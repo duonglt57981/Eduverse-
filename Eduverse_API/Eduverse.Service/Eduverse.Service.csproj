@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Eduverse.Model\Eduverse.Model.csproj" />
     <ProjectReference Include="..\Eduverse.Repository\Eduverse.Repository.csproj" />
   </ItemGroup>

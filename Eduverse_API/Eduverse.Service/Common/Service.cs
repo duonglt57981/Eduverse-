@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace Eduverse.Service.Common
 {

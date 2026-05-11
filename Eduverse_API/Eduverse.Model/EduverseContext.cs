@@ -9,8 +9,8 @@ namespace Eduverse.Model
 {
     public class EduverseContext : IdentityDbContext<AppUser, AppRole, Guid>
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public EduverseContext(DbContextOptions<EduverseContext> options, IHttpContextAccessor httpContextAccessor) : base(options)
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+        public EduverseContext(DbContextOptions<EduverseContext> options, IHttpContextAccessor? httpContextAccessor=null) : base(options)
         {
             this._httpContextAccessor = httpContextAccessor;
         }
@@ -19,10 +19,33 @@ namespace Eduverse.Model
         public DbSet<AppRole> AppRoles { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<TaiKhoan> taiKhoans { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<TaiKhoan>(entity =>
+            {
+                entity.HasKey(t => t.IDTaiKhoan);
+                entity.Property(t => t.Email).IsRequired().HasMaxLength(256);
+                entity.Property(t => t.SDT).HasMaxLength(20);
+                entity.Property(t => t.HashPass).IsRequired();
+                entity.HasIndex(t => t.Email).IsUnique(); // Email unique
+            });
+
+            builder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(r => r.IDRefreshToken);
+                entity.Property(r => r.Token).IsRequired();
+                entity.HasIndex(r => r.Token).IsUnique();
+
+                entity.HasOne(r => r.TaiKhoan)
+                      .WithMany(t => t.RefreshTokens)
+                      .HasForeignKey(r => r.IDTaiKhoan)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
             builder.Entity<AppUser>().HasData(
                 new AppUser
                 {
