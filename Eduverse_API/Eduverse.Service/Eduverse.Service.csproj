@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="RoleService\Dto\" />
+    <Folder Include="RoleService\Request\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Eduverse.Model\Eduverse.Model.csproj" />
+    <ProjectReference Include="..\Eduverse.Repository\Eduverse.Repository.csproj" />
+  </ItemGroup>
+
+</Project>
