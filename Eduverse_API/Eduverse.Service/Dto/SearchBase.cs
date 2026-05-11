@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.Dto
 {
-    internal class SearchBase
+    public class SearchBase
     {
+        public int PageIndex { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
     }
 }
