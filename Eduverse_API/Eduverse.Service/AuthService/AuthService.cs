@@ -178,7 +178,7 @@ namespace Eduverse.Service.AuthService
                 new Claim(ClaimTypes.NameIdentifier, taiKhoan.IDTaiKhoan.ToString()),
                 new Claim(ClaimTypes.Surname,        taiKhoan.Email),
                 new Claim(ClaimTypes.Email,          taiKhoan.Email),
-                new Claim("VaiTro",                  taiKhoan.ID_VaiTro.ToString()),
+                new Claim(ClaimTypes.Role,                  taiKhoan.ID_VaiTro.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
