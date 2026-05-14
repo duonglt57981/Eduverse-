@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { ApiResponse } from "../types/types";
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
 declare global {
   interface Window {
@@ -13,45 +13,88 @@ export class ApiService {
   public api: AxiosInstance;
 
   private constructor() {
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
     this.api = axios.create({
-      baseURL:
-        process.env.NEXT_PUBLIC_API_URL + '/api' || 'http://localhost:3000/api',
-      timeout: 0, // Không giới hạn thời gian chờ
+      baseURL: process.env.NEXT_PUBLIC_API_URL
+        ? process.env.NEXT_PUBLIC_API_URL + "/api"
+        : "https://localhost:7140/api",
+      timeout: 0,
+      withCredentials: true,
     });
 
     this.api.interceptors.request.use((config) => {
-      config.headers['x-client-area'] = window.__APP_AREA || 'dashboard';
+      config.headers["x-client-area"] = window.__APP_AREA || "dashboard";
       return config;
     });
 
     this.api.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('AccessToken');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        // Check window trước
+        if (typeof window !== "undefined") {
+          const token = localStorage.getItem("AccessToken");
+          if (token) config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
-      (error) => {
-        return Promise.reject(error);
-      }
+      (error) => Promise.reject(error),
     );
 
     this.api.interceptors.response.use(
       (response) => response,
-      (error) => {
-        const area = window.__APP_AREA || 'dashboard';
-        if (area == 'dashboard' && error.response?.status === 401) {
-          localStorage.removeItem('AccessToken');
-          // store.dispatch(setShowLoginPopup(true));
-          window.location.href = '/auth/login';
+      async (error) => {
+        const original = error.config as AxiosRequestConfig & {
+          _retry?: boolean;
+        };
+        const area = window.__APP_AREA || "dashboard";
+
+        if (error.response?.status === 401 && !original._retry) {
+          original._retry = true;
+
+          // ← Không retry nếu đang gọi các endpoint auth
+          const authEndpoints = [
+            "/auth/login",
+            "/auth/register",
+            "/auth/refresh-token",
+            "/auth/logout",
+            "/auth/verify-email",
+            "/auth/forgot-password",
+            "/auth/reset-password",
+          ];
+
+          const isAuthEndpoint = authEndpoints.some((ep) =>
+            original.url?.includes(ep),
+          );
+
+          // Nếu là auth endpoint → không retry, redirect login luôn
+          if (isAuthEndpoint) {
+            localStorage.removeItem("AccessToken");
+            if (area === "dashboard") window.location.href = "/auth";
+            return Promise.reject(error);
+          }
+
+          // Các API khác mới retry refresh token
+          try {
+            const res = await this.api.post("/auth/refresh-token");
+            const newToken = res.data.data.accessToken;
+            localStorage.setItem("AccessToken", newToken);
+            original.headers = {
+              ...original.headers,
+              Authorization: `Bearer ${newToken}`,
+            };
+            return this.api(original);
+          } catch {
+            localStorage.removeItem("AccessToken");
+            if (area === "dashboard") window.location.href = "/auth";
+          }
         }
+
         if (error.response?.status === 403) {
-          window.location.href = '/frobiden';
+          window.location.href = "/frobiden";
           return;
         }
-        return Promise.reject(error.response.data.title);
-      }
+
+        return Promise.reject(error.response?.data?.title);
+      },
     );
   }
 
@@ -69,11 +112,11 @@ export class ApiService {
   // Các phương thức API với kiểu dữ liệu trả về
   public async get<T>(
     url: string,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<ApiResponse<T>> {
     const response: AxiosResponse<ApiResponse<T>> = await this.api.get(
       url,
-      config
+      config,
     );
     return response.data;
   }
@@ -81,12 +124,12 @@ export class ApiService {
   public async post<T>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<ApiResponse<T>> {
     const response: AxiosResponse<ApiResponse<T>> = await this.api.post(
       url,
       data,
-      config
+      config,
     );
     return response.data;
   }
@@ -94,34 +137,34 @@ export class ApiService {
   public async put<T>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<ApiResponse<T>> {
     const response: AxiosResponse<ApiResponse<T>> = await this.api.put(
       url,
       data,
-      config
+      config,
     );
     return response.data;
   }
 
   public async delete<T>(
     url: string,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<ApiResponse<T>> {
     const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(
       url,
-      config
+      config,
     );
     return response.data;
   }
 
   public async getBlob(
     url: string,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<Blob> {
     const response: AxiosResponse<Blob> = await this.api.get(url, {
       ...config,
-      responseType: 'blob',
+      responseType: "blob",
     });
     return response.data;
   }
