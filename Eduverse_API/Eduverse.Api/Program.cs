@@ -1,19 +1,26 @@
 ﻿
+using Eduverse.Api.Hubs;
 using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
+using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
-using Eduverse.Service.EmailService;
+using Eduverse.Service.Common;
+using Eduverse.Service.Core.Mapper;
+
+using Eduverse.Service.Common;
+using Eduverse.Service.Core.Mapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Eduverse.Service.EmailService;
 
 namespace Eduverse.Api
 {
-    public class Program
+    public static class Program 
     {
         public static void Main(string[] args)
         {
@@ -42,7 +49,9 @@ namespace Eduverse.Api
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddDependencyInjection();
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddSignalR();
             // JWT
             builder.Services.AddAuthentication(options =>
             {
@@ -62,6 +71,23 @@ namespace Eduverse.Api
                     ValidAudience = builder.Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        var path = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/notificationHub"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
                 };
             });
             builder.Services.AddSwaggerGen(c =>
@@ -125,8 +151,37 @@ namespace Eduverse.Api
 
 
             app.MapControllers();
+            app.MapHub<NotificationHub>("/notificationHub");
+
 
             app.Run();
         }
+        private static void AddDependencyInjection(this IServiceCollection services)
+        {
+
+            services.AddScoped<IMapper, Mapper>();
+            services.AddScoped<DbContext, EduverseContext>();
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            var repositoryTypes = typeof(IRepository<>).Assembly.GetTypes()
+                 .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Repository") && x.Name.EndsWith("Repository"));
+            foreach (var intf in repositoryTypes.Where(t => t.IsInterface))
+            {
+                var impl = repositoryTypes.FirstOrDefault(c => c.IsClass && intf.Name.Substring(1) == c.Name);
+                if (impl != null) services.AddScoped(intf, impl);
+            }
+
+            services.AddScoped(typeof(IService<>), typeof(Service<>));
+            var serviceTypes = typeof(IService<>).Assembly.GetTypes()
+                 .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Service") && x.Name.EndsWith("Service"));
+            foreach (var intf in serviceTypes.Where(t => t.IsInterface))
+            {
+                var impl = serviceTypes.FirstOrDefault(c => c.IsClass && intf.Name.Substring(1) == c.Name);
+                if (impl != null) services.AddScoped(intf, impl);
+            }
+
+         
+        }
     }
+
+
 }

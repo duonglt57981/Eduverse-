@@ -81,3 +81,29 @@ export interface ConfigImport {
   columnName?: string;
   displayName?: string;
 }
+export interface ApiResponse<T> {
+  status: boolean;
+  message: string;
+  data: T;
+}
+
+export interface LoginRequest {
+  userName: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  userName: string;
+  hoTen: string;
+  email: string;
+  password: string;
+  chucVu?: string;
+  gioiTinh?: number;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  userName: string;
+  hoTen: string;
+  email: string;
+}
