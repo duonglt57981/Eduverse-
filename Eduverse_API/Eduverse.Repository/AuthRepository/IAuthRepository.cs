@@ -9,12 +9,10 @@ namespace Eduverse.Repository.AuthRepository
 {
         public interface IAuthRepository
         {
-            Task<TaiKhoan?> GetByEmailAsync(string email);
-            Task<TaiKhoan?> GetByIdAsync(int id);
-            Task AddTaiKhoanAsync(TaiKhoan taiKhoan);
-            Task AddRefreshTokenAsync(RefreshToken token);
-            Task<RefreshToken?> GetRefreshTokenAsync(string token);
-            Task RevokeRefreshTokenAsync(RefreshToken token);
-            Task SaveChangesAsync();
-        }
+        Task<RefreshToken?> GetRefreshTokenAsync(string token);
+        Task AddRefreshTokenAsync(RefreshToken token);
+        Task RevokeRefreshTokenAsync(RefreshToken token);
+        Task RevokeAllRefreshTokensByUserIdAsync(Guid userId);
+        Task SaveChangesAsync();
+    }
 }

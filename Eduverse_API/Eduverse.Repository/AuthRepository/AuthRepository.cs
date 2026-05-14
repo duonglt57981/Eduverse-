@@ -9,43 +9,41 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Repository.AuthRepository
 {
-    public class AuthRepository : IAuthRepository
-    {
-        private readonly EduverseContext _context;
-
-        public AuthRepository(EduverseContext context)
+        public class AuthRepository : IAuthRepository
         {
-            _context = context;
-        }
+            private readonly EduverseContext _context;
 
-        public async Task<TaiKhoan?> GetByEmailAsync(string email)
-            => await _context.taiKhoans
-                .Include(t => t.RefreshTokens)
-                .FirstOrDefaultAsync(t => t.Email == email);
+            public AuthRepository(EduverseContext context)
+            {
+                _context = context;
+            }
 
-        public async Task<TaiKhoan?> GetByIdAsync(int id)
-            => await _context.taiKhoans
-                .Include(t => t.RefreshTokens)
-                .FirstOrDefaultAsync(t => t.IDTaiKhoan == id);
+            public async Task<RefreshToken?> GetRefreshTokenAsync(string token)
+                => await _context.RefreshTokens
+                    .Include(r => r.AppUser) 
+                    .FirstOrDefaultAsync(r => r.Token == token && !r.DaBiThuHoi);
 
-        public async Task AddTaiKhoanAsync(TaiKhoan taiKhoan)
-            => await _context.taiKhoans.AddAsync(taiKhoan);
+            public async Task AddRefreshTokenAsync(RefreshToken token)
+                => await _context.RefreshTokens.AddAsync(token);
 
-        public async Task AddRefreshTokenAsync(RefreshToken token)
-            => await _context.RefreshTokens.AddAsync(token);
+            public async Task RevokeRefreshTokenAsync(RefreshToken token)
+            {
+                token.DaBiThuHoi = true;
+                _context.RefreshTokens.Update(token);
+            }
+            public async Task RevokeAllRefreshTokensByUserIdAsync(Guid userId)
+            {
+                var tokens = await _context.RefreshTokens
+                    .Where(r => r.AppUserId == userId && !r.DaBiThuHoi)
+                    .ToListAsync();
 
-        public async Task<RefreshToken?> GetRefreshTokenAsync(string token)
-            => await _context.RefreshTokens
-                .Include(r => r.TaiKhoan)
-                .FirstOrDefaultAsync(r => r.Token == token && !r.DaBiThuHoi);
+                foreach (var token in tokens)
+                    token.DaBiThuHoi = true;
 
-        public async Task RevokeRefreshTokenAsync(RefreshToken token)
-        {
-            token.DaBiThuHoi = true;
-            _context.RefreshTokens.Update(token);
-        }
+                _context.RefreshTokens.UpdateRange(tokens);
+            }
 
-        public async Task SaveChangesAsync()
-            => await _context.SaveChangesAsync();
-    }
+            public async Task SaveChangesAsync()
+                    => await _context.SaveChangesAsync();
+            }
 }

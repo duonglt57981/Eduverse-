@@ -1,8 +1,11 @@
 ﻿
 using Eduverse.Model;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
 using Eduverse.Service.AuthService;
+using Eduverse.Service.EmailService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -16,7 +19,27 @@ namespace Eduverse.Api
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContext<EduverseContext>(op => op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnecting")));
+            builder.Services.AddIdentity<AppUser, AppRole>(options =>
+            {
+                options.User.AllowedUserNameCharacters =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+
+                options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 6;
+
+                // Lockout sau 5 lần sai
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.AllowedForNewUsers = true;
+
+                // Bắt buộc xác thực email
+                options.SignIn.RequireConfirmedEmail = false; // ← để false, check thủ công trong service
+            }).AddEntityFrameworkStores<EduverseContext>().AddDefaultTokenProviders();
             // Đăng ký services
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddHttpContextAccessor();
@@ -67,13 +90,24 @@ namespace Eduverse.Api
                     }
                 });
             });
+            builder.Services.AddCors(opt =>
+            {
+                opt.AddPolicy("AllowFrontend", policy =>
+                    policy.WithOrigins("http://localhost:3000") 
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials()); 
+            });
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
@@ -83,7 +117,7 @@ namespace Eduverse.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseCors("AllowFrontend");
             app.UseHttpsRedirection();
 
             app.UseAuthentication();

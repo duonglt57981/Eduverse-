@@ -166,7 +166,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "bfccbaa2-3c7c-4dce-9c06-7967c84498cd",
+                            ConcurrencyStamp = "9e698483-57ac-4a73-ac07-b0d531f607bb",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -175,9 +175,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAECSvlz8uMm0Vjy/NzU9r2HOLOyuLYnwokPXmf5Y7eG8OFyANVvDwM0vQJj0kNX8EEA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEJ96/2JSii2Tr2SWeUAcBneCAjio0FKVV4ViNfklIe9mS9ZT9QcNs1vZz02ZSlWaGA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "d1214466-367a-4b3c-85ef-38b813d1d7ff",
+                            SecurityStamp = "793b1524-f0e1-487e-acf8-f25ccc158d18",
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserName = "admin"
@@ -191,6 +191,9 @@ namespace Eduverse.Model.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IDRefreshToken"));
+
+                    b.Property<Guid>("AppUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("DaBiThuHoi")
                         .HasColumnType("bit");
@@ -210,7 +213,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("IDRefreshToken");
 
-                    b.HasIndex("IDTaiKhoan");
+                    b.HasIndex("AppUserId");
 
                     b.HasIndex("Token")
                         .IsUnique();
@@ -268,48 +271,6 @@ namespace Eduverse.Model.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Role");
-                });
-
-            modelBuilder.Entity("Eduverse.Model.Entities.TaiKhoan", b =>
-                {
-                    b.Property<int>("IDTaiKhoan")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IDTaiKhoan"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("HashPass")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ID_VaiTro")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("NgayCapNhat")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("NgayTao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SDT")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("TrangThai")
-                        .HasColumnType("bit");
-
-                    b.HasKey("IDTaiKhoan");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.ToTable("taiKhoans");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.UserRole", b =>
@@ -464,13 +425,13 @@ namespace Eduverse.Model.Migrations
 
             modelBuilder.Entity("Eduverse.Model.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("Eduverse.Model.Entities.TaiKhoan", "TaiKhoan")
-                        .WithMany("RefreshTokens")
-                        .HasForeignKey("IDTaiKhoan")
+                    b.HasOne("Eduverse.Model.Entities.AppUser", "AppUser")
+                        .WithMany()
+                        .HasForeignKey("AppUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("TaiKhoan");
+                    b.Navigation("AppUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -522,11 +483,6 @@ namespace Eduverse.Model.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Eduverse.Model.Entities.TaiKhoan", b =>
-                {
-                    b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
         }

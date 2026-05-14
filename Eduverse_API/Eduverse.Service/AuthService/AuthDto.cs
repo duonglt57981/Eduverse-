@@ -1,42 +1,52 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Eduverse.Service.AuthService
 {
     public class RegisterRequest
     {
-        [Required(ErrorMessage = "SDT không được trống")]
-        public string SDT { get; set; }
-
-        [Required(ErrorMessage = "Email không được trống")]
-        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
-        public string Email { get; set; }
-
-        [Required(ErrorMessage = "Password không được trống")]
-        [MinLength(6, ErrorMessage = "Password tối thiểu 6 ký tự")]
-        public string Password { get; set; }
-
-        public int ID_VaiTro { get; set; } = 2; // Mặc định role user
+        [Required] public string UserName { get; set; }
+        [Required] public string HoTen { get; set; }
+        [Required][EmailAddress] public string Email { get; set; }
+        [Required][MinLength(6)] public string Password { get; set; }
+        public string? ChucVu { get; set; }
+        public int? GioiTinh { get; set; }
     }
 
     public class LoginRequest
     {
-        [Required(ErrorMessage = "Email không được trống")]
-        public string Email { get; set; }
-
-        [Required(ErrorMessage = "Password không được trống")]
-        public string Password { get; set; }
+        [Required] public string UserName { get; set; }
+        [Required] public string Password { get; set; }
     }
 
     public class AuthResponse
     {
         public string AccessToken { get; set; }
-        public string Email { get; set; }
-        public int IDTaiKhoan { get; set; }
-        public int VaiTro { get; set; }
+        public string UserName { get; set; }
+        public string? HoTen { get; set; }
+        public string? Email { get; set; }
+    }
+
+    public class ChangePasswordRequest
+    {
+        [Required] public string OldPassword { get; set; }
+        [Required][MinLength(6)] public string NewPassword { get; set; }
+    }
+
+    public class ForgotPasswordRequest
+    {
+        [Required][EmailAddress] public string Email { get; set; }
+    }
+
+    public class ResetPasswordRequest
+    {
+        [Required] public string UserId { get; set; }
+        [Required] public string Token { get; set; }
+        [Required][MinLength(6)] public string NewPassword { get; set; }
+    }
+
+    public class VerifyEmailRequest
+    {
+        [Required] public string UserId { get; set; }
+        [Required] public string Token { get; set; }
     }
 }
