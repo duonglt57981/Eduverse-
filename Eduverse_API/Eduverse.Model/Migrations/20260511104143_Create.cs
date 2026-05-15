@@ -90,25 +90,6 @@ namespace Eduverse.Model.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "taiKhoans",
-                columns: table => new
-                {
-                    IDTaiKhoan = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SDT = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    HashPass = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TrangThai = table.Column<bool>(type: "bit", nullable: false),
-                    NgayTao = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    NgayCapNhat = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ID_VaiTro = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_taiKhoans", x => x.IDTaiKhoan);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "UserRole",
                 columns: table => new
                 {
@@ -247,23 +228,24 @@ namespace Eduverse.Model.Migrations
                     NgayHetHan = table.Column<DateTime>(type: "datetime2", nullable: false),
                     NgayTao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DaBiThuHoi = table.Column<bool>(type: "bit", nullable: false),
-                    IDTaiKhoan = table.Column<int>(type: "int", nullable: false)
+                    IDTaiKhoan = table.Column<int>(type: "int", nullable: false),
+                    AppUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_RefreshTokens", x => x.IDRefreshToken);
                     table.ForeignKey(
-                        name: "FK_RefreshTokens_taiKhoans_IDTaiKhoan",
-                        column: x => x.IDTaiKhoan,
-                        principalTable: "taiKhoans",
-                        principalColumn: "IDTaiKhoan",
+                        name: "FK_RefreshTokens_AspNetUsers_AppUserId",
+                        column: x => x.AppUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "AnhDaiDien", "ChucVu", "ConcurrencyStamp", "CreatedBy", "CreatedDate", "CreatedId", "DeletedDate", "DeletedId", "DiaChi", "Email", "EmailConfirmed", "GioiTinh", "HoTen", "IdDonVi", "IsDeleted", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UpdatedBy", "UpdatedDate", "UpdatedId", "UserName" },
-                values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), 0, null, "Admin", "bfccbaa2-3c7c-4dce-9c06-7967c84498cd", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, null, null, "admin", true, null, null, new Guid("00000000-0000-0000-0000-000000000000"), false, false, null, "ADMIN", "ADMIN", "AQAAAAIAAYagAAAAECSvlz8uMm0Vjy/NzU9r2HOLOyuLYnwokPXmf5Y7eG8OFyANVvDwM0vQJj0kNX8EEA==", null, false, "d1214466-367a-4b3c-85ef-38b813d1d7ff", false, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "admin" });
+                values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), 0, null, "Admin", "9e698483-57ac-4a73-ac07-b0d531f607bb", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, null, null, "admin", true, null, null, new Guid("00000000-0000-0000-0000-000000000000"), false, false, null, "ADMIN", "ADMIN", "AQAAAAIAAYagAAAAEJ96/2JSii2Tr2SWeUAcBneCAjio0FKVV4ViNfklIe9mS9ZT9QcNs1vZz02ZSlWaGA==", null, false, "793b1524-f0e1-487e-acf8-f25ccc158d18", false, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "admin" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -305,20 +287,14 @@ namespace Eduverse.Model.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokens_IDTaiKhoan",
+                name: "IX_RefreshTokens_AppUserId",
                 table: "RefreshTokens",
-                column: "IDTaiKhoan");
+                column: "AppUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_Token",
                 table: "RefreshTokens",
                 column: "Token",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_taiKhoans_Email",
-                table: "taiKhoans",
-                column: "Email",
                 unique: true);
         }
 
@@ -354,9 +330,6 @@ namespace Eduverse.Model.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
-                name: "taiKhoans");
         }
     }
 }

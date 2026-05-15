@@ -1,13 +1,14 @@
 ﻿
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
+using Eduverse.Service.EmailService;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,107 +18,165 @@ namespace Eduverse.Service.AuthService
 {
     public class AuthService : IAuthService
     {
+        private readonly UserManager<AppUser> _userManager;
         private readonly IAuthRepository _authRepo;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
 
-        public AuthService(IAuthRepository authRepo, IConfiguration config)
+        public AuthService(
+            UserManager<AppUser> userManager,
+            IAuthRepository authRepo,
+            IConfiguration config,
+            IEmailService emailService)
         {
+            _userManager = userManager;
             _authRepo = authRepo;
             _config = config;
+            _emailService = emailService;
         }
 
         // ══════════════════════════════════════════════
-        // REGISTER
+        // REGISTER + GỬI EMAIL VERIFY
         // ══════════════════════════════════════════════
-        public async Task<DataResponse<string>> RegisterAsync(RegisterRequest request)
+        public async Task<string> RegisterAsync(RegisterRequest request)
         {
-            // Kiểm tra email tồn tại
-            var existing = await _authRepo.GetByEmailAsync(request.Email);
-            if (existing is not null)
-                return DataResponse<string>.False("Email đã được sử dụng");
+            var existingEmail = await _userManager.FindByEmailAsync(request.Email);
+            if (existingEmail is not null)
+                throw new Exception("Email đã được sử dụng");
 
-            var taiKhoan = new TaiKhoan
+            var user = new AppUser
             {
-                SDT = request.SDT,
+                UserName = request.UserName,
+                HoTen = request.HoTen, 
                 Email = request.Email,
-                HashPass = BCrypt.Net.BCrypt.HashPassword(request.Password), 
-                TrangThai = true,
-                NgayTao = DateTime.UtcNow,
-                ID_VaiTro = request.ID_VaiTro
+                ChucVu = request.ChucVu,
+                GioiTinh = request.GioiTinh
             };
 
-            await _authRepo.AddTaiKhoanAsync(taiKhoan);
-            await _authRepo.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-            return DataResponse<string>.Success("Đăng ký thành công");
+            // Sinh token xác thực email
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = Uri.EscapeDataString(token);
+            var confirmUrl = $"{_config["App:ClientUrl"]}/auth/verify-email?userId={user.Id}&token={encodedToken}";
+
+            await _emailService.SendAsync(
+                to: user.Email!,
+                subject: "Xác thực tài khoản EduVerse",
+                body: $@"
+                    <h2>Chào {user.HoTen}!</h2>
+                    <p>Nhấn vào link bên dưới để xác thực tài khoản:</p>
+                    <a href='{confirmUrl}' style='background:#c0392b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;'>
+                        Xác thực tài khoản
+                    </a>
+                    <p>Link có hiệu lực trong 24 giờ.</p>
+                "
+            );
+
+            return "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.";
         }
 
         // ══════════════════════════════════════════════
-        // LOGIN
+        // VERIFY EMAIL
         // ══════════════════════════════════════════════
-        public async Task<DataResponse<AuthResponse>> LoginAsync(
-            LoginRequest request, HttpResponse httpResponse)
+        public async Task<string> VerifyEmailAsync(string userId, string token)
         {
-            var taiKhoan = await _authRepo.GetByEmailAsync(request.Email);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null)
+                throw new Exception("Tài khoản không tồn tại");
 
-            // Verify password — BCrypt tự handle timing attack
-            if (taiKhoan is null || !BCrypt.Net.BCrypt.Verify(request.Password, taiKhoan.HashPass))
-                return DataResponse<AuthResponse>.False("Email hoặc mật khẩu không đúng");
+            var decodedToken = Uri.UnescapeDataString(token);
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+            if (!result.Succeeded)
+                throw new Exception("Link xác thực không hợp lệ hoặc đã hết hạn");
 
-            if (!taiKhoan.TrangThai)
-                return DataResponse<AuthResponse>.False("Tài khoản đã bị khóa");
+            return "Xác thực email thành công! Bạn có thể đăng nhập.";
+        }
 
-            // Sinh Access Token (15 phút)
-            var accessToken = GenerateAccessToken(taiKhoan);
+        // ══════════════════════════════════════════════
+        // LOGIN — đầy đủ bảo mật
+        // ══════════════════════════════════════════════
+        public async Task<AuthResponse> LoginAsync(LoginRequest request, HttpResponse httpResponse)
+        {
+            var user = await _userManager.FindByNameAsync(request.UserName);
+            if (user is null)
+                throw new Exception("Tên đăng nhập hoặc mật khẩu không đúng");
 
-            // Sinh Refresh Token (7 ngày) + lưu DB
+            // Check bị khóa chưa
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                var lockoutEnd = user.LockoutEnd!.Value.ToLocalTime();
+                throw new Exception($"Tài khoản bị khóa đến {lockoutEnd:HH:mm dd/MM/yyyy} do đăng nhập sai quá nhiều lần");
+            }
+
+            // Check verify email
+            if (!await _userManager.IsEmailConfirmedAsync(user))
+                throw new Exception("Vui lòng xác thực email trước khi đăng nhập");
+
+            var isValid = await _userManager.CheckPasswordAsync(user, request.Password);
+            if (!isValid)
+            {
+                // Tăng AccessFailedCount
+                await _userManager.AccessFailedAsync(user);
+
+                var failCount = await _userManager.GetAccessFailedCountAsync(user);
+                var maxFail = _userManager.Options.Lockout.MaxFailedAccessAttempts;
+                var remaining = maxFail - failCount;
+
+                if (remaining <= 0)
+                    throw new Exception("Tài khoản bị khóa 15 phút do đăng nhập sai quá nhiều lần");
+
+                throw new Exception($"Mật khẩu không đúng. Còn {remaining} lần thử.");
+            }
+
+            // Reset AccessFailedCount khi login thành công
+            await _userManager.ResetAccessFailedCountAsync(user);
+
+            var accessToken = GenerateAccessToken(user);
             var refreshTokenStr = GenerateRefreshToken();
+
             await _authRepo.AddRefreshTokenAsync(new RefreshToken
             {
                 Token = refreshTokenStr,
                 NgayTao = DateTime.UtcNow,
                 NgayHetHan = DateTime.UtcNow.AddDays(7),
                 DaBiThuHoi = false,
-                IDTaiKhoan = taiKhoan.IDTaiKhoan
+                AppUserId = user.Id
             });
             await _authRepo.SaveChangesAsync();
 
-            // Ghi Refresh Token vào HttpOnly Cookie
             SetRefreshTokenCookie(httpResponse, refreshTokenStr);
 
-            return DataResponse<AuthResponse>.Success(new AuthResponse
+            return new AuthResponse
             {
                 AccessToken = accessToken,
-                Email = taiKhoan.Email,
-                IDTaiKhoan = taiKhoan.IDTaiKhoan,
-                VaiTro = taiKhoan.ID_VaiTro
-            });
+                UserName = user.UserName!,
+                HoTen = user.HoTen,
+                Email = user.Email
+            };
         }
 
         // ══════════════════════════════════════════════
-        // REFRESH TOKEN (Token Rotation)
+        // REFRESH TOKEN
         // ══════════════════════════════════════════════
-        public async Task<DataResponse<AuthResponse>> RefreshTokenAsync(
-            HttpRequest httpRequest, HttpResponse httpResponse)
+        public async Task<AuthResponse> RefreshTokenAsync(HttpRequest httpRequest, HttpResponse httpResponse)
         {
-            // Đọc từ cookie — FE không cần làm gì thêm
             var oldTokenStr = httpRequest.Cookies["refreshToken"];
             if (string.IsNullOrEmpty(oldTokenStr))
-                return DataResponse<AuthResponse>.False("Không tìm thấy refresh token");
+                throw new Exception("Không tìm thấy refresh token");
 
             var tokenEntity = await _authRepo.GetRefreshTokenAsync(oldTokenStr);
-
             if (tokenEntity is null)
-                return DataResponse<AuthResponse>.False("Refresh token không hợp lệ");
+                throw new Exception("Refresh token không hợp lệ");
 
             if (tokenEntity.NgayHetHan < DateTime.UtcNow)
-                return DataResponse<AuthResponse>.False("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+                throw new Exception("Phiên đăng nhập đã hết hạn");
 
-            // Thu hồi token cũ (Rotation — phát hiện token bị đánh cắp)
             await _authRepo.RevokeRefreshTokenAsync(tokenEntity);
 
-            // Cấp token mới
-            var newAccessToken = GenerateAccessToken(tokenEntity.TaiKhoan);
+            var newAccessToken = GenerateAccessToken(tokenEntity.AppUser);
             var newRefreshTokenStr = GenerateRefreshToken();
 
             await _authRepo.AddRefreshTokenAsync(new RefreshToken
@@ -126,29 +185,27 @@ namespace Eduverse.Service.AuthService
                 NgayTao = DateTime.UtcNow,
                 NgayHetHan = DateTime.UtcNow.AddDays(7),
                 DaBiThuHoi = false,
-                IDTaiKhoan = tokenEntity.IDTaiKhoan
+                AppUserId = tokenEntity.AppUserId
             });
             await _authRepo.SaveChangesAsync();
 
             SetRefreshTokenCookie(httpResponse, newRefreshTokenStr);
 
-            return DataResponse<AuthResponse>.Success(new AuthResponse
+            return new AuthResponse
             {
                 AccessToken = newAccessToken,
-                Email = tokenEntity.TaiKhoan.Email,
-                IDTaiKhoan = tokenEntity.TaiKhoan.IDTaiKhoan,
-                VaiTro = tokenEntity.TaiKhoan.ID_VaiTro
-            });
+                UserName = tokenEntity.AppUser.UserName!,
+                HoTen = tokenEntity.AppUser.HoTen,
+                Email = tokenEntity.AppUser.Email
+            };
         }
 
         // ══════════════════════════════════════════════
         // LOGOUT
         // ══════════════════════════════════════════════
-        public async Task<DataResponse<string>> LogoutAsync(
-            HttpRequest httpRequest, HttpResponse httpResponse)
+        public async Task LogoutAsync(HttpRequest httpRequest, HttpResponse httpResponse)
         {
             var tokenStr = httpRequest.Cookies["refreshToken"];
-
             if (!string.IsNullOrEmpty(tokenStr))
             {
                 var tokenEntity = await _authRepo.GetRefreshTokenAsync(tokenStr);
@@ -158,27 +215,101 @@ namespace Eduverse.Service.AuthService
                     await _authRepo.SaveChangesAsync();
                 }
             }
-
             httpResponse.Cookies.Delete("refreshToken");
-            return DataResponse<string>.Success("Đăng xuất thành công");
         }
 
         // ══════════════════════════════════════════════
-        // PRIVATE HELPERS
+        // ĐỔI MẬT KHẨU → LOGOUT MỌI THIẾT BỊ
         // ══════════════════════════════════════════════
-        private string GenerateAccessToken(TaiKhoan taiKhoan)
+        public async Task<string> ChangePasswordAsync(ChangePasswordRequest request, Guid userId, HttpResponse httpResponse)
         {
-            var key = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user is null)
+                throw new Exception("Tài khoản không tồn tại");
+
+            var result = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            // Revoke TẤT CẢ refresh token của user → logout mọi thiết bị
+            await _authRepo.RevokeAllRefreshTokensByUserIdAsync(userId);
+            await _authRepo.SaveChangesAsync();
+
+            // Xóa cookie thiết bị hiện tại
+            httpResponse.Cookies.Delete("refreshToken");
+
+            // Cập nhật SecurityStamp → invalidate tất cả JWT cũ
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            return "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.";
+        }
+
+        // ══════════════════════════════════════════════
+        // FORGOT PASSWORD — gửi email reset
+        // ══════════════════════════════════════════════
+        public async Task<string> ForgotPasswordAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            // Không báo user có tồn tại không — bảo mật
+            if (user is null) return "Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu";
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = Uri.EscapeDataString(token);
+            var resetUrl = $"{_config["App:ClientUrl"]}/auth/reset-password?userId={user.Id}&token={encodedToken}";
+
+            await _emailService.SendAsync(
+                to: email,
+                subject: "Đặt lại mật khẩu EduVerse",
+                body: $@"
+                    <h2>Đặt lại mật khẩu</h2>
+                    <p>Nhấn vào link bên dưới để đặt lại mật khẩu:</p>
+                    <a href='{resetUrl}' style='background:#c0392b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;'>
+                        Đặt lại mật khẩu
+                    </a>
+                    <p>Link có hiệu lực trong 1 giờ. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
+                "
+            );
+
+            return "Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu";
+        }
+
+        // ══════════════════════════════════════════════
+        // RESET PASSWORD
+        // ══════════════════════════════════════════════
+        public async Task<string> ResetPasswordAsync(ResetPasswordRequest request)
+        {
+            var user = await _userManager.FindByIdAsync(request.UserId);
+            if (user is null)
+                throw new Exception("Tài khoản không tồn tại");
+
+            var decodedToken = Uri.UnescapeDataString(request.Token);
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            // Revoke tất cả refresh token
+            await _authRepo.RevokeAllRefreshTokensByUserIdAsync(user.Id);
+            await _authRepo.SaveChangesAsync();
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            return "Đặt lại mật khẩu thành công!";
+        }
+
+        // ══════════════════════════════════════════════
+        // HELPERS
+        // ══════════════════════════════════════════════
+        private string GenerateAccessToken(AppUser user)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-                // Đây là các claim mà EduverseContext.SaveChangesAsync đang đọc
-                new Claim(ClaimTypes.NameIdentifier, taiKhoan.IDTaiKhoan.ToString()),
-                new Claim(ClaimTypes.Surname,        taiKhoan.Email),
-                new Claim(ClaimTypes.Email,          taiKhoan.Email),
-                new Claim(ClaimTypes.Role,                  taiKhoan.ID_VaiTro.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name,           user.UserName!),
+                new Claim(ClaimTypes.Surname,        user.UserName!),
+                new Claim(ClaimTypes.Email,          user.Email ?? ""),
+                new Claim("HoTen",                   user.HoTen ?? ""),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
@@ -203,9 +334,9 @@ namespace Eduverse.Service.AuthService
         {
             response.Cookies.Append("refreshToken", token, new CookieOptions
             {
-                HttpOnly = true,               // JS không đọc được → chống XSS
-                Secure = true,               // Chỉ qua HTTPS
-                SameSite = SameSiteMode.Strict, // Chống CSRF
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
         }
