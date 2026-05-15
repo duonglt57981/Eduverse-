@@ -1,20 +1,22 @@
 ﻿
+using System.Text;
 using Eduverse.Api.Hubs;
 using Eduverse.Model;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
 using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
 namespace Eduverse.Api
 {
-    public static class Program 
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -26,6 +28,9 @@ namespace Eduverse.Api
             builder.Services.AddDependencyInjection();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSignalR();
+            builder.Services.AddIdentity<AppUser, AppRole>()
+             .AddEntityFrameworkStores<EduverseContext>().AddDefaultTokenProviders();
+
             // JWT
             builder.Services.AddAuthentication(options =>
             {
@@ -141,7 +146,7 @@ namespace Eduverse.Api
                 if (impl != null) services.AddScoped(intf, impl);
             }
 
-         
+
         }
     }
 
