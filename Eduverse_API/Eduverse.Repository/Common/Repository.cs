@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Eduverse.Model.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Eduverse.Repository.Common
+namespace Eduverse.IRepository.Common
 {
     public class Repository<T> : IRepository<T> where T : class, IAuditableEntity
     {

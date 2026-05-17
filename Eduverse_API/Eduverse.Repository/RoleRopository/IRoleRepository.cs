@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Eduverse.Model.Entities;
-using Eduverse.Repository.Common;
+using Eduverse.IRepository.Common;
 
-namespace Eduverse.Repository.RoleRopository
+namespace Eduverse.IRepository.RoleRopository
 {
     public interface IRoleRepository : IRepository<Role>
     {

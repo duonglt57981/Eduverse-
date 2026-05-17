@@ -19,6 +19,7 @@ namespace Eduverse.Model
         public DbSet<AppRole> AppRoles { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<KhoaHoc> KhoaHocs { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

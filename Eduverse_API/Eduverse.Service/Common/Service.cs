@@ -7,9 +7,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Eduverse.Model.Entities;
-using Eduverse.Repository.Common;
+using Eduverse.IRepository.Common;
+using Microsoft.EntityFrameworkCore;
 
-namespace Eduverse.Service.Common
+namespace Eduverse.IService.Common
 {
     public class Service<T> : IService<T> where T : class, IAuditableEntity
     {
