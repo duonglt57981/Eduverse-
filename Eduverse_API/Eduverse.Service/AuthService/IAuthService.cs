@@ -1,17 +1,18 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Eduverse.Service.AuthService;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.Data;
+using LoginRequest = Eduverse.Service.AuthService.LoginRequest;
+using RegisterRequest = Eduverse.Service.AuthService.RegisterRequest;
+using ResetPasswordRequest = Eduverse.Service.AuthService.ResetPasswordRequest;
 
-namespace Eduverse.Service.AuthService
+public interface IAuthService
 {
-    public interface IAuthService
-    {
-        Task<DataResponse<string>> RegisterAsync(RegisterRequest request);
-        Task<DataResponse<AuthResponse>> LoginAsync(LoginRequest request, HttpResponse httpResponse);
-        Task<DataResponse<AuthResponse>> RefreshTokenAsync(HttpRequest httpRequest, HttpResponse httpResponse);
-        Task<DataResponse<string>> LogoutAsync(HttpRequest httpRequest, HttpResponse httpResponse);
-    }
+    Task<string> RegisterAsync(RegisterRequest request);
+    Task<AuthResponse> LoginAsync(LoginRequest request, HttpResponse httpResponse);
+    Task<AuthResponse> RefreshTokenAsync(HttpRequest httpRequest, HttpResponse httpResponse);
+    Task LogoutAsync(HttpRequest httpRequest, HttpResponse httpResponse);
+    Task<string> VerifyEmailAsync(string userId, string token);
+    Task<string> ChangePasswordAsync(ChangePasswordRequest request, Guid userId, HttpResponse httpResponse);
+    Task<string> ForgotPasswordAsync(string email);
+    Task<string> ResetPasswordAsync(ResetPasswordRequest request);
 }
