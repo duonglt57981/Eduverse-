@@ -1,0 +1,173 @@
+/* eslint-disable */
+import { ApiResponse } from "../types/types";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+
+declare global {
+  interface Window {
+    __APP_AREA?: string;
+  }
+}
+
+export class ApiService {
+  private static instance: ApiService;
+  public api: AxiosInstance;
+
+  private constructor() {
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+    this.api = axios.create({
+      baseURL: process.env.NEXT_PUBLIC_API_URL
+        ? process.env.NEXT_PUBLIC_API_URL + "/api"
+        : "http://localhost:5002/api",
+      timeout: 0,
+      withCredentials: true,
+    });
+
+    this.api.interceptors.request.use((config) => {
+      config.headers["x-client-area"] = window.__APP_AREA || "dashboard";
+      return config;
+    });
+
+    this.api.interceptors.request.use(
+      (config) => {
+        // Check window trước
+        if (typeof window !== "undefined") {
+          const token = localStorage.getItem("AccessToken");
+          if (token) config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error),
+    );
+
+    this.api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const original = error.config as AxiosRequestConfig & {
+          _retry?: boolean;
+        };
+        const area = window.__APP_AREA || "dashboard";
+
+        if (error.response?.status === 401 && !original._retry) {
+          original._retry = true;
+
+          // ← Không retry nếu đang gọi các endpoint auth
+          const authEndpoints = [
+            "/auth/login",
+            "/auth/register",
+            "/auth/refresh-token",
+            "/auth/logout",
+            "/auth/verify-email",
+            "/auth/forgot-password",
+            "/auth/reset-password",
+          ];
+
+          const isAuthEndpoint = authEndpoints.some((ep) =>
+            original.url?.includes(ep),
+          );
+
+          // Nếu là auth endpoint → không retry, redirect login luôn
+          if (isAuthEndpoint) {
+            localStorage.removeItem("AccessToken");
+            if (area === "dashboard") window.location.href = "/auth";
+            return Promise.reject(error);
+          }
+
+          // Các API khác mới retry refresh token
+          try {
+            const res = await this.api.post("/auth/refresh-token");
+            const newToken = res.data.data.accessToken;
+            localStorage.setItem("AccessToken", newToken);
+            original.headers = {
+              ...original.headers,
+              Authorization: `Bearer ${newToken}`,
+            };
+            return this.api(original);
+          } catch {
+            localStorage.removeItem("AccessToken");
+            if (area === "dashboard") window.location.href = "/auth";
+          }
+        }
+
+        if (error.response?.status === 403) {
+          window.location.href = "/frobiden";
+          return;
+        }
+
+        return Promise.reject(error.response?.data?.title);
+      },
+    );
+  }
+
+  public static get api(): AxiosInstance {
+    return this.api;
+  }
+
+  public static getInstance(): ApiService {
+    if (!ApiService.instance) {
+      ApiService.instance = new ApiService();
+    }
+    return ApiService.instance;
+  }
+
+  // Các phương thức API với kiểu dữ liệu trả về
+  public async get<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await this.api.get(
+      url,
+      config,
+    );
+    return response.data;
+  }
+
+  public async post<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await this.api.post(
+      url,
+      data,
+      config,
+    );
+    return response.data;
+  }
+
+  public async put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await this.api.put(
+      url,
+      data,
+      config,
+    );
+    return response.data;
+  }
+
+  public async delete<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(
+      url,
+      config,
+    );
+    return response.data;
+  }
+
+  public async getBlob(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<Blob> {
+    const response: AxiosResponse<Blob> = await this.api.get(url, {
+      ...config,
+      responseType: "blob",
+    });
+    return response.data;
+  }
+}
+
+export const apiService = ApiService.getInstance();

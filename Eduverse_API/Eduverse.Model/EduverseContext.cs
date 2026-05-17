@@ -9,8 +9,8 @@ namespace Eduverse.Model
 {
     public class EduverseContext : IdentityDbContext<AppUser, AppRole, Guid>
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public EduverseContext(DbContextOptions<EduverseContext> options, IHttpContextAccessor httpContextAccessor) : base(options)
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+        public EduverseContext(DbContextOptions<EduverseContext> options, IHttpContextAccessor? httpContextAccessor=null) : base(options)
         {
             this._httpContextAccessor = httpContextAccessor;
         }
@@ -20,10 +20,53 @@ namespace Eduverse.Model
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<KhoaHoc> KhoaHocs { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<AuditableEntity> AuditableEntities { get; set; }
+        public DbSet<BaiGiang> baiGiangs { get; set; }
+        public DbSet<BaiKiemTra> baiKiemTras { get; set; }
+        public DbSet<CauHoi> cauHois { get; set; }
+        public DbSet<ChiTietLamBaiKiemTra> chiTietLamBaiKiemTras { get; set; }
+        public DbSet<ChungChi> chungChis { get; set; }
+        public DbSet<DangKyKhoaHoc> dangKyKhoaHocs { get; set; }
+        public DbSet<DanhGia> danhGias { get; set; }
+        public DbSet<DanhMuc> danhMucs { get; set; }
+        public DbSet<DanhMuc_KhoaHoc> danhMuc_KhoaHocs { get; set; }
+        public DbSet<DanhSachYeuThich> danhSachYeuThiches { get; set; }
+        public DbSet<DapAn> dapAns { get; set; }
+        public DbSet<DapAn_NguoiDung> dapAn_NguoiDungs { get; set; }
+        public DbSet<DonHang> donHangs { get; set; }
+        public DbSet<DonHangChiTiet> donHangChiTiets { get; set; }
+        public DbSet<GioHang> gioHangs { get; set; }
+        public DbSet<GioHangChiTiet> gioHangChiTiets { get; set; }
+        public DbSet<HoiDap> hoiDaps { get; set; }
+        public DbSet<KetQuaBaiThi> ketQuaBaiThis { get; set; }
+        public DbSet<KhoaHoc> khoaHocs   { get; set; }
+        public DbSet<KhuyenMai> khuyenMais { get; set; }
+        public DbSet<KhuyenMai_KhoaHoc> khuyenMai_KhoaHocs   { get; set; }
+        public DbSet<LanLamBaiKiemTra> lanLamBaiKiemTras { get; set; }
+        public DbSet<LienKet> lienKets { get; set; }
 
+        public DbSet<LoaiThongBao> loaiThongBaos { get; set; }
+        public DbSet<NganHang> nganHangs { get; set; }
+        public DbSet<Phan> phans { get; set; }
+        public DbSet<TaiLieu> taiLieus { get; set; }
+        public DbSet<TienDoHocTap> tienDoHocTaps { get; set; }
+        public DbSet<ThanhToan> thanhToans { get; set; }
+        public DbSet<ThongBao> thongBaos { get; set; }
+        public DbSet<VaiTro_NguoiDung> vaiTro_NguoiDungs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(r => r.IDRefreshToken);
+                entity.Property(r => r.Token).IsRequired();
+                entity.HasIndex(r => r.Token).IsUnique();
+                entity.HasOne(r => r.AppUser)
+                      .WithMany()
+                      .HasForeignKey(r => r.AppUserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
             builder.Entity<AppUser>().HasData(
                 new AppUser
                 {

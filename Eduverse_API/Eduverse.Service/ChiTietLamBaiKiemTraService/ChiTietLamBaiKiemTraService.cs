@@ -11,7 +11,7 @@ namespace Eduverse.Service.ChiTietLamBaiKiemTraService
 {
     public class ChiTietLamBaiKiemTraService : Service<Model.Entities.ChiTietLamBaiKiemTra>, IChiTietLamBaiKiemTraService
     {
-        public ChiTietLamBaiKiemTraService(ChiTietLamBaiKiemTraRepository chiTietLamBaiKiemTraRepository) : base(chiTietLamBaiKiemTraRepository)
+        public ChiTietLamBaiKiemTraService(IChiTietLamBaiKiemTraRepository chiTietLamBaiKiemTraRepository) : base(chiTietLamBaiKiemTraRepository)
         {
         }
     }

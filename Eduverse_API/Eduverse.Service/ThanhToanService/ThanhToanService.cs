@@ -10,7 +10,7 @@ namespace Eduverse.Service.ThanhToanService
 {
     public class ThanhToanService : Service<Model.Entities.ThanhToan>, IThanhToanService
     {
-        public ThanhToanService(ThanhToanRepository thanhToanRepository) : base(thanhToanRepository)
+        public ThanhToanService(IThanhToanRepository thanhToanRepository) : base(thanhToanRepository)
         {
         }
     }

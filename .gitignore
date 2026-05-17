@@ -1,3 +1,18 @@
+# Visual Studio
 .vs/
+*.user
+*.suo
+
+# .NET
 bin/
 obj/
+
+# NodeJS
+node_modules/
+
+# Build
+dist/
+publish/
+
+# Env
+.env

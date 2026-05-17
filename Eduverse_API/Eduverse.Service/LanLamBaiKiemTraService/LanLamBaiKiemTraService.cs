@@ -10,7 +10,7 @@ namespace Eduverse.Service.LanLamBaiKiemTraService
 {
     public class LanLamBaiKiemTraService : Service<Model.Entities.LanLamBaiKiemTra>, ILanLamBaiKiemTraService   
     {
-        public LanLamBaiKiemTraService(LanLamBaiKiemTraRepository lanLamBaiKiemTraRepository) : base(lanLamBaiKiemTraRepository)
+        public LanLamBaiKiemTraService(ILanLamBaiKiemTraRepository lanLamBaiKiemTraRepository) : base(lanLamBaiKiemTraRepository)
         {
         }
     }
