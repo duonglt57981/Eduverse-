@@ -95,10 +95,8 @@ export interface LoginRequest {
 export interface RegisterRequest {
   userName: string;
   hoTen: string;
-  email: string;
   password: string;
-  chucVu?: string;
-  gioiTinh?: number;
+  phoneNumber?: string;
 }
 
 export interface AuthResponse {

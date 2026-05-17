@@ -48,6 +48,7 @@ namespace Eduverse.Service.AuthService
             {
                 UserName = request.UserName,
                 HoTen = request.HoTen,
+                PhoneNumber = request.PhoneNumber,
                 ChucVu = request.ChucVu,
                 GioiTinh = request.GioiTinh
             };
@@ -56,11 +57,8 @@ namespace Eduverse.Service.AuthService
             if (!result.Succeeded)
                 throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-            // Chỉ cho phép đăng ký HocVien hoặc GiaoVien — không cho tự đăng ký Admin
-            var allowedRoles = new[] { "HocVien", "GiaoVien" };
-            var role = allowedRoles.Contains(request.Role) ? request.Role : "HocVien";
-
-            await _userManager.AddToRoleAsync(user, role);
+            // Mặc định gán role HocVien
+            await _userManager.AddToRoleAsync(user, "HocVien");
 
             return "Đăng ký thành công!";
         }

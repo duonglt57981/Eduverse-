@@ -9,7 +9,7 @@ namespace Eduverse.Service.AuthService
         [Required][MinLength(6)] public string Password { get; set; }
         public string? ChucVu { get; set; }
         public int? GioiTinh { get; set; }
-        public string Role { get; set; } = "HocVien";
+        public string? PhoneNumber { get; set; }
     }
 
     public class LoginRequest

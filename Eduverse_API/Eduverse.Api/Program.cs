@@ -1,13 +1,11 @@
 ﻿
+using System.Text;
 using Eduverse.Api.Hubs;
 using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
 using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
-using Eduverse.Service.Common;
-using Eduverse.Service.Core.Mapper;
-
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -21,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Api
 {
-    public static class Program 
+    public static class Program
     {
         public static async Task Main(string[] args)
         {
@@ -53,6 +51,8 @@ namespace Eduverse.Api
             builder.Services.AddDependencyInjection();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSignalR();
+            builder.Services.AddSwaggerGen();
+
             // JWT
             builder.Services.AddAuthentication(options =>
             {
@@ -166,6 +166,13 @@ namespace Eduverse.Api
                 });
             });
             app.UseCors("AllowFrontend");
+            app.UseCors(c =>
+            {
+                c.WithOrigins(builder.Configuration.GetSection("AllowedOrigins").Get<string[]>())
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
@@ -192,7 +199,6 @@ namespace Eduverse.Api
         {
 
             services.AddScoped<IMapper, Mapper>();
-            services.AddScoped<DbContext, EduverseContext>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             var repositoryTypes = typeof(IRepository<>).Assembly.GetTypes()
                  .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Repository") && x.Name.EndsWith("Repository"));
@@ -211,7 +217,7 @@ namespace Eduverse.Api
                 if (impl != null) services.AddScoped(intf, impl);
             }
 
-         
+
         }
     }
 
