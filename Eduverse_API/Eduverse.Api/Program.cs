@@ -8,9 +8,6 @@ using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
-
-using Eduverse.Service.Common;
-using Eduverse.Service.Core.Mapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -53,8 +50,7 @@ namespace Eduverse.Api
             builder.Services.AddDependencyInjection();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSignalR();
-            builder.Services.AddIdentity<AppUser, AppRole>()
-             .AddEntityFrameworkStores<EduverseContext>().AddDefaultTokenProviders();
+            builder.Services.AddSwaggerGen();
 
             // JWT
             builder.Services.AddAuthentication(options =>
@@ -147,7 +143,13 @@ namespace Eduverse.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            app.UseCors("AllowFrontend");
+            app.UseCors(c =>
+            {
+                c.WithOrigins(builder.Configuration.GetSection("AllowedOrigins").Get<string[]>())
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
@@ -164,7 +166,6 @@ namespace Eduverse.Api
         {
 
             services.AddScoped<IMapper, Mapper>();
-            services.AddScoped<DbContext, EduverseContext>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             var repositoryTypes = typeof(IRepository<>).Assembly.GetTypes()
                  .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Repository") && x.Name.EndsWith("Repository"));
