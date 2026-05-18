@@ -23,6 +23,7 @@
     <Folder Include="ChiTietLamBaiKiemTraService\Request\" />
     <Folder Include="ChungChiService\Dto\" />
     <Folder Include="ChungChiService\Request\" />
+    <Folder Include="CloudinaryService\Request\" />
     <Folder Include="DanhGiaService\Dto\" />
     <Folder Include="DanhGiaService\Request\" />
     <Folder Include="DanhMucService\Dto\" />
@@ -78,6 +79,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageReference Include="CloudinaryDotNet" Version="1.29.1" />
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
     <PackageReference Include="NETCore.MailKit" Version="2.1.0" />
   </ItemGroup>

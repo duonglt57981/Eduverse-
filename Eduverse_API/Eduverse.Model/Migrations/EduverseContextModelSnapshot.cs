@@ -166,7 +166,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "e72c7481-892a-4b30-a717-061d38a9e51f",
+                            ConcurrencyStamp = "aa771106-2ba2-4062-94b8-076f2e810afa",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -175,9 +175,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAENw8nQ/TV+a6+x+1V+AXBsypZRPlwf6fyXlA9iesIGBL3DAfHx0cgRFTuoXiWX4+4A==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEB2LcsBkZCGpVDUBwahNW9dPpF0nC4k4cEdLNWItO1aHz2pUD6kM4fHyc556YoImHw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "45ecee23-68ef-455a-befc-a41bc67af68a",
+                            SecurityStamp = "fa581dc8-154d-468a-abba-eb8a925608bd",
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserName = "admin"
@@ -370,6 +370,9 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<Guid?>("IdPhan")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("IdVideoBaiGiang")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("LaBaiGiangFree")
                         .HasColumnType("bit");
