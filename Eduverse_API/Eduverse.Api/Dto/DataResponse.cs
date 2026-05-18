@@ -1,4 +1,4 @@
-﻿namespace Eduverse.Api.Dto
+﻿namespace Hinet.Api.Dto
 {
     public class DataResponse<T>
     {
@@ -50,4 +50,6 @@
             };
         }
     }
+
+
 }

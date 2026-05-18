@@ -1,4 +1,4 @@
-namespace Hinet.Service.Dto
+namespace Eduverse.Service.Dto
 {
     public class DropdownOption
     {

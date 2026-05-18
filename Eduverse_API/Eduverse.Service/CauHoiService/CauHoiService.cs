@@ -1,17 +1,40 @@
-﻿using Eduverse.IRepository.CauHoi;
+﻿using Eduverse.IRepository.BaiGiang;
+using Eduverse.IRepository.CauHoi;
 using Eduverse.IService.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Eduverse.Service.CauHoiService.Dto;
+using Eduverse.Service.CauHoiService.Request;
+using Eduverse.Service.Common;
 
 namespace Eduverse.IService.CauHoi
 {
     public class CauHoiService : Service<Model.Entities.CauHoi>, ICauHoiService
     {
-        public CauHoiService(ICauHoiRepository cauHoiRepository) : base(cauHoiRepository)
+        private readonly IBaiGiangRepository _baiGiangRepository;
+
+        public CauHoiService(ICauHoiRepository repository, IBaiGiangRepository baiGiangRepository) : base(repository)
         {
+            _baiGiangRepository = baiGiangRepository;
+        }
+
+        public Task<PagedList<CauHoiDto>> GetData(CauHoiSearch search)
+        {
+            var query = from q in GetQueryable()
+                        select new CauHoiDto
+                        {
+                            Id = q.Id,
+                            TenCauHoi = q.TenCauHoi,
+
+                        };
+
+            if (!string.IsNullOrEmpty(search.NoiDung))
+            {
+                query = query.Where(x => x.TenCauHoi.Contains(search.NoiDung));
+            }
+            var result = PagedList<CauHoiDto>.CreateAsync(query, search);
+
+            return result;
+
+
         }
     }
 }

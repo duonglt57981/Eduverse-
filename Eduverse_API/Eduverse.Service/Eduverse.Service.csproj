@@ -17,8 +17,6 @@
     <Folder Include="AppUserService\Request\" />
     <Folder Include="BaiGiangService\Dto\" />
     <Folder Include="BaiGiangService\Request\" />
-    <Folder Include="CauHoiService\Dto\" />
-    <Folder Include="CauHoiService\Request\" />
     <Folder Include="ChiTietLamBaiKiemTraService\Dto\" />
     <Folder Include="ChiTietLamBaiKiemTraService\Request\" />
     <Folder Include="ChungChiService\Dto\" />
