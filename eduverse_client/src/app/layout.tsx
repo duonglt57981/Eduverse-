@@ -1,17 +1,37 @@
-import type { Metadata } from 'next';
-import { Providers } from './providers';
+"use client";
+import React from "react";
+import { Providers } from "../store/providers";
 
 
-export const metadata: Metadata = {
-  title: 'Eduverse',
-};
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const appTitle = process.env.NEXT_PUBLIC_APP_NAME
+    ?.replace(/\r?\n|\r/g, " ")
+    ?.replace(/\s+/g, " ")
+    ?.trim();
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <Providers>{children}</Providers>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+      <head>
+        <meta charSet="utf-8" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+
+        <title>{appTitle}</title>
+      </head>
+      <body className="dir-ltr">
+        <div className="App">
+          <Providers>
+            {/* <ConfigProvider theme={lightTheme} locale={viVN}> */}
+              {children}
+            {/* </ConfigProvider> */}
+          </Providers>
+        </div>
       </body>
     </html>
   );

@@ -13,7 +13,6 @@ export class ApiService {
   public api: AxiosInstance;
 
   private constructor() {
-    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
     this.api = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_URL
         ? process.env.NEXT_PUBLIC_API_URL + "/api"
