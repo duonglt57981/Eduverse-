@@ -17,7 +17,7 @@ export class ApiService {
     this.api = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_URL
         ? process.env.NEXT_PUBLIC_API_URL + "/api"
-        : "https://localhost:7140/api",
+        : "http://localhost:5002/api",
       timeout: 0,
       withCredentials: true,
     });

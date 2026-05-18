@@ -4,7 +4,6 @@ using Eduverse.Api.Hubs;
 using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
-using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
@@ -15,15 +14,18 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Eduverse.Service.EmailService;
+using System.Threading.Tasks;
+using Eduverse.IRepository.Common;
+using Eduverse.IService.Common;
 
 namespace Eduverse.Api
 {
     public static class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddDbContext<EduverseContext>(op => op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnecting")));
+            builder.Services.AddDbContext<EduverseContext>(op => op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddIdentity<AppUser, AppRole>(options =>
             {
                 options.User.AllowedUserNameCharacters =
@@ -134,7 +136,7 @@ namespace Eduverse.Api
             });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-
+            
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -143,6 +145,28 @@ namespace Eduverse.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseExceptionHandler(errApp =>
+            {
+                errApp.Run(async ctx =>
+                {
+                    ctx.Response.StatusCode = 400;
+                    ctx.Response.ContentType = "application/json";
+
+                    var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+                    if (ex is not null)
+                    {
+                        var response = new
+                        {
+                            status = false,
+                            message = ex.Error.Message,
+                            data = (object?)null,
+                            errors = (object?)null
+                        };
+                        await ctx.Response.WriteAsJsonAsync(response);
+                    }
+                });
+            });
+            app.UseCors("AllowFrontend");
             app.UseCors(c =>
             {
                 c.WithOrigins(builder.Configuration.GetSection("AllowedOrigins").Get<string[]>())
@@ -159,7 +183,17 @@ namespace Eduverse.Api
             app.MapControllers();
             app.MapHub<NotificationHub>("/notificationHub");
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
 
+                string[] roles = { "HocVien", "GiaoVien", "Admin" };
+                foreach (var role in roles)
+                {
+                    if (!await roleManager.RoleExistsAsync(role))
+                        await roleManager.CreateAsync(new AppRole { Name = role });
+                }
+            }
             app.Run();
         }
         private static void AddDependencyInjection(this IServiceCollection services)

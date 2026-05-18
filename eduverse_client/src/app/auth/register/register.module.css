@@ -1,0 +1,518 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
+
+.page {
+  display: flex;
+  min-height: 100vh;
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
+}
+
+/* ── LEFT PANEL ── */
+.left {
+  width: 46%;
+  background: linear-gradient(160deg, #9b1c1c 0%, #7f1d1d 50%, #5c1111 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.left::before {
+  content: "";
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.leftHeader {
+  margin-bottom: 2rem;
+}
+
+.logoWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoIcon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.logoText {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.leftContent {
+  flex: 1;
+}
+
+.leftTitle {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.leftDesc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.featuredCard {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.featuredIcon {
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.featuredCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.featuredCardSub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.certBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.certBadge i {
+  font-size: 14px;
+  color: #86efac;
+}
+
+.studentCard {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.studentAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.onlineDot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  background: #22c55e;
+  border-radius: 50%;
+  border: 2px solid #7f1d1d;
+}
+
+.studentName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.studentSub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.leftStats {
+  display: flex;
+  gap: 0;
+  margin-top: auto;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.statItem {
+  flex: 1;
+  text-align: center;
+}
+
+.statItem:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.statNum {
+  font-size: 22px;
+  font-weight: 800;
+  display: block;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── RIGHT PANEL ── */
+.right {
+  flex: 1;
+  background: #f9f8f6;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.rightHeader {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #888;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
+  color: #9b1c1c;
+}
+
+.formWrap {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.formTitle {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.formSubtitle {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 1.5rem;
+}
+
+.error {
+  background: #fff0f0;
+  border: 1px solid #fcc;
+  color: #c00;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.success {
+  background: #f0fff4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.inputWrap input {
+  width: 100%;
+  height: 46px;
+  background: #fff;
+  border: 1.5px solid #e8e5e0;
+  border-radius: 10px;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #111;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.inputWrap input::placeholder {
+  color: #bbb;
+}
+.inputWrap input:focus {
+  border-color: #9b1c1c;
+}
+
+.inputWrap button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.strengthWrap {
+  margin-top: 8px;
+}
+
+.strengthLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.strengthLabel span:last-child {
+  font-weight: 600;
+}
+
+.strengthBar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.strengthSeg {
+  flex: 1;
+  height: 3px;
+  background: #e8e5e0;
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+
+.strengthSeg.active {
+  background: #9b1c1c;
+}
+.strengthSeg.medium {
+  background: #f59e0b;
+}
+.strengthSeg.strong {
+  background: #22c55e;
+}
+
+.strengthHints {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.hint.ok {
+  color: #9b1c1c;
+}
+.hint i {
+  font-size: 13px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 10px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.checkRow input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #9b1c1c;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.checkRow a {
+  color: #9b1c1c;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn {
+  width: 100%;
+  height: 50px;
+  background: #9b1c1c;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.1s;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.btn:hover:not(:disabled) {
+  background: #7f1d1d;
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: #bbb;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e8e5e0;
+}
+
+.socialRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.socialBtn {
+  flex: 1;
+  height: 44px;
+  background: #fff;
+  border: 1.5px solid #e8e5e0;
+  border-radius: 10px;
+  font-size: 18px;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+
+.socialBtn:hover {
+  border-color: #9b1c1c;
+}
+
+.switchText {
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 1rem;
+}
+
+.switchText a {
+  color: #9b1c1c;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.secureRow {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.secureBadge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #bbb;
+}
+
+.secureBadge i {
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .left {
+    display: none;
+  }
+  .right {
+    padding: 1.5rem;
+  }
+}

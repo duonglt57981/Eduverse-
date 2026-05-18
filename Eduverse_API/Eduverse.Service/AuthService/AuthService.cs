@@ -40,15 +40,15 @@ namespace Eduverse.Service.AuthService
         // ══════════════════════════════════════════════
         public async Task<string> RegisterAsync(RegisterRequest request)
         {
-            var existingEmail = await _userManager.FindByEmailAsync(request.Email);
-            if (existingEmail is not null)
-                throw new Exception("Email đã được sử dụng");
+            var existing = await _userManager.FindByNameAsync(request.UserName);
+            if (existing is not null)
+                throw new Exception("Username đã tồn tại");
 
             var user = new AppUser
             {
                 UserName = request.UserName,
-                HoTen = request.HoTen, 
-                Email = request.Email,
+                HoTen = request.HoTen,
+                PhoneNumber = request.PhoneNumber,
                 ChucVu = request.ChucVu,
                 GioiTinh = request.GioiTinh
             };
@@ -57,25 +57,10 @@ namespace Eduverse.Service.AuthService
             if (!result.Succeeded)
                 throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-            // Sinh token xác thực email
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var encodedToken = Uri.EscapeDataString(token);
-            var confirmUrl = $"{_config["App:ClientUrl"]}/auth/verify-email?userId={user.Id}&token={encodedToken}";
+            // Mặc định gán role HocVien
+            await _userManager.AddToRoleAsync(user, "HocVien");
 
-            await _emailService.SendAsync(
-                to: user.Email!,
-                subject: "Xác thực tài khoản EduVerse",
-                body: $@"
-                    <h2>Chào {user.HoTen}!</h2>
-                    <p>Nhấn vào link bên dưới để xác thực tài khoản:</p>
-                    <a href='{confirmUrl}' style='background:#c0392b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;'>
-                        Xác thực tài khoản
-                    </a>
-                    <p>Link có hiệu lực trong 24 giờ.</p>
-                "
-            );
-
-            return "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.";
+            return "Đăng ký thành công!";
         }
 
         // ══════════════════════════════════════════════
@@ -110,10 +95,6 @@ namespace Eduverse.Service.AuthService
                 var lockoutEnd = user.LockoutEnd!.Value.ToLocalTime();
                 throw new Exception($"Tài khoản bị khóa đến {lockoutEnd:HH:mm dd/MM/yyyy} do đăng nhập sai quá nhiều lần");
             }
-
-            // Check verify email
-            if (!await _userManager.IsEmailConfirmedAsync(user))
-                throw new Exception("Vui lòng xác thực email trước khi đăng nhập");
 
             var isValid = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!isValid)
@@ -303,15 +284,22 @@ namespace Eduverse.Service.AuthService
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name,           user.UserName!),
-                new Claim(ClaimTypes.Surname,        user.UserName!),
-                new Claim(ClaimTypes.Email,          user.Email ?? ""),
-                new Claim("HoTen",                   user.HoTen ?? ""),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+            // Lấy roles của user
+            var roles = _userManager.GetRolesAsync(user).Result;
+
+            var claims = new List<Claim>
+    {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name,           user.UserName!),
+            new Claim(ClaimTypes.Surname,        user.UserName!),
+            new Claim(ClaimTypes.Email,          user.Email ?? ""),
+            new Claim("HoTen",                   user.HoTen ?? ""),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
+
+            // Thêm role vào claims
+            foreach (var role in roles)
+                claims.Add(new Claim(ClaimTypes.Role, role));
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],

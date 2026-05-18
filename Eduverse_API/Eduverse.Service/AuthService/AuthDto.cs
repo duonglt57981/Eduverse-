@@ -6,10 +6,10 @@ namespace Eduverse.Service.AuthService
     {
         [Required] public string UserName { get; set; }
         [Required] public string HoTen { get; set; }
-        [Required][EmailAddress] public string Email { get; set; }
         [Required][MinLength(6)] public string Password { get; set; }
         public string? ChucVu { get; set; }
         public int? GioiTinh { get; set; }
+        public string? PhoneNumber { get; set; }
     }
 
     public class LoginRequest
