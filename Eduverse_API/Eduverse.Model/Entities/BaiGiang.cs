@@ -12,6 +12,7 @@ namespace Eduverse.Model.Entities
     {
         public string? TieuDe { get; set; }
         public string? LoaiBaiGiang { get; set; }
+        public string? IdVideoBaiGiang { get; set; }
         public string? URLBaiGiang { get; set; }
         public int? ThuTuSapXep { get; set; }
         public int? ThoiLuong { get; set; }

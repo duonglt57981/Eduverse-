@@ -5,18 +5,18 @@ using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
 using Eduverse.Service.AuthService;
-using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 using Eduverse.Service.EmailService;
-using System.Threading.Tasks;
 using Eduverse.IRepository.Common;
 using Eduverse.IService.Common;
+using CloudinaryDotNet;
+using Eduverse.Service.CloudinaryService.Dto;
+using Eduverse.Service.CloudinaryService;
 
 namespace Eduverse.Api
 {
@@ -54,6 +54,21 @@ namespace Eduverse.Api
             builder.Services.AddSignalR();
             builder.Services.AddSwaggerGen();
 
+            var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
+
+            builder.Services.Configure<CloudinarySettings>(cloudinarySettings);
+
+            var account = new Account(
+                cloudinarySettings["CloudName"],
+                cloudinarySettings["ApiKey"],
+                cloudinarySettings["ApiSecret"]
+            );
+
+            var cloudinary = new Cloudinary(account);
+
+            builder.Services.AddSingleton(cloudinary);
+            builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+            
             // JWT
             builder.Services.AddAuthentication(options =>
             {

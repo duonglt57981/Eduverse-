@@ -1,5 +1,5 @@
-﻿using Eduverse.Api.Dto;
-using Eduverse.Service.AuthService;
+﻿using Eduverse.Service.AuthService;
+using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

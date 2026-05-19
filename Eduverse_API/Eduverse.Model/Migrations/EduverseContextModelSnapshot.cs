@@ -371,6 +371,9 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("IdPhan")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("IdVideoBaiGiang")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool?>("LaBaiGiangFree")
                         .HasColumnType("bit");
 
