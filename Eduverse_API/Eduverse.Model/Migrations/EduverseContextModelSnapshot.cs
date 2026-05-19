@@ -166,7 +166,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "e72c7481-892a-4b30-a717-061d38a9e51f",
+                            ConcurrencyStamp = "f77f8573-df9e-44c9-9240-c2e710433ba2",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -175,9 +175,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAENw8nQ/TV+a6+x+1V+AXBsypZRPlwf6fyXlA9iesIGBL3DAfHx0cgRFTuoXiWX4+4A==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEKJ9KAQUjI8RxQpftJizOesEXYp6DUs+F0oFcstBoVKNANIOPeBu4pYaumV2hoQ53w==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "45ecee23-68ef-455a-befc-a41bc67af68a",
+                            SecurityStamp = "0d4c674d-4cf0-42b0-bf3d-f063bb04b405",
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserName = "admin"
@@ -637,6 +637,9 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<Guid?>("IdNguoiDung")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MaGiaoDich")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("NgayTao")
                         .HasColumnType("datetime2");
