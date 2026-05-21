@@ -79,8 +79,54 @@ namespace Eduverse.IService.KhoaHocService
 
         }
 
+        public async Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request)
+        {
+            var khoaHoc = new KhoaHoc
+            {
+                Id = Guid.NewGuid(),
+                TieuDe = request.TieuDe,
+                MoTa = request.MoTa,
+                Gia = request.Gia,
+                GiaGoc = request.GiaGoc,
+                LoaiKhoaHoc = request.LoaiKhoaHoc,
+                HinhAnhKhoaHoc = request.HinhAnhKhoaHoc,
+                URLViewPreviewKhoaHoc = request.URLViewPreviewKhoaHoc,
+                CapDo = request.CapDo,
+                TongThoiLuong = request.TongThoiLuong,
+                TongBaiGiang = request.TongBaiGiang,
+                NgayTao = DateTime.Now,
+                NgayCapNhat = DateTime.Now,
+                SoLuongHocVien = 0,
+                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+                TrangThai = request.TrangThai
+            };
 
-        public async Task UpdateData(Guid id, UpdateKhoaHocRequest request)
+            _khoaHocRepository.Add(khoaHoc);
+
+            await _khoaHocRepository.SaveAsync();
+
+            return new KhoaHocDto
+            {
+                Id = khoaHoc.Id,
+                TieuDe = khoaHoc.TieuDe,
+                MoTa = khoaHoc.MoTa,
+                Gia = khoaHoc.Gia,
+                GiaGoc = khoaHoc.GiaGoc,
+                LoaiKhoaHoc = khoaHoc.LoaiKhoaHoc,
+                HinhAnhKhoaHoc = khoaHoc.HinhAnhKhoaHoc,
+                URLViewPreviewKhoaHoc = khoaHoc.URLViewPreviewKhoaHoc,
+                CapDo = khoaHoc.CapDo,
+                TongThoiLuong = khoaHoc.TongThoiLuong,
+                TongBaiGiang = khoaHoc.TongBaiGiang,
+                NgayTao = khoaHoc.NgayTao,
+                NgayCapNhat = khoaHoc.NgayCapNhat,
+                SoLuongHocVien = khoaHoc.SoLuongHocVien,
+                TrangThaiPheDuyet = khoaHoc.TrangThaiPheDuyet,
+                TrangThai = khoaHoc.TrangThai
+            };
+        }
+
+        public async Task UpdateKhoaHoc(UpdateKhoaHocRequest request, Guid id)
         {
             var khoaHoc = await GetByIdAsync(id);
 
@@ -103,9 +149,15 @@ namespace Eduverse.IService.KhoaHocService
             await _khoaHocRepository.SaveAsync();
         }
 
+        public async Task DeleteKhoaHoc(Guid id)
+        {
+            var delete = await GetByIdAsync(id);
 
-        public async Task DeleteData(Guid id{
-            await _khoaHocRepository.de
+            if (delete == null) throw new("Không tìm thấy khóa học cần xóa");
+
+            _khoaHocRepository.Delete(delete);
+            await _khoaHocRepository.SaveAsync();
         }
+        
     }
 }

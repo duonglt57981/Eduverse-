@@ -17,6 +17,8 @@ using Eduverse.IService.Common;
 using CloudinaryDotNet;
 using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.CloudinaryService;
+using Eduverse.IRepository.KhoaHocRepository;
+using Eduverse.IService.KhoaHocService;
 
 namespace Eduverse.Api
 {
@@ -45,6 +47,7 @@ namespace Eduverse.Api
                 // Bắt buộc xác thực email
                 options.SignIn.RequireConfirmedEmail = false; // ← để false, check thủ công trong service
             }).AddEntityFrameworkStores<EduverseContext>().AddDefaultTokenProviders();
+
             // Đăng ký services
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
@@ -53,6 +56,10 @@ namespace Eduverse.Api
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSignalR();
             builder.Services.AddSwaggerGen();
+
+            //KhoaHoc
+            builder.Services.AddScoped<IKhoaHocRepository, KhoaHocRepository>();
+            builder.Services.AddScoped<IKhoaHocService, KhoaHocService>();
 
             var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
 

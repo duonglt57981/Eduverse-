@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Eduverse.Service.KhoaHocService.Dto;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.KhoaHocService.Request
 {
-    public class UpdateKhoaHocRequest
+    public class UpdateKhoaHocRequest 
     {
         [StringLength(255)]
         public string? TieuDe { get; set; }
