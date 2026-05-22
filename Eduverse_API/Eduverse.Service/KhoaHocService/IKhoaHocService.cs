@@ -17,7 +17,7 @@ namespace Eduverse.IService.KhoaHocService
 
         Task<KhoaHocDto> GetDetail(Guid id);
 
-        Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request);
+        Task CreateKhoaHoc(CreateKhoaHocRequest request);
 
         Task UpdateKhoaHoc(UpdateKhoaHocRequest request, Guid id);
 

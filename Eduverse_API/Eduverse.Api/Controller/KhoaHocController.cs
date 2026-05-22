@@ -1,8 +1,9 @@
-﻿using Eduverse.Api.Dto;
+﻿
 using Eduverse.IService.KhoaHocService;
 using Eduverse.Service.Common;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
+using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +47,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-
+        [Authorize]
         [HttpPost("CreateKhoaHoc")]
         public async Task<DataResponse> CreateKhoaHocs(CreateKhoaHocRequest request)
         {
@@ -61,7 +62,7 @@ namespace Eduverse.Api.Controller
             }
         }
 
-
+        [Authorize]
         [HttpPut("UpdateKhoaHoc")]
         public async Task<DataResponse> UpdateKhoaHoc(UpdateKhoaHocRequest request, Guid id)
         {
