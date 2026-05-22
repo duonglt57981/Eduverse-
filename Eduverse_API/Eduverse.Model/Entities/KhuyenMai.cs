@@ -9,7 +9,6 @@ namespace Eduverse.Model.Entities
 {
     public class KhuyenMai : AuditableEntity
     {
-        [StringLength(50)]
         public string? MaGiamGia { get; set; }
         public int? PhanTramGiam { get; set; }
 

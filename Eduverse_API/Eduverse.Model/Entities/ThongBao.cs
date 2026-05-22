@@ -18,7 +18,7 @@ namespace Eduverse.Model.Entities
 
         public DateTime? ThoiGianTao { get; set; } = DateTime.Now;
 
-        public int? TrangThai { get; set; }
+        public string? TrangThai { get; set; }
 
         public string? LoaiThongBao { get; set; }
     }

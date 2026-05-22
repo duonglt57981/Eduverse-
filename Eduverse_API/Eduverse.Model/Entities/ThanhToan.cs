@@ -11,7 +11,7 @@ namespace Eduverse.Model.Entities
     public class ThanhToan : AuditableEntity
     {
         public string? MaGiaoDich { get; set; }
-        public decimal? SoTien { get; set; }
+        public double? SoTien { get; set; }
         public string? TrangThaiThanhToan { get; set; }
         public DateTime? NgayThanhToan { get; set; } = DateTime.Now;
         public string? PhatSinhLoi { get; set; }

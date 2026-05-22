@@ -10,6 +10,6 @@ namespace Eduverse.Model.Entities
     {
         public string? DapAnChon { get; set; }
 
-        public bool? DiemDatDuoc { get; set; }
+        public string? DiemDatDuoc { get; set; }
     }
 }
