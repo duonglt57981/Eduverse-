@@ -10,8 +10,8 @@ namespace Eduverse.Model.Entities
     public class DonHang : AuditableEntity
     {
         public string? MaGiaoDich { get; set; }
-        public decimal? SoTienGiamGia { get; set; }
-        public decimal? SoTienThanhToan { get; set; }
+        public double? SoTienGiamGia { get; set; }
+        public double? SoTienThanhToan { get; set; }
 
         public DateTime? NgayTao { get; set; } = DateTime.Now;
         public int? TrangThai { get; set; }

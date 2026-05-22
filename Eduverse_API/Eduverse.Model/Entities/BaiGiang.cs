@@ -17,7 +17,7 @@ namespace Eduverse.Model.Entities
         public int? ThuTuSapXep { get; set; }
         public int? ThoiLuong { get; set; }
         public bool? LaBaiGiangFree { get; set; }
-        public int? TrangThai { get; set; }
+        public string? TrangThai { get; set; }
         public Guid? IdPhan { get; set; }
     }
 }

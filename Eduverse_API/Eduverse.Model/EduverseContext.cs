@@ -21,7 +21,6 @@ namespace Eduverse.Model
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<KhoaHoc> KhoaHocs { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-        public DbSet<AuditableEntity> AuditableEntities { get; set; }
         public DbSet<BaiGiang> baiGiangs { get; set; }
         public DbSet<BaiKiemTra> baiKiemTras { get; set; }
         public DbSet<CauHoi> cauHois { get; set; }
