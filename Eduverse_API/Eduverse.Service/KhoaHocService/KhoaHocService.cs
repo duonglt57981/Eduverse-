@@ -26,143 +26,171 @@ namespace Eduverse.IService.KhoaHocService
         private readonly IPhanRepository _phanRepository;
         private readonly IBaiGiangRepository _baiGiangRepository;
         private readonly ITaiLieuRepository _taiLieuRepository;
-        public KhoaHocService(IKhoaHocRepository khoaHocRepository, IPhanRepository phanRepository, IBaiGiangRepository baiGiangRepository, ITaiLieuRepository _taiLieuRepository) : base(khoaHocRepository)
+        public KhoaHocService(IKhoaHocRepository khoaHocRepository, IPhanRepository phanRepository, IBaiGiangRepository baiGiangRepository, ITaiLieuRepository taiLieuRepository) : base(khoaHocRepository)
         {
             _khoaHocRepository = khoaHocRepository;
+            _phanRepository = phanRepository;
+            _baiGiangRepository = baiGiangRepository;
+            _taiLieuRepository = taiLieuRepository;
         }
 
-        public Task<PagedList<KhoaHocDto>> GetKhoaHoc(KhoaHocSearch search)
+        public async Task<PagedList<KhoaHocDto>> GetListDetail(KhoaHocSearch search)
         {
-            var query = from q in GetQueryable()
+            var query = from kh in _khoaHocRepository.GetQueryable().AsNoTracking()
                         select new KhoaHocDto
                         {
-                            Id = q.Id,
-                            TieuDe = q.TieuDe,
-                            MoTa = q.MoTa,
-                            Gia = q.Gia,
-                            GiaGoc = q.GiaGoc,
-                            LoaiKhoaHoc = q.LoaiKhoaHoc,
-                            HinhAnhKhoaHoc = q.HinhAnhKhoaHoc,
-                            URLViewPreviewKhoaHoc = q.URLViewPreviewKhoaHoc,
-                            CapDo = q.CapDo,
-                            TongThoiLuong = q.TongThoiLuong,
-                            TongBaiGiang = q.TongBaiGiang,
-                            NgayTao = q.NgayTao,
-                            NgayCapNhat = q.NgayCapNhat,
-                            SoLuongHocVien = q.SoLuongHocVien,
-                            TrangThaiPheDuyet = q.TrangThaiPheDuyet,
-                            TrangThai = q.TrangThai
+                            Id = kh.Id,
+                            TieuDe = kh.TieuDe,
+                            MoTa = kh.MoTa,
+                            Gia = kh.Gia,
+                            GiaGoc = kh.GiaGoc,
+                            LoaiKhoaHoc = kh.LoaiKhoaHoc,
+                            HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
+                            URLViewPreviewKhoaHoc = kh.URLViewPreviewKhoaHoc,
+                            CapDo = kh.CapDo,
+                            TongThoiLuong = kh.TongThoiLuong,
+                            TongBaiGiang = kh.TongBaiGiang,
+                            SoLuongHocVien = kh.SoLuongHocVien,
+                            TrangThaiPheDuyet = kh.TrangThaiPheDuyet,
+                            TrangThai = kh.TrangThai,
+                            NgayTao = kh.NgayTao
                         };
-            if (!string.IsNullOrEmpty(search.TieuDe))
-            {
-                query = query.Where(x => x.TieuDe.Contains(search.TieuDe));
-            }
-            var resulrt = PagedList<KhoaHocDto>.CreateAsync(query, search);
-            return resulrt;
 
+            if (search != null)
+            {
+                if (!string.IsNullOrWhiteSpace(search.Keyword))
+                {
+                    query = query.Where(x =>
+                        x.TieuDe!.Contains(search.Keyword) ||
+                        x.MoTa!.Contains(search.Keyword));
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.TieuDe))
+                {
+                    query = query.Where(x =>
+                        x.TieuDe!.Contains(search.TieuDe));
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.CapDo))
+                {
+                    query = query.Where(x =>
+                        x.CapDo == search.CapDo);
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.LoaiKhoaHoc))
+                {
+                    query = query.Where(x =>
+                        x.LoaiKhoaHoc == search.LoaiKhoaHoc);
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.TrangThai))
+                {
+                    query = query.Where(x =>
+                        x.TrangThai == search.TrangThai);
+                }
+
+                // giá từ
+                if (search.GiaFrom.HasValue)
+                {
+                    query = query.Where(x =>
+                        x.Gia >= search.GiaFrom);
+                }
+
+                // giá đến
+                if (search.GiaTo.HasValue)
+                {
+                    query = query.Where(x =>
+                        x.Gia <= search.GiaTo);
+                }
+
+                if (search.IsFree.HasValue)
+                {
+                    if (search.IsFree.Value)
+                    {
+                        query = query.Where(x => x.Gia == 0);
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.SortPrice))
+                {
+                    if (search.SortPrice == "asc")
+                    {
+                        query = query.OrderBy(x => x.Gia);
+                    }
+                    else if (search.SortPrice == "desc")
+                    {
+                        query = query.OrderByDescending(x => x.Gia);
+                    }
+                }
+                else
+                {
+                    query = query.OrderByDescending(x => x.NgayTao);
+                }
+            }
+
+            var result = await PagedList<KhoaHocDto>
+                .CreateAsync(query, search);
+
+            return result;
         }
 
 
         public async Task<KhoaHocDetailDto?> GetDto(Guid id)
         {
             var data = await (
-                from kh in _khoaHocRepository.GetQueryable().AsNoTracking()
+                from kh in _khoaHocRepository.GetQueryable()
 
-                join ph in _phanRepository.GetQueryable().AsNoTracking()
+                join ph in _phanRepository.GetQueryable()
                     on kh.Id equals ph.IdKhoaHoc into phGroup
                 from ph in phGroup.DefaultIfEmpty()
 
-                join bg in _baiGiangRepository.GetQueryable().AsNoTracking()
+                join bg in _baiGiangRepository.GetQueryable()
                     on ph.Id equals bg.IdPhan into bgGroup
                 from bg in bgGroup.DefaultIfEmpty()
 
-                join tl in _taiLieuRepository.GetQueryable().AsNoTracking()
+                join tl in _taiLieuRepository.GetQueryable()
                     on bg.Id equals tl.IdBaiGiang into tlGroup
                 from tl in tlGroup.DefaultIfEmpty()
 
                 where kh.Id == id
 
-                select new
+                select new KhoaHocDetailDto
                 {
-                    KhoaHoc = kh,
-                    PhanHoc = ph,
-                    BaiGiang = bg,
-                    TaiLieu = tl
+                    // Khóa học
+                    TieuDeKhoaHoc = kh.TieuDe,
+                    MoTa = kh.MoTa,
+                    Gia = kh.Gia,
+                    GiaGoc = kh.GiaGoc,
+                    LoaiKhoaHoc = kh.LoaiKhoaHoc,
+                    HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
+                    URLViewPreviewKhoaHoc = kh.URLViewPreviewKhoaHoc,
+                    CapDo = kh.CapDo,
+                    TongThoiLuong = kh.TongThoiLuong,
+                    TongBaiGiang = kh.TongBaiGiang,
+
+                    // Phần học
+                    TenPhan = ph != null ? ph.TenPhan : null,
+                    MieuTa = ph != null ? ph.MieuTa : null,
+                    ThuTuSapXepPhanHoc = ph != null ? ph.ThuTuSapXep : null,
+
+                    // Bài giảng
+                    TieuDeBaiGiang = bg != null ? bg.TieuDe : null,
+                    LoaiBaiGiang = bg != null ? bg.LoaiBaiGiang : null,
+                    IdVideoBaiGiang = bg != null ? bg.IdVideoBaiGiang : null,
+                    URLBaiGiang = bg != null ? bg.URLBaiGiang : null,
+                    ThuTuSapXepBaiGiang = bg != null ? bg.ThuTuSapXep : null,
+                    ThoiLuong = bg != null ? bg.ThoiLuong : null,
+                    LaBaiGiangFree = bg != null ? bg.LaBaiGiangFree : null,
+
+                    // Tài liệu
+                    LoaiTaiLieu = tl != null ? tl.LoaiTaiLieu : null,
+                    TenTaiLieu = tl != null ? tl.TenTaiLieu : null,
+                    URL = tl != null ? tl.URL : null
                 }
 
-            ).ToListAsync();
+            ).FirstOrDefaultAsync();
 
-            if (!data.Any())
-                return null;
-
-            var khoaHoc = data.First().KhoaHoc;
-
-            var result = new KhoaHocDto
-            {
-                Id = khoaHoc.Id,
-                TieuDe = khoaHoc.TieuDe,
-                MoTa = khoaHoc.MoTa,
-                Gia = khoaHoc.Gia,
-                GiaGoc = khoaHoc.GiaGoc,
-                AnhKhoaHoc = khoaHoc.AnhKhoaHoc,
-                TrangThai = khoaHoc.TrangThai,
-
-                DanhSachPhanHoc = data
-                    .Where(x => x.PhanHoc != null)
-                    .GroupBy(x => x.PhanHoc.Id)
-                    .Select(phanGroup =>
-                    {
-                        var phan = phanGroup.First().PhanHoc;
-
-                        return new PhanHocDto
-                        {
-                            Id = phan.Id,
-                            TieuDe = phan.TieuDe,
-                            MoTa = phan.MoTa,
-                            ThuTuSapXep = phan.ThuTuSapXep,
-
-                            DanhSachBaiGiang = phanGroup
-                                .Where(x => x.BaiGiang != null)
-                                .GroupBy(x => x.BaiGiang.Id)
-                                .Select(baiGiangGroup =>
-                                {
-                                    var baiGiang = baiGiangGroup.First().BaiGiang;
-
-                                    return new BaiGiangDto
-                                    {
-                                        Id = baiGiang.Id,
-                                        TieuDe = baiGiang.TieuDe,
-                                        MoTa = baiGiang.MoTa,
-                                        VideoUrl = baiGiang.VideoUrl,
-                                        ThuTuSapXep = baiGiang.ThuTuSapXep,
-                                        ThoiLuong = baiGiang.ThoiLuong,
-
-                                        DanhSachTaiLieu = baiGiangGroup
-                                            .Where(x => x.TaiLieu != null)
-                                            .GroupBy(x => x.TaiLieu.Id)
-                                            .Select(taiLieuGroup =>
-                                            {
-                                                var taiLieu = taiLieuGroup.First().TaiLieu;
-
-                                                return new TaiLieuDto
-                                                {
-                                                    Id = taiLieu.Id,
-                                                    TenTaiLieu = taiLieu.TenTaiLieu,
-                                                    DuongDan = taiLieu.DuongDan
-                                                };
-                                            })
-                                            .ToList()
-                                    };
-                                })
-                                .OrderBy(x => x.ThuTuSapXep)
-                                .ToList()
-                        };
-                    })
-                    .OrderBy(x => x.ThuTuSapXep)
-                    .ToList()
-            };
-
-            return result;
+            return data;
         }
 
 
