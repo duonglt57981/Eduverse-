@@ -19,7 +19,7 @@ namespace Eduverse.Model.Entities
 
         public int? SoLanLamToiDa { get; set; }
         public DateTime? NgayTao { get; set; } = DateTime.Now;
-        public bool? TrangThai { get; set; }
+        public string? TrangThai { get; set; }
         public Guid? IdPhan { get; set; }
     }
 }

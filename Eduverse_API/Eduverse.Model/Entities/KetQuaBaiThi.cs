@@ -8,7 +8,7 @@ namespace Eduverse.Model.Entities
 {
     public class KetQuaBaiThi : AuditableEntity
     {
-        public decimal? Diem { get; set; }
+        public double? Diem { get; set; }
 
         public int? SoCauDung { get; set; }
 

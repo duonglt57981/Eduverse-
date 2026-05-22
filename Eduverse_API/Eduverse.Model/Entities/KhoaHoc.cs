@@ -15,10 +15,10 @@ namespace Eduverse.Model.Entities
         public string? MoTa { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal? Gia { get; set; }
+        public double? Gia { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal? GiaGoc { get; set; }
+        public double? GiaGoc { get; set; }
 
         public string? LoaiKhoaHoc { get; set; }
 
@@ -35,7 +35,7 @@ namespace Eduverse.Model.Entities
         public DateTime? NgayCapNhat { get; set; }
 
         public int? SoLuongHocVien { get; set; }
-        public int? TrangThaiPheDuyet { get; set; }
-        public int? TrangThai { get; set; }
+        public string? TrangThaiPheDuyet { get; set; }
+        public string? TrangThai { get; set; }
     }
 }

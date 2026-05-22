@@ -10,6 +10,6 @@ namespace Eduverse.Model.Entities
     {
         public string? TenDanhMuc { get; set; }
         public DateTime? NgayTao { get; set; }
-        public bool? TrangThai { get; set; }
+        public string? TrangThai { get; set; }
     }
 }

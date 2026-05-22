@@ -8,7 +8,7 @@ namespace Eduverse.Model.Entities
 {
     public class DonHangChiTiet : AuditableEntity
     {
-        public decimal? GiaLucDat { get; set; }
+        public double? GiaLucDat { get; set; }
         public Guid? IdKhoaHoc { get; set; }
         public Guid? IdDonHang { get; set; }
     }

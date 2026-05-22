@@ -12,6 +12,6 @@ namespace Eduverse.Model.Entities
         public string? TenTaiKhoan { get; set; }
         public string? SoTaiKhoan { get; set; }
         public DateTime? NgayTao { get; set; } = DateTime.Now;
-        public int? TrangThai { get; set; }
+        public string? TrangThai { get; set; }
     }
 }

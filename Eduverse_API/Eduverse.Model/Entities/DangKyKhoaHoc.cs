@@ -8,8 +8,8 @@ namespace Eduverse.Model.Entities
 {
     public class DangKyKhoaHoc : AuditableEntity
     {
-        public decimal? GiaDangKy { get; set; }
-        public bool? TrangThai { get; set; }
+        public double? GiaDangKy { get; set; }
+        public string? TrangThai { get; set; }
         public DateTime? ThoiGianDK { get; set; }
         public Guid? IdNguoiDangKi { get; set; }
         public Guid? IdDangKi { get; set; }
