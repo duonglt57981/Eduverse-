@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Eduverse.Model.Migrations
 {
     [DbContext(typeof(EduverseContext))]
-    [Migration("20260522144902_fixdecimal")]
-    partial class fixdecimal
+    [Migration("20260523132117_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -169,7 +169,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "e0c81e6e-ad86-4d97-90d9-b109da5a66a9",
+                            ConcurrencyStamp = "333018b6-68bc-4ac0-8476-c0f7989c4706",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -178,9 +178,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEAW6QHIosx4lmL7Mq5wsLZUcyF6KrOJGxiA6SsFbhzKE2VorKcmfP67mu4ysHjpTRg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEL3Z3WLrOgCWtMVev0N4GYL1w3v55035ywXHiVwGibjAztwkDmIbzMj9/cqjhOqMFQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "cea93b27-de60-48a7-9aff-a848eaab1a8a",
+                            SecurityStamp = "a7f99f7e-8284-464b-91c1-0ea1b7fc443a",
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserName = "admin"
