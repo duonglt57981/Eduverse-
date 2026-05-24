@@ -12,24 +12,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Eduverse.Service.EmailService;
-using Eduverse.IRepository.Common;
 using Eduverse.IService.Common;
 using CloudinaryDotNet;
 using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.CloudinaryService;
-using Eduverse.IRepository.KhoaHocRepository;
-using Eduverse.IService.KhoaHocService;
-using Eduverse.Repository.Phan;
-using Eduverse.IService.PhanService;
-using Eduverse.IRepository.BaiGiang;
-using Eduverse.IService.BaiGiang;
-using Eduverse.Repository.TaiLieu;
-using Eduverse.IService.TaiLieuService;
-using Eduverse.IRepository.DangKyKhoaHoc;
-using Eduverse.Service.DangKyKhoaHocService;
-using Eduverse.IRepository.DanhGia;
-using Eduverse.IRepository.DanhMuc;
-using Eduverse.IService.DanhMucService;
+using Eduverse.Repository.Common;
 
 namespace Eduverse.Api
 {
@@ -38,6 +25,7 @@ namespace Eduverse.Api
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddScoped<DbContext, EduverseContext>();
             builder.Services.AddDbContext<EduverseContext>(op => op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddIdentity<AppUser, AppRole>(options =>
             {
@@ -253,8 +241,8 @@ namespace Eduverse.Api
         {
 
             services.AddScoped<IMapper, Mapper>();
-            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            var repositoryTypes = typeof(IRepository<>).Assembly.GetTypes()
+            services.AddScoped(typeof(Repository<>), typeof(Repository<>));
+            var repositoryTypes = typeof(Repository<>).Assembly.GetTypes()
                  .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Repository") && x.Name.EndsWith("Repository"));
             foreach (var intf in repositoryTypes.Where(t => t.IsInterface))
             {

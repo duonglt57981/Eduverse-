@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.BaiKiemTra
 {
-    public interface IBaiKiemTraRepository : IRepository<Model.Entities.BaiKiemTra>
+    public interface IBaiKiemTraRepository : Repository<Model.Entities.BaiKiemTra>
     {
     }
 }

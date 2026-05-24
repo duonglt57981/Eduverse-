@@ -1,8 +1,4 @@
-﻿using AutoMapper;
-using Eduverse.IRepository.BaiGiang;
-using Eduverse.IRepository.CauHoi;
-using Eduverse.IRepository.DangKyKhoaHoc;
-using Eduverse.IRepository.KhoaHocRepository;
+﻿using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.DanhMuc_KhoaHocRepository;

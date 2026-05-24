@@ -5,8 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
-using Eduverse.IRepository.Common;
-using Eduverse.IRepository.RoleRopository;
+using Eduverse.Repository.Common;
+using Eduverse.Repository.RoleRopository;
 namespace Eduverse.IService.RoleService
 {
     public class RoleService : Service<Role>, IRoleService

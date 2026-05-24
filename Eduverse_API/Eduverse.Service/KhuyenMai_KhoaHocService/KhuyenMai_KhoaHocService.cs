@@ -1,7 +1,7 @@
-﻿using Eduverse.IRepository.Common;
+using Eduverse.Repository.Common;
 using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
-using Eduverse.Repository.KhuyenMai_KhoaHoc;
+using Eduverse.Repository.KhuyenMai_KhoaHocRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;

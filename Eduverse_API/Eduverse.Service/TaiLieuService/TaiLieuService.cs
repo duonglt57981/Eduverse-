@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.Common;
+using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.IService.Common;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ namespace Eduverse.IService.TaiLieuService
 {
     public class TaiLieuService : Service<Model.Entities.TaiLieu>, ITaiLieuService
     {
-        public TaiLieuService(IRepository<Model.Entities.TaiLieu> repository) : base(repository)
+        public TaiLieuService(ITaiLieuRepository repository) : base(repository)
         {
         }
     }

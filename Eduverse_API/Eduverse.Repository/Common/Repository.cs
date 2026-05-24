@@ -1,14 +1,9 @@
-﻿    using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using Eduverse.Model;
-using Eduverse.Model.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using Eduverse.Model.Entities;
+using Eduverse.Repository.Common;
 
-namespace Eduverse.IRepository.Common
+namespace Eduverse.Repository.Common
 {
     public class Repository<T> : IRepository<T> where T : class, IAuditableEntity
     {

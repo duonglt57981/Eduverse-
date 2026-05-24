@@ -1,6 +1,6 @@
-﻿using Eduverse.IRepository.Common;
+﻿using Eduverse.Repository.Common;
 
-namespace Eduverse.IRepository.KhoaHocRepository
+namespace Eduverse.Repository.KhoaHocRepository
 {
     public class KhoaHocRepository
         : Repository<Model.Entities.KhoaHoc>, IKhoaHocRepository

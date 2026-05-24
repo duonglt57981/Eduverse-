@@ -1,6 +1,6 @@
-﻿using Eduverse.IService.Common;
+using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
-using Eduverse.Repository.KetQuaBaiThi;
+using Eduverse.Repository.KetQuaBaiThiRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ namespace Eduverse.IService.KetQuaBaiThiService
 {
     public class KetQuaBaiThiService : Service<KetQuaBaiThi>, IKetQuaBaiThiService
     {
-        public KetQuaBaiThiService(IKetQuaBaiThiRepository ketQuaBaiThiRepository) : base(ketQuaBaiThiRepository)
+        public KetQuaBaiThiService(IKetQuaBaiThiRepository ketQuaBaiThRepository) : base(ketQuaBaiThRepository)
         {
         }
     }

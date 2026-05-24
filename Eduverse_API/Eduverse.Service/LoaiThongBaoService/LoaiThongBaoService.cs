@@ -1,6 +1,6 @@
-﻿using Eduverse.IService.Common;
+using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
-using Eduverse.Repository.LoaiThongBao;
+using Eduverse.Repository.LoaiThongBaoRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;

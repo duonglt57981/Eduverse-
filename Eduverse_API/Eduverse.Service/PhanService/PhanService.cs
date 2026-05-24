@@ -1,11 +1,7 @@
-﻿using Eduverse.IRepository.KhoaHocRepository;
+using Eduverse.IRepository.KhoaHocRepository;
 using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
-using Eduverse.Repository.Phan;
-using Eduverse.Service.Common;
-using Eduverse.Service.PhanService.Dto;
-using Eduverse.Service.PhanService.Request;
-using Microsoft.EntityFrameworkCore;
+using Eduverse.Repository.PhanRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;

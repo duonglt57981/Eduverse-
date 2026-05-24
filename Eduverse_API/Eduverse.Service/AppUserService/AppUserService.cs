@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.AppUser;
+using Eduverse.Repository.AppUserRepository;
 using Eduverse.IService.Common;
 using System;
 using System.Collections.Generic;

@@ -1,5 +1,5 @@
-﻿using Eduverse.IRepository.BaiGiang;
-using Eduverse.IRepository.CauHoi;
+using Eduverse.Repository.BaiGiangRepository;
+using Eduverse.Repository.CauHoiRepository;
 using Eduverse.IService.Common;
 using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.CauHoiService.Request;

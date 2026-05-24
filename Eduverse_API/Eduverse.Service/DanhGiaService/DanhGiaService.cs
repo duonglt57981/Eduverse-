@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.DanhGia;
+using Eduverse.Repository.DanhGiaRepository;
 using Eduverse.IService.Common;
 using System;
 using System.Collections.Generic;

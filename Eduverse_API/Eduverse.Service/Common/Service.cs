@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Eduverse.Model.Entities;
-using Eduverse.IRepository.Common;
+using Eduverse.Repository.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace Eduverse.IService.Common
