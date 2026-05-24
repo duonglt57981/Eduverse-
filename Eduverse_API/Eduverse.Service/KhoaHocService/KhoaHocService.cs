@@ -2,8 +2,8 @@
 using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.DanhMuc_KhoaHocRepository;
-using Eduverse.Repository.Phan;
-using Eduverse.Repository.TaiLieu;
+using Eduverse.Repository.PhanRepository;
+using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.Common;
 using Eduverse.Service.DanhMuc_KhoaHocService.Dto;
@@ -17,6 +17,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Eduverse.Repository.PhanRepository;
+using Eduverse.Repository.BaiGiangRepository;
+using Eduverse.Repository.TaiLieuRepository;
+using Eduverse.Repository.DangKyKhoaHocRepository;
+using AutoMapper;
 
 namespace Eduverse.IService.KhoaHocService
 {

@@ -60,25 +60,6 @@ namespace Eduverse.Api
                 cfg.AddMaps(typeof(KhoaHoc).Assembly);
             });
 
-            //KhoaHoc
-            builder.Services.AddScoped<IDangKyKhoaHocRepository, DangKyKhoaHocRepository>();
-            builder.Services.AddScoped<IDangKyKhoaHocService, DangKyKhoaHocService>();
-
-            builder.Services.AddScoped<IKhoaHocRepository, KhoaHocRepository>();
-            builder.Services.AddScoped<IKhoaHocService, KhoaHocService>();
-
-            builder.Services.AddScoped<IPhanRepository, PhanRepository>();
-            builder.Services.AddScoped<IPhanService, PhanService>();
-
-            builder.Services.AddScoped<IBaiGiangRepository, BaiGiangRepository>();
-            builder.Services.AddScoped<IBaiGiangService, BaiGiangServide>();
-
-            builder.Services.AddScoped<ITaiLieuRepository, TaiLieuRepository>();
-            builder.Services.AddScoped<ITaiLieuService, TaiLieuService>();
-
-            builder.Services.AddScoped<IDanhMucRepository, DanhMucRepository>();
-            builder.Services.AddScoped<IDanhMucService, DanhMucService>();
-            //
 
             var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
 

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.Common;
+using Eduverse.Model;
 
 namespace Eduverse.Repository.Common
 {
