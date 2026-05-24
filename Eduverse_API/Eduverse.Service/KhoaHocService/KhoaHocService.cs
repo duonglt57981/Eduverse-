@@ -35,10 +35,10 @@ namespace Eduverse.IService.KhoaHocService
         private readonly IMapper _mapper;
 
         public KhoaHocService(
-            IKhoaHocRepository khoaHocRepository, 
-            IPhanRepository phanRepository, 
-            IBaiGiangRepository baiGiangRepository, 
-            ITaiLieuRepository taiLieuRepository, 
+            IKhoaHocRepository khoaHocRepository,
+            IPhanRepository phanRepository,
+            IBaiGiangRepository baiGiangRepository,
+            ITaiLieuRepository taiLieuRepository,
             IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             IMapper mapper
@@ -167,7 +167,7 @@ namespace Eduverse.IService.KhoaHocService
             {
                 var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
                     .FirstOrDefaultAsync(x => x.IdDangKi == idKhoaHoc && x.IdNguoiDangKi == idNguoiDung);
-                if(dangKy == null) throw new Exception("Người dùng chưa đăng ký khóa học này");
+                if (dangKy == null) throw new Exception("Người dùng chưa đăng ký khóa học này");
 
 
                 var khoaHoc = await (from kh in _khoaHocRepository.GetQueryable()
@@ -251,6 +251,7 @@ namespace Eduverse.IService.KhoaHocService
                     URLViewPreviewKhoaHoc = request.URLViewPreviewKhoaHoc,
                     CapDo = request.CapDo,
 
+
                     TongBaiGiang = 0,
                     TongThoiLuong = 0,
                     SoLuongHocVien = 0,
@@ -261,9 +262,9 @@ namespace Eduverse.IService.KhoaHocService
                 _khoaHocRepository.Add(khoaHoc);
                 await _khoaHocRepository.SaveAsync();
 
-                if(request.DanhSachDanhMuc != null && request.DanhSachDanhMuc.Any())
+                if (request.DanhSachDanhMuc != null && request.DanhSachDanhMuc.Any())
                 {
-                    foreach(var idDanhMuc in request.DanhSachDanhMuc)
+                    foreach (var idDanhMuc in request.DanhSachDanhMuc)
                     {
                         var khoaHocDanhMuc = new DanhMuc_KhoaHocDto
                         {
@@ -276,11 +277,36 @@ namespace Eduverse.IService.KhoaHocService
                     await _danhMuc_KhoaHocRepository.SaveAsync();
                 }
                 return khoaHoc;
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return null;
             }
         }
+
+        //public async Task<KhoaHocDto> UpdateKhoaHoc(Guid id, UpdateKhoaHocRequest request)
+        //{
+        //    try
+        //    {
+        //        var khoaHoc = await _khoaHocRepository.GetByIdAsync(id);
+
+        //        if (khoaHoc == null) throw new Exception("Không tìm thấy khóa học");
+
+
+        //        khoaHoc.TieuDe = request.TieuDe;
+        //        khoaHoc.MoTa = request.MoTa;
+        //        khoaHoc.Gia = request.Gia;
+        //        khoaHoc.GiaGoc = request.GiaGoc;
+        //        khoaHoc.LoaiKhoaHoc = request.Gia == 0 ? "Miễn phí" : "Trả phí";
+        //        khoaHoc.HinhAnhKhoaHoc = request.HinhAnhKhoaHoc;
+        //        khoaHoc.URLViewPreviewKhoaHoc = request.URLViewPreviewKhoaHoc;
+        //        khoaHoc.UpdatedDate = DateTime.Now;
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //    }
+        //}
     }
 }
