@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.KhoaHocRepository;
+﻿using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
 using System;

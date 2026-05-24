@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.Common;
+using Eduverse.Repository.Common;
 using Eduverse.Model;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.Repository.KhuyenMai_KhoaHoc
+namespace Eduverse.Repository.KhuyenMai_KhoaHocRepository
 {
     public class KhuyenMai_KhoaHocRepository : Repository<Model.Entities.KhuyenMai_KhoaHoc>, IKhuyenMai_KhoaHocRepository
     {

@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.DanhSachYeuThich;
+using Eduverse.Repository.DanhSachYeuThichRepository;
 using Eduverse.IService.Common;
 using System;
 using System.Collections.Generic;

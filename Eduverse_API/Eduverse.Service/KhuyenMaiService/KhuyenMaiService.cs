@@ -1,6 +1,6 @@
 ﻿using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
-using Eduverse.Repository.KhuyenMai;
+using Eduverse.Repository.KhuyenMaiRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ namespace Eduverse.IService.KhuyenMaiService
 {
     public class KhuyenMaiService : Service<KhuyenMai>, IKhuyenMaiService
     {
-        public KhuyenMaiService(IKhuyenMaiRepository khuyenMaiRepository) : base(khuyenMaiRepository)
+        public KhuyenMaiService(IKhuyenMaiRepository khuyenMaRepository) : base(khuyenMaRepository)
         {
         }
     }

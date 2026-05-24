@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.BaiGiang;
+using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.IService.Common;
 using System;
 using System.Collections.Generic;
@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Eduverse.IService.BaiGiang
 {
-    public class BaiGiangServide : Service<Model.Entities.BaiGiang>, IBaiGiangService
+    public class BaiGiangService : Service<Model.Entities.BaiGiang>, IBaiGiangService
     {
-        public BaiGiangServide(IBaiGiangRepository baiGiangRepository) : base(baiGiangRepository)
+        public BaiGiangService(IBaiGiangRepository baiGiangRepository) : base(baiGiangRepository)
         {
         }
     }

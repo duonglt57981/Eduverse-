@@ -1,11 +1,11 @@
-﻿using Eduverse.IRepository.Common;
+using Eduverse.Repository.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.Repository.HoiDap
+namespace Eduverse.Repository.HoiDapRepository
 {
     public interface IHoiDapRepository : IRepository<Model.Entities.HoiDap>
     {
