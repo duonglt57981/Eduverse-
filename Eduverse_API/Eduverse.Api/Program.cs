@@ -19,6 +19,17 @@ using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.CloudinaryService;
 using Eduverse.IRepository.KhoaHocRepository;
 using Eduverse.IService.KhoaHocService;
+using Eduverse.Repository.Phan;
+using Eduverse.IService.PhanService;
+using Eduverse.IRepository.BaiGiang;
+using Eduverse.IService.BaiGiang;
+using Eduverse.Repository.TaiLieu;
+using Eduverse.IService.TaiLieuService;
+using Eduverse.IRepository.DangKyKhoaHoc;
+using Eduverse.Service.DangKyKhoaHocService;
+using Eduverse.IRepository.DanhGia;
+using Eduverse.IRepository.DanhMuc;
+using Eduverse.IService.DanhMucService;
 
 namespace Eduverse.Api
 {
@@ -56,10 +67,30 @@ namespace Eduverse.Api
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSignalR();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddAutoMapper(cfg =>
+            {
+                cfg.AddMaps(typeof(KhoaHoc).Assembly);
+            });
 
             //KhoaHoc
+            builder.Services.AddScoped<IDangKyKhoaHocRepository, DangKyKhoaHocRepository>();
+            builder.Services.AddScoped<IDangKyKhoaHocService, DangKyKhoaHocService>();
+
             builder.Services.AddScoped<IKhoaHocRepository, KhoaHocRepository>();
             builder.Services.AddScoped<IKhoaHocService, KhoaHocService>();
+
+            builder.Services.AddScoped<IPhanRepository, PhanRepository>();
+            builder.Services.AddScoped<IPhanService, PhanService>();
+
+            builder.Services.AddScoped<IBaiGiangRepository, BaiGiangRepository>();
+            builder.Services.AddScoped<IBaiGiangService, BaiGiangServide>();
+
+            builder.Services.AddScoped<ITaiLieuRepository, TaiLieuRepository>();
+            builder.Services.AddScoped<ITaiLieuService, TaiLieuService>();
+
+            builder.Services.AddScoped<IDanhMucRepository, DanhMucRepository>();
+            builder.Services.AddScoped<IDanhMucService, DanhMucService>();
+            //
 
             var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
 

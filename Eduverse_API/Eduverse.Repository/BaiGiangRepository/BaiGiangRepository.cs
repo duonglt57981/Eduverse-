@@ -1,4 +1,5 @@
 ﻿using Eduverse.IRepository.Common;
+using Eduverse.Model;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace Eduverse.IRepository.BaiGiang
 {
     public class BaiGiangRepository : Repository<Model.Entities.BaiGiang>, IBaiGiangRepository
     {
-        public BaiGiangRepository(DbContext context) : base(context)
+        public BaiGiangRepository(EduverseContext context) : base(context)
         {
         }
     }

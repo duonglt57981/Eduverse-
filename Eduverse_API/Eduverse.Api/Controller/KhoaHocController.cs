@@ -21,5 +21,28 @@ namespace Eduverse.Api.Controller
             _khoaHocService = khoaHocService;
         }
 
+        [HttpGet("get-khoahoc")]
+        public async Task<IActionResult> GetList([FromQuery] KhoaHocSearch search)
+        {
+            var result = await _khoaHocService.GetList(search);
+            return Ok(result);
+        }
+
+
+        [HttpGet("get-khoahoc-by-id")]
+        public async Task<IActionResult> GetLearning(Guid idKhoaHoc, Guid idNguoiDung)
+        {
+            var result = await _khoaHocService.GetLearning(idKhoaHoc, idNguoiDung);
+            return Ok(result);
+        }
+
+
+        [HttpPost("create-khoahoc")]
+        public async Task<IActionResult> CreateKhoaHoc([FromBody] CreateKhoaHocRequest request)
+        {
+            var result = await _khoaHocService.CreateKhoaHoc(request);
+            return Ok(result);
+
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,7 @@ namespace Eduverse.IRepository.Common
         protected DbContext _entities;
         protected readonly DbSet<T> _dbset;
 
-        public Repository(DbContext context)
+        public Repository(EduverseContext context)
         {
             _entities = context;
             _dbset = context.Set<T>();
