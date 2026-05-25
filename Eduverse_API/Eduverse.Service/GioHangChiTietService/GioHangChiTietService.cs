@@ -1,4 +1,4 @@
-using Eduverse.IService.Common;
+using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.GioHangChiTietRepository;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.IService.GioHangChiTietService
+namespace Eduverse.Service.GioHangChiTietService
 {
     public class GioHangChiTietService : Service<GioHangChiTiet>, IGioHangChiTietService
     {

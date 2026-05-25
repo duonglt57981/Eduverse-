@@ -10,7 +10,7 @@ using Eduverse.Model.Entities;
 using Eduverse.Repository.Common;
 using Microsoft.EntityFrameworkCore;
 
-namespace Eduverse.IService.Common
+namespace Eduverse.Service.Common
 {
     public class Service<T> : IService<T> where T : class, IAuditableEntity
     {

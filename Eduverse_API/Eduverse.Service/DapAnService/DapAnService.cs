@@ -1,12 +1,12 @@
 using Eduverse.Repository.DapAnRepositoryRepository;
-using Eduverse.IService.Common;
+using Eduverse.Service.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.IService.DapAnService
+namespace Eduverse.Service.DapAnService
 {
     public class DapAnService : Service<Model.Entities.DapAn>, IDapAnService
     {

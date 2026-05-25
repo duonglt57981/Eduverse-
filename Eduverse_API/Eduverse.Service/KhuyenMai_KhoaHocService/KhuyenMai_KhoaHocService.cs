@@ -1,5 +1,5 @@
 using Eduverse.Repository.Common;
-using Eduverse.IService.Common;
+using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.KhuyenMai_KhoaHocRepository;
 using System;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.IService.KhuyenMai_KhoaHocService
+namespace Eduverse.Service.KhuyenMai_KhoaHocService
 {
     public class KhuyenMai_KhoaHocService : Service<KhuyenMai_KhoaHoc>, IKhuyenMai_KhoaHocService
     {
