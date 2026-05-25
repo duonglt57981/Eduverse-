@@ -22,27 +22,77 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpGet("get-khoahoc")]
-        public async Task<IActionResult> GetList([FromQuery] KhoaHocSearch search)
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList([FromQuery] KhoaHocSearch search)
         {
-            var result = await _khoaHocService.GetList(search);
-            return Ok(result);
+            try
+            {
+                var result = await _khoaHocService.GetList(search);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
+            }
         }
 
 
-        [HttpGet("get-khoahoc-by-id")]
-        public async Task<IActionResult> GetLearning(Guid idKhoaHoc, Guid idNguoiDung)
+        [HttpGet("get-learning")]
+        public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idKhoaHoc, Guid idNguoiDung)
         {
-            var result = await _khoaHocService.GetLearning(idKhoaHoc, idNguoiDung);
-            return Ok(result);
+            try
+            {
+                var result = await _khoaHocService.GetLearning(idKhoaHoc, idNguoiDung);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
         }
 
 
         [HttpPost("create-khoahoc")]
-        public async Task<IActionResult> CreateKhoaHoc([FromBody] CreateKhoaHocRequest request)
+        public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc([FromBody] CreateKhoaHocRequest request)
         {
-            var result = await _khoaHocService.CreateKhoaHoc(request);
-            return Ok(result);
+            try
+            {
+                var result = await _khoaHocService.CreateKhoaHoc(request);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
 
         }
+
+        [HttpPut("update-khoahoc")]
+        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc(Guid id, [FromBody] UpdateKhoaHocRequest request)
+        {
+            try
+            {
+                var result = await _khoaHocService.UpdateKhoaHoc(id, request);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch(Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
+        }
+
+        [HttpDelete("delete-khoahoc")]
+        public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)
+        {
+            try
+            {
+                var result = await _khoaHocService.DeleteKhoaHoc(id);
+                return DataResponse<bool>.Success(result);
+            }
+            catch(Exception ex)
+            {
+                return DataResponse<bool>.False(ex.Message);
+            }
+        }
+
     }
 }

@@ -1,3 +1,4 @@
+using Eduverse.Model;
 using Eduverse.Repository.Common;
 using Microsoft.EntityFrameworkCore;
 using System;

@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.DanhMuc;
+﻿using Eduverse.Repository.DanhMucRepository;
 using Eduverse.IService.Common;
 using Eduverse.IService.DanhMucService;
 using Eduverse.Repository.DanhMuc_KhoaHocRepository;

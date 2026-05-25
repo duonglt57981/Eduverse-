@@ -1,5 +1,5 @@
-﻿using Eduverse.IRepository.Common;
-using Eduverse.IRepository.DanhMuc;
+﻿using Eduverse.Repository.Common;
+using Eduverse.Repository.DanhMucRepository;
 using Eduverse.Model;
 using System;
 using System.Collections.Generic;

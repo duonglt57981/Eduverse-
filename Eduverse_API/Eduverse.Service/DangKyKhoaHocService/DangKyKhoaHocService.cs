@@ -1,5 +1,5 @@
-﻿using Eduverse.IRepository.DangKyKhoaHoc;
-using Eduverse.IRepository.DanhGia;
+﻿using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.DanhMucRepository;
 using Eduverse.IService.Common;
 using Eduverse.IService.DanhGiaService;
 using System;

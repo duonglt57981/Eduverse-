@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.KhoaHocService.Request
 {
-    internal class UpdateKhoaHocRequest : KhoaHocDto
+    public class UpdateKhoaHocRequest : KhoaHocDto
     {
+
+        public List<Guid>? DanhSachDanhMuc { get; set; }
     }
 }

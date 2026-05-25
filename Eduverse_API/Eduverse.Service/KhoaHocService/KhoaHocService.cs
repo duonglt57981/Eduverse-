@@ -1,8 +1,13 @@
-﻿using Eduverse.Repository.KhoaHocRepository;
+﻿using AutoMapper;
 using Eduverse.IService.Common;
 using Eduverse.Model.Entities;
+using Eduverse.Repository.BaiGiangRepository;
+using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.DanhMuc_KhoaHocRepository;
+using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
+using Eduverse.Repository.PhanRepository;
+using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.Common;
@@ -15,13 +20,10 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Eduverse.Repository.PhanRepository;
-using Eduverse.Repository.BaiGiangRepository;
-using Eduverse.Repository.TaiLieuRepository;
-using Eduverse.Repository.DangKyKhoaHocRepository;
-using AutoMapper;
+using System.Security.Claims;
 
 namespace Eduverse.IService.KhoaHocService
 {
@@ -286,28 +288,29 @@ namespace Eduverse.IService.KhoaHocService
             }
         }
 
-        //public async Task<KhoaHocDto> UpdateKhoaHoc(Guid id, UpdateKhoaHocRequest request)
-        //{
-        //    try
-        //    {
-        //        var khoaHoc = await _khoaHocRepository.GetByIdAsync(id);
+        public async Task<KhoaHocDto> UpdateKhoaHoc(Guid id, UpdateKhoaHocRequest request)
+        {
+            try
+            {
+                var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        //        if (khoaHoc == null) throw new Exception("Không tìm thấy khóa học");
+                var khoaHoc = await _khoaHocRepository.GetByIdAsync(id);
+                if (khoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
 
-        //        khoaHoc.TieuDe = request.TieuDe;
-        //        khoaHoc.MoTa = request.MoTa;
-        //        khoaHoc.Gia = request.Gia;
-        //        khoaHoc.GiaGoc = request.GiaGoc;
-        //        khoaHoc.LoaiKhoaHoc = request.Gia == 0 ? "Miễn phí" : "Trả phí";
-        //        khoaHoc.HinhAnhKhoaHoc = request.HinhAnhKhoaHoc;
-        //        khoaHoc.URLViewPreviewKhoaHoc = request.URLViewPreviewKhoaHoc;
-        //        khoaHoc.UpdatedDate = DateTime.Now;
-        //    }
-        //    catch (Exception ex)
-        //    {
+                khoaHoc.TieuDe = request.TieuDe;
+                khoaHoc.MoTa = request.MoTa;
+                khoaHoc.Gia = request.Gia;
+                khoaHoc.GiaGoc = request.GiaGoc;
+                khoaHoc.LoaiKhoaHoc = request.Gia == 0 ? "Miễn phí" : "Trả phí";
+                khoaHoc.HinhAnhKhoaHoc = request.HinhAnhKhoaHoc;
+                khoaHoc.URLViewPreviewKhoaHoc = request.URLViewPreviewKhoaHoc;
+                khoaHoc.UpdatedDate = DateTime.Now;
+            }
+            catch (Exception ex)
+            {
 
-        //    }
-        //}
+            }
+        }
     }
 }
