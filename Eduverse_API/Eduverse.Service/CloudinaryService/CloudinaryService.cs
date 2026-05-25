@@ -7,6 +7,7 @@ using Eduverse.Service.Common;
 using Microsoft.AspNetCore.Http;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Eduverse.Service.CloudinaryService.Dto;
 
 namespace Eduverse.Service.CloudinaryService
 {
@@ -20,19 +21,64 @@ namespace Eduverse.Service.CloudinaryService
             _cloudinary = cloudinary;
         }
 
-        public async Task<ImageUploadResult> UploadImage(IFormFile file)
+        public async Task<CloudinaryDto> UploadVideoBaiGiangAsync(IFormFile file)
         {
-            using var stream = file.OpenReadStream();
-
-            var uploadParams = new ImageUploadParams
+            try
             {
-                File = new FileDescription(file.FileName, stream),
-                Folder = "uploads"
-            };
+                if (file == null || file.Length == 0)
+                    throw new Exception("File không hợp lệ");
 
-            var result = await _cloudinary.UploadAsync(uploadParams);
+                await using var stream = file.OpenReadStream();
 
-            return result;
+                var uploadParams = new VideoUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "eduverse/baigiang/video"
+                };
+
+                var uploadResult = await _cloudinary
+                    .UploadAsync(uploadParams);
+
+                if (uploadResult.Error != null)
+                    throw new Exception(uploadResult.Error.Message);
+
+                return new CloudinaryDto
+                {
+                    URLBaiGiang = uploadResult.SecureUrl.ToString(),
+
+                    IdVideoBaiGiang = uploadResult.PublicId,
+
+                    ThoiLuong = (int)uploadResult.Duration
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+
+        public async Task DeleteVideoAsync(string publicId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(publicId))
+                    return;
+
+                var deleteParams = new DeletionParams(publicId)
+                {
+                    ResourceType = ResourceType.Video
+                };
+
+                var result = await _cloudinary.DestroyAsync(deleteParams);
+
+                if (result.Result != "ok")
+                    throw new Exception("Xóa video thất bại");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }

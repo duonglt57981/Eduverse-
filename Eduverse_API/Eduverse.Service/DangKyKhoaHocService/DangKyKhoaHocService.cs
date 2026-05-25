@@ -1,7 +1,7 @@
-﻿using Eduverse.IRepository.DangKyKhoaHoc;
-using Eduverse.IRepository.DanhGia;
-using Eduverse.IService.Common;
-using Eduverse.IService.DanhGiaService;
+﻿using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.DanhGiaRepository;
+using Eduverse.Service.Common;
+using Eduverse.Service.DanhGiaService;
 using System;
 using System.Collections.Generic;
 using System.Linq;

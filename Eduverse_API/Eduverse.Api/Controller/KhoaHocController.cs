@@ -1,5 +1,5 @@
 ﻿
-using Eduverse.IService.KhoaHocService;
+using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.Common;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
