@@ -8,8 +8,17 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.BaiGiangService.Request
 {
-    public class CreateBaiGiangRequest : BaiGiang
+    public class CreateBaiGiangRequest 
     {
+        public string? TieuDe { get; set; }
+        public string? LoaiBaiGiang { get; set; }
+        public string? IdVideoBaiGiang { get; set; }
+        public string? URLBaiGiang { get; set; }
+        public int? ThuTuSapXep { get; set; }
+        public bool? LaBaiGiangFree { get; set; } = false;
+        public string? TrangThai { get; set; } = "Hoạt động";
+        public Guid? IdPhan { get; set; }
+        //
         public IFormFile Video { get; set; }
     }
 }

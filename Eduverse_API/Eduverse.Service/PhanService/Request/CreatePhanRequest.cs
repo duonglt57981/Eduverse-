@@ -7,7 +7,11 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.PhanService.Request
 {
-    public class CreatePhanRequest : PhanHocDto
+    public class CreatePhanRequest 
     {
+        public string? TenPhan { get; set; }
+        public string? MieuTa { get; set; }
+        public int? ThuTuSapXep { get; set; }
+        public Guid? IdKhoaHoc { get; set; }
     }
 }

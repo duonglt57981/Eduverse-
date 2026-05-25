@@ -13,6 +13,10 @@ namespace Eduverse.Service.KhoaHocService.Request
 {
     public class KhoaHocSearch : SearchBase
     {
+
+
+
+        //search
         public string? Keyword { get; set; }
 
         public string? TieuDe { get; set; }

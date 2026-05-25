@@ -3,10 +3,13 @@ using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
+using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
+using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.PhanService.Request;
+using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -21,24 +24,28 @@ namespace Eduverse.Service.PhanService
     public class PhanService : Service<Phan>, IPhanService
     {
         private readonly Service.Core.Mapper.IMapper _mapper;
-        private readonly IPhanRepository _phanRepository;
-        private readonly IBaiGiangRepository _baiGiangRepository;
-        private readonly IKhoaHocRepository _khoaHocRepository;
+        private readonly IPhanService _phanService;
+        private readonly IBaiGiangService _baiGiangService;
+        private readonly IKhoaHocService _khoaHocService;
+        private readonly ITaiLieuService _taiLieuService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         
         public PhanService(
-            IPhanRepository phanRepository, 
-            IKhoaHocRepository khoaHocRepository, 
-            IBaiGiangRepository baiGiangRepository,
+            IPhanRepository phanRepository,
+            IPhanService phanService,
+            IBaiGiangService baiGiangService,
+            IKhoaHocService khoaHocService,
+            ITaiLieuService taiLieuService,
             IHttpContextAccessor httpContextAccessor,
             Service.Core.Mapper.IMapper mapper
 
             ) : base(phanRepository)
         {
             _mapper = mapper;
-            _phanRepository = phanRepository;
-            _baiGiangRepository = baiGiangRepository;
-            _khoaHocRepository = khoaHocRepository;
+            _phanService = phanService;
+            _baiGiangService = baiGiangService;
+            _khoaHocService = khoaHocService;
+            _taiLieuService = taiLieuService;
             _httpContextAccessor = httpContextAccessor;
         }
 
@@ -47,10 +54,10 @@ namespace Eduverse.Service.PhanService
             try
             {
 
-                var KhoaHoc = await _khoaHocRepository.GetByIdAsync(request.IdKhoaHoc);
+                var KhoaHoc = await _khoaHocService.GetByIdAsync(request.IdKhoaHoc);
                 if (KhoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
-                var maxThuTu = await _phanRepository
+                var maxThuTu = await _phanService
                     .Where(x => x.IdKhoaHoc == KhoaHoc.Id)
                     .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
@@ -60,12 +67,12 @@ namespace Eduverse.Service.PhanService
                     IdKhoaHoc = request.IdKhoaHoc,
                     TenPhan = request.TenPhan,
                     CreatedDate = DateTime.UtcNow,
-                    CreatedBy = request.CreatedBy,
+                    //CreatedBy =
                     ThuTuSapXep = maxThuTu + 1
                 };
 
-                _phanRepository.Add(entity);
-                await _phanRepository.SaveAsync();
+                await _phanService.CreateAsync(entity);
+                await _phanService.SaveAsync();
 
                 return _mapper.Map<Phan,PhanHocDto>(entity);
             }
@@ -80,27 +87,23 @@ namespace Eduverse.Service.PhanService
         {
             try
             {
-                var entity = await _phanRepository.GetByIdAsync(request.Id);
+                var KhoaHoc = await _khoaHocService.GetByIdAsync(request.IdKhoaHoc);
+                if (KhoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
-                if (entity == null)
-                    throw new Exception("Không tìm thấy phần học");
+                var entity = await _phanService.GetByIdAsync(request.Id);
+                if (entity == null)throw new Exception("Không tìm thấy phần học");
 
-                var khoaHoc = await _khoaHocRepository
-                    .GetByIdAsync(request.IdKhoaHoc);
-
-                if (khoaHoc == null)
-                    throw new Exception("Không tìm thấy khóa học");
+                var khoaHoc = await _khoaHocService.GetByIdAsync(request.IdKhoaHoc);
+                if (khoaHoc == null)throw new Exception("Không tìm thấy khóa học");
 
                 entity.IdKhoaHoc = request.IdKhoaHoc;
                 entity.TenPhan = request.TenPhan;
                 entity.UpdatedDate = DateTime.UtcNow;
-                entity.UpdatedBy = request.UpdatedBy;
+                //entity.UpdatedBy = 
                 entity.ThuTuSapXep = request.ThuTuSapXep;
 
-                _phanRepository.Update(entity);
-
-                await _phanRepository.SaveAsync();
-
+                await _phanService.UpdateAsync(entity);
+                await _phanService.SaveAsync();
                 return _mapper.Map<Phan,PhanHocDto>(entity);
             }
             catch (Exception ex)
@@ -114,29 +117,30 @@ namespace Eduverse.Service.PhanService
         {
             try
             {
-                var phanHoc = await _phanRepository.GetByIdAsync(id);
+                var phanHoc = await _phanService.GetByIdAsync(id);
                 if (phanHoc == null) throw new Exception("Không tìm thấy phần học");
 
-                var khoaHoc = await _khoaHocRepository.GetByIdAsync(phanHoc.IdKhoaHoc);
+                var khoaHoc = await _khoaHocService.GetByIdAsync(phanHoc.IdKhoaHoc);
                 if (khoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
-                var dsBaiGiang = await _baiGiangRepository.GetQueryable()
-                    .Where(x => x.IdPhan == phanHoc.Id).ToListAsync();
-                
 
-                foreach (var baiGiang in dsBaiGiang)
-                {
-                    baiGiang.IsDeleted = true;
-                    baiGiang.DeletedDate = DateTime.UtcNow;
-                    //taiLieu.DeletedId = ;
+                var BaiGiangs = await _baiGiangService
+                    .GetQueryable()
+                    .Where(x => x.IdPhan == phanHoc.Id)
+                    .ToListAsync();
+                await _baiGiangService.DeleteAsync(BaiGiangs);
 
-                    _baiGiangRepository.Update(baiGiang);
-                }
 
-                phanHoc.IsDeleted = true;
-                _phanRepository.Update(phanHoc);
+                var BaiGiangIds = BaiGiangs.Select(x => x.Id).ToList();
+                var taiLieus = await _taiLieuService
+                    .GetQueryable()
+                    .Where(x => BaiGiangIds.Contains(x.IdBaiGiang.Value))
+                    .ToListAsync();
+                await _taiLieuService.DeleteAsync(taiLieus);
 
-                await _phanRepository.SaveAsync();
+
+                await _phanService.DeleteAsync(phanHoc);
+                await _phanService.SaveAsync();
                 return true;
             }
             catch(Exception ex)

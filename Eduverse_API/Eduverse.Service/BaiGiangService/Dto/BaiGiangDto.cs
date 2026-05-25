@@ -10,6 +10,7 @@ namespace Eduverse.Service.BaiGiangService.Dto
 {
     public class BaiGiangDto : BaiGiang
     {
+        //
         public List<TaiLieuDto>? DanhSachTaiLieu { get; set; }
     }
 }

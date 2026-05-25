@@ -67,14 +67,14 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPut("update-khoahoc")]
-        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc(Guid id, [FromBody] UpdateKhoaHocRequest request)
+        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromBody] UpdateKhoaHocRequest request)
         {
             try
             {
-                var result = await _khoaHocService.UpdateKhoaHoc(id, request);
+                var result = await _khoaHocService.UpdateKhoaHoc(request);
                 return DataResponse<KhoaHocDto>.Success(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return DataResponse<KhoaHocDto>.False(ex.Message);
             }
@@ -88,7 +88,7 @@ namespace Eduverse.Api.Controller
                 var result = await _khoaHocService.DeleteKhoaHoc(id);
                 return DataResponse<bool>.Success(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return DataResponse<bool>.False(ex.Message);
             }
