@@ -1,4 +1,4 @@
-﻿using Eduverse.IService.Common;
+﻿using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Service.Common;
 using Eduverse.Service.KhoaHocService.Dto;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.IService.KhoaHocService
+namespace Eduverse.Service.KhoaHocService
 {
     public interface IKhoaHocService : IService<KhoaHoc>
     {

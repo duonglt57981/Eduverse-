@@ -15,7 +15,6 @@
   <ItemGroup>
     <Folder Include="AppUserService\Dto\" />
     <Folder Include="AppUserService\Request\" />
-    <Folder Include="BaiGiangService\Request\" />
     <Folder Include="ChiTietLamBaiKiemTraService\Dto\" />
     <Folder Include="ChiTietLamBaiKiemTraService\Request\" />
     <Folder Include="ChungChiService\Dto\" />
@@ -59,7 +58,6 @@
     <Folder Include="NganHangService\Request\" />
     <Folder Include="RoleService\Dto\" />
     <Folder Include="RoleService\Request\" />
-    <Folder Include="TaiLieuService\Request\" />
     <Folder Include="ThanhToanService\Dto\" />
     <Folder Include="ThanhToanService\Request\" />
     <Folder Include="ThongBaoService\Dto\" />

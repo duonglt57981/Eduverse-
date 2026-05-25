@@ -1,4 +1,4 @@
-﻿using Eduverse.IService.Common;
+﻿using Eduverse.Service.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;

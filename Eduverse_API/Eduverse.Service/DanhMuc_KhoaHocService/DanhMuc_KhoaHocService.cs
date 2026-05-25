@@ -1,6 +1,6 @@
 ﻿using Eduverse.Repository.DanhMucRepository;
-using Eduverse.IService.Common;
-using Eduverse.IService.DanhMucService;
+using Eduverse.Service.Common;
+using Eduverse.Service.DanhMucService;
 using Eduverse.Repository.DanhMuc_KhoaHocRepository;
 using System;
 using System.Collections.Generic;

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Eduverse.Model.Entities;
 
-namespace Eduverse.IService.Common
+namespace Eduverse.Service.Common
 {
     public interface IService<T> where T : class, IAuditableEntity
     {
