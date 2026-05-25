@@ -1,5 +1,5 @@
 ﻿using Eduverse.Repository.KhoaHocRepository;
-using Eduverse.IService.Common;
+using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.DanhMuc_KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
@@ -23,7 +23,7 @@ using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using AutoMapper;
 
-namespace Eduverse.IService.KhoaHocService
+namespace Eduverse.Service.KhoaHocService
 {
     public class KhoaHocService : Service<KhoaHoc>, IKhoaHocService
     {

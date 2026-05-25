@@ -1,4 +1,4 @@
-﻿using Eduverse.IService.Common;
+﻿using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.KhuyenMaiRepository;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.IService.KhuyenMaiService
+namespace Eduverse.Service.KhuyenMaiService
 {
     public class KhuyenMaiService : Service<KhuyenMai>, IKhuyenMaiService
     {

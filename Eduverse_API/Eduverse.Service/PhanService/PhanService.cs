@@ -1,5 +1,4 @@
-using Eduverse.IRepository.KhoaHocRepository;
-using Eduverse.IService.Common;
+using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.PhanRepository;
 using System;
@@ -8,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.IService.PhanService
+namespace Eduverse.Service.PhanService
 {
     public class PhanService : Service<Phan>, IPhanService
     {

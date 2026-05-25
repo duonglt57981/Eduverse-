@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Eduverse.Service.EmailService;
-using Eduverse.IService.Common;
+using Eduverse.Service.Common;
 using CloudinaryDotNet;
 using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.CloudinaryService;
