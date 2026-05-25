@@ -1,4 +1,4 @@
-﻿using Eduverse.IService.Common;
+﻿using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.ThongBao;
 using System;

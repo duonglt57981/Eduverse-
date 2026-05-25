@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.Common;
+using Eduverse.Repository.Common;
 using Eduverse.Model;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.Repository.GioHang
+namespace Eduverse.Repository.GioHangRepository
 {
     public class GioHangRepository : Repository<Model.Entities.GioHang>, IGioHangRepository
     {

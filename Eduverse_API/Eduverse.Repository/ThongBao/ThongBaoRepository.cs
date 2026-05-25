@@ -1,4 +1,4 @@
-﻿using Eduverse.IRepository.Common;
+﻿using Eduverse.Repository.Common;
 using Eduverse.Model;
 using System;
 using System.Collections.Generic;

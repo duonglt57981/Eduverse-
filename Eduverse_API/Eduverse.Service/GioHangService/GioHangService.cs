@@ -1,12 +1,12 @@
-﻿using Eduverse.IService.Common;
-using Eduverse.Repository.GioHang;
+using Eduverse.Service.Common;
+using Eduverse.Repository.GioHangRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Eduverse.IService.GioHangService
+namespace Eduverse.Service.GioHangService
 {
     public class GioHangService : Service<Model.Entities.GioHang>, IGioHangService
     {

@@ -1,7 +1,7 @@
-﻿using Eduverse.IRepository.Common;
-using Eduverse.IService.Common;
+using Eduverse.Repository.Common;
+using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
-using Eduverse.Repository.TienDoHocTap;
+using Eduverse.Repository.TienDoHocTapRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;

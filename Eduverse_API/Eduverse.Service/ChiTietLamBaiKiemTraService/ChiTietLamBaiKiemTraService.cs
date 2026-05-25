@@ -1,4 +1,4 @@
-﻿using Eduverse.IService.Common;
+﻿using Eduverse.Service.Common;
 using Eduverse.Model;
 using Eduverse.Repository.ChiTietLamBaiKiemTraRepository;
 using System;
