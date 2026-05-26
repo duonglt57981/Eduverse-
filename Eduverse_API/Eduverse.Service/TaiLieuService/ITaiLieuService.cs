@@ -1,4 +1,6 @@
 ﻿using Eduverse.Service.Common;
+using Eduverse.Service.TaiLieuService.Dto;
+using Eduverse.Service.TaiLieuService.Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,5 +11,8 @@ namespace Eduverse.Service.TaiLieuService
 {
     public interface ITaiLieuService : IService<Model.Entities.TaiLieu>
     {
+        Task<TaiLieuDto> CreateTaiLieu(CreateTaiLieuRequest request);
+
+        Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request);
     }
 }

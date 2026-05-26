@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.KhoaHocService.Request
 {
-    public class UpdateKhoaHocRequest : KhoaHocDto
+    public class UpdateKhoaHocRequest
     {
+        public Guid? Id { get; set; }
         public string? TieuDe { get; set; }
         public string? MoTa { get; set; }
         public double? Gia { get; set; }

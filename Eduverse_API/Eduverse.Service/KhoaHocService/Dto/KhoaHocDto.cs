@@ -13,8 +13,9 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.KhoaHocService.Dto
 {
-    public class KhoaHocDto : KhoaHoc
+    public class KhoaHocDto 
     {
+        public Guid? Id { get; set; }
         public string? TieuDe { get; set; }
         public string? MoTa { get; set; }
         public double? Gia { get; set; }
@@ -33,7 +34,5 @@ namespace Eduverse.Service.KhoaHocService.Dto
 
         //thêm list 
         public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
-
-        public List<PhanHocDto> PhanHocs { get; set; }
     }
 }

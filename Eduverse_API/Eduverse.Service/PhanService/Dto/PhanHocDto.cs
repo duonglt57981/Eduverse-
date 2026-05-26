@@ -11,6 +11,9 @@ namespace Eduverse.Service.PhanService.Dto
 {
     public  class PhanHocDto : Phan
     {
+
+
+        //
         public List<BaiGiangDto>? DanhSachBaiGiang { get; set; }
         
     }

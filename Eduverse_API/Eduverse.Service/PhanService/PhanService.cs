@@ -24,55 +24,46 @@ namespace Eduverse.Service.PhanService
     public class PhanService : Service<Phan>, IPhanService
     {
         private readonly Service.Core.Mapper.IMapper _mapper;
-        private readonly IPhanService _phanService;
         private readonly IBaiGiangService _baiGiangService;
-        private readonly IKhoaHocService _khoaHocService;
+        private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly ITaiLieuService _taiLieuService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+
         
         public PhanService(
             IPhanRepository phanRepository,
-            IPhanService phanService,
             IBaiGiangService baiGiangService,
-            IKhoaHocService khoaHocService,
             ITaiLieuService taiLieuService,
-            IHttpContextAccessor httpContextAccessor,
+            IKhoaHocRepository khoaHocRepository,
             Service.Core.Mapper.IMapper mapper
 
             ) : base(phanRepository)
         {
             _mapper = mapper;
-            _phanService = phanService;
             _baiGiangService = baiGiangService;
-            _khoaHocService = khoaHocService;
             _taiLieuService = taiLieuService;
-            _httpContextAccessor = httpContextAccessor;
+            _khoaHocRepository = khoaHocRepository;
         }
 
         public async Task<PhanHocDto> CreatePhanHoc(CreatePhanRequest request)
         {
             try
             {
-
-                var KhoaHoc = await _khoaHocService.GetByIdAsync(request.IdKhoaHoc);
+                var KhoaHoc = await _khoaHocRepository.GetByIdAsync(request.IdKhoaHoc);
                 if (KhoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
-                var maxThuTu = await _phanService
+                var maxThuTu = await GetQueryable()
                     .Where(x => x.IdKhoaHoc == KhoaHoc.Id)
                     .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
                 var entity = new PhanHocDto
                 {
-                    Id = Guid.NewGuid(),
                     IdKhoaHoc = request.IdKhoaHoc,
                     TenPhan = request.TenPhan,
-                    CreatedDate = DateTime.UtcNow,
-                    //CreatedBy =
                     ThuTuSapXep = maxThuTu + 1
                 };
 
-                await _phanService.CreateAsync(entity);
-                await _phanService.SaveAsync();
+                await CreateAsync(entity);
+                await SaveAsync();
 
                 return _mapper.Map<Phan,PhanHocDto>(entity);
             }
@@ -87,23 +78,18 @@ namespace Eduverse.Service.PhanService
         {
             try
             {
-                var KhoaHoc = await _khoaHocService.GetByIdAsync(request.IdKhoaHoc);
+                var KhoaHoc = await GetByIdAsync(request.IdKhoaHoc);
                 if (KhoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
-                var entity = await _phanService.GetByIdAsync(request.Id);
+                var entity = await GetByIdAsync(request.Id);
                 if (entity == null)throw new Exception("Không tìm thấy phần học");
-
-                var khoaHoc = await _khoaHocService.GetByIdAsync(request.IdKhoaHoc);
-                if (khoaHoc == null)throw new Exception("Không tìm thấy khóa học");
 
                 entity.IdKhoaHoc = request.IdKhoaHoc;
                 entity.TenPhan = request.TenPhan;
-                entity.UpdatedDate = DateTime.UtcNow;
-                //entity.UpdatedBy = 
                 entity.ThuTuSapXep = request.ThuTuSapXep;
 
-                await _phanService.UpdateAsync(entity);
-                await _phanService.SaveAsync();
+                await UpdateAsync(entity);
+                await SaveAsync();
                 return _mapper.Map<Phan,PhanHocDto>(entity);
             }
             catch (Exception ex)
@@ -117,10 +103,10 @@ namespace Eduverse.Service.PhanService
         {
             try
             {
-                var phanHoc = await _phanService.GetByIdAsync(id);
+                var phanHoc = await GetByIdAsync(id);
                 if (phanHoc == null) throw new Exception("Không tìm thấy phần học");
 
-                var khoaHoc = await _khoaHocService.GetByIdAsync(phanHoc.IdKhoaHoc);
+                var khoaHoc = await GetByIdAsync(phanHoc.IdKhoaHoc);
                 if (khoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
 
@@ -139,8 +125,8 @@ namespace Eduverse.Service.PhanService
                 await _taiLieuService.DeleteAsync(taiLieus);
 
 
-                await _phanService.DeleteAsync(phanHoc);
-                await _phanService.SaveAsync();
+                await DeleteAsync(phanHoc);
+                await SaveAsync();
                 return true;
             }
             catch(Exception ex)

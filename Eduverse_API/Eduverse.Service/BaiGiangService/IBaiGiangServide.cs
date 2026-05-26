@@ -12,5 +12,9 @@ namespace Eduverse.Service.BaiGiangService
     public interface IBaiGiangService : IService<Model.Entities.BaiGiang>
     {
         Task<BaiGiangDto> CreateBaiGiang(CreateBaiGiangRequest request);
+
+        Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request);
+
+        Task<bool> DeleteBaiGiang(Guid id);
     }
 }

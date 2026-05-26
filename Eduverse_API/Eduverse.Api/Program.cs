@@ -17,6 +17,7 @@ using CloudinaryDotNet;
 using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.CloudinaryService;
 using Eduverse.Repository.Common;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Eduverse.Api
 {
@@ -61,6 +62,7 @@ namespace Eduverse.Api
             });
 
 
+            // Cloudinary
             var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
 
             builder.Services.Configure<CloudinarySettings>(cloudinarySettings);
@@ -72,10 +74,25 @@ namespace Eduverse.Api
             );
 
             var cloudinary = new Cloudinary(account);
+            //tăng thời gian upload
+            cloudinary.Api.Timeout = 60 * 60 * 1000;
+
+            //câu hình dung lượng file upload
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 2147483648; // 2GB
+            });
+
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 2147483648; // 2GB
+            });
 
             builder.Services.AddSingleton(cloudinary);
             builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
             
+
             // JWT
             builder.Services.AddAuthentication(options =>
             {
@@ -158,7 +175,8 @@ namespace Eduverse.Api
             });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -239,9 +257,8 @@ namespace Eduverse.Api
                 var impl = serviceTypes.FirstOrDefault(c => c.IsClass && intf.Name.Substring(1) == c.Name);
                 if (impl != null) services.AddScoped(intf, impl);
             }
-
-
         }
+
     }
 
 

@@ -13,18 +13,20 @@ namespace Eduverse.Api.Controller
     [ApiController]
     public class BaiGiangController : ControllerBase
     {
-        private readonly IPhanService _phanService;
         private readonly IBaiGiangService _baiGiangService;
 
         public BaiGiangController(IPhanService phanService, IBaiGiangService baiGiangService)
         {
-            _phanService = phanService;
+
             _baiGiangService = baiGiangService;
 
         }
 
         [HttpPost("create-baigiang")]
-        public async Task<DataResponse<BaiGiangDto>> CreateBaiGiang(CreateBaiGiangRequest request)
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(2147483648)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 2147483648)]
+        public async Task<DataResponse<BaiGiangDto>> CreateBaiGiang([FromForm] CreateBaiGiangRequest request)
         {
             try
             {
@@ -36,5 +38,39 @@ namespace Eduverse.Api.Controller
                 return DataResponse<BaiGiangDto>.False(ex.Message);
             }
         }
+
+
+        [HttpPut("update-baigiang")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(2147483648)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 2147483648)]
+        public async Task<DataResponse<BaiGiangDto>> UpdateBaiGiang([FromForm] UpdateBaiGiangRequest request)
+        {
+            try
+            {
+                var result = await _baiGiangService.UpdateBaiGiang(request);
+                return DataResponse<BaiGiangDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<BaiGiangDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpDelete("delete-baigiang")]
+        public async Task<DataResponse<bool>> DeleteBaiGiang(Guid id)
+        {
+            try
+            {
+                var result = await _baiGiangService.DeleteBaiGiang(id);
+                return DataResponse<bool>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<bool>.False(ex.Message);
+            }
+        }
+
     }
 }

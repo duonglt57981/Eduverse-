@@ -21,67 +21,64 @@ namespace Eduverse.Service.CloudinaryService
             _cloudinary = cloudinary;
         }
 
+
         public async Task<CloudinaryDto> UploadVideoBaiGiangAsync(IFormFile file)
         {
             try
             {
-                // Validate file
                 if (file == null || file.Length == 0)
                     throw new Exception("File không hợp lệ");
 
-                // Validate dung lượng (500MB)
-                const long maxSize = 500 * 1024 * 1024;
-
+                const long maxSize = 2L * 1024 * 1024 * 1024;
                 if (file.Length > maxSize)
-                    throw new Exception("Video không được vượt quá 500MB");
+                    throw new Exception("Video không được vượt quá 2GB");
 
-                // Validate định dạng
-                var allowedExtensions = new[] { ".mp4", ".mov", ".avi", ".mkv" };
-
+                var allowedExtensions = new[] { ".mp4", ".mov", ".avi", ".mkv", ".webm" };
                 var extension = Path.GetExtension(file.FileName).ToLower();
-
                 if (!allowedExtensions.Contains(extension))
-                    throw new Exception("Định dạng video không hỗ trợ");
+                    throw new Exception("Định dạng video không hỗ trợ. Các định dạng hỗ trợ: mp4, mov, avi, mkv, webm");
 
+                // 4. Upload video
                 await using var stream = file.OpenReadStream();
 
                 var uploadParams = new VideoUploadParams
                 {
                     File = new FileDescription(file.FileName, stream),
-
                     Folder = "eduverse/bai-giang",
-
                     UseFilename = true,
                     UniqueFilename = true,
                     Overwrite = false
                 };
 
-                var uploadResult = await _cloudinary
-                    .UploadAsync(uploadParams);
+                var uploadResult = await _cloudinary.UploadLargeAsync(uploadParams);
 
-
-                // Check lỗi cloudinary
+                // 5. Kiểm tra kết quả upload
                 if (uploadResult == null)
-                    throw new Exception("Upload video thất bại");
+                    throw new Exception("Upload video thất bại: Không nhận được phản hồi từ Cloudinary");
 
                 if (uploadResult.Error != null)
-                    throw new Exception(uploadResult.Error.Message);
+                    throw new Exception($"Upload video thất bại: {uploadResult.Error.Message}");
 
                 if (uploadResult.SecureUrl == null)
-                    throw new Exception("Không lấy được URL video");
+                    throw new Exception("Upload video thất bại: Không lấy được URL video");
+
+                // 6. Tính thời lượng video
+                var thoiLuong = 0;
+                if (uploadResult.Duration > 0)
+                {
+                    thoiLuong = (int)Math.Round(uploadResult.Duration);
+                }
 
                 return new CloudinaryDto
                 {
                     URLBaiGiang = uploadResult.SecureUrl.ToString(),
-
                     IdVideoBaiGiang = uploadResult.PublicId,
-
-                    ThoiLuong = uploadResult.Duration != null? (int)Math.Round(uploadResult.Duration) : 0
+                    ThoiLuong = thoiLuong
                 };
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                throw new Exception($"Upload video thất bại: {ex.Message}");
             }
         }
 

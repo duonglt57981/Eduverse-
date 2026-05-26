@@ -36,7 +36,6 @@ namespace Eduverse.Service.KhoaHocService
 {
     public class KhoaHocService : Service<KhoaHoc>, IKhoaHocService
     {
-        private readonly IKhoaHocService _khoaHocService;
         private readonly IPhanService _phanService;
         private readonly IBaiGiangService _baiGiangService;
         private readonly ITaiLieuService _taiLieuService;
@@ -47,7 +46,6 @@ namespace Eduverse.Service.KhoaHocService
 
         public KhoaHocService(
             IKhoaHocRepository khoaHocRepository,
-            IKhoaHocService khoaHocService,
             IPhanService phanService,
             IBaiGiangService baiGiangService,
             ITaiLieuService taiLieuService,
@@ -57,7 +55,6 @@ namespace Eduverse.Service.KhoaHocService
             IMapper mapper
         ) : base(khoaHocRepository)
         {
-            _khoaHocService = khoaHocService;
             _phanService = phanService;
             _baiGiangService = baiGiangService;
             _taiLieuService = taiLieuService;
@@ -72,7 +69,7 @@ namespace Eduverse.Service.KhoaHocService
             try
             {
                 var query =
-                    from kh in _khoaHocService.GetQueryable()
+                    from kh in GetQueryable()
 
                     select new KhoaHocDto
                     {
@@ -193,7 +190,7 @@ namespace Eduverse.Service.KhoaHocService
                 if (dangKy == null) throw new Exception("Người dùng chưa đăng ký khóa học này");
 
 
-                var khoaHoc = await (from kh in _khoaHocService.GetQueryable()
+                var khoaHoc = await (from kh in GetQueryable()
                                      where kh.Id == idKhoaHoc
                                      select new KhoaHocDto
                                      {
@@ -201,9 +198,6 @@ namespace Eduverse.Service.KhoaHocService
                                          TieuDe = kh.TieuDe,
                                          MoTa = kh.MoTa,
                                          HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
-                                         TongBaiGiang = kh.TongBaiGiang,
-                                         TongThoiLuong = kh.TongThoiLuong,
-
                                          DanhSachPhanHoc = (
                                          from ph in _phanService.GetQueryable()
                                          where ph.IdKhoaHoc == kh.Id
@@ -261,18 +255,13 @@ namespace Eduverse.Service.KhoaHocService
         {
             try
             {
-                ////var userIdClaim = _httpContextAccessor.HttpContext?.User?
-                ////    .FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                //Guid.TryParse(userIdClaim, out Guid userId);
-
                 if (string.IsNullOrWhiteSpace(request.TieuDe))
                     throw new Exception("Tên khóa học không được để trống");
 
                 if (request.DanhSachDanhMuc == null || !request.DanhSachDanhMuc.Any())
                     throw new Exception("Vui lòng chọn danh mục");
 
-                var khoaHoc = new KhoaHocDto
+                var khoaHoc = new KhoaHoc
                 {
                     TieuDe = request.TieuDe,
                     MoTa = request.MoTa,
@@ -281,10 +270,8 @@ namespace Eduverse.Service.KhoaHocService
                     LoaiKhoaHoc = request.Gia == null ? "Khóa học miễn phí": "Khóa học trả phí",
                     URLViewPreviewKhoaHoc = request.URLViewPreviewKhoaHoc,
                     HinhAnhKhoaHoc = request.HinhAnhKhoaHoc,
-                    CreatedDate = DateTime.UtcNow,
-                    //CreatedBy = 
                 };
-                await _khoaHocService.CreateAsync(khoaHoc);
+                await CreateAsync(khoaHoc);
 
 
                 var khoaHocDanhMucs = request.DanhSachDanhMuc
@@ -309,12 +296,7 @@ namespace Eduverse.Service.KhoaHocService
         {
             try
             {
-                ////var userIdClaim = _httpContextAccessor.HttpContext?.User?
-                ////    .FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                //Guid.TryParse(userIdClaim, out Guid userId);
-
-                var entity = await _khoaHocService.GetByIdAsync(request.Id);
+                var entity = await GetByIdAsync(request.Id);
 
                 if (entity == null || entity.IsDeleted)throw new Exception("Không tìm thấy khóa học");
 
@@ -331,10 +313,8 @@ namespace Eduverse.Service.KhoaHocService
                 entity.LoaiKhoaHoc = request.Gia == null ? "Khóa học miễn phí" : "Khóa học trả phí";
                 entity.HinhAnhKhoaHoc = request.HinhAnhKhoaHoc;
                 entity.URLViewPreviewKhoaHoc = request.URLViewPreviewKhoaHoc;
-                entity.UpdatedDate = DateTime.UtcNow;
-                //entity.UpdatedBy = userId;
 
-                await _khoaHocService.UpdateAsync(entity);
+                await UpdateAsync(entity);
 
 
                 var danhMucCu = await _danhMuc_KhoaHocService
@@ -386,7 +366,7 @@ namespace Eduverse.Service.KhoaHocService
                     await _danhMuc_KhoaHocService.CreateAsync(khoaHocDanhMuc);
                 }
 
-                await _khoaHocService.SaveAsync();
+                await SaveAsync();
                 return _mapper.Map<KhoaHoc,KhoaHocDto>(entity);
             }
             catch (Exception ex)
@@ -400,10 +380,7 @@ namespace Eduverse.Service.KhoaHocService
         {
             try
             {
-                //var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                //Guid userId = Guid.Parse(userIdClaim);
-
-                var khoaHoc = await _khoaHocService.GetByIdAsync(id);
+                var khoaHoc = await GetByIdAsync(id);
                     
 
                 if (khoaHoc == null)
@@ -432,8 +409,8 @@ namespace Eduverse.Service.KhoaHocService
                 await _taiLieuService.DeleteAsync(taiLieus);
 
 
-                await _khoaHocService.DeleteAsync(khoaHoc);
-                await _khoaHocService.SaveAsync();
+                await DeleteAsync(khoaHoc);
+                await SaveAsync();
                 return true;
             }
             catch (Exception ex)

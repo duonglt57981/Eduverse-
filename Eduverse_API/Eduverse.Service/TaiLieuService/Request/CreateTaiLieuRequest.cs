@@ -7,7 +7,12 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.TaiLieuService.Request
 {
-    public class CreateTaiLieuRequest : TaiLieuDto
+    public class CreateTaiLieuRequest 
     {
+        public string? LoaiTaiLieu { get; set; }
+        public string? TenTaiLieu { get; set; }
+        public string? URL { get; set; }
+        public string? TrangThai { get; set; }
+        public Guid? IdBaiGiang { get; set; }
     }
 }
