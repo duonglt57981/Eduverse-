@@ -20,9 +20,11 @@ namespace Eduverse.Service.TaiLieuService
         private readonly IMapper _mapper;
         private IBaiGiangRepository _baiGiangRepository;
         public TaiLieuService( 
+            IBaiGiangRepository baiGiangRepository,
             ITaiLieuRepository taiLieuRepository,
             IMapper mapper) : base(taiLieuRepository)
         {
+            _baiGiangRepository = baiGiangRepository;
             _mapper = mapper;
         }
 
@@ -32,7 +34,7 @@ namespace Eduverse.Service.TaiLieuService
             if (baiGiang == null) throw new Exception("Không tìm thấy bài giảng");
 
 
-            var entity = new TaiLieuDto
+            var entity = new TaiLieu
             {
                 IdBaiGiang = request.IdBaiGiang,
                 TenTaiLieu = request.TenTaiLieu,
