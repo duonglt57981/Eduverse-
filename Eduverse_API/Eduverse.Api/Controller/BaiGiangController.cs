@@ -23,9 +23,9 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost("create-baigiang")]
-        [Consumes("multipart/form-data")]
-        [RequestSizeLimit(2147483648)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 2147483648)]
+        [RequestSizeLimit(2L * 1024 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024)]
+        [DisableRequestSizeLimit]
         public async Task<DataResponse<BaiGiangDto>> CreateBaiGiang([FromForm] CreateBaiGiangRequest request)
         {
             try

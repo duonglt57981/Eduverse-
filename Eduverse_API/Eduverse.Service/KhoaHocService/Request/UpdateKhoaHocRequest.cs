@@ -1,4 +1,5 @@
 ﻿using Eduverse.Service.KhoaHocService.Dto;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,8 @@ namespace Eduverse.Service.KhoaHocService.Request
         public string? HinhAnhKhoaHoc { get; set; }
         public string? URLViewPreviewKhoaHoc { get; set; }
         public string? CapDo { get; set; }
+
+        public IFormFile? Img { get; set; }
 
 
 

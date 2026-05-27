@@ -74,18 +74,21 @@ namespace Eduverse.Api
             );
 
             var cloudinary = new Cloudinary(account);
-            //tăng thời gian upload
-            cloudinary.Api.Timeout = 60 * 60 * 1000;
-
-            //câu hình dung lượng file upload
-            builder.Services.Configure<FormOptions>(options =>
-            {
-                options.MultipartBodyLengthLimit = 2147483648; // 2GB
-            });
 
             builder.WebHost.ConfigureKestrel(options =>
             {
-                options.Limits.MaxRequestBodySize = 2147483648; // 2GB
+                options.Limits.MaxRequestBodySize = 2L * 1024 * 1024 * 1024; // 2GB
+                options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(5);
+                options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
+            });
+
+            // Tắt size limit của form (mặc định chỉ 128MB)
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024;
+                options.ValueLengthLimit = int.MaxValue;
+                options.MultipartHeadersLengthLimit = int.MaxValue;
+                options.BufferBodyLengthLimit = 2L * 1024 * 1024 * 1024;
             });
 
             builder.Services.AddSingleton(cloudinary);

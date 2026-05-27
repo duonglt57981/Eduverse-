@@ -89,44 +89,70 @@ namespace Eduverse.Service.BaiGiangService
             }
         }
 
-
+      
         public async Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request)
         {
             try
             {
                 var entity = await GetByIdAsync(request.Id);
-                if (entity == null) throw new Exception("Không tìm thấy bài giảng");
+                if (entity == null)throw new Exception("Không tìm thấy bài giảng");
 
-                var phanHoc = await GetByIdAsync(request.IdPhan);
-                if (phanHoc == null) throw new Exception("Không tim thấy phần học");
+                if((entity.URLBaiGiang == null && entity.IdVideoBaiGiang == null) || request.Video == null)
+                {
+                    throw new Exception("Chưa có bài giảng");
+                }
 
-                if (request.Video == null)
-                    throw new Exception("Vui lòng chọn video");
+                if (string.IsNullOrWhiteSpace(request.TieuDe)) throw new Exception("Tên bài giảng không được để trống");
 
-                if (string.IsNullOrWhiteSpace(request.TieuDe))
-                    throw new Exception("Tên bài giảng không được để trống");
+                var oldThoiLuong = entity.ThoiLuong;
 
-                int? oldThoiLuong = entity.ThoiLuong;
+                if (request.Video != null)
+                {
+                    var (newPublicId, newUrl, thoiLuong) = await _cloudinaryService.UpdateVideoAsync(request.Video, entity.IdVideoBaiGiang);
 
-                var upLoadResult = await _cloudinaryService.UploadVideoBaiGiangAsync(request.Video);
+                    entity.IdVideoBaiGiang = newPublicId;
+                    entity.URLBaiGiang = newUrl;
+                    entity.ThoiLuong = thoiLuong;
+                    entity.LoaiBaiGiang = "Bài giảng video";
+                }
 
-                int thoiLuongBaiGiang = (int)upLoadResult.ThoiLuong;
+                if (request.IdPhan.HasValue && request.IdPhan != entity.IdPhan)
+                {
+                    var phanHoc = await _phanRepository.GetByIdAsync(request.IdPhan.Value);
+                    if (phanHoc == null)
+                        throw new Exception("Không tìm thấy phần học");
 
-                entity.IdPhan = phanHoc.Id;
+                    entity.IdPhan = phanHoc.Id;
+                }
+                else
+                {
+                    entity.IdVideoBaiGiang = entity.IdVideoBaiGiang;
+                    entity.URLBaiGiang = entity.URLBaiGiang;
+                    entity.ThoiLuong = entity.ThoiLuong;
+                    entity.LoaiBaiGiang = entity.LoaiBaiGiang;
+                }
+
+                var thuTuDaTon = await GetQueryable()
+                .AnyAsync(x =>
+                x.IdPhan == request.IdPhan &&
+                x.ThuTuSapXep == request.ThuTuSapXep &&
+                x.Id != request.Id &&
+                !x.IsDeleted);
+
+                if (thuTuDaTon)
+                    throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại bài giảng này");
+
                 entity.TieuDe = request.TieuDe;
-                entity.LoaiBaiGiang = request.Video == null ? "Bài giảng doccument" : "Bài giảng video";
-                entity.IdVideoBaiGiang = upLoadResult.IdVideoBaiGiang;
-                entity.URLBaiGiang = upLoadResult.URLBaiGiang;
                 entity.ThuTuSapXep = request.ThuTuSapXep;
-                entity.ThoiLuong = thoiLuongBaiGiang;
                 entity.LaBaiGiangFree = request.LaBaiGiangFree;
                 entity.TrangThai = request.TrangThai;
 
                 await UpdateAsync(entity);
                 await SaveAsync();
+
                 return _mapper.Map<BaiGiang, BaiGiangDto>(entity);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }

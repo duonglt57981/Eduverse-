@@ -84,6 +84,17 @@ namespace Eduverse.Service.PhanService
                 var entity = await GetByIdAsync(request.Id);
                 if (entity == null)throw new Exception("Không tìm thấy phần học");
 
+                var thuTuDaTon = await GetQueryable()
+                .AnyAsync(x =>
+                x.IdKhoaHoc == request.IdKhoaHoc &&
+                x.ThuTuSapXep == request.ThuTuSapXep &&
+                x.Id != request.Id &&
+                !x.IsDeleted);
+
+                if (thuTuDaTon)
+                    throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại trong phần học này");
+
+
                 entity.IdKhoaHoc = request.IdKhoaHoc;
                 entity.TenPhan = request.TenPhan;
                 entity.ThuTuSapXep = request.ThuTuSapXep;

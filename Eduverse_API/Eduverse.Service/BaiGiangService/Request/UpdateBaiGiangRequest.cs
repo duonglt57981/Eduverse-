@@ -21,6 +21,6 @@ namespace Eduverse.Service.BaiGiangService.Request
         public Guid? IdPhan { get; set; }
 
         //
-        public IFormFile Video { get; set; }
+        public IFormFile? Video { get; set; }
     }
 }

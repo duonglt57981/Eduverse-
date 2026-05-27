@@ -12,5 +12,7 @@ namespace Eduverse.Service.CloudinaryService.Dto
         public string? URLBaiGiang { get; set; }
         public int? ThoiLuong { get; set; }
 
+        public string? UrlImg { get; set; }
+
     }
 }

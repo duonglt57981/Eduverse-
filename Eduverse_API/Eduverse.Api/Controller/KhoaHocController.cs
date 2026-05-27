@@ -52,6 +52,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPost("create-khoahoc")]
+        [Consumes("multipart/form-data")]
         public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc([FromBody] CreateKhoaHocRequest request)
         {
             try
