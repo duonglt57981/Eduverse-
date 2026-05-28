@@ -118,7 +118,7 @@ namespace Eduverse.Service.KhoaHocService
                     {
                         query = query.Where(x =>
                             x.TieuDe.Contains(search.Keyword) ||
-                            x.MoTa.Contains(search.Keyword));
+                            x.LoaiKhoaHoc.Contains(search.Keyword));
                     }
 
                     if (!string.IsNullOrWhiteSpace(search.TieuDe))
@@ -191,87 +191,92 @@ namespace Eduverse.Service.KhoaHocService
 
         public async Task<KhoaHocDto> GetLearning(Guid idKhoaHoc, Guid idNguoiDung)
         {
-            var dangKy = await _dangKyKhoaHocService
+            try
+            {
+                var dangKy = await _dangKyKhoaHocService
                 .GetQueryable()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x =>
-                    x.IdDangKi == idKhoaHoc &&
-                    x.IdNguoiDangKi == idNguoiDung);
+                .FirstOrDefaultAsync(x =>x.IdDangKi == idKhoaHoc &&x.IdNguoiDangKi == idNguoiDung);
 
-            if (dangKy == null)
-                throw new Exception("Người dùng chưa đăng ký khóa học này");
+                if (dangKy == null)
+                    throw new Exception("Người dùng chưa đăng ký khóa học này");
 
-            var khoaHoc = await (
-                from kh in GetQueryable().AsNoTracking()
-                where kh.Id == idKhoaHoc
-                select new KhoaHocDto
-                {
-                    Id = kh.Id,
-                    TieuDe = kh.TieuDe,
-                    MoTa = kh.MoTa,
-                    HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
+                var khoaHoc = await (
+                    from kh in GetQueryable().AsNoTracking()
+                    where kh.Id == idKhoaHoc
+                    select new KhoaHocDto
+                    {
+                        Id = kh.Id,
+                        TieuDe = kh.TieuDe,
+                        MoTa = kh.MoTa,
+                        HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
 
-                    DanhSachPhanHoc = (
-                        from ph in _phanService.GetQueryable().AsNoTracking()
-                        where ph.IdKhoaHoc == kh.Id
-                        orderby ph.ThuTuSapXep
-                        select new PhanHocDto
-                        {
-                            Id = ph.Id,
-                            IdKhoaHoc = ph.IdKhoaHoc,
-                            TenPhan = ph.TenPhan,
-                            MieuTa = ph.MieuTa,
-                            ThuTuSapXep = ph.ThuTuSapXep,
+                        DanhSachPhanHoc = (
+                            from ph in _phanService.GetQueryable().AsNoTracking()
+                            where ph.IdKhoaHoc == kh.Id
+                            orderby ph.ThuTuSapXep
+                            select new PhanHocDto
+                            {
+                                Id = ph.Id,
+                                IdKhoaHoc = ph.IdKhoaHoc,
+                                TenPhan = ph.TenPhan,
+                                MieuTa = ph.MieuTa,
+                                ThuTuSapXep = ph.ThuTuSapXep,
 
-                            DanhSachBaiGiang = (
-                                from bg in _baiGiangService.GetQueryable().AsNoTracking()
-                                where bg.IdPhan == ph.Id
-                                orderby bg.ThuTuSapXep
-                                select new BaiGiangDto
-                                {
-                                    Id = bg.Id,
-                                    IdPhan = bg.IdPhan,
+                                DanhSachBaiGiang = (
+                                    from bg in _baiGiangService.GetQueryable().AsNoTracking()
+                                    where bg.IdPhan == ph.Id
+                                    orderby bg.ThuTuSapXep
+                                    select new BaiGiangDto
+                                    {
+                                        Id = bg.Id,
+                                        IdPhan = bg.IdPhan,
 
-                                    TieuDe = bg.TieuDe,
-                                    LoaiBaiGiang = bg.LoaiBaiGiang,
+                                        TieuDe = bg.TieuDe,
+                                        LoaiBaiGiang = bg.LoaiBaiGiang,
 
-                                    IdVideoBaiGiang = bg.IdVideoBaiGiang,
-                                    URLBaiGiang = bg.URLBaiGiang,
+                                        IdVideoBaiGiang = bg.IdVideoBaiGiang,
+                                        URLBaiGiang = bg.URLBaiGiang,
 
-                                    ThuTuSapXep = bg.ThuTuSapXep,
-                                    ThoiLuong = bg.ThoiLuong,
+                                        ThuTuSapXep = bg.ThuTuSapXep,
+                                        ThoiLuong = bg.ThoiLuong,
 
-                                    LaBaiGiangFree = bg.LaBaiGiangFree,
+                                        LaBaiGiangFree = bg.LaBaiGiangFree,
 
-                                    DanhSachTaiLieu = (
-                                        from tl in _taiLieuService.GetQueryable().AsNoTracking()
-                                        where tl.IdBaiGiang == bg.Id
-                                        select new TaiLieuDto
-                                        {
-                                            Id = tl.Id,
-                                            IdBaiGiang = tl.IdBaiGiang,
+                                        DanhSachTaiLieu = (
+                                            from tl in _taiLieuService.GetQueryable().AsNoTracking()
+                                            where tl.IdBaiGiang == bg.Id
+                                            select new TaiLieuDto
+                                            {
+                                                Id = tl.Id,
+                                                IdBaiGiang = tl.IdBaiGiang,
 
-                                            TenTaiLieu = tl.TenTaiLieu,
-                                            LoaiTaiLieu = tl.LoaiTaiLieu,
-                                            URL = tl.URL
-                                        }
-                                    ).ToList()
-                                }
-                            ).ToList()
-                        }
-                    ).ToList()
-                }
-            ).FirstOrDefaultAsync();
+                                                TenTaiLieu = tl.TenTaiLieu,
+                                                LoaiTaiLieu = tl.LoaiTaiLieu,
+                                                URL = tl.URL
+                                            }
+                                        ).ToList()
+                                    }
+                                ).ToList()
+                            }
+                        ).ToList()
+                    }
+                ).FirstOrDefaultAsync();
 
-            if (khoaHoc == null)
-                throw new Exception("Không tìm thấy khóa học");
+                if (khoaHoc == null)throw new Exception("Không tìm thấy khóa học");
 
-            khoaHoc.TongBaiGiang = khoaHoc.DanhSachPhanHoc
-                .Sum(x => x.DanhSachBaiGiang.Count);
+                khoaHoc.SoLuongHocVien = await _dangKyKhoaHocService.Where(x => x.IdDangKi == idKhoaHoc).CountAsync();
+                    
+                khoaHoc.TongBaiGiang = khoaHoc.DanhSachPhanHoc.Sum(x => x.DanhSachBaiGiang.Count);
 
-            khoaHoc.TongThoiLuong = khoaHoc.DanhSachPhanHoc
-                .Sum(x => x.DanhSachBaiGiang.Sum(bg => bg.ThoiLuong ?? 0));
-            return khoaHoc;
+                khoaHoc.TongThoiLuong = khoaHoc.DanhSachPhanHoc.Sum(x => x.DanhSachBaiGiang.Sum(bg => bg.ThoiLuong ?? 0));
+
+                return khoaHoc;
+            }
+            catch(Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
 
@@ -285,9 +290,15 @@ namespace Eduverse.Service.KhoaHocService
                 if (request.DanhSachDanhMuc == null || !request.DanhSachDanhMuc.Any())
                     throw new Exception("Vui lòng chọn danh mục");
 
+                if (request.Gia < 0)
+                    throw new Exception("Giá không hợp lệ");
+
+                if (request.GiaGoc < request.Gia)
+                    throw new Exception("Giá gốc phải lớn hơn hoặc bằng giá");
+
+
                 var listDM =  _danhMucRepository.GetQueryable();
                 var listDMChon = request.DanhSachDanhMuc;
-
                 foreach(var item in listDMChon)
                 {
                     if ((await listDM.FirstAsync(x => x.Id == item)) == null)

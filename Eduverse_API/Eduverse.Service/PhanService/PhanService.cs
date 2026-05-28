@@ -51,6 +51,9 @@ namespace Eduverse.Service.PhanService
                 var KhoaHoc = await _khoaHocRepository.GetByIdAsync(request.IdKhoaHoc);
                 if (KhoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
+                if (string.IsNullOrWhiteSpace(request.TenPhan))
+                    throw new Exception("Vui lòng nhập tên phần học");
+
                 var maxThuTu = await GetQueryable()
                     .Where(x => x.IdKhoaHoc == KhoaHoc.Id)
                     .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
@@ -78,14 +81,16 @@ namespace Eduverse.Service.PhanService
         {
             try
             {
-                var KhoaHoc = await GetByIdAsync(request.IdKhoaHoc);
+                var KhoaHoc = await _khoaHocRepository.GetByIdAsync(request.IdKhoaHoc);
                 if (KhoaHoc == null) throw new Exception("Không tìm thấy khóa học");
 
                 var entity = await GetByIdAsync(request.Id);
                 if (entity == null)throw new Exception("Không tìm thấy phần học");
 
-                var thuTuDaTon = await GetQueryable()
-                .AnyAsync(x =>
+                if (string.IsNullOrWhiteSpace(request.TenPhan))
+                    throw new Exception("Vui lòng nhập tên phần học");
+
+                var thuTuDaTon = await GetQueryable().AnyAsync(x =>
                 x.IdKhoaHoc == request.IdKhoaHoc &&
                 x.ThuTuSapXep == request.ThuTuSapXep &&
                 x.Id != request.Id &&
@@ -119,7 +124,6 @@ namespace Eduverse.Service.PhanService
 
                 var khoaHoc = await GetByIdAsync(phanHoc.IdKhoaHoc);
                 if (khoaHoc == null) throw new Exception("Không tìm thấy khóa học");
-
 
                 var BaiGiangs = await _baiGiangService
                     .GetQueryable()

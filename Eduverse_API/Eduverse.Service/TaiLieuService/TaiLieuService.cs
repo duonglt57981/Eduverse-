@@ -33,6 +33,7 @@ namespace Eduverse.Service.TaiLieuService
             var baiGiang = await _baiGiangRepository.GetByIdAsync(request.IdBaiGiang);
             if (baiGiang == null) throw new Exception("Không tìm thấy bài giảng");
 
+            if (string.IsNullOrWhiteSpace(request.TenTaiLieu)) { }
 
             var entity = new TaiLieu
             {

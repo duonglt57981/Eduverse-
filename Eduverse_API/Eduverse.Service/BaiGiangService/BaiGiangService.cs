@@ -97,12 +97,11 @@ namespace Eduverse.Service.BaiGiangService
                 var entity = await GetByIdAsync(request.Id);
                 if (entity == null)throw new Exception("Không tìm thấy bài giảng");
 
-                if((entity.URLBaiGiang == null && entity.IdVideoBaiGiang == null) || request.Video == null)
-                {
-                    throw new Exception("Chưa có bài giảng");
-                }
+                var phanHoc = await _phanRepository.GetByIdAsync(request.IdPhan);
+                if (phanHoc == null)throw new Exception("Không tìm thấy phần học");
 
-                if (string.IsNullOrWhiteSpace(request.TieuDe)) throw new Exception("Tên bài giảng không được để trống");
+                if (string.IsNullOrWhiteSpace(request.TieuDe)) 
+                    throw new Exception("Tên bài giảng không được để trống");
 
                 var oldThoiLuong = entity.ThoiLuong;
 
@@ -115,21 +114,17 @@ namespace Eduverse.Service.BaiGiangService
                     entity.ThoiLuong = thoiLuong;
                     entity.LoaiBaiGiang = "Bài giảng video";
                 }
-
-                if (request.IdPhan.HasValue && request.IdPhan != entity.IdPhan)
-                {
-                    var phanHoc = await _phanRepository.GetByIdAsync(request.IdPhan.Value);
-                    if (phanHoc == null)
-                        throw new Exception("Không tìm thấy phần học");
-
-                    entity.IdPhan = phanHoc.Id;
-                }
                 else
                 {
                     entity.IdVideoBaiGiang = entity.IdVideoBaiGiang;
                     entity.URLBaiGiang = entity.URLBaiGiang;
                     entity.ThoiLuong = entity.ThoiLuong;
                     entity.LoaiBaiGiang = entity.LoaiBaiGiang;
+                }
+
+                if ((entity.URLBaiGiang == null && entity.IdVideoBaiGiang == null) || request.Video == null)
+                {
+                    throw new Exception("Chưa có nội dung bài giảng");
                 }
 
                 var thuTuDaTon = await GetQueryable()
@@ -141,7 +136,7 @@ namespace Eduverse.Service.BaiGiangService
 
                 if (thuTuDaTon)
                     throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại bài giảng này");
-
+                entity.IdPhan = request.IdPhan;
                 entity.TieuDe = request.TieuDe;
                 entity.ThuTuSapXep = request.ThuTuSapXep;
                 entity.LaBaiGiangFree = request.LaBaiGiangFree;
