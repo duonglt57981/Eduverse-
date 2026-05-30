@@ -37,7 +37,7 @@ namespace Eduverse.Service.TaiLieuService
 
             var entity = new TaiLieu
             {
-                IdBaiGiang = request.IdBaiGiang,
+                IdBaiGiang = request.IdBaiGiang.Value,
                 TenTaiLieu = request.TenTaiLieu,
                 URL = request.URL,
                 LoaiTaiLieu = request.LoaiTaiLieu,
@@ -58,7 +58,7 @@ namespace Eduverse.Service.TaiLieuService
             var entity = await GetByIdAsync(request.Id);
             if (entity == null) throw new Exception("Không tìm thấy tài liệu");
 
-            entity.IdBaiGiang = request.IdBaiGiang;
+            entity.IdBaiGiang = request.IdBaiGiang.Value;
             entity.TenTaiLieu = request.TenTaiLieu;
             entity.URL = request.URL;
             entity.LoaiTaiLieu = request.LoaiTaiLieu;
