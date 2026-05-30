@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import KhoaHocService from "@/src/services/KhoaHocService";
+import { KhoaHocType } from "@/src/types/KhoaHoc/dto";
 import { BaiGiangType } from "@/src/types/BaiGiang/BaiGiangDto";
 import { TaiLieuType } from "@/src/types/TaiLieu/TaiLieuDto";
 import {
@@ -41,99 +42,103 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "@mui/icons-material";
-import { KhoaHocType } from "@/src/types/KhoaHoc/dto";
 
+// ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  red: "#c0392b",
+  red:      "#c0392b",
   redHover: "#a93226",
   redLight: "#fdecea",
-  redMid: "#e74c3c",
+  redMid:   "#e74c3c",
 } as const;
 
+// ─── Design tokens (light only) ───────────────────────────────────────────────
 const T = {
-  bg: "#ffffff",
-  bgAlt: "#f7f9fa",
-  bgCard: "#ffffff",
-  bgHover: "#f0f0f0",
-  bgActive: "#fdecea",
-  border: "#e4e4e4",
-  text: "#1c1d1f",
-  textSub: "#6a6f73",
-  appbar: "#ffffff",
+  bg:          "#ffffff",
+  bgAlt:       "#f7f9fa",
+  bgCard:      "#ffffff",
+  bgHover:     "#f0f0f0",
+  border:      "#e4e4e4",
+  text:        "#1c1d1f",
+  textSub:     "#6a6f73",
+  appbar:      "#ffffff",
   sidebarHead: "#f0f0f0",
-  divider: "#e4e4e4",
-};
+  divider:     "#e4e4e4",
+} as const;
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const SIDEBAR_W   = 370;
+const HEADER_H    = 62;
 
 const KhoaHocServiceInstance = new KhoaHocService();
-const SIDEBAR_W = 370;
 
+// ─────────────────────────────────────────────────────────────────────────────
 const KhoaHocPage = () => {
-  // ── mount guard: tránh hydration mismatch ────────────────────────────────
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [khoaHoc,          setKhoaHoc]          = useState<KhoaHocType | null>(null);
+  const [loading,          setLoading]          = useState(false);
+  const [idKhoaHoc,        setIdKhoaHoc]        = useState("");
+  const [idNguoiDung,      setIdNguoiDung]      = useState("");
+  const [error,            setError]            = useState("");
+  const [baiGiangDangPhat, setBaiGiangDangPhat] = useState<BaiGiangType | null>(null);
+  const [danhSachTatCa,    setDanhSachTatCa]    = useState<BaiGiangType[]>([]);
+  const [phanDangMo,       setPhanDangMo]       = useState<string[]>([]);
+  const [hoanThanh,        setHoanThanh]        = useState<Set<string>>(new Set());
+  const [sidebarOpen,      setSidebarOpen]      = useState(true);
 
-  const [khoaHoc, setKhoaHoc] = useState<KhoaHocType | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [idKhoaHoc, setIdKhoaHoc] = useState("");
-  const [idNguoiDung, setIdNguoiDung] = useState("");
-  const [error, setError] = useState("");
-  const [baiGiangDangPhat, setBaiGiangDangPhat] = useState<BaiGiangType | null>(
-    null,
-  );
-  const [danhSachTatCa, setDanhSachTatCa] = useState<BaiGiangType[]>([]);
-  const [phanDangMo, setPhanDangMo] = useState<string[]>([]);
-  const [hoanThanh, setHoanThanh] = useState<Set<string>>(new Set());
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef      = useRef<HTMLVideoElement>(null);
+  const isFirstLoad   = useRef(true); // true = lư1ee3t 01111ea7u v�o b�i, ch1ec9 load kh�ng play
 
+  // ── Helpers ──────────────────────────────────────────────────────────────
   const flatten = (d: KhoaHocType): BaiGiangType[] =>
     d.danhSachPhanHoc?.flatMap((p) => p.danhSachBaiGiang ?? []) ?? [];
 
-  const chon = (bg: BaiGiangType) => {
+  const chonBaiGiang = (bg: BaiGiangType) => {
     setBaiGiangDangPhat(bg);
     const pid = bg.idPhan as string;
-    if (pid) setPhanDangMo((p) => (p.includes(pid) ? p : [...p, pid]));
+    if (pid) setPhanDangMo((prev) => (prev.includes(pid) ? prev : [...prev, pid]));
   };
 
-  const danhDau = (id: string) =>
+  const danhDauHoanThanh = (id: string) =>
     setHoanThanh((prev) => {
-      const s = new Set(prev);
-      s.add(id);
-      return s;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
     });
 
-  const next = (ds: BaiGiangType[], cur: BaiGiangType) => {
+  const chuyenBaiTiepTheo = (ds: BaiGiangType[], cur: BaiGiangType) => {
     const i = ds.findIndex((b) => b.id === cur.id);
-    if (i !== -1 && i < ds.length - 1) chon(ds[i + 1]);
+    if (i !== -1 && i < ds.length - 1) chonBaiGiang(ds[i + 1]);
   };
 
-  const handleEnded = () => {
-    if (baiGiangDangPhat) {
-      danhDau(baiGiangDangPhat.id as string);
-      next(danhSachTatCa, baiGiangDangPhat);
-    }
+  const handleVideoEnded = () => {
+    if (!baiGiangDangPhat) return;
+    danhDauHoanThanh(baiGiangDangPhat.id as string);
+    chuyenBaiTiepTheo(danhSachTatCa, baiGiangDangPhat);
   };
 
-  const togglePhan = (id: string, playing?: string) => {
-    if (id === playing) return;
-    setPhanDangMo((p) =>
-      p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
+  const togglePhan = (id: string, playingId?: string) => {
+    if (id === playingId) return;
+    setPhanDangMo((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
+  // ── Effect: video reload + scroll to active item ──────────────────────────
   useEffect(() => {
     if (!baiGiangDangPhat) return;
-    if (videoRef.current) {
-      videoRef.current.load();
-      videoRef.current.play().catch(() => {});
+    const video = videoRef.current;
+    if (video) {
+      video.load();
+      if (!isFirstLoad.current) {
+        video.play().catch(() => {});
+      }
+      isFirstLoad.current = false;
     }
     document
       .getElementById(`bai-${baiGiangDangPhat.id}`)
       ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [baiGiangDangPhat]);
 
+  // ── Fetch khóa học ────────────────────────────────────────────────────────
   const fetchKhoaHoc = async () => {
     if (!idKhoaHoc.trim() || !idNguoiDung.trim()) {
       setError("Vui lòng nhập đầy đủ ID khóa học và ID người dùng");
@@ -146,15 +151,13 @@ const KhoaHocPage = () => {
       setBaiGiangDangPhat(null);
       setPhanDangMo([]);
       setHoanThanh(new Set());
-      const res = await KhoaHocServiceInstance.getLearningKhoaHoc(
-        idKhoaHoc,
-        idNguoiDung,
-      );
+      isFirstLoad.current = true; // reset cho khóa học mới
+      const res = await KhoaHocServiceInstance.getLearningKhoaHoc(idKhoaHoc, idNguoiDung);
       setKhoaHoc(res);
       const ds = flatten(res);
       setDanhSachTatCa(ds);
       if (ds.length > 0) {
-        chon(ds[0]);
+        chonBaiGiang(ds[0]);
         setSidebarOpen(true);
       }
     } catch {
@@ -164,29 +167,39 @@ const KhoaHocPage = () => {
     }
   };
 
-  const idx = danhSachTatCa.findIndex((b) => b.id === baiGiangDangPhat?.id);
-  const coNext = idx !== -1 && idx < danhSachTatCa.length - 1;
-  const idPhanPlay = baiGiangDangPhat?.idPhan as string | undefined;
-  const pct =
-    danhSachTatCa.length > 0
-      ? Math.round((hoanThanh.size / danhSachTatCa.length) * 100)
-      : 0;
+  // ── Derived values ────────────────────────────────────────────────────────
+  const currentIdx  = danhSachTatCa.findIndex((b) => b.id === baiGiangDangPhat?.id);
+  const coTiepTheo  = currentIdx !== -1 && currentIdx < danhSachTatCa.length - 1;
+  const idPhanPlay  = baiGiangDangPhat?.idPhan as string | undefined;
+  const phanTram    = danhSachTatCa.length > 0
+    ? Math.round((hoanThanh.size / danhSachTatCa.length) * 100)
+    : 0;
 
+  // ── Shared TextField sx ───────────────────────────────────────────────────
   const fieldSx = {
     "& .MuiOutlinedInput-root": {
       bgcolor: T.bgCard,
-      "& fieldset": { borderColor: T.border },
-      "&:hover fieldset": { borderColor: C.red + "99" },
+      "& fieldset":             { borderColor: T.border },
+      "&:hover fieldset":       { borderColor: C.red + "99" },
       "&.Mui-focused fieldset": { borderColor: C.red },
     },
-    "& .MuiInputLabel-root": { color: T.textSub },
+    "& .MuiInputLabel-root":            { color: T.textSub },
     "& .MuiInputLabel-root.Mui-focused": { color: C.red },
-    "& .MuiInputBase-input": { color: T.text },
-  };
+    "& .MuiInputBase-input":            { color: T.text },
+  } as const;
 
-  // ── Chờ mount xong mới render để tránh SSR/client mismatch ───────────────
-  if (!mounted) return null;
+  // ── Scrollbar sx (reusable) ───────────────────────────────────────────────
+  const scrollbarSx = (w = 8) => ({
+    "&::-webkit-scrollbar":        { width: w },
+    "&::-webkit-scrollbar-track":  { bgcolor: T.bgAlt },
+    "&::-webkit-scrollbar-thumb":  {
+      bgcolor: T.border,
+      borderRadius: w / 2,
+      "&:hover": { bgcolor: C.red },
+    },
+  });
 
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <Box
       sx={{
@@ -197,24 +210,29 @@ const KhoaHocPage = () => {
         bgcolor: T.bg,
       }}
     >
-      {/* ══ HEADER ══════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          HEADER
+      ══════════════════════════════════════════════════════════════════ */}
       <AppBar
         position="relative"
         elevation={0}
         sx={{
+          height: HEADER_H,
+          flexShrink: 0,
           bgcolor: T.appbar,
           borderBottom: `1.5px solid ${khoaHoc ? C.red : T.border}`,
           zIndex: 1200,
-          flexShrink: 0,
         }}
       >
         <Toolbar
           sx={{
-            minHeight: "62px !important",
+            height: "100%",
+            minHeight: `${HEADER_H}px !important`,
             px: { xs: 1.5, md: 2.5 },
             gap: 1,
           }}
         >
+          {/* Logo */}
           <Box sx={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
             <Image
               src="/khoahoc/1-removebg-preview.png"
@@ -227,16 +245,13 @@ const KhoaHocPage = () => {
 
           {khoaHoc ? (
             <>
+              {/* Toggle sidebar */}
               <Tooltip
-                title={
-                  sidebarOpen
-                    ? "Ẩn nội dung khóa học"
-                    : "Hiện nội dung khóa học"
-                }
+                title={sidebarOpen ? "Ẩn nội dung khóa học" : "Hiện nội dung khóa học"}
               >
                 <IconButton
-                  onClick={() => setSidebarOpen((v) => !v)}
                   size="small"
+                  onClick={() => setSidebarOpen((v) => !v)}
                   sx={{
                     ml: 0.5,
                     width: 34,
@@ -246,27 +261,18 @@ const KhoaHocPage = () => {
                     bgcolor: sidebarOpen ? C.redLight : T.bgAlt,
                     color: sidebarOpen ? C.red : T.textSub,
                     transition: "all .2s",
-                    "&:hover": {
-                      bgcolor: C.redLight,
-                      borderColor: C.red,
-                      color: C.red,
-                    },
+                    "&:hover": { bgcolor: C.redLight, borderColor: C.red, color: C.red },
                   }}
                 >
-                  {sidebarOpen ? (
-                    <ChevronRight sx={{ fontSize: 20 }} />
-                  ) : (
-                    <ChevronLeft sx={{ fontSize: 20 }} />
-                  )}
+                  {sidebarOpen
+                    ? <ChevronRight sx={{ fontSize: 20 }} />
+                    : <ChevronLeft  sx={{ fontSize: 20 }} />}
                 </IconButton>
               </Tooltip>
 
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ borderColor: T.border, mx: 0.5 }}
-              />
+              <Divider orientation="vertical" flexItem sx={{ borderColor: T.border, mx: 0.5 }} />
 
+              {/* Tên khóa học */}
               <Typography
                 sx={{
                   color: T.text,
@@ -281,6 +287,7 @@ const KhoaHocPage = () => {
                 {khoaHoc.tieuDe}
               </Typography>
 
+              {/* Tiến độ */}
               <Box
                 sx={{
                   display: { xs: "none", sm: "flex" },
@@ -290,21 +297,17 @@ const KhoaHocPage = () => {
                 }}
               >
                 <Box sx={{ textAlign: "right" }}>
-                  <Typography
-                    sx={{ color: T.textSub, fontSize: 10, lineHeight: 1.2 }}
-                  >
+                  <Typography sx={{ color: T.textSub, fontSize: 10, lineHeight: 1.2 }}>
                     Tiến độ
                   </Typography>
-                  <Typography
-                    sx={{ color: C.red, fontWeight: 700, fontSize: 13 }}
-                  >
-                    {pct}%
+                  <Typography sx={{ color: C.red, fontWeight: 700, fontSize: 13 }}>
+                    {phanTram}%
                   </Typography>
                 </Box>
                 <Box sx={{ width: 96 }}>
                   <LinearProgress
                     variant="determinate"
-                    value={pct}
+                    value={phanTram}
                     sx={{
                       height: 6,
                       borderRadius: 3,
@@ -316,20 +319,19 @@ const KhoaHocPage = () => {
                     }}
                   />
                 </Box>
-                <Typography
-                  sx={{ color: T.textSub, fontSize: 12, whiteSpace: "nowrap" }}
-                >
+                <Typography sx={{ color: T.textSub, fontSize: 12, whiteSpace: "nowrap" }}>
                   {hoanThanh.size}/{danhSachTatCa.length}
                 </Typography>
               </Box>
 
-              {coNext && (
+              {/* Nút tiếp theo (shortcut) */}
+              {coTiepTheo && (
                 <Tooltip title="Chuyển bài tiếp theo">
                   <Button
                     size="small"
                     variant="outlined"
                     endIcon={<SkipNext sx={{ fontSize: 16 }} />}
-                    onClick={() => next(danhSachTatCa, baiGiangDangPhat!)}
+                    onClick={() => chuyenBaiTiepTheo(danhSachTatCa, baiGiangDangPhat!)}
                     sx={{
                       textTransform: "none",
                       fontSize: 12,
@@ -339,10 +341,7 @@ const KhoaHocPage = () => {
                       color: C.red,
                       borderRadius: 1.5,
                       display: { xs: "none", md: "flex" },
-                      "&:hover": {
-                        bgcolor: C.redLight,
-                        borderColor: C.redHover,
-                      },
+                      "&:hover": { bgcolor: C.redLight, borderColor: C.redHover },
                     }}
                   >
                     Tiếp theo
@@ -367,7 +366,9 @@ const KhoaHocPage = () => {
         </Toolbar>
       </AppBar>
 
-      {/* ══ FORM ════════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          FORM TRUY CẬP KHÓA HỌC
+      ══════════════════════════════════════════════════════════════════ */}
       {!khoaHoc && (
         <Fade in timeout={350}>
           <Box
@@ -377,8 +378,8 @@ const KhoaHocPage = () => {
               alignItems: "center",
               justifyContent: "center",
               p: 3,
-              bgcolor: T.bg,
               overflow: "auto",
+              bgcolor: T.bg,
             }}
           >
             <Paper
@@ -393,6 +394,7 @@ const KhoaHocPage = () => {
                 boxShadow: `0 4px 28px rgba(192,57,43,.09)`,
               }}
             >
+              {/* Brand block */}
               <Box sx={{ textAlign: "center", mb: 4 }}>
                 <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
                   <Image
@@ -413,9 +415,7 @@ const KhoaHocPage = () => {
                     mb: 2.5,
                   }}
                 />
-                <Typography
-                  sx={{ fontWeight: 700, color: T.text, fontSize: 20, mb: 0.5 }}
-                >
+                <Typography sx={{ fontWeight: 700, color: T.text, fontSize: 20, mb: 0.5 }}>
                   Bắt đầu học ngay
                 </Typography>
                 <Typography sx={{ color: T.textSub, fontSize: 14 }}>
@@ -456,11 +456,9 @@ const KhoaHocPage = () => {
                 onClick={fetchKhoaHoc}
                 disabled={loading}
                 startIcon={
-                  loading ? (
-                    <CircularProgress size={15} color="inherit" />
-                  ) : (
-                    <Search sx={{ fontSize: 18 }} />
-                  )
+                  loading
+                    ? <CircularProgress size={15} color="inherit" />
+                    : <Search sx={{ fontSize: 18 }} />
                 }
                 sx={{
                   bgcolor: C.red,
@@ -474,7 +472,7 @@ const KhoaHocPage = () => {
                     bgcolor: C.redHover,
                     boxShadow: `0 6px 22px ${C.red}55`,
                   },
-                  "&:disabled": { bgcolor: C.red + "88" },
+                  "&.Mui-disabled": { bgcolor: C.red + "88", color: "#fff" },
                 }}
               >
                 {loading ? "Đang tải..." : "Vào học ngay"}
@@ -484,57 +482,55 @@ const KhoaHocPage = () => {
         </Fade>
       )}
 
-      {/* ══ LAYOUT HỌC - MAIN CONTENT AREA ══════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYOUT HỌC — Video cố định | Sidebar scroll độc lập
+      ══════════════════════════════════════════════════════════════════ */}
       {khoaHoc && (
         <Box
           sx={{
             flex: 1,
             display: "flex",
             overflow: "hidden",
-            position: "relative",
           }}
         >
-          {/* LEFT SIDE - BODY (Video + Info) - Scroll độc lập */}
+          {/* ── CỘT TRÁI: Video (cố định) + Info panel (scroll riêng) ── */}
           <Box
             sx={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
-              transition: "all .28s cubic-bezier(.4,0,.2,1)",
-              mr: sidebarOpen ? 0 : 0,
+              minWidth: 0,
             }}
           >
-            {/* Video Container - Fixed height, no scroll */}
+            {/* VIDEO — không bao giờ scroll */}
             <Box
               sx={{
                 flexShrink: 0,
                 bgcolor: "#060606",
                 borderBottom: `2px solid ${C.red}`,
-                position: "relative",
-                "& video": {
-                  width: "100%",
-                  display: "block",
-                  maxHeight: "55vh",
-                  objectFit: "contain",
-                },
               }}
             >
               {baiGiangDangPhat?.urlBaiGiang ? (
-                <video ref={videoRef} controls autoPlay onEnded={handleEnded}>
+                <video
+                  ref={videoRef}
+                  controls
+                  onEnded={handleVideoEnded}
+                  style={{ width: "100%", maxHeight: "55vh", display: "block", objectFit: "contain" }}
+                >
                   <source src={baiGiangDangPhat.urlBaiGiang} type="video/mp4" />
                 </video>
               ) : (
                 <Box
                   sx={{
                     height: "45vh",
-                    minHeight: 320,
+                    minHeight: 280,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     gap: 2,
-                    background: "linear-gradient(160deg,#0c0c0c,#1a0808)",
+                    background: "linear-gradient(160deg, #0c0c0c, #1a0808)",
                   }}
                 >
                   <Box
@@ -551,38 +547,24 @@ const KhoaHocPage = () => {
                   >
                     <OndemandVideo sx={{ fontSize: 42, color: C.red }} />
                   </Box>
-                  <Typography
-                    sx={{ color: "#666", fontSize: 14, letterSpacing: 0.4 }}
-                  >
+                  <Typography sx={{ color: "#666", fontSize: 14, letterSpacing: 0.4 }}>
                     Chọn bài giảng để bắt đầu học
                   </Typography>
                 </Box>
               )}
             </Box>
 
-            {/* Info Panel - Scroll độc lập */}
+            {/* INFO PANEL — scroll độc lập, video không bị cuộn theo */}
             <Box
               sx={{
                 flex: 1,
                 overflow: "auto",
                 bgcolor: T.bg,
-                "&::-webkit-scrollbar": {
-                  width: 8,
-                  height: 8,
-                },
-                "&::-webkit-scrollbar-track": {
-                  bgcolor: T.bgAlt,
-                },
-                "&::-webkit-scrollbar-thumb": {
-                  bgcolor: T.border,
-                  borderRadius: 4,
-                  "&:hover": {
-                    bgcolor: C.red,
-                  },
-                },
+                ...scrollbarSx(8),
               }}
             >
               <Box sx={{ p: { xs: 2.5, md: 3.5 } }}>
+                {/* Breadcrumb */}
                 {baiGiangDangPhat && (
                   <Box
                     sx={{
@@ -594,18 +576,16 @@ const KhoaHocPage = () => {
                     }}
                   >
                     <Typography sx={{ color: T.textSub, fontSize: 12 }}>
-                      {khoaHoc.danhSachPhanHoc?.find((p) => p.id === idPhanPlay)
-                        ?.tenPhan ?? ""}
+                      {khoaHoc.danhSachPhanHoc?.find((p) => p.id === idPhanPlay)?.tenPhan ?? ""}
                     </Typography>
                     <NavigateNext sx={{ fontSize: 14, color: T.textSub }} />
-                    <Typography
-                      sx={{ color: C.red, fontWeight: 600, fontSize: 12 }}
-                    >
+                    <Typography sx={{ color: C.red, fontWeight: 600, fontSize: 12 }}>
                       {baiGiangDangPhat.tieuDe}
                     </Typography>
                   </Box>
                 )}
 
+                {/* Title + actions */}
                 <Box
                   sx={{
                     display: "flex",
@@ -628,6 +608,7 @@ const KhoaHocPage = () => {
                     >
                       {baiGiangDangPhat?.tieuDe ?? khoaHoc.tieuDe}
                     </Typography>
+
                     <Box
                       sx={{
                         display: "flex",
@@ -638,7 +619,7 @@ const KhoaHocPage = () => {
                     >
                       {baiGiangDangPhat && (
                         <Typography sx={{ color: T.textSub, fontSize: 13 }}>
-                          Bài {idx + 1}/{danhSachTatCa.length} ·{" "}
+                          Bài {currentIdx + 1}/{danhSachTatCa.length} ·{" "}
                           {Math.floor((baiGiangDangPhat.thoiLuong ?? 0) / 60)}p
                           {(baiGiangDangPhat.thoiLuong ?? 0) % 60}s
                         </Typography>
@@ -647,74 +628,53 @@ const KhoaHocPage = () => {
                         <Chip
                           label="Miễn phí"
                           size="small"
-                          sx={{
-                            bgcolor: "#e8f5e9",
-                            color: "#27ae60",
-                            fontSize: 11,
-                            height: 21,
-                            fontWeight: 600,
-                          }}
+                          sx={{ bgcolor: "#e8f5e9", color: "#27ae60", fontSize: 11, height: 21, fontWeight: 600 }}
                         />
                       )}
                       {hoanThanh.has(baiGiangDangPhat?.id as string) && (
                         <Chip
                           icon={
                             <CheckCircle
-                              sx={{
-                                fontSize: "13px !important",
-                                color: `${C.red} !important`,
-                              }}
+                              sx={{ fontSize: "13px !important", color: `${C.red} !important` }}
                             />
                           }
                           label="Đã hoàn thành"
                           size="small"
-                          sx={{
-                            bgcolor: C.redLight,
-                            color: C.red,
-                            fontSize: 11,
-                            height: 21,
-                            fontWeight: 600,
-                          }}
+                          sx={{ bgcolor: C.redLight, color: C.red, fontSize: 11, height: 21, fontWeight: 600 }}
                         />
                       )}
                     </Box>
                   </Box>
 
+                  {/* Buttons */}
                   <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
-                    {baiGiangDangPhat &&
-                      !hoanThanh.has(baiGiangDangPhat.id as string) && (
-                        <Tooltip title="Đánh dấu bài này đã hoàn thành">
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<CheckCircle sx={{ fontSize: 15 }} />}
-                            onClick={() =>
-                              danhDau(baiGiangDangPhat.id as string)
-                            }
-                            sx={{
-                              textTransform: "none",
-                              fontSize: 12.5,
-                              py: 0.7,
-                              borderColor: T.border,
-                              color: T.textSub,
-                              borderRadius: 1.5,
-                              "&:hover": {
-                                borderColor: C.red,
-                                color: C.red,
-                                bgcolor: C.redLight,
-                              },
-                            }}
-                          >
-                            Hoàn thành
-                          </Button>
-                        </Tooltip>
-                      )}
-                    {coNext && (
+                    {baiGiangDangPhat && !hoanThanh.has(baiGiangDangPhat.id as string) && (
+                      <Tooltip title="Đánh dấu bài này đã hoàn thành">
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<CheckCircle sx={{ fontSize: 15 }} />}
+                          onClick={() => danhDauHoanThanh(baiGiangDangPhat.id as string)}
+                          sx={{
+                            textTransform: "none",
+                            fontSize: 12.5,
+                            py: 0.7,
+                            borderColor: T.border,
+                            color: T.textSub,
+                            borderRadius: 1.5,
+                            "&:hover": { borderColor: C.red, color: C.red, bgcolor: C.redLight },
+                          }}
+                        >
+                          Hoàn thành
+                        </Button>
+                      </Tooltip>
+                    )}
+                    {coTiepTheo && (
                       <Button
                         variant="contained"
                         size="small"
                         endIcon={<SkipNext sx={{ fontSize: 16 }} />}
-                        onClick={() => next(danhSachTatCa, baiGiangDangPhat!)}
+                        onClick={() => chuyenBaiTiepTheo(danhSachTatCa, baiGiangDangPhat!)}
                         sx={{
                           textTransform: "none",
                           fontSize: 12.5,
@@ -733,19 +693,9 @@ const KhoaHocPage = () => {
 
                 <Divider sx={{ borderColor: T.divider, mb: 3 }} />
 
-                {khoaHoc.moTa && (
-                  <Typography
-                    sx={{
-                      color: T.textSub,
-                      lineHeight: 1.8,
-                      fontSize: 14,
-                      mb: 3,
-                    }}
-                  >
-                    {khoaHoc.moTa}
-                  </Typography>
-                )}
+                {/* Mô tả */}
 
+                {/* Thống kê */}
                 <Box
                   sx={{
                     display: "flex",
@@ -773,18 +723,9 @@ const KhoaHocPage = () => {
                       label: `${khoaHoc.soLuongHocVien ?? 0} học viên`,
                     },
                   ].map(({ icon, label }, i) => (
-                    <Box
-                      key={i}
-                      sx={{ display: "flex", alignItems: "center", gap: 0.8 }}
-                    >
-                      <Box
-                        sx={{ color: T.textSub, display: "flex", fontSize: 16 }}
-                      >
-                        {icon}
-                      </Box>
-                      <Typography sx={{ color: T.textSub, fontSize: 13 }}>
-                        {label}
-                      </Typography>
+                    <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
+                      <Box sx={{ color: T.textSub, display: "flex" }}>{icon}</Box>
+                      <Typography sx={{ color: T.textSub, fontSize: 13 }}>{label}</Typography>
                     </Box>
                   ))}
                 </Box>
@@ -792,7 +733,7 @@ const KhoaHocPage = () => {
             </Box>
           </Box>
 
-          {/* RIGHT SIDE - SIDEBAR (Taskbar) - Scroll độc lập */}
+          {/* ── CỘT PHẢI: SIDEBAR (scroll độc lập với video) ── */}
           <Box
             sx={{
               width: sidebarOpen ? SIDEBAR_W : 0,
@@ -803,9 +744,9 @@ const KhoaHocPage = () => {
               display: "flex",
               flexDirection: "column",
               bgcolor: T.bgCard,
-              position: "relative",
             }}
           >
+            {/* Sidebar header — cố định */}
             <Box
               sx={{
                 px: 2.5,
@@ -824,9 +765,7 @@ const KhoaHocPage = () => {
                   mb: 1,
                 }}
               >
-                <Typography
-                  sx={{ fontWeight: 700, fontSize: 14, color: T.text }}
-                >
+                <Typography sx={{ fontWeight: 700, fontSize: 14, color: T.text }}>
                   Nội dung khóa học
                 </Typography>
                 <Tooltip title="Đóng sidebar">
@@ -844,11 +783,13 @@ const KhoaHocPage = () => {
                   </IconButton>
                 </Tooltip>
               </Box>
+
+              {/* Progress bar */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <Box sx={{ flex: 1 }}>
                   <LinearProgress
                     variant="determinate"
-                    value={pct}
+                    value={phanTram}
                     sx={{
                       height: 5,
                       borderRadius: 3,
@@ -861,14 +802,9 @@ const KhoaHocPage = () => {
                   />
                 </Box>
                 <Typography
-                  sx={{
-                    color: C.red,
-                    fontWeight: 700,
-                    fontSize: 11,
-                    whiteSpace: "nowrap",
-                  }}
+                  sx={{ color: C.red, fontWeight: 700, fontSize: 11, whiteSpace: "nowrap" }}
                 >
-                  {pct}%
+                  {phanTram}%
                 </Typography>
               </Box>
               <Typography sx={{ color: T.textSub, fontSize: 11, mt: 0.5 }}>
@@ -876,35 +812,22 @@ const KhoaHocPage = () => {
               </Typography>
             </Box>
 
-            {/* Sidebar Scrollable Content */}
+            {/* Sidebar list — scroll độc lập */}
             <Box
               sx={{
                 overflow: "auto",
                 flex: 1,
                 minWidth: SIDEBAR_W,
-                "&::-webkit-scrollbar": {
-                  width: 6,
-                },
-                "&::-webkit-scrollbar-track": {
-                  bgcolor: T.bgAlt,
-                },
-                "&::-webkit-scrollbar-thumb": {
-                  bgcolor: T.border,
-                  borderRadius: 3,
-                  "&:hover": {
-                    bgcolor: C.red,
-                  },
-                },
+                ...scrollbarSx(6),
               }}
             >
               {khoaHoc.danhSachPhanHoc?.map((phan, pi) => {
-                const isOpen = phanDangMo.includes(phan.id ?? "");
+                const isOpen    = phanDangMo.includes(phan.id ?? "");
                 const isPlaying = phan.id === idPhanPlay;
-                const doneCnt =
-                  phan.danhSachBaiGiang?.filter((b: BaiGiangType) =>
-                    hoanThanh.has(b.id as string),
-                  ).length ?? 0;
-                const totalMin = Math.floor(
+                const doneCnt   = phan.danhSachBaiGiang?.filter(
+                  (b: BaiGiangType) => hoanThanh.has(b.id as string),
+                ).length ?? 0;
+                const totalMin  = Math.floor(
                   (phan.danhSachBaiGiang?.reduce(
                     (a: number, b: BaiGiangType) => a + (b.thoiLuong ?? 0),
                     0,
@@ -927,10 +850,7 @@ const KhoaHocPage = () => {
                     <AccordionSummary
                       expandIcon={
                         <ExpandMore
-                          sx={{
-                            fontSize: 19,
-                            color: isPlaying ? C.red : T.textSub,
-                          }}
+                          sx={{ fontSize: 19, color: isPlaying ? C.red : T.textSub }}
                         />
                       }
                       sx={{
@@ -939,12 +859,8 @@ const KhoaHocPage = () => {
                         minHeight: "54px !important",
                         borderLeft: `3px solid ${isPlaying ? C.red : "transparent"}`,
                         transition: "all .15s",
-                        "&:hover": {
-                          bgcolor: isPlaying ? C.redLight : T.bgHover,
-                        },
-                        "& .MuiAccordionSummary-content": {
-                          my: "10px !important",
-                        },
+                        "&:hover": { bgcolor: isPlaying ? C.redLight : T.bgHover },
+                        "& .MuiAccordionSummary-content": { my: "10px !important" },
                       }}
                     >
                       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -961,11 +877,8 @@ const KhoaHocPage = () => {
                         >
                           {phan.thuTuSapXep ?? pi + 1}. {phan.tenPhan}
                         </Typography>
-                        <Typography
-                          sx={{ color: T.textSub, fontSize: 11, mt: 0.2 }}
-                        >
-                          {doneCnt}/{phan.danhSachBaiGiang?.length ?? 0} bài ·{" "}
-                          {totalMin}p
+                        <Typography sx={{ color: T.textSub, fontSize: 11, mt: 0.2 }}>
+                          {doneCnt}/{phan.danhSachBaiGiang?.length ?? 0} bài · {totalMin}p
                         </Typography>
                       </Box>
                     </AccordionSummary>
@@ -973,207 +886,167 @@ const KhoaHocPage = () => {
                     <AccordionDetails sx={{ p: 0, bgcolor: T.bgCard }}>
                       {(phan.danhSachBaiGiang?.length ?? 0) === 0 && (
                         <Typography
-                          sx={{
-                            color: T.textSub,
-                            px: 3,
-                            py: 2.5,
-                            fontStyle: "italic",
-                            fontSize: 13,
-                          }}
+                          sx={{ color: T.textSub, px: 3, py: 2.5, fontStyle: "italic", fontSize: 13 }}
                         >
                           Chưa có bài giảng
                         </Typography>
                       )}
 
-                      {phan.danhSachBaiGiang?.map(
-                        (bg: BaiGiangType, bi: number) => {
-                          const isActive = baiGiangDangPhat?.id === bg.id;
-                          const isDone = hoanThanh.has(bg.id as string);
+                      {phan.danhSachBaiGiang?.map((bg: BaiGiangType, bi: number) => {
+                        const isActive = baiGiangDangPhat?.id === bg.id;
+                        const isDone   = hoanThanh.has(bg.id as string);
 
-                          return (
-                            <Box key={bg.id ?? bi} id={`bai-${bg.id}`}>
-                              <Box
-                                onClick={() => chon(bg)}
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "flex-start",
-                                  gap: 1.5,
-                                  px: 2,
-                                  py: 1.5,
-                                  cursor: "pointer",
-                                  bgcolor: isActive
-                                    ? C.redLight
-                                    : "transparent",
-                                  borderLeft: `3px solid ${isActive ? C.red : "transparent"}`,
-                                  transition: "all .15s",
-                                  "&:hover": {
-                                    bgcolor: isActive ? C.redLight : T.bgHover,
-                                  },
-                                }}
-                              >
-                                {isDone ? (
-                                  <CheckCircle
-                                    sx={{
-                                      fontSize: 17,
-                                      mt: 0.25,
-                                      flexShrink: 0,
-                                      color: C.red,
-                                    }}
-                                  />
-                                ) : (
-                                  <PlayCircleFilled
-                                    sx={{
-                                      fontSize: 17,
-                                      mt: 0.25,
-                                      flexShrink: 0,
-                                      color: isActive ? C.red : T.textSub,
-                                    }}
-                                  />
-                                )}
-                                <Box sx={{ flex: 1, minWidth: 0 }}>
-                                  <Typography
-                                    sx={{
-                                      fontWeight: isActive ? 700 : 400,
-                                      color: isActive ? C.red : T.text,
-                                      lineHeight: 1.5,
-                                      fontSize: 13,
-                                    }}
-                                  >
-                                    {bg.tieuDe}
-                                  </Typography>
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      gap: 1,
-                                      mt: 0.3,
-                                      alignItems: "center",
-                                      flexWrap: "wrap",
-                                    }}
-                                  >
-                                    <Typography
-                                      sx={{ color: T.textSub, fontSize: 11 }}
-                                    >
-                                      {Math.floor((bg.thoiLuong ?? 0) / 60)}p
-                                      {(bg.thoiLuong ?? 0) % 60}s
-                                    </Typography>
-                                    {bg.laBaiGiangFree && (
-                                      <Chip
-                                        label="Miễn phí"
-                                        size="small"
-                                        sx={{
-                                          bgcolor: "#e8f5e9",
-                                          color: "#27ae60",
-                                          fontSize: 10,
-                                          height: 16,
-                                          fontWeight: 600,
-                                        }}
-                                      />
-                                    )}
-                                    {isDone && !isActive && (
-                                      <Typography
-                                        sx={{
-                                          color: C.red,
-                                          fontSize: 10,
-                                          fontWeight: 700,
-                                        }}
-                                      >
-                                        ✓ Hoàn thành
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                </Box>
-                              </Box>
-
-                              {(bg.danhSachTaiLieu?.length ?? 0) > 0 && (
-                                <Box
+                        return (
+                          <Box key={bg.id ?? bi} id={`bai-${bg.id}`}>
+                            {/* Bài giảng row */}
+                            <Box
+                              onClick={() => chonBaiGiang(bg)}
+                              sx={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 1.5,
+                                px: 2,
+                                py: 1.5,
+                                cursor: "pointer",
+                                bgcolor: isActive ? C.redLight : "transparent",
+                                borderLeft: `3px solid ${isActive ? C.red : "transparent"}`,
+                                transition: "all .15s",
+                                "&:hover": { bgcolor: isActive ? C.redLight : T.bgHover },
+                              }}
+                            >
+                              {isDone ? (
+                                <CheckCircle
+                                  sx={{ fontSize: 17, mt: 0.25, flexShrink: 0, color: C.red }}
+                                />
+                              ) : (
+                                <PlayCircleFilled
                                   sx={{
-                                    pl: 5.5,
-                                    pr: 2,
-                                    pb: 1.5,
-                                    pt: 0.5,
-                                    bgcolor: "#fafafa",
-                                    borderTop: `1px dashed ${T.border}`,
+                                    fontSize: 17,
+                                    mt: 0.25,
+                                    flexShrink: 0,
+                                    color: isActive ? C.red : T.textSub,
+                                  }}
+                                />
+                              )}
+
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography
+                                  sx={{
+                                    fontWeight: isActive ? 700 : 400,
+                                    color: isActive ? C.red : T.text,
+                                    lineHeight: 1.5,
+                                    fontSize: 13,
                                   }}
                                 >
-                                  <Typography
-                                    sx={{
-                                      color: T.textSub,
-                                      fontWeight: 600,
-                                      display: "block",
-                                      mb: 0.8,
-                                      fontSize: 11,
-                                    }}
-                                  >
-                                    📎 Tài liệu đính kèm
+                                  {bg.tieuDe}
+                                </Typography>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    gap: 1,
+                                    mt: 0.3,
+                                    alignItems: "center",
+                                    flexWrap: "wrap",
+                                  }}
+                                >
+                                  <Typography sx={{ color: T.textSub, fontSize: 11 }}>
+                                    {Math.floor((bg.thoiLuong ?? 0) / 60)}p
+                                    {(bg.thoiLuong ?? 0) % 60}s
                                   </Typography>
-                                  {bg.danhSachTaiLieu?.map(
-                                    (tl: TaiLieuType, ti: number) => (
-                                      <Box
-                                        key={tl.id ?? ti}
-                                        sx={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 1,
-                                          py: 0.5,
-                                        }}
-                                      >
-                                        {tl.loaiTaiLieu === "PDF" ? (
-                                          <PictureAsPdf
-                                            sx={{
-                                              fontSize: 14,
-                                              color: C.redMid,
-                                              flexShrink: 0,
-                                            }}
-                                          />
-                                        ) : (
-                                          <InsertDriveFile
-                                            sx={{
-                                              fontSize: 14,
-                                              color: "#2980b9",
-                                              flexShrink: 0,
-                                            }}
-                                          />
-                                        )}
-                                        <MuiLink
-                                          href={tl.url}
-                                          download={tl.tenTaiLieu}
-                                          sx={{
-                                            color: "#2980b9",
-                                            flex: 1,
-                                            fontSize: 12,
-                                            cursor: "pointer",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            whiteSpace: "nowrap",
-                                            textDecoration: "none",
-                                            "&:hover": {
-                                              color: C.red,
-                                              textDecoration: "underline",
-                                            },
-                                          }}
-                                        >
-                                          {tl.tenTaiLieu}
-                                        </MuiLink>
-                                        <Chip
-                                          label={tl.loaiTaiLieu}
-                                          size="small"
-                                          sx={{
-                                            fontSize: 9,
-                                            height: 16,
-                                            flexShrink: 0,
-                                            bgcolor: T.bgAlt,
-                                            color: T.textSub,
-                                          }}
-                                        />
-                                      </Box>
-                                    ),
+                                  {bg.laBaiGiangFree && (
+                                    <Chip
+                                      label="Miễn phí"
+                                      size="small"
+                                      sx={{
+                                        bgcolor: "#e8f5e9",
+                                        color: "#27ae60",
+                                        fontSize: 10,
+                                        height: 16,
+                                        fontWeight: 600,
+                                      }}
+                                    />
+                                  )}
+                                  {isDone && !isActive && (
+                                    <Typography sx={{ color: C.red, fontSize: 10, fontWeight: 700 }}>
+                                      ✓ Hoàn thành
+                                    </Typography>
                                   )}
                                 </Box>
-                              )}
+                              </Box>
                             </Box>
-                          );
-                        },
-                      )}
+
+                            {/* Tài liệu đính kèm */}
+                            {(bg.danhSachTaiLieu?.length ?? 0) > 0 && (
+                              <Box
+                                sx={{
+                                  pl: 5.5,
+                                  pr: 2,
+                                  pb: 1.5,
+                                  pt: 0.5,
+                                  bgcolor: "#fafafa",
+                                  borderTop: `1px dashed ${T.border}`,
+                                }}
+                              >
+                                <Typography
+                                  sx={{
+                                    color: T.textSub,
+                                    fontWeight: 600,
+                                    display: "block",
+                                    mb: 0.8,
+                                    fontSize: 11,
+                                  }}
+                                >
+                                  📎 Tài liệu đính kèm
+                                </Typography>
+                                {bg.danhSachTaiLieu?.map((tl: TaiLieuType, ti: number) => (
+                                  <Box
+                                    key={tl.id ?? ti}
+                                    sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}
+                                  >
+                                    {tl.loaiTaiLieu === "PDF" ? (
+                                      <PictureAsPdf
+                                        sx={{ fontSize: 14, color: C.redMid, flexShrink: 0 }}
+                                      />
+                                    ) : (
+                                      <InsertDriveFile
+                                        sx={{ fontSize: 14, color: "#2980b9", flexShrink: 0 }}
+                                      />
+                                    )}
+                                    <MuiLink
+                                      href={tl.url}
+                                      download={tl.tenTaiLieu}
+                                      sx={{
+                                        color: "#2980b9",
+                                        flex: 1,
+                                        fontSize: 12,
+                                        cursor: "pointer",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        textDecoration: "none",
+                                        "&:hover": { color: C.red, textDecoration: "underline" },
+                                      }}
+                                    >
+                                      {tl.tenTaiLieu}
+                                    </MuiLink>
+                                    <Chip
+                                      label={tl.loaiTaiLieu}
+                                      size="small"
+                                      sx={{
+                                        fontSize: 9,
+                                        height: 16,
+                                        flexShrink: 0,
+                                        bgcolor: T.bgAlt,
+                                        color: T.textSub,
+                                      }}
+                                    />
+                                  </Box>
+                                ))}
+                              </Box>
+                            )}
+                          </Box>
+                        );
+                      })}
                     </AccordionDetails>
                   </Accordion>
                 );
@@ -1181,7 +1054,7 @@ const KhoaHocPage = () => {
             </Box>
           </Box>
 
-          {/* Floating open button */}
+          {/* ── Tab nổi mở sidebar (khi đã đóng) ── */}
           {!sidebarOpen && (
             <Fade in={!sidebarOpen}>
               <Box
@@ -1219,7 +1092,6 @@ const KhoaHocPage = () => {
                         fontSize: 10,
                         fontWeight: 700,
                         writingMode: "vertical-rl",
-                        textOrientation: "mixed",
                         letterSpacing: 1,
                       }}
                     >
