@@ -35,7 +35,7 @@ namespace Eduverse.Model.Entities
         [JsonIgnore]
         public bool IsDeleted { get; set; }
         [JsonIgnore]
-        public DateTime? DeletedDate { get; set; }
+        public DateTime? DeletedDate { get; set; }= DateTime.UtcNow;
         [JsonIgnore]
         //[BsonRepresentation(BsonType.String)]
         public Guid? DeletedId { get; set; }
