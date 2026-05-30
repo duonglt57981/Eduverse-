@@ -1,6 +1,14 @@
 "use client";
 import React from "react";
+import { Be_Vietnam_Pro } from "next/font/google";
+import "./globals.css";
 import { Providers } from "../store/providers";
+
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
 
 export default function RootLayout({
@@ -24,7 +32,7 @@ export default function RootLayout({
 
         <title>{appTitle}</title>
       </head>
-      <body className="dir-ltr">
+      <body className={`${beVietnamPro.className} dir-ltr`}>
         <div className="App">
           <Providers>
             {/* <ConfigProvider theme={lightTheme} locale={viVN}> */}
