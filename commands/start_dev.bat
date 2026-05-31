@@ -32,10 +32,7 @@ echo.
 echo Selected branch: %TARGET_BRANCH%
 echo.
 
-set /p PULL_CHOICE="Do you want to pull the latest code from main and merge? (Y/N): "
-
-if /i "%PULL_CHOICE%"=="Y" goto :GIT_SYNC
-goto :SKIP_SYNC
+goto :GIT_SYNC
 
 :GIT_SYNC
 echo.
@@ -73,36 +70,6 @@ echo Git synchronization and merge complete.
 echo.
 goto :START_APPS
 
-:SKIP_SYNC
-echo.
-for /f "tokens=*" %%b in ('git branch --show-current') do set ACTIVE_BRANCH=%%b
-
-if "%ACTIVE_BRANCH%"=="%TARGET_BRANCH%" (
-    echo Already on %TARGET_BRANCH%. Skipping checkout.
-    echo.
-    goto :START_APPS
-)
-
-echo Switching branch from %ACTIVE_BRANCH% to %TARGET_BRANCH%...
-set HAS_CHANGES=0
-for /f "tokens=*" %%i in ('git status --porcelain') do set HAS_CHANGES=1
-
-if "%HAS_CHANGES%"=="1" (
-    echo Local changes detected. Stashing your changes...
-    git stash -u
-    set STASHED=1
-) else (
-    set STASHED=0
-)
-
-git checkout %TARGET_BRANCH%
-
-if "%STASHED%"=="1" (
-    echo Restoring your local changes...
-    git stash pop
-)
-echo Branch switch complete.
-echo.
 
 :START_APPS
 echo Starting applications...
