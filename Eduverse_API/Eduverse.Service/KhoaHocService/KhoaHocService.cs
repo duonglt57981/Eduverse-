@@ -1,18 +1,9 @@
 ﻿using Eduverse.Model.Entities;
-using Eduverse.Repository.BaiGiangRepository;
-using Eduverse.Repository.DangKyKhoaHocRepository;
-using Eduverse.Repository.DanhMuc_KhoaHocRepository;
 using Eduverse.Repository.DanhMucRepository;
 using Eduverse.Repository.KhoaHocRepository;
-using Eduverse.Repository.KhoaHocRepository;
-using Eduverse.Repository.PhanRepository;
-using Eduverse.Repository.PhanRepository;
-using Eduverse.Repository.TaiLieuRepository;
-using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.CloudinaryService;
-using Eduverse.Service.Common;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.DangKyKhoaHocService;
@@ -26,13 +17,8 @@ using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.TaiLieuService.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+
+
 
 namespace Eduverse.Service.KhoaHocService
 {
@@ -215,17 +201,13 @@ namespace Eduverse.Service.KhoaHocService
 
         public async Task<KhoaHocDto> GetLearning(Guid idKhoaHoc, Guid idNguoiDung)
         {
-
             var daDangKy = await _dangKyKhoaHocService
                 .GetQueryable()
                 .AsNoTracking()
-                .AnyAsync(x =>
-                    x.IdDangKi == idKhoaHoc &&
-                    x.IdNguoiDangKi == idNguoiDung);
+                .AnyAsync(x => x.IdDangKi == idKhoaHoc && x.IdNguoiDangKi == idNguoiDung);
 
             if (!daDangKy)
                 throw new Exception("Người dùng chưa đăng ký khóa học này");
-
 
             var khoaHoc = await GetQueryable()
                 .AsNoTracking()
@@ -235,95 +217,91 @@ namespace Eduverse.Service.KhoaHocService
                     Id = x.Id,
                     TieuDe = x.TieuDe,
                     MoTa = x.MoTa,
-                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
-
-                    SoLuongHocVien = _dangKyKhoaHocService
-                        .GetQueryable()
-                        .Count(dk => dk.IdDangKi == x.Id)
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
                 })
                 .FirstOrDefaultAsync();
 
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học");
 
+            khoaHoc.SoLuongHocVien = await _dangKyKhoaHocService
+                .GetQueryable()
+                .AsNoTracking()
+                .CountAsync(dk => dk.IdDangKi == idKhoaHoc);
+
             var phanHocs = await _phanService
                 .GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.IdKhoaHoc == idKhoaHoc)
                 .OrderBy(x => x.ThuTuSapXep)
+                .Select(x => new { x.Id, x.IdKhoaHoc, x.TenPhan, x.MieuTa, x.ThuTuSapXep })
                 .ToListAsync();
 
-            var phanIds = phanHocs
-                .Select(x => x.Id)
-                .ToList();
+            var phanIds = phanHocs.Select(x => x.Id).ToList();
 
-
-            var baiGiangs = await _baiGiangService
+            
+            var dataBaiGiangs = await _baiGiangService
                 .GetQueryable()
                 .AsNoTracking()
                 .Where(x => phanIds.Contains(x.IdPhan))
                 .OrderBy(x => x.ThuTuSapXep)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.IdPhan,
+                    x.TieuDe,
+                    x.LoaiBaiGiang,
+                    x.IdVideoBaiGiang,
+                    x.URLBaiGiang,
+                    x.ThuTuSapXep,
+                    x.ThoiLuong,
+                    x.LaBaiGiangFree
+                })
                 .ToListAsync();
 
-            var baiGiangIds = baiGiangs
-                .Select(x => x.Id)
-                .ToList();
+            var baiGiangIds = dataBaiGiangs.Select(x => x.Id).ToList();
 
-
+            
             var taiLieus = await _taiLieuService
                 .GetQueryable()
                 .AsNoTracking()
                 .Where(x => baiGiangIds.Contains(x.IdBaiGiang))
+                .Select(t => new TaiLieuDto
+                {
+                    Id = t.Id,
+                    IdBaiGiang = t.IdBaiGiang,
+                    TenTaiLieu = t.TenTaiLieu,
+                    LoaiTaiLieu = t.LoaiTaiLieu,
+                    URL = t.URL
+                })
                 .ToListAsync();
 
 
-            khoaHoc.TongBaiGiang = baiGiangs.Count;
-
-            khoaHoc.TongThoiLuong = baiGiangs.Sum(x =>
-                x.ThoiLuong ?? 0);
+            khoaHoc.TongBaiGiang = dataBaiGiangs.Count;
+            khoaHoc.TongThoiLuong = dataBaiGiangs.Sum(x => x.ThoiLuong ?? 0);
 
 
             var taiLieuLookup = taiLieus
                 .GroupBy(x => x.IdBaiGiang)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.Select(t => new TaiLieuDto
-                    {
-                        Id = t.Id,
-                        IdBaiGiang = t.IdBaiGiang,
-                        TenTaiLieu = t.TenTaiLieu,
-                        LoaiTaiLieu = t.LoaiTaiLieu,
-                        URL = t.URL
-                    }).ToList()
-                );
+                .ToDictionary(g => g.Key, g => g.ToList());
 
-
-            var baiGiangLookup = baiGiangs
+            var baiGiangLookup = dataBaiGiangs
                 .GroupBy(x => x.IdPhan)
                 .ToDictionary(
-                    x => x.Key,
-                    x => x.Select(bg => new BaiGiangDto
+                    g => g.Key,
+                    g => g.Select(bg => new BaiGiangDto
                     {
                         Id = bg.Id,
                         IdPhan = bg.IdPhan,
-
                         TieuDe = bg.TieuDe,
                         LoaiBaiGiang = bg.LoaiBaiGiang,
-
                         IdVideoBaiGiang = bg.IdVideoBaiGiang,
                         URLBaiGiang = bg.URLBaiGiang,
-
                         ThuTuSapXep = bg.ThuTuSapXep,
                         ThoiLuong = bg.ThoiLuong,
-
                         LaBaiGiangFree = bg.LaBaiGiangFree,
-
-                        DanhSachTaiLieu =
-                            taiLieuLookup.TryGetValue(bg.Id, out var dsTaiLieu)
-                                ? dsTaiLieu
-                                : new List<TaiLieuDto>()
-                    })
-                    .ToList()
+                        DanhSachTaiLieu = taiLieuLookup.TryGetValue(bg.Id, out var dsTaiLieu) ? dsTaiLieu : new List<TaiLieuDto>()
+                    }).ToList()
                 );
 
 
@@ -332,17 +310,10 @@ namespace Eduverse.Service.KhoaHocService
                 {
                     Id = ph.Id,
                     IdKhoaHoc = ph.IdKhoaHoc,
-
                     TenPhan = ph.TenPhan,
                     MieuTa = ph.MieuTa,
                     ThuTuSapXep = ph.ThuTuSapXep,
-
-                    DanhSachBaiGiang =
-                        baiGiangLookup.TryGetValue(
-                            ph.Id,
-                            out var dsBaiGiang)
-                            ? dsBaiGiang
-                            : new List<BaiGiangDto>()
+                    DanhSachBaiGiang = baiGiangLookup.TryGetValue(ph.Id, out var dsBaiGiang) ? dsBaiGiang : new List<BaiGiangDto>()
                 })
                 .ToList();
 
