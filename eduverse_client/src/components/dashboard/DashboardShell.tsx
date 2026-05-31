@@ -456,7 +456,7 @@ function FeaturedCourseCard({
           },
         }}
       >
-        Xem chi tiết 
+        Xem chi tiết
       </Button>
     </Paper>
   );
@@ -501,7 +501,7 @@ export default function DashboardShell() {
       return;
     }
 
-    setAuthChecked(true);
+    setAuthChecked(true); // react-hooks/set-state-in-effect
   }, [router]);
 
   const handleLogout = async () => {
