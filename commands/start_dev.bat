@@ -68,9 +68,3 @@ if "%STASHED%"=="1" (
 )
 echo Git synchronization and merge complete.
 echo.
-goto :START_APPS
-
-
-:START_APPS
-echo Starting applications...
-call "%~dp0run_all.bat"

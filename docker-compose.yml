@@ -32,6 +32,7 @@ services:
       context: ./Eduverse_API
       dockerfile: Dockerfile
       target: prod
+    pull_policy: never
     container_name: eduverse_api
     restart: unless-stopped
     environment:
@@ -51,6 +52,7 @@ services:
       context: ./eduverse_client
       dockerfile: Dockerfile
       target: prod
+    pull_policy: never
     container_name: eduverse_client
     restart: unless-stopped
     environment:
