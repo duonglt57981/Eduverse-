@@ -541,7 +541,7 @@ export default function InstructorsPage() {
                   ))}
                 </Stack>
                 <Typography sx={{ mt: 1.35, fontSize: 14, lineHeight: 1.95, color: 'rgba(24,24,27,0.72)' }}>
-                  "{item.quote}"
+                  {`"` + item.quote + `"`}
                 </Typography>
                 <Stack direction="row" spacing={1.2} sx={{ mt: 2.2, alignItems: 'center' }}>
                   <Avatar sx={{ bgcolor: '#7f1212', width: 42, height: 42 }}>
