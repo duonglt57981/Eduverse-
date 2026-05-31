@@ -1,4 +1,4 @@
-import { KhoaHocType } from "../types/KhoaHoc/dto";
+import { KhoaHocType } from "../types/khoaHoc/dto";
 import { apiService } from "./index";
 
 export default class KhoaHocService {

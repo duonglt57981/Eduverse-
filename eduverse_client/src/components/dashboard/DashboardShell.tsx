@@ -456,7 +456,7 @@ function FeaturedCourseCard({
           },
         }}
       >
-        Xem chi tiết 
+        Xem chi tiết
       </Button>
     </Paper>
   );
