@@ -501,7 +501,7 @@ export default function DashboardShell() {
       return;
     }
 
-    setAuthChecked(true); // react-hooks/set-state-in-effect
+    setAuthChecked(true);
   }, [router]);
 
   const handleLogout = async () => {
