@@ -1,6 +1,6 @@
 @echo off
-title Eduverse Launcher & Git Sync
-cd /d "%~dp0"
+title Eduverse Launcher ^& Git Sync
+cd /d "%~dp0.."
 
 echo ===================================================
 echo Welcome to Eduverse Development Environment
