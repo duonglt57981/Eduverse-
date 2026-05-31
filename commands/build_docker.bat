@@ -2,9 +2,6 @@
 title Eduverse Docker Builder
 cd /d "%~dp0.."
 
-echo ===================================================
-echo Welcome to Eduverse Docker Image Builder
-echo ===================================================
 echo.
 
 :CHOOSE_ENV

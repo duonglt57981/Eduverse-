@@ -5,13 +5,13 @@ cd /d "%~dp0"
 :MAIN_MENU
 cls
 echo ===================================================
-echo             EDUVERSE DEVELOPMENT MANAGER           
+echo             EDUVERSE DEVELOPMENT COMMANDS           
 echo ===================================================
-echo [1] Git Sync ^& Pull (Select branch, stash, pull main, merge)
-echo [2] Run All (API ^& Next.js Client in new windows)
-echo [3] Run API (Backend API only)
-echo [4] Run Client (Next.js Client only)
-echo [5] Build Docker Images (dev/prod targets)
+echo [1] Pull Latest Code
+echo [2] Run ALL
+echo [3] Run API 
+echo [4] Run Client 
+echo [5] Build Docker Images
 echo [6] Exit
 echo ===================================================
 set /p MENU_CHOICE="Enter your choice (1-6): "
