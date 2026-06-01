@@ -4,9 +4,12 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Hls, { Level } from "hls.js";
 import KhoaHocService from "@/src/services/KhoaHocService";
+import TienDoHocTapService from "@/src/services/TienDoHocTapService";
 import { BaiGiangType } from "@/src/types/BaiGiang/BaiGiangDto";
 import { TaiLieuType } from "@/src/types/TaiLieu/TaiLieuDto";
 import { KhoaHocType } from "@/src/types/khoaHoc/dto";
+import { UpdateTienDoBaiGiangRequest } from "@/src/types/tienDoHocTap/Request/UpdateTienDoBaiGiangRequest";
+import { PhanHocType } from "@/src/types/PhanHoc/PhanHocdto";
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -36,6 +39,7 @@ const T = {
 const SIDEBAR_W = 380;
 const HEADER_H = 60;
 const KhoaHocSvc = new KhoaHocService();
+const TienDoSvc = new TienDoHocTapService();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface QualityLevel {
@@ -43,13 +47,6 @@ interface QualityLevel {
   label: string;
   height: number;
   bitrate?: number;
-}
-
-interface PhanHocType {
-  id?: string;
-  thuTuSapXep?: number;
-  tenPhan?: string;
-  danhSachBaiGiang?: BaiGiangType[];
 }
 
 interface NetworkInformation extends EventTarget {
@@ -201,7 +198,7 @@ const IconDL = ({ size = 13, color = "currentColor" }) => (
   </svg>
 );
 
-const IconTune = ({ size = 13, color = "currentColor" }) => (
+const IconSettings = ({ size = 18, color = "currentColor" }) => (
   <svg
     width={size}
     height={size}
@@ -211,15 +208,8 @@ const IconTune = ({ size = 13, color = "currentColor" }) => (
     strokeWidth="2"
     strokeLinecap="round"
   >
-    <line x1="4" y1="21" x2="4" y2="14" />
-    <line x1="4" y1="10" x2="4" y2="3" />
-    <line x1="12" y1="21" x2="12" y2="12" />
-    <line x1="12" y1="8" x2="12" y2="3" />
-    <line x1="20" y1="21" x2="20" y2="16" />
-    <line x1="20" y1="12" x2="20" y2="3" />
-    <line x1="1" y1="14" x2="7" y2="14" />
-    <line x1="9" y1="8" x2="15" y2="8" />
-    <line x1="17" y1="16" x2="23" y2="16" />
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
   </svg>
 );
 
@@ -322,196 +312,7 @@ const IconLoader = ({ size = 16, color = C.red }) => (
   </svg>
 );
 
-// ─── TaiLieuDropdown ─────────────────────────────────────────────────────────
-const TaiLieuDropdown = ({
-  danhSachTaiLieu,
-}: {
-  danhSachTaiLieu: TaiLieuType[];
-}) => {
-  const [open, setOpen] = useState(false);
-  const [downloading, setDL] = useState<string | null>(null);
-
-  const extractDriveId = useCallback((url: string) => {
-    const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  }, []);
-
-  const handleDownload = useCallback(
-    async (tl: TaiLieuType, e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!tl.url) return;
-
-      const key = tl.id ?? tl.url;
-      setDL(key);
-
-      try {
-        const driveId = extractDriveId(tl.url);
-        if (driveId) {
-          const downloadUrl = `https://drive.google.com/uc?export=download&id=${driveId}`;
-          window.open(downloadUrl, "_blank");
-        } else {
-          const response = await fetch(tl.url, {
-            mode: "cors",
-            cache: "no-store",
-          });
-          const blob = await response.blob();
-          const href = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = href;
-          link.download = tl.tenTaiLieu ?? "tai-lieu";
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(href);
-        }
-      } catch {
-        window.open(tl.url, "_blank");
-      } finally {
-        setTimeout(() => setDL(null), 3000);
-      }
-    },
-    [extractDriveId],
-  );
-
-  return (
-    <div style={{ borderTop: `1px dashed ${T.border}`, background: "#fafafa" }}>
-      <div
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "8px 12px 8px 44px",
-          cursor: "pointer",
-          userSelect: "none",
-          transition: "background .15s",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = T.bgHover)}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-      >
-        <IconAttach size={12} color={C.red} />
-        <span
-          style={{ fontSize: 11, fontWeight: 600, color: T.textSub, flex: 1 }}
-        >
-          {danhSachTaiLieu.length} tài liệu đính kèm
-        </span>
-        {open ? (
-          <IconChevU color={T.textSub} />
-        ) : (
-          <IconChevD color={T.textSub} />
-        )}
-      </div>
-
-      <div
-        style={{
-          overflow: "hidden",
-          maxHeight: open ? `${danhSachTaiLieu.length * 52}px` : "0",
-          transition: "max-height .2s ease",
-        }}
-      >
-        <div
-          style={{
-            padding: "2px 10px 8px 44px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          {danhSachTaiLieu.map((tl, ti) => {
-            const isPdf = tl.loaiTaiLieu === "PDF";
-            const key = tl.id ?? tl.url ?? String(ti);
-            const isLoading = downloading === key;
-            return (
-              <TaiLieuItem
-                key={key}
-                tl={tl}
-                isPdf={isPdf}
-                isLoading={isLoading}
-                onDownload={(e) => !isLoading && handleDownload(tl, e)}
-              />
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const TaiLieuItem = ({
-  tl,
-  isPdf,
-  isLoading,
-  onDownload,
-}: {
-  tl: TaiLieuType;
-  isPdf: boolean;
-  isLoading: boolean;
-  onDownload: (e: React.MouseEvent) => void;
-}) => {
-  const [hov, setHov] = useState(false);
-  return (
-    <div
-      onClick={onDownload}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 10px",
-        borderRadius: 8,
-        cursor: isLoading ? "wait" : "pointer",
-        border: `1px solid ${hov && !isLoading ? C.red + "66" : T.border}`,
-        background:
-          hov && !isLoading ? C.redLight : isLoading ? C.redLight : T.bgCard,
-        transition: "all .15s",
-      }}
-    >
-      {isPdf ? <IconPdf /> : <IconFile />}
-      <span
-        style={{
-          fontSize: 12,
-          flex: 1,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          color: hov && !isLoading ? C.red : isLoading ? C.red : T.text,
-          transition: "color .15s",
-        }}
-      >
-        {isLoading ? "Đang tải xuống..." : tl.tenTaiLieu}
-      </span>
-      <span
-        style={{
-          fontSize: 9,
-          fontWeight: 700,
-          padding: "2px 5px",
-          borderRadius: 4,
-          background: isPdf ? "#fdecea" : "#e8f0fe",
-          color: isPdf ? C.redMid : "#2980b9",
-        }}
-      >
-        {tl.loaiTaiLieu}
-      </span>
-      {isLoading ? (
-        <IconLoader size={13} />
-      ) : (
-        <div style={{ opacity: hov ? 1 : 0, transition: "opacity .15s" }}>
-          <IconDL size={13} color={C.red} />
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ─── QualityMenu ──────────────────────────────────────────────────────────────
+// ─── Quality Menu Component ───────────────────────────────────────────────────
 const QualityMenu = ({
   levels,
   currentLevel,
@@ -556,19 +357,18 @@ const QualityMenu = ({
   const getCurrentDisplayLabel = () => {
     if (currentLevel === -1) {
       if (autoActualHeight) {
-        const height = autoActualHeight;
-        if (height >= 2160) return "4K";
-        if (height >= 1440) return "2K";
-        if (height >= 1080) return "1080p";
-        if (height >= 720) return "720p";
-        if (height >= 480) return "480p";
-        return `${height}p`;
+        const h = autoActualHeight;
+        if (h >= 2160) return "4K";
+        if (h >= 1440) return "2K";
+        if (h >= 1080) return "1080p";
+        if (h >= 720) return "720p";
+        if (h >= 480) return "480p";
+        return `${h}p`;
       }
       return "Auto";
     }
     const level = levels.find((l) => l.index === currentLevel);
     if (!level) return "Auto";
-
     if (level.height === 2160) return "4K";
     if (level.height === 1440) return "2K";
     if (level.height === 1080) return "1080p";
@@ -579,9 +379,8 @@ const QualityMenu = ({
   };
 
   const isLowQuality = () => {
-    if (currentLevel === -1) {
+    if (currentLevel === -1)
       return autoActualHeight ? autoActualHeight < 720 : false;
-    }
     const level = levels.find((l) => l.index === currentLevel);
     return level ? level.height < 720 : false;
   };
@@ -627,7 +426,7 @@ const QualityMenu = ({
           (e.currentTarget.style.background = "rgba(0,0,0,0.7)")
         }
       >
-        <IconTune size={12} color="#fff" />
+        <IconSettings size={14} color="#fff" />
         <span>{getCurrentDisplayLabel()}</span>
         {isLowQuality() && (
           <span
@@ -659,13 +458,12 @@ const QualityMenu = ({
               zIndex: 99,
             }}
           />
-
           <div
             style={{
               position: "absolute",
               bottom: "calc(100% + 8px)",
               right: 0,
-              background: "rgba(28, 28, 28, 0.95)",
+              background: "rgba(28,28,28,0.95)",
               backdropFilter: "blur(12px)",
               border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: 8,
@@ -731,7 +529,6 @@ const QualityMenu = ({
                 </span>
               )}
             </div>
-
             {uniqueLevels.map((lv) => (
               <QualityMenuItem
                 key={lv.index}
@@ -749,7 +546,6 @@ const QualityMenu = ({
                 }}
               />
             ))}
-
             {onAutoDetect && currentLevel !== -1 && (
               <div
                 onClick={() => {
@@ -856,15 +652,14 @@ const QualityMenuItem = ({
         transition: "all .1s ease",
       }}
     >
-      {isSelected && (
+      {isSelected ? (
         <div style={{ width: 18 }}>
           <IconCheck size={12} color="#3ea6ff" />
         </div>
+      ) : (
+        <div style={{ width: 18 }} />
       )}
-      {!isSelected && <div style={{ width: 18 }} />}
-
       <span style={{ flex: 1 }}>{getDisplayLabel()}</span>
-
       {isSuitableForNetwork() && !isSelected && level.index !== -1 && (
         <span
           style={{
@@ -878,7 +673,6 @@ const QualityMenuItem = ({
           ✓ Phù hợp
         </span>
       )}
-
       {isRecommended && !isSelected && level.index !== -1 && (
         <span
           style={{
@@ -892,7 +686,6 @@ const QualityMenuItem = ({
           🎯 Khuyến nghị
         </span>
       )}
-
       {warning && !isSelected && level.index !== -1 && (
         <span
           style={{
@@ -906,17 +699,177 @@ const QualityMenuItem = ({
           ⚠️ {warning.text}
         </span>
       )}
-
       {level.bitrate && !isSelected && level.index !== -1 && !warning && (
-        <span
-          style={{
-            fontSize: 9,
-            color: "rgba(255,255,255,0.4)",
-          }}
-        >
+        <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
           {level.bitrate / 1000} Mbps
         </span>
       )}
+    </div>
+  );
+};
+
+// ─── TaiLieuDropdown ─────────────────────────────────────────────────────────
+const TaiLieuDropdown = ({
+  danhSachTaiLieu,
+}: {
+  danhSachTaiLieu: TaiLieuType[];
+}) => {
+  const [open, setOpen] = useState(false);
+  const [downloading, setDL] = useState<string | null>(null);
+
+  const extractDriveId = useCallback((url: string) => {
+    const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  }, []);
+
+  const handleDownload = useCallback(
+    async (tl: TaiLieuType, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!tl.url) return;
+      const key = tl.id ?? tl.url;
+      setDL(key);
+      try {
+        const driveId = extractDriveId(tl.url);
+        if (driveId) {
+          window.open(
+            `https://drive.google.com/uc?export=download&id=${driveId}`,
+            "_blank",
+          );
+        } else {
+          const response = await fetch(tl.url, {
+            mode: "cors",
+            cache: "no-store",
+          });
+          const blob = await response.blob();
+          const href = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = href;
+          link.download = tl.tenTaiLieu ?? "tai-lieu";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(href);
+        }
+      } catch {
+        window.open(tl.url, "_blank");
+      } finally {
+        setTimeout(() => setDL(null), 3000);
+      }
+    },
+    [extractDriveId],
+  );
+
+  return (
+    <div style={{ borderTop: `1px dashed ${T.border}`, background: "#fafafa" }}>
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "8px 12px 8px 44px",
+          cursor: "pointer",
+          userSelect: "none",
+          transition: "background .15s",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = T.bgHover)}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+      >
+        <IconAttach size={12} color={C.red} />
+        <span
+          style={{ fontSize: 11, fontWeight: 600, color: T.textSub, flex: 1 }}
+        >
+          {danhSachTaiLieu.length} tài liệu đính kèm
+        </span>
+        {open ? (
+          <IconChevU color={T.textSub} />
+        ) : (
+          <IconChevD color={T.textSub} />
+        )}
+      </div>
+      <div
+        style={{
+          overflow: "hidden",
+          maxHeight: open ? `${danhSachTaiLieu.length * 52}px` : "0",
+          transition: "max-height .2s ease",
+        }}
+      >
+        <div
+          style={{
+            padding: "2px 10px 8px 44px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}
+        >
+          {danhSachTaiLieu.map((tl, ti) => {
+            const isPdf = tl.loaiTaiLieu === "PDF";
+            const key = tl.id ?? tl.url ?? String(ti);
+            const isLoading = downloading === key;
+            return (
+              <div
+                key={key}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  cursor: isLoading ? "wait" : "pointer",
+                  border: `1px solid ${T.border}`,
+                  background: isLoading ? C.redLight : T.bgCard,
+                }}
+              >
+                {isPdf ? <IconPdf /> : <IconFile />}
+                <span
+                  style={{
+                    fontSize: 12,
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    color: isLoading ? C.red : T.text,
+                  }}
+                >
+                  {isLoading ? "Đang tải xuống..." : tl.tenTaiLieu}
+                </span>
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    padding: "2px 5px",
+                    borderRadius: 4,
+                    background: isPdf ? "#fdecea" : "#e8f0fe",
+                    color: isPdf ? C.redMid : "#2980b9",
+                  }}
+                >
+                  {tl.loaiTaiLieu}
+                </span>
+                {!isLoading && (
+                  <button
+                    onClick={(e) => handleDownload(tl, e)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      opacity: 0.7,
+                    }}
+                  >
+                    <IconDL size={13} color={C.red} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
@@ -941,7 +894,7 @@ const Spinner = ({
   />
 );
 
-// ─── LinearProgress ───────────────────────────────────────────────────────────
+// ─── Progress Bar ─────────────────────────────────────────────────────────────
 const Progress = ({
   value,
   height = 5,
@@ -1156,7 +1109,7 @@ const AccordionSection = ({
             {phan.thuTuSapXep ?? pi + 1}. {phan.tenPhan}
           </div>
           <div style={{ color: T.textSub, fontSize: 11, marginTop: 2 }}>
-            {doneCnt}/{phan.danhSachBaiGiang?.length ?? 0} bài · {totalMin}p
+            {doneCnt}/{phan.DanhSachBaiGiang?.length ?? 0} bài · {totalMin}p
           </div>
         </div>
         <div
@@ -1169,7 +1122,6 @@ const AccordionSection = ({
           <IconChevD size={17} color={isPlaying ? C.red : T.textSub} />
         </div>
       </div>
-
       <div
         style={{
           overflow: "hidden",
@@ -1266,7 +1218,7 @@ const BaiGiangItem = ({
   );
 };
 
-// ─── Empty Video Placeholder ──────────────────────────────────────────────────
+// ─── VideoPlaceholder ─────────────────────────────────────────────────────────
 const VideoPlaceholder = () => (
   <div
     style={{
@@ -1300,7 +1252,7 @@ const VideoPlaceholder = () => (
   </div>
 );
 
-// ─── Stats Bar ────────────────────────────────────────────────────────────────
+// ─── StatsBar ─────────────────────────────────────────────────────────────────
 const StatsBar = ({ khoaHoc }: { khoaHoc: KhoaHocType }) => (
   <div
     style={{
@@ -1369,98 +1321,139 @@ const StatsBar = ({ khoaHoc }: { khoaHoc: KhoaHocType }) => (
 const KhoaHocPage = () => {
   const [khoaHoc, setKhoaHoc] = useState<KhoaHocType | null>(null);
   const [loading, setLoading] = useState(false);
-  const [idKhoaHoc, setIdKhoaHoc] = useState("");
-  const [idNguoiDung, setIdNguoiDung] = useState("");
+  const [idDangKy, setIdDangKy] = useState("");
   const [error, setError] = useState("");
   const [baiGiang, setBaiGiang] = useState<BaiGiangType | null>(null);
   const [danhSachTatCa, setDanhSachTatCa] = useState<BaiGiangType[]>([]);
   const [phanDangMo, setPhanDangMo] = useState<Set<string>>(new Set());
-  const [hoanThanh, setHoanThanh] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [qualityLevels, setQualityLevels] = useState<QualityLevel[]>([]);
   const [currentQuality, setCurrentQuality] = useState<number>(-1);
   const [autoActualHeight, setAutoActualHeight] = useState<number | null>(null);
   const [networkSpeed, setNetworkSpeed] = useState<number | null>(null);
-  const mounted = typeof window !== "undefined";
 
+  const lastUpdateTimeRef = useRef<Record<string, number>>({});
+  const updatingRef = useRef<Record<string, boolean>>({});
+
+  const mounted = typeof window !== "undefined";
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
 
-  // ── Network Speed Detection ────────────────────────────────────────────────
+  // Network Speed Detection
   useEffect(() => {
     if (!mounted) return;
-
-    const getNetworkSpeed = () => {
-      const nav = navigator as NavigatorWithConnection;
-      if (nav.connection && nav.connection.downlink) {
-        setNetworkSpeed(nav.connection.downlink);
-      }
-    };
-
-    getNetworkSpeed();
-
-    const handleConnectionChange = () => {
-      getNetworkSpeed();
-    };
-
     const nav = navigator as NavigatorWithConnection;
-    if (nav.connection) {
-      nav.connection.addEventListener("change", handleConnectionChange);
-      return () => {
-        nav.connection?.removeEventListener("change", handleConnectionChange);
-      };
-    }
+    const getSpeed = () => {
+      if (nav.connection?.downlink) setNetworkSpeed(nav.connection.downlink);
+    };
+    getSpeed();
+    nav.connection?.addEventListener("change", getSpeed);
+    return () => nav.connection?.removeEventListener("change", getSpeed);
   }, [mounted]);
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  const flatten = useCallback(
-    (d: KhoaHocType): BaiGiangType[] =>
-      d.danhSachPhanHoc?.flatMap((p) => p.danhSachBaiGiang ?? []) ?? [],
-    [],
+  // Helper: flatten danh sách bài giảng
+  const flatten = useCallback((d: KhoaHocType | null): BaiGiangType[] => {
+    if (!d) return [];
+    return d.danhSachPhanHoc?.flatMap((p) => p.danhSachBaiGiang ?? []) ?? [];
+  }, []);
+
+  // Kiểm tra bài đã hoàn thành
+  const isBaiHoanThanh = useCallback(
+    (bgId: string) => {
+      if (!bgId) return false;
+      const bg = danhSachTatCa.find((b) => b.id === bgId);
+      return bg?.daHoanThanh === true;
+    },
+    [danhSachTatCa],
   );
 
-  const chonBaiGiang = useCallback((bg: BaiGiangType) => {
-    setBaiGiang(bg);
-    const pid = bg.idPhan as string;
-    if (pid) {
-      setPhanDangMo((prev) => new Set([...prev, pid]));
-    }
-  }, []);
+  const tongBai = danhSachTatCa.length;
+  const soBaiHoanThanh = danhSachTatCa.filter(
+    (b) => b.daHoanThanh === true,
+  ).length;
+  const phanTramHoanThanh = useMemo(() => {
+    if (tongBai === 0) return 0;
+    return Math.round((soBaiHoanThanh / tongBai) * 100);
+  }, [tongBai, soBaiHoanThanh]);
 
-  const danhDauHoanThanh = useCallback((id: string) => {
-    setHoanThanh((prev) => new Set([...prev, id]));
-  }, []);
+  // Gửi cập nhật tiến độ (trả về refreshed course)
+  const sendProgress = useCallback(
+    async (baiGiangId: string, thoiGianXem: number): Promise<KhoaHocType | null> => {
+      if (!idDangKy || !baiGiangId) return null;
+      if (updatingRef.current[baiGiangId]) return null;
+      updatingRef.current[baiGiangId] = true;
+      try {
+        const request: UpdateTienDoBaiGiangRequest = {
+          idDangKyKhoaHoc: idDangKy,
+          idBaiGiang: baiGiangId,
+          thoiGianXem: Math.floor(thoiGianXem),
+          LanCuoiXem: new Date(),
+        };
+        await TienDoSvc.updateTienDoBaiGiang(request);
 
-  const chuyenBaiTiep = useCallback(
-    (ds: BaiGiangType[], cur: BaiGiangType) => {
-      const i = ds.findIndex((b) => b.id === cur.id);
-      if (i !== -1 && i < ds.length - 1) {
-        chonBaiGiang(ds[i + 1]);
+        const refreshed = await KhoaHocSvc.getLearningKhoaHoc(idDangKy);
+        setKhoaHoc(refreshed);
+        const ds = flatten(refreshed);
+        setDanhSachTatCa(ds);
+        return refreshed;
+      } catch (err) {
+        console.error("Lỗi cập nhật tiến độ:", err);
+        return null;
+      } finally {
+        updatingRef.current[baiGiangId] = false;
       }
     },
-    [chonBaiGiang],
+    [idDangKy, flatten],
   );
 
-  const handleVideoEnded = useCallback(() => {
-    if (!baiGiang) return;
-    danhDauHoanThanh(baiGiang.id as string);
-    chuyenBaiTiep(danhSachTatCa, baiGiang);
-  }, [baiGiang, danhSachTatCa, danhDauHoanThanh, chuyenBaiTiep]);
-
-  const togglePhan = useCallback((id: string, playingId?: string) => {
-    if (id === playingId) return;
-    setPhanDangMo((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
+  // Chọn bài giảng
+  const chonBaiGiang = useCallback((bg: BaiGiangType) => {
+    setBaiGiang(bg);
+    if (bg.idPhan)
+      setPhanDangMo((prev) => new Set([...prev, bg.idPhan as string]));
+    lastUpdateTimeRef.current[bg.id as string] = 0;
   }, []);
 
-  // ── Quality control ───────────────────────────────────────────────────────
+  // Video: cập nhật tiến độ mỗi 10s
+  const handleTimeUpdate = useCallback(() => {
+    if (!videoRef.current || !baiGiang?.id) return;
+    const currentTime = videoRef.current.currentTime;
+    const duration = videoRef.current.duration;
+    if (!currentTime || isNaN(duration)) return;
+
+    const bgId = baiGiang.id as string;
+    const lastSent = lastUpdateTimeRef.current[bgId] ?? 0;
+
+    if (currentTime - lastSent >= 10) {
+      lastUpdateTimeRef.current[bgId] = currentTime;
+      sendProgress(bgId, currentTime);
+    }
+  }, [baiGiang, sendProgress]);
+
+  // Video: kết thúc → gửi full duration → auto next (skip completed)
+  const handleVideoEnded = useCallback(async () => {
+    if (!baiGiang?.id) return;
+    const bgId = baiGiang.id as string;
+    const duration = videoRef.current?.duration || baiGiang.thoiLuong || 0;
+
+    // Gửi tiến độ hoàn thành và lấy khóa học đã refresh
+    const refreshed = await sendProgress(bgId, duration);
+    const currentList = refreshed ? flatten(refreshed) : danhSachTatCa;
+
+    const idx = currentList.findIndex((b) => b.id === bgId);
+    if (idx !== -1) {
+      // Tìm bài tiếp theo chưa hoàn thành
+      let nextIdx = idx + 1;
+      while (nextIdx < currentList.length && currentList[nextIdx].daHoanThanh === true) {
+        nextIdx++;
+      }
+      if (nextIdx < currentList.length) {
+        chonBaiGiang(currentList[nextIdx]);
+      }
+    }
+  }, [baiGiang, danhSachTatCa, sendProgress, chonBaiGiang, flatten]);
+
+  // Chất lượng video
   const handleSelectQuality = useCallback((idx: number) => {
     const hls = hlsRef.current;
     if (!hls) return;
@@ -1484,17 +1477,25 @@ const KhoaHocPage = () => {
     setAutoActualHeight(null);
   }, []);
 
-  // ── HLS Player ────────────────────────────────────────────────────────────
+  // Toggle phần học
+  const togglePhan = useCallback((id: string, playingId?: string) => {
+    if (id === playingId) return;
+    setPhanDangMo((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  }, []);
+
+  // HLS Player
   useEffect(() => {
     if (!baiGiang?.urlBaiGiang) return;
     const video = videoRef.current;
     if (!video) return;
     const url = baiGiang.urlBaiGiang;
-
     setQualityLevels([]);
     setCurrentQuality(-1);
     setAutoActualHeight(null);
-
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
@@ -1515,58 +1516,46 @@ const KhoaHocPage = () => {
       hls.loadSource(url);
       hls.attachMedia(video);
 
-      hls.on(
-        Hls.Events.MANIFEST_PARSED,
-        (_: string, data: { levels: Level[] }) => {
-          const levels: QualityLevel[] = (data.levels as Level[])
-            .map((l, i) => {
-              const preset = QUALITY_PRESETS.find((p) => p.height === l.height);
-              return {
-                index: i,
-                height: l.height,
-                label: preset?.label ?? `${l.height}p`,
-                bitrate: preset?.bitrate ?? l.bitrate,
-              };
-            })
-            .filter(
-              (l, i, arr) => arr.findIndex((x) => x.height === l.height) === i,
-            )
-            .sort((a, b) => b.height - a.height);
+      hls.on(Hls.Events.MANIFEST_PARSED, (_: string, data: { levels: Level[] }) => {
+        const levels: QualityLevel[] = (data.levels as Level[])
+          .map((l, i) => {
+            const preset = QUALITY_PRESETS.find((p) => p.height === l.height);
+            return {
+              index: i,
+              height: l.height,
+              label: preset?.label ?? `${l.height}p`,
+              bitrate: preset?.bitrate ?? l.bitrate,
+            };
+          })
+          .filter(
+            (l, i, arr) => arr.findIndex((x) => x.height === l.height) === i,
+          )
+          .sort((a, b) => b.height - a.height);
+        setQualityLevels([
+          { index: -1, label: "Auto", height: 0, bitrate: undefined },
+          ...levels,
+        ]);
+        setCurrentQuality(-1);
+        video.play().catch(() => {});
+      });
 
-          setQualityLevels([
-            { index: -1, label: "Auto", height: 0, bitrate: undefined },
-            ...levels,
-          ]);
-          setCurrentQuality(-1);
-          video.play().catch(() => {});
-        },
-      );
-
-      hls.on(
-        Hls.Events.LEVEL_SWITCHED,
-        (_: string, data: { level: number }) => {
-          const height = hls.levels[data.level]?.height ?? null;
-          setCurrentQuality((prev) => {
-            if (prev === -1) {
-              setAutoActualHeight(height);
-              return -1;
-            }
-            return data.level;
-          });
-        },
-      );
-
-      hls.on(
-        Hls.Events.ERROR,
-        (_: string, d: { fatal: boolean; type?: string }) => {
-          if (d.fatal) {
-            console.error("HLS fatal error:", d);
-            if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              hls.startLoad();
-            }
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_: string, data: { level: number }) => {
+        const height = hls.levels[data.level]?.height ?? null;
+        setCurrentQuality((prev) => {
+          if (prev === -1) {
+            setAutoActualHeight(height);
+            return -1;
           }
-        },
-      );
+          return data.level;
+        });
+      });
+
+      hls.on(Hls.Events.ERROR, (_: string, d: { fatal: boolean; type?: string }) => {
+        if (d.fatal) {
+          console.error("HLS fatal:", d);
+          if (d.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+        }
+      });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = url;
       video.load();
@@ -1583,10 +1572,39 @@ const KhoaHocPage = () => {
     };
   }, [baiGiang]);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
+  // Seek to saved progress and AUTO PLAY
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !baiGiang) return;
+
+    const handleCanPlay = () => {
+      if (!baiGiang.daHoanThanh && baiGiang.thoiGianXem && baiGiang.thoiGianXem > 0) {
+        if (Math.abs(video.currentTime - baiGiang.thoiGianXem) > 0.5) {
+          video.currentTime = baiGiang.thoiGianXem;
+        }
+      }
+      // Tự động phát video sau khi seek hoặc nếu không cần seek
+      video.play().catch(e => console.log("Autoplay failed:", e));
+    };
+
+    video.addEventListener("canplay", handleCanPlay);
+    if (video.readyState >= 2) {
+      handleCanPlay();
+    }
+    return () => video.removeEventListener("canplay", handleCanPlay);
+  }, [baiGiang]);
+
+  // Determine initial lecture (first not completed, else first)
+  const getInitialLecture = useCallback((lectures: BaiGiangType[]): BaiGiangType | null => {
+    const notCompleted = lectures.find((l) => l.daHoanThanh === false);
+    if (notCompleted) return notCompleted;
+    return lectures.length > 0 ? lectures[0] : null;
+  }, []);
+
+  // Fetch khóa học
   const fetchKhoaHoc = useCallback(async () => {
-    if (!idKhoaHoc.trim() || !idNguoiDung.trim()) {
-      setError("Vui lòng nhập đầy đủ ID khóa học và ID người dùng");
+    if (!idDangKy.trim()) {
+      setError("Vui lòng nhập ID đăng ký khóa học");
       return;
     }
     try {
@@ -1595,32 +1613,31 @@ const KhoaHocPage = () => {
       setKhoaHoc(null);
       setBaiGiang(null);
       setPhanDangMo(new Set());
-      setHoanThanh(new Set());
 
-      const res = await KhoaHocSvc.getLearningKhoaHoc(idKhoaHoc, idNguoiDung);
+      const res = await KhoaHocSvc.getLearningKhoaHoc(idDangKy);
       setKhoaHoc(res);
       const ds = flatten(res);
       setDanhSachTatCa(ds);
 
       if (ds.length > 0) {
-        chonBaiGiang(ds[0]);
-        setSidebarOpen(true);
+        const initial = getInitialLecture(ds);
+        if (initial) {
+          chonBaiGiang(initial);
+          setSidebarOpen(true);
+        }
       }
-    } catch {
-      setError("Không tìm thấy khóa học. Vui lòng kiểm tra lại ID.");
+    } catch (err) {
+      setError("Không tìm thấy khóa học. Vui lòng kiểm tra lại ID đăng ký.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [idKhoaHoc, idNguoiDung, flatten, chonBaiGiang]);
+  }, [idDangKy, flatten, chonBaiGiang, getInitialLecture]);
 
-  // ── Derived ───────────────────────────────────────────────────────────────
+  // Derived values
   const currentIdx = danhSachTatCa.findIndex((b) => b.id === baiGiang?.id);
   const coTiepTheo = currentIdx !== -1 && currentIdx < danhSachTatCa.length - 1;
   const idPhanPlay = baiGiang?.idPhan as string | undefined;
-  const phanTram =
-    danhSachTatCa.length > 0
-      ? Math.round((hoanThanh.size / danhSachTatCa.length) * 100)
-      : 0;
 
   const scrollbarStyle = `
     ::-webkit-scrollbar { width: 6px; }
@@ -1738,23 +1755,31 @@ const KhoaHocPage = () => {
                   Tiến độ
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: C.red }}>
-                  {phanTram}%
+                  {phanTramHoanThanh}%
                 </div>
               </div>
               <div style={{ width: 90 }}>
-                <Progress value={phanTram} />
+                <Progress value={phanTramHoanThanh} />
               </div>
               <div
                 style={{ fontSize: 12, color: T.textSub, whiteSpace: "nowrap" }}
               >
-                {hoanThanh.size}/{danhSachTatCa.length}
+                {soBaiHoanThanh}/{tongBai}
               </div>
             </div>
 
             {coTiepTheo && (
               <Btn
                 variant="outline"
-                onClick={() => chuyenBaiTiep(danhSachTatCa, baiGiang!)}
+                onClick={() => {
+                  let nextIdx = currentIdx + 1;
+                  while (nextIdx < danhSachTatCa.length && danhSachTatCa[nextIdx].daHoanThanh === true) {
+                    nextIdx++;
+                  }
+                  if (nextIdx < danhSachTatCa.length) {
+                    chonBaiGiang(danhSachTatCa[nextIdx]);
+                  }
+                }}
               >
                 <IconNext size={15} /> Tiếp theo
               </Btn>
@@ -1815,7 +1840,6 @@ const KhoaHocPage = () => {
                 style={{ objectFit: "contain" }}
               />
             </div>
-
             <div
               style={{
                 width: 36,
@@ -1825,7 +1849,6 @@ const KhoaHocPage = () => {
                 margin: "0 auto 20px",
               }}
             />
-
             <div style={{ textAlign: "center", marginBottom: 28 }}>
               <div
                 style={{
@@ -1838,10 +1861,9 @@ const KhoaHocPage = () => {
                 Bắt đầu học ngay
               </div>
               <div style={{ fontSize: 14, color: T.textSub }}>
-                Nhập thông tin để truy cập khóa học
+                Nhập ID đăng ký khóa học để truy cập
               </div>
             </div>
-
             <div
               style={{
                 display: "flex",
@@ -1851,21 +1873,13 @@ const KhoaHocPage = () => {
               }}
             >
               <Input
-                label="ID Khóa học"
-                value={idKhoaHoc}
-                onChange={setIdKhoaHoc}
+                label="ID Đăng ký khóa học"
+                value={idDangKy}
+                onChange={setIdDangKy}
                 onKeyDown={(e) => e.key === "Enter" && fetchKhoaHoc()}
-                placeholder="Nhập ID khóa học"
-              />
-              <Input
-                label="ID Người dùng"
-                value={idNguoiDung}
-                onChange={setIdNguoiDung}
-                onKeyDown={(e) => e.key === "Enter" && fetchKhoaHoc()}
-                placeholder="Nhập ID người dùng"
+                placeholder="Nhập ID đăng ký khóa học"
               />
             </div>
-
             {error && (
               <div
                 style={{
@@ -1880,7 +1894,6 @@ const KhoaHocPage = () => {
                 <span>⚠</span> {error}
               </div>
             )}
-
             <button
               onClick={fetchKhoaHoc}
               disabled={loading}
@@ -1930,7 +1943,7 @@ const KhoaHocPage = () => {
               minWidth: 0,
             }}
           >
-            {/* VIDEO PLAYER WITH QUALITY BUTTON */}
+            {/* VIDEO PLAYER */}
             <div
               style={{
                 flexShrink: 0,
@@ -1943,6 +1956,7 @@ const KhoaHocPage = () => {
                   <video
                     ref={videoRef}
                     controls
+                    onTimeUpdate={handleTimeUpdate}
                     onEnded={handleVideoEnded}
                     style={{
                       width: "100%",
@@ -1952,8 +1966,6 @@ const KhoaHocPage = () => {
                       background: "#000",
                     }}
                   />
-
-                  {/* Quality button - bottom right corner */}
                   {qualityLevels.length > 1 && (
                     <div
                       style={{
@@ -1973,93 +1985,6 @@ const KhoaHocPage = () => {
                       />
                     </div>
                   )}
-
-                  {/* Low bandwidth warning */}
-                  {networkSpeed &&
-                    networkSpeed < 5 &&
-                    currentQuality === -1 && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: 60,
-                          right: 12,
-                          background: "rgba(0,0,0,0.85)",
-                          color: "#ff9800",
-                          fontSize: 11,
-                          padding: "6px 10px",
-                          borderRadius: 6,
-                          backdropFilter: "blur(4px)",
-                          zIndex: 10,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          animation: "fadeIn 0.3s ease",
-                        }}
-                      >
-                        <span>⚠️</span>
-                        <span>Mạng đang yếu, hãy chọn chất lượng thấp hơn</span>
-                        <button
-                          onClick={() => {
-                            const lowQuality =
-                              qualityLevels.find((l) => l.height === 360) ||
-                              qualityLevels.find((l) => l.height === 480);
-                            if (lowQuality && lowQuality.index !== -1) {
-                              handleSelectQuality(lowQuality.index);
-                            }
-                          }}
-                          style={{
-                            background: "#ff9800",
-                            border: "none",
-                            color: "#000",
-                            padding: "2px 8px",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 10,
-                            fontWeight: 600,
-                          }}
-                        >
-                          Giảm chất lượng
-                        </button>
-                      </div>
-                    )}
-
-                  {/* Low quality indicator */}
-                  {(() => {
-                    const currentHeight =
-                      currentQuality === -1
-                        ? autoActualHeight
-                        : qualityLevels.find((l) => l.index === currentQuality)
-                            ?.height;
-                    if (
-                      currentHeight &&
-                      currentHeight < 720 &&
-                      currentQuality !== -1
-                    ) {
-                      return (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: 12,
-                            right: 12,
-                            background: "rgba(0,0,0,0.7)",
-                            color: "#ff9800",
-                            fontSize: 10,
-                            padding: "4px 8px",
-                            borderRadius: 4,
-                            backdropFilter: "blur(4px)",
-                            zIndex: 10,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <span>📺</span>
-                          <span>Đang xem chất lượng thấp</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
                 </>
               ) : (
                 <VideoPlaceholder />
@@ -2134,7 +2059,7 @@ const KhoaHocPage = () => {
                       </span>
                     )}
                     {baiGiang?.laBaiGiangFree && <Chip label="Miễn phí" />}
-                    {hoanThanh.has(baiGiang?.id as string) && (
+                    {baiGiang && isBaiHoanThanh(baiGiang.id as string) && (
                       <Chip
                         label="✓ Đã hoàn thành"
                         bg={C.redLight}
@@ -2143,20 +2068,19 @@ const KhoaHocPage = () => {
                     )}
                   </div>
                 </div>
-
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                  {baiGiang && !hoanThanh.has(baiGiang.id as string) && (
-                    <Btn
-                      variant="outline"
-                      onClick={() => danhDauHoanThanh(baiGiang.id as string)}
-                    >
-                      <IconCheck size={14} color={T.textSub} /> Hoàn thành
-                    </Btn>
-                  )}
                   {coTiepTheo && (
                     <Btn
                       variant="filled"
-                      onClick={() => chuyenBaiTiep(danhSachTatCa, baiGiang!)}
+                      onClick={() => {
+                        let nextIdx = currentIdx + 1;
+                        while (nextIdx < danhSachTatCa.length && danhSachTatCa[nextIdx].daHoanThanh === true) {
+                          nextIdx++;
+                        }
+                        if (nextIdx < danhSachTatCa.length) {
+                          chonBaiGiang(danhSachTatCa[nextIdx]);
+                        }
+                      }}
                     >
                       Bài tiếp theo <IconNext size={15} color="#fff" />
                     </Btn>
@@ -2167,7 +2091,6 @@ const KhoaHocPage = () => {
               <div
                 style={{ height: 1, background: T.divider, margin: "20px 0" }}
               />
-
               <StatsBar khoaHoc={khoaHoc} />
             </div>
           </div>
@@ -2223,7 +2146,7 @@ const KhoaHocPage = () => {
                 }}
               >
                 <div style={{ flex: 1 }}>
-                  <Progress value={phanTram} height={5} />
+                  <Progress value={phanTramHoanThanh} height={5} />
                 </div>
                 <span
                   style={{
@@ -2233,11 +2156,11 @@ const KhoaHocPage = () => {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {phanTram}%
+                  {phanTramHoanThanh}%
                 </span>
               </div>
               <div style={{ fontSize: 11, color: T.textHint }}>
-                {hoanThanh.size}/{danhSachTatCa.length} bài đã hoàn thành
+                {soBaiHoanThanh}/{tongBai} bài đã hoàn thành
               </div>
             </div>
 
@@ -2247,7 +2170,7 @@ const KhoaHocPage = () => {
                 const isPlaying = phan.id === idPhanPlay;
                 const doneCnt =
                   phan.danhSachBaiGiang?.filter((b: BaiGiangType) =>
-                    hoanThanh.has(b.id as string),
+                    isBaiHoanThanh(b.id as string),
                   ).length ?? 0;
                 const totalMin = Math.floor(
                   (phan.danhSachBaiGiang?.reduce(
@@ -2255,7 +2178,6 @@ const KhoaHocPage = () => {
                     0,
                   ) ?? 0) / 60,
                 );
-
                 return (
                   <AccordionSection
                     key={phan.id ?? pi}
@@ -2285,7 +2207,7 @@ const KhoaHocPage = () => {
                           key={bg.id ?? bi}
                           bg={bg}
                           isActive={baiGiang?.id === bg.id}
-                          isDone={hoanThanh.has(bg.id as string)}
+                          isDone={bg.daHoanThanh === true}
                           onClick={() => chonBaiGiang(bg)}
                         >
                           {(bg.danhSachTaiLieu?.length ?? 0) > 0 && (

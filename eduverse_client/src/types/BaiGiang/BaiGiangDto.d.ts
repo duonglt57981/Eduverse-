@@ -9,6 +9,10 @@ export interface BaiGiangType {
   laBaiGiangFree?: boolean;
   trangThai?: string;
   idPhan?: Guid;
+  
+  daHoanThanh?: boolean;
+  thoiGianXem?: number;
 
   danhSachTaiLieu?: TaiLieuType[];
+  tienDoHocTap?: TienDoHocTapType;
 }
