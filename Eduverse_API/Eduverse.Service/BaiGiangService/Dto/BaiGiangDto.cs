@@ -11,6 +11,8 @@ namespace Eduverse.Service.BaiGiangService.Dto
     public class BaiGiangDto : BaiGiang
     {
         //
+        public int ThoiGianXem { get; set; }
+        public bool DaHoanThanh { get; set; }
         public List<TaiLieuDto>? DanhSachTaiLieu { get; set; }
     }
 }

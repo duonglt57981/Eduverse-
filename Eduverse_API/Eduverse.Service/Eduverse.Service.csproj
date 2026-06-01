@@ -61,8 +61,6 @@
     <Folder Include="ThanhToanService\Request\" />
     <Folder Include="ThongBaoService\Dto\" />
     <Folder Include="ThongBaoService\Request\" />
-    <Folder Include="TienDoHocTapService\Dto\" />
-    <Folder Include="TienDoHocTapService\Request\" />
     <Folder Include="VaiTro_NguoiDungService\Dto\" />
     <Folder Include="VaiTro_NguoiDungService\Request\" />
   </ItemGroup>

@@ -21,12 +21,12 @@ namespace Eduverse.Api.Controller
             _khoaHocService = khoaHocService;
         }
 
-        [HttpGet("get-khoahoc")]
-        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList([FromQuery] KhoaHocSearch search)
+        [HttpGet("get-khoahoc/{userId}")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList([FromQuery] KhoaHocSearch search, Guid? userId)
         {
             try
             {
-                var result = await _khoaHocService.GetList(search);
+                var result = await _khoaHocService.GetList(search, userId);
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
@@ -36,12 +36,12 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("get-learning")]
-        public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idKhoaHoc, Guid idNguoiDung)
+        [HttpGet("get-learning/{idDangKy}/{IdnguoiDung}")]
+        public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy, Guid IdnguoiDung)
         {
             try
             {
-                var result = await _khoaHocService.GetLearning(idKhoaHoc, idNguoiDung);
+                var result = await _khoaHocService.GetLearning(idDangKy, IdnguoiDung);
                 return DataResponse<KhoaHocDto>.Success(result);
             }
             catch (Exception ex)

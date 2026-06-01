@@ -32,6 +32,11 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public string? TrangThaiPheDuyet { get; set; }
         public string? TrangThai { get; set; }
 
+
+        
+        public bool DaDangKy { get; set; }
+        public int SoBaiGiangHoanThanh { get; set; }
+        public double PhanTramHoanThanh { get; set; }
         //thêm list 
         public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
     }
