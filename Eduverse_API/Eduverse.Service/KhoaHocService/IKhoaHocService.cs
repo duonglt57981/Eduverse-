@@ -13,7 +13,7 @@ namespace Eduverse.Service.KhoaHocService
 {
     public interface IKhoaHocService : IService<KhoaHoc>
     {
-        Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search, Guid? userId = null);
+        Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search, Guid userId);
 
         Task<KhoaHocDto> GetLearning(Guid idDangKy, Guid idNguoiDung);
 
