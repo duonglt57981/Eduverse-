@@ -22,7 +22,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpGet("get-khoahoc/{userId}")]
-        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList([FromQuery] KhoaHocSearch search, Guid? userId)
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList([FromQuery] KhoaHocSearch search, Guid userId)
         {
             try
             {
@@ -40,7 +40,7 @@ namespace Eduverse.Api.Controller
         public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy, Guid IdnguoiDung)
         {
             try
-            {
+            {   
                 var result = await _khoaHocService.GetLearning(idDangKy, IdnguoiDung);
                 return DataResponse<KhoaHocDto>.Success(result);
             }

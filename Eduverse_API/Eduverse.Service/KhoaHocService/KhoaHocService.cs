@@ -62,68 +62,71 @@ namespace Eduverse.Service.KhoaHocService
             _tienDoHocTapService = tienDoHocTapService;
         }
 
-        public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search, Guid? userId = null)
+        public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search, Guid userId)
         {
-            // 1. Lấy danh sách khóa học user đã đăng ký (nếu có userId)
-            HashSet<Guid> enrolledCourseIds = new HashSet<Guid>();
-            if (userId.HasValue)
-            {
-                enrolledCourseIds = await _dangKyKhoaHocService.GetQueryable()
-                    .Where(dk => dk.IdNguoiDangKi == userId.Value && !dk.IsDeleted)
-                    .Select(dk => dk.IdDangKi)
-                    .Distinct()
-                    .ToHashSetAsync();
-            }
+            if (userId == Guid.Empty)
+                throw new Exception("Vui lòng nhập id người dùng");
 
-            // 2. Query khóa học với điều kiện IsDeleted
-            var khoaHocQuery = GetQueryable().AsNoTracking();
+            // ✅ Materialize danh sách khóa học đã đăng ký (in-memory)
+            var khoaHocDaDangKyIds = await _dangKyKhoaHocService
+                .GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdNguoiDangKi == userId && x.IdDangKi.HasValue)
+                .Select(x => x.IdDangKi.Value)
+                .ToListAsync();
 
-            // Nếu có userId: lấy khóa học chưa xóa HOẶC khóa học đã đăng ký (dù đã xóa)
-            if (userId.HasValue)
-            {
-                khoaHocQuery = khoaHocQuery.Where(kh => !kh.IsDeleted || enrolledCourseIds.Contains(kh.Id));
-            }
-            else
-            {
-                khoaHocQuery = khoaHocQuery.Where(kh => !kh.IsDeleted);
-            }
+            // ✅ Lấy danh sách khóa học (filter cơ bản, không join)
+            var khoaHocList = await GetAll()
+                .AsNoTracking()
+                .Where(kh => !kh.IsDeleted || khoaHocDaDangKyIds.Contains(kh.Id))
+                .ToListAsync();
 
-            // 3. Thống kê bài giảng (subquery)
-            var thongKeBaiGiang =
-                from ph in _phanService.GetQueryable().AsNoTracking()
-                join bg in _baiGiangService.GetQueryable().AsNoTracking() on ph.Id equals bg.IdPhan
+            var khoaHocIds = khoaHocList.Select(x => x.Id).ToList();
+
+            // ✅ Materialize thống kê bài giảng
+            var thongKeBaiGiang = await (
+                from bg in _baiGiangService.GetQueryable().AsNoTracking()
+                join ph in _phanService.GetQueryable().AsNoTracking()
+                    on bg.IdPhan equals ph.Id
+                where ph.IdKhoaHoc != null && khoaHocIds.Contains(ph.IdKhoaHoc.Value)
                 group bg by ph.IdKhoaHoc into g
                 select new
                 {
                     IdKhoaHoc = g.Key,
                     TongBaiGiang = g.Count(),
                     TongThoiLuong = g.Sum(x => x.ThoiLuong ?? 0)
-                };
+                }
+            ).ToListAsync();
 
-            // 4. Thống kê học viên (subquery)
-            var thongKeHocVien =
+            // ✅ Materialize thống kê học viên (bỏ Distinct + Count phức tạp)
+            var thongKeHocVien = await (
                 from dk in _dangKyKhoaHocService.GetQueryable().AsNoTracking()
+                where dk.IdDangKi != null && khoaHocIds.Contains(dk.IdDangKi.Value)
                 group dk by dk.IdDangKi into g
                 select new
                 {
                     IdKhoaHoc = g.Key,
-                    SoLuongHocVien = g.Select(x => x.IdNguoiDangKi).Distinct().Count()
-                };
+                    SoLuongHocVien = g.Count()
+                }
+            ).ToListAsync();
 
-            // 5. Join chính
-            var query =
-                from kh in khoaHocQuery
-                join tkbg in thongKeBaiGiang on kh.Id equals tkbg.IdKhoaHoc into bgGroup
-                from tkbg in bgGroup.DefaultIfEmpty()
-                join tkhv in thongKeHocVien on kh.Id equals tkhv.IdKhoaHoc into hvGroup
-                from tkhv in hvGroup.DefaultIfEmpty()
-                select new KhoaHocDto
+            // ✅ Join in-memory — không còn lỗi nullable
+            var bgDict = thongKeBaiGiang.ToDictionary(x => x.IdKhoaHoc);
+            var hvDict = thongKeHocVien.ToDictionary(x => x.IdKhoaHoc);
+            var daDangKySet = new HashSet<Guid>(khoaHocDaDangKyIds);
+
+            var result = khoaHocList.Select(kh =>
+            {
+                bgDict.TryGetValue(kh.Id, out var bg);
+                hvDict.TryGetValue(kh.Id, out var hv);
+
+                return new KhoaHocDto
                 {
                     Id = kh.Id,
                     TieuDe = kh.TieuDe,
                     MoTa = kh.MoTa,
-                    Gia = kh.Gia,
-                    GiaGoc = kh.GiaGoc,
+                    Gia = kh.Gia ?? 0,
+                    GiaGoc = kh.GiaGoc ?? 0,
                     LoaiKhoaHoc = kh.LoaiKhoaHoc,
                     HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
                     URLViewPreviewKhoaHoc = kh.URLViewPreviewKhoaHoc,
@@ -131,51 +134,51 @@ namespace Eduverse.Service.KhoaHocService
                     TrangThai = kh.TrangThai,
                     TrangThaiPheDuyet = kh.TrangThaiPheDuyet,
                     NgayTao = kh.NgayTao,
-                    TongBaiGiang = tkbg != null ? tkbg.TongBaiGiang : 0,
-                    TongThoiLuong = tkbg != null ? tkbg.TongThoiLuong : 0,
-                    SoLuongHocVien = tkhv != null ? tkhv.SoLuongHocVien : 0,
-                    DaDangKy = userId.HasValue && enrolledCourseIds.Contains(kh.Id)
+                    TongBaiGiang = bg?.TongBaiGiang ?? 0,
+                    TongThoiLuong = bg?.TongThoiLuong ?? 0,
+                    SoLuongHocVien = hv?.SoLuongHocVien ?? 0,
+                    DaDangKy = daDangKySet.Contains(kh.Id)
                 };
+            }).AsQueryable();
 
-            // 6. Áp dụng các bộ lọc từ search
+            // ✅ Filter in-memory
             if (!string.IsNullOrWhiteSpace(search?.Keyword))
             {
-                query = query.Where(x =>
-                    EF.Functions.Like(x.TieuDe, $"%{search.Keyword}%") ||
-                    EF.Functions.Like(x.LoaiKhoaHoc, $"%{search.Keyword}%"));
+                var keyword = search.Keyword.Trim().ToLower();
+                result = result.Where(x =>
+                    (x.TieuDe != null && x.TieuDe.ToLower().Contains(keyword)) ||
+                    (x.LoaiKhoaHoc != null && x.LoaiKhoaHoc.ToLower().Contains(keyword)));
             }
 
             if (!string.IsNullOrWhiteSpace(search?.TieuDe))
-                query = query.Where(x => x.TieuDe.Contains(search.TieuDe));
+                result = result.Where(x => x.TieuDe != null && x.TieuDe.Contains(search.TieuDe));
 
             if (!string.IsNullOrWhiteSpace(search?.CapDo))
-                query = query.Where(x => x.CapDo == search.CapDo);
+                result = result.Where(x => x.CapDo == search.CapDo);
 
             if (!string.IsNullOrWhiteSpace(search?.LoaiKhoaHoc))
-                query = query.Where(x => x.LoaiKhoaHoc == search.LoaiKhoaHoc);
+                result = result.Where(x => x.LoaiKhoaHoc == search.LoaiKhoaHoc);
 
             if (!string.IsNullOrWhiteSpace(search?.TrangThai))
-                query = query.Where(x => x.TrangThai == search.TrangThai);
+                result = result.Where(x => x.TrangThai == search.TrangThai);
 
             if (search?.GiaFrom != null)
-                query = query.Where(x => x.Gia >= search.GiaFrom.Value);
+                result = result.Where(x => x.Gia >= search.GiaFrom);
 
             if (search?.GiaTo != null)
-                query = query.Where(x => x.Gia <= search.GiaTo.Value);
+                result = result.Where(x => x.Gia <= search.GiaTo);
 
             if (search?.IsFree == true)
-                query = query.Where(x => x.Gia == 0);
+                result = result.Where(x => x.Gia == 0);
 
-            // 7. Sắp xếp
-            query = search?.SortPrice?.ToLower() switch
+            result = search?.SortPrice?.ToLower() switch
             {
-                "asc" => query.OrderBy(x => x.Gia),
-                "desc" => query.OrderByDescending(x => x.Gia),
-                _ => query.OrderByDescending(x => x.NgayTao)
+                "asc" => result.OrderBy(x => x.Gia),
+                "desc" => result.OrderByDescending(x => x.Gia),
+                _ => result.OrderByDescending(x => x.NgayTao)
             };
 
-            // 8. Phân trang
-            return await PagedList<KhoaHocDto>.CreateAsync(query, search);
+            return await PagedList<KhoaHocDto>.CreateAsync(result, search);
         }
 
 
@@ -188,10 +191,7 @@ namespace Eduverse.Service.KhoaHocService
             var dangKy = await _dangKyKhoaHocService
                 .GetQueryable()
                 .AsNoTracking()
-                .Where(x =>
-                    x.Id == idDangKy &&
-                    x.IdNguoiDangKi == idNguoiDung &&
-                    !x.IsDeleted)
+                .Where(x =>x.Id == idDangKy && x.IdNguoiDangKi == idNguoiDung &&!x.IsDeleted)
                 .Select(x => new
                 {
                     x.IdDangKi
@@ -204,9 +204,9 @@ namespace Eduverse.Service.KhoaHocService
             var idKhoaHoc = dangKy.IdDangKi;
 
             // 2. Lấy khóa học (CHO PHÉP XEM DÙ ĐÃ XÓA MỀM NẾU ĐÃ ĐĂNG KÝ)
-            var khoaHoc = await GetQueryable()
+            var khoaHoc = await GetAll()
                 .AsNoTracking()
-                .Where(x =>x.Id == idKhoaHoc &&(!x.IsDeleted)) 
+                .Where(x =>x.Id == idKhoaHoc) 
                 .Select(x => new KhoaHocDto
                 {
                     Id = x.Id,
@@ -226,17 +226,12 @@ namespace Eduverse.Service.KhoaHocService
             khoaHoc.SoLuongHocVien = await _dangKyKhoaHocService
                 .GetQueryable()
                 .AsNoTracking()
-                .CountAsync(x =>
-                    x.IdDangKi == idKhoaHoc &&
-                    !x.IsDeleted);
+                .CountAsync(x =>x.IdDangKi == idKhoaHoc &&!x.IsDeleted);
 
             var tienDoDict = await _tienDoHocTapService
                 .GetQueryable()
                 .AsNoTracking()
-                .Where(x =>
-                    x.IdDangKi == idDangKy &&
-                    x.IdBaiGiang.HasValue &&
-                    !x.IsDeleted)
+                .Where(x =>x.IdDangKi == idDangKy &&x.IdBaiGiang.HasValue &&!x.IsDeleted)
                 .Select(x => new
                 {
                     x.IdBaiGiang,
@@ -244,7 +239,7 @@ namespace Eduverse.Service.KhoaHocService
                     x.TrangThai
                 })
                 .ToDictionaryAsync(
-                    x => x.IdBaiGiang!.Value,
+                    x => x.IdBaiGiang,
                     x => new
                     {
                         x.ThoiGianXem,
