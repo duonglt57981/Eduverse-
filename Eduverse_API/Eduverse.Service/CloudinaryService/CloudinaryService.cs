@@ -135,42 +135,6 @@ namespace Eduverse.Service.CloudinaryService
         }
 
 
-
-
-
-        public async Task DeleteVideoAsync(string publicId)
-        {
-            if (string.IsNullOrEmpty(publicId)) return;
-
-            var deleteParams = new DeletionParams(publicId)
-            {
-                ResourceType = ResourceType.Video
-            };
-
-            var result = await _cloudinary.DestroyAsync(deleteParams);
-
-            if (result.Error != null)
-                throw new Exception($"Xóa video thất bại: {result.Error.Message}");
-        }
-
-    
-
-        public async Task<(string newPublicId, string newUrl, int thoiLuong)> UpdateVideoAsync(IFormFile videoMoi, string oldPublicId)
-        {
-            var uploadResult = await UploadVideoBaiGiangAsync(videoMoi);
-
-            if (!string.IsNullOrEmpty(oldPublicId))
-                await DeleteVideoAsync(oldPublicId);
-
-            return (uploadResult.IdVideoBaiGiang, uploadResult.URLBaiGiang, (int)uploadResult.ThoiLuong);
-        }
-
-
-
-
-
-
-
         public async Task<CloudinaryImgDto> UploadImageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)

@@ -40,22 +40,22 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPut("update-baigiang")]
-        [Consumes("multipart/form-data")]
-        [RequestSizeLimit(2147483648)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 2147483648)]
-        public async Task<DataResponse<BaiGiangDto>> UpdateBaiGiang([FromForm] UpdateBaiGiangRequest request)
-        {
-            try
-            {
-                var result = await _baiGiangService.UpdateBaiGiang(request);
-                return DataResponse<BaiGiangDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<BaiGiangDto>.False(ex.Message);
-            }
-        }
+        //[HttpPut("update-baigiang")]
+        //[Consumes("multipart/form-data")]
+        //[RequestSizeLimit(2147483648)]
+        //[RequestFormLimits(MultipartBodyLengthLimit = 2147483648)]
+        //public async Task<DataResponse<BaiGiangDto>> UpdateBaiGiang([FromForm] UpdateBaiGiangRequest request)
+        //{
+        //    try
+        //    {
+        //        var result = await _baiGiangService.UpdateBaiGiang(request);
+        //        return DataResponse<BaiGiangDto>.Success(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return DataResponse<BaiGiangDto>.False(ex.Message);
+        //    }
+        //}
 
 
         [HttpDelete("delete-baigiang")]

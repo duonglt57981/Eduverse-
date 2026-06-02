@@ -18,8 +18,8 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public Guid? Id { get; set; }
         public string? TieuDe { get; set; }
         public string? MoTa { get; set; }
-        public double? Gia { get; set; }
-        public double? GiaGoc { get; set; }
+        public double? Gia { get; set; } = 0;
+        public double? GiaGoc { get; set; } = 0;
         public string? LoaiKhoaHoc { get; set; }
         public string? HinhAnhKhoaHoc { get; set; }
         public string? URLViewPreviewKhoaHoc { get; set; }
@@ -33,7 +33,8 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public string? TrangThai { get; set; }
 
 
-        
+        public Guid idDangKiKhoaHoc { get; set; }
+        public DateTime? NgayDangKy { get; set; }
         public bool DaDangKy { get; set; }
         public int SoBaiGiangHoanThanh { get; set; }
         public double PhanTramHoanThanh { get; set; }

@@ -93,57 +93,57 @@ namespace Eduverse.Service.BaiGiangService
         }
 
 
-        public async Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+        //public async Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request)
+        //{
+        //    if (request == null)
+        //        throw new ArgumentNullException(nameof(request));
 
-            if (string.IsNullOrWhiteSpace(request.TieuDe))
-                throw new Exception("Tên bài giảng không được để trống");
+        //    if (string.IsNullOrWhiteSpace(request.TieuDe))
+        //        throw new Exception("Tên bài giảng không được để trống");
 
-            if (request.IdPhan == null)
-                throw new Exception("Id phần học không hợp lệ");
+        //    if (request.IdPhan == null)
+        //        throw new Exception("Id phần học không hợp lệ");
 
-            var entity = await GetByIdAsync(request.Id);
-            if (entity == null)
-                throw new Exception("Không tìm thấy bài giảng");
+        //    var entity = await GetByIdAsync(request.Id);
+        //    if (entity == null)
+        //        throw new Exception("Không tìm thấy bài giảng");
 
-            var phanHoc = await _phanRepository.GetByIdAsync(request.IdPhan.Value);
-            if (phanHoc == null)
-                throw new Exception("Không tìm thấy phần học");
+        //    var phanHoc = await _phanRepository.GetByIdAsync(request.IdPhan.Value);
+        //    if (phanHoc == null)
+        //        throw new Exception("Không tìm thấy phần học");
 
-            var thuTuDaTon = await GetQueryable()
-                .AnyAsync(x =>
-                    x.IdPhan == request.IdPhan &&
-                    x.ThuTuSapXep == request.ThuTuSapXep &&
-                    x.Id != request.Id &&
-                    !x.IsDeleted);
+        //    var thuTuDaTon = await GetQueryable()
+        //        .AnyAsync(x =>
+        //            x.IdPhan == request.IdPhan &&
+        //            x.ThuTuSapXep == request.ThuTuSapXep &&
+        //            x.Id != request.Id &&
+        //            !x.IsDeleted);
 
-            if (thuTuDaTon)
-                throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại bài giảng này");
+        //    if (thuTuDaTon)
+        //        throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại bài giảng này");
 
-            if (request.Video != null)
-            {
-                var (newPublicId, newUrl, thoiLuong) =
-                    await _cloudinaryService.UpdateVideoAsync(request.Video, entity.IdVideoBaiGiang);
+        //    if (request.Video != null)
+        //    {
+        //        var (newPublicId, newUrl, thoiLuong) =
+        //            await _cloudinaryService.UpdateVideoAsync(request.Video, entity.IdVideoBaiGiang);
 
-                entity.IdVideoBaiGiang = newPublicId;
-                entity.URLBaiGiang = newUrl;
-                entity.ThoiLuong = (int)thoiLuong;
-                entity.LoaiBaiGiang = "Bài giảng video";
-            }
+        //        entity.IdVideoBaiGiang = newPublicId;
+        //        entity.URLBaiGiang = newUrl;
+        //        entity.ThoiLuong = (int)thoiLuong;
+        //        entity.LoaiBaiGiang = "Bài giảng video";
+        //    }
 
-            entity.IdPhan = request.IdPhan.Value;
-            entity.TieuDe = request.TieuDe.Trim();
-            entity.ThuTuSapXep = request.ThuTuSapXep;
-            entity.LaBaiGiangFree = request.LaBaiGiangFree;
-            entity.TrangThai = request.TrangThai;
+        //    entity.IdPhan = request.IdPhan.Value;
+        //    entity.TieuDe = request.TieuDe.Trim();
+        //    entity.ThuTuSapXep = request.ThuTuSapXep;
+        //    entity.LaBaiGiangFree = request.LaBaiGiangFree;
+        //    entity.TrangThai = request.TrangThai;
 
-            await UpdateAsync(entity);
-            await SaveAsync();
+        //    await UpdateAsync(entity);
+        //    await SaveAsync();
 
-            return _mapper.Map<BaiGiang, BaiGiangDto>(entity);
-        }
+        //    return _mapper.Map<BaiGiang, BaiGiangDto>(entity);
+        //}
 
 
         public async Task<bool> DeleteBaiGiang(Guid id)

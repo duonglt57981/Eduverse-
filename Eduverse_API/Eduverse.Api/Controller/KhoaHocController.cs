@@ -36,12 +36,27 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("get-learning/{idDangKy}/{IdnguoiDung}")]
-        public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy, Guid IdnguoiDung)
+        [HttpGet("get-khoahoc-dangki/{userId}")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListDangKi([FromQuery] KhoaHocDangKiSearch search, Guid userId)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetListDangKi(search, userId);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("get-learning/{idDangKy}")]
+        public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)
         {
             try
             {   
-                var result = await _khoaHocService.GetLearning(idDangKy, IdnguoiDung);
+                var result = await _khoaHocService.GetLearning(idDangKy);
                 return DataResponse<KhoaHocDto>.Success(result);
             }
             catch (Exception ex)
@@ -67,6 +82,7 @@ namespace Eduverse.Api.Controller
 
         }
 
+
         [HttpPut("update-khoahoc")]
         public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromBody] UpdateKhoaHocRequest request)
         {
@@ -80,6 +96,7 @@ namespace Eduverse.Api.Controller
                 return DataResponse<KhoaHocDto>.False(ex.Message);
             }
         }
+
 
         [HttpDelete("delete-khoahoc")]
         public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)

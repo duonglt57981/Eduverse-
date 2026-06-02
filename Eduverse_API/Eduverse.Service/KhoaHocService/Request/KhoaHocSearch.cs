@@ -25,10 +25,6 @@ namespace Eduverse.Service.KhoaHocService.Request
 
         public string? LoaiKhoaHoc { get; set; }
 
-        public string? TrangThai { get; set; }
-
-        public string? TrangThaiPheDuyet { get; set; }
-
         public double? GiaFrom { get; set; }
 
         public double? GiaTo { get; set; }
