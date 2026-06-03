@@ -130,7 +130,7 @@ namespace Eduverse.Service.KhoaHocService
                 query = query.Where(x =>
                     x.TongBaiGiang >= search.TongBaiGiangFrom.Value);
             }
-
+            
             if (search.TongBaiGiangTo.HasValue)
             {
                 query = query.Where(x =>
@@ -177,7 +177,6 @@ namespace Eduverse.Service.KhoaHocService
                 SoLuongHocVien = kh.SoLuongHocVien,
                 NgayTao = kh.NgayTao,
 
-                // luôn false vì đã loại khỏi query
                 DaDangKy = false
             });
 
@@ -239,9 +238,9 @@ namespace Eduverse.Service.KhoaHocService
             {
                 return new PagedList<KhoaHocDto>(
                     new List<KhoaHocDto>(),
-                    totalCount,
                     search.PageIndex,
-                    search.PageSize);
+                    search.PageSize,
+                    totalCount);
             }
 
             var khoaHocIds = pageData
@@ -311,7 +310,7 @@ namespace Eduverse.Service.KhoaHocService
                         TongBaiGiang = tongBaiGiang,
                         SoBaiGiangHoanThanh = soBaiDaHoc,
                         PhanTramHoanThanh = tongBaiGiang > 0
-                            ? Math.Round((double)soBaiDaHoc * 100 / tongBaiGiang, 2)
+                            ? Math.Round((double)soBaiDaHoc * 100 / tongBaiGiang)
                             : 0
                     };
                 })
@@ -319,9 +318,9 @@ namespace Eduverse.Service.KhoaHocService
 
             return new PagedList<KhoaHocDto>(
                 items,
-                totalCount,
                 search.PageIndex,
-                search.PageSize);
+                search.PageSize,
+                totalCount);
         }
 
 
@@ -330,7 +329,6 @@ namespace Eduverse.Service.KhoaHocService
             if (idDangKy == Guid.Empty)
                 throw new ArgumentException("Id đăng ký không hợp lệ");
 
-            // 1. Lấy thông tin đăng ký + khóa học
             var dangKy = await _dangKyKhoaHocService.GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.Id == idDangKy && !x.IsDeleted)
@@ -346,7 +344,6 @@ namespace Eduverse.Service.KhoaHocService
 
             var idKhoaHoc = dangKy.IdDangKi;
 
-            // 2. Lấy khóa học + thống kê học viên (tách query count để tối ưu)
             var soHocVien = await _dangKyKhoaHocService.GetQueryable()
                 .AsNoTracking()
                 .CountAsync(x => x.IdDangKi == idKhoaHoc && !x.IsDeleted);
@@ -360,8 +357,6 @@ namespace Eduverse.Service.KhoaHocService
                     TieuDe = x.TieuDe,
                     MoTa = x.MoTa,
                     HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
-                    Gia = x.Gia,
-                    GiaGoc = x.GiaGoc,
                     LoaiKhoaHoc = x.LoaiKhoaHoc,
                     SoLuongHocVien = soHocVien,
                     DanhSachPhanHoc = new List<PhanHocDto>()
@@ -508,6 +503,9 @@ namespace Eduverse.Service.KhoaHocService
             if (request.GiaGoc < request.Gia)
                 throw new Exception("Giá gốc phải lớn hơn hoặc bằng giá");
 
+            if (request.Img == null)
+                throw new Exception("Vui lòng chọn ảnh cho khóa học");
+
             var danhMucIds = request.DanhSachDanhMuc.Distinct().ToList();
 
 
@@ -533,6 +531,7 @@ namespace Eduverse.Service.KhoaHocService
                 Gia = request.Gia,
                 LoaiKhoaHoc = isFree ? "Khóa học miễn phí" : "Khóa học trả phí",
                 HinhAnhKhoaHoc = upLoadResult.UrlImg,
+                CreatedDate = DateTime.Now
             };
 
             await CreateAsync(khoaHoc);
@@ -551,7 +550,8 @@ namespace Eduverse.Service.KhoaHocService
 
         public async Task<KhoaHocDto> UpdateKhoaHoc(UpdateKhoaHocRequest request)
         {
-            var entity = await GetByIdAsync(request.Id);
+            var entity = await GetByIdAsync(request.Id)
+                ;
             if (entity == null || entity.IsDeleted)
                 throw new Exception("Không tìm thấy khóa học");
 
@@ -564,13 +564,19 @@ namespace Eduverse.Service.KhoaHocService
             if (request.GiaGoc < request.Gia)
                 throw new Exception("Giá gốc phải lớn hơn hoặc bằng giá");
 
+            var upload = await _cloudinaryService.UploadImageAsync(request.Img);
+            
+
+            if(upload == null)
+            {
+                entity.HinhAnhKhoaHoc = entity.HinhAnhKhoaHoc;
+            }
+
 
             if (request.Img != null)
             {
-                var oldImage = entity.HinhAnhKhoaHoc;
-
-                var upload = await _cloudinaryService.UploadImageAsync(request.Img);
                 entity.HinhAnhKhoaHoc = upload.UrlImg;
+                var oldImage = entity.HinhAnhKhoaHoc;
 
                 if (!string.IsNullOrEmpty(oldImage))
                     _ = _cloudinaryService.DeleteImageAsync(oldImage);
@@ -582,6 +588,8 @@ namespace Eduverse.Service.KhoaHocService
             entity.Gia = request.Gia;
             entity.GiaGoc = request.GiaGoc;
             entity.LoaiKhoaHoc = request.Gia <= 0 ? "Khóa học miễn phí" : "Khóa học trả phí";
+            entity.UpdatedDate = DateTime.Now;
+
 
             await UpdateAsync(entity);
 

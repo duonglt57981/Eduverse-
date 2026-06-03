@@ -64,7 +64,6 @@ namespace Eduverse.Api
 
             // Cloudinary
             var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
-
             builder.Services.Configure<CloudinarySettings>(cloudinarySettings);
 
             var account = new Account(
@@ -74,15 +73,18 @@ namespace Eduverse.Api
             );
 
             var cloudinary = new Cloudinary(account);
+            cloudinary.Api.Timeout = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
 
-            builder.WebHost.ConfigureKestrel(options =>
+            var httpClient = new HttpClient
             {
-                options.Limits.MaxRequestBodySize = 2L * 1024 * 1024 * 1024; // 2GB
-                options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(5);
-                options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
-            });
+                Timeout = TimeSpan.FromMinutes(2)
+            };
+            cloudinary.Api.Client = httpClient;
 
-            // Tắt size limit của form (mặc định chỉ 128MB)
+            builder.Services.AddSingleton(cloudinary);
+            builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+            // Form options
             builder.Services.Configure<FormOptions>(options =>
             {
                 options.MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024;
@@ -91,10 +93,14 @@ namespace Eduverse.Api
                 options.BufferBodyLengthLimit = 2L * 1024 * 1024 * 1024;
             });
 
-            builder.Services.AddSingleton(cloudinary);
-            builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+            // Kestrel
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 2L * 1024 * 1024 * 1024;
+                options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(30);
+                options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(30);
+            });
 
-            
 
             // JWT
             builder.Services.AddAuthentication(options =>

@@ -24,7 +24,7 @@ namespace Eduverse.Service.CloudinaryService
         }
 
 
-        public async Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file, CancellationToken cancellationToken = default)
+        public async Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file,CancellationToken cancellationToken = default)
         {
             if (file == null || file.Length == 0)
                 throw new Exception("File không hợp lệ");
@@ -38,9 +38,9 @@ namespace Eduverse.Service.CloudinaryService
             if (!allowedExtensions.Contains(extension))
                 throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
 
+            // ── 2. Upload ────────────────────────────────────────────────
             await using var inputStream = file.OpenReadStream();
 
-            // 4. Thiết lập cấu hình Upload lên Cloudinary
             var uploadParams = new VideoUploadParams
             {
                 File = new FileDescription(file.FileName, inputStream),
@@ -48,91 +48,119 @@ namespace Eduverse.Service.CloudinaryService
                 UseFilename = true,
                 UniqueFilename = true,
                 Overwrite = false,
-
+                EagerAsync = true, // xử lý ngầm, không chờ — tránh timeout
                 EagerTransforms = new List<Transformation>
-                {
-                    // 360p
-                    new Transformation()
-                        .Height(360)
-                        .VideoCodec("h264")
-                        .AudioCodec("aac")
-                        .FetchFormat("m3u8"),
-
-                    // 480p
-                    new Transformation()
-                        .Height(480)
-                        .VideoCodec("h264")
-                        .AudioCodec("aac")
-                        .FetchFormat("m3u8"),
-
-                    // 720p HD
-                    new Transformation()
-                        .Height(720)
-                        .VideoCodec("h264")
-                        .AudioCodec("aac")
-                        .FetchFormat("m3u8"),
-
-                    // 1080p Full HD
-                    new Transformation()
-                        .Height(1080)
-                        .VideoCodec("h264")
-                        .AudioCodec("aac")
-                        .FetchFormat("m3u8"),
-
-                    // 1440p 2K
-                    new Transformation()
-                        .Height(1440)
-                        .VideoCodec("h264")
-                        .AudioCodec("aac")
-                        .FetchFormat("m3u8"),
-
-                    // 2160p 4K
-                    new Transformation()
-                        .Height(2160)
-                        .VideoCodec("h264")
-                        .AudioCodec("aac")
-                        .FetchFormat("m3u8")
-                },
-                // Chạy ngầm tiến trình băm nhỏ video (HLS) để tránh bị Timeout API
-                EagerAsync = true
+        {
+            new Transformation().RawTransformation("sp_sd/vc_h264,ac_aac,f_m3u8"),
+            new Transformation().RawTransformation("sp_hd/vc_h264,ac_aac,f_m3u8"),
+            new Transformation().RawTransformation("sp_full_hd/vc_h264,ac_aac,f_m3u8"),
+        },
             };
 
-            // 5. Tiến hành upload theo cơ chế phân đoạn (Chunk) phù hợp cho file lớn
             var uploadResult = await _cloudinary.UploadLargeAsync(
                 uploadParams,
-                bufferSize: 100 * 1024 * 1024, // 100MB cho mỗi phân đoạn upload
+                bufferSize: 100 * 1024 * 1024,
                 cancellationToken: cancellationToken
             );
 
-            // 6. Kiểm tra và xử lý kết quả phản hồi
+            // ── 3. Kiểm tra kết quả upload ──────────────────────────────
             if (uploadResult == null)
-                throw new Exception("Upload video thất bại: Không nhận được phản hồi từ Cloudinary");
+                throw new Exception("Upload thất bại: Không nhận được phản hồi");
+
             if (uploadResult.Error != null)
-                throw new Exception($"Upload video thất bại: {uploadResult.Error.Message}");
-            if (uploadResult.SecureUrl == null)
-                throw new Exception("Upload video thất bại: Không lấy được URL video");
+                throw new Exception($"Upload thất bại: {uploadResult.Error.Message}");
 
-            // 7. Xử lý lấy URL phát luồng HLS (.m3u8) chuẩn Udemy
-            string hlsUrl = string.Empty;
-            if (uploadResult.SecureUrl != null)
-            {
-                string rawUrl = uploadResult.SecureUrl.ToString();
+            if (string.IsNullOrEmpty(uploadResult.PublicId))
+                throw new Exception("Upload thất bại: Không lấy được PublicId");
 
-                // Chèn tag profile phát stream '/sp_hd/' ngay sau cụm '/upload/' 
-                // và cắt bỏ đuôi mở rộng gốc (.mp4/.mov...) để thay bằng đuôi '.m3u8'
-                hlsUrl = rawUrl.Replace("/upload/", "/upload/sp_hd/").Substring(0, rawUrl.LastIndexOf('.')) + ".m3u8";
-            }
-            else
-            {
-                throw new Exception("Upload video thất bại: Không lấy được SecureUrl từ Cloudinary");
-            }
+            var publicId = uploadResult.PublicId;
+            var thoiLuong = uploadResult.Duration > 0
+                ? (int)Math.Round(uploadResult.Duration)
+                : 0;
+
+            // ── 4. Polling chờ Cloudinary xử lý HLS xong ────────────────
+            var (hlsReady, hlsUrl) = await WaitForHlsReadyAsync(publicId, cancellationToken);
+            if (!hlsReady || string.IsNullOrEmpty(hlsUrl))
+                throw new Exception("Cloudinary xử lý HLS quá lâu. Vui lòng thử lại sau.");
+
             return new CloudinaryVideoDto
             {
-                IdVideoBaiGiang = uploadResult.PublicId,
+                IdVideoBaiGiang = publicId,
                 URLBaiGiang = hlsUrl,
-                ThoiLuong = uploadResult.Duration > 0 ? (int)Math.Round(uploadResult.Duration) : 0
+                ThoiLuong = thoiLuong,
             };
         }
+
+
+        // ── Polling: chờ derived có m3u8 ────────────────────────────────
+        private async Task<(bool ready, string? hlsUrl)> WaitForHlsReadyAsync(string publicId,CancellationToken cancellationToken,int maxRetry = 60,int delaySeconds = 5)
+        {
+            for (int i = 0; i < maxRetry; i++)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken);
+
+                try
+                {
+                    var resource = await _cloudinary.GetResourceAsync(
+                        new GetResourceParams(publicId)
+                        {
+                            ResourceType = ResourceType.Video,
+                        }
+                    );
+
+                    if (resource == null || resource.Error != null) continue;
+
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(resource);
+                    var doc = System.Text.Json.JsonDocument.Parse(json);
+
+                    if (!doc.RootElement.TryGetProperty("derived", out var derivedArr)
+                        || derivedArr.ValueKind != System.Text.Json.JsonValueKind.Array
+                        || derivedArr.GetArrayLength() == 0)
+                        continue;
+
+                    // Ưu tiên sp_full_hd → sp_hd → bất kỳ m3u8 nào
+                    string? masterUrl = null;
+                    string? hdUrl = null;
+                    string? fallbackUrl = null;
+
+                    foreach (var item in derivedArr.EnumerateArray())
+                    {
+                        var format = item.TryGetProperty("format", out var fmt)
+                            ? fmt.GetString() : null;
+                        var transformation = item.TryGetProperty("transformation", out var tf)
+                            ? tf.GetString() : null;
+                        var secureUrl = item.TryGetProperty("secure_url", out var su)
+                            ? su.GetString() : null;
+
+                        if (format != "m3u8" || string.IsNullOrEmpty(secureUrl)) continue;
+
+                        if (transformation?.StartsWith("sp_full_hd") == true)
+                            masterUrl = secureUrl;
+                        else if (transformation?.StartsWith("sp_hd") == true)
+                            hdUrl ??= secureUrl;
+                        else
+                            fallbackUrl ??= secureUrl;
+                    }
+
+                    var hlsUrl = masterUrl ?? hdUrl ?? fallbackUrl;
+                    if (!string.IsNullOrEmpty(hlsUrl))
+                    {
+                        Console.WriteLine($"[HLS] Xử lý xong sau {i + 1} lần retry. URL: {hlsUrl}");
+                        return (true, hlsUrl);
+                    }
+                }
+                catch (Exception ex) when (!ex.Message.Contains("thất bại"))
+                {
+                    Console.WriteLine($"[HLS] Retry {i + 1} exception: {ex.Message}");
+                    continue;
+                }
+            }
+
+            Console.WriteLine($"[HLS] Timeout sau {maxRetry} lần retry.");
+            return (false, null);
+        }
+
+
 
 
         public async Task<CloudinaryImgDto> UploadImageAsync(IFormFile file)

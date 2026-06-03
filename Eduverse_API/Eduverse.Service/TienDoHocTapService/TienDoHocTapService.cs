@@ -91,10 +91,7 @@ namespace Eduverse.Service.TienDoHocTapService
             }
             else
             {
-                tienDo.ThoiGianXem =
-                    Math.Max(
-                        tienDo.ThoiGianXem ?? 0,
-                        request.ThoiGianXem);
+                tienDo.ThoiGianXem = Math.Max( tienDo.ThoiGianXem ?? 0, request.ThoiGianXem);
 
                 tienDo.LanCuoiXem = now;
 

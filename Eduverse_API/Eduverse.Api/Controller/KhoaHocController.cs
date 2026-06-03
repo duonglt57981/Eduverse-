@@ -41,7 +41,12 @@ namespace Eduverse.Api.Controller
         {
             try
             {
+
                 var result = await _khoaHocService.GetListDangKi(search, userId);
+
+                Console.WriteLine($" search.PageIndex: {search.PageIndex}");
+                Console.WriteLine($" search.PageSize: {search.PageSize}");
+                Console.WriteLine($" userId: {userId}");
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
@@ -68,7 +73,7 @@ namespace Eduverse.Api.Controller
 
         [HttpPost("create-khoahoc")]
         [Consumes("multipart/form-data")]
-        public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc([FromBody] CreateKhoaHocRequest request)
+        public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc([FromForm] CreateKhoaHocRequest request)
         {
             try
             {
@@ -84,7 +89,8 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPut("update-khoahoc")]
-        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromBody] UpdateKhoaHocRequest request)
+        [Consumes("multipart/form-data")]
+        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromForm] UpdateKhoaHocRequest request)
         {
             try
             {
