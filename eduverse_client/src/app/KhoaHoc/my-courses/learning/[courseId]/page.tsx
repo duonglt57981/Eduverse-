@@ -1,45 +1,22 @@
 "use client";
-
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import Hls from "hls.js";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import TienDoHocTapService from "@/src/services/TienDoHocTapService";
-import { BaiGiangType } from "@/src/types/BaiGiang/BaiGiangDto";
-import { TaiLieuType } from "@/src/types/TaiLieu/TaiLieuDto";
-import { KhoaHocType } from "@/src/types/khoaHoc/dto";
 import { UpdateTienDoBaiGiangRequest } from "@/src/types/tienDoHocTap/Request/UpdateTienDoBaiGiangRequest";
+import videojs from "video.js";
+import "video.js/dist/video-js.css";
+import "@videojs/http-streaming";
 
-// MUI imports
+// Material-UI components
 import {
-  Box,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  LinearProgress,
-  Chip,
-  Button,
-  Collapse,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Paper,
-  Stack,
-  useTheme,
-  alpha,
-  styled,
-  Zoom,
-  Fade,
-  Skeleton,
-  TextField,
-  InputAdornment,
-  Tooltip,
-  useMediaQuery,
-  Drawer,
+  Box, AppBar, Toolbar, IconButton, Typography, LinearProgress,
+  Chip, Button, Collapse, List, ListItemButton, ListItemIcon,
+  ListItemText, Paper, Stack, useTheme, alpha, styled, Zoom,
+  Skeleton, TextField, InputAdornment, Tooltip, useMediaQuery, Drawer,
 } from "@mui/material";
+// Material-UI icons
 import {
   ChevronRight as ChevronRightIcon,
   ChevronLeft as ChevronLeftIcon,
@@ -52,405 +29,955 @@ import {
   PictureAsPdf as PictureAsPdfIcon,
   AttachFile as AttachFileIcon,
   Download as DownloadIcon,
-  Settings as SettingsIcon,
   VideoLibrary as VideoLibraryIcon,
   Schedule as ScheduleIcon,
   MenuBook as MenuBookIcon,
   People as PeopleIcon,
   Search as SearchIcon,
   Close as CloseIcon,
-  Fullscreen as FullscreenIcon,
-  FullscreenExit as FullscreenExitIcon,
   School as SchoolIcon,
-  AutoAwesome as AutoAwesomeIcon,
+  OpenInFull as OpenInFullIcon,
+  Hd as HdIcon,
+  SignalCellularAlt as SignalIcon,
 } from "@mui/icons-material";
 
-// ─── Services ─────────────────────────────────────────────────────────────
+// Các type định nghĩa dữ liệu
+import { TaiLieuType } from "@/src/types/TaiLieu/Dto/TaiLieuDto";
+import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
+import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
+
+// Khởi tạo service để gọi API
 const KhoaHocSvc = new KhoaHocService();
 const TienDoSvc = new TienDoHocTapService();
 
-// ─── Constants ───────────────────────────────────────────────────────────
-const SIDEBAR_W = 400;
+// ===============================
+// 2. HẰNG SỐ GIAO DIỆN (KÍCH THƯỚC, MÀU SẮC)
+// ===============================
+const SIDEBAR_W = 380;
 const HEADER_H = 64;
+const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED_DARK = "#6B1414";
+const LOAD_TIMEOUT_MS = 30000;
 
-// ─── Types ───────────────────────────────────────────────────────────────
-interface QualityLevel {
-  index: number;
-  label: string;
-  height: number;
-  bitrate?: number;
+function parseCloudinaryUrl(url: string): CloudinaryUrlInfo | null {
+  try {
+    const u = new URL(url);
+    // Bắt buộc là Cloudinary CDN
+    if (!u.hostname.includes("cloudinary.com") && !u.hostname.includes("res.cloudinary.com")) {
+      return null;
+    }
+
+    // pathname: /{cloudName}/video/upload/{...rest}
+    const parts = u.pathname.split("/").filter(Boolean);
+    // parts[0] = cloudName, parts[1] = "video", parts[2] = "upload"
+    if (parts.length < 4 || parts[1] !== "video" || parts[2] !== "upload") {
+      return null;
+    }
+
+    const cloudName = parts[0];
+    const baseUrl = `${u.origin}/${cloudName}/video/upload`;
+
+    // Phần còn lại sau "upload": có thể bắt đầu bằng transformation (sp_...), version (v\d+), hoặc thẳng publicId
+    const afterUpload = parts.slice(3);
+
+    // Tìm version segment (bắt đầu bằng 'v' theo sau là digits)
+    let versionIdx = -1;
+    for (let i = 0; i < afterUpload.length; i++) {
+      if (/^v\d{8,}$/.test(afterUpload[i])) {
+        versionIdx = i;
+        break;
+      }
+    }
+
+    let version = "";
+    let publicIdSegments: string[];
+
+    if (versionIdx !== -1) {
+      version = afterUpload[versionIdx];
+      publicIdSegments = afterUpload.slice(versionIdx + 1);
+    } else {
+      // Không có version — bỏ qua các transformation segment (sp_..., vc_..., etc.)
+      // Transformation thường chứa "/" hoặc là 1 segment với dấu "_" đặc biệt
+      let startIdx = 0;
+      for (let i = 0; i < afterUpload.length - 1; i++) {
+        const seg = afterUpload[i];
+        // Transformation segment: sp_sd, sp_hd, sp_full_hd, vc_h264, ac_aac, f_m3u8
+        if (/^(sp_|vc_|ac_|f_|q_|w_|h_|c_|fl_|so_|du_|br_|fps_)/.test(seg)) {
+          startIdx = i + 1;
+        }
+      }
+      publicIdSegments = afterUpload.slice(startIdx);
+    }
+
+    // publicId là các segment join bằng "/" bỏ extension cuối
+    const lastSeg = publicIdSegments[publicIdSegments.length - 1];
+    publicIdSegments[publicIdSegments.length - 1] = lastSeg.replace(/\.[^.]+$/, "");
+    const publicId = publicIdSegments.join("/");
+
+    if (!publicId) return null;
+
+    return { cloudName, publicId, version, baseUrl };
+  } catch {
+    return null;
+  }
 }
 
-interface NetworkInformation extends EventTarget {
-  downlink: number;
-  effectiveType: string;
-  rtt: number;
-  saveData: boolean;
+/**
+ * Build Cloudinary HLS URL cho một streaming profile.
+ * sp_auto      → adaptive bitrate (master playlist với nhiều renditions)
+ * sp_full_hd   → 1080p
+ * sp_hd        → 720p
+ * sp_sd        → 480p
+ */
+function buildCloudinaryHlsUrl(info: CloudinaryUrlInfo, profile: string): string {
+  const versionPart = info.version ? `${info.version}/` : "";
+  return `${info.baseUrl}/${profile}/${versionPart}${info.publicId}.m3u8`;
 }
 
-interface NavigatorWithConnection extends Navigator {
-  connection?: NetworkInformation;
+/**
+ * FIX #1 CHÍNH: Chuyển đổi URL từ BE (single-rendition) sang URL tốt nhất để dùng.
+ * - Nếu parse được → dùng sp_auto (adaptive master playlist)
+ * - Nếu không parse được → giữ nguyên URL gốc
+ */
+function getOptimalHlsUrl(originalUrl: string): {
+  masterUrl: string;
+  cloudinaryInfo: CloudinaryUrlInfo | null;
+} {
+  const info = parseCloudinaryUrl(originalUrl);
+  if (!info) {
+    return { masterUrl: originalUrl, cloudinaryInfo: null };
+  }
+  // sp_auto = Cloudinary tự generate master HLS playlist với tất cả renditions đã eager-processed
+  const masterUrl = buildCloudinaryHlsUrl(info, "sp_auto");
+  return { masterUrl, cloudinaryInfo: info };
 }
 
-const QUALITY_PRESETS = [
-  { height: 2160, label: "4K", bitrate: 8000 },
-  { height: 1440, label: "2K", bitrate: 5000 },
-  { height: 1080, label: "1080p", bitrate: 3000 },
-  { height: 720, label: "720p", bitrate: 2000 },
-  { height: 480, label: "480p", bitrate: 1000 },
-  { height: 360, label: "360p", bitrate: 600 },
-];
+// CSS tùy chỉnh cho video player (Video.js)
+const VIDEO_JS_STYLES = `
+  .video-js .vjs-big-play-button {
+    background-color: ${PRIMARY_RED} !important; border-color: ${PRIMARY_RED} !important;
+    border-radius: 50% !important; width: 64px !important; height: 64px !important;
+    line-height: 64px !important; top: 50% !important; left: 50% !important;
+    transform: translate(-50%, -50%) !important; margin: 0 !important;
+  }
+  .video-js .vjs-big-play-button:hover { background-color: ${PRIMARY_RED_DARK} !important; }
+  .video-js .vjs-play-progress,
+  .video-js .vjs-play-progress:before { background-color: ${PRIMARY_RED} !important; }
+  .video-js .vjs-volume-level { background-color: ${PRIMARY_RED} !important; }
+  .video-js .vjs-slider { background-color: rgba(255,255,255,0.2) !important; }
+  .video-js .vjs-load-progress { background-color: rgba(255,255,255,0.3) !important; }
+  .video-js .vjs-control-bar {
+    background: linear-gradient(transparent, rgba(0,0,0,0.85)) !important;
+    height: 48px !important; padding: 0 8px !important;
+  }
+  .video-js .vjs-menu-item.vjs-selected,
+  .video-js .vjs-menu-item.vjs-selected:focus,
+  .video-js .vjs-menu-item.vjs-selected:hover { background-color: ${PRIMARY_RED} !important; color: #fff !important; }
+  .video-js .vjs-menu-item:hover { background-color: rgba(139,26,26,0.3) !important; }
+  .video-js .vjs-menu-button-popup .vjs-menu { bottom: 2.5em !important; }
+  .video-js { width: 100% !important; font-family: inherit !important; }
+  .video-js .vjs-loading-spinner { display: none !important; }
+  .video-js.vjs-waiting .vjs-loading-spinner { display: none !important; }
+  .video-js.vjs-seeking .vjs-loading-spinner { display: none !important; }
+`;
 
-// ─── Styled Components ────────────────────────────────────────────────────
-const StyledVideo = styled("video")({
-  width: "100%",
-  maxHeight: "60vh",
-  display: "block",
-  objectFit: "contain",
-  backgroundColor: "#0a0a0a",
-  cursor: "pointer",
-  transition: "all 0.2s",
+// ===============================
+// 3. STYLED COMPONENTS (MUI)
+// ===============================
+const ProgressBar = styled(LinearProgress)({
+  height: 5, borderRadius: 3,
+  backgroundColor: alpha(PRIMARY_RED, 0.15),
+  "& .MuiLinearProgress-bar": { backgroundColor: PRIMARY_RED, borderRadius: 3 },
 });
 
-const ProgressBar = styled(LinearProgress)(({ theme }) => ({
-  height: 6,
-  borderRadius: 3,
-  backgroundColor: alpha(theme.palette.error.main, 0.2),
-  "& .MuiLinearProgress-bar": {
-    backgroundColor: theme.palette.error.main,
-    borderRadius: 3,
-  },
-}));
-
 const GlassPaper = styled(Paper)(({ theme }) => ({
-  backgroundColor: alpha(theme.palette.background.paper, 0.8),
-  backdropFilter: "blur(12px)",
-  borderRadius: 8,
+  backgroundColor: alpha(theme.palette.background.paper, 0.9),
+  backdropFilter: "blur(12px)", borderRadius: 8,
   border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
 }));
 
-// ─── Quality Menu (cải tiến giao diện) ─────────────────────────────────────
-const QualityMenu = ({
-  levels,
-  currentLevel,
-  autoActualHeight,
-  networkSpeed,
-  onSelect,
-  onAutoDetect,
-}: {
-  levels: QualityLevel[];
-  currentLevel: number;
-  autoActualHeight: number | null;
-  networkSpeed: number | null;
-  onSelect: (idx: number) => void;
-  onAutoDetect?: () => void;
-}) => {
-  const theme = useTheme();
-  const [open, setOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement>(null);
+// ===============================
+// 4. TYPES CHO QUALITY SELECTOR
+// ===============================
+interface QualityLevel {
+  index: number;
+  label: string;
+  bitrate: number;
+  height: number;
+}
 
-  const getCurrentDisplayLabel = () => {
-    if (currentLevel === -1) {
-      if (autoActualHeight) {
-        const h = autoActualHeight;
-        if (h >= 2160) return "4K";
-        if (h >= 1440) return "2K";
-        if (h >= 1080) return "1080p";
-        if (h >= 720) return "720p";
-        if (h >= 480) return "480p";
-        return `${h}p`;
+// FIX #2: Manual quality levels dùng khi VHS không expose qualityLevels (single-rendition fallback)
+// Cloudinary streaming profiles với bitrate ước tính
+const CLOUDINARY_PROFILES: Array<{ profile: string; label: string; height: number; bitrate: number }> = [
+  { profile: "sp_full_hd", label: "1080p HD", height: 1080, bitrate: 4_000_000 },
+  { profile: "sp_hd",      label: "720p HD",  height: 720,  bitrate: 2_000_000 },
+  { profile: "sp_sd",      label: "480p",     height: 480,  bitrate: 800_000  },
+];
+
+// ===============================
+// 5. COMPONENT CON: QualityMenu
+// ===============================
+const QualityMenu = ({
+  qualityLevels,
+  selectedQuality,
+  currentBandwidthKbps,
+  onSelectQuality,
+  // FIX #2: thêm manual profiles khi VHS không có quality levels
+  cloudinaryInfo,
+  onSelectCloudinaryProfile,
+  selectedProfile,
+}: {
+  qualityLevels: QualityLevel[];
+  selectedQuality: number | "auto";
+  currentBandwidthKbps: number | null;
+  onSelectQuality: (q: number | "auto") => void;
+  cloudinaryInfo: CloudinaryUrlInfo | null;
+  onSelectCloudinaryProfile: (profile: string | "auto") => void;
+  selectedProfile: string | "auto";
+}) => {
+  const [open, setOpen] = useState(false);
+
+  // FIX #2: Dùng manual Cloudinary profiles nếu VHS không expose quality levels
+  const useManualProfiles = qualityLevels.length === 0 && cloudinaryInfo !== null;
+
+  const currentLabel = useMemo(() => {
+    if (useManualProfiles) {
+      if (selectedProfile === "auto") return "Tự động";
+      return CLOUDINARY_PROFILES.find(p => p.profile === selectedProfile)?.label ?? "Tự động";
+    }
+    if (selectedQuality === "auto") {
+      if (currentBandwidthKbps && currentBandwidthKbps > 0) {
+        const bw = currentBandwidthKbps >= 1000
+          ? `${(currentBandwidthKbps / 1000).toFixed(1)} Mbps`
+          : `${currentBandwidthKbps} kbps`;
+        return `Tự động · ${bw}`;
       }
       return "Tự động";
     }
-    const level = levels.find((l) => l.index === currentLevel);
-    if (!level) return "Tự động";
-    if (level.height === 2160) return "4K";
-    if (level.height === 1440) return "2K";
-    if (level.height === 1080) return "1080p";
-    if (level.height === 720) return "720p";
-    if (level.height === 480) return "480p";
-    if (level.height === 360) return "360p";
-    return level.label;
-  };
+    return qualityLevels.find(q => q.index === selectedQuality)?.label ?? "Auto";
+  }, [selectedQuality, qualityLevels, currentBandwidthKbps, useManualProfiles, selectedProfile]);
 
-  if (levels.length <= 1) return null;
-
-  const uniqueLevels = levels
-    .filter((lv, i, arr) => lv.index === -1 || arr.findIndex((x) => x.height === lv.height) === i)
-    .sort((a, b) => (a.index === -1 ? -1 : b.height - a.height));
+  // Ẩn menu nếu không có gì để chọn
+  if (qualityLevels.length === 0 && !cloudinaryInfo) return null;
 
   return (
-    <Box sx={{ position: "relative" }}>
-      <Tooltip title="Chất lượng video">
-        <Button
-          ref={anchorRef}
-          onClick={() => setOpen((v) => !v)}
-          variant="contained"
-          sx={{
-            bgcolor: alpha(theme?.palette?.common?.black || "#000", 0.7),
-            backdropFilter: "blur(4px)",
-            color: "#fff",
-            fontSize: "0.75rem",
-            py: 0.5,
-            px: 1.5,
-            minWidth: "auto",
-            borderRadius: 2,
-            "&:hover": { bgcolor: alpha("#000", 0.85) },
-          }}
-          startIcon={<SettingsIcon sx={{ fontSize: 16 }} />}
-        >
-          {getCurrentDisplayLabel()}
-        </Button>
-      </Tooltip>
-      <Fade in={open}>
-        <Paper
-          elevation={8}
-          sx={{
-            position: "absolute",
-            bottom: "calc(100% + 8px)",
-            right: 0,
-            zIndex: 1300,
-            width: 260,
-            bgcolor: "rgba(28,28,28,0.96)",
-            backdropFilter: "blur(16px)",
-            borderRadius: 2,
-            overflow: "hidden",
-            border: "1px solid rgba(255,255,255,0.1)",
-          }}
-        >
-          <Box sx={{ p: 1.5, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>
-              Chất lượng video
-              {networkSpeed && (
-                <Chip
-                  size="small"
-                  label={
-                    networkSpeed < 5
-                      ? "⚠️ Mạng yếu"
-                      : networkSpeed < 10
-                      ? `📶 ${networkSpeed} Mbps`
-                      : `🚀 ${networkSpeed} Mbps`
-                  }
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    fontSize: "0.65rem",
-                    bgcolor:
-                      networkSpeed < 5
-                        ? "rgba(255,152,0,0.2)"
-                        : networkSpeed < 10
-                        ? "rgba(255,193,7,0.2)"
-                        : "rgba(76,175,80,0.2)",
-                    color: networkSpeed < 5 ? "#ff9800" : networkSpeed < 10 ? "#ffc107" : "#4caf50",
-                  }}
-                />
-              )}
-            </Typography>
+    <Box sx={{ position: "absolute", bottom: 52, right: 12, zIndex: 20 }}>
+      {open && (
+        <Box
+          onClick={() => setOpen(false)}
+          sx={{ position: "fixed", inset: 0, zIndex: -1 }}
+        />
+      )}
+
+      {open && (
+        <Paper sx={{
+          position: "absolute", bottom: "calc(100% + 8px)", right: 0,
+          minWidth: 180, py: 0.75,
+          bgcolor: "rgba(18,18,18,0.97)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 1.5,
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+        }}>
+          <Typography variant="caption" sx={{
+            px: 2, py: 0.5, display: "block",
+            color: "rgba(255,255,255,0.4)", fontWeight: 700,
+            letterSpacing: "0.08em", fontSize: "0.65rem",
+            borderBottom: "1px solid rgba(255,255,255,0.08)", mb: 0.5, pb: 0.75,
+          }}>
+            ĐỘ PHÂN GIẢI
+          </Typography>
+
+          {/* Option: Tự động */}
+          <Box
+            onClick={() => {
+              if (useManualProfiles) {
+                onSelectCloudinaryProfile("auto");
+              } else {
+                onSelectQuality("auto");
+              }
+              setOpen(false);
+            }}
+            sx={{
+              px: 2, py: 0.75, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 1.5,
+              bgcolor: (useManualProfiles ? selectedProfile === "auto" : selectedQuality === "auto")
+                ? alpha(PRIMARY_RED, 0.18) : "transparent",
+              "&:hover": { bgcolor: alpha(PRIMARY_RED, 0.12) },
+              transition: "background 0.15s",
+            }}
+          >
+            <SignalIcon sx={{
+              fontSize: 15,
+              color: (useManualProfiles ? selectedProfile === "auto" : selectedQuality === "auto")
+                ? PRIMARY_RED : "rgba(255,255,255,0.45)",
+            }} />
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="caption" sx={{
+                color: (useManualProfiles ? selectedProfile === "auto" : selectedQuality === "auto")
+                  ? PRIMARY_RED : "#fff",
+                fontWeight: (useManualProfiles ? selectedProfile === "auto" : selectedQuality === "auto")
+                  ? 700 : 400,
+                display: "block", lineHeight: 1.2,
+              }}>
+                Tự động
+              </Typography>
+              <Typography sx={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.2 }}>
+                {useManualProfiles ? "Adaptive bitrate" : "Theo tốc độ mạng"}
+              </Typography>
+            </Box>
+            {(useManualProfiles ? selectedProfile === "auto" : selectedQuality === "auto") && (
+              <CheckCircleIcon sx={{ fontSize: 13, color: PRIMARY_RED, flexShrink: 0 }} />
+            )}
           </Box>
-          {uniqueLevels.map((lv) => (
-            <QualityMenuItem
-              key={lv.index}
-              level={lv}
-              isSelected={lv.index === currentLevel}
-              networkSpeed={networkSpeed}
-              onSelect={() => {
-                onSelect(lv.index);
-                setOpen(false);
-              }}
-            />
-          ))}
-          {onAutoDetect && currentLevel !== -1 && (
-            <Button
-              fullWidth
-              onClick={() => {
-                onAutoDetect();
-                setOpen(false);
-              }}
-              sx={{
-                justifyContent: "center",
-                gap: 1,
-                py: 1.5,
-                borderTop: "1px solid rgba(255,255,255,0.08)",
-                color: "#3ea6ff",
-                "&:hover": { bgcolor: "rgba(62,166,255,0.1)" },
-              }}
-            >
-              <AutoAwesomeIcon sx={{ fontSize: 16 }} /> Tự động (Auto)
-            </Button>
+
+          <Box sx={{ height: 1, bgcolor: "rgba(255,255,255,0.06)", my: 0.5 }} />
+
+          {/* FIX #2: Render Cloudinary manual profiles hoặc VHS quality levels */}
+          {useManualProfiles ? (
+            CLOUDINARY_PROFILES.map(p => {
+              const isSelected = selectedProfile === p.profile;
+              const isHD = p.height >= 720;
+              return (
+                <Box
+                  key={p.profile}
+                  onClick={() => { onSelectCloudinaryProfile(p.profile); setOpen(false); }}
+                  sx={{
+                    px: 2, py: 0.75, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 1.5,
+                    bgcolor: isSelected ? alpha(PRIMARY_RED, 0.18) : "transparent",
+                    "&:hover": { bgcolor: alpha(PRIMARY_RED, 0.12) },
+                    transition: "background 0.15s",
+                  }}
+                >
+                  <HdIcon sx={{
+                    fontSize: 15,
+                    color: isSelected ? PRIMARY_RED : isHD ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)",
+                  }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" sx={{
+                      color: isSelected ? PRIMARY_RED : "#fff",
+                      fontWeight: isSelected ? 700 : 400,
+                      display: "block", lineHeight: 1.2,
+                    }}>
+                      {p.label}
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.6rem", lineHeight: 1.2, color: "rgba(255,255,255,0.35)" }}>
+                      {p.bitrate >= 1_000_000
+                        ? `~${(p.bitrate / 1_000_000).toFixed(1)} Mbps`
+                        : `~${Math.round(p.bitrate / 1000)} kbps`}
+                    </Typography>
+                  </Box>
+                  {isSelected && (
+                    <CheckCircleIcon sx={{ fontSize: 13, color: PRIMARY_RED, flexShrink: 0 }} />
+                  )}
+                </Box>
+              );
+            })
+          ) : (
+            qualityLevels.map(q => {
+              const isSelected = selectedQuality === q.index;
+              const isHD = q.height >= 720;
+              return (
+                <Box
+                  key={q.index}
+                  onClick={() => { onSelectQuality(q.index); setOpen(false); }}
+                  sx={{
+                    px: 2, py: 0.75, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 1.5,
+                    bgcolor: isSelected ? alpha(PRIMARY_RED, 0.18) : "transparent",
+                    "&:hover": { bgcolor: alpha(PRIMARY_RED, 0.12) },
+                    transition: "background 0.15s",
+                  }}
+                >
+                  <HdIcon sx={{
+                    fontSize: 15,
+                    color: isSelected ? PRIMARY_RED : isHD ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)",
+                  }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" sx={{
+                      color: isSelected ? PRIMARY_RED : "#fff",
+                      fontWeight: isSelected ? 700 : 400,
+                      display: "block", lineHeight: 1.2,
+                    }}>
+                      {q.label}
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.6rem", lineHeight: 1.2, color: "rgba(255,255,255,0.35)" }}>
+                      {q.bitrate >= 1_000_000
+                        ? `${(q.bitrate / 1_000_000).toFixed(1)} Mbps`
+                        : `${Math.round(q.bitrate / 1000)} kbps`}
+                    </Typography>
+                  </Box>
+                  {isSelected && (
+                    <CheckCircleIcon sx={{ fontSize: 13, color: PRIMARY_RED, flexShrink: 0 }} />
+                  )}
+                </Box>
+              );
+            })
           )}
         </Paper>
-      </Fade>
+      )}
+
+      <Box
+        onClick={() => setOpen(v => !v)}
+        sx={{
+          px: 1.25, py: 0.45, borderRadius: 1,
+          bgcolor: open ? PRIMARY_RED : "rgba(0,0,0,0.72)",
+          border: `1px solid ${open ? PRIMARY_RED : "rgba(255,255,255,0.22)"}`,
+          cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 0.6,
+          transition: "all 0.18s",
+          "&:hover": { bgcolor: open ? PRIMARY_RED_DARK : "rgba(139,26,26,0.75)" },
+          userSelect: "none",
+        }}
+      >
+        <HdIcon sx={{ fontSize: 14, color: "#fff", flexShrink: 0 }} />
+        <Typography sx={{
+          color: "#fff", fontWeight: 600,
+          fontSize: "0.68rem", whiteSpace: "nowrap",
+          maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis",
+        }}>
+          {currentLabel}
+        </Typography>
+      </Box>
     </Box>
   );
 };
 
-const QualityMenuItem = ({
-  level,
-  isSelected,
-  networkSpeed,
-  onSelect,
+// ===============================
+// 6. COMPONENT CON: VideoPlayer
+// ===============================
+const VideoPlayer = ({
+  url, savedTime, isCompleted, onTimeUpdate, onEnded,
 }: {
-  level: QualityLevel;
-  isSelected: boolean;
-  networkSpeed: number | null;
-  onSelect: () => void;
+  url: string; savedTime?: number; isCompleted?: boolean;
+  onTimeUpdate: (t: number) => void; onEnded: () => void;
 }) => {
-  const getDisplayLabel = () => {
-    if (level.index === -1) return "Tự động (Auto)";
-    if (level.height === 2160) return "4K (Ultra HD)";
-    if (level.height === 1440) return "2K (QHD)";
-    if (level.height === 1080) return "1080p (Full HD)";
-    if (level.height === 720) return "720p (HD)";
-    if (level.height === 480) return "480p (SD)";
-    if (level.height === 360) return "360p (SD)";
-    return level.label;
-  };
-  const isSuitable = () => {
-    if (!networkSpeed || level.index === -1) return false;
-    if (level.height === 2160 && networkSpeed >= 50) return true;
-    if (level.height === 1080 && networkSpeed >= 25) return true;
-    if (level.height === 720 && networkSpeed >= 10) return true;
-    if (level.height === 480 && networkSpeed >= 5) return true;
-    if (level.height === 360 && networkSpeed >= 2) return true;
-    return false;
-  };
-  const warning = (() => {
-    if (!networkSpeed || level.index === -1 || !level.bitrate) return null;
-    if (networkSpeed < level.bitrate / 1000) return `Cần ${level.bitrate / 1000} Mbps`;
+  const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
+  const initialTimeSetRef = useRef(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
+  const [loadElapsed, setLoadElapsed] = useState(0);
+
+  // VHS quality levels (khi có master playlist)
+  const [qualityLevels, setQualityLevels] = useState<QualityLevel[]>([]);
+  const [selectedQuality, setSelectedQuality] = useState<number | "auto">("auto");
+  const [currentBandwidthKbps, setCurrentBandwidthKbps] = useState<number | null>(null);
+
+  // FIX #2: Manual Cloudinary profile selector (fallback khi VHS không có quality levels)
+  const [cloudinaryInfo, setCloudinaryInfo] = useState<CloudinaryUrlInfo | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<string | "auto">("auto");
+
+  // URL thực sự đang phát (có thể thay đổi khi user chọn manual profile)
+  const activeUrlRef = useRef<string>(url);
+
+  // ── Timer helpers ──
+  const clearLoadTimeout = useCallback(() => {
+    if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+  }, []);
+
+  const startLoadTimeout = useCallback(() => {
+    clearLoadTimeout();
+    setLoadElapsed(0);
+    const intervalId = setInterval(() => setLoadElapsed(e => e + 1), 1000);
+    timeoutRef.current = setTimeout(() => {
+      clearInterval(intervalId);
+      setLoadTimedOut(true);
+      setIsLoading(false);
+    }, LOAD_TIMEOUT_MS);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (timeoutRef as React.MutableRefObject<any>)._interval = intervalId;
+  }, [clearLoadTimeout]);
+
+  const clearAllTimers = useCallback(() => {
+    clearLoadTimeout();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const iv = (timeoutRef as React.MutableRefObject<any>)._interval;
+    if (iv) { clearInterval(iv); }
+  }, [clearLoadTimeout]);
+
+  // ── Inject CSS ──
+  useEffect(() => {
+    if (!document.getElementById("vjs-custom-styles")) {
+      const s = document.createElement("style");
+      s.id = "vjs-custom-styles";
+      s.textContent = VIDEO_JS_STYLES;
+      document.head.appendChild(s);
+    }
+  }, []);
+
+  // ── Áp dụng VHS quality level ──
+  const applyVhsQuality = useCallback((q: number | "auto") => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ql = (playerRef.current as any)?.qualityLevels?.();
+    if (!ql) return;
+    if (q === "auto") {
+      for (let i = 0; i < ql.length; i++) ql[i].enabled = true;
+    } else {
+      for (let i = 0; i < ql.length; i++) ql[i].enabled = i === q;
+    }
+    setSelectedQuality(q);
+  }, []);
+
+  // FIX #2: Chuyển source sang Cloudinary profile khác
+  const applyCloudinaryProfile = useCallback((profile: string | "auto") => {
+    if (!cloudinaryInfo) return;
+    const newUrl = profile === "auto"
+      ? buildCloudinaryHlsUrl(cloudinaryInfo, "sp_auto")
+      : buildCloudinaryHlsUrl(cloudinaryInfo, profile);
+
+    setSelectedProfile(profile);
+    activeUrlRef.current = newUrl;
+
+    const p = playerRef.current;
+    if (p && typeof p.src === "function") {
+      const currentTime = p.currentTime?.() ?? 0;
+      p.src({ src: newUrl, type: "application/x-mpegURL" });
+      p.load();
+      // Seek lại vị trí đang xem sau khi load source mới
+      p.one("loadedmetadata", () => {
+        if (currentTime > 5) p.currentTime(currentTime);
+        p.play()?.catch(() => {});
+      });
+    }
+  }, [cloudinaryInfo]);
+
+  // ── Khởi tạo Video.js player ──
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // FIX #1: Parse URL và build URL tối ưu
+    const { masterUrl, cloudinaryInfo: info } = getOptimalHlsUrl(url);
+    setCloudinaryInfo(info);
+    activeUrlRef.current = masterUrl;
+
+    // Reset state
+    setHasError(false);
+    setIsLoading(true);
+    setLoadTimedOut(false);
+    setLoadElapsed(0);
+    setQualityLevels([]);
+    setSelectedQuality("auto");
+    setSelectedProfile("auto");
+    setCurrentBandwidthKbps(null);
+    startLoadTimeout();
+
+    const videoEl = document.createElement("video");
+    videoEl.className = "video-js vjs-big-play-centered";
+    containerRef.current.appendChild(videoEl);
+
+    const player = videojs(videoEl, {
+      controls: true,
+      autoplay: true,
+      preload: "auto",
+      fluid: true,
+      playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+      html5: {
+        vhs: {
+          overrideNative: true,
+          useNetworkInformationApi: true,
+          enableLowInitialPlaylist: true,
+          limitRenditionByPlayerDimensions: true,
+          smoothQualityChange: true,
+          allowSeeksWithinUnsafeLiveWindow: true,
+          handlePartialData: true,
+          bandwidth: 4_000_000,
+        },
+        nativeVideoTracks: false,
+        nativeAudioTracks: false,
+        nativeTextTracks: false,
+      },
+      controlBar: {
+        children: [
+          "playToggle", "volumePanel", "currentTimeDisplay",
+          "timeDivider", "durationDisplay", "progressControl",
+          "playbackRateMenuButton", "fullscreenToggle",
+        ],
+      },
+      // FIX #1: Dùng masterUrl thay vì url gốc từ BE
+      sources: [{ src: masterUrl, type: "application/x-mpegURL" }],
+    });
+
+    playerRef.current = player;
+    initialTimeSetRef.current = false;
+
+    // FIX #3: Dùng cả 'canplay' và 'loadedmetadata' để tắt overlay loading
+    const handleReady = () => {
+      clearAllTimers();
+      setIsLoading(false);
+      setLoadTimedOut(false);
+    };
+
+    player.on("canplay", handleReady);
+
+    player.on("loadedmetadata", () => {
+      handleReady();
+
+      // Seek đến thời gian đã lưu
+      if (!initialTimeSetRef.current && !isCompleted && savedTime && savedTime > 5) {
+        player.currentTime(savedTime);
+        initialTimeSetRef.current = true;
+      }
+      player.play()?.catch(() => {});
+
+      // FIX #4: Lấy quality levels từ VHS với retry (EagerAsync có thể chưa xử lý xong)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ql = (player as any).qualityLevels?.();
+      if (ql) {
+        const buildLevels = () => {
+          const levels: QualityLevel[] = [];
+          for (let i = 0; i < ql.length; i++) {
+            const lv = ql[i];
+            const height: number = lv.height ?? 0;
+            const bitrate: number = lv.bitrate ?? 0;
+
+            let label: string;
+            if (height >= 2160) label = "4K (2160p)";
+            else if (height >= 1440) label = "1440p";
+            else if (height >= 1080) label = "1080p HD";
+            else if (height >= 720) label = "720p HD";
+            else if (height >= 480) label = "480p";
+            else if (height >= 360) label = "360p";
+            else if (height >= 240) label = "240p";
+            else if (height > 0) label = `${height}p`;
+            else label = `${Math.round(bitrate / 1000)} kbps`;
+
+            levels.push({ index: i, label, bitrate, height });
+          }
+          levels.sort((a, b) => b.bitrate - a.bitrate);
+          const seen = new Set<string>();
+          const unique = levels.filter(l => {
+            if (seen.has(l.label)) return false;
+            seen.add(l.label); return true;
+          });
+          if (unique.length > 0) setQualityLevels(unique);
+        };
+
+        buildLevels();
+        ql.on("addqualitylevel", buildLevels);
+        ql.on("removequalitylevel", buildLevels);
+      }
+    });
+
+    // FIX #5: 'playing' event cũng tắt overlay (đảm bảo không miss)
+    player.on("playing", () => {
+      clearAllTimers();
+      setIsLoading(false);
+      setLoadTimedOut(false);
+    });
+
+    let lastSent = 0;
+    player.on("timeupdate", () => {
+      const ct = player.currentTime() ?? 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vhsStats = (player.tech(true) as any)?.vhs?.stats;
+      if (vhsStats?.bandwidth > 0) {
+        setCurrentBandwidthKbps(Math.round(vhsStats.bandwidth / 1000));
+      }
+      if (ct - lastSent >= 10) { lastSent = ct; onTimeUpdate(ct); }
+    });
+
+    player.on("ended", () => onEnded());
+
+    player.on("error", () => {
+      // FIX #6: Khi sp_auto fail (Cloudinary chưa process xong), fallback sang URL gốc
+      const currentSrc = player.currentSrc?.() ?? "";
+      const isAutoProfile = currentSrc.includes("sp_auto");
+      if (isAutoProfile && info) {
+        console.warn("[VideoPlayer] sp_auto failed, falling back to original URL");
+        const fallbackUrl = buildCloudinaryHlsUrl(info, "sp_hd");
+        // thử sp_hd, nếu vẫn fail mới báo lỗi
+        player.src({ src: fallbackUrl, type: "application/x-mpegURL" });
+        player.load();
+        // Nếu sp_hd cũng fail → báo lỗi thật
+        player.one("error", () => {
+          clearAllTimers();
+          setIsLoading(false);
+          setHasError(true);
+        });
+      } else if (isAutoProfile && !info) {
+        // Không phải Cloudinary, báo lỗi ngay
+        clearAllTimers();
+        setIsLoading(false);
+        setHasError(true);
+      } else {
+        clearAllTimers();
+        setIsLoading(false);
+        setHasError(true);
+      }
+    });
+
+    // Lắng nghe thay đổi mạng
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const conn = (navigator as any).connection
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      || (navigator as any).mozConnection
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      || (navigator as any).webkitConnection;
+    const onNetworkChange = () => {
+      // VHS sp_auto tự adaptive, không cần làm gì thêm
+    };
+    conn?.addEventListener("change", onNetworkChange);
+
+    return () => {
+      conn?.removeEventListener("change", onNetworkChange);
+      clearAllTimers();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p: any = playerRef.current;
+      playerRef.current = null;
+      try {
+        if (p && typeof p.isDisposed === "function" && !p.isDisposed()) p.dispose();
+      } catch (_) {}
+      const container = containerRef.current;
+      if (container && videoEl.parentNode === container) container.removeChild(videoEl);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url]);
+
+  // ── Thử lại khi lỗi / timeout ──
+  const handleRetry = useCallback(() => {
+    setHasError(false);
+    setLoadTimedOut(false);
+    setIsLoading(true);
+    setLoadElapsed(0);
+    setQualityLevels([]);
+    setSelectedQuality("auto");
+    setSelectedProfile("auto");
+    setCurrentBandwidthKbps(null);
+    startLoadTimeout();
+
+    const p = playerRef.current;
+    if (p && typeof p.src === "function") {
+      // FIX: Retry với URL gốc nếu sp_auto đã fail
+      const { masterUrl } = getOptimalHlsUrl(url);
+      activeUrlRef.current = masterUrl;
+      p.src({ src: masterUrl, type: "application/x-mpegURL" });
+      p.load();
+    }
+  }, [url, startLoadTimeout]);
+
+  // ── Overlay loading / error ──
+  const renderOverlay = () => {
+    if (hasError || loadTimedOut) {
+      return (
+        <Box sx={{
+          position: "absolute", inset: 0, zIndex: 10,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          bgcolor: "rgba(8,8,8,0.93)", gap: 1.5,
+        }}>
+          <VideoLibraryIcon sx={{ fontSize: 56, color: PRIMARY_RED, mb: 0.5 }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, color: "#fff" }}>
+            {loadTimedOut ? "Tải video quá lâu" : "Không thể phát video"}
+          </Typography>
+          <Typography variant="body2" sx={{
+            textAlign: "center", px: 4, maxWidth: 380, color: "rgba(255,255,255,0.65)",
+          }}>
+            {loadTimedOut
+              ? "Kết nối chậm hoặc nguồn video không phản hồi. Vui lòng kiểm tra đường truyền và thử lại."
+              : "Có lỗi xảy ra khi phát video. Vui lòng thử lại."}
+          </Typography>
+          <Button
+            variant="contained" size="small" onClick={handleRetry}
+            sx={{ mt: 1, bgcolor: PRIMARY_RED, "&:hover": { bgcolor: PRIMARY_RED_DARK } }}
+          >
+            Thử lại
+          </Button>
+        </Box>
+      );
+    }
+
+    if (isLoading) {
+      const pct = Math.min((loadElapsed / (LOAD_TIMEOUT_MS / 1000)) * 100, 95);
+      return (
+        <Box sx={{
+          position: "absolute", inset: 0, zIndex: 10,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          bgcolor: "rgba(8,8,8,0.80)", gap: 2, pointerEvents: "none",
+        }}>
+          <Box sx={{
+            width: 52, height: 52, borderRadius: "50%",
+            border: `4px solid ${alpha(PRIMARY_RED, 0.25)}`,
+            borderTopColor: PRIMARY_RED,
+            animation: "vjs-spin 0.85s linear infinite",
+            "@keyframes vjs-spin": { to: { transform: "rotate(360deg)" } },
+          }} />
+          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.85)" }}>
+            Đang tải bài giảng…
+          </Typography>
+          <Box sx={{
+            width: 180, height: 3, borderRadius: 2,
+            bgcolor: "rgba(255,255,255,0.15)", overflow: "hidden",
+          }}>
+            <Box sx={{
+              height: "100%", borderRadius: 2, bgcolor: PRIMARY_RED,
+              width: `${pct}%`, transition: "width 1s linear",
+            }} />
+          </Box>
+          {loadElapsed >= 5 && (
+            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.45)" }}>
+              {loadElapsed}s — File lớn, vui lòng chờ…
+            </Typography>
+          )}
+        </Box>
+      );
+    }
+
     return null;
-  })();
+  };
 
   return (
-    <ListItemButton
-      onClick={onSelect}
-      selected={isSelected}
-      sx={{
-        py: 1,
-        px: 2,
-        color: isSelected ? "#3ea6ff" : "#fff",
-        "&.Mui-selected": {
-          backgroundColor: "rgba(62, 166, 255, 0.15)",
-        },
-        "&:hover": { backgroundColor: "rgba(255,255,255,0.05)" },
-      }}
-    >
-      <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
-        {isSelected && <CheckCircleIcon sx={{ fontSize: 16 }} />}
-      </ListItemIcon>
-      <ListItemText
-        primary={getDisplayLabel()}
-        slotProps={{ primary: { variant: "body2", sx: { fontWeight: isSelected ? 600 : 400 } } }}
+    <Box sx={{ width: "100%", bgcolor: "#000", position: "relative" }}>
+      {renderOverlay()}
+
+      <Box
+        ref={containerRef}
+        sx={{
+          width: "100%",
+          visibility: (isLoading || hasError || loadTimedOut) ? "hidden" : "visible",
+        }}
       />
-      <Stack direction="row" spacing={1}>
-        {isSuitable() && !isSelected && (
-          <Chip label="✓ Phù hợp" size="small" sx={{ height: 18, fontSize: "0.6rem", bgcolor: "rgba(76,175,80,0.2)", color: "#4caf50" }} />
-        )}
-        {warning && !isSelected && (
-          <Chip label={`⚠️ ${warning}`} size="small" sx={{ height: 18, fontSize: "0.6rem", bgcolor: "rgba(255,152,0,0.2)", color: "#ff9800" }} />
-        )}
-      </Stack>
-    </ListItemButton>
+
+      {/* FIX #2: QualityMenu nhận cả VHS levels lẫn manual Cloudinary profiles */}
+      {!isLoading && !hasError && !loadTimedOut && (
+        <QualityMenu
+          qualityLevels={qualityLevels}
+          selectedQuality={selectedQuality}
+          currentBandwidthKbps={currentBandwidthKbps}
+          onSelectQuality={applyVhsQuality}
+          cloudinaryInfo={cloudinaryInfo}
+          onSelectCloudinaryProfile={applyCloudinaryProfile}
+          selectedProfile={selectedProfile}
+        />
+      )}
+    </Box>
   );
 };
 
-// ─── TaiLieuDropdown (cải tiến) ────────────────────────────────────────────
+// ===============================
+// 7. COMPONENT CON: MiniPlayer
+// ===============================
+const MiniPlayer = ({ url, savedTime, isCompleted, onTimeUpdate, onEnded, onExpand }: {
+  url: string; savedTime?: number; isCompleted?: boolean;
+  onTimeUpdate: (t: number) => void; onEnded: () => void; onExpand: () => void;
+}) => (
+  <Box sx={{
+    position: "fixed", bottom: 24, right: 24, width: 300, zIndex: 1300,
+    borderRadius: 2, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+    border: `2px solid ${PRIMARY_RED}`,
+  }}>
+    <VideoPlayer
+      url={url} savedTime={savedTime} isCompleted={isCompleted}
+      onTimeUpdate={onTimeUpdate} onEnded={onEnded}
+    />
+    <Tooltip title="Mở rộng">
+      <IconButton size="small" onClick={onExpand} sx={{
+        position: "absolute", top: 6, right: 6,
+        bgcolor: "rgba(0,0,0,0.6)", color: "#fff",
+        "&:hover": { bgcolor: PRIMARY_RED },
+      }}>
+        <OpenInFullIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  </Box>
+);
+
+// ===============================
+// 8. COMPONENT CON: TaiLieuDropdown
+// ===============================
 const TaiLieuDropdown = ({ danhSachTaiLieu }: { danhSachTaiLieu: TaiLieuType[] }) => {
   const [open, setOpen] = useState(false);
   const [downloading, setDL] = useState<string | null>(null);
+
   const extractDriveId = useCallback((url: string) => {
-    const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
+    for (const p of [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/]) {
+      const m = url.match(p); if (m) return m[1];
     }
     return null;
   }, []);
-  const handleDownload = useCallback(
-    async (tl: TaiLieuType, e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!tl.url) return;
-      const key = tl.id ?? tl.url;
-      setDL(key);
-      try {
-        const driveId = extractDriveId(tl.url);
-        if (driveId) {
-          window.open(`https://drive.google.com/uc?export=download&id=${driveId}`, "_blank");
-        } else {
-          const response = await fetch(tl.url, { mode: "cors", cache: "no-store" });
-          const blob = await response.blob();
-          const href = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = href;
-          link.download = tl.tenTaiLieu ?? "tai-lieu";
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(href);
-        }
-      } catch {
-        window.open(tl.url, "_blank");
-      } finally {
-        setTimeout(() => setDL(null), 3000);
+
+  const handleDownload = useCallback(async (tl: TaiLieuType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!tl.url) return;
+    const key = tl.id ?? tl.url;
+    setDL(key);
+    try {
+      const driveId = extractDriveId(tl.url);
+      if (driveId) {
+        window.open(`https://drive.google.com/uc?export=download&id=${driveId}`, "_blank");
+      } else {
+        const res = await fetch(tl.url, { mode: "cors", cache: "no-store" });
+        const blob = await res.blob();
+        const getExt = () => {
+          const nameExt = (tl.tenTaiLieu ?? "").match(/\.([a-zA-Z0-9]+)$/)?.[1];
+          if (nameExt) return nameExt.toLowerCase();
+          const urlExt = tl.url!.split("?")[0].match(/\.([a-zA-Z0-9]+)$/)?.[1];
+          if (urlExt) return urlExt.toLowerCase();
+          const ct = res.headers.get("Content-Type") ?? blob.type;
+          const ctMap: Record<string, string> = {
+            "application/pdf": "pdf", "application/msword": "doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+            "application/vnd.ms-excel": "xls",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+            "application/vnd.ms-powerpoint": "ppt",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+            "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "text/plain": "txt",
+          };
+          const matched = Object.keys(ctMap).find(k => ct.includes(k));
+          return matched ? ctMap[matched] : "pdf";
+        };
+        const ext = getExt();
+        const baseName = (tl.tenTaiLieu ?? "tai-lieu").replace(/\.[a-zA-Z0-9]+$/, "");
+        const fileName = `${baseName}.${ext}`;
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(href);
       }
-    },
-    [extractDriveId]
-  );
+    } catch { window.open(tl.url, "_blank"); }
+    finally { setTimeout(() => setDL(null), 3000); }
+  }, [extractDriveId]);
 
   return (
-    <Box sx={{ borderTop: "1px solid", borderColor: "divider", bgcolor: "action.hover" }}>
-      <ListItemButton onClick={() => setOpen((v) => !v)} sx={{ pl: 6, py: 1.5 }}>
-        <AttachFileIcon sx={{ fontSize: 16, color: "error.main", mr: 1 }} />
-        <ListItemText
-          primary={`${danhSachTaiLieu.length} tài liệu đính kèm`}
-          slotProps={{ primary: { variant: "caption", sx: { fontWeight: 500, color: "text.secondary" } } }}
-        />
-        {open ? <ExpandLessIcon sx={{ fontSize: 18 }} /> : <ExpandMoreIcon sx={{ fontSize: 18 }} />}
+    <Box sx={{ borderTop: "1px solid", borderColor: "divider" }}>
+      <ListItemButton onClick={() => setOpen(v => !v)} sx={{ pl: 4, py: 0.75 }}>
+        <AttachFileIcon sx={{ fontSize: 14, color: PRIMARY_RED, mr: 0.75 }} />
+        <Typography variant="caption" color="text.secondary" sx={{ flex: 1, fontWeight: 500 }}>
+          {danhSachTaiLieu.length} tài liệu
+        </Typography>
+        {open ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
       </ListItemButton>
       <Collapse in={open}>
-        <Stack spacing={1.5} sx={{ pl: 6, pr: 2, pb: 2 }}>
+        <Stack sx={{ pl: 4, pr: 1.5, pb: 1, gap: 0.5 }}>
           {danhSachTaiLieu.map((tl, idx) => {
             const isPdf = tl.loaiTaiLieu === "PDF";
             const key = tl.id ?? tl.url ?? idx;
             const isLoading = downloading === key;
             return (
-              <Paper
-                key={key}
-                variant="outlined"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  p: 1.5,
-                  bgcolor: isLoading ? alpha("#c0392b", 0.1) : "background.paper",
-                  borderRadius: 2,
-                  transition: "all 0.2s",
-                }}
-              >
-                {isPdf ? (
-                  <PictureAsPdfIcon sx={{ color: "error.main", fontSize: 20 }} />
-                ) : (
-                  <DescriptionIcon sx={{ color: "#2980b9", fontSize: 20 }} />
-                )}
-                <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-                  {isLoading ? "Đang tải xuống..." : tl.tenTaiLieu}
+              <Box key={key} sx={{
+                display: "flex", alignItems: "center", gap: 1, px: 1, py: 0.5,
+                borderRadius: 1,
+                bgcolor: isLoading ? alpha(PRIMARY_RED, 0.08) : alpha("#000", 0.02),
+                border: "1px solid", borderColor: "divider",
+              }}>
+                {isPdf
+                  ? <PictureAsPdfIcon sx={{ fontSize: 15, color: PRIMARY_RED, flexShrink: 0 }} />
+                  : <DescriptionIcon sx={{ fontSize: 15, color: "#2980b9", flexShrink: 0 }} />}
+                <Typography variant="caption" sx={{ flex: 1, fontWeight: 500 }} noWrap>
+                  {isLoading ? "Đang tải..." : tl.tenTaiLieu}
                 </Typography>
-                <Chip
-                  label={tl.loaiTaiLieu}
-                  size="small"
-                  sx={{
-                    bgcolor: isPdf ? alpha("#c0392b", 0.15) : alpha("#2980b9", 0.15),
-                    color: isPdf ? "#c0392b" : "#2980b9",
-                    fontWeight: 500,
-                  }}
-                />
                 {!isLoading && (
-                  <Tooltip title="Tải xuống">
-                    <IconButton size="small" onClick={(e) => handleDownload(tl, e)} sx={{ color: "error.main" }}>
-                      <DownloadIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  <IconButton size="small" onClick={e => handleDownload(tl, e)} sx={{ color: PRIMARY_RED, p: 0.3 }}>
+                    <DownloadIcon sx={{ fontSize: 14 }} />
+                  </IconButton>
                 )}
-              </Paper>
+              </Box>
             );
           })}
         </Stack>
@@ -459,46 +986,35 @@ const TaiLieuDropdown = ({ danhSachTaiLieu }: { danhSachTaiLieu: TaiLieuType[] }
   );
 };
 
-// ─── StatsBar (cải tiến) ───────────────────────────────────────────────────
+// ===============================
+// 9. COMPONENT CON: StatsBar
+// ===============================
 const StatsBar = ({ khoaHoc }: { khoaHoc: KhoaHocType }) => {
   const theme = useTheme();
   const items = [
     {
-      icon: <ScheduleIcon fontSize="small" />,
+      icon: <ScheduleIcon sx={{ fontSize: 16 }} />,
       label: khoaHoc.tongThoiLuong
         ? `${Math.floor(khoaHoc.tongThoiLuong / 3600)}h ${Math.floor((khoaHoc.tongThoiLuong % 3600) / 60)}p`
         : "0h 0p",
-      title: "Tổng thời lượng",
+      title: "Thời lượng",
     },
-    { icon: <MenuBookIcon fontSize="small" />, label: `${khoaHoc.tongBaiGiang ?? 0} bài giảng`, title: "Số bài" },
-    {
-      icon: <PeopleIcon fontSize="small" />,
-      label: `${(khoaHoc.soLuongHocVien ?? 0).toLocaleString("vi-VN")} học viên`,
-      title: "Học viên",
-    },
+    { icon: <MenuBookIcon sx={{ fontSize: 16 }} />, label: `${khoaHoc.tongBaiGiang ?? 0} bài`, title: "Bài giảng" },
+    { icon: <PeopleIcon sx={{ fontSize: 16 }} />, label: (khoaHoc.soLuongHocVien ?? 0).toLocaleString("vi-VN"), title: "Học viên" },
   ];
   return (
-    <GlassPaper sx={{ display: "flex", borderRadius: 3, overflow: "hidden", p: 0.5 }}>
+    <GlassPaper sx={{ display: "flex", borderRadius: 2, overflow: "hidden" }}>
       {items.map((item, i) => (
-        <Box
-          key={i}
-          sx={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
-            borderRight: i < items.length - 1 ? `1px solid ${alpha(theme.palette.divider, 0.5)}` : "none",
-          }}
-        >
-          <Box sx={{ color: "error.main", opacity: 0.7 }}>{item.icon}</Box>
+        <Box key={i} sx={{
+          flex: 1, display: "flex", alignItems: "center", gap: 1, px: 2, py: 1.25,
+          borderRight: i < items.length - 1 ? `1px solid ${alpha(theme.palette.divider, 0.5)}` : "none",
+        }}>
+          <Box sx={{ color: PRIMARY_RED, opacity: 0.75, display: "flex" }}>{item.icon}</Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.2 }}>
               {item.title}
             </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {item.label}
-            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.3 }}>{item.label}</Typography>
           </Box>
         </Box>
       ))}
@@ -506,35 +1022,37 @@ const StatsBar = ({ khoaHoc }: { khoaHoc: KhoaHocType }) => {
   );
 };
 
-// ─── Skeleton Loading ──────────────────────────────────────────────────────
+// ===============================
+// 10. COMPONENT CON: CourseSkeleton
+// ===============================
 const CourseSkeleton = () => (
   <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
     <AppBar position="static" color="default" elevation={0}>
       <Toolbar sx={{ gap: 2 }}>
         <Skeleton variant="rectangular" width={110} height={34} />
-        <Skeleton variant="circular" width={40} height={40} />
         <Skeleton variant="text" sx={{ flex: 1 }} />
-        <Skeleton variant="rounded" width={100} height={40} />
+        <Skeleton variant="rounded" width={100} height={36} />
       </Toolbar>
     </AppBar>
     <Box sx={{ flex: 1, display: "flex" }}>
       <Box sx={{ flex: 1, p: 3 }}>
-        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2, mb: 3 }} />
-        <Skeleton variant="text" width="60%" height={40} />
-        <Skeleton variant="text" width="40%" />
-        <Skeleton variant="rounded" height={80} sx={{ mt: 2 }} />
+        <Skeleton variant="rectangular" height={360} sx={{ borderRadius: 2, mb: 2 }} />
+        <Skeleton variant="text" width="60%" height={36} />
+        <Skeleton variant="rounded" height={70} sx={{ mt: 2 }} />
       </Box>
       <Skeleton variant="rectangular" width={380} sx={{ borderLeft: 1, borderColor: "divider" }} />
     </Box>
   </Box>
 );
 
-// ─── Main Component ─────────────────────────────────────────────────────────
+// ===============================
+// 11. COMPONENT CHÍNH: KhoaHocPage
+// ===============================
 export default function KhoaHocPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const params = useParams();
-  const courseId = (params?.courseld || params?.courseId) as string;
+  const courseId = (params?.courseId || params?.id) as string | undefined;
 
   const [khoaHoc, setKhoaHoc] = useState<KhoaHocType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -544,103 +1062,78 @@ export default function KhoaHocPage() {
   const [phanDangMo, setPhanDangMo] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [searchTerm, setSearchTerm] = useState("");
-  const [qualityLevels, setQualityLevels] = useState<QualityLevel[]>([]);
-  const [currentQuality, setCurrentQuality] = useState<number>(-1);
-  const [autoActualHeight, setAutoActualHeight] = useState<number | null>(null);
-  const [networkSpeed, setNetworkSpeed] = useState<number | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showMini, setShowMini] = useState(false);
 
+  const mainScrollRef = useRef<HTMLDivElement>(null);
+  const videoSectionRef = useRef<HTMLDivElement>(null);
   const lastUpdateTimeRef = useRef<Record<string, number>>({});
   const updatingRef = useRef<Record<string, boolean>>({});
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Network Speed
-  useEffect(() => {
-    const nav = navigator as NavigatorWithConnection;
-    const updateSpeed = () => {
-      if (nav.connection?.downlink) setNetworkSpeed(nav.connection.downlink);
-    };
-    updateSpeed();
-    nav.connection?.addEventListener("change", updateSpeed);
-    return () => nav.connection?.removeEventListener("change", updateSpeed);
-  }, []);
-
-  // Fullscreen handler
-  const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(err => console.error(err));
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  }, []);
 
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+    const el = mainScrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      if (!videoSectionRef.current || !baiGiang?.urlBaiGiang) { setShowMini(false); return; }
+      const rect = videoSectionRef.current.getBoundingClientRect();
+      setShowMini(rect.bottom < HEADER_H);
     };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [baiGiang]);
+
+  const scrollToVideo = useCallback(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   const flatten = useCallback((d: KhoaHocType | null): BaiGiangType[] => {
     if (!d) return [];
-    return d.danhSachPhanHoc?.flatMap((p) => p.danhSachBaiGiang ?? []) ?? [];
+    return d.danhSachPhanHoc?.flatMap(p => p.danhSachBaiGiang ?? []) ?? [];
   }, []);
 
   const isBaiHoanThanh = useCallback(
-    (bgId: string) => danhSachTatCa.find((b) => b.id === bgId)?.daHoanThanh === true,
-    [danhSachTatCa]
+    (bgId: string) => danhSachTatCa.find(b => b.id === bgId)?.daHoanThanh === true,
+    [danhSachTatCa],
   );
 
   const tongBai = danhSachTatCa.length;
-  const soBaiHoanThanh = danhSachTatCa.filter((b) => b.daHoanThanh).length;
+  const soBaiHoanThanh = useMemo(
+    () => danhSachTatCa.filter(b => b.daHoanThanh === true).length,
+    [danhSachTatCa],
+  );
   const phanTramHoanThanh = useMemo(
-    () => (tongBai === 0 ? 0 : Math.round((soBaiHoanThanh / tongBai) * 100)),
-    [tongBai, soBaiHoanThanh]
+    () => tongBai === 0 ? 0 : Math.round((soBaiHoanThanh / tongBai) * 100),
+    [tongBai, soBaiHoanThanh],
   );
 
-  const sendProgress = useCallback(
-    async (baiGiangId: string, thoiGianXem: number) => {
-      if (!courseId || !baiGiangId) return null;
-      if (updatingRef.current[baiGiangId]) return null;
-      updatingRef.current[baiGiangId] = true;
-      try {
-        const request: UpdateTienDoBaiGiangRequest = {
-          idDangKyKhoaHoc: courseId,
-          idBaiGiang: baiGiangId,
-          thoiGianXem: Math.floor(thoiGianXem),
-          LanCuoiXem: new Date(),
-        };
-        await TienDoSvc.updateTienDoBaiGiang(request);
-        const refreshed = await KhoaHocSvc.getLearningKhoaHoc(courseId);
-        setKhoaHoc(refreshed);
-        setDanhSachTatCa(flatten(refreshed));
-        return refreshed;
-      } catch (err) {
-        console.error("Lỗi cập nhật tiến độ:", err);
-        return null;
-      } finally {
-        delete updatingRef.current[baiGiangId];
-      }
-    },
-    [courseId, flatten]
-  );
+  const sendProgress = useCallback(async (baiGiangId: string, thoiGianXem: number) => {
+    if (!courseId || !baiGiangId || updatingRef.current[baiGiangId]) return;
+    updatingRef.current[baiGiangId] = true;
+    try {
+      const request: UpdateTienDoBaiGiangRequest = {
+        idDangKyKhoaHoc: courseId,
+        idBaiGiang: baiGiangId,
+        thoiGianXem: Math.floor(thoiGianXem),
+        LanCuoiXem: new Date(),
+      };
+      await TienDoSvc.updateTienDoBaiGiang(request);
+      setDanhSachTatCa(prev => prev.map(bg =>
+        bg.id === baiGiangId
+          ? { ...bg, thoiGianXem, daHoanThanh: thoiGianXem >= (bg.thoiLuong ?? 0) - 1 }
+          : bg,
+      ));
+    } catch (err) { console.error("Lỗi cập nhật tiến độ:", err); }
+    finally { delete updatingRef.current[baiGiangId]; }
+  }, [courseId]);
 
   const chonBaiGiang = useCallback((bg: BaiGiangType) => {
     setBaiGiang(bg);
-    if (bg.idPhan) setPhanDangMo((prev) => new Set([...prev, bg.idPhan!]));
+    if (bg.idPhan) setPhanDangMo(new Set([bg.idPhan]));
     lastUpdateTimeRef.current[bg.id!] = 0;
+    setTimeout(() => mainScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 50);
   }, []);
 
-  const handleTimeUpdate = useCallback(() => {
-    if (!videoRef.current || !baiGiang?.id) return;
-    const ct = videoRef.current.currentTime;
-    if (!ct || isNaN(videoRef.current.duration)) return;
+  const handleTimeUpdate = useCallback((ct: number) => {
+    if (!baiGiang?.id) return;
     const last = lastUpdateTimeRef.current[baiGiang.id] ?? 0;
     if (ct - last >= 10) {
       lastUpdateTimeRef.current[baiGiang.id] = ct;
@@ -650,264 +1143,148 @@ export default function KhoaHocPage() {
 
   const handleVideoEnded = useCallback(async () => {
     if (!baiGiang?.id) return;
-    const duration = videoRef.current?.duration || baiGiang.thoiLuong || 0;
-    const refreshed = await sendProgress(baiGiang.id, duration);
-    const currentList = refreshed ? flatten(refreshed) : danhSachTatCa;
-    const idx = currentList.findIndex((b) => b.id === baiGiang.id);
-    if (idx !== -1) {
-      let nextIdx = idx + 1;
-      while (nextIdx < currentList.length && currentList[nextIdx].daHoanThanh) nextIdx++;
-      if (nextIdx < currentList.length) chonBaiGiang(currentList[nextIdx]);
+    await sendProgress(baiGiang.id, baiGiang.thoiLuong ?? 0);
+    const idx = danhSachTatCa.findIndex(b => b.id === baiGiang.id);
+    if (idx !== -1 && idx + 1 < danhSachTatCa.length) {
+      chonBaiGiang(danhSachTatCa[idx + 1]);
     }
-  }, [baiGiang, danhSachTatCa, sendProgress, chonBaiGiang, flatten]);
+  }, [baiGiang, danhSachTatCa, sendProgress, chonBaiGiang]);
 
-  const handleSelectQuality = useCallback((idx: number) => {
-    const hls = hlsRef.current;
-    if (!hls) return;
-    setCurrentQuality(idx);
-    if (idx === -1) {
-      hls.currentLevel = -1;
-      hls.loadLevel = -1;
-      setAutoActualHeight(null);
-    } else {
-      hls.currentLevel = idx;
-      hls.nextLevel = idx;
-    }
-  }, []);
-
-  const handleAutoDetect = useCallback(() => {
-    const hls = hlsRef.current;
-    if (!hls) return;
-    hls.currentLevel = -1;
-    hls.loadLevel = -1;
-    setCurrentQuality(-1);
-    setAutoActualHeight(null);
-  }, []);
-
-  const togglePhan = useCallback((id: string, playingId?: string) => {
-    if (id === playingId) return;
-    setPhanDangMo((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) newSet.delete(id);
-      else newSet.add(id);
-      return newSet;
+  const togglePhan = useCallback((id: string, playingPhanId?: string) => {
+    if (id === playingPhanId) return;
+    setPhanDangMo(prev => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
     });
   }, []);
 
-  // Filter bài giảng theo từ khóa
   const filteredPhanHocs = useMemo(() => {
     if (!khoaHoc?.danhSachPhanHoc) return [];
     if (!searchTerm.trim()) return khoaHoc.danhSachPhanHoc;
-    const lowerTerm = searchTerm.toLowerCase();
+    const lower = searchTerm.toLowerCase();
     return khoaHoc.danhSachPhanHoc
       .map(phan => ({
         ...phan,
         danhSachBaiGiang: phan.danhSachBaiGiang?.filter((bg: BaiGiangType) =>
-          bg.tieuDe?.toLowerCase().includes(lowerTerm)
-        ) ?? []
+          bg.tieuDe?.toLowerCase().includes(lower)) ?? [],
       }))
       .filter(phan => phan.danhSachBaiGiang.length > 0);
   }, [khoaHoc, searchTerm]);
 
-  // Fetch khóa học
   useEffect(() => {
     const loadData = async () => {
-      if (!courseId) {
-        setError("Không tìm thấy ID khóa học trong URL");
-        setLoading(false);
-        return;
+      if (!courseId) { setError("Không tìm thấy ID"); setLoading(false); return; }
+      if (!/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(courseId)) {
+        setError("ID không đúng định dạng GUID"); setLoading(false); return;
       }
-      
-      const isValidGuid = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(courseId);
-      if (!isValidGuid) {
-        setError("ID đăng ký không đúng định dạng GUID");
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
-        setError("");
         const res = await KhoaHocSvc.getLearningKhoaHoc(courseId);
-        setKhoaHoc(res);
-        const ds = flatten(res);
+        const data = res.data;
+        setKhoaHoc(data);
+        const ds = flatten(data);
         setDanhSachTatCa(ds);
         if (ds.length > 0) {
-          const notCompleted = ds.find((l) => !l.daHoanThanh);
-          chonBaiGiang(notCompleted ?? ds[0]);
+          const first = ds.find(l => !l.daHoanThanh) ?? ds[0];
+          setBaiGiang(first);
+          if (first.idPhan) setPhanDangMo(new Set([first.idPhan]));
+          lastUpdateTimeRef.current[first.id!] = 0;
         }
-        // Auto expand all sections for better UX
-        if (res.danhSachPhanHoc) {
-          setPhanDangMo(new Set(res.danhSachPhanHoc.map(p => p.id!).filter(Boolean)));
-        }
-      } catch (err: unknown) {
-        console.error(err);
+      } catch (err) {
         const status = (err as { response?: { status?: number } })?.response?.status;
-        if (status === 401 || status === 403) setError("Bạn không có quyền truy cập khóa học này.");
-        else if (status === 404) setError("Không tìm thấy khóa học. Vui lòng kiểm tra lại ID.");
-        else setError("Có lỗi xảy ra. Vui lòng thử lại sau.");
-      } finally {
-        setLoading(false);
-      }
+        if (status === 401 || status === 403) setError("Bạn không có quyền truy cập.");
+        else if (status === 404) setError("Không tìm thấy khóa học.");
+        else setError("Có lỗi xảy ra. Vui lòng thử lại.");
+      } finally { setLoading(false); }
     };
-    
     loadData();
-  }, [courseId, flatten, chonBaiGiang]);
+  }, [courseId]);
 
-  // HLS Player
-  useEffect(() => {
-    if (!baiGiang?.urlBaiGiang) return;
-    const video = videoRef.current;
-    if (!video) return;
-    const url = baiGiang.urlBaiGiang;
-    setQualityLevels([]);
-    setCurrentQuality(-1);
-    setAutoActualHeight(null);
-    if (hlsRef.current) hlsRef.current.destroy();
-    if (url.endsWith(".m3u8") && Hls.isSupported()) {
-      const hls = new Hls({ enableWorker: true, capLevelToPlayerSize: false, startLevel: -1 });
-      hlsRef.current = hls;
-      hls.loadSource(url);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
-        const levels = data.levels
-          .map((l, i) => {
-            const preset = QUALITY_PRESETS.find((p) => p.height === l.height);
-            return {
-              index: i,
-              height: l.height,
-              label: preset?.label ?? `${l.height}p`,
-              bitrate: preset?.bitrate ?? l.bitrate,
-            };
-          })
-          .filter((l, i, arr) => arr.findIndex((x) => x.height === l.height) === i)
-          .sort((a, b) => b.height - a.height);
-        setQualityLevels([{ index: -1, label: "Auto", height: 0 }, ...levels]);
-        setCurrentQuality(-1);
-        video.play().catch(() => {});
-      });
-      hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
-        const height = hls.levels[data.level]?.height ?? null;
-        setCurrentQuality((prev) => {
-          if (prev === -1) setAutoActualHeight(height);
-          return data.level;
-        });
-      });
-    } else {
-      video.src = url;
-      video.load();
-    }
-    return () => {
-      if (hlsRef.current) hlsRef.current.destroy();
-    };
-  }, [baiGiang]);
-
-  // Seek & auto play
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !baiGiang) return;
-    const onCanPlay = () => {
-      if (!baiGiang.daHoanThanh && baiGiang.thoiGianXem && baiGiang.thoiGianXem > 0) {
-        if (Math.abs(video.currentTime - baiGiang.thoiGianXem) > 0.5) video.currentTime = baiGiang.thoiGianXem;
-      }
-      video.play().catch(() => {});
-    };
-    video.addEventListener("canplay", onCanPlay);
-    if (video.readyState >= 2) onCanPlay();
-    return () => video.removeEventListener("canplay", onCanPlay);
-  }, [baiGiang]);
-
-  const currentIdx = danhSachTatCa.findIndex((b) => b.id === baiGiang?.id);
+  const currentIdx = danhSachTatCa.findIndex(b => b.id === baiGiang?.id);
   const coTiepTheo = currentIdx !== -1 && currentIdx < danhSachTatCa.length - 1;
   const idPhanPlay = baiGiang?.idPhan;
 
   if (loading) return <CourseSkeleton />;
-
-  if (error) {
-    return (
-      <Box sx={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#f8f8f8", p: 3 }}>
-        <GlassPaper sx={{ maxWidth: 500, p: 4, textAlign: "center" }}>
-          <Typography variant="h6" color="error" gutterBottom sx={{ fontWeight: 700 }}>
-            Lỗi truy cập
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            {error}
-          </Typography>
-          <Button variant="contained" href="/" sx={{ bgcolor: theme.palette.error.main }}>
-            Về trang chủ
-          </Button>
-        </GlassPaper>
-      </Box>
-    );
-  }
-
+  if (error) return (
+    <Box sx={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", p: 3 }}>
+      <GlassPaper sx={{ maxWidth: 480, p: 4, textAlign: "center" }}>
+        <Typography variant="h6" color="error" gutterBottom sx={{ fontWeight: 700 }}>Lỗi truy cập</Typography>
+        <Typography color="text.secondary" sx={{ mb: 3 }}>{error}</Typography>
+        <Button variant="contained" href="/"
+          sx={{ bgcolor: PRIMARY_RED, "&:hover": { bgcolor: PRIMARY_RED_DARK } }}>
+          Về trang chủ
+        </Button>
+      </GlassPaper>
+    </Box>
+  );
   if (!khoaHoc) return null;
 
   const sidebarContent = (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <Box sx={{ p: 2, borderBottom: `2px solid ${theme.palette.error.main}`, bgcolor: "grey.50" }}>
-        <Stack direction="row" sx={{ mb: 2, justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>Nội dung khóa học</Typography>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <Box sx={{ p: 2, borderBottom: `2px solid ${PRIMARY_RED}`, bgcolor: "grey.50", flexShrink: 0 }}>
+        <Stack direction="row" sx={{ mb: 1.5, justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Nội dung khóa học</Typography>
           {isMobile && (
-            <IconButton onClick={() => setSidebarOpen(false)}>
-              <CloseIcon />
+            <IconButton size="small" onClick={() => setSidebarOpen(false)}>
+              <CloseIcon fontSize="small" />
             </IconButton>
           )}
         </Stack>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Tìm kiếm bài giảng..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+        <TextField fullWidth size="small" placeholder="Tìm kiếm bài giảng..."
+          value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
           slotProps={{
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon fontSize="small" color="action" />
+                  <SearchIcon sx={{ fontSize: 18 }} color="action" />
                 </InputAdornment>
               ),
               endAdornment: searchTerm && (
                 <InputAdornment position="end">
                   <IconButton size="small" onClick={() => setSearchTerm("")}>
-                    <CloseIcon fontSize="small" />
+                    <CloseIcon sx={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
               ),
             },
           }}
-          sx={{ mb: 2 }}
+          sx={{ mb: 1.5 }}
         />
-        <ProgressBar variant="determinate" value={phanTramHoanThanh} sx={{ mb: 1 }} />
+        <ProgressBar variant="determinate" value={phanTramHoanThanh} sx={{ mb: 0.5 }} />
         <Typography variant="caption" color="text.secondary">
-          {soBaiHoanThanh}/{tongBai} bài đã hoàn thành · {phanTramHoanThanh}%
+          {soBaiHoanThanh}/{tongBai} bài · {phanTramHoanThanh}%
         </Typography>
       </Box>
+
       <Box sx={{ overflowY: "auto", flex: 1, pb: 2 }}>
         {filteredPhanHocs.map((phan, idx) => {
           const isOpen = phanDangMo.has(phan.id!);
           const isPlaying = phan.id === idPhanPlay;
           const doneCnt = phan.danhSachBaiGiang?.filter((b: BaiGiangType) => isBaiHoanThanh(b.id!)).length ?? 0;
-          const totalMin = Math.floor((phan.danhSachBaiGiang?.reduce((s: number, b: BaiGiangType) => s + (b.thoiLuong ?? 0), 0) ?? 0) / 60);
+          const totalMin = Math.floor(
+            (phan.danhSachBaiGiang?.reduce((s: number, b: BaiGiangType) => s + (b.thoiLuong ?? 0), 0) ?? 0) / 60,
+          );
           return (
             <Box key={phan.id ?? idx}>
               <ListItemButton
                 onClick={() => togglePhan(phan.id!, idPhanPlay)}
                 sx={{
-                  bgcolor: isPlaying ? alpha(theme.palette.error.main, 0.08) : "transparent",
-                  borderLeft: `3px solid ${isPlaying ? theme.palette.error.main : "transparent"}`,
-                  py: 1.5,
+                  bgcolor: isPlaying ? alpha(PRIMARY_RED, 0.07) : "transparent",
+                  borderLeft: `3px solid ${isPlaying ? PRIMARY_RED : "transparent"}`,
+                  py: 1.25,
                 }}
               >
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }} color={isPlaying ? "error.main" : "text.primary"}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}
+                    color={isPlaying ? PRIMARY_RED : "text.primary"} noWrap>
                     {phan.thuTuSapXep ?? idx + 1}. {phan.tenPhan}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {doneCnt}/{phan.danhSachBaiGiang?.length ?? 0} bài · {totalMin} phút
+                    {doneCnt}/{phan.danhSachBaiGiang?.length ?? 0} bài · {totalMin}p
                   </Typography>
                 </Box>
-                {isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                {isOpen ? <ExpandLessIcon sx={{ fontSize: 20 }} /> : <ExpandMoreIcon sx={{ fontSize: 20 }} />}
               </ListItemButton>
               <Collapse in={isOpen}>
                 <List disablePadding>
@@ -916,23 +1293,25 @@ export default function KhoaHocPage() {
                       <ListItemButton
                         selected={baiGiang?.id === bg.id}
                         onClick={() => chonBaiGiang(bg)}
-                        sx={{ 
-                          pl: 4, 
-                          py: 1.5,
-                          borderLeft: `3px solid ${baiGiang?.id === bg.id ? theme.palette.error.main : "transparent"}`,
-                          bgcolor: baiGiang?.id === bg.id ? alpha(theme.palette.error.main, 0.05) : "transparent",
+                        sx={{
+                          pl: 3, py: 1,
+                          borderLeft: `3px solid ${baiGiang?.id === bg.id ? PRIMARY_RED : "transparent"}`,
+                          bgcolor: baiGiang?.id === bg.id ? alpha(PRIMARY_RED, 0.05) : "transparent",
                         }}
                       >
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          {bg.daHoanThanh ? (
-                            <CheckCircleIcon sx={{ color: theme.palette.error.main, fontSize: 20 }} />
-                          ) : (
-                            <PlayArrowIcon sx={{ color: baiGiang?.id === bg.id ? theme.palette.error.main : "text.disabled", fontSize: 20 }} />
-                          )}
+                        <ListItemIcon sx={{ minWidth: 30 }}>
+                          {bg.daHoanThanh
+                            ? <CheckCircleIcon sx={{ color: PRIMARY_RED, fontSize: 18 }} />
+                            : <PlayArrowIcon sx={{
+                              color: baiGiang?.id === bg.id ? PRIMARY_RED : "text.disabled",
+                              fontSize: 18,
+                            }} />}
                         </ListItemIcon>
                         <ListItemText
                           primary={
-                            <Typography variant="body2" sx={{ fontWeight: baiGiang?.id === bg.id ? 600 : 400 }} color={baiGiang?.id === bg.id ? "error.main" : "text.primary"}>
+                            <Typography variant="body2" sx={{
+                              fontWeight: baiGiang?.id === bg.id ? 600 : 400, lineHeight: 1.4,
+                            }} color={baiGiang?.id === bg.id ? PRIMARY_RED : "text.primary"}>
                               {bg.tieuDe}
                             </Typography>
                           }
@@ -943,7 +1322,9 @@ export default function KhoaHocPage() {
                           }
                         />
                       </ListItemButton>
-                      {(bg.danhSachTaiLieu?.length ?? 0) > 0 && <TaiLieuDropdown danhSachTaiLieu={bg.danhSachTaiLieu!} />}
+                      {(bg.danhSachTaiLieu?.length ?? 0) > 0 && (
+                        <TaiLieuDropdown danhSachTaiLieu={bg.danhSachTaiLieu!} />
+                      )}
                     </Box>
                   ))}
                 </List>
@@ -953,7 +1334,7 @@ export default function KhoaHocPage() {
         })}
         {filteredPhanHocs.length === 0 && (
           <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography color="text.secondary">Không tìm thấy bài giảng phù hợp.</Typography>
+            <Typography color="text.secondary" variant="body2">Không tìm thấy bài giảng.</Typography>
           </Box>
         )}
       </Box>
@@ -961,58 +1342,44 @@ export default function KhoaHocPage() {
   );
 
   return (
-    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", bgcolor: "grey.50" }}>
-      {/* Header */}
-      <AppBar 
-        position="sticky" 
-        color="default" 
-        elevation={0} 
-        sx={{ 
-          borderBottom: `2px solid ${theme.palette.error.main}`,
-          bgcolor: alpha(theme.palette.background.paper, 0.95),
-          backdropFilter: "blur(8px)",
-        }}
-      >
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", bgcolor: "grey.50", overflow: "hidden" }}>
+
+      <AppBar position="static" color="default" elevation={0} sx={{
+        borderBottom: `2px solid ${PRIMARY_RED}`,
+        bgcolor: alpha(theme.palette.background.paper, 0.95),
+        backdropFilter: "blur(8px)",
+        flexShrink: 0,
+      }}>
         <Toolbar sx={{ minHeight: HEADER_H, gap: 2, px: { xs: 2, md: 3 } }}>
-          <Image src="/khoahoc/1-removebg-preview.png" alt="EduVerse" width={120} height={40} style={{ objectFit: "contain" }} priority />
-          <IconButton
-            onClick={() => setSidebarOpen(true)}
-            sx={{
-              border: `1.5px solid ${sidebarOpen ? theme.palette.error.main : theme.palette.divider}`,
-              bgcolor: sidebarOpen ? alpha(theme.palette.error.main, 0.1) : "transparent",
-              display: { xs: "flex", md: isMobile ? "flex" : "none" },
-            }}
-          >
-            <MenuBookIcon sx={{ color: sidebarOpen ? theme.palette.error.main : "inherit" }} />
-          </IconButton>
+          <Image src="/khoahoc/1-removebg-preview.png" alt="EduVerse" width={110} height={36}
+            style={{ objectFit: "contain" }} priority />
+          {isMobile && (
+            <IconButton onClick={() => setSidebarOpen(true)} sx={{
+              border: `1.5px solid ${sidebarOpen ? PRIMARY_RED : theme.palette.divider}`,
+              bgcolor: sidebarOpen ? alpha(PRIMARY_RED, 0.1) : "transparent",
+            }}>
+              <MenuBookIcon sx={{ color: sidebarOpen ? PRIMARY_RED : "inherit", fontSize: 20 }} />
+            </IconButton>
+          )}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography noWrap variant="subtitle1" sx={{ fontWeight: 700 }}>
-              {khoaHoc.tieuDe}
-            </Typography>
+            <Typography noWrap variant="subtitle1" sx={{ fontWeight: 700 }}>{khoaHoc.tieuDe}</Typography>
           </Box>
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
               <Typography variant="caption" color="text.secondary">Tiến độ</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 700 }} color="error.main">{phanTramHoanThanh}%</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: PRIMARY_RED }}>{phanTramHoanThanh}%</Typography>
             </Box>
-            <Box sx={{ width: { xs: 80, sm: 120 } }}>
+            <Box sx={{ width: { xs: 70, sm: 110 } }}>
               <ProgressBar variant="determinate" value={phanTramHoanThanh} />
+              <Typography variant="caption" color="text.secondary">{soBaiHoanThanh}/{tongBai}</Typography>
             </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ display: { xs: "none", sm: "block" } }}>
-              {soBaiHoanThanh}/{tongBai}
-            </Typography>
             {coTiepTheo && (
-              <Button
-                variant="contained"
-                size="small"
-                endIcon={<NavigateNextIcon />}
+              <Button variant="contained" size="small" endIcon={<NavigateNextIcon />}
                 onClick={() => {
-                  let n = currentIdx + 1;
-                  while (n < danhSachTatCa.length && danhSachTatCa[n].daHoanThanh) n++;
+                  const n = currentIdx + 1;
                   if (n < danhSachTatCa.length) chonBaiGiang(danhSachTatCa[n]);
                 }}
-                sx={{ bgcolor: theme.palette.error.main, "&:hover": { bgcolor: theme.palette.error.dark } }}
-              >
+                sx={{ bgcolor: PRIMARY_RED, "&:hover": { bgcolor: PRIMARY_RED_DARK }, whiteSpace: "nowrap" }}>
                 Tiếp
               </Button>
             )}
@@ -1020,165 +1387,136 @@ export default function KhoaHocPage() {
         </Toolbar>
       </AppBar>
 
-      <Box ref={containerRef} sx={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
-        {/* Video & Info Column */}
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
-          {/* Video Player */}
-          <Box sx={{ flexShrink: 0, bgcolor: "#0a0a0a", position: "relative" }}>
+      <Box sx={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
+        <Box
+          ref={mainScrollRef}
+          sx={{ flex: 1, overflowY: "auto", minWidth: 0, display: "flex", flexDirection: "column" }}
+        >
+          <Box ref={videoSectionRef} sx={{ flexShrink: 0 }}>
             {baiGiang?.urlBaiGiang ? (
-              <>
-                <StyledVideo ref={videoRef} controls onTimeUpdate={handleTimeUpdate} onEnded={handleVideoEnded} />
-                <Box sx={{ position: "absolute", bottom: 16, right: 16, zIndex: 10, display: "flex", gap: 1 }}>
-                  <Tooltip title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}>
-                    <IconButton
-                      onClick={toggleFullscreen}
-                      sx={{
-                        bgcolor: alpha("#000", 0.6),
-                        color: "#fff",
-                        "&:hover": { bgcolor: alpha("#000", 0.8) },
-                      }}
-                    >
-                      {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-                    </IconButton>
-                  </Tooltip>
-                  {qualityLevels.length > 1 && (
-                    <QualityMenu
-                      levels={qualityLevels}
-                      currentLevel={currentQuality}
-                      autoActualHeight={autoActualHeight}
-                      networkSpeed={networkSpeed}
-                      onSelect={handleSelectQuality}
-                      onAutoDetect={handleAutoDetect}
-                    />
-                  )}
-                </Box>
-              </>
+              <VideoPlayer
+                key={baiGiang.id}
+                url={baiGiang.urlBaiGiang}
+                savedTime={baiGiang.thoiGianXem}
+                isCompleted={baiGiang.daHoanThanh}
+                onTimeUpdate={handleTimeUpdate}
+                onEnded={handleVideoEnded}
+              />
             ) : (
-              <Box sx={{ height: "45vh", minHeight: 280, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", bgcolor: "#0c0c0c" }}>
-                <VideoLibraryIcon sx={{ fontSize: 80, color: alpha(theme.palette.error.main, 0.5), mb: 2 }} />
+              <Box sx={{
+                height: 280, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center", bgcolor: "#0c0c0c",
+              }}>
+                <VideoLibraryIcon sx={{ fontSize: 72, color: alpha(PRIMARY_RED, 0.45), mb: 1.5 }} />
                 <Typography color="text.secondary" variant="h6">Chọn bài giảng để bắt đầu học</Typography>
               </Box>
             )}
           </Box>
 
-          {/* Content Info */}
-          <Box sx={{ flex: 1, overflowY: "auto", p: { xs: 2, md: 4 } }}>
+          <Box sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>
             {baiGiang && (
-              <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap", alignItems: "center" }}>
+              <Stack direction="row" spacing={0.5} sx={{ mb: 1.5, alignItems: "center", flexWrap: "wrap" }}>
                 <Typography variant="caption" color="text.secondary">
-                  {khoaHoc.danhSachPhanHoc?.find((p) => p.id === idPhanPlay)?.tenPhan ?? ""}
+                  {khoaHoc.danhSachPhanHoc?.find(p => p.id === idPhanPlay)?.tenPhan ?? ""}
                 </Typography>
                 <ChevronRightIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-                <Typography variant="caption" sx={{ fontWeight: 600 }} color="error.main">
+                <Typography variant="caption" sx={{ fontWeight: 600, color: PRIMARY_RED }}>
                   {baiGiang.tieuDe}
                 </Typography>
               </Stack>
             )}
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3, justifyContent: "space-between", alignItems: "flex-start" }}>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>
+
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}
+              sx={{ mb: 2, justifyContent: "space-between", alignItems: "flex-start" }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
                   {baiGiang?.tieuDe ?? khoaHoc.tieuDe}
                 </Typography>
-                <Stack direction="row" spacing={2} sx={{ mt: 1, alignItems: "center", flexWrap: "wrap" }}>
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flexWrap: "wrap" }}>
                   {baiGiang && (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary">
                       Bài {currentIdx + 1}/{danhSachTatCa.length} · {Math.floor((baiGiang.thoiLuong ?? 0) / 60)}p{(baiGiang.thoiLuong ?? 0) % 60}s
                     </Typography>
                   )}
-                  {baiGiang?.laBaiGiangFree && <Chip label="Miễn phí" size="small" color="success" icon={<SchoolIcon />} />}
                   {baiGiang && isBaiHoanThanh(baiGiang.id!) && (
-                    <Chip label="✓ Đã hoàn thành" size="small" color="error" variant="outlined" icon={<CheckCircleIcon />} />
+                    <Chip label="✓ Hoàn thành" size="small" variant="outlined"
+                      icon={<CheckCircleIcon sx={{ fontSize: "14px !important" }} />}
+                      sx={{ color: PRIMARY_RED, borderColor: PRIMARY_RED, height: 22 }} />
                   )}
                 </Stack>
               </Box>
               {coTiepTheo && (
-                <Button
-                  variant="contained"
-                  color="error"
-                  endIcon={<NavigateNextIcon />}
+                <Button variant="contained" size="small" endIcon={<NavigateNextIcon />}
                   onClick={() => {
-                    let n = currentIdx + 1;
-                    while (n < danhSachTatCa.length && danhSachTatCa[n].daHoanThanh) n++;
+                    const n = currentIdx + 1;
                     if (n < danhSachTatCa.length) chonBaiGiang(danhSachTatCa[n]);
                   }}
-                >
+                  sx={{ bgcolor: PRIMARY_RED, "&:hover": { bgcolor: PRIMARY_RED_DARK }, flexShrink: 0 }}>
                   Bài tiếp theo
                 </Button>
               )}
             </Stack>
-            
+
             <StatsBar khoaHoc={khoaHoc} />
-            
-            {/* Mô tả khóa học (nếu có) */}
+
             {khoaHoc.moTa && (
-              <Paper variant="outlined" sx={{ p: 2, mt: 3, borderRadius: 2, bgcolor: "background.paper" }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Mô tả khóa học</Typography>
+              <Paper variant="outlined" sx={{ p: 2, mt: 2, borderRadius: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.75 }}>Mô tả khóa học</Typography>
                 <Typography variant="body2" color="text.secondary">{khoaHoc.moTa}</Typography>
               </Paper>
             )}
           </Box>
         </Box>
 
-        {/* Sidebar - Desktop */}
         {!isMobile && (
           <Box sx={{
             width: sidebarOpen ? SIDEBAR_W : 0,
             flexShrink: 0,
-            transition: "width 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "width 0.28s cubic-bezier(0.4,0,0.2,1)",
             borderLeft: sidebarOpen ? `1px solid ${theme.palette.divider}` : "none",
             bgcolor: "background.paper",
             overflow: "hidden",
-            position: "relative",
+            height: "100%",
           }}>
             {sidebarContent}
           </Box>
         )}
 
-        {/* Sidebar - Mobile Drawer */}
         {isMobile && (
-          <Drawer
-            anchor="right"
-            open={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-            sx={{ '& .MuiDrawer-paper': { width: '85%', maxWidth: 360 } }}
-          >
+          <Drawer anchor="right" open={sidebarOpen} onClose={() => setSidebarOpen(false)}
+            sx={{ "& .MuiDrawer-paper": { width: "85%", maxWidth: 360 } }}>
             {sidebarContent}
           </Drawer>
         )}
 
-        {/* Floating button to open sidebar when closed */}
         {!sidebarOpen && !isMobile && (
           <Zoom in>
-            <Box
-              onClick={() => setSidebarOpen(true)}
-              sx={{
-                position: "fixed",
-                right: 0,
-                top: "50%",
-                transform: "translateY(-50%)",
-                zIndex: 1100,
-                bgcolor: theme.palette.error.main,
-                borderRadius: "8px 0 0 8px",
-                cursor: "pointer",
-                boxShadow: `-3px 0 14px ${alpha(theme.palette.error.main, 0.4)}`,
-                width: 32,
-                py: 3,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 1,
-                transition: "all 0.2s",
-                "&:hover": { width: 38, bgcolor: theme.palette.error.dark }
-              }}
-            >
-              <ChevronLeftIcon sx={{ color: "#fff", fontSize: 20 }} />
-              <Typography sx={{ writingMode: "vertical-rl", color: "#fff", fontSize: 10, fontWeight: 700 }}>
+            <Box onClick={() => setSidebarOpen(true)} sx={{
+              position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)", zIndex: 10,
+              bgcolor: PRIMARY_RED, borderRadius: "8px 0 0 8px", cursor: "pointer",
+              boxShadow: `-3px 0 14px ${alpha(PRIMARY_RED, 0.4)}`,
+              width: 30, py: 3, display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
+              transition: "all 0.2s", "&:hover": { width: 36, bgcolor: PRIMARY_RED_DARK },
+            }}>
+              <ChevronLeftIcon sx={{ color: "#fff", fontSize: 18 }} />
+              <Typography sx={{ writingMode: "vertical-rl", color: "#fff", fontSize: 9, fontWeight: 700 }}>
                 NỘI DUNG
               </Typography>
             </Box>
           </Zoom>
         )}
       </Box>
+
+      {showMini && baiGiang?.urlBaiGiang && (
+        <MiniPlayer
+          url={baiGiang.urlBaiGiang}
+          savedTime={baiGiang.thoiGianXem}
+          isCompleted={baiGiang.daHoanThanh}
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={handleVideoEnded}
+          onExpand={scrollToVideo}
+        />  
+      )}
     </Box>
   );
 }
