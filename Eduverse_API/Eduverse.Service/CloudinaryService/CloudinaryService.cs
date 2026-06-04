@@ -23,9 +23,11 @@ namespace Eduverse.Service.CloudinaryService
             _cloudinary = cloudinary;
         }
 
+
         #region uploadvideo
-        public async Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file,CancellationToken cancellationToken = default)
+        public async Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file, CancellationToken cancellationToken = default)
         {
+            // ── 1. Validate ──────────────────────────────────────────────
             if (file == null || file.Length == 0)
                 throw new Exception("File không hợp lệ");
 
@@ -51,9 +53,14 @@ namespace Eduverse.Service.CloudinaryService
                 EagerAsync = true, // xử lý ngầm, không chờ — tránh timeout
                 EagerTransforms = new List<Transformation>
         {
+            // SD  – 480p
             new Transformation().RawTransformation("sp_sd/vc_h264,ac_aac,f_m3u8"),
+            // HD  – 720p
             new Transformation().RawTransformation("sp_hd/vc_h264,ac_aac,f_m3u8"),
+            // FHD – 1080p
             new Transformation().RawTransformation("sp_full_hd/vc_h264,ac_aac,f_m3u8"),
+            // 2K  – 1440p (Cloudinary không có preset sp_2k, dùng custom; c_limit tránh upscale)
+            new Transformation().RawTransformation("w_2560,h_1440,c_limit/vc_h264,ac_aac,f_m3u8"),
         },
             };
 
@@ -93,7 +100,11 @@ namespace Eduverse.Service.CloudinaryService
 
 
         // ── Polling: chờ derived có m3u8 ────────────────────────────────
-        private async Task<(bool ready, string? hlsUrl)> WaitForHlsReadyAsync(string publicId,CancellationToken cancellationToken,int maxRetry = 60,int delaySeconds = 5)
+        private async Task<(bool ready, string? hlsUrl)> WaitForHlsReadyAsync(
+            string publicId,
+            CancellationToken cancellationToken,
+            int maxRetry = 60,
+            int delaySeconds = 5)
         {
             for (int i = 0; i < maxRetry; i++)
             {
@@ -118,31 +129,29 @@ namespace Eduverse.Service.CloudinaryService
                         || derivedArr.GetArrayLength() == 0)
                         continue;
 
-                    // Ưu tiên sp_full_hd → sp_hd → bất kỳ m3u8 nào
-                    string? masterUrl = null;
-                    string? hdUrl = null;
+                    // Ưu tiên: 2K → FHD → HD → SD → fallback
+                    string? url2k = null;
+                    string? urlFullHd = null;
+                    string? urlHd = null;
+                    string? urlSd = null;
                     string? fallbackUrl = null;
 
                     foreach (var item in derivedArr.EnumerateArray())
                     {
-                        var format = item.TryGetProperty("format", out var fmt)
-                            ? fmt.GetString() : null;
-                        var transformation = item.TryGetProperty("transformation", out var tf)
-                            ? tf.GetString() : null;
-                        var secureUrl = item.TryGetProperty("secure_url", out var su)
-                            ? su.GetString() : null;
+                        var format = item.TryGetProperty("format", out var fmt) ? fmt.GetString() : null;
+                        var transformation = item.TryGetProperty("transformation", out var tf) ? tf.GetString() : null;
+                        var secureUrl = item.TryGetProperty("secure_url", out var su) ? su.GetString() : null;
 
                         if (format != "m3u8" || string.IsNullOrEmpty(secureUrl)) continue;
 
-                        if (transformation?.StartsWith("sp_full_hd") == true)
-                            masterUrl = secureUrl;
-                        else if (transformation?.StartsWith("sp_hd") == true)
-                            hdUrl ??= secureUrl;
-                        else
-                            fallbackUrl ??= secureUrl;
+                        if (transformation?.Contains("w_2560") == true) url2k ??= secureUrl;
+                        else if (transformation?.StartsWith("sp_full_hd") == true) urlFullHd ??= secureUrl;
+                        else if (transformation?.StartsWith("sp_hd") == true) urlHd ??= secureUrl;
+                        else if (transformation?.StartsWith("sp_sd") == true) urlSd ??= secureUrl;
+                        else fallbackUrl ??= secureUrl;
                     }
 
-                    var hlsUrl = masterUrl ?? hdUrl ?? fallbackUrl;
+                    var hlsUrl = url2k ?? urlFullHd ?? urlHd ?? urlSd ?? fallbackUrl;
                     if (!string.IsNullOrEmpty(hlsUrl))
                     {
                         Console.WriteLine($"[HLS] Xử lý xong sau {i + 1} lần retry. URL: {hlsUrl}");
