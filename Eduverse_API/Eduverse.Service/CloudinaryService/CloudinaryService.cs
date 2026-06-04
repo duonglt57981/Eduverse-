@@ -23,7 +23,7 @@ namespace Eduverse.Service.CloudinaryService
             _cloudinary = cloudinary;
         }
 
-
+        #region uploadvideo
         public async Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file,CancellationToken cancellationToken = default)
         {
             if (file == null || file.Length == 0)
@@ -160,6 +160,7 @@ namespace Eduverse.Service.CloudinaryService
             return (false, null);
         }
 
+        #endregion
 
 
 
@@ -235,18 +236,7 @@ namespace Eduverse.Service.CloudinaryService
             var extension = Path.GetExtension(file.FileName).ToLower();
 
             string[] allowedExtensions =
-            {
-        ".pdf",
-        ".doc",
-        ".docx",
-        ".xls",
-        ".xlsx",
-        ".ppt",
-        ".pptx",
-        ".txt",
-        ".zip",
-        ".rar"
-    };
+            {".pdf",".doc",".docx",".xls",".xlsx",".ppt",".pptx",".txt",".zip",".rar"};
 
             if (!allowedExtensions.Contains(extension))
                 throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");

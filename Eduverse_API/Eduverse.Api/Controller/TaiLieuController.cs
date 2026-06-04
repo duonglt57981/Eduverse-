@@ -21,7 +21,8 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost("create-tailieu")]
-        public async Task<DataResponse<TaiLieuDto>> CreateTaiLieu(CreateTaiLieuRequest request)
+        [Consumes("multipart/form-data")]
+        public async Task<DataResponse<TaiLieuDto>> CreateTaiLieu([FromForm] CreateTaiLieuRequest request)
         {
             try
             {
@@ -35,19 +36,20 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPut("update-tailieu")]
-        public async Task<DataResponse<TaiLieuDto>> UpdateTaiLieu(UpdateTaiLieuRequest request)
-        {
-            try
-            {
-                var result = await _taiLieuService.UpdateTaiLieu(request);
-                return DataResponse<TaiLieuDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<TaiLieuDto>.False(ex.Message);
-            }
-        }
+        //[HttpPut("update-tailieu")]
+        //[Consumes("multipart/form-data")]
+        //public async Task<DataResponse<TaiLieuDto>> UpdateTaiLieu([FromForm] UpdateTaiLieuRequest request)
+        //{
+        //    try
+        //    {
+        //        var result = await _taiLieuService.UpdateTaiLieu(request);
+        //        return DataResponse<TaiLieuDto>.Success(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return DataResponse<TaiLieuDto>.False(ex.Message);
+        //    }
+        //}
 
 
         [HttpDelete("delete-tailieu")]

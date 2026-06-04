@@ -73,11 +73,11 @@ namespace Eduverse.Api
             );
 
             var cloudinary = new Cloudinary(account);
-            cloudinary.Api.Timeout = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
+            cloudinary.Api.Timeout = (int)TimeSpan.FromMinutes(30).TotalMilliseconds;
 
             var httpClient = new HttpClient
             {
-                Timeout = TimeSpan.FromMinutes(2)
+                Timeout = TimeSpan.FromMinutes(30)
             };
             cloudinary.Api.Client = httpClient;
 

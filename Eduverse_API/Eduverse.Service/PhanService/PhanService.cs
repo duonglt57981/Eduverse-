@@ -68,7 +68,8 @@ namespace Eduverse.Service.PhanService
             {
                 IdKhoaHoc = request.IdKhoaHoc,
                 TenPhan = request.TenPhan.Trim(),
-                ThuTuSapXep = maxThuTu + 1
+                ThuTuSapXep = maxThuTu + 1,
+                CreatedDate = DateTime.UtcNow
             };
 
             await CreateAsync(entity);
@@ -105,8 +106,7 @@ namespace Eduverse.Service.PhanService
                 .AnyAsync(x =>
                     x.IdKhoaHoc == request.IdKhoaHoc &&
                     x.ThuTuSapXep == request.ThuTuSapXep &&
-                    x.Id != request.Id &&
-                    !x.IsDeleted);
+                    x.Id != request.Id &&!x.IsDeleted);
 
             if (thuTuDaTon)
                 throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại trong phần học này");
@@ -115,6 +115,7 @@ namespace Eduverse.Service.PhanService
             entity.IdKhoaHoc = request.IdKhoaHoc;
             entity.TenPhan = request.TenPhan.Trim();
             entity.ThuTuSapXep = request.ThuTuSapXep;
+            entity.CreatedDate = DateTime.UtcNow;
 
             await UpdateAsync(entity);
             await SaveAsync();
@@ -125,28 +126,15 @@ namespace Eduverse.Service.PhanService
 
         public async Task<bool> DeletePhanHoc(Guid id)
         {
-            var exists = await GetQueryable()
-                .AnyAsync(x => x.Id == id);
+            var phan = await GetByIdAsync(id);
+            if (phan == null)
+                throw new Exception("Không tim thấy phần học");
 
-            if (!exists)
-                throw new Exception("Không tìm thấy phần học");
+            phan.DeletedDate = DateTime.UtcNow;
+            phan.IsDeleted = true;
+           
 
-            var taiLieus = await (
-                from tl in _taiLieuService.GetQueryable()
-                join bg in _baiGiangService.GetQueryable()
-                    on tl.IdBaiGiang equals bg.Id
-                where bg.IdPhan == id && !tl.IsDeleted
-                select tl
-            ).ToListAsync();
-
-            if (taiLieus.Any())
-            {
-                await _taiLieuService.DeleteAsync(taiLieus);
-            }
-
-            await DeleteAsync(new Phan { Id = id });
-            await SaveAsync();
-
+            await DeleteAsync(phan);
             return true;
         }
     }

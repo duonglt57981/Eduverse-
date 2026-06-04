@@ -66,9 +66,7 @@ namespace Eduverse.Service.BaiGiangService
 
             int thoiLuongBaiGiang = (int)uploadResult.ThoiLuong;
 
-            var query = GetQueryable();
-
-            var maxThuTu = await query
+            var maxThuTu = await GetQueryable()
                 .Where(x => x.IdPhan == request.IdPhan.Value)
                 .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
@@ -76,14 +74,14 @@ namespace Eduverse.Service.BaiGiangService
             {
                 IdPhan = request.IdPhan.Value,
                 TieuDe = request.TieuDe.Trim(),
-                LoaiBaiGiang = "Bài giảng video",
+                LoaiBaiGiang = request.Video == null ? "Bài giảng tài liệu" : "Bài giảng video",
                 IdVideoBaiGiang = uploadResult.IdVideoBaiGiang,
                 URLBaiGiang = uploadResult.URLBaiGiang,
                 ThuTuSapXep = maxThuTu + 1,
                 ThoiLuong = thoiLuongBaiGiang,
                 LaBaiGiangFree = request.LaBaiGiangFree,
-                IsDeleted = false,
-                TrangThai = request.TrangThai
+                TrangThai = "HDI",
+                CreatedDate = DateTime.UtcNow
             };
 
             await CreateAsync(entity);
@@ -148,33 +146,15 @@ namespace Eduverse.Service.BaiGiangService
 
         public async Task<bool> DeleteBaiGiang(Guid id)
         {
-            var exists = await GetQueryable()
-                .AnyAsync(x => x.Id == id && !x.IsDeleted);
-
-            if (!exists)
+            var baiGiang = await GetByIdAsync(id);
+            if (baiGiang == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            // soft delete tài liệu
-            var taiLieus = await _taiLieuService.GetQueryable()
-                .Where(x => x.IdBaiGiang == id && !x.IsDeleted)
-                .ToListAsync();
-
-            foreach (var tl in taiLieus)
-            {
-                tl.DeletedDate = DateTime.UtcNow;
-            }
-
-            await _taiLieuService.DeleteRange(taiLieus);
-
-            // soft delete bài giảng
-            var baiGiang = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == id);
-
             baiGiang.DeletedDate = DateTime.UtcNow;
+            baiGiang.IsDeleted = true;
+            baiGiang.TrangThai = "KDI";
 
             await DeleteAsync(baiGiang);
-            await SaveAsync();
-
             return true;
         }
     }

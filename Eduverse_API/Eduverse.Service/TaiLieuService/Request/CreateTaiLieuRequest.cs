@@ -1,4 +1,5 @@
 ﻿using Eduverse.Service.TaiLieuService.Dto;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +10,10 @@ namespace Eduverse.Service.TaiLieuService.Request
 {
     public class CreateTaiLieuRequest 
     {
-        public string? LoaiTaiLieu { get; set; }
         public string? TenTaiLieu { get; set; }
-        public string? URL { get; set; }
-        public string? TrangThai { get; set; }
-        public Guid? IdBaiGiang { get; set; }
+        public string? TrangThai { get; set; } = "HDI";
+        public Guid IdBaiGiang { get; set; }
+
+        public IFormFile Document { get; set; }
     }
 }

@@ -70,6 +70,8 @@ namespace Eduverse.Service.KhoaHocService
             _baiGiangRepository = baiGiangRepository;
         }
 
+
+        #region GetListKhoaHoc
         public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search,Guid userId)
         {
             if (userId == Guid.Empty)
@@ -182,8 +184,10 @@ namespace Eduverse.Service.KhoaHocService
 
             return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
         }
+        #endregion
 
 
+        #region GetListDangKi
         public async Task<PagedList<KhoaHocDto>> GetListDangKi(KhoaHocDangKiSearch search, Guid userId)
         {
             if (userId == Guid.Empty)
@@ -255,7 +259,7 @@ namespace Eduverse.Service.KhoaHocService
 
             var tongBaiGiangDict = await (
                 from ph in _phanRepository.GetAll().AsNoTracking()
-                join bg in _baiGiangRepository.GetAll().AsNoTracking()
+                join bg in _baiGiangRepository.GetQueryable().AsNoTracking()
                     on ph.Id equals bg.IdPhan
                 where ph.IdKhoaHoc.HasValue
                       && khoaHocIds.Contains(ph.IdKhoaHoc.Value)
@@ -322,8 +326,10 @@ namespace Eduverse.Service.KhoaHocService
                 search.PageSize,
                 totalCount);
         }
+        #endregion
 
 
+        #region GetLearning
         public async Task<KhoaHocDto> GetLearning(Guid idDangKy)
         {
             if (idDangKy == Guid.Empty)
@@ -390,7 +396,7 @@ namespace Eduverse.Service.KhoaHocService
             var phanIds = phanHocs.Select(x => x.Id).ToList();
 
             // 4. Lấy bài giảng
-            var baiGiangs = await _baiGiangService.GetQueryable()
+            var baiGiangs = await _baiGiangService.GetQueryable()   
                 .AsNoTracking()
                 .Where(x => phanIds.Contains(x.IdPhan) && !x.IsDeleted)
                 .OrderBy(x => x.ThuTuSapXep)
@@ -477,18 +483,17 @@ namespace Eduverse.Service.KhoaHocService
                     phan.DanhSachBaiGiang = list;
             }
 
-            // 9. Tổng kết
             khoaHoc.TongBaiGiang = tongBaiGiang;
             khoaHoc.TongThoiLuong = tongThoiLuong;
             khoaHoc.SoBaiGiangHoanThanh = hoanThanh;
-            khoaHoc.PhanTramHoanThanh = tongBaiGiang == 0
-                ? 0
-                : Math.Round((double)hoanThanh * 100 / tongBaiGiang, 2);
+            khoaHoc.PhanTramHoanThanh = tongBaiGiang == 0 ? 0: Math.Round((double)hoanThanh * 100 / tongBaiGiang, 2);
 
             return khoaHoc;
         }
+        #endregion
 
 
+        #region CreateKhoaHoc
         public async Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.TieuDe))
@@ -531,7 +536,8 @@ namespace Eduverse.Service.KhoaHocService
                 Gia = request.Gia,
                 LoaiKhoaHoc = isFree ? "Khóa học miễn phí" : "Khóa học trả phí",
                 HinhAnhKhoaHoc = upLoadResult.UrlImg,
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.UtcNow,
+                TrangThai = "HDI"
             };
 
             await CreateAsync(khoaHoc);
@@ -546,12 +552,13 @@ namespace Eduverse.Service.KhoaHocService
 
             return _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
         }
+        #endregion
 
 
+        #region  UpdateKhoaHoc
         public async Task<KhoaHocDto> UpdateKhoaHoc(UpdateKhoaHocRequest request)
         {
-            var entity = await GetByIdAsync(request.Id)
-                ;
+            var entity = await GetByIdAsync(request.Id);
             if (entity == null || entity.IsDeleted)
                 throw new Exception("Không tìm thấy khóa học");
 
@@ -564,47 +571,54 @@ namespace Eduverse.Service.KhoaHocService
             if (request.GiaGoc < request.Gia)
                 throw new Exception("Giá gốc phải lớn hơn hoặc bằng giá");
 
-            var upload = await _cloudinaryService.UploadImageAsync(request.Img);
-            
+            var danhMucMoi = (request.DanhSachDanhMuc ?? new List<Guid>())
+                .Distinct()
+                .ToList();
 
-            if(upload == null)
+            if (danhMucMoi.Any())
             {
-                entity.HinhAnhKhoaHoc = entity.HinhAnhKhoaHoc;
-            }
+                var danhMucTonTai = await _danhMucRepository.GetQueryable()
+                    .Where(x => danhMucMoi.Contains(x.Id) && !x.IsDeleted)
+                    .Select(x => x.Id)
+                    .ToListAsync();
 
+                var danhMucKhongTonTai = danhMucMoi
+                    .Except(danhMucTonTai)
+                    .ToList();
+
+                if (danhMucKhongTonTai.Any())
+                    throw new Exception($"Danh mục không tồn tại: {string.Join(", ", danhMucKhongTonTai)}");
+            }
 
             if (request.Img != null)
             {
-                entity.HinhAnhKhoaHoc = upload.UrlImg;
+                var upload = await _cloudinaryService.UploadImageAsync(request.Img);
+
+                if (upload == null)
+                    throw new Exception("Upload hình ảnh thất bại");
+
                 var oldImage = entity.HinhAnhKhoaHoc;
+                entity.HinhAnhKhoaHoc = upload.UrlImg;
 
                 if (!string.IsNullOrEmpty(oldImage))
                     _ = _cloudinaryService.DeleteImageAsync(oldImage);
             }
 
-
             entity.TieuDe = request.TieuDe;
             entity.MoTa = request.MoTa;
             entity.Gia = request.Gia;
             entity.GiaGoc = request.GiaGoc;
+            entity.CapDo = request.CapDo;
             entity.LoaiKhoaHoc = request.Gia <= 0 ? "Khóa học miễn phí" : "Khóa học trả phí";
-            entity.UpdatedDate = DateTime.Now;
-
+            entity.UpdatedDate = DateTime.UtcNow;
 
             await UpdateAsync(entity);
-
-            var danhMucMoi = (request.DanhSachDanhMuc ?? new List<Guid>())
-                .Distinct()
-                .ToList();
 
             var danhMucCu = await _danhMuc_KhoaHocService.GetQueryable()
                 .Where(x => x.IdKhoaHoc == entity.Id && !x.IsDeleted)
                 .ToListAsync();
 
-            var danhMucCuIds = danhMucCu
-                .Select(x => x.IdDanhMuc)
-                .ToHashSet();
-
+            var danhMucCuIds = danhMucCu.Select(x => x.IdDanhMuc).ToHashSet();
             var danhMucMoiSet = danhMucMoi.ToHashSet();
 
             var canXoa = danhMucCu
@@ -638,87 +652,20 @@ namespace Eduverse.Service.KhoaHocService
             await SaveAsync();
             return _mapper.Map<KhoaHoc, KhoaHocDto>(entity);
         }
+        #endregion
 
 
         public async Task<bool> DeleteKhoaHoc(Guid id)
         {
-            if (id == Guid.Empty)
-                throw new ArgumentException("Id khóa học không hợp lệ");
-
-            var now = DateTime.UtcNow;
-
-
-            var khoaHoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
-
+            var khoaHoc = await GetByIdAsync(id);
             if (khoaHoc == null)
-                throw new Exception("Không tìm thấy khóa học");
+                throw new Exception("Không tìm thấy khoa học");
 
-
-            var phans = await _phanService.GetQueryable()
-                .Where(x => x.IdKhoaHoc == id && !x.IsDeleted)
-                .Select(x => x.Id)
-                .ToListAsync();
-
-            if (phans.Count == 0)
-            {
-                khoaHoc.IsDeleted = true;
-                khoaHoc.DeletedDate = now;
-
-                await UpdateAsync(khoaHoc);
-                return true;
-            }
-
-
-            var baiGiangs = await _baiGiangService.GetQueryable()
-                .Where(x => phans.Contains(x.IdPhan) && !x.IsDeleted)
-                .ToListAsync();
-
-            var baiGiangIds = baiGiangs.Select(x => x.Id).ToList();
-
-            var taiLieus = await _taiLieuService.GetQueryable()
-                .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && !x.IsDeleted)
-                .ToListAsync();
-
-            foreach (var tl in taiLieus)
-            {
-                tl.IsDeleted = true;
-                tl.DeletedDate = now;
-            }
-
-            if (taiLieus.Count > 0)
-                await _taiLieuService.DeleteAsync(taiLieus);
-
-
-            foreach (var bg in baiGiangs)
-            {
-                bg.IsDeleted = true;
-                bg.DeletedDate = now;
-            }
-
-            if (baiGiangs.Count > 0)
-                await _baiGiangService.DeleteAsync(baiGiangs);
-
-
-            var phanEntities = await _phanService.GetQueryable()
-                .Where(x => phans.Contains(x.Id) && !x.IsDeleted)
-                .ToListAsync();
-
-            foreach (var p in phanEntities)
-            {
-                p.IsDeleted = true;
-                p.DeletedDate = now;
-            }
-
-            if (phanEntities.Count > 0)
-                await _phanService.DeleteAsync(phanEntities);
-
- 
             khoaHoc.IsDeleted = true;
-            khoaHoc.DeletedDate = now;
+            khoaHoc.DeletedDate = DateTime.UtcNow;
+            khoaHoc.TrangThai = "KDI";
 
             await DeleteAsync(khoaHoc);
-
             return true;
         }
     }
