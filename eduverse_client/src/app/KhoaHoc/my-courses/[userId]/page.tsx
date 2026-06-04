@@ -21,7 +21,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import SignalWifiOffIcon from "@mui/icons-material/SignalWifiOff";
 import LoginIcon from "@mui/icons-material/Login";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { KhoaHocType } from "@/src/types/khoaHoc/dto";
+import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
 const RED = "#8B1A1A";
 const RED_HOVER = "#6B1414";

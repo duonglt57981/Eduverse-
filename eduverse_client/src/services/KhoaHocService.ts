@@ -1,4 +1,4 @@
-import { KhoaHocType } from "../types/khoaHoc/dto";
+import { KhoaHocType } from "../types/khoaHoc/Dto/dto";
 import { ApiResponse, PagedList } from "../types/types";
 import { apiService } from "./index";
 

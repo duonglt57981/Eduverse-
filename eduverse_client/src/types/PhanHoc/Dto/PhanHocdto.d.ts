@@ -1,4 +1,4 @@
-import { BaiGiangType } from "../BaiGiang/BaiGiangDto";
+import { BaiGiangType } from "../BaiGiang/Dto/BaiGiangDto";
 
 export interface PhanHocType {
   id?: Guid;
