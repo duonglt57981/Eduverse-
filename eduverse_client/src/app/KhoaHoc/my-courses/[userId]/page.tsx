@@ -362,7 +362,7 @@ const MyCoursesPage = () => {
 
   const handleCourseClick = (registrationId?: string) => {
     if (registrationId) {
-      router.push(`/KhoaHoc/my-courses/learning/${registrationId}`);
+      router.push(`/khoahoc/my-courses/learning/${registrationId}`);
     } else {
       console.warn('Missing course registration id');
     }
