@@ -1,24 +1,20 @@
+version: '3.8'
+
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
-
     restart: unless-stopped
-
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "YourStr0ng!Password"
       MSSQL_PID: "Developer"
-
     ports:
       - "1433:1433"
-
     volumes:
       - sqlserver_data:/var/opt/mssql
-
     networks:
-      - sqlserver_net
-
+      - eduverse_net
     healthcheck:
       test:
         [
@@ -30,8 +26,47 @@ services:
       retries: 5
       start_period: 30s
 
+  api:
+    image: eduverse-api:prod
+    build:
+      context: ./Eduverse_API
+      dockerfile: Dockerfile
+      target: prod
+    pull_policy: never
+    container_name: eduverse_api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Eduverse;User Id=sa;Password=YourStr0ng!Password;TrustServerCertificate=True;Encrypt=False;
+    ports:
+      - "5002:5002"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - eduverse_net
+
+  client:
+    image: eduverse-client:prod
+    build:
+      context: ./eduverse_client
+      dockerfile: Dockerfile
+      target: prod
+    pull_policy: never
+    container_name: eduverse_client
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:5002
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - eduverse_net
+
 volumes:
   sqlserver_data:
 
 networks:
-  sqlserver_net:
+  eduverse_net:
