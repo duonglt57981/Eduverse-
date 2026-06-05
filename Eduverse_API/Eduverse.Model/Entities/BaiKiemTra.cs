@@ -21,5 +21,9 @@ namespace Eduverse.Model.Entities
         public DateTime? NgayTao { get; set; } = DateTime.Now;
         public string? TrangThai { get; set; }
         public Guid? IdPhan { get; set; }
+
+
+
+        public List<CauHoi> DanhSachCauHois { get; set; }
     }
 }

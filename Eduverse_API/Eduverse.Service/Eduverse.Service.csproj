@@ -28,7 +28,6 @@
     <Folder Include="DanhMuc_KhoaHocService\Request\" />
     <Folder Include="DanhSachYeuThichService\Dto\" />
     <Folder Include="DanhSachYeuThichService\Request\" />
-    <Folder Include="DapAnService\Request\" />
     <Folder Include="DapAn_NguoiDungService\Dto\" />
     <Folder Include="DapAn_NguoiDungService\Request\" />
     <Folder Include="DonHangChiTietService\Dto\" />

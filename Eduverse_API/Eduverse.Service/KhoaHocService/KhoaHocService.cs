@@ -541,6 +541,7 @@ namespace Eduverse.Service.KhoaHocService
             };
 
             await CreateAsync(khoaHoc);
+            await SaveAsync();
 
             var khoaHocDanhMucs = danhMucIds.Select(id => new DanhMuc_KhoaHocDto
             {
@@ -549,6 +550,7 @@ namespace Eduverse.Service.KhoaHocService
             }).ToList();
 
             await _danhMuc_KhoaHocService.CreateRange(khoaHocDanhMucs);
+            await _danhMuc_KhoaHocService.SaveAsync();
 
             return _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
         }
@@ -613,6 +615,7 @@ namespace Eduverse.Service.KhoaHocService
             entity.UpdatedDate = DateTime.UtcNow;
 
             await UpdateAsync(entity);
+            await SaveAsync();
 
             var danhMucCu = await _danhMuc_KhoaHocService.GetQueryable()
                 .Where(x => x.IdKhoaHoc == entity.Id && !x.IsDeleted)
@@ -625,14 +628,10 @@ namespace Eduverse.Service.KhoaHocService
                 .Where(x => !danhMucMoiSet.Contains(x.IdDanhMuc))
                 .ToList();
 
-            foreach (var item in canXoa)
-            {
-                item.IsDeleted = true;
-                item.DeletedDate = DateTime.UtcNow;
-            }
-
             if (canXoa.Any())
                 await _danhMuc_KhoaHocService.UpdateAsync(canXoa);
+            await _danhMuc_KhoaHocService.SaveAsync();
+
 
             var canThem = danhMucMoiSet
                 .Where(id => !danhMucCuIds.Contains(id))
@@ -648,6 +647,7 @@ namespace Eduverse.Service.KhoaHocService
 
             if (canThem.Any())
                 await _danhMuc_KhoaHocService.CreateRange(canThem);
+            await _danhMuc_KhoaHocService.SaveAsync();
 
             await SaveAsync();
             return _mapper.Map<KhoaHoc, KhoaHocDto>(entity);
@@ -661,11 +661,10 @@ namespace Eduverse.Service.KhoaHocService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khoa học");
 
-            khoaHoc.IsDeleted = true;
-            khoaHoc.DeletedDate = DateTime.UtcNow;
             khoaHoc.TrangThai = "KDI";
 
             await DeleteAsync(khoaHoc);
+            await SaveAsync();
             return true;
         }
     }

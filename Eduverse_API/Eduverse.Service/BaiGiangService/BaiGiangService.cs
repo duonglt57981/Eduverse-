@@ -150,11 +150,10 @@ namespace Eduverse.Service.BaiGiangService
             if (baiGiang == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            baiGiang.DeletedDate = DateTime.UtcNow;
-            baiGiang.IsDeleted = true;
             baiGiang.TrangThai = "KDI";
 
             await DeleteAsync(baiGiang);
+            await SaveAsync();
             return true;
         }
     }

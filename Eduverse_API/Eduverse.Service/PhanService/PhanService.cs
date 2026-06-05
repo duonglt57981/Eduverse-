@@ -69,7 +69,6 @@ namespace Eduverse.Service.PhanService
                 IdKhoaHoc = request.IdKhoaHoc,
                 TenPhan = request.TenPhan.Trim(),
                 ThuTuSapXep = maxThuTu + 1,
-                CreatedDate = DateTime.UtcNow
             };
 
             await CreateAsync(entity);
@@ -129,12 +128,10 @@ namespace Eduverse.Service.PhanService
             var phan = await GetByIdAsync(id);
             if (phan == null)
                 throw new Exception("Không tim thấy phần học");
-
-            phan.DeletedDate = DateTime.UtcNow;
-            phan.IsDeleted = true;
            
 
             await DeleteAsync(phan);
+            await SaveAsync();
             return true;
         }
     }

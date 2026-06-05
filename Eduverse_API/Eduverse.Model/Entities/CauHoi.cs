@@ -15,6 +15,11 @@ namespace Eduverse.Model.Entities
         public int? LoaiCauHoi { get; set; }
         public double? Diem { get; set; }
         public int? ThuTuSapXep { get; set; }
+
+        [Column("IdBaiKiemTra")]
         public Guid? IdBaiKiemTra { get; set; }
+
+
+        public List<DapAn> DanhSachDapAns { get; set; }
     }
 }

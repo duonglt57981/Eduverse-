@@ -8,8 +8,7 @@ namespace Eduverse.Service.DapAnService.Dto
 {
     public class DapAnDto
     {
-        public Guid Id { get; set; }
-
-        public string NoiDungDapAn { get; set; } = string.Empty;
+        public string? NoiDungDapAn { get; set; }
+        public bool? LaDapAnDung { get; set; }
     }
 }

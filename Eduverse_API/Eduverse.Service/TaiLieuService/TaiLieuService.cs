@@ -92,11 +92,10 @@ namespace Eduverse.Service.TaiLieuService
             if (taiLieu == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            taiLieu.DeletedDate = DateTime.UtcNow;
-            taiLieu.IsDeleted = true;
             taiLieu.TrangThai = "KDI";
 
             await DeleteAsync(taiLieu);
+            await SaveAsync();
             return true;
 
         }
