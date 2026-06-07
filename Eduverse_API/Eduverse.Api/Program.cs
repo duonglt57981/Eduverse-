@@ -1,22 +1,30 @@
 ﻿
-using System.Text;
+using CloudinaryDotNet;
+using CloudinaryDotNet;
 using Eduverse.Api.Hubs;
 using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
+using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
+using Eduverse.Service.CloudinaryService;
+using Eduverse.Service.CloudinaryService;
+using Eduverse.Service.CloudinaryService.Dto;
+using Eduverse.Service.CloudinaryService.Dto;
+using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
+using Eduverse.Service.EmailService;
+using Eduverse.Service.EmailService;
+using Eduverse.Service.ThanhToanService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Eduverse.Service.EmailService;
-using Eduverse.Service.Common;
-using CloudinaryDotNet;
-using Eduverse.Service.CloudinaryService.Dto;
-using Eduverse.Service.CloudinaryService;
-using Eduverse.Repository.Common;
+using PayOS;
+using PayOS;
+using System.Text;
 
 namespace Eduverse.Api
 {
@@ -24,6 +32,7 @@ namespace Eduverse.Api
     {
         public static async Task Main(string[] args)
         {
+
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddScoped<DbContext, EduverseContext>();
             builder.Services.AddDbContext<EduverseContext>(op => op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -46,10 +55,16 @@ namespace Eduverse.Api
                 // Bắt buộc xác thực email
                 options.SignIn.RequireConfirmedEmail = false; // ← để false, check thủ công trong service
             }).AddEntityFrameworkStores<EduverseContext>().AddDefaultTokenProviders();
+
+
             // Đăng ký services
             builder.Services.AddScoped<IEmailService, EmailService>();
-            builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IThanhToanService, ThanhToanService>();
+
+            // Đăng ký repositories
+
+
             builder.Services.AddDependencyInjection();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSignalR();
@@ -141,6 +156,17 @@ namespace Eduverse.Api
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials()); 
+            });
+
+            // PayOS
+            builder.Services.AddSingleton<PayOSClient>(sp =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
+                return new PayOSClient(
+                    config["PayOS:ClientId"]!,
+                    config["PayOS:ApiKey"]!,
+                    config["PayOS:ChecksumKey"]!
+                );
             });
 
             // Add services to the container.
