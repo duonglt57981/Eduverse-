@@ -194,12 +194,29 @@ export default function RegisterPage() {
       <Box
         sx={{
           minHeight: '100vh',
-          display: { xs: 'block', md: 'flex' },
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: { xs: 1.5, sm: 2.5, md: 4 },
+          py: { xs: 2, sm: 3 },
           bgcolor: 'background.default',
         }}
       >
         <Box
           sx={{
+            width: '100%',
+            maxWidth: 1240,
+            minHeight: { xs: 'auto', md: 760 },
+            display: { xs: 'block', md: 'flex' },
+            borderRadius: { xs: 4, md: 6 },
+            overflow: 'hidden',
+            boxShadow: '0 28px 80px rgba(52,32,32,0.16)',
+            border: '1px solid rgba(17,17,17,0.06)',
+            backgroundColor: '#fff',
+          }}
+        >
+          <Box
+            sx={{
             display: { xs: 'none', md: 'flex' },
             width: { md: '46%' },
             flexDirection: 'column',
@@ -234,31 +251,24 @@ export default function RegisterPage() {
               pointerEvents: 'none',
             },
           }}
-        >
+          >
           <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 4 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2.5,
-                  bgcolor: 'rgba(255,255,255,0.14)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  overflow: 'hidden',
-                }}
-              >
-                <Image
-                  src="/auth/img/Eduverse-logo.png"
-                  alt="EduVerse"
-                  width={24}
-                  height={24}
-                  priority
-                />
-              </Box>
-              <Typography sx={{ fontWeight: 900, letterSpacing: '-0.3px' }}>
-                EduVerse
-              </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: { xs: 220, md: 290 },
+                mb: 4,
+              }}
+            >
+              <Image
+                src="/auth/img/logo_nedo.png"
+                alt="EduVerse"
+                width={290}
+                height={87}
+                priority
+                style={{ width: '100%', height: 'auto' }}
+              />
             </Box>
 
             <Typography
@@ -269,11 +279,7 @@ export default function RegisterPage() {
                 maxWidth: 520,
               }}
             >
-              Bắt đầu hành
-              <br />
-              trình học tập
-              <br />
-              cùng EduVerse
+              Bắt đầu hành trình học tập cùng EduVerse
             </Typography>
             <Typography
               sx={{
@@ -331,26 +337,7 @@ export default function RegisterPage() {
               </Box>
             </Paper>
 
-            <Box sx={{ mt: 2.5, display: 'flex', justifyContent: 'center' }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  px: 2.25,
-                  py: 1.25,
-                  borderRadius: 999,
-                  backgroundColor: 'rgba(0,0,0,0.14)',
-                  border: '1px solid rgba(255,255,255,0.16)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                <ShieldRounded sx={{ fontSize: 18, color: '#d0ffe8' }} />
-                <Typography sx={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.6px' }}>
-                  GLOBAL CERTIFICATION
-                </Typography>
-              </Paper>
-            </Box>
+          
 
             <Paper
               elevation={0}
@@ -393,7 +380,7 @@ export default function RegisterPage() {
                 />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 900, fontSize: 13 }}>
+                <Typography sx={{ color: 'rgba(244, 244, 244, 0.89)', fontWeight: 800, fontSize: 13 }}>
                   Học viên tiêu biểu
                 </Typography>
                 <Typography sx={{ color: 'rgba(255,255,255,0.70)', fontSize: 12 }}>
@@ -429,20 +416,20 @@ export default function RegisterPage() {
               </Box>
             ))}
           </Box>
-        </Box>
+          </Box>
 
-        <Box
-          sx={{
-            flex: 1,
-            px: { xs: 2.5, sm: 4, md: 5 },
-            py: { xs: 3, md: 4 },
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            bgcolor: 'background.default',
-          }}
-        >
-          <Box sx={{ width: '100%', maxWidth: 480 }}>
+          <Box
+            sx={{
+              flex: 1,
+              px: { xs: 2.5, sm: 4, md: 5 },
+              py: { xs: 3, md: 4 },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              bgcolor: 'background.default',
+            }}
+          >
+            <Box sx={{ width: '100%', maxWidth: 440, my: 'auto' }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <MuiLink
                 component={Link}
@@ -803,18 +790,10 @@ export default function RegisterPage() {
                 color: 'rgba(17,17,17,0.45)',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <LockRounded sx={{ fontSize: 16 }} />
-                <Typography sx={{ fontSize: 11.5, fontWeight: 900, letterSpacing: '0.4px' }}>
-                  SSL SECURE
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <ShieldRounded sx={{ fontSize: 16 }} />
-                <Typography sx={{ fontSize: 11.5, fontWeight: 900, letterSpacing: '0.4px' }}>
-                  PRIVACY PROTECTED
-                </Typography>
-              </Box>
+              
+               
+              
+            </Box>
             </Box>
           </Box>
         </Box>

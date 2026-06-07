@@ -133,7 +133,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await dispatch(login(form));
-    if (login.fulfilled.match(result)) router.push('/');
+    if (login.fulfilled.match(result)) router.push('/dashboard');
   };
 
   return (
@@ -142,12 +142,29 @@ export default function LoginPage() {
       <Box
         sx={{
           minHeight: '100vh',
-          display: { xs: 'block', md: 'flex' },
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: { xs: 1.5, sm: 2.5, md: 4 },
+          py: { xs: 2, sm: 3 },
           bgcolor: '#f9f8f6',
         }}
       >
         <Box
           sx={{
+            width: '100%',
+            maxWidth: 1240,
+            minHeight: { xs: 'auto', md: 760 },
+            display: { xs: 'block', md: 'flex' },
+            borderRadius: { xs: 4, md: 6 },
+            overflow: 'hidden',
+            boxShadow: '0 28px 80px rgba(52,32,32,0.16)',
+            border: '1px solid rgba(17,17,17,0.06)',
+            backgroundColor: '#fff',
+          }}
+        >
+          <Box
+            sx={{
             width: { xs: '100%', md: '46%' },
             color: '#fff',
             px: { xs: 2.5, sm: 4, md: 5 },
@@ -171,32 +188,24 @@ export default function LoginPage() {
               pointerEvents: 'none',
             },
           }}
-        >
+          >
           <Stack spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 2,
-                  bgcolor: 'rgba(255,255,255,0.14)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  overflow: 'hidden',
-                }}
-              >
-                <Image
-                  src="/auth/img/Eduverse-logo.png"
-                  alt="EduVerse"
-                  width={22}
-                  height={22}
-                  priority
-                />
-              </Box>
-              <Typography sx={{ fontWeight: 800, letterSpacing: '-0.3px' }}>
-                EduVerse
-              </Typography>
-            </Stack>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: { xs: 210, sm: 250, md: 290 },
+              }}
+            >
+              <Image
+                src="/auth/img/logo_nedo.png"
+                alt="EduVerse"
+                width={290}
+                height={87}
+                priority
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </Box>
 
             <Box sx={{ maxWidth: 520 }}>
               <Typography
@@ -236,25 +245,24 @@ export default function LoginPage() {
                 position: 'relative',
               }}
             >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundImage:
-                    'radial-gradient(900px 260px at 25% 15%, rgba(255,210,160,0.32), transparent 55%), radial-gradient(700px 220px at 70% 70%, rgba(255,255,255,0.18), transparent 60%), linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.55))',
+              <Image
+                src="/auth/img/Illustration Section.png"
+                alt="EduVerse learning space"
+                fill
+                priority
+                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 46vw"
+                style={{
+                  objectFit: 'cover',
+                  objectPosition: 'center center',
+                  transform: 'scale(1.18)',
                 }}
               />
               <Box
                 sx={{
                   position: 'absolute',
-                  left: 18,
-                  bottom: 18,
-                  width: '70%',
-                  height: 14,
-                  borderRadius: 999,
+                  inset: 0,
                   background:
-                    'linear-gradient(90deg, rgba(255,255,255,0.0), rgba(255,255,255,0.35), rgba(255,255,255,0.0))',
-                  opacity: 0.35,
+                    'linear-gradient(180deg, rgba(20,8,8,0.04) 0%, rgba(78,0,0,0.12) 62%, rgba(120,0,0,0.24) 100%)',
                 }}
               />
             </Box>
@@ -270,9 +278,9 @@ export default function LoginPage() {
             }}
           >
             {[
-              { label: 'Expert Mentors', icon: 'M12 2 9.3 7.6 3 8.3l4.7 4-1.4 6 5.7-3.3 5.7 3.3-1.4-6 4.7-4-6.3-.7L12 2Z' },
-              { label: 'Modern Curriculum', icon: 'M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2.5 4h7v2h-7V8Zm0 4h7v2h-7v-2Z' },
-              { label: 'Global Certification', icon: 'M12 2a6 6 0 0 0-3 11.2V22l3-1.7 3 1.7v-8.8A6 6 0 0 0 12 2Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z' },
+              { label: 'Mentor chất lượng', icon: 'M12 2 9.3 7.6 3 8.3l4.7 4-1.4 6 5.7-3.3 5.7 3.3-1.4-6 4.7-4-6.3-.7L12 2Z' },
+              { label: 'Nội dung thực chiến', icon: 'M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2.5 4h7v2h-7V8Zm0 4h7v2h-7v-2Z' },
+              { label: 'Chứng nhận uy tín', icon: 'M12 2a6 6 0 0 0-3 11.2V22l3-1.7 3 1.7v-8.8A6 6 0 0 0 12 2Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z' },
             ].map((f) => (
               <Paper
                 key={f.label}
@@ -305,21 +313,21 @@ export default function LoginPage() {
               </Paper>
             ))}
           </Stack>
-        </Box>
+          </Box>
 
-        <Box
-          sx={{
-            flex: 1,
-            px: { xs: 2.5, sm: 4, md: 5 },
-            py: { xs: 3, md: 4 },
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            bgcolor: '#f9f8f6',
-          }}
-        >
-          <Box sx={{ width: '100%', maxWidth: 440, my: 'auto' }}>
+          <Box
+            sx={{
+              flex: 1,
+              px: { xs: 2.5, sm: 4, md: 5 },
+              py: { xs: 3, md: 4 },
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              bgcolor: '#f9f8f6',
+            }}
+          >
+            <Box sx={{ width: '100%', maxWidth: 440, my: 'auto' }}>
             <Typography
               variant="h4"
               sx={{ fontSize: { xs: 28, sm: 32 }, mb: 0.75 }}
@@ -327,7 +335,7 @@ export default function LoginPage() {
               Đăng nhập
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 3 }}>
-              Truy cập vào tài khoản EduVerse Premium của bạn
+              Truy cập vào tài khoản EduVerse của bạn
             </Typography>
 
             {error && (
@@ -581,16 +589,17 @@ export default function LoginPage() {
             </Typography>
           </Box>
 
-          <Typography
-            sx={{
-              mt: 4,
-              fontSize: 12,
-              color: '#9b9b9b',
-              textAlign: 'center',
-            }}
-          >
-            © 2024 EduVerse Academy of Excellence. All rights reserved.
-          </Typography>
+            <Typography
+              sx={{
+                mt: 4,
+                fontSize: 12,
+                color: '#9b9b9b',
+                textAlign: 'center',
+              }}
+            >
+             
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>
