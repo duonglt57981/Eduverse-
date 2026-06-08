@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.KhoaHocService.Dto
 {
-    public class KhoaHocDto 
+    public class KhoaHocDto
     {
         public Guid? Id { get; set; }
         public string? TieuDe { get; set; }

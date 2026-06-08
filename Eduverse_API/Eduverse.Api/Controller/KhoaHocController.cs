@@ -7,6 +7,7 @@ using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Eduverse.Api.Controller
 {
@@ -28,7 +29,7 @@ namespace Eduverse.Api.Controller
             {
                 var result = await _khoaHocService.GetList(search, userId);
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
-            }
+        }
             catch (Exception ex)
             {
                 return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
@@ -53,6 +54,11 @@ namespace Eduverse.Api.Controller
             {
                 return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
             }
+
+            return Ok(DataResponse.Success(
+                result,
+                "Thành công"
+            ));
         }
 
 
@@ -63,11 +69,11 @@ namespace Eduverse.Api.Controller
             {   
                 var result = await _khoaHocService.GetLearning(idDangKy);
                 return DataResponse<KhoaHocDto>.Success(result);
-            }
+        }
             catch (Exception ex)
-            {
+        {
                 return DataResponse<KhoaHocDto>.False(ex.Message);
-            }
+        }
         }
 
 
@@ -79,12 +85,22 @@ namespace Eduverse.Api.Controller
             {
                 var result = await _khoaHocService.CreateKhoaHoc(request);
                 return DataResponse<KhoaHocDto>.Success(result);
-            }
+        }
             catch (Exception ex)
-            {
+        {
                 return DataResponse<KhoaHocDto>.False(ex.Message);
-            }
+        }
 
+        [Authorize]
+        [HttpPost("{id}/yeu-thich")]
+        public async Task<IActionResult> ToggleYeuThich(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            await _service.ToggleYeuThichAsync(userId, id);
+            return Ok(DataResponse.Success(
+                null,
+                "Thành công"
+            ));
         }
 
 
@@ -93,27 +109,30 @@ namespace Eduverse.Api.Controller
         public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromForm] UpdateKhoaHocRequest request)
         {
             try
-            {
+        {
                 var result = await _khoaHocService.UpdateKhoaHoc(request);
                 return DataResponse<KhoaHocDto>.Success(result);
-            }
+        }
             catch (Exception ex)
-            {
+        {
                 return DataResponse<KhoaHocDto>.False(ex.Message);
             }
         }
 
+            var result = await _service.GetDataAsync(search, userId);
+            return Ok(DataResponse.Success(result, "Thành công"));
+        }
 
         [HttpDelete("delete-khoahoc")]
         public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)
         {
             try
-            {
+        {
                 var result = await _khoaHocService.DeleteKhoaHoc(id);
                 return DataResponse<bool>.Success(result);
-            }
+        }
             catch (Exception ex)
-            {
+        {
                 return DataResponse<bool>.False(ex.Message);
             }
         }

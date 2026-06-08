@@ -1,4 +1,5 @@
-﻿using Eduverse.Repository.Common;
+﻿using Eduverse.Model;
+using Eduverse.Repository.Common;
 using Eduverse.Repository.DanhMucRepository;
 using Eduverse.Model;
 using System;
