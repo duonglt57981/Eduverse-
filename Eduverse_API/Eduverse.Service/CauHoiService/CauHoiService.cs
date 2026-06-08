@@ -14,17 +14,14 @@ namespace Eduverse.Service.CauHoiService
     {
         private readonly IDapAnRepository _dapAnRepository;
         private readonly EduverseContext _context;
-        private readonly IBaiKiemTraService _baiKiemTraService;
 
         public CauHoiService(
             ICauHoiRepository repository,
             IDapAnRepository dapAnRepository,
-            EduverseContext context,
-            IBaiKiemTraService baiKiemTraService) : base(repository)
+            EduverseContext context) : base(repository)
         {
             _dapAnRepository = dapAnRepository;
             _context = context;
-            _baiKiemTraService = baiKiemTraService;
         }
 
         //public async Task<CauHoiDto> CreateCauHoi(CreateCauHoiRequest request)
