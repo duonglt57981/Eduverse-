@@ -1,13 +1,9 @@
-﻿
-using Eduverse.Service.KhoaHocService;
+﻿using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.Common;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Hinet.Api.Dto;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Eduverse.Api.Controller
 {
@@ -22,120 +18,101 @@ namespace Eduverse.Api.Controller
             _khoaHocService = khoaHocService;
         }
 
-        [HttpGet("get-khoahoc/{userId}")]
-        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList([FromQuery] KhoaHocSearch search, Guid userId)
+        [HttpGet("khoahoc/{userId}")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList(
+            [FromQuery] KhoaHocSearch search,
+            Guid userId)
         {
             try
             {
                 var result = await _khoaHocService.GetList(search, userId);
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
-        }
+            }
             catch (Exception ex)
             {
                 return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
             }
         }
 
-
-        [HttpGet("get-khoahoc-dangki/{userId}")]
-        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListDangKi([FromQuery] KhoaHocDangKiSearch search, Guid userId)
+        [HttpGet("khoahoc-dangki/{userId}")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListDangKi(
+            [FromQuery] KhoaHocDangKiSearch search,
+            Guid userId)
         {
             try
             {
-
                 var result = await _khoaHocService.GetListDangKi(search, userId);
 
-                Console.WriteLine($" search.PageIndex: {search.PageIndex}");
-                Console.WriteLine($" search.PageSize: {search.PageSize}");
-                Console.WriteLine($" userId: {userId}");
+                Console.WriteLine($"PageIndex: {search.PageIndex}");
+                Console.WriteLine($"PageSize: {search.PageSize}");
+                Console.WriteLine($"UserId: {userId}");
+
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
             {
                 return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
             }
-
-            return Ok(DataResponse.Success(
-                result,
-                "Thành công"
-            ));
         }
 
-
-        [HttpGet("get-learning/{idDangKy}")]
+        [HttpGet("learning/{idDangKy}")]
         public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)
         {
             try
-            {   
+            {
                 var result = await _khoaHocService.GetLearning(idDangKy);
                 return DataResponse<KhoaHocDto>.Success(result);
-        }
+            }
             catch (Exception ex)
-        {
+            {
                 return DataResponse<KhoaHocDto>.False(ex.Message);
-        }
+            }
         }
 
-
-        [HttpPost("create-khoahoc")]
+        [HttpPost("khoahoc")]
         [Consumes("multipart/form-data")]
-        public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc([FromForm] CreateKhoaHocRequest request)
+        public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc(
+            [FromForm] CreateKhoaHocRequest request)
         {
             try
             {
                 var result = await _khoaHocService.CreateKhoaHoc(request);
                 return DataResponse<KhoaHocDto>.Success(result);
-        }
+            }
             catch (Exception ex)
-        {
-                return DataResponse<KhoaHocDto>.False(ex.Message);
-        }
-
-        [Authorize]
-        [HttpPost("{id}/yeu-thich")]
-        public async Task<IActionResult> ToggleYeuThich(Guid id)
-        {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            await _service.ToggleYeuThichAsync(userId, id);
-            return Ok(DataResponse.Success(
-                null,
-                "Thành công"
-            ));
-        }
-
-
-        [HttpPut("update-khoahoc")]
-        [Consumes("multipart/form-data")]
-        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromForm] UpdateKhoaHocRequest request)
-        {
-            try
-        {
-                var result = await _khoaHocService.UpdateKhoaHoc(request);
-                return DataResponse<KhoaHocDto>.Success(result);
-        }
-            catch (Exception ex)
-        {
+            {
                 return DataResponse<KhoaHocDto>.False(ex.Message);
             }
         }
 
-            var result = await _service.GetDataAsync(search, userId);
-            return Ok(DataResponse.Success(result, "Thành công"));
+        [HttpPut("khoahoc/{id}")]
+        [Consumes("multipart/form-data")]
+        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc(
+            [FromForm] UpdateKhoaHocRequest request)
+        {
+            try
+            {
+                var result = await _khoaHocService.UpdateKhoaHoc(request);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
         }
 
-        [HttpDelete("delete-khoahoc")]
+        [HttpDelete("khoahoc/{id}")]
         public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)
         {
             try
-        {
+            {
                 var result = await _khoaHocService.DeleteKhoaHoc(id);
                 return DataResponse<bool>.Success(result);
-        }
+            }
             catch (Exception ex)
-        {
+            {
                 return DataResponse<bool>.False(ex.Message);
             }
         }
-
     }
 }

@@ -45,7 +45,6 @@
     <Folder Include="KhuyenMaiService\Request\" />
     <Folder Include="KhuyenMai_KhoaHocService\Dto\" />
     <Folder Include="KhuyenMai_KhoaHocService\Request\" />
-    <Folder Include="LanLamBaiKiemTraService\Dto\" />
     <Folder Include="LanLamBaiKiemTraService\Request\" />
     <Folder Include="LienKetService\Dto\" />
     <Folder Include="LienKetService\Request\" />

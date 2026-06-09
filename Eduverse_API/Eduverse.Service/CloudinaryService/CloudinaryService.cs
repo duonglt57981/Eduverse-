@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Eduverse.Service.Common;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Eduverse.Service.CloudinaryService.Dto;
-using System.IO;               
-using CloudinaryDotNet.Actions;
+
 
 namespace Eduverse.Service.CloudinaryService
 {

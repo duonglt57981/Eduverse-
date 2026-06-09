@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.BaiKiemTraService.Request
 {
-    public class SubmitAnswerRequest
+    public class StartQuizRequest
     {
-        public Guid IdCauHoi { get; set; }
+        public Guid IdBaiKiemTra { get; set; }
 
-        public Guid IdDapAn { get; set; }
+        public Guid IdNguoiDung { get; set; }
     }
 }

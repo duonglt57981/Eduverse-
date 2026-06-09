@@ -20,7 +20,7 @@ namespace Eduverse.Api.Controller
             _taiLieuService = taiLieuService;
         }
 
-        [HttpPost("create-tailieu")]
+        [HttpPost("tailieu")]
         [Consumes("multipart/form-data")]
         public async Task<DataResponse<TaiLieuDto>> CreateTaiLieu([FromForm] CreateTaiLieuRequest request)
         {
@@ -52,7 +52,7 @@ namespace Eduverse.Api.Controller
         //}
 
 
-        [HttpDelete("delete-tailieu")]
+        [HttpDelete("tailieu/{id}")]
         public async Task<DataResponse<bool>> DeleteTaiLieu( Guid id)
         {
             try

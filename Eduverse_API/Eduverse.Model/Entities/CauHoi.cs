@@ -18,8 +18,5 @@ namespace Eduverse.Model.Entities
 
         [Column("IdBaiKiemTra")]
         public Guid? IdBaiKiemTra { get; set; }
-
-
-        public List<DapAn> DanhSachDapAns { get; set; }
     }
 }

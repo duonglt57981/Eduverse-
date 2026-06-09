@@ -19,7 +19,7 @@ namespace Eduverse.Api.Controller
             _phanHocService = phanHocService;
         }
 
-        [HttpPost("create-phanhoc")]
+        [HttpPost("phanhoc")]
         public async Task<DataResponse<PhanHocDto>> CreatePhanHoc(CreatePhanRequest request)
         {
             try
@@ -34,7 +34,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPut("update-phanhoc")]
+        [HttpPut("phanhoc/{id}")]
         public async Task<DataResponse<PhanHocDto>> UpdatePhanHoc(UpdatePhanRequest request)
         {
             try
@@ -49,7 +49,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpDelete("delete-phanhoc")]
+        [HttpDelete("phanhoc/{id}")]
         public async Task<DataResponse<bool>> DeletePhanHoc(Guid id)
         {
             try

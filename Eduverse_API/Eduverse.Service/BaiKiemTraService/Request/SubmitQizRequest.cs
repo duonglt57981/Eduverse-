@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.BaiKiemTraService.Request
 {
-    public class SubmitQuizRequest
+    public class SubmitQizRequest
     {
         public Guid IdLanLamBaiKiemTra { get; set; }
 
-        public List<SubmitAnswerRequest> Answers { get; set; } = [];
+        public List<CauTraLoiRequest> CauTraLois { get; set; } = new();
     }
 }

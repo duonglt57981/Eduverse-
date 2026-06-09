@@ -22,7 +22,7 @@ namespace Eduverse.Api.Controller
 
         }
 
-        [HttpPost("create-baigiang")]
+        [HttpPost("baigiang")]
         [RequestSizeLimit(2L * 1024 * 1024 * 1024)]
         [RequestFormLimits(MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024)]
         [DisableRequestSizeLimit]
@@ -58,12 +58,12 @@ namespace Eduverse.Api.Controller
         //}
 
 
-        [HttpDelete("delete-baigiang")]
-        public async Task<DataResponse<bool>> DeleteBaiGiang(Guid id)
+        [HttpDelete("baigiang/{idBaiGiang}")]
+        public async Task<DataResponse<bool>> DeleteBaiGiang(Guid idBaiGiang)
         {
             try
             {
-                var result = await _baiGiangService.DeleteBaiGiang(id);
+                var result = await _baiGiangService.DeleteBaiGiang(idBaiGiang);
                 return DataResponse<bool>.Success(result);
             }
             catch (Exception ex)
