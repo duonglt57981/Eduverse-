@@ -1,8 +1,5 @@
 ﻿using Eduverse.Service.Common;
 using Eduverse.Model.Entities;
-using Eduverse.Service.Common;
-using Eduverse.Service.KhoaHocService.Dto;
-using Eduverse.Service.KhoaHocService.Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;

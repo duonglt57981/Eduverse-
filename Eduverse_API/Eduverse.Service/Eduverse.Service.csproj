@@ -36,11 +36,14 @@
     <Folder Include="DonHangService\Request\" />
     <Folder Include="GioHangChiTietService\Dto\" />
     <Folder Include="GioHangChiTietService\Request\" />
+    <Folder Include="GioHangService\Dto\" />
     <Folder Include="GioHangService\Request\" />
     <Folder Include="HoiDapService\Dto\" />
     <Folder Include="HoiDapService\Request\" />
     <Folder Include="KetQuaBaiThiService\Dto\" />
     <Folder Include="KetQuaBaiThiService\Request\" />
+    <Folder Include="KhoaHocService\Dto\" />
+    <Folder Include="KhoaHocService\Request\" />
     <Folder Include="KhuyenMaiService\Dto\" />
     <Folder Include="KhuyenMaiService\Request\" />
     <Folder Include="KhuyenMai_KhoaHocService\Dto\" />
@@ -56,6 +59,7 @@
     <Folder Include="RoleService\Request\" />
     <Folder Include="TaiLieuService\Dto\" />
     <Folder Include="TaiLieuService\Request\" />
+    <Folder Include="ThanhToanService\Dto\" />
     <Folder Include="ThanhToanService\Request\" />
     <Folder Include="ThongBaoService\Dto\" />
     <Folder Include="ThongBaoService\Request\" />
