@@ -328,170 +328,215 @@ namespace Eduverse.Service.KhoaHocService
         }
         #endregion
 
+        //#region GetLearning
+        //public async Task<KhoaHocDto> GetLearning(Guid idDangKy)
+        //{
+        //    if (idDangKy == Guid.Empty)
+        //        throw new ArgumentException("Id đăng ký không hợp lệ");
 
-        #region GetLearning
-        public async Task<KhoaHocDto> GetLearning(Guid idDangKy)
-        {
-            if (idDangKy == Guid.Empty)
-                throw new ArgumentException("Id đăng ký không hợp lệ");
+        //    var dangKy = await _dangKyKhoaHocService.GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.Id == idDangKy && !x.IsDeleted)
+        //        .Select(x => new { x.Id, x.IdDangKi })
+        //        .FirstOrDefaultAsync();
 
-            var dangKy = await _dangKyKhoaHocService.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.Id == idDangKy && !x.IsDeleted)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.IdDangKi
-                })
-                .FirstOrDefaultAsync();
+        //    if (dangKy == null)
+        //        throw new Exception("Bạn chưa đăng ký khóa học này");
 
-            if (dangKy == null)
-                throw new Exception("Bạn chưa đăng ký khóa học này");
+        //    var idKhoaHoc = dangKy.IdDangKi;
 
-            var idKhoaHoc = dangKy.IdDangKi;
+        //    var soHocVien = await _dangKyKhoaHocService.GetQueryable()
+        //        .AsNoTracking()
+        //        .CountAsync(x => x.IdDangKi == idKhoaHoc && !x.IsDeleted);
 
-            var soHocVien = await _dangKyKhoaHocService.GetQueryable()
-                .AsNoTracking()
-                .CountAsync(x => x.IdDangKi == idKhoaHoc && !x.IsDeleted);
+        //    var khoaHoc = await GetAll()
+        //        .AsNoTracking()
+        //        .Where(x => x.Id == idKhoaHoc)
+        //        .Select(x => new KhoaHocDto
+        //        {
+        //            Id = x.Id,
+        //            TieuDe = x.TieuDe,
+        //            MoTa = x.MoTa,
+        //            HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+        //            LoaiKhoaHoc = x.LoaiKhoaHoc,
+        //            SoLuongHocVien = soHocVien,
+        //            DanhSachPhanHoc = new List<PhanHocDto>()
+        //        })
+        //        .FirstOrDefaultAsync();
 
-            var khoaHoc = await GetAll()
-                .AsNoTracking()
-                .Where(x => x.Id == idKhoaHoc)
-                .Select(x => new KhoaHocDto
-                {
-                    Id = x.Id,
-                    TieuDe = x.TieuDe,
-                    MoTa = x.MoTa,
-                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
-                    LoaiKhoaHoc = x.LoaiKhoaHoc,
-                    SoLuongHocVien = soHocVien,
-                    DanhSachPhanHoc = new List<PhanHocDto>()
-                })
-                .FirstOrDefaultAsync();
+        //    if (khoaHoc == null)
+        //        throw new Exception("Không tìm thấy khóa học");
 
-            if (khoaHoc == null)
-                throw new Exception("Không tìm thấy khóa học");
+        //    var phanHocs = await _phanService.GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+        //        .OrderBy(x => x.ThuTuSapXep)
+        //        .Select(x => new PhanHocDto
+        //        {
+        //            Id = x.Id,
+        //            IdKhoaHoc = x.IdKhoaHoc,
+        //            TenPhan = x.TenPhan,
+        //            MieuTa = x.MieuTa,
+        //            ThuTuSapXep = x.ThuTuSapXep,
+        //            DanhSachBaiGiang = new List<BaiGiangDto>()
+        //        })
+        //        .ToListAsync();
 
-            // 3. Lấy phần học
-            var phanHocs = await _phanService.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
-                .OrderBy(x => x.ThuTuSapXep)
-                .Select(x => new PhanHocDto
-                {
-                    Id = x.Id,
-                    IdKhoaHoc = x.IdKhoaHoc,
-                    TenPhan = x.TenPhan,
-                    MieuTa = x.MieuTa,
-                    ThuTuSapXep = x.ThuTuSapXep,
-                    DanhSachBaiGiang = new List<BaiGiangDto>()
-                })
-                .ToListAsync();
+        //    khoaHoc.DanhSachPhanHoc = phanHocs;
 
-            khoaHoc.DanhSachPhanHoc = phanHocs;
+        //    if (!phanHocs.Any())
+        //        return khoaHoc;
 
-            if (!phanHocs.Any())
-                return khoaHoc;
+        //    var phanIds = phanHocs.Select(x => x.Id).ToList();
 
-            var phanIds = phanHocs.Select(x => x.Id).ToList();
+        //    // Lấy bài giảng — chỉ lấy bài đang active (chưa IsDeleted)
+        //    // Bài "ChoDuyet" (bản ghi mới tạo bởi Update) sẽ bị lọc ra bởi TrangThai
+        //    var baiGiangs = await _baiGiangService.GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => phanIds.Contains(x.IdPhan)
+        //                 && !x.IsDeleted
+        //                 && x.TrangThai != "ChoDuyet")   // ← bài mới chưa được phục vụ
+        //        .OrderBy(x => x.ThuTuSapXep)
+        //        .Select(x => new BaiGiangDto
+        //        {
+        //            Id = x.Id,
+        //            IdPhan = x.IdPhan,
+        //            TieuDe = x.TieuDe,
+        //            LoaiBaiGiang = x.LoaiBaiGiang,
+        //            IdVideoBaiGiang = x.IdVideoBaiGiang,
+        //            URLBaiGiang = x.URLBaiGiang,
+        //            ThuTuSapXep = x.ThuTuSapXep,
+        //            ThoiLuong = x.ThoiLuong,
+        //            LaBaiGiangFree = x.LaBaiGiangFree,
+        //            DanhSachTaiLieu = new List<TaiLieuDto>()
+        //        })
+        //        .ToListAsync();
 
-            // 4. Lấy bài giảng
-            var baiGiangs = await _baiGiangService.GetQueryable()   
-                .AsNoTracking()
-                .Where(x => phanIds.Contains(x.IdPhan) && !x.IsDeleted)
-                .OrderBy(x => x.ThuTuSapXep)
-                .Select(x => new BaiGiangDto
-                {
-                    Id = x.Id,
-                    IdPhan = x.IdPhan,
-                    TieuDe = x.TieuDe,
-                    LoaiBaiGiang = x.LoaiBaiGiang,
-                    IdVideoBaiGiang = x.IdVideoBaiGiang,
-                    URLBaiGiang = x.URLBaiGiang,
-                    ThuTuSapXep = x.ThuTuSapXep,
-                    ThoiLuong = x.ThoiLuong,
-                    LaBaiGiangFree = x.LaBaiGiangFree,
-                    DanhSachTaiLieu = new List<TaiLieuDto>()
-                })
-                .ToListAsync();
+        //    var baiGiangIds = baiGiangs.Select(x => x.Id).ToList();
 
-            var baiGiangIds = baiGiangs.Select(x => x.Id).ToList();
+        //    // Tiến độ học tập
+        //    var tienDoDict = await _tienDoHocTapService.GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.IdDangKi == idDangKy
+        //                 && x.IdBaiGiang.HasValue
+        //                 && baiGiangIds.Contains(x.IdBaiGiang.Value)
+        //                 && !x.IsDeleted)
+        //        .Select(x => new { x.IdBaiGiang, x.ThoiGianXem, x.TrangThai })
+        //        .ToDictionaryAsync(x => x.IdBaiGiang!.Value);
 
-            // 5. Tiến độ học tập
-            var tienDoDict = await _tienDoHocTapService.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdDangKi == idDangKy
-                    && x.IdBaiGiang.HasValue
-                    && baiGiangIds.Contains(x.IdBaiGiang.Value)
-                    && !x.IsDeleted)
-                .Select(x => new
-                {
-                    x.IdBaiGiang,
-                    x.ThoiGianXem,
-                    x.TrangThai
-                })
-                .ToDictionaryAsync(x => x.IdBaiGiang!.Value);
+        //    // Tài liệu
+        //    var taiLieuLookup = await _taiLieuService.GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && !x.IsDeleted)
+        //        .Select(x => new TaiLieuDto
+        //        {
+        //            Id = x.Id,
+        //            IdBaiGiang = x.IdBaiGiang,
+        //            TenTaiLieu = x.TenTaiLieu,
+        //            LoaiTaiLieu = x.LoaiTaiLieu,
+        //            URL = x.URL
+        //        })
+        //        .ToListAsync()
+        //        .ContinueWith(t => t.Result
+        //            .GroupBy(x => x.IdBaiGiang)
+        //            .ToDictionary(x => x.Key, x => x.ToList()));
 
-            // 6. Tài liệu
-            var taiLieuLookup = await _taiLieuService.GetQueryable()
-                .AsNoTracking()
-                .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && !x.IsDeleted)
-                .Select(x => new TaiLieuDto
-                {
-                    Id = x.Id,
-                    IdBaiGiang = x.IdBaiGiang,
-                    TenTaiLieu = x.TenTaiLieu,
-                    LoaiTaiLieu = x.LoaiTaiLieu,
-                    URL = x.URL
-                })
-                .ToListAsync()
-                .ContinueWith(t => t.Result
-                    .GroupBy(x => x.IdBaiGiang)
-                    .ToDictionary(x => x.Key, x => x.ToList()));
+        //    // Gán dữ liệu + thống kê
+        //    int tongBaiGiang = 0, tongThoiLuong = 0, hoanThanh = 0;
 
-            // 7. Gán dữ liệu + thống kê
-            int tongBaiGiang = 0;
-            int tongThoiLuong = 0;
-            int hoanThanh = 0;
+        //    foreach (var bg in baiGiangs)
+        //    {
+        //        tongBaiGiang++;
+        //        tongThoiLuong += bg.ThoiLuong ?? 0;
 
-            foreach (var bg in baiGiangs)
-            {
-                tongBaiGiang++;
-                tongThoiLuong += bg.ThoiLuong ?? 0;
+        //        if (tienDoDict.TryGetValue(bg.Id, out var td))
+        //        {
+        //            bg.DaHoanThanh = td.TrangThai == "HoanThanh";
+        //            bg.ThoiGianXem = td.ThoiGianXem ?? 0;
+        //            if (bg.DaHoanThanh) hoanThanh++;
+        //        }
 
-                if (tienDoDict.TryGetValue(bg.Id, out var td))
-                {
-                    bg.DaHoanThanh = td.TrangThai == "HoanThanh";
-                    bg.ThoiGianXem = td.ThoiGianXem ?? 0;
+        //        if (taiLieuLookup.TryGetValue(bg.Id, out var tls))
+        //            bg.DanhSachTaiLieu = tls;
+        //    }
 
-                    if (bg.DaHoanThanh)
-                        hoanThanh++;
-                }
+        //    // ── AUTO-SWAP: học xong 100% → kích hoạt bài giảng mới ───────
+        //    double phanTram = tongBaiGiang == 0
+        //        ? 0
+        //        : Math.Round((double)hoanThanh * 100 / tongBaiGiang, 2);
 
-                if (taiLieuLookup.TryGetValue(bg.Id, out var tls))
-                    bg.DanhSachTaiLieu = tls;
-            }
+        //    if (phanTram >= 100)
+        //    {
+        //        await SwapPendingBaiGiang(phanIds);
+        //    }
 
-            // 8. Gắn bài giảng vào phần
-            var baiGiangByPhan = baiGiangs
-                .GroupBy(x => x.IdPhan)
-                .ToDictionary(x => x.Key, x => x.ToList());
+        //    // Gắn bài giảng vào phần học
+        //    var baiGiangByPhan = baiGiangs
+        //        .GroupBy(x => x.IdPhan)
+        //        .ToDictionary(x => x.Key, x => x.ToList());
 
-            foreach (var phan in phanHocs)
-            {
-                if (baiGiangByPhan.TryGetValue(phan.Id, out var list))
-                    phan.DanhSachBaiGiang = list;
-            }
+        //    foreach (var phan in phanHocs)
+        //    {
+        //        if (baiGiangByPhan.TryGetValue(phan.Id, out var list))
+        //            phan.DanhSachBaiGiang = list;
+        //    }
 
-            khoaHoc.TongBaiGiang = tongBaiGiang;
-            khoaHoc.TongThoiLuong = tongThoiLuong;
-            khoaHoc.SoBaiGiangHoanThanh = hoanThanh;
-            khoaHoc.PhanTramHoanThanh = tongBaiGiang == 0 ? 0: Math.Round((double)hoanThanh * 100 / tongBaiGiang, 2);
+        //    khoaHoc.TongBaiGiang = tongBaiGiang;
+        //    khoaHoc.TongThoiLuong = tongThoiLuong;
+        //    khoaHoc.SoBaiGiangHoanThanh = hoanThanh;
+        //    khoaHoc.PhanTramHoanThanh = phanTram;
 
-            return khoaHoc;
-        }
-        #endregion
+        //    return khoaHoc;
+        //}
 
+
+        //private async Task SwapPendingBaiGiang(List<Guid> phanIds)
+        //{
+        //    // Lấy tất cả bài giảng cũ đang chờ swap trong khoá học này
+        //    var baiGiangCuList = await _baiGiangService.GetQueryable()
+        //        .Where(x => phanIds.Contains(x.IdPhan)
+        //                 && x.IsPendingSwap
+        //                 && x.IdBaiGiangMoi.HasValue
+        //                 && !x.IsDeleted)
+        //        .ToListAsync();
+
+        //    if (!baiGiangCuList.Any())
+        //        return;
+
+        //    var idsBaiGiangMoi = baiGiangCuList
+        //        .Select(x => x.IdBaiGiangMoi!.Value)
+        //        .ToList();
+
+        //    // Lấy toàn bộ bài giảng mới tương ứng
+        //    var baiGiangMoiList = await _baiGiangService.GetQueryable()
+        //        .Where(x => idsBaiGiangMoi.Contains(x.Id))
+        //        .ToListAsync();
+
+        //    var baiGiangMoiDict = baiGiangMoiList
+        //        .ToDictionary(x => x.Id);
+
+        //    foreach (var cu in baiGiangCuList)
+        //    {
+        //        if (!baiGiangMoiDict.TryGetValue(cu.IdBaiGiangMoi!.Value, out var moi))
+        //            continue;
+        //        // Xóa mềm bài cũ
+        //        cu.IsDeleted = true;
+        //        cu.IsPendingSwap = false;
+        //        cu.IdBaiGiangMoi = null;
+
+        //        // Kích hoạt bài mới — kế thừa ThuTuSapXep và LaBaiGiangFree từ bài cũ
+        //        // (bài mới đã có đủ nội dung, chỉ cần bật TrangThai)
+        //        moi.TrangThai = "HoatDong";
+        //        moi.ThuTuSapXep = cu.ThuTuSapXep;  // đảm bảo thứ tự đúng
+        //        moi.LaBaiGiangFree = cu.LaBaiGiangFree;
+
+        //        await _baiGiangService.UpdateAsync(cu);
+        //        await _baiGiangService.UpdateAsync(moi);
+        //    }
+
+        //    await _baiGiangService.SaveAsync();
+        //}
+        //#endregion
 
         #region CreateKhoaHoc
         public async Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request)

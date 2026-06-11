@@ -12,6 +12,8 @@ namespace Eduverse.Model.Entities
 
         public DateTime? LanCuoiXem { get; set; }
 
+        public int? vitrixem { get; set; }
+
         public DateTime? ThoiGianHoanThanh { get; set; }
 
         public string? TrangThai { get; set; }

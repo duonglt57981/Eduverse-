@@ -55,19 +55,19 @@ namespace Eduverse.Api.Controller
             }
         }
 
-        [HttpGet("learning/{idDangKy}")]
-        public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)
-        {
-            try
-            {
-                var result = await _khoaHocService.GetLearning(idDangKy);
-                return DataResponse<KhoaHocDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<KhoaHocDto>.False(ex.Message);
-            }
-        }
+        //[HttpGet("learning/{idDangKy}")]
+        //public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)
+        //{
+        //    try
+        //    {
+        //        var result = await _khoaHocService.GetLearning(idDangKy);
+        //        return DataResponse<KhoaHocDto>.Success(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return DataResponse<KhoaHocDto>.False(ex.Message);
+        //    }
+        //}
 
         [HttpPost("khoahoc")]
         [Consumes("multipart/form-data")]

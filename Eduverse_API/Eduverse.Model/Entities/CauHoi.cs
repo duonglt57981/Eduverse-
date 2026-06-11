@@ -12,7 +12,7 @@ namespace Eduverse.Model.Entities
     {
         public string? TenCauHoi { get; set; }
         public string? NoiDungCauHoi { get; set; }
-        public int? LoaiCauHoi { get; set; }
+        public string? LoaiCauHoi { get; set; }
         public double? Diem { get; set; }
         public int? ThuTuSapXep { get; set; }
 

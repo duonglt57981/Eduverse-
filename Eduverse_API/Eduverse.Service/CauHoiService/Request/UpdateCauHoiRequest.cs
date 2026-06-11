@@ -14,13 +14,12 @@ namespace Eduverse.Service.CauHoiService.Request
 
         public string? NoiDungCauHoi { get; set; }
 
-        public int? LoaiCauHoi { get; set; }
+        public string? LoaiCauHoi { get; set; }
 
         public double? Diem { get; set; }
 
         public int? ThuTuSapXep { get; set; }
 
-        public List<UpdateDapAnRequest> DapAns { get; set; }
-            = new();
+        public List<UpdateDapAnRequest> DanhSachDapAns { get; set; }= new();
     }
 }

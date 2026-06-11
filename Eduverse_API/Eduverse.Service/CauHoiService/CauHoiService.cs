@@ -116,7 +116,7 @@ namespace Eduverse.Service.CauHoiService
                 Id = Guid.NewGuid(),
                 TenCauHoi = request.TenCauHoi,
                 NoiDungCauHoi = request.NoiDungCauHoi,
-                LoaiCauHoi = request.DanhSachDapAns.Count(x => x.LaDapAnDung) > 1 ? 2 : 1,
+                LoaiCauHoi = request.DanhSachDapAns.Count(x => x.LaDapAnDung) > 1 ? "multi" : "one",
                 Diem = request.Diem,
                 ThuTuSapXep = ttsapxep++,
                 IdBaiKiemTra = baiKiemTra.Id
@@ -150,7 +150,7 @@ namespace Eduverse.Service.CauHoiService
 
             cauHoi.TenCauHoi = request.TenCauHoi;
             cauHoi.NoiDungCauHoi = request.NoiDungCauHoi;
-            cauHoi.LoaiCauHoi = request.LoaiCauHoi;
+            cauHoi.LoaiCauHoi = request.DanhSachDapAns.Count(x => x.LaDapAnDung) > 1 ? "multi" : "one";
             cauHoi.Diem = request.Diem;
             cauHoi.ThuTuSapXep = request.ThuTuSapXep;
 
@@ -163,7 +163,7 @@ namespace Eduverse.Service.CauHoiService
                     !x.IsDeleted)
                 .ToListAsync();
 
-            var requestIds = request.DapAns
+            var requestIds = request.DanhSachDapAns
                 .Where(x => x.Id.HasValue)
                 .Select(x => x.Id!.Value)
                 .ToHashSet();
@@ -181,7 +181,7 @@ namespace Eduverse.Service.CauHoiService
                 .Where(x => requestIds.Contains(x.Id))
                 .ToDictionary(x => x.Id);
 
-            foreach (var item in request.DapAns
+            foreach (var item in request.DanhSachDapAns
                          .Where(x => x.Id.HasValue))
             {
                 var answer = updateAnswers[item.Id!.Value];
@@ -191,7 +191,7 @@ namespace Eduverse.Service.CauHoiService
                 answer.ThuTuSapXep = item.ThuTuSapXep;
             }
 
-            var newAnswers = request.DapAns
+            var newAnswers = request.DanhSachDapAns
                 .Where(x => !x.Id.HasValue)
                 .Select(x => new DapAn
                 {
