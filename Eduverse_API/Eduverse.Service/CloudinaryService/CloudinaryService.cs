@@ -93,11 +93,7 @@ namespace Eduverse.Service.CloudinaryService
 
 
         // ── Polling: chờ derived có m3u8 ────────────────────────────────
-        private async Task<(bool ready, string? hlsUrl)> WaitForHlsReadyAsync(
-            string publicId,
-            CancellationToken cancellationToken,
-            int maxRetry = 60,
-            int delaySeconds = 5)
+        private async Task<(bool ready, string? hlsUrl)> WaitForHlsReadyAsync(string publicId,CancellationToken cancellationToken,int maxRetry = 60,int delaySeconds = 5)
         {
             for (int i = 0; i < maxRetry; i++)
             {
@@ -165,7 +161,7 @@ namespace Eduverse.Service.CloudinaryService
         #endregion
 
 
-
+        #region Logic upload image, delete image
         public async Task<CloudinaryImgDto> UploadImageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -209,6 +205,7 @@ namespace Eduverse.Service.CloudinaryService
             };
         }
 
+
         public async Task DeleteImageAsync(string publicId)
         {
             if (string.IsNullOrEmpty(publicId)) return;
@@ -223,7 +220,7 @@ namespace Eduverse.Service.CloudinaryService
             if (result.Error != null)
                 throw new Exception($"Xóa ảnh thất bại: {result.Error.Message}");
         }
-
+        #endregion
 
         public async Task<CloudinaryDocumentDto> UploadDocumentAsync(IFormFile file)
         {

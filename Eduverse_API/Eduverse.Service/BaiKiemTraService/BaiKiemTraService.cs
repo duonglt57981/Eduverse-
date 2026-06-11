@@ -47,7 +47,7 @@ namespace Eduverse.Service.BaiKiemTraService
         }
 
 
-        public async Task<Guid> CreateQuiz( CreateBaiKiemTraRequest request)
+        public async Task<CreateBaiKiemTraDto> CreateQuiz( CreateBaiKiemTraRequest request)
         {
             if (request.IdPhan == null)
                 throw new Exception("Phần học không hợp lệ.");
@@ -57,24 +57,26 @@ namespace Eduverse.Service.BaiKiemTraService
             if (phan == null)
                 throw new Exception("Không tìm thấy phần học.");
 
-            var entity = _mapper.Map<CreateBaiKiemTraRequest,BaiKiemTra>(request);
-
-            if(entity.ChoLamLai == false)
+            var entity = new BaiKiemTra
             {
-
-            }
-
-            entity.Id = Guid.NewGuid();
-            entity.NgayTao = DateTime.Now;
-            entity.TrangThai = "HDI";
+                IdPhan = request.IdPhan,
+                TenBaiKiemTra = request.TenBaiKiemTra,
+                MoTa = request.MoTa,
+                DiemDat = request.DiemDat,
+                GioiHanThoiGian = request.GioiHanThoiGian,
+                ChoLamLai = true,
+                SoLanLamLai = request.ChoLamLai == true ? request.SoLanLamLai: 0,
+                SoLanLamToiDa = request.ChoLamLai == true ? request.SoLanLamToiDa : 0,
+                TrangThai = "HoatDong",
+            };
 
             await CreateAsync(entity);
-
-            return entity.Id;
+            await SaveAsync();
+            return _mapper.Map<BaiKiemTra, CreateBaiKiemTraDto>(entity);
         }
 
 
-        public async Task<Guid> UpdateQuiz(UpdateBaiKiemTraRequest request)
+        public async Task<UpdateBaiKiemTraDto> UpdateQuiz(UpdateBaiKiemTraRequest request)
         {
             var quiz = await GetByIdOrThrowAsync(request.Id);
 
@@ -82,8 +84,9 @@ namespace Eduverse.Service.BaiKiemTraService
             quiz.MoTa = request.MoTa;
             quiz.DiemDat = request.DiemDat;
             quiz.GioiHanThoiGian = request.GioiHanThoiGian;
-            quiz.ChoLamLai = request.ChoLamLai;
-            quiz.SoLanLamToiDa = request.SoLanLamToiDa;
+            quiz.ChoLamLai = true;
+            quiz.SoLanLamLai = request.ChoLamLai == true ? request.SoLanLamLai : 0,
+            quiz.SoLanLamToiDa = request.ChoLamLai == true ? request.SoLanLamToiDa : 0,
 
             if (!string.IsNullOrWhiteSpace(request.TrangThai))
             {
@@ -91,6 +94,7 @@ namespace Eduverse.Service.BaiKiemTraService
             }
 
             await UpdateAsync(quiz);
+            await SaveAsync();
 
             return quiz.Id;
         }

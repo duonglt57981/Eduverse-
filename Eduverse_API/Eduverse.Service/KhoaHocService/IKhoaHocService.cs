@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Eduverse.Service.KhoaHocService.Dto;
+using Eduverse.Service.KhoaHocService.Request;
 
 namespace Eduverse.Service.KhoaHocService
 {

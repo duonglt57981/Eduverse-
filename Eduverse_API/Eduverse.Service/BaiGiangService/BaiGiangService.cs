@@ -65,11 +65,11 @@ namespace Eduverse.Service.BaiGiangService
                 TieuDe = request.TieuDe.Trim(),
                 LoaiBaiGiang = request.Video == null ? "Bài giảng tài liệu" : "Bài giảng video",
                 IdVideoBaiGiang = uploadResult.IdVideoBaiGiang,
-                URLBaiGiang = uploadResult.URLBaiGiang,
+                URLBaiGiang = uploadResult.URLBaiGiang.Trim(),
                 ThuTuSapXep = maxThuTu + 1,
                 ThoiLuong = thoiLuongBaiGiang,
                 LaBaiGiangFree = request.LaBaiGiangFree,
-                TrangThai = "HDI",
+                TrangThai = "HoatDong",
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -80,84 +80,81 @@ namespace Eduverse.Service.BaiGiangService
         }
 
 
-        //public async Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request)
-        //{
-        //    if (request == null)
-        //        throw new ArgumentNullException(nameof(request));
+        public async Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
 
-        //    if (string.IsNullOrWhiteSpace(request.TieuDe))
-        //        throw new Exception("Tên bài giảng không được để trống");
+            if (string.IsNullOrWhiteSpace(request.TieuDe))
+                throw new Exception("Tên bài giảng không được để trống");
 
-        //    if (request.IdPhan == null)
-        //        throw new Exception("Id phần học không hợp lệ");
+            if (request.IdPhan == null)
+                throw new Exception("Id phần học không hợp lệ");
 
-        //    // Kiểm tra bài giảng cũ còn tồn tại không
-        //    var baiGiangCu = await GetByIdAsync(request.Id!.Value);
-        //    if (baiGiangCu == null)
-        //        throw new Exception("Không tìm thấy bài giảng");
+            var baiGiangCu = await GetByIdAsync(request.Id!.Value);
+            if (baiGiangCu == null)
+                throw new Exception("Không tìm thấy bài giảng");
 
-        //    // Không cho phép update nếu bài cũ đang chờ swap khác
-        //    if (baiGiangCu.IsPendingSwap)
-        //        throw new Exception("Bài giảng này đang có phiên bản cập nhật chờ được duyệt");
+            if (baiGiangCu.IsPendingSwap)
+                throw new Exception("Bài giảng này đang có phiên bản cập nhật chờ được duyệt");
 
-        //    var phanHoc = await _phanRepository.GetByIdAsync(request.IdPhan.Value);
-        //    if (phanHoc == null)
-        //        throw new Exception("Không tìm thấy phần học");
+            var phanHoc = await _phanRepository.GetByIdAsync(request.IdPhan.Value);
+            if (phanHoc == null)
+                throw new Exception("Không tìm thấy phần học");
+                
+            var thuTuDaTon = await GetQueryable()
+                .AnyAsync(x =>
+                    x.IdPhan == request.IdPhan &&
+                    x.ThuTuSapXep == request.ThuTuSapXep &&
+                    x.Id != request.Id &&
+                    !x.IsDeleted);
 
-        //    var thuTuDaTon = await GetQueryable()
-        //        .AnyAsync(x =>
-        //            x.IdPhan == request.IdPhan &&
-        //            x.ThuTuSapXep == request.ThuTuSapXep &&
-        //            x.Id != request.Id &&
-        //            !x.IsDeleted);
+            if (thuTuDaTon)
+                throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại");
 
-        //    if (thuTuDaTon)
-        //        throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại");
+            // ── Không có video mới → update trực tiếp, không tạo bản ghi pending ──
+            if (request.Video == null)
+            {
+                baiGiangCu.TieuDe = request.TieuDe.Trim();
+                baiGiangCu.ThuTuSapXep = request.ThuTuSapXep;
+                baiGiangCu.LaBaiGiangFree = request.LaBaiGiangFree;
+                baiGiangCu.IdPhan = request.IdPhan.Value;
 
-        //    // ── Tạo bản ghi BaiGiang MỚI ──────────────────────────────────
-        //    var baiGiangMoi = new BaiGiang
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        IdPhan = request.IdPhan.Value,
-        //        TieuDe = request.TieuDe.Trim(),
-        //        ThuTuSapXep = request.ThuTuSapXep,
-        //        LaBaiGiangFree = request.LaBaiGiangFree,
-        //        TrangThai = "ChoDuyet",   // bài mới chưa active, đợi swap
-        //        IsPendingSwap = false,
-        //        IdBaiGiangMoi = null
-        //    };
+                await UpdateAsync(baiGiangCu);
+                await SaveAsync();
 
-        //    if (request.Video != null)
-        //    {
-        //        // Upload video mới — không động vào video cũ
-        //        var (publicId, url, thoiLuong) =
-        //            await _cloudinaryService.UploadVideoAsync(request.Video);
+                return _mapper.Map<BaiGiang, BaiGiangDto>(baiGiangCu);
+            }
 
-        //        baiGiangMoi.IdVideoBaiGiang = publicId;
-        //        baiGiangMoi.URLBaiGiang = url;
-        //        baiGiangMoi.ThoiLuong = (int)thoiLuong;
-        //        baiGiangMoi.LoaiBaiGiang = "Bài giảng video";
-        //    }
-        //    else
-        //    {
-        //        // Giữ nguyên video cũ
-        //        baiGiangMoi.IdVideoBaiGiang = baiGiangCu.IdVideoBaiGiang;
-        //        baiGiangMoi.URLBaiGiang = baiGiangCu.URLBaiGiang;
-        //        baiGiangMoi.ThoiLuong = baiGiangCu.ThoiLuong;
-        //        baiGiangMoi.LoaiBaiGiang = baiGiangCu.LoaiBaiGiang;
-        //    }
+            // ── Có video mới → upload + tạo bản ghi mới chờ swap
+            var videoDto = await _cloudinaryService.UploadVideoBaiGiangAsync(request.Video);
 
-        //    await AddAsync(baiGiangMoi);
+            var baiGiangMoi = new BaiGiang
+            {
+                Id = Guid.NewGuid(),
+                IdPhan = request.IdPhan.Value,
+                TieuDe = request.TieuDe.Trim(),
+                ThuTuSapXep = request.ThuTuSapXep,
+                LaBaiGiangFree = request.LaBaiGiangFree,
+                TrangThai = "HoatDong",
+                IsPendingSwap = false,
+                IdBaiGiangMoi = null,
+                IdVideoBaiGiang = videoDto.IdVideoBaiGiang,
+                URLBaiGiang = videoDto.URLBaiGiang,
+                ThoiLuong = videoDto.ThoiLuong,
+                LoaiBaiGiang = videoDto.IdVideoBaiGiang == null ? "Bài giảng tài liệu" : "Bài giảng video",
+            };
 
-        //    // ── Đánh dấu bài CŨ đang chờ swap ────────────────────────────
-        //    baiGiangCu.IsPendingSwap = true;
-        //    baiGiangCu.IdBaiGiangMoi = baiGiangMoi.Id;
+            await CreateAsync(baiGiangMoi);
 
-        //    await UpdateAsync(baiGiangCu);
-        //    await SaveAsync();
+            baiGiangCu.IsPendingSwap = true;
+            baiGiangCu.IdBaiGiangMoi = baiGiangMoi.Id;
 
-        //    return _mapper.Map<BaiGiang, BaiGiangDto>(baiGiangMoi);
-        //}
+            await UpdateAsync(baiGiangCu);
+            await SaveAsync();
+
+            return _mapper.Map<BaiGiang, BaiGiangDto>(baiGiangMoi);
+        }
 
 
         public async Task<bool> DeleteBaiGiang(Guid id)
@@ -166,7 +163,7 @@ namespace Eduverse.Service.BaiGiangService
             if (baiGiang == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            baiGiang.TrangThai = "KDI";
+            baiGiang.TrangThai = "NgungHoatDong";
 
             await DeleteAsync(baiGiang);
             await SaveAsync();

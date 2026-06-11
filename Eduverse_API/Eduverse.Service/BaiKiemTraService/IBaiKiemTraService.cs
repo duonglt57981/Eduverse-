@@ -12,11 +12,11 @@ namespace Eduverse.Service.BaiKiemTraService
 {
     public interface IBaiKiemTraService : IService<Model.Entities.BaiKiemTra>
     {
-        //Task<BaiKiemTraDto> CreateQuiz(CreateQizzRequest request);
+        Task<CreateBaiKiemTraDto> CreateQuiz(CreateBaiKiemTraRequest request);
 
-        //Task<bool> UpdateQuiz(Guid id, UpdateQuizDto dto);
+        Task<Guid> UpdateQuiz(UpdateBaiKiemTraRequest request);
 
-        //Task<bool> DeleteQuiz(Guid id);
+        Task<bool> DeleteQuiz(Guid id);
 
         /// <summary>
         /// Bắt đầu một lần làm bài kiểm tra mới.

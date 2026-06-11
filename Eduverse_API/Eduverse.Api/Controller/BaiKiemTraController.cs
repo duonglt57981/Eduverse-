@@ -19,6 +19,36 @@ namespace Eduverse.Api.Controller
             _baiKiemTraService = baiKiemTraService;
         }
 
+
+        [HttpPost("baikiemtra")]
+        public  Task<DataResponse<Guid>> CreateBaiKiemTra ([FromBody] CreateBaiKiemTraRequest request)
+        {
+            try
+            {
+                var result = _baiKiemTraService.CreateQuiz(request);
+                return DataResponse<Guid>.Success(result);
+            }
+            catch (Exception ex)
+            {
+
+            }
+            
+        }
+
+
+        [HttpPut("start")]
+        public Task<DataResponse<Guid>> UpdateBaiKiemTra([FromBody] CreateBaiKiemTraRequest request)
+        {
+
+        }
+
+
+        [HttpDelete("")]
+        public Task<DataResponse<bool>> DeleteBaiKiemTra([FromBody] CreateBaiKiemTraRequest request)
+        {
+
+        }
+
         /// <summary>
         /// Bắt đầu làm bài kiểm tra.
         /// </summary>

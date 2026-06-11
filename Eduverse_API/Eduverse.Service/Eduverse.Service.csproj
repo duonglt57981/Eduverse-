@@ -20,7 +20,6 @@
     <Folder Include="ChungChiService\Dto\" />
     <Folder Include="ChungChiService\Request\" />
     <Folder Include="CloudinaryService\Request\" />
-    <Folder Include="DangKyKhoaHocService\Dto\" />
     <Folder Include="DangKyKhoaHocService\Request\" />
     <Folder Include="DanhGiaService\Dto\" />
     <Folder Include="DanhGiaService\Request\" />

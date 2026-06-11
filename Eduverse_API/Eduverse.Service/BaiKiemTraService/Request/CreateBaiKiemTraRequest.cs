@@ -18,6 +18,8 @@ namespace Eduverse.Service.BaiKiemTraService.Request
 
         public bool? ChoLamLai { get; set; } = true;
 
+        public int? SoLanLamLai { get; set; } = 1;
+
         public int? SoLanLamToiDa { get; set; }
 
         public Guid? IdPhan { get; set; }

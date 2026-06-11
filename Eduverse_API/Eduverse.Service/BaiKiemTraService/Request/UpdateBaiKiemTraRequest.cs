@@ -20,6 +20,8 @@ namespace Eduverse.Service.BaiKiemTraService.Request
 
         public bool? ChoLamLai { get; set; }
 
+        public int? SoLanLamLai { get; set; }
+
         public int? SoLanLamToiDa { get; set; }
 
         public string? TrangThai { get; set; }

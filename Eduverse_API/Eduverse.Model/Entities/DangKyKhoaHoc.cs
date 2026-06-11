@@ -13,5 +13,7 @@ namespace Eduverse.Model.Entities
         public DateTime? ThoiGianDK { get; set; }
         public Guid? IdNguoiDangKi { get; set; }
         public Guid? IdDangKi { get; set; }
+        //thêm
+        public bool? IsDangKy { get; set; }
     }
 }

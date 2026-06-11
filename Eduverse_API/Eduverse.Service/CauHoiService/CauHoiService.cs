@@ -26,72 +26,6 @@ namespace Eduverse.Service.CauHoiService
             _dapAnService = dapAnService;
         }
 
-        //public async Task<CauHoiDto> CreateCauHoi(CreateCauHoiRequest request)
-        //{
-        //    var BaiKiemTra = await _baiKiemTraService.GetByIdAsync(request.idBaiKiemTra);
-        //    if (BaiKiemTra == null)
-        //        throw new Exception("Bài kiểm tra không tồn tại");
-
-        //    if (string.IsNullOrWhiteSpace(request.TenCauHoi))
-        //        throw new Exception("Tên câu hỏi không được để trống");
-
-        //    if (request.DanhSachDapAns == null || request.DanhSachDapAns.Count < 2)
-        //        throw new Exception("Mỗi câu hỏi phải có ít nhất 2 đáp án");
-
-        //    if (request.DanhSachDapAns.Count(x => x.LaDapAnDung) != 1)
-        //        throw new Exception("Mỗi câu hỏi phải có đúng 1 đáp án đúng");
-
-        //    // Tạo câu hỏi
-        //    int thutu = 0;
-        //    var cauHoi = new CauHoi
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        IdBaiKiemTra = BaiKiemTra.Id,
-        //        TenCauHoi = request.TenCauHoi,
-        //        NoiDungCauHoi = request.NoiDungCauHoi,
-        //        ThuTuSapXep = thutu++,
-        //        LoaiCauHoi = 1, // 1: đơn, 2: đa (có thể tính sau)
-        //        IsDeleted = false,
-        //        CreatedDate = DateTime.UtcNow
-        //    };
-        //    await CreateAsync(cauHoi);
-
-        //    // Tạo danh sách đáp án
-        //    var listDapAn = new List<DapAn>();
-        //    foreach (var item in request.DanhSachDapAns)
-        //    {
-        //        listDapAn.Add(new DapAn
-        //        {
-        //            Id = Guid.NewGuid(),
-        //            IdCauHoi = cauHoi.Id,
-        //            NoiDungDapAn = item.NoiDungDapAn,
-        //            LaDapAnDung = item.LaDapAnDung,
-        //            ThuTuSapXep = item.ThuTuSapXep,
-        //            IsDeleted = false,
-        //            CreatedDate = DateTime.UtcNow
-        //        });
-        //    }
-        //    await _dapAnRepository.CreateRange(listDapAn);
-        //    await _context.SaveChangesAsync(); // hoặc SaveAsync
-
-        //    // Map to DTO
-        //    return new CauHoiDto
-        //    {
-        //        Id = cauHoi.Id,
-        //        TenCauHoi = cauHoi.TenCauHoi,
-        //        NoiDungCauHoi = cauHoi.NoiDungCauHoi,
-        //        Diem = cauHoi.Diem,
-        //        ThuTuSapXep = cauHoi.ThuTuSapXep,
-        //        DanhSachDapAns = listDapAn.Select(d => new DapAnDto
-        //        {
-        //            NoiDungDapAn = d.NoiDungDapAn,
-        //            LaDapAnDung = d.LaDapAnDung,
-        //            ThuTuSapXep = d.ThuTuSapXep
-        //        }).ToList()
-        //    };
-
-        //}
-
 
         public async Task<Guid> CreateQuestion(CreateCauHoiRequest request)
         {
@@ -141,7 +75,6 @@ namespace Eduverse.Service.CauHoiService
 
             return cauHoi.Id;
         }
-
 
 
         public async Task<Guid> UpdateQuestion(UpdateCauHoiRequest request)
