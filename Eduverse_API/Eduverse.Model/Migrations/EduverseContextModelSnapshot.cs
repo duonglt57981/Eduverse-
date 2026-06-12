@@ -166,7 +166,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "a8bffce1-c158-48af-b79a-d3c46ef33c9e",
+                            ConcurrencyStamp = "39068b34-c33b-449e-be80-1c382a3f52f1",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -175,9 +175,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDdKRUP9rcmdlBWtEhuMqhE6oJlRRRe8Q9ydghkU4F+rh+/ENVDGWIbBqugSvlX68Q==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEAjyAXhdzE0XEqH3gveHzxvre9H0Ml336dibMraDRhZYZAYCVxboI95Gghrgw1wtbw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "9e7af46c-e095-4ff0-8310-98685219fd56",
+                            SecurityStamp = "95d61e65-9605-49ac-b83c-c0a0c13df7be",
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserName = "admin"
@@ -347,9 +347,11 @@ namespace Eduverse.Model.Migrations
                     b.Property<double?>("Diem")
                         .HasColumnType("float");
 
+                    b.Property<string>("DoKho")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("IdBaiKiemTra")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("IdBaiKiemTra");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -533,6 +535,9 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<Guid?>("IdNguoiDangKi")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool?>("IsDangKy")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -1219,7 +1224,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("KhoaHoc");
+                    b.ToTable("KhoaHocs", (string)null);
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.KhuyenMai", b =>
@@ -1358,8 +1363,26 @@ namespace Eduverse.Model.Migrations
                     b.Property<DateTime?>("ThoiGianBatDau")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ThoiGianCapNhat")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("ThoiGianNop")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianTamDung")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianTiepTuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("TongDiemLanKiemTra")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("TongThoiGianDaLam")
+                        .HasColumnType("float");
+
+                    b.Property<string>("TrangThai")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -1853,10 +1876,10 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("IdBaiGiang")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdCauHoi")
+                    b.Property<Guid?>("IdDangKi")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdDangKi")
+                    b.Property<Guid?>("IdLanLamBaiKiemTra")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
