@@ -12,7 +12,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ThanhToanController : ControllerBase
+    public class ThanhToanController : EduverseController
     {
         private readonly IThanhToanService _service;
         private readonly IConfiguration _config;

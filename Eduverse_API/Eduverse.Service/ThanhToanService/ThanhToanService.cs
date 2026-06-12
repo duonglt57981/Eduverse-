@@ -134,7 +134,6 @@ namespace Eduverse.Service.ThanhToanService
                     });
                 }
 
-                // Gộp 1 lần save duy nhất
                 await _donHangRepo.SaveAsync();
             }
             catch (Exception ex)

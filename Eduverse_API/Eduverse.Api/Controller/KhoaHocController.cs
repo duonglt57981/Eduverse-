@@ -11,7 +11,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class KhoaHocController : ControllerBase
+    public class KhoaHocController : EduverseController
     {
         private readonly IKhoaHocService _service;
 

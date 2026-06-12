@@ -12,7 +12,7 @@ namespace Eduverse.Api.Controller
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class GioHangController : ControllerBase
+    public class GioHangController : EduverseController
     {
         private readonly IGioHangService _service;
 
