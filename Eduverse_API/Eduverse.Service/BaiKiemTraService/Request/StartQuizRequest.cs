@@ -8,6 +8,7 @@ namespace Eduverse.Service.BaiKiemTraService.Request
 {
     public class StartQuizRequest
     {
+        public Guid? IdDangKi { get; set; }
         public Guid IdBaiKiemTra { get; set; }
 
         public Guid IdNguoiDung { get; set; }

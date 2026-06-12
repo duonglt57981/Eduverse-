@@ -14,9 +14,10 @@ namespace Eduverse.Service.BaiKiemTraService
     {
         Task<CreateBaiKiemTraDto> CreateQuiz(CreateBaiKiemTraRequest request);
 
-        Task<Guid> UpdateQuiz(UpdateBaiKiemTraRequest request);
+        Task<UpdateBaiKiemTraDto> UpdateQuiz(UpdateBaiKiemTraRequest request);
 
         Task<bool> DeleteQuiz(Guid id);
+
 
         /// <summary>
         /// Bắt đầu một lần làm bài kiểm tra mới.
@@ -24,7 +25,7 @@ namespace Eduverse.Service.BaiKiemTraService
         /// </summary>
         /// <param name="request">Thông tin bài kiểm tra và người dùng.</param>
         /// <returns>Id của lần làm bài được tạo.</returns>
-        Task<Guid> StartQuiz(StartQuizRequest request);
+        Task<LanLamBaiKiemTraDto> StartQuiz(StartQuizRequest request);
 
 
         /// <summary>
@@ -80,5 +81,54 @@ namespace Eduverse.Service.BaiKiemTraService
         /// <param name="idNguoiDung">Id người dùng.</param>
         /// <returns>True nếu được phép làm lại, ngược lại False.</returns>
         Task<bool> CheckCanRetake(Guid idBaiKiemTra, Guid idNguoiDung);
+
+
+        /// <summary>
+        /// Tự động lưu câu trả lời của học viên khi chọn đáp án (auto-save).
+        /// Đồng thời kiểm tra thứ tự làm bài: chỉ cho phép lưu câu hiện tại (câu đầu tiên chưa trả lời)
+        /// hoặc câu đã trả lời trước đó, không cho phép bỏ qua câu hỏi.
+        /// </summary>
+        /// <param name="request">Thông tin lần làm bài, câu hỏi và các đáp án được chọn.</param>
+        /// <returns>
+        /// - Success: true nếu lưu thành công.
+        /// - SoCauDaLam: số câu đã hoàn thành sau khi lưu.
+        /// - TongSoCau: tổng số câu hỏi của bài kiểm tra.
+        /// - DaHoanThanh: true nếu đã trả lời hết tất cả câu hỏi.
+        /// - NextQuestionId: ID của câu hỏi tiếp theo (để FE tự động chuyển).
+        /// - ThoiGianConLai: thời gian còn lại (giây) nếu bài có giới hạn thời gian.
+        /// - CoGioiHan: true nếu bài kiểm tra có giới hạn thời gian.
+        /// - Message: thông báo cho người dùng.
+        /// </returns>
+        Task<AutoSaveDapAnDto> AutoSaveCauTraLoi(AutoSaveRequest request);
+
+
+        /// <summary>
+        /// Tạm dừng bài làm, dừng đếm thời gian. Gọi khi học viên thoát khỏi trang làm bài
+        /// (đóng tab, chuyển trang, mất điện, ...) để sau khi quay lại có thể tiếp tục từ thời điểm đã dừng.
+        /// </summary>
+        /// <param name="idLanLamBaiKiemTra">ID của lần làm bài cần tạm dừng.</param>
+        /// <returns>
+        /// - Success: true nếu tạm dừng thành công.
+        /// - ThoiGianDaLam: tổng thời gian đã làm bài tính đến thời điểm dừng (giây).
+        /// - Message: thông báo xác nhận.
+        /// </returns>
+        Task<TamDungQuizResultDto> PauseQuiz(Guid idLanLamBaiKiemTra);
+
+
+        /// <summary>
+        /// Tiếp tục bài làm đang dở, khôi phục toàn bộ trạng thái: câu trả lời đã lưu,
+        /// vị trí câu hỏi đang làm dở, thời gian còn lại. Gọi khi học viên vào lại bài kiểm tra
+        /// sau khi đã tạm dừng hoặc thoát đột ngột.
+        /// </summary>
+        /// <param name="idLanLamBaiKiemTra">ID của lần làm bài cần tiếp tục.</param>
+        /// <returns>
+        /// - IdLanLamBaiKiemTra, IdBaiKiemTra, TenBaiKiemTra: thông tin cơ bản.
+        /// - CurrentQuestionIndex, CurrentQuestionId: vị trí câu hỏi đang làm dở.
+        /// - SavedAnswers: Dictionary<IdCauHoi, List<IdDapAnChon>> – các đáp án đã chọn.
+        /// - AllQuestions: danh sách câu hỏi kèm đáp án (để hiển thị toàn bộ đề).
+        /// - Progress: số câu đã làm, tổng số câu, phần trăm, đã hoàn thành hay chưa.
+        /// - ThoiGian: thời gian bắt đầu, thời gian đã làm, thời gian còn lại, có giới hạn hay không.
+        /// </returns>
+        Task<ContinueQuizFullDto> ContinueQuizFull(Guid idLanLamBaiKiemTra);
     }
 }

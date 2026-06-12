@@ -3,6 +3,7 @@ using Eduverse.Service.BaiKiemTraService.Dto;
 using Eduverse.Service.BaiKiemTraService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService.Dto;
 using Hinet.Api.Dto;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Eduverse.Api.Controller
@@ -21,50 +22,65 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPost("baikiemtra")]
-        public  Task<DataResponse<Guid>> CreateBaiKiemTra ([FromBody] CreateBaiKiemTraRequest request)
+        public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ([FromBody] CreateBaiKiemTraRequest request)
         {
             try
             {
-                var result = _baiKiemTraService.CreateQuiz(request);
-                return DataResponse<Guid>.Success(result);
+                var result = await _baiKiemTraService.CreateQuiz(request);
+                return DataResponse<CreateBaiKiemTraDto>.Success(result);
             }
             catch (Exception ex)
             {
-
+                return DataResponse<CreateBaiKiemTraDto>.False(ex.Message);
             }
             
         }
 
 
-        [HttpPut("start")]
-        public Task<DataResponse<Guid>> UpdateBaiKiemTra([FromBody] CreateBaiKiemTraRequest request)
+        [HttpPut("baikiemtra/{id}")]
+        public async Task<DataResponse<UpdateBaiKiemTraDto>> UpdateBaiKiemTra([FromBody] UpdateBaiKiemTraRequest request)
         {
-
+            try
+            {
+                var result = await _baiKiemTraService.UpdateQuiz(request);
+                return DataResponse<UpdateBaiKiemTraDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<UpdateBaiKiemTraDto>.False(ex.Message);
+            }
         }
 
 
-        [HttpDelete("")]
-        public Task<DataResponse<bool>> DeleteBaiKiemTra([FromBody] CreateBaiKiemTraRequest request)
+        [HttpDelete("baikiemtra/{Id}")]
+        public async Task<DataResponse<bool>> DeleteBaiKiemTra([FromBody] Guid Id)
         {
-
+            try
+            {
+                var result = await _baiKiemTraService.DeleteQuiz(Id);
+                return DataResponse<bool>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<bool>.False(ex.Message);
+            }
         }
 
         /// <summary>
         /// Bắt đầu làm bài kiểm tra.
         /// </summary>
         [HttpPost("start")]
-        public async Task<DataResponse<Guid>> StartQuiz([FromBody] StartQuizRequest request)
+        public async Task<DataResponse<LanLamBaiKiemTraDto>> StartQuiz([FromBody] StartQuizRequest request)
         {
             try
             {
-                var result =
-                    await _baiKiemTraService.StartQuiz(request);
+                var result = await _baiKiemTraService.StartQuiz(request);
 
-                return DataResponse<Guid>.Success(result);
+                return DataResponse<LanLamBaiKiemTraDto>.Success(result);
             }
             catch (Exception ex)
             {
-                return DataResponse<Guid>.False(ex.Message);
+                return DataResponse<LanLamBaiKiemTraDto>.False(ex.Message);
             }
         }
 
@@ -181,5 +197,62 @@ namespace Eduverse.Api.Controller
                 return DataResponse<bool>.False(ex.Message);
             }
         }
+
+
+        /// <summary>
+        /// Auto-save câu trả lời khi học viên chọn đáp án (có kiểm tra thứ tự)
+        /// </summary>
+        [HttpPost("auto-save")]
+        public async Task<DataResponse<AutoSaveDapAnDto>> AutoSaveCauTraLoi([FromBody] AutoSaveRequest request)
+        {
+            try
+            {
+                var result = await _baiKiemTraService.AutoSaveCauTraLoi(request);
+                return DataResponse<AutoSaveDapAnDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<AutoSaveDapAnDto>.False(ex.Message);
+            }
+        }
+
+
+
+        /// <summary>
+        /// Tạm dừng bài làm (dừng đếm thời gian) - gọi khi user thoát trang
+        /// </summary>
+        [HttpPost("pause/{idLanLamBaiKiemTra}")]
+        public async Task<DataResponse<TamDungQuizResultDto>> PauseQuiz(Guid idLanLamBaiKiemTra)
+        {
+            try
+            {
+                var result = await _baiKiemTraService.PauseQuiz(idLanLamBaiKiemTra);
+                return DataResponse<TamDungQuizResultDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<TamDungQuizResultDto>.False(ex.Message);
+            }
+        }
+
+
+
+        /// <summary>
+        /// Tiếp tục bài làm (khôi phục toàn bộ trạng thái) - gọi khi user vào lại quiz
+        /// </summary>
+        [HttpGet("continue-full/{idLanLamBaiKiemTra}")]
+        public async Task<DataResponse<ContinueQuizFullDto>> ContinueQuizFull(Guid idLanLamBaiKiemTra)
+        {
+            try
+            {
+                var result = await _baiKiemTraService.ContinueQuizFull(idLanLamBaiKiemTra);
+                return DataResponse<ContinueQuizFullDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<ContinueQuizFullDto>.False(ex.Message);
+            }
+        }
+
     }
 }

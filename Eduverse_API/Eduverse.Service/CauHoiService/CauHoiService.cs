@@ -57,6 +57,7 @@ namespace Eduverse.Service.CauHoiService
             };
 
             await CreateAsync(cauHoi);
+            await SaveAsync();
 
             var ttsapxepDapAn = 0;
 
@@ -72,6 +73,7 @@ namespace Eduverse.Service.CauHoiService
                 .ToList();
 
             await _dapAnService.CreateRange(dapAns);
+            await _dapAnService.SaveAsync();
 
             return cauHoi.Id;
         }

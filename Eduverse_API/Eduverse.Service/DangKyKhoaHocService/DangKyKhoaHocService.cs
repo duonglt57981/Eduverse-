@@ -1,6 +1,7 @@
 ﻿using Eduverse.Model.Entities;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.DanhGiaRepository;
+using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.DangKyKhoaHocService.Dto;
@@ -17,15 +18,18 @@ namespace Eduverse.Service.DangKyKhoaHocService
 {
     public class DangKyKhoaHocService : Service<Model.Entities.DangKyKhoaHoc>, IDangKyKhoaHocService
     {
-        private readonly IKhoaHocService _khoaHocService;
+        //private readonly IKhoaHocService _khoaHocService;
+        private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly IMapper _mapper;
         public DangKyKhoaHocService(
-            IDangKyKhoaHocRepository dangKyKhoaHocRepository, 
-            IKhoaHocService khoaHocService,
+            IDangKyKhoaHocRepository dangKyKhoaHocRepository,
+            //IKhoaHocService khoaHocService,
+            IKhoaHocRepository khoaHocRepository,
             IMapper mapper) : base(dangKyKhoaHocRepository)
         {
-            _khoaHocService = khoaHocService;
+            //_khoaHocService = khoaHocService;
             _mapper = mapper;
+            _khoaHocRepository = khoaHocRepository;
         }
 
 
@@ -37,13 +41,13 @@ namespace Eduverse.Service.DangKyKhoaHocService
             if (userId == Guid.Empty)
                 throw new ArgumentException("Id người dùng không hợp lệ");
 
-            var khoaHoc = await _khoaHocService.GetQueryable()
+            var khoaHoc = await _khoaHocRepository.GetQueryable()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == idKhoaHoc
                                        && !x.IsDeleted
                                        && x.TrangThai == "HoatDong");
 
-            var giaKhoaHoc = await _khoaHocService.GetQueryable()
+            var giaKhoaHoc = await _khoaHocRepository.GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.Id == idKhoaHoc && !x.IsDeleted)
                 .Select(x => x.Gia)

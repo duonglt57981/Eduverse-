@@ -61,6 +61,10 @@ namespace Eduverse.Api
             });
 
 
+            //Đăng ký MemoryCache
+            builder.Services.AddMemoryCache();
+
+
             // Cloudinary
             var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
             builder.Services.Configure<CloudinarySettings>(cloudinarySettings);

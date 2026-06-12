@@ -8,7 +8,7 @@ namespace Eduverse.Service.BaiKiemTraService.Dto
 {
     public class CreateBaiKiemTraDto
     {
-        public string TenBaiKiemTra { get; set; }
+        public string? TenBaiKiemTra { get; set; }
 
         public string? MoTa { get; set; }
 

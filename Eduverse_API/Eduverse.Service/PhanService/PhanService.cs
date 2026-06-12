@@ -29,9 +29,7 @@ namespace Eduverse.Service.PhanService
             IBaiGiangService baiGiangService,
             ITaiLieuService taiLieuService,
             IKhoaHocRepository khoaHocRepository,
-            Service.Core.Mapper.IMapper mapper
-
-            ) : base(phanRepository)
+            Service.Core.Mapper.IMapper mapper) : base(phanRepository)
         {
             _mapper = mapper;
             _baiGiangService = baiGiangService;

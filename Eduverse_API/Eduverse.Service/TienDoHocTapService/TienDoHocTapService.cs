@@ -1,5 +1,6 @@
 using Eduverse.Model.Entities;
 using Eduverse.Repository.Common;
+using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.TienDoHocTapRepository;
 using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.Common;
@@ -20,17 +21,21 @@ namespace Eduverse.Service.TienDoHocTapService
     public class TienDoHocTapService : Service<TienDoHocTap>, ITienDoHocTapService
     {
         private readonly IBaiGiangService _baiGiangService;
-        private readonly IDangKyKhoaHocService _dangKyKhoaHocService;
+        ////private readonly IDangKyKhoaHocService _dangKyKhoaHocService;
+        //private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
         private readonly IPhanService _phanService;
         public TienDoHocTapService(
             ITienDoHocTapRepository tienDoHocTapRepository,
             IBaiGiangService baiGiangService,
-            IPhanService phanService,
-            IDangKyKhoaHocService dangKyKhoaHocService) : base(tienDoHocTapRepository)
+            IPhanService phanService
+            //IDangKyKhoaHocService dangKyKhoaHocService,
+            //IDangKyKhoaHocRepository dangKyKhoaHocRepository
+            ) : base(tienDoHocTapRepository)
         {
             _baiGiangService = baiGiangService;
-            _dangKyKhoaHocService = dangKyKhoaHocService;
+            //_dangKyKhoaHocService = dangKyKhoaHocService;
             _phanService = phanService;
+            //_dangKyKhoaHocRepository = dangKyKhoaHocRepository;
         }
 
         public async Task UpdateTienDoBaiGiang(UpdateTienDoBaiGiangRequest request)
