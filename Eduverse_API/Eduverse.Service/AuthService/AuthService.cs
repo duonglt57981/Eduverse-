@@ -116,6 +116,7 @@ namespace Eduverse.Service.AuthService
             // Reset AccessFailedCount khi login thành công
             await _userManager.ResetAccessFailedCountAsync(user);
 
+            var roles = await _userManager.GetRolesAsync(user);
             var accessToken = GenerateAccessToken(user);
             var refreshTokenStr = GenerateRefreshToken();
 
@@ -136,7 +137,8 @@ namespace Eduverse.Service.AuthService
                 AccessToken = accessToken,
                 UserName = user.UserName!,
                 HoTen = user.HoTen,
-                Email = user.Email
+                Email = user.Email,
+                Roles = roles.ToList()
             };
         }
 
@@ -160,6 +162,7 @@ namespace Eduverse.Service.AuthService
 
             var newAccessToken = GenerateAccessToken(tokenEntity.AppUser);
             var newRefreshTokenStr = GenerateRefreshToken();
+            var roles = await _userManager.GetRolesAsync(tokenEntity.AppUser);
 
             await _authRepo.AddRefreshTokenAsync(new RefreshToken
             {
@@ -178,7 +181,8 @@ namespace Eduverse.Service.AuthService
                 AccessToken = newAccessToken,
                 UserName = tokenEntity.AppUser.UserName!,
                 HoTen = tokenEntity.AppUser.HoTen,
-                Email = tokenEntity.AppUser.Email
+                Email = tokenEntity.AppUser.Email,
+                Roles = roles.ToList()
             };
         }
 
