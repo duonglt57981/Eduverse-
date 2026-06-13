@@ -1,5 +1,7 @@
-﻿
+
 using System.Text;
+using CloudinaryDotNet;
+using CloudinaryDotNet;
 using Eduverse.Api.Hubs;
 using Eduverse.Model;
 using Eduverse.Model.Entities;
@@ -33,11 +35,11 @@ namespace Eduverse.Api
                 options.User.AllowedUserNameCharacters =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 
-                options.Password.RequireDigit = false;
-                options.Password.RequireLowercase = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequiredLength = 6;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequiredLength = 8;
 
                 // Lockout sau 5 lần sai
                 options.Lockout.MaxFailedAccessAttempts = 5;
@@ -255,6 +257,7 @@ namespace Eduverse.Api
 
             services.AddScoped<IMapper, Mapper>();
             services.AddScoped(typeof(Repository<>), typeof(Repository<>));
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             var repositoryTypes = typeof(Repository<>).Assembly.GetTypes()
                  .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Repository") && x.Name.EndsWith("Repository"));
             foreach (var intf in repositoryTypes.Where(t => t.IsInterface))

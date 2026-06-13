@@ -213,6 +213,7 @@ export default function LoginPage() {
                 sx={{
                   fontSize: { xs: 32, sm: 40, md: 44 },
                   lineHeight: 1.15,
+                  color: '#ffffff',
                 }}
               >
                 Chào mừng bạn trở lại
@@ -330,7 +331,7 @@ export default function LoginPage() {
             <Box sx={{ width: '100%', maxWidth: 440, my: 'auto' }}>
             <Typography
               variant="h4"
-              sx={{ fontSize: { xs: 28, sm: 32 }, mb: 0.75 }}
+              sx={{ fontSize: { xs: 28, sm: 32 }, mb: 0.75, color: 'text.primary' }}
             >
               Đăng nhập
             </Typography>
@@ -359,7 +360,7 @@ export default function LoginPage() {
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
               <Stack spacing={2}>
                 <Box>
-                  <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>
+                  <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75, color: 'text.primary' }}>
                     Email hoặc tên đăng nhập
                   </Typography>
                   <FormControl fullWidth>
@@ -408,7 +409,7 @@ export default function LoginPage() {
                       justifyContent: 'space-between',
                     }}
                   >
-                    <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}>
                       Mật khẩu
                     </Typography>
                     <MuiLink

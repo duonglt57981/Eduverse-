@@ -35,6 +35,8 @@ import {
   SectionHeading,
 } from './landing-shared';
 
+const TextFieldAny = TextField as any;
+
 function getInitials(name: string) {
   return name
     .split(' ')
@@ -238,6 +240,8 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} sx={{ mt: 1.7 }}>
         <Button
+          component={Link}
+          href="/auth/login"
           variant="outlined"
           sx={{
             flex: 1,
@@ -249,6 +253,8 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
           Xem hồ sơ
         </Button>
         <Button
+          component={Link}
+          href="/auth/login"
           variant="contained"
           endIcon={<ArrowForwardRounded />}
           sx={{
@@ -314,6 +320,7 @@ export default function InstructorsPage() {
                   letterSpacing: '-1.4px',
                   fontWeight: 900,
                   maxWidth: 620,
+                  color: '#1a1a1a',
                 }}
               >
                 Học từ những chuyên gia hàng đầu
@@ -332,6 +339,8 @@ export default function InstructorsPage() {
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3 }}>
                 <Button
+                  component={Link}
+                  href="/auth/login"
                   variant="contained"
                   sx={{
                     px: 2.8,
@@ -343,6 +352,8 @@ export default function InstructorsPage() {
                   Trở thành giảng viên
                 </Button>
                 <Button
+                  component={Link}
+                  href="/auth/login"
                   variant="outlined"
                   sx={{
                     px: 2.8,
@@ -437,10 +448,10 @@ export default function InstructorsPage() {
                 ))}
               </Stack>
 
-              <TextField
+              <TextFieldAny
                 fullWidth
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event: any) => setSearch(event.target.value)}
                 placeholder="Tìm tên giảng viên..."
                 InputProps={{
                   startAdornment: (
@@ -601,6 +612,8 @@ export default function InstructorsPage() {
                 Gia nhập đội ngũ hơn 500+ giảng viên uy tín tại EduVerse và xây dựng cộng đồng học tập chất lượng dành cho người đi làm.
               </Typography>
               <Button
+                component={Link}
+                href="/auth/login"
                 variant="contained"
                 sx={{
                   mt: 3,
