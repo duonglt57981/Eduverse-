@@ -43,6 +43,8 @@ import {
   SectionHeading,
 } from './landing-shared';
 
+const TextFieldAny = TextField as any;
+
 type CourseSortOption = 'newest' | 'rating' | 'price-low';
 
 function CategoryCard({
@@ -336,6 +338,7 @@ export default function CoursesPage() {
                   letterSpacing: '-1.6px',
                   fontWeight: 900,
                   maxWidth: 680,
+                  color: '#1a1a1a',
                 }}
               >
                 Khám phá hàng trăm
@@ -359,20 +362,18 @@ export default function CoursesPage() {
               </Typography>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3 }}>
-                <TextField
+                <TextFieldAny
                   fullWidth
                   variant="outlined"
                   value={search}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
                   placeholder="Tìm kiếm khóa học, kỹ năng..."
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
-                        </InputAdornment>
-                      ),
-                    },
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
+                      </InputAdornment>
+                    ),
                   }}
                   sx={{
                     maxWidth: 420,

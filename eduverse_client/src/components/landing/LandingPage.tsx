@@ -66,6 +66,7 @@ export default function LandingPage() {
                   letterSpacing: '-1.6px',
                   fontWeight: 900,
                   maxWidth: 680,
+                  color: '#1a1a1a',
                 }}
               >
                 Học mọi lúc,

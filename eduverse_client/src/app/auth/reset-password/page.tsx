@@ -72,7 +72,7 @@ function ResetPasswordForm() {
             >
               <ArrowBackRounded fontSize="small" />
             </IconButton>
-            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.4px' }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.4px', color: 'text.primary' }}>
               Đặt lại mật khẩu
             </Typography>
           </Stack>

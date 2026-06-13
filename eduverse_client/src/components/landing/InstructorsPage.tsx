@@ -320,6 +320,7 @@ export default function InstructorsPage() {
                   letterSpacing: '-1.4px',
                   fontWeight: 900,
                   maxWidth: 620,
+                  color: '#1a1a1a',
                 }}
               >
                 Học từ những chuyên gia hàng đầu

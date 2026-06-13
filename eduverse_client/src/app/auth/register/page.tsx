@@ -350,6 +350,7 @@ export default function RegisterPage() {
                 fontSize: 44,
                 lineHeight: 1.08,
                 maxWidth: 520,
+                color: '#ffffff',
               }}
             >
               Bắt đầu hành trình học tập cùng EduVerse
@@ -480,7 +481,7 @@ export default function RegisterPage() {
               { num: '120+', label: 'Giảng viên' },
             ].map((s) => (
               <Box key={s.label}>
-                <Typography sx={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.3px' }}>
+                <Typography sx={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.3px', color: '#ffffff' }}>
                   {s.num}
                 </Typography>
                 <Typography sx={{ fontSize: 11.5, color: 'rgba(255,255,255,0.72)' }}>
@@ -523,7 +524,7 @@ export default function RegisterPage() {
               </MuiLink>
             </Box>
 
-            <Typography variant="h4" sx={{ fontSize: { xs: 26, sm: 30 }, mb: 0.75 }}>
+            <Typography variant="h4" sx={{ fontSize: { xs: 26, sm: 30 }, mb: 0.75, color: 'text.primary' }}>
               Đăng ký tài khoản
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 3 }}>
