@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
 import { resetPassword } from '../../../store/auth/AuthSlice';
@@ -16,7 +17,7 @@ import {
 } from '@mui/material';
 import { ArrowBackRounded, VisibilityOffRounded, VisibilityRounded } from '@mui/icons-material';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const dispatch    = useDispatch();
   const router      = useRouter();
   const params      = useSearchParams();
@@ -181,5 +182,17 @@ export default function ResetPasswordPage() {
         </Stack>
       </Paper>
     </Box>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: '#f9f8f6' }}>
+        <Typography sx={{ fontWeight: 700 }}>Đang tải...</Typography>
+      </Box>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

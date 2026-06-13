@@ -3,6 +3,7 @@ import React from "react";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { Providers } from "../store/providers";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -33,13 +34,15 @@ export default function RootLayout({
         <title>{appTitle}</title>
       </head>
       <body className={`${beVietnamPro.className} dir-ltr`}>
-        <div className="App">
-          <Providers>
-            {/* <ConfigProvider theme={lightTheme} locale={viVN}> */}
-              {children}
-            {/* </ConfigProvider> */}
-          </Providers>
-        </div>
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+          <div className="App">
+            <Providers>
+              {/* <ConfigProvider theme={lightTheme} locale={viVN}> */}
+                {children}
+              {/* </ConfigProvider> */}
+            </Providers>
+          </div>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );

@@ -1,0 +1,2694 @@
+{
+  "AppRole": {
+    "className": "AppRole",
+    "baseClass": "IdentityRole",
+    "properties": []
+  },
+  "AppUser": {
+    "className": "AppUser",
+    "baseClass": "IdentityUser",
+    "properties": [
+      {
+        "name": "HoTen",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "GioiTinh",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "AnhDaiDien",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "ChucVu",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdDonVi",
+        "type": "Guid",
+        "isNavigation": false
+      },
+      {
+        "name": "DiaChi",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "AuditableEntity": {
+    "className": "AuditableEntity",
+    "baseClass": "Entity",
+    "properties": [
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "BaiGiang": {
+    "className": "BaiGiang",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TieuDe",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "LoaiBaiGiang",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdVideoBaiGiang",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "URLBaiGiang",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThuTuSapXep",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThoiLuong",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "LaBaiGiangFree",
+        "type": "bool?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdPhan",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "BaiKiemTra": {
+    "className": "BaiKiemTra",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TenBaiKiemTra",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "MoTa",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "DiemDat",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "GioiHanThoiGian",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "ChoLamLai",
+        "type": "bool?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoLanLamLai",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoLanLamToiDa",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdPhan",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "CauHoi": {
+    "className": "CauHoi",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TenCauHoi",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NoiDungCauHoi",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "LoaiCauHoi",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "Diem",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThuTuSapXep",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdBaiKiemTra",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "ChiTietLamBaiKiemTra": {
+    "className": "ChiTietLamBaiKiemTra",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "LaDung",
+        "type": "bool?",
+        "isNavigation": false
+      },
+      {
+        "name": "DiemNhanDuoc",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdCauHoi",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdDapAnChon",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdLanLamBaiKiemTra",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "ChungChi": {
+    "className": "ChungChi",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "MaSoChungChi",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "TenChungChi",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "URL_ChungChi",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayCap",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayHetHan",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "TongThoiGianHoc",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "DiemTongKet",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdDangKi",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdKhoaHoc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DangKyKhoaHoc": {
+    "className": "DangKyKhoaHoc",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "GiaDangKy",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThoiGianDK",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdNguoiDangKi",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdDangKi",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DanhGia": {
+    "className": "DanhGia",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TenDanhMuc",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NoiDung",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DanhMuc": {
+    "className": "DanhMuc",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TenDanhMuc",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DanhMuc_KhoaHoc": {
+    "className": "DanhMuc_KhoaHoc",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "IdKhoaHoc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdDanhMuc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DanhSachYeuThich": {
+    "className": "DanhSachYeuThich",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "IdNguoiDung",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdKhoaHoc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DapAn": {
+    "className": "DapAn",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "NoiDungDapAn",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "LaDapAnDung",
+        "type": "bool?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThuTuSapXep",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdCauHoi",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DapAn_NguoiDung": {
+    "className": "DapAn_NguoiDung",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "DapAnChon",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "DiemDatDuoc",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DonHang": {
+    "className": "DonHang",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "MaGiaoDich",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoTienGiamGia",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoTienThanhToan",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdNguoiDung",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "DonHangChiTiets",
+        "type": "ICollection<DonHangChiTiet>?",
+        "isNavigation": true
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "DonHangChiTiet": {
+    "className": "DonHangChiTiet",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "GiaLucDat",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdKhoaHoc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdDonHang",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "BaseEntity": {
+    "className": "BaseEntity",
+    "baseClass": "BaseEntity",
+    "properties": [
+      {
+        "name": "Id",
+        "type": "Guid",
+        "isNavigation": false
+      },
+      {
+        "name": "Id",
+        "type": "Guid",
+        "isNavigation": false
+      }
+    ]
+  },
+  "GioHang": {
+    "className": "GioHang",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "IdNguoiDung",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdGioHangChiTiet",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "GioHangChiTiet": {
+    "className": "GioHangChiTiet",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "DaChon",
+        "type": "bool?",
+        "isNavigation": false
+      },
+      {
+        "name": "DaMua",
+        "type": "bool?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThoiGianThem",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdKhoaHoc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "HoiDap": {
+    "className": "HoiDap",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "NoiDung",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdNguoiDung",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdKhoaHoc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "KetQuaBaiThi": {
+    "className": "KetQuaBaiThi",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "Diem",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoCauDung",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayBatDau",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayNop",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "KhoaHoc": {
+    "className": "KhoaHoc",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TieuDe",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "MoTa",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "Gia",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "GiaGoc",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "LoaiKhoaHoc",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "HinhAnhKhoaHoc",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "URLViewPreviewKhoaHoc",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CapDo",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "TongThoiLuong",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "TongBaiGiang",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayCapNhat",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoLuongHocVien",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThaiPheDuyet",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "KhuyenMai": {
+    "className": "KhuyenMai",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "MaGiamGia",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "PhanTramGiam",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayBatDau",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayKetThuc",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoLuongHieuLuc",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "KhuyenMai_KhoaHoc": {
+    "className": "KhuyenMai_KhoaHoc",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "IdKhuyenMai",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdKhoaHoc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "LanLamBaiKiemTra": {
+    "className": "LanLamBaiKiemTra",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "ThoiGianBatDau",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThoiGianNop",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "Dat",
+        "type": "bool?",
+        "isNavigation": false
+      },
+      {
+        "name": "LamLanThu",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdBaiKiemTra",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdNguoiDung",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "LienKet": {
+    "className": "LienKet",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "LoaiLienKet",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "URL",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "LoaiThongBao": {
+    "className": "LoaiThongBao",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "NganHang": {
+    "className": "NganHang",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TenTaiKhoan",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoTaiKhoan",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "Phan": {
+    "className": "Phan",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TenPhan",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "MieuTa",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThuTuSapXep",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdKhoaHoc",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "RefreshToken": {
+    "className": "RefreshToken",
+    "baseClass": null,
+    "properties": [
+      {
+        "name": "IDRefreshToken",
+        "type": "int",
+        "isNavigation": false
+      },
+      {
+        "name": "Token",
+        "type": "string",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayHetHan",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "DaBiThuHoi",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "IDTaiKhoan",
+        "type": "int",
+        "isNavigation": false
+      },
+      {
+        "name": "AppUserId",
+        "type": "Guid",
+        "isNavigation": false
+      },
+      {
+        "name": "AppUser",
+        "type": "AppUser",
+        "isNavigation": true
+      }
+    ]
+  },
+  "Role": {
+    "className": "Role",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "Name",
+        "type": "string",
+        "isNavigation": false
+      },
+      {
+        "name": "Code",
+        "type": "string",
+        "isNavigation": false
+      },
+      {
+        "name": "Type",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsActive",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "TaiLieu": {
+    "className": "TaiLieu",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "LoaiTaiLieu",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "TenTaiLieu",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "URL",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdBaiGiang",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "ThanhToan": {
+    "className": "ThanhToan",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "MaGiaoDich",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "SoTien",
+        "type": "double?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThaiThanhToan",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NgayThanhToan",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "PhatSinhLoi",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdDonHang",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdNganHangs",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "ThongBao": {
+    "className": "ThongBao",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "TieuDe",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "NoiDung",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "DaDoc",
+        "type": "bool?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThoiGianDoc",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThoiGianTao",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "LoaiThongBao",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "TienDoHocTap": {
+    "className": "TienDoHocTap",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "ThoiGianXem",
+        "type": "int?",
+        "isNavigation": false
+      },
+      {
+        "name": "LanCuoiXem",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "ThoiGianHoanThanh",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "TrangThai",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdCauHoi",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdDangKi",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IdBaiGiang",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "UserRole": {
+    "className": "UserRole",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "UserId",
+        "type": "Guid",
+        "isNavigation": false
+      },
+      {
+        "name": "RoleId",
+        "type": "Guid",
+        "isNavigation": false
+      },
+      {
+        "name": "DepartmentId",
+        "type": "Guid",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  },
+  "VaiTro_NguoiDung": {
+    "className": "VaiTro_NguoiDung",
+    "baseClass": "AuditableEntity",
+    "properties": [
+      {
+        "name": "ThoiGianThemVaiTro",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "CreatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedDate",
+        "type": "DateTime",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedBy",
+        "type": "string?",
+        "isNavigation": false
+      },
+      {
+        "name": "UpdatedId",
+        "type": "Guid?",
+        "isNavigation": false
+      },
+      {
+        "name": "IsDeleted",
+        "type": "bool",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedDate",
+        "type": "DateTime?",
+        "isNavigation": false
+      },
+      {
+        "name": "DeletedId",
+        "type": "Guid?",
+        "isNavigation": false
+      }
+    ]
+  }
+}

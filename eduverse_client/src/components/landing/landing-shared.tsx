@@ -208,7 +208,7 @@ export function SectionHeading({
   align?: 'left' | 'center';
 }) {
   return (
-    <Box sx={{ textAlign: align, maxWidth: align === 'center' ? 760 : 640 }}>
+    <Box sx={{ textAlign: align, maxWidth: align === 'center' ? 760 : 640, mx: align === 'center' ? 'auto' : undefined }}>
       {eyebrow ? (
         <Typography
           sx={{

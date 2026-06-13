@@ -10,12 +10,14 @@
     "prepare": "cd .. && husky eduverse_client/.husky"
   },
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.2.10",
     "@microsoft/signalr": "^10.0.0",
     "@mui/icons-material": "^9.0.1",
     "@mui/material": "^9.0.1",
+    "@mui/material-nextjs": "^9.1.1",
     "@reduxjs/toolkit": "^2.12.0",
     "axios": "^1.16.0",
     "cloudinary": "^2.10.0",
