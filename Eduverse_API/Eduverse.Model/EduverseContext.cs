@@ -1,9 +1,10 @@
-﻿using System.Security.Claims;
-using Eduverse.Model.Entities;
+﻿using Eduverse.Model.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
+using System.Security.Claims;
 
 namespace Eduverse.Model
 {
@@ -31,6 +32,7 @@ namespace Eduverse.Model
         public DbSet<DanhMuc> danhMucs { get; set; }
         public DbSet<DanhMuc_KhoaHoc> danhMuc_KhoaHocs { get; set; }
         public DbSet<DanhSachYeuThich> danhSachYeuThiches { get; set; }
+        public DbSet<DanhSachMuonMuaSau> danhSachMuonMuaSaus { get; set; }
         public DbSet<DapAn> dapAns { get; set; }
         public DbSet<DapAn_NguoiDung> dapAn_NguoiDungs { get; set; }
         public DbSet<DonHang> donHangs { get; set; }
@@ -39,7 +41,6 @@ namespace Eduverse.Model
         public DbSet<GioHangChiTiet> gioHangChiTiets { get; set; }
         public DbSet<HoiDap> hoiDaps { get; set; }
         public DbSet<KetQuaBaiThi> ketQuaBaiThis { get; set; }
-        public DbSet<KhoaHoc> khoaHocs   { get; set; }
         public DbSet<KhuyenMai> khuyenMais { get; set; }
         public DbSet<KhuyenMai_KhoaHoc> khuyenMai_KhoaHocs   { get; set; }
         public DbSet<LanLamBaiKiemTra> lanLamBaiKiemTras { get; set; }
@@ -82,6 +83,20 @@ namespace Eduverse.Model
             );
 
             base.OnModelCreating(builder);
+
+            builder.Entity<DonHangChiTiet>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.HasOne<DonHang>()
+                      .WithMany(x => x.DonHangChiTiets)
+                      .HasForeignKey(x => x.IdDonHang);
+
+                entity.HasOne<KhoaHoc>()
+                      .WithMany()
+                      .HasForeignKey(x => x.IdKhoaHoc);
+            });
+
         }
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
