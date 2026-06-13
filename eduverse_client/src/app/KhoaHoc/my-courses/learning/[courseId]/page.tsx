@@ -637,6 +637,7 @@ const VideoPlayer = ({
   const playerRef = useRef<any>(null);
   const initialTimeSetRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -672,21 +673,21 @@ const VideoPlayer = ({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const iv = (timeoutRef as React.MutableRefObject<any>)._interval;
-    if (iv) {
-      clearInterval(iv);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
   }, []);
 
   const startLoadTimeout = useCallback(() => {
     clearAllTimers();
     setLoadElapsed(0);
-    const intervalId = setInterval(() => setLoadElapsed((e) => e + 1), 1000);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (timeoutRef as React.MutableRefObject<any>)._interval = intervalId;
+    intervalRef.current = setInterval(() => setLoadElapsed((e) => e + 1), 1000);
     timeoutRef.current = setTimeout(() => {
-      clearInterval(intervalId);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       setLoadTimedOut(true);
       setIsLoading(false);
     }, LOAD_TIMEOUT_MS);
