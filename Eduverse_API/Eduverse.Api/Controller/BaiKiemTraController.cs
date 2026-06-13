@@ -59,7 +59,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpDelete("baikiemtra/{Id}")]
-        public async Task<DataResponse<bool>> DeleteBaiKiemTra([FromBody] Guid Id)
+        public async Task<DataResponse<bool>> DeleteBaiKiemTra( Guid Id)
         {
             try
             {

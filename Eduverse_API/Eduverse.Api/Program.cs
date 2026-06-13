@@ -147,12 +147,12 @@ namespace Eduverse.Api
             {
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
+                    Description = "JWT Authorization using the Bearer scheme. Example: Bearer {token}",
                     Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Nhập: Bearer {token}"
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
                 });
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
@@ -177,6 +177,8 @@ namespace Eduverse.Api
                           .AllowAnyMethod()
                           .AllowCredentials()); 
             });
+
+
 
             // Add services to the container.
 

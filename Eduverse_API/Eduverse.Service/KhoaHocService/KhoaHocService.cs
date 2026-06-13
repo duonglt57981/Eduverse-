@@ -91,6 +91,7 @@ namespace Eduverse.Service.KhoaHocService
         }
 
 
+
         #region GetListKhoaHoc
         public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search,Guid userId)
         {
@@ -207,6 +208,7 @@ namespace Eduverse.Service.KhoaHocService
             return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
         }
         #endregion
+
 
 
         #region GetListDangKi
@@ -348,6 +350,7 @@ namespace Eduverse.Service.KhoaHocService
                 totalCount);
         }
         #endregion 
+
 
 
         //#region getLearning Realtime
@@ -796,6 +799,7 @@ namespace Eduverse.Service.KhoaHocService
         //#endregion
 
 
+
         #region GetLearning with Cache & Realtime
 
         #region Cache Keys
@@ -1130,7 +1134,7 @@ namespace Eduverse.Service.KhoaHocService
         /// Gọi khi user xem hết / đánh dấu hoàn thành 1 bài giảng.
         /// Trả về % mới để FE update progress bar ngay, không cần gọi lại GetLearning.
         /// </summary>
-        public async Task<double> HoanThanhBaiGiang(Guid? idDangKy, Guid? idBaiGiang, int thoiGianXem)
+        public async Task<double> HoanThanhBaiGiang(Guid? idDangKy,Guid? idBaiGiang,int thoiGianXem)
         {
             var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
                 .Where(x => x.Id == idDangKy && !x.IsDeleted)
@@ -1139,8 +1143,27 @@ namespace Eduverse.Service.KhoaHocService
             if (dangKy == null)
                 throw new Exception("Bạn chưa đăng ký khóa học này");
 
+            var baiGiang = await _baiGiangService.GetQueryable()
+                .Where(x => x.Id == idBaiGiang && !x.IsDeleted)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.ThoiLuong
+                })
+                .FirstOrDefaultAsync();
+
+            if (baiGiang == null)
+                throw new Exception("Không tìm thấy bài giảng");
+
+            // Hoàn thành khi còn <= 20 giây cuối
+            bool daHoanThanh =
+                baiGiang.ThoiLuong.HasValue &&
+                thoiGianXem >= Math.Max(0, baiGiang.ThoiLuong.Value - 20);
+
             var tienDo = await _tienDoHocTapService.GetQueryable()
-                .Where(x => x.IdDangKi == idDangKy && x.IdBaiGiang == idBaiGiang && !x.IsDeleted)
+                .Where(x => x.IdDangKi == idDangKy
+                         && x.IdBaiGiang == idBaiGiang
+                         && !x.IsDeleted)
                 .FirstOrDefaultAsync();
 
             if (tienDo == null)
@@ -1151,26 +1174,24 @@ namespace Eduverse.Service.KhoaHocService
                     IdDangKi = idDangKy,
                     IdBaiGiang = idBaiGiang,
                     ThoiGianXem = thoiGianXem,
-                    TrangThai = "HoanThanh"
+                    TrangThai = daHoanThanh ? "HoanThanh" : "DangHoc"
                 };
+
                 await _tienDoHocTapService.CreateAsync(tienDo);
             }
             else
             {
                 tienDo.ThoiGianXem = thoiGianXem;
-                tienDo.TrangThai = "HoanThanh";
+
+                if (daHoanThanh)
+                    tienDo.TrangThai = "HoanThanh";
+
                 await _tienDoHocTapService.UpdateAsync(tienDo);
             }
 
             await _tienDoHocTapService.SaveAsync();
 
-            // ⚡ REAL-TIME: Tính lại % mới nhất
-            var phanTramMoi = await TinhPhanTramHoanThanh(idDangKy);
-
-            // 🔄 Không cần xóa cache dữ liệu tĩnh vì bài giảng không thay đổi
-            // Chỉ có tiến độ thay đổi - đã được query real-time ở trên
-
-            return phanTramMoi;
+            return await TinhPhanTramHoanThanh(idDangKy);
         }
         #endregion
 
@@ -1356,6 +1377,7 @@ namespace Eduverse.Service.KhoaHocService
         #endregion
 
 
+
         #region CreateKhoaHoc
         public async Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request)
         {
@@ -1420,6 +1442,7 @@ namespace Eduverse.Service.KhoaHocService
             return KhoaHocDto;
         }
         #endregion
+
 
 
         #region  UpdateKhoaHoc
@@ -1519,6 +1542,7 @@ namespace Eduverse.Service.KhoaHocService
             return _mapper.Map<KhoaHoc, KhoaHocDto>(entity);
         }
         #endregion
+
 
 
         public async Task<bool> DeleteKhoaHoc(Guid id)

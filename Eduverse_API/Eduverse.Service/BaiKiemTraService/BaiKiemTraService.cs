@@ -269,223 +269,225 @@ namespace Eduverse.Service.BaiKiemTraService
         /// Nộp bài kiểm tra (có thể do người dùng chủ động nộp hoặc hết thời gian tự động nộp)
         /// Hỗ trợ câu hỏi nhiều đáp án đúng: điểm mỗi đáp án đúng = điểm_câu / số_đáp_án_đúng, không trừ điểm sai
         /// </summary>
-        public async Task<KetQuaLanKiemTraDto> SubmitQuiz(SubmitQizRequest request)
-        {
-            // 1. Lấy thông tin lần làm bài
-            var lanLam = await _lanLamBaiKiemTraService
-                .GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == request.IdLanLamBaiKiemTra && !x.IsDeleted);
-            if (lanLam == null)
-                throw new Exception("Không tìm thấy lần làm bài.");
-
-            var baiKiemTra = await GetByIdOrThrowAsync(lanLam.IdBaiKiemTra.Value);
-
-            // 2. Kiểm tra hết thời gian
-            bool hetThoiGian = false;
-            if (baiKiemTra.GioiHanThoiGian.HasValue && baiKiemTra.GioiHanThoiGian.Value > 0)
+            public async Task<KetQuaLanKiemTraDto> SubmitQuiz(SubmitQizRequest request)
             {
-                var thoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0);
-                if (lanLam.ThoiGianTiepTuc.HasValue)
-                    thoiGianDaLam += (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
+                // 1. Lấy thông tin lần làm bài
+                var lanLam = await _lanLamBaiKiemTraService
+                    .GetQueryable()
+                    .FirstOrDefaultAsync(x => x.Id == request.IdLanLamBaiKiemTra && !x.IsDeleted);
+                if (lanLam == null)
+                    throw new Exception("Không tìm thấy lần làm bài.");
 
-                if (thoiGianDaLam > baiKiemTra.GioiHanThoiGian.Value)
-                    hetThoiGian = true;
-            }
+                var baiKiemTra = await GetByIdOrThrowAsync(lanLam.IdBaiKiemTra.Value);
 
-            // 3. Lấy danh sách câu trả lời (chuyển thành kiểu trung gian)
-            List<CauTraLoiSubmitDto> cauTraLois = new List<CauTraLoiSubmitDto>();
+                // 2. Kiểm tra hết thời gian
+                bool hetThoiGian = false;
+                if (baiKiemTra.GioiHanThoiGian.HasValue && baiKiemTra.GioiHanThoiGian.Value > 0)
+                {
+                    var thoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0);
+                    if (lanLam.ThoiGianTiepTuc.HasValue)
+                        thoiGianDaLam += (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
 
-            if (hetThoiGian)
-            {
-                var chiTietList = await _chiTietLamBaiKiemTraService
+                    if (thoiGianDaLam > baiKiemTra.GioiHanThoiGian.Value)
+                        hetThoiGian = true;
+                }
+
+                // 3. Lấy danh sách câu trả lời (chuyển thành kiểu trung gian)
+                List<CauTraLoiSubmitDto> cauTraLois = new List<CauTraLoiSubmitDto>();
+
+                if (hetThoiGian)
+                {
+                    var chiTietList = await _chiTietLamBaiKiemTraService
+                        .GetQueryable()
+                        .AsNoTracking()
+                        .Where(x => x.IdLanLamBaiKiemTra == lanLam.Id && !x.IsDeleted && x.IdCauHoi.HasValue)
+                        .ToListAsync();
+
+                    cauTraLois = chiTietList
+                        .GroupBy(x => x.IdCauHoi!.Value)
+                        .Select(g => new CauTraLoiSubmitDto
+                        {
+                            IdCauHoi = g.Key,
+                            IdDapAnChons = g.Where(x => x.IdDapAnChon.HasValue)
+                                             .Select(x => x.IdDapAnChon!.Value)
+                                             .ToList()
+                        })
+                        .ToList();
+                }
+                else
+                {
+                    // Chuyển từ CauTraLoiRequest sang CauTraLoiSubmitDto một cách tường minh
+                    if (request.CauTraLois != null)
+                    {
+                        cauTraLois = request.CauTraLois.Select(r => new CauTraLoiSubmitDto
+                        {
+                            IdCauHoi = r.IdCauHoi,
+                            IdDapAnChons = r.IdDapAnChons ?? new List<Guid>()
+                        }).ToList();
+                    }
+                }
+
+
+                // Nếu không có câu trả lời nào -> 0 điểm
+                if (!cauTraLois.Any())
+                {
+                    lanLam.ThoiGianNop = DateTime.Now;
+                    lanLam.Dat = false;
+                    lanLam.TongDiemLanKiemTra = 0;
+                    lanLam.TrangThai = "KhongDat";
+
+                    await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
+                    await _lanLamBaiKiemTraService.SaveAsync();
+
+                    return new KetQuaLanKiemTraDto
+                    {
+                        IdLanLamBaiKiemTra = lanLam.Id,
+                        DatYeuCau = false,
+                        TongDiem = 0,
+                        TongDiemToiDa = 100,
+                        SoCauDung = 0,
+                        TongSoCau = 0,
+                        ThoiGianBatDau = lanLam.ThoiGianBatDau,
+                        ThoiGianKetThuc = DateTime.UtcNow
+                    };
+                }
+
+
+                // 4. Lấy danh sách câu hỏi và đáp án liên quan
+                var cauHoiIds = cauTraLois.Select(x => x.IdCauHoi).Distinct().ToList();
+                var cauHois = await _cauHoiService
                     .GetQueryable()
                     .AsNoTracking()
-                    .Where(x => x.IdLanLamBaiKiemTra == lanLam.Id && !x.IsDeleted && x.IdCauHoi.HasValue)
+                    .Where(x => cauHoiIds.Contains(x.Id) && !x.IsDeleted)
                     .ToListAsync();
 
-                cauTraLois = chiTietList
-                    .GroupBy(x => x.IdCauHoi!.Value)
-                    .Select(g => new CauTraLoiSubmitDto
-                    {
-                        IdCauHoi = g.Key,
-                        IdDapAnChons = g.Where(x => x.IdDapAnChon.HasValue)
-                                         .Select(x => x.IdDapAnChon!.Value)
-                                         .ToList()
-                    })
-                    .ToList();
-            }
-            else
-            {
-                // Chuyển từ CauTraLoiRequest sang CauTraLoiSubmitDto một cách tường minh
-                if (request.CauTraLois != null)
-                {
-                    cauTraLois = request.CauTraLois.Select(r => new CauTraLoiSubmitDto
-                    {
-                        IdCauHoi = r.IdCauHoi,
-                        IdDapAnChons = r.IdDapAnChons ?? new List<Guid>()
-                    }).ToList();
-                }
-            }
+                var dapAns = await _dapAnService
+                    .GetQueryable()
+                    .AsNoTracking()
+                    .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value) && !x.IsDeleted)
+                    .ToListAsync();
 
-            // Nếu không có câu trả lời nào -> 0 điểm
-            if (!cauTraLois.Any())
-            {
+                var cauHoiLookup = cauHois.ToDictionary(x => x.Id);
+                var dapAnLookup = dapAns
+                    .GroupBy(x => x.IdCauHoi!.Value)
+                    .ToDictionary(x => x.Key, x => x.ToList());
+
+                // 5. Tính điểm theo trọng số độ khó (tổng 100)
+                var trongSoMap = new Dictionary<string, int> { { "De", 1 }, { "TrungBinh", 2 }, { "Kho", 3 } };
+                var tongTrongSo = cauHois.Sum(x => trongSoMap.GetValueOrDefault(x.DoKho ?? "De", 1));
+
+                var diemTheoCauHoi = new Dictionary<Guid, double>();
+                var nhomDoKho = cauHois
+                    .GroupBy(x => x.DoKho ?? "De")
+                    .ToDictionary(x => x.Key, x => x.ToList());
+
+                foreach (var nhom in nhomDoKho)
+                {
+                    var trongSo = trongSoMap.GetValueOrDefault(nhom.Key, 1);
+                    var soCau = nhom.Value.Count;
+                    var diemMoiCau = Math.Round((double)trongSo / tongTrongSo * 100 / soCau, 2);
+                    foreach (var ch in nhom.Value)
+                        diemTheoCauHoi[ch.Id] = diemMoiCau;
+                }
+
+                // Xử lý làm tròn
+                var tongDiemToiDaTinh = diemTheoCauHoi.Values.Sum();
+                var chenh = Math.Round(100 - tongDiemToiDaTinh, 2);
+                if (Math.Abs(chenh) > 0.01 && cauHois.Any())
+                {
+                    var cauCuoiId = cauHois.Last().Id;
+                    diemTheoCauHoi[cauCuoiId] = Math.Round(diemTheoCauHoi[cauCuoiId] + chenh, 2);
+                }
+
+                // 6. Chấm bài (multiple-correct, không trừ điểm)
+                double tongDiem = 0;
+                int soCauDung = 0;
+                var chiTietsMoi = new List<ChiTietLamBaiKiemTra>();
+
+                foreach (var traLoi in cauTraLois)
+                {
+                    if (!cauHoiLookup.TryGetValue(traLoi.IdCauHoi, out var cauHoi)) continue;
+                    if (!dapAnLookup.TryGetValue(traLoi.IdCauHoi, out var dapAnsCauHoi)) continue;
+
+                    var correctIds = dapAnsCauHoi
+                        .Where(x => x.LaDapAnDung == true)
+                        .Select(x => x.Id)
+                        .ToHashSet();
+
+                    var selectedIds = traLoi.IdDapAnChons.ToHashSet();
+                    var diemCauNay = diemTheoCauHoi.GetValueOrDefault(cauHoi.Id, 0);
+                    var soDapAnDung = correctIds.Count;
+
+                    if (soDapAnDung == 0) continue;
+
+                    var diemMoiDapAnDung = diemCauNay / soDapAnDung;
+                    var soDapAnDungChon = selectedIds.Intersect(correctIds).Count();
+                    var diemNhanDuoc = soDapAnDungChon * diemMoiDapAnDung;
+                    if (diemNhanDuoc < 0) diemNhanDuoc = 0;
+
+                    tongDiem += diemNhanDuoc;
+                    if (selectedIds.SetEquals(correctIds))
+                        soCauDung++;
+
+                    foreach (var dapAnId in selectedIds)
+                    {
+                        var existed = await _chiTietLamBaiKiemTraService
+                            .GetQueryable()
+                            .AnyAsync(x => x.IdLanLamBaiKiemTra == lanLam.Id
+                                        && x.IdCauHoi == cauHoi.Id
+                                        && x.IdDapAnChon == dapAnId);
+                        if (!existed)
+                        {
+                            chiTietsMoi.Add(new ChiTietLamBaiKiemTra
+                            {
+                                Id = Guid.NewGuid(),
+                                IdLanLamBaiKiemTra = lanLam.Id,
+                                IdCauHoi = cauHoi.Id,
+                                IdDapAnChon = dapAnId,
+                                LaDung = correctIds.Contains(dapAnId),
+                                DiemNhanDuoc = correctIds.Contains(dapAnId) ? diemMoiDapAnDung : 0
+                            });
+                        }
+                    }
+                }
+
+                // 7. Cập nhật lần làm bài
+                tongDiem = Math.Round(tongDiem, 2);
+                var datYeuCau = tongDiem >= (baiKiemTra.DiemDat ?? 0);
+
                 lanLam.ThoiGianNop = DateTime.Now;
-                lanLam.Dat = false;
-                lanLam.TongDiemLanKiemTra = 0;
-                lanLam.TrangThai = "KhongDat";
+                lanLam.Dat = datYeuCau;
+                lanLam.TongDiemLanKiemTra = tongDiem;
+                lanLam.TrangThai = datYeuCau ? "Dat" : "KhongDat";
+
+                if (lanLam.ThoiGianTiepTuc.HasValue)
+                {
+                    var thoiGianVuaLam = (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
+                    lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + thoiGianVuaLam;
+                    lanLam.ThoiGianTiepTuc = null;
+                }
 
                 await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
-                await _lanLamBaiKiemTraService.SaveAsync();
 
+
+                // 9. Lưu chi tiết mới
+                foreach (var ct in chiTietsMoi)
+                    await _chiTietLamBaiKiemTraService.CreateAsync(ct);
+                await _chiTietLamBaiKiemTraService.SaveAsync();
+
+                // 10. Trả về kết quả
                 return new KetQuaLanKiemTraDto
                 {
                     IdLanLamBaiKiemTra = lanLam.Id,
-                    DatYeuCau = false,
-                    TongDiem = 0,
+                    DatYeuCau = datYeuCau,
+                    TongDiem = tongDiem,
                     TongDiemToiDa = 100,
-                    SoCauDung = 0,
-                    TongSoCau = 0,
+                    SoCauDung = soCauDung,
+                    TongSoCau = cauHois.Count,
                     ThoiGianBatDau = lanLam.ThoiGianBatDau,
                     ThoiGianKetThuc = DateTime.UtcNow
                 };
             }
-
-            // 4. Lấy danh sách câu hỏi và đáp án liên quan
-            var cauHoiIds = cauTraLois.Select(x => x.IdCauHoi).Distinct().ToList();
-            var cauHois = await _cauHoiService
-                .GetQueryable()
-                .AsNoTracking()
-                .Where(x => cauHoiIds.Contains(x.Id) && !x.IsDeleted)
-                .ToListAsync();
-
-            var dapAns = await _dapAnService
-                .GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value) && !x.IsDeleted)
-                .ToListAsync();
-
-            var cauHoiLookup = cauHois.ToDictionary(x => x.Id);
-            var dapAnLookup = dapAns
-                .GroupBy(x => x.IdCauHoi!.Value)
-                .ToDictionary(x => x.Key, x => x.ToList());
-
-            // 5. Tính điểm theo trọng số độ khó (tổng 100)
-            var trongSoMap = new Dictionary<string, int> { { "De", 1 }, { "TrungBinh", 2 }, { "Kho", 3 } };
-            var tongTrongSo = cauHois.Sum(x => trongSoMap.GetValueOrDefault(x.DoKho ?? "De", 1));
-
-            var diemTheoCauHoi = new Dictionary<Guid, double>();
-            var nhomDoKho = cauHois
-                .GroupBy(x => x.DoKho ?? "De")
-                .ToDictionary(x => x.Key, x => x.ToList());
-
-            foreach (var nhom in nhomDoKho)
-            {
-                var trongSo = trongSoMap.GetValueOrDefault(nhom.Key, 1);
-                var soCau = nhom.Value.Count;
-                var diemMoiCau = Math.Round((double)trongSo / tongTrongSo * 100 / soCau, 2);
-                foreach (var ch in nhom.Value)
-                    diemTheoCauHoi[ch.Id] = diemMoiCau;
-            }
-
-            // Xử lý làm tròn
-            var tongDiemToiDaTinh = diemTheoCauHoi.Values.Sum();
-            var chenh = Math.Round(100 - tongDiemToiDaTinh, 2);
-            if (Math.Abs(chenh) > 0.01 && cauHois.Any())
-            {
-                var cauCuoiId = cauHois.Last().Id;
-                diemTheoCauHoi[cauCuoiId] = Math.Round(diemTheoCauHoi[cauCuoiId] + chenh, 2);
-            }
-
-            // 6. Chấm bài (multiple-correct, không trừ điểm)
-            double tongDiem = 0;
-            int soCauDung = 0;
-            var chiTietsMoi = new List<ChiTietLamBaiKiemTra>();
-
-            foreach (var traLoi in cauTraLois)
-            {
-                if (!cauHoiLookup.TryGetValue(traLoi.IdCauHoi, out var cauHoi)) continue;
-                if (!dapAnLookup.TryGetValue(traLoi.IdCauHoi, out var dapAnsCauHoi)) continue;
-
-                var correctIds = dapAnsCauHoi
-                    .Where(x => x.LaDapAnDung == true)
-                    .Select(x => x.Id)
-                    .ToHashSet();
-
-                var selectedIds = traLoi.IdDapAnChons.ToHashSet();
-                var diemCauNay = diemTheoCauHoi.GetValueOrDefault(cauHoi.Id, 0);
-                var soDapAnDung = correctIds.Count;
-
-                if (soDapAnDung == 0) continue;
-
-                var diemMoiDapAnDung = diemCauNay / soDapAnDung;
-                var soDapAnDungChon = selectedIds.Intersect(correctIds).Count();
-                var diemNhanDuoc = soDapAnDungChon * diemMoiDapAnDung;
-                if (diemNhanDuoc < 0) diemNhanDuoc = 0;
-
-                tongDiem += diemNhanDuoc;
-                if (selectedIds.SetEquals(correctIds))
-                    soCauDung++;
-
-                foreach (var dapAnId in selectedIds)
-                {
-                    var existed = await _chiTietLamBaiKiemTraService
-                        .GetQueryable()
-                        .AnyAsync(x => x.IdLanLamBaiKiemTra == lanLam.Id
-                                    && x.IdCauHoi == cauHoi.Id
-                                    && x.IdDapAnChon == dapAnId);
-                    if (!existed)
-                    {
-                        chiTietsMoi.Add(new ChiTietLamBaiKiemTra
-                        {
-                            Id = Guid.NewGuid(),
-                            IdLanLamBaiKiemTra = lanLam.Id,
-                            IdCauHoi = cauHoi.Id,
-                            IdDapAnChon = dapAnId,
-                            LaDung = correctIds.Contains(dapAnId),
-                            DiemNhanDuoc = correctIds.Contains(dapAnId) ? diemMoiDapAnDung : 0
-                        });
-                    }
-                }
-            }
-
-            // 7. Cập nhật lần làm bài
-            tongDiem = Math.Round(tongDiem, 2);
-            var datYeuCau = tongDiem >= (baiKiemTra.DiemDat ?? 0);
-
-            lanLam.ThoiGianNop = DateTime.Now;
-            lanLam.Dat = datYeuCau;
-            lanLam.TongDiemLanKiemTra = tongDiem;
-            lanLam.TrangThai = datYeuCau ? "Dat" : "KhongDat";
-
-            if (lanLam.ThoiGianTiepTuc.HasValue)
-            {
-                var thoiGianVuaLam = (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
-                lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + thoiGianVuaLam;
-                lanLam.ThoiGianTiepTuc = null;
-            }
-
-            await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
-
-
-            // 9. Lưu chi tiết mới
-            foreach (var ct in chiTietsMoi)
-                await _chiTietLamBaiKiemTraService.CreateAsync(ct);
-            await _chiTietLamBaiKiemTraService.SaveAsync();
-
-            // 10. Trả về kết quả
-            return new KetQuaLanKiemTraDto
-            {
-                IdLanLamBaiKiemTra = lanLam.Id,
-                DatYeuCau = datYeuCau,
-                TongDiem = tongDiem,
-                TongDiemToiDa = 100,
-                SoCauDung = soCauDung,
-                TongSoCau = cauHois.Count,
-                ThoiGianBatDau = lanLam.ThoiGianBatDau,
-                ThoiGianKetThuc = DateTime.UtcNow
-            };
-        }
 
 
         // Lấy kết quả bài thi
@@ -920,10 +922,17 @@ namespace Eduverse.Service.BaiKiemTraService
             // 4. Nếu đang tạm dừng, khôi phục thời gian tiếp tục
             if (!lanLam.ThoiGianTiepTuc.HasValue)
             {
-                lanLam.ThoiGianTiepTuc = DateTime.Now;
-                await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
-                await _lanLamBaiKiemTraService.SaveAsync();
+                var lastActive = lanLam.ThoiGianCapNhat ?? lanLam.ThoiGianTiepTuc.Value;
+                var elapsed = (lastActive - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
+                if (elapsed < 0) elapsed = 0;
+
+                lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + elapsed;
             }
+
+            // Reset mốc tiếp tục = bây giờ
+            lanLam.ThoiGianTiepTuc = DateTime.Now;
+            await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
+            await _lanLamBaiKiemTraService.SaveAsync();
 
             // 5. Lấy tất cả câu hỏi
             var allQuestions = await _cauHoiService
@@ -1018,18 +1027,23 @@ namespace Eduverse.Service.BaiKiemTraService
         {
             if (gioiHanThoiGian <= 0) return 0;
 
-            // Nếu đang làm (có thời gian tiếp tục)
+            double thoiGianDaLam = lanLam.TongThoiGianDaLam ?? 0;
+
             if (lanLam.ThoiGianTiepTuc.HasValue)
             {
-                var thoiGianDaLamDenHienTai = (lanLam.TongThoiGianDaLam ?? 0) +
-                                               (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
-                return Math.Max(0, gioiHanThoiGian - thoiGianDaLamDenHienTai);
+                // Mốc hoạt động cuối cùng được ghi nhận (lần AutoSave gần nhất)
+                // Nếu chưa autosave lần nào, dùng chính ThoiGianTiepTuc (elapsed = 0)
+                var lastActive = lanLam.ThoiGianCapNhat ?? lanLam.ThoiGianTiepTuc.Value;
+
+                // Chỉ tính thời gian THỰC SỰ ĐANG LÀM (đến lần hoạt động cuối),
+                // không tính khoảng "im lặng" do mất điện/đóng tab đột ngột
+                var elapsed = (lastActive - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
+                if (elapsed < 0) elapsed = 0;
+
+                thoiGianDaLam += elapsed;
             }
-            // Nếu đang tạm dừng
-            else
-            {
-                return Math.Max(0, gioiHanThoiGian - (lanLam.TongThoiGianDaLam ?? 0));
-            }
+
+            return Math.Max(0, gioiHanThoiGian - thoiGianDaLam);
         }
         #endregion
     }
