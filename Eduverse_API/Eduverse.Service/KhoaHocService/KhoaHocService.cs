@@ -10,12 +10,14 @@ using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.BaiKiemTraService;
 using Eduverse.Service.BaiKiemTraService.Dto;
+using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.DangKyKhoaHocService;
 using Eduverse.Service.DanhMuc_KhoaHocService;
 using Eduverse.Service.DanhMuc_KhoaHocService.Dto;
+using Eduverse.Service.DapAnService.Dto;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService;
@@ -1369,8 +1371,8 @@ namespace Eduverse.Service.KhoaHocService
             if (request.GiaGoc < request.Gia)
                 throw new Exception("Giá gốc phải lớn hơn hoặc bằng giá");
 
-            if (request.Img == null)
-                throw new Exception("Vui lòng chọn ảnh cho khóa học");
+            //if (request.Img == null)
+            //    throw new Exception("Vui lòng chọn ảnh cho khóa học");    
 
             var danhMucIds = request.DanhSachDanhMuc.Distinct().ToList();
 
@@ -1404,7 +1406,7 @@ namespace Eduverse.Service.KhoaHocService
             await CreateAsync(khoaHoc);
             await SaveAsync();
 
-            var khoaHocDanhMucs = danhMucIds.Select(id => new DanhMuc_KhoaHocDto
+            var khoaHocDanhMucs = danhMucIds.Select(id => new DanhMuc_KhoaHoc
             {
                 IdKhoaHoc = khoaHoc.Id,
                 IdDanhMuc = id
@@ -1413,7 +1415,9 @@ namespace Eduverse.Service.KhoaHocService
             await _danhMuc_KhoaHocService.CreateRange(khoaHocDanhMucs);
             await _danhMuc_KhoaHocService.SaveAsync();
 
-            return _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
+            var KhoaHocDto = _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
+            KhoaHocDto.DanhMucs = _mapper.MapToList<DanhMuc_KhoaHoc, DanhMuc_KhoaHocDto>(khoaHocDanhMucs);
+            return KhoaHocDto;
         }
         #endregion
 

@@ -4,6 +4,7 @@ using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Eduverse.Api.Controller
 {
@@ -17,6 +18,7 @@ namespace Eduverse.Api.Controller
         {
             _khoaHocService = khoaHocService;
         }
+
 
         [HttpGet("khoahoc/{userId}")]
         public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList(
@@ -33,6 +35,7 @@ namespace Eduverse.Api.Controller
                 return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
             }
         }
+
 
         [HttpGet("khoahoc-dangki/{userId}")]
         public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListDangKi(
@@ -55,6 +58,7 @@ namespace Eduverse.Api.Controller
             }
         }
 
+
         [HttpGet("learning/{idDangKy}")]
         public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)
         {
@@ -69,8 +73,10 @@ namespace Eduverse.Api.Controller
             }
         }
 
-        [HttpPost("khoahoc")]
+
+        [HttpPost("khoahoc")]   
         [Consumes("multipart/form-data")]
+        [Authorize]
         public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc(
             [FromForm] CreateKhoaHocRequest request)
         {
@@ -84,6 +90,7 @@ namespace Eduverse.Api.Controller
                 return DataResponse<KhoaHocDto>.False(ex.Message);
             }
         }
+
 
         [HttpPut("khoahoc/{id}")]
         [Consumes("multipart/form-data")]
@@ -100,6 +107,7 @@ namespace Eduverse.Api.Controller
                 return DataResponse<KhoaHocDto>.False(ex.Message);
             }
         }
+
 
         [HttpDelete("khoahoc/{id}")]
         public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)

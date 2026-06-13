@@ -1,6 +1,9 @@
 ﻿using Eduverse.Service.BaiKiemTraService;
 using Eduverse.Service.BaiKiemTraService.Dto;
 using Eduverse.Service.BaiKiemTraService.Request;
+using Eduverse.Service.CauHoiService;
+using Eduverse.Service.CauHoiService.Dto;
+using Eduverse.Service.CauHoiService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService.Dto;
 using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -13,11 +16,14 @@ namespace Eduverse.Api.Controller
     public class BaiKiemTraController : ControllerBase
     {
         private readonly IBaiKiemTraService _baiKiemTraService;
+        private readonly ICauHoiService _cauHoiService;
 
         public BaiKiemTraController(
-            IBaiKiemTraService baiKiemTraService)
+            IBaiKiemTraService baiKiemTraService,
+            ICauHoiService cauHoiService)
         {
             _baiKiemTraService = baiKiemTraService;
+            _cauHoiService = cauHoiService;
         }
 
 
@@ -65,6 +71,22 @@ namespace Eduverse.Api.Controller
                 return DataResponse<bool>.False(ex.Message);
             }
         }
+
+
+        [HttpPost("CauHoi/create-cauhoi")]
+        public async Task<DataResponse<CreateCauHoiDto>> CreateCauHoi([FromBody] CreateCauHoiRequest request)
+        {
+            try
+            {
+                var result = await _cauHoiService.CreateQuestion(request);
+                return DataResponse<CreateCauHoiDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<CreateCauHoiDto>.False(ex.Message);
+            }
+        }
+
 
         /// <summary>
         /// Bắt đầu làm bài kiểm tra.
@@ -253,6 +275,8 @@ namespace Eduverse.Api.Controller
                 return DataResponse<ContinueQuizFullDto>.False(ex.Message);
             }
         }
+
+
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Eduverse.Model.Entities;
 using Eduverse.Service.BaiGiangService.Dto;
+using Eduverse.Service.DanhMuc_KhoaHocService.Dto;
 using Eduverse.Service.DanhMucService.Dto;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.TaiLieuService.Dto;
@@ -40,5 +41,6 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public double PhanTramHoanThanh { get; set; }
         //thêm list 
         public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
+        public List<DanhMuc_KhoaHocDto>? DanhMucs { get; set; }
     }
 }

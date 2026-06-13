@@ -9,11 +9,13 @@ namespace Eduverse.Service.CauHoiService.Request
 {
     public class CreateCauHoiRequest
     {
+        public Guid IdBaiKiemTra { get; set; }
         public Guid Id { get; set; }
-        public Guid idBaiKiemTra { get; set; }
         public string TenCauHoi { get; set; }
         public string? NoiDungCauHoi { get; set; }
         public double? Diem { get; set; }
+
+        public string? DoKho { get; set; }
 
         public List<DapAnRequest> DanhSachDapAns { get; set; }
     }

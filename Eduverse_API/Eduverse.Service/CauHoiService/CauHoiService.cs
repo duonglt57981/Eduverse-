@@ -1,12 +1,14 @@
 using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
+using Eduverse.Repository.BaiKiemTraRepository;
 using Eduverse.Repository.CauHoiRepository;
 using Eduverse.Repository.DapAnRepositoryRepository;
 using Eduverse.Service.BaiKiemTraService;
 using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.CauHoiService.Request;
 using Eduverse.Service.Common;
+using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.DapAnService;
 using Eduverse.Service.DapAnService.Dto;
 using Microsoft.EntityFrameworkCore;
@@ -14,36 +16,42 @@ namespace Eduverse.Service.CauHoiService
 {
     public class CauHoiService : Service<Model.Entities.CauHoi>, ICauHoiService
     {
+        private readonly IMapper _mapper;
         private readonly EduverseContext _context;
         private readonly IDapAnService _dapAnService;
+        private readonly IBaiKiemTraRepository _baiKiemTraRepository;
 
         public CauHoiService(
+            IMapper mapper,
             ICauHoiRepository repository,
             IDapAnService dapAnService,
+            IBaiKiemTraRepository baiKiemTraRepository,
             EduverseContext context) : base(repository)
         {
+            _mapper = mapper;
             _context = context;
             _dapAnService = dapAnService;
+            _baiKiemTraRepository = baiKiemTraRepository;
         }
 
 
-        public async Task<Guid> CreateQuestion(CreateCauHoiRequest request)
+        public async Task<CreateCauHoiDto> CreateQuestion(CreateCauHoiRequest request)
         {
-            var baiKiemTra = await GetByIdOrThrowAsync(request.idBaiKiemTra);
+            var baiKiemTra = await _baiKiemTraRepository.GetByIdAsync(request.IdBaiKiemTra);
+            if (baiKiemTra == null)
+                throw new Exception("Không tìm thấy bài kiểm tra");
 
-            if (request.DanhSachDapAns == null ||!request.DanhSachDapAns.Any())
-            {
-                throw new Exception(
-                    "Câu hỏi phải có ít nhất 1 đáp án.");   
-            }
+            if (request.DanhSachDapAns == null || !request.DanhSachDapAns.Any())
+                throw new Exception("Câu hỏi phải có ít nhất 1 đáp án.");
 
             if (!request.DanhSachDapAns.Any(x => x.LaDapAnDung))
-            {
-                throw new Exception(
-                    "Phải có ít nhất 1 đáp án đúng.");
-            }
+                throw new Exception("Phải có ít nhất 1 đáp án đúng.");
 
-            int ttsapxep = 0;
+            var maxThuTu = await GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdBaiKiemTra == request.IdBaiKiemTra && !x.IsDeleted)
+                .Select(x => (int?)x.ThuTuSapXep)
+                .MaxAsync() ?? -1;
 
             var cauHoi = new CauHoi
             {
@@ -51,9 +59,10 @@ namespace Eduverse.Service.CauHoiService
                 TenCauHoi = request.TenCauHoi,
                 NoiDungCauHoi = request.NoiDungCauHoi,
                 LoaiCauHoi = request.DanhSachDapAns.Count(x => x.LaDapAnDung) > 1 ? "multi" : "one",
-                Diem = request.Diem,
-                ThuTuSapXep = ttsapxep++,
-                IdBaiKiemTra = baiKiemTra.Id
+                ThuTuSapXep = maxThuTu + 1,
+                IdBaiKiemTra = baiKiemTra.Id,
+                DoKho = request.DoKho
+                
             };
 
             await CreateAsync(cauHoi);
@@ -75,7 +84,10 @@ namespace Eduverse.Service.CauHoiService
             await _dapAnService.CreateRange(dapAns);
             await _dapAnService.SaveAsync();
 
-            return cauHoi.Id;
+            var cauHoiDto = _mapper.Map<CauHoi, CreateCauHoiDto>(cauHoi);
+            cauHoiDto.DanhSachDapAns = _mapper.MapToList<DapAn, DapAnDto>(dapAns);
+
+            return cauHoiDto;
         }
 
 

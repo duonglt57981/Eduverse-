@@ -21,3 +21,4 @@ namespace Eduverse.Service.CauHoiService.Dto
         public bool DaTraLoi { get; set; }
     }
 }
+    
