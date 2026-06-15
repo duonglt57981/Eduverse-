@@ -1,28 +1,25 @@
+
+using System.Text;
+using CloudinaryDotNet;
 using CloudinaryDotNet;
 using Eduverse.Api.Hubs;
 using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
-using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
-using Eduverse.Service.CloudinaryService;
-using Eduverse.Service.CloudinaryService;
-using Eduverse.Service.CloudinaryService.Dto;
-using Eduverse.Service.CloudinaryService.Dto;
-using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
-using Eduverse.Service.EmailService;
-using Eduverse.Service.EmailService;
-using Eduverse.Service.ThanhToanService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using PayOS;
-using PayOS;
-using System.Text;
+using Eduverse.Service.EmailService;
+using Eduverse.Service.Common;
+using CloudinaryDotNet;
+using Eduverse.Service.CloudinaryService.Dto;
+using Eduverse.Service.CloudinaryService;
+using Eduverse.Repository.Common;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Eduverse.Api
 {
@@ -30,7 +27,6 @@ namespace Eduverse.Api
     {
         public static async Task Main(string[] args)
         {
-
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddScoped<DbContext, EduverseContext>();
             builder.Services.AddDbContext<EduverseContext>(op => op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -53,23 +49,26 @@ namespace Eduverse.Api
                 // Bắt buộc xác thực email
                 options.SignIn.RequireConfirmedEmail = false; // ← để false, check thủ công trong service
             }).AddEntityFrameworkStores<EduverseContext>().AddDefaultTokenProviders();
-
-
             // Đăng ký services
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IThanhToanService, ThanhToanService>();
-
-            // Đăng ký repositories
-
-
             builder.Services.AddDependencyInjection();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSignalR();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddAutoMapper(cfg =>
+            {
+                cfg.AddMaps(typeof(KhoaHoc).Assembly);
+            });
 
+
+            //Đăng ký MemoryCache
+            builder.Services.AddMemoryCache();
+
+
+            // Cloudinary
             var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
-
             builder.Services.Configure<CloudinarySettings>(cloudinarySettings);
 
             var account = new Account(
@@ -79,10 +78,35 @@ namespace Eduverse.Api
             );
 
             var cloudinary = new Cloudinary(account);
+            cloudinary.Api.Timeout = (int)TimeSpan.FromMinutes(30).TotalMilliseconds;
+
+            var httpClient = new HttpClient
+            {
+                Timeout = TimeSpan.FromMinutes(30)
+            };
+            cloudinary.Api.Client = httpClient;
 
             builder.Services.AddSingleton(cloudinary);
             builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-            
+
+            // Form options
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024;
+                options.ValueLengthLimit = int.MaxValue;
+                options.MultipartHeadersLengthLimit = int.MaxValue;
+                options.BufferBodyLengthLimit = 2L * 1024 * 1024 * 1024;
+            });
+
+            // Kestrel
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 2L * 1024 * 1024 * 1024;
+                options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(30);
+                options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(30);
+            });
+
+
             // JWT
             builder.Services.AddAuthentication(options =>
             {
@@ -125,12 +149,12 @@ namespace Eduverse.Api
             {
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
+                    Description = "JWT Authorization using the Bearer scheme. Example: Bearer {token}",
                     Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Nhập: Bearer {token}"
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
                 });
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
@@ -156,16 +180,7 @@ namespace Eduverse.Api
                           .AllowCredentials()); 
             });
 
-            // PayOS
-            builder.Services.AddSingleton<PayOSClient>(sp =>
-            {
-                var config = sp.GetRequiredService<IConfiguration>();
-                return new PayOSClient(
-                    config["PayOS:ClientId"]!,
-                    config["PayOS:ApiKey"]!,
-                    config["PayOS:ChecksumKey"]!
-                );
-            });
+
 
             // Add services to the container.
 
@@ -176,7 +191,8 @@ namespace Eduverse.Api
             });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -258,9 +274,8 @@ namespace Eduverse.Api
                 var impl = serviceTypes.FirstOrDefault(c => c.IsClass && intf.Name.Substring(1) == c.Name);
                 if (impl != null) services.AddScoped(intf, impl);
             }
-
-
         }
+
     }
 
 

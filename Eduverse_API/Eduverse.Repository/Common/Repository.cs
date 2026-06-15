@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.Common;
+using Eduverse.Model;
 
 namespace Eduverse.Repository.Common
 {
@@ -10,7 +11,7 @@ namespace Eduverse.Repository.Common
         protected DbContext _entities;
         protected readonly DbSet<T> _dbset;
 
-        public Repository(DbContext context)
+        public Repository(EduverseContext context)
         {
             _entities = context;
             _dbset = context.Set<T>();

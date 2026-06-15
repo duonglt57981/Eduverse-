@@ -20,7 +20,7 @@ namespace Eduverse.Model
         public DbSet<AppRole> AppRoles { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
-        public DbSet<KhoaHoc> KhoaHocs { get; set; }
+        //public DbSet<KhoaHoc> KhoaHocs { get; set; } trùng
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<BaiGiang> baiGiangs { get; set; }
         public DbSet<BaiKiemTra> baiKiemTras { get; set; }
@@ -57,6 +57,9 @@ namespace Eduverse.Model
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<KhoaHoc>()
+       .ToTable("KhoaHocs");
+
             builder.Entity<RefreshToken>(entity =>
             {
                 entity.HasKey(r => r.IDRefreshToken);

@@ -1,3 +1,4 @@
+using Eduverse.Model;
 using Eduverse.Repository.Common;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -10,7 +11,7 @@ namespace Eduverse.Repository.BaiKiemTraRepository
 {
     public class BaiKiemTraRepository : Repository<Model.Entities.BaiKiemTra>, IBaiKiemTraRepository
     {
-        public BaiKiemTraRepository(DbContext context) : base(context)
+        public BaiKiemTraRepository(EduverseContext context) : base(context)
         {
         }
     }

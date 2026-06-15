@@ -214,13 +214,19 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdPhan")
+                    b.Property<Guid?>("IdBaiGiangMoi")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdPhan")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("IdVideoBaiGiang")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPendingSwap")
                         .HasColumnType("bit");
 
                     b.Property<bool?>("LaBaiGiangFree")
@@ -350,14 +356,17 @@ namespace Eduverse.Model.Migrations
                     b.Property<double?>("Diem")
                         .HasColumnType("float");
 
+                    b.Property<string>("DoKho")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("IdBaiKiemTra")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("LoaiCauHoi")
-                        .HasColumnType("int");
+                    b.Property<string>("LoaiCauHoi")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NoiDungCauHoi")
                         .HasColumnType("nvarchar(max)");
@@ -536,6 +545,9 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("IdNguoiDangKi")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool?>("IsDangKy")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -674,10 +686,10 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdDanhMuc")
+                    b.Property<Guid>("IdDanhMuc")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdKhoaHoc")
+                    b.Property<Guid>("IdKhoaHoc")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -1400,8 +1412,26 @@ namespace Eduverse.Model.Migrations
                     b.Property<DateTime?>("ThoiGianBatDau")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ThoiGianCapNhat")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("ThoiGianNop")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianTamDung")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianTiepTuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("TongDiemLanKiemTra")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("TongThoiGianDaLam")
+                        .HasColumnType("float");
+
+                    b.Property<string>("TrangThai")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -1718,7 +1748,7 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdBaiGiang")
+                    b.Property<Guid>("IdBaiGiang")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -1895,10 +1925,10 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("IdBaiGiang")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdCauHoi")
+                    b.Property<Guid?>("IdDangKi")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdDangKi")
+                    b.Property<Guid?>("IdLanLamBaiKiemTra")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -1924,6 +1954,9 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<Guid?>("UpdatedId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("vitrixem")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
