@@ -11,7 +11,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PhanHocController : ControllerBase
+    public class PhanHocController : EduverseController
     {
         private readonly IPhanService _phanHocService;
         public PhanHocController(IPhanService phanHocService)

@@ -13,7 +13,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BaiKiemTraController : ControllerBase
+    public class BaiKiemTraController : EduverseController
     {
         private readonly IBaiKiemTraService _baiKiemTraService;
         private readonly ICauHoiService _cauHoiService;

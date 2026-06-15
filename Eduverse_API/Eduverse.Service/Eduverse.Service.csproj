@@ -41,7 +41,6 @@
     <Folder Include="HoiDapService\Request\" />
     <Folder Include="KetQuaBaiThiService\Dto\" />
     <Folder Include="KetQuaBaiThiService\Request\" />
-    <Folder Include="KhoaHocService\Dto\" />
     <Folder Include="KhoaHocService\Request\" />
     <Folder Include="KhuyenMaiService\Dto\" />
     <Folder Include="KhuyenMaiService\Request\" />

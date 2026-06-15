@@ -10,7 +10,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DangKiKhoaHocController : ControllerBase
+    public class DangKiKhoaHocController : EduverseController
     {
         private readonly IDangKyKhoaHocService _dangKyKhoaHocService;
 

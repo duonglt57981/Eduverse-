@@ -93,6 +93,7 @@ namespace Eduverse.Service.TienDoHocTapService
                 }
 
                 await CreateAsync(tienDo);
+                await SaveAsync();
             }
             else
             {
@@ -115,6 +116,7 @@ namespace Eduverse.Service.TienDoHocTapService
                 await UpdateAsync(tienDo);
             }
 
+            await SaveAsync();
             await SaveAsync();
         }
 

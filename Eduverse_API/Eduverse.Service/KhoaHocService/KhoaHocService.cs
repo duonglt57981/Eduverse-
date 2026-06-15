@@ -91,9 +91,118 @@ namespace Eduverse.Service.KhoaHocService
         }
 
 
-
         #region GetListKhoaHoc
-        public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search,Guid userId)
+        public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search)
+        {
+            search ??= new KhoaHocSearch();
+
+            IQueryable<KhoaHoc> query = GetQueryable()
+                .Where(x => x.TrangThai == "HoatDong" && x.TrangThaiPheDuyet == "DaDuyet");
+
+            // Keyword
+            if (!string.IsNullOrWhiteSpace(search.Keyword))
+            {
+                var keyword = search.Keyword.Trim();
+
+                query = query.Where(x =>
+                    x.TieuDe.Contains(keyword) ||
+                    x.LoaiKhoaHoc.Contains(keyword));
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.TieuDe))
+            {
+                var tieuDe = search.TieuDe.Trim();
+
+                query = query.Where(x =>
+                    x.TieuDe.Contains(tieuDe));
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.CapDo))
+            {
+                query = query.Where(x =>
+                    x.CapDo == search.CapDo);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.LoaiKhoaHoc))
+            {
+                query = query.Where(x =>
+                    x.LoaiKhoaHoc == search.LoaiKhoaHoc);
+            }
+
+            if (search.GiaFrom.HasValue)
+            {
+                query = query.Where(x =>
+                    x.Gia >= search.GiaFrom.Value);
+            }
+
+            if (search.GiaTo.HasValue)
+            {
+                query = query.Where(x =>
+                    x.Gia <= search.GiaTo.Value);
+            }
+
+            if (search.TongBaiGiangFrom.HasValue)
+            {
+                query = query.Where(x =>
+                    x.TongBaiGiang >= search.TongBaiGiangFrom.Value);
+            }
+
+            if (search.TongBaiGiangTo.HasValue)
+            {
+                query = query.Where(x =>
+                    x.TongBaiGiang <= search.TongBaiGiangTo.Value);
+            }
+
+            if (search.IsFree == true)
+            {
+                query = query.Where(x => x.Gia == 0);
+            }
+
+            // Validate
+            if (search.GiaFrom > search.GiaTo)
+            {
+                throw new Exception("Giá bắt đầu không được lớn hơn giá kết thúc");
+            }
+
+            if (search.TongBaiGiangFrom > search.TongBaiGiangTo)
+            {
+                throw new Exception("Số bài giảng bắt đầu không được lớn hơn số bài giảng kết thúc");
+            }
+
+            // Sort
+            query = search.SortPrice?.ToLower() switch
+            {
+                "asc" => query.OrderBy(x => x.Gia),
+                "desc" => query.OrderByDescending(x => x.Gia),
+                _ => query.OrderByDescending(x => x.NgayTao)
+            };
+
+            var dtoQuery = query.Select(kh => new KhoaHocDto
+            {
+                Id = kh.Id,
+                TieuDe = kh.TieuDe,
+                MoTa = kh.MoTa,
+                Gia = kh.Gia,
+                GiaGoc = kh.GiaGoc,
+                LoaiKhoaHoc = kh.LoaiKhoaHoc,
+                HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
+                URLViewPreviewKhoaHoc = kh.URLViewPreviewKhoaHoc,
+                CapDo = kh.CapDo,
+                TongThoiLuong = kh.TongThoiLuong,
+                TongBaiGiang = kh.TongBaiGiang,
+                SoLuongHocVien = kh.SoLuongHocVien,
+                NgayTao = kh.NgayTao,
+
+                DaDangKy = false
+            });
+
+            return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
+        }
+        #endregion
+
+
+        #region GetListKhoaHocByUser
+        public async Task<PagedList<KhoaHocDto>> GetListByUser(KhoaHocSearch search,Guid userId)
         {
             if (userId == Guid.Empty)
                 throw new ArgumentException("UserId không hợp lệ");
@@ -102,11 +211,11 @@ namespace Eduverse.Service.KhoaHocService
 
             IQueryable<KhoaHoc> query = GetQueryable()
                  .AsNoTracking()
-                 .Where(kh => kh.TrangThai == "HoatDong"
-                          && !_dangKyKhoaHocRepository.GetQueryable()
-                                 .Any(dk => dk.IdNguoiDangKi == userId
-                                          && dk.IdDangKi == kh.Id
-                                          && !dk.IsDeleted));
+                 .Where(kh => kh.TrangThai == "HoatDong" 
+                            && kh.TrangThaiPheDuyet == "DaDuyet"
+                            && !_dangKyKhoaHocRepository
+                                .GetQueryable()
+                                .Any(dk => dk.IdNguoiDangKi == userId&& dk.IdDangKi == kh.Id));
 
             // Keyword
             if (!string.IsNullOrWhiteSpace(search.Keyword))
@@ -212,7 +321,7 @@ namespace Eduverse.Service.KhoaHocService
 
 
         #region GetListDangKi
-        public async Task<PagedList<KhoaHocDto>> GetListDangKi(KhoaHocDangKiSearch search, Guid userId)
+        public async Task<PagedList<GetDangKiKhoaHocDto>> GetListDangKi(KhoaHocDangKiSearch search, Guid userId)
         {
             if (userId == Guid.Empty)
                 throw new ArgumentException("UserId không hợp lệ");
@@ -223,7 +332,7 @@ namespace Eduverse.Service.KhoaHocService
                 from dk in _dangKyKhoaHocRepository.GetQueryable().AsNoTracking()
                 join kh in GetAll().AsNoTracking()
                     on dk.IdDangKi equals kh.Id
-                where dk.IdNguoiDangKi == userId
+                where dk.IdNguoiDangKi == userId && kh.TrangThaiPheDuyet == "DaDuyet" 
                 select new
                 {
                     DangKyId = dk.Id,
@@ -263,8 +372,8 @@ namespace Eduverse.Service.KhoaHocService
 
             if (!pageData.Any())
             {
-                return new PagedList<KhoaHocDto>(
-                    new List<KhoaHocDto>(),
+                return new PagedList<GetDangKiKhoaHocDto>(
+                    new List<GetDangKiKhoaHocDto>(),
                     search.PageIndex,
                     search.PageSize,
                     totalCount);
@@ -298,9 +407,7 @@ namespace Eduverse.Service.KhoaHocService
 
             var tienDoDict = await (
                 from td in _tienDoHocTapService.GetQueryable().AsNoTracking()
-                where td.IdDangKi.HasValue
-                      && dangKyIds.Contains(td.IdDangKi.Value)
-                      && td.TrangThai == "HoanThanh"
+                where td.IdDangKi.HasValue&& dangKyIds.Contains(td.IdDangKi.Value)&& td.TrangThai == "HoanThanh"
                 group td by td.IdDangKi.Value into g
                 select new
                 {
@@ -309,18 +416,32 @@ namespace Eduverse.Service.KhoaHocService
                         .Select(x => x.IdBaiGiang)
                         .Distinct()
                         .Count()
+                }).ToDictionaryAsync(x => x.IdDangKy,x => x.SoBaiGiangHoanThanh);
+
+            var tongThoiLuongDict = await (
+                from ph in _phanRepository.GetAll().AsNoTracking()
+                join bg in _baiGiangRepository.GetQueryable().AsNoTracking()
+                    on ph.Id equals bg.IdPhan
+                where ph.IdKhoaHoc.HasValue
+                      && khoaHocIds.Contains(ph.IdKhoaHoc.Value)
+                      && !bg.IsDeleted
+                      && bg.TrangThai != "ChoDuyet"
+                group bg by ph.IdKhoaHoc.Value into g
+                select new
+                {
+                    IdKhoaHoc = g.Key,
+                    TongThoiLuong = g.Sum(x => x.ThoiLuong ?? 0)
                 })
-                .ToDictionaryAsync(
-                    x => x.IdDangKy,
-                    x => x.SoBaiGiangHoanThanh);
+                .ToDictionaryAsync(x => x.IdKhoaHoc, x => x.TongThoiLuong);
 
             var items = pageData
                 .Select(x =>
                 {
                     var tongBaiGiang = tongBaiGiangDict.TryGetValue(x.Id, out var tong) ? tong : 0;
                     var soBaiDaHoc = tienDoDict.TryGetValue(x.DangKyId, out var hoc) ? hoc : 0;
+                    var tongThoiLuong = tongThoiLuongDict.TryGetValue(x.Id, out var tl) ? tl : 0;
 
-                    return new KhoaHocDto
+                    return new GetDangKiKhoaHocDto
                     {
                         Id = x.Id,
                         idDangKiKhoaHoc = x.DangKyId, 
@@ -328,22 +449,19 @@ namespace Eduverse.Service.KhoaHocService
                         MoTa = x.MoTa,
                         LoaiKhoaHoc = x.LoaiKhoaHoc,
                         HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
-                        URLViewPreviewKhoaHoc = x.URLViewPreviewKhoaHoc,
                         CapDo = x.CapDo,
-                        TongThoiLuong = x.TongThoiLuong,
+                        TongThoiLuong = tongThoiLuong,
                         SoLuongHocVien = x.SoLuongHocVien,
                         DaDangKy = true,
                         NgayDangKy = x.NgayDangKy,
                         TongBaiGiang = tongBaiGiang,
                         SoBaiGiangHoanThanh = soBaiDaHoc,
-                        PhanTramHoanThanh = tongBaiGiang > 0
-                            ? Math.Round((double)soBaiDaHoc * 100 / tongBaiGiang)
-                            : 0
+                        PhanTramHoanThanh = tongBaiGiang > 0? Math.Round((double)soBaiDaHoc * 100 / tongBaiGiang) : 0
                     };
                 })
                 .ToList();
 
-            return new PagedList<KhoaHocDto>(
+            return new PagedList<GetDangKiKhoaHocDto>(
                 items,
                 search.PageIndex,
                 search.PageSize,
@@ -981,7 +1099,7 @@ namespace Eduverse.Service.KhoaHocService
                 {
                     var result = await GetAll()
                         .AsNoTracking()
-                        .Where(x => x.Id == idKhoaHoc)
+                        .Where(x => x.Id == idKhoaHoc && x.TrangThaiPheDuyet == "DaDuyet")
                         .Select(x => new KhoaHocDto
                         {
                             Id = x.Id,
@@ -1419,10 +1537,12 @@ namespace Eduverse.Service.KhoaHocService
                 MoTa = request.MoTa.Trim(),
                 GiaGoc = request.GiaGoc,
                 Gia = request.Gia,
+                CapDo = request.CapDo,
                 LoaiKhoaHoc = isFree ? "Khóa học miễn phí" : "Khóa học trả phí",
                 HinhAnhKhoaHoc = upLoadResult.UrlImg.Trim(),
                 CreatedDate = DateTime.UtcNow,
-                TrangThai = "ChoDuyet"
+                TrangThai = "ChoDuyet",
+                TrangThaiPheDuyet = "ChoDuyet"
             };
 
             await CreateAsync(khoaHoc);
@@ -1501,10 +1621,10 @@ namespace Eduverse.Service.KhoaHocService
             entity.CapDo = request.CapDo;
             entity.LoaiKhoaHoc = request.Gia <= 0 ? "Khóa học miễn phí" : "Khóa học trả phí";
             entity.UpdatedDate = DateTime.UtcNow;
-            entity.TrangThai = "HoatDong";
+            entity.TrangThai = entity.TrangThai;
+            entity.TrangThaiPheDuyet = "ChoDuyet";
 
             await UpdateAsync(entity);
-            await SaveAsync();
 
             var danhMucCu = await _danhMuc_KhoaHocService.GetQueryable()
                 .Where(x => x.IdKhoaHoc == entity.Id && !x.IsDeleted)
@@ -1518,8 +1638,8 @@ namespace Eduverse.Service.KhoaHocService
                 .ToList();
 
             if (canXoa.Any())
-                await _danhMuc_KhoaHocService.UpdateAsync(canXoa);
-            await _danhMuc_KhoaHocService.SaveAsync();
+                await _danhMuc_KhoaHocService.DeleteAsync(canXoa);
+                await _danhMuc_KhoaHocService.SaveAsync();
 
 
             var canThem = danhMucMoiSet
@@ -1536,7 +1656,7 @@ namespace Eduverse.Service.KhoaHocService
 
             if (canThem.Any())
                 await _danhMuc_KhoaHocService.CreateRange(canThem);
-            await _danhMuc_KhoaHocService.SaveAsync();
+                await _danhMuc_KhoaHocService.SaveAsync();
 
             await SaveAsync();
             return _mapper.Map<KhoaHoc, KhoaHocDto>(entity);

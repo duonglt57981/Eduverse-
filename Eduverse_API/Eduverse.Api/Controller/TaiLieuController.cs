@@ -10,7 +10,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TaiLieuController : ControllerBase
+    public class TaiLieuController : EduverseController
     {
 
         private readonly ITaiLieuService _taiLieuService;

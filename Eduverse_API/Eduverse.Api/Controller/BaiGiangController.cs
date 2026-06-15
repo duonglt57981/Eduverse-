@@ -11,7 +11,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BaiGiangController : ControllerBase
+    public class BaiGiangController : EduverseController
     {
         private readonly IBaiGiangService _baiGiangService;
 
