@@ -73,7 +73,6 @@ namespace Eduverse.Service.BaiKiemTraService
                 DiemDat = request.DiemDat,
                 GioiHanThoiGian = request.GioiHanThoiGian,
                 ChoLamLai = true,
-                SoLanLamLai = request.ChoLamLai == true ? request.SoLanLamLai: 0,
                 SoLanLamToiDa = request.ChoLamLai == true ? request.SoLanLamToiDa : 0,
                 TrangThai = "HoatDong",
             };

@@ -57,7 +57,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("kiemduyet-khoahoc-getlichsu/{idKhoaHoc}")]
+        [HttpGet("kiemduyet-khoahoc-gethistory/{idKhoaHoc}")]
         [Authorize(Roles = "Admin")]
         public async Task<DataResponse<List<LichSuKiemDuyetDto>>> GetLichSuKiemDuyet(Guid idKhoaHoc)
         {

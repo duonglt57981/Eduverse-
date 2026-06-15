@@ -6,6 +6,7 @@ using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.CauHoiService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService.Dto;
 using Hinet.Api.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,7 +29,8 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPost("baikiemtra")]
-        public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ([FromBody] CreateBaiKiemTraRequest request)
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ([FromForm] CreateBaiKiemTraRequest request)
         {
             try
             {
@@ -44,6 +46,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPut("baikiemtra/{id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<UpdateBaiKiemTraDto>> UpdateBaiKiemTra([FromBody] UpdateBaiKiemTraRequest request)
         {
             try
@@ -59,6 +62,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpDelete("baikiemtra/{Id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteBaiKiemTra( Guid Id)
         {
             try
@@ -74,6 +78,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPost("CauHoi/create-cauhoi")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<CreateCauHoiDto>> CreateCauHoi([FromBody] CreateCauHoiRequest request)
         {
             try
