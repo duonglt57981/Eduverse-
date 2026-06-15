@@ -96,6 +96,7 @@ export const resetPassword = createAsyncThunk(
 
 interface AuthState {
   user: AuthResponse | null;
+  roles: string[];
   loading: boolean;
   error: string | null;
   successMessage: string | null;
@@ -103,6 +104,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
+  roles: [],
   loading: false,
   error: null,
   successMessage: null,
@@ -128,6 +130,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
+        state.roles = action.payload.roles || [];
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -147,6 +150,7 @@ const authSlice = createSlice({
       })
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
+        state.roles = [];
       })
       .addCase(forgotPassword.pending, (state) => {
         state.loading = true;

@@ -118,6 +118,11 @@ namespace Eduverse.Service.AuthService
         public async Task<AuthResponse> LoginAsync(LoginRequest request, HttpResponse httpResponse)
         {
             var user = await _userManager.FindByNameAsync(request.UserName);
+            if (user is null && request.UserName.Contains("@"))
+            {
+                user = await _userManager.FindByEmailAsync(request.UserName);
+            }
+
             if (user is null)
                 throw new Exception("Tên đăng nhập hoặc mật khẩu không đúng");
 

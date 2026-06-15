@@ -1,4 +1,4 @@
-﻿using Eduverse.Service.ThanhToanService;
+using Eduverse.Service.ThanhToanService;
 using Eduverse.Service.ThanhToanService.Dto;
 using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +37,7 @@ namespace Eduverse.Api.Controller
             return Guid.Parse(userId);
         }
 
-        [Authorize]
+        [Authorize(Roles = "HocVien")]
         [HttpPost("tao-thanh-toan")]
         public async Task<IActionResult> TaoThanhToan([FromBody] TaoThanhToanDto dto)
         {
@@ -49,7 +49,7 @@ namespace Eduverse.Api.Controller
             ));
         }
 
-        [Authorize]
+        [Authorize(Roles = "HocVien")]
         [HttpPost("kiem-tra-ma-giam-gia")]
         public async Task<IActionResult> KiemTraMaGiamGia([FromBody] ApDungMaGiamGiaDto dto)
         {
@@ -86,7 +86,7 @@ namespace Eduverse.Api.Controller
             );
         }
 
-        [Authorize]
+        [Authorize(Roles = "HocVien")]
         [HttpGet("don-hang")]
         public async Task<IActionResult> GetDonHang()
         {
@@ -98,7 +98,7 @@ namespace Eduverse.Api.Controller
             ));
         }
 
-        [Authorize]
+        [Authorize(Roles = "HocVien")]
         [HttpGet("don-hang/{id}")]
         public async Task<IActionResult> GetDonHangById(Guid id)
         {

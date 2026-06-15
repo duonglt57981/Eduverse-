@@ -1,4 +1,4 @@
-﻿using Eduverse.Service.Common;
+using Eduverse.Service.Common;
 using Eduverse.Service.DanhMucService;
 using Eduverse.Service.DanhMucService.Dto;
 using Eduverse.Service.DanhMucService.Request;
@@ -63,7 +63,7 @@ namespace Eduverse.Api.Controller
 
         #region Create
         [HttpPost]
-        // [Authorize(Roles = "Admin")] // có thể thêm nếu cần
+        [Authorize(Roles = "Admin")]
         public async Task<DataResponse<DanhMucDto>> Create([FromBody] CreateDanhMucRequest request)
         {
             var result = await _danhMucService.Create(request);
@@ -78,7 +78,7 @@ namespace Eduverse.Api.Controller
 
         #region Update
         [HttpPut]
-        // [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<DataResponse<DanhMucDto>> Update([FromBody] UpdateDanhMucRequest request)
         {
             var result = await _danhMucService.Update(request);
@@ -93,7 +93,7 @@ namespace Eduverse.Api.Controller
 
         #region Delete
         [HttpDelete("{id}")]
-        // [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<DataResponse<bool>> Delete(Guid id)
         {
             var result = await _danhMucService.Delete(id);

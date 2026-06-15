@@ -133,7 +133,16 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await dispatch(login(form));
-    if (login.fulfilled.match(result)) router.push('/dashboard');
+    if (login.fulfilled.match(result)) {
+      const roles: string[] = result.payload.roles || [];
+      if (roles.includes('Admin')) {
+        router.push('/admin/dashboard');
+      } else if (roles.includes('GiaoVien')) {
+        router.push('/instructor/dashboard');
+      } else {
+        router.push('/student/dashboard');
+      }
+    }
   };
 
   return (

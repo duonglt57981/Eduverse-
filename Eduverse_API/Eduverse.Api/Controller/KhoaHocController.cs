@@ -1,4 +1,4 @@
-﻿using Eduverse.Service.KhoaHocService;
+using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Hinet.Api.Dto;
@@ -49,7 +49,7 @@ namespace Eduverse.Api.Controller
             ));
         }
 
-        [Authorize]
+        [Authorize(Roles = "GiaoVien,Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateKhoaHocDto dto)
         {
@@ -61,7 +61,7 @@ namespace Eduverse.Api.Controller
             ));
         }
 
-        [Authorize]
+        [Authorize(Roles = "GiaoVien,Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateKhoaHocDto dto)
         {
@@ -73,7 +73,7 @@ namespace Eduverse.Api.Controller
             ));
         }
 
-        [Authorize]
+        [Authorize(Roles = "GiaoVien,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   ArrowForwardRounded,
   MenuRounded,
@@ -52,9 +52,10 @@ import {
   Avatar
 } from '@mui/material';
 import { logout } from '@/src/store/auth/AuthSlice';
-import { useDispatch } from '@/src/store/hook';
+import { useDispatch, useSelector } from '@/src/store/hook';
 import {
-  sidebarPrimaryItems,
+  getSidebarItemsByRole,
+  getSecondarySidebarItemsByRole,
   sidebarSecondaryItems,
   aiRecommendationBanners,
   footerColumnsData,
@@ -302,21 +303,109 @@ function SectorIcon({ iconName, color }: { iconName: string; color: string }) {
 }
 
 // Sidebar Navigation Render Helper
-function SidebarContent({ onLogout }: { onLogout: () => void }) {
+function SidebarContent({ onLogout, roles = [] }: { onLogout: () => void; roles?: string[] }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const sidebarItems = getSidebarItemsByRole(roles);
+
+  const getRoleBadge = () => {
+    if (roles.includes('Admin')) return { label: 'Admin', color: '#DC2626', bg: 'rgba(220, 38, 38, 0.08)' };
+    if (roles.includes('GiaoVien')) return { label: 'Giảng viên', color: '#7C3AED', bg: 'rgba(124, 58, 237, 0.08)' };
+    return null;
+  };
+
+  const roleBadge = getRoleBadge();
+
+  const getHomeRoute = () => {
+    if (roles.includes('Admin')) return '/admin/dashboard';
+    if (roles.includes('GiaoVien')) return '/instructor/dashboard';
+    return '/student/dashboard';
+  };
+
   const getRouteByLabel = (label: string) => {
-    switch (label) {
-      case 'Trang chủ':
-        return '/dashboard';
-      case 'Khóa học của tôi':
-        return '/courses';
-      case 'Khám phá':
-        return '/courses';
-      case 'Lộ trình học tập':
-        return '/learning-paths';
-      default:
-        return '/dashboard';
+    // Student roles (or fallback)
+    if (roles.includes('HocVien') || (!roles.includes('Admin') && !roles.includes('GiaoVien'))) {
+      switch (label) {
+        case 'Trang chủ':
+          return '/student/dashboard';
+        case 'Khóa học của tôi':
+          return '/student/courses';
+        case 'Khám phá':
+          return '/courses';
+        case 'Giỏ hàng':
+          return '/student/cart';
+        case 'Lịch học':
+          return '/student/schedule';
+        case 'Kiểm tra':
+          return '/student/tests';
+        case 'Chứng chỉ':
+          return '/student/certificates';
+        case 'Yêu thích':
+          return '/student/favorites';
+        case 'Thông báo':
+          return '/student/notifications';
+        case 'Hồ sơ':
+          return '/student/profile';
+        case 'Cài đặt':
+          return '/student/settings';
+        default:
+          return '/student/dashboard';
+      }
     }
+
+    // Instructor roles
+    if (roles.includes('GiaoVien')) {
+      switch (label) {
+        case 'Trang chủ':
+          return '/instructor/dashboard';
+        case 'Quản lý khóa học':
+          return '/instructor/courses';
+        case 'Quản lý bài giảng':
+          return '/instructor/lectures';
+        case 'Bài kiểm tra':
+          return '/instructor/tests';
+        case 'Học viên của tôi':
+          return '/instructor/students';
+        case 'Thống kê':
+          return '/instructor/analytics';
+        case 'Chứng chỉ':
+          return '/instructor/certificates';
+        default:
+          return '/instructor/dashboard';
+      }
+    }
+
+    // Admin roles
+    if (roles.includes('Admin')) {
+      switch (label) {
+        case 'Dashboard':
+          return '/admin/dashboard';
+        case 'Người dùng':
+          return '/admin/users';
+        case 'Vai trò':
+          return '/admin/roles';
+        case 'Danh mục':
+          return '/admin/categories';
+        case 'Khóa học':
+          return '/admin/courses';
+        case 'Bài giảng':
+          return '/admin/lectures';
+        case 'Bài kiểm tra':
+          return '/admin/tests';
+        case 'Khuyến mãi':
+          return '/admin/promotions';
+        case 'Thanh toán':
+          return '/admin/payments';
+        case 'Thông báo':
+          return '/admin/notifications';
+        case 'Cài đặt':
+          return '/admin/settings';
+        default:
+          return '/admin/dashboard';
+      }
+    }
+
+    return getHomeRoute();
   };
 
   return (
@@ -329,14 +418,35 @@ function SidebarContent({ onLogout }: { onLogout: () => void }) {
       }}
     >
       <Box sx={{ px: 2, py: 3, flex: 1 }}>
+        {/* Role Badge */}
+        {roleBadge && (
+          <Box sx={{ px: 2, mb: 2 }}>
+            <Chip
+              label={roleBadge.label}
+              size="small"
+              sx={{
+                fontWeight: 800,
+                fontSize: 11.5,
+                color: roleBadge.color,
+                bgcolor: roleBadge.bg,
+                border: `1px solid ${roleBadge.color}20`,
+                borderRadius: '10px',
+                height: 26,
+                letterSpacing: '0.3px',
+              }}
+            />
+          </Box>
+        )}
+
         <List disablePadding>
-          {sidebarPrimaryItems.map((item) => {
+          {sidebarItems.map((item) => {
             const Icon = item.icon;
-            const isActive = Boolean(item.active);
+            const itemRoute = getRouteByLabel(item.label);
+            const isActive = pathname === itemRoute;
             return (
               <ListItemButton
                 key={item.label}
-                onClick={() => router.push(getRouteByLabel(item.label))}
+                onClick={() => router.push(itemRoute)}
                 sx={{
                   mb: 0.5,
                   borderRadius: '16px',
@@ -367,7 +477,7 @@ function SidebarContent({ onLogout }: { onLogout: () => void }) {
         <Divider sx={{ my: 2, opacity: 0.6 }} />
 
         <List disablePadding>
-          {sidebarSecondaryItems.map((item) => {
+          {getSecondarySidebarItemsByRole(roles).map((item) => {
             const Icon = item.icon;
             return (
               <ListItemButton
@@ -556,9 +666,10 @@ function CourseCard({ course }: { course: CourseCardItem }) {
 }
 
 // MAIN RENDER COMPONENT
-export default function DashboardShell() {
+export default function DashboardShell({ children }: { children?: React.ReactNode }) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const roles = useSelector((s) => s.auth.roles) || [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   
@@ -715,7 +826,14 @@ export default function DashboardShell() {
 
             {/* Logo */}
             <Box 
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                const getHomeRoute = () => {
+                  if (roles.includes('Admin')) return '/admin/dashboard';
+                  if (roles.includes('GiaoVien')) return '/instructor/dashboard';
+                  return '/student/dashboard';
+                };
+                router.push(getHomeRoute());
+              }}
               sx={{ width: { xs: 110, sm: 130, lg: 150 }, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
             >
               <Image
@@ -755,7 +873,7 @@ export default function DashboardShell() {
           >
             <SearchRounded sx={{ color: 'rgba(0,0,0,0.35)', fontSize: 18 }} />
             <InputBase
-              placeholder="Tìm kiếm nội dung bất kỳ"
+              placeholder={roles.includes('Admin') ? "Tìm kiếm báo cáo..." : "Tìm kiếm nội dung bất kỳ"}
               sx={{ flex: 1, fontSize: 13.5, fontWeight: 400 }}
             />
           </Paper>
@@ -767,10 +885,83 @@ export default function DashboardShell() {
               <SearchRounded />
             </IconButton>
 
+            {roles.includes('Admin') && (
+              <Stack direction="row" spacing={1.5} sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<CalendarMonthRounded sx={{ color: 'rgba(31,41,55,0.6)' }} />}
+                  endIcon={<ChevronRightRounded sx={{ transform: 'rotate(90deg)', color: 'rgba(31,41,55,0.6)' }} />}
+                  sx={{
+                    borderRadius: '10px',
+                    borderColor: 'rgba(0,0,0,0.12)',
+                    color: '#1F2937',
+                    px: 2,
+                    py: 0.8,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    bgcolor: '#ffffff',
+                    '&:hover': {
+                      borderColor: 'rgba(0,0,0,0.2)',
+                      bgcolor: '#F9FAFB',
+                    }
+                  }}
+                >
+                  01 Th11, 2023 - 30 Th11, 2023
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<ArrowForwardRounded sx={{ transform: 'rotate(90deg)' }} />}
+                  sx={{
+                    borderRadius: '10px',
+                    bgcolor: '#8D1313',
+                    color: '#ffffff',
+                    px: 2,
+                    py: 0.8,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      bgcolor: '#7F1D1D',
+                      boxShadow: 'none',
+                    }
+                  }}
+                >
+                  Xuất báo cáo
+                </Button>
+              </Stack>
+            )}
 
 
-            {/* User Avatar */}
-            <Stack direction="row" sx={{ alignItems: 'center', pl: 0.5 }}>
+
+            {/* User Avatar + Role Badge */}
+            <Stack direction="row" sx={{ alignItems: 'center', pl: 0.5, gap: 1 }}>
+              {roles.includes('Admin') ? (
+                <Stack sx={{ display: { xs: 'none', sm: 'flex' }, textAlign: 'left', mr: 1 }}>
+                  <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: '#1F2937', lineHeight: 1.2 }}>
+                    Admin Panel
+                  </Typography>
+                  <Typography sx={{ fontSize: 10, fontWeight: 700, color: 'rgba(31,41,55,0.5)', letterSpacing: '0.5px' }}>
+                    SUPER ADMINISTRATOR
+                  </Typography>
+                </Stack>
+              ) : roles.includes('GiaoVien') && (
+                <Chip
+                  label="Giảng viên"
+                  size="small"
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: 10.5,
+                    height: 24,
+                    color: '#7C3AED',
+                    bgcolor: 'rgba(124, 58, 237, 0.08)',
+                    border: '1px solid rgba(124, 58, 237, 0.2)',
+                    borderRadius: '8px',
+                    display: { xs: 'none', sm: 'flex' },
+                  }}
+                />
+              )}
               <Avatar
                 src={dashboardData?.welcomeStats?.avatarUrl || undefined}
                 sx={{
@@ -810,7 +1001,7 @@ export default function DashboardShell() {
             },
           }}
         >
-          <SidebarContent onLogout={handleLogout} />
+          <SidebarContent onLogout={handleLogout} roles={roles} />
         </Drawer>
 
         {/* ========================================================= */}
@@ -832,16 +1023,28 @@ export default function DashboardShell() {
               bgcolor: COLORS.white,
             }}
           >
-            <SidebarContent onLogout={handleLogout} />
+            <SidebarContent onLogout={handleLogout} roles={roles} />
           </Box>
 
           {/* 2. MAIN CONTENT SCROLL AREA (Expanded Single Column Layout) */}
-          <Box sx={{ flex: 1, minWidth: 0, px: { xs: 2, md: 5 }, py: 4.5, display: 'flex', justifyContent: 'center' }}>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              px: { xs: 2, md: 5 },
+              py: 3,
+              display: 'flex',
+              justifyContent: 'center',
+              height: `calc(100vh - ${headerHeight})`,
+              overflowY: 'auto',
+            }}
+          >
             <Box sx={{ width: '100%', maxWidth: '1280px', display: 'flex', flexDirection: 'column', gap: 4.5 }}>
-              
-              {/* ========================================================= */}
-              {/* 2. WELCOME SECTION                                        */}
-              {/* ========================================================= */}
+              {children ? children : (
+                <>
+                  {/* ========================================================= */}
+                  {/* 2. WELCOME SECTION                                        */}
+                  {/* ========================================================= */}
               <Paper
                 elevation={0}
                 sx={{
@@ -2064,7 +2267,8 @@ export default function DashboardShell() {
                   </Stack>
                 </Box>
               </Box>
-
+              </>
+              )}
             </Box>
           </Box>
         </Box>

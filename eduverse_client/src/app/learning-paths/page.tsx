@@ -59,7 +59,7 @@ import {
   InputLabel
 } from '@mui/material';
 import { logout } from '@/src/store/auth/AuthSlice';
-import { useDispatch } from '@/src/store/hook';
+import { useDispatch, useSelector } from '@/src/store/hook';
 import { apiService } from '@/src/services/index';
 
 // --- CRIMSON RED DESIGN PALETTE ---
@@ -129,6 +129,13 @@ function CircularProgressGlow() {
 // Sidebar Content Component
 function SidebarContent({ onLogout, currentRoute = '/learning-paths' }: { onLogout: () => void; currentRoute?: string }) {
   const router = useRouter();
+  const roles = useSelector((s) => s.auth.roles) || [];
+
+  const getHomeRoute = () => {
+    if (roles.includes('Admin')) return '/admin/dashboard';
+    if (roles.includes('GiaoVien')) return '/instructor/dashboard';
+    return '/student/dashboard';
+  };
   return (
     <Box
       sx={{
@@ -146,7 +153,13 @@ function SidebarContent({ onLogout, currentRoute = '/learning-paths' }: { onLogo
             return (
               <ListItemButton
                 key={item.label}
-                onClick={() => router.push(item.route)}
+                onClick={() => {
+                  let dest: string = item.route;
+                  if (dest === '/dashboard') {
+                    dest = getHomeRoute();
+                  }
+                  router.push(dest);
+                }}
                 sx={{
                   mb: 0.5,
                   borderRadius: '16px',
@@ -232,6 +245,13 @@ function SidebarContent({ onLogout, currentRoute = '/learning-paths' }: { onLogo
 export default function LearningPathsPage() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const roles = useSelector((s) => s.auth.roles) || [];
+
+  const getHomeRoute = () => {
+    if (roles.includes('Admin')) return '/admin/dashboard';
+    if (roles.includes('GiaoVien')) return '/instructor/dashboard';
+    return '/student/dashboard';
+  };
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState<string>('Học viên');
@@ -393,7 +413,7 @@ export default function LearningPathsPage() {
 
             {/* Logo */}
             <Box 
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push(getHomeRoute())}
               sx={{ width: { xs: 110, sm: 130, lg: 150 }, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
             >
               <Image
