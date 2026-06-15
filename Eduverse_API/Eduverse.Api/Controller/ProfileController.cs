@@ -210,13 +210,8 @@ namespace Eduverse.Api.Controller
 
             try
             {
-                var uploadResult = await _cloudinaryService.UploadImage(file);
-                if (uploadResult.Error != null)
-                {
-                    return new DataResponse<object> { Status = false, Message = uploadResult.Error.Message };
-                }
-
-                user.AnhDaiDien = uploadResult.SecureUrl.AbsoluteUri;
+                var uploadResult = await _cloudinaryService.UploadImageAsync(file);
+                user.AnhDaiDien = uploadResult.UrlImg;
                 await _userManager.UpdateAsync(user);
 
                 return new DataResponse<object>
@@ -257,13 +252,8 @@ namespace Eduverse.Api.Controller
 
             try
             {
-                var uploadResult = await _cloudinaryService.UploadImage(file);
-                if (uploadResult.Error != null)
-                {
-                    return new DataResponse<object> { Status = false, Message = uploadResult.Error.Message };
-                }
-
-                user.AnhBia = uploadResult.SecureUrl.AbsoluteUri;
+                var uploadResult = await _cloudinaryService.UploadImageAsync(file);
+                user.AnhBia = uploadResult.UrlImg;
                 await _userManager.UpdateAsync(user);
 
                 return new DataResponse<object>

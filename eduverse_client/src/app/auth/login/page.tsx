@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
-import { login } from '../../../store/auth/AuthSlice';
+import { login, externalLogin } from '../../../store/auth/AuthSlice';
 import {
   Box,
   Button,
@@ -93,6 +93,47 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const router   = useRouter();
   const { loading, error } = useSelector((s) => s.auth);
+
+  const handleExternalLogin = (provider: 'google' | 'facebook') => {
+    const width = 500;
+    const height = 650;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    
+    const popup = window.open(
+      `/auth/oauth-callback?provider=${provider}`,
+      `Đăng nhập ${provider === 'google' ? 'Google' : 'Facebook'}`,
+      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
+    );
+
+    if (!popup) {
+      alert('Vui lòng bỏ chặn popup để tiếp tục đăng nhập.');
+      return;
+    }
+
+    const messageListener = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'OAUTH_SUCCESS') {
+        window.removeEventListener('message', messageListener);
+        const { provider, email, name, providerKey } = event.data.payload;
+        
+        const result = await dispatch(externalLogin({ provider, email, name, providerKey }));
+        if (externalLogin.fulfilled.match(result)) {
+          const roles: string[] = result.payload.roles || [];
+          if (roles.includes('Admin')) {
+            router.push('/admin/dashboard');
+          } else if (roles.includes('GiaoVien')) {
+            router.push('/instructor/dashboard');
+          } else {
+            router.push('/student/dashboard');
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', messageListener);
+  };
 
   const [form, setForm] = useState({ userName: '', password: '' });
   const [showPass, setShowPass] = useState(false);
@@ -543,6 +584,7 @@ export default function LoginPage() {
               <Button
                 fullWidth
                 variant="outlined"
+                onClick={() => handleExternalLogin('google')}
                 startIcon={<GoogleGlyph sx={{ fontSize: 18 }} />}
                 sx={{
                   borderRadius: 999,
@@ -560,6 +602,7 @@ export default function LoginPage() {
               <Button
                 fullWidth
                 variant="outlined"
+                onClick={() => handleExternalLogin('facebook')}
                 startIcon={<FacebookGlyph sx={{ fontSize: 18 }} />}
                 sx={{
                   borderRadius: 999,

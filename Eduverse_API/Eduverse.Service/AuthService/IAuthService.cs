@@ -1,4 +1,4 @@
-﻿using Eduverse.Service.AuthService;
+using Eduverse.Service.AuthService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using LoginRequest = Eduverse.Service.AuthService.LoginRequest;
@@ -15,4 +15,5 @@ public interface IAuthService
     Task<string> ChangePasswordAsync(ChangePasswordRequest request, Guid userId, HttpResponse httpResponse);
     Task<string> ForgotPasswordAsync(string email);
     Task<string> ResetPasswordAsync(ResetPasswordRequest request);
+    Task<AuthResponse> ExternalLoginAsync(ExternalLoginRequest request, HttpResponse httpResponse);
 }

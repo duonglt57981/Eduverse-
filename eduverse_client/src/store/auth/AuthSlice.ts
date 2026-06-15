@@ -22,6 +22,25 @@ export const login = createAsyncThunk(
   },
 );
 
+export const externalLogin = createAsyncThunk(
+  "auth/externalLogin",
+  async (
+    data: { provider: string; email: string; name?: string; providerKey: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await apiService.post<AuthResponse>("/auth/external-login", data);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("AccessToken", res.data.accessToken);
+      }
+      return res.data;
+    } catch (err: unknown) {
+      const message = typeof err === "string" ? err : "Đăng nhập bên ngoài thất bại";
+      return rejectWithValue(message);
+    }
+  },
+);
+
 export const register = createAsyncThunk(
   "auth/register",
   async (data: RegisterRequest, { rejectWithValue }) => {
@@ -123,6 +142,19 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(externalLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(externalLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.roles = action.payload.roles || [];
+      })
+      .addCase(externalLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;

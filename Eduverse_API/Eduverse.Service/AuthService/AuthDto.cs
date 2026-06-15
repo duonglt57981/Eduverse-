@@ -37,6 +37,15 @@ namespace Eduverse.Service.AuthService
         public string UserName { get; set; }
         public string? HoTen { get; set; }
         public string? Email { get; set; }
+        public List<string>? Roles { get; set; }
+    }
+
+    public class ExternalLoginRequest
+    {
+        [Required] public string Provider { get; set; }
+        [Required] public string Email { get; set; }
+        public string? Name { get; set; }
+        [Required] public string ProviderKey { get; set; }
     }
 
     public class ChangePasswordRequest
