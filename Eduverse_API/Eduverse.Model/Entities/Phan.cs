@@ -19,5 +19,8 @@ namespace Eduverse.Model.Entities
         public DateTime? NgayTao { get; set; } = DateTime.Now;
         public Guid? IdKhoaHoc { get; set; }
 
+        public Guid? IdBanGhiTruoc { get; set; }
+        public bool IsBanHienTai { get; set; } = true;
+
     }
 }

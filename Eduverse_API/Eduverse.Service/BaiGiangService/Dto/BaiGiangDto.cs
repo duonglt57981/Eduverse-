@@ -24,5 +24,8 @@ namespace Eduverse.Service.BaiGiangService.Dto
         public int ThoiGianXem { get; set; }
         public bool DaHoanThanh { get; set; }
         public List<TaiLieuDto>? DanhSachTaiLieu { get; set; }
+
+        public Guid? IdBanGhiTruoc { get; set; }
+        public bool IsBanHienTai { get; set; } = true;
     }
 }

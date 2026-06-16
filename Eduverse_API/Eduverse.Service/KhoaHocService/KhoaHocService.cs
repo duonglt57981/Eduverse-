@@ -1547,6 +1547,7 @@ namespace Eduverse.Service.KhoaHocService
 
             var khoaHoc = new KhoaHoc
             {
+                IsBanHienTai = true,
                 TieuDe = request.TieuDe.Trim(),
                 MoTa = request.MoTa.Trim(),
                 GiaGoc = request.GiaGoc,
@@ -1556,8 +1557,9 @@ namespace Eduverse.Service.KhoaHocService
                 HinhAnhKhoaHoc = upLoadResult.UrlImg.Trim(),
                 IdHinhAnhKhoaHoc = upLoadResult.PublicId,
                 CreatedDate = DateTime.UtcNow,
-                TrangThai = "ChoDuyet",
+                TrangThai = "Nhap",
                 TrangThaiPheDuyet = "ChoDuyet"
+
             };
 
             await CreateAsync(khoaHoc);
@@ -1583,7 +1585,7 @@ namespace Eduverse.Service.KhoaHocService
         #region  UpdateKhoaHoc
         public async Task<KhoaHocDto> UpdateKhoaHoc(UpdateKhoaHocRequest request)
         {
-            var entity = await GetByIdAsync(request.Id);
+            var entity = await GetByIdAsync(request.IdKhoaHoc);
             if (entity == null || entity.IsDeleted)
                 throw new Exception("Không tìm thấy khóa học");
 
@@ -1625,7 +1627,8 @@ namespace Eduverse.Service.KhoaHocService
                 entity.HinhAnhKhoaHoc = upload.UrlImg;
                 entity.IdHinhAnhKhoaHoc = upload.PublicId;
             }
-
+            entity.Id = Guid.NewGuid();
+            entity.IdBanGhiTruoc = request.IdKhoaHoc;
             entity.TieuDe = request.TieuDe;
             entity.MoTa = request.MoTa;
             entity.Gia = request.Gia;
@@ -1633,10 +1636,10 @@ namespace Eduverse.Service.KhoaHocService
             entity.CapDo = request.CapDo;
             entity.LoaiKhoaHoc = request.Gia <= 0 ? "Khóa học miễn phí" : "Khóa học trả phí";
             entity.UpdatedDate = DateTime.UtcNow;
-            entity.TrangThai = entity.TrangThai;
-            entity.TrangThaiPheDuyet = "ChoDuyetS";
+            entity.TrangThai = "Nhap";
+            entity.TrangThaiPheDuyet = "ChoDuyet";
 
-            await UpdateAsync(entity);
+            await CreateAsync(entity);
 
             var danhMucCu = await _danhMuc_KhoaHocService.GetQueryable()
                 .Where(x => x.IdKhoaHoc == entity.Id && !x.IsDeleted)
@@ -1650,8 +1653,11 @@ namespace Eduverse.Service.KhoaHocService
                 .ToList();
 
             if (canXoa.Any())
+            {
                 await _danhMuc_KhoaHocService.DeleteAsync(canXoa);
                 await _danhMuc_KhoaHocService.SaveAsync();
+            }
+                
 
 
             var canThem = danhMucMoiSet
@@ -1661,14 +1667,15 @@ namespace Eduverse.Service.KhoaHocService
                     Id = Guid.NewGuid(),
                     IdKhoaHoc = entity.Id,
                     IdDanhMuc = id,
-                    CreatedDate = DateTime.UtcNow,
-                    IsDeleted = false
                 })
                 .ToList();
 
             if (canThem.Any())
+            {
                 await _danhMuc_KhoaHocService.CreateRange(canThem);
                 await _danhMuc_KhoaHocService.SaveAsync();
+            }
+                
 
             await SaveAsync();
             return _mapper.Map<KhoaHoc, KhoaHocDto>(entity);
