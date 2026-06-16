@@ -5,6 +5,7 @@ using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.LichSuKiemDuyetKhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Repository.TaiLieuRepository;
+using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.Common;
 using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.KhoaHocService.Dto;
@@ -12,6 +13,8 @@ using Eduverse.Service.KhoaHocService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Request;
+using Eduverse.Service.PhanService;
+using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -28,26 +31,35 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly IKhoaHocService _khoaHocService;
         private readonly IPhanRepository _phanRepository;
+        private readonly IPhanService _phanService;
         private readonly IBaiGiangRepository _baiGiangRepository;
         private readonly ITaiLieuRepository _taiLieuRepository;
         private readonly IBaiKiemTraRepository _kiemTraRepository;
         private readonly IHttpContextAccessor? _httpContextAccessor;
+        private readonly IBaiGiangService _baiGiangService;
+        private readonly ITaiLieuService _taiLieuService;
         public LichSuKiemDuyetKhoaHocService(ILichSuKiemDuyetKhoaHocRepository repository,
             IKhoaHocRepository khoaHocRepository,
             IPhanRepository phanRepository,
             IBaiGiangRepository baiGiangRepository,
+            IBaiGiangService baiGiangService,
             ITaiLieuRepository taiLieuRepository,
             IBaiKiemTraRepository kiemTraRepository,
             IKhoaHocService khoaHocService,
+            IPhanService phanService,
+            ITaiLieuService taiLieuService,
             IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
             _phanRepository = phanRepository;
+            _phanService = phanService;
             _baiGiangRepository = baiGiangRepository;
             _taiLieuRepository = taiLieuRepository;
             _kiemTraRepository = kiemTraRepository;
             _khoaHocService = khoaHocService;
             this._httpContextAccessor = httpContextAccessor;
+            _baiGiangService = baiGiangService;
+            _taiLieuService = taiLieuService;
         }
 
         public async Task<PagedList<GetListKiemDuyetDto>> GetListKhoaHocKiemDuyet(KhoaHocKiemDuyetSearchDto search)
@@ -156,7 +168,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             var khoaHoc = await _khoaHocService.GetByIdOrThrowAsync(request.IdKhoaHoc);
 
-            if (khoaHoc.TrangThaiPheDuyet != "ChoDuyet" || khoaHoc.TrangThaiPheDuyet != "TuChoi")
+            if (khoaHoc.TrangThaiPheDuyet != "ChoDuyet" && khoaHoc.TrangThaiPheDuyet != "TuChoi"&& khoaHoc.TrangThaiPheDuyet != "ChoDuyetS")
                 throw new Exception("Khóa học không ở trạng thái chờ duyệt.");
 
             if (request.TrangThaiPheDuyet == "TuChoi" && string.IsNullOrWhiteSpace(request.LyDo))
@@ -176,6 +188,26 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     .AnyAsync(x => x.IdKhoaHoc == khoaHoc.Id);
 
                 khoaHoc.TrangThai = daCoLichSu ? khoaHoc.TrangThai : "HoatDong";
+
+                await _phanService.GetQueryable()
+                    .Where(x => x.IdKhoaHoc == khoaHoc.Id && x.TrangThai == "ChoDuyet")
+                    .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
+
+                var phanIds = await _phanService.GetQueryable()
+                    .Where(x => x.IdKhoaHoc == khoaHoc.Id && x.TrangThai == "ChoDuyetS")
+                    .Select(x => x.Id)
+                    .ToListAsync();
+                await _baiGiangService.GetQueryable()
+                    .Where(x => phanIds.Contains(x.IdPhan) && x.TrangThai == "ChoDuyetS")
+                    .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
+
+                var baiGiangIds = await _baiGiangService.GetQueryable()
+                    .Where(x => phanIds.Contains(x.IdPhan) && x.TrangThai == "ChoDuyetS")
+                    .Select(x => x.Id)
+                    .ToListAsync();
+                await _taiLieuService.GetQueryable()
+                    .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && x.TrangThai == "ChoDuyet")
+                    .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
             }
                 
 

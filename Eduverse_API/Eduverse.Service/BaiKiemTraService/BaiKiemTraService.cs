@@ -15,7 +15,9 @@ using Eduverse.Service.LanLamBaiKiemTraService;
 using Eduverse.Service.LanLamBaiKiemTraService.Dto;
 using Eduverse.Service.PhanService;
 using Eduverse.Service.TienDoHocTapService;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Eduverse.Service.BaiKiemTraService
 {
@@ -30,6 +32,7 @@ namespace Eduverse.Service.BaiKiemTraService
         private readonly IMapper _mapper;
         private readonly EduverseContext _eduverseContext;
         private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public BaiKiemTraService(
             IMapper mapper,
@@ -41,7 +44,8 @@ namespace Eduverse.Service.BaiKiemTraService
             IDapAnService dapAnService,
             EduverseContext eduverseContext,
             ITienDoHocTapService tienDoHocTapService,
-            IDangKyKhoaHocRepository dangKyKhoaHocRepository) : base(baiKiemTraRepository)
+            IDangKyKhoaHocRepository dangKyKhoaHocRepository,
+             IHttpContextAccessor httpContextAccessor) : base(baiKiemTraRepository)
         {
             _lanLamBaiKiemTraService = lanLamBaiKiemTraService;
             _chiTietLamBaiKiemTraService = chiTietLamBaiKiemTraService;
@@ -52,6 +56,7 @@ namespace Eduverse.Service.BaiKiemTraService
             _eduverseContext = eduverseContext;
             _tienDoHocTapService = tienDoHocTapService;
             _dangKyKhoaHocRepository = dangKyKhoaHocRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
 
@@ -142,7 +147,7 @@ namespace Eduverse.Service.BaiKiemTraService
             var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.Id == request.IdDangKi && !x.IsDeleted)
-                .Select(x => new { x.IdNguoiDangKi, x.IdDangKi })
+                .Select(x => new { x.IdNguoiDangKi, x.IdKhoaHoc })
                 .FirstOrDefaultAsync();
 
             if (dangKy == null)
@@ -161,7 +166,7 @@ namespace Eduverse.Service.BaiKiemTraService
             if (quizThuocKhoaHoc == null)
                 throw new Exception("Không tìm thấy bài kiểm tra hoặc bài kiểm tra không thuộc phần học nào.");
 
-            if (quizThuocKhoaHoc != dangKy.IdDangKi)
+            if (quizThuocKhoaHoc != dangKy.IdKhoaHoc)
                 throw new Exception("Bài kiểm tra không thuộc khóa học bạn đã đăng ký.");
 
 
@@ -519,8 +524,10 @@ namespace Eduverse.Service.BaiKiemTraService
 
 
         // Kiểm tra có được làm lại hay không
-        public async Task<bool> CheckCanRetake(Guid idBaiKiemTra,Guid idNguoiDung)
+        public async Task<bool> CheckCanRetake(Guid idBaiKiemTra)
         {
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var idNguoiDung);
+
             var baiKiemTra = await GetByIdOrThrowAsync(idBaiKiemTra);
 
             if (baiKiemTra.ChoLamLai != true)
@@ -539,8 +546,10 @@ namespace Eduverse.Service.BaiKiemTraService
 
 
         // Lịch sử các lần làm bài
-        public async Task<List<LichSuLamBaiDto>> GetHistory(Guid idBaiKiemTra,Guid idNguoiDung)
+        public async Task<List<LichSuLamBaiDto>> GetHistory(Guid idBaiKiemTra)
         {
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var idNguoiDung);
+
             return await _lanLamBaiKiemTraService
                 .GetQueryable()
                 .AsNoTracking()

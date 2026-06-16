@@ -23,7 +23,11 @@ namespace Eduverse.Model.Entities
         public string? LoaiKhoaHoc { get; set; }
 
         public string? HinhAnhKhoaHoc { get; set; }
+
+        public string? IdHinhAnhKhoaHoc { get; set; }
+
         public string? URLViewPreviewKhoaHoc { get; set; }
+
         public string? CapDo { get; set; }
 
         public int? TongThoiLuong { get; set; }

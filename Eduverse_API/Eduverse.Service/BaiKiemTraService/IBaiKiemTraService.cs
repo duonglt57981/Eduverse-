@@ -70,7 +70,7 @@ namespace Eduverse.Service.BaiKiemTraService
         /// <param name="idBaiKiemTra">Id bài kiểm tra.</param>
         /// <param name="idNguoiDung">Id người dùng.</param>
         /// <returns>Danh sách lịch sử làm bài.</returns>
-        Task<List<LichSuLamBaiDto>> GetHistory(Guid idBaiKiemTra, Guid idNguoiDung);
+        Task<List<LichSuLamBaiDto>> GetHistory(Guid idBaiKiemTra);
 
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace Eduverse.Service.BaiKiemTraService
         /// <param name="idBaiKiemTra">Id bài kiểm tra.</param>
         /// <param name="idNguoiDung">Id người dùng.</param>
         /// <returns>True nếu được phép làm lại, ngược lại False.</returns>
-        Task<bool> CheckCanRetake(Guid idBaiKiemTra, Guid idNguoiDung);
+        Task<bool> CheckCanRetake(Guid idBaiKiemTra);
 
 
         /// <summary>

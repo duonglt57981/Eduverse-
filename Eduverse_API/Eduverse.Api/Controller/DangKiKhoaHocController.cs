@@ -20,11 +20,12 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost("dangki-khoahoc{idKhoaHoc}")]
-        public async Task<DataResponse<DangKyKhoaHocMienPhiDto>> DangKyKhoaHocMienPhi(Guid idKhoaHoc, Guid userId)
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<DangKyKhoaHocMienPhiDto>> DangKyKhoaHocMienPhi(Guid idKhoaHoc)
         {
             try
             {
-                var result = await _dangKyKhoaHocService.DangKyKhoaHocMienPhi(idKhoaHoc, userId);
+                var result = await _dangKyKhoaHocService.DangKyKhoaHocMienPhi(idKhoaHoc);
                 return DataResponse<DangKyKhoaHocMienPhiDto>.Success(result);
             }
             catch (Exception ex)

@@ -70,7 +70,7 @@ namespace Eduverse.Api.Controller
                 .Where(r => r.IdNguoiDangKi == loggedInUserId.Value && r.IsDeleted == false)
                 .ToListAsync();
 
-            var registeredCourseIds = userRegistrations.Select(r => r.IdDangKi).ToList();
+            var registeredCourseIds = userRegistrations.Select(r => r.IdKhoaHoc).ToList();
 
             // Fetch actual courses information
             var courses = await _khoaHocService.GetQueryable()
@@ -92,7 +92,7 @@ namespace Eduverse.Api.Controller
 
             foreach (var reg in userRegistrations)
             {
-                var course = courses.FirstOrDefault(c => c.Id == reg.IdDangKi);
+                var course = courses.FirstOrDefault(c => c.Id == reg.IdKhoaHoc);
                 var record = progressRecords.FirstOrDefault(p => p.IdDangKi == reg.Id);
                 if (course != null && record != null)
                 {
@@ -136,7 +136,7 @@ namespace Eduverse.Api.Controller
             int idx = 0;
             foreach (var reg in userRegistrations)
             {
-                var course = courses.FirstOrDefault(c => c.Id == reg.IdDangKi);
+                var course = courses.FirstOrDefault(c => c.Id == reg.IdKhoaHoc);
                 if (course != null)
                 {
                     var record = progressRecords.FirstOrDefault(p => p.IdDangKi == reg.Id);
@@ -441,9 +441,9 @@ namespace Eduverse.Api.Controller
             // Seed user registrations (DangKyKhoaHoc)
             var registrations = new List<DangKyKhoaHoc>
             {
-                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdDangKi = courses[0].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-15), GiaDangKy = courses[0].Gia },
-                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdDangKi = courses[1].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-10), GiaDangKy = courses[1].Gia },
-                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdDangKi = courses[2].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-5), GiaDangKy = courses[2].Gia }
+                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdKhoaHoc = courses[0].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-15), GiaDangKy = courses[0].Gia },
+                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdKhoaHoc = courses[1].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-10), GiaDangKy = courses[1].Gia },
+                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdKhoaHoc = courses[2].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-5), GiaDangKy = courses[2].Gia }
             };
             foreach (var reg in registrations)
             {

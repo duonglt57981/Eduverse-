@@ -2,6 +2,7 @@
 using Eduverse.Service.TaiLieuService.Dto;
 using Eduverse.Service.TaiLieuService.Request;
 using Hinet.Api.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,7 @@ namespace Eduverse.Api.Controller
 
         [HttpPost("tailieu")]
         [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<TaiLieuDto>> CreateTaiLieu([FromForm] CreateTaiLieuRequest request)
         {
             try
@@ -36,23 +38,25 @@ namespace Eduverse.Api.Controller
         }
 
 
-        //[HttpPut("update-tailieu")]
-        //[Consumes("multipart/form-data")]
-        //public async Task<DataResponse<TaiLieuDto>> UpdateTaiLieu([FromForm] UpdateTaiLieuRequest request)
-        //{
-        //    try
-        //    {
-        //        var result = await _taiLieuService.UpdateTaiLieu(request);
-        //        return DataResponse<TaiLieuDto>.Success(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return DataResponse<TaiLieuDto>.False(ex.Message);
-        //    }
-        //}
+        [HttpPut("update-tailieu")]
+        [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<TaiLieuDto>> UpdateTaiLieu([FromForm] UpdateTaiLieuRequest request)
+        {
+            try
+            {
+                var result = await _taiLieuService.UpdateTaiLieu(request);
+                return DataResponse<TaiLieuDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<TaiLieuDto>.False(ex.Message);
+            }
+        }
 
 
         [HttpDelete("tailieu/{id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteTaiLieu( Guid id)
         {
             try

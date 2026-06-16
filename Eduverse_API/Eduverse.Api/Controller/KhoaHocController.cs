@@ -37,11 +37,12 @@ namespace Eduverse.Api.Controller
 
 
         [HttpGet("khoahoc-by/{userId}")]
-        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListByUser([FromQuery] KhoaHocSearch search,Guid userId)
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListByUser([FromQuery] KhoaHocSearch search)
         {
             try
             {
-                var result = await _khoaHocService.GetListByUser(search, userId);
+                var result = await _khoaHocService.GetListByUser(search);
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
@@ -51,19 +52,14 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("khoahoc-dangki/{userId}")]
-        public async Task<DataResponse<PagedList<GetDangKiKhoaHocDto>>> GetListDangKi(
-            [FromQuery] KhoaHocDangKiSearch search,
+        [HttpGet("khoahoc-dangki")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<PagedList<GetDangKiKhoaHocDto>>> GetListDangKi([FromQuery] KhoaHocDangKiSearch search,
             Guid userId)
         {
             try
             {
-                var result = await _khoaHocService.GetListDangKi(search, userId);
-
-                Console.WriteLine($"PageIndex: {search.PageIndex}");
-                Console.WriteLine($"PageSize: {search.PageSize}");
-                Console.WriteLine($"UserId: {userId}");
-
+                var result = await _khoaHocService.GetListDangKi(search);
                 return DataResponse<PagedList<GetDangKiKhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
@@ -74,6 +70,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpGet("khoahoc-learning/{idDangKy}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)
         {
             try
@@ -90,6 +87,7 @@ namespace Eduverse.Api.Controller
 
         [HttpPost("khoahoc-create")]   
         [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc( [FromForm] CreateKhoaHocRequest request)
         {
             try
@@ -106,6 +104,7 @@ namespace Eduverse.Api.Controller
 
         [HttpPut("khoahoc-put")]
         [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromForm] UpdateKhoaHocRequest request)
         {
             try
@@ -120,7 +119,8 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpDelete("khoahoc-delete/{id}")]
+        [HttpDelete("khoahoc-delete/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)
         {
             try

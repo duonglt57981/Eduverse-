@@ -14,9 +14,9 @@ namespace Eduverse.Service.KhoaHocService
     {
         Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search);
 
-        Task<PagedList<KhoaHocDto>> GetListByUser(KhoaHocSearch search, Guid userId);
+        Task<PagedList<KhoaHocDto>> GetListByUser(KhoaHocSearch search);
 
-        Task<PagedList<GetDangKiKhoaHocDto>> GetListDangKi(KhoaHocDangKiSearch search, Guid userId);
+        Task<PagedList<GetDangKiKhoaHocDto>> GetListDangKi(KhoaHocDangKiSearch search);
 
         Task<KhoaHocDto> GetLearning(Guid idDangKy);
 
