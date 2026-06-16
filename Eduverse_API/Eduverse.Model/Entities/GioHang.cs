@@ -9,6 +9,5 @@ namespace Eduverse.Model.Entities
     public class GioHang : AuditableEntity
     {
         public Guid? IdNguoiDung { get; set; }
-        public Guid? IdGioHangChiTiet { get; set; }
     }
 }

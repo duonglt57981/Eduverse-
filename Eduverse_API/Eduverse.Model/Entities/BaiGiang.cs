@@ -19,5 +19,9 @@ namespace Eduverse.Model.Entities
         public bool? LaBaiGiangFree { get; set; }
         public string? TrangThai { get; set; }
         public Guid IdPhan { get; set; }
+
+        //thêm 
+        public Guid? IdBaiGiangMoi { get; set; }
+        public bool IsPendingSwap { get; set; } = false;
     }
 }

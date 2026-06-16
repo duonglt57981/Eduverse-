@@ -20,7 +20,6 @@
     <Folder Include="ChungChiService\Dto\" />
     <Folder Include="ChungChiService\Request\" />
     <Folder Include="CloudinaryService\Request\" />
-    <Folder Include="DangKyKhoaHocService\Dto\" />
     <Folder Include="DangKyKhoaHocService\Request\" />
     <Folder Include="DanhGiaService\Dto\" />
     <Folder Include="DanhGiaService\Request\" />
@@ -28,7 +27,6 @@
     <Folder Include="DanhMuc_KhoaHocService\Request\" />
     <Folder Include="DanhSachYeuThichService\Dto\" />
     <Folder Include="DanhSachYeuThichService\Request\" />
-    <Folder Include="DapAnService\Request\" />
     <Folder Include="DapAn_NguoiDungService\Dto\" />
     <Folder Include="DapAn_NguoiDungService\Request\" />
     <Folder Include="DonHangChiTietService\Dto\" />
@@ -43,11 +41,11 @@
     <Folder Include="HoiDapService\Request\" />
     <Folder Include="KetQuaBaiThiService\Dto\" />
     <Folder Include="KetQuaBaiThiService\Request\" />
+    <Folder Include="KhoaHocService\Request\" />
     <Folder Include="KhuyenMaiService\Dto\" />
     <Folder Include="KhuyenMaiService\Request\" />
     <Folder Include="KhuyenMai_KhoaHocService\Dto\" />
     <Folder Include="KhuyenMai_KhoaHocService\Request\" />
-    <Folder Include="LanLamBaiKiemTraService\Dto\" />
     <Folder Include="LanLamBaiKiemTraService\Request\" />
     <Folder Include="LienKetService\Dto\" />
     <Folder Include="LienKetService\Request\" />
@@ -57,6 +55,8 @@
     <Folder Include="NganHangService\Request\" />
     <Folder Include="RoleService\Dto\" />
     <Folder Include="RoleService\Request\" />
+    <Folder Include="TaiLieuService\Dto\" />
+    <Folder Include="TaiLieuService\Request\" />
     <Folder Include="ThanhToanService\Dto\" />
     <Folder Include="ThanhToanService\Request\" />
     <Folder Include="ThongBaoService\Dto\" />

@@ -43,6 +43,8 @@ import {
   SectionHeading,
 } from './landing-shared';
 
+const TextFieldAny = TextField as any;
+
 type CourseSortOption = 'newest' | 'rating' | 'price-low';
 
 function CategoryCard({
@@ -142,7 +144,6 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
       <Box sx={{ position: 'relative' }}>
         <CourseVisual palette={course.palette} badge={course.badge} />
         <Button
-          minWidth={0}
           sx={{
             position: 'absolute',
             top: 14,
@@ -229,6 +230,8 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} sx={{ mt: 1.75 }}>
         <Button
+          component={Link}
+          href="/auth/login"
           variant="outlined"
           sx={{
             flex: 1,
@@ -240,6 +243,8 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
           Xem chi tiết
         </Button>
         <Button
+          component={Link}
+          href="/auth/login"
           variant="contained"
           endIcon={<ArrowForwardRounded />}
           sx={{
@@ -333,6 +338,7 @@ export default function CoursesPage() {
                   letterSpacing: '-1.6px',
                   fontWeight: 900,
                   maxWidth: 680,
+                  color: '#1a1a1a',
                 }}
               >
                 Khám phá hàng trăm
@@ -356,19 +362,18 @@ export default function CoursesPage() {
               </Typography>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3 }}>
-                <TextField
+                <TextFieldAny
                   fullWidth
+                  variant="outlined"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
                   placeholder="Tìm kiếm khóa học, kỹ năng..."
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
-                        </InputAdornment>
-                      ),
-                    },
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
+                      </InputAdornment>
+                    ),
                   }}
                   sx={{
                     maxWidth: 420,
@@ -452,20 +457,13 @@ export default function CoursesPage() {
           </Box>
 
           <Box sx={{ py: { xs: 4, md: 6 } }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} sx={{ justifyContent: 'space-between', gap: 2, mb: 2.6 }}>
+            <Box sx={{ mb: 3.5 }}>
               <SectionHeading
                 title="Danh mục phổ biến"
                 description="Bắt đầu hành trình của bạn với các lĩnh vực đang dẫn đầu xu hướng."
+                align="center"
               />
-              <Button
-                component={Link}
-                href="/courses"
-                endIcon={<ArrowForwardRounded />}
-                sx={{ color: '#8d1313', alignSelf: { xs: 'flex-start', md: 'flex-end' } }}
-              >
-                Xem tất cả danh mục
-              </Button>
-            </Stack>
+            </Box>
 
             <Box
               sx={{
@@ -484,6 +482,17 @@ export default function CoursesPage() {
                 />
               ))}
             </Box>
+
+            <Stack direction="row" sx={{ justifyContent: 'center', mt: 4 }}>
+              <Button
+                component={Link}
+                href="/courses"
+                endIcon={<ArrowForwardRounded />}
+                sx={{ color: '#8d1313' }}
+              >
+                Xem tất cả danh mục
+              </Button>
+            </Stack>
           </Box>
 
           <Box

@@ -1,0 +1,76 @@
+﻿using CloudinaryDotNet;
+using Eduverse.Model.Entities;
+using Eduverse.Service.Common;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Request;
+using Hinet.Api.Dto;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+
+namespace Eduverse.Api.Controller
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class KiemDuyetKhoaHocController : EduverseController
+    {
+        private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
+
+        public KiemDuyetKhoaHocController(ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService)
+        {
+            _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
+        }
+
+        [HttpGet("kiemduyet-khoahoc-getlist")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<PagedList<GetListKiemDuyetDto>>> GetListKiemDuyetKhoaHoc([FromQuery] KhoaHocKiemDuyetSearchDto search)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.GetListKhoaHocKiemDuyet(search);
+                return DataResponse<PagedList<GetListKiemDuyetDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<GetListKiemDuyetDto>>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("kiemduyet-khoahoc")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc([FromForm] KiemDuyetKhoaHocRequest request)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetKhoaHoc(request);
+                return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
+                
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("kiemduyet-khoahoc-gethistory/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<List<LichSuKiemDuyetDto>>> GetLichSuKiemDuyet(Guid idKhoaHoc)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.GetLichSuKiemDuyet(idKhoaHoc);
+                return DataResponse<List<LichSuKiemDuyetDto>>.Success(result);
+
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<LichSuKiemDuyetDto>>.False(ex.Message);
+            }
+        }
+    } 
+}

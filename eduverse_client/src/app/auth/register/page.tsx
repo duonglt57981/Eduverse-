@@ -1,10 +1,10 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
-import { register } from '../../../store/auth/AuthSlice';
+import { register, clearError, clearSuccess } from '../../../store/auth/AuthSlice';
 import {
   Box,
   Button,
@@ -26,13 +26,13 @@ import {
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
   ArrowBackRounded,
+  BadgeRounded,
   CheckCircleRounded,
   CircleOutlined,
   EmailRounded,
   LockRounded,
   PersonRounded,
   PhoneIphoneRounded,
-  ShieldRounded,
   VisibilityOffRounded,
   VisibilityRounded,
 } from '@mui/icons-material';
@@ -113,6 +113,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     hoTen: '',
     userName: '',
+    email: '',
     phoneNumber: '',
     password: '',
   });
@@ -121,6 +122,13 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreeNews, setAgreeNews] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Clear Redux messages khi mount trang để không hiện message cũ
+  useEffect(() => {
+    dispatch(clearError());
+    dispatch(clearSuccess());
+  }, [dispatch]);
 
   const theme = useMemo(
     () =>
@@ -152,17 +160,82 @@ export default function RegisterPage() {
   const confirmMismatch =
     confirmPass.length > 0 && form.password.length > 0 && confirmPass !== form.password;
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Họ tên: tối thiểu 2 ký tự
+    if (!form.hoTen.trim()) {
+      errors.hoTen = 'Vui lòng nhập họ và tên.';
+    } else if (form.hoTen.trim().length < 2) {
+      errors.hoTen = 'Họ và tên phải có ít nhất 2 ký tự.';
+    }
+
+    // Username: không dấu, không khoảng trắng, chỉ chữ cái không dấu + số + ._-
+    if (!form.userName.trim()) {
+      errors.userName = 'Vui lòng nhập tên đăng nhập.';
+    } else if (form.userName.trim().length < 3) {
+      errors.userName = 'Tên đăng nhập phải có ít nhất 3 ký tự.';
+    } else if (/\s/.test(form.userName)) {
+      errors.userName = 'Tên đăng nhập không được chứa dấu cách.';
+    } else if (/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]/.test(form.userName)) {
+      errors.userName = 'Tên đăng nhập không được chứa dấu tiếng Việt.';
+    } else if (!/^[a-zA-Z0-9._-]+$/.test(form.userName)) {
+      errors.userName = 'Tên đăng nhập chỉ được chứa chữ cái không dấu, số, dấu chấm, gạch ngang.';
+    }
+
+    // Email: bắt buộc, đúng format
+    if (!form.email.trim()) {
+      errors.email = 'Vui lòng nhập email.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      errors.email = 'Email không đúng định dạng.';
+    }
+
+    // Số điện thoại: bắt buộc, 10 chữ số, bắt đầu bằng 0
+    if (!form.phoneNumber.trim()) {
+      errors.phoneNumber = 'Vui lòng nhập số điện thoại.';
+    } else if (!/^0[0-9]{9}$/.test(form.phoneNumber.trim())) {
+      errors.phoneNumber = 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.';
+    }
+
+    // Mật khẩu: ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt
+    if (!form.password) {
+      errors.password = 'Vui lòng nhập mật khẩu.';
+    } else {
+      const missing: string[] = [];
+      if (form.password.length < 8) missing.push('ít nhất 8 ký tự');
+      if (!/[A-Z]/.test(form.password)) missing.push('1 chữ in hoa');
+      if (!/[a-z]/.test(form.password)) missing.push('1 chữ thường');
+      if (!/[0-9]/.test(form.password)) missing.push('1 chữ số');
+      if (!/[^a-zA-Z0-9]/.test(form.password)) missing.push('1 ký tự đặc biệt');
+      if (missing.length > 0) {
+        errors.password = `Mật khẩu cần có: ${missing.join(', ')}.`;
+      }
+    }
+
+    // Xác nhận mật khẩu
+    if (!confirmPass) {
+      errors.confirmPass = 'Vui lòng xác nhận mật khẩu.';
+    } else if (confirmPass !== form.password) {
+      errors.confirmPass = 'Mật khẩu xác nhận không khớp.';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLocalError(null);
+    dispatch(clearError());
+    dispatch(clearSuccess());
+
+    if (!validateForm()) return;
+
     if (!agreeTerms) {
       setLocalError('Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật.');
       return;
     }
-    if (confirmMismatch) {
-      setLocalError('Mật khẩu xác nhận không khớp.');
-      return;
-    }
+
     const result = await dispatch(register(form));
     if (register.fulfilled.match(result)) {
       router.push('/auth/login');
@@ -277,6 +350,7 @@ export default function RegisterPage() {
                 fontSize: 44,
                 lineHeight: 1.08,
                 maxWidth: 520,
+                color: '#ffffff',
               }}
             >
               Bắt đầu hành trình học tập cùng EduVerse
@@ -407,7 +481,7 @@ export default function RegisterPage() {
               { num: '120+', label: 'Giảng viên' },
             ].map((s) => (
               <Box key={s.label}>
-                <Typography sx={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.3px' }}>
+                <Typography sx={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.3px', color: '#ffffff' }}>
                   {s.num}
                 </Typography>
                 <Typography sx={{ fontSize: 11.5, color: 'rgba(255,255,255,0.72)' }}>
@@ -450,7 +524,7 @@ export default function RegisterPage() {
               </MuiLink>
             </Box>
 
-            <Typography variant="h4" sx={{ fontSize: { xs: 26, sm: 30 }, mb: 0.75 }}>
+            <Typography variant="h4" sx={{ fontSize: { xs: 26, sm: 30 }, mb: 0.75, color: 'text.primary' }}>
               Đăng ký tài khoản
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 3 }}>
@@ -514,12 +588,11 @@ export default function RegisterPage() {
 
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
               <Stack spacing={1.75}>
-                <FormControl fullWidth>
+                <FormControl fullWidth error={!!fieldErrors.hoTen}>
                   <OutlinedInput
                     placeholder="Họ và tên"
                     value={form.hoTen}
-                    onChange={(e) => setForm({ ...form, hoTen: e.target.value })}
-                    required
+                    onChange={(e) => { setForm({ ...form, hoTen: e.target.value }); setFieldErrors((p) => ({ ...p, hoTen: '' })); }}
                     startAdornment={
                       <InputAdornment position="start">
                         <PersonRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
@@ -527,16 +600,31 @@ export default function RegisterPage() {
                     }
                     sx={inputSx}
                   />
+                  {fieldErrors.hoTen && <FormHelperText>{fieldErrors.hoTen}</FormHelperText>}
                 </FormControl>
 
-                <FormControl fullWidth>
+                <FormControl fullWidth error={!!fieldErrors.userName}>
                   <OutlinedInput
-                    placeholder="Email hoặc tên đăng nhập"
+                    placeholder="Tên đăng nhập"
                     value={form.userName}
-                    onChange={(e) => setForm({ ...form, userName: e.target.value })}
-                    required
+                    onChange={(e) => { setForm({ ...form, userName: e.target.value }); setFieldErrors((p) => ({ ...p, userName: '' })); }}
                     type="text"
-                    inputProps={{ inputMode: 'email' }}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <BadgeRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                      </InputAdornment>
+                    }
+                    sx={inputSx}
+                  />
+                  {fieldErrors.userName && <FormHelperText>{fieldErrors.userName}</FormHelperText>}
+                </FormControl>
+
+                <FormControl fullWidth error={!!fieldErrors.email}>
+                  <OutlinedInput
+                    placeholder="Email"
+                    value={form.email}
+                    onChange={(e) => { setForm({ ...form, email: e.target.value }); setFieldErrors((p) => ({ ...p, email: '' })); }}
+                    type="email"
                     startAdornment={
                       <InputAdornment position="start">
                         <EmailRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
@@ -544,15 +632,14 @@ export default function RegisterPage() {
                     }
                     sx={inputSx}
                   />
+                  {fieldErrors.email && <FormHelperText>{fieldErrors.email}</FormHelperText>}
                 </FormControl>
 
-                <FormControl fullWidth>
+                <FormControl fullWidth error={!!fieldErrors.phoneNumber}>
                   <OutlinedInput
-                    placeholder="Số điện thoại"
+                    placeholder="Số điện thoại (VD: 0912345678)"
                     value={form.phoneNumber}
-                    onChange={(e) =>
-                      setForm({ ...form, phoneNumber: e.target.value })
-                    }
+                    onChange={(e) => { setForm({ ...form, phoneNumber: e.target.value }); setFieldErrors((p) => ({ ...p, phoneNumber: '' })); }}
                     type="tel"
                     startAdornment={
                       <InputAdornment position="start">
@@ -561,14 +648,14 @@ export default function RegisterPage() {
                     }
                     sx={inputSx}
                   />
+                  {fieldErrors.phoneNumber && <FormHelperText>{fieldErrors.phoneNumber}</FormHelperText>}
                 </FormControl>
 
-                <FormControl fullWidth>
+                <FormControl fullWidth error={!!fieldErrors.password}>
                   <OutlinedInput
                     placeholder="Mật khẩu"
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    required
+                    onChange={(e) => { setForm({ ...form, password: e.target.value }); setFieldErrors((p) => ({ ...p, password: '' })); }}
                     type={showPass ? 'text' : 'password'}
                     startAdornment={
                       <InputAdornment position="start">
@@ -590,6 +677,7 @@ export default function RegisterPage() {
                     }
                     sx={inputSx}
                   />
+                  {fieldErrors.password && <FormHelperText>{fieldErrors.password}</FormHelperText>}
                 </FormControl>
 
                 {form.password ? (
@@ -648,18 +736,17 @@ export default function RegisterPage() {
                   </Box>
                 ) : null}
 
-                <FormControl fullWidth error={confirmMismatch}>
+                <FormControl fullWidth error={confirmMismatch || !!fieldErrors.confirmPass}>
                   <OutlinedInput
                     placeholder="Xác nhận mật khẩu"
                     value={confirmPass}
-                    onChange={(e) => setConfirmPass(e.target.value)}
-                    required
+                    onChange={(e) => { setConfirmPass(e.target.value); setFieldErrors((p) => ({ ...p, confirmPass: '' })); }}
                     type={showPass ? 'text' : 'password'}
                     sx={inputSx}
                   />
-                  {confirmMismatch ? (
-                    <FormHelperText>Mật khẩu xác nhận không khớp.</FormHelperText>
-                  ) : null}
+                  {(confirmMismatch || fieldErrors.confirmPass) && (
+                    <FormHelperText>{fieldErrors.confirmPass || 'Mật khẩu xác nhận không khớp.'}</FormHelperText>
+                  )}
                 </FormControl>
 
                 <Box sx={{ mt: 0.25 }}>
@@ -669,13 +756,15 @@ export default function RegisterPage() {
                         checked={agreeTerms}
                         onChange={(e) => setAgreeTerms(e.target.checked)}
                         sx={{
+                          py: 0.5,
+                          pl: 1,
                           color: 'rgba(17,17,17,0.35)',
                           '&.Mui-checked': { color: '#7f1d1d' },
                         }}
                       />
                     }
                     label={
-                      <Typography sx={{ fontSize: 12.75, color: 'rgba(17,17,17,0.65)' }}>
+                      <Typography sx={{ mt: 0.4, fontSize: 12.75, color: 'rgba(17,17,17,0.65)' }}>
                         Tôi đồng ý với{' '}
                         <MuiLink component={Link} href="/terms" underline="hover" sx={{ color: '#7f1d1d', fontWeight: 800 }}>
                           Điều khoản dịch vụ
@@ -696,13 +785,15 @@ export default function RegisterPage() {
                         checked={agreeNews}
                         onChange={(e) => setAgreeNews(e.target.checked)}
                         sx={{
+                          py: 0.5,
+                          pl: 1,
                           color: 'rgba(17,17,17,0.35)',
                           '&.Mui-checked': { color: '#7f1d1d' },
                         }}
                       />
                     }
                     label={
-                      <Typography sx={{ fontSize: 12.75, color: 'rgba(17,17,17,0.65)' }}>
+                      <Typography sx={{ mt: 0.4, fontSize: 12.75, color: 'rgba(17,17,17,0.65)' }}>
                         Đăng ký nhận thông báo về khóa học mới và ưu đãi đặc biệt qua email.
                       </Typography>
                     }

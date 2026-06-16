@@ -1,5 +1,6 @@
 ﻿using Eduverse.Model.Entities;
 using Eduverse.Service.BaiGiangService.Dto;
+using Eduverse.Service.DanhMuc_KhoaHocService.Dto;
 using Eduverse.Service.DanhMucService.Dto;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.TaiLieuService.Dto;
@@ -13,26 +14,8 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.KhoaHocService.Dto
 {
-    public class KhoaHocDto 
+    public class KhoaHocDto : KhoaHoc
     {
-        public Guid? Id { get; set; }
-        public string? TieuDe { get; set; }
-        public string? MoTa { get; set; }
-        public double? Gia { get; set; } = 0;
-        public double? GiaGoc { get; set; } = 0;
-        public string? LoaiKhoaHoc { get; set; }
-        public string? HinhAnhKhoaHoc { get; set; }
-        public string? URLViewPreviewKhoaHoc { get; set; }
-        public string? CapDo { get; set; }
-        public int? TongThoiLuong { get; set; }
-        public int? TongBaiGiang { get; set; }
-        public DateTime? NgayTao { get; set; } = DateTime.Now;
-        public DateTime? NgayCapNhat { get; set; }
-        public int? SoLuongHocVien { get; set; }
-        public string? TrangThaiPheDuyet { get; set; }
-        public string? TrangThai { get; set; }
-
-
         public Guid idDangKiKhoaHoc { get; set; }
         public DateTime? NgayDangKy { get; set; }
         public bool DaDangKy { get; set; }
@@ -40,5 +23,6 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public double PhanTramHoanThanh { get; set; }
         //thêm list 
         public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
+        public List<DanhMuc_KhoaHocDto>? DanhMucs { get; set; }
     }
 }

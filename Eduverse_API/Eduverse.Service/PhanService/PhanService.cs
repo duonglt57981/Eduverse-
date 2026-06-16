@@ -12,12 +12,7 @@ using Eduverse.Service.PhanService.Request;
 using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Eduverse.Service.PhanService
 {
@@ -34,9 +29,7 @@ namespace Eduverse.Service.PhanService
             IBaiGiangService baiGiangService,
             ITaiLieuService taiLieuService,
             IKhoaHocRepository khoaHocRepository,
-            Service.Core.Mapper.IMapper mapper
-
-            ) : base(phanRepository)
+            Service.Core.Mapper.IMapper mapper) : base(phanRepository)
         {
             _mapper = mapper;
             _baiGiangService = baiGiangService;
@@ -69,7 +62,6 @@ namespace Eduverse.Service.PhanService
                 IdKhoaHoc = request.IdKhoaHoc,
                 TenPhan = request.TenPhan.Trim(),
                 ThuTuSapXep = maxThuTu + 1,
-                CreatedDate = DateTime.UtcNow
             };
 
             await CreateAsync(entity);
@@ -129,12 +121,10 @@ namespace Eduverse.Service.PhanService
             var phan = await GetByIdAsync(id);
             if (phan == null)
                 throw new Exception("Không tim thấy phần học");
-
-            phan.DeletedDate = DateTime.UtcNow;
-            phan.IsDeleted = true;
            
 
             await DeleteAsync(phan);
+            await SaveAsync();
             return true;
         }
     }

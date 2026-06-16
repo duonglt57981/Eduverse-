@@ -1,18 +1,12 @@
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.TaiLieuRepository;
-using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
-using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.TaiLieuService.Dto;
 using Eduverse.Service.TaiLieuService.Request;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Eduverse.Service.TaiLieuService
 {
@@ -50,10 +44,10 @@ namespace Eduverse.Service.TaiLieuService
             var entity = new TaiLieu
             {
                 IdBaiGiang = request.IdBaiGiang,
-                TenTaiLieu = request.TenTaiLieu,
-                URL = uploadResult.UrlDoc,
-                LoaiTaiLieu = fileExtension,
-                TrangThai = "HDI",
+                TenTaiLieu = request.TenTaiLieu.Trim(),
+                URL = uploadResult.UrlDoc.Trim(),
+                LoaiTaiLieu = fileExtension.Trim(),
+                TrangThai = "HoatDong",
                 CreatedDate = DateTime.UtcNow
 
             };
@@ -64,26 +58,40 @@ namespace Eduverse.Service.TaiLieuService
         }
 
 
-        //public async Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request)
-        //{
-        //    var baiGiang = await GetByIdAsync(request.IdBaiGiang);
-        //    if (baiGiang == null) throw new Exception("Không tìm thấy bài giảng");
+        public async Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
 
-        //    var entity = await GetByIdAsync(request.Id);
-        //    if (entity == null) throw new Exception("Không tìm thấy tài liệu");
+            var baiGiang = await _baiGiangRepository.GetByIdAsync(request.IdBaiGiang);
+            if (baiGiang == null)
+                throw new Exception("Không tìm thấy bài giảng");
 
-        //    entity.IdBaiGiang = request.IdBaiGiang.Value;
-        //    entity.TenTaiLieu = request.TenTaiLieu;
-        //    entity.URL = request.URL;
-        //    entity.LoaiTaiLieu = request.LoaiTaiLieu;
-        //    entity.TrangThai = request.TrangThai;
-        //    entity.UpdatedDate = DateTime.UtcNow;
-            
-                
-        //    await CreateAsync(entity);
-        //    await SaveAsync();
-        //    return _mapper.Map<TaiLieu, TaiLieuDto>(entity);
-        //}
+            var entityCu = await GetByIdAsync(request.Id);
+            if (entityCu == null)
+                throw new Exception("Không tìm thấy tài liệu");
+            await DeleteAsync(entityCu);
+
+            var uploadResult = await _cloudinaryService.UploadDocumentAsync(request.Document);
+
+            var fileExtension = Path.GetExtension(request.Document.FileName).TrimStart('.').ToUpper();
+
+            // Tạo bản ghi mới
+            var entityMoi = new TaiLieu
+            {
+                Id = Guid.NewGuid(),
+                IdBaiGiang = request.IdBaiGiang.Value,
+                TenTaiLieu = request.TenTaiLieu.Trim(),
+                URL = uploadResult.UrlDoc.Trim(),
+                LoaiTaiLieu = fileExtension.Trim(),
+                TrangThai = "HoatDong",
+            };
+
+            await CreateAsync(entityMoi);
+            await SaveAsync();
+
+            return _mapper.Map<TaiLieu, TaiLieuDto>(entityMoi);
+        }
 
 
         public async Task<bool> DeleteTaiLieu(Guid id)
@@ -92,11 +100,10 @@ namespace Eduverse.Service.TaiLieuService
             if (taiLieu == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            taiLieu.DeletedDate = DateTime.UtcNow;
-            taiLieu.IsDeleted = true;
-            taiLieu.TrangThai = "KDI";
+            taiLieu.TrangThai = "NgungHoatDong";
 
             await DeleteAsync(taiLieu);
+            await SaveAsync();
             return true;
 
         }

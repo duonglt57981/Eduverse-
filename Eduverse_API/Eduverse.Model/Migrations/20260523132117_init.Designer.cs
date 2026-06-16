@@ -906,7 +906,7 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DonHangId")
+                    b.Property<Guid?>("IdDonHang")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<double?>("GiaLucDat")
@@ -932,7 +932,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DonHangId");
+                    b.HasIndex("IdDonHang");
 
                     b.ToTable("donHangChiTiets");
                 });
@@ -2076,7 +2076,7 @@ namespace Eduverse.Model.Migrations
                 {
                     b.HasOne("Eduverse.Model.Entities.DonHang", null)
                         .WithMany("DonHangChiTiets")
-                        .HasForeignKey("DonHangId");
+                        .HasForeignKey("IdDonHang");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.RefreshToken", b =>
