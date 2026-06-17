@@ -40,6 +40,22 @@ namespace Eduverse.Api.Controller
         }
 
 
+        [HttpGet("kiemduyet-khoahoc-getdetail")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<KiemDuyetDetailDto>> GetDetailKiemDuyetKhoaHoc([FromQuery] Guid idKhoaHoc)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.GetDetailKhoaHocKiemDuyet(idKhoaHoc);
+                return DataResponse<KiemDuyetDetailDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KiemDuyetDetailDto>.False(ex.Message);
+            }
+        }   
+
+
         [HttpPost("kiemduyet-khoahoc")]
         [Authorize(Roles = "Admin")]
         public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc([FromForm] KiemDuyetKhoaHocRequest request)
