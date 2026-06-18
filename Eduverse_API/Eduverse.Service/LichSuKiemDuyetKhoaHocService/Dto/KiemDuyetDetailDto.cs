@@ -12,12 +12,17 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
     public class KiemDuyetDetailDto : KhoaHoc
     {
         public Guid idDangKiKhoaHoc { get; set; }
+        public Guid IdBanNhap { get; set; }
         public DateTime? NgayDangKy { get; set; }
         public bool DaDangKy { get; set; }
         public int SoBaiGiangHoanThanh { get; set; }
         public double PhanTramHoanThanh { get; set; }
 
         public bool IsDangSua { get; set; }
+        public bool IsLocked { get; set; }
+        public string? LockedBy { get; set; }
+        public DateTime? LockedAt { get; set; }
+        public bool IsCurrentUserLocked { get; set; }
         //thêm list 
         public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
         public List<string>? DanhMucs { get; set; }

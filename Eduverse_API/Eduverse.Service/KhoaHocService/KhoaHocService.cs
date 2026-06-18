@@ -2,6 +2,7 @@
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.DanhMuc_KhoaHocRepository;
 using Eduverse.Repository.DanhMucRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.LanLamBaiKiemTraRepository;
@@ -51,6 +52,7 @@ namespace Eduverse.Service.KhoaHocService
         private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
         private readonly IBaiKiemTraRepository _baiKiemTraRepository ;
         private readonly ILanLamBaiKiemTraService _lanLamBaiKiemTraService;
+        private readonly IDanhMuc_KhoaHocRepository _danhMuc_KhoaHocRepository;
 
         public KhoaHocService(
             IMemoryCache memoryCache,
@@ -68,8 +70,8 @@ namespace Eduverse.Service.KhoaHocService
             IBaiGiangRepository baiGiangRepository,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             IBaiKiemTraRepository baiKiemTraRepository,
-            ILanLamBaiKiemTraService lanLamBaiKiemTraService
-
+            ILanLamBaiKiemTraService lanLamBaiKiemTraService,
+            IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository
         ) : base(khoaHocRepository)
         {
             _memoryCache = memoryCache;
@@ -86,6 +88,7 @@ namespace Eduverse.Service.KhoaHocService
             _dangKyKhoaHocRepository = dangKyKhoaHocRepository;
             _baiKiemTraRepository = baiKiemTraRepository;
             _lanLamBaiKiemTraService = lanLamBaiKiemTraService;
+            _danhMuc_KhoaHocRepository = danhMuc_KhoaHocRepository;
         }
 
 
@@ -1642,12 +1645,20 @@ namespace Eduverse.Service.KhoaHocService
                                         && !x.IsDeleted
                                         && (x.TrangThaiPheDuyet == "ChoDuyet"
                                             || x.TrangThaiPheDuyet == "DaDuyet"
-                                            || x.TrangThaiPheDuyet == "TuChoi"));
+                                            || x.TrangThaiPheDuyet == "TuChoi"
+                                            || x.TrangThaiPheDuyet == "DangDuyet"));
 
             if (banNhap != null)
             {
-                // ── Đã có bản nháp → update luôn, KHÔNG tạo mới ──
-                banNhap.TieuDe = request.TieuDe.Trim();
+                if(banNhap.TrangThaiPheDuyet == "DangDuyet")
+                        throw new Exception(
+                    $"❌ KHÓA HỌC ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
+                    $"Hệ thống Eduverses đang kiểm duyệt khóa học này" +
+                    $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
+                    $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
+                );
+                    // ── Đã có bản nháp → update luôn, KHÔNG tạo mới ──
+                    banNhap.TieuDe = request.TieuDe.Trim();
                 banNhap.MoTa = request.MoTa?.Trim();
                 banNhap.Gia = request.Gia;
                 banNhap.GiaGoc = request.GiaGoc;
@@ -1664,8 +1675,15 @@ namespace Eduverse.Service.KhoaHocService
             }
             else
             {
-                // ── Chưa có bản nháp → tạo mới ───────────────────
-                var banNhapMoi = new KhoaHoc
+                    if (banNhap.TrangThaiPheDuyet == "DangDuyet")
+                        throw new Exception(
+                    $"❌ KHÓA HỌC ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
+                    $"Hệ thống Eduverses đang kiểm duyệt khóa học này" +
+                    $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
+                    $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
+                );
+                    // ── Chưa có bản nháp → tạo mới ───────────────────
+                    var banNhapMoi = new KhoaHoc
                 {
                     Id = Guid.NewGuid(),
                     IdBanGhiTruoc = banGoc.Id,
