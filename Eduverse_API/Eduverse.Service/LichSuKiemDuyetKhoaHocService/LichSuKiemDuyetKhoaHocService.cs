@@ -11,11 +11,13 @@ using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.Common;
 using Eduverse.Service.DanhMuc_KhoaHocService;
+using Eduverse.Service.GeminiService;
 using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Exceptions;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Request;
 using Eduverse.Service.PhanService;
 using Eduverse.Service.PhanService.Dto;
@@ -23,6 +25,7 @@ using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.TaiLieuService.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -105,6 +108,21 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IDanhMucRepository _danhMucRepository;
         private readonly IDanhMuc_KhoaHocService _danhMuc_KhoaHocService;
 
+
+        private readonly IGemini _geminiService;
+        private readonly ILogger<LichSuKiemDuyetKhoaHocService> _logger;
+
+        // Tu cam co ban (kiem tra nhanh truoc khi goi AI)
+        private static readonly HashSet<string> _tuCam = new()
+        {
+            "cac", "lon", "dit", "vai", "dm", "ml", "cc", "deo", "vcl",
+            "loz", "cmm", "dit me", "ngu", "dien",
+            "giet", "chem", "danh", "ban", "dap",
+            "bao luc", "vu khi", "sung", "dao", "bom",
+            "lat do", "bieu tinh", "dao chinh", "cach mang",
+            "khung bo", "phan dong", "noi loan"
+        };
+
         public LichSuKiemDuyetKhoaHocService(ILichSuKiemDuyetKhoaHocRepository repository,
             IKhoaHocRepository khoaHocRepository,
             IPhanRepository phanRepository,
@@ -118,6 +136,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository,
             IDanhMucRepository _danhMucRepository,
             IDanhMuc_KhoaHocService danhMuc_KhoaHocService,
+            IGemini geminiService,
+            ILogger<LichSuKiemDuyetKhoaHocService> logger,
             IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
@@ -132,6 +152,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             _taiLieuService = taiLieuService;
             _danhMuc_KhoaHocRepository = danhMuc_KhoaHocRepository;
             _danhMuc_KhoaHocService = danhMuc_KhoaHocService;
+            _geminiService = geminiService;
+            _logger = logger;
         }
 
         #region GetListKhoaHocKiemDuyet
@@ -231,9 +253,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             return new PagedList<GetListKiemDuyetDto>(pageData, search.PageIndex, search.PageSize, totalCount);
         }
         #endregion
-
-
-        
 
 
         #region KiemDuyetKhoaHoc
@@ -455,8 +474,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         #endregion
 
 
-
-
         public async Task<List<LichSuKiemDuyetDto>> GetLichSuKiemDuyet(Guid idKhoaHoc)
         {
             return await GetQueryable()
@@ -473,6 +490,37 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     NgayDuyet = x.NgayDuyet
                 })
                 .ToListAsync();
+        }
+
+
+        public async Task KiemTraVaNemExceptionAsync(string noiDung)
+        {
+            if (string.IsNullOrWhiteSpace(noiDung)) return;
+
+            // 1. Kiem tra tu cam co ban
+            var tuTimThay = _tuCam.Where(t => noiDung.ToLower().Contains(t)).ToList();
+            if (tuTimThay.Any())
+            {
+                throw new KiemDuyetException(
+                    $"Noi dung chua tu ngu nhay cam: {string.Join(", ", tuTimThay)}",
+                    "TuCamCoBan",
+                    tuTimThay,
+                    "Vui long loai bo cac tu ngu khong phu hop"
+                );
+            }
+
+            // 2. Kiem tra bang Gemini
+            var ketQua = await _geminiService.KiemTraAsync(noiDung);
+
+            if (!ketQua.HopLe)
+            {
+                throw new KiemDuyetException(
+                    ketQua.ThongBao ?? "Noi dung vi pham",
+                    ketQua.Loai ?? "ViPham",
+                    ketQua.TuViPham ?? new List<string>(),
+                    ketQua.GoiYSua
+                );
+            }
         }
     }
 }

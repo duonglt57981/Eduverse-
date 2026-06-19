@@ -77,8 +77,9 @@ namespace Eduverse.Service.DangKyKhoaHocService
                 IdNguoiDangKi = idNguoiDangKi,
                 IdKhoaHoc = idKhoaHoc,
                 GiaDangKy = giaKhoaHoc,
-                TrangThai = "HoatDong",
+                TrangThai = "DaDangKi",
                 IsDangKy = true,    
+                ThoiGianDK = DateTime.UtcNow
             };
 
             await CreateAsync(dangKy);

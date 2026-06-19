@@ -72,14 +72,10 @@ namespace Eduverse.Service.PhanService
                 IdKhoaHoc = request.IdKhoaHoc,
                 TenPhan = request.TenPhan.Trim(),
                 ThuTuSapXep = maxThuTu + 1,
-                TrangThai = "ChoDuyet"
+                TrangThai = "HoatDong"
             };
 
-            if (khoaHoc.TrangThaiPheDuyet == "DaDuyet")
-                khoaHoc.TrangThaiPheDuyet = "ChoDuyetS";
-
             await CreateAsync(entity);
-            await _khoaHocService.UpdateAsync(khoaHoc);
             await SaveAsync();
 
             return _mapper.Map<Phan,PhanHocDto>(entity);
@@ -140,11 +136,14 @@ namespace Eduverse.Service.PhanService
             var coNguoiHoc = await _dangKyKhoaHocRepository.GetQueryable()
                 .AnyAsync(x => x.IdKhoaHoc == phan.IdKhoaHoc);
 
-            phan.TrangThai = coNguoiHoc == null ? "DaXoa" : "HoatDong";
+            phan.TrangThai = coNguoiHoc == null ? "DaXoa" : "NgungHoatDong";// nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
+                                                                       //nếu isdele = true + HoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc
 
             await DeleteAsync(phan);
             await SaveAsync();
             return true;
+
+
         }
     }
 }

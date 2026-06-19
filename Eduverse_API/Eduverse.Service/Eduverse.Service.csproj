@@ -33,6 +33,8 @@
     <Folder Include="DonHangChiTietService\Request\" />
     <Folder Include="DonHangService\Dto\" />
     <Folder Include="DonHangService\Request\" />
+    <Folder Include="GeminiService\Dto\" />
+    <Folder Include="GeminiService\Request\" />
     <Folder Include="GioHangChiTietService\Dto\" />
     <Folder Include="GioHangChiTietService\Request\" />
     <Folder Include="GioHangService\Dto\" />
@@ -70,6 +72,7 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="CloudinaryDotNet" Version="1.29.1" />
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
+    <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.72.0" />
     <PackageReference Include="NETCore.MailKit" Version="2.1.0" />
     <PackageReference Include="payOS" Version="2.1.0" />
   </ItemGroup>

@@ -1,7 +1,9 @@
 ﻿using Eduverse.Model;
 using Eduverse.Model.Entities;
+using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.PhanRepository;
 using Eduverse.Service.BaiKiemTraService.Dto;
 using Eduverse.Service.BaiKiemTraService.Request;
 using Eduverse.Service.CauHoiService;
@@ -33,6 +35,9 @@ namespace Eduverse.Service.BaiKiemTraService
         private readonly EduverseContext _eduverseContext;
         private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IBaiGiangRepository _baiGiangRepository;
+        private readonly IPhanRepository _phanRepository;
+
 
         public BaiKiemTraService(
             IMapper mapper,
@@ -45,7 +50,9 @@ namespace Eduverse.Service.BaiKiemTraService
             EduverseContext eduverseContext,
             ITienDoHocTapService tienDoHocTapService,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
-             IHttpContextAccessor httpContextAccessor) : base(baiKiemTraRepository)
+            IBaiGiangRepository baiGiangRepository,
+            IPhanRepository phanRepository,
+            IHttpContextAccessor httpContextAccessor) : base(baiKiemTraRepository)
         {
             _lanLamBaiKiemTraService = lanLamBaiKiemTraService;
             _chiTietLamBaiKiemTraService = chiTietLamBaiKiemTraService;
@@ -57,6 +64,8 @@ namespace Eduverse.Service.BaiKiemTraService
             _tienDoHocTapService = tienDoHocTapService;
             _dangKyKhoaHocRepository = dangKyKhoaHocRepository;
             _httpContextAccessor = httpContextAccessor;
+            _baiGiangRepository = baiGiangRepository;
+            _phanRepository = phanRepository;
         }
 
 
@@ -116,16 +125,15 @@ namespace Eduverse.Service.BaiKiemTraService
         {
             var quiz = await GetByIdOrThrowAsync(id);
 
-            var daCoNguoiLam = await _lanLamBaiKiemTraService
-                .AnyAsync(x =>
-                    x.IdBaiKiemTra == id &&
-                    !x.IsDeleted);
-
-            if (daCoNguoiLam)
-                throw new Exception(
-                    "Bài kiểm tra đã có người làm, không thể xóa.");
-
-            quiz.IsDeleted = true;
+            var coNguoiHoc = await (
+                 from ph in _phanRepository.GetQueryable()
+                 join dk in _dangKyKhoaHocRepository.GetQueryable()
+                     on ph.IdKhoaHoc equals dk.IdKhoaHoc
+                 where ph.Id == quiz.IdPhan
+                 select dk.Id
+             ).AnyAsync();
+            quiz.TrangThai = coNguoiHoc == null ? "DaXoa" : "NgungHoatDong"; // nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
+                                                                                 //nếu isdele = true + HoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc;
 
             await UpdateAsync(quiz);
 

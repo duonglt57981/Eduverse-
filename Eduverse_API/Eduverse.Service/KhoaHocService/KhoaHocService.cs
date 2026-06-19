@@ -1105,8 +1105,9 @@ namespace Eduverse.Service.KhoaHocService
                     var result = await GetAll()
                         .AsNoTracking()
                         .Where(x => x.Id == idKhoaHoc 
-                        && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "ChoDuyetS") 
-                        && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong"))
+                        && (x.TrangThaiPheDuyet == "DaDuyet") 
+                        && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
+                        && x.DeletedDate > dangKy.CreatedDate) // kiểm tra trc ngày xóa đã có ai đăng kí
                         .Select(x => new KhoaHocDto
                         {
                             Id = x.Id,
@@ -1133,7 +1134,8 @@ namespace Eduverse.Service.KhoaHocService
                     var list = await _phanRepository.GetAll()
                         .AsNoTracking()
                         .Where(x => x.IdKhoaHoc == idKhoaHoc 
-                                        && (!x.IsDeleted||(x.IsDeleted && x.TrangThai == "HoatDong"&& x.DeletedDate > dangKy.CreatedDate)) && x.TrangThai != "Nhap")
+                                        &&(x.IsDeleted && x.TrangThai == "HoatDong"&& x.DeletedDate > dangKy.CreatedDate) 
+                                        && x.TrangThai != "BanNhap") 
                         .OrderBy(x => x.ThuTuSapXep)
                         .Select(x => new PhanHocDto
                         {
@@ -1778,7 +1780,11 @@ namespace Eduverse.Service.KhoaHocService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khoa học");
 
-            khoaHoc.TrangThai = "NgungHoatDong";
+            var coNguoiHoc = await _dangKyKhoaHocRepository.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == id);
+
+            khoaHoc.TrangThai = coNguoiHoc == null ? "DaXoa" : "NgungHoatDong";// nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
+                                                                               //nếu isdele = true + NgungHoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc
 
             await DeleteAsync(khoaHoc);
             await SaveAsync();

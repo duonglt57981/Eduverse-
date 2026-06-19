@@ -15,5 +15,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         //Task<KiemDuyetDetailDto> GetDetailKhoaHocKiemDuyet(Guid idKhoaHoc);
         Task<KiemDuyetKhoaHocDto> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request);
         Task<List<LichSuKiemDuyetDto>> GetLichSuKiemDuyet(Guid idKhoaHoc);
+
+
+        Task KiemTraVaNemExceptionAsync(string noiDung);
     }
 }
