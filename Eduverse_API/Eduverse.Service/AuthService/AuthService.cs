@@ -118,6 +118,11 @@ namespace Eduverse.Service.AuthService
         public async Task<AuthResponse> LoginAsync(LoginRequest request, HttpResponse httpResponse)
         {
             var user = await _userManager.FindByNameAsync(request.UserName);
+            if (user is null && request.UserName.Contains("@"))
+            {
+                user = await _userManager.FindByEmailAsync(request.UserName);
+            }
+
             if (user is null)
                 throw new Exception("Tên đăng nhập hoặc mật khẩu không đúng");
 
@@ -162,12 +167,15 @@ namespace Eduverse.Service.AuthService
 
             SetRefreshTokenCookie(httpResponse, refreshTokenStr);
 
+            var roles = await _userManager.GetRolesAsync(user);
+
             return new AuthResponse
             {
                 AccessToken = accessToken,
                 UserName = user.UserName!,
                 HoTen = user.HoTen,
-                Email = user.Email
+                Email = user.Email,
+                Roles = roles.ToList()
             };
         }
 
@@ -204,12 +212,15 @@ namespace Eduverse.Service.AuthService
 
             SetRefreshTokenCookie(httpResponse, newRefreshTokenStr);
 
+            var roles = await _userManager.GetRolesAsync(tokenEntity.AppUser);
+
             return new AuthResponse
             {
                 AccessToken = newAccessToken,
                 UserName = tokenEntity.AppUser.UserName!,
                 HoTen = tokenEntity.AppUser.HoTen,
-                Email = tokenEntity.AppUser.Email
+                Email = tokenEntity.AppUser.Email,
+                Roles = roles.ToList()
             };
         }
 
@@ -383,6 +394,80 @@ namespace Eduverse.Service.AuthService
             await _userManager.UpdateSecurityStampAsync(user);
 
             return "Đặt lại mật khẩu thành công!";
+        }
+
+        // ══════════════════════════════════════════════
+        // ĐĂNG NHẬP EXTERNAL (GOOGLE & FACEBOOK)
+        // ══════════════════════════════════════════════
+        public async Task<AuthResponse> ExternalLoginAsync(ExternalLoginRequest request, HttpResponse httpResponse)
+        {
+            var user = await _userManager.FindByLoginAsync(request.Provider, request.ProviderKey);
+            if (user is null)
+            {
+                user = await _userManager.FindByEmailAsync(request.Email);
+                if (user is null)
+                {
+                    var emailPrefix = request.Email.Split('@')[0];
+                    var userName = emailPrefix;
+                    var userWithSameName = await _userManager.FindByNameAsync(userName);
+                    int suffix = 1;
+                    while (userWithSameName is not null)
+                    {
+                        userName = $"{emailPrefix}{suffix}";
+                        userWithSameName = await _userManager.FindByNameAsync(userName);
+                        suffix++;
+                    }
+
+                    user = new AppUser
+                    {
+                        UserName = userName,
+                        Email = request.Email,
+                        HoTen = request.Name ?? userName,
+                        EmailConfirmed = true
+                    };
+
+                    var createResult = await _userManager.CreateAsync(user);
+                    if (!createResult.Succeeded)
+                    {
+                        throw new Exception($"Không thể tạo tài khoản: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+                    }
+
+                    await _userManager.AddToRoleAsync(user, "HocVien");
+                }
+
+                var identityUserLoginInfo = new UserLoginInfo(request.Provider, request.ProviderKey, request.Provider);
+                var addLoginResult = await _userManager.AddLoginAsync(user, identityUserLoginInfo);
+                if (!addLoginResult.Succeeded)
+                {
+                    throw new Exception($"Không thể liên kết tài khoản {request.Provider}: {string.Join(", ", addLoginResult.Errors.Select(e => e.Description))}");
+                }
+            }
+
+            var accessToken = GenerateAccessToken(user);
+            var refreshTokenStr = GenerateRefreshToken();
+
+            await _authRepo.AddRefreshTokenAsync(new RefreshToken
+            {
+                Token = refreshTokenStr,
+                NgayTao = DateTime.UtcNow,
+                NgayHetHan = DateTime.UtcNow.AddDays(7),
+                DaBiThuHoi = false,
+                AppUserId = user.Id
+            });
+            await _authRepo.SaveChangesAsync();
+
+            SetRefreshTokenCookie(httpResponse, refreshTokenStr);
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return new AuthResponse
+            {
+                AccessToken = accessToken,
+                UserName = user.UserName!,
+                HoTen = user.HoTen,
+                Email = user.Email,
+                Roles = roles.ToList()
+            };
         }
 
         // ══════════════════════════════════════════════

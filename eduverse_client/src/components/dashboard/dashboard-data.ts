@@ -22,7 +22,21 @@ import {
   BarChartRounded,
   OfflineBoltRounded,
   EventRounded,
-  AutoAwesomeRounded
+  AutoAwesomeRounded,
+  AdminPanelSettingsRounded,
+  PeopleRounded,
+  DashboardRounded,
+  ArticleRounded,
+  VideoLibraryRounded,
+  AssessmentRounded,
+  ManageAccountsRounded,
+  BuildRounded,
+  LocalOfferRounded,
+  CreditCardRounded,
+  PeopleAltRounded,
+  HelpOutlineRounded,
+  CategoryRounded,
+  ShoppingCartRounded
 } from '@mui/icons-material';
 import type { SvgIconComponent } from '@mui/icons-material';
 
@@ -77,6 +91,7 @@ export type NextSectorItem = {
   subfields: string[];
   bgLight: string;
   iconColor: string;
+  idBenhVien?: string;
 };
 
 export type CourseCardItem = {
@@ -139,20 +154,67 @@ export type FooterColumn = {
 // --- MOCK DATA ---
 
 export const sidebarPrimaryItems: DashboardNavItem[] = [
-  { label: 'Trang chủ', icon: HomeRounded, active: true },
+  { label: 'Trang chủ', icon: HomeRounded },
   { label: 'Khóa học của tôi', icon: MenuBookRounded },
   { label: 'Khám phá', icon: ExploreRounded },
-  { label: 'Lộ trình học tập', icon: TimelineRounded },
+  { label: 'Giỏ hàng', icon: ShoppingCartRounded },
   { label: 'Lịch học', icon: CalendarMonthRounded },
-  { label: 'Kiểm tra & Đánh giá', icon: QuizRounded },
+  { label: 'Kiểm tra', icon: QuizRounded },
   { label: 'Chứng chỉ', icon: EmojiEventsRounded },
   { label: 'Yêu thích', icon: FavoriteBorderRounded },
+  { label: 'Thông báo', icon: NotificationsRounded },
+  { label: 'Hồ sơ', icon: PeopleAltRounded },
+  { label: 'Cài đặt', icon: SettingsRounded },
 ] as const;
 
-export const sidebarSecondaryItems: DashboardNavItem[] = [
-  { label: 'Hồ sơ cá nhân', icon: SchoolRounded },
-  { label: 'Cài đặt hệ thống', icon: SettingsRounded },
+// Sidebar items dành riêng cho Giảng viên
+export const sidebarGiaoVienItems: DashboardNavItem[] = [
+  { label: 'Trang chủ', icon: HomeRounded },
+  { label: 'Quản lý khóa học', icon: VideoLibraryRounded },
+  { label: 'Quản lý bài giảng', icon: ArticleRounded },
+  { label: 'Bài kiểm tra', icon: QuizRounded },
+  { label: 'Học viên của tôi', icon: PeopleRounded },
+  { label: 'Thống kê', icon: AssessmentRounded },
+  { label: 'Chứng chỉ', icon: EmojiEventsRounded },
 ] as const;
+
+// Sidebar items dành riêng cho Admin
+export const sidebarAdminItems: DashboardNavItem[] = [
+  { label: 'Dashboard', icon: DashboardRounded },
+  { label: 'Người dùng', icon: PeopleAltRounded },
+  { label: 'Vai trò', icon: AdminPanelSettingsRounded },
+  { label: 'Danh mục', icon: CategoryRounded },
+  { label: 'Khóa học', icon: SchoolRounded },
+  { label: 'Bài giảng', icon: ArticleRounded },
+  { label: 'Bài kiểm tra', icon: QuizRounded },
+  { label: 'Khuyến mãi', icon: LocalOfferRounded },
+  { label: 'Thanh toán', icon: CreditCardRounded },
+  { label: 'Thông báo', icon: NotificationsRounded },
+  { label: 'Cài đặt', icon: SettingsRounded },
+] as const;
+
+export const sidebarSecondaryItems: DashboardNavItem[] = [] as const;
+
+/**
+ * Trả về sidebar items phù hợp với vai trò người dùng
+ */
+export function getSidebarItemsByRole(roles: string[]): DashboardNavItem[] {
+  if (roles.includes('Admin')) return [...sidebarAdminItems];
+  if (roles.includes('GiaoVien')) return [...sidebarGiaoVienItems];
+  return [...sidebarPrimaryItems];
+}
+
+/**
+ * Trả về secondary sidebar items phù hợp với vai trò người dùng
+ */
+export function getSecondarySidebarItemsByRole(roles: string[]): DashboardNavItem[] {
+  if (roles.includes('Admin')) {
+    return [
+      { label: 'Hỗ trợ', icon: HelpOutlineRounded }
+    ];
+  }
+  return [];
+}
 
 export const welcomeData: WelcomeStats = {
   userName: 'Nguyễn Văn A',

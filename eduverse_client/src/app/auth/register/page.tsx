@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
-import { register, clearError, clearSuccess } from '../../../store/auth/AuthSlice';
+import { register, clearError, clearSuccess, externalLogin } from '../../../store/auth/AuthSlice';
 import {
   Box,
   Button,
@@ -109,6 +109,47 @@ export default function RegisterPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { loading, error, successMessage } = useSelector((s) => s.auth);
+
+  const handleExternalLogin = (provider: 'google' | 'facebook') => {
+    const width = 500;
+    const height = 650;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    
+    const popup = window.open(
+      `/auth/oauth-callback?provider=${provider}`,
+      `Đăng nhập ${provider === 'google' ? 'Google' : 'Facebook'}`,
+      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
+    );
+
+    if (!popup) {
+      setLocalError('Vui lòng bỏ chặn popup để tiếp tục đăng nhập.');
+      return;
+    }
+
+    const messageListener = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'OAUTH_SUCCESS') {
+        window.removeEventListener('message', messageListener);
+        const { provider, email, name, providerKey } = event.data.payload;
+        
+        const result = await dispatch(externalLogin({ provider, email, name, providerKey }));
+        if (externalLogin.fulfilled.match(result)) {
+          const roles: string[] = result.payload.roles || [];
+          if (roles.includes('Admin')) {
+            router.push('/admin/dashboard');
+          } else if (roles.includes('GiaoVien')) {
+            router.push('/instructor/dashboard');
+          } else {
+            router.push('/student/dashboard');
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', messageListener);
+  };
 
   const [form, setForm] = useState({
     hoTen: '',
@@ -840,7 +881,13 @@ export default function RegisterPage() {
                   key={b.key}
                   type="button"
                   variant="outlined"
-                  onClick={() => setLocalError('Social login chưa được tích hợp.')}
+                  onClick={() => {
+                    if (b.key === 'google' || b.key === 'facebook') {
+                      handleExternalLogin(b.key);
+                    } else {
+                      setLocalError('Chức năng liên kết tài khoản này chưa được tích hợp.');
+                    }
+                  }}
                   sx={{
                     height: 44,
                     borderRadius: 2.5,
