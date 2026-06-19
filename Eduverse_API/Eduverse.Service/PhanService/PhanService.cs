@@ -9,6 +9,7 @@ using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.KhoaHocService;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.PhanService.Request;
 using Eduverse.Service.TaiLieuService;
@@ -27,6 +28,7 @@ namespace Eduverse.Service.PhanService
         private readonly ITaiLieuService _taiLieuService;
         private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
         private readonly ITienDoHocTapRepository _tienDoHocTapRepository;
+        private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
 
         
         public PhanService(
@@ -37,7 +39,9 @@ namespace Eduverse.Service.PhanService
             Service.Core.Mapper.IMapper mapper,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             ITienDoHocTapRepository tienDoHocTapRepository,
-            IKhoaHocService khoaHocService) : base(phanRepository)
+            IKhoaHocService khoaHocService,
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService
+            ) : base(phanRepository)
         {
             _mapper = mapper;
             _baiGiangService = baiGiangService;
@@ -46,6 +50,7 @@ namespace Eduverse.Service.PhanService
             _dangKyKhoaHocRepository = dangKyKhoaHocRepository;
             _tienDoHocTapRepository = tienDoHocTapRepository;
             _khoaHocService = khoaHocService;
+            _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
         }
 
         public async Task<PhanHocDto> CreatePhanHoc(CreatePhanRequest request)  
@@ -67,13 +72,21 @@ namespace Eduverse.Service.PhanService
                 .Where(x => x.IdKhoaHoc == request.IdKhoaHoc)
                 .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
+
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
+
+
             var entity = new Phan
             {
+                Id = new Guid(),
                 IdKhoaHoc = request.IdKhoaHoc,
                 TenPhan = request.TenPhan.Trim(),
+                MieuTa = request.MieuTa,
                 ThuTuSapXep = maxThuTu + 1,
                 TrangThai = "HoatDong"
             };
+
 
             await CreateAsync(entity);
             await SaveAsync();
@@ -114,6 +127,7 @@ namespace Eduverse.Service.PhanService
             if (thuTuDaTon)
                 throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại trong phần học này");
 
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
 
             entity.IdKhoaHoc = request.IdKhoaHoc;
             entity.TenPhan = request.TenPhan.Trim();

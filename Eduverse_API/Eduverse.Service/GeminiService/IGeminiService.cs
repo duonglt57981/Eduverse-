@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.GeminiService
 {
-    public interface IGemini
+    public interface IGeminiService
     {
         Task<KetQuaKiemDuyetInput> KiemTraAsync(string noiDung);
     }

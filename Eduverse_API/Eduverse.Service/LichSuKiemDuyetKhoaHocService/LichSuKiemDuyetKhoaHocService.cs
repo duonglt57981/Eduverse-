@@ -109,7 +109,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IDanhMuc_KhoaHocService _danhMuc_KhoaHocService;
 
 
-        private readonly IGemini _geminiService;
+        private readonly IGeminiService _geminiService;
         private readonly ILogger<LichSuKiemDuyetKhoaHocService> _logger;
 
         // Tu cam co ban (kiem tra nhanh truoc khi goi AI)
@@ -123,7 +123,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             "khung bo", "phan dong", "noi loan"
         };
 
-        public LichSuKiemDuyetKhoaHocService(ILichSuKiemDuyetKhoaHocRepository repository,
+        public LichSuKiemDuyetKhoaHocService(
+            ILichSuKiemDuyetKhoaHocRepository repository,
+            ILanLamBaiKiemTraService lanLamBaiKiemTraService,
             IKhoaHocRepository khoaHocRepository,
             IPhanRepository phanRepository,
             IBaiGiangRepository baiGiangRepository,
@@ -131,18 +133,16 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             ITaiLieuRepository taiLieuRepository,
             IBaiKiemTraRepository kiemTraRepository,
             IKhoaHocService khoaHocService,
-            IPhanService phanService,
             ITaiLieuService taiLieuService,
             IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository,
             IDanhMucRepository _danhMucRepository,
             IDanhMuc_KhoaHocService danhMuc_KhoaHocService,
-            IGemini geminiService,
+            IGeminiService geminiService,
             ILogger<LichSuKiemDuyetKhoaHocService> logger,
             IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
             _phanRepository = phanRepository;
-            _phanService = phanService;
             _baiGiangRepository = baiGiangRepository;
             _taiLieuRepository = taiLieuRepository;
             _kiemTraRepository = kiemTraRepository;

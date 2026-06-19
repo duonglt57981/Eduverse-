@@ -1,25 +1,26 @@
 
-using System.Text;
+using CloudinaryDotNet;
 using CloudinaryDotNet;
 using CloudinaryDotNet;
 using Eduverse.Api.Hubs;
 using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
+using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
+using Eduverse.Service.CloudinaryService;
+using Eduverse.Service.CloudinaryService.Dto;
+using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
+using Eduverse.Service.EmailService;
+using Eduverse.Service.GeminiService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Eduverse.Service.EmailService;
-using Eduverse.Service.Common;
-using CloudinaryDotNet;
-using Eduverse.Service.CloudinaryService.Dto;
-using Eduverse.Service.CloudinaryService;
-using Eduverse.Repository.Common;
-using Microsoft.AspNetCore.Http.Features;
+using System.Text;
 
 namespace Eduverse.Api
 {
@@ -66,6 +67,9 @@ namespace Eduverse.Api
             //Đăng ký MemoryCache
             builder.Services.AddMemoryCache();
 
+
+            // Gemini
+            builder.Services.AddScoped<IGeminiService, GeminiService>();
 
             // Cloudinary
             var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");

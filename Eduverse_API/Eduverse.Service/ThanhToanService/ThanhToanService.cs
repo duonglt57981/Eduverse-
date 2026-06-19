@@ -277,7 +277,7 @@ namespace Eduverse.Service.ThanhToanService
                     {
                         var daDangKy = await _dangKyRepo.AnyAsync(
                             x => x.IdNguoiDangKi == donHang.IdNguoiDung
-                              && x.IdDangKi == ct.IdKhoaHoc
+                              && x.IdKhoaHoc == ct.IdKhoaHoc
                               && x.IsDeleted == false);
 
                         if (!daDangKy)
@@ -285,7 +285,7 @@ namespace Eduverse.Service.ThanhToanService
                             _dangKyRepo.Add(new DangKyKhoaHoc
                             {
                                 IdNguoiDangKi = donHang.IdNguoiDung,
-                                IdDangKi = ct.IdKhoaHoc,
+                                IdKhoaHoc = ct.IdKhoaHoc,
                                 GiaDangKy = ct.GiaLucDat,
                                 TrangThai = "Hoạt động",
                                 ThoiGianDK = DateTime.Now,

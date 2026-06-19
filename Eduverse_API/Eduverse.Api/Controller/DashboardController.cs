@@ -748,7 +748,7 @@ namespace Eduverse.Api.Controller
             try
             {
                 var courseRegs = allRegistrations
-                    .GroupBy(r => r.IdDangKi)
+                    .GroupBy(r => r.IdKhoaHoc)
                     .Select(g => new { CourseId = g.Key, Count = g.Count() })
                     .OrderByDescending(x => x.Count)
                     .ToList();
@@ -817,7 +817,7 @@ namespace Eduverse.Api.Controller
                 foreach (var reg in sortedRegs)
                 {
                     var studentUser = await _userManager.FindByIdAsync(reg.IdNguoiDangKi.ToString());
-                    var course = courses.FirstOrDefault(c => c.Id == reg.IdDangKi);
+                    var course = courses.FirstOrDefault(c => c.Id == reg.IdKhoaHoc);
                     if (studentUser != null && course != null)
                     {
                         var diff = DateTime.Now - (reg.ThoiGianDK ?? DateTime.Now);

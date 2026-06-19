@@ -44,7 +44,7 @@ namespace Eduverse.Service.GioHangService
             var daMua = await _dangKyKhoaHocRepository.GetQueryable()
                 .AnyAsync(x =>
                     x.IdNguoiDangKi == request.IdNguoiDung &&
-                    x.IdDangKi == request.IdKhoaHoc &&
+                    x.IdKhoaHoc == request.IdKhoaHoc &&
                     x.TrangThai == "Hoạt động");
             if (daMua)
             {
