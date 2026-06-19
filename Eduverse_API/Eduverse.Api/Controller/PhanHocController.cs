@@ -3,6 +3,7 @@ using Eduverse.Service.PhanService;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.PhanService.Request;
 using Hinet.Api.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PhanHocController : ControllerBase
+    public class PhanHocController : EduverseController
     {
         private readonly IPhanService _phanHocService;
         public PhanHocController(IPhanService phanHocService)
@@ -20,6 +21,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost("phanhoc")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<PhanHocDto>> CreatePhanHoc(CreatePhanRequest request)
         {
             try
@@ -35,6 +37,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPut("phanhoc/{id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<PhanHocDto>> UpdatePhanHoc(UpdatePhanRequest request)
         {
             try
@@ -50,6 +53,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpDelete("phanhoc/{id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeletePhanHoc(Guid id)
         {
             try

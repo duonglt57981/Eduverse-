@@ -14,6 +14,7 @@ namespace Eduverse.Service.PhanService.Dto
 
 
         //
+        public bool IsDangSua { get; set; }
         public List<BaiGiangDto>? DanhSachBaiGiang { get; set; }
         
     }

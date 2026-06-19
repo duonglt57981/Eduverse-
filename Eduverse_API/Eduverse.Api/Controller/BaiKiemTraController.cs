@@ -6,6 +6,7 @@ using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.CauHoiService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService.Dto;
 using Hinet.Api.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,7 +14,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BaiKiemTraController : ControllerBase
+    public class BaiKiemTraController : EduverseController
     {
         private readonly IBaiKiemTraService _baiKiemTraService;
         private readonly ICauHoiService _cauHoiService;
@@ -28,7 +29,8 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPost("baikiemtra")]
-        public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ([FromBody] CreateBaiKiemTraRequest request)
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ([FromForm] CreateBaiKiemTraRequest request)
         {
             try
             {
@@ -44,6 +46,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPut("baikiemtra/{id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<UpdateBaiKiemTraDto>> UpdateBaiKiemTra([FromBody] UpdateBaiKiemTraRequest request)
         {
             try
@@ -59,6 +62,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpDelete("baikiemtra/{Id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteBaiKiemTra( Guid Id)
         {
             try
@@ -74,6 +78,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPost("CauHoi/create-cauhoi")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<CreateCauHoiDto>> CreateCauHoi([FromBody] CreateCauHoiRequest request)
         {
             try
@@ -92,6 +97,7 @@ namespace Eduverse.Api.Controller
         /// Bắt đầu làm bài kiểm tra.
         /// </summary>
         [HttpPost("start")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<LanLamBaiKiemTraDto>> StartQuiz([FromBody] StartQuizRequest request)
         {
             try
@@ -110,6 +116,7 @@ namespace Eduverse.Api.Controller
         /// Lấy đề thi cho học viên.
         /// </summary>
         [HttpGet("{idBaiKiemTra}/quiz")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<BaiKiemTraLamBaiDto>>GetQuizForStudent(Guid idBaiKiemTra)
         {
             try
@@ -129,6 +136,7 @@ namespace Eduverse.Api.Controller
         /// Nộp bài kiểm tra.
         /// </summary>
         [HttpPost("submit")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<KetQuaLanKiemTraDto>> SubmitQuiz([FromBody] SubmitQizRequest request)
         {
             try
@@ -147,6 +155,7 @@ namespace Eduverse.Api.Controller
         /// Lấy kết quả bài thi.
         /// </summary>
         [HttpGet("result/{idLanLamBai}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<KetQuaLanKiemTraDto>> GetResult(Guid idLanLamBai)
         {
             try
@@ -166,6 +175,7 @@ namespace Eduverse.Api.Controller
         /// Xem lại bài làm.
         /// </summary>
         [HttpGet("review/{idLanLamBai}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<ReviewQizzDto>>GetReviewQuiz(Guid idLanLamBai)
         {
             try
@@ -185,12 +195,13 @@ namespace Eduverse.Api.Controller
         /// Lịch sử làm bài.
         /// </summary>
         [HttpGet("{idBaiKiemTra}/history/{idNguoiDung}")]
-        public async Task<DataResponse<List<LichSuLamBaiDto>>> GetHistory(Guid idBaiKiemTra,Guid idNguoiDung)
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<List<LichSuLamBaiDto>>> GetHistory(Guid idBaiKiemTra)
         {
             try
             {
                 var result = await _baiKiemTraService
-                        .GetHistory( idBaiKiemTra,idNguoiDung);
+                        .GetHistory( idBaiKiemTra);
 
                 return DataResponse<List<LichSuLamBaiDto>>
                     .Success(result);
@@ -205,12 +216,12 @@ namespace Eduverse.Api.Controller
         /// Kiểm tra có được làm lại hay không.
         /// </summary>
         [HttpGet("{idBaiKiemTra}/can-retake/{idNguoiDung}")]
-        public async Task<DataResponse<bool>>CheckCanRetake(Guid idBaiKiemTra,Guid idNguoiDung)
+        public async Task<DataResponse<bool>>CheckCanRetake(Guid idBaiKiemTra)
         {
             try
             {
                 var result = await _baiKiemTraService
-                        .CheckCanRetake(idBaiKiemTra,idNguoiDung);
+                        .CheckCanRetake(idBaiKiemTra);
 
                 return DataResponse<bool>.Success(result);
             }
@@ -225,6 +236,7 @@ namespace Eduverse.Api.Controller
         /// Auto-save câu trả lời khi học viên chọn đáp án (có kiểm tra thứ tự)
         /// </summary>
         [HttpPost("auto-save")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<AutoSaveDapAnDto>> AutoSaveCauTraLoi([FromBody] AutoSaveRequest request)
         {
             try
@@ -244,6 +256,7 @@ namespace Eduverse.Api.Controller
         /// Tạm dừng bài làm (dừng đếm thời gian) - gọi khi user thoát trang
         /// </summary>
         [HttpPost("pause/{idLanLamBaiKiemTra}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<TamDungQuizResultDto>> PauseQuiz(Guid idLanLamBaiKiemTra)
         {
             try
@@ -263,6 +276,7 @@ namespace Eduverse.Api.Controller
         /// Tiếp tục bài làm (khôi phục toàn bộ trạng thái) - gọi khi user vào lại quiz
         /// </summary>
         [HttpGet("continue-full/{idLanLamBaiKiemTra}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<ContinueQuizFullDto>> ContinueQuizFull(Guid idLanLamBaiKiemTra)
         {
             try

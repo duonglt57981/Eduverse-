@@ -7,7 +7,7 @@ namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TienDoHocTapController : ControllerBase
+    public class TienDoHocTapController : EduverseController
     {
         private readonly ITienDoHocTapService _service;
 

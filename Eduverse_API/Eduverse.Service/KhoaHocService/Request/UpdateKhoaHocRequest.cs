@@ -10,7 +10,7 @@ namespace Eduverse.Service.KhoaHocService.Request
 {
     public class UpdateKhoaHocRequest
     {
-        public Guid? Id { get; set; }
+        public Guid? IdKhoaHoc { get; set; }
         public string? TieuDe { get; set; }
         public string? MoTa { get; set; }
         public double? Gia { get; set; }

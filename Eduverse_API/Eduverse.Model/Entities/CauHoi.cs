@@ -18,5 +18,9 @@ namespace Eduverse.Model.Entities
         public Guid? IdBaiKiemTra { get; set; }
         //thêm
         public string? DoKho { get; set; }
+
+
+        public Guid? IdBanGhiTruoc { get; set; }
+        public bool IsBanHienTai { get; set; } = true;
     }
 }

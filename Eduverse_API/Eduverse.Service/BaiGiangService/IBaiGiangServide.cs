@@ -13,7 +13,7 @@ namespace Eduverse.Service.BaiGiangService
     {
         Task<BaiGiangDto> CreateBaiGiang(CreateBaiGiangRequest request);
 
-        //Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request);
+        Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request);
 
         Task<bool> DeleteBaiGiang(Guid id);
     }

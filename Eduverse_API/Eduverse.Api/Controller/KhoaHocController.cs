@@ -20,14 +20,13 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("khoahoc/{userId}")]
-        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList(
-            [FromQuery] KhoaHocSearch search,
-            Guid userId)
+        [HttpGet("khoahoc-list")]
+        [AllowAnonymous]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList([FromQuery] KhoaHocSearch search)
         {
             try
             {
-                var result = await _khoaHocService.GetList(search, userId);
+                var result = await _khoaHocService.GetList(search);
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
@@ -37,19 +36,13 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("khoahoc-dangki/{userId}")]
-        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListDangKi(
-            [FromQuery] KhoaHocDangKiSearch search,
-            Guid userId)
+        [HttpGet("khoahoc-by/{userId}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListByUser([FromQuery] KhoaHocSearch search)
         {
             try
             {
-                var result = await _khoaHocService.GetListDangKi(search, userId);
-
-                Console.WriteLine($"PageIndex: {search.PageIndex}");
-                Console.WriteLine($"PageSize: {search.PageSize}");
-                Console.WriteLine($"UserId: {userId}");
-
+                var result = await _khoaHocService.GetListByUser(search);
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
@@ -59,7 +52,25 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("learning/{idDangKy}")]
+        [HttpGet("khoahoc-dangki")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<PagedList<GetDangKiKhoaHocDto>>> GetListDangKi([FromQuery] KhoaHocDangKiSearch search,
+            Guid userId)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetListDangKi(search);
+                return DataResponse<PagedList<GetDangKiKhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<GetDangKiKhoaHocDto>>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("khoahoc-learning/{idDangKy}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)
         {
             try
@@ -74,10 +85,10 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPost("khoahoc")]   
+        [HttpPost("khoahoc-create")]   
         [Consumes("multipart/form-data")]
-        public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc(
-            [FromForm] CreateKhoaHocRequest request)
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc( [FromForm] CreateKhoaHocRequest request)
         {
             try
             {
@@ -91,10 +102,10 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPut("khoahoc/{id}")]
+        [HttpPut("khoahoc-put")]
         [Consumes("multipart/form-data")]
-        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc(
-            [FromForm] UpdateKhoaHocRequest request)
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromForm] UpdateKhoaHocRequest request)
         {
             try
             {
@@ -108,7 +119,8 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpDelete("khoahoc/{id}")]
+        [HttpDelete("khoahoc-delete/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)
         {
             try

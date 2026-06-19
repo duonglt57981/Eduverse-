@@ -13,7 +13,7 @@ namespace Eduverse.Service.CloudinaryService
     {
         Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file, CancellationToken cancellationToken = default);
         Task<CloudinaryImgDto> UploadImageAsync(IFormFile file);
-        Task DeleteImageAsync(string publicId);
+        Task<CloudinaryImgDto> UpdateImageAsync(string publicId, IFormFile newFile);
         Task<CloudinaryDocumentDto> UploadDocumentAsync(IFormFile file);
     }
 }

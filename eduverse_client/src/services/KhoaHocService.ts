@@ -8,7 +8,7 @@ export default class KhoaHocService {
   ): Promise<ApiResponse<KhoaHocType>> {
     try {
       const response = await apiService.get<KhoaHocType>(
-        `/KhoaHoc/learning/${idDangKyKhoaHoc}`,
+        `/KhoaHoc/khoahoc-learning/${idDangKyKhoaHoc}`,
       );
       return response;
     } catch (error) {
@@ -17,10 +17,10 @@ export default class KhoaHocService {
     }
   }
 
-  async getmyKhoaHoc(isNguoiDung: string): Promise<KhoaHocType[]> {
+  async getmyKhoaHoc(): Promise<KhoaHocType[]> {
     try {
       const response = await apiService.get<PagedList<KhoaHocType>>(
-        `/KhoaHoc/khoahoc-dangki/${isNguoiDung}?pageIndex=1&pageSize=100`,
+        `/KhoaHoc/khoahoc-dangki`,
       );
       return response.data.items ?? [];
     } catch (error) {

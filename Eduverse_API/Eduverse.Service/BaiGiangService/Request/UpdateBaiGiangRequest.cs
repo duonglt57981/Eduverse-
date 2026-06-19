@@ -10,7 +10,7 @@ namespace Eduverse.Service.BaiGiangService.Request
 {
     public class UpdateBaiGiangRequest
     {
-        public Guid? Id { get; set; }
+        public Guid? IdBaiGiang { get; set; }
         public string? TieuDe { get; set; }
         public string? LoaiBaiGiang { get; set; }
         public string? IdVideoBaiGiang { get; set; }

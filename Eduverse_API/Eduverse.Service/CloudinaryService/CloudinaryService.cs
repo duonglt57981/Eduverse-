@@ -20,7 +20,6 @@ namespace Eduverse.Service.CloudinaryService
         #region uploadvideo
         public async Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file, CancellationToken cancellationToken = default)
         {
-            // ── 1. Validate ──────────────────────────────────────────────
             if (file == null || file.Length == 0)
                 throw new Exception("File không hợp lệ");
 
@@ -52,7 +51,7 @@ namespace Eduverse.Service.CloudinaryService
             new Transformation().RawTransformation("sp_hd/vc_h264,ac_aac,f_m3u8"),
             // FHD – 1080p
             new Transformation().RawTransformation("sp_full_hd/vc_h264,ac_aac,f_m3u8"),
-            // 2K  – 1440p (Cloudinary không có preset sp_2k, dùng custom; c_limit tránh upscale)
+            // 2K  – 1440p 
             new Transformation().RawTransformation("w_2560,h_1440,c_limit/vc_h264,ac_aac,f_m3u8"),
         },
             };
@@ -202,23 +201,51 @@ namespace Eduverse.Service.CloudinaryService
             return new CloudinaryImgDto
             {
                 UrlImg = uploadResult.SecureUrl.ToString(),
+                PublicId = uploadResult.PublicId,
             };
         }
 
 
-        public async Task DeleteImageAsync(string publicId)
+        public async Task<CloudinaryImgDto> UpdateImageAsync(string publicId, IFormFile newFile)
         {
-            if (string.IsNullOrEmpty(publicId)) return;
+            if (string.IsNullOrEmpty(publicId))
+                throw new Exception("publicId không được để trống");
 
-            var deleteParams = new DeletionParams(publicId)
+            if (newFile == null || newFile.Length == 0)
+                throw new Exception("File mới không hợp lệ");
+
+            const long maxSize = 10L * 1024 * 1024;
+            if (newFile.Length > maxSize)
+                throw new Exception("Ảnh không được vượt quá 10MB");
+
+            var extension = Path.GetExtension(newFile.FileName).ToLower();
+            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            if (!allowedExtensions.Contains(extension))
+                throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
+
+            await using var inputStream = newFile.OpenReadStream();
+
+            var uploadParams = new ImageUploadParams
             {
-                ResourceType = ResourceType.Image
+                File = new FileDescription(newFile.FileName, inputStream),
+                PublicId = publicId,          // chỉ định publicId trùng với ảnh cũ
+                Folder = "eduverse/images",   // có thể giữ hoặc lấy từ publicId cũ
+                Overwrite = true,             // quan trọng: ghi đè
+                UniqueFilename = false,       // để không tạo tên unique mới
+                Transformation = new Transformation()
+                    .Quality("auto")
+                    .FetchFormat("auto")
             };
 
-            var result = await _cloudinary.DestroyAsync(deleteParams);
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            if (uploadResult.Error != null)
+                throw new Exception($"Upload thất bại: {uploadResult.Error.Message}");
 
-            if (result.Error != null)
-                throw new Exception($"Xóa ảnh thất bại: {result.Error.Message}");
+            return new CloudinaryImgDto
+            {
+                PublicId = uploadResult.PublicId,
+                UrlImg = uploadResult.SecureUrl.ToString()
+            };
         }
         #endregion
 

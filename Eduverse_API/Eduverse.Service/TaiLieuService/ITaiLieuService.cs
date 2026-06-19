@@ -13,7 +13,7 @@ namespace Eduverse.Service.TaiLieuService
     {
         Task<TaiLieuDto> CreateTaiLieu(CreateTaiLieuRequest request);
 
-        //Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request);
+        Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request);
 
         Task<bool> DeleteTaiLieu(Guid id);
     }

@@ -73,7 +73,6 @@ namespace Eduverse.Service.CauHoiService
             var dapAns = request.DanhSachDapAns
                 .Select(x => new DapAn
                 {
-                    Id = Guid.NewGuid(),
                     NoiDungDapAn = x.NoiDungDapAn,
                     LaDapAnDung = x.LaDapAnDung,
                     ThuTuSapXep = ttsapxepDapAn++,
@@ -152,12 +151,15 @@ namespace Eduverse.Service.CauHoiService
 
             if (deleteAnswers.Any())
                 await _dapAnService.UpdateAsync(deleteAnswers);
+            await _dapAnService.SaveAsync();
 
             if (updateAnswers.Any())
                 await _dapAnService.UpdateAsync(updateAnswers.Values);
+            await _dapAnService.SaveAsync();
 
             if (newAnswers.Any())
                 await _dapAnService.CreateRange(newAnswers);
+            await _dapAnService.SaveAsync();
 
             return cauHoi.Id;
         }

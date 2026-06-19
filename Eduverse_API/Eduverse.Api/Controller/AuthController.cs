@@ -8,9 +8,10 @@ namespace Eduverse.Api.Controller
 {
     [ApiController]
     [Route("api/auth")]
-    public class AuthController : ControllerBase
+    public class AuthController : EduverseController
     {
         private readonly IAuthService _authService;
+
 
         public AuthController(IAuthService authService)
         {

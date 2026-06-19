@@ -1017,7 +1017,7 @@ namespace Eduverse.Model.Migrations
                     table.PrimaryKey("PK_donHangChiTiets", x => x.Id);
                     table.ForeignKey(
                         name: "FK_donHangChiTiets_donHangs_DonHangId",
-                        column: x => x.DonHangId,
+                        column: x => x.IdDonHang,
                         principalTable: "donHangs",
                         principalColumn: "Id");
                 });
@@ -1069,7 +1069,7 @@ namespace Eduverse.Model.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_donHangChiTiets_DonHangId",
                 table: "donHangChiTiets",
-                column: "DonHangId");
+                column: "IdDonHang");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_AppUserId",

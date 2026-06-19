@@ -23,7 +23,11 @@ namespace Eduverse.Model.Entities
         public string? LoaiKhoaHoc { get; set; }
 
         public string? HinhAnhKhoaHoc { get; set; }
+
+        public string? IdHinhAnhKhoaHoc { get; set; }
+
         public string? URLViewPreviewKhoaHoc { get; set; }
+
         public string? CapDo { get; set; }
 
         public int? TongThoiLuong { get; set; }
@@ -37,5 +41,9 @@ namespace Eduverse.Model.Entities
         public int? SoLuongHocVien { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
         public string? TrangThai { get; set; }
+
+        public Guid? IdBanGhiTruoc { get; set; }
+        public bool IsBanHienTai { get; set; } = true;
+
     }
 }
