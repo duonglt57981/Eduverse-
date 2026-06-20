@@ -25,10 +25,10 @@ namespace Eduverse.Service.GeminiService
 
             _httpClient = new HttpClient();
 
-            _httpClient.BaseAddress = new Uri(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent");
-
-            _httpClient.DefaultRequestHeaders.Add("x-goog-api-key", _apiKey);
+            var apiKey = configuration["Gemini:ApiKey"];
+            var modelVersion = configuration["Gemini:ModelVersion"];
+            _httpClient.BaseAddress = new Uri($"https://generativelanguage.googleapis.com/v1beta/models/{modelVersion}:generateContent");
+            _httpClient.DefaultRequestHeaders.Add("x-goog-api-key", apiKey);
 
             _logger = logger;
         }
@@ -43,20 +43,20 @@ namespace Eduverse.Service.GeminiService
             try
             {
                 var prompt = $@"
-Kiem duyet noi dung sau: ""{noiDung}""
+                Kiem duyet noi dung sau: ""{noiDung}""
 
-Yeu cau:
-- Phat hien tu ngu nhay cam, bao luc, khi dam, tho tuc, chinh tri
-- Tra ve JSON:
-{{
-    ""hopLe"": true/false,
-    ""loai"": ""AnToan|BaoLuc|KhiDam|ThoTuc|ChinhTri"",
-    ""diemSo"": 0.0-1.0,
-    ""tuViPham"": [""tu1"", ""tu2""],
-    ""lyDo"": ""Ly do chi tiet"",
-    ""goiYSua"": ""Goi y sua chua""
-}}
-Chi tra ve JSON, khong them text khac.";
+                Yeu cau:
+                - Phat hien tu ngu nhay cam, bao luc, khi dam, tho tuc, chinh tri
+                - Tra ve JSON:
+                {{
+                    ""hopLe"": true/false,
+                    ""loai"": ""AnToan|BaoLuc|KhiDam|ThoTuc|ChinhTri"",
+                    ""diemSo"": 0.0-1.0,
+                    ""tuViPham"": [""tu1"", ""tu2""],
+                    ""lyDo"": ""Ly do chi tiet"",
+                    ""goiYSua"": ""Goi y sua chua""
+                }}
+                Chi tra ve JSON, khong them text khac.";
 
                 var request = new
                 {
@@ -67,7 +67,13 @@ Chi tra ve JSON, khong them text khac.";
                     parts = new[] { new { text = prompt } }
                 }
             },
-                    generationConfig = new { temperature = 0.1, maxOutputTokens = 512 }
+                    generationConfig = new
+                    {
+                        temperature = 0.1,
+                        maxOutputTokens = 512,
+                        // ✅ FIX: ép Gemini trả JSON thuần, tránh bị bọc trong ```json ... ```
+                        responseMimeType = "application/json"
+                    }
                 };
 
                 var json = JsonSerializer.Serialize(request);
@@ -84,7 +90,6 @@ Chi tra ve JSON, khong them text khac.";
                 {
                     try
                     {
-                        // Phân tích lỗi từ Gemini
                         using var errorDoc = JsonDocument.Parse(responseContent);
                         if (errorDoc.RootElement.TryGetProperty("error", out var error))
                         {
@@ -94,17 +99,11 @@ Chi tra ve JSON, khong them text khac.";
                             _logger.LogError("Gemini API Error: {Code} - {Message}", errorCode, errorMessage);
 
                             if (errorCode == 403)
-                            {
                                 throw new Exception("API key khong hop le hoac bi khoa. Vui long kiem tra lai.");
-                            }
                             else if (errorCode == 429)
-                            {
                                 throw new Exception("Vuot qua gioi han request. Vui long thu lai sau.");
-                            }
                             else
-                            {
                                 throw new Exception($"Gemini API Error: {errorMessage}");
-                            }
                         }
                         else
                         {
@@ -117,14 +116,146 @@ Chi tra ve JSON, khong them text khac.";
                     }
                 }
 
-                // ✅ Parse response
-                return ParseResponse(responseContent);
+                return ParseResponse(responseContent, noiDung);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Loi goi Gemini");
+                // ✅ FIX (fail-closed): nếu service kiểm duyệt lỗi, KHÔNG được tự ý coi nội dung là hợp lệ.
+                // Ném lỗi để tầng gọi quyết định (vd: chặn tạm và đưa vào hàng đợi duyệt thủ công),
+                // thay vì nuốt lỗi và để lọt nội dung chưa được kiểm tra.
                 throw new Exception($"Loi he thong kiem duyet: {ex.Message}");
             }
+        }
+
+        private KetQuaKiemDuyetInput ParseResponse(string responseJson, string noiDungGoc)
+        {
+            // ✅ FIX: helper fail-closed dùng chung cho mọi nhánh lỗi parse bên dưới.
+            // Trước đây mọi lỗi đều trả HopLe = true (fail-open) -> đây là lỗi chính khiến
+            // từ cấm lọt qua khi Gemini trả JSON không đúng format mong đợi.
+            KetQuaKiemDuyetInput FailClosed(string lyDo)
+            {
+                return new KetQuaKiemDuyetInput
+                {
+                    HopLe = false,
+                    Loai = "KhongXacDinh",
+                    ThongBao = lyDo,
+                    TuViPham = new List<string>(),
+                    GoiYSua = "He thong khong the tu dong kiem duyet, vui long cho admin duyet thu cong."
+                };
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(responseJson);
+
+                if (!doc.RootElement.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
+                {
+                    _logger.LogWarning("No candidates in response: {Response}", responseJson);
+                    return FailClosed("Khong co ket qua tu AI, can duyet thu cong");
+                }
+
+                // ✅ Kiểm tra finishReason — nếu bị cắt do maxOutputTokens hoặc bị chặn bởi
+                // chính bộ lọc an toàn của Gemini (SAFETY), JSON trả về có thể rỗng/không đầy đủ.
+                var finishReason = candidates[0].TryGetProperty("finishReason", out var fr) ? fr.GetString() : null;
+                if (string.Equals(finishReason, "SAFETY", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("Gemini tu chan noi dung vi ly do an toan: {Content}", noiDungGoc);
+                    return new KetQuaKiemDuyetInput
+                    {
+                        HopLe = false,
+                        Loai = "ViPhamAnToan",
+                        ThongBao = "Noi dung bi danh dau vi pham chinh sach an toan",
+                        TuViPham = new List<string>(),
+                        GoiYSua = ""
+                    };
+                }
+
+                var text = candidates[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString();
+
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    _logger.LogWarning("Empty text in response: {Response}", responseJson);
+                    return FailClosed("Khong co noi dung tra ve tu AI, can duyet thu cong");
+                }
+
+                // ✅ FIX: làm sạch text phòng trường hợp model vẫn bọc markdown code fence
+                // (```json ... ``` hoặc ``` ... ```) du da set responseMimeType, de an toan double.
+                text = CleanJsonText(text);
+
+                using var resultDoc = JsonDocument.Parse(text);
+                var root = resultDoc.RootElement;
+
+                if (!root.TryGetProperty("hopLe", out var hopLeProp) || !root.TryGetProperty("diemSo", out var diemSoProp))
+                {
+                    _logger.LogWarning("JSON tu Gemini thieu field bat buoc: {Text}", text);
+                    return FailClosed("Ket qua kiem duyet khong day du, can duyet thu cong");
+                }
+
+                var hopLe = hopLeProp.GetBoolean();
+                var diemSo = diemSoProp.GetDouble();
+
+                // Neu diem >= nguong -> Chan (giu nguyen logic goc)
+                if (diemSo >= NGUONG_CHAN)
+                {
+                    hopLe = false;
+                }
+
+                return new KetQuaKiemDuyetInput
+                {
+                    HopLe = hopLe,
+                    Loai = root.GetProperty("loai").GetString() ?? "Khac",
+                    ThongBao = root.GetProperty("lyDo").GetString() ?? "",
+                    TuViPham = root.TryGetProperty("tuViPham", out var terms)
+                        ? terms.EnumerateArray().Select(t => t.GetString()).Where(t => t != null).Select(t => t!).ToList()
+                        : new List<string>(),
+                    GoiYSua = root.TryGetProperty("goiYSua", out var sug) ? sug.GetString() : ""
+                };
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Loi parse JSON: {Response}", responseJson);
+                // ✅ FIX: trước đây return HopLe = true. Đây chính xác là chỗ làm nội dung
+                // có từ cấm bị lọt qua mỗi khi Gemini trả format hơi khác kỳ vọng.
+                return FailClosed("Loi parse ket qua AI, can duyet thu cong");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Loi xu ly response: {Response}", responseJson);
+                return FailClosed("Loi xu ly ket qua AI, can duyet thu cong");
+            }
+        }
+
+        /// <summary>
+        /// Loai bo markdown code fence (```json ... ``` hoac ``` ... ```) ma Gemini
+        /// doi khi van them vao du da yeu cau JSON thuan.
+        /// </summary>
+        private static string CleanJsonText(string text)
+        {
+            var trimmed = text.Trim();
+
+            if (trimmed.StartsWith("```"))
+            {
+                // Bo dong dau tien (``` hoac ```json)
+                var firstNewline = trimmed.IndexOf('\n');
+                if (firstNewline >= 0)
+                {
+                    trimmed = trimmed[(firstNewline + 1)..];
+                }
+
+                // Bo ``` o cuoi neu co
+                var lastFence = trimmed.LastIndexOf("```", StringComparison.Ordinal);
+                if (lastFence >= 0)
+                {
+                    trimmed = trimmed[..lastFence];
+                }
+            }
+
+            return trimmed.Trim();
         }
 
         private KetQuaKiemDuyetInput ParseResponse(string responseJson)

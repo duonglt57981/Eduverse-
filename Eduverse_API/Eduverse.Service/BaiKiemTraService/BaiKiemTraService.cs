@@ -15,6 +15,7 @@ using Eduverse.Service.DapAnService;
 using Eduverse.Service.DapAnService.Dto;
 using Eduverse.Service.LanLamBaiKiemTraService;
 using Eduverse.Service.LanLamBaiKiemTraService.Dto;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService;
 using Eduverse.Service.TienDoHocTapService;
 using Microsoft.AspNetCore.Http;
@@ -37,6 +38,7 @@ namespace Eduverse.Service.BaiKiemTraService
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IBaiGiangRepository _baiGiangRepository;
         private readonly IPhanRepository _phanRepository;
+        private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
 
 
         public BaiKiemTraService(
@@ -52,7 +54,9 @@ namespace Eduverse.Service.BaiKiemTraService
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             IBaiGiangRepository baiGiangRepository,
             IPhanRepository phanRepository,
-            IHttpContextAccessor httpContextAccessor) : base(baiKiemTraRepository)
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
+            IHttpContextAccessor httpContextAccessor
+            ) : base(baiKiemTraRepository)
         {
             _lanLamBaiKiemTraService = lanLamBaiKiemTraService;
             _chiTietLamBaiKiemTraService = chiTietLamBaiKiemTraService;
@@ -66,6 +70,7 @@ namespace Eduverse.Service.BaiKiemTraService
             _httpContextAccessor = httpContextAccessor;
             _baiGiangRepository = baiGiangRepository;
             _phanRepository = phanRepository;
+            _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
         }
 
 
@@ -78,6 +83,9 @@ namespace Eduverse.Service.BaiKiemTraService
 
             if (phan == null)
                 throw new Exception("Không tìm thấy phần học.");
+
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenBaiKiemTra);
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MoTa);
 
             var entity = new BaiKiemTra
             {

@@ -4,6 +4,7 @@ using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.TaiLieuService.Dto;
 using Eduverse.Service.TaiLieuService.Request;
 
@@ -15,15 +16,19 @@ namespace Eduverse.Service.TaiLieuService
         private readonly IMapper _mapper;
         private IBaiGiangRepository _baiGiangRepository;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
         public TaiLieuService( 
             IBaiGiangRepository baiGiangRepository,
             ITaiLieuRepository taiLieuRepository,
             IMapper mapper,
-            ICloudinaryService cloudinaryService) : base(taiLieuRepository)
+            ICloudinaryService cloudinaryService,
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService
+            ) : base(taiLieuRepository)
         {
             _baiGiangRepository = baiGiangRepository;
             _mapper = mapper;
             _cloudinaryService = cloudinaryService;
+            _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
         }
 
         public async Task<TaiLieuDto> CreateTaiLieu(CreateTaiLieuRequest request)
@@ -41,6 +46,8 @@ namespace Eduverse.Service.TaiLieuService
 
             var fileExtension = Path.GetExtension(request.Document.FileName).TrimStart('.').ToUpper();
 
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenTaiLieu);
+
             var entity = new TaiLieu
             {
                 IdBaiGiang = request.IdBaiGiang,
@@ -48,8 +55,6 @@ namespace Eduverse.Service.TaiLieuService
                 URL = uploadResult.UrlDoc.Trim(),
                 LoaiTaiLieu = fileExtension.Trim(),
                 TrangThai = "HoatDong",
-                CreatedDate = DateTime.UtcNow
-
             };
 
             await CreateAsync(entity);

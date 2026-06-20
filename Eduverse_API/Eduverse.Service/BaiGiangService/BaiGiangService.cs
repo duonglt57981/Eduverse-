@@ -7,6 +7,7 @@ using Eduverse.Service.BaiGiangService.Request;
 using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.TaiLieuService;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,14 +21,17 @@ namespace Eduverse.Service.BaiGiangService
         private readonly IPhanRepository _phanRepository;
         private readonly IMapper _mapper; 
         private readonly IDangKyKhoaHocRepository _dangkyKhoaHocRepository;
-        
+        private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
+
+
         public BaiGiangService(
             IBaiGiangRepository baiGiangRepository,
             ICloudinaryService cloudinaryService,
             ITaiLieuService taiLieuService,
             IPhanRepository phanRepository,
             IMapper mapper,
-            IDangKyKhoaHocRepository dangkyKhoaHocRepository
+            IDangKyKhoaHocRepository dangkyKhoaHocRepository,
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService
             ) : base(baiGiangRepository)
         {
             _cloudinaryService = cloudinaryService;
@@ -35,6 +39,7 @@ namespace Eduverse.Service.BaiGiangService
             _phanRepository = phanRepository;
             _mapper = mapper;
             _dangkyKhoaHocRepository = dangkyKhoaHocRepository;
+            _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
         }
 
 
@@ -63,6 +68,8 @@ namespace Eduverse.Service.BaiGiangService
             var maxThuTu = await GetQueryable()
                 .Where(x => x.IdPhan == request.IdPhan.Value)
                 .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
+
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
 
             var entity = new BaiGiang
             {
@@ -142,6 +149,7 @@ namespace Eduverse.Service.BaiGiangService
 
             }
 
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
 
             var banNhapBaiGiang = new BaiGiang
             {

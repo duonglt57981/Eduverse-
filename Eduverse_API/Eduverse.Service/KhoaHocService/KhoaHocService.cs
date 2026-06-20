@@ -22,6 +22,7 @@ using Eduverse.Service.DapAnService.Dto;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.TaiLieuService;
@@ -53,6 +54,7 @@ namespace Eduverse.Service.KhoaHocService
         private readonly IBaiKiemTraRepository _baiKiemTraRepository ;
         private readonly ILanLamBaiKiemTraService _lanLamBaiKiemTraService;
         private readonly IDanhMuc_KhoaHocRepository _danhMuc_KhoaHocRepository;
+        private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
 
         public KhoaHocService(
             IMemoryCache memoryCache,
@@ -71,7 +73,8 @@ namespace Eduverse.Service.KhoaHocService
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             IBaiKiemTraRepository baiKiemTraRepository,
             ILanLamBaiKiemTraService lanLamBaiKiemTraService,
-            IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository
+            IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository,
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService
         ) : base(khoaHocRepository)
         {
             _memoryCache = memoryCache;
@@ -89,6 +92,7 @@ namespace Eduverse.Service.KhoaHocService
             _baiKiemTraRepository = baiKiemTraRepository;
             _lanLamBaiKiemTraService = lanLamBaiKiemTraService;
             _danhMuc_KhoaHocRepository = danhMuc_KhoaHocRepository;
+            _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
         }
 
 
@@ -1550,6 +1554,10 @@ namespace Eduverse.Service.KhoaHocService
 
             var isFree = request.Gia <= 0;
 
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MoTa);
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.CapDo);
+
             var khoaHoc = new KhoaHoc
             {
                 IsBanHienTai = true,
@@ -1653,14 +1661,19 @@ namespace Eduverse.Service.KhoaHocService
             if (banNhap != null)
             {
                 if(banNhap.TrangThaiPheDuyet == "DangDuyet")
-                        throw new Exception(
-                    $"❌ KHÓA HỌC ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
-                    $"Hệ thống Eduverses đang kiểm duyệt khóa học này" +
-                    $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
-                    $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
-                );
-                    // ── Đã có bản nháp → update luôn, KHÔNG tạo mới ──
-                    banNhap.TieuDe = request.TieuDe.Trim();
+                     throw new Exception(
+                            $"❌ KHÓA HỌC ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
+                            $"Hệ thống Eduverses đang kiểm duyệt khóa học này" +
+                            $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
+                            $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
+                     );
+
+                await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
+                await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MoTa);
+                await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.CapDo);
+
+                // ── Đã có bản nháp → update luôn, KHÔNG tạo mới ──
+                banNhap.TieuDe = request.TieuDe.Trim();
                 banNhap.MoTa = request.MoTa?.Trim();
                 banNhap.Gia = request.Gia;
                 banNhap.GiaGoc = request.GiaGoc;
@@ -1677,15 +1690,20 @@ namespace Eduverse.Service.KhoaHocService
             }
             else
             {
-                    if (banNhap.TrangThaiPheDuyet == "DangDuyet")
-                        throw new Exception(
-                    $"❌ KHÓA HỌC ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
-                    $"Hệ thống Eduverses đang kiểm duyệt khóa học này" +
-                    $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
-                    $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
-                );
-                    // ── Chưa có bản nháp → tạo mới ───────────────────
-                    var banNhapMoi = new KhoaHoc
+                if (banNhap.TrangThaiPheDuyet == "DangDuyet")
+                    throw new Exception(
+                        $"❌ KHÓA HỌC ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
+                        $"Hệ thống Eduverses đang kiểm duyệt khóa học này" +
+                        $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
+                        $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
+                    );
+
+                await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
+                await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MoTa);
+                await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.CapDo);
+
+                // ── Chưa có bản nháp → tạo mới ───────────────────
+                var banNhapMoi = new KhoaHoc
                 {
                     Id = Guid.NewGuid(),
                     IdBanGhiTruoc = banGoc.Id,

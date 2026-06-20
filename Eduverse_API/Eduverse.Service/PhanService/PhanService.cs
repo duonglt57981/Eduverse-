@@ -74,7 +74,7 @@ namespace Eduverse.Service.PhanService
 
 
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MieuTa);
 
 
             var entity = new Phan
@@ -128,6 +128,7 @@ namespace Eduverse.Service.PhanService
                 throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại trong phần học này");
 
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MieuTa);
 
             entity.IdKhoaHoc = request.IdKhoaHoc;
             entity.TenPhan = request.TenPhan.Trim();

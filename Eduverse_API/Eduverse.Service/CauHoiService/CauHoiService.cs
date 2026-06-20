@@ -11,6 +11,7 @@ using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.DapAnService;
 using Eduverse.Service.DapAnService.Dto;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Microsoft.EntityFrameworkCore;
 namespace Eduverse.Service.CauHoiService
 {
@@ -20,18 +21,22 @@ namespace Eduverse.Service.CauHoiService
         private readonly EduverseContext _context;
         private readonly IDapAnService _dapAnService;
         private readonly IBaiKiemTraRepository _baiKiemTraRepository;
+        private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
 
         public CauHoiService(
             IMapper mapper,
             ICauHoiRepository repository,
             IDapAnService dapAnService,
             IBaiKiemTraRepository baiKiemTraRepository,
-            EduverseContext context) : base(repository)
+            EduverseContext context,
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService
+            ) : base(repository)
         {
             _mapper = mapper;
             _context = context;
             _dapAnService = dapAnService;
             _baiKiemTraRepository = baiKiemTraRepository;
+            _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
         }
 
 
@@ -53,6 +58,10 @@ namespace Eduverse.Service.CauHoiService
                 .Select(x => (int?)x.ThuTuSapXep)
                 .MaxAsync() ?? -1;
 
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenCauHoi);
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.NoiDungCauHoi);
+
+
             var cauHoi = new CauHoi
             {
                 Id = Guid.NewGuid(),
@@ -69,16 +78,26 @@ namespace Eduverse.Service.CauHoiService
             await SaveAsync();
 
             var ttsapxepDapAn = 0;
+            
 
             var dapAns = request.DanhSachDapAns
                 .Select(x => new DapAn
                 {
+
                     NoiDungDapAn = x.NoiDungDapAn,
                     LaDapAnDung = x.LaDapAnDung,
                     ThuTuSapXep = ttsapxepDapAn++,
                     IdCauHoi = cauHoi.Id
                 })
                 .ToList();
+
+
+            var noiDungTatCaDapAn = string.Join(" ", dapAns
+                .Where(x => !string.IsNullOrWhiteSpace(x.NoiDungDapAn))
+                .Select(x => x.NoiDungDapAn));
+
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(noiDungTatCaDapAn);
+
 
             await _dapAnService.CreateRange(dapAns);
             await _dapAnService.SaveAsync();
