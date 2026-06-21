@@ -9,6 +9,7 @@ namespace Eduverse.Service.GeminiService
 {
     public interface IGeminiService
     {
-        Task<KetQuaKiemDuyetInput> KiemTraAsync(string noiDung);
+        Task<KetQuaKiemDuyetInput> KiemDuyetInputAsync(string noiDung);
+        Task<KetQuaKiemDuyetInput> KiemDuyetOuputAsync(string noiDung);
     }
 }

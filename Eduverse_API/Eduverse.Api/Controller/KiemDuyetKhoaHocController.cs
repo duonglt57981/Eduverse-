@@ -56,21 +56,21 @@ namespace Eduverse.Api.Controller
         //}   
 
 
-        [HttpPost("kiemduyet-khoahoc")]
-        [Authorize(Roles = "Admin")]
-        public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc([FromForm] KiemDuyetKhoaHocRequest request)
-        {
-            try
-            {
-                var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetKhoaHoc(request);
-                return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
+        //[HttpPost("kiemduyet-khoahoc")]
+        //[Authorize(Roles = "Admin")]
+        //public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc([FromForm] KiemDuyetKhoaHocRequest request)
+        //{
+        //    try
+        //    {
+        //        var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetKhoaHoc(request);
+        //        return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
                 
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
-            }
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
+        //    }
+        //}
 
 
         [HttpGet("kiemduyet-khoahoc-gethistory/{idKhoaHoc}")]

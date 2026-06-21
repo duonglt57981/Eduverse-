@@ -40,73 +40,73 @@ namespace Eduverse.Service.CauHoiService
         }
 
 
-        public async Task<CreateCauHoiDto> CreateQuestion(CreateCauHoiRequest request)
-        {
-            var baiKiemTra = await _baiKiemTraRepository.GetByIdAsync(request.IdBaiKiemTra);
-            if (baiKiemTra == null)
-                throw new Exception("Không tìm thấy bài kiểm tra");
+        //public async Task<CreateCauHoiDto> CreateQuestion(CreateCauHoiRequest request)
+        //{
+        //    var baiKiemTra = await _baiKiemTraRepository.GetByIdAsync(request.IdBaiKiemTra);
+        //    if (baiKiemTra == null)
+        //        throw new Exception("Không tìm thấy bài kiểm tra");
 
-            if (request.DanhSachDapAns == null || !request.DanhSachDapAns.Any())
-                throw new Exception("Câu hỏi phải có ít nhất 1 đáp án.");
+        //    if (request.DanhSachDapAns == null || !request.DanhSachDapAns.Any())
+        //        throw new Exception("Câu hỏi phải có ít nhất 1 đáp án.");
 
-            if (!request.DanhSachDapAns.Any(x => x.LaDapAnDung))
-                throw new Exception("Phải có ít nhất 1 đáp án đúng.");
+        //    if (!request.DanhSachDapAns.Any(x => x.LaDapAnDung))
+        //        throw new Exception("Phải có ít nhất 1 đáp án đúng.");
 
-            var maxThuTu = await GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdBaiKiemTra == request.IdBaiKiemTra && !x.IsDeleted)
-                .Select(x => (int?)x.ThuTuSapXep)
-                .MaxAsync() ?? -1;
+        //    var maxThuTu = await GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.IdBaiKiemTra == request.IdBaiKiemTra && !x.IsDeleted)
+        //        .Select(x => (int?)x.ThuTuSapXep)
+        //        .MaxAsync() ?? -1;
 
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenCauHoi);
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.NoiDungCauHoi);
+        //    await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenCauHoi);
+        //    await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.NoiDungCauHoi);
 
 
-            var cauHoi = new CauHoi
-            {
-                Id = Guid.NewGuid(),
-                TenCauHoi = request.TenCauHoi,
-                NoiDungCauHoi = request.NoiDungCauHoi,
-                LoaiCauHoi = request.DanhSachDapAns.Count(x => x.LaDapAnDung) > 1 ? "multi" : "one",
-                ThuTuSapXep = maxThuTu + 1,
-                IdBaiKiemTra = baiKiemTra.Id,
-                DoKho = request.DoKho
+        //    var cauHoi = new CauHoi
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        TenCauHoi = request.TenCauHoi,
+        //        NoiDungCauHoi = request.NoiDungCauHoi,
+        //        LoaiCauHoi = request.DanhSachDapAns.Count(x => x.LaDapAnDung) > 1 ? "multi" : "one",
+        //        ThuTuSapXep = maxThuTu + 1,
+        //        IdBaiKiemTra = baiKiemTra.Id,
+        //        DoKho = request.DoKho
                 
-            };
+        //    };
 
-            await CreateAsync(cauHoi);
-            await SaveAsync();
+        //    await CreateAsync(cauHoi);
+        //    await SaveAsync();
 
-            var ttsapxepDapAn = 0;
+        //    var ttsapxepDapAn = 0;
             
 
-            var dapAns = request.DanhSachDapAns
-                .Select(x => new DapAn
-                {
+        //    var dapAns = request.DanhSachDapAns
+        //        .Select(x => new DapAn
+        //        {
 
-                    NoiDungDapAn = x.NoiDungDapAn,
-                    LaDapAnDung = x.LaDapAnDung,
-                    ThuTuSapXep = ttsapxepDapAn++,
-                    IdCauHoi = cauHoi.Id
-                })
-                .ToList();
-
-
-            var noiDungTatCaDapAn = string.Join(" ", dapAns
-                .Where(x => !string.IsNullOrWhiteSpace(x.NoiDungDapAn))
-                .Select(x => x.NoiDungDapAn));
-
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(noiDungTatCaDapAn);
+        //            NoiDungDapAn = x.NoiDungDapAn,
+        //            LaDapAnDung = x.LaDapAnDung,
+        //            ThuTuSapXep = ttsapxepDapAn++,
+        //            IdCauHoi = cauHoi.Id
+        //        })
+        //        .ToList();
 
 
-            await _dapAnService.CreateRange(dapAns);
-            await _dapAnService.SaveAsync();
+        //    var noiDungTatCaDapAn = string.Join(" ", dapAns
+        //        .Where(x => !string.IsNullOrWhiteSpace(x.NoiDungDapAn))
+        //        .Select(x => x.NoiDungDapAn));
 
-            var cauHoiDto = _mapper.Map<CauHoi, CreateCauHoiDto>(cauHoi);
-            cauHoiDto.DanhSachDapAns = _mapper.MapToList<DapAn, DapAnDto>(dapAns);
+        //    await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(noiDungTatCaDapAn);
 
-            return cauHoiDto;
-        }
+
+        //    await _dapAnService.CreateRange(dapAns);
+        //    await _dapAnService.SaveAsync();
+
+        //    var cauHoiDto = _mapper.Map<CauHoi, CreateCauHoiDto>(cauHoi);
+        //    cauHoiDto.DanhSachDapAns = _mapper.MapToList<DapAn, CreateDapAnDto>(dapAns);
+
+        //    return cauHoiDto;
+        //}
 
 
         public async Task<Guid> UpdateQuestion(UpdateCauHoiRequest request)

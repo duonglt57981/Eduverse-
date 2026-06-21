@@ -1,4 +1,5 @@
-﻿using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
+﻿using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,12 +13,15 @@ namespace Eduverse.Service.GeminiService
 {
     public class GeminiService : IGeminiService
     {
+
+
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
         private readonly ILogger<GeminiService> _logger;
 
         // Nguong co dinh
-        private const double NGUONG_CHAN = 0.7;
+        private const double NGUONG_CHAN = 0.7;      // Reject if score >= 0.7
+        private const double NGUONG_PHAN_VAN = 0.4;  // Need admin review if score >= 0.4 and < 0.7
 
         public GeminiService(IConfiguration configuration, ILogger<GeminiService> logger)
         {
@@ -33,7 +37,8 @@ namespace Eduverse.Service.GeminiService
             _logger = logger;
         }
 
-        public async Task<KetQuaKiemDuyetInput> KiemTraAsync(string noiDung)
+        #region KiemDuyetInput
+        public async Task<KetQuaKiemDuyetInput> KiemDuyetInputAsync(string noiDung)
         {
             if (string.IsNullOrWhiteSpace(noiDung))
             {
@@ -257,59 +262,121 @@ namespace Eduverse.Service.GeminiService
 
             return trimmed.Trim();
         }
+        #endregion
 
-        private KetQuaKiemDuyetInput ParseResponse(string responseJson)
+
+        #region KiemDuyetOuput
+        /// <summary>
+        /// Gọi Gemini để kiểm duyệt 1 đoạn nội dung text, parse JSON kết quả.
+        /// Fail-closed: mọi lỗi (parse, response rỗng, thiếu field, lỗi mạng)
+        /// đều trả về diemSo nằm trong khoảng phân vân (cần xem xét),
+        /// KHÔNG bao giờ mặc định an toàn khi gặp lỗi không rõ nguyên nhân.
+        /// </summary>
+        public async Task<KetQuaKiemDuyetInput> KiemDuyetOuputAsync(string noiDung)
+        {
+            if (string.IsNullOrWhiteSpace(noiDung))
+            {
+                return new KetQuaKiemDuyetInput { HopLe = true, DiemSo = 0.0, Loai = "AnToan" };
+            }
+
+            try
+            {
+                var prompt = $@"
+                        Kiem duyet noi dung sau: ""{noiDung}""
+ 
+                        Yeu cau:
+                        - Phat hien tu ngu nhay cam, bao luc, khieu dam, tho tuc, chinh tri cuc doan
+                        - Tra ve JSON:
+                        {{
+                            ""hopLe"": true/false,
+                            ""loai"": ""AnToan|BaoLuc|KhieuDam|ThoTuc|ChinhTri"",
+                            ""diemSo"": 0.0-1.0,
+                            ""tuViPham"": [""tu1"", ""tu2""],
+                            ""lyDo"": ""Ly do chi tiet"",
+                            ""goiYSua"": ""Goi y sua chua""
+                        }}
+                        Chi tra ve JSON, khong them text khac.";
+
+                var request = new
+                {
+                    contents = new[] { new { parts = new[] { new { text = prompt } } } },
+                    generationConfig = new
+                    {
+                        temperature = 0.1,
+                        maxOutputTokens = 512,
+                        responseMimeType = "application/json"
+                    }
+                };
+
+                var json = JsonSerializer.Serialize(request);
+                var response = await _httpClient.PostAsync("", new StringContent(json, Encoding.UTF8, "application/json"));
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation("Gemini Status Code: {StatusCode}", response.StatusCode);
+                _logger.LogDebug("Gemini Response: {Response}", responseContent);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Gemini API Error: {StatusCode} - {Response}", response.StatusCode, responseContent);
+                    return FailClosedOuput("Loi goi Gemini API, can duyet thu cong");
+                }
+
+                return ParseResponseOutput(responseContent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Loi goi Gemini kiem duyet");
+                return FailClosedOuput($"Loi he thong kiem duyet: {ex.Message}");
+            }
+        }
+
+        private KetQuaKiemDuyetInput ParseResponseOutput(string responseJson)
         {
             try
             {
                 using var doc = JsonDocument.Parse(responseJson);
 
-                // ✅ Kiểm tra có candidates không
                 if (!doc.RootElement.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
                 {
-                    _logger.LogWarning("No candidates in response");
+                    _logger.LogWarning("Khong co candidates trong response Gemini: {Response}", responseJson);
+                    return FailClosedOuput("Khong co ket qua tu AI, can duyet thu cong");
+                }
+
+                var finishReason = candidates[0].TryGetProperty("finishReason", out var fr) ? fr.GetString() : null;
+                if (string.Equals(finishReason, "SAFETY", StringComparison.OrdinalIgnoreCase))
+                {
                     return new KetQuaKiemDuyetInput
                     {
-                        HopLe = true,
-                        ThongBao = "Khong co ket qua tu AI"
+                        HopLe = false,
+                        Loai = "ViPhamAnToan",
+                        DiemSo = 1.0,
+                        ThongBao = "Noi dung bi danh dau vi pham chinh sach an toan cua Gemini"
                     };
                 }
 
-                // ✅ Lấy text từ response
-                var text = candidates[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString();
-
+                var text = candidates[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
                 if (string.IsNullOrWhiteSpace(text))
                 {
-                    _logger.LogWarning("Empty text in response");
-                    return new KetQuaKiemDuyetInput
-                    {
-                        HopLe = true,
-                        ThongBao = "Khong co noi dung tra ve"
-                    };
+                    return FailClosedOuput("Khong co noi dung tra ve tu AI, can duyet thu cong");
                 }
 
-                // ✅ Parse JSON từ text
+                text = CleanJsonTextOutput(text);
+
                 using var resultDoc = JsonDocument.Parse(text);
                 var root = resultDoc.RootElement;
 
-                var hopLe = root.GetProperty("hopLe").GetBoolean();
-                var diemSo = root.GetProperty("diemSo").GetDouble();
-
-                // Neu diem >= 0.7 -> Chan
-                if (diemSo >= NGUONG_CHAN)
+                if (!root.TryGetProperty("hopLe", out var hopLeProp) || !root.TryGetProperty("diemSo", out var diemSoProp))
                 {
-                    hopLe = false;
+                    _logger.LogWarning("JSON Gemini thieu field bat buoc: {Text}", text);
+                    return FailClosedOuput("Ket qua kiem duyet khong day du, can duyet thu cong");
                 }
 
                 return new KetQuaKiemDuyetInput
                 {
-                    HopLe = hopLe,
+                    HopLe = hopLeProp.GetBoolean(),
+                    DiemSo = diemSoProp.GetDouble(),
                     Loai = root.GetProperty("loai").GetString() ?? "Khac",
-                    ThongBao = root.GetProperty("lyDo").GetString() ?? "",
+                    ThongBao = root.TryGetProperty("lyDo", out var lyDo) ? lyDo.GetString() : "",
                     TuViPham = root.TryGetProperty("tuViPham", out var terms)
                         ? terms.EnumerateArray().Select(t => t.GetString()).Where(t => t != null).Select(t => t!).ToList()
                         : new List<string>(),
@@ -318,22 +385,36 @@ namespace Eduverse.Service.GeminiService
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "Loi parse JSON: {Response}", responseJson);
-                return new KetQuaKiemDuyetInput
-                {
-                    HopLe = true,
-                    ThongBao = "Loi parse ket qua"
-                };
+                _logger.LogError(ex, "Loi parse JSON Gemini: {Response}", responseJson);
+                return FailClosedOuput("Loi parse ket qua AI, can duyet thu cong");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Loi xu ly response: {Response}", responseJson);
-                return new KetQuaKiemDuyetInput
-                {
-                    HopLe = true,
-                    ThongBao = "Loi xu ly ket qua"
-                };
+                _logger.LogError(ex, "Loi xu ly response Gemini: {Response}", responseJson);
+                return FailClosedOuput("Loi xu ly ket qua AI, can duyet thu cong");
             }
         }
+
+        private static KetQuaKiemDuyetInput FailClosedOuput(string lyDo) => new()
+        {
+            HopLe = false,
+            Loai = "KhongXacDinh",
+            DiemSo = (NGUONG_PHAN_VAN + NGUONG_CHAN) / 2,
+            ThongBao = lyDo
+        };
+
+        private static string CleanJsonTextOutput(string text)
+        {
+            var trimmed = text.Trim();
+            if (trimmed.StartsWith("```"))
+            {
+                var firstNewline = trimmed.IndexOf('\n');
+                if (firstNewline >= 0) trimmed = trimmed[(firstNewline + 1)..];
+                var lastFence = trimmed.LastIndexOf("```", StringComparison.Ordinal);
+                if (lastFence >= 0) trimmed = trimmed[..lastFence];
+            }
+            return trimmed.Trim();
+        }
+        #endregion
     }
 }

@@ -15,6 +15,7 @@ using Eduverse.Service.PhanService.Request;
 using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 
 namespace Eduverse.Service.PhanService
@@ -28,6 +29,7 @@ namespace Eduverse.Service.PhanService
         private readonly ITaiLieuService _taiLieuService;
         private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
         private readonly ITienDoHocTapRepository _tienDoHocTapRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
 
         
@@ -36,6 +38,7 @@ namespace Eduverse.Service.PhanService
             IBaiGiangService baiGiangService,
             ITaiLieuService taiLieuService,
             IKhoaHocRepository khoaHocRepository,
+            IHttpContextAccessor httpContextAccessor,
             Service.Core.Mapper.IMapper mapper,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             ITienDoHocTapRepository tienDoHocTapRepository,
@@ -51,6 +54,7 @@ namespace Eduverse.Service.PhanService
             _tienDoHocTapRepository = tienDoHocTapRepository;
             _khoaHocService = khoaHocService;
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
+            this._httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<PhanHocDto> CreatePhanHoc(CreatePhanRequest request)  
@@ -97,6 +101,8 @@ namespace Eduverse.Service.PhanService
 
         public async Task<PhanHocDto> UpdatePhanHoc(UpdatePhanRequest request)
         {
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+
             ArgumentNullException.ThrowIfNull(request);
 
             if (string.IsNullOrWhiteSpace(request.TenPhan))
@@ -115,6 +121,9 @@ namespace Eduverse.Service.PhanService
                 throw new Exception("Không tìm thấy khóa học");
 
             var entity = entityTask.Result;
+            if (entity.CreatedId != nguoiTao)
+                throw new Exception("Bạn không có quyền hạn để sửa phần học này!");
+
             if (entity == null)
                 throw new Exception("Không tìm thấy phần học");
 
@@ -144,7 +153,11 @@ namespace Eduverse.Service.PhanService
 
         public async Task<bool> DeletePhanHoc(Guid id)
         {
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+
             var phan = await GetAll().FirstOrDefaultAsync(x => x.Id == id);
+            if (phan.CreatedId != nguoiTao)
+                throw new Exception("Bạn không có quyền hạn để xóa phần học này!");
             if (phan == null)
                 throw new Exception("Không tim thấy phần học");
 

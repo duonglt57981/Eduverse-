@@ -13,7 +13,6 @@ namespace Eduverse.Model.Entities
         public int? vitrixem { get; set; }
         public DateTime? ThoiGianHoanThanh { get; set; }
         public string? TrangThai { get; set; }
-        //public Guid? IdCauHoi { get; set; }
         public Guid? IdLanLamBaiKiemTra { get; set; }
         public Guid? IdDangKi { get; set; }
         public Guid? IdBaiGiang { get; set; }

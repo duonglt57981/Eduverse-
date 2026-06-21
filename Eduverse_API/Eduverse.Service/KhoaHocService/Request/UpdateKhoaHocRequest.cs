@@ -16,6 +16,7 @@ namespace Eduverse.Service.KhoaHocService.Request
         public double? Gia { get; set; }
         public double? GiaGoc { get; set; }
         public string? CapDo { get; set; }
+        public string? TrangThai { get; set; }
 
 
         public IFormFile? Img { get; set; }

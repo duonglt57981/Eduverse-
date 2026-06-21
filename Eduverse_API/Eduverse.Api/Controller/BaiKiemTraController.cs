@@ -30,7 +30,7 @@ namespace Eduverse.Api.Controller
 
         [HttpPost("baikiemtra")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ([FromForm] CreateBaiKiemTraRequest request)
+        public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ( CreateBaiKiemTraRequest request)
         {
             try
             {
@@ -77,20 +77,20 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPost("CauHoi/create-cauhoi")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<CreateCauHoiDto>> CreateCauHoi([FromBody] CreateCauHoiRequest request)
-        {
-            try
-            {
-                var result = await _cauHoiService.CreateQuestion(request);
-                return DataResponse<CreateCauHoiDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<CreateCauHoiDto>.False(ex.Message);
-            }
-        }
+        //[HttpPost("CauHoi/create-cauhoi")]
+        //[Authorize(Roles = "Admin,GiaoVien")]
+        //public async Task<DataResponse<CreateCauHoiDto>> CreateCauHoi([FromBody] CreateCauHoiRequest request)
+        //{
+        //    try
+        //    {
+        //        var result = await _cauHoiService.CreateQuestion(request);
+        //        return DataResponse<CreateCauHoiDto>.Success(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return DataResponse<CreateCauHoiDto>.False(ex.Message);
+        //    }
+        //}
 
 
         /// <summary>

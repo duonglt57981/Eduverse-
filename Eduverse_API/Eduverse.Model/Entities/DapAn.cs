@@ -15,6 +15,9 @@ namespace Eduverse.Model.Entities
         public int? ThuTuSapXep { get; set; }
         public Guid? IdCauHoi { get; set; }
 
+        public string? TrangThai { get; set; }
+        public string? TrangThaiPheDuyet { get; set; }
+
 
         public Guid? IdBanGhiTruoc { get; set; }
         public bool IsBanHienTai { get; set; } = true;

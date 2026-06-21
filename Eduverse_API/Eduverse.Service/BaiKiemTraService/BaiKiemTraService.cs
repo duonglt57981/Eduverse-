@@ -3,6 +3,7 @@ using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Service.BaiKiemTraService.Dto;
 using Eduverse.Service.BaiKiemTraService.Request;
@@ -38,6 +39,7 @@ namespace Eduverse.Service.BaiKiemTraService
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IBaiGiangRepository _baiGiangRepository;
         private readonly IPhanRepository _phanRepository;
+        private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
 
 
@@ -55,6 +57,7 @@ namespace Eduverse.Service.BaiKiemTraService
             IBaiGiangRepository baiGiangRepository,
             IPhanRepository phanRepository,
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
+            IKhoaHocRepository khoaHocRepository,
             IHttpContextAccessor httpContextAccessor
             ) : base(baiKiemTraRepository)
         {
@@ -71,37 +74,129 @@ namespace Eduverse.Service.BaiKiemTraService
             _baiGiangRepository = baiGiangRepository;
             _phanRepository = phanRepository;
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
+            _eduverseContext = eduverseContext;
+            _khoaHocRepository = khoaHocRepository;
         }
 
 
-        public async Task<CreateBaiKiemTraDto> CreateQuiz( CreateBaiKiemTraRequest request)
+        public async Task<CreateBaiKiemTraDto> CreateQuiz(CreateBaiKiemTraRequest request)
         {
-            if (request.IdPhan == null)
+            // ===== 1. VALIDATE ĐẦU VÀO =====
+            if (request == null)
+                throw new Exception("Yêu cầu không hợp lệ.");
+
+            if (request.IdPhan == null || request.IdPhan == Guid.Empty)
                 throw new Exception("Phần học không hợp lệ.");
 
             var phan = await _phanService.GetByIdAsync(request.IdPhan);
-
             if (phan == null)
                 throw new Exception("Không tìm thấy phần học.");
+
+            if (string.IsNullOrWhiteSpace(request.TenBaiKiemTra))
+                throw new Exception("Tên bài kiểm tra không được để trống.");
 
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenBaiKiemTra);
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MoTa);
 
-            var entity = new BaiKiemTra
-            {
-                IdPhan = request.IdPhan,
-                TenBaiKiemTra = request.TenBaiKiemTra,
-                MoTa = request.MoTa,
-                DiemDat = request.DiemDat,
-                GioiHanThoiGian = request.GioiHanThoiGian,
-                ChoLamLai = true,
-                SoLanLamToiDa = request.ChoLamLai == true ? request.SoLanLamToiDa : 0,
-                TrangThai = "HoatDong",
-            };
+            if (request.DanhSachCauHoi == null || !request.DanhSachCauHoi.Any())
+                throw new Exception("Bài kiểm tra phải có ít nhất một câu hỏi.");
 
-            await CreateAsync(entity);
-            await SaveAsync();
-            return _mapper.Map<BaiKiemTra, CreateBaiKiemTraDto>(entity);
+            foreach (var cauHoi in request.DanhSachCauHoi)
+            {
+                if (string.IsNullOrWhiteSpace(cauHoi.NoiDungCauHoi))
+                    throw new Exception("Nội dung câu hỏi không được để trống.");
+
+                if (cauHoi.DanhSachDapAn == null || cauHoi.DanhSachDapAn.Count < 2)
+                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
+
+                if (!cauHoi.DanhSachDapAn.Any(d => d.LaDapAnDung == true))
+                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất một đáp án đúng.");
+
+                //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(cauHoi.NoiDungCauHoi);
+                //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(cauHoi.TenCauHoi);
+
+                //foreach (var dapAn in cauHoi.DanhSachDapAn)
+                //{
+                //    await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(dapAn.NoiDungDapAn);
+                //}
+            }
+
+            // ===== 2. TẠO TRONG TRANSACTION =====
+            await using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
+            try
+            {
+                // --- 2.1 Tạo bài kiểm tra ---
+                var baiKiemTra = new BaiKiemTra
+                {
+                    IdPhan = request.IdPhan,
+                    TenBaiKiemTra = request.TenBaiKiemTra,
+                    MoTa = request.MoTa,
+                    DiemDat = request.DiemDat,
+                    GioiHanThoiGian = request.GioiHanThoiGian,
+                    ChoLamLai = request.ChoLamLai,
+                    SoLanLamLai = 0,
+                    SoLanLamToiDa = request.ChoLamLai == true ? request.SoLanLamToiDa : 0,
+                    NgayTao = DateTime.Now,
+                    TrangThai = "HoatDong",
+                    TrangThaiPheDuyet = "ChoDuyet",
+                    IsBanHienTai = true,
+                };
+
+                await CreateAsync(baiKiemTra);
+                await SaveAsync(); // lưu để lấy được Id (nếu Id sinh tại DB)
+
+                // --- 2.2 Tạo từng câu hỏi + đáp án ---
+                var thuTuCauHoi = 1;
+                foreach (var cauHoiReq in request.DanhSachCauHoi)
+                {
+                    var cauHoi = new CauHoi
+                    {
+                        IdBaiKiemTra = baiKiemTra.Id,
+                        TenCauHoi = cauHoiReq.TenCauHoi,
+                        NoiDungCauHoi = cauHoiReq.NoiDungCauHoi,
+                        LoaiCauHoi = cauHoiReq.LoaiCauHoi,
+                        Diem = cauHoiReq.Diem,
+                        DoKho = cauHoiReq.DoKho,
+                        ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? thuTuCauHoi,
+                        TrangThai = "HoatDong",
+                        TrangThaiPheDuyet = "ChoDuyet",
+                        IsBanHienTai = true,
+                    };
+
+                    await _cauHoiService.CreateAsync(cauHoi);
+                    await _cauHoiService.SaveAsync();
+
+                    var thuTuDapAn = 1;
+                    foreach (var dapAnReq in cauHoiReq.DanhSachDapAn)
+                    {
+                        var dapAn = new DapAn
+                        {
+                            IdCauHoi = cauHoi.Id,
+                            NoiDungDapAn = dapAnReq.NoiDungDapAn,
+                            LaDapAnDung = dapAnReq.LaDapAnDung,
+                            ThuTuSapXep = dapAnReq.ThuTuSapXep ?? thuTuDapAn,
+                            TrangThai = "HoatDong",
+                            TrangThaiPheDuyet = "ChoDuyet",
+                            IsBanHienTai = true,
+                        };
+
+                        await _dapAnService.CreateAsync(dapAn);
+                        thuTuDapAn++;
+                    }
+                    await _dapAnService.SaveAsync();
+
+                    thuTuCauHoi++;
+                }
+
+                await transaction.CommitAsync();
+
+                return _mapper.Map<BaiKiemTra, CreateBaiKiemTraDto>(baiKiemTra);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
 
@@ -151,6 +246,14 @@ namespace Eduverse.Service.BaiKiemTraService
 
         public async Task<LanLamBaiKiemTraDto> StartQuiz(StartQuizRequest request)
         {
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiDangKi);
+
+            if (request.IdBaiKiemTra == Guid.Empty)
+                throw new Exception("Thiếu thông tin bài kiểm tra.");
+
+            if (nguoiDangKi == Guid.Empty)
+                throw new Exception("Không xác định được người dùng hiện tại.");
+
             var baiKiemTra = await GetQueryable()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x =>
@@ -160,38 +263,57 @@ namespace Eduverse.Service.BaiKiemTraService
             if (baiKiemTra == null)
                 throw new Exception("Không tìm thấy bài kiểm tra.");
 
+            var quizInfo = await GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.Id == request.IdBaiKiemTra)
+                .Join(_phanService.GetQueryable().AsNoTracking(),
+                      bkt => bkt.IdPhan,
+                      phan => phan.Id,
+                      (bkt, phan) => new
+                      {
+                          QuizIsDeleted = bkt.IsDeleted,
+                          PhanIsDeleted = phan.IsDeleted,
+                          phan.IdKhoaHoc
+                      })
+                .FirstOrDefaultAsync();
+
+            if (quizInfo == null)
+                throw new Exception("Không tìm thấy bài kiểm tra hoặc phần học chứa bài kiểm tra này.");
+
+            if (quizInfo.PhanIsDeleted)
+                throw new Exception("Phần học chứa bài kiểm tra này đã bị xóa.");
+
+            if (quizInfo.QuizIsDeleted)
+                throw new Exception("Bài kiểm tra này đã bị xóa hoặc không còn tồn tại.");
+
+            if (quizInfo.IdKhoaHoc == Guid.Empty || quizInfo.IdKhoaHoc == null)
+                throw new Exception("Bài kiểm tra không thuộc khóa học nào.");
+
+            // 2. Kiểm tra khóa học còn tồn tại / chưa bị xóa (nếu cần kiểm tra thêm tầng KhoaHoc)
+            var khoaHocTonTai = await _khoaHocRepository.GetQueryable()
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == quizInfo.IdKhoaHoc && !x.IsDeleted);
+
+            if (!khoaHocTonTai)
+                throw new Exception("Khóa học chứa bài kiểm tra này không còn tồn tại.");
+
+            // 3. Kiểm tra đăng ký của người dùng hiện tại với khóa học đó
             var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
                 .AsNoTracking()
-                .Where(x => x.Id == request.IdDangKi && !x.IsDeleted)
-                .Select(x => new { x.IdNguoiDangKi, x.IdKhoaHoc })
+                .Where(x => !x.IsDeleted
+                         && x.IdNguoiDangKi == nguoiDangKi
+                         && x.IdKhoaHoc == quizInfo.IdKhoaHoc)
+                .Select(x => new { x.Id, x.TrangThai }) // tùy schema thực tế
                 .FirstOrDefaultAsync();
 
             if (dangKy == null)
                 throw new Exception("Bạn chưa đăng ký khóa học này.");
 
-            //Kiểm tra bài kiểm tra này có thuộc 1 phần học của khóa học đã đăng ký không
-            var quizThuocKhoaHoc = await GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.Id == request.IdBaiKiemTra && !x.IsDeleted)
-                .Join(_phanService.GetQueryable().AsNoTracking().Where(p => !p.IsDeleted),
-                      bkt => bkt.IdPhan,
-                      phan => phan.Id,
-                      (bkt, phan) => phan.IdKhoaHoc)
-                .FirstOrDefaultAsync();
-
-            if (quizThuocKhoaHoc == null)
-                throw new Exception("Không tìm thấy bài kiểm tra hoặc bài kiểm tra không thuộc phần học nào.");
-
-            if (quizThuocKhoaHoc != dangKy.IdKhoaHoc)
-                throw new Exception("Bài kiểm tra không thuộc khóa học bạn đã đăng ký.");
-
-
-            var idNguoiDung = dangKy.IdNguoiDangKi;
 
             var lanLamDangLam = await _lanLamBaiKiemTraService
                 .GetQueryable()
                 .FirstOrDefaultAsync(x =>
-                    x.IdNguoiDung == idNguoiDung &&
+                    x.IdNguoiDung == nguoiDangKi &&
                     x.IdBaiKiemTra == request.IdBaiKiemTra &&
                     x.TrangThai == "DangLam" &&
                     x.ThoiGianNop == null &&
@@ -204,7 +326,7 @@ namespace Eduverse.Service.BaiKiemTraService
                 .GetQueryable()
                 .AsNoTracking()
                 .CountAsync(x =>
-                    x.IdNguoiDung == idNguoiDung &&
+                    x.IdNguoiDung == nguoiDangKi &&
                     x.IdBaiKiemTra == request.IdBaiKiemTra &&
                     x.ThoiGianNop != null &&
                     !x.IsDeleted);
@@ -219,7 +341,7 @@ namespace Eduverse.Service.BaiKiemTraService
             var lanLam = new LanLamBaiKiemTra
             {
                 IdBaiKiemTra = request.IdBaiKiemTra,
-                IdNguoiDung = idNguoiDung,
+                IdNguoiDung = nguoiDangKi,
                 LamLanThu = soLanDaLam + 1,
                 ThoiGianBatDau = DateTime.Now,
                 ThoiGianTiepTuc = DateTime.Now,

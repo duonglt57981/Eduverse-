@@ -19,6 +19,7 @@ namespace Eduverse.Model.Entities
         public int? SoLanLamToiDa { get; set; }
         public DateTime? NgayTao { get; set; } = DateTime.Now;
         public string? TrangThai { get; set; }
+        public string? TrangThaiPheDuyet { get; set; }
         public Guid? IdPhan { get; set; }
 
         public Guid? IdBanGhiTruoc { get; set; }

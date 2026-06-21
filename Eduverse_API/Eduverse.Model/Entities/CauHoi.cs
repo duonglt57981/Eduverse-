@@ -18,6 +18,8 @@ namespace Eduverse.Model.Entities
         public Guid? IdBaiKiemTra { get; set; }
         //thêm
         public string? DoKho { get; set; }
+        public string? TrangThai { get; set; }
+        public string? TrangThaiPheDuyet { get; set; }
 
 
         public Guid? IdBanGhiTruoc { get; set; }

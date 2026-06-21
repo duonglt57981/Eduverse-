@@ -175,7 +175,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "e78dae65-27bd-42a4-baed-227e3c8a0209",
+                            ConcurrencyStamp = "38c10270-f1fe-493f-98e3-b4832d8301d4",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -184,9 +184,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEJhxtHx9zLkBOWCQBn5AOAMkp8WEp4nbFRFrVX5Vh6F+z6fYahfHBy/wgMkNqS+1Zg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEC5fOOs/QOKAJu8zDio9yUlfLl+aFTxzewFuIFc1Q9kYGNHL1enrzP3OupIpo2J7qQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "f46742cf-dfce-418a-93b2-c4020a24bee4",
+                            SecurityStamp = "3c788eec-37ab-4cd2-977d-199aec844717",
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserName = "admin"
@@ -253,6 +253,9 @@ namespace Eduverse.Model.Migrations
                     b.Property<string>("TrangThai")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TrangThaiPheDuyet")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("URLBaiGiang")
                         .HasColumnType("nvarchar(max)");
 
@@ -267,7 +270,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("baiGiangs", (string)null);
+                    b.ToTable("baiGiangs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.BaiKiemTra", b =>
@@ -330,6 +333,9 @@ namespace Eduverse.Model.Migrations
                     b.Property<string>("TrangThai")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TrangThaiPheDuyet")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -341,7 +347,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("baiKiemTras", (string)null);
+                    b.ToTable("baiKiemTras");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.CauHoi", b =>
@@ -395,6 +401,12 @@ namespace Eduverse.Model.Migrations
                     b.Property<int?>("ThuTuSapXep")
                         .HasColumnType("int");
 
+                    b.Property<string>("TrangThai")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TrangThaiPheDuyet")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -406,7 +418,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("cauHois", (string)null);
+                    b.ToTable("cauHois");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.ChiTietLamBaiKiemTra", b =>
@@ -459,7 +471,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("chiTietLamBaiKiemTras", (string)null);
+                    b.ToTable("chiTietLamBaiKiemTras");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.ChungChi", b =>
@@ -530,7 +542,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("chungChis", (string)null);
+                    b.ToTable("chungChis");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DangKyKhoaHoc", b =>
@@ -586,7 +598,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("dangKyKhoaHocs", (string)null);
+                    b.ToTable("dangKyKhoaHocs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DanhGia", b =>
@@ -633,7 +645,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("danhGias", (string)null);
+                    b.ToTable("danhGias");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DanhMuc", b =>
@@ -680,7 +692,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("danhMucs", (string)null);
+                    b.ToTable("danhMucs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DanhMuc_KhoaHoc", b =>
@@ -724,7 +736,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("danhMuc_KhoaHocs", (string)null);
+                    b.ToTable("danhMuc_KhoaHocs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DanhSachMuonMuaSau", b =>
@@ -812,7 +824,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("danhSachYeuThiches", (string)null);
+                    b.ToTable("danhSachYeuThiches");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DapAn", b =>
@@ -857,6 +869,12 @@ namespace Eduverse.Model.Migrations
                     b.Property<int?>("ThuTuSapXep")
                         .HasColumnType("int");
 
+                    b.Property<string>("TrangThai")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TrangThaiPheDuyet")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -868,7 +886,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("dapAns", (string)null);
+                    b.ToTable("dapAns");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DapAn_NguoiDung", b =>
@@ -912,7 +930,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("dapAn_NguoiDungs", (string)null);
+                    b.ToTable("dapAn_NguoiDungs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DonHang", b =>
@@ -968,7 +986,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("donHangs", (string)null);
+                    b.ToTable("donHangs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DonHangChiTiet", b =>
@@ -1019,7 +1037,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasIndex("IdKhoaHoc");
 
-                    b.ToTable("donHangChiTiets", (string)null);
+                    b.ToTable("donHangChiTiets");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.GioHang", b =>
@@ -1060,7 +1078,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("gioHangs", (string)null);
+                    b.ToTable("gioHangs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.GioHangChiTiet", b =>
@@ -1113,7 +1131,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("gioHangChiTiets", (string)null);
+                    b.ToTable("gioHangChiTiets");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.HoiDap", b =>
@@ -1163,7 +1181,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("hoiDaps", (string)null);
+                    b.ToTable("hoiDaps");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.KetQuaBaiThi", b =>
@@ -1213,7 +1231,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ketQuaBaiThis", (string)null);
+                    b.ToTable("ketQuaBaiThis");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.KhoaHoc", b =>
@@ -1359,7 +1377,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("khuyenMais", (string)null);
+                    b.ToTable("khuyenMais");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.KhuyenMai_KhoaHoc", b =>
@@ -1403,7 +1421,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("khuyenMai_KhoaHocs", (string)null);
+                    b.ToTable("khuyenMai_KhoaHocs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.LanLamBaiKiemTra", b =>
@@ -1477,7 +1495,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("lanLamBaiKiemTras", (string)null);
+                    b.ToTable("lanLamBaiKiemTras");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.LichSuKiemDuyetKhoaHoc", b =>
@@ -1501,7 +1519,7 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdKhoaHoc")
+                    b.Property<Guid?>("IdDoiDuong")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdNguoiDuyet")
@@ -1509,6 +1527,9 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<string>("LoaiDoiTuong")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LyDo")
                         .HasColumnType("nvarchar(max)");
@@ -1580,7 +1601,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("lienKets", (string)null);
+                    b.ToTable("lienKets");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.LoaiThongBao", b =>
@@ -1618,7 +1639,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("loaiThongBaos", (string)null);
+                    b.ToTable("loaiThongBaos");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.NganHang", b =>
@@ -1668,7 +1689,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("nganHangs", (string)null);
+                    b.ToTable("nganHangs");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.Phan", b =>
@@ -1719,6 +1740,9 @@ namespace Eduverse.Model.Migrations
                     b.Property<string>("TrangThai")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TrangThaiPheDuyet")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -1730,7 +1754,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("phans", (string)null);
+                    b.ToTable("phans");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.RefreshToken", b =>
@@ -1767,7 +1791,7 @@ namespace Eduverse.Model.Migrations
                     b.HasIndex("Token")
                         .IsUnique();
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.Role", b =>
@@ -1819,7 +1843,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Role", (string)null);
+                    b.ToTable("Role");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.TaiLieu", b =>
@@ -1861,6 +1885,9 @@ namespace Eduverse.Model.Migrations
                     b.Property<string>("TrangThai")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TrangThaiPheDuyet")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("URL")
                         .HasColumnType("nvarchar(max)");
 
@@ -1875,7 +1902,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("taiLieus", (string)null);
+                    b.ToTable("taiLieus");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.ThanhToan", b =>
@@ -1934,7 +1961,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("thanhToans", (string)null);
+                    b.ToTable("thanhToans");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.ThongBao", b =>
@@ -1993,7 +2020,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("thongBaos", (string)null);
+                    b.ToTable("thongBaos");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.TienDoHocTap", b =>
@@ -2055,7 +2082,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("tienDoHocTaps", (string)null);
+                    b.ToTable("tienDoHocTaps");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.UserRole", b =>
@@ -2102,7 +2129,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserRole", (string)null);
+                    b.ToTable("UserRole");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.VaiTro_NguoiDung", b =>
@@ -2143,7 +2170,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("vaiTro_NguoiDungs", (string)null);
+                    b.ToTable("vaiTro_NguoiDungs");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

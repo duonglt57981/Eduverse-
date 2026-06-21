@@ -8,9 +8,10 @@ namespace Eduverse.Model.Entities
 {
     public class LichSuKiemDuyetKhoaHoc : AuditableEntity
     {
-        public Guid? IdKhoaHoc { get; set; }
+        public Guid? IdDoiDuong { get; set; }
 
         public Guid? IdNguoiDuyet { get; set; }
+        public string?LoaiDoiTuong { get; set; }
 
         public string? TrangThaiPheDuyet { get; set; }
 

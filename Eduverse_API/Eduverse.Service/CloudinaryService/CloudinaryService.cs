@@ -171,7 +171,7 @@ namespace Eduverse.Service.CloudinaryService
                 throw new Exception("Ảnh không được vượt quá 10MB");
 
             var extension = Path.GetExtension(file.FileName).ToLower();
-            string[] allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+            string[] allowedExtensions = [".jpg", ".jpeg", ".png"];
             if (!allowedExtensions.Contains(extension))
                 throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
 
@@ -270,7 +270,7 @@ namespace Eduverse.Service.CloudinaryService
             await using var inputStream = file.OpenReadStream();
 
             var uploadParams = new RawUploadParams
-            {
+            {   
                 File = new FileDescription(file.FileName, inputStream),
                 Folder = "eduverse/documents",
                 UseFilename = true,

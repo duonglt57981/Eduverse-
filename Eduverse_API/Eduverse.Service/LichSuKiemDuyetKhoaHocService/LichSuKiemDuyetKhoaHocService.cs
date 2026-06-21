@@ -2,16 +2,22 @@
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
+using Eduverse.Repository.CauHoiRepository;
 using Eduverse.Repository.DanhMuc_KhoaHocRepository;
 using Eduverse.Repository.DanhMucRepository;
+using Eduverse.Repository.DapAnRepositoryRepository;
 using Eduverse.Repository.KhoaHocRepository;
+using Eduverse.Repository.LanLamBaiKiemTraRepository;
 using Eduverse.Repository.LichSuKiemDuyetKhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.BaiGiangService.Dto;
+using Eduverse.Service.BaiKiemTraService;
+using Eduverse.Service.CauHoiService;
 using Eduverse.Service.Common;
 using Eduverse.Service.DanhMuc_KhoaHocService;
+using Eduverse.Service.DapAnService;
 using Eduverse.Service.GeminiService;
 using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.KhoaHocService.Dto;
@@ -34,219 +40,51 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
-    public static class ClaimsPrincipalExtensions
+
+    public static class TrangThaiPheDuyet
     {
-        public static string GetDisplayName(this ClaimsPrincipal user)
-        {
-            if (user == null) return "Unknown User";
+        public const string ChoDuyet = "ChoDuyet";
+        public const string DaDuyet = "DaDuyet";
+        public const string TuChoi = "TuChoi";
+        public const string ChoAdminDuyet = "ChoAdminDuyet";
+    }
 
-            var givenName = user.FindFirstValue(ClaimTypes.GivenName);
-            var surname = user.FindFirstValue(ClaimTypes.Surname);
-            var name = user.FindFirstValue(ClaimTypes.Name);
-            var email = user.FindFirstValue(ClaimTypes.Email);
+    public static class TrangThaiLamBai
+    {
+        public const string DangLam = "DangLam";
+    }
 
-            // Ưu tiên: GivenName + Surname
-            if (!string.IsNullOrEmpty(givenName) && !string.IsNullOrEmpty(surname))
-                return $"{givenName} {surname}";
-
-            // Fallback 1: Name
-            if (!string.IsNullOrEmpty(name))
-                return name;
-
-            // Fallback 2: Email
-            if (!string.IsNullOrEmpty(email))
-                return email;
-
-            return "Unknown User";
-        }
-
-        public static string GetUserId(this ClaimsPrincipal user)
-        {
-            var userIdClaim = user?.FindFirstValue(ClaimTypes.NameIdentifier);
-            return userIdClaim ?? string.Empty;
-        }
-
-        public static Guid GetUserIdGuid(this ClaimsPrincipal user)
-        {
-            var userIdClaim = user?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(userIdClaim, out var userId))
-                return userId;
-
-            return Guid.Empty;
-        }
-
-        public static string GetUserRole(this ClaimsPrincipal user)
-        {
-            return user?.FindFirstValue(ClaimTypes.Role) ?? "Unknown";
-        }
-
-        public static bool IsAdmin(this ClaimsPrincipal user)
-        {
-            return user?.FindFirstValue(ClaimTypes.Role) == "Admin";
-        }
-
-        public static bool IsAuthenticated(this ClaimsPrincipal user)
-        {
-            return user?.Identity?.IsAuthenticated == true;
-        }
+    public static class TrangThaiTienDo
+    {
+        public const string HoanThanh = "HoanThanh";
     }
 
     public class LichSuKiemDuyetKhoaHocService : Service<Model.Entities.LichSuKiemDuyetKhoaHoc>, ILichSuKiemDuyetKhoaHocService
     {
+        private const double NGUONG_CHAN = 0.7;      // Reject if score >= 0.7
+        private const double NGUONG_PHAN_VAN = 0.4;  // Need admin review if score >= 0.4 and < 0.7
+
         private readonly IKhoaHocRepository _khoaHocRepository;
-        private readonly IKhoaHocService _khoaHocService;
         private readonly IPhanRepository _phanRepository;
-        private readonly IPhanService _phanService;
         private readonly IBaiGiangRepository _baiGiangRepository;
         private readonly ITaiLieuRepository _taiLieuRepository;
         private readonly IBaiKiemTraRepository _kiemTraRepository;
         private readonly IHttpContextAccessor? _httpContextAccessor;
-        private readonly IBaiGiangService _baiGiangService;
-        private readonly ITaiLieuService _taiLieuService;
         private readonly IDanhMuc_KhoaHocRepository _danhMuc_KhoaHocRepository;
         private readonly IDanhMucRepository _danhMucRepository;
         private readonly IDanhMuc_KhoaHocService _danhMuc_KhoaHocService;
-
-
+        private readonly IBaiKiemTraService _baiKiemTraService;
+        private readonly ILanLamBaiKiemTraRepository _lanLamBaiKiemTraRepository;
+        private readonly ICauHoiRepository _cauHoiRepository;
+        private readonly IDapAnRepository _dapAnRepository;
         private readonly IGeminiService _geminiService;
         private readonly ILogger<LichSuKiemDuyetKhoaHocService> _logger;
 
-        ////Tu cam co ban(kiem tra nhanh truoc khi goi AI)
-        //public static readonly HashSet<string> _tuCam = new(){
-    
-        //    // 1. Thô tục, chửi thề
-        //    "cac", "cặc", "lon", "lồn", "dit", "địt", "vai", "vãi",
-        //    "dm", "đm", "ml", "cc", "deo", "đéo", "vcl", "vãi lồn",
-        //    "loz", "lồz", "cmm", "dit me", "địt mẹ", "ngu", "ngu dốt",
-        //    "dien", "điên", "khung", "khùng", "dai", "dại", "cho", "chó",
-        //    "cho deo", "đồ con", "con cac", "con cặc", "me may", "mẹ mày",
-        //    "du", "đu", "du ma", "đụ má", "thang", "thằng", "thang cho", "thằng chó",
-        //    "vo van", "vô văn", "do con", "đồ con", "con me may", "con mẹ mày",
-    
-        //    // 2. Bạo lực, vũ khí
-        //    "giet", "giết", "chem", "chém", "danh", "đánh", "ban", "bắn",
-        //    "dap", "đập", "tan cong", "tấn công", "bao luc", "bạo lực",
-        //    "vu khi", "vũ khí", "sung", "súng", "dao", "bom", "lua", "lửa",
-        //    "sat hai", "sát hại", "hanh hung", "hành hung", "tra tan", "tra tấn",
-        //    "dau dap", "đầu đập", "xa hoi den", "xã hội đen", "gay", "gậy",
-        //    "cuop", "cướp", "cuop giat", "cướp giật", "choi", "chơi",
-        //    "danh nhau", "đánh nhau", "bao hanh", "bạo hành",
-    
-        //    // 3. Chính trị nhạy cảm
-        //    "lat do", "lật đổ", "bieu tinh", "biểu tình", "dao chinh", "đảo chính",
-        //    "cach mang", "cách mạng", "khung bo", "khủng bố", "phan dong", "phản động",
-        //    "noi loan", "nổi loạn", "xam luoc", "xâm lược", "doan di", "đoàn di",
-        //    "diet chung", "diệt chủng", "tan sat", "tàn sát", "bo may", "bộ máy",
-        //    "chong doi", "chống đối", "chong pha", "chống phá", "lien minh", "liên minh",
-        //    "phe phai", "phe phái", "do thai", "đồ tể", "dân chủ", "dan chu",
-    
-        //    // 4. Kỳ thị, phân biệt
-        //    "phan biet", "phân biệt", "ky thi", "kỳ thị", "chung toc", "chủng tộc",
-        //    "dan toc", "dân tộc", "ton giao", "tôn giáo", "xuat than", "xuất thân",
-        //    "gia cap", "gia cấp", "ngheo", "nghèo", "nguoi den", "người đen",
-        //    "nguoi trang", "người trắng", "hoi giao", "hồi giáo", "phat giao", "phật giáo",
-        //    "thieu so", "thiểu số", "da so", "đa số",
-    
-        //    // 5. Ma túy, chất cấm
-        //    "ma tuy", "ma túy", "can sa", "cần sa", "thuoc lac", "thuốc lắc",
-        //    "thuoc phien", "thuốc phiện", "heroin", "cocaine", "meth",
-        //    "am phet", "amphet", "chat gay nghien", "chất gây nghiện",
-        //    "chat kich thich", "chất kích thích", "xach", "sách",
-    
-        //    // 6. Khiêu dâm, 18+
-        //    "sex", "lam tinh", "làm tình", "quan he", "quan hệ",
-        //    "du dam", "dụ dỗ", "khiêu dam", "khiêu dâm", "dong tinh", "đồng tính",
-        //    "nguoi lon", "người lớn", "phim cap ba", "phim cấp ba",
-        //    "anh nong", "ảnh nóng", "truyen cap ba", "truyện cấp ba",
-        //    "ga", "gái", "danh nhau", "đánh nhau", "giai tri", "giải trí",
-        //    "nong", "nóng", "khoa than", "khỏa thân", "truy cap", "truy cập",
-    
-        //    // 7. Lừa đảo, gian lận
-        //    "lua dao", "lừa đảo", "gian lan", "gian lận", "man tra", "mán trá",
-        //    "do tru", "đồ trụ", "trom cap", "trộm cắp", "luoc do", "lược đồ",
-        //    "xam hoi", "xâm hội", "choi bai", "chơi bài", "da ban", "đá ban",
-    
-        //    // 8. Quấy rối, bắt nạt
-        //    "quay roi", "quấy rối", "bat nat", "bắt nạt", "doa", "đe dọa",
-        //    "de doa", "đe dọa", "cat nhat", "cắt nhật", "u hiep", "ủy hiếp",
-        //    "dien gay", "điên gây", "ham doa", "hăm dọa", "khung bo", "khủng bố",
-    
-        //    // 9. Từ ngữ nhạy cảm khác
-        //    "xoi", "xối", "no", "nổ", "dau", "đau", "che", "chê",
-        //    "noi xau", "nói xấu", "nhuoc ma", "nhục mạ", "si nhi", "sỉ nhục",
-        //    "xuc pham", "xúc phạm", "miệt thị", "coi thuong", "coi thường",
-        //    "khinh thuong", "khinh thường", "khinh bi", "khinh bỉ",
-    
-    
-        //    // ========== TIẾNG ANH ==========
-    
-        //    // 1. Profanity (Thô tục)
-        //    "fuck", "fucking", "motherfucker", "shit", "bullshit",
-        //    "bitch", "bastard", "damn", "hell", "ass", "asshole",
-        //    "dick", "pussy", "cunt", "whore", "slut", "porn",
-        //    "cock", "suck", "sucks", "piss", "pissed", "pissing",
-    
-        //    // 2. Violence (Bạo lực)
-        //    "kill", "killing", "murder", "slaughter", "execute",
-        //    "assassinate", "violence", "abuse", "assault", "attack",
-        //    "assail", "strike", "weapon", "gun", "knife", "bomb",
-        //    "explosion", "grenade", "shoot", "shooting", "stab",
-        //    "strangle", "torture", "rape", "molest", "terror",
-        //    "terrorism", "terrorist", "jihad", "extremist", "radical",
-        //    "war", "battle", "conflict", "invasion", "occupation",
-        //    "coup", "rebellion", "revolution", "overthrow", "uprising",
-        //    "riot", "protest", "sedition", "mutiny", "genocide",
-        //    "massacre", "slay", "behead", "crucify", "lynch",
-        //    "violent", "brutal", "savage", "bloody", "bloodshed",
-        //    "mass murder", "serial killer", "homicide", "manslaughter",
-    
-        //    // 3. Hate Speech (Kỳ thị)
-        //    "hate", "hatred", "racist", "racism", "sexist", "sexism",
-        //    "discrimination", "segregation", "supremacy", "white power",
-        //    "nazi", "fascist", "fascism", "holocaust", "xenophobia",
-        //    "homophobic", "transphobic", "bigot", "bigotry", "prejudice",
-        //    "stereotype", "racial", "ethnic", "minority", "majority",
-        //    "black power", "white supremacy", "hate crime",
-    
-        //    // 4. Politics (Chính trị)
-        //    "dictator", "dictatorship", "tyranny", "oppression",
-        //    "communist", "propaganda", "sabotage", "espionage",
-        //    "subversion", "insurrection", "secession", "rebel",
-        //    "anarchist", "anarchy", "civil war", "guerrilla",
-        //    "insurgency", "militant", "jihadist", "extremism",
-    
-        //    // 5. Drugs (Ma túy)
-        //    "drug", "narcotic", "opium", "morphine", "ecstasy",
-        //    "cocaine", "heroin", "meth", "amphetamine", "cannabis",
-        //    "marijuana", "weed", "pot", "hashish", "LSD", "acid",
-        //    "addict", "addiction", "overdose", "dealer", "trafficking",
-    
-        //    // 6. Porn/Adult (Khiêu dâm)
-        //    "porn", "porno", "xxx", "nude", "naked", "sex",
-        //    "hentai", "incest", "bestiality", "pedophile", "pedophilia",
-        //    "prostitute", "prostitution", "strip", "stripper",
-        //    "erotic", "erotica", "obscene", "obscenity",
-    
-        //    // 7. Bullying/Abuse (Bắt nạt)
-        //    "bully", "bullying", "harass", "harassment",
-        //    "intimidate", "menace", "threat", "threaten",
-        //    "coerce", "coercion", "humiliate", "degrade",
-        //    "torture", "abusive", "cruel", "inhumane",
-    
-        //    // 8. Spam/Scam (Lừa đảo)
-        //    "scam", "fraud", "phishing", "spam", "malware",
-        //    "virus", "hack", "hacker", "blackmail", "extortion",
-        //    "phishing", "scamming", "defraud", "deception",
-    
-        //    // 9. Other
-        //    "stupid", "idiot", "moron", "retard", "retarded",
-        //    "loser", "gay", "queer", "dyke", "faggot",
-        //    "crap", "dumb", "dummy", "fool", "foolish"
-        //};
 
         public LichSuKiemDuyetKhoaHocService(
             ILichSuKiemDuyetKhoaHocRepository repository,
@@ -254,31 +92,33 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             IKhoaHocRepository khoaHocRepository,
             IPhanRepository phanRepository,
             IBaiGiangRepository baiGiangRepository,
-            IBaiGiangService baiGiangService,
             ITaiLieuRepository taiLieuRepository,
             IBaiKiemTraRepository kiemTraRepository,
-            IKhoaHocService khoaHocService,
-            ITaiLieuService taiLieuService,
             IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository,
             IDanhMucRepository _danhMucRepository,
             IDanhMuc_KhoaHocService danhMuc_KhoaHocService,
             IGeminiService geminiService,
             ILogger<LichSuKiemDuyetKhoaHocService> logger,
+            IBaiKiemTraRepository _baiKiemTraRepository,
+            ILanLamBaiKiemTraRepository lanLamBaiKiemTraRepository,
+            ICauHoiRepository cauHoiRepository,
+            IDapAnRepository dapAnRepository,
             IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
             _phanRepository = phanRepository;
+            _baiKiemTraRepository = _baiKiemTraRepository;
             _baiGiangRepository = baiGiangRepository;
             _taiLieuRepository = taiLieuRepository;
             _kiemTraRepository = kiemTraRepository;
-            _khoaHocService = khoaHocService;
             this._httpContextAccessor = httpContextAccessor;
-            _baiGiangService = baiGiangService;
-            _taiLieuService = taiLieuService;
             _danhMuc_KhoaHocRepository = danhMuc_KhoaHocRepository;
             _danhMuc_KhoaHocService = danhMuc_KhoaHocService;
             _geminiService = geminiService;
             _logger = logger;
+            _lanLamBaiKiemTraRepository = lanLamBaiKiemTraRepository;
+            _cauHoiRepository = cauHoiRepository;
+            _dapAnRepository = dapAnRepository;
         }
 
         #region GetListKhoaHocKiemDuyet
@@ -379,7 +219,278 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         }
         #endregion
 
+        public async Task<List<LichSuKiemDuyetDto>> GetLichSuKiemDuyet(Guid idKhoaHoc)
+        {
+            return await GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdDoiDuong == idKhoaHoc && !x.IsDeleted)
+                .OrderByDescending(x => x.NgayDuyet)
+                .Select(x => new LichSuKiemDuyetDto
+                {
+                    Id = x.Id,
+                    IdKhoaHoc = x.IdDoiDuong,
+                    IdNguoiDuyet = x.IdNguoiDuyet,
+                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                    LyDo = x.LyDo,
+                    NgayDuyet = x.NgayDuyet
+                })
+                .ToListAsync();
+        }
 
+
+        //#region KiemDuyetKhoaHoc
+        //public async Task<KiemDuyetKhoaHocDto> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request)
+        //{
+        //    // ── Kiểm tra quyền ──────────────────────────────────
+        //    var role = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
+        //    if (role != "Admin")
+        //        throw new UnauthorizedAccessException("Chỉ Admin mới có quyền kiểm duyệt khóa học.");
+
+        //    if (request.TrangThaiPheDuyet != "DaDuyet" && request.TrangThaiPheDuyet != "TuChoi")
+        //        throw new Exception("Trạng thái phê duyệt không hợp lệ.");
+
+        //    if (request.TrangThaiPheDuyet == "TuChoi" && string.IsNullOrWhiteSpace(request.LyDo))
+        //        throw new Exception("Phải nhập lý do khi từ chối khóa học.");
+
+        //    var khoaHocNhap = await _khoaHocService.GetByIdOrThrowAsync(request.IdKhoaHoc);
+
+        //    if (khoaHocNhap.TrangThaiPheDuyet != "ChoDuyet" && khoaHocNhap.TrangThaiPheDuyet != "DangDuyet")
+        //        throw new Exception("Khóa học không ở trạng thái chờ duyệt.");
+
+        //    Guid.TryParse(
+        //        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
+        //        out var idNguoiDuyet);
+        //    var ngayDuyet = DateTime.Now;
+
+        //    // ── TuChoi ──────────────────────────────────────────
+        //    if (request.TrangThaiPheDuyet == "TuChoi")
+        //    {
+        //        khoaHocNhap.TrangThaiPheDuyet = "TuChoi";
+
+        //        if (khoaHocNhap.IdBanGhiTruoc.HasValue)
+        //        {
+        //            await _khoaHocService.DeleteAsync(khoaHocNhap);
+        //        }
+
+        //        await _khoaHocService.UpdateAsync(khoaHocNhap);
+        //        await _khoaHocService.SaveAsync();
+        //    }
+        //    // ── DaDuyet ─────────────────────────────────────────
+        //    else
+        //    {
+        //        var phanIds = await _phanService.GetQueryable()
+        //            .Where(x => x.IdKhoaHoc == khoaHocNhap.Id && !x.IsDeleted)
+        //            .Select(x => x.Id)
+        //            .ToListAsync();
+
+        //        var baiGiangIds = await _baiGiangService.GetQueryable()
+        //            .Where(x => phanIds.Contains(x.IdPhan) && !x.IsDeleted)
+        //            .Select(x => x.Id)
+        //            .ToListAsync();
+
+        //        // ── Lần đầu duyệt (tạo mới, không có bản gốc) ──
+        //        if (!khoaHocNhap.IdBanGhiTruoc.HasValue)
+        //        {
+        //            khoaHocNhap.TrangThaiPheDuyet = "DaDuyet";
+        //            khoaHocNhap.TrangThai = "HoatDong";
+        //            khoaHocNhap.IsBanHienTai = true;
+
+        //            await _phanService.GetQueryable()
+        //                .Where(x => phanIds.Contains(x.Id))
+        //                .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
+
+        //            await _baiGiangService.GetQueryable()
+        //                .Where(x => baiGiangIds.Contains(x.Id))
+        //                .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
+
+        //            await _taiLieuService.GetQueryable()
+        //                .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && !x.IsDeleted)
+        //                .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
+        //        }
+        //        // ── Duyệt bản nháp (GV đã update, có bản gốc) ──
+        //        else
+        //        {
+        //            var idBanGoc = khoaHocNhap.IdBanGhiTruoc.Value;
+
+        //            var banGoc = await _khoaHocService.GetByIdOrThrowAsync(idBanGoc);
+
+        //            // ① Copy field từ bản nháp → bản gốc (giữ Id gốc để FK DangKy không vỡ)
+        //            banGoc.TieuDe = khoaHocNhap.TieuDe;
+        //            banGoc.MoTa = khoaHocNhap.MoTa;
+        //            banGoc.HinhAnhKhoaHoc = khoaHocNhap.HinhAnhKhoaHoc;
+        //            banGoc.IdHinhAnhKhoaHoc = khoaHocNhap.IdHinhAnhKhoaHoc;
+        //            banGoc.Gia = khoaHocNhap.Gia;
+        //            banGoc.GiaGoc = khoaHocNhap.GiaGoc;
+        //            banGoc.CapDo = khoaHocNhap.CapDo;
+        //            banGoc.LoaiKhoaHoc = khoaHocNhap.LoaiKhoaHoc;
+        //            banGoc.TrangThaiPheDuyet = "DaDuyet";
+        //            banGoc.TrangThai = "HoatDong";
+        //            banGoc.IsBanHienTai = true;
+        //            banGoc.UpdatedDate = DateTime.UtcNow;
+
+        //            // ⭐ ② Copy danh mục từ bản nháp sang bản gốc
+        //            await CopyDanhMucFromNhapToGoc(khoaHocNhap.Id, idBanGoc);
+
+        //            // ③ Lấy phan/baigiang gốc để soft-delete
+        //            var phanGocIds = await _phanService.GetQueryable()
+        //                .Where(x => x.IdKhoaHoc == idBanGoc && !x.IsDeleted)
+        //                .Select(x => x.Id)
+        //                .ToListAsync();
+
+        //            var baiGiangGocIds = await _baiGiangService.GetQueryable()
+        //                .Where(x => phanGocIds.Contains(x.IdPhan) && !x.IsDeleted)
+        //                .Select(x => x.Id)
+        //                .ToListAsync();
+
+        //            // ④ Soft-delete tailieu → baigiang → phan gốc
+        //            await _taiLieuService.GetQueryable()
+        //                .Where(x => baiGiangGocIds.Contains(x.IdBaiGiang))
+        //                .ExecuteUpdateAsync(x => x
+        //                    .SetProperty(p => p.IsDeleted, true)
+        //                    .SetProperty(p => p.DeletedDate, DateTime.Now));
+
+        //            await _baiGiangService.GetQueryable()
+        //                .Where(x => baiGiangGocIds.Contains(x.Id))
+        //                .ExecuteUpdateAsync(x => x
+        //                    .SetProperty(p => p.IsDeleted, true)
+        //                    .SetProperty(p => p.DeletedDate, DateTime.Now));
+
+        //            await _phanService.GetQueryable()
+        //                .Where(x => phanGocIds.Contains(x.Id))
+        //                .ExecuteUpdateAsync(x => x
+        //                    .SetProperty(p => p.IsDeleted, true)
+        //                    .SetProperty(p => p.DeletedDate, DateTime.Now));
+
+        //            // ⑤ Chuyển phan/baigiang nháp sang IdKhoaHoc gốc + activate
+        //            await _phanService.GetQueryable()
+        //                .Where(x => phanIds.Contains(x.Id))
+        //                .ExecuteUpdateAsync(x => x
+        //                    .SetProperty(p => p.IdKhoaHoc, idBanGoc)
+        //                    .SetProperty(p => p.TrangThai, "HoatDong"));
+
+        //            await _baiGiangService.GetQueryable()
+        //                .Where(x => baiGiangIds.Contains(x.Id))
+        //                .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
+
+        //            await _taiLieuService.GetQueryable()
+        //                .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && !x.IsDeleted)
+        //                .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
+
+        //            // ⑥ Reset bản nháp (giữ lại, tái sử dụng lần sau)
+        //            khoaHocNhap.TrangThaiPheDuyet = "DaDuyet";
+        //            khoaHocNhap.TrangThai = "Nhap";
+        //            khoaHocNhap.IsBanHienTai = false;
+        //            khoaHocNhap.UpdatedDate = DateTime.UtcNow;
+
+        //            await _khoaHocService.UpdateAsync(banGoc);
+        //            await _khoaHocService.UpdateAsync(khoaHocNhap);
+        //        }
+
+        //        await _khoaHocService.SaveAsync();
+        //    }
+
+        //    // ── Ghi lịch sử ─────────────────────────────────────
+        //    var lichSu = new LichSuKiemDuyetKhoaHoc
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        IdKhoaHoc = request.IdKhoaHoc,
+        //        IdNguoiDuyet = idNguoiDuyet,
+        //        TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+        //        LyDo = request.LyDo,
+        //        NgayDuyet = ngayDuyet
+        //    };
+
+        //    await CreateAsync(lichSu);
+        //    await SaveAsync();
+
+        //    return new KiemDuyetKhoaHocDto
+        //    {
+        //        IdKhoaHoc = khoaHocNhap.IdBanGhiTruoc ?? khoaHocNhap.Id,
+        //        TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+        //        NgayDuyet = ngayDuyet
+        //    };
+        //}
+
+        //// ── Helper copy danh mục từ bản nháp sang bản gốc ──
+        //private async Task CopyDanhMucFromNhapToGoc(Guid idKhoaHocNhap, Guid idKhoaHocGoc)
+        //{
+        //    // ① Lấy danh mục của bản nháp (chưa bị xóa)
+        //    var danhMucNhap = await _danhMuc_KhoaHocService.GetQueryable()
+        //        .Where(x => x.IdKhoaHoc == idKhoaHocNhap && !x.IsDeleted)
+        //        .ToListAsync();
+
+        //    // ② Lấy danh mục hiện tại của bản gốc
+        //    var danhMucGoc = await _danhMuc_KhoaHocService.GetQueryable()
+        //        .Where(x => x.IdKhoaHoc == idKhoaHocGoc && !x.IsDeleted)
+        //        .ToListAsync();
+
+        //    var danhMucGocIds = danhMucGoc.Select(x => x.IdDanhMuc).ToHashSet();
+        //    var danhMucNhapIds = danhMucNhap.Select(x => x.IdDanhMuc).ToHashSet();
+
+        //    // ③ Xóa những danh mục của bản gốc không có trong bản nháp
+        //    var canXoa = danhMucGoc
+        //        .Where(x => !danhMucNhapIds.Contains(x.IdDanhMuc))
+        //        .ToList();
+
+        //    if (canXoa.Any())
+        //    {
+        //        await _danhMuc_KhoaHocService.DeleteAsync(canXoa);
+        //        await _danhMuc_KhoaHocService.SaveAsync();
+        //    }
+
+        //    // ④ Thêm những danh mục của bản nháp chưa có trong bản gốc
+        //    var canThem = danhMucNhapIds
+        //        .Where(id => !danhMucGocIds.Contains(id))
+        //        .Select(id => new DanhMuc_KhoaHoc
+        //        {
+        //            Id = Guid.NewGuid(),
+        //            IdKhoaHoc = idKhoaHocGoc,
+        //            IdDanhMuc = id
+        //        }).ToList();
+
+        //    if (canThem.Any())
+        //    {
+        //        await _danhMuc_KhoaHocService.CreateRange(canThem);
+        //        await _danhMuc_KhoaHocService.SaveAsync();
+        //    }
+        //}
+        //#endregion
+
+
+        #region KiemDuyetInputAIandThuCong
+        public async Task KiemTraVaNemExceptionAsync(string noiDung)
+        {
+            if (string.IsNullOrWhiteSpace(noiDung)) return;
+
+            //// 1. Kiem tra tu cam co ban
+            var listtucam = TuCams._tuCam;
+            var tuTimThay = listtucam.Where(t => noiDung.ToLower().Contains(t)).ToList();
+            if (tuTimThay.Any())
+            {
+                throw new KiemDuyetException(
+                    $"Noi dung chua tu ngu nhay cam: {string.Join(", ", tuTimThay)}", 
+                    "TuCamCoBan",
+                    tuTimThay,
+                    "Vui long loai bo cac tu ngu khong phu hop"
+                );
+            }
+
+            // 2. Kiem tra bang Gemini
+            var ketQua = await _geminiService.KiemDuyetInputAsync(noiDung);
+
+            if (!ketQua.HopLe)
+            {
+                throw new KiemDuyetException(
+                    ketQua.ThongBao ?? "Noi dung vi pham",
+                    ketQua.Loai ?? "ViPham",
+                    ketQua.TuViPham ?? new List<string>(),
+                    ketQua.GoiYSua
+                );
+            }
+        }
+        #endregion
+
+        #region KiemDuyetOuputThuCong
         #region KiemDuyetKhoaHoc
         public async Task<KiemDuyetKhoaHocDto> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request)
         {
@@ -394,7 +505,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             if (request.TrangThaiPheDuyet == "TuChoi" && string.IsNullOrWhiteSpace(request.LyDo))
                 throw new Exception("Phải nhập lý do khi từ chối khóa học.");
 
-            var khoaHocNhap = await _khoaHocService.GetByIdOrThrowAsync(request.IdKhoaHoc);
+            var khoaHocNhap = await _khoaHocRepository.GetByIdAsync(request.IdBanNhap);
+            if (khoaHocNhap == null)
+                throw new Exception("Không tìm thấy bản nháp");
 
             if (khoaHocNhap.TrangThaiPheDuyet != "ChoDuyet" && khoaHocNhap.TrangThaiPheDuyet != "DangDuyet")
                 throw new Exception("Khóa học không ở trạng thái chờ duyệt.");
@@ -411,52 +524,30 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                 if (khoaHocNhap.IdBanGhiTruoc.HasValue)
                 {
-                    await _khoaHocService.DeleteAsync(khoaHocNhap);
+                     _khoaHocRepository.Delete(khoaHocNhap);
                 }
 
-                await _khoaHocService.UpdateAsync(khoaHocNhap);
-                await _khoaHocService.SaveAsync();
+                 _khoaHocRepository.Update(khoaHocNhap);
+                await _khoaHocRepository.SaveAsync();
             }
             // ── DaDuyet ─────────────────────────────────────────
             else
             {
-                var phanIds = await _phanService.GetQueryable()
-                    .Where(x => x.IdKhoaHoc == khoaHocNhap.Id && !x.IsDeleted)
-                    .Select(x => x.Id)
-                    .ToListAsync();
-
-                var baiGiangIds = await _baiGiangService.GetQueryable()
-                    .Where(x => phanIds.Contains(x.IdPhan) && !x.IsDeleted)
-                    .Select(x => x.Id)
-                    .ToListAsync();
-
                 // ── Lần đầu duyệt (tạo mới, không có bản gốc) ──
                 if (!khoaHocNhap.IdBanGhiTruoc.HasValue)
                 {
                     khoaHocNhap.TrangThaiPheDuyet = "DaDuyet";
                     khoaHocNhap.TrangThai = "HoatDong";
                     khoaHocNhap.IsBanHienTai = true;
-
-                    await _phanService.GetQueryable()
-                        .Where(x => phanIds.Contains(x.Id))
-                        .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
-
-                    await _baiGiangService.GetQueryable()
-                        .Where(x => baiGiangIds.Contains(x.Id))
-                        .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
-
-                    await _taiLieuService.GetQueryable()
-                        .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && !x.IsDeleted)
-                        .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
                 }
                 // ── Duyệt bản nháp (GV đã update, có bản gốc) ──
                 else
                 {
                     var idBanGoc = khoaHocNhap.IdBanGhiTruoc.Value;
 
-                    var banGoc = await _khoaHocService.GetByIdOrThrowAsync(idBanGoc);
+                    var banGoc = await _khoaHocRepository.GetByIdAsync(idBanGoc);
 
-                    // ① Copy field từ bản nháp → bản gốc (giữ Id gốc để FK DangKy không vỡ)
+                    // 1. Copy field từ bản nháp → bản gốc (giữ Id gốc để FK DangKy không vỡ)
                     banGoc.TieuDe = khoaHocNhap.TieuDe;
                     banGoc.MoTa = khoaHocNhap.MoTa;
                     banGoc.HinhAnhKhoaHoc = khoaHocNhap.HinhAnhKhoaHoc;
@@ -470,72 +561,20 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     banGoc.IsBanHienTai = true;
                     banGoc.UpdatedDate = DateTime.UtcNow;
 
-                    // ⭐ ② Copy danh mục từ bản nháp sang bản gốc
+                    //  2. Copy danh mục từ bản nháp sang bản gốc
                     await CopyDanhMucFromNhapToGoc(khoaHocNhap.Id, idBanGoc);
-
-                    // ③ Lấy phan/baigiang gốc để soft-delete
-                    var phanGocIds = await _phanService.GetQueryable()
-                        .Where(x => x.IdKhoaHoc == idBanGoc && !x.IsDeleted)
-                        .Select(x => x.Id)
-                        .ToListAsync();
-
-                    var baiGiangGocIds = await _baiGiangService.GetQueryable()
-                        .Where(x => phanGocIds.Contains(x.IdPhan) && !x.IsDeleted)
-                        .Select(x => x.Id)
-                        .ToListAsync();
-
-                    // ④ Soft-delete tailieu → baigiang → phan gốc
-                    await _taiLieuService.GetQueryable()
-                        .Where(x => baiGiangGocIds.Contains(x.IdBaiGiang))
-                        .ExecuteUpdateAsync(x => x
-                            .SetProperty(p => p.IsDeleted, true)
-                            .SetProperty(p => p.DeletedDate, DateTime.Now));
-
-                    await _baiGiangService.GetQueryable()
-                        .Where(x => baiGiangGocIds.Contains(x.Id))
-                        .ExecuteUpdateAsync(x => x
-                            .SetProperty(p => p.IsDeleted, true)
-                            .SetProperty(p => p.DeletedDate, DateTime.Now));
-
-                    await _phanService.GetQueryable()
-                        .Where(x => phanGocIds.Contains(x.Id))
-                        .ExecuteUpdateAsync(x => x
-                            .SetProperty(p => p.IsDeleted, true)
-                            .SetProperty(p => p.DeletedDate, DateTime.Now));
-
-                    // ⑤ Chuyển phan/baigiang nháp sang IdKhoaHoc gốc + activate
-                    await _phanService.GetQueryable()
-                        .Where(x => phanIds.Contains(x.Id))
-                        .ExecuteUpdateAsync(x => x
-                            .SetProperty(p => p.IdKhoaHoc, idBanGoc)
-                            .SetProperty(p => p.TrangThai, "HoatDong"));
-
-                    await _baiGiangService.GetQueryable()
-                        .Where(x => baiGiangIds.Contains(x.Id))
-                        .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
-
-                    await _taiLieuService.GetQueryable()
-                        .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && !x.IsDeleted)
-                        .ExecuteUpdateAsync(x => x.SetProperty(p => p.TrangThai, "HoatDong"));
-
-                    // ⑥ Reset bản nháp (giữ lại, tái sử dụng lần sau)
-                    khoaHocNhap.TrangThaiPheDuyet = "DaDuyet";
-                    khoaHocNhap.TrangThai = "Nhap";
-                    khoaHocNhap.IsBanHienTai = false;
-                    khoaHocNhap.UpdatedDate = DateTime.UtcNow;
-
-                    await _khoaHocService.UpdateAsync(banGoc);
-                    await _khoaHocService.UpdateAsync(khoaHocNhap);
+                     _khoaHocRepository.Update(banGoc);
+                     _khoaHocRepository.Update(khoaHocNhap);
                 }
-
-                await _khoaHocService.SaveAsync();
+                await _khoaHocRepository.SaveAsync();
             }
 
             // ── Ghi lịch sử ─────────────────────────────────────
             var lichSu = new LichSuKiemDuyetKhoaHoc
             {
                 Id = Guid.NewGuid(),
-                IdKhoaHoc = request.IdKhoaHoc,
+                IdDoiDuong = request.IdBanNhap,
+                LoaiDoiTuong = "KhoaHoc",
                 IdNguoiDuyet = idNguoiDuyet,
                 TrangThaiPheDuyet = request.TrangThaiPheDuyet,
                 LyDo = request.LyDo,
@@ -547,12 +586,12 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             return new KiemDuyetKhoaHocDto
             {
-                IdKhoaHoc = khoaHocNhap.IdBanGhiTruoc ?? khoaHocNhap.Id,
+                IdDoiTuong = khoaHocNhap.IdBanGhiTruoc ?? khoaHocNhap.Id,
+                LoaiDoiTuong = lichSu.LoaiDoiTuong,
                 TrangThaiPheDuyet = request.TrangThaiPheDuyet,
                 NgayDuyet = ngayDuyet
             };
         }
-
         // ── Helper copy danh mục từ bản nháp sang bản gốc ──
         private async Task CopyDanhMucFromNhapToGoc(Guid idKhoaHocNhap, Guid idKhoaHocGoc)
         {
@@ -599,54 +638,536 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         #endregion
 
 
-        public async Task<List<LichSuKiemDuyetDto>> GetLichSuKiemDuyet(Guid idKhoaHoc)
-        {
-            return await GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
-                .OrderByDescending(x => x.NgayDuyet)
-                .Select(x => new LichSuKiemDuyetDto
-                {
-                    Id = x.Id,
-                    IdKhoaHoc = x.IdKhoaHoc,
-                    IdNguoiDuyet = x.IdNguoiDuyet,
-                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
-                    LyDo = x.LyDo,
-                    NgayDuyet = x.NgayDuyet
-                })
-                .ToListAsync();
-        }
+        //#region KiemDuyetBaiGiang
+        //public async Task<KiemDuyetKhoaHocDto> KiemDuyetBaiGiang(KiemDuyetKhoaHocRequest request)
+        //{
+        //    // ── Kiểm tra quyền ──────────────────────────────────
+        //    var role = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
+        //    if (role != "Admin")
+        //        throw new UnauthorizedAccessException("Chỉ Admin mới có quyền kiểm duyệt bài giảng.");
+
+        //    if (request.TrangThaiPheDuyet != "DaDuyet" && request.TrangThaiPheDuyet != "TuChoi")
+        //        throw new Exception("Trạng thái phê duyệt không hợp lệ.");
+
+        //    if (request.TrangThaiPheDuyet == "TuChoi" && string.IsNullOrWhiteSpace(request.LyDo))
+        //        throw new Exception("Phải nhập lý do khi từ chối.");
+
+        //    var baiGiangNhap = await _baiGiangRepository.GetByIdAsync(request.IdBanNhap);
+        //    if (baiGiangNhap == null)
+        //        throw new Exception("Không tìm thấy bản nháp");
+
+        //    if (baiGiangNhap.tr != "ChoDuyet" && baiGiangNhap.TrangThaiPheDuyet != "DangDuyet")
+        //        throw new Exception("Khóa học không ở trạng thái chờ duyệt.");
+
+        //    Guid.TryParse(
+        //        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
+        //        out var idNguoiDuyet);
+        //    var ngayDuyet = DateTime.Now;
+
+        //    // ── TuChoi ──────────────────────────────────────────
+        //    if (request.TrangThaiPheDuyet == "TuChoi")
+        //    {
+        //        baiGiangNhap.TrangThaiPheDuyet = "TuChoi";
+
+        //        if (baiGiangNhap.IdBanGhiTruoc.HasValue)
+        //        {
+        //            _khoaHocRepository.Delete(baiGiangNhap);
+        //        }
+
+        //        _khoaHocRepository.Update(baiGiangNhap);
+        //        await _khoaHocRepository.SaveAsync();
+        //    }
+        //    // ── DaDuyet ─────────────────────────────────────────
+        //    else
+        //    {
+        //        // ── Lần đầu duyệt (tạo mới, không có bản gốc) ──
+        //        if (!baiGiangNhap.IdBanGhiTruoc.HasValue)
+        //        {
+        //            baiGiangNhap.TrangThaiPheDuyet = "DaDuyet";
+        //            baiGiangNhap.TrangThai = "HoatDong";
+        //            baiGiangNhap.IsBanHienTai = true;
+        //        }
+        //        // ── Duyệt bản nháp (GV đã update, có bản gốc) ──
+        //        else
+        //        {
+        //            var idBanGoc = baiGiangNhap.IdBanGhiTruoc.Value;
+
+        //            var banGoc = await _khoaHocRepository.GetByIdAsync(idBanGoc);
+
+        //            // 1. Copy field từ bản nháp → bản gốc (giữ Id gốc để FK DangKy không vỡ)
+        //            banGoc.TieuDe = baiGiangNhap.TieuDe;
+        //            banGoc.MoTa = baiGiangNhap.MoTa;
+        //            banGoc.HinhAnhKhoaHoc = baiGiangNhap.HinhAnhKhoaHoc;
+        //            banGoc.IdHinhAnhKhoaHoc = baiGiangNhap.IdHinhAnhKhoaHoc;
+        //            banGoc.Gia = baiGiangNhap.Gia;
+        //            banGoc.GiaGoc = baiGiangNhap.GiaGoc;
+        //            banGoc.CapDo = baiGiangNhap.CapDo;
+        //            banGoc.LoaiKhoaHoc = baiGiangNhap.LoaiKhoaHoc;
+        //            banGoc.TrangThaiPheDuyet = "DaDuyet";
+        //            banGoc.TrangThai = "HoatDong";
+        //            banGoc.IsBanHienTai = true;
+        //            banGoc.UpdatedDate = DateTime.UtcNow;
+
+        //            _baiGiangRepository.Update(banGoc);
+        //            _baiGiangRepository.Update(baiGiangNhap);
+        //        }
+        //        await _khoaHocRepository.SaveAsync();
+        //    }
+
+        //    // ── Ghi lịch sử ─────────────────────────────────────
+        //    var lichSu = new LichSuKiemDuyetKhoaHoc
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        IdDoiDuong = request.IdBanNhap,
+        //        LoaiDoiTuong = "BaiGiang",
+        //        IdNguoiDuyet = idNguoiDuyet,
+        //        TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+        //        LyDo = request.LyDo,
+        //        NgayDuyet = ngayDuyet
+        //    };
+
+        //    await CreateAsync(lichSu);
+        //    await SaveAsync();
+
+        //    return new KiemDuyetKhoaHocDto
+        //    {
+        //        IdDoiTuong = khoaHocNhap.IdBanGhiTruoc ?? khoaHocNhap.Id,
+        //        LoaiDoiTuong = lichSu.LoaiDoiTuong,
+        //        TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+        //        NgayDuyet = ngayDuyet
+        //    };
+        //}
+        //#endregion
+        #endregion
 
 
-        public async Task KiemTraVaNemExceptionAsync(string noiDung)
-        {
-            if (string.IsNullOrWhiteSpace(noiDung)) return;
 
-            //// 1. Kiem tra tu cam co ban
-            var listtucam = TuCams._tuCam;
-            var tuTimThay = listtucam.Where(t => noiDung.ToLower().Contains(t)).ToList();
-            if (tuTimThay.Any())
-            {
-                throw new KiemDuyetException(
-                    $"Noi dung chua tu ngu nhay cam: {string.Join(", ", tuTimThay)}", 
-                    "TuCamCoBan",
-                    tuTimThay,
-                    "Vui long loai bo cac tu ngu khong phu hop"
-                );
-            }
+        #region KiemDuyetOuputAI
+        //// ===============================================================
+        //// 1. KHOA HOC — map ngay khi DaDuyet, không có điều kiện phụ
+        //// ===============================================================
+        //public async Task<KetQuaXuLyDuyetDto> KiemDuyetKhoaHocAsync(Guid idBanNhap)
+        //{
+        //    var nhap = await _khoaHocRepository.GetByIdAsync(idBanNhap);
+        //    if (nhap == null || nhap.IsBanHienTai)
+        //        throw new InvalidOperationException($"Khong tim thay ban nhap KhoaHoc voi Id {idBanNhap}");
 
-            // 2. Kiem tra bang Gemini
-            var ketQua = await _geminiService.KiemTraAsync(noiDung);
+        //    if (nhap.IdBanGhiTruoc == null)
+        //        throw new InvalidOperationException($"Ban nhap KhoaHoc {idBanNhap} khong co IdBanGhiTruoc");
 
-            if (!ketQua.HopLe)
-            {
-                throw new KiemDuyetException(
-                    ketQua.ThongBao ?? "Noi dung vi pham",
-                    ketQua.Loai ?? "ViPham",
-                    ketQua.TuViPham ?? new List<string>(),
-                    ketQua.GoiYSua
-                );
-            }
-        }
+        //    var ketQuaAi = await _geminiService.KiemDuyetOuputAsync($"Tieu de: {nhap.TieuDe}\nMo ta: {nhap.MoTa}");
+        //    var phanLoai = PhanLoaiTheoDiem(ketQuaAi.DiemSo);
+
+        //    if (phanLoai == TrangThaiPheDuyet.TuChoi)
+        //    {
+        //        nhap.TrangThaiPheDuyet = TrangThaiPheDuyet.TuChoi;
+        //        nhap.IsDeleted = true;
+        //         _khoaHocRepository.Update(nhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.TuChoi, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    if (phanLoai == TrangThaiPheDuyet.ChoAdminDuyet)
+        //    {
+        //        nhap.TrangThaiPheDuyet = TrangThaiPheDuyet.ChoAdminDuyet;
+        //         _khoaHocRepository.Update(nhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.ChoAdminDuyet, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    // DaDuyet -> map ngay
+        //    var goc = await _khoaHocRepository.GetByIdAsync(nhap.IdBanGhiTruoc.Value);
+        //    if (goc == null)
+        //        throw new InvalidOperationException($"Khong tim thay ban goc KhoaHoc voi Id {nhap.IdBanGhiTruoc}");
+
+        //    goc.TieuDe = nhap.TieuDe;
+        //    goc.MoTa = nhap.MoTa;
+        //    goc.Gia = nhap.Gia;
+        //    goc.GiaGoc = nhap.GiaGoc;
+        //    goc.LoaiKhoaHoc = nhap.LoaiKhoaHoc;
+        //    goc.HinhAnhKhoaHoc = nhap.HinhAnhKhoaHoc;
+        //    goc.IdHinhAnhKhoaHoc = nhap.IdHinhAnhKhoaHoc;
+        //    goc.URLViewPreviewKhoaHoc = nhap.URLViewPreviewKhoaHoc;
+        //    goc.CapDo = nhap.CapDo;
+        //    goc.TongThoiLuong = nhap.TongThoiLuong;
+        //    goc.TongBaiGiang = nhap.TongBaiGiang;
+        //    goc.NgayCapNhat = DateTime.Now;
+        //    // Khong dong: TrangThaiPheDuyet, TrangThai (hien thi), SoLuongHocVien cua goc
+
+        //    nhap.TrangThaiPheDuyet = TrangThaiPheDuyet.DaDuyet;
+        //    nhap.IsDeleted = true; // da map xong, khong can giu nhap nua
+
+        //    _khoaHocRepository.Update(goc);
+        //    _khoaHocRepository.Update(nhap);
+
+        //    return KetQua(idBanNhap, TrangThaiPheDuyet.DaDuyet, true, "Da map du lieu KhoaHoc vao ban goc");
+        //}
+
+        //// ===============================================================
+        //// 2. PHAN — map ngay khi DaDuyet, không có điều kiện phụ
+        //// ===============================================================
+        //public async Task<KetQuaXuLyDuyetDto> KiemDuyetPhanAsync(Guid idBanNhap)
+        //{
+        //    var nhap = await _phanRepository.GetByIdAsync(idBanNhap);
+        //    if (nhap == null || nhap.IsBanHienTai)
+        //        throw new InvalidOperationException($"Khong tim thay ban nhap Phan voi Id {idBanNhap}");
+
+        //    if (nhap.IdBanGhiTruoc == null)
+        //        throw new InvalidOperationException($"Ban nhap Phan {idBanNhap} khong co IdBanGhiTruoc");
+
+        //    var ketQuaAi = await _geminiService.KiemDuyetOuputAsync($"Ten phan: {nhap.TenPhan}\nMieu ta: {nhap.MieuTa}");
+        //    var phanLoai = PhanLoaiTheoDiem(ketQuaAi.DiemSo);
+
+        //    if (phanLoai == TrangThaiPheDuyet.TuChoi)
+        //    {
+        //        nhap.TrangThai = TrangThaiPheDuyet.TuChoi;
+        //        nhap.IsDeleted = true;
+        //         _phanRepository.Update(nhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.TuChoi, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    if (phanLoai == TrangThaiPheDuyet.ChoAdminDuyet)
+        //    {
+        //        nhap.TrangThai = TrangThaiPheDuyet.ChoAdminDuyet;
+        //         _phanRepository.Update(nhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.ChoAdminDuyet, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    var goc = await _phanRepository.GetByIdAsync(nhap.IdBanGhiTruoc.Value);
+        //    if (goc == null)
+        //        throw new InvalidOperationException($"Khong tim thay ban goc Phan voi Id {nhap.IdBanGhiTruoc}");
+
+        //    goc.TenPhan = nhap.TenPhan;
+        //    goc.MieuTa = nhap.MieuTa;
+        //    goc.ThuTuSapXep = nhap.ThuTuSapXep;
+        //    // TrangThai cua goc giu nguyen y nghia hien thi, khong bi ghi de boi DaDuyet
+
+        //    nhap.TrangThai = TrangThaiPheDuyet.DaDuyet;
+        //    nhap.IsDeleted = true;
+
+        //     _phanRepository.Update(goc);
+        //     _phanRepository.Update(nhap);
+
+        //    return KetQua(idBanNhap, TrangThaiPheDuyet.DaDuyet, true, "Da map du lieu Phan vao ban goc");
+        //}
+
+        //// ===============================================================
+        //// 3. BAI GIANG — KHÔNG tự map. Chỉ đánh dấu IsPendingSwap trên bản
+        //// gốc; SwapPendingBaiGiang() (đã có sẵn, chạy lúc đạt 100%) sẽ map.
+        //// ===============================================================
+        //public async Task<KetQuaXuLyDuyetDto> KiemDuyetBaiGiangAsync(Guid idBanNhap)
+        //{
+        //    var nhap = await _baiGiangRepository.GetByIdAsync(idBanNhap);
+        //    if (nhap == null || nhap.IsBanHienTai)
+        //        throw new InvalidOperationException($"Khong tim thay ban nhap BaiGiang voi Id {idBanNhap}");
+
+        //    if (nhap.IdBanGhiTruoc == null)
+        //        throw new InvalidOperationException($"Ban nhap BaiGiang {idBanNhap} khong co IdBanGhiTruoc");
+
+        //    var ketQuaAi = await _geminiService.KiemDuyetOuputAsync($"Tieu de bai giang: {nhap.TieuDe}");
+        //    var phanLoai = PhanLoaiTheoDiem(ketQuaAi.DiemSo);
+
+        //    if (phanLoai == TrangThaiPheDuyet.TuChoi)
+        //    {
+        //        nhap.TrangThai = TrangThaiPheDuyet.TuChoi;
+        //        nhap.IsDeleted = true;
+        //        _baiGiangRepository.Update(nhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.TuChoi, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    if (phanLoai == TrangThaiPheDuyet.ChoAdminDuyet)
+        //    {
+        //        nhap.TrangThai = TrangThaiPheDuyet.ChoAdminDuyet;
+        //        _baiGiangRepository.Update(nhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.ChoAdminDuyet, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    // DaDuyet -> KHONG map ngay. Chi bao hieu cho co che swap co san:
+        //    // danh dau ban GOC (id cu) la "co ban thay the dang cho", tro toi nhap.
+        //    var goc = await _baiGiangRepository.GetByIdAsync(nhap.IdBanGhiTruoc.Value);
+        //    if (goc == null)
+        //        throw new InvalidOperationException($"Khong tim thay ban goc BaiGiang voi Id {nhap.IdBanGhiTruoc}");
+
+        //    nhap.TrangThai = TrangThaiPheDuyet.DaDuyet;
+
+        //    goc.IdBaiGiangMoi = nhap.Id;
+        //    goc.IsPendingSwap = true;
+        //    // KHONG xoa nhap, KHONG copy field sang goc o day -
+        //    // SwapPendingBaiGiang() se lam viec do khi hoc vien dat 100%.
+
+        //    _baiGiangRepository.Update(nhap);
+        //    _baiGiangRepository.Update(goc);
+
+        //    return KetQua(
+        //        idBanNhap,
+        //        TrangThaiPheDuyet.DaDuyet,
+        //        false,
+        //        "AI da duyet. Da danh dau cho swap, se duoc ap dung khi hoc vien hoan thanh 100% khoa hoc");
+        //}
+
+        //// ===============================================================
+        //// 4. BAI KIEM TRA — map khi không có LanLamBaiKiemTra nào DangLam
+        //// ===============================================================
+        //public async Task<KetQuaXuLyDuyetDto> KiemDuyetBaiKiemTraAsync(Guid idBanNhap)
+        //{
+        //    var nhap = await _baiKiemTraService.GetByIdAsync(idBanNhap);
+        //    if (nhap == null || nhap.IsBanHienTai)
+        //        throw new InvalidOperationException($"Khong tim thay ban nhap BaiKiemTra voi Id {idBanNhap}");
+
+        //    if (nhap.IdBanGhiTruoc == null)
+        //        throw new InvalidOperationException($"Ban nhap BaiKiemTra {idBanNhap} khong co IdBanGhiTruoc");
+
+        //    var ketQuaAi = await _geminiService.KiemDuyetOuputAsync($"Ten bai kiem tra: {nhap.TenBaiKiemTra}\nMo ta: {nhap.MoTa}");
+        //    var phanLoai = PhanLoaiTheoDiem(ketQuaAi.DiemSo);
+
+        //    if (phanLoai == TrangThaiPheDuyet.TuChoi)
+        //    {
+        //        nhap.TrangThai = TrangThaiPheDuyet.TuChoi;
+        //        nhap.IsDeleted = true;
+        //        await _baiKiemTraService.UpdateAsync(nhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.TuChoi, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    if (phanLoai == TrangThaiPheDuyet.ChoAdminDuyet)
+        //    {
+        //        nhap.TrangThai = TrangThaiPheDuyet.ChoAdminDuyet;
+        //        await _baiKiemTraService.UpdateAsync(nhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.ChoAdminDuyet, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    nhap.TrangThai = TrangThaiPheDuyet.DaDuyet;
+        //    await _baiKiemTraService.UpdateAsync(nhap);
+        //    await _baiKiemTraService.SaveAsync();
+
+        //    var daMap = await ThuMapBaiKiemTraNeuDuDieuKienAsync(nhap);
+
+        //    return KetQua(
+        //        idBanNhap,
+        //        TrangThaiPheDuyet.DaDuyet,
+        //        daMap,
+        //        daMap
+        //            ? "Da map du lieu BaiKiemTra vao ban goc"
+        //            : "AI da duyet, nhung CHUA map - dang co nguoi DangLam bai kiem tra nay");
+        //}
+
+        ///// <summary>
+        ///// Map 1 bản nháp BaiKiemTra đã DaDuyet vào bản gốc, nếu không có
+        ///// LanLamBaiKiemTra nào (của bài kiểm tra GỐC) đang ở trạng thái
+        ///// DangLam. Nên được gọi lại khi 1 LanLamBaiKiemTra chuyển khỏi
+        ///// DangLam (nộp bài/hết giờ), không chỉ ngay lúc AI duyệt.
+        ///// </summary>
+        //public async Task<bool> ThuMapBaiKiemTraNeuDuDieuKienAsync(BaiKiemTra nhap)
+        //{
+        //    if (nhap.TrangThai != TrangThaiPheDuyet.DaDuyet)
+        //        return false;
+
+        //    var coAiDangLam = await _lanLamBaiKiemTraRepository.AnyAsync(
+        //        x => x.IdBaiKiemTra == nhap.IdBanGhiTruoc && x.TrangThai == TrangThaiLamBai.DangLam);
+
+        //    if (coAiDangLam)
+        //        return false;
+
+        //    var goc = await _baiKiemTraService.GetByIdAsync(nhap.IdBanGhiTruoc!.Value);
+        //    if (goc == null)
+        //        throw new InvalidOperationException($"Khong tim thay ban goc BaiKiemTra voi Id {nhap.IdBanGhiTruoc}");
+
+        //    goc.TenBaiKiemTra = nhap.TenBaiKiemTra;
+        //    goc.MoTa = nhap.MoTa;
+        //    goc.DiemDat = nhap.DiemDat;
+        //    goc.GioiHanThoiGian = nhap.GioiHanThoiGian;
+        //    goc.ChoLamLai = nhap.ChoLamLai;
+        //    goc.SoLanLamLai = nhap.SoLanLamLai;
+        //    goc.SoLanLamToiDa = nhap.SoLanLamToiDa;
+
+        //    nhap.IsDeleted = true;
+
+        //    await _baiKiemTraService.UpdateAsync(goc);
+        //    await _baiKiemTraService.UpdateAsync(nhap);
+        //    await _baiKiemTraService.SaveAsync();
+
+        //    return true;
+        //}
+
+        //// ===============================================================
+        //// 5. CAU HOI — map theo cùng điều kiện với BaiKiemTra cha của nó
+        //// (không có LanLamBaiKiemTra nào DangLam). DapAn đi kèm CauHoi
+        //// được map cùng lúc, không kiểm duyệt AI riêng (không có text rời).
+        //// ===============================================================
+        //public async Task<KetQuaXuLyDuyetDto> KiemDuyetCauHoiAsync(Guid idBanNhap)
+        //{
+        //    var nhap = await _cauHoiRepository.GetByIdAsync(idBanNhap);
+        //    if (nhap == null || nhap.IsBanHienTai)
+        //        throw new InvalidOperationException($"Khong tim thay ban nhap CauHoi voi Id {idBanNhap}");
+
+        //    if (nhap.IdBanGhiTruoc == null)
+        //        throw new InvalidOperationException($"Ban nhap CauHoi {idBanNhap} khong co IdBanGhiTruoc");
+
+        //    var ketQuaAi = await _geminiService.KiemDuyetOuputAsync($"Cau hoi: {nhap.TenCauHoi}\nNoi dung: {nhap.NoiDungCauHoi}");
+        //    var phanLoai = PhanLoaiTheoDiem(ketQuaAi.DiemSo);
+
+        //    if (phanLoai == TrangThaiPheDuyet.TuChoi)
+        //    {
+        //        nhap.IsDeleted = true;
+        //        _cauHoiRepository.Update(nhap);
+        //        // DapAn cua nhap CauHoi nay cung khong con can thiet -> xoa mem theo
+        //        await XoaMemDapAnCuaCauHoiAsync(nhap.Id);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.TuChoi, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    if (phanLoai == TrangThaiPheDuyet.ChoAdminDuyet)
+        //    {
+        //        // LUU Y: entity CauHoi duoc gui khong co cot TrangThai rieng.
+        //        // Neu can luu trang thai ChoAdminDuyet cho CauHoi, can bo sung
+        //        // cot TrangThai vao entity CauHoi truoc. Hien tai chi log lai.
+        //        _logger.LogWarning("CauHoi {Id} can ChoAdminDuyet nhung entity chua co cot TrangThai - vui long bo sung", idBanNhap);
+        //        return KetQua(idBanNhap, TrangThaiPheDuyet.ChoAdminDuyet, false, ketQuaAi.ThongBao);
+        //    }
+
+        //    var daMap = await ThuMapCauHoiNeuDuDieuKienAsync(nhap);
+
+        //    return KetQua(
+        //        idBanNhap,
+        //        TrangThaiPheDuyet.DaDuyet,
+        //        daMap,
+        //        daMap
+        //            ? "Da map du lieu CauHoi + DapAn vao ban goc"
+        //            : "AI da duyet, nhung CHUA map - dang co nguoi DangLam bai kiem tra chua cau hoi nay");
+        //}
+
+        ///// <summary>
+        ///// Map 1 bản nháp CauHoi (+ DapAn con của nó) vào bản gốc, theo cùng
+        ///// điều kiện với BaiKiemTra: không map khi có LanLamBaiKiemTra nào
+        ///// đang DangLam cho BaiKiemTra chứa câu hỏi này.
+        ///// </summary>
+        //public async Task<bool> ThuMapCauHoiNeuDuDieuKienAsync(CauHoi nhap)
+        //{
+        //    if (nhap.IdBaiKiemTra == null)
+        //    {
+        //        _logger.LogWarning("CauHoi {Id} khong co IdBaiKiemTra, khong the kiem tra dieu kien map", nhap.Id);
+        //        return false;
+        //    }
+
+        //    var coAiDangLam = await _lanLamBaiKiemTraRepository.AnyAsync(
+        //        x => x.IdBaiKiemTra == nhap.IdBaiKiemTra && x.TrangThai == TrangThaiLamBai.DangLam);
+
+        //    if (coAiDangLam)
+        //        return false;
+
+        //    var goc = await _cauHoiRepository.GetByIdAsync(nhap.IdBanGhiTruoc!.Value);
+        //    if (goc == null)
+        //        throw new InvalidOperationException($"Khong tim thay ban goc CauHoi voi Id {nhap.IdBanGhiTruoc}");
+
+        //    goc.TenCauHoi = nhap.TenCauHoi;
+        //    goc.NoiDungCauHoi = nhap.NoiDungCauHoi;
+        //    goc.LoaiCauHoi = nhap.LoaiCauHoi;
+        //    goc.Diem = nhap.Diem;
+        //    goc.ThuTuSapXep = nhap.ThuTuSapXep;
+        //    goc.DoKho = nhap.DoKho;
+
+        //    nhap.IsDeleted = true;
+
+        //     _cauHoiRepository.Update(goc);
+        //     _cauHoiRepository.Update(nhap);
+        //    await _cauHoiRepository.SaveAsync();
+
+        //    // Map DapAn nhap (cua CauHoi nhap) -> ghi de DapAn cua CauHoi goc
+        //    await MapDapAnTheoCauHoiAsync(idCauHoiNhap: nhap.Id, idCauHoiGoc: goc.Id);
+
+        //    return true;
+        //}
+
+        ///// <summary>
+        ///// Map toàn bộ DapAn thuộc 1 CauHoi nháp sang CauHoi gốc tương ứng:
+        ///// xóa mềm DapAn cũ của gốc, tạo lại theo DapAn của nháp.
+        ///// (DapAn không có quy trình duyệt AI riêng — đi theo CauHoi cha.)
+        ///// </summary>
+        //private async Task MapDapAnTheoCauHoiAsync(Guid idCauHoiNhap, Guid idCauHoiGoc)
+        //{
+        //    var dapAnGocCu = _dapAnRepository.GetQueryable()
+        //        .Where(x => x.IdCauHoi == idCauHoiGoc)
+        //        .ToList();
+
+        //    foreach (var da in dapAnGocCu)
+        //    {
+        //        _dapAnRepository.Delete(da);
+        //        await _dapAnRepository.SaveAsync();
+        //    }
+        //    if (dapAnGocCu.Any())
+        //    {
+        //        foreach (var da in dapAnGocCu)
+        //        {
+        //            _dapAnRepository.Update(da);
+        //        }
+        //    }
+
+        //    var dapAnNhap = _dapAnRepository.GetQueryable()
+        //        .Where(x => x.IdCauHoi == idCauHoiNhap)
+        //        .ToList();
+
+        //    var dapAnMoi = dapAnNhap.Select(da => new DapAn
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        NoiDungDapAn = da.NoiDungDapAn,
+        //        LaDapAnDung = da.LaDapAnDung,
+        //        ThuTuSapXep = da.ThuTuSapXep,
+        //        IdCauHoi = idCauHoiGoc,
+        //        IsBanHienTai = true
+        //    }).ToList();
+
+        //    if (dapAnMoi.Any())
+        //    {
+        //         _dapAnRepository.AddRange(dapAnMoi);
+        //    }
+
+        //    // Don ban nhap DapAn cu (gan voi CauHoi nhap, da map xong khong can nua)
+        //    foreach (var da in dapAnNhap)
+        //    {
+        //         _dapAnRepository.Delete(da);
+        //        await _dapAnRepository.SaveAsync();
+        //    }
+        //    if (dapAnNhap.Any())
+        //    {
+        //        foreach (var da in dapAnNhap)
+        //        {
+        //             _dapAnRepository.Update(da);
+        //        }
+        //    }
+        //}
+
+        //private async Task XoaMemDapAnCuaCauHoiAsync(Guid idCauHoi)
+        //{
+        //    var dapAns = _dapAnRepository.GetQueryable().Where(x => x.IdCauHoi == idCauHoi).ToList();
+        //    foreach (var da in dapAns)
+        //    {
+        //         _dapAnRepository.Delete(da);
+        //    }
+        //    if (dapAns.Any())
+        //    {
+        //        foreach (var da in dapAns)
+        //        {
+        //             _dapAnRepository.Update(da);
+        //        }
+        //    }
+        //}
+
+        //// ===============================================================
+        //// HELPERS DÙNG CHUNG
+        //// ===============================================================
+
+        //private static KetQuaXuLyDuyetDto KetQua(Guid id, string trangThai, bool daMap, string ghiChu) =>
+        //    new()
+        //    {
+        //        IdBanNhap = id,
+        //        TrangThaiMoi = trangThai,
+        //        DaMapDuLieu = daMap,
+        //        GhiChu = ghiChu
+        //    };
+
+        //private static string PhanLoaiTheoDiem(double diemSo)
+        //{
+        //    if (diemSo >= NGUONG_CHAN) return TrangThaiPheDuyet.TuChoi;
+        //    if (diemSo >= NGUONG_PHAN_VAN) return TrangThaiPheDuyet.ChoAdminDuyet;
+        //    return TrangThaiPheDuyet.DaDuyet;
+        //}
+        #endregion
     }
 }
+

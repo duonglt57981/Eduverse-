@@ -8,7 +8,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
 {
     public class KiemDuyetKhoaHocDto
     {
-        public Guid? IdKhoaHoc { get; set; }
+        public Guid? IdDoiTuong { get; set; }
+        public string LoaiDoiTuong { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
         public DateTime? NgayDuyet { get; set; }
     }

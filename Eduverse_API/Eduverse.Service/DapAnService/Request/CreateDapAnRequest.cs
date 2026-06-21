@@ -9,6 +9,7 @@ namespace Eduverse.Service.DapAnService.Request
     public class CreateDapAnRequest
     {
         public string? NoiDungDapAn { get; set; }
-        public bool LaDapAnDung { get; set; }
+        public bool? LaDapAnDung { get; set; }
+        public int? ThuTuSapXep { get; set; }
     }
 }

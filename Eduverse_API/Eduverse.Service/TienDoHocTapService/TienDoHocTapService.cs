@@ -1,4 +1,5 @@
 using Eduverse.Model.Entities;
+using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.Common;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.TienDoHocTapRepository;
@@ -20,22 +21,13 @@ namespace Eduverse.Service.TienDoHocTapService
 {
     public class TienDoHocTapService : Service<TienDoHocTap>, ITienDoHocTapService
     {
-        private readonly IBaiGiangService _baiGiangService;
-        ////private readonly IDangKyKhoaHocService _dangKyKhoaHocService;
-        //private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
-        //private readonly IPhanService _phanService;
+        private readonly IBaiGiangRepository _baiGiangRepository;
         public TienDoHocTapService(
             ITienDoHocTapRepository tienDoHocTapRepository,
-            IBaiGiangService baiGiangService
-            //IPhanService phanService
-            //IDangKyKhoaHocService dangKyKhoaHocService,
-            //IDangKyKhoaHocRepository dangKyKhoaHocRepository
+            IBaiGiangRepository baiGiangRepository
             ) : base(tienDoHocTapRepository)
         {
-            _baiGiangService = baiGiangService;
-            //_dangKyKhoaHocService = dangKyKhoaHocService;
-            //_phanService = phanService;
-            //_dangKyKhoaHocRepository = dangKyKhoaHocRepository;
+            _baiGiangRepository = baiGiangRepository;
         }
 
         public async Task UpdateTienDoBaiGiang(UpdateTienDoBaiGiangRequest request)
@@ -46,7 +38,7 @@ namespace Eduverse.Service.TienDoHocTapService
             if (request.IdBaiGiang == Guid.Empty)
                 throw new Exception("Id bài giảng không hợp lệ");
 
-            var baiGiang = await _baiGiangService
+            var baiGiang = await _baiGiangRepository
                 .GetQueryable()
                 .AsNoTracking()
                 .Where(x =>

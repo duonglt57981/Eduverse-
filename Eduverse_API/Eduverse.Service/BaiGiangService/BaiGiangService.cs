@@ -9,7 +9,9 @@ using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.TaiLieuService;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 
 namespace Eduverse.Service.BaiGiangService
@@ -17,29 +19,29 @@ namespace Eduverse.Service.BaiGiangService
     public class BaiGiangService : Service<Model.Entities.BaiGiang>, IBaiGiangService
     {
         private readonly ICloudinaryService _cloudinaryService;
-        private readonly ITaiLieuService _taiLieuService;
         private readonly IPhanRepository _phanRepository;
         private readonly IMapper _mapper; 
         private readonly IDangKyKhoaHocRepository _dangkyKhoaHocRepository;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
 
         public BaiGiangService(
             IBaiGiangRepository baiGiangRepository,
             ICloudinaryService cloudinaryService,
-            ITaiLieuService taiLieuService,
             IPhanRepository phanRepository,
             IMapper mapper,
             IDangKyKhoaHocRepository dangkyKhoaHocRepository,
-            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
+            IHttpContextAccessor httpContextAccessor
             ) : base(baiGiangRepository)
         {
             _cloudinaryService = cloudinaryService;
-            _taiLieuService = taiLieuService;
             _phanRepository = phanRepository;
             _mapper = mapper;
             _dangkyKhoaHocRepository = dangkyKhoaHocRepository;
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
 
@@ -94,6 +96,8 @@ namespace Eduverse.Service.BaiGiangService
 
         public async Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request)
         {
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
@@ -111,6 +115,7 @@ namespace Eduverse.Service.BaiGiangService
                .FirstOrDefaultAsync(x => x.Id == request.IdBaiGiang && x.IsBanHienTai);
             if (banGoc == null)
                 throw new Exception("Không tim thấy bài giảng");
+
 
             var thuTuDaTon = await GetQueryable()
                 .AnyAsync(x =>
