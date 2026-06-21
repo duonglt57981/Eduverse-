@@ -306,77 +306,65 @@ function SectorIcon({ iconName, color }: { iconName: string; color: string }) {
 function SidebarContent({ onLogout, roles = [] }: { onLogout: () => void; roles?: string[] }) {
   const router = useRouter();
   const pathname = usePathname();
-  const sidebarItems = getSidebarItemsByRole(roles);
+
+  // If not in instructor view, filter out 'GiaoVien' role for sidebar items,
+  // so that the sidebar falls back to student items.
+  // Similarly filter out 'Admin' if not in admin view.
+  const activeRoles = useMemo(() => {
+    let list = [...roles];
+    if (!pathname.startsWith('/instructor')) {
+      list = list.filter((r) => r !== 'GiaoVien');
+    }
+    if (!pathname.startsWith('/admin')) {
+      list = list.filter((r) => r !== 'Admin');
+    }
+    return list;
+  }, [roles, pathname]);
+
+  const sidebarItems = getSidebarItemsByRole(activeRoles);
 
   const getRoleBadge = () => {
-    if (roles.includes('Admin')) return { label: 'Admin', color: '#DC2626', bg: 'rgba(220, 38, 38, 0.08)' };
-    if (roles.includes('GiaoVien')) return { label: 'Giảng viên', color: '#7C3AED', bg: 'rgba(124, 58, 237, 0.08)' };
+    if (activeRoles.includes('Admin')) return { label: 'Admin', color: '#DC2626', bg: 'rgba(220, 38, 38, 0.08)' };
+    if (activeRoles.includes('GiaoVien')) return { label: 'Giảng viên', color: '#7C3AED', bg: 'rgba(124, 58, 237, 0.08)' };
     return null;
   };
 
   const roleBadge = getRoleBadge();
 
   const getHomeRoute = () => {
-    if (roles.includes('Admin')) return '/admin/dashboard';
-    if (roles.includes('GiaoVien')) return '/instructor/dashboard';
+    if (activeRoles.includes('Admin')) return '/admin/dashboard';
+    if (activeRoles.includes('GiaoVien')) return '/instructor/dashboard';
     return '/student/dashboard';
   };
 
   const getRouteByLabel = (label: string) => {
-    // Student roles (or fallback)
-    if (roles.includes('HocVien') || (!roles.includes('Admin') && !roles.includes('GiaoVien'))) {
-      switch (label) {
-        case 'Trang chủ':
-          return '/student/dashboard';
-        case 'Khóa học của tôi':
-          return '/student/courses';
-        case 'Khám phá':
-          return '/courses';
-        case 'Giỏ hàng':
-          return '/student/cart';
-        case 'Lịch học':
-          return '/student/schedule';
-        case 'Kiểm tra':
-          return '/student/tests';
-        case 'Chứng chỉ':
-          return '/student/certificates';
-        case 'Yêu thích':
-          return '/student/favorites';
-        case 'Thông báo':
-          return '/student/notifications';
-        case 'Hồ sơ':
-          return '/student/profile';
-        case 'Cài đặt':
-          return '/student/settings';
-        default:
-          return '/student/dashboard';
-      }
-    }
+    const isInstructorView = pathname.startsWith('/instructor');
+    const isAdminView = pathname.startsWith('/admin');
 
     // Instructor roles
-    if (roles.includes('GiaoVien')) {
+    if (isInstructorView && roles.includes('GiaoVien')) {
       switch (label) {
-        case 'Trang chủ':
+        case 'Dashboard':
           return '/instructor/dashboard';
-        case 'Quản lý khóa học':
-          return '/instructor/courses';
-        case 'Quản lý bài giảng':
-          return '/instructor/lectures';
         case 'Bài kiểm tra':
           return '/instructor/tests';
-        case 'Học viên của tôi':
+        case 'Khóa học':
+          return '/instructor/courses';
+        case 'Học viên':
           return '/instructor/students';
-        case 'Thống kê':
-          return '/instructor/analytics';
-        case 'Chứng chỉ':
-          return '/instructor/certificates';
+        case 'Doanh thu':
+          return '/instructor/revenue';
+        case 'Q&A':
+          return '/instructor/qa';
+        case 'Cài đặt':
+          return '/instructor/settings';
         default:
           return '/instructor/dashboard';
       }
     }
 
     // Admin roles
-    if (roles.includes('Admin')) {
+    if (isAdminView && roles.includes('Admin')) {
       switch (label) {
         case 'Dashboard':
           return '/admin/dashboard';
@@ -405,7 +393,33 @@ function SidebarContent({ onLogout, roles = [] }: { onLogout: () => void; roles?
       }
     }
 
-    return getHomeRoute();
+    // Fallback to Student roles (or default)
+    switch (label) {
+      case 'Trang chủ':
+        return '/student/dashboard';
+      case 'Khóa học của tôi':
+        return '/student/courses';
+      case 'Khám phá':
+        return '/courses';
+      case 'Giỏ hàng':
+        return '/student/cart';
+      case 'Lịch học':
+        return '/student/schedule';
+      case 'Kiểm tra':
+        return '/student/tests';
+      case 'Chứng chỉ':
+        return '/student/certificates';
+      case 'Yêu thích':
+        return '/student/favorites';
+      case 'Thông báo':
+        return '/student/notifications';
+      case 'Hồ sơ':
+        return '/student/profile';
+      case 'Cài đặt':
+        return '/student/settings';
+      default:
+        return '/student/dashboard';
+    }
   };
 
   return (
@@ -418,25 +432,6 @@ function SidebarContent({ onLogout, roles = [] }: { onLogout: () => void; roles?
       }}
     >
       <Box sx={{ px: 2, py: 3, flex: 1 }}>
-        {/* Role Badge */}
-        {roleBadge && (
-          <Box sx={{ px: 2, mb: 2 }}>
-            <Chip
-              label={roleBadge.label}
-              size="small"
-              sx={{
-                fontWeight: 800,
-                fontSize: 11.5,
-                color: roleBadge.color,
-                bgcolor: roleBadge.bg,
-                border: `1px solid ${roleBadge.color}20`,
-                borderRadius: '10px',
-                height: 26,
-                letterSpacing: '0.3px',
-              }}
-            />
-          </Box>
-        )}
 
         <List disablePadding>
           {sidebarItems.map((item) => {
@@ -502,6 +497,60 @@ function SidebarContent({ onLogout, roles = [] }: { onLogout: () => void; roles?
           })}
         </List>
       </Box>
+
+      {/* Instructor CTA */}
+      {!roles.includes('Admin') && !pathname.startsWith('/instructor') && (
+        <Box sx={{ px: 2, pb: 1 }}>
+          {roles.includes('GiaoVien') ? (
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={() => router.push('/instructor/dashboard')}
+              startIcon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
+              sx={{
+                borderRadius: '14px',
+                bgcolor: COLORS.primary,
+                color: '#fff',
+                py: 1.3,
+                fontSize: 13.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                boxShadow: '0 4px 16px rgba(141,19,19,0.2)',
+                '&:hover': {
+                  bgcolor: COLORS.primaryDark,
+                  boxShadow: '0 6px 20px rgba(141,19,19,0.3)',
+                },
+              }}
+            >
+              Dashboard Giảng viên
+            </Button>
+          ) : (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #4A0E0E 0%, #8D1313 100%)',
+                color: '#fff',
+                cursor: 'pointer',
+                transition: 'transform 200ms ease, box-shadow 200ms ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 24px rgba(141,19,19,0.25)',
+                },
+              }}
+              onClick={() => router.push('/student/profile')}
+            >
+              <Typography sx={{ fontSize: 13, fontWeight: 800, mb: 0.5 }}>
+                🎓 Trở thành Giảng viên
+              </Typography>
+              <Typography sx={{ fontSize: 11, opacity: 0.8, lineHeight: 1.5 }}>
+                Đăng ký để tạo và quản lý khóa học của riêng bạn.
+              </Typography>
+            </Paper>
+          )}
+        </Box>
+      )}
 
       <Box sx={{ px: 2, py: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
         <ListItemButton
@@ -669,6 +718,7 @@ function CourseCard({ course }: { course: CourseCardItem }) {
 export default function DashboardShell({ children }: { children?: React.ReactNode }) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const roles = useSelector((s) => s.auth.roles) || [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -794,7 +844,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ minHeight: '100vh', bgcolor: COLORS.bgLight, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ height: '100vh', bgcolor: COLORS.bgLight, display: 'flex', flexDirection: 'column', overflow: 'hidden', pt: headerHeight }}>
         
         {/* ========================================================= */}
         {/* 1. HEADER NAVIGATION (Fixed)                              */}
@@ -873,7 +923,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
           >
             <SearchRounded sx={{ color: 'rgba(0,0,0,0.35)', fontSize: 18 }} />
             <InputBase
-              placeholder={roles.includes('Admin') ? "Tìm kiếm báo cáo..." : "Tìm kiếm nội dung bất kỳ"}
+              placeholder={pathname.startsWith('/admin') ? "Tìm kiếm báo cáo..." : pathname.startsWith('/instructor') ? "Tìm kiếm học viên, khóa học hoặc dữ liệu..." : "Tìm kiếm nội dung bất kỳ"}
               sx={{ flex: 1, fontSize: 13.5, fontWeight: 400 }}
             />
           </Paper>
@@ -936,32 +986,88 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
 
 
             {/* User Avatar + Role Badge */}
-            <Stack direction="row" sx={{ alignItems: 'center', pl: 0.5, gap: 1 }}>
-              {roles.includes('Admin') ? (
-                <Stack sx={{ display: { xs: 'none', sm: 'flex' }, textAlign: 'left', mr: 1 }}>
-                  <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: '#1F2937', lineHeight: 1.2 }}>
-                    Admin Panel
-                  </Typography>
-                  <Typography sx={{ fontSize: 10, fontWeight: 700, color: 'rgba(31,41,55,0.5)', letterSpacing: '0.5px' }}>
-                    SUPER ADMINISTRATOR
-                  </Typography>
-                </Stack>
-              ) : roles.includes('GiaoVien') && (
-                <Chip
-                  label="Giảng viên"
-                  size="small"
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: 10.5,
-                    height: 24,
-                    color: '#7C3AED',
-                    bgcolor: 'rgba(124, 58, 237, 0.08)',
-                    border: '1px solid rgba(124, 58, 237, 0.2)',
-                    borderRadius: '8px',
-                    display: { xs: 'none', sm: 'flex' },
-                  }}
-                />
+            <Stack direction="row" sx={{ alignItems: 'center', pl: 0.5, gap: 1.5 }}>
+              {roles.includes('GiaoVien') && (
+                <>
+                  {pathname.startsWith('/instructor') ? (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => router.push('/student/dashboard')}
+                      startIcon={<ChevronLeftRounded />}
+                      sx={{
+                        borderRadius: '10px',
+                        borderColor: 'rgba(0,0,0,0.12)',
+                        color: '#1F2937',
+                        px: 1.5,
+                        py: 0.6,
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        display: { xs: 'none', md: 'flex' },
+                        '&:hover': {
+                          borderColor: COLORS.primary,
+                          bgcolor: 'rgba(141,19,19,0.03)',
+                          color: COLORS.primary,
+                        },
+                      }}
+                    >
+                      Học viên
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => router.push('/instructor/dashboard')}
+                      endIcon={<ChevronRightRounded />}
+                      sx={{
+                        borderRadius: '10px',
+                        borderColor: 'rgba(0,0,0,0.12)',
+                        color: '#1F2937',
+                        px: 1.5,
+                        py: 0.6,
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        display: { xs: 'none', md: 'flex' },
+                        '&:hover': {
+                          borderColor: COLORS.primary,
+                          bgcolor: 'rgba(141,19,19,0.03)',
+                          color: COLORS.primary,
+                        },
+                      }}
+                    >
+                      Giảng viên
+                    </Button>
+                  )}
+                </>
               )}
+
+              <IconButton sx={{ color: 'rgba(31,41,55,0.55)', display: { xs: 'none', sm: 'flex' } }}>
+                <NotificationsNoneRounded sx={{ fontSize: 22 }} />
+              </IconButton>
+              {pathname.startsWith('/instructor') && (
+                <IconButton sx={{ color: 'rgba(31,41,55,0.55)', display: { xs: 'none', sm: 'flex' } }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </IconButton>
+              )}
+
+              <Stack sx={{ display: { xs: 'none', sm: 'flex' }, textAlign: 'right', mr: 0.5 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#1F2937', lineHeight: 1.3 }}>
+                  {pathname.startsWith('/admin')
+                    ? 'Admin Panel'
+                    : pathname.startsWith('/instructor')
+                    ? `GS. ${dashboardData?.welcomeStats?.userName || 'Giảng viên'}`
+                    : (dashboardData?.welcomeStats?.userName || 'Học viên')}
+                </Typography>
+                <Typography sx={{ fontSize: 10, fontWeight: 600, color: COLORS.primary, letterSpacing: '0.3px' }}>
+                  {pathname.startsWith('/admin')
+                    ? 'SUPER ADMINISTRATOR'
+                    : pathname.startsWith('/instructor')
+                    ? 'Premium Instructor'
+                    : 'Học viên'}
+                </Typography>
+              </Stack>
               <Avatar
                 src={dashboardData?.welcomeStats?.avatarUrl || undefined}
                 sx={{
@@ -1007,7 +1113,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
         {/* ========================================================= */}
         {/* MAIN LAYOUT STRUCTURE                                     */}
         {/* ========================================================= */}
-        <Box sx={{ display: 'flex', flex: 1, pt: headerHeight }}>
+        <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           
           {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
           <Box
@@ -1016,10 +1122,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
               flexShrink: 0,
               display: { xs: 'none', lg: 'block' },
               borderRight: '1px solid rgba(0,0,0,0.06)',
-              position: 'sticky',
-              top: headerHeight,
-              alignSelf: 'flex-start',
-              height: `calc(100vh - ${headerHeight})`,
+              height: '100%',
               bgcolor: COLORS.white,
             }}
           >
@@ -1035,7 +1138,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
               py: 3,
               display: 'flex',
               justifyContent: 'center',
-              height: `calc(100vh - ${headerHeight})`,
+              height: '100%',
               overflowY: 'auto',
             }}
           >

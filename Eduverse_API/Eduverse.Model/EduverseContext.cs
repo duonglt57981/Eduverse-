@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -54,6 +54,7 @@ namespace Eduverse.Model
         public DbSet<ThanhToan> thanhToans { get; set; }
         public DbSet<ThongBao> thongBaos { get; set; }
         public DbSet<VaiTro_NguoiDung> vaiTro_NguoiDungs { get; set; }
+        public DbSet<InstructorRequest> InstructorRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

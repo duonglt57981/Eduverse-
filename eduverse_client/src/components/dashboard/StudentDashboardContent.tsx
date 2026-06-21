@@ -162,45 +162,7 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Category bar at the top of content
-function CategoryBar({ categories }: { categories: string[] }) {
-  return (
-    <Box
-      sx={{
-        width: '100%',
-        overflowX: 'auto',
-        borderBottom: '1px solid rgba(0,0,0,0.06)',
-        bgcolor: COLORS.white,
-        py: 1.5,
-        px: 2,
-        borderRadius: '16px',
-        mb: 3,
-        scrollbarWidth: 'none',
-        '&::-webkit-scrollbar': { display: 'none' },
-      }}
-    >
-      <Stack direction="row" spacing={3} sx={{ minWidth: 'max-content' }}>
-        {categories.map((cat, idx) => (
-          <Typography
-            key={idx}
-            sx={{
-              fontSize: 13.5,
-              fontWeight: idx === 4 ? 800 : 500, // Make 'Phát triển' or similar look active/bold
-              color: idx === 4 ? COLORS.primary : 'rgba(31,41,55,0.7)',
-              cursor: 'pointer',
-              transition: 'color 150ms',
-              '&:hover': { color: COLORS.primary },
-              borderBottom: idx === 4 ? `2px solid ${COLORS.primary}` : '2px solid transparent',
-              pb: 0.5,
-            }}
-          >
-            {cat}
-          </Typography>
-        ))}
-      </Stack>
-    </Box>
-  );
-}
+
 
 // Course card component
 function CourseCard({ course }: { course: any }) {
@@ -302,20 +264,7 @@ export default function StudentDashboardContent() {
   const [activeTab, setActiveTab] = useState<'courses' | 'assigned' | 'paths' | 'certs' | 'tests'>('courses');
   const [selectedSkill, setSelectedSkill] = useState<string>('AI');
 
-  // Hardcoded default category bar items from screenshot
-  const categoriesList = [
-    'Hoạt động kinh doanh',
-    'Điện toán đám mây',
-    'An ninh mạng',
-    'Khoa học dữ liệu',
-    'Phát triển',
-    'Hoạt động CNTT',
-    'Học ngôn ngữ',
-    'Năng lực lãnh đạo & Quản lý',
-    'Marketing',
-    'AI tạo sinh',
-    'Phát triển cá nhân',
-  ];
+
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -389,8 +338,6 @@ export default function StudentDashboardContent() {
 
   return (
     <Stack spacing={4} sx={{ width: '100%', mt: -1 }}>
-      {/* 1. Categories Navigation Sub-bar */}
-      <CategoryBar categories={categoriesList} />
 
       {/* 2. Welcome Banner area */}
       <Paper

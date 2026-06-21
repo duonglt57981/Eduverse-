@@ -6,7 +6,7 @@ import { Box, Typography, Paper } from '@mui/material';
 
 export default function StudentCartPage() {
   return (
-    <AuthGuard allowedRoles={['HocVien']}>
+    <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
       <DashboardShell>
         <Paper 
           elevation={0} 

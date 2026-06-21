@@ -175,7 +175,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "e78dae65-27bd-42a4-baed-227e3c8a0209",
+                            ConcurrencyStamp = "aeff8bf2-6027-49d1-9470-337e5b3dde5f",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -184,9 +184,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEJhxtHx9zLkBOWCQBn5AOAMkp8WEp4nbFRFrVX5Vh6F+z6fYahfHBy/wgMkNqS+1Zg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEBNDqYfAKaPSL5dbjFEHebMr/DT8uo3je7954gwcPN3vC9uL0/EBDHbRTyjg/apdLA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "f46742cf-dfce-418a-93b2-c4020a24bee4",
+                            SecurityStamp = "449f2f49-2f63-4f73-8285-c8a58dd76506",
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserName = "admin"
@@ -1142,6 +1142,71 @@ namespace Eduverse.Model.Migrations
                     b.ToTable("hoiDaps");
                 });
 
+            modelBuilder.Entity("Eduverse.Model.Entities.InstructorRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AdminNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("AppUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ChuyenMon")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("KinhNghiem")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("LyDo")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.ToTable("InstructorRequests");
+                });
+
             modelBuilder.Entity("Eduverse.Model.Entities.KetQuaBaiThi", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1273,7 +1338,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("KhoaHocs");
+                    b.ToTable("KhoaHocs", (string)null);
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.KhuyenMai", b =>
@@ -2163,6 +2228,17 @@ namespace Eduverse.Model.Migrations
                     b.HasOne("Eduverse.Model.Entities.KhoaHoc", null)
                         .WithMany()
                         .HasForeignKey("IdKhoaHoc");
+                });
+
+            modelBuilder.Entity("Eduverse.Model.Entities.InstructorRequest", b =>
+                {
+                    b.HasOne("Eduverse.Model.Entities.AppUser", "AppUser")
+                        .WithMany()
+                        .HasForeignKey("AppUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppUser");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.RefreshToken", b =>

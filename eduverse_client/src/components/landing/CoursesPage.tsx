@@ -361,7 +361,7 @@ export default function CoursesPage() {
                 tập được cá nhân hóa, công nghệ hiện đại và cộng đồng học viên dẫn đầu.
               </Typography>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3, alignItems: 'stretch' }}>
                 <TextFieldAny
                   fullWidth
                   variant="outlined"
@@ -378,8 +378,22 @@ export default function CoursesPage() {
                   sx={{
                     maxWidth: 420,
                     '& .MuiOutlinedInput-root': {
+                      height: 48,
                       bgcolor: '#fff',
                       borderRadius: 2.8,
+                      transition: 'box-shadow 160ms ease, border-color 160ms ease',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(17,17,17,0.12)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(127,29,29,0.38)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#7f1d1d',
+                      },
+                      '&.Mui-focused': {
+                        boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
+                      },
                     },
                   }}
                 />
@@ -387,8 +401,15 @@ export default function CoursesPage() {
                   variant="contained"
                   sx={{
                     px: 3.2,
+                    height: 48,
                     borderRadius: 2.8,
                     background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
+                    boxShadow: '0 8px 20px rgba(127,29,29,0.18)',
+                    transition: 'background 160ms ease, box-shadow 160ms ease',
+                    '&:hover': {
+                      background: 'linear-gradient(90deg, #7f1d1d 0%, #6b1414 100%)',
+                      boxShadow: '0 10px 24px rgba(127,29,29,0.24)',
+                    },
                   }}
                 >
                   Tìm kiếm ngay
@@ -418,7 +439,7 @@ export default function CoursesPage() {
                   }}
                 >
                   <Image
-                    src="/auth/img/Illustration Section.png"
+                    src="/auth/img/Illustration_Section_v2.png"
                     alt="EduVerse learning space"
                     fill
                     priority
