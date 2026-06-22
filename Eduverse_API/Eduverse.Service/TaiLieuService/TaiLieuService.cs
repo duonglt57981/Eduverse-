@@ -7,6 +7,7 @@ using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.TaiLieuService.Dto;
 using Eduverse.Service.TaiLieuService.Request;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Eduverse.Service.TaiLieuService
@@ -54,48 +55,13 @@ namespace Eduverse.Service.TaiLieuService
                 TenTaiLieu = request.TenTaiLieu.Trim(),
                 URL = uploadResult.UrlDoc.Trim(),
                 LoaiTaiLieu = fileExtension.Trim(),
-                TrangThai = "HoatDong",
+                TrangThai = "ChoDuyet",
+                TrangThaiPheDuyet = "ChoDuyet"
             };
 
             await CreateAsync(entity);
             await SaveAsync();
             return _mapper.Map<TaiLieu, TaiLieuDto>(entity);
-        }
-
-
-        public async Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            var baiGiang = await _baiGiangRepository.GetByIdAsync(request.IdBaiGiang);
-            if (baiGiang == null)
-                throw new Exception("Không tìm thấy bài giảng");
-
-            var entityCu = await GetByIdAsync(request.Id);
-            if (entityCu == null)
-                throw new Exception("Không tìm thấy tài liệu");
-            await DeleteAsync(entityCu);
-
-            var uploadResult = await _cloudinaryService.UploadDocumentAsync(request.Document);
-
-            var fileExtension = Path.GetExtension(request.Document.FileName).TrimStart('.').ToUpper();
-
-            // Tạo bản ghi mới
-            var entityMoi = new TaiLieu
-            {
-                Id = Guid.NewGuid(),
-                IdBaiGiang = request.IdBaiGiang.Value,
-                TenTaiLieu = request.TenTaiLieu.Trim(),
-                URL = uploadResult.UrlDoc.Trim(),
-                LoaiTaiLieu = fileExtension.Trim(),
-                TrangThai = "HoatDong",
-            };
-
-            await CreateAsync(entityMoi);
-            await SaveAsync();
-
-            return _mapper.Map<TaiLieu, TaiLieuDto>(entityMoi);
         }
 
 
@@ -105,7 +71,7 @@ namespace Eduverse.Service.TaiLieuService
             if (taiLieu == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            taiLieu.TrangThai = "NgungHoatDong";
+            taiLieu.TrangThai = "DaXoa";
 
             await DeleteAsync(taiLieu);
             await SaveAsync();

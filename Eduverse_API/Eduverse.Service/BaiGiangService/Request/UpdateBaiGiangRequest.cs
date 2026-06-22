@@ -17,7 +17,6 @@ namespace Eduverse.Service.BaiGiangService.Request
         public string? URLBaiGiang { get; set; }
         public int? ThuTuSapXep { get; set; }
         public bool? LaBaiGiangFree { get; set; } = false;
-        public string? TrangThai { get; set; } = "Hoạt động";
         public Guid? IdPhan { get; set; }
 
         //

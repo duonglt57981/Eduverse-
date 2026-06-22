@@ -16,6 +16,7 @@ using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Eduverse.Service.PhanService
@@ -88,7 +89,9 @@ namespace Eduverse.Service.PhanService
                 TenPhan = request.TenPhan.Trim(),
                 MieuTa = request.MieuTa,
                 ThuTuSapXep = maxThuTu + 1,
-                TrangThai = "HoatDong"
+                TrangThai = "HoatDong",
+                TrangThaiPheDuyet = "DaDuyet"
+
             };
 
 
@@ -142,7 +145,8 @@ namespace Eduverse.Service.PhanService
             entity.IdKhoaHoc = request.IdKhoaHoc;
             entity.TenPhan = request.TenPhan.Trim();
             entity.ThuTuSapXep = request.ThuTuSapXep;
-            entity.TrangThai = "ChoDuyetS";
+            entity.TrangThai = "HoatDong";
+            entity.TrangThaiPheDuyet = "DaDuyet";
 
             await UpdateAsync(entity);
             await SaveAsync();

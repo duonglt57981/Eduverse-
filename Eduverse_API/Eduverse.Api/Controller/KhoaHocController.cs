@@ -84,6 +84,37 @@ namespace Eduverse.Api.Controller
             }
         }
 
+        [HttpPost("khoahoc-chuyentrangthai-dangsua")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> ChuyenTTDangSua([FromForm] Guid id)
+        {
+            try
+            {
+                var result = await _khoaHocService.ChuyenTrangThaiDangSua(id);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("khoahoc-chuyentrangthai-choduyet")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> ChuyenTTChoDuyet([FromForm] Guid id)
+        {
+            try
+            {
+                var result = await _khoaHocService.ChuyenTrangThaiChoDuyet(id);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
+        }
+
 
         [HttpPost("khoahoc-create")]   
         [Consumes("multipart/form-data")]

@@ -12,6 +12,7 @@ using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Eduverse.Service.BaiGiangService
@@ -83,8 +84,9 @@ namespace Eduverse.Service.BaiGiangService
                 ThuTuSapXep = maxThuTu + 1,
                 ThoiLuong = thoiLuongBaiGiang,
                 LaBaiGiangFree = request.LaBaiGiangFree,
-                TrangThai = "HoatDong",
-                CreatedDate = DateTime.UtcNow
+                TrangThai = "DangSua",
+                TrangThaiPheDuyet = "DangSua",
+                IsBanHienTai = true,
             };
 
             await CreateAsync(entity);
@@ -97,6 +99,26 @@ namespace Eduverse.Service.BaiGiangService
         public async Task<BaiGiangDto> UpdateBaiGiang(UpdateBaiGiangRequest request)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+
+            var banGoc = await GetQueryable()
+               .FirstOrDefaultAsync(x => x.Id == request.IdBaiGiang && x.IsBanHienTai);
+
+            if (banGoc.CreatedId != nguoiTao)
+                throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
+
+            if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
+                throw new Exception("Chuyển sang DangSua để sửa khóa học này!");
+
+            if (banGoc.TrangThaiPheDuyet == "DangDuyet")
+                throw new Exception(
+                   $"❌ BÀI GIANG ĐANG ĐƯỢC KIỂM DUYỆT!\n" +
+                   $"Hệ thống Eduverses đang kiểm duyệt bài giảng này" +
+                   $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
+                   $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin ."
+               );
+
+            if (banGoc == null)
+                throw new Exception("Không tim thấy bài giảng");
 
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -111,12 +133,6 @@ namespace Eduverse.Service.BaiGiangService
             if (phanHoc == null)
                 throw new Exception("Không tìm thấy phần học");
 
-            var banGoc = await GetQueryable()
-               .FirstOrDefaultAsync(x => x.Id == request.IdBaiGiang && x.IsBanHienTai);
-            if (banGoc == null)
-                throw new Exception("Không tim thấy bài giảng");
-
-
             var thuTuDaTon = await GetQueryable()
                 .AnyAsync(x =>
                     x.IdPhan == request.IdPhan &&
@@ -126,18 +142,6 @@ namespace Eduverse.Service.BaiGiangService
 
             if (thuTuDaTon)
                 throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại");
-
-            var checkTrangThaiDangDuyet = await GetAll()
-                .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
-                                        && !x.IsDeleted
-                                        && x.TrangThai == "DangDuyet");
-            if (checkTrangThaiDangDuyet != null)
-                throw new Exception(
-                   $"❌ BÀI GIANG ĐANG ĐƯỢC KIỂM DUYỆT!\n" +
-                   $"Hệ thống Eduverses đang kiểm duyệt bài giảng này" +
-                   $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
-                   $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin ."
-               );
 
             string video = banGoc.URLBaiGiang;
             string idVideo = banGoc.IdVideoBaiGiang;
@@ -156,24 +160,86 @@ namespace Eduverse.Service.BaiGiangService
 
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
 
-            var banNhapBaiGiang = new BaiGiang
+            if((banGoc.TrangThaiPheDuyet == "DangSua") && banGoc.IsBanHienTai == true && banGoc != null)
             {
-                IdPhan = request.IdPhan.Value,
-                IdBanGhiTruoc = banGoc.Id,
-                TieuDe = request.TieuDe,
-                ThuTuSapXep = request.ThuTuSapXep,
-                LaBaiGiangFree = request.LaBaiGiangFree,
-                IdVideoBaiGiang = idVideo,
-                URLBaiGiang = video,
-                ThoiLuong = thoiLuong,
-                LoaiBaiGiang = thoiLuong == null ? "Bài giảng tài liệu" : "Bài giảng video",
-                IsPendingSwap = false,
-            };
+                banGoc.IdPhan = request.IdPhan.Value;
+                banGoc.TieuDe = request.TieuDe;
+                banGoc.ThuTuSapXep = request.ThuTuSapXep;
+                banGoc.LaBaiGiangFree = request.LaBaiGiangFree;
+                banGoc.IdVideoBaiGiang = idVideo;
+                banGoc.URLBaiGiang = video;
+                banGoc.ThoiLuong = thoiLuong;
+                banGoc.LoaiBaiGiang = thoiLuong == null ? "Bài giảng tài liệu" : "Bài giảng video";
+                banGoc.IsPendingSwap = false;
+                banGoc.TrangThai = "DangSua";
+                banGoc.TrangThaiPheDuyet = "DangSua";
 
-            await CreateAsync(banNhapBaiGiang);
-            await SaveAsync();
 
-            return _mapper.Map<BaiGiang, BaiGiangDto>(banNhapBaiGiang);
+            }
+
+            var banNhap = await GetAll()
+               .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
+                                       && !x.IsDeleted
+                                       && (x.TrangThaiPheDuyet == "ChoDuyet"
+                                           || x.TrangThaiPheDuyet == "DaDuyet"
+                                           || x.TrangThaiPheDuyet == "TuChoi"
+                                           || x.TrangThaiPheDuyet == "DangDuyet"
+                                           || x.TrangThaiPheDuyet == "DangSua"));
+
+            if(banNhap.TrangThaiPheDuyet == "DangSua" && banNhap != null)
+            {
+                if (banNhap.CreatedId != nguoiTao)
+                    throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
+
+                if (banNhap.TrangThaiPheDuyet == "ChoDuyet")
+                    throw new Exception("Chuyển sang DangSua để sửa khóa học này!");
+
+                if (banNhap.TrangThaiPheDuyet == "DangDuyet")
+                    throw new Exception(
+                           $"❌ KHÓA HỌC ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
+                           $"Hệ thống Eduverses đang kiểm duyệt khóa học này" +
+                           $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
+                           $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
+                    );
+
+                banNhap.IdPhan = request.IdPhan.Value;
+                banNhap.IdBanGhiTruoc = banGoc.Id;
+                banNhap.TieuDe = request.TieuDe;
+                banNhap.ThuTuSapXep = request.ThuTuSapXep;
+                banNhap.LaBaiGiangFree = request.LaBaiGiangFree;
+                banNhap.IdVideoBaiGiang = idVideo;
+                banNhap.URLBaiGiang = video;
+                banNhap.ThoiLuong = thoiLuong;
+                banNhap.LoaiBaiGiang = thoiLuong == null ? "Bài giảng tài liệu" : "Bài giảng video";
+                banNhap.IsPendingSwap = false;
+
+
+                await UpdateAsync(banNhap);
+                await SaveAsync();
+            }
+            else if(banGoc.TrangThaiPheDuyet != "DangSua")
+            {
+                var banNhapBaiGiang = new BaiGiang
+                {
+                    IdPhan = request.IdPhan.Value,
+                    IdBanGhiTruoc = banGoc.Id,
+                    TieuDe = request.TieuDe,
+                    ThuTuSapXep = request.ThuTuSapXep,
+                    LaBaiGiangFree = request.LaBaiGiangFree,
+                    IdVideoBaiGiang = idVideo,
+                    URLBaiGiang = video,
+                    ThoiLuong = thoiLuong,
+                    LoaiBaiGiang = thoiLuong == null ? "Bài giảng tài liệu" : "Bài giảng video",
+                    IsPendingSwap = false,
+                };
+
+                await CreateAsync(banNhapBaiGiang);
+                await SaveAsync();
+            }
+
+            
+
+            return _mapper.Map<BaiGiang, BaiGiangDto>(banNhap);
         }
 
 

@@ -24,18 +24,18 @@ namespace Eduverse.Api.Controller
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
         }
 
-        [HttpGet("kiemduyet-khoahoc-getlist")]
+        [HttpGet("kiemduyet-khoahoc-getdanhsach")]
         [Authorize(Roles = "Admin")]
-        public async Task<DataResponse<PagedList<GetListKiemDuyetDto>>> GetListKiemDuyetKhoaHoc([FromQuery] KhoaHocKiemDuyetSearchDto search)
+        public async Task<DataResponse<PagedList<KhoaHocKiemDuyetListDto>>> GetListKiemDuyetKhoaHoc([FromQuery] KhoaHocKiemDuyetSearchDto search)
         {
             try
             {
-                var result = await _lichSuKiemDuyetKhoaHocService.GetListKhoaHocKiemDuyet(search);
-                return DataResponse<PagedList<GetListKiemDuyetDto>>.Success(result);
+                var result = await _lichSuKiemDuyetKhoaHocService.GetDanhSachKiemDuyet(search);
+                return DataResponse<PagedList<KhoaHocKiemDuyetListDto>>.Success(result);
             }
             catch (Exception ex)
             {
-                return DataResponse<PagedList<GetListKiemDuyetDto>>.False(ex.Message);
+                return DataResponse<PagedList<KhoaHocKiemDuyetListDto>>.False(ex.Message);
             }
         }
 
@@ -56,21 +56,38 @@ namespace Eduverse.Api.Controller
         //}   
 
 
-        //[HttpPost("kiemduyet-khoahoc")]
-        //[Authorize(Roles = "Admin")]
-        //public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc([FromForm] KiemDuyetKhoaHocRequest request)
-        //{
-        //    try
-        //    {
-        //        var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetKhoaHoc(request);
-        //        return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
-                
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
-        //    }
-        //}
+        [HttpPost("kiemduyet-khoahoc")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc([FromForm] KiemDuyetKhoaHocRequest request)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetKhoaHoc(request);
+                return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
+
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("kiemduyet-baigiang")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetBaiGiang([FromForm] KiemDuyetKhoaHocRequest request)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetBaiGiang(request);
+                return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
+
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
+            }
+        }
 
 
         [HttpGet("kiemduyet-khoahoc-gethistory/{idKhoaHoc}")]
