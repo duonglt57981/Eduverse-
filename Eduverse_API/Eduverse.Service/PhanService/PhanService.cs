@@ -78,8 +78,8 @@ namespace Eduverse.Service.PhanService
                 .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
 
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MieuTa);
+            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
+            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MieuTa);
 
 
             var entity = new Phan

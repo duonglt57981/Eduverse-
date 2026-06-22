@@ -34,6 +34,7 @@ using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.TaiLieuService.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -42,7 +43,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
@@ -225,78 +225,77 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         #endregion
 
 
-        //#region GetDetailKiemDuyet
-        //// ===== 2. Chi tiết kiểm duyệt 1 khóa học =====
-        //public async Task<KhoaHocKiemDuyetDetailDto> GetDetailKiemDuyet(Guid idKhoaHoc)
-        //{
-        //    const string CHO_DUYET = "ChoDuyet";
+        #region GetDetailKiemDuyet
+        // ===== 2. Chi tiết kiểm duyệt 1 khóa học =====
+        public async Task<KiemDuyetDetailDto> GetDetailKiemDuyet(Guid idKhoaHoc)
+        {
+            const string CHO_DUYET = "ChoDuyet";
 
-        //    var khoaHoc = await _khoaHocRepository.GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => x.Id == idKhoaHoc)
-        //        .Select(x => new { x.Id, x.TenKhoaHoc, x.MoTa })
-        //        .FirstOrDefaultAsync();
+            var khoaHoc = await _khoaHocRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.Id == idKhoaHoc)
+                .Select(x => new { x.Id, x.TieuDe, x.MoTa })
+                .FirstOrDefaultAsync();
 
-        //    if (khoaHoc == null)
-        //        return null;
+            if (khoaHoc == null)
+                return null;
 
-        //    var idPhans = await _phanRepository.GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => x.IdKhoaHoc == idKhoaHoc)
-        //        .Select(x => x.Id)
-        //        .ToListAsync();
+            var idPhans = await _phanRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc)
+                .Select(x => x.Id)
+                .ToListAsync();
 
-        //    if (!idPhans.Any())
-        //    {
-        //        return new KhoaHocKiemDuyetDetailDto
-        //        {
-        //            IdKhoaHoc = khoaHoc.Id,
-        //            TenKhoaHoc = khoaHoc.TenKhoaHoc,
-        //            MoTa = khoaHoc.MoTa
-        //        };
-        //    }
+            if (!idPhans.Any())
+            {
+                return new KiemDuyetDetailDto
+                {
+                    IdKhoaHoc = khoaHoc.Id,
+                    TenKhoaHoc = khoaHoc.TieuDe,
+                    MoTa = khoaHoc.MoTa
+                };
+            }
 
-        //    var allBaiGiang = await _baiGiangRepository.GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => idPhans.Contains(x.IdPhan))
-        //        .Select(x => new { x.Id, x.IdBanGhiTruoc, x.TenBaiGiang, x.TrangThaiPheDuyet })
-        //        .ToListAsync();
+            var allBaiGiang = await _baiGiangRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => idPhans.Contains(x.IdPhan))
+                .Select(x => new { x.Id, x.IdBanGhiTruoc, x.TieuDe, x.TrangThaiPheDuyet })
+                .ToListAsync();
 
-        //    var idBaiGiangs = allBaiGiang.Select(x => x.Id).ToList();
+            var idBaiGiangs = allBaiGiang.Select(x => x.Id).ToList();
 
-        //    var baiGiangChoDuyet = allBaiGiang
-        //        .Where(x => x.TrangThaiPheDuyet == CHO_DUYET)
-        //        .Select(x => new BaiGiangChoDuyetDto
-        //        {
-        //            IdBaiGiang = x.Id,
-        //            IdBanGhiTruoc = x.IdBanGhiTruoc,
-        //            TenBaiGiang = x.TenBaiGiang,
-        //            TrangThaiPheDuyet = x.TrangThaiPheDuyet
-        //        })
-        //        .ToList();
+            var baiGiangChoDuyet = allBaiGiang
+                .Where(x => x.TrangThaiPheDuyet == CHO_DUYET)
+                .Select(x => new BaiGiangChoDuyetDto
+                {
+                    IdBaiGiang = x.Id,
+                    IdBanGhiTruoc = x.IdBanGhiTruoc,
+                    TenBaiGiang = x.TieuDe,
+                    TrangThaiPheDuyet = x.TrangThaiPheDuyet
+                })
+                .ToList();
 
-        //    var taiLieuChoDuyet = await _taiLieuRepository.GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => idBaiGiangs.Contains(x.IdBaiGiang) && x.TrangThaiPheDuyet == CHO_DUYET)
-        //        .Select(x => new TaiLieuChoDuyetDto
-        //        {
-        //            IdTaiLieu = x.Id,
-        //            IdBanGhiTruoc = x.IdBanGhiTruoc,
-        //            TenTaiLieu = x.TenTaiLieu,
-        //            TrangThaiPheDuyet = x.TrangThaiPheDuyet
-        //        })
-        //        .ToListAsync();
+            var taiLieuChoDuyet = await _taiLieuRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => idBaiGiangs.Contains(x.IdBaiGiang) && x.TrangThaiPheDuyet == CHO_DUYET)
+                .Select(x => new TaiLieuChoDuyetDto
+                {
+                    IdTaiLieu = x.Id,
+                    TenTaiLieu = x.TenTaiLieu,
+                    TrangThaiPheDuyet = x.TrangThaiPheDuyet
+                })
+                .ToListAsync();
 
-        //    return new KhoaHocKiemDuyetDetailDto
-        //    {
-        //        IdKhoaHoc = khoaHoc.Id,
-        //        TenKhoaHoc = khoaHoc.TenKhoaHoc,
-        //        MoTa = khoaHoc.MoTa,
-        //        BaiGiangChoDuyet = baiGiangChoDuyet,
-        //        TaiLieuChoDuyet = taiLieuChoDuyet
-        //    };
-        //}
-        //#endregion
+            return new KiemDuyetDetailDto
+            {
+                IdKhoaHoc = khoaHoc.Id,
+                TenKhoaHoc = khoaHoc.TieuDe,
+                MoTa = khoaHoc.MoTa,
+                BaiGiangChoDuyet = baiGiangChoDuyet,
+                TaiLieuChoDuyet = taiLieuChoDuyet
+            };
+        }
+        #endregion
 
 
         #region GetLichSuKiemDuyet
@@ -779,6 +778,10 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 NgayDuyet = ngayDuyet
             };
         }
+        #endregion
+
+
+        #region KiemDuyetBaiKiemTras
         #endregion
         #endregion
 
