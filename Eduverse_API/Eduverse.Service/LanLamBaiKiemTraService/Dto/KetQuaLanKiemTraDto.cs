@@ -12,6 +12,7 @@ namespace Eduverse.Service.LanLamBaiKiemTraService.Dto
         public bool Dat { get; set; }
         public double TongDiem { get; set; }// điểm thực tế đạt được
         public int SoCauDung { get; set; }
+        public int SoCauSai { get; set; }
         public int TongSoCau { get; set; }
         public DateTime? ThoiGianNop { get; set; }
         public bool DatYeuCau { get; set; }       

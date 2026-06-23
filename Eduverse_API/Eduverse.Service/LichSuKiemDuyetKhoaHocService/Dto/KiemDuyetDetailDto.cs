@@ -9,22 +9,31 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
 {
-    public class KiemDuyetDetailDto : KhoaHoc
+    public class KiemDuyetDetailDto 
     {
-        public Guid idDangKiKhoaHoc { get; set; }
-        public Guid IdBanNhap { get; set; }
-        public DateTime? NgayDangKy { get; set; }
-        public bool DaDangKy { get; set; }
-        public int SoBaiGiangHoanThanh { get; set; }
-        public double PhanTramHoanThanh { get; set; }
+        public Guid IdKhoaHoc { get; set; }
+        public string TenKhoaHoc { get; set; }
+        public string MoTa { get; set; }
+        public string TrangThaiPheDuyet { get; set; }
+        public List<BaiGiangChoDuyetDto> BaiGiangChoDuyet { get; set; } = new();
+        public List<TaiLieuChoDuyetDto> TaiLieuChoDuyet { get; set; } = new();
+    }
 
-        public bool IsDangSua { get; set; }
-        public bool IsLocked { get; set; }
-        public string? LockedBy { get; set; }
-        public DateTime? LockedAt { get; set; }
-        public bool IsCurrentUserLocked { get; set; }
-        //thêm list 
-        public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
-        public List<string>? DanhMucs { get; set; }
+    public class BaiGiangChoDuyetDto
+    {
+        public Guid IdBaiGiang { get; set; }
+        public Guid? IdBanGhiTruoc { get; set; }
+        public string TenBaiGiang { get; set; }
+        public string TrangThaiPheDuyet { get; set; }
+        public DateTime? NgayGuiDuyet { get; set; }
+    }
+
+    public class TaiLieuChoDuyetDto
+    {
+        public Guid IdTaiLieu { get; set; }
+        public Guid? IdBanGhiTruoc { get; set; }
+        public string TenTaiLieu { get; set; }
+        public string TrangThaiPheDuyet { get; set; }
+        public DateTime? NgayGuiDuyet { get; set; }
     }
 }
