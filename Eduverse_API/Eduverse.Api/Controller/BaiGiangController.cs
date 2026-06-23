@@ -1,6 +1,7 @@
 ﻿using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.BaiGiangService.Request;
+using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.PhanService;
 using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,38 @@ namespace Eduverse.Api.Controller
 
             _baiGiangService = baiGiangService;
 
+        }
+
+
+        [HttpPost("khoahoc-chuyentrangthai-dangsua")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<BaiGiangDto>> ChuyenTTDangSua([FromForm] Guid id)
+        {
+            try
+            {
+                var result = await _baiGiangService.ChuyenTrangThaiDangSua(id);
+                return DataResponse<BaiGiangDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<BaiGiangDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("khoahoc-chuyentrangthai-choduyet")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<BaiGiangDto>> ChuyenTTChoDuyet([FromForm] Guid id)
+        {
+            try
+            {
+                var result = await _baiGiangService.ChuyenTrangThaiChoDuyet(id);
+                return DataResponse<BaiGiangDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<BaiGiangDto>.False(ex.Message);
+            }
         }
 
         [HttpPost("baigiang")]

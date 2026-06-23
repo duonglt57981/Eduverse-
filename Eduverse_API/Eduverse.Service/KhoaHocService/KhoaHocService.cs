@@ -1447,37 +1447,33 @@ namespace Eduverse.Service.KhoaHocService
         #region SwapPendingBaiGiang
         private async Task SwapPendingBaiGiang(List<Guid> phanIds)
         {
-            var baiGiangCuList = await _baiGiangRepository.GetQueryable()
-                .Where(x => phanIds.Contains(x.IdPhan)
-                         && x.IsPendingSwap
-                         && x.IdBaiGiangMoi.HasValue
+            // Lấy id các bài giảng hiện tại (bản gốc) thuộc các phần này
+            var baiGiangGocList = await _baiGiangRepository.GetQueryable()
+                .Where(x => phanIds.Contains(x.IdPhan) && !x.IsDeleted)
+                .ToListAsync();
+
+            if (!baiGiangGocList.Any())
+                return;
+
+            var idsBaiGiangGoc = baiGiangGocList.Select(x => x.Id).ToList();
+
+            // Tìm bản ghi mới (draft) đã duyệt, đang chờ active, trỏ về bản gốc qua IdBanGhiTruoc
+            var baiGiangMoiList = await _baiGiangRepository.GetQueryable()
+                .Where(x => x.IdBanGhiTruoc.HasValue
+                         && idsBaiGiangGoc.Contains(x.IdBanGhiTruoc.Value)
+                         && x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.TrangThai == "BanNhap"
+                         && x.IsBanHienTai == false
                          && !x.IsDeleted)
                 .ToListAsync();
 
-            if (!baiGiangCuList.Any())
+            if (!baiGiangMoiList.Any())
                 return;
 
-            var idsBaiGiangMoi = baiGiangCuList
-                .Select(x => x.IdBaiGiangMoi!.Value)
-                .ToList();
+            var baiGiangGocDict = baiGiangGocList.ToDictionary(x => x.Id);
 
-            var baiGiangMoiList = await _baiGiangRepository.GetQueryable()
-                .Where(x => idsBaiGiangMoi.Contains(x.Id))
-                .ToListAsync();
+            var idsBaiGiangMoi = baiGiangMoiList.Select(x => x.Id).ToList();
 
-            var baiGiangMoiDict = baiGiangMoiList.ToDictionary(x => x.Id);
-
-            var idsBaiGiangCu = baiGiangCuList.Select(x => x.Id).ToList();
-
-            var taiLieus = await _taiLieuRepository.GetQueryable()
-                .Where(x => idsBaiGiangCu.Contains(x.IdBaiGiang) && !x.IsDeleted)
-                .ToListAsync();
-
-            var taiLieuByBaiGiangCu = taiLieus
-                .GroupBy(x => x.IdBaiGiang)
-                .ToDictionary(x => x.Key, x => x.ToList());
-
-            // Lấy IdKhoaHoc từ phần học đầu tiên
             Guid khoaHocId = Guid.Empty;
             if (phanIds.Any())
             {
@@ -1488,33 +1484,24 @@ namespace Eduverse.Service.KhoaHocService
                 khoaHocId = firstPhan.Value;
             }
 
-            foreach (var cu in baiGiangCuList)
+            foreach (var moi in baiGiangMoiList)
             {
-                if (!baiGiangMoiDict.TryGetValue(cu.IdBaiGiangMoi!.Value, out var moi))
+                if (!baiGiangGocDict.TryGetValue(moi.IdBanGhiTruoc!.Value, out var goc))
                     continue;
 
-                cu.IsDeleted = true;
-                cu.IsPendingSwap = false;
-                cu.IdBaiGiangMoi = null;
+                // Copy nội dung từ bản MỚI sang bản GỐC, giữ vị trí/Id của bản gốc
+                goc.TieuDe = moi.TieuDe;
+                goc.LoaiBaiGiang = moi.LoaiBaiGiang;
+                goc.IdVideoBaiGiang = moi.IdVideoBaiGiang;
+                goc.URLBaiGiang = moi.URLBaiGiang;
+                goc.ThoiLuong = moi.ThoiLuong;
+                // ThuTuSapXep, LaBaiGiangFree, IdPhan: giữ nguyên theo bản gốc
 
-                moi.TrangThai = "HoatDong";
-                moi.ThuTuSapXep = cu.ThuTuSapXep;
-                moi.LaBaiGiangFree = cu.LaBaiGiangFree;
 
-                if (taiLieuByBaiGiangCu.TryGetValue(cu.Id, out var dsTaiLieu))
-                {
-                    foreach (var tl in dsTaiLieu)
-                        tl.IdBaiGiang = moi.Id;
-                }
-
-                 _baiGiangRepository.Update(cu);
-                 _baiGiangRepository.Update(moi);
+                _baiGiangRepository.Update(goc);
+                _baiGiangRepository.Update(moi);
             }
 
-            await _taiLieuRepository.SaveAsync();
-            await _baiGiangRepository.SaveAsync();
-
-            // Xóa cache sau khi swap để lần sau lấy dữ liệu mới
             if (khoaHocId != Guid.Empty)
             {
                 InvalidateCourseCache(khoaHocId, phanIds);
@@ -1768,9 +1755,6 @@ namespace Eduverse.Service.KhoaHocService
             }
 
             var isFree = request.Gia <= 0;
-
-            
-
 
             if (banGoc.TrangThaiPheDuyet == "DangSua" && banGoc.IsBanHienTai == true && banGoc != null)
             {
