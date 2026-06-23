@@ -442,12 +442,14 @@ export default function InstructorsPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Tìm tên giảng viên..."
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
                 sx={{
                   maxWidth: { xs: '100%', lg: 300 },

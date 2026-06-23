@@ -14,13 +14,16 @@ import {
   SchoolRounded,
   SettingsRounded,
   TimelineRounded,
+  CategoryRounded,
 } from '@mui/icons-material';
 import type { SvgIconComponent } from '@mui/icons-material';
 
 export type DashboardNavItem = {
   label: string;
   icon: SvgIconComponent;
+  href?: string;
   active?: boolean;
+  children?: DashboardNavItem[];
 };
 
 export type DashboardStatCard = {
@@ -72,19 +75,20 @@ export type DashboardActivity = {
 };
 
 export const sidebarPrimaryItems: DashboardNavItem[] = [
-  { label: 'Trang chủ', icon: HomeRounded, active: true },
+  { label: 'Trang chủ', icon: HomeRounded, href: '/dashboard', active: true },
+  { label: 'Quản lý danh mục', icon: CategoryRounded },
   { label: 'Khóa học của tôi', icon: MenuBookRounded },
   { label: 'Khám phá', icon: ExploreRounded },
   { label: 'Lịch học', icon: CalendarMonthRounded },
   { label: 'Kiểm tra', icon: QuizRounded },
-  { label: 'Chứng chỉ', icon: EmojiEventsRounded },
-  { label: 'Yêu thích', icon: FavoriteBorderRounded },
+  { label: 'Chứng chỉ', icon: EmojiEventsRounded, href: '/dashboard/chungchi' },
+  { label: 'Yêu thích', icon: FavoriteBorderRounded, href: 'favorite' },
   { label: 'Thông báo', icon: NotificationsRounded },
 ] as const;
 
 export const sidebarSecondaryItems: DashboardNavItem[] = [
   { label: 'Hồ sơ', icon: SchoolRounded },
-  { label: 'Cài đặt', icon: SettingsRounded },
+  { label: 'Cài đặt', icon: SettingsRounded, href: 'settings' },
 ] as const;
 
 export const statCards: DashboardStatCard[] = [

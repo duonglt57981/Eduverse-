@@ -1,0 +1,46 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  AccessTimeRounded,
+  ArrowForwardRounded,
+  ChevronRightRounded,
+  ExpandLessRounded,
+  ExpandMoreRounded,
+  LogoutRounded,
+  MailOutlineRounded,
+  MenuRounded,
+  NotificationsNoneRounded,
+  SearchRounded,
+  WbTwilightRounded,
+} from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Divider,
+  Drawer,
+  IconButton,
+  InputBase,
+  LinearProgress,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { logout } from '@/src/store/auth/AuthSlice';
+import { useDispatch } from '@/src/store/hook';
+import { useDanhMucForSidebar } from '@/src/hooks/useDanhMucForSidebar';
+import {
+  activities,
+  featuredCourses,
+  inProgressCourses,
+  quickActions,
+  recentAssessments,
+  sidebarPrimaryItems,
+  sidebarSeco

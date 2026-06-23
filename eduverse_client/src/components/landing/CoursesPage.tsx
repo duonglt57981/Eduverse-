@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
+  FavoriteRounded,
   MenuBookRounded,
   QueryStatsRounded,
   SchoolRounded,
@@ -13,6 +14,7 @@ import {
   StarRounded,
   TimerRounded,
 } from '@mui/icons-material';
+import { useFavorite } from '@/src/features/favorite/hooks/useFavorite';
 import {
   Box,
   Button,
@@ -124,6 +126,9 @@ function FilterGroup({
 }
 
 function CourseCard({ course }: { course: CourseCatalogItem }) {
+  const { isFavorited, toggleFavorite } = useFavorite();
+  const favorited = isFavorited(course.id);
+
   return (
     <Paper
       elevation={0}
@@ -142,7 +147,10 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
       <Box sx={{ position: 'relative' }}>
         <CourseVisual palette={course.palette} badge={course.badge} />
         <Button
-          minWidth={0}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            toggleFavorite(course.id, course.title);
+          }}
           sx={{
             position: 'absolute',
             top: 14,
@@ -154,9 +162,18 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             borderRadius: '50%',
             bgcolor: 'rgba(255,255,255,0.9)',
             color: '#8d1313',
+            transition: 'transform 150ms ease',
+            '&:hover': {
+              transform: 'scale(1.1)',
+              bgcolor: '#ffffff',
+            },
           }}
         >
-          <FavoriteBorderRounded sx={{ fontSize: 18 }} />
+          {favorited ? (
+            <FavoriteRounded sx={{ fontSize: 18, color: '#8d1313' }} />
+          ) : (
+            <FavoriteBorderRounded sx={{ fontSize: 18 }} />
+          )}
         </Button>
       </Box>
 
@@ -261,6 +278,12 @@ export default function CoursesPage() {
   const [sortBy, setSortBy] = useState<CourseSortOption>('newest');
   const [freeOnly, setFreeOnly] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+
+  const { fetchFavorites } = useFavorite();
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
 
   const filteredCourses = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();

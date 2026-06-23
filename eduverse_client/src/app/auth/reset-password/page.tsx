@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
 import { resetPassword } from '../../../store/auth/AuthSlice';
@@ -14,13 +14,15 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { ArrowBackRounded, VisibilityOffRounded, VisibilityRounded } from '@mui/icons-material';
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const dispatch    = useDispatch();
   const router      = useRouter();
   const params      = useSearchParams();
   const { loading, error, successMessage } = useSelector((s) => s.auth);
+  const theme       = useTheme();
 
   const [newPassword, setNewPassword] = useState('');
   const [showPass, setShowPass]       = useState(false);
@@ -35,6 +37,9 @@ export default function ResetPasswordPage() {
     }
   };
 
+  const primaryColor = theme.palette.primary.main;
+  const primaryDark = theme.palette.primary.dark;
+
   return (
     <Box
       sx={{
@@ -42,7 +47,7 @@ export default function ResetPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: '#f9f8f6',
+        bgcolor: 'background.default',
         px: 2,
       }}
     >
@@ -52,9 +57,9 @@ export default function ResetPasswordPage() {
           width: '100%',
           maxWidth: 460,
           borderRadius: 4,
-          border: '1px solid rgba(17,17,17,0.10)',
+          border: `1px solid ${theme.palette.divider}`,
           p: { xs: 3, sm: 4 },
-          bgcolor: '#fff',
+          bgcolor: 'background.paper',
         }}
       >
         <Stack spacing={2.5}>
@@ -65,18 +70,18 @@ export default function ResetPasswordPage() {
               aria-label="Quay lại đăng nhập"
               size="small"
               sx={{
-                border: '1px solid rgba(17,17,17,0.10)',
-                bgcolor: 'rgba(17,17,17,0.02)',
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.action.hover,
               }}
             >
               <ArrowBackRounded fontSize="small" />
             </IconButton>
-            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.4px' }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.4px', color: 'text.primary' }}>
               Đặt lại mật khẩu
             </Typography>
           </Stack>
 
-          <Typography variant="body2" sx={{ color: 'rgba(17,17,17,0.65)' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Nhập mật khẩu mới của bạn.
           </Typography>
 
@@ -84,9 +89,9 @@ export default function ResetPasswordPage() {
             <Box
               sx={{
                 borderRadius: 2.5,
-                border: '1px solid rgba(127,29,29,0.25)',
-                bgcolor: 'rgba(127,29,29,0.06)',
-                color: '#7f1d1d',
+                border: `1px solid ${alpha(theme.palette.error.main, 0.25)}`,
+                bgcolor: alpha(theme.palette.error.main, 0.06),
+                color: 'error.main',
                 px: 2,
                 py: 1.25,
                 fontSize: 13,
@@ -137,21 +142,21 @@ export default function ResetPasswordPage() {
                   }
                   sx={{
                     borderRadius: 999,
-                    bgcolor: 'rgba(17,17,17,0.04)',
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(17,17,17,0.04)',
                     pr: 0.5,
                     transition: 'box-shadow 160ms ease, background 160ms ease',
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(17,17,17,0.08)',
+                      borderColor: theme.palette.divider,
                     },
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(17,17,17,0.14)',
+                      borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(17,17,17,0.14)',
                     },
                     '&.Mui-focused': {
-                      boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
-                      bgcolor: 'rgba(17,17,17,0.03)',
+                      boxShadow: `0 0 0 4px ${alpha(primaryColor, 0.14)}`,
+                      bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(17,17,17,0.03)',
                     },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(127,29,29,0.38)',
+                      borderColor: alpha(primaryColor, 0.38),
                     },
                   }}
                 />
@@ -165,12 +170,10 @@ export default function ResetPasswordPage() {
                   borderRadius: 999,
                   py: 1.5,
                   fontWeight: 800,
-                  background:
-                    'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-                  boxShadow: '0 14px 34px rgba(127,29,29,0.26)',
+                  background: `linear-gradient(90deg, ${primaryColor}e0 0%, ${primaryColor} 55%, ${primaryDark} 100%)`,
+                  boxShadow: `0 14px 34px ${alpha(primaryColor, 0.26)}`,
                   '&:hover': {
-                    background:
-                      'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
+                    background: `linear-gradient(90deg, ${primaryColor} 0%, ${primaryDark} 60%, ${primaryDark} 100%)`,
                   },
                 }}
               >
@@ -181,5 +184,13 @@ export default function ResetPasswordPage() {
         </Stack>
       </Paper>
     </Box>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

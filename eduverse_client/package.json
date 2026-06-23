@@ -10,20 +10,27 @@
     "prepare": "cd .. && husky eduverse_client/.husky"
   },
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.2.10",
     "@microsoft/signalr": "^10.0.0",
     "@mui/icons-material": "^9.0.1",
+    "@mui/lab": "^9.0.0-beta.5",
     "@mui/material": "^9.0.1",
+    "@mui/material-nextjs": "^9.1.1",
     "@reduxjs/toolkit": "^2.12.0",
+    "@tanstack/react-query": "^5.101.0",
     "axios": "^1.16.0",
     "cloudinary": "^2.10.0",
     "next": "^16.2.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-hook-form": "^7.79.0",
     "react-redux": "^9.3.0",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "sweetalert2": "^11.26.25",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -21,7 +21,8 @@ import {
   SvgIcon,
   Typography,
 } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
+import { useThemeSettings } from '../../../contexts/ThemeSettingsContext';
 
 function ArrowRightIcon(props: React.ComponentProps<typeof SvgIcon>) {
   return (
@@ -93,6 +94,7 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const router   = useRouter();
   const { loading, error } = useSelector((s) => s.auth);
+  const { currentAccent } = useThemeSettings();
 
   const [form, setForm] = useState({ userName: '', password: '' });
   const [showPass, setShowPass] = useState(false);
@@ -103,7 +105,7 @@ export default function LoginPage() {
       createTheme({
         palette: {
           mode: 'light',
-          primary: { main: '#7f1d1d' },
+          primary: { main: currentAccent.value, dark: currentAccent.hoverColor },
           text: { primary: '#141414', secondary: '#6f6f6f' },
           background: { default: '#f9f8f6', paper: '#ffffff' },
         },
@@ -127,7 +129,7 @@ export default function LoginPage() {
           },
         },
       }),
-    [],
+    [currentAccent],
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,8 +176,7 @@ export default function LoginPage() {
             justifyContent: 'space-between',
             position: 'relative',
             overflow: 'hidden',
-            background:
-              'linear-gradient(160deg, #9b1c1c 0%, #7f1d1d 50%, #5c1111 100%)',
+            background: `linear-gradient(160deg, ${currentAccent.value}cc 0%, ${currentAccent.value} 50%, ${currentAccent.hoverColor} 100%)`,
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -388,11 +389,11 @@ export default function LoginPage() {
                           borderColor: 'rgba(17,17,17,0.14)',
                         },
                         '&.Mui-focused': {
-                          boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
+                          boxShadow: `0 0 0 4px ${alpha(currentAccent.value, 0.14)}`,
                           bgcolor: 'rgba(17,17,17,0.03)',
                         },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(127,29,29,0.38)',
+                          borderColor: alpha(currentAccent.value, 0.38),
                         },
                       }}
                     />
@@ -417,8 +418,8 @@ export default function LoginPage() {
                       sx={{
                         fontSize: 12.5,
                         fontWeight: 700,
-                        color: '#7f1d1d',
-                        '&:hover': { color: '#5c1111' },
+                        color: 'primary.main',
+                        '&:hover': { color: 'primary.dark' },
                       }}
                     >
                       Quên mật khẩu?
@@ -461,11 +462,11 @@ export default function LoginPage() {
                           borderColor: 'rgba(17,17,17,0.14)',
                         },
                         '&.Mui-focused': {
-                          boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
+                          boxShadow: `0 0 0 4px ${alpha(currentAccent.value, 0.14)}`,
                           bgcolor: 'rgba(17,17,17,0.03)',
                         },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(127,29,29,0.38)',
+                          borderColor: alpha(currentAccent.value, 0.38),
                         },
                       }}
                     />
@@ -479,7 +480,7 @@ export default function LoginPage() {
                       onChange={(e) => setRemember(e.target.checked)}
                       sx={{
                         color: 'rgba(17,17,17,0.35)',
-                        '&.Mui-checked': { color: '#7f1d1d' },
+                        '&.Mui-checked': { color: 'primary.main' },
                       }}
                     />
                   }
@@ -499,16 +500,14 @@ export default function LoginPage() {
                   sx={{
                     mt: 0.5,
                     width: '100%',
-                    background:
-                      'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-                    boxShadow: '0 14px 34px rgba(127,29,29,0.26)',
+                    background: `linear-gradient(90deg, ${currentAccent.value}d0 0%, ${currentAccent.value} 55%, ${currentAccent.hoverColor} 100%)`,
+                    boxShadow: `0 14px 34px ${alpha(currentAccent.value, 0.26)}`,
                     '&:hover': {
-                      background:
-                        'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
-                      boxShadow: '0 16px 42px rgba(127,29,29,0.32)',
+                      background: `linear-gradient(90deg, ${currentAccent.value} 0%, ${currentAccent.hoverColor} 60%, ${currentAccent.hoverColor} 100%)`,
+                      boxShadow: `0 16px 42px ${alpha(currentAccent.value, 0.32)}`,
                     },
                     '&.Mui-disabled': {
-                      background: 'rgba(127,29,29,0.35)',
+                      background: alpha(currentAccent.value, 0.35),
                       color: 'rgba(255,255,255,0.9)',
                     },
                   }}
@@ -580,8 +579,8 @@ export default function LoginPage() {
                 underline="none"
                 sx={{
                   fontWeight: 800,
-                  color: '#7f1d1d',
-                  '&:hover': { color: '#5c1111' },
+                  color: 'primary.main',
+                  '&:hover': { color: 'primary.dark' },
                 }}
               >
                 Đăng ký ngay
