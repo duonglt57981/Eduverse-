@@ -240,9 +240,9 @@ namespace Eduverse.Api
         }
         private static void AddDependencyInjection(this IServiceCollection services)
         {
-
             services.AddScoped<IMapper, Mapper>();
             services.AddScoped(typeof(Repository<>), typeof(Repository<>));
+
             var repositoryTypes = typeof(Repository<>).Assembly.GetTypes()
                  .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Repository") && x.Name.EndsWith("Repository"));
             foreach (var intf in repositoryTypes.Where(t => t.IsInterface))
@@ -252,15 +252,17 @@ namespace Eduverse.Api
             }
 
             services.AddScoped(typeof(IService<>), typeof(Service<>));
+
             var serviceTypes = typeof(IService<>).Assembly.GetTypes()
-                 .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Service") && x.Name.EndsWith("Service"));
+                 .Where(x => !string.IsNullOrEmpty(x.Namespace) &&
+                             (x.Namespace.StartsWith("Eduverse.Service") ||
+                              x.Namespace.StartsWith("Eduverse.IService")) && 
+                             x.Name.EndsWith("Service"));
             foreach (var intf in serviceTypes.Where(t => t.IsInterface))
             {
                 var impl = serviceTypes.FirstOrDefault(c => c.IsClass && intf.Name.Substring(1) == c.Name);
                 if (impl != null) services.AddScoped(intf, impl);
             }
-
-
         }
     }
 

@@ -19,13 +19,9 @@
     <Folder Include="BaiGiangService\Request\" />
     <Folder Include="ChiTietLamBaiKiemTraService\Dto\" />
     <Folder Include="ChiTietLamBaiKiemTraService\Request\" />
-    <Folder Include="ChungChiService\Dto\" />
-    <Folder Include="ChungChiService\Request\" />
     <Folder Include="CloudinaryService\Request\" />
     <Folder Include="DanhGiaService\Dto\" />
     <Folder Include="DanhGiaService\Request\" />
-    <Folder Include="DanhSachYeuThichService\Dto\" />
-    <Folder Include="DanhSachYeuThichService\Request\" />
     <Folder Include="DapAnService\Dto\" />
     <Folder Include="DapAnService\Request\" />
     <Folder Include="DapAn_NguoiDungService\Dto\" />

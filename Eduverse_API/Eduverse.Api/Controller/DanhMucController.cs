@@ -63,7 +63,7 @@ namespace Eduverse.Api.Controller
 
         #region Create
         [HttpPost]
-        // [Authorize(Roles = "Admin")] // có thể thêm nếu cần
+        // [Authorize(Roles = "Admin")] 
         public async Task<DataResponse<DanhMucDto>> Create([FromBody] CreateDanhMucRequest request)
         {
             var result = await _danhMucService.Create(request);
