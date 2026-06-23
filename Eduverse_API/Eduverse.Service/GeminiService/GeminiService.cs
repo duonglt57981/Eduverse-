@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Eduverse.Service.GeminiService
@@ -38,6 +39,7 @@ namespace Eduverse.Service.GeminiService
         }
 
         #region KiemDuyetInput
+
         public async Task<KetQuaKiemDuyetInput> KiemDuyetInputAsync(string noiDung)
         {
             if (string.IsNullOrWhiteSpace(noiDung))
@@ -48,35 +50,34 @@ namespace Eduverse.Service.GeminiService
             try
             {
                 var prompt = $@"
-                Kiem duyet noi dung sau: ""{noiDung}""
-
-                Yeu cau:
-                - Phat hien tu ngu nhay cam, bao luc, khi dam, tho tuc, chinh tri
-                - Tra ve JSON:
-                {{
-                    ""hopLe"": true/false,
-                    ""loai"": ""AnToan|BaoLuc|KhiDam|ThoTuc|ChinhTri"",
-                    ""diemSo"": 0.0-1.0,
-                    ""tuViPham"": [""tu1"", ""tu2""],
-                    ""lyDo"": ""Ly do chi tiet"",
-                    ""goiYSua"": ""Goi y sua chua""
-                }}
-                Chi tra ve JSON, khong them text khac.";
+            Kiem duyet noi dung sau: ""{noiDung}""
+ 
+            Yeu cau:
+            - Phat hien tu ngu nhay cam, bao luc, khi dam, tho tuc, chinh tri
+            - Tra ve JSON:
+            {{
+                ""hopLe"": true/false,
+                ""loai"": ""AnToan|BaoLuc|KhiDam|ThoTuc|ChinhTri"",
+                ""diemSo"": 0.0-1.0,
+                ""tuViPham"": [""tu1"", ""tu2""],
+                ""lyDo"": ""Ly do chi tiet"",
+                ""goiYSua"": ""Goi y sua chua""
+            }}
+            Chi tra ve JSON, khong them text khac.";
 
                 var request = new
                 {
                     contents = new[]
                     {
-                new
-                {
-                    parts = new[] { new { text = prompt } }
-                }
-            },
+                    new
+                    {
+                        parts = new[] { new { text = prompt } }
+                    }
+                },
                     generationConfig = new
                     {
                         temperature = 0.1,
-                        maxOutputTokens = 512,
-                        // ✅ FIX: ép Gemini trả JSON thuần, tránh bị bọc trong ```json ... ```
+                        maxOutputTokens = 1024, // tăng để tránh bị cắt giữa JSON khi tuViPham dài
                         responseMimeType = "application/json"
                     }
                 };
@@ -84,13 +85,11 @@ namespace Eduverse.Service.GeminiService
                 var json = JsonSerializer.Serialize(request);
                 var response = await _httpClient.PostAsync("", new StringContent(json, Encoding.UTF8, "application/json"));
 
-                // ✅ Đọc response 1 LẦN DUY NHẤT
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 _logger.LogInformation("Status Code: {StatusCode}", response.StatusCode);
                 _logger.LogDebug("Response: {Response}", responseContent);
 
-                // ✅ Kiểm tra status code
                 if (!response.IsSuccessStatusCode)
                 {
                     try
@@ -126,18 +125,13 @@ namespace Eduverse.Service.GeminiService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Loi goi Gemini");
-                // ✅ FIX (fail-closed): nếu service kiểm duyệt lỗi, KHÔNG được tự ý coi nội dung là hợp lệ.
-                // Ném lỗi để tầng gọi quyết định (vd: chặn tạm và đưa vào hàng đợi duyệt thủ công),
-                // thay vì nuốt lỗi và để lọt nội dung chưa được kiểm tra.
+                // Fail-closed: nếu service kiểm duyệt lỗi, KHÔNG tự ý coi nội dung là hợp lệ.
                 throw new Exception($"Loi he thong kiem duyet: {ex.Message}");
             }
         }
 
         private KetQuaKiemDuyetInput ParseResponse(string responseJson, string noiDungGoc)
         {
-            // ✅ FIX: helper fail-closed dùng chung cho mọi nhánh lỗi parse bên dưới.
-            // Trước đây mọi lỗi đều trả HopLe = true (fail-open) -> đây là lỗi chính khiến
-            // từ cấm lọt qua khi Gemini trả JSON không đúng format mong đợi.
             KetQuaKiemDuyetInput FailClosed(string lyDo)
             {
                 return new KetQuaKiemDuyetInput
@@ -150,8 +144,28 @@ namespace Eduverse.Service.GeminiService
                 };
             }
 
+            bool IsValidJson(string json)
+            {
+                if (string.IsNullOrWhiteSpace(json)) return false;
+                json = json.Trim();
+
+                if (!json.StartsWith("{") && !json.StartsWith("[")) return false;
+                if (!json.EndsWith("}") && !json.EndsWith("]")) return false;
+
+                try
+                {
+                    JsonDocument.Parse(json);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
             try
             {
+                // ===== 1. PARSE RESPONSE GỐC (envelope của Gemini) =====
                 using var doc = JsonDocument.Parse(responseJson);
 
                 if (!doc.RootElement.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
@@ -160,9 +174,8 @@ namespace Eduverse.Service.GeminiService
                     return FailClosed("Khong co ket qua tu AI, can duyet thu cong");
                 }
 
-                // ✅ Kiểm tra finishReason — nếu bị cắt do maxOutputTokens hoặc bị chặn bởi
-                // chính bộ lọc an toàn của Gemini (SAFETY), JSON trả về có thể rỗng/không đầy đủ.
                 var finishReason = candidates[0].TryGetProperty("finishReason", out var fr) ? fr.GetString() : null;
+
                 if (string.Equals(finishReason, "SAFETY", StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogWarning("Gemini tu chan noi dung vi ly do an toan: {Content}", noiDungGoc);
@@ -174,6 +187,11 @@ namespace Eduverse.Service.GeminiService
                         TuViPham = new List<string>(),
                         GoiYSua = ""
                     };
+                }
+
+                if (string.Equals(finishReason, "MAX_TOKENS", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("Gemini bi cat cut do het maxOutputTokens: {Content}", noiDungGoc);
                 }
 
                 var text = candidates[0]
@@ -188,14 +206,38 @@ namespace Eduverse.Service.GeminiService
                     return FailClosed("Khong co noi dung tra ve tu AI, can duyet thu cong");
                 }
 
-                // ✅ FIX: làm sạch text phòng trường hợp model vẫn bọc markdown code fence
-                // (```json ... ``` hoặc ``` ... ```) du da set responseMimeType, de an toan double.
+                // ===== 2. LÀM SẠCH TEXT (dùng đúng 1 hàm duy nhất, có brace-balancing) =====
                 text = CleanJsonText(text);
 
+                if (!IsValidJson(text))
+                {
+                    _logger.LogWarning("Invalid JSON from Gemini: {Text}", text);
+
+                    var extracted = ExtractJson(text);
+
+                    if (!string.IsNullOrEmpty(extracted))
+                    {
+                        // Vá lại dấu đóng nếu thiếu sau khi extract thô
+                        extracted = CleanJsonText(extracted);
+                    }
+
+                    if (!string.IsNullOrEmpty(extracted) && IsValidJson(extracted))
+                    {
+                        _logger.LogInformation("Extracted JSON: {Extracted}", extracted);
+                        text = extracted;
+                    }
+                    else
+                    {
+                        return FailClosed("Ket qua kiem duyet khong dung dinh dang JSON, can duyet thu cong");
+                    }
+                }
+
+                // ===== 3. PARSE KẾT QUẢ =====
                 using var resultDoc = JsonDocument.Parse(text);
                 var root = resultDoc.RootElement;
 
-                if (!root.TryGetProperty("hopLe", out var hopLeProp) || !root.TryGetProperty("diemSo", out var diemSoProp))
+                if (!root.TryGetProperty("hopLe", out var hopLeProp) ||
+                    !root.TryGetProperty("diemSo", out var diemSoProp))
                 {
                     _logger.LogWarning("JSON tu Gemini thieu field bat buoc: {Text}", text);
                     return FailClosed("Ket qua kiem duyet khong day du, can duyet thu cong");
@@ -204,28 +246,45 @@ namespace Eduverse.Service.GeminiService
                 var hopLe = hopLeProp.GetBoolean();
                 var diemSo = diemSoProp.GetDouble();
 
-                // Neu diem >= nguong -> Chan (giu nguyen logic goc)
                 if (diemSo >= NGUONG_CHAN)
                 {
                     hopLe = false;
                 }
 
+                var tuViPham = new List<string>();
+                if (root.TryGetProperty("tuViPham", out var terms) && terms.ValueKind == JsonValueKind.Array)
+                {
+                    tuViPham = terms.EnumerateArray()
+                        .Select(t => t.GetString())
+                        .Where(t => !string.IsNullOrWhiteSpace(t))
+                        .Select(t => t!)
+                        .ToList();
+                }
+
+                var loai = root.TryGetProperty("loai", out var loaiProp)
+                    ? loaiProp.GetString() ?? "Khac"
+                    : "Khac";
+
+                var thongBao = root.TryGetProperty("lyDo", out var lyDoProp)
+                    ? lyDoProp.GetString() ?? ""
+                    : "";
+
+                var goiYSua = root.TryGetProperty("goiYSua", out var sugProp)
+                    ? sugProp.GetString() ?? ""
+                    : "";
+
                 return new KetQuaKiemDuyetInput
                 {
                     HopLe = hopLe,
-                    Loai = root.GetProperty("loai").GetString() ?? "Khac",
-                    ThongBao = root.GetProperty("lyDo").GetString() ?? "",
-                    TuViPham = root.TryGetProperty("tuViPham", out var terms)
-                        ? terms.EnumerateArray().Select(t => t.GetString()).Where(t => t != null).Select(t => t!).ToList()
-                        : new List<string>(),
-                    GoiYSua = root.TryGetProperty("goiYSua", out var sug) ? sug.GetString() : ""
+                    Loai = loai,
+                    ThongBao = thongBao,
+                    TuViPham = tuViPham,
+                    GoiYSua = goiYSua
                 };
             }
             catch (JsonException ex)
             {
                 _logger.LogError(ex, "Loi parse JSON: {Response}", responseJson);
-                // ✅ FIX: trước đây return HopLe = true. Đây chính xác là chỗ làm nội dung
-                // có từ cấm bị lọt qua mỗi khi Gemini trả format hơi khác kỳ vọng.
                 return FailClosed("Loi parse ket qua AI, can duyet thu cong");
             }
             catch (Exception ex)
@@ -235,33 +294,65 @@ namespace Eduverse.Service.GeminiService
             }
         }
 
+        // ===== HELPER: TRÍCH XUẤT JSON THÔ TỪ ĐOẠN TEXT LỘN XỘN =====
+        private string ExtractJson(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return null;
+
+            var start = text.IndexOf('{');
+            if (start == -1) start = text.IndexOf('[');
+            if (start == -1) return null;
+
+            var end = text.LastIndexOf('}');
+            if (end == -1) end = text.LastIndexOf(']');
+            if (end == -1 || end <= start) return null;
+
+            return text.Substring(start, end - start + 1);
+        }
+
         /// <summary>
         /// Loai bo markdown code fence (```json ... ``` hoac ``` ... ```) ma Gemini
-        /// doi khi van them vao du da yeu cau JSON thuan.
+        /// doi khi van them vao du da yeu cau JSON thuan, va tu dong bo sung dau dong
+        /// con thieu neu JSON bi cat cut do het maxOutputTokens.
         /// </summary>
-        private static string CleanJsonText(string text)
+        private static string CleanJsonText(string responseJson)
         {
-            var trimmed = text.Trim();
+            if (string.IsNullOrWhiteSpace(responseJson))
+                return responseJson;
 
-            if (trimmed.StartsWith("```"))
+            // 1. Xóa các block code markdown nếu có (```json ... ```)
+            var cleaned = Regex.Replace(
+                responseJson,
+                @"```(?:json)?\s*|\s*```",
+                "",
+                RegexOptions.Multiline
+            );
+
+            // 2. Trim khoảng trắng
+            cleaned = cleaned.Trim();
+
+            // 3. Đếm số dấu mở/đóng để phát hiện JSON bị cắt cụt
+            var openBraces = cleaned.Count(c => c == '{');
+            var closeBraces = cleaned.Count(c => c == '}');
+            var openBrackets = cleaned.Count(c => c == '[');
+            var closeBrackets = cleaned.Count(c => c == ']');
+
+            // 4. Bổ sung dấu đóng nếu thiếu (best-effort vá JSON bị cắt cụt)
+            if (openBrackets > closeBrackets)
             {
-                // Bo dong dau tien (``` hoac ```json)
-                var firstNewline = trimmed.IndexOf('\n');
-                if (firstNewline >= 0)
-                {
-                    trimmed = trimmed[(firstNewline + 1)..];
-                }
-
-                // Bo ``` o cuoi neu co
-                var lastFence = trimmed.LastIndexOf("```", StringComparison.Ordinal);
-                if (lastFence >= 0)
-                {
-                    trimmed = trimmed[..lastFence];
-                }
+                for (int i = 0; i < openBrackets - closeBrackets; i++)
+                    cleaned += "]";
             }
 
-            return trimmed.Trim();
+            if (openBraces > closeBraces)
+            {
+                for (int i = 0; i < openBraces - closeBraces; i++)
+                    cleaned += "}";
+            }
+
+            return cleaned;
         }
+
         #endregion
 
 

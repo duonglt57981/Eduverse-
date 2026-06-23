@@ -109,78 +109,77 @@ namespace Eduverse.Service.CauHoiService
         //}
 
 
-        public async Task<Guid> UpdateQuestion(UpdateCauHoiRequest request)
-        {
-            var cauHoi = await GetByIdOrThrowAsync(request.Id);
+        //public async Task<Guid> UpdateQuestion(UpdateCauHoiRequest request)
+        //{
+        //    var cauHoi = await GetByIdOrThrowAsync(request.Id);
 
-            cauHoi.TenCauHoi = request.TenCauHoi;
-            cauHoi.NoiDungCauHoi = request.NoiDungCauHoi;
-            cauHoi.LoaiCauHoi = request.DanhSachDapAns.Count(x => x.LaDapAnDung) > 1 ? "multi" : "one";
-            cauHoi.Diem = request.Diem;
-            cauHoi.ThuTuSapXep = request.ThuTuSapXep;
+        //    cauHoi.TenCauHoi = request.TenCauHoi;
+        //    cauHoi.NoiDungCauHoi = request.NoiDungCauHoi;
+        //    cauHoi.LoaiCauHoi = request.DanhSachDapAns.Count(x => x.LaDapAnDung) > 1 ? "multi" : "one";
+        //    cauHoi.ThuTuSapXep = request.ThuTuSapXep;
 
-            await UpdateAsync(cauHoi);
+        //    await UpdateAsync(cauHoi);
 
-            var currentAnswers = await _dapAnService
-                .GetQueryable()
-                .Where(x =>
-                    x.IdCauHoi == cauHoi.Id &&
-                    !x.IsDeleted)
-                .ToListAsync();
+        //    var currentAnswers = await _dapAnService
+        //        .GetQueryable()
+        //        .Where(x =>
+        //            x.IdCauHoi == cauHoi.Id &&
+        //            !x.IsDeleted)
+        //        .ToListAsync();
 
-            var requestIds = request.DanhSachDapAns
-                .Where(x => x.Id.HasValue)
-                .Select(x => x.Id!.Value)
-                .ToHashSet();
+        //    var requestIds = request.DanhSachDapAns
+        //        .Where(x => x.Id.HasValue)
+        //        .Select(x => x.Id!.Value)
+        //        .ToHashSet();
 
-            var deleteAnswers = currentAnswers
-                .Where(x => !requestIds.Contains(x.Id))
-                .ToList();
+        //    var deleteAnswers = currentAnswers
+        //        .Where(x => !requestIds.Contains(x.Id))
+        //        .ToList();
 
-            foreach (var item in deleteAnswers)
-            {
-                item.IsDeleted = true;
-            }
+        //    foreach (var item in deleteAnswers)
+        //    {
+        //        item.IsDeleted = true;
+        //    }
 
-            var updateAnswers = currentAnswers
-                .Where(x => requestIds.Contains(x.Id))
-                .ToDictionary(x => x.Id);
+        //    var updateAnswers = currentAnswers
+        //        .Where(x => requestIds.Contains(x.Id))
+        //        .ToDictionary(x => x.Id);
 
-            foreach (var item in request.DanhSachDapAns
-                         .Where(x => x.Id.HasValue))
-            {
-                var answer = updateAnswers[item.Id!.Value];
+        //    foreach (var item in request.DanhSachDapAns
+        //                 .Where(x => x.Id.HasValue))
+        //    {
+        //        var answer = updateAnswers[item.Id!.Value];
 
-                answer.NoiDungDapAn = item.NoiDungDapAn;
-                answer.LaDapAnDung = item.LaDapAnDung;
-                answer.ThuTuSapXep = item.ThuTuSapXep;
-            }
+        //        answer.NoiDungDapAn = item.NoiDungDapAn;
+        //        answer.LaDapAnDung = item.LaDapAnDung;
+        //        answer.ThuTuSapXep = item.ThuTuSapXep;
+        //    }
 
-            var newAnswers = request.DanhSachDapAns
-                .Where(x => !x.Id.HasValue)
-                .Select(x => new DapAn
-                {
-                    Id = Guid.NewGuid(),
-                    IdCauHoi = cauHoi.Id,
-                    NoiDungDapAn = x.NoiDungDapAn,
-                    LaDapAnDung = x.LaDapAnDung,
-                    ThuTuSapXep = x.ThuTuSapXep
-                })
-                .ToList();
+        //    var newAnswers = request.DanhSachDapAns
+        //        .Where(x => !x.Id.HasValue)
+        //        .Select(x => new DapAn
+        //        {
+        //            Id = Guid.NewGuid(),
+        //            IdCauHoi = cauHoi.Id,
+        //            NoiDungDapAn = x.NoiDungDapAn,
+        //            LaDapAnDung = x.LaDapAnDung,
+        //            ThuTuSapXep = x.ThuTuSapXep
+        //        })
+        //        .ToList();
 
-            if (deleteAnswers.Any())
-                await _dapAnService.UpdateAsync(deleteAnswers);
-            await _dapAnService.SaveAsync();
+        //    if (deleteAnswers.Any())
+        //        await _dapAnService.UpdateAsync(deleteAnswers);
+        //    await _dapAnService.SaveAsync();
 
-            if (updateAnswers.Any())
-                await _dapAnService.UpdateAsync(updateAnswers.Values);
-            await _dapAnService.SaveAsync();
+        //    if (updateAnswers.Any())
+        //        await _dapAnService.UpdateAsync(updateAnswers.Values);
+        //    await _dapAnService.SaveAsync();
 
-            if (newAnswers.Any())
-                await _dapAnService.CreateRange(newAnswers);
-            await _dapAnService.SaveAsync();
+        //    if (newAnswers.Any())
+        //        await _dapAnService.CreateRange(newAnswers);
+        //    await _dapAnService.SaveAsync();
 
-            return cauHoi.Id;
-        }
+        //    return cauHoi.Id;
+        //}
     }
 }

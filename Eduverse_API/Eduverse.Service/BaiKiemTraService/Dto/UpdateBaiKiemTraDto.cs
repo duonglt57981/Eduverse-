@@ -8,6 +8,7 @@ namespace Eduverse.Service.BaiKiemTraService.Dto
 {
     public class UpdateBaiKiemTraDto
     {
+        public Guid Id { get; set; }
         public string? TenBaiKiemTra { get; set; }
 
         public string? MoTa { get; set; }
@@ -17,8 +18,6 @@ namespace Eduverse.Service.BaiKiemTraService.Dto
         public int? GioiHanThoiGian { get; set; }
 
         public bool? ChoLamLai { get; set; } = true;
-
-        public int? SoLanLamLai { get; set; } = 1;
 
         public int? SoLanLamToiDa { get; set; }
 

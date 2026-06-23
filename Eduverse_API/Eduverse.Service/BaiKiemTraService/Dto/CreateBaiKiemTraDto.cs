@@ -16,8 +16,8 @@ namespace Eduverse.Service.BaiKiemTraService.Dto
         public double? DiemDat { get; set; }
         public int? GioiHanThoiGian { get; set; }
         public bool? ChoLamLai { get; set; }
-        public int? SoLanLamLai { get; set; }
         public int? SoLanLamToiDa { get; set; }
+        public int? SoCauHoi { get; set; }
         public string? TrangThai { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
 

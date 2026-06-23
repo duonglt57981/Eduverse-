@@ -1534,7 +1534,7 @@ namespace Eduverse.Service.KhoaHocService
 
             // ── Lấy bản gốc (IsBanHienTai = true) ───────────────
             var banGoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == IdKhoaHoc && x.IsBanHienTai && !x.IsDeleted);
+                .FirstOrDefaultAsync(x => x.Id == IdKhoaHoc  && !x.IsDeleted);
 
             if (banGoc == null)
                 throw new Exception("Không tìm thấy khóa học");
@@ -1589,7 +1589,7 @@ namespace Eduverse.Service.KhoaHocService
 
             // ── Lấy bản gốc (IsBanHienTai = true) ───────────────
             var banGoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == IdKhoaHoc && x.IsBanHienTai && !x.IsDeleted);
+                .FirstOrDefaultAsync(x => x.Id == IdKhoaHoc && !x.IsDeleted);
 
             if (banGoc == null)
                 throw new Exception("Không tìm thấy khóa học");

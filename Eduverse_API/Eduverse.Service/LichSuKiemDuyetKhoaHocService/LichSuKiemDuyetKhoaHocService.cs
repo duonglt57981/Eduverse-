@@ -558,7 +558,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             if (khoaHocNhap == null)
                 throw new Exception("Không tìm thấy bản nháp");
 
-            if (khoaHocNhap.TrangThaiPheDuyet != "ChoDuyet" && khoaHocNhap.TrangThaiPheDuyet != "DangDuyet")
+            if (khoaHocNhap.TrangThaiPheDuyet != "ChoDuyet")
                 throw new Exception("Khóa học không ở trạng thái chờ duyệt.");
 
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),out var idNguoiDuyet);
@@ -593,7 +593,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 else
                 {
                     var idBanGoc = khoaHocNhap.IdBanGhiTruoc.Value;
-
                     var banGoc = await _khoaHocRepository.GetByIdAsync(idBanGoc);
 
                     // 1. Copy field từ bản nháp → bản gốc (giữ Id gốc để FK DangKy không vỡ)
@@ -609,6 +608,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     banGoc.TrangThai = "HoatDong";
                     banGoc.IsBanHienTai = true;
                     banGoc.UpdatedDate = DateTime.UtcNow;
+                    khoaHocNhap.TrangThaiPheDuyet = "DaDuyet";
+                    khoaHocNhap.TrangThai = "BanNhap";
 
                     //  2. Copy danh mục từ bản nháp sang bản gốc
                     await CopyDanhMucFromNhapToGoc(khoaHocNhap.Id, idBanGoc);
@@ -742,15 +743,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 // ── Duyệt bản nháp (GV đã update, có bản gốc) ──
                 else
                 {
-                    var idBanGoc = baiGiangNhap.IdBanGhiTruoc.Value;
+                    baiGiangNhap.TrangThaiPheDuyet = "DaDuyet";
+                    baiGiangNhap.TrangThai = "BanNhap";
 
-                    var banGoc = await _baiGiangRepository.GetByIdAsync(idBanGoc);
-                    banGoc.TrangThaiPheDuyet = "DaDuyet";
-                    banGoc.TrangThai = "HoatDong";
-                    banGoc.IsBanHienTai = true;
-                    banGoc.UpdatedDate = DateTime.UtcNow;
-
-                    _baiGiangRepository.Update(banGoc);
                     _baiGiangRepository.Update(baiGiangNhap);
                 }
                 await _khoaHocRepository.SaveAsync();
@@ -774,6 +769,93 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             return new KiemDuyetKhoaHocDto
             {
                 IdDoiTuong = baiGiangNhap.IdBanGhiTruoc ?? baiGiangNhap.Id,
+                LoaiDoiTuong = lichSu.LoaiDoiTuong,
+                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+                NgayDuyet = ngayDuyet
+            };
+        }
+        #endregion
+
+
+        #region KiemDuyetBaiKiemTra
+        public async Task<KiemDuyetKhoaHocDto> KiemDuyetBaiKiemTra(KiemDuyetKhoaHocRequest request)
+        {
+            // ── Kiểm tra quyền ──────────────────────────────────
+            var role = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
+            if (role != "Admin")
+                throw new UnauthorizedAccessException("Chỉ Admin mới có quyền kiểm duyệt");
+
+            if (request.TrangThaiPheDuyet != "DaDuyet" && request.TrangThaiPheDuyet != "TuChoi")
+                throw new Exception("Trạng thái phê duyệt không hợp lệ.");
+
+            if (request.TrangThaiPheDuyet == "TuChoi" && string.IsNullOrWhiteSpace(request.LyDo))
+                throw new Exception("Phải nhập lý do khi từ chối");
+
+            var baiKiemTraNhap = await _baiKiemTraService.GetByIdAsync(request.IdBanNhap);
+            if (baiKiemTraNhap == null)
+                throw new Exception("Không tìm thấy bản nháp");
+
+            if (baiKiemTraNhap.TrangThaiPheDuyet != "ChoDuyet")
+                throw new Exception("Bài giảng không ở trạng thái chờ duyệt.");
+
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var idNguoiDuyet);
+
+            var ngayDuyet = DateTime.Now;
+
+            // ── TuChoi ──────────────────────────────────────────
+            if (request.TrangThaiPheDuyet == "TuChoi")
+            {
+                baiKiemTraNhap.TrangThaiPheDuyet = "TuChoi";
+                baiKiemTraNhap.TrangThai = "TuChoi";
+
+                if (baiKiemTraNhap.IdBanGhiTruoc.HasValue)
+                {
+                    await _baiKiemTraService.DeleteAsync(baiKiemTraNhap);
+                }
+
+                _baiKiemTraService.UpdateAsync(baiKiemTraNhap);
+                await _baiKiemTraService.SaveAsync();
+            }
+            // ── DaDuyet ─────────────────────────────────────────
+            else
+            {
+                // ── Lần đầu duyệt (tạo mới, không có bản gốc) ──
+                if (!baiKiemTraNhap.IdBanGhiTruoc.HasValue && baiKiemTraNhap.TrangThaiPheDuyet =="ChoDuyet")
+                {
+                    baiKiemTraNhap.TrangThaiPheDuyet = "DaDuyet";
+                    baiKiemTraNhap.TrangThai = "HoatDong";
+                    baiKiemTraNhap.IsBanHienTai = true;
+                }
+                // ── Duyệt bản nháp (GV đã update, có bản gốc) ──
+                else if(baiKiemTraNhap.IdBanGhiTruoc.HasValue && baiKiemTraNhap.TrangThaiPheDuyet == "ChoDuyet")
+                {
+                    var idBanGoc = baiKiemTraNhap.IdBanGhiTruoc.Value;
+                    var banGoc = await _baiKiemTraService.GetByIdAsync(idBanGoc);
+                    banGoc.TrangThaiPheDuyet = "DaDuyet";
+                    banGoc.TrangThai = "HoatDong";
+                    banGoc.IsBanHienTai = true;
+                }
+                await _khoaHocRepository.SaveAsync();
+            }
+
+            // ── Ghi lịch sử ─────────────────────────────────────
+            var lichSu = new LichSuKiemDuyetKhoaHoc
+            {
+                Id = Guid.NewGuid(),
+                IdDoiDuong = request.IdBanNhap,
+                LoaiDoiTuong = "BaiKiemTra",
+                IdNguoiDuyet = idNguoiDuyet,
+                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+                LyDo = request.LyDo,
+                NgayDuyet = ngayDuyet
+            };
+
+            await CreateAsync(lichSu);
+            await SaveAsync();
+
+            return new KiemDuyetKhoaHocDto
+            {
+                IdDoiTuong = baiKiemTraNhap.IdBanGhiTruoc ?? baiKiemTraNhap.Id,
                 LoaiDoiTuong = lichSu.LoaiDoiTuong,
                 TrangThaiPheDuyet = request.TrangThaiPheDuyet,
                 NgayDuyet = ngayDuyet

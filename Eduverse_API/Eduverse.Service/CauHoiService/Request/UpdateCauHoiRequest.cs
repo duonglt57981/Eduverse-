@@ -14,9 +14,7 @@ namespace Eduverse.Service.CauHoiService.Request
 
         public string? NoiDungCauHoi { get; set; }
 
-        public string? LoaiCauHoi { get; set; }
-
-        public double? Diem { get; set; }
+        public string? DoKho { get; set; }
 
         public int? ThuTuSapXep { get; set; }
 
