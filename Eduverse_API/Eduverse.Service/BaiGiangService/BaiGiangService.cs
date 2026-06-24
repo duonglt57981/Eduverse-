@@ -154,7 +154,7 @@ namespace Eduverse.Service.BaiGiangService
                 .Where(x => x.IdPhan == request.IdPhan.Value)
                 .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
+            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
 
             var entity = new BaiGiang
             {
@@ -246,7 +246,7 @@ namespace Eduverse.Service.BaiGiangService
             {
                 banGoc.IdPhan = request.IdPhan.Value;
                 banGoc.TieuDe = request.TieuDe;
-                banGoc.ThuTuSapXep = request.ThuTuSapXep;
+                banGoc.ThuTuSapXep = request.ThuTuSapXep == 0? banGoc.ThuTuSapXep : request.ThuTuSapXep;
                 banGoc.LaBaiGiangFree = request.LaBaiGiangFree;
                 banGoc.IdVideoBaiGiang = idVideo;
                 banGoc.URLBaiGiang = video;
@@ -256,7 +256,9 @@ namespace Eduverse.Service.BaiGiangService
                 banGoc.TrangThai = "DangSua";
                 banGoc.TrangThaiPheDuyet = "DangSua";
 
-
+                await UpdateAsync(banGoc);
+                await SaveAsync();
+                return _mapper.Map<BaiGiang, BaiGiangDto>(banGoc);
             }
 
             var banNhap = await GetAll()
@@ -268,7 +270,7 @@ namespace Eduverse.Service.BaiGiangService
                                            || x.TrangThaiPheDuyet == "DangDuyet"
                                            || x.TrangThaiPheDuyet == "DangSua"));
 
-            if(banNhap.TrangThaiPheDuyet == "DangSua" && banNhap != null)
+            if(banNhap != null && banNhap.TrangThaiPheDuyet == "DangSua" )
             {
                 if (banNhap.CreatedId != nguoiTao)
                     throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
@@ -287,32 +289,39 @@ namespace Eduverse.Service.BaiGiangService
                 banNhap.IdPhan = request.IdPhan.Value;
                 banNhap.IdBanGhiTruoc = banGoc.Id;
                 banNhap.TieuDe = request.TieuDe;
-                banNhap.ThuTuSapXep = request.ThuTuSapXep;
+                banNhap.ThuTuSapXep = request.ThuTuSapXep == 0 ? banGoc.ThuTuSapXep : request.ThuTuSapXep;
                 banNhap.LaBaiGiangFree = request.LaBaiGiangFree;
                 banNhap.IdVideoBaiGiang = idVideo;
                 banNhap.URLBaiGiang = video;
                 banNhap.ThoiLuong = thoiLuong;
                 banNhap.LoaiBaiGiang = thoiLuong == null ? "Bài giảng tài liệu" : "Bài giảng video";
                 banNhap.IsPendingSwap = false;
+                banNhap.IsBanHienTai = false;
+
+
 
 
                 await UpdateAsync(banNhap);
                 await SaveAsync();
             }
-            else if(banGoc.TrangThaiPheDuyet != "DangSua")
+            else if(banGoc.TrangThaiPheDuyet != "DangSua" || banNhap.TrangThaiPheDuyet != "DangSua")
             {
                 var banNhapBaiGiang = new BaiGiang
                 {
                     IdPhan = request.IdPhan.Value,
                     IdBanGhiTruoc = banGoc.Id,
                     TieuDe = request.TieuDe,
-                    ThuTuSapXep = request.ThuTuSapXep,
+                    ThuTuSapXep = request.ThuTuSapXep == 0 ? banGoc.ThuTuSapXep : request.ThuTuSapXep,
                     LaBaiGiangFree = request.LaBaiGiangFree,
                     IdVideoBaiGiang = idVideo,
                     URLBaiGiang = video,
                     ThoiLuong = thoiLuong,
                     LoaiBaiGiang = thoiLuong == null ? "Bài giảng tài liệu" : "Bài giảng video",
                     IsPendingSwap = false,
+                    TrangThai = "DangSua",
+                    TrangThaiPheDuyet = "DangSua",
+                    IsBanHienTai = false
+                    
                 };
 
                 await CreateAsync(banNhapBaiGiang);

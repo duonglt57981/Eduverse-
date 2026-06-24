@@ -13,6 +13,8 @@ namespace Eduverse.Service.LanLamBaiKiemTraService.Dto
 
         public double TongDiem { get; set; }
 
+        public DateTime? ThoiGianNop { get; set; }
+
         public bool Dat { get; set; }
 
         public List<CauHoiReviewDto> CauHois { get; set; } = new();

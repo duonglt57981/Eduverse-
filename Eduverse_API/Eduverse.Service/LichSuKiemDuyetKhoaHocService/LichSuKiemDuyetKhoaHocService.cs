@@ -608,7 +608,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     banGoc.IsBanHienTai = true;
                     banGoc.UpdatedDate = DateTime.UtcNow;
                     khoaHocNhap.TrangThaiPheDuyet = "DaDuyet";
-                    khoaHocNhap.TrangThai = "BanNhap";
+                    khoaHocNhap.TrangThai = "BanSwap";
+                    khoaHocNhap.IsBanHienTai = false;
 
                     //  2. Copy danh mục từ bản nháp sang bản gốc
                     await CopyDanhMucFromNhapToGoc(khoaHocNhap.Id, idBanGoc);
@@ -741,7 +742,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 else
                 {
                     baiGiangNhap.TrangThaiPheDuyet = "DaDuyet";
-                    baiGiangNhap.TrangThai = "BanNhap";
+                    baiGiangNhap.TrangThai = "BanSwap";
+                    baiGiangNhap.IsBanHienTai = false;
 
                     _baiGiangRepository.Update(baiGiangNhap);
                 }
@@ -826,7 +828,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 {
 
                     baiKiemTraNhap.TrangThaiPheDuyet = "DaDuyet";
-                    baiKiemTraNhap.TrangThai = "BanNhap";
+                    baiKiemTraNhap.TrangThai = "BanSwap";
+                    baiKiemTraNhap.IsBanHienTai = false;
                 }
                 await _khoaHocRepository.SaveAsync();
             }

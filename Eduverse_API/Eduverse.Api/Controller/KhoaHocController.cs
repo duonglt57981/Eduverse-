@@ -116,6 +116,22 @@ namespace Eduverse.Api.Controller
         }
 
 
+        [HttpGet("khoahoc-get-toupdatekhoahoc/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<GetToUpdateKhoaHoc>> GetToUpdateKhoaHoc( Guid  idKhoaHoc)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetToUpdateKhoaHoc(idKhoaHoc);
+                return DataResponse<GetToUpdateKhoaHoc>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<GetToUpdateKhoaHoc>.False(ex.Message);
+            }
+        }
+
+
         [HttpPost("khoahoc-create")]   
         [Consumes("multipart/form-data")]
         [Authorize(Roles = "Admin,GiaoVien")]

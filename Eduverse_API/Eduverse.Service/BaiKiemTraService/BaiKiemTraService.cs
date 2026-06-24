@@ -27,6 +27,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Eduverse.Service.BaiKiemTraService
 {
@@ -46,6 +47,8 @@ namespace Eduverse.Service.BaiKiemTraService
         private readonly IPhanRepository _phanRepository;
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
+
+        private const int HEARTBEAT_TIMEOUT_SECONDS = 20;
 
 
         public BaiKiemTraService(
@@ -891,6 +894,8 @@ namespace Eduverse.Service.BaiKiemTraService
         }
 
 
+        
+        #region StartQuiz
         public async Task<LanLamBaiKiemTraDto> StartQuiz(StartQuizRequest request)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiDangKi);
@@ -903,9 +908,7 @@ namespace Eduverse.Service.BaiKiemTraService
 
             var baiKiemTra = await GetQueryable()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x =>
-                    x.Id == request.IdBaiKiemTra &&
-                    !x.IsDeleted);
+                .FirstOrDefaultAsync(x => x.Id == request.IdBaiKiemTra && !x.IsDeleted);
 
             if (baiKiemTra == null)
                 throw new Exception("Không tìm thấy bài kiểm tra.");
@@ -936,7 +939,6 @@ namespace Eduverse.Service.BaiKiemTraService
             if (quizInfo.IdKhoaHoc == Guid.Empty || quizInfo.IdKhoaHoc == null)
                 throw new Exception("Bài kiểm tra không thuộc khóa học nào.");
 
-            // 2. Kiểm tra khóa học còn tồn tại / chưa bị xóa (nếu cần kiểm tra thêm tầng KhoaHoc)
             var khoaHocTonTai = await _khoaHocRepository.GetQueryable()
                 .AsNoTracking()
                 .AnyAsync(x => x.Id == quizInfo.IdKhoaHoc && !x.IsDeleted);
@@ -944,18 +946,16 @@ namespace Eduverse.Service.BaiKiemTraService
             if (!khoaHocTonTai)
                 throw new Exception("Khóa học chứa bài kiểm tra này không còn tồn tại.");
 
-            // 3. Kiểm tra đăng ký của người dùng hiện tại với khóa học đó
             var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted
                          && x.IdNguoiDangKi == nguoiDangKi
                          && x.IdKhoaHoc == quizInfo.IdKhoaHoc)
-                .Select(x => new { x.Id, x.TrangThai }) // tùy schema thực tế
+                .Select(x => new { x.Id, x.TrangThai })
                 .FirstOrDefaultAsync();
 
             if (dangKy == null)
                 throw new Exception("Bạn chưa đăng ký khóa học này.");
-
 
             var lanLamDangLam = await _lanLamBaiKiemTraService
                 .GetQueryable()
@@ -985,14 +985,17 @@ namespace Eduverse.Service.BaiKiemTraService
                 soLanDaLam >= baiKiemTra.SoLanLamToiDa.Value)
                 throw new Exception("Đã vượt quá số lần làm bài.");
 
+            var now = DateTime.Now;
             var lanLam = new LanLamBaiKiemTra
             {
                 Id = new Guid(),
                 IdBaiKiemTra = request.IdBaiKiemTra,
                 IdNguoiDung = nguoiDangKi,
                 LamLanThu = soLanDaLam + 1,
-                ThoiGianBatDau = DateTime.Now,
-                ThoiGianTiepTuc = DateTime.Now,
+                ThoiGianBatDau = now,
+                ThoiGianTiepTuc = now,
+                ThoiGianCapNhat = now,
+                TongThoiGianDaLam = 0,
                 TrangThai = "DangLam"
             };
 
@@ -1001,16 +1004,14 @@ namespace Eduverse.Service.BaiKiemTraService
 
             return _mapper.Map<LanLamBaiKiemTra, LanLamBaiKiemTraDto>(lanLam);
         }
+        #endregion
 
-
-        // Lấy đề thi cho học viên
+        #region GetQuizForStudent
         public async Task<BaiKiemTraLamBaiDto> GetQuizForStudent(Guid idBaiKiemTra)
         {
             var baiKiemTra = await GetQueryable()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x =>
-                    x.Id == idBaiKiemTra &&
-                    !x.IsDeleted); 
+                .FirstOrDefaultAsync(x => x.Id == idBaiKiemTra && !x.IsDeleted);
 
             if (baiKiemTra == null)
                 throw new Exception("Không tìm thấy bài kiểm tra.");
@@ -1018,21 +1019,16 @@ namespace Eduverse.Service.BaiKiemTraService
             var cauHois = await _cauHoiService
                 .GetQueryable()
                 .AsNoTracking()
-                .Where(x =>x.IdBaiKiemTra == idBaiKiemTra &&!x.IsDeleted)
+                .Where(x => x.IdBaiKiemTra == idBaiKiemTra && !x.IsDeleted)
                 .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
-            var cauHoiIds = cauHois
-                .Select(x => x.Id)
-                .ToList();
+            var cauHoiIds = cauHois.Select(x => x.Id).ToList();
 
             var dapAns = await _dapAnService
                 .GetQueryable()
                 .AsNoTracking()
-                .Where(x =>
-                    x.IdCauHoi.HasValue &&
-                    cauHoiIds.Contains(x.IdCauHoi.Value) &&
-                    !x.IsDeleted)
+                .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value) && !x.IsDeleted)
                 .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
@@ -1041,48 +1037,49 @@ namespace Eduverse.Service.BaiKiemTraService
             result.CauHois = cauHois.Select(c =>
             {
                 var item = _mapper.Map<CauHoi, CauHoiLamBaiDto>(c);
-
                 item.DapAns = dapAns
                     .Where(d => d.IdCauHoi == c.Id)
                     .Select(d => _mapper.Map<DapAn, DapAnLamBaiDto>(d))
                     .ToList();
-
                 return item;
             }).ToList();
 
             return result;
         }
+        #endregion
 
-
-        // Nộp bài và chấm điểm
+        #region SubmitQuiz
         /// <summary>
-        /// Nộp bài kiểm tra (có thể do người dùng chủ động nộp hoặc hết thời gian tự động nộp)
-        /// Hỗ trợ câu hỏi nhiều đáp án đúng: điểm mỗi đáp án đúng = điểm_câu / số_đáp_án_đúng, không trừ điểm sai
+        /// Nộp bài kiểm tra (chủ động nộp hoặc hết thời gian tự động nộp).
+        /// Gọi CapNhatThoiGianLamBai() trước tiên để cộng nốt thời gian đang làm và tự
+        /// loại bỏ khoảng chết nếu có.
         /// </summary>
         public async Task<KetQuaLanKiemTraDto> SubmitQuiz(SubmitQizRequest request)
         {
-            // 1. Lấy thông tin lần làm bài
             var lanLam = await _lanLamBaiKiemTraService
                 .GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == request.IdLanLamBaiKiemTra && !x.IsDeleted);
             if (lanLam == null)
                 throw new Exception("Không tìm thấy lần làm bài.");
 
+            if (lanLam.ThoiGianNop != null)
+                throw new Exception("Bài kiểm tra đã được nộp.");
+
             var baiKiemTra = await GetByIdOrThrowAsync(lanLam.IdBaiKiemTra.Value);
 
-            // 2. Kiểm tra hết thời gian
+            // 1. Cập nhật thời gian làm bài lần cuối trước khi nộp
+            CapNhatThoiGianLamBai(lanLam);
+            lanLam.ThoiGianTiepTuc = null; // đóng phiên, không cộng thêm sau khi nộp
+
+            // 2. Kiểm tra hết thời gian (dựa trên TongThoiGianDaLam đã chuẩn hóa)
             bool hetThoiGian = false;
             if (baiKiemTra.GioiHanThoiGian.HasValue && baiKiemTra.GioiHanThoiGian.Value > 0)
             {
-                var thoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0);
-                if (lanLam.ThoiGianTiepTuc.HasValue)
-                    thoiGianDaLam += (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
-
-                if (thoiGianDaLam > baiKiemTra.GioiHanThoiGian.Value)
+                if ((lanLam.TongThoiGianDaLam ?? 0) > baiKiemTra.GioiHanThoiGian.Value)
                     hetThoiGian = true;
             }
 
-            // 3. Lấy danh sách câu trả lời (chuyển thành kiểu trung gian)
+            // 3. Lấy danh sách câu trả lời
             List<CauTraLoiSubmitDto> cauTraLois = new List<CauTraLoiSubmitDto>();
 
             if (hetThoiGian)
@@ -1106,7 +1103,6 @@ namespace Eduverse.Service.BaiKiemTraService
             }
             else
             {
-                // Chuyển từ CauTraLoiRequest sang CauTraLoiSubmitDto một cách tường minh
                 if (request.CauTraLois != null)
                 {
                     cauTraLois = request.CauTraLois.Select(r => new CauTraLoiSubmitDto
@@ -1117,8 +1113,6 @@ namespace Eduverse.Service.BaiKiemTraService
                 }
             }
 
-
-            // Nếu không có câu trả lời nào -> 0 điểm
             if (!cauTraLois.Any())
             {
                 lanLam.ThoiGianNop = DateTime.Now;
@@ -1141,7 +1135,6 @@ namespace Eduverse.Service.BaiKiemTraService
                     ThoiGianKetThuc = DateTime.UtcNow
                 };
             }
-
 
             // 4. Lấy danh sách câu hỏi và đáp án liên quan
             var cauHoiIds = cauTraLois.Select(x => x.IdCauHoi).Distinct().ToList();
@@ -1174,7 +1167,6 @@ namespace Eduverse.Service.BaiKiemTraService
                 diemTheoCauHoi[ch.Id] = diem;
             }
 
-            // Xử lý làm tròn
             var tongDiemToiDaTinh = diemTheoCauHoi.Values.Sum();
             var chenh = Math.Round(100 - tongDiemToiDaTinh, 2);
             if (Math.Abs(chenh) > 0.01 && cauHois.Any())
@@ -1182,7 +1174,6 @@ namespace Eduverse.Service.BaiKiemTraService
                 var cauCuoiId = cauHois.Last().Id;
                 diemTheoCauHoi[cauCuoiId] = Math.Round(diemTheoCauHoi[cauCuoiId] + chenh, 2);
             }
-
 
             // 6. Chấm bài (multiple-correct, không trừ điểm)
             double tongDiem = 0;
@@ -1245,22 +1236,15 @@ namespace Eduverse.Service.BaiKiemTraService
             lanLam.TongDiemLanKiemTra = tongDiem;
             lanLam.TrangThai = datYeuCau ? "Dat" : "KhongDat";
 
-            if (lanLam.ThoiGianTiepTuc.HasValue)
-            {
-                var thoiGianVuaLam = (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
-                lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + thoiGianVuaLam;
-                lanLam.ThoiGianTiepTuc = null;
-            }
-
             await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
+            await _lanLamBaiKiemTraService.SaveAsync();
 
-
-            // 9. Lưu chi tiết mới
+            // 8. Lưu chi tiết mới
             foreach (var ct in chiTietsMoi)
                 await _chiTietLamBaiKiemTraService.CreateAsync(ct);
             await _chiTietLamBaiKiemTraService.SaveAsync();
 
-            // 10. Trả về kết quả
+            // 9. Trả về kết quả
             return new KetQuaLanKiemTraDto
             {
                 IdLanLamBaiKiemTra = lanLam.Id,
@@ -1273,41 +1257,107 @@ namespace Eduverse.Service.BaiKiemTraService
                 ThoiGianBatDau = lanLam.ThoiGianBatDau,
                 ThoiGianKetThuc = DateTime.UtcNow
             };
-
-
         }
+        #endregion
 
-
-        // Lấy kết quả bài thi
-        public async Task<KetQuaLanKiemTraDto> GetResult(Guid idLanLamBai)
+        #region GetReviewQuiz 
+        public async Task<ReviewQizzDto> GetReviewQuiz(Guid idLanLamBai)
         {
             var lanLam = await _lanLamBaiKiemTraService
                 .GetQueryable()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x =>x.Id == idLanLamBai && !x.IsDeleted);
+                .FirstOrDefaultAsync(x => x.Id == idLanLamBai && !x.IsDeleted);
 
             if (lanLam == null)
-                throw new Exception("Không tìm thấy kết quả.");
+                throw new Exception("Không tìm thấy lần làm bài.");
 
             var chiTiets = await _chiTietLamBaiKiemTraService
                 .GetQueryable()
                 .AsNoTracking()
-                .Where(x =>x.IdLanLamBaiKiemTra == idLanLamBai && !x.IsDeleted)
+                .Where(x => x.IdLanLamBaiKiemTra == idLanLamBai && !x.IsDeleted)
                 .ToListAsync();
 
-            return new KetQuaLanKiemTraDto
+            if (!chiTiets.Any())
+                throw new Exception("Không tìm thấy chi tiết bài làm.");
+
+            var cauHoiIds = chiTiets
+                .Where(x => x.IdCauHoi.HasValue)
+                .Select(x => x.IdCauHoi!.Value)
+                .Distinct()
+                .ToList();
+
+            var cauHois = await _cauHoiService
+                .GetQueryable()
+                .AsNoTracking()
+                .Where(x => cauHoiIds.Contains(x.Id) && !x.IsDeleted)
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            var dapAns = await _dapAnService
+                .GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value) && !x.IsDeleted)
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            var chiTietLookup = chiTiets
+                .Where(x => x.IdCauHoi.HasValue)
+                .ToDictionary(x => x.IdCauHoi!.Value, x => x);
+
+            var dapAnDungLookup = dapAns
+                .Where(x => x.LaDapAnDung == true && x.IdCauHoi.HasValue)
+                .ToDictionary(x => x.IdCauHoi!.Value, x => x);
+
+            var dapAnLookup = dapAns
+                .Where(x => x.IdCauHoi.HasValue)
+                .GroupBy(x => x.IdCauHoi!.Value)
+                .ToDictionary(x => x.Key, x => x.ToList());
+
+            var review = new ReviewQizzDto
             {
                 IdLanLamBaiKiemTra = lanLam.Id,
                 Dat = lanLam.Dat ?? false,
                 TongDiem = chiTiets.Sum(x => x.DiemNhanDuoc ?? 0),
-                SoCauDung = chiTiets.Count(x => x.LaDung == true),
-                TongSoCau = chiTiets.Count,
-                ThoiGianNop = lanLam.ThoiGianNop
+                ThoiGianNop = lanLam.ThoiGianNop,
+                CauHois = new List<CauHoiReviewDto>()
             };
+
+            foreach (var cauHoi in cauHois)
+            {
+                if (!chiTietLookup.TryGetValue(cauHoi.Id, out var chiTiet))
+                    continue;
+
+                dapAnDungLookup.TryGetValue(cauHoi.Id, out var dapAnDung);
+                dapAnLookup.TryGetValue(cauHoi.Id, out var dsDapAn);
+
+                var cauHoiReview = new CauHoiReviewDto
+                {
+                    IdCauHoi = cauHoi.Id,
+                    TenCauHoi = cauHoi.TenCauHoi,
+                    NoiDungCauHoi = cauHoi.NoiDungCauHoi,
+                    IdDapAnChon = chiTiet.IdDapAnChon,
+                    IdDapAnDung = dapAnDung?.Id,
+                    LaDung = chiTiet.LaDung ?? false,
+                    DiemNhanDuoc = chiTiet.DiemNhanDuoc ?? 0,
+                    DapAns = dsDapAn?
+                        .Select(x => new DapAnReviewDto
+                        {
+                            Id = x.Id,
+                            NoiDungDapAn = x.NoiDungDapAn,
+                            LaDapAnDung = x.LaDapAnDung ?? false
+                        })
+                        .ToList()
+                        ?? new List<DapAnReviewDto>()
+                };
+
+                review.CauHois.Add(cauHoiReview);
+            }
+
+            return review;
         }
+        #endregion
 
-
-        // Kiểm tra có được làm lại hay không
+        #region CheckCanRetake
         public async Task<bool> CheckCanRetake(Guid idBaiKiemTra)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var idNguoiDung);
@@ -1327,9 +1377,9 @@ namespace Eduverse.Service.BaiKiemTraService
 
             return soLanDaLam < (baiKiemTra.SoLanLamToiDa ?? 1);
         }
+        #endregion
 
-
-        // Lịch sử các lần làm bài
+        #region GetHistory
         public async Task<List<LichSuLamBaiDto>> GetHistory(Guid idBaiKiemTra)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var idNguoiDung);
@@ -1352,140 +1402,11 @@ namespace Eduverse.Service.BaiKiemTraService
                 })
                 .ToListAsync();
         }
+        #endregion
 
-        // Xem lại chi tiết bài làm
-        public async Task<ReviewQizzDto> GetReviewQuiz(Guid idLanLamBai)
-        {
-            var lanLam = await _lanLamBaiKiemTraService
-                .GetQueryable()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x =>
-                    x.Id == idLanLamBai &&
-                    !x.IsDeleted);
-
-            if (lanLam == null)
-                throw new Exception("Không tìm thấy lần làm bài.");
-
-            var chiTiets = await _chiTietLamBaiKiemTraService
-                .GetQueryable()
-                .AsNoTracking()
-                .Where(x =>
-                    x.IdLanLamBaiKiemTra == idLanLamBai &&
-                    !x.IsDeleted)
-                .ToListAsync();
-
-            if (!chiTiets.Any())
-                throw new Exception("Không tìm thấy chi tiết bài làm.");
-
-            var cauHoiIds = chiTiets
-                .Where(x => x.IdCauHoi.HasValue)
-                .Select(x => x.IdCauHoi!.Value)
-                .Distinct()
-                .ToList();
-
-            var cauHois = await _cauHoiService
-                .GetQueryable()
-                .AsNoTracking()
-                .Where(x =>
-                    cauHoiIds.Contains(x.Id) &&
-                    !x.IsDeleted)
-                .OrderBy(x => x.ThuTuSapXep)
-                .ToListAsync();
-
-            var dapAns = await _dapAnService
-                .GetQueryable()
-                .AsNoTracking()
-                .Where(x =>
-                    x.IdCauHoi.HasValue &&
-                    cauHoiIds.Contains(x.IdCauHoi.Value) &&
-                    !x.IsDeleted)
-                .OrderBy(x => x.ThuTuSapXep)
-                .ToListAsync();
-
-            var chiTietLookup = chiTiets
-                .Where(x => x.IdCauHoi.HasValue)
-                .ToDictionary(
-                    x => x.IdCauHoi!.Value,
-                    x => x);
-
-            var dapAnDungLookup = dapAns
-                .Where(x =>
-                    x.LaDapAnDung == true &&
-                    x.IdCauHoi.HasValue)
-                .ToDictionary(
-                    x => x.IdCauHoi!.Value,
-                    x => x);
-
-            var dapAnLookup = dapAns
-                .Where(x => x.IdCauHoi.HasValue)
-                .GroupBy(x => x.IdCauHoi!.Value)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.ToList());
-
-            var review = new ReviewQizzDto
-            {
-                IdLanLamBaiKiemTra = lanLam.Id,
-                Dat = lanLam.Dat ?? false,
-                TongDiem = chiTiets.Sum(x => x.DiemNhanDuoc ?? 0),
-                CauHois = new List<CauHoiReviewDto>()
-            };
-
-            foreach (var cauHoi in cauHois)
-            {
-                if (!chiTietLookup.TryGetValue(cauHoi.Id, out var chiTiet))
-                    continue;
-
-                dapAnDungLookup.TryGetValue(
-                    cauHoi.Id,
-                    out var dapAnDung);
-
-                dapAnLookup.TryGetValue(
-                    cauHoi.Id,
-                    out var dsDapAn);
-
-                var cauHoiReview = new CauHoiReviewDto
-                {
-                    IdCauHoi = cauHoi.Id,
-                    TenCauHoi = cauHoi.TenCauHoi,
-                    NoiDungCauHoi = cauHoi.NoiDungCauHoi,
-
-                    IdDapAnChon = chiTiet.IdDapAnChon,
-
-                    IdDapAnDung = dapAnDung?.Id,
-
-                    LaDung = chiTiet.LaDung ?? false,
-
-                    DiemNhanDuoc =
-                        chiTiet.DiemNhanDuoc ?? 0,
-
-                    DapAns = dsDapAn?
-                        .Select(x => new DapAnReviewDto
-                        {
-                            Id = x.Id,
-                            NoiDungDapAn = x.NoiDungDapAn,
-                            LaDapAnDung =
-                                x.LaDapAnDung ?? false
-                        })
-                        .ToList()
-                        ?? new List<DapAnReviewDto>()
-                };
-
-                review.CauHois.Add(cauHoiReview);
-            }
-
-            return review;
-        }
-
-
-        #region Auto-Save Câu Trả Lời 
-        /// <summary>
-        /// Auto-save câu trả lời - CHỈ cho phép lưu câu hiện tại hoặc câu đã làm trước đó
-        /// Không cho phép bỏ qua câu hỏi để làm câu sau
-        /// </summary>
+        #region AutoSaveCauTraLoi
         public async Task<AutoSaveDapAnDto> AutoSaveCauTraLoi(AutoSaveRequest request)
         {
-            // 1. Kiểm tra lần làm bài
             var lanLam = await _lanLamBaiKiemTraService
                 .GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == request.IdLanLamBaiKiemTra && !x.IsDeleted);
@@ -1496,19 +1417,16 @@ namespace Eduverse.Service.BaiKiemTraService
             if (lanLam.ThoiGianNop != null)
                 throw new Exception("Bài kiểm tra đã được nộp.");
 
-            // 2. Lấy thông tin bài kiểm tra
             var baiKiemTra = await GetByIdOrThrowAsync(lanLam.IdBaiKiemTra.Value);
             var gioiHanThoiGian = baiKiemTra.GioiHanThoiGian ?? 0;
 
-            // 3. Kiểm tra thời gian (nếu có giới hạn)
             if (gioiHanThoiGian > 0)
             {
-                var thoiGianConLais = TinhThoiGianConLai(lanLam, gioiHanThoiGian);
-                if (thoiGianConLais <= 0)
+                var thoiGianConLai = TinhThoiGianConLai(lanLam, gioiHanThoiGian);
+                if (thoiGianConLai <= 0)
                     throw new Exception("Đã hết thời gian làm bài. Vui lòng nộp bài.");
             }
 
-            // 4. Lấy danh sách câu hỏi theo thứ tự
             var allQuestions = await _cauHoiService
                 .GetQueryable()
                 .AsNoTracking()
@@ -1517,7 +1435,6 @@ namespace Eduverse.Service.BaiKiemTraService
                 .Select(x => x.Id)
                 .ToListAsync();
 
-            // 5. Lấy các câu đã trả lời
             var answeredQuestions = await _chiTietLamBaiKiemTraService
                 .GetQueryable()
                 .AsNoTracking()
@@ -1528,11 +1445,8 @@ namespace Eduverse.Service.BaiKiemTraService
                 .Distinct()
                 .ToListAsync();
 
-            // 6. Tìm câu hỏi tiếp theo cần làm (câu đầu tiên chưa trả lời)
             var nextRequiredQuestion = allQuestions.FirstOrDefault(x => !answeredQuestions.Contains(x));
 
-            // 7. ⭐ KIỂM TRA TUẦN TỰ - QUAN TRỌNG
-            // Chỉ được lưu nếu là câu hiện tại (câu tiếp theo cần làm) HOẶC câu đã làm trước đó
             var isCurrentQuestion = request.IdCauHoi == nextRequiredQuestion;
             var isAlreadyAnswered = answeredQuestions.Contains(request.IdCauHoi);
             var isAllowed = isCurrentQuestion || isAlreadyAnswered;
@@ -1543,7 +1457,6 @@ namespace Eduverse.Service.BaiKiemTraService
                 throw new Exception($"Vui lòng trả lời câu hỏi số {nextQuestionNumber} trước khi chuyển sang câu khác.");
             }
 
-            // 8. Kiểm tra câu hỏi có tồn tại không
             var cauHoi = await _cauHoiService
                 .GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == request.IdCauHoi && !x.IsDeleted);
@@ -1551,7 +1464,6 @@ namespace Eduverse.Service.BaiKiemTraService
             if (cauHoi == null)
                 throw new Exception("Không tìm thấy câu hỏi.");
 
-            // 9. Xóa đáp án cũ của câu hỏi này (nếu có)
             var existingAnswers = await _chiTietLamBaiKiemTraService
                 .GetQueryable()
                 .Where(x => x.IdLanLamBaiKiemTra == request.IdLanLamBaiKiemTra &&
@@ -1564,7 +1476,6 @@ namespace Eduverse.Service.BaiKiemTraService
                 await _chiTietLamBaiKiemTraService.DeleteAsync(old);
             }
 
-            // 10. Lưu đáp án mới
             var chiTiets = new List<ChiTietLamBaiKiemTra>();
 
             foreach (var idDapAn in request.IdDapAnChons)
@@ -1594,23 +1505,15 @@ namespace Eduverse.Service.BaiKiemTraService
             }
             await _chiTietLamBaiKiemTraService.SaveAsync();
 
-            // 11. Cập nhật thời gian làm bài
-            if (lanLam.ThoiGianTiepTuc.HasValue)
-            {
-                var thoiGianVuaLam = (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
-                lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + thoiGianVuaLam;
-                lanLam.ThoiGianTiepTuc = DateTime.Now;
-            }
-            lanLam.ThoiGianCapNhat = DateTime.Now;
+            // Cập nhật thời gian - tự phát hiện khoảng chết nếu user vừa mất điện rồi quay lại
+            CapNhatThoiGianLamBai(lanLam);
             await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
             await _lanLamBaiKiemTraService.SaveAsync();
 
-            // 12. Tính toán kết quả trả về
             var soCauDaLam = await GetSoCauDaLam(request.IdLanLamBaiKiemTra);
             var tongSoCau = allQuestions.Count;
             var daHoanThanh = soCauDaLam == tongSoCau;
 
-            // Tìm câu tiếp theo để FE tự động chuyển
             Guid? nextQuestionId = null;
             if (!daHoanThanh)
             {
@@ -1626,8 +1529,7 @@ namespace Eduverse.Service.BaiKiemTraService
                 nextQuestionId = allQuestions.FirstOrDefault(x => !currentAnswered.Contains(x));
             }
 
-            // Tính thời gian còn lại
-            var thoiGianConLai = gioiHanThoiGian > 0 ? TinhThoiGianConLai(lanLam, gioiHanThoiGian) : 0;
+            var thoiGianConLaiResult = gioiHanThoiGian > 0 ? TinhThoiGianConLai(lanLam, gioiHanThoiGian) : 0;
 
             return new AutoSaveDapAnDto
             {
@@ -1636,19 +1538,20 @@ namespace Eduverse.Service.BaiKiemTraService
                 TongSoCau = tongSoCau,
                 DaHoanThanh = daHoanThanh,
                 NextQuestionId = nextQuestionId,
-                ThoiGianConLai = thoiGianConLai,
+                ThoiGianConLai = thoiGianConLaiResult,
                 CoGioiHan = gioiHanThoiGian > 0,
                 Message = daHoanThanh ? "Bạn đã hoàn thành tất cả câu hỏi! Hãy nộp bài." : "Đã lưu câu trả lời."
             };
         }
         #endregion
 
-        #region Pause Quiz - Tạm dừng bài làm (khi user thoát)
+        #region Heartbeat
         /// <summary>
-        /// Tạm dừng bài làm - dừng đếm thời gian
-        /// Gọi khi user đóng tab, chuyển trang, hoặc mất điện
+        /// FE gọi định kỳ (10s) khi tab visible. Mất điện/đóng tab -> FE đơn giản không
+        /// gọi được nữa, không cần báo gì. Lần gọi kế tiếp (heartbeat, autosave, continue,
+        /// submit) sẽ tự phát hiện khoảng trống lớn qua CapNhatThoiGianLamBai và cắt bỏ.
         /// </summary>
-        public async Task<TamDungQuizResultDto> PauseQuiz(Guid idLanLamBaiKiemTra)
+        public async Task<HeartbeatResultDto> Heartbeat(Guid idLanLamBaiKiemTra)
         {
             var lanLam = await _lanLamBaiKiemTraService
                 .GetQueryable()
@@ -1660,35 +1563,26 @@ namespace Eduverse.Service.BaiKiemTraService
             if (lanLam.ThoiGianNop != null)
                 throw new Exception("Bài kiểm tra đã được nộp.");
 
-            // Tính thời gian đã làm từ lần cuối tiếp tục
-            if (lanLam.ThoiGianTiepTuc.HasValue)
-            {
-                var thoiGianVuaLam = (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
-                lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + thoiGianVuaLam;
-                lanLam.ThoiGianTiepTuc = null; // Xóa thời gian tiếp tục - báo hiệu đang tạm dừng
-            }
+            CapNhatThoiGianLamBai(lanLam);
 
-            lanLam.ThoiGianTamDung = DateTime.Now;
             await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
             await _lanLamBaiKiemTraService.SaveAsync();
 
-            return new TamDungQuizResultDto
+            var baiKiemTra = await GetByIdOrThrowAsync(lanLam.IdBaiKiemTra.Value);
+            var gioiHanThoiGian = baiKiemTra.GioiHanThoiGian ?? 0;
+
+            return new HeartbeatResultDto
             {
-                Success = true,
-                ThoiGianDaLam = lanLam.TongThoiGianDaLam ?? 0,
-                Message = "Đã tạm dừng bài làm. Khi quay lại sẽ tiếp tục từ thời điểm này."
+                TongThoiGianDaLam = lanLam.TongThoiGianDaLam ?? 0,
+                ThoiGianConLai = gioiHanThoiGian > 0 ? TinhThoiGianConLai(lanLam, gioiHanThoiGian) : 0,
+                CoGioiHan = gioiHanThoiGian > 0
             };
         }
         #endregion
 
-        #region Continue Quiz Full - Tiếp tục bài làm (khôi phục toàn bộ)
-        /// <summary>
-        /// Tiếp tục bài làm - khôi phục toàn bộ trạng thái
-        /// Gọi khi user vào lại bài kiểm tra
-        /// </summary>
+        #region ContinueQuizFull
         public async Task<ContinueQuizFullDto> ContinueQuizFull(Guid idLanLamBaiKiemTra)
         {
-            // 1. Lấy lần làm bài
             var lanLam = await _lanLamBaiKiemTraService
                 .GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == idLanLamBaiKiemTra && !x.IsDeleted);
@@ -1699,11 +1593,15 @@ namespace Eduverse.Service.BaiKiemTraService
             if (lanLam.ThoiGianNop != null)
                 throw new Exception("Bài kiểm tra đã được nộp.");
 
-            // 2. Lấy bài kiểm tra
             var baiKiemTra = await GetByIdOrThrowAsync(lanLam.IdBaiKiemTra.Value);
             var gioiHanThoiGian = baiKiemTra.GioiHanThoiGian ?? 0;
 
-            // 3. Kiểm tra thời gian (nếu có giới hạn)
+            // 1. Chuẩn hóa thời gian ngay khi resume - tự cắt khoảng chết nếu có
+            CapNhatThoiGianLamBai(lanLam);
+            await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
+            await _lanLamBaiKiemTraService.SaveAsync();
+
+            // 2. Kiểm tra hết giờ SAU khi đã chuẩn hóa
             if (gioiHanThoiGian > 0)
             {
                 var thoiGianConLai = TinhThoiGianConLai(lanLam, gioiHanThoiGian);
@@ -1711,22 +1609,6 @@ namespace Eduverse.Service.BaiKiemTraService
                     throw new Exception("Đã hết thời gian làm bài. Vui lòng nộp bài để xem kết quả.");
             }
 
-            // 4. Nếu đang tạm dừng, khôi phục thời gian tiếp tục
-            if (!lanLam.ThoiGianTiepTuc.HasValue)
-            {
-                var lastActive = lanLam.ThoiGianCapNhat ?? lanLam.ThoiGianTiepTuc.Value;
-                var elapsed = (lastActive - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
-                if (elapsed < 0) elapsed = 0;
-
-                lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + elapsed;
-            }
-
-            // Reset mốc tiếp tục = bây giờ
-            lanLam.ThoiGianTiepTuc = DateTime.Now;
-            await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
-            await _lanLamBaiKiemTraService.SaveAsync();
-
-            // 5. Lấy tất cả câu hỏi
             var allQuestions = await _cauHoiService
                 .GetQueryable()
                 .AsNoTracking()
@@ -1734,31 +1616,27 @@ namespace Eduverse.Service.BaiKiemTraService
                 .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
-            // 6. Lấy câu trả lời đã lưu
             var savedAnswers = await _chiTietLamBaiKiemTraService
                 .GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.IdLanLamBaiKiemTra == idLanLamBaiKiemTra &&
                             !x.IsDeleted &&
                             x.IdCauHoi.HasValue &&
-                            x.IdDapAnChon.HasValue)  // ⭐ Thêm điều kiện này
+                            x.IdDapAnChon.HasValue)
                 .GroupBy(x => x.IdCauHoi!.Value)
                 .ToDictionaryAsync(
                     g => g.Key,
-                    g => g.Select(x => x.IdDapAnChon!.Value).ToList()  // ⭐ Dùng !.Value
+                    g => g.Select(x => x.IdDapAnChon!.Value).ToList()
                 );
 
-            // 7. Xác định câu hỏi đang làm dở (câu đầu tiên chưa trả lời)
             var answeredQuestionIds = savedAnswers.Keys.ToList();
             var currentQuestion = allQuestions.FirstOrDefault(x => !answeredQuestionIds.Contains(x.Id));
             var currentQuestionIndex = currentQuestion != null
                 ? allQuestions.FindIndex(x => x.Id == currentQuestion.Id)
                 : allQuestions.Count - 1;
 
-            // 8. Xây dựng dữ liệu trả về cho FE
             var quizData = await GetQuizForStudent(baiKiemTra.Id);
 
-            // Đánh dấu câu đã trả lời
             foreach (var cauHoi in quizData.CauHois)
             {
                 if (savedAnswers.ContainsKey(cauHoi.Id))
@@ -1802,6 +1680,33 @@ namespace Eduverse.Service.BaiKiemTraService
         #endregion
 
         #region PT hỗ trợ
+
+        /// <summary>
+        /// Hàm trung tâm xử lý thời gian làm bài - dùng chung cho Heartbeat, AutoSave,
+        /// ContinueQuizFull, SubmitQuiz. Nơi DUY NHẤT cộng dồn TongThoiGianDaLam.
+        /// </summary>
+        private void CapNhatThoiGianLamBai(LanLamBaiKiemTra lanLam)
+        {
+            var now = DateTime.Now;
+
+            if (lanLam.ThoiGianTiepTuc.HasValue)
+            {
+                var khoangCach = (now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
+
+                if (khoangCach > 0 && khoangCach <= HEARTBEAT_TIMEOUT_SECONDS)
+                {
+                    lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + khoangCach;
+                }
+                else if (khoangCach > HEARTBEAT_TIMEOUT_SECONDS)
+                {
+                    lanLam.TongThoiGianDaLam = (lanLam.TongThoiGianDaLam ?? 0) + HEARTBEAT_TIMEOUT_SECONDS;
+                }
+            }
+
+            lanLam.ThoiGianTiepTuc = now;
+            lanLam.ThoiGianCapNhat = now;
+        }
+
         private async Task<int> GetSoCauDaLam(Guid idLanLamBaiKiemTra)
         {
             return await _chiTietLamBaiKiemTraService
@@ -1823,21 +1728,31 @@ namespace Eduverse.Service.BaiKiemTraService
 
             if (lanLam.ThoiGianTiepTuc.HasValue)
             {
-                // Mốc hoạt động cuối cùng được ghi nhận (lần AutoSave gần nhất)
-                // Nếu chưa autosave lần nào, dùng chính ThoiGianTiepTuc (elapsed = 0)
-                var lastActive = lanLam.ThoiGianCapNhat ?? lanLam.ThoiGianTiepTuc.Value;
-
-                // Chỉ tính thời gian THỰC SỰ ĐANG LÀM (đến lần hoạt động cuối),
-                // không tính khoảng "im lặng" do mất điện/đóng tab đột ngột
-                var elapsed = (lastActive - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
-                if (elapsed < 0) elapsed = 0;
-
-                thoiGianDaLam += elapsed;
+                var khoangCach = (DateTime.Now - lanLam.ThoiGianTiepTuc.Value).TotalSeconds;
+                thoiGianDaLam += Math.Min(Math.Max(0, khoangCach), HEARTBEAT_TIMEOUT_SECONDS);
             }
 
             return Math.Max(0, gioiHanThoiGian - thoiGianDaLam);
         }
         #endregion
+
+        //FE
+            //        let heartbeatTimer;
+
+            //        function startHeartbeat(lanLamId)
+            //        {
+            //            heartbeatTimer = setInterval(() => {
+            //            if (document.visibilityState === 'visible')
+            //            {
+            //                fetch(`/ api / quiz /${ lanLamId}/ heartbeat`, { method: 'POST' });
+            //        }
+            //    }, 10000); // 10s < HEARTBEAT_TIMEOUT_SECONDS (20s)
+            //}
+
+            //function stopHeartbeat()
+            //{
+            //    clearInterval(heartbeatTimer);
+            //}
     }
 }
 

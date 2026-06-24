@@ -151,25 +151,6 @@ namespace Eduverse.Api.Controller
             }
         }
 
-        /// <summary>
-        /// Lấy kết quả bài thi.
-        /// </summary>
-        [HttpGet("result/{idLanLamBai}")]
-        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
-        public async Task<DataResponse<KetQuaLanKiemTraDto>> GetResult(Guid idLanLamBai)
-        {
-            try
-            {
-                var result = await _baiKiemTraService
-                        .GetResult(idLanLamBai);
-
-                return DataResponse<KetQuaLanKiemTraDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<KetQuaLanKiemTraDto>.False(ex.Message);
-            }
-        }
 
         /// <summary>
         /// Xem lại bài làm.
@@ -249,27 +230,6 @@ namespace Eduverse.Api.Controller
                 return DataResponse<AutoSaveDapAnDto>.False(ex.Message);
             }
         }
-
-
-
-        /// <summary>
-        /// Tạm dừng bài làm (dừng đếm thời gian) - gọi khi user thoát trang
-        /// </summary>
-        [HttpPost("pause/{idLanLamBaiKiemTra}")]
-        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
-        public async Task<DataResponse<TamDungQuizResultDto>> PauseQuiz(Guid idLanLamBaiKiemTra)
-        {
-            try
-            {
-                var result = await _baiKiemTraService.PauseQuiz(idLanLamBaiKiemTra);
-                return DataResponse<TamDungQuizResultDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<TamDungQuizResultDto>.False(ex.Message);
-            }
-        }
-
 
 
         /// <summary>

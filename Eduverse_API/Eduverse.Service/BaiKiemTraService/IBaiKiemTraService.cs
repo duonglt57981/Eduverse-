@@ -47,15 +47,6 @@ namespace Eduverse.Service.BaiKiemTraService
 
 
         /// <summary>
-        /// Lấy kết quả của một lần làm bài.
-        /// Bao gồm điểm số, số câu đúng và trạng thái đạt.
-        /// </summary>
-        /// <param name="idLanLamBai">Id lần làm bài.</param>
-        /// <returns>Kết quả bài thi.</returns> 
-        Task<KetQuaLanKiemTraDto> GetResult(Guid idLanLamBai);
-
-
-        /// <summary>
         /// Xem lại chi tiết bài làm.
         /// Trả về câu hỏi, đáp án đã chọn, đáp án đúng và điểm từng câu.
         /// </summary>
@@ -102,17 +93,8 @@ namespace Eduverse.Service.BaiKiemTraService
         Task<AutoSaveDapAnDto> AutoSaveCauTraLoi(AutoSaveRequest request);
 
 
-        /// <summary>
-        /// Tạm dừng bài làm, dừng đếm thời gian. Gọi khi học viên thoát khỏi trang làm bài
-        /// (đóng tab, chuyển trang, mất điện, ...) để sau khi quay lại có thể tiếp tục từ thời điểm đã dừng.
-        /// </summary>
-        /// <param name="idLanLamBaiKiemTra">ID của lần làm bài cần tạm dừng.</param>
-        /// <returns>
-        /// - Success: true nếu tạm dừng thành công.
-        /// - ThoiGianDaLam: tổng thời gian đã làm bài tính đến thời điểm dừng (giây).
-        /// - Message: thông báo xác nhận.
-        /// </returns>
-        Task<TamDungQuizResultDto> PauseQuiz(Guid idLanLamBaiKiemTra);
+
+        Task<HeartbeatResultDto> Heartbeat(Guid idLanLamBaiKiemTra);
 
 
         /// <summary>

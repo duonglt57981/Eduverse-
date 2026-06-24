@@ -24,6 +24,8 @@ namespace Eduverse.Service.KhoaHocService
 
         Task<KhoaHocDto> ChuyenTrangThaiChoDuyet(Guid IdKhoaHoc);
 
+        Task<GetToUpdateKhoaHoc> GetToUpdateKhoaHoc(Guid IdKhoaHoc);
+
         Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request);
 
         Task<KhoaHocDto> UpdateKhoaHoc(UpdateKhoaHocRequest request);
