@@ -72,6 +72,7 @@ const HEADER_H = 64;
 const PRIMARY_RED = "#8B1A1A";
 const PRIMARY_RED_DARK = "#6B1414";
 const LOAD_TIMEOUT_MS = 30000;
+const TextFieldAny = TextField as any;
 
 // ─────────────────────────────────────────────
 // Cloudinary helpers
@@ -1721,27 +1722,25 @@ export default function KhoaHocPage() {
             </IconButton>
           )}
         </Stack>
-        <TextField
+        <TextFieldAny
           fullWidth
           size="small"
           placeholder="Tìm kiếm bài giảng..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18 }} color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: searchTerm && (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearchTerm("")}>
-                    <CloseIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
+          onChange={(e: any) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 18 }} color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearchTerm("")}>
+                  <CloseIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </InputAdornment>
+            ),
           }}
           sx={{ mb: 1.5 }}
         />

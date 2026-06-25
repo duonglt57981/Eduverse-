@@ -171,7 +171,7 @@ export default function LandingPage() {
                   }}
                 >
                   <Image
-                    src="/auth/img/Illustration Section.png"
+                    src="/auth/img/Illustration_Section_v2.png"
                     alt="EduVerse classroom"
                     fill
                     priority

@@ -6,7 +6,7 @@ import StudentDashboardContent from '@/src/components/dashboard/StudentDashboard
 
 export default function StudentDashboardPage() {
   return (
-    <AuthGuard allowedRoles={['HocVien']}>
+    <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
       <DashboardShell>
         <StudentDashboardContent />
       </DashboardShell>

@@ -398,19 +398,17 @@ export default function InstructorsPage() {
           </Box>
 
           <Box sx={{ py: { xs: 4, md: 5 } }}>
-            <Stack
-              direction={{ xs: 'column', md: 'row' }}
-              sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'flex-end' }, gap: 2, mb: 2.6 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3.5 }}>
               <SectionHeading
                 eyebrow="Giảng viên nổi bật"
                 title="Giảng viên tiêu biểu"
                 description="Những mentor nổi bật với kinh nghiệm thực chiến, tư duy hiện đại và đánh giá rất cao từ học viên."
+                align="center"
               />
-              <Button endIcon={<ArrowForwardRounded />} sx={{ color: '#8d1313' }}>
+              <Button endIcon={<ArrowForwardRounded />} sx={{ color: '#8d1313', mt: 1.5 }}>
                 Xem hồ sơ đầy đủ
               </Button>
-            </Stack>
+            </Box>
 
             <Box
               sx={{

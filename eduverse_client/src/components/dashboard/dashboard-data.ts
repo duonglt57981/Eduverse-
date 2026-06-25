@@ -169,13 +169,13 @@ export const sidebarPrimaryItems: DashboardNavItem[] = [
 
 // Sidebar items dành riêng cho Giảng viên
 export const sidebarGiaoVienItems: DashboardNavItem[] = [
-  { label: 'Trang chủ', icon: HomeRounded },
-  { label: 'Quản lý khóa học', icon: VideoLibraryRounded },
-  { label: 'Quản lý bài giảng', icon: ArticleRounded },
+  { label: 'Dashboard', icon: DashboardRounded },
   { label: 'Bài kiểm tra', icon: QuizRounded },
-  { label: 'Học viên của tôi', icon: PeopleRounded },
-  { label: 'Thống kê', icon: AssessmentRounded },
-  { label: 'Chứng chỉ', icon: EmojiEventsRounded },
+  { label: 'Khóa học', icon: SchoolRounded },
+  { label: 'Học viên', icon: PeopleRounded },
+  { label: 'Doanh thu', icon: AssessmentRounded },
+  { label: 'Q&A', icon: HelpOutlineRounded },
+  { label: 'Cài đặt', icon: SettingsRounded },
 ] as const;
 
 // Sidebar items dành riêng cho Admin

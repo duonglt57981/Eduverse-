@@ -14,6 +14,12 @@ import {
   Tab,
   Tabs,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Chip,
 } from '@mui/material';
 import {
   TrendingUpRounded,
@@ -385,6 +391,66 @@ export default function AdminDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Tabs and request states
+  const [adminActiveTab, setAdminActiveTab] = useState(0);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [rejectNotes, setRejectNotes] = useState('');
+
+  const fetchRequests = async () => {
+    try {
+      setLoadingRequests(true);
+      const res = await apiService.get<any>('/admin/instructor-requests');
+      if (res.status && res.data) {
+        setRequests(res.data);
+      }
+    } catch (err) {
+      console.log('Error fetching instructor requests:', err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      const res = await apiService.post<any>(`/admin/instructor-requests/${id}/approve`);
+      if (res.status) {
+        fetchRequests();
+      } else {
+        alert(res.message || 'Lỗi khi phê duyệt');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Lỗi hệ thống khi phê duyệt');
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedRequest) return;
+    try {
+      const res = await apiService.post<any>(`/admin/instructor-requests/${selectedRequest.id}/reject`, {
+        adminNotes: rejectNotes
+      });
+      if (res.status) {
+        setDialogOpen(false);
+        setRejectNotes('');
+        setSelectedRequest(null);
+        fetchRequests();
+      } else {
+        alert(res.message || 'Lỗi khi từ chối');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Lỗi hệ thống khi từ chối');
+    }
+  };
+
+  useEffect(() => {
+    if (adminActiveTab === 1) {
+      fetchRequests();
+    }
+  }, [adminActiveTab]);
+
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
@@ -471,177 +537,368 @@ export default function AdminDashboardContent() {
         </Typography>
       </Box>
 
-      {/* 2. Indicators Cards */}
-      <Box
+      {/* Horizontal Tab Navigation */}
+      <Tabs
+        value={adminActiveTab}
+        onChange={(_, val) => setAdminActiveTab(val)}
         sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
-          gap: 3,
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          '& .MuiTabs-indicator': {
+            bgcolor: COLORS.primary,
+            height: 3,
+            borderRadius: '3px',
+          },
+          '& .MuiTab-root': {
+            textTransform: 'none',
+            fontSize: 14.5,
+            fontWeight: 800,
+            color: 'rgba(31,41,55,0.5)',
+            px: 2,
+            pb: 1.5,
+            '&.Mui-selected': { color: COLORS.primary },
+          },
         }}
       >
-        {cardStats.map((stat, idx) => (
-          <Paper
-            key={idx}
-            elevation={0}
+        <Tab label="Thống kê tổng quan" />
+        <Tab label="Duyệt giảng viên" />
+      </Tabs>
+
+      {adminActiveTab === 0 && (
+        <>
+          {/* 2. Indicators Cards */}
+          <Box
             sx={{
-              p: 3,
-              borderRadius: '20px',
-              border: '1px solid rgba(0,0,0,0.06)',
-              bgcolor: COLORS.white,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              position: 'relative',
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+              gap: 3,
             }}
           >
-            {/* Header info */}
-            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography sx={{ fontSize: 11.5, fontWeight: 800, color: 'rgba(31,41,55,0.4)', letterSpacing: '0.4px' }}>
-                {stat.title}
-              </Typography>
-              {/* Trend */}
-              <ChipTrend value={stat.trend} isUp={stat.isUp} />
-            </Stack>
-
-            {/* Content info */}
-            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-end', mt: 0.5 }}>
-              <Typography sx={{ fontSize: 22, fontWeight: 900, color: COLORS.textDark, letterSpacing: '-0.5px' }}>
-                {stat.value}
-              </Typography>
-              <Box
+            {cardStats.map((stat, idx) => (
+              <Paper
+                key={idx}
+                elevation={0}
                 sx={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '12px',
-                  bgcolor: stat.iconBg,
-                  display: 'grid',
-                  placeItems: 'center',
+                  p: 3,
+                  borderRadius: '20px',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  bgcolor: COLORS.white,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                  position: 'relative',
                 }}
               >
-                {stat.icon}
-              </Box>
-            </Stack>
-          </Paper>
-        ))}
-      </Box>
+                {/* Header info */}
+                <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography sx={{ fontSize: 11.5, fontWeight: 800, color: 'rgba(31,41,55,0.4)', letterSpacing: '0.4px' }}>
+                    {stat.title}
+                  </Typography>
+                  {/* Trend */}
+                  <ChipTrend value={stat.trend} isUp={stat.isUp} />
+                </Stack>
 
-      {/* 3. Revenue Trend Chart */}
-      <RevenueLineChart data={revenueTrend} />
+                {/* Content info */}
+                <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-end', mt: 0.5 }}>
+                  <Typography sx={{ fontSize: 22, fontWeight: 900, color: COLORS.textDark, letterSpacing: '-0.5px' }}>
+                    {stat.value}
+                  </Typography>
+                  <Box
+                    sx={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: '12px',
+                      bgcolor: stat.iconBg,
+                      display: 'grid',
+                      placeItems: 'center',
+                    }}
+                  >
+                    {stat.icon}
+                  </Box>
+                </Stack>
+              </Paper>
+            ))}
+          </Box>
 
-      {/* 4. Split Row: Student growth & Best Selling */}
-      <Grid container spacing={3.5} sx={{ width: '100%', m: 0 }}>
-        <Grid size={{ xs: 12, md: 7 }} sx={{ p: 0 }}>
-          <StudentGrowthChart data={studentGrowth} />
-        </Grid>
-        <Grid size={{ xs: 12, md: 5 }} sx={{ p: 0 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3.5,
-              borderRadius: '24px',
-              border: '1px solid rgba(141,19,19,0.06)',
-              bgcolor: COLORS.white,
-              height: '100%',
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}>
-              Khóa học bán chạy nhất
-            </Typography>
+          {/* 3. Revenue Trend Chart */}
+          <RevenueLineChart data={revenueTrend} />
 
-            <Stack spacing={3}>
-              {bestSellingCourses.map((course: any, idx: number) => {
-                const colors = [COLORS.primary, '#7C3AED', '#0EA5E9'];
-                return (
-                  <Stack key={idx} spacing={1}>
-                    <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                        <Box
+          {/* 4. Split Row: Student growth & Best Selling */}
+          <Grid container spacing={3.5} sx={{ width: '100%', m: 0 }}>
+            <Grid size={{ xs: 12, md: 7 }} sx={{ p: 0 }}>
+              <StudentGrowthChart data={studentGrowth} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 5 }} sx={{ p: 0 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3.5,
+                  borderRadius: '24px',
+                  border: '1px solid rgba(141,19,19,0.06)',
+                  bgcolor: COLORS.white,
+                  height: '100%',
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}>
+                  Khóa học bán chạy nhất
+                </Typography>
+
+                <Stack spacing={3}>
+                  {bestSellingCourses.map((course: any, idx: number) => {
+                    const colors = [COLORS.primary, '#7C3AED', '#0EA5E9'];
+                    return (
+                      <Stack key={idx} spacing={1}>
+                        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                            <Box
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '8px',
+                                bgcolor: 'rgba(0,0,0,0.04)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <StarRounded sx={{ color: '#F59E0B', fontSize: 16 }} />
+                            </Box>
+                            <Typography sx={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>
+                              {course.title}
+                            </Typography>
+                          </Stack>
+                          <Typography sx={{ fontSize: 13, fontWeight: 800, color: COLORS.textDark }}>
+                            {course.percentage}%
+                          </Typography>
+                        </Stack>
+                        <LinearProgress
+                          variant="determinate"
+                          value={course.percentage}
                           sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '8px',
+                            height: 6,
+                            borderRadius: '3px',
                             bgcolor: 'rgba(0,0,0,0.04)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: '3px',
+                              bgcolor: colors[idx % colors.length],
+                            },
                           }}
-                        >
-                          <StarRounded sx={{ color: '#F59E0B', fontSize: 16 }} />
-                        </Box>
-                        <Typography sx={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>
-                          {course.title}
-                        </Typography>
+                        />
                       </Stack>
-                      <Typography sx={{ fontSize: 13, fontWeight: 800, color: COLORS.textDark }}>
-                        {course.percentage}%
-                      </Typography>
-                    </Stack>
-                    <LinearProgress
-                      variant="determinate"
-                      value={course.percentage}
-                      sx={{
-                        height: 6,
-                        borderRadius: '3px',
-                        bgcolor: 'rgba(0,0,0,0.04)',
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: '3px',
-                          bgcolor: colors[idx % colors.length],
-                        },
-                      }}
-                    />
-                  </Stack>
-                );
-              })}
-            </Stack>
-          </Paper>
-        </Grid>
-      </Grid>
+                    );
+                  })}
+                </Stack>
+              </Paper>
+            </Grid>
+          </Grid>
 
-      {/* 5. Split Row: Heatmap & Recent activity */}
-      <Grid container spacing={3.5} sx={{ width: '100%', m: 0 }}>
-        <Grid size={{ xs: 12, md: 7 }} sx={{ p: 0 }}>
-          <LearningActivityHeatmap data={heatmap} />
-        </Grid>
-        <Grid size={{ xs: 12, md: 5 }} sx={{ p: 0 }}>
-          <Paper
-            elevation={0}
+          {/* 5. Split Row: Heatmap & Recent activity */}
+          <Grid container spacing={3.5} sx={{ width: '100%', m: 0 }}>
+            <Grid size={{ xs: 12, md: 7 }} sx={{ p: 0 }}>
+              <LearningActivityHeatmap data={heatmap} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 5 }} sx={{ p: 0 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3.5,
+                  borderRadius: '24px',
+                  border: '1px solid rgba(141,19,19,0.06)',
+                  bgcolor: COLORS.white,
+                  height: '100%',
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}>
+                  Hoạt động trực tuyến
+                </Typography>
+
+                <Stack spacing={2.5}>
+                  {recentActivities.map((act: any, idx: number) => {
+                    const getIconColor = () => {
+                      if (act.type === 'registration') return COLORS.green;
+                      if (act.type === 'quiz') return '#3B82F6';
+                      return '#F59E0B';
+                    };
+                    return (
+                      <Stack key={idx} direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                        <FiberManualRecordRounded sx={{ color: getIconColor(), fontSize: 12, mt: 0.5, flexShrink: 0 }} />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: COLORS.textDark, lineHeight: 1.3 }}>
+                            {act.title}
+                          </Typography>
+                          <Typography sx={{ fontSize: 11.5, color: 'rgba(31,41,55,0.4)', mt: 0.5, fontWeight: 600 }}>
+                            {act.time} • {act.subtitle}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    );
+                  })}
+                </Stack>
+              </Paper>
+            </Grid>
+          </Grid>
+        </>
+      )}
+
+      {adminActiveTab === 1 && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: '24px',
+            border: '1px solid rgba(141,19,19,0.06)',
+            bgcolor: COLORS.white,
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark, mb: 1 }}>
+            Danh sách yêu cầu nâng cấp Giảng viên
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: 'rgba(31,41,55,0.5)', mb: 3 }}>
+            Xem xét và phê duyệt hoặc từ chối các yêu cầu nâng cấp vai trò từ Học viên.
+          </Typography>
+
+          {loadingRequests ? (
+            <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
+              <CircularProgress sx={{ color: COLORS.primary }} />
+            </Box>
+          ) : requests.length === 0 ? (
+            <Typography sx={{ py: 6, color: 'rgba(31,41,55,0.4)', fontWeight: 600, textAlign: 'center' }}>
+              Không có yêu cầu nâng cấp nào.
+            </Typography>
+          ) : (
+            <Box sx={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.06)', color: 'rgba(31,41,55,0.5)', fontWeight: 800 }}>
+                    <th style={{ padding: '12px 8px' }}>Học viên</th>
+                    <th style={{ padding: '12px 8px' }}>Chuyên môn</th>
+                    <th style={{ padding: '12px 8px' }}>Kinh nghiệm</th>
+                    <th style={{ padding: '12px 8px' }}>Lý do</th>
+                    <th style={{ padding: '12px 8px' }}>Trạng thái</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'right' }}>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((req) => (
+                    <tr key={req.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                      <td style={{ padding: '16px 8px' }}>
+                        <Typography sx={{ fontSize: '14px', fontWeight: 700, color: COLORS.textDark }}>
+                          {req.hoTen || req.userName}
+                        </Typography>
+                        <Typography sx={{ fontSize: '11px', color: 'rgba(31,41,55,0.4)', fontWeight: 600 }}>
+                          {req.email} • {req.phoneNumber || 'Không có sđt'}
+                        </Typography>
+                      </td>
+                      <td style={{ padding: '16px 8px', fontWeight: 600 }}>{req.chuyenMon}</td>
+                      <td style={{ padding: '16px 8px', color: 'rgba(31,41,55,0.7)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={req.kinhNghiem}>
+                        {req.kinhNghiem}
+                      </td>
+                      <td style={{ padding: '16px 8px', color: 'rgba(31,41,55,0.7)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={req.lyDo}>
+                        {req.lyDo}
+                      </td>
+                      <td style={{ padding: '16px 8px' }}>
+                        {req.status === 0 ? (
+                          <Chip label="Chờ duyệt" size="small" sx={{ bgcolor: 'rgba(245, 158, 11, 0.08)', color: '#D97706', fontWeight: 700 }} />
+                        ) : req.status === 1 ? (
+                          <Chip label="Đã duyệt" size="small" sx={{ bgcolor: 'rgba(16, 185, 129, 0.08)', color: '#059669', fontWeight: 700 }} />
+                        ) : (
+                          <Chip label="Từ chối" size="small" sx={{ bgcolor: 'rgba(239, 68, 68, 0.08)', color: '#DC2626', fontWeight: 700 }} />
+                        )}
+                      </td>
+                      <td style={{ padding: '16px 8px', textAlign: 'right' }}>
+                        {req.status === 0 && (
+                          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => handleApprove(req.id)}
+                              sx={{
+                                bgcolor: COLORS.green,
+                                color: '#fff',
+                                textTransform: 'none',
+                                fontWeight: 800,
+                                borderRadius: '8px',
+                                '&:hover': { bgcolor: '#059669' }
+                              }}
+                            >
+                              Duyệt
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => {
+                                setSelectedRequest(req);
+                                setDialogOpen(true);
+                              }}
+                              sx={{
+                                color: COLORS.primary,
+                                borderColor: COLORS.primary,
+                                textTransform: 'none',
+                                fontWeight: 800,
+                                borderRadius: '8px',
+                                '&:hover': { borderColor: COLORS.primaryDark, bgcolor: 'rgba(141,19,19,0.04)' }
+                              }}
+                            >
+                              Từ chối
+                            </Button>
+                          </Stack>
+                        )}
+                        {req.status !== 0 && (
+                          <Typography sx={{ fontSize: '12px', color: 'rgba(31,41,55,0.4)', fontWeight: 700 }}>
+                            {req.status === 1 ? 'Đã duyệt' : 'Đã từ chối'}
+                          </Typography>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
+          )}
+        </Paper>
+      )}
+
+      {/* Rejection Dialog */}
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography sx={{ fontSize: 16.5, fontWeight: 900, color: COLORS.textDark }}>
+            Từ chối yêu cầu nâng cấp giảng viên
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13, color: 'rgba(31,41,55,0.6)', mb: 2, lineHeight: 1.5 }}>
+            Nhập lý do phản hồi hoặc ý kiến từ chối gửi đến học viên:
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Lý do từ chối"
+            value={rejectNotes}
+            onChange={(e) => setRejectNotes(e.target.value)}
+            placeholder="Ví dụ: Hồ sơ chuyên môn chưa phù hợp với yêu cầu của hệ thống."
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setDialogOpen(false)} sx={{ color: 'rgba(31,41,55,0.5)', fontWeight: 800 }}>
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleReject}
             sx={{
-              p: 3.5,
-              borderRadius: '24px',
-              border: '1px solid rgba(141,19,19,0.06)',
-              bgcolor: COLORS.white,
-              height: '100%',
+              bgcolor: COLORS.primary,
+              color: '#fff',
+              fontWeight: 800,
+              borderRadius: '10px',
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: COLORS.primaryDark, boxShadow: 'none' },
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}>
-              Hoạt động trực tuyến
-            </Typography>
-
-            <Stack spacing={2.5}>
-              {recentActivities.map((act: any, idx: number) => {
-                const getIconColor = () => {
-                  if (act.type === 'registration') return COLORS.green;
-                  if (act.type === 'quiz') return '#3B82F6';
-                  return '#F59E0B';
-                };
-                return (
-                  <Stack key={idx} direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
-                    <FiberManualRecordRounded sx={{ color: getIconColor(), fontSize: 12, mt: 0.5, flexShrink: 0 }} />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: COLORS.textDark, lineHeight: 1.3 }}>
-                        {act.title}
-                      </Typography>
-                      <Typography sx={{ fontSize: 11.5, color: 'rgba(31,41,55,0.4)', mt: 0.5, fontWeight: 600 }}>
-                        {act.time} • {act.subtitle}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                );
-              })}
-            </Stack>
-          </Paper>
-        </Grid>
-      </Grid>
+            Từ chối yêu cầu
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

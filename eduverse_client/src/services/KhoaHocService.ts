@@ -19,8 +19,14 @@ export default class KhoaHocService {
 
   async getmyKhoaHoc(): Promise<KhoaHocType[]> {
     try {
+      const token = localStorage.getItem("token");
       const response = await apiService.get<PagedList<KhoaHocType>>(
         `/KhoaHoc/khoahoc-dangki`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
       return response.data.items ?? [];
     } catch (error) {
