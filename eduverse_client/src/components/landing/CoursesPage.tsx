@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
-  FavoriteRounded,
   MenuBookRounded,
   QueryStatsRounded,
   SchoolRounded,
@@ -14,7 +13,6 @@ import {
   StarRounded,
   TimerRounded,
 } from '@mui/icons-material';
-import { useFavorite } from '@/src/features/favorite/hooks/useFavorite';
 import {
   Box,
   Button,
@@ -44,6 +42,8 @@ import {
   LandingThemeProvider,
   SectionHeading,
 } from './landing-shared';
+
+const TextFieldAny = TextField as any;
 
 type CourseSortOption = 'newest' | 'rating' | 'price-low';
 
@@ -126,9 +126,6 @@ function FilterGroup({
 }
 
 function CourseCard({ course }: { course: CourseCatalogItem }) {
-  const { isFavorited, toggleFavorite } = useFavorite();
-  const favorited = isFavorited(course.id);
-
   return (
     <Paper
       elevation={0}
@@ -147,10 +144,6 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
       <Box sx={{ position: 'relative' }}>
         <CourseVisual palette={course.palette} badge={course.badge} />
         <Button
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            toggleFavorite(course.id, course.title);
-          }}
           sx={{
             position: 'absolute',
             top: 14,
@@ -162,18 +155,9 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             borderRadius: '50%',
             bgcolor: 'rgba(255,255,255,0.9)',
             color: '#8d1313',
-            transition: 'transform 150ms ease',
-            '&:hover': {
-              transform: 'scale(1.1)',
-              bgcolor: '#ffffff',
-            },
           }}
         >
-          {favorited ? (
-            <FavoriteRounded sx={{ fontSize: 18, color: '#8d1313' }} />
-          ) : (
-            <FavoriteBorderRounded sx={{ fontSize: 18 }} />
-          )}
+          <FavoriteBorderRounded sx={{ fontSize: 18 }} />
         </Button>
       </Box>
 
@@ -246,6 +230,8 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} sx={{ mt: 1.75 }}>
         <Button
+          component={Link}
+          href="/auth/login"
           variant="outlined"
           sx={{
             flex: 1,
@@ -257,6 +243,8 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
           Xem chi tiết
         </Button>
         <Button
+          component={Link}
+          href="/auth/login"
           variant="contained"
           endIcon={<ArrowForwardRounded />}
           sx={{
@@ -278,12 +266,6 @@ export default function CoursesPage() {
   const [sortBy, setSortBy] = useState<CourseSortOption>('newest');
   const [freeOnly, setFreeOnly] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
-
-  const { fetchFavorites } = useFavorite();
-
-  useEffect(() => {
-    fetchFavorites();
-  }, [fetchFavorites]);
 
   const filteredCourses = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -356,6 +338,7 @@ export default function CoursesPage() {
                   letterSpacing: '-1.6px',
                   fontWeight: 900,
                   maxWidth: 680,
+                  color: '#1a1a1a',
                 }}
               >
                 Khám phá hàng trăm
@@ -378,26 +361,39 @@ export default function CoursesPage() {
                 tập được cá nhân hóa, công nghệ hiện đại và cộng đồng học viên dẫn đầu.
               </Typography>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3 }}>
-                <TextField
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3, alignItems: 'stretch' }}>
+                <TextFieldAny
                   fullWidth
+                  variant="outlined"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
                   placeholder="Tìm kiếm khóa học, kỹ năng..."
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
-                        </InputAdornment>
-                      ),
-                    },
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
+                      </InputAdornment>
+                    ),
                   }}
                   sx={{
                     maxWidth: 420,
                     '& .MuiOutlinedInput-root': {
+                      height: 48,
                       bgcolor: '#fff',
                       borderRadius: 2.8,
+                      transition: 'box-shadow 160ms ease, border-color 160ms ease',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(17,17,17,0.12)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(127,29,29,0.38)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#7f1d1d',
+                      },
+                      '&.Mui-focused': {
+                        boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
+                      },
                     },
                   }}
                 />
@@ -405,8 +401,15 @@ export default function CoursesPage() {
                   variant="contained"
                   sx={{
                     px: 3.2,
+                    height: 48,
                     borderRadius: 2.8,
                     background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
+                    boxShadow: '0 8px 20px rgba(127,29,29,0.18)',
+                    transition: 'background 160ms ease, box-shadow 160ms ease',
+                    '&:hover': {
+                      background: 'linear-gradient(90deg, #7f1d1d 0%, #6b1414 100%)',
+                      boxShadow: '0 10px 24px rgba(127,29,29,0.24)',
+                    },
                   }}
                 >
                   Tìm kiếm ngay
@@ -436,7 +439,7 @@ export default function CoursesPage() {
                   }}
                 >
                   <Image
-                    src="/auth/img/Illustration Section.png"
+                    src="/auth/img/Illustration_Section_v2.png"
                     alt="EduVerse learning space"
                     fill
                     priority
@@ -475,20 +478,13 @@ export default function CoursesPage() {
           </Box>
 
           <Box sx={{ py: { xs: 4, md: 6 } }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} sx={{ justifyContent: 'space-between', gap: 2, mb: 2.6 }}>
+            <Box sx={{ mb: 3.5 }}>
               <SectionHeading
                 title="Danh mục phổ biến"
                 description="Bắt đầu hành trình của bạn với các lĩnh vực đang dẫn đầu xu hướng."
+                align="center"
               />
-              <Button
-                component={Link}
-                href="/courses"
-                endIcon={<ArrowForwardRounded />}
-                sx={{ color: '#8d1313', alignSelf: { xs: 'flex-start', md: 'flex-end' } }}
-              >
-                Xem tất cả danh mục
-              </Button>
-            </Stack>
+            </Box>
 
             <Box
               sx={{
@@ -507,6 +503,17 @@ export default function CoursesPage() {
                 />
               ))}
             </Box>
+
+            <Stack direction="row" sx={{ justifyContent: 'center', mt: 4 }}>
+              <Button
+                component={Link}
+                href="/courses"
+                endIcon={<ArrowForwardRounded />}
+                sx={{ color: '#8d1313' }}
+              >
+                Xem tất cả danh mục
+              </Button>
+            </Stack>
           </Box>
 
           <Box

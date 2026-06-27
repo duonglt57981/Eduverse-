@@ -1,10 +1,10 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
-import { register } from '../../../store/auth/AuthSlice';
+import { register, clearError, clearSuccess, externalLogin } from '../../../store/auth/AuthSlice';
 import {
   Box,
   Button,
@@ -14,6 +14,7 @@ import {
   FormControl,
   FormControlLabel,
   FormHelperText,
+  Grid,
   IconButton,
   InputAdornment,
   Link as MuiLink,
@@ -23,17 +24,16 @@ import {
   SvgIcon,
   Typography,
 } from '@mui/material';
-import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
-import { useThemeSettings } from '../../../contexts/ThemeSettingsContext';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
   ArrowBackRounded,
+  BadgeRounded,
   CheckCircleRounded,
   CircleOutlined,
   EmailRounded,
   LockRounded,
   PersonRounded,
   PhoneIphoneRounded,
-  ShieldRounded,
   VisibilityOffRounded,
   VisibilityRounded,
 } from '@mui/icons-material';
@@ -110,11 +110,75 @@ export default function RegisterPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { loading, error, successMessage } = useSelector((s) => s.auth);
-  const { currentAccent } = useThemeSettings();
+
+  const handleExternalLogin = (provider: 'google' | 'facebook') => {
+    const width = 500;
+    const height = 650;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
+    let url = `/auth/oauth-callback?provider=${provider}`;
+
+    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/oauth-callback?provider=${provider}`);
+
+    if (provider === 'google' && googleClientId) {
+      url = `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?client_id=${googleClientId}` +
+        `&redirect_uri=${redirectUri}` +
+        `&response_type=id_token` +
+        `&scope=openid%20profile%20email` +
+        `&nonce=nonce_${Date.now()}` +
+        `&state=state_${provider}`;
+    } else if (provider === 'facebook' && facebookAppId) {
+      url = `https://www.facebook.com/v18.0/dialog/oauth` +
+        `?client_id=${facebookAppId}` +
+        `&redirect_uri=${redirectUri}` +
+        `&response_type=token` +
+        `&scope=public_profile,email` +
+        `&state=state_${provider}`;
+    }
+
+    const popup = window.open(
+      url,
+      `Đăng nhập ${provider === 'google' ? 'Google' : 'Facebook'}`,
+      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
+    );
+
+    if (!popup) {
+      setLocalError('Vui lòng bỏ chặn popup để tiếp tục đăng nhập.');
+      return;
+    }
+
+    const messageListener = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'OAUTH_SUCCESS') {
+        window.removeEventListener('message', messageListener);
+        const payload = event.data.payload;
+
+        const result = await dispatch(externalLogin(payload));
+        if (externalLogin.fulfilled.match(result)) {
+          const roles: string[] = result.payload.roles || [];
+          if (roles.includes('Admin')) {
+            router.push('/admin/dashboard');
+          } else if (roles.includes('GiaoVien')) {
+            router.push('/instructor/dashboard');
+          } else {
+            router.push('/student/dashboard');
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', messageListener);
+  };
 
   const [form, setForm] = useState({
     hoTen: '',
     userName: '',
+    email: '',
     phoneNumber: '',
     password: '',
   });
@@ -123,13 +187,20 @@ export default function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreeNews, setAgreeNews] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Clear Redux messages khi mount trang để không hiện message cũ
+  useEffect(() => {
+    dispatch(clearError());
+    dispatch(clearSuccess());
+  }, [dispatch]);
 
   const theme = useMemo(
     () =>
       createTheme({
         palette: {
           mode: 'light',
-          primary: { main: currentAccent.value, dark: currentAccent.hoverColor },
+          primary: { main: '#7f1d1d' },
           background: { default: '#f9f8f6', paper: '#ffffff' },
           text: { primary: '#141414', secondary: '#6f6f6f' },
         },
@@ -142,7 +213,7 @@ export default function RegisterPage() {
           button: { textTransform: 'none', fontWeight: 800 },
         },
       }),
-    [currentAccent],
+    [],
   );
 
   const strength = useMemo(() => getStrength(form.password), [form.password]);
@@ -154,17 +225,82 @@ export default function RegisterPage() {
   const confirmMismatch =
     confirmPass.length > 0 && form.password.length > 0 && confirmPass !== form.password;
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Họ tên: tối thiểu 2 ký tự
+    if (!form.hoTen.trim()) {
+      errors.hoTen = 'Vui lòng nhập họ và tên.';
+    } else if (form.hoTen.trim().length < 2) {
+      errors.hoTen = 'Họ và tên phải có ít nhất 2 ký tự.';
+    }
+
+    // Username: không dấu, không khoảng trắng, chỉ chữ cái không dấu + số + ._-
+    if (!form.userName.trim()) {
+      errors.userName = 'Vui lòng nhập tên đăng nhập.';
+    } else if (form.userName.trim().length < 3) {
+      errors.userName = 'Tên đăng nhập phải có ít nhất 3 ký tự.';
+    } else if (/\s/.test(form.userName)) {
+      errors.userName = 'Tên đăng nhập không được chứa dấu cách.';
+    } else if (/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]/.test(form.userName)) {
+      errors.userName = 'Tên đăng nhập không được chứa dấu tiếng Việt.';
+    } else if (!/^[a-zA-Z0-9._-]+$/.test(form.userName)) {
+      errors.userName = 'Tên đăng nhập chỉ được chứa chữ cái không dấu, số, dấu chấm, gạch ngang.';
+    }
+
+    // Email: bắt buộc, đúng format
+    if (!form.email.trim()) {
+      errors.email = 'Vui lòng nhập email.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      errors.email = 'Email không đúng định dạng.';
+    }
+
+    // Số điện thoại: bắt buộc, 10 chữ số, bắt đầu bằng 0
+    if (!form.phoneNumber.trim()) {
+      errors.phoneNumber = 'Vui lòng nhập số điện thoại.';
+    } else if (!/^0[0-9]{9}$/.test(form.phoneNumber.trim())) {
+      errors.phoneNumber = 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.';
+    }
+
+    // Mật khẩu: ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt
+    if (!form.password) {
+      errors.password = 'Vui lòng nhập mật khẩu.';
+    } else {
+      const missing: string[] = [];
+      if (form.password.length < 8) missing.push('ít nhất 8 ký tự');
+      if (!/[A-Z]/.test(form.password)) missing.push('1 chữ in hoa');
+      if (!/[a-z]/.test(form.password)) missing.push('1 chữ thường');
+      if (!/[0-9]/.test(form.password)) missing.push('1 chữ số');
+      if (!/[^a-zA-Z0-9]/.test(form.password)) missing.push('1 ký tự đặc biệt');
+      if (missing.length > 0) {
+        errors.password = `Mật khẩu cần có: ${missing.join(', ')}.`;
+      }
+    }
+
+    // Xác nhận mật khẩu
+    if (!confirmPass) {
+      errors.confirmPass = 'Vui lòng xác nhận mật khẩu.';
+    } else if (confirmPass !== form.password) {
+      errors.confirmPass = 'Mật khẩu xác nhận không khớp.';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLocalError(null);
+    dispatch(clearError());
+    dispatch(clearSuccess());
+
+    if (!validateForm()) return;
+
     if (!agreeTerms) {
       setLocalError('Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật.');
       return;
     }
-    if (confirmMismatch) {
-      setLocalError('Mật khẩu xác nhận không khớp.');
-      return;
-    }
+
     const result = await dispatch(register(form));
     if (register.fulfilled.match(result)) {
       router.push('/auth/login');
@@ -183,32 +319,33 @@ export default function RegisterPage() {
     },
     '&.Mui-focused': {
       bgcolor: 'rgba(17,17,17,0.03)',
-      boxShadow: `0 0 0 4px ${alpha(currentAccent.value, 0.14)}`,
+      boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: alpha(currentAccent.value, 0.38),
+      borderColor: 'rgba(127,29,29,0.38)',
     },
-  };
+  } as const;
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box
         sx={{
-          minHeight: '100vh',
+          height: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           px: { xs: 1.5, sm: 2.5, md: 4 },
           py: { xs: 2, sm: 3 },
           bgcolor: 'background.default',
+          overflow: 'hidden',
         }}
       >
         <Box
           sx={{
             width: '100%',
             maxWidth: 1240,
-            minHeight: { xs: 'auto', md: 760 },
+            height: { xs: 'auto', md: 'min(760px, 90vh)' },
             display: { xs: 'block', md: 'flex' },
             borderRadius: { xs: 4, md: 6 },
             overflow: 'hidden',
@@ -223,12 +360,13 @@ export default function RegisterPage() {
               width: { md: '46%' },
               flexDirection: 'column',
               justifyContent: 'space-between',
-              px: { md: 5 },
-              py: { md: 4 },
+              px: { md: 4 },
+              py: { md: 3 },
               color: '#fff',
               position: 'relative',
               overflow: 'hidden',
-              background: `linear-gradient(160deg, ${currentAccent.value}cc 0%, ${currentAccent.value} 50%, ${currentAccent.hoverColor} 100%)`,
+              background:
+                'linear-gradient(160deg, #9b1c1c 0%, #7f1d1d 50%, #5c1111 100%)',
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -259,7 +397,7 @@ export default function RegisterPage() {
                   display: 'flex',
                   alignItems: 'center',
                   width: { xs: 220, md: 290 },
-                  mb: 4,
+                  mb: 2.5,
                 }}
               >
                 <Image
@@ -275,20 +413,21 @@ export default function RegisterPage() {
               <Typography
                 variant="h3"
                 sx={{
-                  fontSize: 44,
-                  lineHeight: 1.08,
+                  fontSize: { md: 36 },
+                  lineHeight: 1.1,
                   maxWidth: 520,
+                  color: '#ffffff',
                 }}
               >
                 Bắt đầu hành trình học tập cùng EduVerse
               </Typography>
               <Typography
                 sx={{
-                  mt: 2.25,
+                  mt: 1.5,
                   maxWidth: 520,
                   color: 'rgba(255,255,255,0.72)',
-                  fontSize: 14,
-                  lineHeight: 1.8,
+                  fontSize: 13.5,
+                  lineHeight: 1.7,
                 }}
               >
                 Nền tảng giáo dục Ivy League kỹ thuật số, kết nối bạn với những kiến thức
@@ -298,8 +437,8 @@ export default function RegisterPage() {
               <Paper
                 elevation={0}
                 sx={{
-                  mt: 3.5,
-                  p: 2.25,
+                  mt: 2,
+                  p: 1.75,
                   borderRadius: 4,
                   backgroundColor: 'rgba(255,255,255,0.10)',
                   border: '1px solid rgba(255,255,255,0.16)',
@@ -343,8 +482,8 @@ export default function RegisterPage() {
               <Paper
                 elevation={0}
                 sx={{
-                  mt: 3,
-                  p: 2,
+                  mt: 2,
+                  p: 1.5,
                   borderRadius: 4,
                   backgroundColor: 'rgba(255,255,255,0.08)',
                   border: '1px solid rgba(255,255,255,0.14)',
@@ -395,9 +534,9 @@ export default function RegisterPage() {
               sx={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 2,
+                gap: 1,
                 borderTop: '1px solid rgba(255,255,255,0.12)',
-                pt: 2.5,
+                pt: 1.5,
                 position: 'relative',
                 zIndex: 1,
               }}
@@ -408,7 +547,7 @@ export default function RegisterPage() {
                 { num: '120+', label: 'Giảng viên' },
               ].map((s) => (
                 <Box key={s.label}>
-                  <Typography sx={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.3px' }}>
+                  <Typography sx={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.3px', color: '#ffffff' }}>
                     {s.num}
                   </Typography>
                   <Typography sx={{ fontSize: 11.5, color: 'rgba(255,255,255,0.72)' }}>
@@ -422,6 +561,9 @@ export default function RegisterPage() {
           <Box
             sx={{
               flex: 1,
+              width: '100%',
+              height: { md: '100%' },
+              overflowY: { md: 'auto' },
               px: { xs: 2.5, sm: 4, md: 5 },
               py: { xs: 3, md: 4 },
               display: 'flex',
@@ -443,7 +585,7 @@ export default function RegisterPage() {
                     fontSize: 13,
                     fontWeight: 800,
                     color: 'rgba(17,17,17,0.65)',
-                    '&:hover': { color: 'primary.main' },
+                    '&:hover': { color: '#7f1d1d' },
                   }}
                 >
                   <ArrowBackRounded sx={{ fontSize: 18 }} />
@@ -451,7 +593,7 @@ export default function RegisterPage() {
                 </MuiLink>
               </Box>
 
-              <Typography variant="h4" sx={{ fontSize: { xs: 26, sm: 30 }, mb: 0.75 }}>
+              <Typography variant="h4" sx={{ fontSize: { xs: 26, sm: 30 }, mb: 0.75, color: 'text.primary' }}>
                 Đăng ký tài khoản
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 3 }}>
@@ -513,231 +655,257 @@ export default function RegisterPage() {
                 </Paper>
               ) : null}
 
-              <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-                <Stack spacing={1.75}>
-                  <FormControl fullWidth>
-                    <OutlinedInput
-                      placeholder="Họ và tên"
-                      value={form.hoTen}
-                      onChange={(e) => setForm({ ...form, hoTen: e.target.value })}
-                      required
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <PersonRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
-                        </InputAdornment>
-                      }
-                      sx={inputSx}
-                    />
-                  </FormControl>
+              <Box component="form" onSubmit={handleSubmit} sx={{ mt: 0.5 }}>
+                <Grid container spacing={1.5}>
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl fullWidth error={!!fieldErrors.hoTen}>
+                      <OutlinedInput
+                        placeholder="Họ và tên"
+                        value={form.hoTen}
+                        onChange={(e) => { setForm({ ...form, hoTen: e.target.value }); setFieldErrors((p) => ({ ...p, hoTen: '' })); }}
+                        startAdornment={
+                          <InputAdornment position="start">
+                            <PersonRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                          </InputAdornment>
+                        }
+                        sx={inputSx}
+                      />
+                      {fieldErrors.hoTen && <FormHelperText>{fieldErrors.hoTen}</FormHelperText>}
+                    </FormControl>
+                  </Grid>
 
-                  <FormControl fullWidth>
-                    <OutlinedInput
-                      placeholder="Email hoặc tên đăng nhập"
-                      value={form.userName}
-                      onChange={(e) => setForm({ ...form, userName: e.target.value })}
-                      required
-                      type="text"
-                      inputProps={{ inputMode: 'email' }}
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <EmailRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
-                        </InputAdornment>
-                      }
-                      sx={inputSx}
-                    />
-                  </FormControl>
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl fullWidth error={!!fieldErrors.userName}>
+                      <OutlinedInput
+                        placeholder="Tên đăng nhập"
+                        value={form.userName}
+                        onChange={(e) => { setForm({ ...form, userName: e.target.value }); setFieldErrors((p) => ({ ...p, userName: '' })); }}
+                        type="text"
+                        startAdornment={
+                          <InputAdornment position="start">
+                            <BadgeRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                          </InputAdornment>
+                        }
+                        sx={inputSx}
+                      />
+                      {fieldErrors.userName && <FormHelperText>{fieldErrors.userName}</FormHelperText>}
+                    </FormControl>
+                  </Grid>
 
-                  <FormControl fullWidth>
-                    <OutlinedInput
-                      placeholder="Số điện thoại"
-                      value={form.phoneNumber}
-                      onChange={(e) =>
-                        setForm({ ...form, phoneNumber: e.target.value })
-                      }
-                      type="tel"
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <PhoneIphoneRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
-                        </InputAdornment>
-                      }
-                      sx={inputSx}
-                    />
-                  </FormControl>
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl fullWidth error={!!fieldErrors.email}>
+                      <OutlinedInput
+                        placeholder="Email"
+                        value={form.email}
+                        onChange={(e) => { setForm({ ...form, email: e.target.value }); setFieldErrors((p) => ({ ...p, email: '' })); }}
+                        type="email"
+                        startAdornment={
+                          <InputAdornment position="start">
+                            <EmailRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                          </InputAdornment>
+                        }
+                        sx={inputSx}
+                      />
+                      {fieldErrors.email && <FormHelperText>{fieldErrors.email}</FormHelperText>}
+                    </FormControl>
+                  </Grid>
 
-                  <FormControl fullWidth>
-                    <OutlinedInput
-                      placeholder="Mật khẩu"
-                      value={form.password}
-                      onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      required
-                      type={showPass ? 'text' : 'password'}
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <LockRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
-                        </InputAdornment>
-                      }
-                      endAdornment={
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                            edge="end"
-                            onClick={() => setShowPass((v) => !v)}
-                            size="small"
-                            sx={{ color: 'rgba(17,17,17,0.55)' }}
-                          >
-                            {showPass ? <VisibilityOffRounded /> : <VisibilityRounded />}
-                          </IconButton>
-                        </InputAdornment>
-                      }
-                      sx={inputSx}
-                    />
-                  </FormControl>
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl fullWidth error={!!fieldErrors.phoneNumber}>
+                      <OutlinedInput
+                        placeholder="Số điện thoại"
+                        value={form.phoneNumber}
+                        onChange={(e) => { setForm({ ...form, phoneNumber: e.target.value }); setFieldErrors((p) => ({ ...p, phoneNumber: '' })); }}
+                        type="tel"
+                        startAdornment={
+                          <InputAdornment position="start">
+                            <PhoneIphoneRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                          </InputAdornment>
+                        }
+                        sx={inputSx}
+                      />
+                      {fieldErrors.phoneNumber && <FormHelperText>{fieldErrors.phoneNumber}</FormHelperText>}
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl fullWidth error={!!fieldErrors.password}>
+                      <OutlinedInput
+                        placeholder="Mật khẩu"
+                        value={form.password}
+                        onChange={(e) => { setForm({ ...form, password: e.target.value }); setFieldErrors((p) => ({ ...p, password: '' })); }}
+                        type={showPass ? 'text' : 'password'}
+                        startAdornment={
+                          <InputAdornment position="start">
+                            <LockRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                          </InputAdornment>
+                        }
+                        endAdornment={
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                              edge="end"
+                              onClick={() => setShowPass((v) => !v)}
+                              size="small"
+                              sx={{ color: 'rgba(17,17,17,0.55)' }}
+                            >
+                              {showPass ? <VisibilityOffRounded /> : <VisibilityRounded />}
+                            </IconButton>
+                          </InputAdornment>
+                        }
+                        sx={inputSx}
+                      />
+                      {fieldErrors.password && <FormHelperText>{fieldErrors.password}</FormHelperText>}
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl fullWidth error={confirmMismatch || !!fieldErrors.confirmPass}>
+                      <OutlinedInput
+                        placeholder="Xác nhận mật khẩu"
+                        value={confirmPass}
+                        onChange={(e) => { setConfirmPass(e.target.value); setFieldErrors((p) => ({ ...p, confirmPass: '' })); }}
+                        type={showPass ? 'text' : 'password'}
+                        sx={inputSx}
+                      />
+                      {(confirmMismatch || fieldErrors.confirmPass) && (
+                        <FormHelperText>{fieldErrors.confirmPass || 'Mật khẩu xác nhận không khớp.'}</FormHelperText>
+                      )}
+                    </FormControl>
+                  </Grid>
 
                   {form.password ? (
-                    <Box
-                      sx={{
-                        mt: -0.5,
-                        px: 0.5,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          mb: 1,
-                        }}
-                      >
-                        <Typography sx={{ fontSize: 11.5, fontWeight: 900, color: 'rgba(17,17,17,0.55)' }}>
-                          ĐỘ BẢO MẬT
-                        </Typography>
-                        <Typography sx={{ fontSize: 11.5, fontWeight: 900, color: strengthTone }}>
-                          {strengthLabel.toUpperCase()}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-                        {[0, 1, 2].map((i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              height: 6,
-                              borderRadius: 999,
-                              bgcolor: i < strength.score ? strengthTone : 'rgba(17,17,17,0.10)',
-                              transition: 'background 160ms ease',
-                            }}
-                          />
-                        ))}
-                      </Box>
+                    <Grid size={{ xs: 12 }}>
+                      <Box sx={{ px: 0.5 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                          <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: 'rgba(17,17,17,0.55)' }}>
+                            ĐỘ BẢO MẬT
+                          </Typography>
+                          <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: strengthTone }}>
+                            {strengthLabel.toUpperCase()}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}>
+                          {[0, 1, 2].map((i) => (
+                            <Box
+                              key={i}
+                              sx={{
+                                height: 4,
+                                borderRadius: 999,
+                                bgcolor: i < strength.score ? strengthTone : 'rgba(17,17,17,0.10)',
+                                transition: 'background 160ms ease',
+                              }}
+                            />
+                          ))}
+                        </Box>
 
-                      <Box sx={{ mt: 1.25, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
-                        {[
-                          { ok: strength.hasMin, label: 'Ít nhất 8 ký tự' },
-                          { ok: strength.hasUpper && strength.hasNumber, label: 'Chữ hoa & chữ số' },
-                          { ok: strength.hasSpecial, label: 'Ký tự đặc biệt' },
-                        ].map((r) => (
-                          <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                            {r.ok ? (
-                              <CheckCircleRounded sx={{ fontSize: 16, color: '#0a5a3a' }} />
-                            ) : (
-                              <CircleOutlined sx={{ fontSize: 16, color: 'rgba(17,17,17,0.35)' }} />
-                            )}
-                            <Typography sx={{ fontSize: 12.5, color: r.ok ? 'rgba(17,17,17,0.78)' : 'rgba(17,17,17,0.52)' }}>
-                              {r.label}
-                            </Typography>
-                          </Box>
-                        ))}
+                        <Box sx={{ mt: 0.75, display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                          {[
+                            { ok: strength.hasMin, label: 'Ít nhất 8 ký tự' },
+                            { ok: strength.hasUpper && strength.hasNumber, label: 'Chữ hoa & chữ số' },
+                            { ok: strength.hasSpecial, label: 'Ký tự đặc biệt' },
+                          ].map((r) => (
+                            <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              {r.ok ? (
+                                <CheckCircleRounded sx={{ fontSize: 13, color: '#0a5a3a' }} />
+                              ) : (
+                                <CircleOutlined sx={{ fontSize: 13, color: 'rgba(17,17,17,0.35)' }} />
+                              )}
+                              <Typography sx={{ fontSize: 11, color: r.ok ? 'rgba(17,17,17,0.78)' : 'rgba(17,17,17,0.52)' }}>
+                                {r.label}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
                       </Box>
-                    </Box>
+                    </Grid>
                   ) : null}
 
-                  <FormControl fullWidth error={confirmMismatch}>
-                    <OutlinedInput
-                      placeholder="Xác nhận mật khẩu"
-                      value={confirmPass}
-                      onChange={(e) => setConfirmPass(e.target.value)}
-                      required
-                      type={showPass ? 'text' : 'password'}
-                      sx={inputSx}
-                    />
-                    {confirmMismatch ? (
-                      <FormHelperText>Mật khẩu xác nhận không khớp.</FormHelperText>
-                    ) : null}
-                  </FormControl>
+                  <Grid size={{ xs: 12 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={agreeTerms}
+                            onChange={(e) => setAgreeTerms(e.target.checked)}
+                            sx={{
+                              py: 0.25,
+                              pl: 0.5,
+                              color: 'rgba(17,17,17,0.35)',
+                              '&.Mui-checked': { color: '#7f1d1d' },
+                            }}
+                          />
+                        }
+                        label={
+                          <Typography sx={{ mt: 0.2, fontSize: 11.5, color: 'rgba(17,17,17,0.65)' }}>
+                            Tôi đồng ý với{' '}
+                            <MuiLink component={Link} href="/terms" underline="hover" sx={{ color: '#7f1d1d', fontWeight: 800 }}>
+                              Điều khoản dịch vụ
+                            </MuiLink>{' '}
+                            và{' '}
+                            <MuiLink component={Link} href="/privacy" underline="hover" sx={{ color: '#7f1d1d', fontWeight: 800 }}>
+                              Chính sách bảo mật
+                            </MuiLink>
+                            .
+                          </Typography>
+                        }
+                        sx={{ alignItems: 'flex-start', m: 0 }}
+                      />
 
-                  <Box sx={{ mt: 0.25 }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={agreeTerms}
-                          onChange={(e) => setAgreeTerms(e.target.checked)}
-                          sx={{
-                            color: 'rgba(17,17,17,0.35)',
-                            '&.Mui-checked': { color: 'primary.main' },
-                          }}
-                        />
-                      }
-                      label={
-                        <Typography sx={{ fontSize: 12.75, color: 'rgba(17,17,17,0.65)' }}>
-                          Tôi đồng ý với{' '}
-                          <MuiLink component={Link} href="/terms" underline="hover" sx={{ color: 'primary.main', fontWeight: 800 }}>
-                            Điều khoản dịch vụ
-                          </MuiLink>{' '}
-                          và{' '}
-                          <MuiLink component={Link} href="/privacy" underline="hover" sx={{ color: 'primary.main', fontWeight: 800 }}>
-                            Chính sách bảo mật
-                          </MuiLink>
-                          .
-                        </Typography>
-                      }
-                      sx={{ alignItems: 'flex-start', m: 0 }}
-                    />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={agreeNews}
+                            onChange={(e) => setAgreeNews(e.target.checked)}
+                            sx={{
+                              py: 0.25,
+                              pl: 0.5,
+                              color: 'rgba(17,17,17,0.35)',
+                              '&.Mui-checked': { color: '#7f1d1d' },
+                            }}
+                          />
+                        }
+                        label={
+                          <Typography sx={{ mt: 0.2, fontSize: 11.5, color: 'rgba(17,17,17,0.65)' }}>
+                            Đăng ký nhận thông báo về khóa học mới và ưu đãi đặc biệt qua email.
+                          </Typography>
+                        }
+                        sx={{ alignItems: 'flex-start', m: 0 }}
+                      />
+                    </Box>
+                  </Grid>
 
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={agreeNews}
-                          onChange={(e) => setAgreeNews(e.target.checked)}
-                          sx={{
-                            color: 'rgba(17,17,17,0.35)',
-                            '&.Mui-checked': { color: 'primary.main' },
-                          }}
-                        />
-                      }
-                      label={
-                        <Typography sx={{ fontSize: 12.75, color: 'rgba(17,17,17,0.65)' }}>
-                          Đăng ký nhận thông báo về khóa học mới và ưu đãi đặc biệt qua email.
-                        </Typography>
-                      }
-                      sx={{ alignItems: 'flex-start', m: 0, mt: 0.5 }}
-                    />
-                  </Box>
-
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={loading}
-                    sx={{
-                      mt: 0.5,
-                      borderRadius: 999,
-                      py: 1.55,
-                      background: `linear-gradient(90deg, ${currentAccent.value}d0 0%, ${currentAccent.value} 55%, ${currentAccent.hoverColor} 100%)`,
-                      boxShadow: `0 14px 34px ${alpha(currentAccent.value, 0.26)}`,
-                      '&:hover': {
-                        background: `linear-gradient(90deg, ${currentAccent.value} 0%, ${currentAccent.hoverColor} 60%, ${currentAccent.hoverColor} 100%)`,
-                      },
-                    }}
-                  >
-                    {loading ? 'Đang tạo tài khoản...' : 'Đăng ký tài khoản →'}
-                  </Button>
-                </Stack>
+                  <Grid size={{ xs: 12 }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={loading}
+                      sx={{
+                        width: '100%',
+                        borderRadius: 999,
+                        py: 1.25,
+                        background:
+                          'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
+                        boxShadow: '0 10px 24px rgba(127,29,29,0.2)',
+                        '&:hover': {
+                          background:
+                            'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
+                        },
+                      }}
+                    >
+                      {loading ? 'Đang tạo tài khoản...' : 'Đăng ký tài khoản →'}
+                    </Button>
+                  </Grid>
+                </Grid>
               </Box>
 
-              <Divider sx={{ my: 3, opacity: 0.35 }}>
-                <Typography sx={{ fontSize: 11.5, fontWeight: 900, color: 'rgba(17,17,17,0.45)' }}>
+              <Divider sx={{ my: 1.5, opacity: 0.35 }}>
+                <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: 'rgba(17,17,17,0.45)' }}>
                   HOẶC TIẾP TỤC VỚI
                 </Typography>
               </Divider>
 
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1.25 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
                 {[
                   { key: 'google', icon: <GoogleGlyph /> },
                   { key: 'facebook', icon: <FacebookGlyph /> },
@@ -748,15 +916,21 @@ export default function RegisterPage() {
                     key={b.key}
                     type="button"
                     variant="outlined"
-                    onClick={() => setLocalError('Social login chưa được tích hợp.')}
+                    onClick={() => {
+                      if (b.key === 'google' || b.key === 'facebook') {
+                        handleExternalLogin(b.key);
+                      } else {
+                        setLocalError('Chức năng liên kết tài khoản này chưa được tích hợp.');
+                      }
+                    }}
                     sx={{
-                      height: 44,
+                      height: 38,
                       borderRadius: 2.5,
                       borderColor: 'rgba(17,17,17,0.10)',
                       color: 'rgba(17,17,17,0.75)',
                       '&:hover': {
-                        borderColor: alpha(currentAccent.value, 0.35),
-                        backgroundColor: alpha(currentAccent.value, 0.04),
+                        borderColor: 'rgba(127,29,29,0.35)',
+                        backgroundColor: 'rgba(127,29,29,0.04)',
                       },
                     }}
                   >
@@ -767,13 +941,13 @@ export default function RegisterPage() {
                 ))}
               </Box>
 
-              <Typography sx={{ mt: 2.5, textAlign: 'center', fontSize: 13, color: 'rgba(17,17,17,0.60)' }}>
+              <Typography sx={{ mt: 1.75, textAlign: 'center', fontSize: 12.5, color: 'rgba(17,17,17,0.60)' }}>
                 Đã có tài khoản?{' '}
                 <MuiLink
                   component={Link}
                   href="/auth/login"
                   underline="none"
-                  sx={{ color: 'primary.main', fontWeight: 900, '&:hover': { color: 'primary.dark' } }}
+                  sx={{ color: '#7f1d1d', fontWeight: 900, '&:hover': { color: '#5c1111' } }}
                 >
                   Đăng nhập ngay
                 </MuiLink>
@@ -789,7 +963,6 @@ export default function RegisterPage() {
                   color: 'rgba(17,17,17,0.45)',
                 }}
               >
-
 
 
 

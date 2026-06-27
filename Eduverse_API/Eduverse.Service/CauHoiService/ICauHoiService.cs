@@ -6,5 +6,6 @@ namespace Eduverse.Service.CauHoiService
 {
     public interface ICauHoiService : IService<Model.Entities.CauHoi>
     {
+        Task<CreateCauHoiDto> CreateQuestion(CreateCauHoiRequest request);
     }
 }

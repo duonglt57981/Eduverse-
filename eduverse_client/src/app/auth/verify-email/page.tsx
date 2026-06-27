@@ -1,9 +1,10 @@
 "use client";
+
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { apiService } from "../../../services/index";
 
-function VerifyEmailContent() {
+function VerifyEmailForm() {
   const params = useSearchParams();
   const router = useRouter();
   const [msg, setMsg] = useState("Đang xác thực email...");
@@ -58,8 +59,12 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={null}>
-      <VerifyEmailContent />
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+        <h2>Đang tải...</h2>
+      </div>
+    }>
+      <VerifyEmailForm />
     </Suspense>
   );
 }

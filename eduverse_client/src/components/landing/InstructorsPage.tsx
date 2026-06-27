@@ -35,6 +35,8 @@ import {
   SectionHeading,
 } from './landing-shared';
 
+const TextFieldAny = TextField as any;
+
 function getInitials(name: string) {
   return name
     .split(' ')
@@ -238,6 +240,8 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} sx={{ mt: 1.7 }}>
         <Button
+          component={Link}
+          href="/auth/login"
           variant="outlined"
           sx={{
             flex: 1,
@@ -249,6 +253,8 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
           Xem hồ sơ
         </Button>
         <Button
+          component={Link}
+          href="/auth/login"
           variant="contained"
           endIcon={<ArrowForwardRounded />}
           sx={{
@@ -314,6 +320,7 @@ export default function InstructorsPage() {
                   letterSpacing: '-1.4px',
                   fontWeight: 900,
                   maxWidth: 620,
+                  color: '#1a1a1a',
                 }}
               >
                 Học từ những chuyên gia hàng đầu
@@ -332,6 +339,8 @@ export default function InstructorsPage() {
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3 }}>
                 <Button
+                  component={Link}
+                  href="/auth/login"
                   variant="contained"
                   sx={{
                     px: 2.8,
@@ -343,6 +352,8 @@ export default function InstructorsPage() {
                   Trở thành giảng viên
                 </Button>
                 <Button
+                  component={Link}
+                  href="/auth/login"
                   variant="outlined"
                   sx={{
                     px: 2.8,
@@ -387,19 +398,17 @@ export default function InstructorsPage() {
           </Box>
 
           <Box sx={{ py: { xs: 4, md: 5 } }}>
-            <Stack
-              direction={{ xs: 'column', md: 'row' }}
-              sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'flex-end' }, gap: 2, mb: 2.6 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3.5 }}>
               <SectionHeading
                 eyebrow="Giảng viên nổi bật"
                 title="Giảng viên tiêu biểu"
                 description="Những mentor nổi bật với kinh nghiệm thực chiến, tư duy hiện đại và đánh giá rất cao từ học viên."
+                align="center"
               />
-              <Button endIcon={<ArrowForwardRounded />} sx={{ color: '#8d1313' }}>
+              <Button endIcon={<ArrowForwardRounded />} sx={{ color: '#8d1313', mt: 1.5 }}>
                 Xem hồ sơ đầy đủ
               </Button>
-            </Stack>
+            </Box>
 
             <Box
               sx={{
@@ -437,10 +446,10 @@ export default function InstructorsPage() {
                 ))}
               </Stack>
 
-              <TextField
+              <TextFieldAny
                 fullWidth
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event: any) => setSearch(event.target.value)}
                 placeholder="Tìm tên giảng viên..."
                 slotProps={{
                   input: {
@@ -603,6 +612,8 @@ export default function InstructorsPage() {
                 Gia nhập đội ngũ hơn 500+ giảng viên uy tín tại EduVerse và xây dựng cộng đồng học tập chất lượng dành cho người đi làm.
               </Typography>
               <Button
+                component={Link}
+                href="/auth/login"
                 variant="contained"
                 sx={{
                   mt: 3,

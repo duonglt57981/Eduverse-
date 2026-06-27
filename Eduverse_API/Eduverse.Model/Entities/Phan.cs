@@ -16,5 +16,6 @@ namespace Eduverse.Model.Entities
 
         public DateTime? NgayTao { get; set; } = DateTime.Now;
         public Guid? IdKhoaHoc { get; set; }
+
     }
 }

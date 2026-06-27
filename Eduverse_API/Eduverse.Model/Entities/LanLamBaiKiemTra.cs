@@ -16,5 +16,13 @@ namespace Eduverse.Model.Entities
         public int? LamLanThu { get; set; }
         public Guid? IdBaiKiemTra { get; set; }
         public Guid? IdNguoiDung { get; set; }
+
+        //thêm
+        public string? TrangThai { get; set; }
+        public double? TongDiemLanKiemTra { get; set; }
+        public double? TongThoiGianDaLam { get; set; }  // Tổng thời gian đã làm (giây)
+        public DateTime? ThoiGianTiepTuc { get; set; }  // Thời điểm tiếp tục làm bài
+        public DateTime? ThoiGianTamDung { get; set; }  // Thời điểm tạm dừng
+        public DateTime? ThoiGianCapNhat { get; set; }  // Thời gian cập nhật cuối
     }
 }
