@@ -228,9 +228,6 @@ namespace Eduverse.Service.ThanhToanService
                     Console.WriteLine("[WEBHOOK] SIGNATURE KHONG HOP LE - co the la gia mao!");
                     return false;
                 }
-                Console.WriteLine(
-                    $"ORDER CODE NHAN DUOC: {webhookData.OrderCode}"
-                );
                 var maGiaoDich = $"EDU{webhookData.OrderCode}";
 
                 var donHang = await _donHangRepo.GetQueryable()
@@ -243,8 +240,6 @@ namespace Eduverse.Service.ThanhToanService
                 {
                     if ((double)webhookData.Amount < donHang.SoTienThanhToan)
                     {
-                        Console.WriteLine($"[WEBHOOK] SO TIEN KHONG KHOP! " +
-                            $"Can: {donHang.SoTienThanhToan}, Nhan: {webhookData.Amount}");
 
                         donHang.TrangThai = 2;
                         donHang.UpdatedDate = DateTime.Now;

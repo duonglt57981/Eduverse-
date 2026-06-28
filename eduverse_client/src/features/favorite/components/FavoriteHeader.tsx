@@ -1,0 +1,79 @@
+'use client';
+
+import Link from 'next/link';
+import { Box, Button, Typography, Stack, Chip } from '@mui/material';
+import { ArrowBackRounded } from '@mui/icons-material';
+
+interface FavoriteHeaderProps {
+  count: number;
+}
+
+export default function FavoriteHeader({ count }: FavoriteHeaderProps) {
+  return (
+    <Box sx={{ mb: 4 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Chip
+            label="Danh sách mong muốn"
+            sx={{
+              bgcolor: 'rgba(159,23,23,0.08)',
+              color: '#9f1717',
+              fontWeight: 900,
+              mb: 1.5,
+            }}
+          />
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: 32, sm: 40, md: 48 },
+              fontWeight: 900,
+              letterSpacing: '-1px',
+              lineHeight: 1.1,
+            }}
+          >
+            Khóa Học Yêu Thích
+          </Typography>
+          <Typography
+            sx={{
+              mt: 1,
+              fontSize: 15,
+              color: 'rgba(24,24,27,0.6)',
+              fontWeight: 500,
+            }}
+          >
+            Bạn đang lưu trữ {count} khóa học trong danh sách của mình
+          </Typography>
+        </Box>
+
+        <Button
+          component={Link}
+          href="/courses"
+          startIcon={<ArrowBackRounded />}
+          variant="outlined"
+          sx={{
+            borderRadius: 2.8,
+            borderColor: 'rgba(17,17,17,0.12)',
+            color: 'rgba(24,24,27,0.78)',
+            px: 2.5,
+            py: 1.2,
+            transition: 'all 200ms ease',
+            '&:hover': {
+              borderColor: '#8d1313',
+              color: '#8d1313',
+              bgcolor: 'rgba(141,19,19,0.04)',
+            },
+          }}
+        >
+          Quay lại danh sách khóa học
+        </Button>
+      </Stack>
+    </Box>
+  );
+}

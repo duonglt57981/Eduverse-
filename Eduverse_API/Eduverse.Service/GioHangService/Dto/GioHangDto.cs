@@ -25,5 +25,8 @@ namespace Eduverse.Service.GioHangService.Dto
         public double? GiaGoc { get; set; }
         public bool? DaChon { get; set; }
         public DateTime? ThoiGianThem { get; set; }
+        public string? TenTacGia { get; set; }
+        public int? TongThoiLuong { get; set; } 
+        public int? TongBaiGiang { get; set; }
     }
 }
