@@ -9,9 +9,11 @@ namespace Eduverse.Model.Entities
 {
     public class NganHang : AuditableEntity
     {
+        public string? TenNganHang { get; set; }
         public string? TenTaiKhoan { get; set; }
         public string? SoTaiKhoan { get; set; }
         public DateTime? NgayTao { get; set; } = DateTime.Now;
         public string? TrangThai { get; set; }
+        public Guid? IdNguoiDung { get; set; }
     }
 }

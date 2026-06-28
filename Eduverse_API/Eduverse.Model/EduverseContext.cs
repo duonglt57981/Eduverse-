@@ -54,6 +54,7 @@ namespace Eduverse.Model
         public DbSet<ThanhToan> thanhToans { get; set; }
         public DbSet<ThongBao> thongBaos { get; set; }
         public DbSet<VaiTro_NguoiDung> vaiTro_NguoiDungs { get; set; }
+        public DbSet<YeuCauRutTien> yeuCauRutTiens { get; set; }
         public DbSet<InstructorRequest> InstructorRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
