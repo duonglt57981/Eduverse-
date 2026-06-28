@@ -1,13 +1,20 @@
-﻿using Eduverse.Service.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Eduverse.Model.Entities;
+using Eduverse.Service.ChungChiService.Dto;
+using Eduverse.Service.ChungChiService.Request;
+using Eduverse.Service.Common;
 
-namespace Eduverse.Service.ChungChiService
+namespace Eduverse.IService.ChungChiService
 {
-    public interface IChungChiService : IService<Model.Entities.ChungChi>
+    public interface IChungChiService : IService<ChungChi>
     {
+        Task<PagedList<ChungChiResponse>> GetPaged(ChungChiSearch search);
+
+        Task<ChungChiResponse> GetDetail(Guid id);
+
+        Task<ChungChi> CreateChungChi(ChungChi entity);
+
+        Task<ChungChi> UpdateChungChi(Guid id, ChungChi entity);
+
+        Task<bool> DeleteChungChi(Guid id);
     }
 }
