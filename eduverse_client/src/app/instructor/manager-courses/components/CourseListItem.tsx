@@ -37,16 +37,22 @@ export function CourseListItem({
   return (
     <Box
       sx={{
-        p: 1.5,
-        pl: isNestedDraftRow ? 3 : 1.5,
-        borderBottom: "1px solid #faf0f0",
+        p: 1.75,
+        pl: isNestedDraftRow ? 3.5 : 1.75,
+        borderBottom: "1px solid rgba(141, 19, 19, 0.05)",
         position: "relative",
         bgcolor: isSelected
-          ? alpha(R, 0.04)
+          ? "rgba(141, 19, 19, 0.04)"
           : isNestedDraftRow
-            ? "#fffaf5"
-            : undefined,
+            ? "#fffcf9"
+            : "transparent",
         cursor: "pointer",
+        transition: "all 0.2s ease",
+        "&:hover": {
+          bgcolor: isSelected
+            ? "rgba(141, 19, 19, 0.06)"
+            : "rgba(141, 19, 19, 0.02)",
+        },
       }}
       onClick={onSelect}
     >
@@ -148,9 +154,9 @@ export function CourseListItem({
             left: 0,
             top: 0,
             bottom: 0,
-            width: 3,
+            width: 4,
             bgcolor: R,
-            borderRadius: "0 2px 2px 0",
+            borderRadius: "0 4px 4px 0",
           }}
         />
       )}

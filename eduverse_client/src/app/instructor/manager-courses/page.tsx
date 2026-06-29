@@ -217,11 +217,20 @@ export default function TeacherCourseManager() {
             Tạo và quản lý nội dung giảng dạy của bạn
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1.5}>
           <Tooltip title="Tải lại">
             <IconButton
               onClick={loadCourses}
-              sx={{ border: "1px solid #fde8e8", borderRadius: 2 }}
+              sx={{ 
+                border: "1.5px solid rgba(141, 19, 19, 0.15)", 
+                borderRadius: 3,
+                bgcolor: "#fff",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: "rgba(141, 19, 19, 0.04)",
+                  borderColor: R,
+                }
+              }}
             >
               <RefreshIcon sx={{ color: R, fontSize: 20 }} />
             </IconButton>
@@ -280,24 +289,31 @@ export default function TeacherCourseManager() {
           <Grid key={s.label} size={{ xs: 6, sm: 4, md: 2 }}>
             <Paper
               sx={{
-                p: 2,
-                borderRadius: 3,
-                border: "1px solid #f0dada",
-                boxShadow: "none",
+                p: 2.25,
+                borderRadius: 4,
+                border: "1px solid rgba(141, 19, 19, 0.06)",
+                borderLeft: `4px solid ${s.color}`,
+                boxShadow: "0 4px 12px rgba(141, 19, 19, 0.01)",
                 bgcolor: "#fff",
+                transition: "all 0.25s ease",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 6px 18px rgba(141, 19, 19, 0.04)",
+                  borderColor: alpha(s.color, 0.4),
+                }
               }}
             >
               <Typography
                 sx={{
                   fontSize: 24,
-                  fontWeight: 800,
+                  fontWeight: 900,
                   color: s.color,
-                  lineHeight: 1,
+                  lineHeight: 1.1,
                 }}
               >
                 {s.val}
               </Typography>
-              <Typography sx={{ fontSize: 11, color: "#999", mt: 0.25 }}>
+              <Typography sx={{ fontSize: 11, color: "#777", mt: 0.5, fontWeight: 500 }}>
                 {s.label}
               </Typography>
             </Paper>
@@ -309,13 +325,14 @@ export default function TeacherCourseManager() {
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper
             sx={{
-              borderRadius: 3,
-              border: "1px solid #f0dada",
+              borderRadius: 4,
+              border: "1px solid rgba(141, 19, 19, 0.06)",
               overflow: "hidden",
-              boxShadow: "none",
+              boxShadow: "0 10px 30px rgba(141, 19, 19, 0.015)",
+              bgcolor: "#fff",
             }}
           >
-            <Box sx={{ p: 1.5, borderBottom: "1px solid #f5e0e0" }}>
+            <Box sx={{ p: 2, borderBottom: "1px solid rgba(141, 19, 19, 0.06)" }}>
               <TextField
                 size="small"
                 fullWidth
@@ -327,7 +344,7 @@ export default function TeacherCourseManager() {
                     startAdornment: (
                       <InputAdornment position="start">
                         <SearchIcon
-                          sx={{ color: alpha(R, 0.4), fontSize: 18 }}
+                          sx={{ color: alpha(R, 0.5), fontSize: 18 }}
                         />
                       </InputAdornment>
                     ),
@@ -339,9 +356,11 @@ export default function TeacherCourseManager() {
                       </InputAdornment>
                     ) : null,
                     sx: {
-                      borderRadius: 2,
+                      borderRadius: 3,
                       fontSize: 13,
-                      "& fieldset": { borderColor: "#f0dada" },
+                      "& fieldset": { borderColor: "rgba(141, 19, 19, 0.15)" },
+                      "&:hover fieldset": { borderColor: R },
+                      "&.Mui-focused fieldset": { borderColor: R },
                     },
                   },
                 }}
@@ -420,11 +439,12 @@ export default function TeacherCourseManager() {
         <Grid size={{ xs: 12, md: 8 }}>
           <Paper
             sx={{
-              borderRadius: 3,
-              border: "1px solid #f0dada",
-              p: 3,
-              boxShadow: "none",
-              minHeight: 400,
+              borderRadius: 4,
+              border: "1px solid rgba(141, 19, 19, 0.06)",
+              p: 3.5,
+              boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+              minHeight: 450,
+              bgcolor: "#fff",
             }}
           >
             {!selected ? (

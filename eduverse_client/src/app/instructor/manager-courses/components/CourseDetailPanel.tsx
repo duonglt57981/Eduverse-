@@ -248,15 +248,18 @@ export function CourseDetailPanel({
   return (
     <Box sx={{ animation: `${fadeIn} 0.3s ease` }}>
       {/* Header */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+      {/* Header */}
+      <Box sx={{ display: "flex", gap: 3, mb: 4, alignItems: "center" }}>
         <Box
           sx={{
-            width: 96,
-            height: 68,
-            borderRadius: 2,
+            width: 120,
+            height: 80,
+            borderRadius: 3,
             overflow: "hidden",
             flexShrink: 0,
-            bgcolor: "#fde8e8",
+            bgcolor: "rgba(141, 19, 19, 0.04)",
+            border: "1px solid rgba(141, 19, 19, 0.08)",
+            boxShadow: "0 4px 12px rgba(141, 19, 19, 0.03)",
           }}
         >
           {isValidImg(currentCourse.hinhAnhKhoaHoc) ? (
@@ -281,7 +284,14 @@ export function CourseDetailPanel({
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
-            sx={{ fontWeight: 800, fontSize: 15, mb: 0.5, lineHeight: 1.3 }}
+            sx={{ 
+              fontWeight: 900, 
+              fontSize: 18, 
+              mb: 1, 
+              lineHeight: 1.3,
+              color: "#1F2937",
+              fontFamily: '"Be Vietnam Pro", sans-serif'
+            }}
           >
             {currentCourse.tieuDe}
             {draft && (
@@ -317,42 +327,65 @@ export function CourseDetailPanel({
             {(currentCourse as any).danhSachDanhMuc?.map((dm: any) => (
               <Chip
                 key={dm.id}
-                icon={<CategoryIcon sx={{ fontSize: 11 }} />}
+                icon={<CategoryIcon sx={{ fontSize: 12, color: `${R} !important` }} />}
                 label={dm.tenDanhMuc}
                 size="small"
                 sx={{
-                  fontSize: "0.65rem",
-                  height: 20,
-                  bgcolor: alpha(R, 0.08),
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
+                  height: 24,
+                  bgcolor: "rgba(141, 19, 19, 0.05)",
                   color: R,
+                  border: "1px solid rgba(141, 19, 19, 0.1)",
                 }}
               />
             ))}
             <Chip
-              icon={<PeopleIcon sx={{ fontSize: 11 }} />}
-              label={`${currentCourse.soLuongHocVien ?? 0} HV`}
+              icon={<PeopleIcon sx={{ fontSize: 12, color: "#666 !important" }} />}
+              label={`${currentCourse.soLuongHocVien ?? 0} Học viên`}
               size="small"
-              sx={{ fontSize: "0.65rem", height: 20, bgcolor: "#f5f5f5" }}
+              sx={{ 
+                fontSize: "0.72rem", 
+                fontWeight: 600,
+                height: 24, 
+                bgcolor: "#fcfbf9",
+                color: "#555",
+                border: "1px solid rgba(0,0,0,0.05)",
+              }}
             />
             {minutes > 0 && (
               <Chip
-                icon={<AccessTimeIcon sx={{ fontSize: 11 }} />}
+                icon={<AccessTimeIcon sx={{ fontSize: 12, color: "#666 !important" }} />}
                 label={fmtTime(currentCourse.tongThoiLuong)}
                 size="small"
-                sx={{ fontSize: "0.65rem", height: 20, bgcolor: "#f5f5f5" }}
+                sx={{ 
+                  fontSize: "0.72rem", 
+                  fontWeight: 600,
+                  height: 24, 
+                  bgcolor: "#fcfbf9",
+                  color: "#555",
+                  border: "1px solid rgba(0,0,0,0.05)",
+                }}
               />
             )}
             <Chip
-              icon={<MenuBookIcon sx={{ fontSize: 11 }} />}
-              label={`${currentCourse.tongBaiGiang ?? 0} bài`}
+              icon={<MenuBookIcon sx={{ fontSize: 12, color: "#666 !important" }} />}
+              label={`${currentCourse.tongBaiGiang ?? 0} Bài học`}
               size="small"
-              sx={{ fontSize: "0.65rem", height: 20, bgcolor: "#f5f5f5" }}
+              sx={{ 
+                fontSize: "0.72rem", 
+                fontWeight: 600,
+                height: 24, 
+                bgcolor: "#fcfbf9",
+                color: "#555",
+                border: "1px solid rgba(0,0,0,0.05)",
+              }}
             />
           </Stack>
         </Box>
       </Box>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 1 }} flexWrap="wrap">
+      <Stack direction="row" spacing={2} sx={{ mb: 2.5 }} flexWrap="wrap" useFlexGap gap={1.5}>
         {canSubmit && (
           <Tooltip title={isLocked ? `Bị khoá (${lockDisplay})` : ""}>
             <span>
@@ -431,20 +464,20 @@ export function CourseDetailPanel({
         </Typography>
       )}
 
-      <Divider sx={{ mb: 2, borderColor: "#fde8e8" }} />
+      <Divider sx={{ my: 3, borderColor: "rgba(141, 19, 19, 0.08)" }} />
 
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          mb: 2,
+          mb: 2.5,
         }}
       >
-        <Typography sx={{ fontWeight: 700, fontSize: 14, color: R }}>
+        <Typography sx={{ fontWeight: 900, fontSize: 16, color: R, fontFamily: '"Be Vietnam Pro", sans-serif' }}>
           Nội dung khóa học
         </Typography>
-        <Typography sx={{ fontSize: 12, color: "#999" }}>
+        <Typography sx={{ fontSize: 13, color: "#777", fontWeight: 600 }}>
           {phanList.length} phần ·{" "}
           {phanList.reduce(
             (s, p) => s + ((p as any).danhSachBaiGiang?.length ?? 0),

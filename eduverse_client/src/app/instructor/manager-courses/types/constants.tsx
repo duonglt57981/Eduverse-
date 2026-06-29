@@ -117,8 +117,8 @@ export const shimmer = keyframes`
 // ─── Styled Components ────────────────────────────────────────────────────────
 export const PageWrap = styled(Box)({
   minHeight: "100vh",
-  background: "#f9f4f4",
-  padding: "24px 28px",
+  background: "transparent",
+  padding: "32px 40px",
 });
 
 // MUI v9: Card no longer accepts arbitrary props like `selected` directly on styled.
@@ -126,93 +126,124 @@ export const PageWrap = styled(Box)({
 export const KhoaHocCard = styled(Card, {
   shouldForwardProp: (prop) => prop !== "selected",
 })<{ selected?: boolean }>(({ selected }) => ({
-  borderRadius: 14,
-  border: `1.5px solid ${selected ? R : "#f0dada"}`,
+  borderRadius: 16,
+  border: `1px solid ${selected ? R : "rgba(141, 19, 19, 0.08)"}`,
   cursor: "pointer",
-  transition: "all 0.2s",
-  background: selected ? `linear-gradient(135deg,#fff5f5,#fff)` : "#fff",
+  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+  background: selected ? `linear-gradient(135deg, rgba(141,19,19,0.03) 0%, #fff 100%)` : "#fff",
   boxShadow: selected
-    ? `0 4px 20px ${alpha(R, 0.18)}`
-    : "0 2px 8px rgba(0,0,0,0.05)",
+    ? `0 10px 25px ${alpha(R, 0.08)}`
+    : "0 4px 20px rgba(0, 0, 0, 0.015)",
   animation: `${fadeIn} 0.3s ease`,
   "&:hover": {
-    borderColor: alpha(R, 0.5),
-    boxShadow: `0 6px 24px ${alpha(R, 0.14)}`,
+    borderColor: R,
+    boxShadow: `0 12px 30px ${alpha(R, 0.1)}`,
+    transform: "translateY(-2px)",
   },
 }));
 
 export const PhanRow = styled(Box, {
   shouldForwardProp: (prop) => prop !== "depth",
 })<{ depth?: number }>(({ depth = 0 }) => ({
-  borderRadius: 10,
-  border: "1px solid #f0dada",
-  marginBottom: 8,
+  borderRadius: 12,
+  border: "1px solid rgba(141, 19, 19, 0.06)",
+  marginBottom: 10,
   background: "#fff",
   marginLeft: depth * 16,
+  boxShadow: "0 2px 12px rgba(141, 19, 19, 0.01)",
   animation: `${fadeIn} 0.25s ease`,
+  transition: "all 0.2s ease",
+  "&:hover": {
+    borderColor: alpha(R, 0.3),
+    boxShadow: "0 4px 16px rgba(141, 19, 19, 0.03)",
+  },
 }));
 
 export const BaiGiangRow = styled(Box)({
   display: "flex",
   alignItems: "center",
-  padding: "8px 12px",
-  borderRadius: 8,
-  border: "1px solid #fde8e8",
-  marginBottom: 6,
-  background: "#fffafa",
+  padding: "10px 14px",
+  borderRadius: 10,
+  border: "1px solid rgba(141, 19, 19, 0.04)",
+  marginBottom: 8,
+  background: "#fffcfc",
   animation: `${fadeIn} 0.2s ease`,
-  "&:hover": { background: "#fff5f5" },
+  transition: "all 0.2s ease",
+  "&:hover": {
+    background: "rgba(141, 19, 19, 0.02)",
+    borderColor: alpha(R, 0.15),
+  },
 });
 
 export const TaiLieuRow = styled(Box)({
   display: "flex",
   alignItems: "center",
-  padding: "6px 10px",
-  borderRadius: 6,
-  border: "1px dashed #fcc",
-  marginBottom: 4,
-  background: "#fffefe",
+  padding: "8px 12px",
+  borderRadius: 8,
+  border: "1px dashed rgba(141, 19, 19, 0.15)",
+  marginBottom: 6,
+  background: "#ffffff",
   animation: `${fadeIn} 0.2s ease`,
+  transition: "all 0.2s ease",
+  "&:hover": {
+    background: "rgba(141, 19, 19, 0.01)",
+    borderColor: alpha(R, 0.35),
+  },
 });
 
 export const ActionBtn = styled(Button)({
   textTransform: "none",
-  fontWeight: 600,
-  borderRadius: 8,
-  fontSize: "0.8rem",
-  padding: "5px 14px",
+  fontWeight: 700,
+  borderRadius: 12,
+  fontSize: "0.85rem",
+  padding: "8px 20px",
+  boxShadow: "none",
+  transition: "all 0.2s ease-in-out",
 });
 
 export const RedBtn = styled(ActionBtn)({
   background: R,
   color: "#fff",
-  "&:hover": { background: RH },
+  "&:hover": {
+    background: RH,
+    transform: "translateY(-1px)",
+    boxShadow: "0 6px 16px rgba(141, 19, 19, 0.2)",
+  },
 });
 
 export const OutlineBtn = styled(ActionBtn)({
   border: `1.5px solid ${alpha(R, 0.4)}`,
   color: R,
-  "&:hover": { background: alpha(R, 0.06), borderColor: R },
+  background: "transparent",
+  "&:hover": {
+    background: alpha(R, 0.04),
+    borderColor: R,
+    transform: "translateY(-1px)",
+  },
 });
 
 export const SectionHeader = styled(Box)({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "10px 14px",
+  padding: "12px 16px",
   cursor: "pointer",
-  "&:hover": { background: alpha(R, 0.03) },
+  transition: "all 0.2s ease",
+  "&:hover": { background: alpha(R, 0.02) },
 });
 
 export const UploadZone = styled(Box)({
-  border: `2px dashed ${alpha(R, 0.35)}`,
-  borderRadius: 10,
-  padding: "20px 16px",
+  border: `2px dashed rgba(141, 19, 19, 0.2)`,
+  borderRadius: 12,
+  padding: "24px 20px",
   textAlign: "center",
   cursor: "pointer",
-  background: alpha(R, 0.02),
-  transition: "all 0.2s",
-  "&:hover": { background: alpha(R, 0.05), borderColor: R },
+  background: "rgba(141, 19, 19, 0.01)",
+  transition: "all 0.25s ease",
+  "&:hover": {
+    background: alpha(R, 0.04),
+    borderColor: R,
+  },
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
