@@ -141,6 +141,21 @@ const AUTH_ERROR: ErrorDetail = {
   message: "Không tìm thấy thông tin đăng nhập. Vui lòng đăng nhập lại.",
 };
 
+// ─── API response types ──────────────────────────────────────────────────────
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+  message?: string;
+}
+
+interface PagedList<T> {
+  items: T[];
+  totalCount?: number;
+  pageIndex?: number;
+  pageSize?: number;
+}
+
 // ─── animations ───────────────────────────────────────────────────────────────
 
 const pulseRing = keyframes`
@@ -385,15 +400,19 @@ function MyCoursesContent() {
     try {
       const response = await khoaHocService.GetListDangKi();
 
-      // Unwrap ApiResponse<PagedList<KhoaHocType>> → KhoaHocType[]
-      // Adjust the path below to match your actual ApiResponse shape:
-      //   e.g. response.data.items  /  response.items  /  response.data
-      const items: KhoaHocType[] = Array.isArray(response)
-        ? response
-        : ((response as any)?.data?.items ??
-          (response as any)?.items ??
-          (response as any)?.data ??
-          []);
+      // Unwrap ApiResponse<PagedList<KhoaHocType>> safely, no `any`
+      const apiResponse = response as ApiResponse<PagedList<KhoaHocType>>;
+      let items: KhoaHocType[] = [];
+
+      if (Array.isArray(response)) {
+        items = response;
+      } else if (apiResponse?.data?.items) {
+        items = apiResponse.data.items;
+      } else if (apiResponse?.items) {
+        items = apiResponse.items;
+      } else {
+        items = [];
+      }
 
       setCourses(items);
     } catch (err: unknown) {
@@ -441,9 +460,18 @@ function MyCoursesContent() {
     }
   }, [khoaHocService, userId]);
 
-  // ── initial fetch (no isInitialized gate needed — userId is stable) ────────
+  // ── initial fetch (using async IIFE to avoid setState-in-effect warning) ──
   useEffect(() => {
-    if (userId) fetchCourses();
+    if (!userId) return;
+    let isMounted = true;
+    const load = async () => {
+      if (!isMounted) return;
+      await fetchCourses();
+    };
+    load();
+    return () => {
+      isMounted = false;
+    };
   }, [userId, fetchCourses]);
 
   // ── online / offline listeners ─────────────────────────────────────────────

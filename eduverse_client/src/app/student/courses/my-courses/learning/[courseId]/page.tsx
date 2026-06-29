@@ -1,3 +1,5 @@
+// src/app/khoa-hoc/page.tsx
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
@@ -194,7 +196,7 @@ export default function KhoaHocLearningPage() {
 
   const handleSelectBaiGiang = useCallback(
     (bg: BaiGiangType) => {
-      setQuizDangChon(null); // đóng quiz nếu đang mở, quay về xem bài giảng
+      setQuizDangChon(null);
       chonBaiGiang(bg, danhSachTatCa);
     },
     [chonBaiGiang, danhSachTatCa],
@@ -231,6 +233,89 @@ export default function KhoaHocLearningPage() {
   const currentIsCompleted = baiGiang?.id
     ? progressMap.get(baiGiang.id)?.daHoanThanh
     : baiGiang?.daHoanThanh;
+
+  // ── Render video area ──
+  const renderVideoArea = () => {
+    if (loading) {
+      return <CourseSkeleton />;
+    }
+
+    if (!danhSachTatCa.length) {
+      return (
+        <Box
+          sx={{
+            height: 280,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "#f5f5f5",
+            color: "text.secondary",
+          }}
+        >
+          <VideoLibraryIcon sx={{ fontSize: 64, opacity: 0.3, mb: 2 }} />
+          <Typography variant="h6">Chưa có bài giảng</Typography>
+          <Typography variant="body2">
+            Khóa học này chưa có nội dung bài giảng.
+          </Typography>
+        </Box>
+      );
+    }
+
+    if (!baiGiang) {
+      return (
+        <Box
+          sx={{
+            height: 280,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "#fafafa",
+          }}
+        >
+          <MenuBookIcon sx={{ fontSize: 72, color: alpha(PRIMARY_RED, 0.2) }} />
+          <Typography variant="h6" color="text.secondary">
+            Chọn bài giảng để bắt đầu học
+          </Typography>
+        </Box>
+      );
+    }
+
+    if (!baiGiang.urlBaiGiang) {
+      return (
+        <Box
+          sx={{
+            height: 280,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "#fafafa",
+          }}
+        >
+          <Typography variant="h6" color="text.secondary">
+            Bài giảng này chưa có video
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {baiGiang.tieuDe}
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Có video hợp lệ
+    return (
+      <VideoPlayer
+        key={baiGiang.id}
+        url={baiGiang.urlBaiGiang}
+        savedTime={currentSavedTime}
+        isCompleted={currentIsCompleted}
+        onTimeUpdate={handleTimeUpdateWrapper}
+        onEnded={handleVideoEnded}
+      />
+    );
+  };
 
   // ── Loading & Error ──
   if (loading) {
@@ -279,7 +364,41 @@ export default function KhoaHocLearningPage() {
 
   if (!khoaHoc) {
     console.log("⚠️ [KhoaHocLearningPage] Không có dữ liệu khóa học");
-    return null;
+    return (
+      <Box
+        sx={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 3,
+        }}
+      >
+        <Paper sx={{ maxWidth: 480, p: 4, textAlign: "center" }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
+            Không tải được khóa học
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Dữ liệu khóa học trống hoặc không hợp lệ. Vui lòng thử lại.
+          </Typography>
+          <Stack direction="row" spacing={1.5} justifyContent="center">
+            <Button variant="outlined" onClick={() => window.location.reload()}>
+              Tải lại
+            </Button>
+            <Button
+              variant="contained"
+              href="/"
+              sx={{
+                bgcolor: PRIMARY_RED,
+                "&:hover": { bgcolor: PRIMARY_RED_DARK },
+              }}
+            >
+              Về trang chủ
+            </Button>
+          </Stack>
+        </Paper>
+      </Box>
+    );
   }
 
   console.log("✅ [KhoaHocLearningPage] Render với khóa học:", khoaHoc.tieuDe);
@@ -321,7 +440,9 @@ export default function KhoaHocLearningPage() {
             <IconButton
               onClick={() => setSidebarOpen(true)}
               sx={{
-                border: `1.5px solid ${sidebarOpen ? PRIMARY_RED : theme.palette.divider}`,
+                border: `1.5px solid ${
+                  sidebarOpen ? PRIMARY_RED : theme.palette.divider
+                }`,
                 bgcolor: sidebarOpen ? alpha(PRIMARY_RED, 0.1) : "transparent",
               }}
             >
@@ -436,38 +557,7 @@ export default function KhoaHocLearningPage() {
             <>
               {/* Video section */}
               <Box ref={videoSectionRef} sx={{ flexShrink: 0 }}>
-                {baiGiang?.urlBaiGiang ? (
-                  <VideoPlayer
-                    key={baiGiang.id}
-                    url={baiGiang.urlBaiGiang}
-                    savedTime={currentSavedTime}
-                    isCompleted={currentIsCompleted}
-                    onTimeUpdate={handleTimeUpdateWrapper}
-                    onEnded={handleVideoEnded}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      height: 280,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "#0c0c0c",
-                    }}
-                  >
-                    <VideoLibraryIcon
-                      sx={{
-                        fontSize: 72,
-                        color: alpha(PRIMARY_RED, 0.45),
-                        mb: 1.5,
-                      }}
-                    />
-                    <Typography color="text.secondary" variant="h6">
-                      Chọn bài giảng để bắt đầu học
-                    </Typography>
-                  </Box>
-                )}
+                {renderVideoArea()}
               </Box>
 
               {/* Info section */}
