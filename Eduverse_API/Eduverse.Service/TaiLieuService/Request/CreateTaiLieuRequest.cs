@@ -11,7 +11,7 @@ namespace Eduverse.Service.TaiLieuService.Request
     public class CreateTaiLieuRequest 
     {
         public string? TenTaiLieu { get; set; }
-        public string? TrangThai { get; set; } = "HDI";
+        public string? TrangThai { get; set; }
         public Guid IdBaiGiang { get; set; }
 
         public IFormFile Document { get; set; }

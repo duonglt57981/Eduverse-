@@ -1,5 +1,6 @@
 ﻿using Eduverse.Model.Entities;
 using Eduverse.Service.BaiGiangService.Dto;
+using Eduverse.Service.BaiKiemTraService.Dto;
 using Eduverse.Service.TaiLieuService.Dto;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,9 @@ namespace Eduverse.Service.PhanService.Dto
         //
         public bool IsDangSua { get; set; }
         public List<BaiGiangDto>? DanhSachBaiGiang { get; set; }
-        
+
+        public List<BaiKiemTraDto> DanhSachBaiKiemTra { get; set; } = new();
+
+
     }
 }

@@ -118,7 +118,7 @@ namespace Eduverse.Api.Controller
 
         [HttpGet("khoahoc-get-toupdatekhoahoc/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<GetToUpdateKhoaHoc>> GetToUpdateKhoaHoc( Guid  idKhoaHoc)
+        public async Task<DataResponse<GetToUpdateKhoaHoc>> GetToUpdateKhoaHoc([FromQuery] Guid  idKhoaHoc)
         {
             try
             {
@@ -128,6 +128,22 @@ namespace Eduverse.Api.Controller
             catch (Exception ex)
             {
                 return DataResponse<GetToUpdateKhoaHoc>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("khoahoc-getlist-formanager")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListForManager([FromQuery] GetListSearch search)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetListForManager(search);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
             }
         }
 

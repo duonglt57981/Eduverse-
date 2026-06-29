@@ -2,10 +2,12 @@ using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.Common;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.PhanRepository;
 using Eduverse.Repository.TienDoHocTapRepository;
 using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.Common;
 using Eduverse.Service.DangKyKhoaHocService;
+using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.PhanService;
 using Eduverse.Service.TienDoHocTapService.Dto;
 using Eduverse.Service.TienDoHocTapService.Request;
@@ -22,14 +24,71 @@ namespace Eduverse.Service.TienDoHocTapService
     public class TienDoHocTapService : Service<TienDoHocTap>, ITienDoHocTapService
     {
         private readonly IBaiGiangRepository _baiGiangRepository;
+        private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
+        private readonly ITienDoHocTapRepository _tienDoHocTapRepository;
+        private readonly IKhoaHocService _khoaHocService;
+        private readonly IPhanRepository _phanRepository;
         public TienDoHocTapService(
             ITienDoHocTapRepository tienDoHocTapRepository,
-            IBaiGiangRepository baiGiangRepository
+            IBaiGiangRepository baiGiangRepository,
+            IDangKyKhoaHocRepository dangKyKhoaHocRepository,
+            IKhoaHocService khoaHocService,
+            IPhanRepository phanRepository
             ) : base(tienDoHocTapRepository)
         {
             _baiGiangRepository = baiGiangRepository;
+            _dangKyKhoaHocRepository = dangKyKhoaHocRepository ;
+            _tienDoHocTapRepository = tienDoHocTapRepository ;
+            _khoaHocService = khoaHocService ;
+            _phanRepository = phanRepository ;
         }
 
+        #region UpDateTienDoBaiGiang
+        #region Helper: Xác định ID chuẩn
+        private async Task<Guid> GetBaiGiangIdChuanChoTienDo(Guid idBaiGiang, DateTime ngayDangKy)
+        {
+            var baiGiang = await _baiGiangRepository.GetQueryable()
+                .Where(x => x.Id == idBaiGiang && !x.IsDeleted)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.IsBanHienTai,
+                    x.IdBanGhiTruoc,
+                    x.CreatedDate
+                })
+                .FirstOrDefaultAsync();
+
+            if (baiGiang == null)
+                return idBaiGiang;
+
+            if (baiGiang.IsBanHienTai == true)
+            {
+                var swapTruocDangKy = await _baiGiangRepository.GetQueryable()
+                    .Where(x => x.IdBanGhiTruoc == baiGiang.Id
+                             && x.IsBanHienTai == false
+                             && !x.IsDeleted
+                             && x.CreatedDate <= ngayDangKy)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .Select(x => x.Id)
+                    .FirstOrDefaultAsync();
+
+                if (swapTruocDangKy != Guid.Empty)
+                    return swapTruocDangKy;
+                else
+                    return baiGiang.Id;
+            }
+            else
+            {
+                var gocId = baiGiang.IdBanGhiTruoc ?? baiGiang.Id;
+                if (baiGiang.CreatedDate <= ngayDangKy)
+                    return baiGiang.Id;
+                else
+                    return gocId;
+            }
+        }
+        #endregion
+
+        #region UpdateTienDoBaiGiang
         public async Task UpdateTienDoBaiGiang(UpdateTienDoBaiGiangRequest request)
         {
             if (request.IdDangKyKhoaHoc == Guid.Empty)
@@ -38,31 +97,33 @@ namespace Eduverse.Service.TienDoHocTapService
             if (request.IdBaiGiang == Guid.Empty)
                 throw new Exception("Id bài giảng không hợp lệ");
 
-            var baiGiang = await _baiGiangRepository
-                .GetQueryable()
-                .AsNoTracking()
-                .Where(x =>
-                    x.Id == request.IdBaiGiang &&
-                    !x.IsDeleted)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.ThoiLuong
-                })
+            var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
+                .Where(x => x.Id == request.IdDangKyKhoaHoc && !x.IsDeleted)
+                .Select(x => new { x.IdKhoaHoc, x.CreatedDate })
                 .FirstOrDefaultAsync();
 
-            if (baiGiang == null)
+            if (dangKy == null)
+                throw new Exception("Đăng ký không tồn tại");
+
+            Guid idChuan = await GetBaiGiangIdChuanChoTienDo(request.IdBaiGiang, dangKy.CreatedDate);
+
+            var baiGiangInfo = await _baiGiangRepository.GetQueryable()
+                .Where(x => x.Id == idChuan && !x.IsDeleted)
+                .Select(x => new { x.ThoiLuong })
+                .FirstOrDefaultAsync();
+
+            if (baiGiangInfo == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            var tienDo = await GetQueryable()
+            var nguongHoanThanh = (baiGiangInfo.ThoiLuong ?? 0) * 0.9;
+
+            var tienDo = await _tienDoHocTapRepository.GetQueryable()
                 .FirstOrDefaultAsync(x =>
                     x.IdDangKi == request.IdDangKyKhoaHoc &&
-                    x.IdBaiGiang == request.IdBaiGiang &&
+                    x.IdBaiGiang == idChuan &&
                     !x.IsDeleted);
 
             var now = DateTime.UtcNow;
-
-            var nguongHoanThanh = (baiGiang.ThoiLuong ?? 0) * 0.9;
 
             if (tienDo == null)
             {
@@ -70,47 +131,81 @@ namespace Eduverse.Service.TienDoHocTapService
                 {
                     Id = Guid.NewGuid(),
                     IdDangKi = request.IdDangKyKhoaHoc,
-                    IdBaiGiang = request.IdBaiGiang,
+                    IdBaiGiang = idChuan,
                     ThoiGianXem = request.ThoiGianXem,
                     LanCuoiXem = now,
-                    TrangThai = "DangHoc",
+                    TrangThai = request.ThoiGianXem >= nguongHoanThanh ? "HoanThanh" : "DangHoc",
                     CreatedDate = now,
                     UpdatedDate = now
                 };
 
-                if (request.ThoiGianXem >= nguongHoanThanh)
-                {
-                    tienDo.TrangThai = "HoanThanh";
+                if (tienDo.TrangThai == "HoanThanh")
                     tienDo.ThoiGianHoanThanh = now;
-                }
 
-                await CreateAsync(tienDo);
-                await SaveAsync();
+                 _tienDoHocTapRepository.Add(tienDo);
             }
             else
             {
-                tienDo.ThoiGianXem = Math.Max( tienDo.ThoiGianXem ?? 0, request.ThoiGianXem);
-
-                tienDo.LanCuoiXem = now;
-
-                if (tienDo.ThoiGianXem >= nguongHoanThanh)
+                if (request.ThoiGianXem > (tienDo.ThoiGianXem ?? 0))
                 {
-                    tienDo.TrangThai = "HoanThanh";
-                    tienDo.ThoiGianHoanThanh ??= now;
-                }
-                else
-                {
-                    tienDo.TrangThai = "DangHoc";
-                }
+                    tienDo.ThoiGianXem = request.ThoiGianXem;
+                    tienDo.LanCuoiXem = now;
+                    tienDo.UpdatedDate = now;
 
-                tienDo.UpdatedDate = now;
+                    if (tienDo.ThoiGianXem >= nguongHoanThanh && tienDo.TrangThai != "HoanThanh")
+                    {
+                        tienDo.TrangThai = "HoanThanh";
+                        tienDo.ThoiGianHoanThanh = now;
+                    }
+                    else if (tienDo.ThoiGianXem < nguongHoanThanh && tienDo.TrangThai != "HoanThanh")
+                    {
+                        tienDo.TrangThai = "DangHoc";
+                    }
 
-                await UpdateAsync(tienDo);
+                     _tienDoHocTapRepository.Update(tienDo);
+                }
             }
 
-            await SaveAsync();
-            await SaveAsync();
+            await _tienDoHocTapRepository.SaveAsync();
+
+            var phanTram = await _khoaHocService.TinhPhanTramHoanThanh(request.IdDangKyKhoaHoc, dangKy.CreatedDate);
+
+            if (phanTram >= 100)
+            {
+                var phanIds = await _phanRepository.GetQueryable()
+                    .Where(x => x.IdKhoaHoc == dangKy.IdKhoaHoc && !x.IsDeleted)
+                    .Select(x => x.Id)
+                    .ToListAsync();
+
+                await _khoaHocService.SwapPendingBaiGiang(request.IdDangKyKhoaHoc, phanIds);
+            }
         }
+        #endregion
+
+        #region HoanThanhBaiGiang
+        public async Task<double> HoanThanhBaiGiang(Guid? idDangKy, Guid? idBaiGiang, int thoiGianXem)
+        {
+            if (!idDangKy.HasValue || !idBaiGiang.HasValue)
+                throw new Exception("Id không hợp lệ");
+
+            var request = new UpdateTienDoBaiGiangRequest
+            {
+                IdDangKyKhoaHoc = idDangKy.Value,
+                IdBaiGiang = idBaiGiang.Value,
+                ThoiGianXem = thoiGianXem
+            };
+
+            await UpdateTienDoBaiGiang(request);
+
+            var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
+                .Where(x => x.Id == idDangKy && !x.IsDeleted)
+                .Select(x => x.CreatedDate)
+                .FirstOrDefaultAsync();
+
+            return await _khoaHocService.TinhPhanTramHoanThanh(idDangKy, dangKy);
+        }
+        #endregion
+        #endregion
 
         public async Task<TienDoKhoaHocDto> GetTienDoKhoaHoc(Guid idDangKy)
         {
