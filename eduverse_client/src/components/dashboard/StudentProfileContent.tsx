@@ -77,6 +77,12 @@ export default function StudentProfileContent() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
+  // Instructor upgrade requests state
+  const [instructorRequest, setInstructorRequest] = useState<any>(null);
+  const [specialty, setSpecialty] = useState('');
+  const [experience, setExperience] = useState('');
+  const [motivation, setMotivation] = useState('');
+
   // Form fields
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -167,9 +173,51 @@ export default function StudentProfileContent() {
     }
   };
 
+  const fetchUpgradeRequest = async () => {
+    try {
+      const res = await apiService.get<any>('/profile/upgrade-request');
+      if (res.status && res.data) {
+        setInstructorRequest(res.data);
+        setSpecialty(res.data.chuyenMon || '');
+        setExperience(res.data.kinhNghiem || '');
+        setMotivation(res.data.lyDo || '');
+      }
+    } catch (err) {
+      console.log('Error fetching upgrade request:', err);
+    }
+  };
+
+  const handleSubmitUpgrade = async () => {
+    if (!specialty.trim() || !experience.trim() || !motivation.trim()) {
+      showToast('Vui lòng điền đầy đủ các thông tin đăng ký', 'error');
+      return;
+    }
+
+    try {
+      setSaveLoading(true);
+      const res = await apiService.post<any>('/profile/upgrade-request', {
+        chuyenMon: specialty,
+        kinhNghiem: experience,
+        lyDo: motivation,
+      });
+
+      if (res.status) {
+        showToast('Gửi yêu cầu nâng cấp thành công!', 'success');
+        fetchUpgradeRequest();
+      } else {
+        showToast(res.message || 'Lỗi khi gửi yêu cầu', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Lỗi hệ thống khi gửi yêu cầu', 'error');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfileData();
     fetchAchievementsAndCerts();
+    fetchUpgradeRequest();
   }, []);
 
   // Show Toast Helper
@@ -706,6 +754,7 @@ export default function StudentProfileContent() {
         <Tab label="Bảo mật" />
         <Tab label="Thành tích" />
         <Tab label="Chứng chỉ" />
+        <Tab label="Đăng ký Giảng viên" />
       </Tabs>
 
       {/* 4. Tab Content Grid */}
@@ -1534,6 +1583,163 @@ export default function StudentProfileContent() {
                   </Grid>
                 ))}
               </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* TAB 5: ĐĂNG KÝ GIẢNG VIÊN */}
+        {activeTab === 4 && (
+          <Grid size={{ xs: 12 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                borderRadius: '24px',
+                bgcolor: COLORS.white,
+                border: '1px solid rgba(141,19,19,0.06)',
+              }}
+            >
+              <Typography variant="h6" sx={{ fontSize: 18, fontWeight: 900, color: COLORS.textDark, mb: 0.5 }}>
+                Đăng ký nâng cấp tài khoản Giảng viên
+              </Typography>
+              <Typography sx={{ fontSize: 13.5, color: 'rgba(31,41,55,0.5)', mb: 4 }}>
+                Trở thành giảng viên để tạo, quản lý và chia sẻ khóa học của riêng bạn trên hệ thống EduVerse.
+              </Typography>
+
+              {instructorRequest && instructorRequest.status === 0 ? (
+                // Pending status
+                <Box
+                  sx={{
+                    p: 4,
+                    borderRadius: '16px',
+                    bgcolor: 'rgba(245, 158, 11, 0.05)',
+                    border: '1px dashed #F59E0B',
+                    textAlign: 'center',
+                    maxWidth: 500,
+                    mx: 'auto',
+                    my: 3,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: '#D97706', mb: 1 }}>
+                    ⏳ Đang chờ phê duyệt
+                  </Typography>
+                  <Typography sx={{ fontSize: 13.5, color: '#B45309', lineHeight: 1.6 }}>
+                    Yêu cầu nâng cấp của bạn đã được gửi thành công vào lúc <strong>{new Date(instructorRequest.createdDate).toLocaleDateString('vi-VN')}</strong>.
+                    Ban quản trị đang xem xét thông tin của bạn. Vui lòng chờ phê duyệt.
+                  </Typography>
+                </Box>
+              ) : instructorRequest && instructorRequest.status === 1 ? (
+                // Approved status
+                <Box
+                  sx={{
+                    p: 4,
+                    borderRadius: '16px',
+                    bgcolor: 'rgba(16, 185, 129, 0.05)',
+                    border: '1px dashed #10B981',
+                    textAlign: 'center',
+                    maxWidth: 500,
+                    mx: 'auto',
+                    my: 3,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: '#059669', mb: 1 }}>
+                    🎉 Đã phê duyệt!
+                  </Typography>
+                  <Typography sx={{ fontSize: 13.5, color: '#047857', lineHeight: 1.6 }}>
+                    Yêu cầu của bạn đã được phê duyệt. Bạn đã là một Giảng viên chính thức của EduVerse!
+                    Hãy đăng nhập lại để cập nhật quyền truy cập bảng quản trị dành riêng cho Giảng viên.
+                  </Typography>
+                </Box>
+              ) : (
+                // Form input (No request or Rejected status)
+                <Grid container spacing={3}>
+                  {instructorRequest && instructorRequest.status === 2 && (
+                    <Grid size={{ xs: 12 }}>
+                      <Box
+                        sx={{
+                          p: 2.5,
+                          borderRadius: '12px',
+                          bgcolor: 'rgba(239, 68, 68, 0.05)',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          mb: 2,
+                        }}
+                      >
+                        <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#DC2626', mb: 0.5 }}>
+                          ❌ Yêu cầu trước đó bị từ chối
+                        </Typography>
+                        <Typography sx={{ fontSize: 13, color: '#B91C1C', lineHeight: 1.5 }}>
+                          Lý do phản hồi từ Admin: {instructorRequest.adminNotes || 'Không có ghi chú.'}
+                        </Typography>
+                        <Typography sx={{ fontSize: 12, color: 'rgba(185,28,28,0.7)', mt: 1, fontWeight: 600 }}>
+                          Bạn có thể điều chỉnh thông tin bên dưới và gửi lại yêu cầu mới.
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  )}
+
+                  <Grid size={{ xs: 12 }}>
+                    <TextFieldAny
+                      fullWidth
+                      label="Lĩnh vực chuyên môn"
+                      value={specialty}
+                      onChange={(e: any) => setSpecialty(e.target.value)}
+                      placeholder="Ví dụ: Công nghệ thông tin, Thiết kế đồ họa, Quản trị kinh doanh..."
+                      InputLabelProps={{ shrink: true }}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <TextFieldAny
+                      fullWidth
+                      multiline
+                      rows={4}
+                      label="Kinh nghiệm làm việc & giảng dạy"
+                      value={experience}
+                      onChange={(e: any) => setExperience(e.target.value)}
+                      placeholder="Chi tiết về các dự án đã tham gia, số năm kinh nghiệm, các đơn vị đã công tác..."
+                      InputLabelProps={{ shrink: true }}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <TextFieldAny
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="Lý do & Kế hoạch giảng dạy tại EduVerse"
+                      value={motivation}
+                      onChange={(e: any) => setMotivation(e.target.value)}
+                      placeholder="Tại sao bạn muốn giảng dạy tại đây và bạn dự kiến biên soạn các chủ đề khóa học nào?"
+                      InputLabelProps={{ shrink: true }}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 1 }}>
+                      <Button
+                        variant="contained"
+                        onClick={handleSubmitUpgrade}
+                        disabled={saveLoading}
+                        sx={{
+                          bgcolor: COLORS.primary,
+                          color: '#fff',
+                          fontWeight: 800,
+                          borderRadius: '12px',
+                          px: 4,
+                          py: 1.25,
+                          boxShadow: 'none',
+                          '&:hover': { bgcolor: COLORS.primaryDark, boxShadow: 'none' },
+                        }}
+                      >
+                        {saveLoading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Gửi yêu cầu xét duyệt'}
+                      </Button>
+                    </Stack>
+                  </Grid>
+                </Grid>
+              )}
             </Paper>
           </Grid>
         )}

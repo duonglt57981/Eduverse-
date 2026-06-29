@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Box,
@@ -26,17 +26,9 @@ function OAuthCallbackContent() {
   const [customName, setCustomName] = useState('');
   const [customEmail, setCustomEmail] = useState('');
   const [customError, setCustomError] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const mockUsers = isGoogle
-    ? [
-        { name: 'Nguyễn Văn A', email: 'nguyenvana@gmail.com', key: 'g-12345' },
-        { name: 'Trần Thị B', email: 'tranthib@gmail.com', key: 'g-67890' },
-      ]
-    : [
-        { name: 'Lê Văn C', email: 'levanc@facebook.com', key: 'fb-12345' },
-        { name: 'Phạm Thị D', email: 'phamthid@facebook.com', key: 'fb-67890' },
-      ];
-
+  // Theme definition
   const theme = useMemo(
     () =>
       createTheme({
@@ -54,6 +46,34 @@ function OAuthCallbackContent() {
       }),
     [isGoogle]
   );
+
+  useEffect(() => {
+    // Check if we have real tokens in the hash redirect
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash && (hash.includes('access_token') || hash.includes('id_token'))) {
+        const params = new URLSearchParams(hash.substring(1));
+        const token = params.get('id_token') || params.get('access_token');
+        if (token) {
+          if (window.opener) {
+            window.opener.postMessage(
+              {
+                type: 'OAUTH_SUCCESS',
+                payload: {
+                  provider: providerName,
+                  token: token,
+                },
+              },
+              window.location.origin
+            );
+            window.close();
+            return;
+          }
+        }
+      }
+      setLoading(false);
+    }
+  }, [providerName]);
 
   const handleSelect = (user: { name: string; email: string; key: string }) => {
     if (window.opener) {
@@ -93,6 +113,29 @@ function OAuthCallbackContent() {
       key: providerKey,
     });
   };
+
+  const mockUsers = isGoogle
+    ? [
+        { name: 'Nguyễn Văn A', email: 'nguyenvana@gmail.com', key: 'g-12345' },
+        { name: 'Trần Thị B', email: 'tranthib@gmail.com', key: 'g-67890' },
+      ]
+    : [
+        { name: 'Lê Văn C', email: 'levanc@facebook.com', key: 'fb-12345' },
+        { name: 'Phạm Thị D', email: 'phamthid@facebook.com', key: 'fb-67890' },
+      ];
+
+  if (loading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default' }}>
+          <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+            Đang xử lý kết quả đăng nhập...
+          </Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>

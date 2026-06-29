@@ -161,6 +161,9 @@ namespace Eduverse.Service.GioHangService
                 join k in _khoaHocRepo.GetQueryable().AsNoTracking()
                     on ghct.IdKhoaHoc equals k.Id into kGroup
                 from k in kGroup.DefaultIfEmpty()
+                join u in _userRepository.GetQueryable().AsNoTracking()
+                    on k.CreatedId equals u.Id into uGroup
+                from u in uGroup.DefaultIfEmpty()
                 where ghct.IdGioHang == gioHangId
                    && ghct.DaMua == false
                    && ghct.IsDeleted == false
@@ -173,7 +176,10 @@ namespace Eduverse.Service.GioHangService
                     Gia = k != null ? k.Gia : null,
                     GiaGoc = k != null ? k.GiaGoc : null,
                     DaChon = ghct.DaChon,
-                    ThoiGianThem = ghct.ThoiGianThem
+                    ThoiGianThem = ghct.ThoiGianThem,
+                    TenTacGia = u != null ? u.HoTen : null,  
+                    TongThoiLuong = k != null ? k.TongThoiLuong : null, 
+                    TongBaiGiang = k != null ? k.TongBaiGiang : null  
                 }
             ).ToListAsync();
 

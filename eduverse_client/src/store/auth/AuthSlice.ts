@@ -25,7 +25,7 @@ export const login = createAsyncThunk(
 export const externalLogin = createAsyncThunk(
   "auth/externalLogin",
   async (
-    data: { provider: string; email: string; name?: string; providerKey: string },
+    data: { provider: string; email?: string; name?: string; providerKey?: string; token?: string },
     { rejectWithValue },
   ) => {
     try {

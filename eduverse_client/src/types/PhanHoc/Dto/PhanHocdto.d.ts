@@ -10,4 +10,10 @@ export interface PhanHocType {
 
   DanhSachBaiGiang?: BaiGiangType[];
 }
- 
+
+export interface GetToUpdatePhanDto {
+  id?: string;
+  tenPhan?: string;
+  mieuTa?: string;
+  thuTuSapXep?: number;
+}

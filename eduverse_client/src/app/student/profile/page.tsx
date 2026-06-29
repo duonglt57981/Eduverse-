@@ -6,7 +6,7 @@ import StudentProfileContent from '@/src/components/dashboard/StudentProfileCont
 
 export default function StudentProfilePage() {
   return (
-    <AuthGuard allowedRoles={['HocVien']}>
+    <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
       <DashboardShell>
         <StudentProfileContent />
       </DashboardShell>

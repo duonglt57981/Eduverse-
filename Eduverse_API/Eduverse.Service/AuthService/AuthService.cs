@@ -399,15 +399,97 @@ namespace Eduverse.Service.AuthService
         // ══════════════════════════════════════════════
         // ĐĂNG NHẬP EXTERNAL (GOOGLE & FACEBOOK)
         // ══════════════════════════════════════════════
+        private async Task<(string email, string name, string providerKey)> ValidateGoogleTokenAsync(string token)
+        {
+            using var client = new System.Net.Http.HttpClient();
+            var response = await client.GetAsync($"https://oauth2.googleapis.com/tokeninfo?id_token={token}");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Mã xác thực Google không hợp lệ hoặc đã hết hạn.");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var doc = System.Text.Json.JsonDocument.Parse(content);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("error_description", out var errorProp))
+            {
+                throw new Exception($"Lỗi xác thực Google: {errorProp.GetString()}");
+            }
+
+            var email = root.GetProperty("email").GetString() ?? throw new Exception("Không lấy được email từ Google.");
+            var name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : email.Split('@')[0];
+            var providerKey = root.GetProperty("sub").GetString() ?? throw new Exception("Không lấy được mã định danh từ Google.");
+
+            return (email, name, providerKey);
+        }
+
+        private async Task<(string email, string name, string providerKey)> ValidateFacebookTokenAsync(string token)
+        {
+            using var client = new System.Net.Http.HttpClient();
+            var response = await client.GetAsync($"https://graph.facebook.com/me?fields=id,name,email&access_token={token}");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Mã xác thực Facebook không hợp lệ hoặc đã hết hạn.");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var doc = System.Text.Json.JsonDocument.Parse(content);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("error", out var errorProp))
+            {
+                var errMsg = errorProp.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Lỗi không xác định";
+                throw new Exception($"Lỗi xác thực Facebook: {errMsg}");
+            }
+
+            var providerKey = root.GetProperty("id").GetString() ?? throw new Exception("Không lấy được mã định danh từ Facebook.");
+            var email = root.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : $"{providerKey}@facebook.com";
+            var name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : $"Facebook User {providerKey.Substring(0, 5)}";
+
+            return (email, name, providerKey);
+        }
+
         public async Task<AuthResponse> ExternalLoginAsync(ExternalLoginRequest request, HttpResponse httpResponse)
         {
-            var user = await _userManager.FindByLoginAsync(request.Provider, request.ProviderKey);
+            string email = request.Email ?? "";
+            string name = request.Name ?? "";
+            string providerKey = request.ProviderKey ?? "";
+
+            if (!string.IsNullOrWhiteSpace(request.Token))
+            {
+                if (request.Provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
+                {
+                    var googleResult = await ValidateGoogleTokenAsync(request.Token);
+                    email = googleResult.email;
+                    name = googleResult.name;
+                    providerKey = googleResult.providerKey;
+                }
+                else if (request.Provider.Equals("Facebook", StringComparison.OrdinalIgnoreCase))
+                {
+                    var facebookResult = await ValidateFacebookTokenAsync(request.Token);
+                    email = facebookResult.email;
+                    name = facebookResult.name;
+                    providerKey = facebookResult.providerKey;
+                }
+                else
+                {
+                    throw new Exception("Nhà cung cấp đăng nhập không hỗ trợ.");
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(providerKey))
+            {
+                throw new Exception("Thông tin xác thực tài khoản liên kết không đầy đủ.");
+            }
+
+            var user = await _userManager.FindByLoginAsync(request.Provider, providerKey);
             if (user is null)
             {
-                user = await _userManager.FindByEmailAsync(request.Email);
+                user = await _userManager.FindByEmailAsync(email);
                 if (user is null)
                 {
-                    var emailPrefix = request.Email.Split('@')[0];
+                    var emailPrefix = email.Split('@')[0];
                     var userName = emailPrefix;
                     var userWithSameName = await _userManager.FindByNameAsync(userName);
                     int suffix = 1;
@@ -421,8 +503,8 @@ namespace Eduverse.Service.AuthService
                     user = new AppUser
                     {
                         UserName = userName,
-                        Email = request.Email,
-                        HoTen = request.Name ?? userName,
+                        Email = email,
+                        HoTen = name ?? userName,
                         EmailConfirmed = true
                     };
 
@@ -435,7 +517,7 @@ namespace Eduverse.Service.AuthService
                     await _userManager.AddToRoleAsync(user, "HocVien");
                 }
 
-                var identityUserLoginInfo = new UserLoginInfo(request.Provider, request.ProviderKey, request.Provider);
+                var identityUserLoginInfo = new UserLoginInfo(request.Provider, providerKey, request.Provider);
                 var addLoginResult = await _userManager.AddLoginAsync(user, identityUserLoginInfo);
                 if (!addLoginResult.Succeeded)
                 {
