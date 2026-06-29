@@ -1,5 +1,7 @@
 // src/app/instructor/manager-courses/page.tsx
 "use client";
+import AuthGuard from "@/src/components/AuthGuard";
+import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
@@ -196,7 +198,9 @@ export default function TeacherCourseManager() {
   );
 
   return (
-    <PageWrap>
+    <AuthGuard allowedRoles={["GiaoVien"]}>
+      <DashboardShell>
+        <PageWrap>
       <Box
         sx={{
           display: "flex",
@@ -490,5 +494,7 @@ export default function TeacherCourseManager() {
 
       {ToastComponent}
     </PageWrap>
+      </DashboardShell>
+    </AuthGuard>
   );
 }

@@ -1,4 +1,6 @@
 "use client";
+import AuthGuard from "@/src/components/AuthGuard";
+import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -93,7 +95,9 @@ export default function DoanhThuPage() {
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
+    <AuthGuard allowedRoles={["GiaoVien"]}>
+      <DashboardShell>
+        <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
       <Typography
         sx={{ fontSize: 24, fontWeight: 700, mb: 3, color: "text.primary" }}
       >
@@ -328,6 +332,8 @@ export default function DoanhThuPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+        </Box>
+      </DashboardShell>
+    </AuthGuard>
   );
 }
