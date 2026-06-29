@@ -790,6 +790,21 @@ export default function DashboardShell({
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const handleAvatarUpdate = () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("user_avatar");
+        if (stored) {
+          setUserAvatar(stored);
+        }
+      }
+    };
+    window.addEventListener("avatar_updated", handleAvatarUpdate);
+    handleAvatarUpdate();
+    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -1268,7 +1283,7 @@ export default function DashboardShell({
                 </Typography>
               </Stack>
               <Avatar
-                src={dashboardData?.welcomeStats?.avatarUrl || undefined}
+                src={userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined}
                 onClick={handleAvatarClick}
                 sx={{
                   width: 38,
@@ -1335,7 +1350,7 @@ export default function DashboardShell({
                   }}
                 >
                   <Avatar
-                    src={dashboardData?.welcomeStats?.avatarUrl || undefined}
+                    src={userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined}
                     sx={{
                       width: 44,
                       height: 44,
@@ -1642,7 +1657,7 @@ export default function DashboardShell({
                       >
                         <Avatar
                           src={
-                            dashboardData?.welcomeStats?.avatarUrl || undefined
+                            userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined
                           }
                           sx={{
                             width: 80,

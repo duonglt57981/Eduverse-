@@ -468,6 +468,10 @@ export default function StudentProfileContent() {
 
         if (res.status && res.data) {
           showToast(cropType === 'avatar' ? 'Ảnh đại diện đã được lưu' : 'Ảnh bìa đã được lưu', 'success');
+          if (cropType === 'avatar') {
+            localStorage.setItem("user_avatar", res.data.url);
+            window.dispatchEvent(new Event("avatar_updated"));
+          }
           setProfile((prev: any) => ({
             ...prev,
             [cropType === 'avatar' ? 'anhDaiDien' : 'anhBia']: res.data.url,
