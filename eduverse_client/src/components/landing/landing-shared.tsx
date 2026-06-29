@@ -139,46 +139,29 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
           </Stack>
 
           <Stack direction="row" spacing={1.25}>
-            {user ? (
-              <Chip
-                component={Link}
-                href={roles.includes('Admin') ? '/admin/dashboard' : roles.includes('GiaoVien') ? '/instructor/dashboard' : '/student/dashboard'}
-                clickable
-                label="Bảng điều khiển"
-                sx={{
-                  bgcolor: 'primary.main',
-                  color: '#fff',
-                  fontWeight: 900,
-                  '&:hover': { bgcolor: 'primary.dark' },
-                }}
-              />
-            ) : (
-              <>
-                <Chip
-                  component={Link}
-                  href="/auth/login"
-                  clickable
-                  label="Đăng nhập"
-                  sx={{
-                    bgcolor: 'transparent',
-                    color: 'text.primary',
-                    fontWeight: 800,
-                  }}
-                />
-                <Chip
-                  component={Link}
-                  href="/auth/register"
-                  clickable
-                  label="Đăng ký"
-                  sx={{
-                    bgcolor: 'primary.main',
-                    color: '#fff',
-                    fontWeight: 900,
-                    '&:hover': { bgcolor: 'primary.dark' },
-                  }}
-                />
-              </>
-            )}
+            <Chip
+              component={Link}
+              href="/auth/login"
+              clickable
+              label="Đăng nhập"
+              sx={{
+                bgcolor: 'transparent',
+                color: 'text.primary',
+                fontWeight: 800,
+              }}
+            />
+            <Chip
+              component={Link}
+              href="/auth/register"
+              clickable
+              label="Đăng ký"
+              sx={{
+                bgcolor: 'primary.main',
+                color: '#fff',
+                fontWeight: 900,
+                '&:hover': { bgcolor: 'primary.dark' },
+              }}
+            />
           </Stack>
         </Stack>
       </Box>
