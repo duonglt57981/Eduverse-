@@ -46,7 +46,7 @@ function SidebarContent({ onLogout }: { onLogout: () => void }) {
       case 'Khóa học của tôi':
         return '/student/courses';
       case 'Khám phá':
-        return '/courses';
+        return '/student/explore';
       case 'Giỏ hàng':
         return '/student/cart';
       case 'Yêu thích':
