@@ -22,10 +22,11 @@ export class ApiService {
     });
 
     this.api.interceptors.request.use((config) => {
-      config.headers["x-client-area"] = window.__APP_AREA || "dashboard";
+      if (typeof window !== "undefined") {
+        config.headers["x-client-area"] = window.__APP_AREA || "dashboard";
+      }
       return config;
     });
-
     this.api.interceptors.request.use(
       (config) => {
         // Check window trước
@@ -44,7 +45,7 @@ export class ApiService {
         const original = error.config as AxiosRequestConfig & {
           _retry?: boolean;
         };
-        const area = window.__APP_AREA || "dashboard";
+        const area = typeof window !== "undefined" ? window.__APP_AREA || "dashboard" : "dashboard";
 
         if (error.response?.status === 401 && !original._retry) {
           original._retry = true;
@@ -67,7 +68,7 @@ export class ApiService {
           // Nếu là auth endpoint → không retry, redirect login luôn
           if (isAuthEndpoint) {
             localStorage.removeItem("AccessToken");
-            if (area === "dashboard") window.location.href = "/auth";
+            if (area === "dashboard") window.location.href = "/auth/login";
             return Promise.reject(error);
           }
 

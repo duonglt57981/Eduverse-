@@ -104,4 +104,5 @@ export interface AuthResponse {
   userName: string;
   hoTen: string;
   email: string;
+  roles: string[];
 }

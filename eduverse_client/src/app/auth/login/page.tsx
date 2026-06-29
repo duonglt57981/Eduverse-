@@ -133,7 +133,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await dispatch(login(form));
-    if (login.fulfilled.match(result)) router.push('/dashboard');
+    if (login.fulfilled.match(result)) router.push('/trang-chu');
   };
 
   return (
