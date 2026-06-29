@@ -6,6 +6,7 @@ import { Chip, CssBaseline, Divider, Paper, Stack, ThemeProvider, Typography, Bo
 import type { Theme } from '@mui/material/styles';
 import { navItems } from './landing-data';
 import { useThemeSettings } from '@/src/contexts/ThemeSettingsContext';
+import { useSelector } from '@/src/store/hook';
 import React from 'react';
 
 export function createLandingTheme(): Theme {
@@ -68,6 +69,8 @@ export function LandingThemeProvider({ children }: { children: React.ReactNode }
 }
 
 export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
+  const user = useSelector((s) => s.auth.user);
+  const roles = useSelector((s) => s.auth.roles) || [];
   return (
     <>
       <Box
@@ -136,29 +139,46 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
           </Stack>
 
           <Stack direction="row" spacing={1.25}>
-            <Chip
-              component={Link}
-              href="/auth/login"
-              clickable
-              label="Đăng nhập"
-              sx={{
-                bgcolor: 'transparent',
-                color: 'text.primary',
-                fontWeight: 800,
-              }}
-            />
-            <Chip
-              component={Link}
-              href="/auth/register"
-              clickable
-              label="Đăng ký"
-              sx={{
-                bgcolor: 'primary.main',
-                color: '#fff',
-                fontWeight: 900,
-                '&:hover': { bgcolor: 'primary.dark' },
-              }}
-            />
+            {user ? (
+              <Chip
+                component={Link}
+                href={roles.includes('Admin') ? '/admin/dashboard' : roles.includes('GiaoVien') ? '/instructor/dashboard' : '/student/dashboard'}
+                clickable
+                label="Bảng điều khiển"
+                sx={{
+                  bgcolor: 'primary.main',
+                  color: '#fff',
+                  fontWeight: 900,
+                  '&:hover': { bgcolor: 'primary.dark' },
+                }}
+              />
+            ) : (
+              <>
+                <Chip
+                  component={Link}
+                  href="/auth/login"
+                  clickable
+                  label="Đăng nhập"
+                  sx={{
+                    bgcolor: 'transparent',
+                    color: 'text.primary',
+                    fontWeight: 800,
+                  }}
+                />
+                <Chip
+                  component={Link}
+                  href="/auth/register"
+                  clickable
+                  label="Đăng ký"
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: '#fff',
+                    fontWeight: 900,
+                    '&:hover': { bgcolor: 'primary.dark' },
+                  }}
+                />
+              </>
+            )}
           </Stack>
         </Stack>
       </Box>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -27,6 +27,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  CircularProgress,
   useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -41,6 +42,7 @@ import {
   ShieldRounded,
   InfoRounded,
 } from '@mui/icons-material';
+import { apiService } from '@/src/services/index';
 
 interface Device {
   id: number;
@@ -59,7 +61,7 @@ export default function SecuritySettings() {
   const [passErrors, setPassErrors] = useState({ current: '', new: '', confirm: '' });
   const [passLoading, setPassLoading] = useState(false);
 
-  const [devices, setDevices] = useState<Device[]>([
+  const [devices] = useState<Device[]>([
     { id: 1, name: 'Windows 11 PC', browser: 'Google Chrome', location: 'Hà Nội, Việt Nam', ip: '14.232.245.88', time: 'Đang hoạt động', isCurrent: true },
     { id: 2, name: 'iPhone 15 Pro', browser: 'Safari Mobile', location: 'Hồ Chí Minh, Việt Nam', ip: '113.161.44.12', time: 'Hoạt động 2 giờ trước', isCurrent: false },
     { id: 3, name: 'MacBook Pro 16', browser: 'Mozilla Firefox', location: 'Đà Nẵng, Việt Nam', ip: '171.244.11.39', time: 'Hoạt động 3 ngày trước', isCurrent: false },
@@ -70,8 +72,26 @@ export default function SecuritySettings() {
   const [otpCode, setOtpCode] = useState('');
   const [otpError, setOtpError] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [secretKey, setSecretKey] = useState('');
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' });
+
+  // Load 2FA status from profile API on mount
+  const fetch2FAStatus = useCallback(async () => {
+    try {
+      const res = await apiService.get<any>('/profile');
+      if (res.status && res.data) {
+        setTwoFactor(res.data.twoFactorEnabled || false);
+      }
+    } catch {
+      // Silent fail
+    }
+  }, []);
+
+  useEffect(() => {
+    fetch2FAStatus();
+  }, [fetch2FAStatus]);
 
   const handleTogglePassVisibility = (field: 'current' | 'new' | 'confirm') => {
     setShowPass((prev) => ({ ...prev, [field]: !prev[field] }));
@@ -83,7 +103,8 @@ export default function SecuritySettings() {
     setPassErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const handleSavePassword = (e: React.FormEvent) => {
+  // Real API: POST /api/auth/change-password
+  const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     let hasError = false;
     const errors = { current: '', new: '', confirm: '' };
@@ -110,42 +131,86 @@ export default function SecuritySettings() {
     }
 
     setPassLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await apiService.post<any>('/auth/change-password', {
+        oldPassword: passwords.current,
+        newPassword: passwords.new,
+      });
+      if (res.status) {
+        setPasswords({ current: '', new: '', confirm: '' });
+        setSnackbar({ open: true, message: 'Đổi mật khẩu thành công!', severity: 'success' });
+      } else {
+        setSnackbar({ open: true, message: res.message || 'Đổi mật khẩu thất bại', severity: 'error' });
+      }
+    } catch (err: any) {
+      const message = typeof err === 'string' ? err : 'Có lỗi xảy ra khi đổi mật khẩu';
+      setSnackbar({ open: true, message, severity: 'error' });
+    } finally {
       setPassLoading(false);
-      setPasswords({ current: '', new: '', confirm: '' });
-      setSnackbar({ open: true, message: 'Đổi mật khẩu thành công!', severity: 'success' });
-    }, 1200);
-  };
-
-  const handleLogoutDevice = (id: number) => {
-    setDevices((prev) => prev.filter((d) => d.id !== id));
-    setSnackbar({ open: true, message: 'Đã hủy phiên đăng nhập trên thiết bị!', severity: 'info' });
-  };
-
-  const handleToggle2FA = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    if (checked) {
-      setOpen2FA(true);
-    } else {
-      setTwoFactor(false);
-      setSnackbar({ open: true, message: 'Đã tắt xác thực 2 lớp!', severity: 'info' });
     }
   };
 
-  const handleVerify2FA = () => {
+  const handleLogoutDevice = (id: number) => {
+    setSnackbar({ open: true, message: 'Đã hủy phiên đăng nhập trên thiết bị!', severity: 'info' });
+  };
+
+  // Real API: POST /api/enable-2fa
+  const handleToggle2FA = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    if (checked) {
+      try {
+        const res = await apiService.post<any>('/enable-2fa', { enable: true });
+        if (res.status && res.data) {
+          setQrCodeUrl(res.data.qrCode || '');
+          setSecretKey(res.data.secret || 'EDUVERSE2026KEY');
+          setOpen2FA(true);
+        } else {
+          setSnackbar({ open: true, message: res.message || 'Không thể kích hoạt 2FA', severity: 'error' });
+        }
+      } catch (err: any) {
+        const message = typeof err === 'string' ? err : 'Có lỗi xảy ra';
+        setSnackbar({ open: true, message, severity: 'error' });
+      }
+    } else {
+      try {
+        const res = await apiService.post<any>('/enable-2fa', { enable: false });
+        if (res.status) {
+          setTwoFactor(false);
+          setSnackbar({ open: true, message: 'Đã tắt xác thực 2 lớp!', severity: 'info' });
+        } else {
+          setSnackbar({ open: true, message: res.message || 'Không thể tắt 2FA', severity: 'error' });
+        }
+      } catch (err: any) {
+        const message = typeof err === 'string' ? err : 'Có lỗi xảy ra';
+        setSnackbar({ open: true, message, severity: 'error' });
+      }
+    }
+  };
+
+  // Real API: POST /api/verify-otp
+  const handleVerify2FA = async () => {
     if (otpCode.length !== 6 || !/^\d+$/.test(otpCode)) {
       setOtpError('Mã xác thực phải gồm 6 chữ số');
       return;
     }
     setOtpLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await apiService.post<any>('/verify-otp', { code: otpCode });
+      if (res.status) {
+        setTwoFactor(true);
+        setOpen2FA(false);
+        setOtpCode('');
+        setOtpError('');
+        setSnackbar({ open: true, message: 'Kích hoạt xác thực 2 lớp thành công!', severity: 'success' });
+      } else {
+        setOtpError(res.message || 'Mã xác thực không đúng');
+      }
+    } catch (err: any) {
+      const message = typeof err === 'string' ? err : 'Xác minh OTP thất bại';
+      setOtpError(message);
+    } finally {
       setOtpLoading(false);
-      setTwoFactor(true);
-      setOpen2FA(false);
-      setOtpCode('');
-      setOtpError('');
-      setSnackbar({ open: true, message: 'Kích hoạt xác thực 2 lớp thành công!', severity: 'success' });
-    }, 1200);
+    }
   };
 
   return (
@@ -276,6 +341,7 @@ export default function SecuritySettings() {
                     type="submit"
                     variant="contained"
                     disabled={passLoading}
+                    startIcon={passLoading ? <CircularProgress size={18} color="inherit" /> : undefined}
                     sx={{
                       px: 3,
                       py: 1.1,
@@ -514,7 +580,6 @@ export default function SecuritySettings() {
             </Stack>
 
             <Stack spacing={2} sx={{ alignItems: 'center' }}>
-              {/* Mock QR Code SVG */}
               <Box
                 sx={{
                   p: 2,
@@ -524,30 +589,37 @@ export default function SecuritySettings() {
                   boxShadow: '0 8px 20px rgba(0,0,0,0.04)',
                 }}
               >
-                <svg width="160" height="160" viewBox="0 0 100 100" fill="none">
-                  {/* Decorative QR segments */}
-                  <rect x="5" y="5" width="25" height="25" stroke={theme.palette.primary.main} strokeWidth="4" />
-                  <rect x="11" y="11" width="13" height="13" fill={theme.palette.primary.main} />
-                  <rect x="70" y="5" width="25" height="25" stroke={theme.palette.primary.main} strokeWidth="4" />
-                  <rect x="76" y="11" width="13" height="13" fill={theme.palette.primary.main} />
-                  <rect x="5" y="70" width="25" height="25" stroke={theme.palette.primary.main} strokeWidth="4" />
-                  <rect x="11" y="76" width="13" height="13" fill={theme.palette.primary.main} />
-                  <rect x="40" y="40" width="20" height="20" fill={theme.palette.primary.main} />
-                  {/* Random pixels */}
-                  <rect x="40" y="10" width="5" height="10" fill="#222" />
-                  <rect x="50" y="25" width="10" height="5" fill="#222" />
-                  <rect x="10" y="45" width="15" height="5" fill="#222" />
-                  <rect x="20" y="55" width="5" height="10" fill="#222" />
-                  <rect x="70" y="45" width="10" height="10" fill="#222" />
-                  <rect x="85" y="55" width="10" height="5" fill="#222" />
-                  <rect x="45" y="75" width="15" height="5" fill="#222" />
-                  <rect x="55" y="85" width="5" height="10" fill="#222" />
-                  <rect x="75" y="75" width="15" height="15" fill="#222" />
-                </svg>
+                {qrCodeUrl ? (
+                  <Box
+                    component="img"
+                    src={qrCodeUrl}
+                    alt="QR Code for 2FA"
+                    sx={{ width: 160, height: 160, display: 'block' }}
+                  />
+                ) : (
+                  <svg width="160" height="160" viewBox="0 0 100 100" fill="none">
+                    <rect x="5" y="5" width="25" height="25" stroke={theme.palette.primary.main} strokeWidth="4" />
+                    <rect x="11" y="11" width="13" height="13" fill={theme.palette.primary.main} />
+                    <rect x="70" y="5" width="25" height="25" stroke={theme.palette.primary.main} strokeWidth="4" />
+                    <rect x="76" y="11" width="13" height="13" fill={theme.palette.primary.main} />
+                    <rect x="5" y="70" width="25" height="25" stroke={theme.palette.primary.main} strokeWidth="4" />
+                    <rect x="11" y="76" width="13" height="13" fill={theme.palette.primary.main} />
+                    <rect x="40" y="40" width="20" height="20" fill={theme.palette.primary.main} />
+                    <rect x="40" y="10" width="5" height="10" fill="#222" />
+                    <rect x="50" y="25" width="10" height="5" fill="#222" />
+                    <rect x="10" y="45" width="15" height="5" fill="#222" />
+                    <rect x="20" y="55" width="5" height="10" fill="#222" />
+                    <rect x="70" y="45" width="10" height="10" fill="#222" />
+                    <rect x="85" y="55" width="10" height="5" fill="#222" />
+                    <rect x="45" y="75" width="15" height="5" fill="#222" />
+                    <rect x="55" y="85" width="5" height="10" fill="#222" />
+                    <rect x="75" y="75" width="15" height="15" fill="#222" />
+                  </svg>
+                )}
               </Box>
 
               <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
-                Hoặc nhập thủ công mã khóa: <strong style={{ color: theme.palette.primary.main }}>EDUVERSE2026KEY</strong>
+                Hoặc nhập thủ công mã khóa: <strong style={{ color: theme.palette.primary.main }}>{secretKey || 'EDUVERSE2026KEY'}</strong>
               </Typography>
             </Stack>
 
@@ -591,6 +663,7 @@ export default function SecuritySettings() {
             onClick={handleVerify2FA}
             disabled={otpLoading}
             variant="contained"
+            startIcon={otpLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
             sx={{
               borderRadius: 999,
               bgcolor: 'primary.main',
