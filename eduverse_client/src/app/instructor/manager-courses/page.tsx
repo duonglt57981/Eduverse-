@@ -290,16 +290,16 @@ export default function TeacherCourseManager() {
             <Paper
               sx={{
                 p: 2.25,
-                borderRadius: 4,
-                border: "1px solid rgba(141, 19, 19, 0.06)",
+                borderRadius: "8px",
+                border: "1px solid rgba(141, 19, 19, 0.08)",
                 borderLeft: `4px solid ${s.color}`,
-                boxShadow: "0 4px 12px rgba(141, 19, 19, 0.01)",
+                boxShadow: "0 2px 8px rgba(141, 19, 19, 0.01)",
                 bgcolor: "#fff",
-                transition: "all 0.25s ease",
+                transition: "all 0.2s ease-in-out",
                 "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 18px rgba(141, 19, 19, 0.04)",
-                  borderColor: alpha(s.color, 0.4),
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 12px rgba(141, 19, 19, 0.03)",
+                  borderColor: alpha(s.color, 0.3),
                 }
               }}
             >
@@ -325,18 +325,18 @@ export default function TeacherCourseManager() {
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper
             sx={{
-              borderRadius: 4,
-              border: "1px solid rgba(141, 19, 19, 0.06)",
+              borderRadius: "8px",
+              border: "1px solid rgba(141, 19, 19, 0.08)",
               overflow: "hidden",
-              boxShadow: "0 10px 30px rgba(141, 19, 19, 0.015)",
+              boxShadow: "0 4px 20px rgba(141, 19, 19, 0.01)",
               bgcolor: "#fff",
             }}
           >
-            <Box sx={{ p: 2, borderBottom: "1px solid rgba(141, 19, 19, 0.06)" }}>
+            <Box sx={{ p: 2, borderBottom: "1px solid rgba(141, 19, 19, 0.06)", bgcolor: "#faf9f6" }}>
               <TextField
                 size="small"
                 fullWidth
-                placeholder="Tìm khóa học…"
+                placeholder="Tìm kiếm khóa học..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 slotProps={{
@@ -344,7 +344,7 @@ export default function TeacherCourseManager() {
                     startAdornment: (
                       <InputAdornment position="start">
                         <SearchIcon
-                          sx={{ color: alpha(R, 0.5), fontSize: 18 }}
+                          sx={{ color: "rgba(141, 19, 19, 0.5)", fontSize: 18 }}
                         />
                       </InputAdornment>
                     ),
@@ -356,10 +356,15 @@ export default function TeacherCourseManager() {
                       </InputAdornment>
                     ) : null,
                     sx: {
-                      borderRadius: 3,
+                      borderRadius: "6px",
                       fontSize: 13,
-                      "& fieldset": { borderColor: "rgba(141, 19, 19, 0.15)" },
-                      "&:hover fieldset": { borderColor: R },
+                      bgcolor: "#ffffff",
+                      transition: "all 0.2s ease",
+                      "& fieldset": { borderColor: "rgba(141, 19, 19, 0.12)" },
+                      "&:hover fieldset": { borderColor: "rgba(141, 19, 19, 0.3)" },
+                      "&.Mui-focused": {
+                        boxShadow: "0 0 0 3px rgba(141, 19, 19, 0.04)",
+                      },
                       "&.Mui-focused fieldset": { borderColor: R },
                     },
                   },
@@ -439,10 +444,10 @@ export default function TeacherCourseManager() {
         <Grid size={{ xs: 12, md: 8 }}>
           <Paper
             sx={{
-              borderRadius: 4,
-              border: "1px solid rgba(141, 19, 19, 0.06)",
+              borderRadius: "8px",
+              border: "1px solid rgba(141, 19, 19, 0.08)",
               p: 3.5,
-              boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+              boxShadow: "0 4px 20px rgba(141, 19, 19, 0.01)",
               minHeight: 450,
               bgcolor: "#fff",
             }}

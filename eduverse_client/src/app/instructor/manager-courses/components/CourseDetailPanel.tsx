@@ -254,7 +254,7 @@ export function CourseDetailPanel({
           sx={{
             width: 120,
             height: 80,
-            borderRadius: 3,
+            borderRadius: "8px",
             overflow: "hidden",
             flexShrink: 0,
             bgcolor: "rgba(141, 19, 19, 0.04)",
