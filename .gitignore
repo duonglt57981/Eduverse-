@@ -16,3 +16,6 @@ publish/
 
 # Env
 .env
+
+# Documents
+Tailieu_*

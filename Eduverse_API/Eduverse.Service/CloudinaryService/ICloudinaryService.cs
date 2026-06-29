@@ -1,15 +1,19 @@
-﻿using System;
+﻿using CloudinaryDotNet.Actions;
+using Eduverse.Service.CloudinaryService.Dto;
+using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Http;
 
 namespace Eduverse.Service.CloudinaryService
 {
     public interface ICloudinaryService
     {
-        Task<ImageUploadResult> UploadImage(IFormFile file);
+        Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file, CancellationToken cancellationToken = default);
+        Task<CloudinaryImgDto> UploadImageAsync(IFormFile file);
+        Task<CloudinaryImgDto> UpdateImageAsync(string publicId, IFormFile newFile);
+        Task<CloudinaryDocumentDto> UploadDocumentAsync(IFormFile file);
     }
 }

@@ -63,6 +63,7 @@ export default function AboutUsPage() {
                   letterSpacing: '-1.5px',
                   fontWeight: 900,
                   maxWidth: 700,
+                  color: '#1a1a1a',
                 }}
               >
                 EduVerse kiến tạo hành trình học tập hiện đại và bền vững

@@ -1,17 +1,82 @@
+using Eduverse.Model.Entities;
+using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.TaiLieuRepository;
+using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Eduverse.Service.Core.Mapper;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
+using Eduverse.Service.TaiLieuService.Dto;
+using Eduverse.Service.TaiLieuService.Request;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace Eduverse.Service.TaiLieuService
 {
     public class TaiLieuService : Service<Model.Entities.TaiLieu>, ITaiLieuService
     {
-        public TaiLieuService(ITaiLieuRepository repository) : base(repository)
+        private readonly IMapper _mapper;
+        private IBaiGiangRepository _baiGiangRepository;
+        private readonly ICloudinaryService _cloudinaryService;
+        private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
+        public TaiLieuService( 
+            IBaiGiangRepository baiGiangRepository,
+            ITaiLieuRepository taiLieuRepository,
+            IMapper mapper,
+            ICloudinaryService cloudinaryService,
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService
+            ) : base(taiLieuRepository)
         {
+            _baiGiangRepository = baiGiangRepository;
+            _mapper = mapper;
+            _cloudinaryService = cloudinaryService;
+            _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
+        }
+
+        public async Task<TaiLieuDto> CreateTaiLieu(CreateTaiLieuRequest request)
+        {
+            var baiGiang = await _baiGiangRepository.GetByIdAsync(request.IdBaiGiang);
+            if (baiGiang == null) throw new Exception("Không tìm thấy bài giảng");
+
+            if (string.IsNullOrWhiteSpace(request.TenTaiLieu))
+                throw new Exception("Vui lòng nhập tên tài liệu");
+
+            if (request.Document == null)
+                throw new Exception("Vui lòng chọn file tài liệu");
+
+            var uploadResult = await _cloudinaryService.UploadDocumentAsync(request.Document);
+
+            var fileExtension = Path.GetExtension(request.Document.FileName).TrimStart('.').ToUpper();
+
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenTaiLieu);
+
+            var entity = new TaiLieu
+            {
+                IdBaiGiang = request.IdBaiGiang,
+                TenTaiLieu = request.TenTaiLieu.Trim(),
+                URL = uploadResult.UrlDoc.Trim(),
+                LoaiTaiLieu = fileExtension.Trim(),
+                TrangThai = "ChoDuyet",
+                TrangThaiPheDuyet = "ChoDuyet"
+            };
+
+            await CreateAsync(entity);
+            await SaveAsync();
+            return _mapper.Map<TaiLieu, TaiLieuDto>(entity);
+        }
+
+
+        public async Task<bool> DeleteTaiLieu(Guid id)
+        {
+            var taiLieu = await GetByIdAsync(id);
+            if (taiLieu == null)
+                throw new Exception("Không tìm thấy bài giảng");
+
+            taiLieu.TrangThai = "DaXoa";
+
+            await DeleteAsync(taiLieu);
+            await SaveAsync();
+            return true;
+
         }
     }
 }

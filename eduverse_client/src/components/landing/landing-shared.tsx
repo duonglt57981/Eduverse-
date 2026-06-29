@@ -2,9 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Chip, CssBaseline, Divider, Paper, Stack, ThemeProvider, Typography, Box, createTheme } from '@mui/material';
+import { Chip, CssBaseline, Divider, Paper, Stack, ThemeProvider, Typography, Box, createTheme, useMediaQuery } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { navItems } from './landing-data';
+import { useThemeSettings } from '@/src/contexts/ThemeSettingsContext';
+import { useSelector } from '@/src/store/hook';
+import React from 'react';
 
 export function createLandingTheme(): Theme {
   return createTheme({
@@ -26,15 +29,48 @@ export function createLandingTheme(): Theme {
 }
 
 export function LandingThemeProvider({ children }: { children: React.ReactNode }) {
+  const { currentAccent, themeMode } = useThemeSettings();
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const activeMode = themeMode === 'system' ? (prefersDarkMode ? 'dark' : 'light') : themeMode;
+
+  const theme = React.useMemo(() => {
+    return createTheme({
+      palette: {
+        mode: activeMode,
+        primary: {
+          main: currentAccent.value,
+          dark: currentAccent.hoverColor,
+        },
+        background: {
+          default: activeMode === 'dark' ? '#121212' : '#f7f3ef',
+          paper: activeMode === 'dark' ? '#1e1e1e' : '#ffffff',
+        },
+        text: {
+          primary: activeMode === 'dark' ? '#ffffff' : '#19171c',
+          secondary: activeMode === 'dark' ? '#a09ba5' : '#69656c',
+        },
+      },
+      shape: { borderRadius: 2.8 },
+      typography: {
+        fontFamily:
+          '"Be Vietnam Pro","Roboto",system-ui,-apple-system,Segoe UI,Arial,sans-serif',
+        h3: { fontWeight: 900 },
+        h4: { fontWeight: 900 },
+        button: { textTransform: 'none', fontWeight: 800 },
+      },
+    });
+  }, [activeMode, currentAccent]);
+
   return (
-    <ThemeProvider theme={createLandingTheme()}>
-      <CssBaseline />
+    <ThemeProvider theme={theme}>
       {children}
     </ThemeProvider>
   );
 }
 
 export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
+  const user = useSelector((s) => s.auth.user);
+  const roles = useSelector((s) => s.auth.roles) || [];
   return (
     <>
       <Box
@@ -92,8 +128,8 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
                     fontSize: 14,
                     fontWeight: isActive ? 900 : 700,
                     textDecoration: 'none',
-                    color: isActive ? '#8d1313' : 'inherit',
-                    '&:hover': { color: '#8d1313' },
+                    color: isActive ? 'primary.main' : 'inherit',
+                    '&:hover': { color: 'primary.main' },
                   }}
                 >
                   {item.label}
@@ -103,29 +139,46 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
           </Stack>
 
           <Stack direction="row" spacing={1.25}>
-            <Chip
-              component={Link}
-              href="/auth/login"
-              clickable
-              label="Đăng nhập"
-              sx={{
-                bgcolor: 'transparent',
-                color: '#19171c',
-                fontWeight: 800,
-              }}
-            />
-            <Chip
-              component={Link}
-              href="/auth/register"
-              clickable
-              label="Đăng ký"
-              sx={{
-                bgcolor: '#8d1313',
-                color: '#fff',
-                fontWeight: 900,
-                '&:hover': { bgcolor: '#7a1111' },
-              }}
-            />
+            {user ? (
+              <Chip
+                component={Link}
+                href={roles.includes('Admin') ? '/admin/dashboard' : roles.includes('GiaoVien') ? '/instructor/dashboard' : '/student/dashboard'}
+                clickable
+                label="Bảng điều khiển"
+                sx={{
+                  bgcolor: 'primary.main',
+                  color: '#fff',
+                  fontWeight: 900,
+                  '&:hover': { bgcolor: 'primary.dark' },
+                }}
+              />
+            ) : (
+              <>
+                <Chip
+                  component={Link}
+                  href="/auth/login"
+                  clickable
+                  label="Đăng nhập"
+                  sx={{
+                    bgcolor: 'transparent',
+                    color: 'text.primary',
+                    fontWeight: 800,
+                  }}
+                />
+                <Chip
+                  component={Link}
+                  href="/auth/register"
+                  clickable
+                  label="Đăng ký"
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: '#fff',
+                    fontWeight: 900,
+                    '&:hover': { bgcolor: 'primary.dark' },
+                  }}
+                />
+              </>
+            )}
           </Stack>
         </Stack>
       </Box>
@@ -208,14 +261,14 @@ export function SectionHeading({
   align?: 'left' | 'center';
 }) {
   return (
-    <Box sx={{ textAlign: align, maxWidth: align === 'center' ? 760 : 640 }}>
+    <Box sx={{ textAlign: align, maxWidth: align === 'center' ? 760 : 640, mx: align === 'center' ? 'auto' : undefined }}>
       {eyebrow ? (
         <Typography
           sx={{
             fontSize: 12,
             fontWeight: 900,
             letterSpacing: '0.14em',
-            color: '#a32020',
+            color: 'primary.main',
             textTransform: 'uppercase',
           }}
         >
@@ -229,6 +282,7 @@ export function SectionHeading({
           fontSize: { xs: 28, md: 42 },
           lineHeight: 1.08,
           letterSpacing: '-0.9px',
+          color: '#1a1a1a',
         }}
       >
         {title}
@@ -301,7 +355,7 @@ export function CourseVisual({
           position: 'absolute',
           top: 12,
           left: 12,
-          bgcolor: '#8e1212',
+          bgcolor: 'primary.main',
           color: '#fff',
           fontWeight: 900,
         }}

@@ -1,4 +1,4 @@
-﻿using Eduverse.Service.AuthService;
+using Eduverse.Service.AuthService;
 using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,9 +8,10 @@ namespace Eduverse.Api.Controller
 {
     [ApiController]
     [Route("api/auth")]
-    public class AuthController : ControllerBase
+    public class AuthController : EduverseController
     {
         private readonly IAuthService _authService;
+
 
         public AuthController(IAuthService authService)
         {
@@ -30,6 +31,19 @@ namespace Eduverse.Api.Controller
         public async Task<DataResponse<AuthResponse>> Login([FromBody] LoginRequest request)
         {
             var result = await _authService.LoginAsync(request, Response);
+            return new DataResponse<AuthResponse>
+            {
+                Status = true,
+                Message = "Đăng nhập thành công",
+                Data = result
+            };
+        }
+
+        [HttpPost("external-login")]
+        [AllowAnonymous]
+        public async Task<DataResponse<AuthResponse>> ExternalLogin([FromBody] ExternalLoginRequest request)
+        {
+            var result = await _authService.ExternalLoginAsync(request, Response);
             return new DataResponse<AuthResponse>
             {
                 Status = true,

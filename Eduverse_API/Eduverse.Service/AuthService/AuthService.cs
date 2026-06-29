@@ -1,4 +1,4 @@
-﻿
+
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
 using Eduverse.Service.EmailService;
@@ -41,13 +41,44 @@ namespace Eduverse.Service.AuthService
         // ══════════════════════════════════════════════
         public async Task<string> RegisterAsync(RegisterRequest request)
         {
-            var existing = await _userManager.FindByNameAsync(request.UserName);
-            if (existing is not null)
-                throw new Exception("Username đã tồn tại");
+            // Check trùng username
+            var existingUser = await _userManager.FindByNameAsync(request.UserName);
+            if (existingUser is not null)
+                throw new Exception("Tên đăng nhập đã được sử dụng");
+
+            // Check trùng email
+            var existingEmail = await _userManager.FindByEmailAsync(request.Email);
+            if (existingEmail is not null)
+                throw new Exception("Email này đã được đăng ký");
+
+            // Check trùng số điện thoại (nếu có nhập)
+            if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+            {
+                // Validate format: 10 số, bắt đầu bằng 0
+                if (!System.Text.RegularExpressions.Regex.IsMatch(request.PhoneNumber, @"^0[0-9]{9}$"))
+                    throw new Exception("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0");
+
+                var phoneExists = _userManager.Users.Any(u => u.PhoneNumber == request.PhoneNumber);
+                if (phoneExists)
+                    throw new Exception("Số điện thoại này đã được đăng ký");
+            }
+
+            // Validate mật khẩu: ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt
+            if (request.Password.Length < 8)
+                throw new Exception("Mật khẩu phải có ít nhất 8 ký tự");
+            if (!request.Password.Any(char.IsUpper))
+                throw new Exception("Mật khẩu phải chứa ít nhất 1 chữ in hoa");
+            if (!request.Password.Any(char.IsLower))
+                throw new Exception("Mật khẩu phải chứa ít nhất 1 chữ thường");
+            if (!request.Password.Any(char.IsDigit))
+                throw new Exception("Mật khẩu phải chứa ít nhất 1 chữ số");
+            if (request.Password.All(c => char.IsLetterOrDigit(c)))
+                throw new Exception("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt");
 
             var user = new AppUser
             {
                 UserName = request.UserName,
+                Email = request.Email,
                 HoTen = request.HoTen,
                 PhoneNumber = request.PhoneNumber,
                 ChucVu = request.ChucVu,
@@ -87,6 +118,11 @@ namespace Eduverse.Service.AuthService
         public async Task<AuthResponse> LoginAsync(LoginRequest request, HttpResponse httpResponse)
         {
             var user = await _userManager.FindByNameAsync(request.UserName);
+            if (user is null && request.UserName.Contains("@"))
+            {
+                user = await _userManager.FindByEmailAsync(request.UserName);
+            }
+
             if (user is null)
                 throw new Exception("Tên đăng nhập hoặc mật khẩu không đúng");
 
@@ -116,7 +152,6 @@ namespace Eduverse.Service.AuthService
             // Reset AccessFailedCount khi login thành công
             await _userManager.ResetAccessFailedCountAsync(user);
 
-            var roles = await _userManager.GetRolesAsync(user);
             var accessToken = GenerateAccessToken(user);
             var refreshTokenStr = GenerateRefreshToken();
 
@@ -131,6 +166,8 @@ namespace Eduverse.Service.AuthService
             await _authRepo.SaveChangesAsync();
 
             SetRefreshTokenCookie(httpResponse, refreshTokenStr);
+
+            var roles = await _userManager.GetRolesAsync(user);
 
             return new AuthResponse
             {
@@ -162,7 +199,6 @@ namespace Eduverse.Service.AuthService
 
             var newAccessToken = GenerateAccessToken(tokenEntity.AppUser);
             var newRefreshTokenStr = GenerateRefreshToken();
-            var roles = await _userManager.GetRolesAsync(tokenEntity.AppUser);
 
             await _authRepo.AddRefreshTokenAsync(new RefreshToken
             {
@@ -175,6 +211,8 @@ namespace Eduverse.Service.AuthService
             await _authRepo.SaveChangesAsync();
 
             SetRefreshTokenCookie(httpResponse, newRefreshTokenStr);
+
+            var roles = await _userManager.GetRolesAsync(tokenEntity.AppUser);
 
             return new AuthResponse
             {
@@ -231,32 +269,64 @@ namespace Eduverse.Service.AuthService
         }
 
         // ══════════════════════════════════════════════
-        // FORGOT PASSWORD — gửi email reset
+        // FORGOT PASSWORD — gửi mã OTP về email
         // ══════════════════════════════════════════════
         public async Task<string> ForgotPasswordAsync(string email)
         {
+            if (string.IsNullOrWhiteSpace(email))
+                throw new Exception("Email không được để trống");
+
             var user = await _userManager.FindByEmailAsync(email);
-            // Không báo user có tồn tại không — bảo mật
-            if (user is null) return "Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu";
+            if (user is null) 
+                throw new Exception("Tài khoản với Email này không tồn tại trên hệ thống");
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var encodedToken = Uri.EscapeDataString(token);
-            var resetUrl = $"{_config["App:ClientUrl"]}/auth/reset-password?userId={user.Id}&token={encodedToken}";
+            // Tạo mã OTP ngẫu nhiên gồm 6 chữ số
+            var random = new Random();
+            var otpCode = random.Next(100000, 999999).ToString();
 
-            await _emailService.SendAsync(
-                to: email,
-                subject: "Đặt lại mật khẩu EduVerse",
-                body: $@"
-                    <h2>Đặt lại mật khẩu</h2>
-                    <p>Nhấn vào link bên dưới để đặt lại mật khẩu:</p>
-                    <a href='{resetUrl}' style='background:#c0392b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;'>
-                        Đặt lại mật khẩu
-                    </a>
-                    <p>Link có hiệu lực trong 1 giờ. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
-                "
-            );
+            // Lưu OTP và Expiry (5 phút) vào User Tokens
+            await _userManager.SetAuthenticationTokenAsync(user, "ForgotPassword", "OTP", otpCode);
+            await _userManager.SetAuthenticationTokenAsync(user, "ForgotPassword", "OTPExpiry", DateTime.UtcNow.AddMinutes(5).ToString("o"));
 
-            return "Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu";
+            // Thử gửi email, nếu SMTP chưa cấu hình thì trả OTP trực tiếp
+            try
+            {
+                await _emailService.SendAsync(
+                    to: email,
+                    subject: "Mã OTP đặt lại mật khẩu EduVerse",
+                    body: $@"
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
+                            <div style='text-align: center; margin-bottom: 20px;'>
+                                <h2 style='color: #7f1d1d; margin: 0; font-size: 24px; font-weight: bold;'>EduVerse</h2>
+                            </div>
+                            <hr style='border: none; border-top: 1px solid #f0f0f0; margin-bottom: 20px;' />
+                            <p style='font-size: 16px; color: #333333; line-height: 1.5;'>Chào bạn,</p>
+                            <p style='font-size: 16px; color: #333333; line-height: 1.5;'>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn trên hệ thống học tập trực tuyến <strong>EduVerse</strong>.</p>
+                            <p style='font-size: 16px; color: #333333; line-height: 1.5;'>Vui lòng sử dụng mã xác thực OTP bên dưới để tiếp tục khôi phục mật khẩu mới:</p>
+                            
+                            <div style='background: #f9f8f6; border: 1px dashed #7f1d1d; border-radius: 8px; padding: 15px; text-align: center; margin: 25px 0;'>
+                                <span style='font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #7f1d1d;'>{otpCode}</span>
+                            </div>
+                            
+                            <p style='font-size: 14px; color: #666666; line-height: 1.5;'>Mã OTP này có hiệu lực trong vòng <strong>5 phút</strong>. Vì lý do bảo mật, vui lòng tuyệt đối không chia sẻ mã này với bất kỳ ai.</p>
+                            <p style='font-size: 14px; color: #666666; line-height: 1.5;'>Nếu bạn không thực hiện yêu cầu này, bạn có thể an tâm bỏ qua email này.</p>
+                            
+                            <hr style='border: none; border-top: 1px solid #f0f0f0; margin: 25px 0;' />
+                            <div style='text-align: center;'>
+                                <p style='font-size: 12px; color: #999999; margin: 0;'>Đây là email tự động, vui lòng không phản hồi email này.</p>
+                                <p style='font-size: 12px; color: #999999; margin: 5px 0 0 0;'>&copy; {DateTime.Now.Year} EduVerse. All rights reserved.</p>
+                            </div>
+                        </div>
+                    "
+                );
+
+                return "Mã OTP khôi phục mật khẩu đã được gửi về email của bạn";
+            }
+            catch
+            {
+                // Email chưa cấu hình SMTP → trả OTP trực tiếp trong response
+                return $"Mã OTP của bạn là: {otpCode} (có hiệu lực 5 phút)";
+            }
         }
 
         // ══════════════════════════════════════════════
@@ -264,14 +334,59 @@ namespace Eduverse.Service.AuthService
         // ══════════════════════════════════════════════
         public async Task<string> ResetPasswordAsync(ResetPasswordRequest request)
         {
-            var user = await _userManager.FindByIdAsync(request.UserId);
+            AppUser? user = null;
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                user = await _userManager.FindByEmailAsync(request.Email);
+            }
+            else if (!string.IsNullOrWhiteSpace(request.UserId))
+            {
+                user = await _userManager.FindByIdAsync(request.UserId);
+            }
+
             if (user is null)
                 throw new Exception("Tài khoản không tồn tại");
 
-            var decodedToken = Uri.UnescapeDataString(request.Token);
-            var result = await _userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
+            // Kiểm tra mật khẩu mới trùng mật khẩu cũ hay không
+            var isSamePassword = await _userManager.CheckPasswordAsync(user, request.NewPassword);
+            if (isSamePassword)
+                throw new Exception("Mật khẩu mới không được trùng với mật khẩu cũ");
+
+            // Validate mật khẩu: ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt
+            if (request.NewPassword.Length < 8)
+                throw new Exception("Mật khẩu mới phải có ít nhất 8 ký tự");
+            if (!request.NewPassword.Any(char.IsUpper))
+                throw new Exception("Mật khẩu mới phải chứa ít nhất 1 chữ in hoa");
+            if (!request.NewPassword.Any(char.IsLower))
+                throw new Exception("Mật khẩu mới phải chứa ít nhất 1 chữ thường");
+            if (!request.NewPassword.Any(char.IsDigit))
+                throw new Exception("Mật khẩu mới phải chứa ít nhất 1 chữ số");
+            if (request.NewPassword.All(c => char.IsLetterOrDigit(c)))
+                throw new Exception("Mật khẩu mới phải chứa ít nhất 1 ký tự đặc biệt");
+
+            // Lấy OTP và thời gian hết hạn đã lưu
+            var storedOtp = await _userManager.GetAuthenticationTokenAsync(user, "ForgotPassword", "OTP");
+            var storedExpiryStr = await _userManager.GetAuthenticationTokenAsync(user, "ForgotPassword", "OTPExpiry");
+
+            if (string.IsNullOrEmpty(storedOtp) || storedOtp != request.Token)
+                throw new Exception("Mã OTP không chính xác");
+
+            if (string.IsNullOrEmpty(storedExpiryStr) || 
+                !DateTime.TryParse(storedExpiryStr, null, System.Globalization.DateTimeStyles.RoundtripKind, out var expiry) || 
+                expiry < DateTime.UtcNow)
+            {
+                throw new Exception("Mã OTP đã hết hạn");
+            }
+
+            // Tiến hành đổi mật khẩu
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, request.NewPassword);
             if (!result.Succeeded)
                 throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            // Xóa OTP khỏi database sau khi dùng thành công
+            await _userManager.RemoveAuthenticationTokenAsync(user, "ForgotPassword", "OTP");
+            await _userManager.RemoveAuthenticationTokenAsync(user, "ForgotPassword", "OTPExpiry");
 
             // Revoke tất cả refresh token
             await _authRepo.RevokeAllRefreshTokensByUserIdAsync(user.Id);
@@ -279,6 +394,162 @@ namespace Eduverse.Service.AuthService
             await _userManager.UpdateSecurityStampAsync(user);
 
             return "Đặt lại mật khẩu thành công!";
+        }
+
+        // ══════════════════════════════════════════════
+        // ĐĂNG NHẬP EXTERNAL (GOOGLE & FACEBOOK)
+        // ══════════════════════════════════════════════
+        private async Task<(string email, string name, string providerKey)> ValidateGoogleTokenAsync(string token)
+        {
+            using var client = new System.Net.Http.HttpClient();
+            var response = await client.GetAsync($"https://oauth2.googleapis.com/tokeninfo?id_token={token}");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Mã xác thực Google không hợp lệ hoặc đã hết hạn.");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var doc = System.Text.Json.JsonDocument.Parse(content);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("error_description", out var errorProp))
+            {
+                throw new Exception($"Lỗi xác thực Google: {errorProp.GetString()}");
+            }
+
+            var email = root.GetProperty("email").GetString() ?? throw new Exception("Không lấy được email từ Google.");
+            var name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : email.Split('@')[0];
+            var providerKey = root.GetProperty("sub").GetString() ?? throw new Exception("Không lấy được mã định danh từ Google.");
+
+            return (email, name, providerKey);
+        }
+
+        private async Task<(string email, string name, string providerKey)> ValidateFacebookTokenAsync(string token)
+        {
+            using var client = new System.Net.Http.HttpClient();
+            var response = await client.GetAsync($"https://graph.facebook.com/me?fields=id,name,email&access_token={token}");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Mã xác thực Facebook không hợp lệ hoặc đã hết hạn.");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var doc = System.Text.Json.JsonDocument.Parse(content);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("error", out var errorProp))
+            {
+                var errMsg = errorProp.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Lỗi không xác định";
+                throw new Exception($"Lỗi xác thực Facebook: {errMsg}");
+            }
+
+            var providerKey = root.GetProperty("id").GetString() ?? throw new Exception("Không lấy được mã định danh từ Facebook.");
+            var email = root.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : $"{providerKey}@facebook.com";
+            var name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : $"Facebook User {providerKey.Substring(0, 5)}";
+
+            return (email, name, providerKey);
+        }
+
+        public async Task<AuthResponse> ExternalLoginAsync(ExternalLoginRequest request, HttpResponse httpResponse)
+        {
+            string email = request.Email ?? "";
+            string name = request.Name ?? "";
+            string providerKey = request.ProviderKey ?? "";
+
+            if (!string.IsNullOrWhiteSpace(request.Token))
+            {
+                if (request.Provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
+                {
+                    var googleResult = await ValidateGoogleTokenAsync(request.Token);
+                    email = googleResult.email;
+                    name = googleResult.name;
+                    providerKey = googleResult.providerKey;
+                }
+                else if (request.Provider.Equals("Facebook", StringComparison.OrdinalIgnoreCase))
+                {
+                    var facebookResult = await ValidateFacebookTokenAsync(request.Token);
+                    email = facebookResult.email;
+                    name = facebookResult.name;
+                    providerKey = facebookResult.providerKey;
+                }
+                else
+                {
+                    throw new Exception("Nhà cung cấp đăng nhập không hỗ trợ.");
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(providerKey))
+            {
+                throw new Exception("Thông tin xác thực tài khoản liên kết không đầy đủ.");
+            }
+
+            var user = await _userManager.FindByLoginAsync(request.Provider, providerKey);
+            if (user is null)
+            {
+                user = await _userManager.FindByEmailAsync(email);
+                if (user is null)
+                {
+                    var emailPrefix = email.Split('@')[0];
+                    var userName = emailPrefix;
+                    var userWithSameName = await _userManager.FindByNameAsync(userName);
+                    int suffix = 1;
+                    while (userWithSameName is not null)
+                    {
+                        userName = $"{emailPrefix}{suffix}";
+                        userWithSameName = await _userManager.FindByNameAsync(userName);
+                        suffix++;
+                    }
+
+                    user = new AppUser
+                    {
+                        UserName = userName,
+                        Email = email,
+                        HoTen = name ?? userName,
+                        EmailConfirmed = true
+                    };
+
+                    var createResult = await _userManager.CreateAsync(user);
+                    if (!createResult.Succeeded)
+                    {
+                        throw new Exception($"Không thể tạo tài khoản: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+                    }
+
+                    await _userManager.AddToRoleAsync(user, "HocVien");
+                }
+
+                var identityUserLoginInfo = new UserLoginInfo(request.Provider, providerKey, request.Provider);
+                var addLoginResult = await _userManager.AddLoginAsync(user, identityUserLoginInfo);
+                if (!addLoginResult.Succeeded)
+                {
+                    throw new Exception($"Không thể liên kết tài khoản {request.Provider}: {string.Join(", ", addLoginResult.Errors.Select(e => e.Description))}");
+                }
+            }
+
+            var accessToken = GenerateAccessToken(user);
+            var refreshTokenStr = GenerateRefreshToken();
+
+            await _authRepo.AddRefreshTokenAsync(new RefreshToken
+            {
+                Token = refreshTokenStr,
+                NgayTao = DateTime.UtcNow,
+                NgayHetHan = DateTime.UtcNow.AddDays(7),
+                DaBiThuHoi = false,
+                AppUserId = user.Id
+            });
+            await _authRepo.SaveChangesAsync();
+
+            SetRefreshTokenCookie(httpResponse, refreshTokenStr);
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return new AuthResponse
+            {
+                AccessToken = accessToken,
+                UserName = user.UserName!,
+                HoTen = user.HoTen,
+                Email = user.Email,
+                Roles = roles.ToList()
+            };
         }
 
         // ══════════════════════════════════════════════

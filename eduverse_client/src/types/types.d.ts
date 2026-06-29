@@ -95,6 +95,7 @@ export interface LoginRequest {
 export interface RegisterRequest {
   userName: string;
   hoTen: string;
+  email: string;
   password: string;
   phoneNumber?: string;
 }

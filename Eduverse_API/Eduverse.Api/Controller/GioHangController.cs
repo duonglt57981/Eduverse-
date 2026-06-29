@@ -1,4 +1,4 @@
-﻿
+
 using Eduverse.Service.GioHangService;
 using Eduverse.Service.GioHangService.Dto;
 using Hinet.Api.Dto;
@@ -10,9 +10,9 @@ using System.Security.Claims;
 namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "HocVien")]
     [ApiController]
-    public class GioHangController : ControllerBase
+    public class GioHangController : EduverseController
     {
         private readonly IGioHangService _service;
 

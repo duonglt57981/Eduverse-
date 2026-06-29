@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
-import { login } from '../../../store/auth/AuthSlice';
+import { login, externalLogin } from '../../../store/auth/AuthSlice';
 import {
   Box,
   Button,
@@ -91,8 +91,72 @@ function FacebookGlyph(props: React.ComponentProps<typeof SvgIcon>) {
 
 export default function LoginPage() {
   const dispatch = useDispatch();
-  const router   = useRouter();
+  const router = useRouter();
   const { loading, error } = useSelector((s) => s.auth);
+
+  const handleExternalLogin = (provider: 'google' | 'facebook') => {
+    const width = 500;
+    const height = 650;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
+    let url = `/auth/oauth-callback?provider=${provider}`;
+
+    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/oauth-callback?provider=${provider}`);
+
+    if (provider === 'google' && googleClientId) {
+      url = `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?client_id=${googleClientId}` +
+        `&redirect_uri=${redirectUri}` +
+        `&response_type=id_token` +
+        `&scope=openid%20profile%20email` +
+        `&nonce=nonce_${Date.now()}` +
+        `&state=state_${provider}`;
+    } else if (provider === 'facebook' && facebookAppId) {
+      url = `https://www.facebook.com/v18.0/dialog/oauth` +
+        `?client_id=${facebookAppId}` +
+        `&redirect_uri=${redirectUri}` +
+        `&response_type=token` +
+        `&scope=public_profile,email` +
+        `&state=state_${provider}`;
+    }
+
+    const popup = window.open(
+      url,
+      `Đăng nhập ${provider === 'google' ? 'Google' : 'Facebook'}`,
+      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
+    );
+
+    if (!popup) {
+      alert('Vui lòng bỏ chặn popup để tiếp tục đăng nhập.');
+      return;
+    }
+
+    const messageListener = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'OAUTH_SUCCESS') {
+        window.removeEventListener('message', messageListener);
+        const payload = event.data.payload;
+
+        const result = await dispatch(externalLogin(payload));
+        if (externalLogin.fulfilled.match(result)) {
+          const roles: string[] = result.payload.roles || [];
+          if (roles.includes('Admin')) {
+            router.push('/admin/dashboard');
+          } else if (roles.includes('GiaoVien')) {
+            router.push('/instructor/dashboard');
+          } else {
+            router.push('/student/dashboard');
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', messageListener);
+  };
 
   const [form, setForm] = useState({ userName: '', password: '' });
   const [showPass, setShowPass] = useState(false);
@@ -133,28 +197,57 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await dispatch(login(form));
-    if (login.fulfilled.match(result)) router.push('/trang-chu');
+    if (login.fulfilled.match(result)) {
+      const roles: string[] = result.payload.roles || [];
+      if (roles.includes('Admin')) {
+        router.push('/admin/dashboard');
+      } else if (roles.includes('GiaoVien')) {
+        router.push('/instructor/dashboard');
+      } else {
+        router.push('/student/dashboard');
+      }
+    }
   };
+
+  const inputSx = {
+    height: 50,
+    borderRadius: 3,
+    bgcolor: 'rgba(17,17,17,0.035)',
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(17,17,17,0.08)',
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(17,17,17,0.16)',
+    },
+    '&.Mui-focused': {
+      bgcolor: 'rgba(17,17,17,0.03)',
+      boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(127,29,29,0.38)',
+    },
+  } as const;
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box
         sx={{
-          minHeight: '100vh',
+          height: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           px: { xs: 1.5, sm: 2.5, md: 4 },
           py: { xs: 2, sm: 3 },
           bgcolor: '#f9f8f6',
+          overflow: 'hidden',
         }}
       >
         <Box
           sx={{
             width: '100%',
             maxWidth: 1240,
-            minHeight: { xs: 'auto', md: 760 },
+            height: { xs: 'auto', md: 'min(760px, 90vh)' },
             display: { xs: 'block', md: 'flex' },
             borderRadius: { xs: 4, md: 6 },
             overflow: 'hidden',
@@ -165,159 +258,163 @@ export default function LoginPage() {
         >
           <Box
             sx={{
-            width: { xs: '100%', md: '46%' },
-            color: '#fff',
-            px: { xs: 2.5, sm: 4, md: 5 },
-            py: { xs: 3, md: 4 },
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            position: 'relative',
-            overflow: 'hidden',
-            background:
-              'linear-gradient(160deg, #9b1c1c 0%, #7f1d1d 50%, #5c1111 100%)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: -110,
-              right: -110,
-              width: 360,
-              height: 360,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.06)',
-              pointerEvents: 'none',
-            },
-          }}
-          >
-          <Stack spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                width: { xs: 210, sm: 250, md: 290 },
-              }}
-            >
-              <Image
-                src="/auth/img/logo_nedo.png"
-                alt="EduVerse"
-                width={290}
-                height={87}
-                priority
-                style={{ width: '100%', height: 'auto' }}
-              />
-            </Box>
-
-            <Box sx={{ maxWidth: 520 }}>
-              <Typography
-                variant="h3"
-                sx={{
-                  fontSize: { xs: 32, sm: 40, md: 44 },
-                  lineHeight: 1.15,
-                }}
-              >
-                Chào mừng bạn trở lại
-                <br />
-                với tri thức đỉnh cao.
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 2,
-                  maxWidth: 440,
-                  color: 'rgba(255,255,255,0.72)',
-                  fontSize: 14,
-                  lineHeight: 1.8,
-                }}
-              >
-                Hành trình chinh phục sự nghiệp của bạn bắt đầu từ việc không
-                ngừng học hỏi tại môi trường chuẩn quốc tế.
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                mt: { xs: 2, md: 3 },
-                borderRadius: 4,
-                overflow: 'hidden',
-                height: { xs: 190, sm: 220, md: 240 },
-                bgcolor: 'rgba(0,0,0,0.22)',
-                border: '1px solid rgba(255,255,255,0.14)',
-                boxShadow: '0 22px 50px rgba(0,0,0,0.28)',
-                position: 'relative',
-              }}
-            >
-              <Image
-                src="/auth/img/Illustration Section.png"
-                alt="EduVerse learning space"
-                fill
-                priority
-                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 46vw"
-                style={{
-                  objectFit: 'cover',
-                  objectPosition: 'center center',
-                  transform: 'scale(1.18)',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  background:
-                    'linear-gradient(180deg, rgba(20,8,8,0.04) 0%, rgba(78,0,0,0.12) 62%, rgba(120,0,0,0.24) 100%)',
-                }}
-              />
-            </Box>
-          </Stack>
-
-          <Stack
-            direction="row"
-            spacing={1.25}
-            sx={{
-              mt: { xs: 3, md: 4 },
+              width: { xs: '100%', md: '46%' },
+              color: '#fff',
+              px: { xs: 2.5, sm: 4, md: 4 },
+              py: { xs: 2.5, sm: 3, md: 3 },
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
               position: 'relative',
-              zIndex: 1,
+              overflow: 'hidden',
+              background:
+                'linear-gradient(160deg, #9b1c1c 0%, #7f1d1d 50%, #5c1111 100%)',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: -110,
+                right: -110,
+                width: 360,
+                height: 360,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)',
+                pointerEvents: 'none',
+              },
             }}
           >
-            {[
-              { label: 'Mentor chất lượng', icon: 'M12 2 9.3 7.6 3 8.3l4.7 4-1.4 6 5.7-3.3 5.7 3.3-1.4-6 4.7-4-6.3-.7L12 2Z' },
-              { label: 'Nội dung thực chiến', icon: 'M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2.5 4h7v2h-7V8Zm0 4h7v2h-7v-2Z' },
-              { label: 'Chứng nhận uy tín', icon: 'M12 2a6 6 0 0 0-3 11.2V22l3-1.7 3 1.7v-8.8A6 6 0 0 0 12 2Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z' },
-            ].map((f) => (
-              <Paper
-                key={f.label}
-                elevation={0}
+            <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
+              <Box
                 sx={{
-                  flex: 1,
-                  px: 1.5,
-                  py: 1.75,
-                  borderRadius: 3,
-                  backgroundColor: 'rgba(255,255,255,0.09)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.88)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: { xs: 210, sm: 250, md: 290 },
                 }}
               >
-                <Stack spacing={0.75} sx={{ alignItems: 'center' }}>
-                  <SvgIcon sx={{ fontSize: 22, opacity: 0.85 }} viewBox="0 0 24 24">
-                    <path fill="currentColor" d={f.icon} />
-                  </SvgIcon>
-                  <Typography
-                    sx={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      textAlign: 'center',
-                      letterSpacing: '-0.1px',
-                    }}
-                  >
-                    {f.label}
-                  </Typography>
-                </Stack>
-              </Paper>
-            ))}
-          </Stack>
+                <Image
+                  src="/auth/img/logo_nedo.png"
+                  alt="EduVerse"
+                  width={290}
+                  height={87}
+                  priority
+                  style={{ width: '100%', height: 'auto' }}
+                />
+              </Box>
+
+              <Box sx={{ maxWidth: 520 }}>
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontSize: { xs: 28, sm: 34, md: 36 },
+                    lineHeight: 1.15,
+                    color: '#ffffff',
+                  }}
+                >
+                  Chào mừng bạn trở lại
+                  <br />
+                  với tri thức đỉnh cao.
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1.5,
+                    maxWidth: 440,
+                    color: 'rgba(255,255,255,0.72)',
+                    fontSize: 14,
+                    lineHeight: 1.8,
+                  }}
+                >
+                  Hành trình chinh phục sự nghiệp của bạn bắt đầu từ việc không
+                  ngừng học hỏi tại môi trường chuẩn quốc tế.
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  mt: { xs: 2, md: 3 },
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                  height: { xs: 160, sm: 190, md: 200 },
+                  bgcolor: 'rgba(0,0,0,0.22)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  boxShadow: '0 22px 50px rgba(0,0,0,0.28)',
+                  position: 'relative',
+                }}
+              >
+                <Image
+                  src="/auth/img/Illustration_Section_v2.png"
+                  alt="EduVerse learning space"
+                  fill
+                  priority
+                  sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 46vw"
+                  style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                    transform: 'scale(1.18)',
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    background:
+                      'linear-gradient(180deg, rgba(20,8,8,0.04) 0%, rgba(78,0,0,0.12) 62%, rgba(120,0,0,0.24) 100%)',
+                  }}
+                />
+              </Box>
+            </Stack>
+
+            <Stack
+              direction="row"
+              spacing={1.25}
+              sx={{
+                mt: { xs: 2, md: 2.5 },
+                position: 'relative',
+                zIndex: 1,
+              }}
+            >
+              {[
+                { label: 'Mentor chất lượng', icon: 'M12 2 9.3 7.6 3 8.3l4.7 4-1.4 6 5.7-3.3 5.7 3.3-1.4-6 4.7-4-6.3-.7L12 2Z' },
+                { label: 'Nội dung thực chiến', icon: 'M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2.5 4h7v2h-7V8Zm0 4h7v2h-7v-2Z' },
+                { label: 'Chứng nhận uy tín', icon: 'M12 2a6 6 0 0 0-3 11.2V22l3-1.7 3 1.7v-8.8A6 6 0 0 0 12 2Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z' },
+              ].map((f) => (
+                <Paper
+                  key={f.label}
+                  elevation={0}
+                  sx={{
+                    flex: 1,
+                    px: 1.25,
+                    py: 1.25,
+                    borderRadius: 3,
+                    backgroundColor: 'rgba(255,255,255,0.09)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    color: 'rgba(255,255,255,0.88)',
+                  }}
+                >
+                  <Stack spacing={0.75} sx={{ alignItems: 'center' }}>
+                    <SvgIcon sx={{ fontSize: 22, opacity: 0.85 }} viewBox="0 0 24 24">
+                      <path fill="currentColor" d={f.icon} />
+                    </SvgIcon>
+                    <Typography
+                      sx={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        textAlign: 'center',
+                        letterSpacing: '-0.1px',
+                      }}
+                    >
+                      {f.label}
+                    </Typography>
+                  </Stack>
+                </Paper>
+              ))}
+            </Stack>
           </Box>
 
           <Box
             sx={{
               flex: 1,
+              width: '100%',
+              height: { md: '100%' },
+              overflowY: { md: 'auto' },
               px: { xs: 2.5, sm: 4, md: 5 },
               py: { xs: 3, md: 4 },
               display: 'flex',
@@ -328,266 +425,233 @@ export default function LoginPage() {
             }}
           >
             <Box sx={{ width: '100%', maxWidth: 440, my: 'auto' }}>
-            <Typography
-              variant="h4"
-              sx={{ fontSize: { xs: 28, sm: 32 }, mb: 0.75 }}
-            >
-              Đăng nhập
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 3 }}>
-              Truy cập vào tài khoản EduVerse của bạn
-            </Typography>
-
-            {error && (
-              <Paper
-                elevation={0}
-                sx={{
-                  mb: 2,
-                  px: 2,
-                  py: 1.25,
-                  borderRadius: 2.5,
-                  border: '1px solid #f5bcbc',
-                  background: '#fff0f0',
-                  color: '#b42318',
-                  fontSize: 13,
-                }}
+              <Typography
+                variant="h4"
+                sx={{ fontSize: { xs: 28, sm: 32 }, mb: 0.75, color: 'text.primary' }}
               >
-                {error}
-              </Paper>
-            )}
+                Đăng nhập
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 3 }}>
+                Truy cập vào tài khoản EduVerse của bạn
+              </Typography>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-              <Stack spacing={2}>
-                <Box>
-                  <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>
-                    Email hoặc tên đăng nhập
-                  </Typography>
-                  <FormControl fullWidth>
-                    <OutlinedInput
-                      placeholder="name@company.com"
-                      value={form.userName}
-                      onChange={(e) =>
-                        setForm({ ...form, userName: e.target.value })
-                      }
-                      autoComplete="username"
-                      inputProps={{ inputMode: 'email' }}
-                      endAdornment={
-                        <InputAdornment position="end">
-                          <MailIcon sx={{ fontSize: 18, color: '#8a8a8a' }} />
-                        </InputAdornment>
-                      }
-                      sx={{
-                        borderRadius: 999,
-                        bgcolor: 'rgba(17,17,17,0.04)',
-                        pr: 1.25,
-                        transition: 'box-shadow 160ms ease, background 160ms ease',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(17,17,17,0.06)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(17,17,17,0.14)',
-                        },
-                        '&.Mui-focused': {
-                          boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
-                          bgcolor: 'rgba(17,17,17,0.03)',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(127,29,29,0.38)',
-                        },
-                      }}
-                    />
-                  </FormControl>
-                </Box>
+              {error && (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    mb: 2,
+                    px: 2,
+                    py: 1.25,
+                    borderRadius: 2.5,
+                    border: '1px solid #f5bcbc',
+                    background: '#fff0f0',
+                    color: '#b42318',
+                    fontSize: 13,
+                  }}
+                >
+                  {error}
+                </Paper>
+              )}
 
-                <Box>
-                  <Stack
-                    direction="row"
-                    sx={{
-                      mb: 0.75,
-                      alignItems: 'baseline',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
-                      Mật khẩu
+              <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+                <Stack spacing={2}>
+                  <Box>
+                    <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75, color: 'text.primary' }}>
+                      Email hoặc tên đăng nhập
                     </Typography>
-                    <MuiLink
-                      href="/auth/forgot-password"
-                      underline="none"
+                    <FormControl fullWidth>
+                      <OutlinedInput
+                        placeholder="name@company.com"
+                        value={form.userName}
+                        onChange={(e) =>
+                          setForm({ ...form, userName: e.target.value })
+                        }
+                        autoComplete="username"
+                        inputProps={{ inputMode: 'email' }}
+                        endAdornment={
+                          <InputAdornment position="end">
+                            <MailIcon sx={{ fontSize: 18, color: '#8a8a8a' }} />
+                          </InputAdornment>
+                        }
+                        sx={{ ...inputSx, pr: 1.25 }}
+                      />
+                    </FormControl>
+                  </Box>
+
+                  <Box>
+                    <Stack
+                      direction="row"
                       sx={{
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        color: '#7f1d1d',
-                        '&:hover': { color: '#5c1111' },
+                        mb: 0.75,
+                        alignItems: 'baseline',
+                        justifyContent: 'space-between',
                       }}
                     >
-                      Quên mật khẩu?
-                    </MuiLink>
-                  </Stack>
-                  <FormControl fullWidth>
-                    <OutlinedInput
-                      type={showPass ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={form.password}
-                      onChange={(e) =>
-                        setForm({ ...form, password: e.target.value })
-                      }
-                      autoComplete={remember ? 'current-password' : 'off'}
-                      endAdornment={
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                            onClick={() => setShowPass((v) => !v)}
-                            edge="end"
-                            size="small"
-                            sx={{ color: '#7a7a7a' }}
-                          >
-                            {showPass ? (
-                              <EyeOffIcon sx={{ fontSize: 18 }} />
-                            ) : (
-                              <EyeIcon sx={{ fontSize: 18 }} />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      }
-                      sx={{
-                        borderRadius: 999,
-                        bgcolor: 'rgba(17,17,17,0.04)',
-                        transition: 'box-shadow 160ms ease, background 160ms ease',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(17,17,17,0.06)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(17,17,17,0.14)',
-                        },
-                        '&.Mui-focused': {
-                          boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
-                          bgcolor: 'rgba(17,17,17,0.03)',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(127,29,29,0.38)',
-                        },
-                      }}
-                    />
-                  </FormControl>
-                </Box>
+                      <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}>
+                        Mật khẩu
+                      </Typography>
+                      <MuiLink
+                        href="/auth/forgot-password"
+                        underline="none"
+                        sx={{
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                          color: '#7f1d1d',
+                          '&:hover': { color: '#5c1111' },
+                        }}
+                      >
+                        Quên mật khẩu?
+                      </MuiLink>
+                    </Stack>
+                    <FormControl fullWidth>
+                      <OutlinedInput
+                        type={showPass ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={form.password}
+                        onChange={(e) =>
+                          setForm({ ...form, password: e.target.value })
+                        }
+                        autoComplete={remember ? 'current-password' : 'off'}
+                        endAdornment={
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                              onClick={() => setShowPass((v) => !v)}
+                              edge="end"
+                              size="small"
+                              sx={{ color: '#7a7a7a' }}
+                            >
+                              {showPass ? (
+                                <EyeOffIcon sx={{ fontSize: 18 }} />
+                              ) : (
+                                <EyeIcon sx={{ fontSize: 18 }} />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        }
+                        sx={inputSx}
+                      />
+                    </FormControl>
+                  </Box>
 
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={remember}
-                      onChange={(e) => setRemember(e.target.checked)}
-                      sx={{
-                        color: 'rgba(17,17,17,0.35)',
-                        '&.Mui-checked': { color: '#7f1d1d' },
-                      }}
-                    />
-                  }
-                  label={
-                    <Typography sx={{ fontSize: 13, color: '#525252' }}>
-                      Ghi nhớ đăng nhập
-                    </Typography>
-                  }
-                  sx={{ mt: -0.75 }}
-                />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={remember}
+                        onChange={(e) => setRemember(e.target.checked)}
+                        sx={{
+                          color: 'rgba(17,17,17,0.35)',
+                          '&.Mui-checked': { color: '#7f1d1d' },
+                        }}
+                      />
+                    }
+                    label={
+                      <Typography sx={{ fontSize: 13, color: '#525252' }}>
+                        Ghi nhớ đăng nhập
+                      </Typography>
+                    }
+                    sx={{ mt: -0.75 }}
+                  />
 
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={loading}
-                  endIcon={<ArrowRightIcon sx={{ fontSize: 18 }} />}
-                  sx={{
-                    mt: 0.5,
-                    width: '100%',
-                    background:
-                      'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-                    boxShadow: '0 14px 34px rgba(127,29,29,0.26)',
-                    '&:hover': {
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    endIcon={<ArrowRightIcon sx={{ fontSize: 18 }} />}
+                    sx={{
+                      mt: 0.5,
+                      width: '100%',
                       background:
-                        'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
-                      boxShadow: '0 16px 42px rgba(127,29,29,0.32)',
-                    },
-                    '&.Mui-disabled': {
-                      background: 'rgba(127,29,29,0.35)',
-                      color: 'rgba(255,255,255,0.9)',
+                        'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
+                      boxShadow: '0 14px 34px rgba(127,29,29,0.26)',
+                      '&:hover': {
+                        background:
+                          'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
+                        boxShadow: '0 16px 42px rgba(127,29,29,0.32)',
+                      },
+                      '&.Mui-disabled': {
+                        background: 'rgba(127,29,29,0.35)',
+                        color: 'rgba(255,255,255,0.9)',
+                      },
+                    }}
+                  >
+                    {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                  </Button>
+                </Stack>
+              </Box>
+
+              <Divider
+                sx={{
+                  my: 3,
+                  color: '#9a9a9a',
+                  '&::before, &::after': { borderColor: 'rgba(17,17,17,0.10)' },
+                  fontSize: 12.5,
+                }}
+              >
+                Hoặc tiếp tục với
+              </Divider>
+
+              <Stack direction="row" spacing={1.5}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => handleExternalLogin('google')}
+                  startIcon={<GoogleGlyph sx={{ fontSize: 18 }} />}
+                  sx={{
+                    borderRadius: 999,
+                    borderColor: 'rgba(17,17,17,0.14)',
+                    color: '#2a2a2a',
+                    bgcolor: '#fff',
+                    '&:hover': {
+                      borderColor: 'rgba(17,17,17,0.22)',
+                      bgcolor: 'rgba(255,255,255,0.92)',
                     },
                   }}
                 >
-                  {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                  Google
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => handleExternalLogin('facebook')}
+                  startIcon={<FacebookGlyph sx={{ fontSize: 18 }} />}
+                  sx={{
+                    borderRadius: 999,
+                    borderColor: 'rgba(17,17,17,0.14)',
+                    color: '#2a2a2a',
+                    bgcolor: '#fff',
+                    '&:hover': {
+                      borderColor: 'rgba(17,17,17,0.22)',
+                      bgcolor: 'rgba(255,255,255,0.92)',
+                    },
+                  }}
+                >
+                  Facebook
                 </Button>
               </Stack>
+
+              <Typography
+                sx={{
+                  mt: 3,
+                  textAlign: 'center',
+                  fontSize: 13.5,
+                  color: '#6b6b6b',
+                }}
+              >
+                Chưa có tài khoản?{' '}
+                <MuiLink
+                  href="/auth/register"
+                  underline="none"
+                  sx={{
+                    fontWeight: 800,
+                    color: '#7f1d1d',
+                    '&:hover': { color: '#5c1111' },
+                  }}
+                >
+                  Đăng ký ngay
+                </MuiLink>
+              </Typography>
             </Box>
-
-            <Divider
-              sx={{
-                my: 3,
-                color: '#9a9a9a',
-                '&::before, &::after': { borderColor: 'rgba(17,17,17,0.10)' },
-                fontSize: 12.5,
-              }}
-            >
-              Hoặc tiếp tục với
-            </Divider>
-
-            <Stack direction="row" spacing={1.5}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<GoogleGlyph sx={{ fontSize: 18 }} />}
-                sx={{
-                  borderRadius: 999,
-                  borderColor: 'rgba(17,17,17,0.14)',
-                  color: '#2a2a2a',
-                  bgcolor: '#fff',
-                  '&:hover': {
-                    borderColor: 'rgba(17,17,17,0.22)',
-                    bgcolor: 'rgba(255,255,255,0.92)',
-                  },
-                }}
-              >
-                Google
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<FacebookGlyph sx={{ fontSize: 18 }} />}
-                sx={{
-                  borderRadius: 999,
-                  borderColor: 'rgba(17,17,17,0.14)',
-                  color: '#2a2a2a',
-                  bgcolor: '#fff',
-                  '&:hover': {
-                    borderColor: 'rgba(17,17,17,0.22)',
-                    bgcolor: 'rgba(255,255,255,0.92)',
-                  },
-                }}
-              >
-                Facebook
-              </Button>
-            </Stack>
-
-            <Typography
-              sx={{
-                mt: 3,
-                textAlign: 'center',
-                fontSize: 13.5,
-                color: '#6b6b6b',
-              }}
-            >
-              Chưa có tài khoản?{' '}
-              <MuiLink
-                href="/auth/register"
-                underline="none"
-                sx={{
-                  fontWeight: 800,
-                  color: '#7f1d1d',
-                  '&:hover': { color: '#5c1111' },
-                }}
-              >
-                Đăng ký ngay
-              </MuiLink>
-            </Typography>
-          </Box>
 
             <Typography
               sx={{
@@ -597,7 +661,7 @@ export default function LoginPage() {
                 textAlign: 'center',
               }}
             >
-             
+
             </Typography>
           </Box>
         </Box>

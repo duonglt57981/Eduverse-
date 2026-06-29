@@ -134,7 +134,6 @@ namespace Eduverse.Service.ThanhToanService
                     });
                 }
 
-                // Gộp 1 lần save duy nhất
                 await _donHangRepo.SaveAsync();
             }
             catch (Exception ex)
@@ -229,9 +228,6 @@ namespace Eduverse.Service.ThanhToanService
                     Console.WriteLine("[WEBHOOK] SIGNATURE KHONG HOP LE - co the la gia mao!");
                     return false;
                 }
-                Console.WriteLine(
-                    $"ORDER CODE NHAN DUOC: {webhookData.OrderCode}"
-                );
                 var maGiaoDich = $"EDU{webhookData.OrderCode}";
 
                 var donHang = await _donHangRepo.GetQueryable()
@@ -244,8 +240,6 @@ namespace Eduverse.Service.ThanhToanService
                 {
                     if ((double)webhookData.Amount < donHang.SoTienThanhToan)
                     {
-                        Console.WriteLine($"[WEBHOOK] SO TIEN KHONG KHOP! " +
-                            $"Can: {donHang.SoTienThanhToan}, Nhan: {webhookData.Amount}");
 
                         donHang.TrangThai = 2;
                         donHang.UpdatedDate = DateTime.Now;
@@ -278,7 +272,7 @@ namespace Eduverse.Service.ThanhToanService
                     {
                         var daDangKy = await _dangKyRepo.AnyAsync(
                             x => x.IdNguoiDangKi == donHang.IdNguoiDung
-                              && x.IdDangKi == ct.IdKhoaHoc
+                              && x.IdKhoaHoc == ct.IdKhoaHoc
                               && x.IsDeleted == false);
 
                         if (!daDangKy)
@@ -286,7 +280,7 @@ namespace Eduverse.Service.ThanhToanService
                             _dangKyRepo.Add(new DangKyKhoaHoc
                             {
                                 IdNguoiDangKi = donHang.IdNguoiDung,
-                                IdDangKi = ct.IdKhoaHoc,
+                                IdKhoaHoc = ct.IdKhoaHoc,
                                 GiaDangKy = ct.GiaLucDat,
                                 TrangThai = "Hoạt động",
                                 ThoiGianDK = DateTime.Now,

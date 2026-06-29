@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -27,6 +27,17 @@ namespace Eduverse.Model.Entities
 
         [DisplayName("Địa chỉ")]
         public string? DiaChi { get; set; }
+
+        [DisplayName("Ngày sinh")]
+        public DateTime? NgaySinh { get; set; }
+
+        [DisplayName("Tiểu sử cá nhân")]
+        public string? TieuSu { get; set; }
+
+        [DisplayName("Ảnh bìa")]
+        public string? AnhBia { get; set; }
+        // chi dc role giang vien moi co the dung thuoc tinh SoDuTaiKhoan de rut tien
+        public decimal? SoDuTaiKhoan { get; set; } = 0;
 
         public DateTime CreatedDate { get; set; }
         public string? CreatedBy { get; set; }

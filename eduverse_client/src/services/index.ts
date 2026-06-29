@@ -93,7 +93,7 @@ export class ApiService {
           return;
         }
 
-        return Promise.reject(error.response?.data?.title);
+        return Promise.reject(error.response?.data?.message || error.message);
       },
     );
   }

@@ -1,156 +1,200 @@
 ﻿using Eduverse.Service.KhoaHocService;
+using Eduverse.Service.Common;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Hinet.Api.Dto;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class KhoaHocController : ControllerBase
+    public class KhoaHocController : EduverseController
     {
-        private readonly IKhoaHocService _service;
+        private readonly IKhoaHocService _khoaHocService;
 
-        public KhoaHocController(IKhoaHocService service)
+        public KhoaHocController(IKhoaHocService khoaHocService)
         {
-            _service = service;
+            _khoaHocService = khoaHocService;
         }
 
-        [HttpGet("paged")]
-        public async Task<IActionResult> GetPaged([FromQuery] KhoaHocQueryDto query)
-        {
-            var result = await _service.GetPagedAsync(query);
-            return Ok(DataResponse.Success(
-                result,
-                "Lấy danh sách thành công"
-            ));
-        }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+        [HttpGet("khoahoc-list")]
+        [AllowAnonymous]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetList([FromQuery] KhoaHocSearch search)
         {
-            Guid? userId = null;
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(userIdClaim, out var uid)) userId = uid;
-
-            var result = await _service.GetByIdAsync(id, userId);
-            if (result == null)
+            try
             {
-                return NotFound(DataResponse.False("Không tìm thấy khóa học"));
+                var result = await _khoaHocService.GetList(search);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
             }
-
-            return Ok(DataResponse.Success(
-                result,
-                "Thành công"
-            ));
-        }
-
-        [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateKhoaHocDto dto)
-        {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await _service.TaoKhoaHocAsync(dto, userId);
-            return Ok(DataResponse.Success(
-                result,
-                "Tạo khóa học thành công"
-            ));
-        }
-
-        [Authorize]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateKhoaHocDto dto)
-        {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await _service.CapNhatKhoaHocAsync(id, dto, userId);
-            return Ok(DataResponse.Success(
-                result,
-                "Cập nhật thành công"
-            ));
-        }
-
-        [Authorize]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            var khoahoc = await _service.GetByIdAsync(id);
-
-            if (khoahoc == null)
+            catch (Exception ex)
             {
-                return NotFound(DataResponse.False("Không tìm thấy khóa học để xóa"));
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
             }
-            await _service.DeleteAsync(khoahoc);
-            return Ok(DataResponse.Success(
-                null,
-                "Xóa thành công"
-            ));
         }
 
-        [HttpGet("danh-muc")]
-        public async Task<IActionResult> GetDanhMuc()
+
+        [HttpGet("khoahoc-by/{userId}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListByUser([FromQuery] KhoaHocSearch search)
         {
-            var result = await _service.GetAllDanhMucAsync();
-            return Ok(DataResponse.Success(
-                result,
-                "Thành công"
-            ));
+            try
+            {
+                var result = await _khoaHocService.GetListByUser(search);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
+            }
         }
 
-        [Authorize]
-        [HttpPost("{id}/yeu-thich")]
-        public async Task<IActionResult> ToggleYeuThich(Guid id)
+
+        [HttpGet("khoahoc-dangki")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<PagedList<GetDangKiKhoaHocDto>>> GetListDangKi([FromQuery] KhoaHocDangKiSearch search,
+            Guid userId)
         {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            await _service.ToggleYeuThichAsync(userId, id);
-            return Ok(DataResponse.Success(
-                null,
-                "Thành công"
-            ));
+            try
+            {
+                var result = await _khoaHocService.GetListDangKi(search);
+                return DataResponse<PagedList<GetDangKiKhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<GetDangKiKhoaHocDto>>.False(ex.Message);
+            }
         }
 
-        [Authorize]
-        [HttpGet("yeu-thich")]
-        public async Task<IActionResult> GetYeuThich([FromQuery] KhoaHocSearch search)
+
+        [HttpGet("khoahoc-learning/{idDangKy}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)
         {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await _service.GetYeuThichAsync(userId, search);
-            return Ok(DataResponse.Success(result, "Thành công"));
+            try
+            {
+                var result = await _khoaHocService.GetLearning(idDangKy);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
         }
 
-        [HttpGet("search")]
-        public async Task<IActionResult> GetData([FromQuery] KhoaHocSearch search)
+        [HttpPost("khoahoc-chuyentrangthai-dangsua")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> ChuyenTTDangSua([FromForm] Guid id)
         {
-            Guid? userId = null;
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(claim, out var uid)) userId = uid;
-
-            var result = await _service.GetDataAsync(search, userId);
-            return Ok(DataResponse.Success(result, "Thành công"));
+            try
+            {
+                var result = await _khoaHocService.ChuyenTrangThaiDangSua(id);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
         }
 
-        [HttpGet("{id}/detail")]
-        public async Task<IActionResult> GetChiTiet(Guid id)
-        {
-            Guid? userId = null;
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(claim, out var uid)) userId = uid;
 
-            var result = await _service.GetChiTietAsync(id, userId);
-            if (result == null) return NotFound(DataResponse.False("Không tìm thấy"));
-            return Ok(DataResponse.Success(result, "Thành công"));
+        [HttpPost("khoahoc-chuyentrangthai-choduyet")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> ChuyenTTChoDuyet([FromForm] Guid id)
+        {
+            try
+            {
+                var result = await _khoaHocService.ChuyenTrangThaiChoDuyet(id);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
         }
 
-        [Authorize]
-        [HttpGet("da-dang-ky")]
-        public async Task<IActionResult> GetDaDangKy([FromQuery] KhoaHocSearch search)
+
+        [HttpGet("khoahoc-get-toupdatekhoahoc/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<GetToUpdateKhoaHoc>> GetToUpdateKhoaHoc([FromQuery] Guid  idKhoaHoc)
         {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var result = await _service.GetKhoaHocDaDangKyAsync(userId, search);
-            return Ok(DataResponse.Success(result, "Thành công"));
+            try
+            {
+                var result = await _khoaHocService.GetToUpdateKhoaHoc(idKhoaHoc);
+                return DataResponse<GetToUpdateKhoaHoc>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<GetToUpdateKhoaHoc>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("khoahoc-getlist-formanager")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListForManager([FromQuery] GetListSearch search)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetListForManager(search);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("khoahoc-create")]   
+        [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> CreateKhoaHoc( [FromForm] CreateKhoaHocRequest request)
+        {
+            try
+            {
+                var result = await _khoaHocService.CreateKhoaHoc(request);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPut("khoahoc-put")]
+        [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> UpdateKhoaHoc([FromForm] UpdateKhoaHocRequest request)
+        {
+            try
+            {
+                var result = await _khoaHocService.UpdateKhoaHoc(request);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpDelete("khoahoc-delete/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)
+        {
+            try
+            {
+                var result = await _khoaHocService.DeleteKhoaHoc(id);
+                return DataResponse<bool>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<bool>.False(ex.Message);
+            }
         }
     }
 }

@@ -66,6 +66,7 @@ export default function LandingPage() {
                   letterSpacing: '-1.6px',
                   fontWeight: 900,
                   maxWidth: 680,
+                  color: '#1a1a1a',
                 }}
               >
                 Học mọi lúc,
@@ -105,6 +106,8 @@ export default function LandingPage() {
                   Bắt đầu học ngay
                 </Button>
                 <Button
+                  component={Link}
+                  href="/auth/login"
                   variant="outlined"
                   startIcon={<PlayArrowRounded />}
                   sx={{
@@ -168,7 +171,7 @@ export default function LandingPage() {
                   }}
                 >
                   <Image
-                    src="/auth/img/Illustration Section.png"
+                    src="/auth/img/Illustration_Section_v2.png"
                     alt="EduVerse classroom"
                     fill
                     priority
@@ -232,19 +235,14 @@ export default function LandingPage() {
           </Box>
 
           <Box id="courses" sx={{ py: { xs: 5, md: 7 } }}>
-            <Stack
-              direction={{ xs: 'column', md: 'row' }}
-              sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'flex-end' }, gap: 2, mb: 3 }}
-            >
+            <Box sx={{ mb: 3.5 }}>
               <SectionHeading
                 eyebrow="Courses"
                 title="Các khóa học nổi bật"
                 description="Lựa chọn chương trình học được thiết kế chuyên sâu với nội dung thực tiễn và mentor chất lượng cao."
+                align="center"
               />
-              <Button endIcon={<ArrowForwardRounded />} sx={{ color: '#8d1313' }}>
-                Xem toàn bộ khóa học
-              </Button>
-            </Stack>
+            </Box>
 
             <Box
               sx={{
@@ -289,6 +287,8 @@ export default function LandingPage() {
                       {course.price}
                     </Typography>
                     <Button
+                      component={Link}
+                      href="/auth/login"
                       variant="outlined"
                       sx={{
                         borderRadius: 2.8,
@@ -302,6 +302,17 @@ export default function LandingPage() {
                 </Paper>
               ))}
             </Box>
+
+            <Stack direction="row" sx={{ justifyContent: 'center', mt: 4 }}>
+              <Button 
+                component={Link}
+                href="/courses"
+                endIcon={<ArrowForwardRounded />} 
+                sx={{ color: '#8d1313' }}
+              >
+                Xem toàn bộ khóa học
+              </Button>
+            </Stack>
           </Box>
 
           <Box id="benefits" sx={{ py: { xs: 5, md: 7 } }}>
