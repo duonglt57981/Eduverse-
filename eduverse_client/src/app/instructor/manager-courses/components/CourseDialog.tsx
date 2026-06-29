@@ -38,6 +38,7 @@ const fieldSx = {
   "& .MuiOutlinedInput-root": {
     borderRadius: "10px",
     fontSize: 14,
+    height: 46,
     backgroundColor: "#fff",
     "& fieldset": { borderColor: "#D1D5DB" },
     "&:hover fieldset": { borderColor: "rgba(141, 19, 19, 0.4)" },
@@ -442,6 +443,7 @@ export function CourseDialog({
                 ...fieldSx,
                 "& .MuiOutlinedInput-root": {
                   ...((fieldSx as any)["& .MuiOutlinedInput-root"]),
+                  height: "auto",
                   alignItems: "flex-start",
                 },
                 "& .MuiOutlinedInput-input": {
