@@ -332,9 +332,8 @@ export default function TeacherCourseManager() {
               bgcolor: "#fff",
             }}
           >
-            <Box sx={{ p: 2, borderBottom: "1px solid rgba(141, 19, 19, 0.06)", bgcolor: "#faf9f6" }}>
+            <Box sx={{ p: 2.5, borderBottom: "1px solid rgba(141, 19, 19, 0.06)", bgcolor: "#faf9f6" }}>
               <TextField
-                size="small"
                 fullWidth
                 placeholder="Tìm kiếm khóa học..."
                 value={search}
@@ -344,26 +343,28 @@ export default function TeacherCourseManager() {
                     startAdornment: (
                       <InputAdornment position="start">
                         <SearchIcon
-                          sx={{ color: "rgba(141, 19, 19, 0.5)", fontSize: 18 }}
+                          sx={{ color: "rgba(141, 19, 19, 0.6)", fontSize: 20 }}
                         />
                       </InputAdornment>
                     ),
                     endAdornment: search ? (
                       <InputAdornment position="end">
                         <IconButton size="small" onClick={() => setSearch("")}>
-                          <ClearIcon sx={{ fontSize: 15 }} />
+                          <ClearIcon sx={{ fontSize: 16 }} />
                         </IconButton>
                       </InputAdornment>
                     ) : null,
                     sx: {
-                      borderRadius: "6px",
-                      fontSize: 13,
+                      height: 46,
+                      borderRadius: "8px",
+                      fontSize: 14.5,
                       bgcolor: "#ffffff",
+                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.02)",
                       transition: "all 0.2s ease",
-                      "& fieldset": { borderColor: "rgba(141, 19, 19, 0.12)" },
-                      "&:hover fieldset": { borderColor: "rgba(141, 19, 19, 0.3)" },
+                      "& fieldset": { borderColor: "rgba(141, 19, 19, 0.15)" },
+                      "&:hover fieldset": { borderColor: "rgba(141, 19, 19, 0.35)" },
                       "&.Mui-focused": {
-                        boxShadow: "0 0 0 3px rgba(141, 19, 19, 0.04)",
+                        boxShadow: "0 0 0 3px rgba(141, 19, 19, 0.05)",
                       },
                       "&.Mui-focused fieldset": { borderColor: R },
                     },
