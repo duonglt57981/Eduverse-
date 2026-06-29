@@ -434,7 +434,7 @@ function SidebarContent({
       case 'Khám phá':
         return '/student/explore';
       case 'Giỏ hàng':
-        return '/student/cart';
+        return '/student/gio-hang';
       case 'Yêu thích':
         return '/student/favorites';
       case 'Hồ sơ':
