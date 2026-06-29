@@ -2,11 +2,11 @@
 
 import AuthGuard from '@/src/components/AuthGuard';
 import DashboardShell from '@/src/components/dashboard/DashboardShell';
-import { Box, Typography, Paper } from '@mui/material';
+import { Typography, Paper } from '@mui/material';
 
-export default function StudentTestsPage() {
+export default function AdminTestsPage() {
   return (
-    <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
+    <AuthGuard allowedRoles={['Admin']}>
       <DashboardShell>
         <Paper 
           elevation={0} 
@@ -19,7 +19,7 @@ export default function StudentTestsPage() {
           }}
         >
           <Typography variant="h5" sx={{ fontWeight: 900, color: '#8D1313', mb: 2 }}>
-            Bài kiểm tra & Đánh giá
+            Quản lý bài kiểm tra
           </Typography>
           <Typography sx={{ color: 'rgba(31,41,55,0.6)', lineHeight: 1.6 }}>
             Tính năng này đang được EduVerse phát triển và sẽ sớm ra mắt trong phiên bản tiếp theo.

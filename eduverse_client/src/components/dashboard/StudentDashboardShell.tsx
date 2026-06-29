@@ -39,9 +39,24 @@ function SidebarContent({ onLogout }: { onLogout: () => void }) {
   const router = useRouter();
   const theme = useTheme();
 
-  const handleNavClick = (href?: string) => {
-    if (href) {
-      router.push(href);
+  const getRouteByLabel = (label: string) => {
+    switch (label) {
+      case 'Trang chủ':
+        return '/student/dashboard';
+      case 'Khóa học của tôi':
+        return '/student/courses';
+      case 'Khám phá':
+        return '/courses';
+      case 'Giỏ hàng':
+        return '/student/cart';
+      case 'Yêu thích':
+        return '/student/favorites';
+      case 'Hồ sơ':
+        return '/student/profile';
+      case 'Cài đặt':
+        return '/settings';
+      default:
+        return '/student/dashboard';
     }
   };
 
@@ -65,7 +80,7 @@ function SidebarContent({ onLogout }: { onLogout: () => void }) {
           justifyContent: 'center',
           cursor: 'pointer',
         }}
-        onClick={() => router.push('/dashboard')}
+        onClick={() => router.push('/student/dashboard')}
       >
         <Box sx={{ width: 210, maxWidth: '100%' }}>
           <Image
@@ -83,14 +98,13 @@ function SidebarContent({ onLogout }: { onLogout: () => void }) {
         <List disablePadding>
           {sidebarPrimaryItems.map((item) => {
             const Icon = item.icon;
-            // Determine active state dynamically
-            const isCertPage = item.label === 'Chứng chỉ' && (pathname?.includes('/student/certificates') || pathname?.includes('/certificate'));
-            const isActive = isCertPage || (item.href && pathname === item.href);
+            const itemRoute = getRouteByLabel(item.label);
+            const isActive = pathname === itemRoute;
 
             return (
               <ListItemButton
                 key={item.label}
-                onClick={() => handleNavClick(item.href)}
+                onClick={() => router.push(itemRoute)}
                 sx={{
                   mb: 0.5,
                   borderRadius: 2.8,
@@ -123,11 +137,12 @@ function SidebarContent({ onLogout }: { onLogout: () => void }) {
         <List disablePadding>
           {sidebarSecondaryItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.href && pathname === item.href;
+            const itemRoute = getRouteByLabel(item.label);
+            const isActive = pathname === itemRoute;
             return (
               <ListItemButton
                 key={item.label}
-                onClick={() => handleNavClick(item.href)}
+                onClick={() => router.push(itemRoute)}
                 sx={{
                   mb: 0.5,
                   borderRadius: 2.8,
@@ -148,26 +163,6 @@ function SidebarContent({ onLogout }: { onLogout: () => void }) {
             );
           })}
         </List>
-      </Box>
-
-      <Box sx={{ px: 1.25, py: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
-        <ListItemButton
-          onClick={onLogout}
-          sx={{
-            borderRadius: 2.8,
-            px: 1.5,
-            py: 1.1,
-            color: 'rgba(24,24,27,0.72)',
-            '&:hover': { bgcolor: 'action.hover' },
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-            <LogoutRounded fontSize="small" />
-          </ListItemIcon>
-          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-            Đăng xuất
-          </Typography>
-        </ListItemButton>
       </Box>
     </Box>
   );
@@ -285,12 +280,12 @@ export default function StudentDashboardShell({ children }: StudentDashboardShel
           >
             <IconButton
               onClick={() => setMobileOpen(true)}
-              sx={{ display: { xs: 'inline-flex', lg: 'none' } }}
+                sx={{ display: { xs: 'inline-flex', lg: 'none' } }}
             >
               <MenuRounded />
             </IconButton>
 
-            <Box sx={{ width: { xs: 120, sm: 140, lg: 170 }, cursor: 'pointer' }} onClick={() => router.push('/dashboard')}>
+            <Box sx={{ width: { xs: 120, sm: 140, lg: 170 }, cursor: 'pointer' }} onClick={() => router.push('/student/dashboard')}>
               <Image
                 src="/auth/img/logo_nentrang.png"
                 alt="EduVerse"

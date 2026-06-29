@@ -2,7 +2,6 @@
 
 import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import { Box, Typography, Paper } from "@mui/material";
-import { CategoryRounded } from "@mui/icons-material";
 
 export default function Page() {
   return (
@@ -13,13 +12,21 @@ export default function Page() {
             Quản lý danh mục
           </Typography>
         </Box>
-        <Paper elevation={0} sx={{ p: 4, borderRadius: 2.8, border: '1px solid rgba(17,17,17,0.08)', textAlign: 'center' }}>
-          <CategoryRounded sx={{ fontSize: 48, color: '#7f1d1d', mb: 2 }} />
-          <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
-            Tính năng đang phát triển
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4.5, 
+            borderRadius: '24px', 
+            border: '1px solid rgba(141,19,19,0.06)',
+            bgcolor: '#ffffff',
+            boxShadow: '0 10px 30px rgba(141,19,19,0.015)'
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 900, color: '#8D1313', mb: 2 }}>
+            Quản lý danh mục
           </Typography>
-          <Typography sx={{ color: 'text.secondary' }}>
-            Giao diện Quản lý danh mục đang được xây dựng. Vui lòng quay lại sau.
+          <Typography sx={{ color: 'rgba(31,41,55,0.6)', lineHeight: 1.6 }}>
+            Tính năng này đang được EduVerse phát triển và sẽ sớm ra mắt trong phiên bản tiếp theo.
           </Typography>
         </Paper>
       </Box>

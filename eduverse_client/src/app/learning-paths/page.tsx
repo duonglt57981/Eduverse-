@@ -133,7 +133,6 @@ function SidebarContent({ onLogout, currentRoute = '/learning-paths' }: { onLogo
 
   const getHomeRoute = () => {
     if (roles.includes('Admin')) return '/admin/dashboard';
-    if (roles.includes('GiaoVien')) return '/instructor/dashboard';
     return '/student/dashboard';
   };
   return (
@@ -249,7 +248,6 @@ export default function LearningPathsPage() {
 
   const getHomeRoute = () => {
     if (roles.includes('Admin')) return '/admin/dashboard';
-    if (roles.includes('GiaoVien')) return '/instructor/dashboard';
     return '/student/dashboard';
   };
   const [mobileOpen, setMobileOpen] = useState(false);
