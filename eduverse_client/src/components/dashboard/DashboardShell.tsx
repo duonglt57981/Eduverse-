@@ -410,7 +410,7 @@ function SidebarContent({ onLogout, roles = [] }: { onLogout: () => void; roles?
       case 'Khóa học của tôi':
         return '/student/courses';
       case 'Khám phá':
-        return '/courses';
+        return '/student/explore';
       case 'Giỏ hàng':
         return '/student/cart';
       case 'Yêu thích':
@@ -434,6 +434,59 @@ function SidebarContent({ onLogout, roles = [] }: { onLogout: () => void; roles?
       }}
     >
       <Box sx={{ px: 2, py: 3, flex: 1 }}>
+        {/* Instructor CTA */}
+        {!roles.includes('Admin') && !pathname.startsWith('/instructor') && (
+          <Box sx={{ px: 0, mb: 2.5 }}>
+            {roles.includes('GiaoVien') ? (
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => router.push('/instructor/dashboard')}
+                startIcon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
+                sx={{
+                  borderRadius: '14px',
+                  bgcolor: COLORS.primary,
+                  color: '#fff',
+                  py: 1.3,
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  boxShadow: '0 4px 16px rgba(141,19,19,0.2)',
+                  '&:hover': {
+                    bgcolor: COLORS.primaryDark,
+                    boxShadow: '0 6px 20px rgba(141,19,19,0.3)',
+                  },
+                }}
+              >
+                Dashboard Giảng viên
+              </Button>
+            ) : (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #4A0E0E 0%, #8D1313 100%)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  transition: 'transform 200ms ease, box-shadow 200ms ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 24px rgba(141,19,19,0.25)',
+                  },
+                }}
+                onClick={() => router.push('/student/profile')}
+              >
+                <Typography sx={{ fontSize: 13, fontWeight: 800, mb: 0.5 }}>
+                  🎓 Trở thành Giảng viên
+                </Typography>
+                <Typography sx={{ fontSize: 11, opacity: 0.8, lineHeight: 1.5 }}>
+                  Đăng ký để tạo và quản lý khóa học của riêng bạn.
+                </Typography>
+              </Paper>
+            )}
+          </Box>
+        )}
 
         <List disablePadding>
           {sidebarItems.map((item) => {
@@ -499,60 +552,6 @@ function SidebarContent({ onLogout, roles = [] }: { onLogout: () => void; roles?
           })}
         </List>
       </Box>
-
-      {/* Instructor CTA */}
-      {!roles.includes('Admin') && !pathname.startsWith('/instructor') && (
-        <Box sx={{ px: 2, pb: 1 }}>
-          {roles.includes('GiaoVien') ? (
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={() => router.push('/instructor/dashboard')}
-              startIcon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
-              sx={{
-                borderRadius: '14px',
-                bgcolor: COLORS.primary,
-                color: '#fff',
-                py: 1.3,
-                fontSize: 13.5,
-                fontWeight: 700,
-                textTransform: 'none',
-                boxShadow: '0 4px 16px rgba(141,19,19,0.2)',
-                '&:hover': {
-                  bgcolor: COLORS.primaryDark,
-                  boxShadow: '0 6px 20px rgba(141,19,19,0.3)',
-                },
-              }}
-            >
-              Dashboard Giảng viên
-            </Button>
-          ) : (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #4A0E0E 0%, #8D1313 100%)',
-                color: '#fff',
-                cursor: 'pointer',
-                transition: 'transform 200ms ease, box-shadow 200ms ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 24px rgba(141,19,19,0.25)',
-                },
-              }}
-              onClick={() => router.push('/student/profile')}
-            >
-              <Typography sx={{ fontSize: 13, fontWeight: 800, mb: 0.5 }}>
-                🎓 Trở thành Giảng viên
-              </Typography>
-              <Typography sx={{ fontSize: 11, opacity: 0.8, lineHeight: 1.5 }}>
-                Đăng ký để tạo và quản lý khóa học của riêng bạn.
-              </Typography>
-            </Paper>
-          )}
-        </Box>
-      )}
     </Box>
   );
 }
