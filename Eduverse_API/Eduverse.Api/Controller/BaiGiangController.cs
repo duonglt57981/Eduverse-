@@ -25,7 +25,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPost("khoahoc-chuyentrangthai-dangsua")]
+        [HttpPost("khoahoc-chuyentrangthai-dangsua/{id}")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<BaiGiangDto>> ChuyenTTDangSua([FromForm] Guid id)
         {

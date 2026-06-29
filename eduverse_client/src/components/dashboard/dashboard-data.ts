@@ -158,12 +158,7 @@ export const sidebarPrimaryItems: DashboardNavItem[] = [
   { label: 'Khóa học của tôi', icon: MenuBookRounded },
   { label: 'Khám phá', icon: ExploreRounded },
   { label: 'Giỏ hàng', icon: ShoppingCartRounded },
-  { label: 'Lịch học', icon: CalendarMonthRounded },
-  { label: 'Kiểm tra', icon: QuizRounded },
-  { label: 'Chứng chỉ', icon: EmojiEventsRounded },
   { label: 'Yêu thích', icon: FavoriteBorderRounded },
-  { label: 'Thông báo', icon: NotificationsRounded },
-  { label: 'Hồ sơ', icon: PeopleAltRounded },
   { label: 'Cài đặt', icon: SettingsRounded },
 ] as const;
 

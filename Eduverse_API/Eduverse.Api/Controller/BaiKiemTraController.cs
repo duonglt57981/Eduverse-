@@ -28,6 +28,23 @@ namespace Eduverse.Api.Controller
         }
 
 
+        //[HttpGet("getquizz-learning/{IdDangKi}")]
+        //[Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        //public async Task<DataResponse<GetQuizToLearningDto>> GetQuizToLearning(Guid IdDangKi)
+        //{
+        //    try
+        //    {
+        //        var result = await _baiKiemTraService.GetQuizToLearning(IdDangKi);
+        //        return DataResponse<GetQuizToLearningDto>.Success(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return DataResponse<GetQuizToLearningDto>.False(ex.Message);
+        //    }
+
+        //}
+
+
         [HttpPost("baikiemtra")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ( CreateBaiKiemTraRequest request)
@@ -228,6 +245,22 @@ namespace Eduverse.Api.Controller
             catch (Exception ex)
             {
                 return DataResponse<AutoSaveDapAnDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("heartbeat-timequiz/{idLanLamBaiKiemTra}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<HeartbeatResultDto>> Heartbeat(Guid idLanLamBaiKiemTra)
+        {
+            try
+            {
+                var result = await _baiKiemTraService.Heartbeat(idLanLamBaiKiemTra);
+                return DataResponse<HeartbeatResultDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<HeartbeatResultDto>.False(ex.Message);
             }
         }
 

@@ -26,11 +26,17 @@ namespace Eduverse.Service.KhoaHocService
 
         Task<GetToUpdateKhoaHoc> GetToUpdateKhoaHoc(Guid IdKhoaHoc);
 
+        Task<PagedList<KhoaHocDto>> GetListForManager(GetListSearch search);
+
         Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request);
 
         Task<KhoaHocDto> UpdateKhoaHoc(UpdateKhoaHocRequest request);
 
         Task<bool> DeleteKhoaHoc(Guid id);
+
+        //
+        Task<double> TinhPhanTramHoanThanh(Guid? idDangKy, DateTime? ngayDangKy = null);
+        Task SwapPendingBaiGiang(Guid idDangKy, List<Guid> phanIds);
 
 
     }

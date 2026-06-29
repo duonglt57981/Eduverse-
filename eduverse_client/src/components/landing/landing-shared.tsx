@@ -62,7 +62,6 @@ export function LandingThemeProvider({ children }: { children: React.ReactNode }
 
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline />
       {children}
     </ThemeProvider>
   );

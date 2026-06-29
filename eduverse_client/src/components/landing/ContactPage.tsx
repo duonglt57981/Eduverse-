@@ -61,9 +61,17 @@ function ContactField({
             boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
           },
         },
+        '& input.MuiOutlinedInput-input': {
+          padding: '16px 14px',
+          lineHeight: '1.4',
+        },
         '& .MuiInputLabel-root': {
           color: 'rgba(17,17,17,0.5)',
           fontSize: 14,
+          transform: 'translate(14px, 16px) scale(1)',
+          '&.MuiInputLabel-shrink': {
+            transform: 'translate(14px, -9px) scale(0.75)',
+          },
           '&.Mui-focused': {
             color: '#7f1d1d',
           },

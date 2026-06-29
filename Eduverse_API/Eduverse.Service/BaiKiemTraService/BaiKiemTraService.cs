@@ -22,6 +22,7 @@ using Eduverse.Service.LanLamBaiKiemTraService;
 using Eduverse.Service.LanLamBaiKiemTraService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService;
+using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.TienDoHocTapService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -86,6 +87,257 @@ namespace Eduverse.Service.BaiKiemTraService
             _khoaHocRepository = khoaHocRepository;
         }
 
+        //public async Task<GetQuizToLearningDto> GetQuizToLearning(Guid idDangKy)
+        //{
+        //    // ─── 1. Lấy userId từ token ───
+        //    Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
+
+        //    // ─── 2. Lấy thông tin đăng ký khóa học ───
+        //    var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.Id == idDangKy && !x.IsDeleted)
+        //        .Select(x => new { x.Id, x.IdKhoaHoc, x.IdNguoiDangKi, x.CreatedDate })
+        //        .FirstOrDefaultAsync();
+
+        //    if (dangKy == null)
+        //        throw new Exception("Không tìm thấy đăng ký khóa học");
+
+        //    if (dangKy.IdNguoiDangKi != userId)
+        //        throw new Exception("Bạn chưa đăng ký khóa học này!");
+
+        //    var idKhoaHoc = dangKy.IdKhoaHoc;
+
+        //    // ─── 3. Lấy thông tin khóa học ───
+        //    var khoaHoc = await _khoaHocRepository.GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.Id == idKhoaHoc && !x.IsDeleted)
+        //        .Select(x => new { x.Id, x.TieuDe })
+        //        .FirstOrDefaultAsync();
+
+        //    if (khoaHoc == null)
+        //        throw new Exception("Không tìm thấy khóa học");
+
+        //    // ─── 4. Lấy danh sách phần học của khóa học ───
+        //    var phanHocs = await _phanRepository.GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.IdKhoaHoc == idKhoaHoc
+        //                 && !x.IsDeleted
+        //                 && x.TrangThai == "HoatDong"
+        //                 && x.TrangThaiPheDuyet == "DaDuyet")
+        //        .OrderBy(x => x.ThuTuSapXep)
+        //        .Select(x => new { x.Id, x.TenPhan, x.ThuTuSapXep })
+        //        .ToListAsync();
+
+        //    if (!phanHocs.Any())
+        //    {
+        //        // Không có phần học nào -> trả về sớm, tránh query thừa ở các bước sau
+        //        return new GetQuizToLearningDto
+        //        {
+        //            IdKhoaHoc = khoaHoc.Id,
+        //            TenKhoaHoc = khoaHoc.TieuDe,
+        //            DanhSachTheoPhan = new List<PhanHocDto>(),
+        //            DanhSachTatCa = new List<BaiKiemTraDto>(),
+        //            TongSoBaiKiemTra = 0
+        //        };
+        //    }
+
+        //    var phanIds = phanHocs.Select(x => x.Id).ToList();
+
+        //    // ─── 5. Lấy bài kiểm tra theo các phần (chỉ lấy bản GỐC, IsBanHienTai = true) ───
+        //    // FIX: dùng đúng _baiKiemTraRepository.GetQueryable() (tránh nhầm sang queryable khác).
+        //    // FIX: entity BaiKiemTra không có SoCauHoi/DiemToiDa -> bỏ khỏi Select, sẽ tính SoCauHoi riêng ở bước 6.
+        //    var baiKiemTras = await GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.IdPhan.HasValue
+        //                 && phanIds.Contains(x.IdPhan.Value)
+        //                 && !x.IsDeleted
+        //                 && x.TrangThai == "HoatDong"
+        //                 && x.TrangThaiPheDuyet == "DaDuyet"
+        //                 && x.IsBanHienTai)
+        //        .OrderBy(x => x.TenBaiKiemTra)
+        //        .Select(x => new BaiKiemTraDto
+        //        {
+        //            Id = x.Id,
+        //            IdGoc = x.Id,
+        //            TenBaiKiemTra = x.TenBaiKiemTra,
+        //            MoTa = x.MoTa,
+        //            DiemDat = x.DiemDat,
+        //            GioiHanThoiGian = x.GioiHanThoiGian,
+        //            ChoLamLai = x.ChoLamLai,
+        //            SoLanLamToiDa = x.SoLanLamToiDa,
+        //            IdPhan = x.IdPhan,
+        //            CreatedDate = x.CreatedDate,
+        //            IsBanHienTai = x.IsBanHienTai,
+        //            IdBanGhiTruoc = x.IdBanGhiTruoc,
+        //            TrangThai = x.TrangThai,
+        //            TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+        //            IsSwap = false
+        //        })
+        //        .ToListAsync();
+
+        //    if (!baiKiemTras.Any())
+        //    {
+        //        var danhSachTheoPhanRong = phanHocs.Select(phan => new PhanHocDto
+        //        {
+        //            Id = phan.Id,
+        //            TenPhan = phan.TenPhan,
+        //            ThuTuSapXep = phan.ThuTuSapXep,
+        //            DanhSachBaiKiemTra = new List<BaiKiemTraDto>()
+        //        }).ToList();
+
+        //        return new GetQuizToLearningDto
+        //        {
+        //            IdKhoaHoc = khoaHoc.Id,
+        //            TenKhoaHoc = khoaHoc.TieuDe,
+        //            DanhSachTheoPhan = danhSachTheoPhanRong,
+        //            DanhSachTatCa = new List<BaiKiemTraDto>(),
+        //            TongSoBaiKiemTra = 0
+        //        };
+        //    }
+
+        //    // ─── 6. Đếm số câu hỏi cho từng bài kiểm tra gốc ───
+        //    // FIX: khai báo baiKiemTraIds (thiếu trong bản gốc gây lỗi compile).
+        //    // SoCauHoi chỉ là số đếm CauHoi hợp lệ (Count), không lấy từ entity vì BaiKiemTra không có field này.
+        //    var baiKiemTraIds = baiKiemTras.Select(x => x.Id).ToList();
+
+        //    if (baiKiemTraIds.Any())
+        //    {
+        //        var cauHoiCounts = await _cauHoiService.GetQueryable()
+        //            .AsNoTracking()
+        //            .Where(x => x.IdBaiKiemTra.HasValue
+        //                     && baiKiemTraIds.Contains(x.IdBaiKiemTra.Value)
+        //                     && !x.IsDeleted
+        //                     && x.TrangThai == "HoatDong"
+        //                     && x.TrangThaiPheDuyet == "DaDuyet"
+        //                     && x.IsBanHienTai)
+        //            .GroupBy(x => x.IdBaiKiemTra!.Value)
+        //            .Select(g => new { IdBaiKiemTra = g.Key, Count = g.Count() })
+        //            .ToDictionaryAsync(x => x.IdBaiKiemTra, x => x.Count);
+
+        //        foreach (var baiKiemTra in baiKiemTras)
+        //        {
+        //            baiKiemTra.SoCauHoi = cauHoiCounts.TryGetValue(baiKiemTra.Id, out var count) ? count : 0;
+        //        }
+        //    }
+
+        //    // ─── 7. Xử lý Swap cho từng bài kiểm tra (nếu có) ───
+        //    var baiKiemTraGocIds = baiKiemTras.Select(x => x.Id).ToList();
+        //    var swapBaiKiemTras = await GetQueryable()
+        //        .AsNoTracking()
+        //        .Where(x => x.IdBanGhiTruoc.HasValue
+        //                 && baiKiemTraGocIds.Contains(x.IdBanGhiTruoc.Value)
+        //                 && x.TrangThaiPheDuyet == "DaDuyet"
+        //                 && x.TrangThai == "HoatDong"
+        //                 && x.IsBanHienTai == false
+        //                 && !x.IsDeleted)
+        //        .Select(x => new
+        //        {
+        //            x.Id,
+        //            x.IdBanGhiTruoc,
+        //            x.TenBaiKiemTra,
+        //            x.MoTa,
+        //            x.DiemDat,
+        //            x.GioiHanThoiGian,
+        //            x.ChoLamLai,
+        //            x.SoLanLamToiDa,
+        //            x.CreatedDate,
+        //            x.IsBanHienTai,
+        //            x.TrangThai
+        //        })
+        //        .ToListAsync();
+
+        //    // Đếm số câu hỏi cho các bài swap (giống bước 6, nhưng cho swap)
+        //    var swapIds = swapBaiKiemTras.Select(x => x.Id).ToList();
+        //    var swapCauHoiCounts = new Dictionary<Guid, int>();
+        //    if (swapIds.Any())
+        //    {
+        //        swapCauHoiCounts = await _cauHoiService.GetQueryable()
+        //            .AsNoTracking()
+        //            .Where(x => x.IdBaiKiemTra.HasValue
+        //                     && swapIds.Contains(x.IdBaiKiemTra.Value)
+        //                     && !x.IsDeleted
+        //                     && x.TrangThai == "HoatDong"
+        //                     && x.TrangThaiPheDuyet == "DaDuyet"
+        //                     && x.IsBanHienTai)
+        //            .GroupBy(x => x.IdBaiKiemTra!.Value)
+        //            .Select(g => new { IdBaiKiemTra = g.Key, Count = g.Count() })
+        //            .ToDictionaryAsync(x => x.IdBaiKiemTra, x => x.Count);
+        //    }
+
+        //    // Map swap mới nhất theo bài kiểm tra gốc
+        //    var swapMoiNhatByGoc = swapBaiKiemTras
+        //        .GroupBy(x => x.IdBanGhiTruoc!.Value)
+        //        .Select(g => new
+        //        {
+        //            IdGoc = g.Key,
+        //            SwapMoiNhat = g.OrderByDescending(x => x.CreatedDate).First()
+        //        })
+        //        .ToDictionary(x => x.IdGoc, x => x.SwapMoiNhat);
+
+        //    // Ngày đăng ký dùng để quyết định dùng swap hay gốc:
+        //    // - swap được tạo TRƯỚC hoặc BẰNG ngày đăng ký => học viên đăng ký sau khi đã có swap => dùng swap
+        //    // - swap được tạo SAU ngày đăng ký => học viên đăng ký từ trước khi có swap => vẫn dùng bản gốc
+        //    var ngayDangKy = dangKy.CreatedDate;
+
+        //    // ─── 8. Build danh sách bài kiểm tra cuối cùng (có xử lý swap) ───
+        //    var baiKiemTraFinal = new List<BaiKiemTraDto>();
+        //    foreach (var baiKiemTra in baiKiemTras)
+        //    {
+        //        BaiKiemTraDto item;
+
+        //        if (swapMoiNhatByGoc.TryGetValue(baiKiemTra.Id, out var swap) && swap.CreatedDate <= ngayDangKy)
+        //        {
+        //            var soCauHoiSwap = swapCauHoiCounts.TryGetValue(swap.Id, out var c) ? c : 0;
+
+        //            item = new BaiKiemTraDto
+        //            {
+        //                Id = swap.Id,
+        //                IdGoc = baiKiemTra.Id,
+        //                TenBaiKiemTra = swap.TenBaiKiemTra,
+        //                MoTa = swap.MoTa,
+        //                DiemDat = swap.DiemDat,
+        //                GioiHanThoiGian = swap.GioiHanThoiGian,
+        //                ChoLamLai = swap.ChoLamLai,
+        //                SoLanLamToiDa = swap.SoLanLamToiDa,
+        //                IdPhan = baiKiemTra.IdPhan,
+        //                SoCauHoi = soCauHoiSwap,
+        //                CreatedDate = swap.CreatedDate,
+        //                IsBanHienTai = swap.IsBanHienTai,
+        //                IdBanGhiTruoc = baiKiemTra.Id,
+        //                TrangThai = swap.TrangThai,
+        //                TrangThaiPheDuyet = "DaDuyet",
+        //                IsSwap = true
+        //            };
+        //        }
+        //        else
+        //        {
+        //            item = baiKiemTra; // bản gốc, giữ nguyên (đã có SoCauHoi từ bước 6)
+        //        }
+
+        //        baiKiemTraFinal.Add(item);
+        //    }
+
+        //    // ─── 9. Group theo phần (sau khi đã xử lý swap) ───
+        //    var danhSachTheoPhanFinal = phanHocs.Select(phan => new PhanHocDto
+        //    {
+        //        Id = phan.Id,
+        //        TenPhan = phan.TenPhan,
+        //        ThuTuSapXep = phan.ThuTuSapXep,
+        //        DanhSachBaiKiemTra = baiKiemTraFinal
+        //            .Where(x => x.IdPhan == phan.Id)
+        //            .ToList()
+        //    }).ToList();
+
+        //    // ─── 10. Tạo response ───
+        //    return new GetQuizToLearningDto
+        //    {
+        //        IdKhoaHoc = khoaHoc.Id,
+        //        TenKhoaHoc = khoaHoc.TieuDe,
+        //        DanhSachTheoPhan = danhSachTheoPhanFinal,
+        //        DanhSachTatCa = baiKiemTraFinal,
+        //        TongSoBaiKiemTra = baiKiemTraFinal.Count
+        //    };
+        //}
 
         #region CreateQuiz
         private string GetQuizContent(CreateBaiKiemTraRequest request)
@@ -402,7 +654,6 @@ namespace Eduverse.Service.BaiKiemTraService
             };
         }
         #endregion
-
 
         #region UpdateQuiz
 
@@ -872,8 +1123,6 @@ namespace Eduverse.Service.BaiKiemTraService
 
         #endregion
 
-
-
         public async Task<bool> DeleteQuiz(Guid id)
         {
             var quiz = await GetByIdOrThrowAsync(id);
@@ -892,8 +1141,6 @@ namespace Eduverse.Service.BaiKiemTraService
 
             return true;
         }
-
-
         
         #region StartQuiz
         public async Task<LanLamBaiKiemTraDto> StartQuiz(StartQuizRequest request)

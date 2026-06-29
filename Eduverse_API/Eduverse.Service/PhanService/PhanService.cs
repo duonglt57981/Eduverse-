@@ -9,14 +9,16 @@ using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.KhoaHocService;
+using Eduverse.Service.KhoaHocService.Dto;
+using Eduverse.Service.KhoaHocService.Request;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.PhanService.Request;
 using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 
 namespace Eduverse.Service.PhanService
@@ -58,6 +60,77 @@ namespace Eduverse.Service.PhanService
             this._httpContextAccessor = httpContextAccessor;
         }
 
+        public async Task<GetToUpdatePhanDto> GetToUpdatePhan(Guid IdPhan)
+        {
+            Guid.TryParse(
+                _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var nguoiTao);
+
+            var Phan = await GetQueryable()
+                .Where(x => x.Id == IdPhan
+                         && x.IsBanHienTai
+                         && !x.IsDeleted
+                         && x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.TrangThai == "HoatDong"
+                         && x.CreatedId == nguoiTao)
+                .Select(x => new GetToUpdatePhanDto
+                {
+                   Id = x.Id,
+                   TenPhan = x.TenPhan,
+                   MieuTa = x.MieuTa,
+                   ThuTuSapXep = x.ThuTuSapXep
+                  
+                })
+                .FirstOrDefaultAsync();
+
+            if (Phan == null)
+                throw new Exception("Không tìm thấy phần học hoặc bạn không có quyền.");
+
+            return Phan;
+        }
+
+        //public async Task<PagedList<KhoaHocDto>> GetListForManager(GetListSearch search)
+        //{
+        //    // Lấy userId từ token
+        //    var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    if (!Guid.TryParse(userIdClaim, out var userId))
+        //    {
+        //        throw new UnauthorizedAccessException("Không thể xác định người dùng.");
+        //    }
+
+        //    var query = GetAll()
+        //        .Where(x => x.TrangThaiPheDuyet != "TuChoi"
+        //        && x.TrangThai != "DaXoa"
+        //        && x.CreatedId == userId);
+
+        //    // Áp dụng tìm kiếm
+        //    if (!string.IsNullOrEmpty(search.Keyword))
+        //    {
+        //        query = query.Where(x => x.TrangThaiPheDuyet.Contains(search.Keyword));
+        //    }
+
+        //    query = query.OrderByDescending(x => x.CreatedDate);
+
+        //    var itemsQuery = query.Select(x => new KhoaHocDto
+        //    {
+        //        Id = x.Id,
+        //        TieuDe = x.TieuDe,
+        //        MoTa = x.MoTa,
+        //        Gia = x.Gia,
+        //        GiaGoc = x.GiaGoc,
+        //        CapDo = x.CapDo,
+        //        HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+        //        TrangThai = x.TrangThai,
+        //        TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+        //        CreatedId = x.CreatedId,
+        //        CreatedDate = x.CreatedDate,
+        //        IsBanHienTai = x.IsBanHienTai,
+        //        IdBanGhiTruoc = x.IdBanGhiTruoc
+        //    });
+
+        //    return await PagedList<KhoaHocDto>.CreateAsync(itemsQuery, search);
+        //}
+
         public async Task<PhanHocDto> CreatePhanHoc(CreatePhanRequest request)  
         {
             if (request == null)
@@ -77,9 +150,8 @@ namespace Eduverse.Service.PhanService
                 .Where(x => x.IdKhoaHoc == request.IdKhoaHoc)
                 .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
-
-            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
-            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MieuTa);
+            var content = $"{request.TenPhan} {request.MieuTa}";
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(content);
 
 
             var entity = new Phan
@@ -139,8 +211,8 @@ namespace Eduverse.Service.PhanService
             if (thuTuDaTon)
                 throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại trong phần học này");
 
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenPhan);
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MieuTa);
+            var content = $"{request.TenPhan} {request.MieuTa}";
+            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(content);
 
             entity.IdKhoaHoc = request.IdKhoaHoc;
             entity.TenPhan = request.TenPhan.Trim();
