@@ -15,6 +15,7 @@ export interface KhoaHocType {
   soLuongHocVien?: number;
   trangThaiPheDuyet?: string;
   trangThai?: string;
+  idBanGhiTruoc?: string | null;
 
   idDangKiKhoaHoc?: string;
   ngayDangKy: Date;

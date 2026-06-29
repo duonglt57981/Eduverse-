@@ -146,6 +146,33 @@ export default class KhoaHocService {
     }
   }
 
+  async GetListForManager(
+    searchParams?: KhoaHocSearch,
+  ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
+    try {
+      // Tạo query string từ searchParams
+      const params = new URLSearchParams();
+
+      if (searchParams) {
+        Object.entries(searchParams).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            params.append(key, value.toString());
+          }
+        });
+      }
+
+      const queryString = params.toString();
+      const url = `/KhoaHoc/khoahoc-getlist-formanager${queryString ? `?${queryString}` : ""}`;
+
+      const response =
+        await apiService.get<ApiResponse<PagedList<KhoaHocType>>>(url);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching course list for manager:", error);
+      throw error;
+    }
+  }
+
   async CreateKhoaHoc(
     request: CreateKhoaHocRequest,
   ): Promise<ApiResponse<KhoaHocType>> {

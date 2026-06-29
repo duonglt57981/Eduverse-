@@ -30,7 +30,7 @@ export default class PhanService {
   ): Promise<ApiResponse<PhanHocType>> {
     try {
       const response = await apiService.post<ApiResponse<PhanHocType>>(
-        "/KhoaHoc/phanhoc",
+        "/PhanHoc/phanhoc",
         request,
       );
       return response.data;

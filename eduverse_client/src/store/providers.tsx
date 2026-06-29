@@ -16,15 +16,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
             retry: 1,
           },
         },
-      })
+      }),
   );
 
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <ThemeSettingsProvider>
-          {children}
-        </ThemeSettingsProvider>
+        <ThemeSettingsProvider>{children}</ThemeSettingsProvider>
       </QueryClientProvider>
     </Provider>
   );
