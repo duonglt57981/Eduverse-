@@ -69,6 +69,22 @@ namespace Eduverse.Api.Controller
         }
 
 
+        [HttpGet("khoahoc-preview/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<KhoaHocDto>> GetKhoaHocPreview([FromQuery] Guid idKhoaHoc)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetKhoaHocPreview(idKhoaHoc);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
         [HttpGet("khoahoc-learning/{idDangKy}")]
         [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<KhoaHocDto>> GetLearning(Guid idDangKy)

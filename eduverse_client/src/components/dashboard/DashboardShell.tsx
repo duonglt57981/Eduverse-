@@ -390,6 +390,8 @@ function SidebarContent({
           return "/instructor/qa";
         case "Cài đặt":
           return "/instructor/settings";
+        case "Ngân hàng":
+          return "/instructor/bank";
         default:
           return "/instructor/dashboard";
       }
@@ -420,6 +422,8 @@ function SidebarContent({
           return "/admin/notifications";
         case "Cài đặt":
           return "/admin/settings";
+        case "Rút tiền":
+          return "/admin/withdrawal-request";
         default:
           return "/admin/dashboard";
       }
@@ -797,6 +801,7 @@ export default function DashboardShell({
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response = await apiService.get<any>("/dashboard");
         if (response.status && response.data) {
           setDashboardData(response.data);
@@ -1199,7 +1204,23 @@ export default function DashboardShell({
                   )}
                 </>
               )}
-
+              <IconButton
+                sx={{
+                  color: "rgba(31,41,55,0.55)",
+                  display: { xs: "none", sm: "flex" },
+                }}
+              >
+                <FavoriteBorderRounded sx={{ fontSize: 22 }} />
+              </IconButton>
+              <IconButton
+                onClick={() => router.push("/student/cart")}
+                sx={{
+                  color: "rgba(31,41,55,0.55)",
+                  display: { xs: "none", sm: "flex" },
+                }}
+              >
+                <ShoppingCartRounded sx={{ fontSize: 22 }} />
+              </IconButton>
               <IconButton
                 sx={{
                   color: "rgba(31,41,55,0.55)",
@@ -1361,24 +1382,24 @@ export default function DashboardShell({
                   </Avatar>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography
+                      noWrap
                       sx={{
                         fontWeight: 800,
                         fontSize: 14.5,
                         color: "#1F2937",
-                        noWrap: true,
                         textOverflow: "ellipsis",
                         overflow: "hidden",
                       }}
-                    >
+                      >
                       {dashboardData?.welcomeStats?.userName ||
                         user?.hoTen ||
                         "Học viên"}
                     </Typography>
                     <Typography
+                      noWrap
                       sx={{
                         fontSize: 11.5,
                         color: "text.secondary",
-                        noWrap: true,
                         textOverflow: "ellipsis",
                         overflow: "hidden",
                       }}
@@ -1965,6 +1986,7 @@ export default function DashboardShell({
                     {activeContinueTab === "courses" && (
                       <CarouselRow>
                         {dashboardData?.continueLearning?.courses?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}
@@ -2321,6 +2343,7 @@ export default function DashboardShell({
 
                         {/* Backend API learning paths */}
                         {dashboardData?.continueLearning?.paths?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}

@@ -1,4 +1,7 @@
-"use client";
+'use client';
+
+import AuthGuard from '@/src/components/AuthGuard';
+import DashboardShell from '@/src/components/dashboard/DashboardShell';
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -19,27 +22,25 @@ import {
   CircularProgress,
   Alert,
   Stack,
-  Avatar,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import AddIcon from "@mui/icons-material/Add";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import { useDispatch, useSelector } from "../../../store/hook";
+import { useDispatch, useSelector } from "@/src/store/hook";
 import {
   getSoDu,
   getLichSuRutTien,
   getNganHangs,
   taoYeuCauRutTien,
-} from "../../../store/rutTien/RutTienSlice";
+} from "@/src/store/rutTien/RutTienSlice";
 
-const PRIMARY = "#9b1c1c";
+const PRIMARY = "#8D1313";
 
-const trangThaiColor: Record<string, "warning" | "success" | "error" | "info"> =
-  {
-    ChoDuyet: "warning",
-    DaChuyenTien: "success",
-    TuChoi: "error",
-  };
+const trangThaiColor: Record<string, "warning" | "success" | "error" | "info"> = {
+  ChoDuyet: "warning",
+  DaChuyenTien: "success",
+  TuChoi: "error",
+};
 
 const trangThaiLabel: Record<string, string> = {
   ChoDuyet: "Chờ duyệt",
@@ -47,9 +48,9 @@ const trangThaiLabel: Record<string, string> = {
   TuChoi: "Từ chối",
 };
 
-export default function DoanhThuPage() {
+function DoanhThuContent() {
   const dispatch = useDispatch();
-  const { soDu, lichSu, nganHangs, loading } = useSelector((s) => s.rutTien);
+  const { soDu, lichSu, nganHangs } = useSelector((s) => s.rutTien);
 
   const [openRut, setOpenRut] = useState(false);
   const [soTienRut, setSoTienRut] = useState("");
@@ -71,8 +72,7 @@ export default function DoanhThuPage() {
     const so = parseFloat(soTienRut);
     if (!so || so <= 0) return setError("Vui lòng nhập số tiền hợp lệ");
     if (!idNganHang) return setError("Vui lòng chọn tài khoản ngân hàng");
-    if (so > soDu)
-      return setError(`Số dư không đủ. Hiện có: ${formatTien(soDu)}`);
+    if (so > soDu) return setError(`Số dư không đủ. Hiện có: ${formatTien(soDu)}`);
     if (so < 50000) return setError("Số tiền rút tối thiểu là 50.000đ");
 
     setSubmitting(true);
@@ -93,61 +93,48 @@ export default function DoanhThuPage() {
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
-      <Typography
-        sx={{ fontSize: 24, fontWeight: 700, mb: 3, color: "text.primary" }}
-      >
-        Doanh thu & Rút tiền
-      </Typography>
+    <Box>
+      {/* Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography sx={{ fontSize: 26, fontWeight: 900, color: PRIMARY, mb: 0.5 }}>
+          Doanh thu & Rút tiền
+        </Typography>
+        <Typography sx={{ color: "rgba(31,41,55,0.55)", fontSize: 14 }}>
+          Quản lý số dư và yêu cầu rút tiền của bạn
+        </Typography>
+      </Box>
 
       {success && (
-        <Alert
-          severity="success"
-          onClose={() => setSuccess(false)}
-          sx={{ mb: 2 }}
-        >
-          Đã gửi yêu cầu rút tiền thành công! Admin sẽ xử lý trong 1-3 ngày làm
-          việc.
+        <Alert severity="success" onClose={() => setSuccess(false)} sx={{ mb: 3, borderRadius: "10px" }}>
+          Đã gửi yêu cầu rút tiền thành công! Admin sẽ xử lý trong 1-3 ngày làm việc.
         </Alert>
       )}
 
       {/* Số dư */}
       <Card
         sx={{
-          borderRadius: 3,
+          borderRadius: "16px",
           p: 3,
           mb: 3,
           background: `linear-gradient(135deg, ${PRIMARY} 0%, #7f1d1d 100%)`,
           color: "#fff",
+          boxShadow: "0 8px 24px rgba(141,19,19,0.25)",
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Box>
             <Typography sx={{ fontSize: 13, opacity: 0.8, mb: 0.5 }}>
               Số dư khả dụng
             </Typography>
-            <Typography sx={{ fontSize: 36, fontWeight: 800 }}>
+            <Typography sx={{ fontSize: 36, fontWeight: 900 }}>
               {formatTien(soDu)}
             </Typography>
             <Typography sx={{ fontSize: 12, opacity: 0.7, mt: 0.5 }}>
               Tỷ lệ doanh thu: 70% mỗi khóa học được mua
             </Typography>
           </Box>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 1,
-              alignItems: "flex-end",
-            }}
-          >
-            <AccountBalanceWalletIcon sx={{ fontSize: 48, opacity: 0.5 }} />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, alignItems: "flex-end" }}>
+            <AccountBalanceWalletIcon sx={{ fontSize: 48, opacity: 0.4 }} />
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -156,13 +143,11 @@ export default function DoanhThuPage() {
               sx={{
                 bgcolor: "#fff",
                 color: PRIMARY,
-                fontWeight: 700,
-                borderRadius: 2,
+                fontWeight: 800,
+                borderRadius: "10px",
+                px: 2.5,
                 "&:hover": { bgcolor: "#f5f5f5" },
-                "&.Mui-disabled": {
-                  bgcolor: "rgba(255,255,255,0.3)",
-                  color: "#fff",
-                },
+                "&.Mui-disabled": { bgcolor: "rgba(255,255,255,0.25)", color: "#fff" },
               }}
             >
               Rút tiền
@@ -171,27 +156,33 @@ export default function DoanhThuPage() {
         </Box>
 
         {nganHangs.length === 0 && (
-          <Alert severity="warning" sx={{ mt: 2, borderRadius: 2 }}>
-            Bạn chưa có tài khoản ngân hàng. Vui lòng thêm tài khoản trước khi
-            rút tiền.
+          <Alert severity="warning" sx={{ mt: 2, borderRadius: "10px" }}>
+            Bạn chưa có tài khoản ngân hàng. Vui lòng thêm tài khoản trước khi rút tiền.
           </Alert>
         )}
         {soDu < 50000 && soDu > 0 && (
-          <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
+          <Alert severity="info" sx={{ mt: 2, borderRadius: "10px" }}>
             Số dư tối thiểu để rút là 50.000đ
           </Alert>
         )}
       </Card>
 
       {/* Lịch sử rút tiền */}
-      <Card sx={{ borderRadius: 3, p: 2.5 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 2 }}>
+      <Card
+        sx={{
+          borderRadius: "16px",
+          p: 2.5,
+          border: "1px solid rgba(141,19,19,0.08)",
+          boxShadow: "0 2px 12px rgba(141,19,19,0.06)",
+        }}
+      >
+        <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 2, color: "text.primary" }}>
           Lịch sử rút tiền
         </Typography>
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ mb: 2, borderColor: "rgba(141,19,19,0.08)" }} />
 
         {lichSu.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 4 }}>
+          <Box sx={{ textAlign: "center", py: 6 }}>
             <AccountBalanceIcon sx={{ fontSize: 48, color: "#ddd", mb: 1 }} />
             <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
               Chưa có lịch sử rút tiền
@@ -206,13 +197,14 @@ export default function DoanhThuPage() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  p: 1.5,
-                  bgcolor: "#f9f8f6",
-                  borderRadius: 2,
+                  p: 2,
+                  bgcolor: "rgba(141,19,19,0.02)",
+                  border: "1px solid rgba(141,19,19,0.06)",
+                  borderRadius: "12px",
                 }}
               >
                 <Box>
-                  <Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: 14, color: PRIMARY }}>
                     {formatTien(item.soTienRut)}
                   </Typography>
                   <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
@@ -228,7 +220,7 @@ export default function DoanhThuPage() {
                   label={trangThaiLabel[item.trangThai ?? ""] ?? item.trangThai}
                   color={trangThaiColor[item.trangThai ?? ""] ?? "default"}
                   size="small"
-                  sx={{ fontWeight: 600 }}
+                  sx={{ fontWeight: 700 }}
                 />
               </Box>
             ))}
@@ -239,15 +231,14 @@ export default function DoanhThuPage() {
       {/* Dialog rút tiền */}
       <Dialog
         open={openRut}
-        onClose={() => {
-          setOpenRut(false);
-          setError("");
-        }}
+        onClose={() => { setOpenRut(false); setError(""); }}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+        slotProps={{ paper: { sx: { borderRadius: "16px" } } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Tạo yêu cầu rút tiền</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800, color: PRIMARY }}>
+          Tạo yêu cầu rút tiền
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 2 }}>
             Số dư khả dụng: <strong>{formatTien(soDu)}</strong>
@@ -259,22 +250,13 @@ export default function DoanhThuPage() {
             type="number"
             size="small"
             value={soTienRut}
-            onChange={(e) => {
-              setSoTienRut(e.target.value);
-              setError("");
-            }}
+            onChange={(e) => { setSoTienRut(e.target.value); setError(""); }}
             sx={{
               mb: 2,
-              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-                borderColor: PRIMARY,
-              },
+              "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+              "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: PRIMARY },
             }}
-            slotProps={{
-              htmlInput: {
-                min: 50000,
-                max: soDu,
-              },
-            }}
+            slotProps={{ htmlInput: { min: 50000, max: soDu } }}
             helperText="Tối thiểu 50.000đ"
           />
 
@@ -284,6 +266,7 @@ export default function DoanhThuPage() {
               value={idNganHang}
               onChange={(e) => setIdNganHang(e.target.value)}
               label="Tài khoản ngân hàng"
+              sx={{ borderRadius: "10px" }}
             >
               {nganHangs.map((n) => (
                 <MenuItem key={n.id} value={n.id}>
@@ -294,18 +277,15 @@ export default function DoanhThuPage() {
           </FormControl>
 
           {error && (
-            <Alert severity="error" sx={{ borderRadius: 2 }}>
+            <Alert severity="error" sx={{ borderRadius: "10px" }}>
               {error}
             </Alert>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
           <Button
-            onClick={() => {
-              setOpenRut(false);
-              setError("");
-            }}
-            sx={{ color: "#666" }}
+            onClick={() => { setOpenRut(false); setError(""); }}
+            sx={{ color: "#666", borderRadius: "10px" }}
           >
             Hủy
           </Button>
@@ -316,8 +296,9 @@ export default function DoanhThuPage() {
             sx={{
               bgcolor: PRIMARY,
               "&:hover": { bgcolor: "#7f1d1d" },
-              borderRadius: 2,
-              fontWeight: 700,
+              borderRadius: "10px",
+              fontWeight: 800,
+              px: 3,
             }}
           >
             {submitting ? (
@@ -329,5 +310,25 @@ export default function DoanhThuPage() {
         </DialogActions>
       </Dialog>
     </Box>
+  );
+}
+
+export default function InstructorRevenuePage() {
+  return (
+    <AuthGuard allowedRoles={['GiaoVien']}>
+      <DashboardShell>
+        <Box
+          sx={{
+            p: { xs: 2, md: 4 },
+            borderRadius: '24px',
+            border: '1px solid rgba(141,19,19,0.06)',
+            bgcolor: '#ffffff',
+            boxShadow: '0 10px 30px rgba(141,19,19,0.015)',
+          }}
+        >
+          <DoanhThuContent />
+        </Box>
+      </DashboardShell>
+    </AuthGuard>
   );
 }
