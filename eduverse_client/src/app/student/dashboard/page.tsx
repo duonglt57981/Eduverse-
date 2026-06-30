@@ -1,15 +1,15 @@
 'use client';
 
 import AuthGuard from '@/src/components/AuthGuard';
-import DashboardShell from '@/src/components/dashboard/DashboardShell';
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import StudentDashboardContent from '@/src/components/dashboard/StudentDashboardContent';
 
 export default function StudentDashboardPage() {
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <StudentDashboardContent/>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

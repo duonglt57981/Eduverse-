@@ -31,7 +31,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import SignalWifiOffIcon from "@mui/icons-material/SignalWifiOff";
 import LoginIcon from "@mui/icons-material/Login";
 import AuthGuard from "@/src/components/AuthGuard";
-import DashboardShell from "@/src/components/dashboard/DashboardShell";
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
@@ -947,7 +947,7 @@ function MyCoursesContent() {
 export default function StudentCoursesPage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Paper
           elevation={0}
           sx={{
@@ -960,7 +960,7 @@ export default function StudentCoursesPage() {
         >
           <MyCoursesContent />
         </Paper>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

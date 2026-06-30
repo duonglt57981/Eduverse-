@@ -6,167 +6,29 @@ import { useRouter, usePathname } from 'next/navigation';
 import {
   LogoutRounded,
   MailOutlineRounded,
-  MenuRounded,
   NotificationsNoneRounded,
   SearchRounded,
-  WbTwilightRounded,
-  EmojiEventsRounded,
+  SettingsRounded,
+  ShoppingCartOutlined,
+  FavoriteBorderOutlined,
+  LanguageRounded,
 } from '@mui/icons-material';
 import {
   Box,
-  Divider,
-  Drawer,
   IconButton,
   InputBase,
-  List,
-  ListItemButton,
-  ListItemIcon,
   Paper,
   Stack,
   Typography,
   useTheme,
+  Button,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Divider
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { logout } from '@/src/store/auth/AuthSlice';
-import { useDispatch } from '@/src/store/hook';
-import {
-  sidebarPrimaryItems,
-  sidebarSecondaryItems,
-} from './dashboard-data';
-
-function SidebarContent({ onLogout }: { onLogout: () => void }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const theme = useTheme();
-
-  const getRouteByLabel = (label: string) => {
-    switch (label) {
-      case 'Trang chủ':
-        return '/student/dashboard';
-      case 'Khóa học của tôi':
-        return '/student/courses';
-      case 'Khám phá':
-        return '/student/explore';
-      case 'Giỏ hàng':
-        return '/student/cart';
-      case 'Yêu thích':
-        return '/student/favorites';
-      case 'Hồ sơ':
-        return '/student/profile';
-      case 'Cài đặt':
-        return '/settings';
-      default:
-        return '/student/dashboard';
-    }
-  };
-
-  return (
-    <Box
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.paper',
-      }}
-    >
-      <Box
-        sx={{
-          px: 2.5,
-          py: 2.25,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-        }}
-        onClick={() => router.push('/student/dashboard')}
-      >
-        <Box sx={{ width: 210, maxWidth: '100%' }}>
-          <Image
-            src="/auth/img/logo_nentrang.png"
-            alt="EduVerse"
-            width={210}
-            height={64}
-            priority
-            style={{ width: '100%', height: 'auto' }}
-          />
-        </Box>
-      </Box>
-
-      <Box sx={{ px: 1.25, py: 1.5, flex: 1, overflowY: 'auto' }}>
-        <List disablePadding>
-          {sidebarPrimaryItems.map((item) => {
-            const Icon = item.icon;
-            const itemRoute = getRouteByLabel(item.label);
-            const isActive = pathname === itemRoute;
-
-            return (
-              <ListItemButton
-                key={item.label}
-                onClick={() => router.push(itemRoute)}
-                sx={{
-                  mb: 0.5,
-                  borderRadius: 2.8,
-                  px: 1.5,
-                  py: 1.2,
-                  color: isActive ? 'primary.main' : 'rgba(24,24,27,0.72)',
-                  bgcolor: isActive ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
-                  borderLeft: isActive ? `3px solid ${theme.palette.primary.main}` : '3px solid transparent',
-                  transition: 'all 160ms ease',
-                  '&:hover': {
-                    bgcolor: isActive
-                      ? alpha(theme.palette.primary.main, 0.10)
-                      : 'action.hover',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                  <Icon fontSize="small" />
-                </ListItemIcon>
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                  {item.label}
-                </Typography>
-              </ListItemButton>
-            );
-          })}
-        </List>
-
-        <Divider sx={{ my: 1.5 }} />
-
-        <List disablePadding>
-          {sidebarSecondaryItems.map((item) => {
-            const Icon = item.icon;
-            const itemRoute = getRouteByLabel(item.label);
-            const isActive = pathname === itemRoute;
-            return (
-              <ListItemButton
-                key={item.label}
-                onClick={() => router.push(itemRoute)}
-                sx={{
-                  mb: 0.5,
-                  borderRadius: 2.8,
-                  px: 1.5,
-                  py: 1.1,
-                  color: isActive ? 'primary.main' : 'rgba(24,24,27,0.72)',
-                  bgcolor: isActive ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
-                  '&:hover': { bgcolor: 'action.hover' },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                  <Icon fontSize="small" />
-                </ListItemIcon>
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                  {item.label}
-                </Typography>
-              </ListItemButton>
-            );
-          })}
-        </List>
-      </Box>
-    </Box>
-  );
-}
+import { useDispatch, useSelector } from '@/src/store/hook';
 
 interface StudentDashboardShellProps {
   children: React.ReactNode;
@@ -175,19 +37,22 @@ interface StudentDashboardShellProps {
 export default function StudentDashboardShell({ children }: StudentDashboardShellProps) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const theme = useTheme();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  
   const [authChecked, setAuthChecked] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const openMenu = Boolean(anchorEl);
+
+  const user = useSelector((state: any) => state.auth.user);
+  const hoTen = user?.hoTen || 'Học viên EduVerse';
+  const userInitials = hoTen.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
   useEffect(() => {
     const token = window.localStorage.getItem('AccessToken');
-
-    // Bypass check if we are in development and want to easily test
     if (!token) {
-      // Create a temporary mock token for easy testing if desired
       window.localStorage.setItem('AccessToken', 'mock-token-eduverse');
     }
-
     setAuthChecked(true);
   }, [router]);
 
@@ -196,8 +61,18 @@ export default function StudentDashboardShell({ children }: StudentDashboardShel
     router.replace('/auth/login');
   };
 
-  const sidebarWidth = 270;
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
   const headerOffset = '86px';
+
+  const navItems = [
+    { label: 'Khám phá', path: '/student/explore' },
+  ];
 
   if (!authChecked) {
     return (
@@ -230,23 +105,6 @@ export default function StudentDashboardShell({ children }: StudentDashboardShel
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Drawer
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: 'block', lg: 'none' },
-          '& .MuiDrawer-paper': {
-            width: sidebarWidth,
-            boxSizing: 'border-box',
-            mt: headerOffset,
-            height: `calc(100% - ${headerOffset})`,
-          },
-        }}
-      >
-        <SidebarContent onLogout={handleLogout} />
-      </Drawer>
-
       <Box
         component="header"
         sx={{
@@ -261,54 +119,70 @@ export default function StudentDashboardShell({ children }: StudentDashboardShel
           borderBottom: '1px solid',
           borderColor: 'divider',
           bgcolor: 'background.paper',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <Stack
           direction="row"
           spacing={2}
-          sx={{ alignItems: 'center', justifyContent: 'space-between', minHeight: 52 }}
+          sx={{ alignItems: 'center', width: '100%', minHeight: 52 }}
         >
-          <Stack
-            direction="row"
-            spacing={1.5}
-            sx={{
-              alignItems: 'center',
-              minWidth: 0,
-              width: { xs: 'auto', lg: sidebarWidth },
-              flexShrink: 0,
-            }}
+          {/* Logo */}
+          <Box 
+            sx={{ width: { xs: 120, sm: 140, lg: 170 }, cursor: 'pointer', flexShrink: 0 }} 
+            onClick={() => router.push('/student/dashboard')}
           >
-            <IconButton
-              onClick={() => setMobileOpen(true)}
-                sx={{ display: { xs: 'inline-flex', lg: 'none' } }}
-            >
-              <MenuRounded />
-            </IconButton>
+            <Image
+              src="/auth/img/logo_nentrang.png"
+              alt="EduVerse"
+              width={170}
+              height={52}
+              priority
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+            />
+          </Box>
 
-            <Box sx={{ width: { xs: 120, sm: 140, lg: 170 }, cursor: 'pointer' }} onClick={() => router.push('/student/dashboard')}>
-              <Image
-                src="/auth/img/logo_nentrang.png"
-                alt="EduVerse"
-                width={170}
-                height={52}
-                priority
-                style={{ width: '100%', height: 'auto' }}
-              />
-            </Box>
+          {/* Nav Items (Khám phá, Khóa học của tôi, ...) */}
+          <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'none', lg: 'flex' }, flexShrink: 0 }}>
+            {navItems.map((item) => {
+              const isActive = pathname === item.path;
+              return (
+                <Button
+                  key={item.label}
+                  onClick={() => router.push(item.path)}
+                  sx={{
+                    color: isActive ? 'primary.main' : 'text.primary',
+                    fontWeight: 400,
+                    fontSize: 14,
+                    textTransform: 'none',
+                    px: 1.5,
+                    minWidth: 'auto',
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: 'transparent',
+                    }
+                  }}
+                >
+                  {item.label}
+                </Button>
+              );
+            })}
           </Stack>
 
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
+          {/* Search Bar */}
+          <Box sx={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'center' }}>
             <Paper
               elevation={0}
               sx={{
-                flex: 1,
-                maxWidth: 520,
+                width: '100%',
+                maxWidth: 600,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                px: 1.5,
-                py: 1,
-                borderRadius: 2.8,
+                px: 2.5,
+                py: 1.25,
+                borderRadius: 50, // Pill shape like Udemy
                 bgcolor: 'background.default',
                 border: '1px solid',
                 borderColor: 'divider',
@@ -316,68 +190,162 @@ export default function StudentDashboardShell({ children }: StudentDashboardShel
             >
               <SearchRounded sx={{ color: 'rgba(24,24,27,0.42)' }} />
               <InputBase
-                placeholder="Tìm kiếm khóa học, tài liệu..."
+                placeholder="Tìm kiếm nội dung bất kỳ..."
                 sx={{ flex: 1, fontSize: 14 }}
               />
             </Paper>
+          </Box>
 
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              {[NotificationsNoneRounded, MailOutlineRounded, WbTwilightRounded].map(
-                (Icon, index) => (
-                  <IconButton
-                    key={index}
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      bgcolor: 'background.paper',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.03) },
-                    }}
-                  >
-                    <Icon fontSize="small" />
-                  </IconButton>
-                ),
-              )}
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', pl: 0.5 }}>
-                <Box
+          {/* Right Actions */}
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
+            <Button
+              onClick={() => router.push('/student/profile')}
+              sx={{
+                display: { xs: 'none', lg: 'block' },
+                color: 'text.primary',
+                fontWeight: 600,
+                fontSize: 14,
+                textTransform: 'none',
+                px: 1.5,
+                '&:hover': { color: 'primary.main', bgcolor: 'transparent' }
+              }}
+            >
+              Trở thành Giảng viên
+            </Button>
+
+            <Button
+              onClick={() => router.push('/student/courses/my-courses')}
+              sx={{
+                display: { xs: 'none', lg: 'block' },
+                color: 'text.primary',
+                fontWeight: 600,
+                fontSize: 14,
+                textTransform: 'none',
+                px: 1.5,
+                '&:hover': { color: 'primary.main', bgcolor: 'transparent' }
+              }}
+            >
+              Khóa học của tôi
+            </Button>
+
+            {[
+              { icon: FavoriteBorderOutlined, path: '/student/favorites' },
+              { icon: ShoppingCartOutlined, path: '/student/cart' },
+              { icon: NotificationsNoneRounded, path: '#' }
+            ].map(
+              (item, index) => (
+                <IconButton
+                  key={index}
+                  onClick={() => item.path !== '#' && router.push(item.path)}
                   sx={{
                     width: 42,
                     height: 42,
-                    borderRadius: 2.8,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: '#fff',
-                    fontWeight: 900,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                    bgcolor: 'transparent',
+                    '&:hover': { color: theme.palette.primary.main },
                   }}
                 >
-                  MA
+                  <item.icon fontSize="small" />
+                </IconButton>
+              ),
+            )}
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', pl: 0.5 }}>
+              <Box
+                onClick={handleMenuClick}
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#fff',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                  '&:hover': {
+                    opacity: 0.9,
+                  }
+                }}
+              >
+                {userInitials}
+              </Box>
+              <Menu
+                anchorEl={anchorEl}
+                open={openMenu}
+                onClose={handleMenuClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                PaperProps={{
+                  elevation: 0,
+                  sx: {
+                    mt: 1.5,
+                    overflow: 'visible',
+                    filter: 'drop-shadow(0px 4px 20px rgba(0,0,0,0.08))',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 0, // Udemy uses sharp edges for dropdowns usually, but let's keep 0 or small
+                    minWidth: 280,
+                    p: 0,
+                    '& .MuiMenuItem-root': {
+                      py: 1.2,
+                      px: 2,
+                      fontSize: 14,
+                      color: 'text.primary',
+                      '&:hover': {
+                        color: 'primary.main',
+                      }
+                    }
+                  },
+                }}
+              >
+                {/* Header User Info */}
+                <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.5, '&:hover': { bgcolor: 'action.hover', cursor: 'pointer' } }} onClick={() => { handleMenuClose(); router.push('/student/profile'); }}>
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: '50%',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: 20,
+                      bgcolor: '#1c1d1f',
+                    }}
+                  >
+                    {userInitials}
+                  </Box>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 16, display: 'block', color: 'text.primary' }} noWrap>
+                      {hoTen}
+                    </Typography>
+                    <Typography sx={{ fontSize: 12, color: 'text.secondary', display: 'block' }} noWrap>
+                      {user?.email || 'user@eduverse.vn'}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Stack>
+                
+                <Divider sx={{ my: 0 }} />
+                
+                <MenuItem onClick={() => { handleMenuClose(); router.push('/student/settings'); }}>
+                  <ListItemIcon>
+                    <SettingsRounded fontSize="small" />
+                  </ListItemIcon>
+                  Cài đặt
+                </MenuItem>
+                <MenuItem onClick={() => { handleMenuClose(); handleLogout(); }}>
+                  <ListItemIcon>
+                    <LogoutRounded fontSize="small" />
+                  </ListItemIcon>
+                  Đăng xuất
+                </MenuItem>
+              </Menu>
             </Stack>
           </Stack>
         </Stack>
       </Box>
 
-      <Box sx={{ display: 'flex', minHeight: '100vh', pt: headerOffset }}>
-        <Box
-          sx={{
-            width: sidebarWidth,
-            flexShrink: 0,
-            display: { xs: 'none', lg: 'block' },
-            borderRight: '1px solid',
-            borderColor: 'divider',
-            position: 'sticky',
-            top: headerOffset,
-            alignSelf: 'flex-start',
-            height: `calc(100vh - ${headerOffset})`,
-          }}
-        >
-          <SidebarContent onLogout={handleLogout} />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box sx={{ pt: headerOffset, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ flex: 1, width: '100%', maxWidth: 1400, mx: 'auto', px: { xs: 2, md: 3 } }}>
           {children}
         </Box>
       </Box>

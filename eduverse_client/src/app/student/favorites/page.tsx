@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import AuthGuard from '@/src/components/AuthGuard';
-import DashboardShell from '@/src/components/dashboard/DashboardShell';
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import { Box } from '@mui/material';
 import { useFavorite } from '@/src/features/favorite/hooks/useFavorite';
 import FavoriteHeader from '@/src/features/favorite/components/FavoriteHeader';
@@ -17,7 +17,7 @@ export default function StudentFavoritesPage() {
 
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Box sx={{ py: 2 }}>
           <FavoriteHeader count={favorites.length} />
           <FavoriteGrid
@@ -26,7 +26,7 @@ export default function StudentFavoritesPage() {
             onRemove={removeFavorite}
           />
         </Box>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

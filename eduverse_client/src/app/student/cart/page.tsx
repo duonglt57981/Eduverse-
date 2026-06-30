@@ -1,7 +1,7 @@
 'use client';
 
 import AuthGuard from '@/src/components/AuthGuard';
-import DashboardShell from '@/src/components/dashboard/DashboardShell';
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -524,7 +524,7 @@ function GioHangContent() {
 export default function StudentCartPage() {
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Box
           sx={{
             p: { xs: 2, md: 4 },
@@ -536,7 +536,7 @@ export default function StudentCartPage() {
         >
           <GioHangContent />
         </Box>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

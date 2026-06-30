@@ -37,7 +37,7 @@ import AllInclusiveIcon from "@mui/icons-material/AllInclusive";
 import FolderIcon from "@mui/icons-material/Folder";
 import CloseIcon from "@mui/icons-material/Close";
 import AuthGuard from "@/src/components/AuthGuard";
-import DashboardShell from "@/src/components/dashboard/DashboardShell";
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import DangKiService from "@/src/services/DangKiService";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "../../instructor/manager-courses/types";
@@ -789,7 +789,7 @@ function CourseRegistrationContent() {
 export default function CourseRegistrationPage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Paper
           elevation={0}
           sx={{
@@ -802,7 +802,7 @@ export default function CourseRegistrationPage() {
         >
           <CourseRegistrationContent />
         </Paper>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }
