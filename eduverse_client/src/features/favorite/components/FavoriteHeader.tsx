@@ -1,8 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { Box, Button, Typography, Stack, Chip } from '@mui/material';
-import { ArrowBackRounded } from '@mui/icons-material';
+import { Box, Typography, Stack, Chip } from '@mui/material';
 
 interface FavoriteHeaderProps {
   count: number;
