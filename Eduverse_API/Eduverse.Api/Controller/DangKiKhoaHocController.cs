@@ -19,7 +19,7 @@ namespace Eduverse.Api.Controller
             _dangKyKhoaHocService = dangKyKhoaHocService;
         }
 
-        [HttpPost("dangki-khoahoc{idKhoaHoc}")]
+        [HttpPost("dangki-khoahoc/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<DangKyKhoaHocMienPhiDto>> DangKyKhoaHocMienPhi(Guid idKhoaHoc)
         {
