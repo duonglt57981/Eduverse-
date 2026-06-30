@@ -528,14 +528,13 @@ function HoverPanel({
           <Button
             fullWidth
             variant="outlined"
-
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(course.id, course.tieuDe || course.title || "");
             }}
             startIcon={
               isFavorited(course.id) ? (
-                <FavoriteRounded sx={{ color: '#8d1313' }} />
+                <FavoriteRounded sx={{ color: "#8d1313" }} />
               ) : (
                 <FavoriteBorderRounded />
               )
@@ -568,7 +567,6 @@ interface CourseCardProps {
   onClick?: (course: KhoaHocDto) => void;
   width?: number;
 }
-
 
 function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
   const { isFavorited, toggleFavorite } = useFavorite();
@@ -691,26 +689,26 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
               toggleFavorite(course.id, title);
             }}
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: 5,
               right: 8,
               width: 26,
               height: 26,
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
-              color: favorited ? '#8d1313' : 'rgba(31, 41, 55, 0.4)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+              bgcolor: "rgba(255, 255, 255, 0.95)",
+              color: favorited ? "#8d1313" : "rgba(31, 41, 55, 0.4)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
               zIndex: 5,
-              transition: 'all 150ms ease',
+              transition: "all 150ms ease",
               p: 0,
-              '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 1)',
-                color: '#8d1313',
-                transform: 'scale(1.08)',
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 1)",
+                color: "#8d1313",
+                transform: "scale(1.08)",
               },
             }}
           >
             {favorited ? (
-              <FavoriteRounded sx={{ fontSize: 16, color: '#8d1313' }} />
+              <FavoriteRounded sx={{ fontSize: 16, color: "#8d1313" }} />
             ) : (
               <FavoriteBorderRounded sx={{ fontSize: 16 }} />
             )}
@@ -738,7 +736,6 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
               label={
                 (course.gia ?? 0) === 0
                   ? "MIỄN PHÍ"
-
                   : `${course.gia?.toLocaleString("vi-VN")}₫`
               }
               size="small"
