@@ -319,6 +319,7 @@ function HoverPanel({
       ref={panelRef}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={(e) => e.stopPropagation()}
       sx={{
         position: "fixed",
         top: pos.top,
@@ -478,6 +479,7 @@ function HoverPanel({
               variant="contained"
               startIcon={<CheckCircleRounded />}
               disabled
+              onClick={(e) => e.stopPropagation()}
               sx={{
                 borderRadius: "12px",
                 py: 1.1,
@@ -498,7 +500,10 @@ function HoverPanel({
               fullWidth
               variant="contained"
               startIcon={<ShoppingCartRounded />}
-              onClick={() => onAddCart(course)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddCart(course);
+              }}
               sx={{
                 borderRadius: "12px",
                 py: 1.1,
@@ -521,6 +526,7 @@ function HoverPanel({
             fullWidth
             variant="outlined"
             startIcon={<FavoriteBorderRounded />}
+            onClick={(e) => e.stopPropagation()}
             sx={{
               borderRadius: "12px",
               py: 1,
@@ -546,10 +552,16 @@ function HoverPanel({
 interface CourseCardProps {
   course: KhoaHocDto;
   onAddCart: (course: KhoaHocDto) => void;
+  onClick?: (course: KhoaHocDto) => void;
   width?: number;
 }
 
-function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
+function CourseCard({
+  course,
+  onAddCart,
+  onClick,
+  width = 240,
+}: CourseCardProps) {
   const [hovered, setHovered] = useState(false);
   const [hoverCard, setHoverCard] = useState(false);
   const [hoverPanel, setHoverPanel] = useState(false);
@@ -593,10 +605,6 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
       }
     }, 150);
   };
-  const handlePanelClose = () => {
-    if (leaveTimer.current) clearTimeout(leaveTimer.current);
-    setHovered(false);
-  };
 
   return (
     <>
@@ -605,6 +613,7 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
         elevation={0}
         onMouseEnter={handleCardEnter}
         onMouseLeave={handleCardLeave}
+        onClick={() => onClick?.(course)}
         sx={{
           width,
           flexShrink: 0,
@@ -685,9 +694,9 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
           {isFree && (
             <Chip
               label={
-                course.gia === 0
+                (course.gia ?? 0) === 0
                   ? "MIỄN PHÍ"
-                  : `${course.gia.toLocaleString("vi-VN")}₫`
+                  : `${(course.gia ?? 0).toLocaleString("vi-VN")}₫`
               }
               size="small"
               sx={{
@@ -906,6 +915,16 @@ export default function StudentDashboardContent() {
     };
     void load();
   }, []);
+
+  // Điều hướng sang trang chi tiết/preview khóa học
+  const handleOpenCourse = useCallback(
+    (course: KhoaHocDto) => {
+      const id = course.id || course.idDangKiKhoaHoc;
+      if (!id) return;
+      router.push(`/student/enroll-courses/${id}`);
+    },
+    [router],
+  );
 
   // Add to cart
   const handleAddCart = useCallback(async (course: KhoaHocDto) => {
@@ -1470,6 +1489,7 @@ export default function StudentDashboardContent() {
                 <Paper
                   key={item.id || item.idDangKiKhoaHoc}
                   elevation={0}
+                  onClick={() => handleOpenCourse(item)}
                   sx={{
                     width: 300,
                     flexShrink: 0,
@@ -1481,6 +1501,7 @@ export default function StudentDashboardContent() {
                     alignItems: "center",
                     gap: 2,
                     position: "relative",
+                    cursor: "pointer",
                     transition: "transform 200ms, box-shadow 200ms",
                     "&:hover": {
                       transform: "translateY(-3px)",
@@ -1549,6 +1570,7 @@ export default function StudentDashboardContent() {
                   </Box>
                   <IconButton
                     size="small"
+                    onClick={(e) => e.stopPropagation()}
                     sx={{ alignSelf: "flex-start", mt: -0.5, mr: -0.5 }}
                   >
                     <MoreVertRounded
@@ -1680,6 +1702,7 @@ export default function StudentDashboardContent() {
                 <Paper
                   key={item.id}
                   elevation={0}
+                  onClick={() => handleOpenCourse(item)}
                   sx={{
                     width: 300,
                     flexShrink: 0,
@@ -1693,6 +1716,7 @@ export default function StudentDashboardContent() {
                     minHeight: 150,
                     position: "relative",
                     overflow: "hidden",
+                    cursor: "pointer",
                     transition: "transform 200ms, box-shadow 200ms",
                     "&:hover": {
                       transform: "translateY(-4px)",
@@ -1776,6 +1800,7 @@ export default function StudentDashboardContent() {
                 <Paper
                   key={item.id}
                   elevation={0}
+                  onClick={() => handleOpenCourse(item)}
                   sx={{
                     width: 380,
                     flexShrink: 0,
@@ -1787,6 +1812,7 @@ export default function StudentDashboardContent() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: 2,
+                    cursor: "pointer",
                     transition: "transform 200ms, box-shadow 200ms",
                     "&:hover": {
                       transform: "translateY(-4px)",
@@ -1836,7 +1862,7 @@ export default function StudentDashboardContent() {
                       </Typography>
                     </Box>
                   </Stack>
-                  <IconButton size="small">
+                  <IconButton size="small" onClick={(e) => e.stopPropagation()}>
                     <MoreVertRounded />
                   </IconButton>
                 </Paper>
@@ -2126,6 +2152,7 @@ export default function StudentDashboardContent() {
                   key={course.id}
                   course={course}
                   onAddCart={handleAddCart}
+                  onClick={handleOpenCourse}
                   width={240}
                 />
               ))}
@@ -2353,6 +2380,7 @@ export default function StudentDashboardContent() {
                     key={c.id}
                     course={c}
                     onAddCart={handleAddCart}
+                    onClick={handleOpenCourse}
                     width={240}
                   />
                 ))}
@@ -2386,6 +2414,7 @@ export default function StudentDashboardContent() {
                   key={c.id}
                   course={c}
                   onAddCart={handleAddCart}
+                  onClick={handleOpenCourse}
                   width={240}
                 />
               ))}
