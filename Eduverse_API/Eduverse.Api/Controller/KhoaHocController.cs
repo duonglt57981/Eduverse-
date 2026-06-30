@@ -71,7 +71,7 @@ namespace Eduverse.Api.Controller
 
         [HttpGet("khoahoc-preview/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien,HocVien")]
-        public async Task<DataResponse<KhoaHocDto>> GetKhoaHocPreview([FromQuery] Guid idKhoaHoc)
+        public async Task<DataResponse<KhoaHocDto>> GetKhoaHocPreview( Guid idKhoaHoc)
         {
             try
             {

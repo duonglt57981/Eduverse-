@@ -507,9 +507,6 @@ namespace Eduverse.Service.KhoaHocService
         #region GetKhoaHocPreview (Public - chưa đăng ký)
             public async Task<KhoaHocDto> GetKhoaHocPreview(Guid idKhoaHoc)
             {
-                if (idKhoaHoc == Guid.Empty)
-                    throw new ArgumentException("Id khóa học không hợp lệ");
-
                 // Cache: số học viên
                 var soHocVien = await GetOrCreateCacheAsync(
                     CacheKeys.SoHocVien(idKhoaHoc),
