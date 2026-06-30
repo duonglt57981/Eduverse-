@@ -75,7 +75,7 @@ export default function TeacherCourseManager() {
         pageIndex: 1,
         pageSize: 50,
       });
-      const items = (res as any).items ?? [];
+      const items = (res as { items?: KhoaHocType[] }).items ?? [];
       setCourses(items);
 
       // Tự động mở rộng bản nháp lần đầu

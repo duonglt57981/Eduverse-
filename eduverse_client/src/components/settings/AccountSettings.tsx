@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -18,6 +18,7 @@ import {
   Snackbar,
   Alert,
   IconButton,
+  Skeleton,
   useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -31,27 +32,83 @@ import {
   PhoneRounded,
   CakeRounded,
   LocationOnRounded,
-  WcRounded,
 } from '@mui/icons-material';
+import { apiService } from '@/src/services/index';
+
+interface ProfileData {
+  hoTen: string;
+  email: string;
+  phoneNumber: string;
+  ngaySinh: string;
+  diaChi: string;
+  tieuSu: string;
+  anhDaiDien: string;
+  chucVu: string;
+  twoFactorEnabled: boolean;
+}
 
 export default function AccountSettings() {
   const theme = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
-  const [profile, setProfile] = useState({
-    fullName: 'Nguyễn Minh Anh',
-    email: 'minhanh.eduverse@gmail.com',
-    phone: '0987654321',
-    dob: '2002-05-15',
-    gender: 'Nữ',
-    address: 'Số 1 Đại Cồ Việt, Bách Khoa, Hai Bà Trưng, Hà Nội',
-    avatar: '', // Base64 placeholder or empty for initials
+  const [profile, setProfile] = useState<ProfileData>({
+    hoTen: '',
+    email: '',
+    phoneNumber: '',
+    ngaySinh: '',
+    diaChi: '',
+    tieuSu: '',
+    anhDaiDien: '',
+    chucVu: '',
+    twoFactorEnabled: false,
   });
 
-  const [tempProfile, setTempProfile] = useState({ ...profile });
+  const [tempProfile, setTempProfile] = useState<ProfileData>({ ...profile });
+
+  // Fetch profile from API on mount
+  const fetchProfile = useCallback(async () => {
+    try {
+      setFetchLoading(true);
+      const res = await apiService.get<any>('/profile');
+      if (res.status && res.data) {
+        const data = res.data;
+        const profileData: ProfileData = {
+          hoTen: data.hoTen || '',
+          email: data.email || '',
+          phoneNumber: data.phoneNumber || '',
+          ngaySinh: data.ngaySinh || '',
+          diaChi: data.diaChi || '',
+          tieuSu: data.tieuSu || '',
+          anhDaiDien: data.anhDaiDien || '',
+          chucVu: data.chucVu || '',
+          twoFactorEnabled: data.twoFactorEnabled || false,
+        };
+        setProfile(profileData);
+        setTempProfile(profileData);
+      }
+    } catch (err: any) {
+      showNotification('Không thể tải thông tin hồ sơ', 'error');
+    } finally {
+      setFetchLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const showNotification = (message: string, severity: 'success' | 'error') => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setShowSnackbar(true);
+  };
 
   const handleEditToggle = () => {
     if (!isEditing) {
@@ -68,39 +125,82 @@ export default function AccountSettings() {
     }));
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload avatar to backend (POST /api/profile/avatar)
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('Ảnh tải lên không được vượt quá 5MB', 'error');
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await apiService.post<any>('/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (res.status && res.data?.url) {
+        const newUrl = res.data.url;
+        setProfile((prev) => ({ ...prev, anhDaiDien: newUrl }));
+        setTempProfile((prev) => ({ ...prev, anhDaiDien: newUrl }));
+        showNotification('Cập nhật ảnh đại diện thành công!', 'success');
+      } else {
+        showNotification(res.message || 'Không thể tải ảnh lên', 'error');
+      }
+    } catch (err: any) {
+      // Fallback to local preview if API fails
       const reader = new FileReader();
       reader.onloadend = () => {
-        setTempProfile((prev) => ({
-          ...prev,
-          avatar: reader.result as string,
-        }));
+        const base64 = reader.result as string;
+        setTempProfile((prev) => ({ ...prev, anhDaiDien: base64 }));
         if (!isEditing) {
-          setProfile((prev) => ({
-            ...prev,
-            avatar: reader.result as string,
-          }));
-          setShowSnackbar(true);
+          setProfile((prev) => ({ ...prev, anhDaiDien: base64 }));
         }
       };
       reader.readAsDataURL(file);
+      showNotification('Đã lưu ảnh tạm thời (chưa upload lên server)', 'error');
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
-  const handleSave = () => {
+  // Save profile to backend (PUT /api/profile)
+  const handleSave = async () => {
     setLoading(true);
-    // Simulate API request
-    setTimeout(() => {
-      setProfile({ ...tempProfile });
+    try {
+      const payload = {
+        hoTen: tempProfile.hoTen,
+        email: tempProfile.email,
+        phoneNumber: tempProfile.phoneNumber,
+        diaChi: tempProfile.diaChi,
+        ngaySinh: tempProfile.ngaySinh,
+        tieuSu: tempProfile.tieuSu,
+      };
+
+      const res = await apiService.put<any>('/profile', payload);
+      if (res.status) {
+        setProfile({ ...tempProfile });
+        setIsEditing(false);
+        showNotification('Cập nhật thông tin tài khoản thành công!', 'success');
+      } else {
+        showNotification(res.message || 'Cập nhật thất bại', 'error');
+      }
+    } catch (err: any) {
+      const message = typeof err === 'string' ? err : 'Có lỗi xảy ra khi cập nhật hồ sơ';
+      showNotification(message, 'error');
+    } finally {
       setLoading(false);
-      setIsEditing(false);
-      setShowSnackbar(true);
-    }, 1000);
+    }
   };
 
   const getInitials = (name: string) => {
+    if (!name) return 'U';
     return name
       .split(' ')
       .map((n) => n[0])
@@ -108,6 +208,43 @@ export default function AccountSettings() {
       .join('')
       .toUpperCase();
   };
+
+  // Loading skeleton
+  if (fetchLoading) {
+    return (
+      <Card
+        elevation={0}
+        sx={{
+          borderRadius: 2.8,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+        }}
+      >
+        <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={4} sx={{ mb: 4, pb: 4, borderBottom: '1px solid', borderColor: 'divider', alignItems: 'center' }}>
+            <Skeleton variant="circular" width={110} height={110} />
+            <Stack spacing={1} sx={{ flexGrow: 1 }}>
+              <Skeleton variant="text" width={200} height={36} />
+              <Skeleton variant="text" width={160} height={20} />
+              <Skeleton variant="text" width={220} height={18} />
+            </Stack>
+            <Skeleton variant="rounded" width={120} height={40} sx={{ borderRadius: 999 }} />
+          </Stack>
+          <Grid container spacing={3}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Grid size={{ xs: 12, sm: i === 5 ? 12 : 6 }} key={i}>
+                <Stack spacing={0.75}>
+                  <Skeleton variant="text" width={80} height={18} />
+                  <Skeleton variant="rounded" height={50} sx={{ borderRadius: 2.8 }} />
+                </Stack>
+              </Grid>
+            ))}
+          </Grid>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Box>
@@ -119,11 +256,11 @@ export default function AccountSettings() {
       >
         <Alert
           onClose={() => setShowSnackbar(false)}
-          severity="success"
+          severity={snackbarSeverity}
           variant="filled"
-          sx={{ borderRadius: 2, bgcolor: '#2e7d32' }}
+          sx={{ borderRadius: 2 }}
         >
-          Cập nhật thông tin tài khoản thành công!
+          {snackbarMessage}
         </Alert>
       </Snackbar>
 
@@ -145,7 +282,7 @@ export default function AccountSettings() {
           >
             <Box sx={{ position: 'relative' }}>
               <Avatar
-                src={isEditing ? tempProfile.avatar : profile.avatar}
+                src={isEditing ? tempProfile.anhDaiDien : profile.anhDaiDien}
                 sx={{
                   width: 110,
                   height: 110,
@@ -158,7 +295,7 @@ export default function AccountSettings() {
                   color: '#fff',
                 }}
               >
-                {getInitials(isEditing ? tempProfile.fullName : profile.fullName)}
+                {getInitials(isEditing ? tempProfile.hoTen : profile.hoTen)}
               </Avatar>
               <input
                 type="file"
@@ -169,6 +306,7 @@ export default function AccountSettings() {
               />
               <IconButton
                 onClick={() => fileInputRef.current?.click()}
+                disabled={avatarUploading}
                 sx={{
                   position: 'absolute',
                   bottom: 0,
@@ -183,16 +321,16 @@ export default function AccountSettings() {
                   height: 36,
                 }}
               >
-                <CameraAltRounded fontSize="small" />
+                {avatarUploading ? <CircularProgress size={18} color="inherit" /> : <CameraAltRounded fontSize="small" />}
               </IconButton>
             </Box>
 
             <Stack spacing={1} sx={{ textAlign: { xs: 'center', sm: 'left' }, flexGrow: 1 }}>
               <Typography variant="h5" sx={{ fontWeight: 900, color: 'text.primary', letterSpacing: '-0.5px' }}>
-                {profile.fullName}
+                {profile.hoTen || 'Học viên EduVerse'}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                Học viên khóa học thực chiến • Mã số: EDV-202688
+                {profile.chucVu || 'Học viên'}
               </Typography>
               <Typography sx={{ color: 'primary.main', fontSize: 13, fontWeight: 700 }}>
                 {profile.email}
@@ -275,8 +413,8 @@ export default function AccountSettings() {
                 </Typography>
                 <TextField
                   fullWidth
-                  name="fullName"
-                  value={isEditing ? tempProfile.fullName : profile.fullName}
+                  name="hoTen"
+                  value={isEditing ? tempProfile.hoTen : profile.hoTen}
                   onChange={handleChange}
                   disabled={!isEditing}
                   placeholder="Nhập họ và tên"
@@ -339,8 +477,8 @@ export default function AccountSettings() {
                 </Typography>
                 <TextField
                   fullWidth
-                  name="phone"
-                  value={isEditing ? tempProfile.phone : profile.phone}
+                  name="phoneNumber"
+                  value={isEditing ? tempProfile.phoneNumber : profile.phoneNumber}
                   onChange={handleChange}
                   disabled={!isEditing}
                   placeholder="Nhập số điện thoại"
@@ -372,8 +510,8 @@ export default function AccountSettings() {
                 <TextField
                   fullWidth
                   type="date"
-                  name="dob"
-                  value={isEditing ? tempProfile.dob : profile.dob}
+                  name="ngaySinh"
+                  value={isEditing ? tempProfile.ngaySinh : profile.ngaySinh}
                   onChange={handleChange}
                   disabled={!isEditing}
                   slotProps={{
@@ -397,33 +535,6 @@ export default function AccountSettings() {
               </Stack>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Stack spacing={0.75}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <WcRounded fontSize="inherit" sx={{ color: 'rgba(25,23,28,0.4)' }} /> Giới tính
-                </Typography>
-                <FormControl fullWidth disabled={!isEditing}>
-                  <Select
-                    name="gender"
-                    value={isEditing ? tempProfile.gender : profile.gender}
-                    onChange={(e) => handleChange(e as any)}
-                    sx={{
-                      borderRadius: 2.8,
-                      bgcolor: !isEditing ? 'action.hover' : 'background.paper',
-                      transition: 'all 160ms ease',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.08)',
-                      },
-                    }}
-                  >
-                    <MenuItem value="Nam">Nam</MenuItem>
-                    <MenuItem value="Nữ">Nữ</MenuItem>
-                    <MenuItem value="Khác">Khác</MenuItem>
-                  </Select>
-                </FormControl>
-              </Stack>
-            </Grid>
-
             <Grid size={{ xs: 12 }}>
               <Stack spacing={0.75}>
                 <Typography sx={{ fontSize: 13, fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -433,8 +544,8 @@ export default function AccountSettings() {
                   fullWidth
                   multiline
                   rows={2}
-                  name="address"
-                  value={isEditing ? tempProfile.address : profile.address}
+                  name="diaChi"
+                  value={isEditing ? tempProfile.diaChi : profile.diaChi}
                   onChange={handleChange}
                   disabled={!isEditing}
                   placeholder="Nhập địa chỉ của bạn"

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -24,23 +24,42 @@ import {
   ForumRounded,
 } from '@mui/icons-material';
 
+const STORAGE_KEY = 'eduverse_privacy_settings';
+
+const defaultPrivacy = {
+  publicProfile: true,
+  showCertificates: true,
+  showLeaderboard: false,
+  searchable: true,
+  allowMessages: true,
+};
+
 export default function PrivacySettings() {
   const theme = useTheme();
-  const [privacy, setPrivacy] = useState({
-    publicProfile: true,
-    showCertificates: true,
-    showLeaderboard: false,
-    searchable: true,
-    allowMessages: true,
-  });
-
+  const [privacy, setPrivacy] = useState(defaultPrivacy);
   const [showSnackbar, setShowSnackbar] = useState(false);
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) setPrivacy(JSON.parse(saved));
+    } catch {
+      // Silent fail — use defaults
+    }
+  }, []);
 
   const handleToggle = (setting: keyof typeof privacy) => {
     setPrivacy((prev) => ({ ...prev, [setting]: !prev[setting] }));
   };
 
+  // Save to localStorage (TODO: replace with API call when backend supports it)
   const handleSave = () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(privacy));
+    } catch {
+      // Silent fail
+    }
     setShowSnackbar(true);
   };
 

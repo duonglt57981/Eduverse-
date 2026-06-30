@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -26,22 +26,29 @@ import {
   ReceiptLongRounded,
 } from '@mui/icons-material';
 
+const STORAGE_KEY_CHANNELS = 'eduverse_notification_channels';
+const STORAGE_KEY_TOPICS = 'eduverse_notification_topics';
+
+const defaultChannels = { email: true, push: true, sms: false };
+const defaultTopics = { system: true, course: true, certificate: true, payment: true };
+
 export default function NotificationSettings() {
   const theme = useTheme();
-  const [channels, setChannels] = useState({
-    email: true,
-    push: true,
-    sms: false,
-  });
-
-  const [topics, setTopics] = useState({
-    system: true,
-    course: true,
-    certificate: true,
-    payment: true,
-  });
-
+  const [channels, setChannels] = useState(defaultChannels);
+  const [topics, setTopics] = useState(defaultTopics);
   const [showSnackbar, setShowSnackbar] = useState(false);
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedChannels = localStorage.getItem(STORAGE_KEY_CHANNELS);
+      const savedTopics = localStorage.getItem(STORAGE_KEY_TOPICS);
+      if (savedChannels) setChannels(JSON.parse(savedChannels));
+      if (savedTopics) setTopics(JSON.parse(savedTopics));
+    } catch {
+      // Silent fail — use defaults
+    }
+  }, []);
 
   const handleChannelToggle = (channel: keyof typeof channels) => {
     setChannels((prev) => ({ ...prev, [channel]: !prev[channel] }));
@@ -51,7 +58,14 @@ export default function NotificationSettings() {
     setTopics((prev) => ({ ...prev, [topic]: !prev[topic] }));
   };
 
+  // Save to localStorage (TODO: replace with API call when backend supports it)
   const handleSave = () => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CHANNELS, JSON.stringify(channels));
+      localStorage.setItem(STORAGE_KEY_TOPICS, JSON.stringify(topics));
+    } catch {
+      // Silent fail
+    }
     setShowSnackbar(true);
   };
 
@@ -120,7 +134,7 @@ export default function NotificationSettings() {
               <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                 <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                   <Box sx={{ color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08), width: 40, height: 40, borderRadius: 2, display: 'grid', placeItems: 'center' }}>
-                    <NotificationsNoneRounded fontSize="small" />
+                    <NotificationsNoneRounded fontSize="large" />
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: 14.5, fontWeight: 800 }}>Thông báo trình duyệt (Push Notification)</Typography>

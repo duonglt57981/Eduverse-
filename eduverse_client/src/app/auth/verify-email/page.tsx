@@ -28,7 +28,7 @@ function VerifyEmailForm() {
       .then(() => {
         setOk(true);
         setMsg("Xác thực email thành công!");
-        setTimeout(() => router.push("/auth"), 2500);
+        setTimeout(() => router.push("/auth/login"), 2500);
       })
       .catch(() => {
         setMsg("Link xác thực không hợp lệ hoặc đã hết hạn");

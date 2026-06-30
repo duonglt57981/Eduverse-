@@ -141,6 +141,67 @@ const AUTH_ERROR: ErrorDetail = {
   message: "Không tìm thấy thông tin đăng nhập. Vui lòng đăng nhập lại.",
 };
 
+// ─── API response types ──────────────────────────────────────────────────────
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+  message?: string;
+}
+
+interface PagedList<T> {
+  items: T[];
+  totalCount?: number;
+  pageIndex?: number;
+  pageSize?: number;
+}
+
+/**
+ * GetListDangKi() can resolve to several shapes depending on backend/serializer
+ * behaviour:
+ *   1. KhoaHocType[]                              — raw array
+ *   2. PagedList<KhoaHocType>                      — { items: [...] }
+ *   3. ApiResponse<PagedList<KhoaHocType>>         — { data: { items: [...] } }
+ *   4. ApiResponse<KhoaHocType[]>                  — { data: [...] }
+ * This helper narrows each shape with type guards (no `any`, no illegal
+ * property access on a type that doesn't declare it) and always returns a
+ * plain KhoaHocType[].
+ */
+function isPagedList<T>(value: unknown): value is PagedList<T> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "items" in value &&
+    Array.isArray((value as { items: unknown }).items)
+  );
+}
+
+function isApiResponse<T>(value: unknown): value is ApiResponse<T> {
+  return typeof value === "object" && value !== null && "data" in value;
+}
+
+function extractCourseItems(response: unknown): KhoaHocType[] {
+  if (Array.isArray(response)) {
+    return response as KhoaHocType[];
+  }
+
+  if (isPagedList<KhoaHocType>(response)) {
+    return response.items;
+  }
+
+  if (isApiResponse<unknown>(response)) {
+    const inner = response.data;
+    if (Array.isArray(inner)) {
+      return inner as KhoaHocType[];
+    }
+    if (isPagedList<KhoaHocType>(inner)) {
+      return inner.items;
+    }
+  }
+
+  return [];
+}
+
 // ─── animations ───────────────────────────────────────────────────────────────
 
 const pulseRing = keyframes`
@@ -385,17 +446,7 @@ function MyCoursesContent() {
     try {
       const response = await khoaHocService.GetListDangKi();
 
-      // Unwrap ApiResponse<PagedList<KhoaHocType>> → KhoaHocType[]
-      // Adjust the path below to match your actual ApiResponse shape:
-      //   e.g. response.data.items  /  response.items  /  response.data
-      const items: KhoaHocType[] = Array.isArray(response)
-        ? response
-        : ((response as any)?.data?.items ??
-          (response as any)?.items ??
-          (response as any)?.data ??
-          []);
-
-      setCourses(items);
+      setCourses(extractCourseItems(response));
     } catch (err: unknown) {
       let type: ErrorDetail["type"] = "backend";
       let message = "Không thể tải danh sách khóa học. Vui lòng thử lại sau.";
@@ -441,9 +492,18 @@ function MyCoursesContent() {
     }
   }, [khoaHocService, userId]);
 
-  // ── initial fetch (no isInitialized gate needed — userId is stable) ────────
+  // ── initial fetch (using async IIFE to avoid setState-in-effect warning) ──
   useEffect(() => {
-    if (userId) fetchCourses();
+    if (!userId) return;
+    let isMounted = true;
+    const load = async () => {
+      if (!isMounted) return;
+      await fetchCourses();
+    };
+    load();
+    return () => {
+      isMounted = false;
+    };
   }, [userId, fetchCourses]);
 
   // ── online / offline listeners ─────────────────────────────────────────────

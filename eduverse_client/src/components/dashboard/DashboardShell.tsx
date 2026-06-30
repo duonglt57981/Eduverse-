@@ -36,8 +36,8 @@ import {
   HistoryRounded,
   PersonRounded,
   HelpOutlineRounded,
-  ForumRounded
-} from '@mui/icons-material';
+  ForumRounded,
+} from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -59,10 +59,10 @@ import {
   Tabs,
   Avatar,
   Menu,
-  MenuItem
-} from '@mui/material';
-import { logout } from '@/src/store/auth/AuthSlice';
-import { useDispatch, useSelector } from '@/src/store/hook';
+  MenuItem,
+} from "@mui/material";
+import { logout } from "@/src/store/auth/AuthSlice";
+import { useDispatch, useSelector } from "@/src/store/hook";
 import {
   getSidebarItemsByRole,
   getSecondarySidebarItemsByRole,
@@ -390,6 +390,8 @@ function SidebarContent({
           return "/instructor/qa";
         case "Cài đặt":
           return "/instructor/settings";
+        case "Ngân hàng":
+          return "/instructor/bank";
         default:
           return "/instructor/dashboard";
       }
@@ -420,6 +422,8 @@ function SidebarContent({
           return "/admin/notifications";
         case "Cài đặt":
           return "/admin/settings";
+        case "Rút tiền":
+          return "/admin/withdrawal-request";
         default:
           return "/admin/dashboard";
       }
@@ -427,20 +431,22 @@ function SidebarContent({
 
     // Fallback to Student roles (or default)
     switch (label) {
-      case 'Trang chủ':
-        return '/student/dashboard';
-      case 'Khóa học của tôi':
-        return '/student/courses';
-      case 'Khám phá':
-        return '/student/explore';
-      case 'Giỏ hàng':
-        return '/student/cart';
-      case 'Yêu thích':
-        return '/student/favorites';
-      case 'Hồ sơ':
-        return '/student/profile';
-      case 'Cài đặt':
-        return '/student/settings';
+      case "Trang chủ":
+        return "/student/dashboard";
+      case "Khóa học của tôi":
+        return "/student/courses/my-courses";
+      case "Khám phá":
+        return "/student/explore";
+      case "Giỏ hàng":
+        return "/student/gio-hang";
+      case "Yêu thích":
+        return "/student/favorites";
+      case "Hồ sơ":
+        return "/student/profile";
+      case "Cài đặt":
+        return "/student/settings";
+      case "":
+        return "/student/enroll-courses";
       default:
         return "/student/dashboard";
     }
@@ -457,26 +463,41 @@ function SidebarContent({
     >
       <Box sx={{ px: 2, py: 3, flex: 1 }}>
         {/* Instructor CTA */}
-        {!roles.includes('Admin') && !pathname.startsWith('/instructor') && (
+        {!roles.includes("Admin") && !pathname.startsWith("/instructor") && (
           <Box sx={{ px: 0, mb: 2.5 }}>
-            {roles.includes('GiaoVien') ? (
+            {roles.includes("GiaoVien") ? (
               <Button
                 fullWidth
                 variant="contained"
-                onClick={() => router.push('/instructor/dashboard')}
-                startIcon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
+                onClick={() => router.push("/instructor/dashboard")}
+                startIcon={
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                  </svg>
+                }
                 sx={{
-                  borderRadius: '14px',
+                  borderRadius: "14px",
                   bgcolor: COLORS.primary,
-                  color: '#fff',
+                  color: "#fff",
                   py: 1.3,
                   fontSize: 13.5,
                   fontWeight: 700,
-                  textTransform: 'none',
-                  boxShadow: '0 4px 16px rgba(141,19,19,0.2)',
-                  '&:hover': {
+                  textTransform: "none",
+                  boxShadow: "0 4px 16px rgba(141,19,19,0.2)",
+                  "&:hover": {
                     bgcolor: COLORS.primaryDark,
-                    boxShadow: '0 6px 20px rgba(141,19,19,0.3)',
+                    boxShadow: "0 6px 20px rgba(141,19,19,0.3)",
                   },
                 }}
               >
@@ -487,22 +508,25 @@ function SidebarContent({
                 elevation={0}
                 sx={{
                   p: 2,
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #4A0E0E 0%, #8D1313 100%)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  transition: 'transform 200ms ease, box-shadow 200ms ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(141,19,19,0.25)',
+                  borderRadius: "16px",
+                  background:
+                    "linear-gradient(135deg, #4A0E0E 0%, #8D1313 100%)",
+                  color: "#fff",
+                  cursor: "pointer",
+                  transition: "transform 200ms ease, box-shadow 200ms ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 8px 24px rgba(141,19,19,0.25)",
                   },
                 }}
-                onClick={() => router.push('/student/profile')}
+                onClick={() => router.push("/student/profile")}
               >
                 <Typography sx={{ fontSize: 13, fontWeight: 800, mb: 0.5 }}>
                   🎓 Trở thành Giảng viên
                 </Typography>
-                <Typography sx={{ fontSize: 11, opacity: 0.8, lineHeight: 1.5 }}>
+                <Typography
+                  sx={{ fontSize: 11, opacity: 0.8, lineHeight: 1.5 }}
+                >
                   Đăng ký để tạo và quản lý khóa học của riêng bạn.
                 </Typography>
               </Paper>
@@ -577,7 +601,6 @@ function SidebarContent({
           })}
         </List>
       </Box>
-
     </Box>
   );
 }
@@ -764,7 +787,7 @@ export default function DashboardShell({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-  
+
   // Custom states
   const [activeContinueTab, setActiveContinueTab] = useState<
     "courses" | "assigned" | "paths" | "certs" | "tests"
@@ -778,6 +801,7 @@ export default function DashboardShell({
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response = await apiService.get<any>("/dashboard");
         if (response.status && response.data) {
           setDashboardData(response.data);
@@ -1180,7 +1204,23 @@ export default function DashboardShell({
                   )}
                 </>
               )}
-
+              <IconButton
+                sx={{
+                  color: "rgba(31,41,55,0.55)",
+                  display: { xs: "none", sm: "flex" },
+                }}
+              >
+                <FavoriteBorderRounded sx={{ fontSize: 22 }} />
+              </IconButton>
+              <IconButton
+                onClick={() => router.push("/student/cart")}
+                sx={{
+                  color: "rgba(31,41,55,0.55)",
+                  display: { xs: "none", sm: "flex" },
+                }}
+              >
+                <ShoppingCartRounded sx={{ fontSize: 22 }} />
+              </IconButton>
               <IconButton
                 sx={{
                   color: "rgba(31,41,55,0.55)",
@@ -1264,10 +1304,14 @@ export default function DashboardShell({
                 }}
               >
                 {dashboardData?.welcomeStats?.userName
-                  ? dashboardData.welcomeStats.userName.split(' ').pop()?.substring(0, 2).toUpperCase()
+                  ? dashboardData.welcomeStats.userName
+                      .split(" ")
+                      .pop()
+                      ?.substring(0, 2)
+                      .toUpperCase()
                   : user?.hoTen
-                  ? user.hoTen.split(' ').pop()?.substring(0, 2).toUpperCase()
-                  : 'HV'}
+                    ? user.hoTen.split(" ").pop()?.substring(0, 2).toUpperCase()
+                    : "HV"}
               </Avatar>
 
               <Menu
@@ -1280,129 +1324,221 @@ export default function DashboardShell({
                     elevation: 0,
                     sx: {
                       width: 290,
-                      overflow: 'visible',
-                      filter: 'drop-shadow(0px 4px 20px rgba(0,0,0,0.08))',
+                      overflow: "visible",
+                      filter: "drop-shadow(0px 4px 20px rgba(0,0,0,0.08))",
                       mt: 1.5,
-                      border: '1px solid rgba(0,0,0,0.08)',
-                      borderRadius: '12px',
-                      '& .MuiMenuItem-root': {
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      borderRadius: "12px",
+                      "& .MuiMenuItem-root": {
                         px: 2.5,
                         py: 1.1,
                         fontSize: 14,
                         fontWeight: 500,
-                        color: '#1F2937',
+                        color: "#1F2937",
                         fontFamily: '"Be Vietnam Pro", sans-serif',
-                        '&:hover': {
-                          bgcolor: 'rgba(141,19,19,0.04)',
-                          color: '#8D1313',
+                        "&:hover": {
+                          bgcolor: "rgba(141,19,19,0.04)",
+                          color: "#8D1313",
                         },
                       },
                     },
-                  }
+                  },
                 }}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                transformOrigin={{ horizontal: "right", vertical: "top" }}
+                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
               >
                 {/* Header User info */}
-                <Box sx={{ px: 2.5, py: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    px: 2.5,
+                    py: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
                   <Avatar
                     src={dashboardData?.welcomeStats?.avatarUrl || undefined}
-                    sx={{ width: 44, height: 44, bgcolor: '#111827', fontWeight: 800 }}
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      bgcolor: "#111827",
+                      fontWeight: 800,
+                    }}
                   >
                     {dashboardData?.welcomeStats?.userName
-                      ? dashboardData.welcomeStats.userName.split(' ').pop()?.substring(0, 2).toUpperCase()
+                      ? dashboardData.welcomeStats.userName
+                          .split(" ")
+                          .pop()
+                          ?.substring(0, 2)
+                          .toUpperCase()
                       : user?.hoTen
-                      ? user.hoTen.split(' ').pop()?.substring(0, 2).toUpperCase()
-                      : 'HV'}
+                        ? user.hoTen
+                            .split(" ")
+                            .pop()
+                            ?.substring(0, 2)
+                            .toUpperCase()
+                        : "HV"}
                   </Avatar>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: 14.5, color: '#1F2937', noWrap: true, textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                      {dashboardData?.welcomeStats?.userName || user?.hoTen || 'Học viên'}
+                    <Typography
+                      noWrap
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: 14.5,
+                        color: "#1F2937",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                      }}
+                      >
+                      {dashboardData?.welcomeStats?.userName ||
+                        user?.hoTen ||
+                        "Học viên"}
                     </Typography>
-                    <Typography sx={{ fontSize: 11.5, color: 'text.secondary', noWrap: true, textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                      {user?.email || 'email@example.com'}
+                    <Typography
+                      noWrap
+                      sx={{
+                        fontSize: 11.5,
+                        color: "text.secondary",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {user?.email || "email@example.com"}
                     </Typography>
                   </Box>
                 </Box>
-                
-                <Divider sx={{ my: 0.5, borderColor: 'rgba(0,0,0,0.06)' }} />
+
+                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
                 {/* Section 1 */}
-                <MenuItem onClick={() => router.push('/student/dashboard')}>
+                <MenuItem onClick={() => router.push("/student/dashboard")}>
                   Học tập
                 </MenuItem>
-                <MenuItem onClick={() => router.push('/student/cart')} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>Giỏ hàng của tôi</Typography>
-                  <Box sx={{ bgcolor: '#7C3AED', color: '#fff', borderRadius: '50%', width: 20, height: 20, display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700 }}>
+                <MenuItem
+                  onClick={() => router.push("/student/cart")}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                >
+                  <Typography
+                    sx={{ fontSize: "inherit", fontWeight: "inherit" }}
+                  >
+                    Giỏ hàng của tôi
+                  </Typography>
+                  <Box
+                    sx={{
+                      bgcolor: "#7C3AED",
+                      color: "#fff",
+                      borderRadius: "50%",
+                      width: 20,
+                      height: 20,
+                      display: "grid",
+                      placeItems: "center",
+                      fontSize: 11,
+                      fontWeight: 700,
+                    }}
+                  >
                     1
                   </Box>
                 </MenuItem>
-                <MenuItem onClick={() => router.push('/student/favorites')}>
+                <MenuItem onClick={() => router.push("/student/favorites")}>
                   Danh sách mong ước
                 </MenuItem>
-                {roles.includes('GiaoVien') && (
-                  <MenuItem onClick={() => router.push('/instructor/dashboard')}>
+                {roles.includes("GiaoVien") && (
+                  <MenuItem
+                    onClick={() => router.push("/instructor/dashboard")}
+                  >
                     Bảng điều khiển của giảng viên
                   </MenuItem>
                 )}
 
-                <Divider sx={{ my: 0.5, borderColor: 'rgba(0,0,0,0.06)' }} />
+                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
                 {/* Section 2 */}
-                <MenuItem onClick={() => router.push('/student/dashboard')}>
+                <MenuItem onClick={() => router.push("/student/dashboard")}>
                   Thông báo.
                 </MenuItem>
-                <MenuItem onClick={() => router.push('/student/dashboard')}>
+                <MenuItem onClick={() => router.push("/student/dashboard")}>
                   Tin nhắn
                 </MenuItem>
 
-                <Divider sx={{ my: 0.5, borderColor: 'rgba(0,0,0,0.06)' }} />
+                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
                 {/* Section 3 */}
-                <MenuItem onClick={() => router.push('/settings')}>
+                <MenuItem onClick={() => router.push("/settings")}>
                   Cài đặt tài khoản
                 </MenuItem>
-                <MenuItem onClick={() => router.push('/student/dashboard')}>
+                <MenuItem onClick={() => router.push("/student/dashboard")}>
                   Phương thức thanh toán
                 </MenuItem>
-                <MenuItem onClick={() => router.push('/student/dashboard')}>
+                <MenuItem onClick={() => router.push("/student/dashboard")}>
                   Thuê bao
                 </MenuItem>
-                <MenuItem onClick={() => router.push('/student/dashboard')}>
+                <MenuItem onClick={() => router.push("/student/dashboard")}>
                   Ưu đãi Udemy
                 </MenuItem>
-                <MenuItem onClick={() => router.push('/student/dashboard')}>
+                <MenuItem onClick={() => router.push("/student/dashboard")}>
                   Lịch sử mua
                 </MenuItem>
 
-                <Divider sx={{ my: 0.5, borderColor: 'rgba(0,0,0,0.06)' }} />
+                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
                 {/* Section 4 */}
-                <MenuItem sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>Ngôn ngữ</Typography>
-                  <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
-                    <Typography sx={{ fontSize: 13, fontWeight: 500 }}>Tiếng Việt</Typography>
+                <MenuItem
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                >
+                  <Typography
+                    sx={{ fontSize: "inherit", fontWeight: "inherit" }}
+                  >
+                    Ngôn ngữ
+                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    sx={{ alignItems: "center", color: "text.secondary" }}
+                  >
+                    <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
+                      Tiếng Việt
+                    </Typography>
                     <LanguageRounded sx={{ fontSize: 16 }} />
                   </Stack>
                 </MenuItem>
 
-                <Divider sx={{ my: 0.5, borderColor: 'rgba(0,0,0,0.06)' }} />
+                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
                 {/* Section 5 */}
-                <MenuItem onClick={() => router.push('/student/profile')}>
+                <MenuItem onClick={() => router.push("/student/profile")}>
                   Hồ sơ công khai
                 </MenuItem>
-                <MenuItem onClick={() => router.push('/student/profile')}>
+                <MenuItem onClick={() => router.push("/student/profile")}>
                   Chỉnh sửa hồ sơ
                 </MenuItem>
 
-                <Divider sx={{ my: 0.5, borderColor: 'rgba(0,0,0,0.06)' }} />
+                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
                 {/* Section 6 */}
-                <MenuItem onClick={() => router.push('/student/dashboard')}>
+                <MenuItem onClick={() => router.push("/student/dashboard")}>
                   Trợ giúp và Hỗ trợ
                 </MenuItem>
-                <MenuItem onClick={handleLogout} sx={{ color: '#DC2626', '&:hover': { bgcolor: 'rgba(220,38,38,0.04)', color: '#B91C1C' } }}>
+                <MenuItem
+                  onClick={handleLogout}
+                  sx={{
+                    color: "#DC2626",
+                    "&:hover": {
+                      bgcolor: "rgba(220,38,38,0.04)",
+                      color: "#B91C1C",
+                    },
+                  }}
+                >
                   Đăng xuất
                 </MenuItem>
               </Menu>
@@ -1850,6 +1986,7 @@ export default function DashboardShell({
                     {activeContinueTab === "courses" && (
                       <CarouselRow>
                         {dashboardData?.continueLearning?.courses?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}
@@ -2206,6 +2343,7 @@ export default function DashboardShell({
 
                         {/* Backend API learning paths */}
                         {dashboardData?.continueLearning?.paths?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}

@@ -58,8 +58,8 @@ namespace Eduverse.Service.DangKyKhoaHocService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học");
 
-            if (khoaHoc.Gia > 0)
-                throw new Exception("Khóa học này yêu cầu thanh toán");
+            //if (khoaHoc.Gia > 0)
+            //    throw new Exception("Khóa học này yêu cầu thanh toán");
 
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var idNguoiDangKi);
 

@@ -1,8 +1,10 @@
+// src/app/student/courses/my-courses/learning/[courseId]/components/VideoPlayer.tsx
+// (hoặc src/app/khoa-hoc/components/VideoPlayer.tsx)
+
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Box, Typography, Button, alpha } from "@mui/material";
-// ✅ Import icon từ @mui/icons-material
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
@@ -23,6 +25,15 @@ interface VideoPlayerProps {
   isCompleted?: boolean;
   onTimeUpdate: (t: number) => void;
   onEnded: () => void;
+}
+
+// Interface để truy cập vhs từ tech
+interface TechWithVhs {
+  vhs?: {
+    stats?: {
+      bandwidth?: number;
+    };
+  };
 }
 
 export const VideoPlayer = ({
@@ -58,6 +69,18 @@ export const VideoPlayer = ({
   );
 
   const activeUrlRef = useRef<string>(url);
+
+  // Xác định loại video dựa trên extension
+  const getVideoType = useMemo(() => {
+    if (url.includes(".m3u8")) return "application/x-mpegURL";
+    if (url.includes(".ts")) return "video/MP2T";
+    if (url.includes(".mp4")) return "video/mp4";
+    return "video/mp4"; // fallback
+  }, [url]);
+
+  const isHls = useMemo(() => {
+    return url.includes(".m3u8");
+  }, [url]);
 
   // Inject styles
   useEffect(() => {
@@ -133,9 +156,12 @@ export const VideoPlayer = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Xác định URL HLS tối ưu (nếu là Cloudinary) hoặc giữ nguyên
     const { masterUrl, cloudinaryInfo: info } = getOptimalHlsUrl(url);
+    const finalUrl = masterUrl || url;
+    const isHlsUrl = finalUrl.includes(".m3u8");
     setCloudinaryInfo(info);
-    activeUrlRef.current = masterUrl;
+    activeUrlRef.current = finalUrl;
 
     setHasError(false);
     setIsLoading(true);
@@ -151,6 +177,9 @@ export const VideoPlayer = ({
     videoEl.className = "video-js vjs-big-play-centered";
     containerRef.current.appendChild(videoEl);
 
+    // Xác định type source
+    const sourceType = isHlsUrl ? "application/x-mpegURL" : getVideoType;
+
     const player = videojs(videoEl, {
       controls: true,
       autoplay: true,
@@ -158,16 +187,18 @@ export const VideoPlayer = ({
       fluid: true,
       playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
       html5: {
-        vhs: {
-          overrideNative: true,
-          useNetworkInformationApi: true,
-          enableLowInitialPlaylist: true,
-          limitRenditionByPlayerDimensions: true,
-          smoothQualityChange: true,
-          allowSeeksWithinUnsafeLiveWindow: true,
-          handlePartialData: true,
-          bandwidth: 4_000_000,
-        },
+        vhs: isHlsUrl
+          ? {
+              overrideNative: true,
+              useNetworkInformationApi: true,
+              enableLowInitialPlaylist: true,
+              limitRenditionByPlayerDimensions: true,
+              smoothQualityChange: true,
+              allowSeeksWithinUnsafeLiveWindow: true,
+              handlePartialData: true,
+              bandwidth: 4_000_000,
+            }
+          : undefined, // Không dùng VHS cho video thường
         nativeVideoTracks: false,
         nativeAudioTracks: false,
         nativeTextTracks: false,
@@ -184,7 +215,7 @@ export const VideoPlayer = ({
         audioTrackButton: false,
         descriptionsButton: false,
       },
-      sources: [{ src: masterUrl, type: "application/x-mpegURL" }],
+      sources: [{ src: finalUrl, type: sourceType }],
     });
 
     playerRef.current = player;
@@ -211,39 +242,42 @@ export const VideoPlayer = ({
       }
       player.play()?.catch(() => {});
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ql = (player as any).qualityLevels?.();
-      if (ql) {
-        const buildLevels = () => {
-          const levels: QualityLevel[] = [];
-          for (let i = 0; i < ql.length; i++) {
-            const lv = ql[i];
-            const height: number = lv.height ?? 0;
-            const bitrate: number = lv.bitrate ?? 0;
-            let label: string;
-            if (height >= 2160) label = "4K (2160p)";
-            else if (height >= 1440) label = "1440p";
-            else if (height >= 1080) label = "1080p HD";
-            else if (height >= 720) label = "720p HD";
-            else if (height >= 480) label = "480p";
-            else if (height >= 360) label = "360p";
-            else if (height >= 240) label = "240p";
-            else if (height > 0) label = `${height}p`;
-            else label = `${Math.round(bitrate / 1000)} kbps`;
-            levels.push({ index: i, label, bitrate, height });
-          }
-          levels.sort((a, b) => b.bitrate - a.bitrate);
-          const seen = new Set<string>();
-          const unique = levels.filter((l) => {
-            if (seen.has(l.label)) return false;
-            seen.add(l.label);
-            return true;
-          });
-          if (unique.length > 0) setQualityLevels(unique);
-        };
-        buildLevels();
-        ql.on("addqualitylevel", buildLevels);
-        ql.on("removequalitylevel", buildLevels);
+      // Chỉ lấy quality levels nếu là HLS
+      if (isHlsUrl) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ql = (player as any).qualityLevels?.();
+        if (ql) {
+          const buildLevels = () => {
+            const levels: QualityLevel[] = [];
+            for (let i = 0; i < ql.length; i++) {
+              const lv = ql[i];
+              const height: number = lv.height ?? 0;
+              const bitrate: number = lv.bitrate ?? 0;
+              let label: string;
+              if (height >= 2160) label = "4K (2160p)";
+              else if (height >= 1440) label = "1440p";
+              else if (height >= 1080) label = "1080p HD";
+              else if (height >= 720) label = "720p HD";
+              else if (height >= 480) label = "480p";
+              else if (height >= 360) label = "360p";
+              else if (height >= 240) label = "240p";
+              else if (height > 0) label = `${height}p`;
+              else label = `${Math.round(bitrate / 1000)} kbps`;
+              levels.push({ index: i, label, bitrate, height });
+            }
+            levels.sort((a, b) => b.bitrate - a.bitrate);
+            const seen = new Set<string>();
+            const unique = levels.filter((l) => {
+              if (seen.has(l.label)) return false;
+              seen.add(l.label);
+              return true;
+            });
+            if (unique.length > 0) setQualityLevels(unique);
+          };
+          buildLevels();
+          ql.on("addqualitylevel", buildLevels);
+          ql.on("removequalitylevel", buildLevels);
+        }
       }
     });
 
@@ -256,10 +290,14 @@ export const VideoPlayer = ({
     let lastSent = 0;
     player.on("timeupdate", () => {
       const ct = player.currentTime() ?? 0;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const vhsStats = (player.tech(true) as any)?.vhs?.stats;
-      if (vhsStats?.bandwidth > 0) {
-        setCurrentBandwidthKbps(Math.round(vhsStats.bandwidth / 1000));
+      // Lấy bandwidth nếu là HLS
+      if (isHlsUrl) {
+        const tech = player.tech(true);
+        // Sử dụng interface đã định nghĩa để tránh any
+        const vhs = (tech as unknown as TechWithVhs)?.vhs;
+        if (vhs?.stats?.bandwidth) {
+          setCurrentBandwidthKbps(Math.round(vhs.stats.bandwidth / 1000));
+        }
       }
       if (ct - lastSent >= 10) {
         lastSent = ct;
@@ -270,12 +308,13 @@ export const VideoPlayer = ({
     player.on("ended", () => onEnded());
 
     player.on("error", () => {
+      // Fallback: nếu đang dùng HLS, thử phát file gốc (nếu khác)
       const currentSrc = player.currentSrc?.() ?? "";
-      const isAutoProfile = currentSrc.includes("sp_auto");
-      if (isAutoProfile && info) {
-        console.warn("[VideoPlayer] sp_auto failed, falling back to sp_hd");
-        const fallbackUrl = buildCloudinaryHlsUrl(info, "sp_hd");
-        player.src({ src: fallbackUrl, type: "application/x-mpegURL" });
+      if (isHlsUrl && currentSrc.includes(".m3u8") && info) {
+        console.warn("[VideoPlayer] HLS failed, falling back to direct file");
+        const fallbackUrl = url; // URL gốc
+        const fallbackType = url.includes(".ts") ? "video/MP2T" : "video/mp4";
+        player.src({ src: fallbackUrl, type: fallbackType });
         player.load();
         player.one("error", () => {
           clearAllTimers();
@@ -318,8 +357,15 @@ export const VideoPlayer = ({
     const p = playerRef.current;
     if (p && typeof p.src === "function") {
       const { masterUrl } = getOptimalHlsUrl(url);
-      activeUrlRef.current = masterUrl;
-      p.src({ src: masterUrl, type: "application/x-mpegURL" });
+      const finalUrl = masterUrl || url;
+      activeUrlRef.current = finalUrl;
+      const isHlsUrl = finalUrl.includes(".m3u8");
+      const type = isHlsUrl
+        ? "application/x-mpegURL"
+        : finalUrl.includes(".ts")
+          ? "video/MP2T"
+          : "video/mp4";
+      p.src({ src: finalUrl, type });
       p.load();
     }
   }, [url, startLoadTimeout]);
@@ -449,7 +495,7 @@ export const VideoPlayer = ({
             isLoading || hasError || loadTimedOut ? "hidden" : "visible",
         }}
       />
-      {!isLoading && !hasError && !loadTimedOut && (
+      {!isLoading && !hasError && !loadTimedOut && isHls && (
         <QualityMenu
           qualityLevels={qualityLevels}
           selectedQuality={selectedQuality}
