@@ -9,7 +9,7 @@ export default class DangKiService {
     try {
       const response = await apiService.post<
         ApiResponse<DangKyKhoaHocMienPhiDto>
-      >("/DangKiKhoaHoc/dangki-khoahoc{idKhoaHoc}");
+      >(`/DangKiKhoaHoc/dangki-khoahoc/${idKhoaHoc}`, {});
       return response.data;
     } catch (error) {
       console.error("Error creating payment:", error);

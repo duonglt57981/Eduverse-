@@ -322,6 +322,7 @@ function HoverPanel({
       ref={panelRef}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={(e) => e.stopPropagation()}
       sx={{
         position: "fixed",
         top: pos.top,
@@ -481,6 +482,7 @@ function HoverPanel({
               variant="contained"
               startIcon={<CheckCircleRounded />}
               disabled
+              onClick={(e) => e.stopPropagation()}
               sx={{
                 borderRadius: "12px",
                 py: 1.1,
@@ -501,7 +503,10 @@ function HoverPanel({
               fullWidth
               variant="contained"
               startIcon={<ShoppingCartRounded />}
-              onClick={() => onAddCart(course)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddCart(course);
+              }}
               sx={{
                 borderRadius: "12px",
                 py: 1.1,
@@ -529,7 +534,7 @@ function HoverPanel({
             }}
             startIcon={
               isFavorited(course.id) ? (
-                <FavoriteRounded sx={{ color: '#8d1313' }} />
+                <FavoriteRounded sx={{ color: "#8d1313" }} />
               ) : (
                 <FavoriteBorderRounded />
               )
@@ -559,10 +564,16 @@ function HoverPanel({
 interface CourseCardProps {
   course: KhoaHocDto;
   onAddCart: (course: KhoaHocDto) => void;
+  onClick?: (course: KhoaHocDto) => void;
   width?: number;
 }
 
-function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
+function CourseCard({
+  course,
+  onAddCart,
+  onClick,
+  width = 240,
+}: CourseCardProps) {
   const { isFavorited, toggleFavorite } = useFavorite();
   const favorited = isFavorited(course.id);
   const [hovered, setHovered] = useState(false);
@@ -608,10 +619,6 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
       }
     }, 150);
   };
-  const handlePanelClose = () => {
-    if (leaveTimer.current) clearTimeout(leaveTimer.current);
-    setHovered(false);
-  };
 
   return (
     <>
@@ -620,6 +627,7 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
         elevation={0}
         onMouseEnter={handleCardEnter}
         onMouseLeave={handleCardLeave}
+        onClick={() => onClick?.(course)}
         sx={{
           width,
           flexShrink: 0,
@@ -686,26 +694,26 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
               toggleFavorite(course.id, title);
             }}
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: 5,
               right: 8,
               width: 26,
               height: 26,
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
-              color: favorited ? '#8d1313' : 'rgba(31, 41, 55, 0.4)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+              bgcolor: "rgba(255, 255, 255, 0.95)",
+              color: favorited ? "#8d1313" : "rgba(31, 41, 55, 0.4)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
               zIndex: 5,
-              transition: 'all 150ms ease',
+              transition: "all 150ms ease",
               p: 0,
-              '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 1)',
-                color: '#8d1313',
-                transform: 'scale(1.08)',
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 1)",
+                color: "#8d1313",
+                transform: "scale(1.08)",
               },
             }}
           >
             {favorited ? (
-              <FavoriteRounded sx={{ fontSize: 16, color: '#8d1313' }} />
+              <FavoriteRounded sx={{ fontSize: 16, color: "#8d1313" }} />
             ) : (
               <FavoriteBorderRounded sx={{ fontSize: 16 }} />
             )}
@@ -954,6 +962,16 @@ export default function StudentDashboardContent() {
     void load();
     void fetchFavorites();
   }, [fetchFavorites]);
+
+  // Điều hướng sang trang chi tiết/preview khóa học
+  const handleOpenCourse = useCallback(
+    (course: KhoaHocDto) => {
+      const id = course.id || course.idDangKiKhoaHoc;
+      if (!id) return;
+      router.push(`/student/enroll-courses/${id}`);
+    },
+    [router],
+  );
 
   // Add to cart
   const handleAddCart = useCallback(async (course: KhoaHocDto) => {
@@ -1518,6 +1536,7 @@ export default function StudentDashboardContent() {
                 <Paper
                   key={item.id || item.idDangKiKhoaHoc}
                   elevation={0}
+                  onClick={() => handleOpenCourse(item)}
                   sx={{
                     width: 300,
                     flexShrink: 0,
@@ -1529,6 +1548,7 @@ export default function StudentDashboardContent() {
                     alignItems: "center",
                     gap: 2,
                     position: "relative",
+                    cursor: "pointer",
                     transition: "transform 200ms, box-shadow 200ms",
                     "&:hover": {
                       transform: "translateY(-3px)",
@@ -1597,6 +1617,7 @@ export default function StudentDashboardContent() {
                   </Box>
                   <IconButton
                     size="small"
+                    onClick={(e) => e.stopPropagation()}
                     sx={{ alignSelf: "flex-start", mt: -0.5, mr: -0.5 }}
                   >
                     <MoreVertRounded
@@ -1728,6 +1749,7 @@ export default function StudentDashboardContent() {
                 <Paper
                   key={item.id}
                   elevation={0}
+                  onClick={() => handleOpenCourse(item)}
                   sx={{
                     width: 300,
                     flexShrink: 0,
@@ -1741,6 +1763,7 @@ export default function StudentDashboardContent() {
                     minHeight: 150,
                     position: "relative",
                     overflow: "hidden",
+                    cursor: "pointer",
                     transition: "transform 200ms, box-shadow 200ms",
                     "&:hover": {
                       transform: "translateY(-4px)",
@@ -1824,6 +1847,7 @@ export default function StudentDashboardContent() {
                 <Paper
                   key={item.id}
                   elevation={0}
+                  onClick={() => handleOpenCourse(item)}
                   sx={{
                     width: 380,
                     flexShrink: 0,
@@ -1835,6 +1859,7 @@ export default function StudentDashboardContent() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: 2,
+                    cursor: "pointer",
                     transition: "transform 200ms, box-shadow 200ms",
                     "&:hover": {
                       transform: "translateY(-4px)",
@@ -1884,7 +1909,7 @@ export default function StudentDashboardContent() {
                       </Typography>
                     </Box>
                   </Stack>
-                  <IconButton size="small">
+                  <IconButton size="small" onClick={(e) => e.stopPropagation()}>
                     <MoreVertRounded />
                   </IconButton>
                 </Paper>
@@ -2174,6 +2199,7 @@ export default function StudentDashboardContent() {
                   key={course.id}
                   course={course}
                   onAddCart={handleAddCart}
+                  onClick={handleOpenCourse}
                   width={240}
                 />
               ))}
@@ -2401,6 +2427,7 @@ export default function StudentDashboardContent() {
                     key={c.id}
                     course={c}
                     onAddCart={handleAddCart}
+                    onClick={handleOpenCourse}
                     width={240}
                   />
                 ))}
@@ -2434,6 +2461,7 @@ export default function StudentDashboardContent() {
                   key={c.id}
                   course={c}
                   onAddCart={handleAddCart}
+                  onClick={handleOpenCourse}
                   width={240}
                 />
               ))}

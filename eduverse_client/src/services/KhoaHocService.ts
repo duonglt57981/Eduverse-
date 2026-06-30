@@ -84,7 +84,7 @@ export default class KhoaHocService {
 
     try {
       const response = await apiService.get<ApiResponse<KhoaHocType>>(
-        `/api/KhoaHoc/khoahoc-preview/${idKhoaHoc}`,
+        `/KhoaHoc/khoahoc-preview/${idKhoaHoc}`,
       );
 
       return response.data;
