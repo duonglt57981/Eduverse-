@@ -134,7 +134,7 @@ export default function NotificationSettings() {
               <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                 <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                   <Box sx={{ color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08), width: 40, height: 40, borderRadius: 2, display: 'grid', placeItems: 'center' }}>
-                    <NotificationsNoneRounded fontSize="small" />
+                    <NotificationsNoneRounded fontSize="large" />
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: 14.5, fontWeight: 800 }}>Thông báo trình duyệt (Push Notification)</Typography>

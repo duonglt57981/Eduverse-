@@ -8,7 +8,7 @@ export default function StudentDashboardPage() {
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
       <DashboardShell>
-        <StudentDashboardContent />
+        <StudentDashboardContent/>
       </DashboardShell>
     </AuthGuard>
   );
