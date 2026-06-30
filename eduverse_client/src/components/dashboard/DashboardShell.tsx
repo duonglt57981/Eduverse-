@@ -1203,6 +1203,7 @@ export default function DashboardShell({
                 </>
               )}
               <IconButton
+                onClick={() => router.push("/student/favorites")}
                 sx={{
                   color: "rgba(31,41,55,0.55)",
                   display: { xs: "none", sm: "flex" },

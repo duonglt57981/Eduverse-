@@ -36,6 +36,7 @@ export default function FavoriteHeader({ count }: FavoriteHeaderProps) {
               fontWeight: 900,
               letterSpacing: '-1px',
               lineHeight: 1.1,
+              color: 'text.primary',
             }}
           >
             Khóa Học Yêu Thích
@@ -51,28 +52,6 @@ export default function FavoriteHeader({ count }: FavoriteHeaderProps) {
             Bạn đang lưu trữ {count} khóa học trong danh sách của mình
           </Typography>
         </Box>
-
-        <Button
-          component={Link}
-          href="/courses"
-          startIcon={<ArrowBackRounded />}
-          variant="outlined"
-          sx={{
-            borderRadius: 2.8,
-            borderColor: 'rgba(17,17,17,0.12)',
-            color: 'rgba(24,24,27,0.78)',
-            px: 2.5,
-            py: 1.2,
-            transition: 'all 200ms ease',
-            '&:hover': {
-              borderColor: '#8d1313',
-              color: '#8d1313',
-              bgcolor: 'rgba(141,19,19,0.04)',
-            },
-          }}
-        >
-          Quay lại danh sách khóa học
-        </Button>
       </Stack>
     </Box>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { apiService } from "@/src/services/index";
+import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
 import {
   Box,
   Button,
@@ -37,6 +38,7 @@ import {
   QuizRounded,
   ShoppingCartRounded,
   FavoriteBorderRounded,
+  FavoriteRounded,
   CheckCircleRounded,
   AccessTimeRounded,
   MenuBookRounded,
@@ -267,6 +269,7 @@ function HoverPanel({
   onMouseEnter,
   onMouseLeave,
 }: HoverPanelProps) {
+  const { isFavorited, toggleFavorite } = useFavorite();
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -520,7 +523,17 @@ function HoverPanel({
           <Button
             fullWidth
             variant="outlined"
-            startIcon={<FavoriteBorderRounded />}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(course.id, course.tieuDe || course.title || "");
+            }}
+            startIcon={
+              isFavorited(course.id) ? (
+                <FavoriteRounded sx={{ color: '#8d1313' }} />
+              ) : (
+                <FavoriteBorderRounded />
+              )
+            }
             sx={{
               borderRadius: "12px",
               py: 1,
@@ -534,7 +547,7 @@ function HoverPanel({
               },
             }}
           >
-            Lưu vào yêu thích
+            {isFavorited(course.id) ? "Bỏ yêu thích" : "Lưu vào yêu thích"}
           </Button>
         </Stack>
       </Box>
@@ -550,6 +563,8 @@ interface CourseCardProps {
 }
 
 function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
+  const { isFavorited, toggleFavorite } = useFavorite();
+  const favorited = isFavorited(course.id);
   const [hovered, setHovered] = useState(false);
   const [hoverCard, setHoverCard] = useState(false);
   const [hoverPanel, setHoverPanel] = useState(false);
@@ -655,7 +670,7 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
               sx={{
                 position: "absolute",
                 top: 8,
-                right: 8,
+                right: 42,
                 bgcolor: "rgba(255,255,255,0.92)",
                 color: C.primary,
                 fontWeight: 800,
@@ -664,6 +679,37 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
               }}
             />
           )}
+          <IconButton
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              toggleFavorite(course.id, title);
+            }}
+            sx={{
+              position: 'absolute',
+              top: 5,
+              right: 8,
+              width: 26,
+              height: 26,
+              bgcolor: 'rgba(255, 255, 255, 0.95)',
+              color: favorited ? '#8d1313' : 'rgba(31, 41, 55, 0.4)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+              zIndex: 5,
+              transition: 'all 150ms ease',
+              p: 0,
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 1)',
+                color: '#8d1313',
+                transform: 'scale(1.08)',
+              },
+            }}
+          >
+            {favorited ? (
+              <FavoriteRounded sx={{ fontSize: 16, color: '#8d1313' }} />
+            ) : (
+              <FavoriteBorderRounded sx={{ fontSize: 16 }} />
+            )}
+          </IconButton>
           {course.daDangKy && (
             <Chip
               icon={<CheckCircleRounded sx={{ fontSize: "12px !important" }} />}
@@ -685,16 +731,16 @@ function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
           {isFree && (
             <Chip
               label={
-                course.gia === 0
+                (course.gia ?? 0) === 0
                   ? "MIỄN PHÍ"
-                  : `${course.gia.toLocaleString("vi-VN")}₫`
+                  : `${course.gia?.toLocaleString("vi-VN")}₫`
               }
               size="small"
               sx={{
                 position: "absolute",
                 bottom: 8,
                 left: 8,
-                bgcolor: course.gia === 0 ? "#10B981" : "#8D1313",
+                bgcolor: (course.gia ?? 0) === 0 ? "#10B981" : "#8D1313",
                 color: "#fff",
                 fontWeight: 900,
                 fontSize: 9.5,
@@ -874,6 +920,7 @@ function SectionHeader({
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function StudentDashboardContent() {
   const router = useRouter();
+  const { fetchFavorites } = useFavorite();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -905,7 +952,8 @@ export default function StudentDashboardContent() {
       }
     };
     void load();
-  }, []);
+    void fetchFavorites();
+  }, [fetchFavorites]);
 
   // Add to cart
   const handleAddCart = useCallback(async (course: KhoaHocDto) => {
