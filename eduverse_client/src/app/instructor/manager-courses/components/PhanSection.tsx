@@ -42,6 +42,7 @@ interface PhanSectionProps {
   khoaHocId: string;
   items: PhanHocType[];
   onRefresh: () => void;
+  onMutated?: () => void;
   canEdit?: boolean;
 }
 
@@ -49,6 +50,7 @@ export function PhanSection({
   khoaHocId,
   items,
   onRefresh,
+  onMutated,
   canEdit = false,
 }: PhanSectionProps) {
   const { show, ToastComponent } = useToast();
@@ -120,6 +122,7 @@ export function PhanSection({
       setAdding(false);
       setEditTarget(null);
       onRefresh();
+      onMutated?.();
     } catch {
       show("Lỗi khi lưu phần học", "error");
     } finally {
@@ -135,6 +138,7 @@ export function PhanSection({
       show("Đã xoá phần học");
       setConfirmDel(null);
       onRefresh();
+      onMutated?.();
     } catch {
       show("Lỗi khi xoá phần học", "error");
     } finally {
@@ -196,6 +200,7 @@ export function PhanSection({
                 phanId={phan.id!}
                 items={baiGiangs}
                 onRefresh={onRefresh}
+                onMutated={onMutated}
                 canEdit={canEdit}
               />
             </Collapse>

@@ -43,7 +43,15 @@ export const useCourseData = (
       try {
         setLoading(true);
         const res = await KhoaHocSvc.getLearningKhoaHoc(courseId);
-        const data = res.data;
+        const data = res?.data;
+
+        if (!data) {
+          setError("Không tìm thấy dữ liệu khóa học.");
+          setKhoaHoc(null);
+          setDanhSachTatCa([]);
+          return;
+        }
+
         setKhoaHoc(data);
         const ds = flatten(data);
         setDanhSachTatCa(ds);
