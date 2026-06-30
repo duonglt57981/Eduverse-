@@ -75,6 +75,25 @@ export default class KhoaHocService {
     }
   }
 
+  async GetKhoaHocPreview(
+    idKhoaHoc?: string,
+  ): Promise<ApiResponse<KhoaHocType>> {
+    if (!idKhoaHoc) {
+      throw new Error("idKhoaHoc is required.");
+    }
+
+    try {
+      const response = await apiService.get<ApiResponse<KhoaHocType>>(
+        `/api/KhoaHoc/khoahoc-preview/${idKhoaHoc}`,
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching preview course:", error);
+      throw error;
+    }
+  }
+
   async getLearningKhoaHoc(
     idDangKyKhoaHoc: string,
   ): Promise<ApiResponse<KhoaHocType>> {

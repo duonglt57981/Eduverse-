@@ -1,3 +1,5 @@
+// src/app/khoa-hoc/hooks/useCourseData.ts
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -31,31 +33,67 @@ export const useCourseData = (
   useEffect(() => {
     const loadData = async () => {
       if (!courseId) {
-        setError("Không tìm thấy ID");
+        setError("Không tìm thấy ID khóa học");
         setLoading(false);
         return;
       }
-      if (!/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(courseId)) {
-        setError("ID không đúng định dạng GUID");
+
+      // Kiểm tra định dạng GUID
+      const guidRegex = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+      if (!guidRegex.test(courseId)) {
+        setError("ID khóa học không hợp lệ");
         setLoading(false);
         return;
       }
+
       try {
         setLoading(true);
+        setError("");
+
         const res = await KhoaHocSvc.getLearningKhoaHoc(courseId);
-        const data = res?.data;
+        console.log("📦 [useCourseData] Full response:", res);
+
+        // --- Lấy data từ nhiều vị trí có thể ---
+        let data: KhoaHocType | null = null;
+
+        if (res) {
+          // Trường hợp res.data là object chính (như API trả về)
+          if (
+            res.data &&
+            typeof res.data === "object" &&
+            !Array.isArray(res.data)
+          ) {
+            data = res.data;
+          }
+          // Trường hợp res.result
+          else if (res.result && typeof res.result === "object") {
+            data = res.result;
+          }
+          // Trường hợp res chính là object (nếu API trả thẳng)
+          else if (typeof res === "object" && !res.message) {
+            data = res as KhoaHocType;
+          }
+        }
 
         if (!data) {
-          setError("Không tìm thấy dữ liệu khóa học.");
+          console.warn(
+            "⚠️ [useCourseData] Không tìm thấy dữ liệu trong response",
+          );
+          setError("Không tìm thấy dữ liệu khóa học");
           setKhoaHoc(null);
           setDanhSachTatCa([]);
           return;
         }
 
+        console.log("✅ [useCourseData] Dữ liệu khóa học:", data);
         setKhoaHoc(data);
+
         const ds = flatten(data);
         setDanhSachTatCa(ds);
+        console.log("📚 [useCourseData] Số bài giảng:", ds.length);
+        console.log("📹 [useCourseData] URL video mẫu:", ds[0]?.urlBaiGiang);
       } catch (err) {
+        console.error("❌ [useCourseData] Lỗi:", err);
         const status = (err as { response?: { status?: number } })?.response
           ?.status;
         if (status === 401 || status === 403) {
@@ -65,10 +103,13 @@ export const useCourseData = (
         } else {
           setError("Có lỗi xảy ra. Vui lòng thử lại.");
         }
+        setKhoaHoc(null);
+        setDanhSachTatCa([]);
       } finally {
         setLoading(false);
       }
     };
+
     loadData();
   }, [courseId]);
 
