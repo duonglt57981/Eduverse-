@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+using CloudinaryDotNet;
 using Eduverse.Model.Entities;
 using Eduverse.Service.Common;
 using Hinet.Api.Dto;
@@ -10,6 +6,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace Eduverse.Api.Controller
 {
@@ -355,20 +356,26 @@ namespace Eduverse.Api.Controller
             // 4. Interested Skills Badges
             var interestedSkills = new List<string> { "AI", "Python", "ReactJS", "SQL Server", "AWS", "UI/UX" };
 
-
+            var unregisteredCourses = courses
+                .Where(c => !registeredCourseIds.Contains(c.Id))
+                .ToList();
 
 
             // 5. Skills Courses
-            var skillCourses = courses.Select((c, i) => new
+            var skillCourses = unregisteredCourses.Select((c, i) => new
             {
                 id = c.Id.ToString(),
                 title = c.TieuDe,
-                instructor = "Giảng viên EduVerse",
-                rating = 4.8,
+                instructor = c.CreatedBy,
                 studentsCount = c.SoLuongHocVien ?? 1500,
                 level = c.CapDo ?? "Trung cấp",
+
+                gia = c.Gia,
+                giaGoc = c.GiaGoc,
+
                 thumbnailGradient = GetGradient(i + 2)
             }).ToList();
+
 
             // 6. Premium Selection
             var premiumCourse = courses.FirstOrDefault(c => c.CapDo == "Nâng cao") ?? courses.FirstOrDefault();
@@ -376,19 +383,23 @@ namespace Eduverse.Api.Controller
             {
                 title = premiumCourse?.TieuDe ?? "Thiết kế hệ thống chuyên sâu",
                 description = premiumCourse?.MoTa ?? "Học cách thiết kế hệ thống có tính sẵn sàng cao, chịu tải hàng triệu người dùng từ các chuyên gia đầu ngành.",
-                instructor = "TS. Nguyễn Văn B",
+                instructor = premiumCourse?.CreatedBy?? "An Danh",
                 rating = 4.9,
                 studentsCount = premiumCourse?.SoLuongHocVien ?? 2500,
                 level = premiumCourse?.CapDo ?? "Nâng cao",
+                gia = premiumCourse.Gia,
+                giagoc = premiumCourse.GiaGoc,
                 thumbnailGradient = "linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)",
                 relatedCourses = courses.Take(3).Select((c, i) => new
                 {
                     id = c.Id.ToString(),
                     title = c.TieuDe,
-                    instructor = "Giảng viên EduVerse",
+                    instructor = premiumCourse?.CreatedBy ?? "An Danh",
                     rating = 4.7,
                     studentsCount = c.SoLuongHocVien ?? 1000,
                     level = c.CapDo ?? "Cơ bản",
+                    gia = c.Gia,
+                    giagoc = c.GiaGoc,
                     thumbnailGradient = GetGradient(i + 1)
                 }).ToList()
             };
@@ -401,14 +412,15 @@ namespace Eduverse.Api.Controller
                 {
                     id = c.Id.ToString(),
                     title = c.TieuDe,
-                    instructor = "Giảng viên chuyên nghiệp",
+                    instructor = premiumCourse?.CreatedBy ?? "An Danh",
                     rating = 4.8,
                     studentsCount = c.SoLuongHocVien ?? 1800,
                     level = c.CapDo ?? "Trung cấp",
+                    gia = c.Gia,
+                    giagoc = c.GiaGoc,
                     thumbnailGradient = GetGradient(i + 3)
                 }).ToList()
             };
-
             return new DataResponse<object>
             {
                 Status = true,
