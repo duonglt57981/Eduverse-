@@ -156,6 +156,52 @@ interface PagedList<T> {
   pageSize?: number;
 }
 
+/**
+ * GetListDangKi() can resolve to several shapes depending on backend/serializer
+ * behaviour:
+ *   1. KhoaHocType[]                              — raw array
+ *   2. PagedList<KhoaHocType>                      — { items: [...] }
+ *   3. ApiResponse<PagedList<KhoaHocType>>         — { data: { items: [...] } }
+ *   4. ApiResponse<KhoaHocType[]>                  — { data: [...] }
+ * This helper narrows each shape with type guards (no `any`, no illegal
+ * property access on a type that doesn't declare it) and always returns a
+ * plain KhoaHocType[].
+ */
+function isPagedList<T>(value: unknown): value is PagedList<T> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "items" in value &&
+    Array.isArray((value as { items: unknown }).items)
+  );
+}
+
+function isApiResponse<T>(value: unknown): value is ApiResponse<T> {
+  return typeof value === "object" && value !== null && "data" in value;
+}
+
+function extractCourseItems(response: unknown): KhoaHocType[] {
+  if (Array.isArray(response)) {
+    return response as KhoaHocType[];
+  }
+
+  if (isPagedList<KhoaHocType>(response)) {
+    return response.items;
+  }
+
+  if (isApiResponse<unknown>(response)) {
+    const inner = response.data;
+    if (Array.isArray(inner)) {
+      return inner as KhoaHocType[];
+    }
+    if (isPagedList<KhoaHocType>(inner)) {
+      return inner.items;
+    }
+  }
+
+  return [];
+}
+
 // ─── animations ───────────────────────────────────────────────────────────────
 
 const pulseRing = keyframes`
@@ -400,21 +446,7 @@ function MyCoursesContent() {
     try {
       const response = await khoaHocService.GetListDangKi();
 
-      // Unwrap ApiResponse<PagedList<KhoaHocType>> safely, no `any`
-      const apiResponse = response as ApiResponse<PagedList<KhoaHocType>>;
-      let items: KhoaHocType[] = [];
-
-      if (Array.isArray(response)) {
-        items = response;
-      } else if (apiResponse?.data?.items) {
-        items = apiResponse.data.items;
-      } else if (apiResponse?.items) {
-        items = apiResponse.items;
-      } else {
-        items = [];
-      }
-
-      setCourses(items);
+      setCourses(extractCourseItems(response));
     } catch (err: unknown) {
       let type: ErrorDetail["type"] = "backend";
       let message = "Không thể tải danh sách khóa học. Vui lòng thử lại sau.";

@@ -430,7 +430,7 @@ function SidebarContent({
       case "Trang chủ":
         return "/student/dashboard";
       case "Khóa học của tôi":
-        return "/student/courses";
+        return "/student/courses/my-courses";
       case "Khám phá":
         return "/student/explore";
       case "Giỏ hàng":
@@ -441,6 +441,8 @@ function SidebarContent({
         return "/student/profile";
       case "Cài đặt":
         return "/student/settings";
+      case "":
+        return "/student/enroll-courses";
       default:
         return "/student/dashboard";
     }
