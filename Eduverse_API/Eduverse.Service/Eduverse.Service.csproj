@@ -59,7 +59,6 @@
     <Folder Include="TaiLieuService\Request\" />
     <Folder Include="ThanhToanService\Dto\" />
     <Folder Include="ThanhToanService\Request\" />
-    <Folder Include="ThongBaoService\Request\" />
     <Folder Include="VaiTro_NguoiDungService\Dto\" />
     <Folder Include="VaiTro_NguoiDungService\Request\" />
   </ItemGroup>
