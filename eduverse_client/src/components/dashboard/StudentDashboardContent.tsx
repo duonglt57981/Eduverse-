@@ -568,7 +568,7 @@ interface CourseCardProps {
   width?: number;
 }
 
-function CourseCard({ course, onAddCart, width = 240 }: CourseCardProps) {
+function CourseCard({ course, onAddCart,onClick, width = 240 }: CourseCardProps) {
   const { isFavorited, toggleFavorite } = useFavorite();
   const favorited = isFavorited(course.id);
   const [hovered, setHovered] = useState(false);
@@ -1162,7 +1162,7 @@ export default function StudentDashboardContent() {
 
       {/* ── 2. AI + Assessment Banners ─────────────────────────────── */}
       <Grid container spacing={2.5}>
-        <Grid xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper
             elevation={0}
             sx={{
@@ -1243,7 +1243,7 @@ export default function StudentDashboardContent() {
           </Paper>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper
             elevation={0}
             sx={{
@@ -1336,7 +1336,7 @@ export default function StudentDashboardContent() {
         }}
       >
         <Grid container spacing={3} sx={{ alignItems: "center" }}>
-          <Grid xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Typography
               sx={{ fontSize: 17, fontWeight: 900, color: C.textDark }}
             >
@@ -1353,7 +1353,7 @@ export default function StudentDashboardContent() {
               Đã xong vòng truy cập, giờ hãy hoàn thành vòng xem.
             </Typography>
           </Grid>
-          <Grid xs={6} md={3}>
+          <Grid size={{ xs: 6, md: 3 }}>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <Box
                 sx={{
@@ -1387,7 +1387,7 @@ export default function StudentDashboardContent() {
               </Box>
             </Stack>
           </Grid>
-          <Grid xs={6} md={4}>
+          <Grid size={{ xs: 6, md: 4 }}>
             <Stack
               direction="row"
               spacing={2}
@@ -2237,8 +2237,7 @@ export default function StudentDashboardContent() {
           >
             <Grid container>
               <Grid
-                xs={12}
-                md={5}
+                size={{ xs: 12, md: 5 }}
                 sx={{
                   minHeight: 240,
                   background:
@@ -2277,8 +2276,7 @@ export default function StudentDashboardContent() {
                 />
               </Grid>
               <Grid
-                xs={12}
-                md={7}
+                size={{ xs: 12, md: 7 }}
                 sx={{
                   p: { xs: 3, md: 4 },
                   display: "flex",

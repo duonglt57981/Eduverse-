@@ -126,7 +126,7 @@ export function CourseListItem({
               />
             )}
           </Typography>
-          <Stack direction="row" spacing={0.5} flexWrap="wrap">
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
             {statusChip(course.trangThaiPheDuyet)}
           </Stack>
         </Box>

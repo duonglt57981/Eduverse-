@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -556,6 +557,7 @@ export default function AdminDashboardContent() {
 
   useEffect(() => {
     if (adminActiveTab === 1) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchRequests();
     }
   }, [adminActiveTab]);

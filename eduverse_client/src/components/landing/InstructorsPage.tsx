@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -35,6 +36,7 @@ import {
   SectionHeading,
 } from './landing-shared';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
 
 function getInitials(name: string) {

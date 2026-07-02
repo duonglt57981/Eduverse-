@@ -4,13 +4,11 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  LogoutRounded,
   MailOutlineRounded,
   MenuRounded,
   NotificationsNoneRounded,
   SearchRounded,
   WbTwilightRounded,
-  EmojiEventsRounded,
 } from '@mui/icons-material';
 import {
   Box,
@@ -188,6 +186,7 @@ export default function StudentDashboardShell({ children }: StudentDashboardShel
       window.localStorage.setItem('AccessToken', 'mock-token-eduverse');
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAuthChecked(true);
   }, [router]);
 

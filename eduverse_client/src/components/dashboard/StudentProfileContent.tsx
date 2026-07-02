@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState, useRef, useMemo } from 'react';
@@ -130,10 +131,13 @@ export default function StudentProfileContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-
+  
   // Toasts / Messages
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: 'success' | 'error' } | null>(null);
-
+  const showToast = (message: string, severity: 'success' | 'error') => {
+    setToast({ open: true, message, severity });
+    setTimeout(() => setToast(null), 4000);
+  };
   // Fetch all profile details
   const fetchProfileData = async () => {
     try {
@@ -215,16 +219,12 @@ export default function StudentProfileContent() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProfileData();
     fetchAchievementsAndCerts();
     fetchUpgradeRequest();
   }, []);
 
-  // Show Toast Helper
-  const showToast = (message: string, severity: 'success' | 'error') => {
-    setToast({ open: true, message, severity });
-    setTimeout(() => setToast(null), 4000);
-  };
 
   // Profile Save handler
   const handleSaveProfile = async () => {

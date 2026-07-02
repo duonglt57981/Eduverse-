@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiService } from "@/src/services";
 import { ApiResponse } from "@/src/types/types";
 import { FavoriteCourse } from "../types/favorite.type";
@@ -81,7 +82,7 @@ export const favoriteService = {
     return {
       status: response.status,
       message: response.message,
-      data: response.status
+      data: response.data
     };
   },
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Box,
@@ -20,7 +20,7 @@ import DashboardShell from '@/src/components/dashboard/DashboardShell';
 
 const PRIMARY = '#8D1313';
 
-export default function PaymentResultPage() {
+function PaymentResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
@@ -190,5 +190,12 @@ export default function PaymentResultPage() {
         </Box>
       </DashboardShell>
     </AuthGuard>
+  );
+}
+export default function PaymentResultPage() {
+  return (
+    <Suspense fallback={<div>Đang tải...</div>}>
+      <PaymentResultContent />
+    </Suspense>
   );
 }

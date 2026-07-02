@@ -427,7 +427,6 @@ function CourseRegistrationContent() {
                 <Stack
                   key={i}
                   direction="row"
-                  alignItems="center"
                   spacing={0.75}
                   sx={{
                     bgcolor: "rgba(255,255,255,0.06)",
@@ -436,6 +435,7 @@ function CourseRegistrationContent() {
                     px: 1.5,
                     py: 0.6,
                     color: "#ddd",
+                    alignItems:"center"
                   }}
                 >
                   {item.icon}
@@ -519,12 +519,12 @@ function CourseRegistrationContent() {
                         key={i}
                         direction="row"
                         spacing={1}
-                        alignItems="center"
                         sx={{
                           bgcolor: RED_SOFT,
                           borderRadius: 3,
                           px: 1.75,
                           py: 1,
+                          alignItems:"center"
                         }}
                       >
                         {item.icon}
@@ -558,17 +558,17 @@ function CourseRegistrationContent() {
                     <PhanCard key={phan.id ?? i}>
                       <Stack
                         direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
                         sx={{
                           p: 2,
                           background: `linear-gradient(90deg, ${RED_SOFT}, #fff)`,
+                          alignItems:"center",
+                        justifyContent:"space-between"
                         }}
                       >
                         <Stack
                           direction="row"
                           spacing={1.25}
-                          alignItems="center"
+                          sx={{ alignItems: "center" }}
                         >
                           <Box
                             sx={{
@@ -1055,11 +1055,10 @@ function CourseRegistrationContent() {
       >
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ px: 2, py: 1.25, bgcolor: "#1c1d1f" }}
+          sx={{ px: 2, py: 1.25, bgcolor: "#1c1d1f",alignItems:"center",
+          justifyContent:"space-between" }}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{alignItems:"center"}}>
             <PlayCircleIcon sx={{ fontSize: 18, color: RED }} />
             <Typography sx={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>
               {videoPlayer.title}

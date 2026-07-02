@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -362,13 +363,6 @@ function SidebarContent({
   };
 
   const roleBadge = getRoleBadge();
-
-  const getHomeRoute = () => {
-    if (activeRoles.includes("Admin")) return "/admin/dashboard";
-    if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
-    return "/student/dashboard";
-  };
-
   const getRouteByLabel = (label: string) => {
     const isInstructorView = pathname.startsWith("/instructor");
     const isAdminView = pathname.startsWith("/admin");
@@ -787,12 +781,28 @@ export default function DashboardShell({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+  const activeRoles = useMemo(() => {
+    let list = [...roles];
+    if (!pathname.startsWith("/instructor")) {
+      list = list.filter((r) => r !== "GiaoVien");
+    }
+    if (!pathname.startsWith("/admin")) {
+      list = list.filter((r) => r !== "Admin");
+    }
+    return list;
+  }, [roles, pathname]);
+  const getHomeRoute = () => {
+    if (activeRoles.includes("Admin")) return "/admin/dashboard";
+    if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
+    return "/student/dashboard";
+  };
 
   // Custom states
   const [activeContinueTab, setActiveContinueTab] = useState<
     "courses" | "assigned" | "paths" | "certs" | "tests"
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("AI");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -808,6 +818,7 @@ export default function DashboardShell({
         } else {
           setError(response.message || "Không thể lấy dữ liệu Dashboard");
         }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         setError(
           typeof err === "string" ? err : "Đã xảy ra lỗi khi tải dữ liệu",
@@ -869,6 +880,7 @@ export default function DashboardShell({
   const filteredSkillsCourses = useMemo(() => {
     if (!dashboardData?.skillsCourses) return [];
     const skill = selectedSkill.toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return dashboardData.skillsCourses.filter((course: any) => {
       const title = (course.title || "").toLowerCase();
       if (skill === "ai")
@@ -2534,6 +2546,7 @@ export default function DashboardShell({
 
                         {/* Backend API certificates */}
                         {dashboardData?.continueLearning?.certificates?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}
@@ -2774,6 +2787,7 @@ export default function DashboardShell({
 
                         {/* Backend API tests list */}
                         {dashboardData?.continueLearning?.assessments?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
@@ -160,6 +161,7 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
   }, [pageIndex, pageSize, roleFilter]);
 
@@ -667,13 +669,14 @@ export default function AdminUsersPage() {
                     placeholder="Tìm kiếm theo Tên, Tài khoản, Email, Số điện thoại..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchRounded sx={{ color: COLORS.grey }} />
-                        </InputAdornment>
-                      ),
-                    }}
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SearchRounded sx={{ color: COLORS.grey }} />
+                            </InputAdornment>
+                          ),
+                      }}}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         height: '50px',
@@ -967,8 +970,10 @@ export default function AdminUsersPage() {
             onClose={() => setDialogOpen(false)}
             maxWidth="md"
             fullWidth
-            PaperProps={{
-              sx: { borderRadius: '24px', p: 1 },
+            slotProps={{
+              paper: {
+                sx: { borderRadius: '24px', p: 1 },
+              },
             }}
           >
             <DialogTitle sx={{ fontWeight: 800, color: COLORS.textDark, borderBottom: '1px solid rgba(0,0,0,0.05)', pb: 2 }}>

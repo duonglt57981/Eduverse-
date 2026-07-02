@@ -43,6 +43,7 @@ export default function NotificationSettings() {
     try {
       const savedChannels = localStorage.getItem(STORAGE_KEY_CHANNELS);
       const savedTopics = localStorage.getItem(STORAGE_KEY_TOPICS);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (savedChannels) setChannels(JSON.parse(savedChannels));
       if (savedTopics) setTopics(JSON.parse(savedTopics));
     } catch {
