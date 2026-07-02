@@ -568,7 +568,12 @@ interface CourseCardProps {
   width?: number;
 }
 
-function CourseCard({ course, onAddCart,onClick, width = 240 }: CourseCardProps) {
+function CourseCard({
+  course,
+  onAddCart,
+  onClick,
+  width = 240,
+}: CourseCardProps) {
   const { isFavorited, toggleFavorite } = useFavorite();
   const favorited = isFavorited(course.id);
   const [hovered, setHovered] = useState(false);

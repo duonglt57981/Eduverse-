@@ -16,7 +16,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { useDispatch, useSelector } from '../../../store/hook';
 import { getDonHang } from '../../../store/thanhToan/ThanhToanSlice';
 import AuthGuard from '@/src/components/AuthGuard';
-import DashboardShell from '@/src/components/dashboard/DashboardShell';
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 
 const PRIMARY = '#8D1313';
 
@@ -44,7 +44,7 @@ function PaymentResultContent() {
 
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Box
           sx={{
             display: 'flex',
@@ -188,7 +188,7 @@ function PaymentResultContent() {
             </Stack>
           </Container>
         </Box>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

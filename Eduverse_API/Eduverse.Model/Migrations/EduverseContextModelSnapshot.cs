@@ -2067,6 +2067,62 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("IdNguoiDung")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("DonViId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileDinhKem")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("FromUser")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool?>("IsDisplay")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsXuatBan")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ItemName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ItemType")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Link")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("NguoiTao")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("SendToFrontEndUser")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("ToUser")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 

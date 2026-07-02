@@ -1,7 +1,7 @@
 "use client";
 
 import AuthGuard from "@/src/components/AuthGuard";
-import DashboardShell from "@/src/components/dashboard/DashboardShell";
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -474,7 +474,7 @@ function ThanhToanContent() {
 export default function StudentCheckoutPage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Box
           sx={{
             p: { xs: 2, md: 4 },
@@ -486,7 +486,7 @@ export default function StudentCheckoutPage() {
         >
           <ThanhToanContent />
         </Box>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }
