@@ -4,6 +4,13 @@ import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { Providers } from "../store/providers";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import { usePathname } from "next/navigation";
+import { Box } from "@mui/material";
+import {
+  LandingNavbar,
+  LandingFooter,
+  LandingThemeProvider,
+} from "../components/landing/landing-shared";
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -11,6 +18,37 @@ const beVietnamPro = Be_Vietnam_Pro({
   display: "swap",
 });
 
+function RouteLayoutWrapper({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() || "/";
+
+  const isPublicRoute = !(
+    pathname.startsWith("/admin") ||
+    (pathname === "/instructor" || pathname.startsWith("/instructor/")) ||
+    (pathname.startsWith("/student") && !pathname.startsWith("/student/enroll-courses")) ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/auth") ||
+    pathname === "/learning-paths" ||
+    pathname === "/settings"
+  );
+
+  if (isPublicRoute) {
+    return (
+      <LandingThemeProvider>
+        <Box sx={{ minHeight: "100vh", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
+          <Box sx={{ width: "100%", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 }, flexGrow: 1, display: "flex", flexDirection: "column" }}>
+            <LandingNavbar activePath={pathname} />
+            <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+              {children}
+            </Box>
+            <LandingFooter />
+          </Box>
+        </Box>
+      </LandingThemeProvider>
+    );
+  }
+
+  return <>{children}</>;
+}
 
 export default function RootLayout({
   children,
@@ -38,7 +76,7 @@ export default function RootLayout({
           <div className="App">
             <Providers>
               {/* <ConfigProvider theme={lightTheme} locale={viVN}> */}
-                {children}
+                <RouteLayoutWrapper>{children}</RouteLayoutWrapper>
               {/* </ConfigProvider> */}
             </Providers>
           </div>

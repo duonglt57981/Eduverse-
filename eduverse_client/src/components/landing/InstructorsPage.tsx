@@ -30,9 +30,6 @@ import {
   type InstructorItem,
 } from './landing-data';
 import {
-  LandingFooter,
-  LandingNavbar,
-  LandingThemeProvider,
   SectionHeading,
 } from './landing-shared';
 
@@ -298,12 +295,8 @@ export default function InstructorsPage() {
   }, [activeCategory, search]);
 
   return (
-    <LandingThemeProvider>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Box sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 } }}>
-          <LandingNavbar activePath="/instructors" />
-
-          <Box
+    <>
+      <Box
             sx={{
               pt: { xs: 5, md: 7 },
               pb: { xs: 4, md: 6 },
@@ -630,11 +623,7 @@ export default function InstructorsPage() {
               </Button>
             </Box>
           </Paper>
-
-          <LandingFooter />
-        </Box>
-      </Box>
-    </LandingThemeProvider>
+    </>
   );
 }
 

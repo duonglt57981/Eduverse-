@@ -397,7 +397,7 @@ export function CourseDetailPanel({
         </Box>
       </Box>
 
-      <Stack direction="row" spacing={2} sx={{ mb: 2.5 }} flexWrap="wrap" useFlexGap gap={1.5}>
+      <Stack direction="row" spacing={2} sx={{ mb: 2.5, flexWrap: "wrap", gap: 1.5 }} useFlexGap>
         {canSubmit && (
           <Tooltip title={isLocked ? `Bị khoá (${lockDisplay})` : ""}>
             <span>

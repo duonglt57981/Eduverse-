@@ -71,6 +71,14 @@ export function LandingThemeProvider({ children }: { children: React.ReactNode }
 export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
   const user = useSelector((s) => s.auth.user);
   const roles = useSelector((s) => s.auth.roles) || [];
+  
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.href === '/favorite' && !user) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <>
       <Box
@@ -117,7 +125,7 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
               color: 'rgba(24,24,27,0.68)',
             }}
           >
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const isActive = item.href === activePath;
               return (
                 <Typography

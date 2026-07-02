@@ -72,11 +72,15 @@ const COLORS = {
   grey: '#9CA3AF',
 };
 
-export default function StudentProfileContent() {
+interface StudentProfileContentProps {
+  onlyBecomeInstructor?: boolean;
+}
+
+export default function StudentProfileContent({ onlyBecomeInstructor = false }: StudentProfileContentProps) {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(onlyBecomeInstructor ? 4 : 0);
 
   // Instructor upgrade requests state
   const [instructorRequest, setInstructorRequest] = useState<any>(null);
@@ -562,7 +566,11 @@ export default function StudentProfileContent() {
         </Paper>
       )}
 
-      {/* 1. Header Profile Banner Cover */}
+      {!onlyBecomeInstructor && (
+        <>
+          {!onlyBecomeInstructor && (
+        <>
+          {/* 1. Header Profile Banner Cover */}
       <Paper
         elevation={0}
         sx={{
@@ -760,6 +768,10 @@ export default function StudentProfileContent() {
         <Tab label="Chứng chỉ" />
         <Tab label="Đăng ký Giảng viên" />
       </Tabs>
+        </>
+      )}
+        </>
+      )}
 
       {/* 4. Tab Content Grid */}
       <Grid container spacing={3.5}>
@@ -1591,165 +1603,336 @@ export default function StudentProfileContent() {
           </Grid>
         )}
 
-        {/* TAB 5: ĐĂNG KÝ GIẢNG VIÊN */}
+              {/* TAB 5: ĐĂNG KÝ GIẢNG VIÊN */}
         {activeTab === 4 && (
           <Grid size={{ xs: 12 }}>
             <Paper
               elevation={0}
               sx={{
-                p: 4,
+                p: { xs: 3, md: 5 },
                 borderRadius: '24px',
                 bgcolor: COLORS.white,
                 border: '1px solid rgba(141,19,19,0.06)',
+                boxShadow: '0 12px 40px rgba(141,19,19,0.03)',
               }}
             >
-              <Typography variant="h6" sx={{ fontSize: 18, fontWeight: 900, color: COLORS.textDark, mb: 0.5 }}>
-                Đăng ký nâng cấp tài khoản Giảng viên
-              </Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'rgba(31,41,55,0.5)', mb: 4 }}>
-                Trở thành giảng viên để tạo, quản lý và chia sẻ khóa học của riêng bạn trên hệ thống EduVerse.
-              </Typography>
+              <Grid container spacing={5}>
+                {/* Left Side: Info & Benefits Card */}
+                <Grid size={{ xs: 12, md: 5.2 }}>
+                  <Box
+                    sx={{
+                      p: { xs: 3.5, md: 4.5 },
+                      borderRadius: '20px',
+                      background: 'linear-gradient(135deg, #3A0B0B 0%, #8D1313 100%)',
+                      color: '#ffffff',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      boxShadow: '0 12px 30px rgba(141,19,19,0.18)',
+                    }}
+                  >
+                    {/* Background light pattern effect */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: '-20%',
+                        right: '-20%',
+                        width: '300px',
+                        height: '300px',
+                        borderRadius: '50%',
+                        background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)',
+                        pointerEvents: 'none',
+                      }}
+                    />
 
-              {instructorRequest && instructorRequest.status === 0 ? (
-                // Pending status
-                <Box
-                  sx={{
-                    p: 4,
-                    borderRadius: '16px',
-                    bgcolor: 'rgba(245, 158, 11, 0.05)',
-                    border: '1px dashed #F59E0B',
-                    textAlign: 'center',
-                    maxWidth: 500,
-                    mx: 'auto',
-                    my: 3,
-                  }}
-                >
-                  <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: '#D97706', mb: 1 }}>
-                    ⏳ Đang chờ phê duyệt
-                  </Typography>
-                  <Typography sx={{ fontSize: 13.5, color: '#B45309', lineHeight: 1.6 }}>
-                    Yêu cầu nâng cấp của bạn đã được gửi thành công vào lúc <strong>{new Date(instructorRequest.createdDate).toLocaleDateString('vi-VN')}</strong>.
-                    Ban quản trị đang xem xét thông tin của bạn. Vui lòng chờ phê duyệt.
-                  </Typography>
-                </Box>
-              ) : instructorRequest && instructorRequest.status === 1 ? (
-                // Approved status
-                <Box
-                  sx={{
-                    p: 4,
-                    borderRadius: '16px',
-                    bgcolor: 'rgba(16, 185, 129, 0.05)',
-                    border: '1px dashed #10B981',
-                    textAlign: 'center',
-                    maxWidth: 500,
-                    mx: 'auto',
-                    my: 3,
-                  }}
-                >
-                  <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: '#059669', mb: 1 }}>
-                    🎉 Đã phê duyệt!
-                  </Typography>
-                  <Typography sx={{ fontSize: 13.5, color: '#047857', lineHeight: 1.6 }}>
-                    Yêu cầu của bạn đã được phê duyệt. Bạn đã là một Giảng viên chính thức của EduVerse!
-                    Hãy đăng nhập lại để cập nhật quyền truy cập bảng quản trị dành riêng cho Giảng viên.
-                  </Typography>
-                </Box>
-              ) : (
-                // Form input (No request or Rejected status)
-                <Grid container spacing={3}>
-                  {instructorRequest && instructorRequest.status === 2 && (
-                    <Grid size={{ xs: 12 }}>
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        color: 'rgba(255,255,255,0.7)',
+                        fontWeight: 900,
+                        letterSpacing: 2,
+                        fontSize: 11,
+                        mb: 1.5,
+                        display: 'block',
+                      }}
+                    >
+                      GIẢNG VIÊN ĐỐI TÁC
+                    </Typography>
+                    
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        fontWeight: 900,
+                        fontSize: { xs: 26, md: 32 },
+                        lineHeight: 1.25,
+                        mb: 2,
+                      }}
+                    >
+                      Kiến tạo tương lai cùng EduVerse
+                    </Typography>
+
+                    <Typography
+                      sx={{
+                        fontSize: 14,
+                        color: 'rgba(255,255,255,0.8)',
+                        mb: 4.5,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      Trở thành một phần của cộng đồng giáo dục hiện đại. Chia sẻ kiến thức, tạo sức ảnh hưởng và mở khóa cơ hội phát triển không giới hạn.
+                    </Typography>
+
+                    <Stack spacing={3.5}>
+                      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                        <Box sx={{ p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '10px', display: 'flex' }}>
+                          <MilitaryTechRounded sx={{ color: '#fff', fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontWeight: 800, fontSize: 14.5, color: '#fff', mb: 0.5 }}>
+                            Chuyên môn thực chiến
+                          </Typography>
+                          <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
+                            Mang kiến thức thực tế của bạn truyền tải cho thế hệ kế nghiệp thông qua hệ thống học liệu thông minh.
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                        <Box sx={{ p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '10px', display: 'flex' }}>
+                          <EmojiEventsRounded sx={{ color: '#fff', fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontWeight: 800, fontSize: 14.5, color: '#fff', mb: 0.5 }}>
+                            Phát triển thương hiệu
+                          </Typography>
+                          <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
+                            Khẳng định uy tín chuyên môn và xây dựng cộng đồng học viên lớn mạnh của riêng bạn.
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                        <Box sx={{ p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '10px', display: 'flex' }}>
+                          <TimelineRounded sx={{ color: '#fff', fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontWeight: 800, fontSize: 14.5, color: '#fff', mb: 0.5 }}>
+                            Thu nhập hấp dẫn
+                          </Typography>
+                          <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
+                            Nhận mức chia sẻ doanh thu hấp dẫn lên đến 80%, với quy trình thanh toán nhanh chóng, minh bạch.
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                        <Box sx={{ p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '10px', display: 'flex' }}>
+                          <LocalFireDepartmentRounded sx={{ color: '#fff', fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontWeight: 800, fontSize: 14.5, color: '#fff', mb: 0.5 }}>
+                            Hỗ trợ toàn diện
+                          </Typography>
+                          <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
+                            Đội ngũ kỹ thuật hỗ trợ chuẩn hóa nội dung, thiết kế học liệu chất lượng cao từ A-Z.
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                </Grid>
+
+                {/* Right Side: Form upgrading */}
+                <Grid size={{ xs: 12, md: 6.8 }} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <Box>
+                    <Typography variant="h5" sx={{ fontSize: { xs: 20, md: 24 }, fontWeight: 900, color: COLORS.textDark, mb: 1 }}>
+                      Đăng ký nâng cấp Giảng viên
+                    </Typography>
+                    <Typography sx={{ fontSize: 13.5, color: COLORS.textSecondary, mb: 4, lineHeight: 1.6 }}>
+                      Hoàn thành mẫu đơn bên dưới. Đội ngũ kiểm duyệt EduVerse sẽ đánh giá hồ sơ và phản hồi đến bạn trong vòng 24h làm việc.
+                    </Typography>
+
+                    {instructorRequest && instructorRequest.status === 0 ? (
                       <Box
                         sx={{
-                          p: 2.5,
-                          borderRadius: '12px',
-                          bgcolor: 'rgba(239, 68, 68, 0.05)',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
-                          mb: 2,
+                          p: 4,
+                          borderRadius: '16px',
+                          bgcolor: 'rgba(245, 158, 11, 0.05)',
+                          border: '1px dashed #F59E0B',
+                          textAlign: 'center',
+                          my: 3,
                         }}
                       >
-                        <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#DC2626', mb: 0.5 }}>
-                          ❌ Yêu cầu trước đó bị từ chối
+                        <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: '#D97706', mb: 1 }}>
+                          ⏳ Đang chờ phê duyệt
                         </Typography>
-                        <Typography sx={{ fontSize: 13, color: '#B91C1C', lineHeight: 1.5 }}>
-                          Lý do phản hồi từ Admin: {instructorRequest.adminNotes || 'Không có ghi chú.'}
-                        </Typography>
-                        <Typography sx={{ fontSize: 12, color: 'rgba(185,28,28,0.7)', mt: 1, fontWeight: 600 }}>
-                          Bạn có thể điều chỉnh thông tin bên dưới và gửi lại yêu cầu mới.
+                        <Typography sx={{ fontSize: 13.5, color: '#B45309', lineHeight: 1.6 }}>
+                          Yêu cầu nâng cấp của bạn đã được gửi thành công vào lúc <strong>{new Date(instructorRequest.createdDate).toLocaleDateString('vi-VN')}</strong>.
+                          Ban quản trị đang xem xét thông tin của bạn. Vui lòng chờ phê duyệt.
                         </Typography>
                       </Box>
-                    </Grid>
-                  )}
-
-                  <Grid size={{ xs: 12 }}>
-                    <TextFieldAny
-                      fullWidth
-                      label="Lĩnh vực chuyên môn"
-                      value={specialty}
-                      onChange={(e: any) => setSpecialty(e.target.value)}
-                      placeholder="Ví dụ: Công nghệ thông tin, Thiết kế đồ họa, Quản trị kinh doanh..."
-                      InputLabelProps={{ shrink: true }}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <TextFieldAny
-                      fullWidth
-                      multiline
-                      rows={4}
-                      label="Kinh nghiệm làm việc & giảng dạy"
-                      value={experience}
-                      onChange={(e: any) => setExperience(e.target.value)}
-                      placeholder="Chi tiết về các dự án đã tham gia, số năm kinh nghiệm, các đơn vị đã công tác..."
-                      InputLabelProps={{ shrink: true }}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <TextFieldAny
-                      fullWidth
-                      multiline
-                      rows={3}
-                      label="Lý do & Kế hoạch giảng dạy tại EduVerse"
-                      value={motivation}
-                      onChange={(e: any) => setMotivation(e.target.value)}
-                      placeholder="Tại sao bạn muốn giảng dạy tại đây và bạn dự kiến biên soạn các chủ đề khóa học nào?"
-                      InputLabelProps={{ shrink: true }}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 1 }}>
-                      <Button
-                        variant="contained"
-                        onClick={handleSubmitUpgrade}
-                        disabled={saveLoading}
+                    ) : instructorRequest && instructorRequest.status === 1 ? (
+                      <Box
                         sx={{
-                          bgcolor: COLORS.primary,
-                          color: '#fff',
-                          fontWeight: 800,
-                          borderRadius: '12px',
-                          px: 4,
-                          py: 1.25,
-                          boxShadow: 'none',
-                          '&:hover': { bgcolor: COLORS.primaryDark, boxShadow: 'none' },
+                          p: 4,
+                          borderRadius: '16px',
+                          bgcolor: 'rgba(16, 185, 129, 0.05)',
+                          border: '1px dashed #10B981',
+                          textAlign: 'center',
+                          my: 3,
                         }}
                       >
-                        {saveLoading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Gửi yêu cầu xét duyệt'}
-                      </Button>
-                    </Stack>
-                  </Grid>
+                        <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: '#059669', mb: 1 }}>
+                          🎉 Đã phê duyệt!
+                        </Typography>
+                        <Typography sx={{ fontSize: 13.5, color: '#047857', lineHeight: 1.6 }}>
+                          Yêu cầu của bạn đã được phê duyệt. Bạn đã là một Giảng viên chính thức của EduVerse!
+                          Hãy đăng nhập lại để cập nhật quyền truy cập bảng quản trị dành riêng cho Giảng viên.
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Grid container spacing={3.5}>
+                        {instructorRequest && instructorRequest.status === 2 && (
+                          <Grid size={{ xs: 12 }}>
+                            <Box
+                              sx={{
+                                p: 2.5,
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(239, 68, 68, 0.05)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                mb: 2,
+                              }}
+                            >
+                              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#DC2626', mb: 0.5 }}>
+                                ❌ Yêu cầu trước đó bị từ chối
+                              </Typography>
+                              <Typography sx={{ fontSize: 13, color: '#B91C1C', lineHeight: 1.5 }}>
+                                Lý do phản hồi từ Admin: {instructorRequest.adminNotes || 'Không có ghi chú.'}
+                              </Typography>
+                              <Typography sx={{ fontSize: 12, color: 'rgba(185,28,28,0.7)', mt: 1, fontWeight: 600 }}>
+                                Bạn có thể điều chỉnh thông tin bên dưới và gửi lại yêu cầu mới.
+                              </Typography>
+                            </Box>
+                          </Grid>
+                        )}
+
+                        <Grid size={{ xs: 12 }}>
+                          <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
+                            <MilitaryTechRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
+                            <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
+                              Lĩnh vực chuyên môn
+                            </Typography>
+                          </Stack>
+                          <TextFieldAny
+                            fullWidth
+                            value={specialty}
+                            onChange={(e: any) => setSpecialty(e.target.value)}
+                            placeholder="Ví dụ: Công nghệ thông tin, Thiết kế đồ họa, Quản trị kinh doanh..."
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(141,19,19,0.01)',
+                                '&:hover fieldset': { borderColor: COLORS.primaryLight },
+                                '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: '2px' },
+                              }
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
+                            <TimelineRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
+                            <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
+                              Kinh nghiệm làm việc & giảng dạy
+                            </Typography>
+                          </Stack>
+                          <TextFieldAny
+                            fullWidth
+                            multiline
+                            rows={4}
+                            value={experience}
+                            onChange={(e: any) => setExperience(e.target.value)}
+                            placeholder="Chi tiết về các dự án đã tham gia, số năm kinh nghiệm, các đơn vị đã công tác..."
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(141,19,19,0.01)',
+                                '&:hover fieldset': { borderColor: COLORS.primaryLight },
+                                '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: '2px' },
+                              }
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
+                            <LocalFireDepartmentRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
+                            <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
+                              Lý do & Kế hoạch giảng dạy tại EduVerse
+                            </Typography>
+                          </Stack>
+                          <TextFieldAny
+                            fullWidth
+                            multiline
+                            rows={3}
+                            value={motivation}
+                            onChange={(e: any) => setMotivation(e.target.value)}
+                            placeholder="Tại sao bạn muốn giảng dạy tại đây và bạn dự kiến biên soạn các chủ đề khóa học nào?"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(141,19,19,0.01)',
+                                '&:hover fieldset': { borderColor: COLORS.primaryLight },
+                                '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: '2px' },
+                              }
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 1.5 }}>
+                            <Button
+                              variant="contained"
+                              onClick={handleSubmitUpgrade}
+                              disabled={saveLoading}
+                              sx={{
+                                bgcolor: COLORS.primary,
+                                color: '#fff',
+                                fontWeight: 800,
+                                fontSize: 14.5,
+                                borderRadius: '12px',
+                                px: 5,
+                                py: 1.5,
+                                textTransform: 'none',
+                                boxShadow: '0 6px 20px rgba(141,19,19,0.2)',
+                                transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s',
+                                '&:hover': {
+                                  bgcolor: COLORS.primaryLight,
+                                  boxShadow: '0 8px 25px rgba(141,19,19,0.3)',
+                                  transform: 'translateY(-1px)',
+                                },
+                                '&:active': {
+                                  transform: 'translateY(0)',
+                                }
+                              }}
+                            >
+                              {saveLoading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Gửi yêu cầu xét duyệt'}
+                            </Button>
+                          </Stack>
+                        </Grid>
+                      </Grid>
+                    )}
+                  </Box>
                 </Grid>
-              )}
+              </Grid>
             </Paper>
           </Grid>
         )}
       </Grid>
-
-      {/* dialog for crop modal */}
+{/* dialog for crop modal */}
       <Dialog open={showCropDialog} onClose={() => setShowCropDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={{ fontSize: 17, fontWeight: 900, color: COLORS.textDark }}>

@@ -64,6 +64,7 @@ import {
 } from "@mui/material";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
+import DashboardHeader from "./DashboardHeader";
 import {
   getSidebarItemsByRole,
   getSecondarySidebarItemsByRole,
@@ -513,7 +514,7 @@ function SidebarContent({
                     boxShadow: "0 8px 24px rgba(141,19,19,0.25)",
                   },
                 }}
-                onClick={() => router.push("/student/profile")}
+                onClick={() => router.push("/student/become-instructor")}
               >
                 <Typography sx={{ fontSize: 13, fontWeight: 800, mb: 0.5 }}>
                   🎓 Trở thành Giảng viên
@@ -997,6 +998,7 @@ export default function DashboardShell({
         {/* ========================================================= */}
         {/* 1. HEADER NAVIGATION (Fixed)                              */}
         {/* ========================================================= */}
+        {pathname.startsWith("/admin") ? (
         <Box
           component="header"
           sx={{
@@ -1573,48 +1575,55 @@ export default function DashboardShell({
             </Stack>
           </Stack>
         </Box>
+        ) : (
+          <DashboardHeader onMenuClick={undefined} />
+        )}
+
+
 
         {/* ========================================================= */}
         {/* SIDEBAR DRAWER (COLLAPSED FOR MOBILE/TABLET)              */}
-        {/* ========================================================= */}
-        <Drawer
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: "block", lg: "none" },
-            "& .MuiDrawer-paper": {
-              width: sidebarWidth,
-              boxSizing: "border-box",
-              mt: headerHeight,
-              height: `calc(100% - ${headerHeight})`,
-              boxShadow: "12px 0 24px rgba(0,0,0,0.03)",
-              borderRight: "1px solid rgba(0,0,0,0.06)",
-            },
-          }}
-        >
-          <SidebarContent onLogout={handleLogout} roles={roles} />
-        </Drawer>
+        {/* ========================================================= */}        {!pathname.startsWith("/instructor") && (
+          <Drawer
+            open={mobileOpen}
+            onClose={() => setMobileOpen(false)}
+            ModalProps={{ keepMounted: true }}
+            sx={{
+              display: { xs: "block", lg: "none" },
+              "& .MuiDrawer-paper": {
+                width: sidebarWidth,
+                boxSizing: "border-box",
+                mt: headerHeight,
+                height: `calc(100% - ${headerHeight})`,
+                boxShadow: "12px 0 24px rgba(0,0,0,0.03)",
+                borderRight: "1px solid rgba(0,0,0,0.06)",
+              },
+            }}
+          >
+            <SidebarContent onLogout={handleLogout} roles={roles} />
+          </Drawer>
+        )}
 
         {/* ========================================================= */}
         {/* MAIN LAYOUT STRUCTURE                                     */}
         {/* ========================================================= */}
         <Box
           sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
-        >
-          {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
-          <Box
-            sx={{
-              width: sidebarWidth,
-              flexShrink: 0,
-              display: { xs: "none", lg: "block" },
-              borderRight: "1px solid rgba(0,0,0,0.06)",
-              height: "100%",
-              bgcolor: COLORS.white,
-            }}
-          >
-            <SidebarContent onLogout={handleLogout} roles={roles} />
-          </Box>
+        >          {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
+          {!pathname.startsWith("/instructor") && (
+            <Box
+              sx={{
+                width: sidebarWidth,
+                flexShrink: 0,
+                display: { xs: "none", lg: "block" },
+                borderRight: "1px solid rgba(0,0,0,0.06)",
+                height: "100%",
+                bgcolor: COLORS.white,
+              }}
+            >
+              <SidebarContent onLogout={handleLogout} roles={roles} />
+            </Box>
+          )}
 
           {/* 2. MAIN CONTENT SCROLL AREA (Expanded Single Column Layout) */}
           <Box
