@@ -24,7 +24,7 @@ import { Certificate } from "@/src/types/certificate";
 import CertificateViewerModal from "./CertificateViewerModal";
 import Swal from "sweetalert2";
 
-interface CertificateCardProps {s
+interface CertificateCardProps {
   certificate: Certificate;
 }
 

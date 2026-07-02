@@ -38,11 +38,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
     try {
       const response = await favoriteService.addFavorite(courseId);
       if (response.status) {
-        const updatedFavorites = [...get().favorites, response.data];
-        set({
-          favorites: updatedFavorites,
-          favoriteCount: updatedFavorites.length,
-        });
+        await get().fetchFavorites();
         return response.data;
       }
       throw new Error(response.message || "Không thể thêm vào danh sách yêu thích");
@@ -56,13 +52,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
     try {
       const response = await favoriteService.removeFavorite(courseId);
       if (response.status) {
-        const updatedFavorites = get().favorites.filter(
-          (item) => item.khoaHocId !== courseId && item.id !== courseId
-        );
-        set({
-          favorites: updatedFavorites,
-          favoriteCount: updatedFavorites.length,
-        });
+        await get().fetchFavorites();
       } else {
         throw new Error(response.message || "Không thể xóa khỏi danh sách yêu thích");
       }

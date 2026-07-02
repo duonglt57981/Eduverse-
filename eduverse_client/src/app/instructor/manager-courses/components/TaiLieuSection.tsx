@@ -62,6 +62,7 @@ export function TaiLieuSection({
       fd.append("Document", file);
       fd.append("TenTaiLieu", file.name);
       fd.append("LoaiTaiLieu", file.type.includes("pdf") ? "PDF" : "TaiLieu");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await tlSvc.CreateTaiLieu(fd as any);
       show("Đã thêm tài liệu");
       setAdding(false);

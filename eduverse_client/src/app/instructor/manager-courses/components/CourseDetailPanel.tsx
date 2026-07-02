@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/instructor/manager-courses/components/CourseDetailPanel.tsx
 "use client";
 
@@ -68,6 +69,7 @@ export function CourseDetailPanel({
   const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentCourse(initialCourse);
     setPhanList((initialCourse as any).danhSachPhanHoc ?? []);
   }, [initialCourse]);
@@ -75,6 +77,7 @@ export function CourseDetailPanel({
   // Đếm ngược thời gian khoá
   useEffect(() => {
     if (!lockExpiry) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRemainingSeconds(0);
       return;
     }
@@ -91,6 +94,15 @@ export function CourseDetailPanel({
     }, 1000);
     return () => clearInterval(interval);
   }, [lockExpiry]);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const draft = isDraftCourse(currentCourse);
   const current = isCurrentVersion(currentCourse);
@@ -99,8 +111,7 @@ export function CourseDetailPanel({
   const isChoDuyet = currentCourse.trangThaiPheDuyet === "ChoDuyet";
   const isDaDuyet = currentCourse.trangThaiPheDuyet === "DaDuyet";
 
-  const canEditContent =
-    currentCourse.isBanHienTai === true && !isLockedApproved;
+  const canEditContent = currentCourse.daDangKy === true && !isLockedApproved;
   const baseKhoaHocId = draft ? currentCourse.idBanGhiTruoc : currentCourse.id;
 
   const canSubmit = !isLockedApproved && (isDangSua || draft);
@@ -108,7 +119,7 @@ export function CourseDetailPanel({
   const canPublish = isDaDuyet && draft;
   const canCreateDraftFromApproved = isLockedApproved;
 
-  const isLocked = lockExpiry !== null && Date.now() < lockExpiry;
+  const isLocked = lockExpiry !== null && currentTime < lockExpiry;
   const lockMinutes = Math.floor(remainingSeconds / 60);
   const lockSeconds = remainingSeconds % 60;
   const lockDisplay = `${lockMinutes}:${lockSeconds.toString().padStart(2, "0")}`;
@@ -233,15 +244,16 @@ export function CourseDetailPanel({
       { trangThaiPheDuyet: "DangSua" },
     );
   };
+  // Chua có API cho PublishDraft, nên tạm comment lại
 
-  const handlePublishDraft = () => {
-    handleStatusChange(
-      () => khoaHocSvc.PublishDraft(currentCourse.id!),
-      "Đã xuất bản bản nháp thành công",
-      "Lỗi xuất bản",
-      { trangThaiPheDuyet: "DaDuyet" },
-    );
-  };
+  // const handlePublishDraft = () => {
+  //   handleStatusChange(
+  //     () => khoaHocSvc.PublishDraft(currentCourse.id!),
+  //     "Đã xuất bản bản nháp thành công",
+  //     "Lỗi xuất bản",
+  //     { trangThaiPheDuyet: "DaDuyet" },
+  //   );
+  // };
 
   const minutes = Math.floor((currentCourse.tongThoiLuong ?? 0) / 60);
 
@@ -321,7 +333,7 @@ export function CourseDetailPanel({
               />
             )}
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" gap={0.5}>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap",gap: 0.5 }}>
             {statusChip(currentCourse.trangThaiPheDuyet)}
             {statusChip(currentCourse.trangThai)}
             {(currentCourse as any).danhSachDanhMuc?.map((dm: any) => (
@@ -417,7 +429,7 @@ export function CourseDetailPanel({
             <span>
               <RedBtn
                 startIcon={<CheckCircleIcon />}
-                onClick={handlePublishDraft}
+                // onClick={handlePublishDraft}
                 disabled={changing || isLocked}
               >
                 Xuất bản bản nháp

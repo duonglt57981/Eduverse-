@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Eduverse.Service.DanhSachYeuThichService.Dto
 {
@@ -10,5 +10,9 @@ namespace Eduverse.Service.DanhSachYeuThichService.Dto
         public Guid? IdKhoaHoc { get; set; }
         public string? TenKhoaHoc { get; set; }
         public DateTime CreatedDate { get; set; }   // từ AuditableEntity
+        public string? MoTa { get; set; }
+        public string? HinhAnh { get; set; }
+        public string? GiangVien { get; set; }
+        public double? GiaTien { get; set; }
     }
 }

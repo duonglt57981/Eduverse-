@@ -43,6 +43,7 @@ import {
   SectionHeading,
 } from './landing-shared';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
 
 type CourseSortOption = 'newest' | 'rating' | 'price-low';

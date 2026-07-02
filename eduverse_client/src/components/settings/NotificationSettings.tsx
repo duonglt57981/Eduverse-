@@ -43,6 +43,7 @@ export default function NotificationSettings() {
     try {
       const savedChannels = localStorage.getItem(STORAGE_KEY_CHANNELS);
       const savedTopics = localStorage.getItem(STORAGE_KEY_TOPICS);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (savedChannels) setChannels(JSON.parse(savedChannels));
       if (savedTopics) setTopics(JSON.parse(savedTopics));
     } catch {
@@ -134,7 +135,7 @@ export default function NotificationSettings() {
               <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                 <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                   <Box sx={{ color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08), width: 40, height: 40, borderRadius: 2, display: 'grid', placeItems: 'center' }}>
-                    <NotificationsNoneRounded fontSize="small" />
+                    <NotificationsNoneRounded fontSize="large" />
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: 14.5, fontWeight: 800 }}>Thông báo trình duyệt (Push Notification)</Typography>

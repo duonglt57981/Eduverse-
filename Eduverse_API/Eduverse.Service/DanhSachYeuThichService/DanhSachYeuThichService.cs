@@ -60,6 +60,28 @@ namespace Eduverse.Service.DanhSachYeuThichService
                 TenKhoaHoc = _khoaHocRepository.GetQueryable()
                     .Where(kh => kh.Id == x.IdKhoaHoc)
                     .Select(kh => kh.TieuDe)
+                    .FirstOrDefault(),
+                MoTa = _khoaHocRepository.GetQueryable()
+                    .Where(kh => kh.Id == x.IdKhoaHoc)
+                    .Select(kh => kh.MoTa)
+                    .FirstOrDefault(),
+                HinhAnh = _khoaHocRepository.GetQueryable()
+                    .Where(kh => kh.Id == x.IdKhoaHoc)
+                    .Select(kh => kh.HinhAnhKhoaHoc)
+                    .FirstOrDefault(),
+                GiangVien = _appUserRepository.GetQueryable()
+                    .Where(u => u.Id == _khoaHocRepository.GetQueryable()
+                        .Where(kh => kh.Id == x.IdKhoaHoc)
+                        .Select(kh => kh.CreatedId)
+                        .FirstOrDefault())
+                    .Select(u => u.HoTen)
+                    .FirstOrDefault() ?? _khoaHocRepository.GetQueryable()
+                        .Where(kh => kh.Id == x.IdKhoaHoc)
+                        .Select(kh => kh.CreatedBy)
+                        .FirstOrDefault(),
+                GiaTien = _khoaHocRepository.GetQueryable()
+                    .Where(kh => kh.Id == x.IdKhoaHoc)
+                    .Select(kh => kh.Gia)
                     .FirstOrDefault()
             });
 

@@ -1,31 +1,32 @@
 'use client';
 
+import { useEffect } from 'react';
 import AuthGuard from '@/src/components/AuthGuard';
-import DashboardShell from '@/src/components/dashboard/DashboardShell';
-import { Box, Typography, Paper } from '@mui/material';
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
+import { Box } from '@mui/material';
+import { useFavorite } from '@/src/features/favorite/hooks/useFavorite';
+import FavoriteHeader from '@/src/features/favorite/components/FavoriteHeader';
+import FavoriteGrid from '@/src/features/favorite/components/FavoriteGrid';
 
 export default function StudentFavoritesPage() {
+  const { favorites, loading, fetchFavorites, removeFavorite } = useFavorite();
+
+  useEffect(() => {
+    void fetchFavorites();
+  }, [fetchFavorites]);
+
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <DashboardShell>
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 4.5, 
-            borderRadius: '24px', 
-            border: '1px solid rgba(141,19,19,0.06)',
-            bgcolor: '#ffffff',
-            boxShadow: '0 10px 30px rgba(141,19,19,0.015)'
-          }}
-        >
-          <Typography variant="h5" sx={{ fontWeight: 900, color: '#8D1313', mb: 2 }}>
-            Danh sách yêu thích
-          </Typography>
-          <Typography sx={{ color: 'rgba(31,41,55,0.6)', lineHeight: 1.6 }}>
-            Tính năng này đang được EduVerse phát triển và sẽ sớm ra mắt trong phiên bản tiếp theo.
-          </Typography>
-        </Paper>
-      </DashboardShell>
+      <StudentDashboardShell>
+        <Box sx={{ py: 2 }}>
+          <FavoriteHeader count={favorites.length} />
+          <FavoriteGrid
+            favorites={favorites}
+            loading={loading}
+            onRemove={removeFavorite}
+          />
+        </Box>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

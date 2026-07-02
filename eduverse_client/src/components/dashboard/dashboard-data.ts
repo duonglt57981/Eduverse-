@@ -36,7 +36,10 @@ import {
   PeopleAltRounded,
   HelpOutlineRounded,
   CategoryRounded,
-  ShoppingCartRounded
+  ShoppingCartRounded,
+  AccountBalanceRounded,
+  PaymentsRounded,
+  AccountBalanceWalletRounded,
 } from '@mui/icons-material';
 import type { SvgIconComponent } from '@mui/icons-material';
 
@@ -157,8 +160,6 @@ export const sidebarPrimaryItems: DashboardNavItem[] = [
   { label: 'Trang chủ', icon: HomeRounded },
   { label: 'Khóa học của tôi', icon: MenuBookRounded },
   { label: 'Khám phá', icon: ExploreRounded },
-  { label: 'Giỏ hàng', icon: ShoppingCartRounded },
-  { label: 'Yêu thích', icon: FavoriteBorderRounded },
   { label: 'Cài đặt', icon: SettingsRounded },
 ] as const;
 
@@ -169,6 +170,7 @@ export const sidebarGiaoVienItems: DashboardNavItem[] = [
   { label: 'Khóa học', icon: SchoolRounded },
   { label: 'Học viên', icon: PeopleRounded },
   { label: 'Doanh thu', icon: AssessmentRounded },
+  { label: "Ngân hàng", icon: AccountBalanceRounded },
   { label: 'Q&A', icon: HelpOutlineRounded },
   { label: 'Cài đặt', icon: SettingsRounded },
 ] as const;
@@ -184,6 +186,7 @@ export const sidebarAdminItems: DashboardNavItem[] = [
   { label: 'Bài kiểm tra', icon: QuizRounded },
   { label: 'Khuyến mãi', icon: LocalOfferRounded },
   { label: 'Thanh toán', icon: CreditCardRounded },
+  { label: "Rút tiền", icon: AccountBalanceWalletRounded },
   { label: 'Thông báo', icon: NotificationsRounded },
   { label: 'Cài đặt', icon: SettingsRounded },
 ] as const;

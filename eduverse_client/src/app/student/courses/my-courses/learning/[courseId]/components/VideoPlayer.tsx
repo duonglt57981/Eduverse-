@@ -1,4 +1,5 @@
-// src/app/khoa-hoc/components/VideoPlayer.tsx
+// src/app/student/courses/my-courses/learning/[courseId]/components/VideoPlayer.tsx
+// (hoặc src/app/khoa-hoc/components/VideoPlayer.tsx)
 
 "use client";
 
@@ -24,6 +25,15 @@ interface VideoPlayerProps {
   isCompleted?: boolean;
   onTimeUpdate: (t: number) => void;
   onEnded: () => void;
+}
+
+// Interface để truy cập vhs từ tech
+interface TechWithVhs {
+  vhs?: {
+    stats?: {
+      bandwidth?: number;
+    };
+  };
 }
 
 export const VideoPlayer = ({
@@ -60,7 +70,14 @@ export const VideoPlayer = ({
 
   const activeUrlRef = useRef<string>(url);
 
-  // Kiểm tra URL có phải HLS không
+  // Xác định loại video dựa trên extension
+  const getVideoType = useMemo(() => {
+    if (url.includes(".m3u8")) return "application/x-mpegURL";
+    if (url.includes(".ts")) return "video/MP2T";
+    if (url.includes(".mp4")) return "video/mp4";
+    return "video/mp4"; // fallback
+  }, [url]);
+
   const isHls = useMemo(() => {
     return url.includes(".m3u8");
   }, [url]);
@@ -161,7 +178,7 @@ export const VideoPlayer = ({
     containerRef.current.appendChild(videoEl);
 
     // Xác định type source
-    const sourceType = isHlsUrl ? "application/x-mpegURL" : "video/mp4";
+    const sourceType = isHlsUrl ? "application/x-mpegURL" : getVideoType;
 
     const player = videojs(videoEl, {
       controls: true,
@@ -275,10 +292,11 @@ export const VideoPlayer = ({
       const ct = player.currentTime() ?? 0;
       // Lấy bandwidth nếu là HLS
       if (isHlsUrl) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const tech = player.tech(true);
-        if (tech?.vhs?.stats?.bandwidth) {
-          setCurrentBandwidthKbps(Math.round(tech.vhs.stats.bandwidth / 1000));
+        // Sử dụng interface đã định nghĩa để tránh any
+        const vhs = (tech as unknown as TechWithVhs)?.vhs;
+        if (vhs?.stats?.bandwidth) {
+          setCurrentBandwidthKbps(Math.round(vhs.stats.bandwidth / 1000));
         }
       }
       if (ct - lastSent >= 10) {
@@ -295,7 +313,8 @@ export const VideoPlayer = ({
       if (isHlsUrl && currentSrc.includes(".m3u8") && info) {
         console.warn("[VideoPlayer] HLS failed, falling back to direct file");
         const fallbackUrl = url; // URL gốc
-        player.src({ src: fallbackUrl, type: "video/mp4" });
+        const fallbackType = url.includes(".ts") ? "video/MP2T" : "video/mp4";
+        player.src({ src: fallbackUrl, type: fallbackType });
         player.load();
         player.one("error", () => {
           clearAllTimers();
@@ -341,10 +360,12 @@ export const VideoPlayer = ({
       const finalUrl = masterUrl || url;
       activeUrlRef.current = finalUrl;
       const isHlsUrl = finalUrl.includes(".m3u8");
-      p.src({
-        src: finalUrl,
-        type: isHlsUrl ? "application/x-mpegURL" : "video/mp4",
-      });
+      const type = isHlsUrl
+        ? "application/x-mpegURL"
+        : finalUrl.includes(".ts")
+          ? "video/MP2T"
+          : "video/mp4";
+      p.src({ src: finalUrl, type });
       p.load();
     }
   }, [url, startLoadTimeout]);

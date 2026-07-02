@@ -18,6 +18,8 @@ namespace Eduverse.Service.KhoaHocService
 
         Task<PagedList<GetDangKiKhoaHocDto>> GetListDangKi(KhoaHocDangKiSearch search);
 
+        Task<KhoaHocDto> GetKhoaHocPreview(Guid idKhoaHoc);
+
         Task<KhoaHocDto> GetLearning(Guid idDangKy);
 
         Task<KhoaHocDto> ChuyenTrangThaiDangSua(Guid IdKhoaHoc);

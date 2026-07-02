@@ -3,7 +3,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import {
   Box,
@@ -19,6 +20,7 @@ import {
   Drawer,
   Paper,
   Chip,
+  LinearProgress,
 } from "@mui/material";
 import {
   ChevronRight as ChevronRightIcon,
@@ -51,13 +53,17 @@ const baiKiemTraSvc = new BaiKiemTraService();
 const PRIMARY_RED = "#8B1A1A";
 const PRIMARY_RED_DARK = "#6B1414";
 const SIDEBAR_W = 380;
-const HEADER_H = 64;
+const HEADER_H = 86;
 
 export default function KhoaHocLearningPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const params = useParams();
+  const pathname = usePathname();
   const courseId = (params?.courseId || params?.id) as string | undefined;
+  
+  const role = pathname.split('/')[1] || 'student';
+  const dashboardPath = `/${role}/dashboard`;
 
   console.log("📌 [KhoaHocLearningPage] courseId:", courseId);
 
@@ -381,7 +387,7 @@ export default function KhoaHocLearningPage() {
           <Typography color="text.secondary" sx={{ mb: 3 }}>
             Dữ liệu khóa học trống hoặc không hợp lệ. Vui lòng thử lại.
           </Typography>
-          <Stack direction="row" spacing={1.5} justifyContent="center">
+          <Stack direction="row" spacing={1.5} sx={{ justifyContent: "center" }}>
             <Button variant="outlined" onClick={() => window.location.reload()}>
               Tải lại
             </Button>
@@ -428,14 +434,18 @@ export default function KhoaHocLearningPage() {
         }}
       >
         <Toolbar sx={{ minHeight: HEADER_H, gap: 2, px: { xs: 2, md: 3 } }}>
-          <Image
-            src="/khoahoc/1-removebg-preview.png"
-            alt="EduVerse"
-            width={110}
-            height={36}
-            style={{ objectFit: "contain" }}
-            priority
-          />
+          <Box sx={{ width: { xs: 120, sm: 140, lg: 170 }, cursor: 'pointer' }}>
+            <Link href={dashboardPath} style={{ display: 'block', width: '100%' }}>
+              <Image
+                src="/auth/img/logo_nentrang.png"
+                alt="EduVerse"
+                width={170}
+                height={52}
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+                priority
+              />
+            </Link>
+          </Box>
           {isMobile && (
             <IconButton
               onClick={() => setSidebarOpen(true)}
@@ -460,42 +470,26 @@ export default function KhoaHocLearningPage() {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Box
-              sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                Tiến độ
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 700, color: PRIMARY_RED }}
-              >
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", display: { xs: "none", sm: "flex" }, bgcolor: alpha(PRIMARY_RED, 0.05), px: 1.5, py: 0.5, borderRadius: 2 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: PRIMARY_RED }}>
                 {phanTramHoanThanh}%
               </Typography>
-            </Box>
-            <Box sx={{ width: { xs: 70, sm: 110 } }}>
-              <Box
-                sx={{
-                  height: 5,
-                  borderRadius: 3,
-                  backgroundColor: alpha(PRIMARY_RED, 0.15),
-                  overflow: "hidden",
-                }}
-              >
-                <Box
+              <Box sx={{ width: 80 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={phanTramHoanThanh}
                   sx={{
-                    height: "100%",
+                    height: 6,
                     borderRadius: 3,
-                    backgroundColor: PRIMARY_RED,
-                    width: `${phanTramHoanThanh}%`,
-                    transition: "width 0.3s ease",
+                    backgroundColor: alpha(PRIMARY_RED, 0.15),
+                    "& .MuiLinearProgress-bar": { backgroundColor: PRIMARY_RED, borderRadius: 3 },
                   }}
                 />
               </Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
                 {soBaiHoanThanh}/{tongBai}
               </Typography>
-            </Box>
+            </Stack>
             {coTiepTheo && (
               <Button
                 variant="contained"
@@ -561,22 +555,22 @@ export default function KhoaHocLearningPage() {
               </Box>
 
               {/* Info section */}
-              <Box sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>
+              <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, maxWidth: 1200, mx: "auto", width: "100%" }}>
                 {baiGiang && (
                   <Stack
                     direction="row"
-                    spacing={0.5}
-                    sx={{ mb: 1.5, alignItems: "center", flexWrap: "wrap" }}
+                    spacing={0.75}
+                    sx={{ mb: 2, alignItems: "center", flexWrap: "wrap" }}
                   >
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                       {khoaHoc.danhSachPhanHoc?.find((p) => p.id === idPhanPlay)
                         ?.tenPhan ?? ""}
                     </Typography>
                     <ChevronRightIcon
-                      sx={{ fontSize: 14, color: "text.disabled" }}
+                      sx={{ fontSize: 16, color: "text.disabled" }}
                     />
                     <Typography
-                      variant="caption"
+                      variant="body2"
                       sx={{ fontWeight: 600, color: PRIMARY_RED }}
                     >
                       {baiGiang.tieuDe}
@@ -586,15 +580,15 @@ export default function KhoaHocLearningPage() {
 
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
-                  spacing={2}
+                  spacing={3}
                   sx={{
-                    mb: 2,
+                    mb: 4,
                     justifyContent: "space-between",
                     alignItems: "flex-start",
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: "text.primary" }}>
                       {baiGiang?.tieuDe ?? khoaHoc.tieuDe}
                     </Typography>
                     <Stack
@@ -649,16 +643,23 @@ export default function KhoaHocLearningPage() {
 
                 {khoaHoc.moTa && (
                   <Paper
-                    variant="outlined"
-                    sx={{ p: 2, mt: 2, borderRadius: 2 }}
+                    elevation={0}
+                    sx={{
+                      p: { xs: 2.5, md: 3 },
+                      mt: 3,
+                      borderRadius: 3,
+                      border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+                      boxShadow: `0px 2px 10px ${alpha(theme.palette.common.black, 0.03)}`,
+                      backgroundColor: "background.paper",
+                    }}
                   >
                     <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 700, mb: 0.75 }}
+                      variant="subtitle1"
+                      sx={{ fontWeight: 800, mb: 1.5, color: "text.primary" }}
                     >
                       Mô tả khóa học
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
                       {khoaHoc.moTa}
                     </Typography>
                   </Paper>

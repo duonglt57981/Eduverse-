@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/instructor/manager-courses/components/CourseDialog.tsx
 "use client";
 
@@ -100,34 +101,37 @@ export function CourseDialog({
 
   // ── Load danh mục ──────────────────────────────────────────────────────────
   const loadDanhMuc = useCallback(async () => {
-    if (danhMucList.length > 0) return;
-    setDanhMucLoading(true);
-    setDanhMucError(null);
-    try {
-      const res = await danhMucService.getList({
-        pageIndex: 1,
-        pageSize: 100,
-      });
-      let items: DanhMucDto[] = [];
-      const data = (res as any)?.data;
-      if (data) {
-        items = data.items ?? data;
-      } else if (Array.isArray(res)) {
-        items = res;
-      } else if ((res as any)?.items) {
-        items = (res as any).items;
-      }
-      setDanhMucList(items);
-    } catch (error) {
-      console.error("Lỗi tải danh mục:", error);
-      setDanhMucError("Không thể tải danh mục. Vui lòng thử lại.");
-      show("Không thể tải danh mục", "error");
-    } finally {
-      setDanhMucLoading(false);
+  if (danhMucList.length > 0) return;
+
+  setDanhMucLoading(true);
+  setDanhMucError(null);
+
+  try {
+    const res = await danhMucService.getList({
+      pageIndex: 1,
+      pageSize: 100,
+    });
+
+    let items: DanhMucDto[] = [];
+
+    if (Array.isArray(res.data)) {
+      items = res.data;
+    } else {
+      items = res.data.items ?? [];
     }
-  }, [danhMucList.length, show]);
+
+    setDanhMucList(items);
+  } catch (error) {
+    console.error("Lỗi tải danh mục:", error);
+    setDanhMucError("Không thể tải danh mục. Vui lòng thử lại.");
+    show("Không thể tải danh mục", "error");
+  } finally {
+    setDanhMucLoading(false);
+  }
+}, [danhMucList.length, show]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open && danhMucList.length === 0) loadDanhMuc();
   }, [open, danhMucList.length, loadDanhMuc]);
 
@@ -139,6 +143,7 @@ export function CourseDialog({
           (editCourse as any).idDanhMucList ??
           (editCourse as any).danhSachDanhMuc?.map((d: any) => d.id) ??
           [];
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setForm({
           tieuDe: editCourse.tieuDe ?? "",
           moTa: editCourse.moTa ?? "",

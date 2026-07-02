@@ -122,14 +122,14 @@ export default function RegisterPage() {
     let url = `/auth/oauth-callback?provider=${provider}`;
 
     const redirectUri = encodeURIComponent(`${window.location.origin}/auth/oauth-callback?provider=${provider}`);
-
+    const nonce = crypto.randomUUID();
     if (provider === 'google' && googleClientId) {
       url = `https://accounts.google.com/o/oauth2/v2/auth` +
         `?client_id=${googleClientId}` +
         `&redirect_uri=${redirectUri}` +
         `&response_type=id_token` +
         `&scope=openid%20profile%20email` +
-        `&nonce=nonce_${Date.now()}` +
+        `&nonce=nonce_${nonce}` +
         `&state=state_${provider}`;
     } else if (provider === 'facebook' && facebookAppId) {
       url = `https://www.facebook.com/v18.0/dialog/oauth` +

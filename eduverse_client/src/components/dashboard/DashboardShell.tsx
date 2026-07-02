@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -362,13 +363,6 @@ function SidebarContent({
   };
 
   const roleBadge = getRoleBadge();
-
-  const getHomeRoute = () => {
-    if (activeRoles.includes("Admin")) return "/admin/dashboard";
-    if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
-    return "/student/dashboard";
-  };
-
   const getRouteByLabel = (label: string) => {
     const isInstructorView = pathname.startsWith("/instructor");
     const isAdminView = pathname.startsWith("/admin");
@@ -390,6 +384,8 @@ function SidebarContent({
           return "/instructor/qa";
         case "Cài đặt":
           return "/instructor/settings";
+        case "Ngân hàng":
+          return "/instructor/bank";
         default:
           return "/instructor/dashboard";
       }
@@ -420,6 +416,8 @@ function SidebarContent({
           return "/admin/notifications";
         case "Cài đặt":
           return "/admin/settings";
+        case "Rút tiền":
+          return "/admin/withdrawal-request";
         default:
           return "/admin/dashboard";
       }
@@ -430,7 +428,7 @@ function SidebarContent({
       case "Trang chủ":
         return "/student/dashboard";
       case "Khóa học của tôi":
-        return "/student/courses";
+        return "/student/courses/my-courses";
       case "Khám phá":
         return "/student/explore";
       case "Giỏ hàng":
@@ -441,6 +439,8 @@ function SidebarContent({
         return "/student/profile";
       case "Cài đặt":
         return "/student/settings";
+      case "":
+        return "/student/enroll-courses";
       default:
         return "/student/dashboard";
     }
@@ -781,12 +781,28 @@ export default function DashboardShell({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+  const activeRoles = useMemo(() => {
+    let list = [...roles];
+    if (!pathname.startsWith("/instructor")) {
+      list = list.filter((r) => r !== "GiaoVien");
+    }
+    if (!pathname.startsWith("/admin")) {
+      list = list.filter((r) => r !== "Admin");
+    }
+    return list;
+  }, [roles, pathname]);
+  const getHomeRoute = () => {
+    if (activeRoles.includes("Admin")) return "/admin/dashboard";
+    if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
+    return "/student/dashboard";
+  };
 
   // Custom states
   const [activeContinueTab, setActiveContinueTab] = useState<
     "courses" | "assigned" | "paths" | "certs" | "tests"
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("AI");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -810,12 +826,14 @@ export default function DashboardShell({
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response = await apiService.get<any>("/dashboard");
         if (response.status && response.data) {
           setDashboardData(response.data);
         } else {
           setError(response.message || "Không thể lấy dữ liệu Dashboard");
         }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         setError(
           typeof err === "string" ? err : "Đã xảy ra lỗi khi tải dữ liệu",
@@ -877,6 +895,7 @@ export default function DashboardShell({
   const filteredSkillsCourses = useMemo(() => {
     if (!dashboardData?.skillsCourses) return [];
     const skill = selectedSkill.toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return dashboardData.skillsCourses.filter((course: any) => {
       const title = (course.title || "").toLowerCase();
       if (skill === "ai")
@@ -1212,7 +1231,24 @@ export default function DashboardShell({
                   )}
                 </>
               )}
-
+              <IconButton
+                onClick={() => router.push("/student/favorites")}
+                sx={{
+                  color: "rgba(31,41,55,0.55)",
+                  display: { xs: "none", sm: "flex" },
+                }}
+              >
+                <FavoriteBorderRounded sx={{ fontSize: 22 }} />
+              </IconButton>
+              <IconButton
+                onClick={() => router.push("/student/cart")}
+                sx={{
+                  color: "rgba(31,41,55,0.55)",
+                  display: { xs: "none", sm: "flex" },
+                }}
+              >
+                <ShoppingCartRounded sx={{ fontSize: 22 }} />
+              </IconButton>
               <IconButton
                 sx={{
                   color: "rgba(31,41,55,0.55)",
@@ -1374,24 +1410,24 @@ export default function DashboardShell({
                   </Avatar>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography
+                      noWrap
                       sx={{
                         fontWeight: 800,
                         fontSize: 14.5,
                         color: "#1F2937",
-                        noWrap: true,
                         textOverflow: "ellipsis",
                         overflow: "hidden",
                       }}
-                    >
+                      >
                       {dashboardData?.welcomeStats?.userName ||
                         user?.hoTen ||
                         "Học viên"}
                     </Typography>
                     <Typography
+                      noWrap
                       sx={{
                         fontSize: 11.5,
                         color: "text.secondary",
-                        noWrap: true,
                         textOverflow: "ellipsis",
                         overflow: "hidden",
                       }}
@@ -1978,6 +2014,7 @@ export default function DashboardShell({
                     {activeContinueTab === "courses" && (
                       <CarouselRow>
                         {dashboardData?.continueLearning?.courses?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}
@@ -2334,6 +2371,7 @@ export default function DashboardShell({
 
                         {/* Backend API learning paths */}
                         {dashboardData?.continueLearning?.paths?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}
@@ -2523,6 +2561,7 @@ export default function DashboardShell({
 
                         {/* Backend API certificates */}
                         {dashboardData?.continueLearning?.certificates?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}
@@ -2763,6 +2802,7 @@ export default function DashboardShell({
 
                         {/* Backend API tests list */}
                         {dashboardData?.continueLearning?.assessments?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}

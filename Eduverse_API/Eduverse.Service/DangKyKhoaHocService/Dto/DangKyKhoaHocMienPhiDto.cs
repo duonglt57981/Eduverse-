@@ -13,6 +13,6 @@ namespace Eduverse.Service.DangKyKhoaHocService.Dto
         public DateTime? ThoiGianDK { get; set; }
         public Guid? IdNguoiDangKi { get; set; }
         public Guid? IdDangKi { get; set; }
-        public bool? IsDangKy { get; set; }
+        public bool? IsDangKy { get; set; } 
     }
 }

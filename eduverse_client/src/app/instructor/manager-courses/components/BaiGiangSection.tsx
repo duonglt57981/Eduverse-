@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/instructor/manager-courses/components/BaiGiangSection.tsx
 "use client";
 
@@ -46,6 +47,7 @@ interface BaiGiangSectionProps {
   phanId: string;
   items: BaiGiangType[];
   onRefresh: () => void;
+  onMutated?: () => void;
   canEdit?: boolean;
 }
 
@@ -53,6 +55,7 @@ export function BaiGiangSection({
   phanId,
   items,
   onRefresh,
+  onMutated,
   canEdit = false,
 }: BaiGiangSectionProps) {
   const { show, ToastComponent } = useToast();
@@ -161,7 +164,7 @@ export function BaiGiangSection({
               <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
                 {bg.tieuDe}
               </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{alignItems:"center"}}>
                 <Typography sx={{ fontSize: 11, color: "#999" }}>
                   {bg.loaiBaiGiang}
                 </Typography>
@@ -184,7 +187,7 @@ export function BaiGiangSection({
                 )}
               </Stack>
             </Box>
-            <Stack direction="row" spacing={0.5} alignItems="center">
+            <Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
               <Tooltip title="Xem tài liệu">
                 <IconButton
                   size="small"

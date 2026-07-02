@@ -71,7 +71,7 @@ export default function FavoriteEmpty() {
 
       <Button
         component={Link}
-        href="/courses"
+        href="/student/dashboard"
         variant="contained"
         sx={{
           px: 4,
@@ -87,7 +87,7 @@ export default function FavoriteEmpty() {
           },
         }}
       >
-        Khám phá khóa học ngay
+        Quay lại dashboard
       </Button>
     </Paper>
   );

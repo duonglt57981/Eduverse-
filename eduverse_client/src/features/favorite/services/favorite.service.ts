@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiService } from "@/src/services";
 import { ApiResponse } from "@/src/types/types";
 import { FavoriteCourse } from "../types/favorite.type";
@@ -29,19 +30,24 @@ export const favoriteService = {
    * Lấy danh sách khóa học yêu thích
    */
   async getFavorites(): Promise<ApiResponse<FavoriteCourse[]>> {
-    // TODO:
-    // const response = await apiService.get<FavoriteCourse[]>("/DanhSachYeuThich/get-data");
-    // return response;
-    
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          status: true,
-          message: "Lấy danh sách yêu thích thành công",
-          data: getLocalFavorites(),
-        });
-      }, 500);
-    });
+    const response = await apiService.get<any>("/DanhSachYeuThich/get-data?pageSize=-1");
+    const items = response.data?.items || [];
+    const mapped: FavoriteCourse[] = items.map((item: any) => ({
+      id: item.id,
+      khoaHocId: item.idKhoaHoc,
+      tieuDe: item.tenKhoaHoc || "",
+      moTa: item.moTa || "",
+      hinhAnh: item.hinhAnh || "",
+      giangVien: item.giangVien || "Giảng viên EduVerse",
+      giaTien: item.giaTien || 0,
+      createdDate: item.createdDate,
+      isFavorite: true
+    }));
+    return {
+      status: response.status,
+      message: response.message,
+      data: mapped,
+    };
   },
 
   /**
@@ -49,65 +55,34 @@ export const favoriteService = {
    * Thêm khóa học vào danh sách yêu thích
    */
   async addFavorite(khoaHocId: string): Promise<ApiResponse<FavoriteCourse>> {
-    // TODO:
-    // const response = await apiService.post<FavoriteCourse>(`/DanhSachYeuThich/them?khoaHocId=${khoaHocId}`);
-    // return response;
-
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const course = MOCK_COURSES.find((c) => c.id === khoaHocId);
-        if (!course) {
-          return reject(new Error("Không tìm thấy khóa học"));
-        }
-        const current = getLocalFavorites();
-        const exists = current.find((item) => item.khoaHocId === khoaHocId);
-        if (exists) {
-          return resolve({
-            status: true,
-            message: "Khóa học đã có trong danh sách yêu thích",
-            data: exists,
-          });
-        }
-
-        const favId = `fav-${Math.random().toString(36).substring(2, 11)}`;
-        const newFavorite = mapToFavoriteCourse(course, favId);
-        
-        current.push(newFavorite);
-        saveLocalFavorites(current);
-
-        resolve({
-          status: true,
-          message: "Đã thêm vào danh sách yêu thích thành công",
-          data: newFavorite,
-        });
-      }, 500);
-    });
+    const response = await apiService.post<any>(`/DanhSachYeuThich/them?khoaHocId=${khoaHocId}`);
+    return {
+      status: response.status,
+      message: response.message,
+      data: {
+        id: response.data?.id,
+        khoaHocId: response.data?.idKhoaHoc || khoaHocId,
+        tieuDe: "",
+        moTa: "",
+        hinhAnh: "",
+        giangVien: "",
+        giaTien: 0,
+        createdDate: response.data?.createdDate || new Date().toISOString(),
+        isFavorite: true
+      }
+    };
   },
 
   /**
-   * DELETE /api/DanhSachYeuThich/xoa-theo-id/{id}
+   * DELETE /api/DanhSachYeuThich/xoa-theo-khoahoc/{id}
    * Xóa khóa học khỏi danh sách yêu thích
    */
   async removeFavorite(khoaHocId: string): Promise<ApiResponse<boolean>> {
-    // TODO:
-    // const response = await apiService.delete<boolean>(`/DanhSachYeuThich/xoa-theo-id/${khoaHocId}`);
-    // return response;
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const current = getLocalFavorites();
-        // Supports removing either by course ID or by wishlist relation ID
-        const updated = current.filter(
-          (item) => item.khoaHocId !== khoaHocId && item.id !== khoaHocId
-        );
-        saveLocalFavorites(updated);
-
-        resolve({
-          status: true,
-          message: "Đã xóa khỏi danh sách yêu thích thành công",
-          data: true,
-        });
-      }, 500);
-    });
+    const response = await apiService.delete<any>(`/DanhSachYeuThich/xoa-theo-khoahoc/${khoaHocId}`);
+    return {
+      status: response.status,
+      message: response.message,
+      data: response.data
+    };
   },
 };

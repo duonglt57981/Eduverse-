@@ -54,6 +54,8 @@ namespace Eduverse.Api
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<Eduverse.IService.DanhSachYeuThichService.IDanhSachYeuThichService, Eduverse.Service.DanhSachYeuThichService.DanhSachYeuThichService>();
+            builder.Services.AddScoped<Eduverse.IService.ChungChiService.IChungChiService, Eduverse.IService.ChungChiService.ChungChiService>();
             builder.Services.AddDependencyInjection();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSignalR();
@@ -280,7 +282,7 @@ namespace Eduverse.Api
 
             services.AddScoped(typeof(IService<>), typeof(Service<>));
             var serviceTypes = typeof(IService<>).Assembly.GetTypes()
-                 .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("Eduverse.Service") && x.Name.EndsWith("Service"));
+                 .Where(x => !string.IsNullOrEmpty(x.Namespace) && (x.Namespace.StartsWith("Eduverse.Service") || x.Namespace.StartsWith("Eduverse.IService")) && x.Name.EndsWith("Service"));
             foreach (var intf in serviceTypes.Where(t => t.IsInterface))
             {
                 var impl = serviceTypes.FirstOrDefault(c => c.IsClass && intf.Name.Substring(1) == c.Name);

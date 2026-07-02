@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/instructor/manager-courses/components/PhanSection.tsx
 "use client";
 
@@ -71,8 +72,8 @@ export function PhanSection({
 
   const togglePhan = (phanId: string, phan: PhanHocType) => {
     setExpanded((p) => ({ ...p, [phanId]: !p[phanId] }));
-    if (!baiGiangMap[phanId] && phan.danhSachBaiGiang) {
-      setBaiGiangMap((p) => ({ ...p, [phanId]: phan.danhSachBaiGiang ?? [] }));
+    if (!baiGiangMap[phanId] && phan.DanhSachBaiGiang) {
+      setBaiGiangMap((p) => ({ ...p, [phanId]: phan.DanhSachBaiGiang ?? [] }));
     }
   };
 
@@ -150,11 +151,11 @@ export function PhanSection({
     <Box>
       {items.map((phan) => {
         const isOpen = expanded[phan.id!];
-        const baiGiangs = baiGiangMap[phan.id!] ?? phan.danhSachBaiGiang ?? [];
+        const baiGiangs = baiGiangMap[phan.id!] ?? phan.DanhSachBaiGiang ?? [];
         return (
           <PhanRow key={phan.id}>
             <SectionHeader onClick={() => togglePhan(phan.id!, phan)}>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {isOpen ? (
                   <ExpandLessIcon sx={{ color: R, fontSize: 18 }} />
                 ) : (
@@ -164,9 +165,9 @@ export function PhanSection({
                 <Typography sx={{ fontWeight: 700, fontSize: 13.5 }}>
                   {phan.tenPhan}
                 </Typography>
-                {phan.danhSachBaiGiang?.length ? (
+                {phan.DanhSachBaiGiang?.length ? (
                   <Chip
-                    label={`${phan.danhSachBaiGiang.length} bài`}
+                    label={`${phan.DanhSachBaiGiang.length} bài`}
                     size="small"
                     sx={{
                       fontSize: "0.65rem",
