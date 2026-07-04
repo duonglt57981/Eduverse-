@@ -92,7 +92,8 @@ namespace Eduverse.Service.YeuCauRutTienService
                     SoTaiKhoan = n != null ? n.SoTaiKhoan : null,
                     TenTaiKhoan = n != null ? n.TenTaiKhoan : null,
                     TenGiangVien = u != null ? u.HoTen : null,
-                    SoDuHienTai = u != null ? u.SoDuTaiKhoan : null
+                    SoDuHienTai = u != null ? u.SoDuTaiKhoan : null,
+                    HinhAnhQR = n != null ? n.HinhAnhQR : null,
                 }
             ).ToListAsync();
         }
@@ -166,47 +167,10 @@ namespace Eduverse.Service.YeuCauRutTienService
             var user = await _userRepo.GetByIdAsync(yeuCau.IdNguoiDung)
                 ?? throw new Exception("Không tìm thấy giảng viên");
 
-            var client = new HttpClient();
 
             if (dto.TrangThai == "DaDuyet")
             {
-                try
-                {
-                    // Dùng đúng PayoutRequest của PayOS 2.1.0
-                    var payoutRequest = new PayOS.Models.V1.Payouts.PayoutRequest
-                    {
-                        ReferenceId = $"RUT{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
-                        Amount = (long)(yeuCau.SoTienRut ?? 0),
-                        Description = $"Rut tien giang vien {user.HoTen}",
-                        ToBin = nganHang.TenNganHang!,   // BIN ngân hàng
-                        ToAccountNumber = nganHang.SoTaiKhoan!  // Số tài khoản
-                    };
-
-                    var result = await _payOSPayout.Payouts.CreateAsync(payoutRequest);
-                    Console.WriteLine($"[PAYOUT] Thành công! ID: {result.Id}");
-                    yeuCau.TrangThai = "DaChuyenTien";
-                }
-                catch (PayOS.Exceptions.ForbiddenException ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    // Log đầy đủ để biết lỗi gì
-                    Console.WriteLine($"[PAYOUT ERROR] Message: {ex.Message}");
-                    Console.WriteLine($"[PAYOUT ERROR] Type: {ex.GetType().Name}");
-                    Console.WriteLine($"[PAYOUT ERROR] Inner: {ex.InnerException?.Message}");
-
-                    // Log thông tin request để kiểm tra
-                    Console.WriteLine($"[PAYOUT REQUEST] ToBin: {nganHang.TenNganHang}");
-                    Console.WriteLine($"[PAYOUT REQUEST] ToAccountNumber: {nganHang.SoTaiKhoan}");
-                    Console.WriteLine($"[PAYOUT REQUEST] Amount: {(long)(yeuCau.SoTienRut ?? 0)}");
-                    Console.WriteLine($"[PAYOUT REQUEST] ReferenceId: RUT{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
-
-                    // Hoàn tiền nếu PayOS lỗi
-                    user.SoDuTaiKhoan += yeuCau.SoTienRut ?? 0;
-                    user.UpdatedDate = DateTime.Now;
-                    _userRepo.Update(user);
-                    await _userRepo.SaveAsync();
-                    throw new Exception($"Lỗi chuyển tiền PayOS: {ex.Message}");
-                }
+                yeuCau.TrangThai = "DaChuyenTien";
 
                 _thongBaoRepo.Add(new ThongBao
                 {

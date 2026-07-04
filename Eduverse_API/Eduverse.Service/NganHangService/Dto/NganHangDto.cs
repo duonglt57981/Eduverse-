@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,8 @@ namespace Eduverse.Service.NganHangService.Dto
         public string? TenTaiKhoan { get; set; }
         public string? SoTaiKhoan { get; set; }
         public string? TrangThai { get; set; }
+        public string? HinhAnhQR { get; set; }
+        public string? PublicIdHinhAnhQR { get; set; }
     }
 
     public class TaoNganHangDto
@@ -20,5 +23,6 @@ namespace Eduverse.Service.NganHangService.Dto
         public string TenNganHang { get; set; } = "";
         public string TenTaiKhoan { get; set; } = "";
         public string SoTaiKhoan { get; set; } = "";
+        public IFormFile? HinhAnhQR { get; set; }
     }
 }
