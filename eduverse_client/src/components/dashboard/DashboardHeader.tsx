@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -55,6 +56,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("user_avatar");
       if (stored) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUserAvatar(stored);
       }
     }
@@ -92,6 +94,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     if (typeof window !== "undefined") {
       if (pathname.startsWith("/instructor")) {
         localStorage.setItem("current_role", "GiaoVien");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveRole("GiaoVien");
       } else if (pathname.startsWith("/admin")) {
         localStorage.setItem("current_role", "Admin");
@@ -247,6 +250,19 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 }}
               >
                 Doanh thu
+              </Button>
+              <Button
+                onClick={() => router.push("/instructor/bank")}
+                sx={{
+                  color: pathname.startsWith("/instructor/bank") ? "primary.main" : "text.primary",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  textTransform: "none",
+                  px: 1.5,
+                  "&:hover": { color: "primary.main", bgcolor: "transparent" },
+                }}
+              >
+                Ngân hàng
               </Button>
             </>
           )}

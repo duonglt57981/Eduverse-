@@ -7,6 +7,7 @@ export interface NganHangDto {
   tenNganHang?: string;
   tenTaiKhoan?: string;
   soTaiKhoan?: string;
+  hinhAnhQR?: string;
   trangThai?: string;
 }
 
@@ -21,6 +22,7 @@ export interface YeuCauRutTienDto {
   tenTaiKhoan?: string;
   tenGiangVien?: string;
   soDuHienTai?: number;
+  hinhAnhQR?: string;
 }
 export interface ThongBaoDto {
   id: string;
@@ -44,16 +46,20 @@ export const getNganHangs = createAsyncThunk(
 
 export const themNganHang = createAsyncThunk(
   "rutTien/themNganHang",
-  async (dto: {
-    tenNganHang: string;
-    tenTaiKhoan: string;
-    soTaiKhoan: string;
-  }) => {
-    const res = await apiService.post<NganHangDto>("/nganhang", dto);
-    return res.data;
+  async (formData: FormData, { rejectWithValue }) => {
+    try {
+      const res = await apiService.post<NganHangDto>("/nganhang", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    } catch (err: unknown) {
+      if (axios.isAxiosError<{ message?: string }>(err)) {
+        return rejectWithValue(err.response?.data?.message ?? "Lỗi thêm ngân hàng");
+      }
+      return rejectWithValue("Lỗi thêm ngân hàng");
+    }
   },
 );
-
 export const xoaNganHang = createAsyncThunk(
   "rutTien/xoaNganHang",
   async (id: string) => {
