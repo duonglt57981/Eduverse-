@@ -270,7 +270,7 @@ namespace Eduverse.Service.CloudinaryService
             await using var inputStream = file.OpenReadStream();
 
             var uploadParams = new RawUploadParams
-            {   
+            {
                 File = new FileDescription(file.FileName, inputStream),
                 Folder = "eduverse/documents",
                 UseFilename = true,
@@ -296,6 +296,22 @@ namespace Eduverse.Service.CloudinaryService
                 .ToString()
                 .Replace("/upload/", "/upload/fl_attachment/")
             };
+
+        }
+        public async Task DeleteImageAsync(string publicId)
+        {
+            if (string.IsNullOrEmpty(publicId))
+                throw new Exception("PublicId không được để trống");
+
+            var deleteParams = new DeletionParams(publicId)
+            {
+                ResourceType = ResourceType.Image
+            };
+
+            var result = await _cloudinary.DestroyAsync(deleteParams);
+
+            if (result.Error != null)
+                throw new Exception($"Xóa ảnh thất bại: {result.Error.Message}");
         }
     }
 }

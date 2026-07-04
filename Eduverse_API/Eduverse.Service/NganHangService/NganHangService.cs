@@ -92,10 +92,8 @@ namespace Eduverse.Service.NganHangService
             if (entity == null)
                 throw new Exception("Không tìm thấy tài khoản ngân hàng");
 
-            // Xóa ảnh QR trên Cloudinary nếu có PublicId
-            // (Thêm DeleteImageAsync vào ICloudinaryService nếu cần)
-            // if (!string.IsNullOrEmpty(entity.PublicIdHinhAnhQR))
-            //     await _cloudinaryService.DeleteImageAsync(entity.PublicIdHinhAnhQR);
+             if (!string.IsNullOrEmpty(entity.PublicIdHinhAnhQR))
+                await _cloudinaryService.DeleteImageAsync(entity.PublicIdHinhAnhQR);
 
             await DeleteAsync(entity);
         }

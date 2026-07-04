@@ -15,5 +15,6 @@ namespace Eduverse.Service.CloudinaryService
         Task<CloudinaryImgDto> UploadImageAsync(IFormFile file);
         Task<CloudinaryImgDto> UpdateImageAsync(string publicId, IFormFile newFile);
         Task<CloudinaryDocumentDto> UploadDocumentAsync(IFormFile file);
+        Task DeleteImageAsync(string publicId);
     }
 }
