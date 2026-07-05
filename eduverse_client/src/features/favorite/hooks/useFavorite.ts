@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useFavoriteStore } from "../store/favorite.store";
 import Swal from "sweetalert2";
 
