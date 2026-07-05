@@ -18,7 +18,7 @@ export interface KhoaHocType {
   idBanGhiTruoc?: string | null;
   tongBaiGiang?: number;
   tongTaiLieu?: number;
-
+  isBanHienTai?: boolean;
   daDangKy: boolean;
 
   idDangKiKhoaHoc?: string;

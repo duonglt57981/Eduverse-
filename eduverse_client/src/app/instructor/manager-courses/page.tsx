@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/static-components */
 // src/app/instructor/manager-courses/page.tsx
 "use client";
 
@@ -30,16 +32,24 @@ import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import {
   R,
-  PageWrap,
   RedBtn,
   isDraftCourse,
   isCurrentVersion,
+  canGuiDuyet,
+  canSuaTiep,
+  isPendingApproval,
 } from "./types/constants";
 import { useToast } from "./components/useToast";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { CourseDialog } from "./components/CourseDialog";
 import { CourseDetailPanel } from "./components/CourseDetailPanel";
 import { CourseListItem } from "./components/CourseListItem";
+import { BulkActionBar } from "./components/BulkActionBar";
+
+// Import AuthGuard và StudentDashboardShell
+import AuthGuard from "@/src/components/AuthGuard";
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
+import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
 const khoaHocSvc = new KhoaHocService();
 
@@ -61,6 +71,10 @@ export default function TeacherCourseManager() {
   const [expandedDrafts, setExpandedDrafts] = useState<Record<string, boolean>>(
     {},
   );
+
+  // Tích chọn hàng loạt
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const loadingRef = useRef(false);
   const hasLoadedRef = useRef(false);
@@ -91,7 +105,11 @@ export default function TeacherCourseManager() {
       }
 
       if (items.length > 0) {
-        setSelected((prev) => prev ?? items[0]);
+        setSelected((prev) => {
+          if (!prev) return items[0];
+          const fresh = items.find((c) => c.id === prev.id);
+          return fresh ?? items[0];
+        });
       } else {
         setSelected(null);
       }
@@ -110,7 +128,6 @@ export default function TeacherCourseManager() {
     }
   }, [loadCourses]);
 
-  // 🔥 Hàm cập nhật khóa học trong danh sách realtime
   const updateCourseInList = useCallback((updatedCourse: KhoaHocType) => {
     setCourses((prev) =>
       prev.map((c) => (c.id === updatedCourse.id ? updatedCourse : c)),
@@ -152,6 +169,14 @@ export default function TeacherCourseManager() {
 
   const handleDelete = async () => {
     if (!confirmDel) return;
+    if (isPendingApproval(confirmDel.trangThaiPheDuyet)) {
+      show(
+        "Không thể xoá khóa học khi đang ở trạng thái Chờ duyệt / Đang duyệt",
+        "error",
+      );
+      setConfirmDel(null);
+      return;
+    }
     setDelLoading(true);
     try {
       await khoaHocSvc.DeleteKhoaHoc(confirmDel.id!);
@@ -179,6 +204,100 @@ export default function TeacherCourseManager() {
     }));
   };
 
+  // ─── Tích chọn hàng loạt ────────────────────────────────────────
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const selectedCourses = useMemo(
+    () => courses.filter((c) => c.id && selectedIds.has(c.id)),
+    [courses, selectedIds],
+  );
+  const approvableSelected = selectedCourses.filter((c) =>
+    canGuiDuyet(c.trangThaiPheDuyet),
+  );
+  const editableSelected = selectedCourses.filter((c) =>
+    canSuaTiep(c.trangThaiPheDuyet),
+  );
+
+  const runBulkStatusChange = async (
+    targets: KhoaHocType[],
+    apiCall: (id: string) => Promise<any>,
+    successMsg: string,
+  ) => {
+    if (targets.length === 0 || bulkLoading) return;
+    setBulkLoading(true);
+    try {
+      const results = await Promise.allSettled(
+        targets.map((c) => apiCall(c.id!)),
+      );
+      const failed = results.filter((r) => r.status === "rejected").length;
+      const ok = results.length - failed;
+      if (ok > 0) show(`${successMsg} (${ok} bản ghi)`);
+      if (failed > 0) show(`${failed} bản ghi thao tác thất bại`, "error");
+      clearSelection();
+      await loadCourses();
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkGuiDuyet = async () => {
+    if (approvableSelected.length === 0 || bulkLoading) return;
+    setBulkLoading(true);
+    try {
+      const ids = approvableSelected.map((c) => c.id!);
+      const result = await khoaHocSvc.ChuyenTTChoDuyetBatch(ids);
+      const data = result.data ?? [];
+      const successCount = data.length;
+      const failed = ids.length - successCount;
+      if (successCount > 0) show(`Đã gửi phê duyệt (${successCount} khóa học)`);
+      if (failed > 0) show(`${failed} khóa học thao tác thất bại`, "error");
+      clearSelection();
+      await loadCourses();
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Lỗi gửi phê duyệt hàng loạt";
+      show(msg, "error");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkSuaTiep = async () => {
+    if (editableSelected.length === 0 || bulkLoading) return;
+    setBulkLoading(true);
+    try {
+      const ids = editableSelected.map((c) => c.id!);
+      const result = await khoaHocSvc.ChuyenTTDangSuaBatch(ids);
+      const data = result.data ?? [];
+      const successCount = data.length;
+      const failed = ids.length - successCount;
+      if (successCount > 0)
+        show(`Đã chuyển về Đang sửa (${successCount} khóa học)`);
+      if (failed > 0) show(`${failed} khóa học thao tác thất bại`, "error");
+      clearSelection();
+      await loadCourses();
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Lỗi sửa tiếp hàng loạt";
+      show(msg, "error");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   const stats = useMemo(
     () => ({
       total: courses.length,
@@ -195,14 +314,17 @@ export default function TeacherCourseManager() {
     [courses],
   );
 
-  return (
-    <PageWrap>
+  // Component nội dung chính
+  const MainContent = () => (
+    <>
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           mb: 3,
+          flexWrap: "wrap",
+          gap: 2,
         }}
       >
         <Box>
@@ -234,6 +356,7 @@ export default function TeacherCourseManager() {
         </Stack>
       </Box>
 
+      {/* Thống kê */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
           {
@@ -301,7 +424,9 @@ export default function TeacherCourseManager() {
         ))}
       </Grid>
 
+      {/* Danh sách và chi tiết khóa học */}
       <Grid container spacing={3}>
+        {/* Danh sách khóa học */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper
             sx={{
@@ -312,6 +437,16 @@ export default function TeacherCourseManager() {
             }}
           >
             <Box sx={{ p: 1.5, borderBottom: "1px solid #f5e0e0" }}>
+              <BulkActionBar
+                selectedCount={selectedIds.size}
+                approvableCount={approvableSelected.length}
+                editableCount={editableSelected.length}
+                onApprove={handleBulkGuiDuyet}
+                onContinueEdit={handleBulkSuaTiep}
+                onClear={clearSelection}
+                loading={bulkLoading}
+                itemLabel="khóa học"
+              />
               <TextField
                 size="small"
                 fullWidth
@@ -389,6 +524,8 @@ export default function TeacherCourseManager() {
                         hasDraftToggle={hasDraftToggle}
                         draftExpanded={isExpanded}
                         onToggleDraft={() => toggleDraftRow(c.id!)}
+                        checked={selectedIds.has(c.id!)}
+                        onToggleCheck={() => toggleSelect(c.id!)}
                       />
                       {hasDraftToggle &&
                         isExpanded &&
@@ -397,6 +534,8 @@ export default function TeacherCourseManager() {
                             key={d.id}
                             course={d}
                             isDraft
+                            checked={selectedIds.has(d.id!)}
+                            onToggleCheck={() => toggleSelect(d.id!)}
                             isNestedDraftRow
                             isSelected={selected?.id === d.id}
                             onSelect={() => setSelected(d)}
@@ -413,6 +552,7 @@ export default function TeacherCourseManager() {
           </Paper>
         </Grid>
 
+        {/* Chi tiết khóa học */}
         <Grid size={{ xs: 12, md: 8 }}>
           <Paper
             sx={{
@@ -448,27 +588,59 @@ export default function TeacherCourseManager() {
         </Grid>
       </Grid>
 
+      {/* Menu Context */}
       <Menu
         open={!!menuAnchor}
         anchorEl={menuAnchor?.el}
         onClose={() => setMenuAnchor(null)}
       >
-        <MenuItem onClick={() => menuAnchor && handleEdit(menuAnchor.course)}>
-          <EditIcon sx={{ fontSize: 16, mr: 1 }} /> Chỉnh sửa thông tin
-        </MenuItem>
-        <MenuItem
-          sx={{ color: R }}
-          onClick={() => {
-            if (menuAnchor) {
-              setConfirmDel(menuAnchor.course);
-              setMenuAnchor(null);
-            }
-          }}
+        <Tooltip
+          title={
+            menuAnchor && isPendingApproval(menuAnchor.course.trangThaiPheDuyet)
+              ? "Không thể chỉnh sửa khi khóa học đang Chờ duyệt / Đang duyệt"
+              : ""
+          }
         >
-          <DeleteIcon sx={{ fontSize: 16, mr: 1 }} /> Xoá khóa học
-        </MenuItem>
+          <span>
+            <MenuItem
+              onClick={() => menuAnchor && handleEdit(menuAnchor.course)}
+              disabled={
+                !!menuAnchor &&
+                isPendingApproval(menuAnchor.course.trangThaiPheDuyet)
+              }
+            >
+              <EditIcon sx={{ fontSize: 16, mr: 1 }} /> Chỉnh sửa thông tin
+            </MenuItem>
+          </span>
+        </Tooltip>
+        <Tooltip
+          title={
+            menuAnchor && isPendingApproval(menuAnchor.course.trangThaiPheDuyet)
+              ? "Không thể xoá khi khóa học đang Chờ duyệt / Đang duyệt"
+              : ""
+          }
+        >
+          <span>
+            <MenuItem
+              sx={{ color: R }}
+              onClick={() => {
+                if (menuAnchor) {
+                  setConfirmDel(menuAnchor.course);
+                  setMenuAnchor(null);
+                }
+              }}
+              disabled={
+                !!menuAnchor &&
+                isPendingApproval(menuAnchor.course.trangThaiPheDuyet)
+              }
+            >
+              <DeleteIcon sx={{ fontSize: 16, mr: 1 }} /> Xoá khóa học
+            </MenuItem>
+          </span>
+        </Tooltip>
       </Menu>
 
+      {/* Dialog tạo/sửa khóa học */}
       <CourseDialog
         open={dialogOpen}
         onClose={() => {
@@ -479,6 +651,7 @@ export default function TeacherCourseManager() {
         editCourse={editCourse}
       />
 
+      {/* Dialog xác nhận xóa */}
       <ConfirmDialog
         open={!!confirmDel}
         title="Xoá khóa học"
@@ -488,7 +661,28 @@ export default function TeacherCourseManager() {
         loading={delLoading}
       />
 
+      {/* Toast notifications */}
       {ToastComponent}
-    </PageWrap>
+    </>
+  );
+
+  // Render với AuthGuard và StudentDashboardShell
+  return (
+    <AuthGuard allowedRoles={["GiaoVien", "Admin"]}>
+      <DashboardShell>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4.5,
+            borderRadius: "24px",
+            border: "1px solid rgba(141,19,19,0.06)",
+            bgcolor: "#ffffff",
+            boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+          }}
+        >
+          <MainContent />
+        </Paper>
+      </DashboardShell>
+    </AuthGuard>
   );
 }

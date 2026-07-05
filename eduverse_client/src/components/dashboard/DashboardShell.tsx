@@ -424,6 +424,8 @@ function SidebarContent({
           return "/admin/settings";
         case "Rút tiền":
           return "/admin/withdrawal-request";
+        case "":
+          return "/admin/approve-courses";
         default:
           return "/admin/dashboard";
       }
@@ -1391,7 +1393,7 @@ export default function DashboardShell({
                         textOverflow: "ellipsis",
                         overflow: "hidden",
                       }}
-                      >
+                    >
                       {dashboardData?.welcomeStats?.userName ||
                         user?.hoTen ||
                         "Học viên"}

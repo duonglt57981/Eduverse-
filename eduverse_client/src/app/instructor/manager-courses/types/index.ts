@@ -14,18 +14,19 @@ export interface ToastState {
 
 export interface PhanForm {
   tenPhan: string;
-  mieuTa: string;
+  mieuTa: string; // Lưu HTML
 }
 
+// Bài giảng: bắt buộc có video, có cờ miễn phí, không còn loại/mô tả rich-text.
 export interface BaiGiangForm {
   tieuDe: string;
-  loaiBaiGiang: string;
-  thoiLuong: string;
+  laBaiGiangFree: boolean;
+  videoFile: File | null;
 }
 
 export interface CourseForm {
   tieuDe: string;
-  moTa: string;
+  moTa: string; // Lưu HTML
   gia: string;
   giaGoc: string;
   capDo: string;
@@ -50,3 +51,10 @@ export interface Versionable {
   idBanGhiTruoc?: string | null;
   isBanHienTai?: boolean;
 }
+
+
+export type ApiListShape<T> =
+  | T[]
+  | { data?: T[] | null; items?: T[] | null }
+  | null
+  | undefined;

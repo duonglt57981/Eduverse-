@@ -47,6 +47,9 @@ import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 import BaiKiemTraService from "@/src/services/BaiKiemTraService";
 
+// Import DOMPurify để làm sạch HTML
+import DOMPurify from "dompurify";
+
 const baiKiemTraSvc = new BaiKiemTraService();
 
 // Constants
@@ -61,8 +64,8 @@ export default function KhoaHocLearningPage() {
   const params = useParams();
   const pathname = usePathname();
   const courseId = (params?.courseId || params?.id) as string | undefined;
-  
-  const role = pathname.split('/')[1] || 'student';
+
+  const role = pathname.split("/")[1] || "student";
   const dashboardPath = `/${role}/dashboard`;
 
   console.log("📌 [KhoaHocLearningPage] courseId:", courseId);
@@ -434,14 +437,17 @@ export default function KhoaHocLearningPage() {
         }}
       >
         <Toolbar sx={{ minHeight: HEADER_H, gap: 2, px: { xs: 2, md: 3 } }}>
-          <Box sx={{ width: { xs: 120, sm: 140, lg: 170 }, cursor: 'pointer' }}>
-            <Link href={dashboardPath} style={{ display: 'block', width: '100%' }}>
+          <Box sx={{ width: { xs: 120, sm: 140, lg: 170 }, cursor: "pointer" }}>
+            <Link
+              href={dashboardPath}
+              style={{ display: "block", width: "100%" }}
+            >
               <Image
                 src="/auth/img/logo_nentrang.png"
                 alt="EduVerse"
                 width={170}
                 height={52}
-                style={{ width: '100%', height: 'auto', display: 'block' }}
+                style={{ width: "100%", height: "auto", display: "block" }}
                 priority
               />
             </Link>
@@ -470,8 +476,22 @@ export default function KhoaHocLearningPage() {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center", display: { xs: "none", sm: "flex" }, bgcolor: alpha(PRIMARY_RED, 0.05), px: 1.5, py: 0.5, borderRadius: 2 }}>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: PRIMARY_RED }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                alignItems: "center",
+                display: { xs: "none", sm: "flex" },
+                bgcolor: alpha(PRIMARY_RED, 0.05),
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 2,
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 600, color: PRIMARY_RED }}
+              >
                 {phanTramHoanThanh}%
               </Typography>
               <Box sx={{ width: 80 }}>
@@ -482,11 +502,18 @@ export default function KhoaHocLearningPage() {
                     height: 6,
                     borderRadius: 3,
                     backgroundColor: alpha(PRIMARY_RED, 0.15),
-                    "& .MuiLinearProgress-bar": { backgroundColor: PRIMARY_RED, borderRadius: 3 },
+                    "& .MuiLinearProgress-bar": {
+                      backgroundColor: PRIMARY_RED,
+                      borderRadius: 3,
+                    },
                   }}
                 />
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 500 }}
+              >
                 {soBaiHoanThanh}/{tongBai}
               </Typography>
             </Stack>
@@ -555,14 +582,26 @@ export default function KhoaHocLearningPage() {
               </Box>
 
               {/* Info section */}
-              <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, maxWidth: 1200, mx: "auto", width: "100%" }}>
+              <Box
+                sx={{
+                  p: { xs: 3, md: 4 },
+                  flex: 1,
+                  maxWidth: 1200,
+                  mx: "auto",
+                  width: "100%",
+                }}
+              >
                 {baiGiang && (
                   <Stack
                     direction="row"
                     spacing={0.75}
                     sx={{ mb: 2, alignItems: "center", flexWrap: "wrap" }}
                   >
-                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ fontWeight: 500 }}
+                    >
                       {khoaHoc.danhSachPhanHoc?.find((p) => p.id === idPhanPlay)
                         ?.tenPhan ?? ""}
                     </Typography>
@@ -588,7 +627,10 @@ export default function KhoaHocLearningPage() {
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: "text.primary" }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 800, mb: 1, color: "text.primary" }}
+                    >
                       {baiGiang?.tieuDe ?? khoaHoc.tieuDe}
                     </Typography>
                     <Stack
@@ -641,6 +683,7 @@ export default function KhoaHocLearningPage() {
 
                 <StatsBar khoaHoc={khoaHoc} />
 
+                {/* ===================== PHẦN SỬA MÔ TẢ ===================== */}
                 {khoaHoc.moTa && (
                   <Paper
                     elevation={0}
@@ -659,11 +702,49 @@ export default function KhoaHocLearningPage() {
                     >
                       Mô tả khóa học
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                      {khoaHoc.moTa}
-                    </Typography>
+                    <Box
+                      sx={{
+                        fontSize: "0.875rem",
+                        fontWeight: 400,
+                        lineHeight: 1.7,
+                        color: "text.secondary",
+                        "& p": { margin: "0 0 0.75em 0" },
+                        "& ul, & ol": {
+                          paddingLeft: "1.5em",
+                          margin: "0.5em 0 0.75em 0",
+                        },
+                        "& li": { marginBottom: "0.25em" },
+                        "& h1, & h2, & h3, & h4, & h5, & h6": {
+                          margin: "0.75em 0 0.25em 0",
+                          fontWeight: 700,
+                          color: "text.primary",
+                        },
+                        "& img": {
+                          maxWidth: "100%",
+                          height: "auto",
+                          borderRadius: 1,
+                          margin: "0.5em 0",
+                        },
+                        "& a": {
+                          color: PRIMARY_RED,
+                          textDecoration: "underline",
+                          "&:hover": { color: PRIMARY_RED_DARK },
+                        },
+                        "& blockquote": {
+                          borderLeft: `4px solid ${PRIMARY_RED}`,
+                          paddingLeft: "1.5em",
+                          margin: "0.75em 0",
+                          color: "text.secondary",
+                          fontStyle: "italic",
+                        },
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(khoaHoc.moTa),
+                      }}
+                    />
                   </Paper>
                 )}
+                {/* ======================================================== */}
               </Box>
             </>
           )}

@@ -5,7 +5,6 @@ export interface EntityType {
   createdBy?: string;
   updatedDate?: Date;
   updatedBy?: string;
-
 }
 
 export interface ApiResponse<T = any> {
@@ -20,8 +19,6 @@ export type Response<T = any> = ApiResponse<T>;
 export interface Dictionary<T = any> {
   [key: string]: T;
 }
-
-
 
 export interface DropdownOption {
   label: string;

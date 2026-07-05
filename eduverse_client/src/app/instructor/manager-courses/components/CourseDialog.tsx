@@ -1,4 +1,3 @@
-// src/app/instructor/manager-courses/components/CourseDialog.tsx
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -23,13 +22,23 @@ import CategoryIcon from "@mui/icons-material/Category";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { danhMucService } from "@/src/services/danhmucService";
 import { KhoaHocType, DanhMucDto, CourseForm } from "../types";
-import { R, RedBtn, OutlineBtn, UploadZone } from "../types/constants";
+import {
+  R,
+  RedBtn,
+  OutlineBtn,
+  UploadZone,
+  ALLOWED_IMG_EXT,
+  MAX_IMG_MB,
+  validateImgFile,
+  resolveApiResult,
+} from "../types/constants";
 import { useToast } from "./useToast";
+import { RichTextEditor } from "./RichTextEditor";
 
 const khoaHocSvc = new KhoaHocService();
 
-const MAX_IMG_MB = 10;
 const MAX_GIA = 100_000_000;
+const IMG_ACCEPT = ".jpg,.jpeg,.png,image/jpeg,image/png";
 
 interface CourseDialogProps {
   open: boolean;
@@ -57,7 +66,11 @@ export function CourseDialog({
   const [imgPreview, setImgPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const imgRef = useRef<HTMLInputElement>(null);
-  const [errors, setErrors] = useState<{ img?: string; gia?: string }>({});
+  const [errors, setErrors] = useState<{
+    img?: string;
+    gia?: string;
+    danhMuc?: string;
+  }>({});
 
   const [danhMucList, setDanhMucList] = useState<DanhMucDto[]>([]);
   const [danhMucLoading, setDanhMucLoading] = useState(false);
@@ -133,13 +146,10 @@ export function CourseDialog({
   const handleImg = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const sizeMb = f.size / (1024 * 1024);
-    if (sizeMb > MAX_IMG_MB) {
-      setErrors((p) => ({
-        ...p,
-        img: `Ảnh vượt quá ${MAX_IMG_MB}MB (hiện tại ${sizeMb.toFixed(1)}MB)`,
-      }));
-      show(`Ảnh không được vượt quá ${MAX_IMG_MB}MB`, "error");
+    const errMsg = validateImgFile(f);
+    if (errMsg) {
+      setErrors((p) => ({ ...p, img: errMsg }));
+      show(errMsg, "error");
       e.target.value = "";
       return;
     }
@@ -152,66 +162,84 @@ export function CourseDialog({
   const validate = (): string | null => {
     if (!form.tieuDe.trim()) return "Vui lòng nhập tiêu đề khóa học";
 
+    // Tạo mới bắt buộc phải có ảnh bìa. Khi sửa, nếu không chọn ảnh mới thì
+    // giữ ảnh cũ (imgPreview đã có sẵn từ editCourse).
+    if (!editCourse && !imgFile) return "Vui lòng chọn ảnh bìa khóa học";
+    if (imgFile) {
+      const imgErr = validateImgFile(imgFile);
+      if (imgErr) return imgErr;
+    }
+
+    if (form.idDanhMucList.length === 0)
+      return "Vui lòng chọn ít nhất một danh mục";
+
     const gia = Number(form.gia || 0);
     const giaGoc = Number(form.giaGoc || 0);
 
+    if (!form.giaGoc || giaGoc <= 0) return "Vui lòng nhập giá gốc";
     if (Number.isNaN(gia) || gia < 0) return "Giá không được âm";
     if (Number.isNaN(giaGoc) || giaGoc < 0) return "Giá gốc không được âm";
     if (gia >= MAX_GIA)
       return `Giá phải nhỏ hơn ${MAX_GIA.toLocaleString("vi-VN")}đ`;
     if (giaGoc >= MAX_GIA)
       return `Giá gốc phải nhỏ hơn ${MAX_GIA.toLocaleString("vi-VN")}đ`;
-    if (giaGoc > 0 && gia > giaGoc) return "Giá bán không được lớn hơn giá gốc";
-
-    if (imgFile && imgFile.size / (1024 * 1024) > MAX_IMG_MB) {
-      return `Ảnh không được vượt quá ${MAX_IMG_MB}MB`;
-    }
+    if (gia > giaGoc) return "Giá bán không được lớn hơn giá gốc";
 
     return null;
   };
 
-  // ── Lưu (bỏ tự động chuyển trạng thái) ──────────────────────────────────
+  // ── Lưu ──────────────────────────────────────────────────
   const handleSave = async () => {
     const err = validate();
     if (err) {
       show(err, "error");
-      if (err.toLowerCase().includes("ảnh"))
-        setErrors((p) => ({ ...p, img: err }));
-      if (err.toLowerCase().includes("giá"))
-        setErrors((p) => ({ ...p, gia: err }));
+      const lower = err.toLowerCase();
+      setErrors((p) => ({
+        ...p,
+        img: lower.includes("ảnh") ? err : p.img,
+        gia: lower.includes("giá") ? err : p.gia,
+        danhMuc: lower.includes("danh mục") ? err : p.danhMuc,
+      }));
       return;
     }
     setSaving(true);
     try {
       const fd = new FormData();
       fd.append("TieuDe", form.tieuDe.trim());
-      fd.append("MoTa", form.moTa.trim());
+      fd.append("MoTa", form.moTa || "");
       fd.append("Gia", form.gia || "0");
       fd.append("GiaGoc", form.giaGoc || "0");
       fd.append("CapDo", form.capDo);
 
-      if (form.idDanhMucList.length > 0) {
-        form.idDanhMucList.forEach((id) => {
-          fd.append("DanhSachDanhMuc", id);
-        });
-      }
+      form.idDanhMucList.forEach((id) => {
+        fd.append("DanhSachDanhMuc", id);
+      });
 
       if (imgFile) fd.append("Img", imgFile);
 
-      if (editCourse) {
-        const targetId = editCourse.idBanGhiTruoc ?? editCourse.id;
-        fd.append("IdKhoaHoc", targetId!);
-        await khoaHocSvc.UpdateKhoaHoc(fd as any);
-        show("Đã cập nhật khóa học");
-      } else {
-        await khoaHocSvc.CreateKhoaHoc(fd as any);
-        show("Đã tạo khóa học mới");
+      const result: any = editCourse
+        ? await (() => {
+            const targetId = editCourse.idBanGhiTruoc ?? editCourse.id;
+            fd.append("IdKhoaHoc", targetId!);
+            return khoaHocSvc.UpdateKhoaHoc(fd as any);
+          })()
+        : await khoaHocSvc.CreateKhoaHoc(fd as any);
+
+      const { ok, errorMsg } = resolveApiResult(result);
+      if (!ok) {
+        show(errorMsg ?? "Lỗi khi lưu khóa học", "error");
+        return;
       }
+      show(editCourse ? "Đã cập nhật khóa học" : "Đã tạo khóa học mới");
       onSaved();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Lỗi lưu khóa học:", error);
-      show("Lỗi khi lưu khóa học", "error");
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Lỗi khi lưu khóa học";
+      show(msg, "error");
     } finally {
       setSaving(false);
     }
@@ -241,7 +269,7 @@ export function CourseDialog({
             <input
               ref={imgRef}
               type="file"
-              accept="image/*"
+              accept={IMG_ACCEPT}
               style={{ display: "none" }}
               onChange={handleImg}
             />
@@ -262,7 +290,8 @@ export function CourseDialog({
                 <>
                   <CloudUploadIcon sx={{ color: alpha(R, 0.4), mb: 0.5 }} />
                   <Typography sx={{ fontSize: 13, color: "#888" }}>
-                    Nhấn để chọn ảnh bìa (tối đa {MAX_IMG_MB}MB)
+                    Nhấn để chọn ảnh bìa * ({ALLOWED_IMG_EXT.join(", ")}, tối đa{" "}
+                    {MAX_IMG_MB}MB)
                   </Typography>
                 </>
               )}
@@ -284,31 +313,35 @@ export function CourseDialog({
             sx={inputSx}
           />
 
-          {/* Mô tả */}
-          <TextField
-            size="small"
-            label="Mô tả"
-            fullWidth
-            multiline
-            rows={3}
+          {/* Mô tả - RichTextEditor */}
+          <RichTextEditor
             value={form.moTa}
-            onChange={(e) => setForm((p) => ({ ...p, moTa: e.target.value }))}
-            sx={inputSx}
+            onChange={(value) => setForm((p) => ({ ...p, moTa: value }))}
+            placeholder="Mô tả chi tiết về khóa học..."
+            height={250}
+            label="Mô tả khóa học"
           />
 
-          {/* Danh mục (chọn nhiều) */}
+          {/* Danh mục */}
           <TextField
             size="small"
             select
-            label="Danh mục"
+            label="Danh mục *"
             fullWidth
+            error={!!errors.danhMuc}
+            helperText={errors.danhMuc || " "}
             value={form.idDanhMucList}
             onChange={(e) => {
               const val = e.target.value;
-              setForm((p) => ({
+              const ids =
+                typeof val === "string" ? val.split(",") : (val as string[]);
+              setForm((p) => ({ ...p, idDanhMucList: ids }));
+              setErrors((p) => ({
                 ...p,
-                idDanhMucList:
-                  typeof val === "string" ? val.split(",") : (val as string[]),
+                danhMuc:
+                  ids.length === 0
+                    ? "Vui lòng chọn ít nhất một danh mục"
+                    : undefined,
               }));
             }}
             sx={inputSx}
@@ -434,7 +467,7 @@ export function CourseDialog({
             />
             <TextField
               size="small"
-              label="Giá gốc"
+              label="Giá gốc *"
               type="number"
               sx={{ flex: 1, ...inputSx }}
               value={form.giaGoc}
@@ -492,7 +525,15 @@ export function CourseDialog({
         <RedBtn
           onClick={handleSave}
           disabled={
-            !form.tieuDe.trim() || saving || !!errors.gia || !!errors.img
+            !form.tieuDe.trim() ||
+            saving ||
+            !!errors.gia ||
+            !!errors.img ||
+            !!errors.danhMuc ||
+            (!editCourse && !imgFile) ||
+            form.idDanhMucList.length === 0 ||
+            !form.giaGoc ||
+            Number(form.giaGoc) <= 0
           }
         >
           {saving ? (

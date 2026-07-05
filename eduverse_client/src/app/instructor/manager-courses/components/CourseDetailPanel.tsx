@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @next/next/no-img-element */
 // src/app/instructor/manager-courses/components/CourseDetailPanel.tsx
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -22,7 +25,7 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import CategoryIcon from "@mui/icons-material/Category";
 
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { KhoaHocType, PhanHocType } from "../types";
+import { KhoaHocType } from "../types";
 import {
   R,
   RedBtn,
@@ -33,7 +36,13 @@ import {
   isDraftCourse,
   isCurrentVersion,
   isLockedApprovedCourse,
+  isPendingApproval,
   statusChip,
+  isApproved,
+  resolveApiResult,
+  TEXT_DARK,
+  TEXT_GRAY,
+  BORDER_GRAY,
 } from "../types/constants";
 import { useToast } from "./useToast";
 import { PhanSection } from "./PhanSection";
@@ -56,39 +65,41 @@ export function CourseDetailPanel({
   const { show, ToastComponent } = useToast();
   const [currentCourse, setCurrentCourse] =
     useState<KhoaHocType>(initialCourse);
-  const [phanList, setPhanList] = useState<PhanHocType[]>(
-    (initialCourse as any).danhSachPhanHoc ?? [],
-  );
   const [changing, setChanging] = useState(false);
+  const [contentStats, setContentStats] = useState({ phan: 0, baiGiang: 0 });
+  const handleStatsChange = useCallback(
+    (phan: number, baiGiang: number) => setContentStats({ phan, baiGiang }),
+    [],
+  );
 
-  // --- State cho chức năng khoá chuyển trạng thái ---
   const [changeCount, setChangeCount] = useState(0);
   const [lockExpiry, setLockExpiry] = useState<number | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
   const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setCurrentCourse(initialCourse);
-    setPhanList((initialCourse as any).danhSachPhanHoc ?? []);
   }, [initialCourse]);
 
-  // Đếm ngược thời gian khoá
   useEffect(() => {
     if (!lockExpiry) {
       setRemainingSeconds(0);
+      setIsLocked(false);
       return;
     }
-    const interval = setInterval(() => {
-      const remaining = Math.max(
-        0,
-        Math.floor((lockExpiry - Date.now()) / 1000),
-      );
+    const updateLock = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((lockExpiry - now) / 1000));
       setRemainingSeconds(remaining);
+      setIsLocked(remaining > 0);
       if (remaining === 0) {
         setLockExpiry(null);
         clearInterval(interval);
       }
-    }, 1000);
+    };
+    updateLock();
+    const interval = setInterval(updateLock, 1000);
     return () => clearInterval(interval);
   }, [lockExpiry]);
 
@@ -98,81 +109,39 @@ export function CourseDetailPanel({
   const isDangSua = currentCourse.trangThaiPheDuyet === "DangSua";
   const isChoDuyet = currentCourse.trangThaiPheDuyet === "ChoDuyet";
   const isDaDuyet = currentCourse.trangThaiPheDuyet === "DaDuyet";
+  const isPending = isPendingApproval(currentCourse.trangThaiPheDuyet);
 
   const canEditContent =
-    currentCourse.isBanHienTai === true && !isLockedApproved;
-  const baseKhoaHocId = draft ? currentCourse.idBanGhiTruoc : currentCourse.id;
+    currentCourse.isBanHienTai === true &&
+    !isDraftCourse(currentCourse) &&
+    !isPending;
+  const baseKhoaHocId = currentCourse.id;
 
   const canSubmit = !isLockedApproved && (isDangSua || draft);
   const canEdit = !isLockedApproved && isChoDuyet;
   const canPublish = isDaDuyet && draft;
   const canCreateDraftFromApproved = isLockedApproved;
 
-  const isLocked = lockExpiry !== null && Date.now() < lockExpiry;
-  const lockMinutes = Math.floor(remainingSeconds / 60);
-  const lockSeconds = remainingSeconds % 60;
-  const lockDisplay = `${lockMinutes}:${lockSeconds.toString().padStart(2, "0")}`;
+  const lockDisplay =
+    remainingSeconds > 0
+      ? `${Math.floor(remainingSeconds / 60)}:${(remainingSeconds % 60).toString().padStart(2, "0")}`
+      : "00:00";
 
   const updateCourseLocal = (updated: KhoaHocType) => {
     setCurrentCourse(updated);
-    setPhanList((updated as any).danhSachPhanHoc ?? []);
     if (onCourseUpdate) onCourseUpdate(updated);
   };
 
-  /**
-   * Kiểm tra response có thành công không.
-   * API có thể trả nhiều shape khác nhau:
-   *   - { success: true, data: {...} }
-   *   - { status: true/200, data: {...} }
-   *   - { data: {...} }          → không có success field, chỉ cần data tồn tại
-   *   - truthy object không null → coi là thành công (API đã throw nếu lỗi)
-   */
-  function resolveApiResult(result: any): {
-    ok: boolean;
-    data: KhoaHocType | null;
-    errorMsg: string | null;
-  } {
-    if (!result)
-      return {
-        ok: false,
-        data: null,
-        errorMsg: "Không có phản hồi từ máy chủ",
-      };
-
-    const explicitFail =
-      result.success === false ||
-      (typeof result.status === "number" && result.status >= 400);
-    if (explicitFail) {
-      const msg =
-        result.message ||
-        (Array.isArray(result.errors)
-          ? result.errors.join(", ")
-          : result.errors) ||
-        null;
-      return { ok: false, data: null, errorMsg: msg };
-    }
-
-    const data: KhoaHocType | null =
-      result.data ?? result.result ?? result.khoaHoc ?? null;
-
-    return { ok: true, data, errorMsg: null };
-  }
-
-  // --- Hàm xử lý tăng đếm chuyển trạng thái ---
   const handleSuccessfulStatusChange = () => {
     if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
-
     const newCount = changeCount + 1;
     setChangeCount(newCount);
-
     if (newCount >= 5) {
       setLockExpiry(Date.now() + 5 * 60 * 1000);
       setChangeCount(0);
       show("Bạn đã chuyển trạng thái quá nhiều lần. Tạm khoá 5 phút.", "error");
     } else {
-      resetTimeoutRef.current = setTimeout(() => {
-        setChangeCount(0);
-      }, 60 * 1000);
+      resetTimeoutRef.current = setTimeout(() => setChangeCount(0), 60 * 1000);
     }
   };
 
@@ -186,29 +155,18 @@ export function CourseDetailPanel({
     setChanging(true);
     try {
       const result = await apiCall();
-      console.log("API response:", result);
-
       const { ok, data, errorMsg: apiErr } = resolveApiResult(result);
-
       if (ok) {
-        if (data) {
-          updateCourseLocal(data);
-        } else if (optimisticStatus) {
-          const patched: KhoaHocType = {
-            ...currentCourse,
-            ...optimisticStatus,
-          };
-          updateCourseLocal(patched);
-        }
+        if (data) updateCourseLocal(data);
+        else if (optimisticStatus)
+          updateCourseLocal({ ...currentCourse, ...optimisticStatus });
         show(successMsg);
         onRefresh();
-        // ✅ Tăng đếm sau khi thành công
         handleSuccessfulStatusChange();
       } else {
         show(apiErr ?? errorMsg, "error");
       }
     } catch (error: any) {
-      console.error("Lỗi chuyển trạng thái:", error);
       const msg = error?.response?.data?.message || error?.message || errorMsg;
       show(msg, "error");
     } finally {
@@ -216,32 +174,21 @@ export function CourseDetailPanel({
     }
   };
 
-  const handleChuyenTTChoDuyet = () => {
+  const handleChuyenTTChoDuyet = () =>
     handleStatusChange(
-      () => khoaHocSvc.ChuyenTTChoDuyet(currentCourse.id!),
+      () => khoaHocSvc.ChuyenTTChoDuyetBatch([currentCourse.id!]),
       "Đã gửi yêu cầu phê duyệt",
       "Lỗi chuyển trạng thái",
       { trangThaiPheDuyet: "ChoDuyet" },
     );
-  };
 
-  const handleChuyenTTDangSua = () => {
+  const handleChuyenTTDangSua = () =>
     handleStatusChange(
-      () => khoaHocSvc.ChuyenTTDangSua(currentCourse.id!),
-      "Đã chuyển sang trạng thái Đang sửa",
+      () => khoaHocSvc.ChuyenTTDangSuaBatch([currentCourse.id!]),
+      "Đã chuyển sang Đang sửa",
       "Lỗi chuyển trạng thái",
       { trangThaiPheDuyet: "DangSua" },
     );
-  };
-
-  const handlePublishDraft = () => {
-    handleStatusChange(
-      () => khoaHocSvc.PublishDraft(currentCourse.id!),
-      "Đã xuất bản bản nháp thành công",
-      "Lỗi xuất bản",
-      { trangThaiPheDuyet: "DaDuyet" },
-    );
-  };
 
   const minutes = Math.floor((currentCourse.tongThoiLuong ?? 0) / 60);
 
@@ -256,7 +203,7 @@ export function CourseDetailPanel({
             borderRadius: 2,
             overflow: "hidden",
             flexShrink: 0,
-            bgcolor: "#fde8e8",
+            bgcolor: "#f0f0f0",
           }}
         >
           {isValidImg(currentCourse.hinhAnhKhoaHoc) ? (
@@ -281,7 +228,13 @@ export function CourseDetailPanel({
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
-            sx={{ fontWeight: 800, fontSize: 15, mb: 0.5, lineHeight: 1.3 }}
+            sx={{
+              fontWeight: 800,
+              fontSize: 15,
+              mb: 0.5,
+              lineHeight: 1.3,
+              color: TEXT_DARK,
+            }}
           >
             {currentCourse.tieuDe}
             {draft && (
@@ -311,9 +264,25 @@ export function CourseDetailPanel({
               />
             )}
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" gap={0.5}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ flexWrap: "wrap", alignItems: "center", gap: 0.5 }}
+          >
             {statusChip(currentCourse.trangThaiPheDuyet)}
             {statusChip(currentCourse.trangThai)}
+            {isApproved(currentCourse.trangThaiPheDuyet) && (
+              <Chip
+                label="✅ Đã duyệt"
+                size="small"
+                sx={{
+                  fontSize: "0.6rem",
+                  height: 18,
+                  bgcolor: "#e8f5e9",
+                  color: "#2e7d32",
+                }}
+              />
+            )}
             {(currentCourse as any).danhSachDanhMuc?.map((dm: any) => (
               <Chip
                 key={dm.id}
@@ -352,7 +321,12 @@ export function CourseDetailPanel({
         </Box>
       </Box>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 1 }} flexWrap="wrap">
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ mb: 1, flexWrap: "wrap" }}
+        useFlexGap
+      >
         {canSubmit && (
           <Tooltip title={isLocked ? `Bị khoá (${lockDisplay})` : ""}>
             <span>
@@ -379,19 +353,6 @@ export function CourseDetailPanel({
             </span>
           </Tooltip>
         )}
-        {canPublish && (
-          <Tooltip title={isLocked ? `Bị khoá (${lockDisplay})` : ""}>
-            <span>
-              <RedBtn
-                startIcon={<CheckCircleIcon />}
-                onClick={handlePublishDraft}
-                disabled={changing || isLocked}
-              >
-                Xuất bản bản nháp
-              </RedBtn>
-            </span>
-          </Tooltip>
-        )}
         {canCreateDraftFromApproved && (
           <Tooltip title={isLocked ? `Bị khoá (${lockDisplay})` : ""}>
             <span>
@@ -400,7 +361,7 @@ export function CourseDetailPanel({
                 onClick={onEdit}
                 disabled={changing || isLocked}
               >
-                Tạo bản nháp để sửa
+                Tạo bản nháp
               </OutlineBtn>
             </span>
           </Tooltip>
@@ -410,28 +371,35 @@ export function CourseDetailPanel({
         )}
       </Stack>
 
-      {/* Hiển thị thông báo khoá */}
       {isLocked && (
         <Typography sx={{ fontSize: 13, color: "#d32f2f", mt: 1 }}>
           ⛔ Tạm khoá chuyển trạng thái ({lockDisplay})
         </Typography>
       )}
-
       {isLockedApproved && (
-        <Typography sx={{ fontSize: 12, color: "#999", mb: 2 }}>
-          Đây là bản đã duyệt và đang công khai. Để chỉnh sửa nội dung, hãy tạo
-          bản nháp — các thay đổi sẽ không ảnh hưởng tới bản đang chạy cho đến
-          khi bạn xuất bản.
+        <Typography sx={{ fontSize: 12, color: TEXT_GRAY, mb: 2 }}>
+          Đây là bản đã duyệt và đang công khai. Chỉnh sửa nội dung bên dưới sẽ
+          áp dụng trực tiếp lên bản đang công khai — hoặc bạn có thể nhấn
+          &quot;Tạo bản nháp&quot; nếu muốn thử nghiệm thay đổi riêng trước khi
+          công khai.
         </Typography>
       )}
-      {isChoDuyet && !isLockedApproved && (
+      {isPending && (
         <Typography sx={{ fontSize: 12, color: "#e65100", mb: 2 }}>
-          Khóa học đang ở trạng thái Chờ duyệt. Bạn vẫn có thể chỉnh sửa nội
-          dung nhưng trạng thái sẽ không tự động thay đổi.
+          Khóa học đang ở trạng thái {isChoDuyet ? "Chờ duyệt" : "Đang duyệt"},
+          không thể chỉnh sửa nội dung.
+          {isChoDuyet &&
+            ` Nhấn "Sửa tiếp" để chuyển về Đang sửa trước khi chỉnh sửa.`}
+        </Typography>
+      )}
+      {draft && currentCourse.isBanHienTai !== true && (
+        <Typography sx={{ fontSize: 12, color: TEXT_GRAY, mb: 2 }}>
+          Đây là bản nháp (chưa phải bản hiện tại), không thể thêm/sửa phần học
+          cho tới khi bản nháp này được duyệt và trở thành bản chính.
         </Typography>
       )}
 
-      <Divider sx={{ mb: 2, borderColor: "#fde8e8" }} />
+      <Divider sx={{ mb: 2, borderColor: BORDER_GRAY }} />
 
       <Box
         sx={{
@@ -441,25 +409,25 @@ export function CourseDetailPanel({
           mb: 2,
         }}
       >
-        <Typography sx={{ fontWeight: 700, fontSize: 14, color: R }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 14, color: TEXT_DARK }}>
           Nội dung khóa học
         </Typography>
-        <Typography sx={{ fontSize: 12, color: "#999" }}>
-          {phanList.length} phần ·{" "}
-          {phanList.reduce(
-            (s, p) => s + ((p as any).danhSachBaiGiang?.length ?? 0),
-            0,
-          )}{" "}
-          bài giảng
+        <Typography sx={{ fontSize: 12, color: TEXT_GRAY }}>
+          {contentStats.phan} phần · {contentStats.baiGiang} bài giảng
         </Typography>
       </Box>
 
-      <PhanSection
-        khoaHocId={baseKhoaHocId!}
-        items={phanList}
-        onRefresh={onRefresh}
-        canEdit={canEditContent}
-      />
+      {baseKhoaHocId ? (
+        <PhanSection
+          khoaHocId={baseKhoaHocId}
+          canEdit={canEditContent}
+          onStatsChange={handleStatsChange}
+        />
+      ) : (
+        <Typography sx={{ fontSize: 12.5, color: "#d32f2f", py: 1 }}>
+          Không xác định ID khóa học.
+        </Typography>
+      )}
 
       {ToastComponent}
     </Box>
