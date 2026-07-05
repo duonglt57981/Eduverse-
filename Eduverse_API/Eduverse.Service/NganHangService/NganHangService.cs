@@ -93,7 +93,7 @@ namespace Eduverse.Service.NganHangService
                 throw new Exception("Không tìm thấy tài khoản ngân hàng");
 
              if (!string.IsNullOrEmpty(entity.PublicIdHinhAnhQR))
-                await _cloudinaryService.DeleteImageAsync(entity.PublicIdHinhAnhQR);
+                await _cloudinaryService.DeleteImageNganHangAsync(entity.PublicIdHinhAnhQR);
 
             await DeleteAsync(entity);
         }

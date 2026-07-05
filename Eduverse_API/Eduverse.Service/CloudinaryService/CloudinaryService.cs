@@ -379,5 +379,22 @@ namespace Eduverse.Service.CloudinaryService
         }
 
         #endregion
+
+
+        public async Task DeleteImageNganHangAsync(string publicId)
+        {
+            if (string.IsNullOrEmpty(publicId))
+                throw new Exception("PublicId không được để trống");
+
+            var deleteParams = new DeletionParams(publicId)
+            {
+                ResourceType = ResourceType.Image
+            };
+
+            var result = await _cloudinary.DestroyAsync(deleteParams);
+
+            if (result.Error != null)
+                throw new Exception($"Xóa ảnh thất bại: {result.Error.Message}");
+        }
     }
 }
