@@ -21,6 +21,7 @@ export default function StudentDashboardShell({
     if (!token) {
       window.localStorage.setItem("AccessToken", "mock-token-eduverse");
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAuthChecked(true);
   }, [router]);
 
