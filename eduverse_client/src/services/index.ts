@@ -89,8 +89,14 @@ export class ApiService {
         }
 
         if (error.response?.status === 403) {
-          window.location.href = "/frobiden";
-          return;
+          if (typeof window !== "undefined") {
+            const token = localStorage.getItem("AccessToken");
+            if (!token) {
+              window.location.href = "/auth/login";
+              return;
+            }
+          }
+          return Promise.reject(error.response?.data?.message || "Không có quyền truy cập");
         }
 
         return Promise.reject(error.response?.data?.message || error.message);

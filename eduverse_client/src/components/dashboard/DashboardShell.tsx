@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -63,6 +64,7 @@ import {
 } from "@mui/material";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
+import DashboardHeader from "./DashboardHeader";
 import {
   getSidebarItemsByRole,
   getSecondarySidebarItemsByRole,
@@ -362,13 +364,6 @@ function SidebarContent({
   };
 
   const roleBadge = getRoleBadge();
-
-  const getHomeRoute = () => {
-    if (activeRoles.includes("Admin")) return "/admin/dashboard";
-    if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
-    return "/student/dashboard";
-  };
-
   const getRouteByLabel = (label: string) => {
     const isInstructorView = pathname.startsWith("/instructor");
     const isAdminView = pathname.startsWith("/admin");
@@ -521,7 +516,7 @@ function SidebarContent({
                     boxShadow: "0 8px 24px rgba(141,19,19,0.25)",
                   },
                 }}
-                onClick={() => router.push("/student/profile")}
+                onClick={() => router.push("/student/become-instructor")}
               >
                 <Typography sx={{ fontSize: 13, fontWeight: 800, mb: 0.5 }}>
                   🎓 Trở thành Giảng viên
@@ -789,15 +784,46 @@ export default function DashboardShell({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+  const activeRoles = useMemo(() => {
+    let list = [...roles];
+    if (!pathname.startsWith("/instructor")) {
+      list = list.filter((r) => r !== "GiaoVien");
+    }
+    if (!pathname.startsWith("/admin")) {
+      list = list.filter((r) => r !== "Admin");
+    }
+    return list;
+  }, [roles, pathname]);
+  const getHomeRoute = () => {
+    if (activeRoles.includes("Admin")) return "/admin/dashboard";
+    if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
+    return "/student/dashboard";
+  };
 
   // Custom states
   const [activeContinueTab, setActiveContinueTab] = useState<
     "courses" | "assigned" | "paths" | "certs" | "tests"
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("AI");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const handleAvatarUpdate = () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("user_avatar");
+        if (stored) {
+          setUserAvatar(stored);
+        }
+      }
+    };
+    window.addEventListener("avatar_updated", handleAvatarUpdate);
+    handleAvatarUpdate();
+    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -810,6 +836,7 @@ export default function DashboardShell({
         } else {
           setError(response.message || "Không thể lấy dữ liệu Dashboard");
         }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         setError(
           typeof err === "string" ? err : "Đã xảy ra lỗi khi tải dữ liệu",
@@ -871,6 +898,7 @@ export default function DashboardShell({
   const filteredSkillsCourses = useMemo(() => {
     if (!dashboardData?.skillsCourses) return [];
     const skill = selectedSkill.toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return dashboardData.skillsCourses.filter((course: any) => {
       const title = (course.title || "").toLowerCase();
       if (skill === "ai")
@@ -972,6 +1000,7 @@ export default function DashboardShell({
         {/* ========================================================= */}
         {/* 1. HEADER NAVIGATION (Fixed)                              */}
         {/* ========================================================= */}
+        {pathname.startsWith("/admin") ? (
         <Box
           component="header"
           sx={{
@@ -1294,7 +1323,7 @@ export default function DashboardShell({
                 </Typography>
               </Stack>
               <Avatar
-                src={dashboardData?.welcomeStats?.avatarUrl || undefined}
+                src={userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined}
                 onClick={handleAvatarClick}
                 sx={{
                   width: 38,
@@ -1361,7 +1390,7 @@ export default function DashboardShell({
                   }}
                 >
                   <Avatar
-                    src={dashboardData?.welcomeStats?.avatarUrl || undefined}
+                    src={userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined}
                     sx={{
                       width: 44,
                       height: 44,
@@ -1548,48 +1577,55 @@ export default function DashboardShell({
             </Stack>
           </Stack>
         </Box>
+        ) : (
+          <DashboardHeader onMenuClick={undefined} />
+        )}
+
+
 
         {/* ========================================================= */}
         {/* SIDEBAR DRAWER (COLLAPSED FOR MOBILE/TABLET)              */}
-        {/* ========================================================= */}
-        <Drawer
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: "block", lg: "none" },
-            "& .MuiDrawer-paper": {
-              width: sidebarWidth,
-              boxSizing: "border-box",
-              mt: headerHeight,
-              height: `calc(100% - ${headerHeight})`,
-              boxShadow: "12px 0 24px rgba(0,0,0,0.03)",
-              borderRight: "1px solid rgba(0,0,0,0.06)",
-            },
-          }}
-        >
-          <SidebarContent onLogout={handleLogout} roles={roles} />
-        </Drawer>
+        {/* ========================================================= */}        {!pathname.startsWith("/instructor") && (
+          <Drawer
+            open={mobileOpen}
+            onClose={() => setMobileOpen(false)}
+            ModalProps={{ keepMounted: true }}
+            sx={{
+              display: { xs: "block", lg: "none" },
+              "& .MuiDrawer-paper": {
+                width: sidebarWidth,
+                boxSizing: "border-box",
+                mt: headerHeight,
+                height: `calc(100% - ${headerHeight})`,
+                boxShadow: "12px 0 24px rgba(0,0,0,0.03)",
+                borderRight: "1px solid rgba(0,0,0,0.06)",
+              },
+            }}
+          >
+            <SidebarContent onLogout={handleLogout} roles={roles} />
+          </Drawer>
+        )}
 
         {/* ========================================================= */}
         {/* MAIN LAYOUT STRUCTURE                                     */}
         {/* ========================================================= */}
         <Box
           sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
-        >
-          {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
-          <Box
-            sx={{
-              width: sidebarWidth,
-              flexShrink: 0,
-              display: { xs: "none", lg: "block" },
-              borderRight: "1px solid rgba(0,0,0,0.06)",
-              height: "100%",
-              bgcolor: COLORS.white,
-            }}
-          >
-            <SidebarContent onLogout={handleLogout} roles={roles} />
-          </Box>
+        >          {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
+          {!pathname.startsWith("/instructor") && (
+            <Box
+              sx={{
+                width: sidebarWidth,
+                flexShrink: 0,
+                display: { xs: "none", lg: "block" },
+                borderRight: "1px solid rgba(0,0,0,0.06)",
+                height: "100%",
+                bgcolor: COLORS.white,
+              }}
+            >
+              <SidebarContent onLogout={handleLogout} roles={roles} />
+            </Box>
+          )}
 
           {/* 2. MAIN CONTENT SCROLL AREA (Expanded Single Column Layout) */}
           <Box
@@ -1668,7 +1704,7 @@ export default function DashboardShell({
                       >
                         <Avatar
                           src={
-                            dashboardData?.welcomeStats?.avatarUrl || undefined
+                            userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined
                           }
                           sx={{
                             width: 80,
@@ -2536,6 +2572,7 @@ export default function DashboardShell({
 
                         {/* Backend API certificates */}
                         {dashboardData?.continueLearning?.certificates?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}
@@ -2776,6 +2813,7 @@ export default function DashboardShell({
 
                         {/* Backend API tests list */}
                         {dashboardData?.continueLearning?.assessments?.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (item: any) => (
                             <Paper
                               key={item.id}

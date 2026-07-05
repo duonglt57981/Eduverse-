@@ -146,100 +146,100 @@ export const fadeIn = keyframes`
 // ─── Layout shells ─────────────────────────────────────────────────────────
 export const PageWrap = styled(Box)({
   minHeight: "100vh",
-  background: PAGE_BG,
-  padding: "24px 28px",
+  background: "transparent",
+  padding: "32px 40px",
 });
 
 // ─── Course card ────────────────────────────────────────────────────────────
 export const KhoaHocCard = styled(Card, {
   shouldForwardProp: (prop) => prop !== "selected",
 })<{ selected?: boolean }>(({ selected }) => ({
-  borderRadius: 8,
-  border: `1px solid ${selected ? R : BORDER_GRAY}`,
+  borderRadius: 16,
+  border: `1px solid ${selected ? R : "rgba(141, 19, 19, 0.08)"}`,
   cursor: "pointer",
-  transition: "all 0.15s",
-  background: "#fff",
-  boxShadow: selected ? `0 0 0 1px ${alpha(R, 0.25)}` : "none",
-  animation: `${fadeIn} 0.25s ease`,
+  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+  background: selected
+    ? `linear-gradient(135deg, rgba(141,19,19,0.03) 0%, #fff 100%)`
+    : "#fff",
+  boxShadow: selected
+    ? `0 10px 25px ${alpha(R, 0.08)}`
+    : "0 4px 20px rgba(0, 0, 0, 0.015)",
+  animation: `${fadeIn} 0.3s ease`,
   "&:hover": {
-    borderColor: alpha(R, 0.5),
+    borderColor: R,
+    boxShadow: `0 12px 30px ${alpha(R, 0.1)}`,
+    transform: "translateY(-2px)",
   },
 }));
 
-// ─── Curriculum (Udemy-style accordion) ────────────────────────────────────
-export const CurriculumSection = styled(Box)({
-  border: `1px solid ${BORDER_GRAY_STRONG}`,
-  borderRadius: 6,
+export const PhanRow = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "depth",
+})<{ depth?: number }>(({ depth = 0 }) => ({
+  borderRadius: 12,
+  border: "1px solid rgba(141, 19, 19, 0.06)",
   marginBottom: 10,
-  background: SURFACE,
-  overflow: "hidden",
-  animation: `${fadeIn} 0.2s ease`,
-});
-
-export const CurriculumSectionHeader = styled(Box)({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "13px 14px",
-  background: SURFACE_SUBTLE,
-  cursor: "pointer",
-  gap: 8,
-  "&:hover": { background: "#f1f3f4" },
-});
-
-// Giữ tên cũ để tương thích
-export const PhanRow = CurriculumSection;
-export const SectionHeader = CurriculumSectionHeader;
-
-export const IndexBadge = styled(Box)({
-  width: 22,
-  height: 22,
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 11,
-  fontWeight: 700,
-  color: TEXT_GRAY,
-  background: "#eceff1",
-  flexShrink: 0,
-});
+  background: "#fff",
+  marginLeft: depth * 16,
+  boxShadow: "0 2px 12px rgba(141, 19, 19, 0.01)",
+  animation: `${fadeIn} 0.25s ease`,
+  transition: "all 0.2s ease",
+  "&:hover": {
+    borderColor: alpha(R, 0.3),
+    boxShadow: "0 4px 16px rgba(141, 19, 19, 0.03)",
+  },
+}));
 
 export const BaiGiangRow = styled(Box)({
   display: "flex",
   alignItems: "center",
   padding: "10px 14px",
-  borderTop: `1px solid #f1f1f1`,
-  background: SURFACE,
-  transition: "background 0.12s",
-  "&:hover": { background: SURFACE_SUBTLE },
+  borderRadius: 10,
+  border: "1px solid rgba(141, 19, 19, 0.04)",
+  marginBottom: 8,
+  background: "#fffcfc",
+  animation: `${fadeIn} 0.2s ease`,
+  transition: "all 0.2s ease",
+  "&:hover": {
+    background: "rgba(141, 19, 19, 0.02)",
+    borderColor: alpha(R, 0.15),
+  },
 });
 
 export const TaiLieuRow = styled(Box)({
   display: "flex",
   alignItems: "center",
-  padding: "7px 12px",
-  borderRadius: 5,
-  border: `1px solid ${BORDER_GRAY}`,
-  marginBottom: 4,
-  background: SURFACE_SUBTLE,
-  animation: `${fadeIn} 0.15s ease`,
+  padding: "8px 12px",
+  borderRadius: 8,
+  border: "1px dashed rgba(141, 19, 19, 0.15)",
+  marginBottom: 6,
+  background: "#ffffff",
+  animation: `${fadeIn} 0.2s ease`,
+  transition: "all 0.2s ease",
+  "&:hover": {
+    background: "rgba(141, 19, 19, 0.01)",
+    borderColor: alpha(R, 0.35),
+  },
 });
 
 // ─── Buttons ──────────────────────────────────────────────────────────────
 export const ActionBtn = styled(Button)({
   textTransform: "none",
-  fontWeight: 600,
-  borderRadius: 6,
-  fontSize: "0.8rem",
-  padding: "6px 16px",
+  fontWeight: 700,
+  borderRadius: 12,
+  fontSize: "0.85rem",
+  padding: "8px 20px",
+  boxShadow: "none",
+  transition: "all 0.2s ease-in-out",
 });
 
 export const RedBtn = styled(ActionBtn)({
   background: R,
   color: "#fff",
-  boxShadow: "none",
-  "&:hover": { background: RH, boxShadow: "none" },
+  "&:hover": {
+    background: RH,
+    transform: "translateY(-1px)",
+    boxShadow: "0 6px 16px rgba(141, 19, 19, 0.2)",
+  },
   "&:disabled": {
     background: alpha(R, 0.35),
     color: "#fff",
@@ -247,20 +247,38 @@ export const RedBtn = styled(ActionBtn)({
 });
 
 export const OutlineBtn = styled(ActionBtn)({
-  border: `1.5px solid ${BORDER_GRAY_STRONG}`,
-  color: TEXT_DARK,
-  "&:hover": { background: SURFACE_SUBTLE, borderColor: R, color: R },
+  border: `1.5px solid ${alpha(R, 0.4)}`,
+  color: R,
+  background: "transparent",
+  "&:hover": {
+    background: alpha(R, 0.04),
+    borderColor: R,
+    transform: "translateY(-1px)",
+  },
+});
+
+export const SectionHeader = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "12px 16px",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  "&:hover": { background: alpha(R, 0.02) },
 });
 
 export const UploadZone = styled(Box)({
-  border: `2px dashed ${alpha(R, 0.3)}`,
-  borderRadius: 8,
-  padding: "18px 14px",
+  border: `2px dashed rgba(141, 19, 19, 0.2)`,
+  borderRadius: 12,
+  padding: "24px 20px",
   textAlign: "center",
   cursor: "pointer",
-  background: SURFACE_SUBTLE,
-  transition: "all 0.15s",
-  "&:hover": { background: alpha(R, 0.04), borderColor: R },
+  background: "rgba(141, 19, 19, 0.01)",
+  transition: "all 0.25s ease",
+  "&:hover": {
+    background: alpha(R, 0.04),
+    borderColor: R,
+  },
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────

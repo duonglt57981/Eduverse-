@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/instructor/manager-courses/components/PhanSection.tsx
 "use client";
 
@@ -25,7 +26,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import PhanService from "@/src/services/PhanService";
 import BaiGiangService from "@/src/services/BaiGiangService";
-import { PhanHocType, PhanForm } from "../types";
+import { PhanHocType, PhanForm, BaiGiangType } from "../types";
 import {
   R,
   RedBtn,
@@ -122,10 +123,8 @@ export function PhanSection({
             currentPhans.map(async (phan) => {
               try {
                 const bgRes = await bgSvc.GetListBaiGiangManager(phan.id!);
-                const arr = extractList<{ idBanGhiTruoc?: string | null }>(
-                  bgRes,
-                );
-                return arr.filter((b) => !b.idBanGhiTruoc).length;
+                const arr = extractList<BaiGiangType>(bgRes as any);
+                return arr.filter((b) => !(b as any).idBanGhiTruoc).length;
               } catch {
                 return 0;
               }
@@ -146,6 +145,7 @@ export function PhanSection({
   }, [khoaHocId, show, onStatsChange]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
@@ -253,7 +253,12 @@ export function PhanSection({
     return (
       <PhanRow key={phan.id}>
         <SectionHeader onClick={() => togglePhan(phan.id!)}>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack
+            component="div"
+            direction="row"
+            spacing={1}
+            alignItems="center"
+          >
             {isOpen ? (
               <ExpandLessIcon sx={{ color: R, fontSize: 18 }} />
             ) : (
@@ -335,7 +340,13 @@ export function PhanSection({
   return (
     <Box>
       {loading ? (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ py: 2 }}>
+        <Stack
+          component="div"
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ py: 2 }}
+        >
           <CircularProgress size={16} sx={{ color: alpha(R, 0.5) }} />
           <Typography sx={{ fontSize: 12.5, color: TEXT_GRAY }}>
             Đang tải nội dung khóa học…

@@ -178,7 +178,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "a168bc61-d929-40c6-84a4-92684b2fa10f",
+                            ConcurrencyStamp = "627513c9-2ae8-47ec-a5a2-57640f96c8f8",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -187,10 +187,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-
-                            PasswordHash = "AQAAAAIAAYagAAAAEPu3bHoh0JFaDBUlxpCmm2mLO8vjh/Zdm4twdSP29pP/VJVNtOsnkXIvAnYndIipEA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEEMUlhUXpFo7t2JMiFIkSL0fbAJlT3Z2uKFBRBiFCKcsZhpheTVdG/Vo+YhQORwgug==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "55f610d8-b632-439c-8030-f140244cf1c8",
+                            SecurityStamp = "86775bfb-189d-4ecc-a663-51fc6000b2e6",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -1733,6 +1732,9 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("HinhAnhQR")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("IdNguoiDung")
                         .HasColumnType("uniqueidentifier");
 
@@ -1741,6 +1743,9 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<DateTime?>("NgayTao")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("PublicIdHinhAnhQR")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SoTaiKhoan")
                         .HasColumnType("nvarchar(max)");
@@ -2064,9 +2069,6 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdNguoiDung")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid?>("DonViId")
                         .HasColumnType("uniqueidentifier");
 
@@ -2078,6 +2080,12 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<Guid?>("FromUser")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IdNguoiDung")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<bool?>("IsDisplay")
                         .HasColumnType("bit");
@@ -2100,12 +2108,18 @@ namespace Eduverse.Model.Migrations
                     b.Property<string>("Link")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("LoaiThongBao")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("NguoiTao")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NoiDung")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ProductId")
                         .HasColumnType("nvarchar(max)");
@@ -2116,22 +2130,6 @@ namespace Eduverse.Model.Migrations
                     b.Property<bool?>("SendToFrontEndUser")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("ToUser")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Type")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LoaiThongBao")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NoiDung")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("ThoiGianDoc")
                         .HasColumnType("datetime2");
 
@@ -2141,8 +2139,15 @@ namespace Eduverse.Model.Migrations
                     b.Property<string>("TieuDe")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ToUser")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("TrangThai")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");

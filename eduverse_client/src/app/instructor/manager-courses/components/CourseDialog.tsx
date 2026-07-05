@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// src/app/instructor/manager-courses/components/CourseDialog.tsx
+
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   Stack,
   Box,
   TextField,
@@ -14,10 +15,14 @@ import {
   CircularProgress,
   InputAdornment,
   Typography,
+  IconButton,
+  Grid,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CategoryIcon from "@mui/icons-material/Category";
+import CloseIcon from "@mui/icons-material/Close";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { danhMucService } from "@/src/services/danhmucService";
@@ -39,6 +44,39 @@ const khoaHocSvc = new KhoaHocService();
 
 const MAX_GIA = 100_000_000;
 const IMG_ACCEPT = ".jpg,.jpeg,.png,image/jpeg,image/png";
+
+/* ── Shared input styling ────────────────────────────────────────────────── */
+const fieldSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "10px",
+    fontSize: 14,
+    height: 46,
+    backgroundColor: "#fff",
+    "& fieldset": { borderColor: "#D1D5DB" },
+    "&:hover fieldset": { borderColor: "rgba(141, 19, 19, 0.4)" },
+    "&.Mui-focused fieldset": { borderColor: R, borderWidth: "1.5px" },
+    "&.Mui-focused": {
+      boxShadow: "0 0 0 3px rgba(141, 19, 19, 0.06)",
+    },
+  },
+  "& .MuiInputLabel-root": { display: "none" },
+  "& .MuiOutlinedInput-notchedOutline legend": { display: "none" },
+  "& .MuiOutlinedInput-input": {
+    padding: "12px 14px",
+    "&::placeholder": { color: "#9CA3AF", opacity: 1 },
+  },
+  "& .MuiOutlinedInput-root.Mui-error fieldset": {
+    borderColor: "#DC2626",
+  },
+};
+
+const labelSx = {
+  fontSize: 14,
+  fontWeight: 600,
+  color: "#1F2937",
+  mb: 0.75,
+  fontFamily: '"Be Vietnam Pro", sans-serif',
+};
 
 interface CourseDialogProps {
   open: boolean;
@@ -79,22 +117,24 @@ export function CourseDialog({
   // ── Load danh mục ──────────────────────────────────────────────────────────
   const loadDanhMuc = useCallback(async () => {
     if (danhMucList.length > 0) return;
+
     setDanhMucLoading(true);
     setDanhMucError(null);
+
     try {
       const res = await danhMucService.getList({
         pageIndex: 1,
         pageSize: 100,
       });
+
       let items: DanhMucDto[] = [];
-      const data = (res as any)?.data;
-      if (data) {
-        items = data.items ?? data;
-      } else if (Array.isArray(res)) {
-        items = res;
-      } else if ((res as any)?.items) {
-        items = (res as any).items;
+
+      if (Array.isArray(res.data)) {
+        items = res.data;
+      } else {
+        items = res.data.items ?? [];
       }
+
       setDanhMucList(items);
     } catch (error) {
       console.error("Lỗi tải danh mục:", error);
@@ -106,6 +146,7 @@ export function CourseDialog({
   }, [danhMucList.length, show]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open && danhMucList.length === 0) loadDanhMuc();
   }, [open, danhMucList.length, loadDanhMuc]);
 
@@ -117,6 +158,7 @@ export function CourseDialog({
           (editCourse as any).idDanhMucList ??
           (editCourse as any).danhSachDanhMuc?.map((d: any) => d.id) ??
           [];
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setForm({
           tieuDe: editCourse.tieuDe ?? "",
           moTa: editCourse.moTa ?? "",
@@ -245,27 +287,91 @@ export function CourseDialog({
     }
   };
 
-  const inputSx = {
-    "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: R },
-    "& label.Mui-focused": { color: R },
-  };
-
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      maxWidth={false}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "20px",
+            width: { xs: "calc(100% - 24px)", sm: 680, md: 700 },
+            maxWidth: 720,
+            maxHeight: "90vh",
+            boxShadow:
+              "0 25px 60px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04)",
+            m: { xs: 1.5, sm: 2 },
+          },
+        },
+      }}
     >
-      <DialogTitle sx={{ fontWeight: 700, fontSize: 17, color: R }}>
-        {editCourse ? "Chỉnh sửa khóa học" : "Tạo khóa học mới"}
-      </DialogTitle>
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          px: { xs: 2.5, sm: 4 },
+          pt: { xs: 2.5, sm: 3.5 },
+          pb: 0,
+        }}
+      >
+        <Box>
+          <Typography
+            sx={{
+              fontSize: { xs: 20, sm: 23 },
+              fontWeight: 700,
+              color: R,
+              fontFamily: '"Be Vietnam Pro", sans-serif',
+              lineHeight: 1.3,
+            }}
+          >
+            {editCourse ? "Chỉnh sửa khóa học" : "Tạo khóa học mới"}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 14,
+              color: "#6B7280",
+              mt: 0.5,
+            }}
+          >
+            {editCourse
+              ? "Cập nhật thông tin khóa học của bạn."
+              : "Nhập thông tin cơ bản để bắt đầu xây dựng khóa học."}
+          </Typography>
+        </Box>
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            mt: 0.5,
+            color: "#9CA3AF",
+            "&:hover": { color: "#1F2937", bgcolor: "rgba(0,0,0,0.04)" },
+          }}
+        >
+          <CloseIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+      </Box>
 
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          {/* Ảnh bìa */}
+      {/* ── Content ────────────────────────────────────────────────────── */}
+      <DialogContent
+        sx={{
+          px: { xs: 2.5, sm: 4 },
+          pt: 2.5,
+          pb: 1,
+          overflowY: "auto",
+          "&::-webkit-scrollbar": { width: 5 },
+          "&::-webkit-scrollbar-thumb": {
+            background: "rgba(141, 19, 19, 0.12)",
+            borderRadius: 10,
+          },
+        }}
+      >
+        <Stack spacing={2.5}>
+          {/* ── Ảnh bìa ────────────────────────────────────────────────── */}
           <Box>
+            <Typography sx={labelSx}>Ảnh bìa khóa học</Typography>
             <input
               ref={imgRef}
               type="file"
@@ -273,16 +379,36 @@ export function CourseDialog({
               style={{ display: "none" }}
               onChange={handleImg}
             />
-            <UploadZone onClick={() => imgRef.current?.click()}>
+            <Box
+              onClick={() => imgRef.current?.click()}
+              sx={{
+                height: imgPreview ? "auto" : { xs: 130, sm: 150 },
+                border: `1.5px dashed ${errors.img ? "#DC2626" : alpha(R, 0.25)}`,
+                borderRadius: "12px",
+                cursor: "pointer",
+                bgcolor: errors.img
+                  ? "rgba(220, 38, 38, 0.02)"
+                  : "rgba(141, 19, 19, 0.015)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+                overflow: "hidden",
+                "&:hover": {
+                  bgcolor: alpha(R, 0.04),
+                  borderColor: R,
+                },
+              }}
+            >
               {imgPreview ? (
                 <Box
                   component="img"
                   src={imgPreview}
                   alt="preview"
                   sx={{
-                    maxHeight: 120,
-                    maxWidth: "100%",
-                    borderRadius: 1,
+                    width: "100%",
+                    maxHeight: 180,
                     objectFit: "cover",
                   }}
                 />
@@ -295,25 +421,35 @@ export function CourseDialog({
                   </Typography>
                 </>
               )}
-            </UploadZone>
+            </Box>
             {errors.img && (
-              <Typography sx={{ fontSize: 11.5, color: "#d32f2f", mt: 0.5 }}>
+              <Typography
+                sx={{
+                  fontSize: 12.5,
+                  color: "#DC2626",
+                  mt: 0.75,
+                  fontWeight: 500,
+                }}
+              >
                 {errors.img}
               </Typography>
             )}
           </Box>
+          {/* ── Tiêu đề ────────────────────────────────────────────────── */}
+          <Box>
+            <Typography sx={labelSx}>Tiêu đề khóa học *</Typography>
+            <TextField
+              fullWidth
+              placeholder="Nhập tiêu đề khóa học"
+              value={form.tieuDe}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, tieuDe: e.target.value }))
+              }
+              sx={fieldSx}
+            />
+          </Box>
 
-          {/* Tiêu đề */}
-          <TextField
-            size="small"
-            label="Tiêu đề khóa học *"
-            fullWidth
-            value={form.tieuDe}
-            onChange={(e) => setForm((p) => ({ ...p, tieuDe: e.target.value }))}
-            sx={inputSx}
-          />
-
-          {/* Mô tả - RichTextEditor */}
+          {/* ── Mô tả - RichTextEditor ─────────────────────────────────── */}
           <RichTextEditor
             value={form.moTa}
             onChange={(value) => setForm((p) => ({ ...p, moTa: value }))}
@@ -322,206 +458,285 @@ export function CourseDialog({
             label="Mô tả khóa học"
           />
 
-          {/* Danh mục */}
-          <TextField
-            size="small"
-            select
-            label="Danh mục *"
-            fullWidth
-            error={!!errors.danhMuc}
-            helperText={errors.danhMuc || " "}
-            value={form.idDanhMucList}
-            onChange={(e) => {
-              const val = e.target.value;
-              const ids =
-                typeof val === "string" ? val.split(",") : (val as string[]);
-              setForm((p) => ({ ...p, idDanhMucList: ids }));
-              setErrors((p) => ({
-                ...p,
-                danhMuc:
-                  ids.length === 0
-                    ? "Vui lòng chọn ít nhất một danh mục"
-                    : undefined,
-              }));
-            }}
-            sx={inputSx}
-            slotProps={{
-              select: {
-                multiple: true,
-                MenuProps: {
-                  slotProps: { paper: { style: { maxHeight: 320 } } },
-                },
-                renderValue: (selected) => {
-                  const ids = selected as string[];
-                  if (!ids.length) {
-                    return (
-                      <em style={{ color: "#999", fontSize: "0.85rem" }}>
-                        — Chọn danh mục —
-                      </em>
-                    );
-                  }
-                  return (
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                      {ids.map((id) => {
-                        const dm = danhMucList.find((d) => d.id === id);
-                        return (
-                          <Chip
-                            key={id}
-                            label={dm?.tenDanhMuc ?? id}
-                            size="small"
-                            sx={{
-                              height: 20,
-                              fontSize: "0.7rem",
-                              bgcolor: alpha(R, 0.08),
-                              color: R,
-                            }}
-                          />
-                        );
-                      })}
-                    </Box>
-                  );
-                },
-              },
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CategoryIcon sx={{ fontSize: 16, color: alpha(R, 0.5) }} />
-                  </InputAdornment>
-                ),
-                endAdornment: danhMucLoading ? (
-                  <InputAdornment position="end" sx={{ mr: 2 }}>
-                    <CircularProgress size={14} sx={{ color: R }} />
-                  </InputAdornment>
-                ) : danhMucError ? (
-                  <InputAdornment position="end" sx={{ mr: 2 }}>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "#d32f2f", cursor: "pointer" }}
-                      onClick={loadDanhMuc}
-                    >
-                      Tải lại
-                    </Typography>
-                  </InputAdornment>
-                ) : undefined,
-              },
-            }}
-          >
-            {danhMucLoading ? (
-              <MenuItem disabled value="__loading__">
-                <CircularProgress size={20} sx={{ color: R }} />
-                <Box component="span" sx={{ ml: 1 }}>
-                  Đang tải...
-                </Box>
-              </MenuItem>
-            ) : danhMucList.length === 0 ? (
-              <MenuItem disabled value="__empty__">
-                {danhMucError || "Không có danh mục nào"}
-              </MenuItem>
-            ) : (
-              danhMucList.map((dm) => (
-                <MenuItem key={dm.id} value={dm.id}>
-                  {dm.tenDanhMuc}
-                </MenuItem>
-              ))
-            )}
-          </TextField>
-
-          {/* Giá và cấp độ */}
-          <Stack direction="row" spacing={1.5}>
+          {/* ── Danh mục ────────────────────────────────────────────────── */}
+          <Box>
+            <Typography sx={labelSx}>Danh mục *</Typography>
             <TextField
-              size="small"
-              label="Giá (VNĐ)"
-              type="number"
-              sx={{ flex: 1, ...inputSx }}
-              value={form.gia}
-              error={!!errors.gia}
-              helperText={errors.gia || " "}
-              onChange={(e) => {
-                const v = e.target.value;
-                setForm((p) => ({ ...p, gia: v }));
-                const giaNum = Number(v || 0);
-                const giaGocNum = Number(form.giaGoc || 0);
-                if (giaNum < 0) {
-                  setErrors((p) => ({ ...p, gia: "Giá không được âm" }));
-                } else if (giaNum >= MAX_GIA) {
-                  setErrors((p) => ({
-                    ...p,
-                    gia: `Giá phải nhỏ hơn ${MAX_GIA.toLocaleString("vi-VN")}đ`,
-                  }));
-                } else if (giaGocNum > 0 && giaNum > giaGocNum) {
-                  setErrors((p) => ({
-                    ...p,
-                    gia: "Giá bán không được lớn hơn giá gốc",
-                  }));
-                } else {
-                  setErrors((p) => ({ ...p, gia: undefined }));
-                }
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">₫</InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <TextField
-              size="small"
-              label="Giá gốc *"
-              type="number"
-              sx={{ flex: 1, ...inputSx }}
-              value={form.giaGoc}
-              onChange={(e) => {
-                const v = e.target.value;
-                setForm((p) => ({ ...p, giaGoc: v }));
-                const giaNum = Number(form.gia || 0);
-                const giaGocNum = Number(v || 0);
-                if (giaGocNum < 0) {
-                  setErrors((p) => ({ ...p, gia: "Giá gốc không được âm" }));
-                } else if (giaGocNum >= MAX_GIA) {
-                  setErrors((p) => ({
-                    ...p,
-                    gia: `Giá gốc phải nhỏ hơn ${MAX_GIA.toLocaleString("vi-VN")}đ`,
-                  }));
-                } else if (giaGocNum > 0 && giaNum > giaGocNum) {
-                  setErrors((p) => ({
-                    ...p,
-                    gia: "Giá bán không được lớn hơn giá gốc",
-                  }));
-                } else {
-                  setErrors((p) => ({ ...p, gia: undefined }));
-                }
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">₫</InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <TextField
-              size="small"
               select
-              label="Cấp độ"
-              sx={{ minWidth: 120, ...inputSx }}
-              value={form.capDo}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, capDo: e.target.value }))
-              }
+              fullWidth
+              error={!!errors.danhMuc}
+              value={form.idDanhMucList}
+              onChange={(e) => {
+                const val = e.target.value;
+                const ids =
+                  typeof val === "string" ? val.split(",") : (val as string[]);
+                setForm((p) => ({ ...p, idDanhMucList: ids }));
+                setErrors((p) => ({
+                  ...p,
+                  danhMuc:
+                    ids.length === 0
+                      ? "Vui lòng chọn ít nhất một danh mục"
+                      : undefined,
+                }));
+              }}
+              sx={fieldSx}
+              slotProps={{
+                select: {
+                  multiple: true,
+                  displayEmpty: true,
+                  MenuProps: {
+                    slotProps: {
+                      paper: {
+                        sx: {
+                          maxHeight: 320,
+                          borderRadius: "10px",
+                          mt: 0.5,
+                          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+                        },
+                      },
+                    },
+                  },
+                  renderValue: (selected) => {
+                    const ids = selected as string[];
+                    if (!ids.length) {
+                      return (
+                        <Typography sx={{ color: "#9CA3AF", fontSize: 14 }}>
+                          Chọn danh mục khóa học
+                        </Typography>
+                      );
+                    }
+                    return (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {ids.map((id) => {
+                          const dm = danhMucList.find((d) => d.id === id);
+                          return (
+                            <Chip
+                              key={id}
+                              label={dm?.tenDanhMuc ?? id}
+                              size="small"
+                              sx={{
+                                height: 22,
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                bgcolor: alpha(R, 0.08),
+                                color: R,
+                                border: `1px solid ${alpha(R, 0.12)}`,
+                              }}
+                            />
+                          );
+                        })}
+                      </Box>
+                    );
+                  },
+                },
+                input: {
+                  endAdornment: danhMucLoading ? (
+                    <InputAdornment position="end" sx={{ mr: 2 }}>
+                      <CircularProgress size={14} sx={{ color: R }} />
+                    </InputAdornment>
+                  ) : danhMucError ? (
+                    <InputAdornment position="end" sx={{ mr: 2 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "#DC2626",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                        }}
+                        onClick={loadDanhMuc}
+                      >
+                        Tải lại
+                      </Typography>
+                    </InputAdornment>
+                  ) : undefined,
+                },
+              }}
             >
-              {["Cơ bản", "Trung cấp", "Nâng cao"].map((c) => (
-                <MenuItem key={c} value={c}>
-                  {c}
+              {danhMucLoading ? (
+                <MenuItem disabled value="__loading__">
+                  <CircularProgress size={20} sx={{ color: R }} />
+                  <Box component="span" sx={{ ml: 1 }}>
+                    Đang tải...
+                  </Box>
                 </MenuItem>
-              ))}
+              ) : danhMucList.length === 0 ? (
+                <MenuItem disabled value="__empty__">
+                  {danhMucError || "Không có danh mục nào"}
+                </MenuItem>
+              ) : (
+                danhMucList.map((dm) => (
+                  <MenuItem key={dm.id} value={dm.id}>
+                    {dm.tenDanhMuc}
+                  </MenuItem>
+                ))
+              )}
             </TextField>
-          </Stack>
+          </Box>
+
+          {/* ── Giá bán, Giá gốc, Cấp độ ────────────────────────────────── */}
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 4.2 }}>
+              <Box>
+                <Typography sx={labelSx}>Giá bán (VNĐ)</Typography>
+                <TextField
+                  fullWidth
+                  type="number"
+                  placeholder="0"
+                  value={form.gia}
+                  error={!!errors.gia}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setForm((p) => ({ ...p, gia: v }));
+                    const giaNum = Number(v || 0);
+                    const giaGocNum = Number(form.giaGoc || 0);
+                    if (giaNum < 0) {
+                      setErrors((p) => ({ ...p, gia: "Giá không được âm" }));
+                    } else if (giaNum >= MAX_GIA) {
+                      setErrors((p) => ({
+                        ...p,
+                        gia: `Giá phải nhỏ hơn ${MAX_GIA.toLocaleString("vi-VN")}đ`,
+                      }));
+                    } else if (giaGocNum > 0 && giaNum > giaGocNum) {
+                      setErrors((p) => ({
+                        ...p,
+                        gia: "Giá bán không được lớn hơn giá gốc",
+                      }));
+                    } else {
+                      setErrors((p) => ({ ...p, gia: undefined }));
+                    }
+                  }}
+                  sx={fieldSx}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography
+                            sx={{
+                              fontWeight: 700,
+                              color: "#6B7280",
+                              fontSize: 14,
+                            }}
+                          >
+                            ₫
+                          </Typography>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                {errors.gia && (
+                  <Typography
+                    sx={{
+                      fontSize: 12.5,
+                      color: "#DC2626",
+                      mt: 0.5,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {errors.gia}
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4.2 }}>
+              <Box>
+                <Typography sx={labelSx}>Giá gốc</Typography>
+                <TextField
+                  fullWidth
+                  type="number"
+                  placeholder="0"
+                  value={form.giaGoc}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setForm((p) => ({ ...p, giaGoc: v }));
+                    const giaNum = Number(form.gia || 0);
+                    const giaGocNum = Number(v || 0);
+                    if (giaGocNum < 0) {
+                      setErrors((p) => ({
+                        ...p,
+                        gia: "Giá gốc không được âm",
+                      }));
+                    } else if (giaGocNum >= MAX_GIA) {
+                      setErrors((p) => ({
+                        ...p,
+                        gia: `Giá gốc phải nhỏ hơn ${MAX_GIA.toLocaleString("vi-VN")}đ`,
+                      }));
+                    } else if (giaGocNum > 0 && giaNum > giaGocNum) {
+                      setErrors((p) => ({
+                        ...p,
+                        gia: "Giá bán không được lớn hơn giá gốc",
+                      }));
+                    } else {
+                      setErrors((p) => ({ ...p, gia: undefined }));
+                    }
+                  }}
+                  sx={fieldSx}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography
+                            sx={{
+                              fontWeight: 700,
+                              color: "#6B7280",
+                              fontSize: 14,
+                            }}
+                          >
+                            ₫
+                          </Typography>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3.6 }}>
+              <Box>
+                <Typography sx={labelSx}>Cấp độ</Typography>
+                <TextField
+                  select
+                  fullWidth
+                  value={form.capDo}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, capDo: e.target.value }))
+                  }
+                  sx={fieldSx}
+                >
+                  {["Cơ bản", "Trung cấp", "Nâng cao"].map((c) => (
+                    <MenuItem key={c} value={c}>
+                      {c}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            </Grid>
+          </Grid>
         </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2.5, gap: 1 }}>
-        <OutlineBtn onClick={onClose}>Hủy</OutlineBtn>
+      {/* ── Footer ─────────────────────────────────────────────────────── */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1.5,
+          px: { xs: 2.5, sm: 4 },
+          pt: 2.5,
+          pb: { xs: 2.5, sm: 3.5 },
+        }}
+      >
+        <OutlineBtn
+          onClick={onClose}
+          sx={{
+            height: 44,
+            px: 3,
+            borderRadius: "10px",
+            fontSize: 14,
+          }}
+        >
+          Hủy
+        </OutlineBtn>
         <RedBtn
           onClick={handleSave}
           disabled={
@@ -535,6 +750,16 @@ export function CourseDialog({
             !form.giaGoc ||
             Number(form.giaGoc) <= 0
           }
+          sx={{
+            height: 44,
+            px: 3,
+            borderRadius: "10px",
+            fontSize: 14,
+            "&.Mui-disabled": {
+              bgcolor: alpha(R, 0.35),
+              color: "rgba(255, 255, 255, 0.75)",
+            },
+          }}
         >
           {saving ? (
             <CircularProgress size={18} sx={{ color: "#fff" }} />
@@ -544,7 +769,7 @@ export function CourseDialog({
             "Tạo khóa học"
           )}
         </RedBtn>
-      </DialogActions>
+      </Box>
       {ToastComponent}
     </Dialog>
   );

@@ -18,12 +18,14 @@ namespace Eduverse.Service.YeuCauRutTienService.Dto
         public string? TenTaiKhoan { get; set; }
         public string? TenGiangVien { get; set; }
         public decimal? SoDuHienTai { get; set; }
+        public string? HinhAnhQR { get; set; }
     }
 
     public class TaoYeuCauRutTienDto
     {
         public decimal SoTienRut { get; set; }
         public Guid IdNganHang { get; set; }
+        
     }
 
     public class XuLyYeuCauDto

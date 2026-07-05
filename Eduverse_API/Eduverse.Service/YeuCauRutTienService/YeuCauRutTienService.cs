@@ -7,6 +7,7 @@ using Eduverse.Service.Common;
 using Eduverse.Service.KetQuaBaiThiService;
 using Eduverse.Service.YeuCauRutTienService.Dto;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PayOS;
 using System;
 using System.Collections.Generic;
@@ -23,19 +24,23 @@ namespace Eduverse.Service.YeuCauRutTienService
         private readonly IAppUserRepository _userRepo;
         private readonly IRepository<ThongBao> _thongBaoRepo;
         private readonly PayOSClient _payOS;
+        private readonly PayOSClient _payOSPayout;
 
         public YeuCauRutTienService(
             IRepository<YeuCauRutTien> repo,
             IRepository<NganHang> nganHangRepo,
             IAppUserRepository userRepo,
             IRepository<ThongBao> thongBaoRepo,
-            PayOSClient payOS) : base(repo)
+            PayOSClient payOS,
+            [FromKeyedServices("payout")] PayOSClient payOSPayout
+            ) : base(repo)
         {
             _repo = repo;
             _nganHangRepo = nganHangRepo;
             _userRepo = userRepo;
             _thongBaoRepo = thongBaoRepo;
             _payOS = payOS;
+            _payOSPayout = payOSPayout;
         }
         public async Task<decimal> GetSoDuAsync(Guid userId)
         {
@@ -87,7 +92,8 @@ namespace Eduverse.Service.YeuCauRutTienService
                     SoTaiKhoan = n != null ? n.SoTaiKhoan : null,
                     TenTaiKhoan = n != null ? n.TenTaiKhoan : null,
                     TenGiangVien = u != null ? u.HoTen : null,
-                    SoDuHienTai = u != null ? u.SoDuTaiKhoan : null
+                    SoDuHienTai = u != null ? u.SoDuTaiKhoan : null,
+                    HinhAnhQR = n != null ? n.HinhAnhQR : null,
                 }
             ).ToListAsync();
         }
@@ -161,36 +167,10 @@ namespace Eduverse.Service.YeuCauRutTienService
             var user = await _userRepo.GetByIdAsync(yeuCau.IdNguoiDung)
                 ?? throw new Exception("Không tìm thấy giảng viên");
 
+
             if (dto.TrangThai == "DaDuyet")
             {
-                try
-                {
-                    // Dùng đúng PayoutRequest của PayOS 2.1.0
-                    var payoutRequest = new PayOS.Models.V1.Payouts.PayoutRequest
-                    {
-                        ReferenceId = $"RUT{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
-                        Amount = (long)(yeuCau.SoTienRut ?? 0),
-                        Description = $"Rut tien giang vien {user.HoTen}",
-                        ToBin = nganHang.TenNganHang!,   // BIN ngân hàng
-                        ToAccountNumber = nganHang.SoTaiKhoan!  // Số tài khoản
-                    };
-
-                    if (dto.TrangThai == "DaDuyet")
-                    {
-                        // await _payOS.Payouts.CreateAsync(payoutRequest);
-
-                        yeuCau.TrangThai = "DaChuyenTien";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Hoàn tiền nếu PayOS lỗi
-                    user.SoDuTaiKhoan += yeuCau.SoTienRut ?? 0;
-                    user.UpdatedDate = DateTime.Now;
-                    _userRepo.Update(user);
-                    await _userRepo.SaveAsync();
-                    throw new Exception($"Lỗi chuyển tiền PayOS: {ex.Message}");
-                }
+                yeuCau.TrangThai = "DaChuyenTien";
 
                 _thongBaoRepo.Add(new ThongBao
                 {

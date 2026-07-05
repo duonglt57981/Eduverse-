@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/immutability */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -101,6 +103,7 @@ export default function AccountSettings() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProfile();
   }, [fetchProfile]);
 
@@ -147,6 +150,8 @@ export default function AccountSettings() {
 
       if (res.status && res.data?.url) {
         const newUrl = res.data.url;
+        localStorage.setItem("user_avatar", newUrl);
+        window.dispatchEvent(new Event("avatar_updated"));
         setProfile((prev) => ({ ...prev, anhDaiDien: newUrl }));
         setTempProfile((prev) => ({ ...prev, anhDaiDien: newUrl }));
         showNotification('Cập nhật ảnh đại diện thành công!', 'success');
@@ -158,6 +163,8 @@ export default function AccountSettings() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
+        localStorage.setItem("user_avatar", base64);
+        window.dispatchEvent(new Event("avatar_updated"));
         setTempProfile((prev) => ({ ...prev, anhDaiDien: base64 }));
         if (!isEditing) {
           setProfile((prev) => ({ ...prev, anhDaiDien: base64 }));

@@ -89,6 +89,7 @@ export const favoriteService = {
       status: response.status,
       message: response.message,
       data: response.status ?? false,
+
     };
   },
 };

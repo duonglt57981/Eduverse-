@@ -14,6 +14,7 @@ namespace Eduverse.Api.Controller
     {
         private readonly INganHangService _service;
         public NganHangController(INganHangService service) => _service = service;
+
         private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         [HttpGet]
@@ -24,7 +25,8 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost]
-        public async Task<IActionResult> Tao([FromBody] TaoNganHangDto dto)
+        [Consumes("multipart/form-data")] // báo Swagger đây là form upload
+        public async Task<IActionResult> Tao([FromForm] TaoNganHangDto dto)
         {
             var result = await _service.TaoNganHangAsync(GetUserId(), dto);
             return Ok(DataResponse.Success(result, "Đã thêm tài khoản ngân hàng"));

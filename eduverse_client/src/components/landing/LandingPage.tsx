@@ -25,29 +25,22 @@ import {
 } from './landing-data';
 import {
   CourseVisual,
-  LandingFooter,
-  LandingNavbar,
-  LandingThemeProvider,
   SectionHeading,
 } from './landing-shared';
 
 export default function LandingPage() {
   return (
-    <LandingThemeProvider>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Box sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 } }}>
-          <LandingNavbar activePath="/" />
-
-          <Box
-            sx={{
-              pt: { xs: 5, md: 8 },
-              pb: { xs: 4, md: 6 },
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.02fr) minmax(420px, 0.98fr)' },
-              gap: { xs: 4, md: 5 },
-              alignItems: 'center',
-            }}
-          >
+    <>
+      <Box
+        sx={{
+          pt: { xs: 5, md: 8 },
+          pb: { xs: 4, md: 6 },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.02fr) minmax(420px, 0.98fr)' },
+          gap: { xs: 4, md: 5 },
+          alignItems: 'center',
+        }}
+      >
             <Box>
               <Chip
                 label="Nền tảng học tập premium"
@@ -526,11 +519,7 @@ export default function LandingPage() {
               </Stack>
             </Box>
           </Paper>
-
-          <LandingFooter />
-        </Box>
-      </Box>
-    </LandingThemeProvider>
+    </>
   );
 }
 

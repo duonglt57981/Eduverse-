@@ -59,19 +59,11 @@ export const useCourseData = (
         if (res) {
           // Trường hợp res.data là object chính (như API trả về)
           if (
-            res.data &&
+            res?.data &&
             typeof res.data === "object" &&
             !Array.isArray(res.data)
           ) {
             data = res.data;
-          }
-          // Trường hợp res.result
-          else if (res.result && typeof res.result === "object") {
-            data = res.result;
-          }
-          // Trường hợp res chính là object (nếu API trả thẳng)
-          else if (typeof res === "object" && !res.message) {
-            data = res as KhoaHocType;
           }
         }
 

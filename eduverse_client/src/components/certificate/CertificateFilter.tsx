@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import {
@@ -28,6 +29,7 @@ export default function CertificateFilter({ filters, onChange }: CertificateFilt
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleStatusChange = (e: any) => {
     onChange({
       ...filters,

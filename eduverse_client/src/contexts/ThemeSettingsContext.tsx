@@ -45,7 +45,9 @@ export function ThemeSettingsProvider({ children }: { children: React.ReactNode 
     const savedTheme = window.localStorage.getItem('eduverse_theme_mode') as ThemeMode;
     const savedAccent = window.localStorage.getItem('eduverse_accent_color') as AccentColor;
 
-    if (savedTheme) setThemGITeModeState(savedTheme);
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (savedTheme) setThemeModeState(savedTheme);
     if (savedAccent) setAccentColorState(savedAccent);
     setMounted(true);
   }, []);

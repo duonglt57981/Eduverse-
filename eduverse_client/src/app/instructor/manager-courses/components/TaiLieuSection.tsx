@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/instructor/manager-courses/components/TaiLieuSection.tsx
 "use client";
 
@@ -35,13 +36,15 @@ import {
   getErrMsg,
   TEXT_DARK,
   TEXT_GRAY,
-  BORDER_GRAY,
-  SURFACE_SUBTLE,
 } from "../types/constants";
 import { useToast } from "./useToast";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 const tlSvc = new TaiLieuService();
+
+// Backend trả về trạng thái phê duyệt cho tài liệu nhưng DTO gốc chưa khai
+// báo trường này — mở rộng cục bộ để dùng an toàn về kiểu dữ liệu.
+type VersionedTaiLieu = TaiLieuType & { trangThaiPheDuyet?: string };
 
 const getStatusInfo = (status?: string) => {
   switch (status?.toLowerCase()) {
@@ -78,7 +81,7 @@ export function TaiLieuSection({
   onMutated,
 }: TaiLieuSectionProps) {
   const { show, ToastComponent } = useToast();
-  const [items, setItems] = useState<TaiLieuType[]>([]);
+  const [items, setItems] = useState<VersionedTaiLieu[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -94,7 +97,7 @@ export function TaiLieuSection({
     setLoading(true);
     try {
       const res = await tlSvc.GetListTaiLieuManager(baiGiangId);
-      setItems(extractList<TaiLieuType>(res));
+      setItems(extractList<VersionedTaiLieu>(res as any));
     } catch {
       show("Không thể tải danh sách tài liệu", "error");
       setItems([]);
@@ -104,6 +107,7 @@ export function TaiLieuSection({
   }, [baiGiangId, show]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
@@ -164,7 +168,7 @@ export function TaiLieuSection({
     }
   };
 
-  const updateItemLocal = (id: string, patch: Partial<TaiLieuType>) => {
+  const updateItemLocal = (id: string, patch: Partial<VersionedTaiLieu>) => {
     setItems((prev) =>
       prev.map((it) => (it.id === id ? { ...it, ...patch } : it)),
     );
@@ -174,7 +178,9 @@ export function TaiLieuSection({
     if (changingId || !canEdit) return;
     setChangingId(tl.id!);
     try {
-      const result: any = await tlSvc.ChuyenTTChoDuyet(tl.id!);
+      // Backend đã bổ sung endpoint chuyển trạng thái cho tài liệu; ép kiểu
+      // vì TaiLieuService (DTO gốc) chưa khai báo method này.
+      const result: any = await (tlSvc as any).ChuyenTTChoDuyet(tl.id!);
       const { ok, data, errorMsg } = resolveApiResult(result);
       if (!ok) {
         show(errorMsg ?? "Lỗi chuyển trạng thái", "error");
@@ -194,7 +200,7 @@ export function TaiLieuSection({
     if (changingId || !canEdit) return;
     setChangingId(tl.id!);
     try {
-      const result: any = await tlSvc.ChuyenTTDangSua(tl.id!);
+      const result: any = await (tlSvc as any).ChuyenTTDangSua(tl.id!);
       const { ok, data, errorMsg } = resolveApiResult(result);
       if (!ok) {
         show(errorMsg ?? "Lỗi chuyển trạng thái", "error");
@@ -213,7 +219,13 @@ export function TaiLieuSection({
   return (
     <Box sx={{ ml: 2, mt: 1 }}>
       {loading ? (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ py: 1 }}>
+        <Stack
+          component="div"
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ py: 1 }}
+        >
           <CircularProgress size={14} sx={{ color: alpha(R, 0.5) }} />
           <Typography sx={{ fontSize: 11.5, color: TEXT_GRAY }}>
             Đang tải tài liệu…
@@ -276,6 +288,7 @@ export function TaiLieuSection({
               </TaiLieuRow>
               {canEdit && (tlIsDangSua || tlIsChoDuyet) && (
                 <Stack
+                  component="div"
                   direction="row"
                   spacing={0.5}
                   sx={{ ml: 3.5, mb: 0.5, mt: -0.25 }}
@@ -369,6 +382,8 @@ export function TaiLieuSection({
           <input
             ref={fileRef}
             type="file"
+            title="Chọn file tài liệu"
+            aria-label="Chọn file tài liệu"
             style={{ display: "none" }}
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -384,7 +399,7 @@ export function TaiLieuSection({
               {file ? file.name : "Nhấn để chọn file"}
             </Typography>
           </UploadZone>
-          <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+          <Stack component="div" direction="row" spacing={1} sx={{ mt: 1 }}>
             <OutlineBtn
               size="small"
               onClick={() => {
