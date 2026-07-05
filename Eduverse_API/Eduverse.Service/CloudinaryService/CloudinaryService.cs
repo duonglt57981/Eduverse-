@@ -47,12 +47,8 @@ namespace Eduverse.Service.CloudinaryService
         {
             // SD  – 480p
             new Transformation().RawTransformation("sp_sd/vc_h264,ac_aac,f_m3u8"),
-            // HD  – 720p
-            new Transformation().RawTransformation("sp_hd/vc_h264,ac_aac,f_m3u8"),
             // FHD – 1080p
             new Transformation().RawTransformation("sp_full_hd/vc_h264,ac_aac,f_m3u8"),
-            // 2K  – 1440p 
-            new Transformation().RawTransformation("w_2560,h_1440,c_limit/vc_h264,ac_aac,f_m3u8"),
         },
             };
 
@@ -249,6 +245,9 @@ namespace Eduverse.Service.CloudinaryService
         }
         #endregion
 
+
+        #region Logic upload file, delete file
+
         public async Task<CloudinaryDocumentDto> UploadDocumentAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -292,10 +291,77 @@ namespace Eduverse.Service.CloudinaryService
             return new CloudinaryDocumentDto
             {
                 UrlDoc = uploadResult.SecureUrl.ToString(),
+                IdDocument = uploadResult.PublicId,
                 DownloadUrl = uploadResult.SecureUrl
+                
+
+
                 .ToString()
                 .Replace("/upload/", "/upload/fl_attachment/")
             };
         }
+
+
+        public async Task<CloudinaryDocumentDto> UpdateDocumentAsync(IFormFile file, string? oldPublicId)
+        {
+            if (file == null || file.Length == 0)
+                throw new Exception("File không hợp lệ");
+
+            const long maxSize = 50L * 1024 * 1024; // 50MB
+
+            if (file.Length > maxSize)
+                throw new Exception("Tài liệu không được vượt quá 50MB");
+
+            var extension = Path.GetExtension(file.FileName).ToLower();
+
+            string[] allowedExtensions =
+            {".pdf",".doc",".docx",".xls",".xlsx",".ppt",".pptx",".txt",".zip",".rar"};
+
+            if (!allowedExtensions.Contains(extension))
+                throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
+
+            await using var inputStream = file.OpenReadStream();
+
+            var uploadParams = new RawUploadParams
+            {
+                File = new FileDescription(file.FileName, inputStream),
+                Folder = "eduverse/documents",
+                UseFilename = true,
+                UniqueFilename = true,
+                Overwrite = false
+            };
+
+            
+            if (!string.IsNullOrEmpty(oldPublicId))
+            {
+                uploadParams.PublicId = oldPublicId;
+                uploadParams.UseFilename = false;
+                uploadParams.UniqueFilename = false;
+                uploadParams.Overwrite = true;
+                uploadParams.Invalidate = true; 
+            }
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+            if (uploadResult == null)
+                throw new Exception("Upload tài liệu thất bại");
+
+            if (uploadResult.Error != null)
+                throw new Exception($"Upload tài liệu thất bại: {uploadResult.Error.Message}");
+
+            if (uploadResult.SecureUrl == null)
+                throw new Exception("Không lấy được URL tài liệu");
+
+            return new CloudinaryDocumentDto
+            {
+                UrlDoc = uploadResult.SecureUrl.ToString(),
+                IdDocument = uploadResult.PublicId,
+                DownloadUrl = uploadResult.SecureUrl
+                    .ToString()
+                    .Replace("/upload/", "/upload/fl_attachment/")
+            };
+        }
+
+        #endregion
     }
 }

@@ -20,7 +20,7 @@ namespace Eduverse.Api.Controller
             _phanHocService = phanHocService;
         }
 
-        [HttpGet("\"phanhoc-get-toupdate/{idKhoaHoc}")]
+        [HttpGet("phanhoc-get-toupdate/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<GetToUpdatePhanDto>> GetToUpdatePhan(Guid IdPhan)
         {
@@ -35,9 +35,24 @@ namespace Eduverse.Api.Controller
             }
         }
 
-        [HttpPost("phanhoc")]
+        [HttpGet("phanhoc-getlistformanager/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<PhanHocDto>> CreatePhanHoc([FromForm] CreatePhanRequest request)
+        public async Task<DataResponse<List<PhanHocDto>>> GetListForManager(Guid IdKhoaHoc)
+        {
+            try
+            {
+                var result = await _phanHocService.GetListForManager(IdKhoaHoc);
+                return DataResponse<List<PhanHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<PhanHocDto>>.False(ex.Message);
+            }
+        }
+
+        [HttpPost("phanhoc-create")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<PhanHocDto>> CreatePhanHoc(CreatePhanRequest request)
         {
             try
             {
@@ -51,9 +66,9 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPut("phanhoc/{id}")]
+        [HttpPut("phanhoc-update")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<PhanHocDto>> UpdatePhanHoc([FromForm] UpdatePhanRequest request)
+        public async Task<DataResponse<PhanHocDto>> UpdatePhanHoc( UpdatePhanRequest request)
         {
             try
             {
@@ -67,7 +82,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpDelete("phanhoc/{id}")]
+        [HttpDelete("phanhoc-delete/{id}")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeletePhanHoc(Guid id)
         {

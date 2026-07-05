@@ -14,6 +14,8 @@ namespace Eduverse.Service.PhanService
     {
         Task<GetToUpdatePhanDto> GetToUpdatePhan(Guid IdPhan);
 
+        Task<List<PhanHocDto>> GetListForManager(Guid IdKhoaHoc);
+
         Task<PhanHocDto> CreatePhanHoc(CreatePhanRequest request);
 
         Task<PhanHocDto> UpdatePhanHoc(UpdatePhanRequest request);

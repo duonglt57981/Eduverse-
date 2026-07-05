@@ -10,5 +10,6 @@ namespace Eduverse.Service.CloudinaryService.Dto
     {
         public string UrlDoc { get; set; }
         public string DownloadUrl { get; set; }
+        public string IdDocument { get; set; }
     }
 }

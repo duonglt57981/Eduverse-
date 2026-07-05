@@ -22,9 +22,9 @@ namespace Eduverse.Service.KhoaHocService
 
         Task<KhoaHocDto> GetLearning(Guid idDangKy);
 
-        Task<KhoaHocDto> ChuyenTrangThaiDangSua(Guid IdKhoaHoc);
+        Task<List<KhoaHocDto>> ChuyenTrangThaiDangSua(BatchIdsRequest request);
 
-        Task<KhoaHocDto> ChuyenTrangThaiChoDuyet(Guid IdKhoaHoc);
+        Task<List<KhoaHocDto>> ChuyenTrangThaiChoDuyet(BatchIdsRequest request);
 
         Task<GetToUpdateKhoaHoc> GetToUpdateKhoaHoc(Guid IdKhoaHoc);
 

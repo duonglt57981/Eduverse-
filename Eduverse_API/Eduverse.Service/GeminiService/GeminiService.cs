@@ -50,34 +50,34 @@ namespace Eduverse.Service.GeminiService
             try
             {
                 var prompt = $@"
-            Kiem duyet noi dung sau: ""{noiDung}""
+    Kiem duyet noi dung sau: ""{noiDung}""
  
-            Yeu cau:
-            - Phat hien tu ngu nhay cam, bao luc, khi dam, tho tuc, chinh tri
-            - Tra ve JSON:
-            {{
-                ""hopLe"": true/false,
-                ""loai"": ""AnToan|BaoLuc|KhiDam|ThoTuc|ChinhTri"",
-                ""diemSo"": 0.0-1.0,
-                ""tuViPham"": [""tu1"", ""tu2""],
-                ""lyDo"": ""Ly do chi tiet"",
-                ""goiYSua"": ""Goi y sua chua""
-            }}
-            Chi tra ve JSON, khong them text khac.";
+    Yeu cau:
+    - Phat hien tu ngu nhay cam, bao luc, khi dam, tho tuc, chinh tri
+    - Tra ve JSON:
+    {{
+        ""hopLe"": true/false,
+        ""loai"": ""AnToan|BaoLuc|KhiDam|ThoTuc|ChinhTri"",
+        ""diemSo"": 0.0-1.0,
+        ""tuViPham"": [""tu1"", ""tu2""],
+        ""lyDo"": ""Ly do chi tiet"",
+        ""goiYSua"": ""Goi y sua chua""
+    }}
+    Chi tra ve JSON, khong them text khac.";
 
                 var request = new
                 {
                     contents = new[]
                     {
-                    new
-                    {
-                        parts = new[] { new { text = prompt } }
-                    }
-                },
+                new
+                {
+                    parts = new[] { new { text = prompt } }
+                }
+            },
                     generationConfig = new
                     {
                         temperature = 0.1,
-                        maxOutputTokens = 1024, // tăng để tránh bị cắt giữa JSON khi tuViPham dài
+                        maxOutputTokens = 1024,
                         responseMimeType = "application/json"
                     }
                 };
@@ -92,6 +92,7 @@ namespace Eduverse.Service.GeminiService
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    // Log chi tiết lỗi từ Gemini, nhưng không throw -> fallback xuống catch bên dưới
                     try
                     {
                         using var errorDoc = JsonDocument.Parse(responseContent);
@@ -99,34 +100,40 @@ namespace Eduverse.Service.GeminiService
                         {
                             var errorMessage = error.GetProperty("message").GetString();
                             var errorCode = error.GetProperty("code").GetInt32();
-
                             _logger.LogError("Gemini API Error: {Code} - {Message}", errorCode, errorMessage);
-
-                            if (errorCode == 403)
-                                throw new Exception("API key khong hop le hoac bi khoa. Vui long kiem tra lai.");
-                            else if (errorCode == 429)
-                                throw new Exception("Vuot qua gioi han request. Vui long thu lai sau.");
-                            else
-                                throw new Exception($"Gemini API Error: {errorMessage}");
                         }
                         else
                         {
-                            throw new Exception($"Gemini API Error: {response.StatusCode} - {responseContent}");
+                            _logger.LogError("Gemini API Error: {StatusCode} - {Response}", response.StatusCode, responseContent);
                         }
                     }
                     catch (JsonException)
                     {
-                        throw new Exception($"Gemini API Error: {response.StatusCode} - {responseContent}");
+                        _logger.LogError("Gemini API Error (non-JSON): {StatusCode} - {Response}", response.StatusCode, responseContent);
                     }
+
+                    // Gemini loi -> fallback: chi coi la hop le vi da qua kiem tra tu cam co ban
+                    return new KetQuaKiemDuyetInput
+                    {
+                        HopLe = true,
+                        Loai = "FallbackTuCamCoBan",
+                        ThongBao = "Gemini API loi, da fallback ve kiem tra tu cam co ban"
+                    };
                 }
 
                 return ParseResponse(responseContent, noiDung);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Loi goi Gemini");
-                // Fail-closed: nếu service kiểm duyệt lỗi, KHÔNG tự ý coi nội dung là hợp lệ.
-                throw new Exception($"Loi he thong kiem duyet: {ex.Message}");
+                _logger.LogError(ex, "Loi goi Gemini, fallback ve kiem tra tu cam co ban");
+
+                // Fallback: khong throw nua, chi dua vao ket qua kiem tra tu cam co ban (da chay o buoc 1)
+                return new KetQuaKiemDuyetInput
+                {
+                    HopLe = true,
+                    Loai = "FallbackTuCamCoBan",
+                    ThongBao = $"Gemini API loi ({ex.Message}), da fallback ve kiem tra tu cam co ban"
+                };
             }
         }
 

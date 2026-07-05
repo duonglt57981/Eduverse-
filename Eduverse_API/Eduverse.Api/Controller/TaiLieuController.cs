@@ -1,4 +1,5 @@
-﻿using Eduverse.Service.TaiLieuService;
+﻿using Eduverse.Service.BaiGiangService.Dto;
+using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.TaiLieuService.Dto;
 using Eduverse.Service.TaiLieuService.Request;
 using Hinet.Api.Dto;
@@ -21,7 +22,25 @@ namespace Eduverse.Api.Controller
             _taiLieuService = taiLieuService;
         }
 
-        [HttpPost("tailieu")]
+
+        [HttpGet("tailieu-getlistformanager/{IdBaiGiang}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<TaiLieuDto>>> GetListForManagerTaiLieu(Guid IdBaiGiang)
+        {
+            try
+            {
+                var result = await _taiLieuService.GetListForManager(IdBaiGiang);
+                return DataResponse<List<TaiLieuDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<TaiLieuDto>>.False(ex.Message);
+            }
+        }
+
+
+
+        [HttpPost("tailieu-create")]
         [Consumes("multipart/form-data")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<TaiLieuDto>> CreateTaiLieu([FromForm] CreateTaiLieuRequest request)
@@ -38,7 +57,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpDelete("tailieu/{id}")]
+        [HttpDelete("tailieu-delete/{id}")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteTaiLieu( Guid id)
         {

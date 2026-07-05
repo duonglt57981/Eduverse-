@@ -12,13 +12,14 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
     public interface ILichSuKiemDuyetKhoaHocService : IService<Model.Entities.LichSuKiemDuyetKhoaHoc>
     {
         Task<PagedList<KhoaHocKiemDuyetListDto>> GetDanhSachKiemDuyet(KhoaHocKiemDuyetSearchDto search);
-        //Task<KiemDuyetDetailDto> GetDetailKhoaHocKiemDuyet(Guid idKhoaHoc);
+        Task<KiemDuyetDetailDto> GetDetailKiemDuyet(Guid idKhoaHoc);
         //Task<KiemDuyetKhoaHocDto> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request);
         Task<List<LichSuKiemDuyetDto>> GetLichSuKiemDuyet(Guid idKhoaHoc);
 
         Task<KiemDuyetKhoaHocDto> KiemDuyetBaiGiang(KiemDuyetKhoaHocRequest request);
         Task<KiemDuyetKhoaHocDto> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request);
 
+        Task<KiemDuyetKhoaHocDto> KiemDuyetTaiLieu(KiemDuyetKhoaHocRequest request);
 
 
         Task KiemTraVaNemExceptionAsync(string noiDung);

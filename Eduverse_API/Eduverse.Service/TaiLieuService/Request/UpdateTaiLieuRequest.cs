@@ -12,6 +12,7 @@ namespace Eduverse.Service.TaiLieuService.Request
         public Guid? Id { get; set; }
         public string? TenTaiLieu { get; set; }
         public string? URL { get; set; }
+        public string? IdDocument { get; set; }
         public string? TrangThai { get; set; } = "HDI";
         public Guid? IdBaiGiang { get; set; }
 

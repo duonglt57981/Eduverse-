@@ -1,4 +1,5 @@
-﻿using Eduverse.Model.Entities;
+﻿using Eduverse.Model;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
 using Eduverse.Repository.CauHoiRepository;
@@ -60,6 +61,9 @@ namespace Eduverse.Service.KhoaHocService
         private readonly IDanhMuc_KhoaHocRepository _danhMuc_KhoaHocRepository;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
         private readonly ICauHoiRepository _cauHoiRepository;
+        private readonly IBaiGiangService _baiGiangService;
+        private readonly ITaiLieuService _taiLieuService;
+        private readonly EduverseContext _eduverseContext;
 
         public KhoaHocService(
             IMemoryCache memoryCache,
@@ -79,7 +83,11 @@ namespace Eduverse.Service.KhoaHocService
             ILanLamBaiKiemTraService lanLamBaiKiemTraService,
             IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository,
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
-            ICauHoiRepository cauHoiRepository
+            ICauHoiRepository cauHoiRepository,
+            IBaiGiangService baiGiangService,
+            ITaiLieuService taiLieuService,
+            EduverseContext eduverseContext
+
         ) : base(khoaHocRepository)
         {
             _memoryCache = memoryCache;
@@ -98,7 +106,11 @@ namespace Eduverse.Service.KhoaHocService
             _danhMuc_KhoaHocRepository = danhMuc_KhoaHocRepository;
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
             _cauHoiRepository = cauHoiRepository;
+            _baiGiangService = baiGiangService;
+            _taiLieuService = taiLieuService;
+            _eduverseContext = eduverseContext;
         }
+        
 
 
         #region GetListKhoaHoc
@@ -2041,102 +2053,272 @@ namespace Eduverse.Service.KhoaHocService
         #endregion
 
 
-        public async Task<KhoaHocDto> ChuyenTrangThaiDangSua(Guid  IdKhoaHoc)
+        public async Task<List<KhoaHocDto>> ChuyenTrangThaiChoDuyet(BatchIdsRequest request)
         {
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+            var userIdStr = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                throw new UnauthorizedAccessException("Không xác định được người dùng");
 
-            if (IdKhoaHoc == null || IdKhoaHoc == Guid.Empty)
-                throw new Exception("Id khóa học không hợp lệ");
+            // Lấy bản gốc (có IsBanHienTai = true hoặc không)
+            var banGocs = await GetQueryable()
+                .Where(x => request.Ids.Contains(x.Id) && !x.IsDeleted)
+                .ToListAsync();
 
-            // ── Lấy bản gốc (IsBanHienTai = true) ───────────────
-            var banGoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == IdKhoaHoc  && !x.IsDeleted);
+            if (!banGocs.Any())
+                throw new Exception("Không tìm thấy khóa học nào");
 
-            if (banGoc == null)
-                throw new Exception("Không tìm thấy khóa học");
+            // Kiểm tra quyền sở hữu
+            var invalidOwners = banGocs.Where(x => x.CreatedId != userId).Select(x => x.Id).ToList();
+            if (invalidOwners.Any())
+                throw new Exception($"Bạn không có quyền hạn để sửa các khóa học: {string.Join(", ", invalidOwners)}");
 
-            if (banGoc.CreatedId != nguoiTao)
-                throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
+            var banGocIds = banGocs.Select(x => x.Id).ToList();
 
-            // ── Tìm bản đang chờ xử lý kiểm duyệt (nháp hoặc gốc) ──
-            var banCanXuLy = await GetAll()
-                .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
-                                        && !x.IsDeleted
-                                        && (x.TrangThaiPheDuyet == "ChoDuyet"
-                                            || x.TrangThaiPheDuyet == "DangDuyet"));
+            // Lấy các bản nháp (hoặc bản gốc) đang ở trạng thái DangSua
+            var banNhaps = await GetAll()
+                .Where(x => banGocIds.Contains(x.IdBanGhiTruoc ?? Guid.Empty)
+                            && !x.IsDeleted
+                            && x.TrangThaiPheDuyet == "DangSua")
+                .ToListAsync();
 
-            // Nếu không có bản nháp nào đang chờ/đang duyệt, kiểm tra luôn bản gốc
-            if (banCanXuLy == null &&
-                (banGoc.TrangThaiPheDuyet == "ChoDuyet" || banGoc.TrangThaiPheDuyet == "DangDuyet"))
+            var khoaHocToUpdate = new List<KhoaHoc>();
+            var baiGiangToUpdate = new List<BaiGiang>();
+            var taiLieuToUpdate = new List<TaiLieu>();
+
+            // Lấy danh sách Id của các khóa học sẽ cập nhật để lọc các phần/bài giảng/tài liệu liên quan
+            var khoaHocIdsToUpdate = new List<Guid>();
+
+            foreach (var banGoc in banGocs)
             {
-                banCanXuLy = banGoc;
+                var banCanXuLy = banNhaps.FirstOrDefault(x => x.IdBanGhiTruoc == banGoc.Id);
+                if (banCanXuLy == null && banGoc.TrangThaiPheDuyet == "DangSua")
+                {
+                    banCanXuLy = banGoc;
+                }
+
+                if (banCanXuLy == null)
+                    throw new Exception($"Khóa học {banGoc.Id} hiện không ở trạng thái Đang sửa nên không thể gửi CHỜ DUYỆT");
+
+                // Cập nhật khóa học
+                banCanXuLy.TrangThaiPheDuyet = "ChoDuyet";
+                banCanXuLy.TrangThai = "ChoDuyet";
+                banCanXuLy.UpdatedDate = DateTime.UtcNow;
+                khoaHocToUpdate.Add(banCanXuLy);
+                khoaHocIdsToUpdate.Add(banCanXuLy.Id);
             }
 
-            if (banCanXuLy == null)
-                throw new Exception("Khóa học hiện không ở trạng thái chờ duyệt nên không thể chuyển sang ĐANG SỬA ");
+            // Lấy tất cả phần học thuộc các khóa học này, sau đó lấy bài giảng và tài liệu
+            if (khoaHocIdsToUpdate.Any())
+            {
+                // Lấy tất cả phần học của các khóa học đó
+                var phanHocs = await _phanRepository.GetQueryable()
+                    .Where(p => khoaHocIdsToUpdate.Contains(p.IdKhoaHoc.Value) && !p.IsDeleted)
+                    .Select(p => p.Id)
+                    .ToListAsync();
 
-            // ── Nếu đang được admin kiểm duyệt → chặn, báo cho biết ──
-            if (banCanXuLy.TrangThaiPheDuyet == "DangDuyet")
-                throw new Exception(
-                    $"❌ KHÓA HỌC ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
-                    $"Hệ thống Eduverses đang kiểm duyệt khóa học này. " +
-                    $"Bạn KHÔNG THỂ chuyển sang trạng thái Đang sửa trong khi admin đang xem xét.\n" +
-                    $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
-                );
+                if (phanHocs.Any())
+                {
+                    // Lấy tất cả bài giảng thuộc các phần đó và đang ở trạng thái DangSua
+                    var baiGiangs = await _baiGiangRepository.GetQueryable()
+                        .Where(b => phanHocs.Contains(b.IdPhan) && !b.IsDeleted && b.TrangThaiPheDuyet == "DangSua")
+                        .ToListAsync();
 
-            // ── Đang ChoDuyet → cho phép chuyển sang DangSua ──
-            banCanXuLy.TrangThaiPheDuyet = "DangSua";
-            banCanXuLy.TrangThai = "DangSua";
-            banCanXuLy.UpdatedDate = DateTime.UtcNow;
+                    foreach (var bg in baiGiangs)
+                    {
+                        bg.TrangThaiPheDuyet = "ChoDuyet";
+                        bg.TrangThai = "ChoDuyet";
+                        bg.UpdatedDate = DateTime.UtcNow;
+                        baiGiangToUpdate.Add(bg);
+                    }
 
-            await UpdateAsync(banCanXuLy);
-            await SaveAsync();
+                    // Lấy tất cả tài liệu thuộc các bài giảng đó và đang ở trạng thái DangSua
+                    var baiGiangIds = baiGiangs.Select(b => b.Id).ToList();
+                    if (baiGiangIds.Any())
+                    {
+                        var taiLieus = await _taiLieuRepository.GetQueryable()
+                            .Where(t => baiGiangIds.Contains(t.IdBaiGiang) && !t.IsDeleted && t.TrangThaiPheDuyet == "DangSua")
+                            .ToListAsync();
 
-            return _mapper.Map<KhoaHoc, KhoaHocDto>(banCanXuLy);
+                        foreach (var tl in taiLieus)
+                        {
+                            tl.TrangThaiPheDuyet = "ChoDuyet";
+                            tl.TrangThai = "ChoDuyet";
+                            tl.UpdatedDate = DateTime.UtcNow;
+                            taiLieuToUpdate.Add(tl);
+                        }
+                    }
+                }
+            }
+
+            if (_baiGiangService == null)
+                throw new Exception("_baiGiangService chưa được inject");
+
+            if (_taiLieuService == null)
+                throw new Exception("_baiGiangService chưa được inject");
+
+            // Cập nhật trong transaction
+            using (var transaction = await _eduverseContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    if (khoaHocToUpdate.Any())
+                        await UpdateAsync(khoaHocToUpdate);
+                    if (baiGiangToUpdate.Any())
+                        await _baiGiangService.UpdateAsync(baiGiangToUpdate);
+                    if (taiLieuToUpdate.Any())
+                        await _taiLieuService.UpdateAsync(taiLieuToUpdate);
+
+                    await _eduverseContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+
+            var resultDtos = _mapper.MapList<KhoaHoc, KhoaHocDto>(khoaHocToUpdate);
+            return resultDtos.ToList();
         }
 
 
-        public async Task<KhoaHocDto> ChuyenTrangThaiChoDuyet(Guid IdKhoaHoc)
+        public async Task<List<KhoaHocDto>> ChuyenTrangThaiDangSua(BatchIdsRequest request)
         {
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+            var userIdStr = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                throw new UnauthorizedAccessException("Không xác định được người dùng");
 
-            if (IdKhoaHoc == Guid.Empty)
-                throw new Exception("Id khóa học không hợp lệ");
+            // Lấy bản gốc
+            var banGocs = await GetQueryable()
+                .Where(x => request.Ids.Contains(x.Id) && !x.IsDeleted)
+                .ToListAsync();
 
-            // ── Lấy bản gốc (IsBanHienTai = true) ───────────────
-            var banGoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == IdKhoaHoc && !x.IsDeleted);
+            if (!banGocs.Any())
+                throw new Exception("Không tìm thấy khóa học nào");
 
-            if (banGoc == null)
-                throw new Exception("Không tìm thấy khóa học");
+            var invalidOwners = banGocs.Where(x => x.CreatedId != userId).Select(x => x.Id).ToList();
+            if (invalidOwners.Any())
+                throw new Exception($"Bạn không có quyền hạn để sửa các khóa học: {string.Join(", ", invalidOwners)}");
 
-            if (banGoc.CreatedId != nguoiTao)
-                throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
+            var banGocIds = banGocs.Select(x => x.Id).ToList();
 
-            // ── Chỉ tìm bản đang ở DangSua: ưu tiên bản nháp, không có thì xét bản gốc ──
-            var banCanXuLy = await GetAll()
-                .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
-                                        && !x.IsDeleted
-                                        && x.TrangThaiPheDuyet == "DangSua");
+            var banNhaps = await GetAll()
+                .Where(x => banGocIds.Contains(x.IdBanGhiTruoc ?? Guid.Empty)
+                            && !x.IsDeleted
+                            && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet"))
+                .ToListAsync();
 
-            if (banCanXuLy == null && banGoc.TrangThaiPheDuyet == "DangSua")
-                banCanXuLy = banGoc;
+            var khoaHocToUpdate = new List<KhoaHoc>();
+            var baiGiangToUpdate = new List<BaiGiang>();
+            var taiLieuToUpdate = new List<TaiLieu>();
 
-            if (banCanXuLy == null)
-                throw new Exception("Khóa học hiện không ở trạng thái Đang sửa nên không thể gửi CHỜ DUYỆT");
+            var khoaHocIdsToUpdate = new List<Guid>();
 
-            // ── Chuyển sang ChoDuyet ──
-            banCanXuLy.TrangThaiPheDuyet = "ChoDuyet";
-            banCanXuLy.TrangThai = "ChoDuyet";
-            banCanXuLy.UpdatedDate = DateTime.UtcNow;
+            foreach (var banGoc in banGocs)
+            {
+                var banCanXuLy = banNhaps.FirstOrDefault(x => x.IdBanGhiTruoc == banGoc.Id);
+                if (banCanXuLy == null && (banGoc.TrangThaiPheDuyet == "ChoDuyet" || banGoc.TrangThaiPheDuyet == "DangDuyet"))
+                {
+                    banCanXuLy = banGoc;
+                }
 
-            await UpdateAsync(banCanXuLy);
-            await SaveAsync();
+                if (banCanXuLy == null)
+                    throw new Exception($"Khóa học {banGoc.Id} hiện không ở trạng thái Chờ duyệt hoặc Đang duyệt");
 
-            return _mapper.Map<KhoaHoc, KhoaHocDto>(banCanXuLy);
+                if (banCanXuLy.TrangThaiPheDuyet == "DangDuyet")
+                    throw new Exception($"❌ Khóa học {banGoc.Id} đang được kiểm duyệt. Không thể chuyển sang Đang sửa.");
+
+                // Cập nhật khóa học
+                banCanXuLy.TrangThaiPheDuyet = "DangSua";
+                banCanXuLy.TrangThai = "DangSua";
+                banCanXuLy.UpdatedDate = DateTime.UtcNow;
+                khoaHocToUpdate.Add(banCanXuLy);
+                khoaHocIdsToUpdate.Add(banCanXuLy.Id);
+            }
+
+            // Lấy tất cả phần học thuộc các khóa học này
+            if (khoaHocIdsToUpdate.Any())
+            {
+                var phanHocs = await _phanRepository.GetQueryable()
+                    .Where(p => khoaHocIdsToUpdate.Contains(p.IdKhoaHoc.Value) && !p.IsDeleted)
+                    .Select(p => p.Id)
+                    .ToListAsync();
+
+                if (phanHocs.Any())
+                {
+                    // Lấy tất cả bài giảng thuộc các phần đó và đang ở trạng thái ChoDuyet hoặc DangDuyet
+                    var baiGiangs = await _baiGiangRepository.GetQueryable()
+                        .Where(b => phanHocs.Contains(b.IdPhan) && !b.IsDeleted
+                                    && (b.TrangThaiPheDuyet == "ChoDuyet" || b.TrangThaiPheDuyet == "DangDuyet"))
+                        .ToListAsync();
+
+                    foreach (var bg in baiGiangs)
+                    {
+                        if (bg.TrangThaiPheDuyet == "DangDuyet")
+                            throw new Exception($"❌ Bài giảng {bg.Id} đang được kiểm duyệt. Không thể chuyển.");
+
+                        bg.TrangThaiPheDuyet = "DangSua";
+                        bg.TrangThai = "DangSua";
+                        bg.UpdatedDate = DateTime.UtcNow;
+                        baiGiangToUpdate.Add(bg);
+                    }
+
+                    // Lấy tất cả tài liệu thuộc các bài giảng đó và đang ở trạng thái ChoDuyet hoặc DangDuyet
+                    var baiGiangIds = baiGiangs.Select(b => b.Id).ToList();
+                    if (baiGiangIds.Any())
+                    {
+                        var taiLieus = await _taiLieuRepository.GetQueryable()
+                            .Where(t => baiGiangIds.Contains(t.IdBaiGiang) && !t.IsDeleted
+                                        && (t.TrangThaiPheDuyet == "ChoDuyet" || t.TrangThaiPheDuyet == "DangDuyet"))
+                            .ToListAsync();
+
+                        foreach (var tl in taiLieus)
+                        {
+                            if (tl.TrangThaiPheDuyet == "DangDuyet")
+                                throw new Exception($"❌ Tài liệu {tl.Id} đang được kiểm duyệt. Không thể chuyển.");
+
+                            tl.TrangThaiPheDuyet = "DangSua";
+                            tl.TrangThai = "DangSua";
+                            tl.UpdatedDate = DateTime.UtcNow;
+                            taiLieuToUpdate.Add(tl);
+                        }
+                    }
+                }
+            }
+
+            if (_baiGiangService == null)
+                throw new Exception("_baiGiangService chưa được inject");
+
+            if (_taiLieuService == null)
+                throw new Exception("_baiGiangService chưa được inject");
+
+            using (var transaction = await _eduverseContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    if (khoaHocToUpdate.Any())
+                        await UpdateAsync(khoaHocToUpdate);
+                    if (baiGiangToUpdate.Any())
+                        await _baiGiangService.UpdateAsync(baiGiangToUpdate);
+                    if (taiLieuToUpdate.Any())
+                        await _taiLieuService.UpdateAsync(taiLieuToUpdate);
+
+                    await _eduverseContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+
+            var resultDtos = _mapper.MapList<KhoaHoc, KhoaHocDto>(khoaHocToUpdate);
+            return resultDtos.ToList();
         }
 
-        
+
         public async Task<GetToUpdateKhoaHoc> GetToUpdateKhoaHoc(Guid idKhoaHoc)
         {
             Guid.TryParse(
@@ -2554,21 +2736,24 @@ namespace Eduverse.Service.KhoaHocService
         #endregion
 
 
-        public async Task<bool> DeleteKhoaHoc(Guid id)
+        public async Task<bool> DeleteKhoaHoc(Guid idKhoaHoc)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
-            var khoaHoc = await GetByIdAsync(id);
+            var khoaHoc = await GetByIdAsync(idKhoaHoc);
             if (khoaHoc.CreatedId != nguoiTao)
                 throw new Exception("Ban kh có quyền hạn để xóa khóa học này!");
 
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khoa học");
 
-            var coNguoiHoc = await _dangKyKhoaHocRepository.GetQueryable()
-                .AnyAsync(x => x.IdKhoaHoc == id);
+            if (khoaHoc.TrangThai == "ChoDuyet")
+                throw new Exception("Đang gửi duyệt không thể xóa");
 
-            khoaHoc.TrangThai = coNguoiHoc == null ? "DaXoa" : "NgungHoatDong";// nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
-                                                                               //nếu isdele = true + NgungHoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc
+            var coNguoiHoc = await _dangKyKhoaHocRepository.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc);
+
+                khoaHoc.TrangThai = coNguoiHoc == false ? "DaXoa" : "NgungHoatDong";// nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
+                                                                                   //nếu isdele = true + NgungHoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc
 
             await DeleteAsync(khoaHoc);
             await SaveAsync();

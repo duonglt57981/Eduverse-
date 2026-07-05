@@ -100,34 +100,33 @@ namespace Eduverse.Api.Controller
             }
         }
 
-        [HttpPost("khoahoc-chuyentrangthai-dangsua")]
+        [HttpPost("khoahoc-chuyentrangthai-choduyet-batch")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<KhoaHocDto>> ChuyenTTDangSua([FromForm] Guid id)
+        public async Task<DataResponse<List<KhoaHocDto>>> ChuyenTTChoDuyetBatch(BatchIdsRequest request)
         {
             try
             {
-                var result = await _khoaHocService.ChuyenTrangThaiDangSua(id);
-                return DataResponse<KhoaHocDto>.Success(result);
+                var result = await _khoaHocService.ChuyenTrangThaiChoDuyet(request);
+                return DataResponse<List<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
             {
-                return DataResponse<KhoaHocDto>.False(ex.Message);
+                return DataResponse<List<KhoaHocDto>>.False(ex.Message);
             }
         }
 
-
-        [HttpPost("khoahoc-chuyentrangthai-choduyet")]
+        [HttpPost("khoahoc-chuyentrangthai-dangsua-batch")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<KhoaHocDto>> ChuyenTTChoDuyet([FromForm] Guid id)
+        public async Task<DataResponse<List<KhoaHocDto>>> ChuyenTTDangSuaBatch(BatchIdsRequest request)
         {
             try
             {
-                var result = await _khoaHocService.ChuyenTrangThaiChoDuyet(id);
-                return DataResponse<KhoaHocDto>.Success(result);
+                var result = await _khoaHocService.ChuyenTrangThaiDangSua(request);
+                return DataResponse<List<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)
             {
-                return DataResponse<KhoaHocDto>.False(ex.Message);
+                return DataResponse<List<KhoaHocDto>>.False(ex.Message);
             }
         }
 
@@ -148,7 +147,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("khoahoc-getlist-formanager")]
+        [HttpGet("khoahoc-getlistformanager")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListForManager([FromQuery] GetListSearch search)
         {
@@ -200,11 +199,11 @@ namespace Eduverse.Api.Controller
 
         [HttpDelete("khoahoc-delete/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid id)
+        public async Task<DataResponse<bool>> DeleteKhoaHoc(Guid idKhoaHoc)
         {
             try
             {
-                var result = await _khoaHocService.DeleteKhoaHoc(id);
+                var result = await _khoaHocService.DeleteKhoaHoc(idKhoaHoc);
                 return DataResponse<bool>.Success(result);
             }
             catch (Exception ex)

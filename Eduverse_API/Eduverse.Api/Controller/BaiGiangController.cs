@@ -25,7 +25,23 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPost("khoahoc-chuyentrangthai-dangsua/{id}")]
+        [HttpGet("baigiang-getlistformanager/{IdPhan}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<BaiGiangDto>>> GetListForManagerBaiGiang(Guid IdPhan)
+        {
+            try
+            {
+                var result = await _baiGiangService.GetListForManager(IdPhan);
+                return DataResponse<List<BaiGiangDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<BaiGiangDto>>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("baigiang-chuyentrangthai-dangsua")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<BaiGiangDto>> ChuyenTTDangSua([FromForm] Guid id)
         {
@@ -41,7 +57,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPost("khoahoc-chuyentrangthai-choduyet")]
+        [HttpPost("baigiang-chuyentrangthai-choduyet")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<BaiGiangDto>> ChuyenTTChoDuyet([FromForm] Guid id)
         {
@@ -56,12 +72,13 @@ namespace Eduverse.Api.Controller
             }
         }
 
-        [HttpPost("baigiang")]
+
+        [HttpPost("baigiang-create")]
         [RequestSizeLimit(2L * 1024 * 1024 * 1024)]
         [RequestFormLimits(MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024)]
         [DisableRequestSizeLimit]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<BaiGiangDto>> CreateBaiGiang([FromForm] CreateBaiGiangRequest request)
+        public async Task<DataResponse<BaiGiangDto>> CreateBaiGiang( CreateBaiGiangRequest request)
         {
             try
             {
@@ -75,12 +92,12 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPut("update-baigiang")]
+        [HttpPut("baigiang-update")]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(2147483648)]
         [RequestFormLimits(MultipartBodyLengthLimit = 2147483648)]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<BaiGiangDto>> UpdateBaiGiang([FromForm] UpdateBaiGiangRequest request)
+        public async Task<DataResponse<BaiGiangDto>> UpdateBaiGiang( UpdateBaiGiangRequest request)
         {
             try
             {
@@ -94,7 +111,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpDelete("baigiang/{idBaiGiang}")]
+        [HttpDelete("baigiang-delete/{idBaiGiang}")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteBaiGiang(Guid idBaiGiang)
         {

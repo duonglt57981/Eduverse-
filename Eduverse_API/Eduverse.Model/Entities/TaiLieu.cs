@@ -12,6 +12,7 @@ namespace Eduverse.Model.Entities
         public string? LoaiTaiLieu { get; set; }
         public string? TenTaiLieu { get; set; }
         public string? URL { get; set; }
+        public string? IdDocument { get; set; }
         public DateTime? NgayTao { get; set; } = DateTime.Now;
         public string? TrangThai { get; set; }
         public string? TrangThaiPheDuyet { get; set; }

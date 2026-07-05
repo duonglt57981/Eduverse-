@@ -40,20 +40,20 @@ namespace Eduverse.Api.Controller
         }
 
 
-        //[HttpGet("kiemduyet-khoahoc-getdetail")]
-        //[Authorize(Roles = "Admin")]
-        //public async Task<DataResponse<KiemDuyetDetailDto>> GetDetailKiemDuyetKhoaHoc([FromQuery] Guid idKhoaHoc)
-        //{
-        //    try
-        //    {
-        //        var result = await _lichSuKiemDuyetKhoaHocService.GetDetailKhoaHocKiemDuyet(idKhoaHoc);
-        //        return DataResponse<KiemDuyetDetailDto>.Success(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return DataResponse<KiemDuyetDetailDto>.False(ex.Message);
-        //    }
-        //}   
+        [HttpGet("kiemduyet-khoahoc-getdetail/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<KiemDuyetDetailDto>> GetDetailKiemDuyetKhoaHoc( Guid idKhoaHoc)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.GetDetailKiemDuyet(idKhoaHoc);
+                return DataResponse<KiemDuyetDetailDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KiemDuyetDetailDto>.False(ex.Message);
+            }
+        }
 
 
         [HttpPost("kiemduyet-khoahoc")]
@@ -80,6 +80,23 @@ namespace Eduverse.Api.Controller
             try
             {
                 var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetBaiGiang(request);
+                return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
+
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("kiemduyet-tailieu")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetTaiLieu([FromForm] KiemDuyetKhoaHocRequest request)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetTaiLieu(request);
                 return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
 
             }

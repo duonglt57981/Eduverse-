@@ -9,6 +9,7 @@ using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
+using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,41 @@ namespace Eduverse.Service.BaiGiangService
             _dangkyKhoaHocRepository = dangkyKhoaHocRepository;
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
             _httpContextAccessor = httpContextAccessor;
+        }
+
+
+        public async Task<List<BaiGiangDto>> GetListForManager(Guid IdPhan)
+        {
+            // Lấy userId từ token
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                throw new UnauthorizedAccessException("Không thể xác định người dùng.");
+            }
+
+            var query = GetAll()
+                .Where(x => x.TrangThaiPheDuyet != "TuChoi"
+                    && x.TrangThai != "DaXoa"
+                    && x.CreatedId == userId
+                    && x.IdPhan == IdPhan)
+                .OrderBy(x => x.CreatedDate)
+                .Select(x => new BaiGiangDto
+                {
+                    Id = x.Id,
+                    IdPhan = IdPhan,
+                    TieuDe = x.TieuDe,
+                    LoaiBaiGiang = x.LoaiBaiGiang,
+                    ThuTuSapXep = x.ThuTuSapXep,
+                    URLBaiGiang = x.URLBaiGiang,
+                    LaBaiGiangFree = x.LaBaiGiangFree,
+                    ThoiLuong = x.ThoiLuong,
+                    TrangThai = x.TrangThai,
+                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                    IsBanHienTai = x.IsBanHienTai,
+                    IdBanGhiTruoc = x.IdBanGhiTruoc
+                });
+
+            return await query.ToListAsync();
         }
 
 
@@ -86,6 +122,7 @@ namespace Eduverse.Service.BaiGiangService
 
             return _mapper.Map<BaiGiang, BaiGiangDto>(banCanXuLy);
         }
+
 
         public async Task<BaiGiangDto> ChuyenTrangThaiDangSua(Guid IdBaiGiang)
         {
@@ -185,7 +222,7 @@ namespace Eduverse.Service.BaiGiangService
             var banGoc = await GetQueryable()
                .FirstOrDefaultAsync(x => x.Id == request.IdBaiGiang && x.IsBanHienTai);
 
-            if (banGoc.CreatedId != nguoiTao)
+              if (banGoc.CreatedId != nguoiTao)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
 
             if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
@@ -225,6 +262,8 @@ namespace Eduverse.Service.BaiGiangService
             if (thuTuDaTon)
                 throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại");
 
+
+
             string video = banGoc.URLBaiGiang;
             string idVideo = banGoc.IdVideoBaiGiang;
             int? thoiLuong = banGoc.ThoiLuong;
@@ -246,7 +285,7 @@ namespace Eduverse.Service.BaiGiangService
             {
                 banGoc.IdPhan = request.IdPhan.Value;
                 banGoc.TieuDe = request.TieuDe;
-                banGoc.ThuTuSapXep = request.ThuTuSapXep == 0? banGoc.ThuTuSapXep : request.ThuTuSapXep;
+                banGoc.ThuTuSapXep = request.ThuTuSapXep == null? banGoc.ThuTuSapXep : request.ThuTuSapXep;
                 banGoc.LaBaiGiangFree = request.LaBaiGiangFree;
                 banGoc.IdVideoBaiGiang = idVideo;
                 banGoc.URLBaiGiang = video;
@@ -255,6 +294,8 @@ namespace Eduverse.Service.BaiGiangService
                 banGoc.IsPendingSwap = false;
                 banGoc.TrangThai = "DangSua";
                 banGoc.TrangThaiPheDuyet = "DangSua";
+
+                
 
                 await UpdateAsync(banGoc);
                 await SaveAsync();
@@ -340,6 +381,9 @@ namespace Eduverse.Service.BaiGiangService
             if (baiGiang == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
+            if (baiGiang.TrangThai == "ChoDuyet")
+                throw new Exception("Đang gửi duyệt không thể xóa");
+
             var coNguoiHoc = await (
                  from ph in _phanRepository.GetQueryable()
                  join dk in _dangkyKhoaHocRepository.GetQueryable()
@@ -348,7 +392,7 @@ namespace Eduverse.Service.BaiGiangService
                  select dk.Id
              ).AnyAsync();
 
-            baiGiang.TrangThai = coNguoiHoc == null ? "DaXoa" : "NgungHoatDong"; // nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
+            baiGiang.TrangThai = coNguoiHoc == false ? "DaXoa" : "NgungHoatDong"; // nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
                                                                                  //nếu isdele = true + HoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc
 
             await DeleteAsync(baiGiang);
