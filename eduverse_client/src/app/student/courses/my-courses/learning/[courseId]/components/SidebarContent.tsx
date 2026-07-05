@@ -126,10 +126,11 @@ export const SidebarContent = ({
     >
       <Box
         sx={{
-          p: 2,
-          borderBottom: `2px solid ${PRIMARY_RED}`,
-          bgcolor: "grey.50",
+          p: 2.5,
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          bgcolor: "background.paper",
           flexShrink: 0,
+          boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.02)}`,
         }}
       >
         <Stack
@@ -150,25 +151,38 @@ export const SidebarContent = ({
           )}
         </Stack>
 
-        {/* ✅ Dùng spread với as const */}
-        <TextField {...textFieldProps} />
+        <TextField 
+          {...textFieldProps} 
+          sx={{ 
+            ...textFieldProps.sx, 
+            "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.default" } 
+          }} 
+        />
 
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary" }}>
+            Tiến độ học tập
+          </Typography>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: PRIMARY_RED }}>
+            {phanTramHoanThanh}%
+          </Typography>
+        </Box>
         <LinearProgress
           variant="determinate"
           value={phanTramHoanThanh}
           sx={{
-            height: 5,
+            height: 6,
             borderRadius: 3,
-            backgroundColor: alpha(PRIMARY_RED, 0.15),
+            backgroundColor: alpha(PRIMARY_RED, 0.1),
             "& .MuiLinearProgress-bar": {
               backgroundColor: PRIMARY_RED,
               borderRadius: 3,
             },
-            mb: 0.5,
+            mb: 0.75,
           }}
         />
-        <Typography variant="caption" color="text.secondary">
-          {soBaiHoanThanh}/{tongBai} bài · {phanTramHoanThanh}%
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", textAlign: "right" }}>
+          {soBaiHoanThanh}/{tongBai} bài
         </Typography>
       </Box>
 
@@ -191,9 +205,14 @@ export const SidebarContent = ({
               <ListItemButton
                 onClick={() => onTogglePhan(phan.id!, idPhanPlay)}
                 sx={{
-                  bgcolor: isPlaying ? alpha(PRIMARY_RED, 0.07) : "transparent",
+                  bgcolor: isPlaying ? alpha(PRIMARY_RED, 0.04) : "transparent",
                   borderLeft: `3px solid ${isPlaying ? PRIMARY_RED : "transparent"}`,
-                  py: 1.25,
+                  py: 1.5,
+                  px: 2.5,
+                  transition: "background-color 0.2s",
+                  "&:hover": {
+                    bgcolor: alpha(PRIMARY_RED, 0.06),
+                  }
                 }}
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -228,12 +247,17 @@ export const SidebarContent = ({
                           selected={isSelected}
                           onClick={() => onSelectBaiGiang(bg)}
                           sx={{
-                            pl: 3,
-                            py: 1,
+                            pl: 3.5,
+                            pr: 2.5,
+                            py: 1.25,
                             borderLeft: `3px solid ${isSelected ? PRIMARY_RED : "transparent"}`,
                             bgcolor: isSelected
-                              ? alpha(PRIMARY_RED, 0.05)
+                              ? alpha(PRIMARY_RED, 0.08)
                               : "transparent",
+                            transition: "all 0.2s",
+                            "&:hover": {
+                              bgcolor: alpha(PRIMARY_RED, 0.04),
+                            }
                           }}
                         >
                           <ListItemIcon sx={{ minWidth: 30 }}>

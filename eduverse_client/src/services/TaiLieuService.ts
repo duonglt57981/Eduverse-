@@ -4,12 +4,26 @@ import { CreateTaiLieuRequest } from "../types/TaiLieu/Request/TaiLieuRequest";
 import { ApiResponse } from "../types/types";
 
 export default class TaiLieuService {
+  async GetListTaiLieuManager(
+    idBaiGiang: string,
+  ): Promise<ApiResponse<TaiLieuType[]>> {
+    try {
+      const response = await apiService.get<ApiResponse<TaiLieuType[]>>(
+        `/TaiLieu/tailieu-getlistformanager/${idBaiGiang}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching phan hoc for update:", error);
+      throw error;
+    }
+  }
+
   async CreateTaiLieu(
     request: CreateTaiLieuRequest,
   ): Promise<ApiResponse<TaiLieuType>> {
     try {
       const response = await apiService.post<ApiResponse<TaiLieuType>>(
-        "/KhoaHoc/tailieu",
+        "/TaiLieu/tailieu-create",
         request,
         {
           headers: {
@@ -27,7 +41,7 @@ export default class TaiLieuService {
   async DeleteTaiLieu(id: string): Promise<ApiResponse<boolean>> {
     try {
       const response = await apiService.delete<ApiResponse<boolean>>(
-        `/KhoaHoc/tailieu/${id}`,
+        `/TaiLieu/tailieu-delete/${id}`,
       );
       return response.data;
     } catch (error) {

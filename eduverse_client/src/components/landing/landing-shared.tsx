@@ -71,6 +71,14 @@ export function LandingThemeProvider({ children }: { children: React.ReactNode }
 export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
   const user = useSelector((s) => s.auth.user);
   const roles = useSelector((s) => s.auth.roles) || [];
+  
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.href === '/favorite' && !user) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <>
       <Box
@@ -117,7 +125,7 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
               color: 'rgba(24,24,27,0.68)',
             }}
           >
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const isActive = item.href === activePath;
               return (
                 <Typography
@@ -139,46 +147,29 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
           </Stack>
 
           <Stack direction="row" spacing={1.25}>
-            {user ? (
-              <Chip
-                component={Link}
-                href={roles.includes('Admin') ? '/admin/dashboard' : roles.includes('GiaoVien') ? '/instructor/dashboard' : '/student/dashboard'}
-                clickable
-                label="Bảng điều khiển"
-                sx={{
-                  bgcolor: 'primary.main',
-                  color: '#fff',
-                  fontWeight: 900,
-                  '&:hover': { bgcolor: 'primary.dark' },
-                }}
-              />
-            ) : (
-              <>
-                <Chip
-                  component={Link}
-                  href="/auth/login"
-                  clickable
-                  label="Đăng nhập"
-                  sx={{
-                    bgcolor: 'transparent',
-                    color: 'text.primary',
-                    fontWeight: 800,
-                  }}
-                />
-                <Chip
-                  component={Link}
-                  href="/auth/register"
-                  clickable
-                  label="Đăng ký"
-                  sx={{
-                    bgcolor: 'primary.main',
-                    color: '#fff',
-                    fontWeight: 900,
-                    '&:hover': { bgcolor: 'primary.dark' },
-                  }}
-                />
-              </>
-            )}
+            <Chip
+              component={Link}
+              href="/auth/login"
+              clickable
+              label="Đăng nhập"
+              sx={{
+                bgcolor: 'transparent',
+                color: 'text.primary',
+                fontWeight: 800,
+              }}
+            />
+            <Chip
+              component={Link}
+              href="/auth/register"
+              clickable
+              label="Đăng ký"
+              sx={{
+                bgcolor: 'primary.main',
+                color: '#fff',
+                fontWeight: 900,
+                '&:hover': { bgcolor: 'primary.dark' },
+              }}
+            />
           </Stack>
         </Stack>
       </Box>

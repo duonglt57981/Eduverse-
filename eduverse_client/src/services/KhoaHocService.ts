@@ -108,44 +108,34 @@ export default class KhoaHocService {
     }
   }
 
-  async ChuyenTTDangSua(id: string): Promise<ApiResponse<KhoaHocType>> {
+  async ChuyenTTChoDuyetBatch(
+    ids: string[],
+  ): Promise<ApiResponse<KhoaHocType[]>> {
     try {
-      const formData = new FormData();
-      formData.append("id", id);
-
-      const response = await apiService.post<ApiResponse<KhoaHocType>>(
-        "/KhoaHoc/khoahoc-chuyentrangthai-dangsua",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
+      const response = await apiService.post<ApiResponse<KhoaHocType[]>>(
+        `/KhoaHoc/khoahoc-chuyentrangthai-choduyet-batch`,
+        { ids },
       );
       return response.data;
     } catch (error) {
-      console.error("Error changing status to 'Đang sửa':", error);
+      console.error("Error batch changing status to 'Chờ duyệt':", error);
       throw error;
     }
   }
 
-  async ChuyenTTChoDuyet(id: string): Promise<ApiResponse<KhoaHocType>> {
+  async ChuyenTTDangSuaBatch(
+    ids: string[],
+  ): Promise<ApiResponse<KhoaHocType[]>> {
     try {
-      const formData = new FormData();
-      formData.append("id", id);
-
-      const response = await apiService.post<ApiResponse<KhoaHocType>>(
-        "/KhoaHoc/khoahoc-chuyentrangthai-choduyet",
-        formData,
+      const response = await apiService.post<ApiResponse<KhoaHocType[]>>(
+        `/KhoaHoc/khoahoc-chuyentrangthai-dangsua-batch`,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          ids,
         },
       );
       return response.data;
     } catch (error) {
-      console.error("Error changing status to 'Chờ duyệt':", error);
+      console.error("Error batch changing status to 'Đang sửa':", error);
       throw error;
     }
   }
@@ -181,7 +171,7 @@ export default class KhoaHocService {
       }
 
       const queryString = params.toString();
-      const url = `/KhoaHoc/khoahoc-getlist-formanager${queryString ? `?${queryString}` : ""}`;
+      const url = `/KhoaHoc/khoahoc-getlistformanager${queryString ? `?${queryString}` : ""}`;
 
       const response =
         await apiService.get<ApiResponse<PagedList<KhoaHocType>>>(url);

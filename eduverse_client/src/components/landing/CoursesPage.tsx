@@ -37,12 +37,10 @@ import {
 } from './landing-data';
 import {
   CourseVisual,
-  LandingFooter,
-  LandingNavbar,
-  LandingThemeProvider,
   SectionHeading,
 } from './landing-shared';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
 
 type CourseSortOption = 'newest' | 'rating' | 'price-low';
@@ -305,12 +303,8 @@ export default function CoursesPage() {
   };
 
   return (
-    <LandingThemeProvider>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Box sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 } }}>
-          <LandingNavbar activePath="/courses" />
-
-          <Box
+    <>
+      <Box
             sx={{
               pt: { xs: 5, md: 7 },
               pb: { xs: 4, md: 5 },
@@ -710,11 +704,7 @@ export default function CoursesPage() {
               ) : null}
             </Box>
           </Box>
-
-          <LandingFooter />
-        </Box>
-      </Box>
-    </LandingThemeProvider>
+    </>
   );
 }
 

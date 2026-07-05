@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import AuthGuard from '@/src/components/AuthGuard';
-import DashboardShell from '@/src/components/dashboard/DashboardShell';
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import {
   Box,
   Typography,
@@ -58,7 +58,7 @@ export default function StudentSettingsPage() {
 
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Box sx={{ mb: 3.5 }}>
           <Typography
             variant="h4"
@@ -141,7 +141,7 @@ export default function StudentSettingsPage() {
             <TabPanel value={activeTab} index={5}><LinkedAccountSettings /></TabPanel>
           </Box>
         </Box>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

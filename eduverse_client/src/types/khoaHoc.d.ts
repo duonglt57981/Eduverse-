@@ -35,6 +35,7 @@ export interface PhanDto {
   mieuTa?: string;
   thuTuSapXep?: number;
   baiGiangs?: BaiGiangDto[];
+  idBanGhiTruoc: string | null;
 }
 
 export interface KhoaHocDetailDto extends KhoaHocDto {

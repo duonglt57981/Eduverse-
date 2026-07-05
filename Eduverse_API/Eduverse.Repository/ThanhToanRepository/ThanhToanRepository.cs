@@ -12,5 +12,5 @@ namespace Eduverse.Repository.ThanhToanRepository
     {
         public ThanhToanRepository(EduverseContext context) : base(context)
         { }
-        }
+     }
 }

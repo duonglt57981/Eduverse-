@@ -1,7 +1,14 @@
 // src/app/instructor/manager-courses/components/CourseListItem.tsx
 "use client";
 
-import { Box, Typography, Chip, IconButton, Stack } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Chip,
+  IconButton,
+  Stack,
+  Checkbox,
+} from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SchoolIcon from "@mui/icons-material/School";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -9,7 +16,15 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
-import { R, isValidImg, statusChip } from "../types/constants";
+import {
+  R,
+  TEXT_DARK,
+  BORDER_GRAY,
+  isValidImg,
+  statusChip,
+  canGuiDuyet,
+  canSuaTiep,
+} from "../types/constants";
 
 interface CourseListItemProps {
   course: KhoaHocType;
@@ -21,6 +36,8 @@ interface CourseListItemProps {
   draftExpanded?: boolean;
   onToggleDraft?: () => void;
   isNestedDraftRow?: boolean;
+  checked?: boolean;
+  onToggleCheck?: () => void;
 }
 
 export function CourseListItem({
@@ -33,24 +50,53 @@ export function CourseListItem({
   draftExpanded,
   onToggleDraft,
   isNestedDraftRow,
+  checked = false,
+  onToggleCheck,
 }: CourseListItemProps) {
+  const isApprovable = canGuiDuyet(course.trangThaiPheDuyet);
+  const isEditable = canSuaTiep(course.trangThaiPheDuyet);
+
   return (
     <Box
       sx={{
-        p: 1.5,
-        pl: isNestedDraftRow ? 3 : 1.5,
-        borderBottom: "1px solid #faf0f0",
+        p: 1.75,
+        pl: isNestedDraftRow ? 3.5 : 1.75,
+        borderBottom: "1px solid rgba(141, 19, 19, 0.05)",
         position: "relative",
         bgcolor: isSelected
-          ? alpha(R, 0.04)
+          ? "rgba(141, 19, 19, 0.04)"
           : isNestedDraftRow
-            ? "#fffaf5"
-            : undefined,
+
+            ? "#fffcf9"
+            : "transparent",
         cursor: "pointer",
+        transition: "all 0.2s ease",
+        "&:hover": {
+          bgcolor: isSelected
+            ? "rgba(141, 19, 19, 0.06)"
+            : "rgba(141, 19, 19, 0.02)",
+        },
       }}
       onClick={onSelect}
     >
-      <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+        {onToggleCheck && (
+          <Checkbox
+            checked={checked}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleCheck();
+            }}
+            onClick={(e) => e.stopPropagation()}
+            size="small"
+            sx={{
+              mt: -0.5,
+              color: alpha(R, 0.3),
+              "&.Mui-checked": { color: R },
+            }}
+          />
+        )}
+
         {hasDraftToggle && (
           <IconButton
             size="small"
@@ -75,7 +121,7 @@ export function CourseListItem({
             borderRadius: 1.5,
             overflow: "hidden",
             flexShrink: 0,
-            bgcolor: "#fde8e8",
+            bgcolor: "#f0f0f0",
           }}
         >
           {isValidImg(course.hinhAnhKhoaHoc) ? (
@@ -98,6 +144,7 @@ export function CourseListItem({
             </Box>
           )}
         </Box>
+
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             sx={{
@@ -108,7 +155,7 @@ export function CourseListItem({
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-              color: isSelected ? R : "inherit",
+              color: isSelected ? R : TEXT_DARK,
             }}
           >
             {course.tieuDe}
@@ -126,10 +173,23 @@ export function CourseListItem({
               />
             )}
           </Typography>
-          <Stack direction="row" spacing={0.5} flexWrap="wrap">
+
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
             {statusChip(course.trangThaiPheDuyet)}
+            {(isApprovable || isEditable) && (
+              <Chip
+                size="small"
+                sx={{
+                  fontSize: "0.5rem",
+                  height: 16,
+                  bgcolor: isApprovable ? "#fff3e0" : "#e3f2fd",
+                  color: isApprovable ? "#e65100" : "#1565c0",
+                }}
+              />
+            )}
           </Stack>
         </Box>
+
         <IconButton
           size="small"
           onClick={(e) => {
@@ -141,6 +201,7 @@ export function CourseListItem({
           <MoreVertIcon sx={{ fontSize: 16, color: "#bbb" }} />
         </IconButton>
       </Box>
+
       {isSelected && (
         <Box
           sx={{
@@ -148,9 +209,23 @@ export function CourseListItem({
             left: 0,
             top: 0,
             bottom: 0,
-            width: 3,
+            width: 4,
             bgcolor: R,
-            borderRadius: "0 2px 2px 0",
+            borderRadius: "0 4px 4px 0",
+          }}
+        />
+      )}
+      {checked && (
+        <Box
+          sx={{
+            position: "absolute",
+            right: 8,
+            bottom: 8,
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            bgcolor: R,
+            opacity: 0.6,
           }}
         />
       )}

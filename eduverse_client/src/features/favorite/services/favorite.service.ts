@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiService } from "@/src/services";
 import { ApiResponse } from "@/src/types/types";
 import { FavoriteCourse } from "../types/favorite.type";
@@ -29,7 +30,9 @@ export const favoriteService = {
    * Lấy danh sách khóa học yêu thích
    */
   async getFavorites(): Promise<ApiResponse<FavoriteCourse[]>> {
-    const response = await apiService.get<any>("/DanhSachYeuThich/get-data?pageSize=-1");
+    const response = await apiService.get<any>(
+      "/DanhSachYeuThich/get-data?pageSize=-1",
+    );
     const items = response.data?.items || [];
     const mapped: FavoriteCourse[] = items.map((item: any) => ({
       id: item.id,
@@ -40,7 +43,7 @@ export const favoriteService = {
       giangVien: item.giangVien || "Giảng viên EduVerse",
       giaTien: item.giaTien || 0,
       createdDate: item.createdDate,
-      isFavorite: true
+      isFavorite: true,
     }));
     return {
       status: response.status,
@@ -54,7 +57,9 @@ export const favoriteService = {
    * Thêm khóa học vào danh sách yêu thích
    */
   async addFavorite(khoaHocId: string): Promise<ApiResponse<FavoriteCourse>> {
-    const response = await apiService.post<any>(`/DanhSachYeuThich/them?khoaHocId=${khoaHocId}`);
+    const response = await apiService.post<any>(
+      `/DanhSachYeuThich/them?khoaHocId=${khoaHocId}`,
+    );
     return {
       status: response.status,
       message: response.message,
@@ -67,8 +72,8 @@ export const favoriteService = {
         giangVien: "",
         giaTien: 0,
         createdDate: response.data?.createdDate || new Date().toISOString(),
-        isFavorite: true
-      }
+        isFavorite: true,
+      },
     };
   },
 
@@ -77,11 +82,14 @@ export const favoriteService = {
    * Xóa khóa học khỏi danh sách yêu thích
    */
   async removeFavorite(khoaHocId: string): Promise<ApiResponse<boolean>> {
-    const response = await apiService.delete<any>(`/DanhSachYeuThich/xoa-theo-khoahoc/${khoaHocId}`);
+    const response = await apiService.delete<any>(
+      `/DanhSachYeuThich/xoa-theo-khoahoc/${khoaHocId}`,
+    );
     return {
       status: response.status,
       message: response.message,
-      data: response.status
+      data: response.status ?? false,
+
     };
   },
 };

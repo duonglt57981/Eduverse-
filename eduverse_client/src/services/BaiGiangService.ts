@@ -4,13 +4,32 @@ import {
   CreateBaiGiangRequest,
   UpdateBaiGiangRequest,
 } from "../types/BaiGiang/Request/BaiGiangRequest";
+import { BaiGiangDto } from "../types/khoaHoc";
 import { ApiResponse } from "../types/types";
 
 export default class BaiGiangService {
+  async GetListBaiGiangManager(
+    idPhan: string,
+  ): Promise<ApiResponse<BaiGiangDto[]>> {
+    try {
+      const response = await apiService.get<ApiResponse<BaiGiangDto[]>>(
+        `/BaiGiang/baigiang-getlistformanager/${idPhan}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching phan hoc for update:", error);
+      throw error;
+    }
+  }
+
   async ChuyenTTDangSua(id: string): Promise<ApiResponse<BaiGiangType>> {
     try {
+      const formData = new FormData();
+      formData.append("id", id);
+
       const response = await apiService.post<ApiResponse<BaiGiangType>>(
-        "/KhoaHoc/khoahoc-chuyentrangthai-dangsua/${id}",
+        `/BaiGiang/baigiang-chuyentrangthai-dangsua`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -26,8 +45,12 @@ export default class BaiGiangService {
 
   async ChuyenTTChoDuyet(id: string): Promise<ApiResponse<BaiGiangType>> {
     try {
+      const formData = new FormData();
+      formData.append("id", id);
+
       const response = await apiService.post<ApiResponse<BaiGiangType>>(
-        "/KhoaHoc/khoahoc-chuyentrangthai-choduyet/${id}",
+        `/BaiGiang/baigiang-chuyentrangthai-choduyet`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -46,7 +69,7 @@ export default class BaiGiangService {
   ): Promise<ApiResponse<BaiGiangType>> {
     try {
       const response = await apiService.post<ApiResponse<BaiGiangType>>(
-        "/KhoaHoc/baigiang",
+        "/BaiGiang/baigiang-create",
         request,
         {
           headers: {
@@ -67,7 +90,7 @@ export default class BaiGiangService {
   ): Promise<ApiResponse<BaiGiangType>> {
     try {
       const response = await apiService.put<ApiResponse<BaiGiangType>>(
-        "/KhoaHoc/update-baigiang",
+        "/BaiGiang/baigiang-update",
         request,
         {
           headers: {
@@ -86,7 +109,7 @@ export default class BaiGiangService {
   async DeleteBaiGiang(idBaiGiang: string): Promise<ApiResponse<boolean>> {
     try {
       const response = await apiService.delete<ApiResponse<boolean>>(
-        `/KhoaHoc/baigiang/${idBaiGiang}`,
+        `/BaiGiang/baigiang-delete/${idBaiGiang}`,
       );
       return response.data;
     } catch (error) {

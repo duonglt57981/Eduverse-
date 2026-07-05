@@ -17,7 +17,7 @@ import khoaHocReducer from "./khoaHoc/KhoaHocSlice";
 import gioHangReducer from "./gioHang/GioHangSlice";
 import thanhToanReducer from "./thanhToan/ThanhToanSlice";
 import muaSauReducer from "./danhSachMuonMuaSau/DanhSachMuonMuaSauSlice";
-import rutTienReducer from "./rutTien/RutTienSlice"
+import rutTienReducer from "./rutTien/RutTienSlice";
 
 const persistConfig = { key: "root", storage };
 

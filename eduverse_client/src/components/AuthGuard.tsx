@@ -47,6 +47,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
     if (allowedRoles.length > 0) {
       const hasPermission = allowedRoles.some((role) => roles.includes(role));
       if (!hasPermission) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setForbidden(true);
         setChecked(true);
         return;

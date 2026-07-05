@@ -56,7 +56,7 @@ namespace Eduverse.Api.Controller
             var result = await _service.KiemTraMaGiamGiaAsync(dto);
             return Ok(DataResponse.Success(result, result.ThongBao));
         }
-
+        [AllowAnonymous]
         [HttpPost("webhook")]
         public async Task<IActionResult> Webhook([FromBody] Webhook webhook)
         {

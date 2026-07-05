@@ -1,13 +1,13 @@
 'use client';
 
 import AuthGuard from '@/src/components/AuthGuard';
-import DashboardShell from '@/src/components/dashboard/DashboardShell';
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import { Box, Typography, Paper } from '@mui/material';
 
 export default function StudentExplorePage() {
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Paper 
           elevation={0} 
           sx={{ 
@@ -25,7 +25,7 @@ export default function StudentExplorePage() {
             Tính năng này đang được EduVerse phát triển và sẽ sớm ra mắt trong phiên bản tiếp theo.
           </Typography>
         </Paper>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

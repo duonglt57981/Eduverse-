@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+using CloudinaryDotNet;
 using Eduverse.Model.Entities;
 using Eduverse.Service.Common;
 using Hinet.Api.Dto;
@@ -10,6 +6,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace Eduverse.Api.Controller
 {
@@ -282,49 +283,9 @@ namespace Eduverse.Api.Controller
             var continueLearning = new
             {
                 courses = continueCourses,
-                paths = new List<object>
-                {
-                    new
-                    {
-                        id = "path-fallback-1",
-                        title = "Poly - SYB3013 - Khởi sự doanh nghiệp_SP2026",
-                        contentType = "Lộ trình học tập",
-                        duration = "4/4 mục đã hoàn thành",
-                        progress = 100,
-                        thumbnailGradient = "linear-gradient(135deg, #8D1313 0%, #7F1D1D 100%)"
-                    },
-                    new
-                    {
-                        id = "path-fallback-2",
-                        title = "Poly - SOF1021 - Nhập môn kỹ thuật phần mềm - FA2025",
-                        contentType = "Lộ trình học tập",
-                        duration = "4/4 mục đã hoàn thành",
-                        progress = 100,
-                        thumbnailGradient = "linear-gradient(135deg, #8D1313 0%, #7F1D1D 100%)"
-                    },
-                    new
-                    {
-                        id = "path-fallback-3",
-                        title = "Poly - SOF3032 - Kiểm thử cơ bản - FA2025",
-                        contentType = "Lộ trình học tập",
-                        duration = "2/2 mục đã hoàn thành",
-                        progress = 100,
-                        thumbnailGradient = "linear-gradient(135deg, #8D1313 0%, #7F1D1D 100%)"
-                    }
-                },
+                //paths = null,
                 certificates = certList,
-                assessments = new List<object>
-                {
-                    new
-                    {
-                        id = "assess-fallback-1",
-                        title = "Đánh giá năng lực Backend Developer",
-                        contentType = "Bài thi thực hành",
-                        duration = "Còn 1 bài thi",
-                        progress = 0,
-                        thumbnailGradient = "linear-gradient(135deg, #10B981 0%, #059669 100%)"
-                    }
-                }
+                //assessments = null,
             };
 
             // 3. Next Sectors
@@ -332,7 +293,6 @@ namespace Eduverse.Api.Controller
             try
             {
                 categories = await _danhMucService.GetQueryable()
-                    .Where(d => d.IsDeleted == false)
                     .Take(4)
                     .ToListAsync();
             }
@@ -341,12 +301,12 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error fetching categories: " + ex.Message);
             }
 
-            var defaultSectorIcons = new[] { "ai", "cloud", "data", "marketing" };
+            //var defaultSectorIcons = new[] { "ai", "cloud", "data", "marketing" };
             var nextSectors = categories.Select((cat, i) => new
             {
                 id = cat.Id.ToString(),
                 title = cat.TenDanhMuc,
-                iconName = defaultSectorIcons[i % defaultSectorIcons.Length],
+                //iconName = defaultSectorIcons[i % defaultSectorIcons.Length],
                 subfields = GetSubfields(cat.TenDanhMuc),
                 bgLight = "#FFF8F6",
                 iconColor = "#8D1313"
@@ -355,20 +315,26 @@ namespace Eduverse.Api.Controller
             // 4. Interested Skills Badges
             var interestedSkills = new List<string> { "AI", "Python", "ReactJS", "SQL Server", "AWS", "UI/UX" };
 
-
+            var unregisteredCourses = courses
+                .Where(c => !registeredCourseIds.Contains(c.Id))
+                .ToList();
 
 
             // 5. Skills Courses
-            var skillCourses = courses.Select((c, i) => new
+            var skillCourses = unregisteredCourses.Select((c, i) => new
             {
                 id = c.Id.ToString(),
                 title = c.TieuDe,
-                instructor = "Giảng viên EduVerse",
-                rating = 4.8,
+                instructor = c.CreatedBy,
                 studentsCount = c.SoLuongHocVien ?? 1500,
                 level = c.CapDo ?? "Trung cấp",
+
+                gia = c.Gia,
+                giaGoc = c.GiaGoc,
+
                 thumbnailGradient = GetGradient(i + 2)
             }).ToList();
+
 
             // 6. Premium Selection
             var premiumCourse = courses.FirstOrDefault(c => c.CapDo == "Nâng cao") ?? courses.FirstOrDefault();
@@ -376,19 +342,23 @@ namespace Eduverse.Api.Controller
             {
                 title = premiumCourse?.TieuDe ?? "Thiết kế hệ thống chuyên sâu",
                 description = premiumCourse?.MoTa ?? "Học cách thiết kế hệ thống có tính sẵn sàng cao, chịu tải hàng triệu người dùng từ các chuyên gia đầu ngành.",
-                instructor = "TS. Nguyễn Văn B",
+                instructor = premiumCourse?.CreatedBy?? "An Danh",
                 rating = 4.9,
                 studentsCount = premiumCourse?.SoLuongHocVien ?? 2500,
                 level = premiumCourse?.CapDo ?? "Nâng cao",
+                gia = premiumCourse.Gia,
+                giagoc = premiumCourse.GiaGoc,
                 thumbnailGradient = "linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)",
                 relatedCourses = courses.Take(3).Select((c, i) => new
                 {
                     id = c.Id.ToString(),
                     title = c.TieuDe,
-                    instructor = "Giảng viên EduVerse",
+                    instructor = premiumCourse?.CreatedBy ?? "An Danh",
                     rating = 4.7,
                     studentsCount = c.SoLuongHocVien ?? 1000,
                     level = c.CapDo ?? "Cơ bản",
+                    gia = c.Gia,
+                    giagoc = c.GiaGoc,
                     thumbnailGradient = GetGradient(i + 1)
                 }).ToList()
             };
@@ -401,14 +371,15 @@ namespace Eduverse.Api.Controller
                 {
                     id = c.Id.ToString(),
                     title = c.TieuDe,
-                    instructor = "Giảng viên chuyên nghiệp",
+                    instructor = premiumCourse?.CreatedBy ?? "An Danh",
                     rating = 4.8,
                     studentsCount = c.SoLuongHocVien ?? 1800,
                     level = c.CapDo ?? "Trung cấp",
+                    gia = c.Gia,
+                    giagoc = c.GiaGoc,
                     thumbnailGradient = GetGradient(i + 3)
                 }).ToList()
             };
-
             return new DataResponse<object>
             {
                 Status = true,
@@ -464,160 +435,6 @@ namespace Eduverse.Api.Controller
                 return;
             }
 
-            // Seed categories (DanhMuc)
-            var categories = new List<DanhMuc>
-            {
-                new DanhMuc { Id = Guid.NewGuid(), TenDanhMuc = "Trí tuệ Nhân tạo (AI)", TrangThai = "Active", NgayTao = DateTime.Now },
-                new DanhMuc { Id = Guid.NewGuid(), TenDanhMuc = "Điện toán Đám mây", TrangThai = "Active", NgayTao = DateTime.Now },
-                new DanhMuc { Id = Guid.NewGuid(), TenDanhMuc = "Khoa học Dữ liệu", TrangThai = "Active", NgayTao = DateTime.Now },
-                new DanhMuc { Id = Guid.NewGuid(), TenDanhMuc = "Marketing Kỹ thuật số", TrangThai = "Active", NgayTao = DateTime.Now }
-            };
-            foreach (var cat in categories)
-            {
-                await _danhMucService.CreateAsync(cat);
-            }
-
-            // Seed courses (KhoaHoc)
-            var courses = new List<KhoaHoc>
-            {
-                new KhoaHoc
-                {
-                    Id = Guid.Parse("c1111111-1111-1111-1111-111111111111"),
-                    TieuDe = "HTML & CSS Nâng Cao",
-                    MoTa = "Khóa học HTML & CSS nâng cao giúp xây dựng giao diện web chuyên nghiệp, tối ưu hóa CSS và responsive.",
-                    Gia = 499000,
-                    GiaGoc = 999000,
-                    LoaiKhoaHoc = "Web Development",
-                    CapDo = "Trung cấp",
-                    TongThoiLuong = 120,
-                    TongBaiGiang = 15,
-                    SoLuongHocVien = 1540,
-                    TrangThai = "Active",
-                    NgayTao = DateTime.Now
-                },
-                new KhoaHoc
-                {
-                    Id = Guid.Parse("c2222222-2222-2222-2222-222222222222"),
-                    TieuDe = "Lập trình Javascript Thực Chiến",
-                    MoTa = "Lập trình Javascript thực chiến với các dự án thực tế, từ cơ bản đến nâng cao.",
-                    Gia = 799000,
-                    GiaGoc = 1499000,
-                    LoaiKhoaHoc = "Web Development",
-                    CapDo = "Trung cấp",
-                    TongThoiLuong = 240,
-                    TongBaiGiang = 25,
-                    SoLuongHocVien = 2890,
-                    TrangThai = "Active",
-                    NgayTao = DateTime.Now
-                },
-                new KhoaHoc
-                {
-                    Id = Guid.Parse("c3333333-3333-3333-3333-333333333333"),
-                    TieuDe = "Thiết kế hệ thống với Microservices",
-                    MoTa = "Thiết kế hệ thống Microservices quy mô lớn sử dụng .NET Core, Docker, Ocelot API Gateway.",
-                    Gia = 1299000,
-                    GiaGoc = 2499000,
-                    LoaiKhoaHoc = "System Design",
-                    CapDo = "Nâng cao",
-                    TongThoiLuong = 480,
-                    TongBaiGiang = 40,
-                    SoLuongHocVien = 1200,
-                    TrangThai = "Active",
-                    NgayTao = DateTime.Now
-                },
-                new KhoaHoc
-                {
-                    Id = Guid.Parse("c4444444-4444-4444-4444-444444444444"),
-                    TieuDe = "Nhập môn Machine Learning & Python",
-                    MoTa = "Khóa học nền tảng về Machine Learning sử dụng Python, Scikit-Learn và Pandas.",
-                    Gia = 899000,
-                    GiaGoc = 1799000,
-                    LoaiKhoaHoc = "AI & Machine Learning",
-                    CapDo = "Cơ bản",
-                    TongThoiLuong = 360,
-                    TongBaiGiang = 30,
-                    SoLuongHocVien = 3200,
-                    TrangThai = "Active",
-                    NgayTao = DateTime.Now
-                },
-                new KhoaHoc
-                {
-                    Id = Guid.Parse("c5555555-5555-5555-5555-555555555555"),
-                    TieuDe = "Xây dựng Chatbot AI với LLMs",
-                    MoTa = "Ứng dụng LangChain, OpenAI API để xây dựng hệ thống Chatbot thông minh.",
-                    Gia = 1499000,
-                    GiaGoc = 2999000,
-                    LoaiKhoaHoc = "AI & Machine Learning",
-                    CapDo = "Nâng cao",
-                    TongThoiLuong = 200,
-                    TongBaiGiang = 18,
-                    SoLuongHocVien = 850,
-                    TrangThai = "Active",
-                    NgayTao = DateTime.Now
-                },
-                new KhoaHoc
-                {
-                    Id = Guid.Parse("c6666666-6666-6666-6666-666666666666"),
-                    TieuDe = "AWS Cloud Practitioner Essentials",
-                    MoTa = "Khóa học luyện thi chứng chỉ AWS Cloud Practitioner bản cập nhật mới nhất.",
-                    Gia = 599000,
-                    GiaGoc = 1199000,
-                    LoaiKhoaHoc = "Cloud Computing",
-                    CapDo = "Cơ bản",
-                    TongThoiLuong = 180,
-                    TongBaiGiang = 22,
-                    SoLuongHocVien = 4500,
-                    TrangThai = "Active",
-                    NgayTao = DateTime.Now
-                }
-            };
-            foreach (var course in courses)
-            {
-                await _khoaHocService.CreateAsync(course);
-            }
-
-            // Seed user registrations (DangKyKhoaHoc)
-            var registrations = new List<DangKyKhoaHoc>
-            {
-                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdKhoaHoc = courses[0].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-15), GiaDangKy = courses[0].Gia },
-                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdKhoaHoc = courses[1].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-10), GiaDangKy = courses[1].Gia },
-                new DangKyKhoaHoc { Id = Guid.NewGuid(), IdNguoiDangKi = userId, IdKhoaHoc = courses[2].Id, TrangThai = "Active", ThoiGianDK = DateTime.Now.AddDays(-5), GiaDangKy = courses[2].Gia }
-            };
-            foreach (var reg in registrations)
-            {
-                await _dangKyKhoaHocService.CreateAsync(reg);
-            }
-
-            // Seed TienDoHocTap for those registrations
-            var progressRecords = new List<TienDoHocTap>
-            {
-                new TienDoHocTap { Id = Guid.NewGuid(), IdDangKi = registrations[0].Id, ThoiGianXem = 70, LanCuoiXem = DateTime.Now, TrangThai = "Learning" },
-                new TienDoHocTap { Id = Guid.NewGuid(), IdDangKi = registrations[1].Id, ThoiGianXem = 40, LanCuoiXem = DateTime.Now, TrangThai = "Learning" },
-                new TienDoHocTap { Id = Guid.NewGuid(), IdDangKi = registrations[2].Id, ThoiGianXem = 15, LanCuoiXem = DateTime.Now, TrangThai = "Learning" }
-            };
-            foreach (var prog in progressRecords)
-            {
-                await _tienDoHocTapService.CreateAsync(prog);
-            }
-
-            // Seed some certificates (ChungChi)
-            var certificate = new ChungChi
-            {
-                Id = Guid.NewGuid(),
-                IdKhoaHoc = courses[0].Id,
-                IdDangKi = registrations[0].Id,
-                TenChungChi = "Chứng chỉ HTML & CSS Nâng Cao",
-                MaSoChungChi = "CERT-HTMLCSS-2026",
-                URL_ChungChi = "#",
-                NgayCap = DateTime.Now.AddDays(-1),
-                TrangThai = "Completed",
-                DiemTongKet = 9.5,
-                TongThoiGianHoc = 120,
-                NgayTao = DateTime.Now
-            };
-            await _chungChiService.CreateAsync(certificate);
-
-            await _khoaHocService.SaveAsync();
         }
 
         private async Task<DataResponse<object>> GetAdminDashboardDataAsync()
@@ -703,12 +520,6 @@ namespace Eduverse.Api.Controller
                     .Sum(r => r.GiaDangKy ?? 0);
             }
 
-            // Fallback for visual demonstration in Dev Environment if total revenue is 0
-            if (totalRevenue == 0)
-            {
-                revenueTrend = new double[] { 120000000, 150000000, 180000000, 220000000, 250000000, 310000000, 280000000, 260000000, 290000000, 350000000, 420000000, 380000000 };
-                totalRevenue = revenueTrend.Sum();
-            }
 
             // 6. Student Growth (last 7 months)
             var studentGrowth = new int[7];

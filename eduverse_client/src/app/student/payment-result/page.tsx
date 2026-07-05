@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Box,
@@ -16,11 +16,11 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { useDispatch, useSelector } from '../../../store/hook';
 import { getDonHang } from '../../../store/thanhToan/ThanhToanSlice';
 import AuthGuard from '@/src/components/AuthGuard';
-import DashboardShell from '@/src/components/dashboard/DashboardShell';
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 
 const PRIMARY = '#8D1313';
 
-export default function PaymentResultPage() {
+function PaymentResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
@@ -44,7 +44,7 @@ export default function PaymentResultPage() {
 
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <DashboardShell>
+      <StudentDashboardShell>
         <Box
           sx={{
             display: 'flex',
@@ -188,7 +188,14 @@ export default function PaymentResultPage() {
             </Stack>
           </Container>
         </Box>
-      </DashboardShell>
+      </StudentDashboardShell>
     </AuthGuard>
+  );
+}
+export default function PaymentResultPage() {
+  return (
+    <Suspense fallback={<div>Đang tải...</div>}>
+      <PaymentResultContent />
+    </Suspense>
   );
 }

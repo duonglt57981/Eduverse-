@@ -95,13 +95,22 @@ namespace Eduverse.Api
             builder.Services.AddSingleton(cloudinary);
             builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
-            // PayOS
+
+            // PayOS chuyen khoan
+            // Client payment
             var payOS = new PayOS.PayOSClient(
                 builder.Configuration["PayOS:ClientId"] ?? "",
                 builder.Configuration["PayOS:ApiKey"] ?? "",
                 builder.Configuration["PayOS:ChecksumKey"] ?? ""
             );
             builder.Services.AddSingleton(payOS);
+            // Client payout
+            var payOSPayout = new PayOS.PayOSClient(
+                builder.Configuration["PayOSPayout:ClientId"] ?? "",
+                builder.Configuration["PayOSPayout:ApiKey"] ?? "",
+                builder.Configuration["PayOSPayout:ChecksumKey"] ?? ""
+            );
+            builder.Services.AddKeyedSingleton<PayOS.PayOSClient>("payout", payOSPayout);
 
             // Form options
             builder.Services.Configure<FormOptions>(options =>

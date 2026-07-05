@@ -1,4 +1,5 @@
 import { apiService } from ".";
+import { PhanDto } from "../types/khoaHoc";
 import {
   GetToUpdatePhanDto,
   PhanHocType,
@@ -16,7 +17,19 @@ export default class PhanService {
   ): Promise<ApiResponse<GetToUpdatePhanDto>> {
     try {
       const response = await apiService.get<ApiResponse<GetToUpdatePhanDto>>(
-        `/KhoaHoc/phanhoc-get-toupdate/${idPhan}`,
+        `/Phanhoc/phanhoc-get-toupdate/${idPhan}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching phan hoc for update:", error);
+      throw error;
+    }
+  }
+
+  async GetListPhanManager(idKhoaHoc: string): Promise<ApiResponse<PhanDto[]>> {
+    try {
+      const response = await apiService.get<ApiResponse<PhanDto[]>>(
+        `/PhanHoc/phanhoc-getlistformanager/${idKhoaHoc}`,
       );
       return response.data;
     } catch (error) {
@@ -30,7 +43,7 @@ export default class PhanService {
   ): Promise<ApiResponse<PhanHocType>> {
     try {
       const response = await apiService.post<ApiResponse<PhanHocType>>(
-        "/PhanHoc/phanhoc",
+        "/PhanHoc/phanhoc-create",
         request,
       );
       return response.data;
@@ -45,7 +58,7 @@ export default class PhanService {
   ): Promise<ApiResponse<PhanHocType>> {
     try {
       const response = await apiService.put<ApiResponse<PhanHocType>>(
-        `/KhoaHoc/phanhoc/${request.id}`,
+        `/PhanHoc/phanhoc-update`,
         request,
       );
       return response.data;
@@ -58,7 +71,7 @@ export default class PhanService {
   async DeletePhanHoc(id: string): Promise<ApiResponse<boolean>> {
     try {
       const response = await apiService.delete<ApiResponse<boolean>>(
-        `/KhoaHoc/phanhoc/${id}`,
+        `/PhanHoc/phanhoc-delete/${id}`,
       );
       return response.data;
     } catch (error) {

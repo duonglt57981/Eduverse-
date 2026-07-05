@@ -52,7 +52,6 @@
     <Folder Include="LienKetService\Request\" />
     <Folder Include="LoaiThongBaoService\Dto\" />
     <Folder Include="LoaiThongBaoService\Request\" />
-    <Folder Include="NganHangService\Dto\" />
     <Folder Include="NganHangService\Request\" />
     <Folder Include="RoleService\Dto\" />
     <Folder Include="RoleService\Request\" />
@@ -60,8 +59,6 @@
     <Folder Include="TaiLieuService\Request\" />
     <Folder Include="ThanhToanService\Dto\" />
     <Folder Include="ThanhToanService\Request\" />
-    <Folder Include="ThongBaoService\Dto\" />
-    <Folder Include="ThongBaoService\Request\" />
     <Folder Include="VaiTro_NguoiDungService\Dto\" />
     <Folder Include="VaiTro_NguoiDungService\Request\" />
   </ItemGroup>

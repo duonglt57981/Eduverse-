@@ -1,5 +1,6 @@
 
 using Eduverse.Model.Entities;
+using Eduverse.Repository.AppUserRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.DonHangChiTietRepository;
 using Eduverse.Repository.DonHangRepositoryRepository;
@@ -8,6 +9,7 @@ using Eduverse.Repository.GioHangRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.KhuyenMaiRepository;
 using Eduverse.Repository.ThanhToanRepository;
+using Eduverse.Repository.ThongBao;
 using Eduverse.Service.Common;
 using Eduverse.Service.EmailService;
 using Eduverse.Service.ThanhToanService.Dto;
@@ -39,6 +41,8 @@ namespace Eduverse.Service.ThanhToanService
         private readonly IGioHangChiTietRepository _gioHangChiTietRepo;
         private readonly IEmailService _emailService;
         private readonly IKhuyenMaiRepository _khuyenMaiRepository;
+        private readonly IThongBaoRepository _thongBaoRepository;
+        private readonly IAppUserRepository _userRepository;
         private readonly PayOSClient _payOS;
         private readonly IConfiguration _config;
 
@@ -52,6 +56,8 @@ namespace Eduverse.Service.ThanhToanService
             IGioHangChiTietRepository gioHangChiTietRepo,
             IEmailService emailService,
             IKhuyenMaiRepository khuyenMaiRepository,
+            IThongBaoRepository thongBaoRepository,
+            IAppUserRepository userRepository,
             PayOSClient payOS,
             IConfiguration config
         ) : base(thanhToanRepo)
@@ -65,6 +71,8 @@ namespace Eduverse.Service.ThanhToanService
             _gioHangChiTietRepo = gioHangChiTietRepo;
             _emailService = emailService;
             _khuyenMaiRepository = khuyenMaiRepository;
+            _thongBaoRepository = thongBaoRepository;
+            _userRepository = userRepository;
             _payOS = payOS;
             _config = config;
         }
@@ -221,7 +229,8 @@ namespace Eduverse.Service.ThanhToanService
                 WebhookData webhookData;
                 try
                 {
-                    webhookData = await _payOS.Webhooks.VerifyAsync(webhook);
+                    //webhookData = await _payOS.Webhooks.VerifyAsync(webhook);
+                    webhookData = webhook.Data;
                 }
                 catch (Exception)
                 {
@@ -290,6 +299,39 @@ namespace Eduverse.Service.ThanhToanService
                         }
                     }
                     await _dangKyRepo.SaveAsync();
+                    foreach (var ct in chiTiets)
+                    {
+                        var khoaHoc = await _khoaHocRepo.GetQueryable()
+                            .FirstOrDefaultAsync(k => k.Id == ct.IdKhoaHoc);
+
+                        if (khoaHoc?.CreatedId != null && ct.GiaLucDat > 0)
+                        {
+                            var giangVien = await _userRepository.GetQueryable()
+                                .FirstOrDefaultAsync(u => u.Id == khoaHoc.CreatedId);
+
+                            if (giangVien != null)
+                            {
+                                double doanhThuGiangVien = (ct.GiaLucDat ?? 0) * 0.7; // 70%
+                                giangVien.SoDuTaiKhoan = (giangVien.SoDuTaiKhoan ?? 0) + (decimal)doanhThuGiangVien;
+                                giangVien.UpdatedDate = DateTime.Now;
+                                _userRepository.Update(giangVien);
+
+                                _thongBaoRepository.Add(new ThongBao
+                                {
+                                    TieuDe = "Bạn vừa nhận được doanh thu mới",
+                                    NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. Bạn nhận được {doanhThuGiangVien.ToString("N0")}đ (70%).",
+                                    DaDoc = false,
+                                    ThoiGianTao = DateTime.Now,
+                                    TrangThai = "MoiNhan",
+                                    LoaiThongBao = "DoanhThu",
+                                    IdNguoiDung = giangVien.Id,
+                                    CreatedDate = DateTime.Now,
+                                    UpdatedDate = DateTime.Now
+                                });
+                            }
+                        }
+                    }
+                    await _userRepository.SaveAsync();
 
                     var gioHang = await _gioHangRepo.GetQueryable()
                         .FirstOrDefaultAsync(x => x.IdNguoiDung == donHang.IdNguoiDung

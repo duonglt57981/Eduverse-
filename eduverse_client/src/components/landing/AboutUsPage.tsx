@@ -12,9 +12,6 @@ import {
   stats,
 } from './landing-data';
 import {
-  LandingFooter,
-  LandingNavbar,
-  LandingThemeProvider,
   SectionHeading,
 } from './landing-shared';
 
@@ -30,12 +27,8 @@ export default function AboutUsPage() {
   const featuredTeam = instructorCatalog.slice(0, 3);
 
   return (
-    <LandingThemeProvider>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Box sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 } }}>
-          <LandingNavbar activePath="/about-us" />
-
-          <Box
+    <>
+      <Box
             sx={{
               pt: { xs: 5, md: 7 },
               pb: { xs: 4, md: 6 },
@@ -531,11 +524,7 @@ export default function AboutUsPage() {
               </Stack>
             </Box>
           </Paper>
-
-          <LandingFooter />
-        </Box>
-      </Box>
-    </LandingThemeProvider>
+    </>
   );
 }
 

@@ -20,9 +20,6 @@ import {
 } from '@mui/material';
 import { contactFaqs, contactInfo } from './landing-data';
 import {
-  LandingFooter,
-  LandingNavbar,
-  LandingThemeProvider,
   SectionHeading,
 } from './landing-shared';
 
@@ -83,12 +80,8 @@ function ContactField({
 
 export default function ContactPage() {
   return (
-    <LandingThemeProvider>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Box sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 } }}>
-          <LandingNavbar activePath="/contact" />
-
-          <Paper
+    <>
+      <Paper
             elevation={0}
             sx={{
               mt: { xs: 3, md: 4 },
@@ -406,11 +399,7 @@ export default function ContactPage() {
               </Box>
             </Paper>
           </Box>
-
-          <LandingFooter />
-        </Box>
-      </Box>
-    </LandingThemeProvider>
+    </>
   );
 }
 
