@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +10,7 @@ namespace Eduverse.Service.DanhMucService.Dto
     public class DanhMucDto
     {
         public Guid Id { get; set; }
+        public string? MaDanhMuc { get; set; }
         public string? TenDanhMuc { get; set; }
         public DateTime? NgayTao { get; set; }
         public string? TrangThai { get; set; }

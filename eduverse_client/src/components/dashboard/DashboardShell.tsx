@@ -74,6 +74,18 @@ import {
   type CourseCardItem,
 } from "./dashboard-data";
 import { apiService } from "@/src/services/index";
+import {
+  Badge,
+  Popover,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import { useSignalR } from "@/src/hook/useSignalR";
+import { thongBaoService } from "@/src/services/ThongBaoService";
+import { ThongBao } from "@/src/types/thongbao";
+import Swal from "sweetalert2";
 
 // --- CRIMSON RED DESIGN PALETTE ---
 const COLORS = {
@@ -775,6 +787,84 @@ export default function DashboardShell({
   const roles = useSelector((s) => s.auth.roles) || [];
   const user = useSelector((s) => s.auth.user);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifications, setNotifications] = useState<ThongBao[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [notiAnchorEl, setNotiAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [selectedNoti, setSelectedNoti] = useState<ThongBao | null>(null);
+  const openNotiPopover = Boolean(notiAnchorEl);
+
+  useEffect(() => {
+    if (user) {
+      thongBaoService.getMyNotifications().then((res) => {
+        console.log("Eduverse Notifications Response:", res);
+        if (res.status && res.data) {
+          setNotifications(res.data);
+        }
+      });
+      thongBaoService.getUnreadCount().then((res) => {
+        console.log("Eduverse Unread Count Response:", res);
+        if (res.status && typeof res.data === "number") {
+          setUnreadCount(res.data);
+        }
+      });
+    }
+  }, [user]);
+
+  useSignalR("ReceiveNotification", (newNoti: ThongBao) => {
+    setNotifications((prev) => {
+      if (prev.some((n) => n.id === newNoti.id)) return prev;
+      return [newNoti, ...prev].slice(0, 50);
+    });
+    setUnreadCount((prev) => prev + 1);
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener("mouseenter", Swal.stopTimer);
+        toast.addEventListener("mouseleave", Swal.resumeTimer);
+      }
+    });
+    Toast.fire({
+      icon: "info",
+      title: newNoti.tieuDe || "Thông báo mới",
+      text: newNoti.noiDung || newNoti.message || "",
+    });
+  });
+
+  const handleNotiClick = async (noti: ThongBao) => {
+    setNotiAnchorEl(null);
+    if (!noti.daDoc) {
+      try {
+        await thongBaoService.markAsRead(noti.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === noti.id ? { ...n, daDoc: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error("Lỗi đánh dấu đã đọc:", err);
+      }
+    }
+
+    if (noti.link) {
+      router.push(noti.link);
+    } else {
+      setSelectedNoti(noti);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await thongBaoService.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, daDoc: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Lỗi đánh dấu tất cả đã đọc:", err);
+    }
+  };
   const [authChecked, setAuthChecked] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
@@ -1180,60 +1270,58 @@ export default function DashboardShell({
               direction="row"
               sx={{ alignItems: "center", pl: 0.5, gap: 1.5 }}
             >
-              {roles.includes("GiaoVien") && (
-                <>
-                  {pathname.startsWith("/instructor") ? (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => router.push("/student/dashboard")}
-                      startIcon={<ChevronLeftRounded />}
-                      sx={{
-                        borderRadius: "10px",
-                        borderColor: "rgba(0,0,0,0.12)",
-                        color: "#1F2937",
-                        px: 1.5,
-                        py: 0.6,
-                        fontSize: 12.5,
-                        fontWeight: 600,
-                        textTransform: "none",
-                        display: { xs: "none", md: "flex" },
-                        "&:hover": {
-                          borderColor: COLORS.primary,
-                          bgcolor: "rgba(141,19,19,0.03)",
-                          color: COLORS.primary,
-                        },
-                      }}
-                    >
-                      Học viên
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => router.push("/instructor/dashboard")}
-                      endIcon={<ChevronRightRounded />}
-                      sx={{
-                        borderRadius: "10px",
-                        borderColor: "rgba(0,0,0,0.12)",
-                        color: "#1F2937",
-                        px: 1.5,
-                        py: 0.6,
-                        fontSize: 12.5,
-                        fontWeight: 600,
-                        textTransform: "none",
-                        display: { xs: "none", md: "flex" },
-                        "&:hover": {
-                          borderColor: COLORS.primary,
-                          bgcolor: "rgba(141,19,19,0.03)",
-                          color: COLORS.primary,
-                        },
-                      }}
-                    >
-                      Giảng viên
-                    </Button>
-                  )}
-                </>
+              {!pathname.startsWith("/instructor") && !pathname.startsWith("/admin") && roles.includes("GiaoVien") && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => router.push("/instructor/dashboard")}
+                  endIcon={<ChevronRightRounded />}
+                  sx={{
+                    borderRadius: "10px",
+                    borderColor: "rgba(0,0,0,0.12)",
+                    color: "#1F2937",
+                    px: 1.5,
+                    py: 0.6,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    textTransform: "none",
+                    display: { xs: "none", md: "flex" },
+                    "&:hover": {
+                      borderColor: COLORS.primary,
+                      bgcolor: "rgba(141,19,19,0.03)",
+                      color: COLORS.primary,
+                    },
+                  }}
+                >
+                  Trang giảng viên
+                </Button>
+              )}
+
+              {pathname.startsWith("/instructor") && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => router.push("/student/dashboard")}
+                  startIcon={<ChevronLeftRounded />}
+                  sx={{
+                    borderRadius: "10px",
+                    borderColor: "rgba(0,0,0,0.12)",
+                    color: "#1F2937",
+                    px: 1.5,
+                    py: 0.6,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    textTransform: "none",
+                    display: { xs: "none", md: "flex" },
+                    "&:hover": {
+                      borderColor: COLORS.primary,
+                      bgcolor: "rgba(141,19,19,0.03)",
+                      color: COLORS.primary,
+                    },
+                  }}
+                >
+                  Về trang học viên
+                </Button>
               )}
               <IconButton
                 onClick={() => router.push("/student/favorites")}
@@ -1254,12 +1342,15 @@ export default function DashboardShell({
                 <ShoppingCartRounded sx={{ fontSize: 22 }} />
               </IconButton>
               <IconButton
+                onClick={(e) => setNotiAnchorEl(e.currentTarget)}
                 sx={{
                   color: "rgba(31,41,55,0.55)",
                   display: { xs: "none", sm: "flex" },
                 }}
               >
-                <NotificationsNoneRounded sx={{ fontSize: 22 }} />
+                <Badge badgeContent={unreadCount} color="error">
+                  <NotificationsNoneRounded sx={{ fontSize: 22 }} />
+                </Badge>
               </IconButton>
               {pathname.startsWith("/instructor") && (
                 <IconButton
@@ -3502,6 +3593,187 @@ export default function DashboardShell({
             </Box>
           </Box>
         </Box>
+
+        <Popover
+          anchorEl={notiAnchorEl}
+          open={openNotiPopover}
+          onClose={() => setNotiAnchorEl(null)}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "right",
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          slotProps={{
+            paper: {
+              sx: {
+                width: 360,
+                maxHeight: 480,
+                borderRadius: "16px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                border: "1px solid rgba(0,0,0,0.08)",
+                mt: 1.5,
+                display: "flex",
+                flexDirection: "column",
+              },
+            },
+          }}
+        >
+          <Box
+            sx={{
+              p: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
+            }}
+          >
+            <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937" }}>
+              Thông báo
+            </Typography>
+            {unreadCount > 0 && (
+              <Button
+                size="small"
+                onClick={handleMarkAllAsRead}
+                sx={{
+                  color: COLORS.primary,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  p: 0,
+                  minWidth: 0,
+                  "&:hover": {
+                    bgcolor: "transparent",
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                Đánh dấu tất cả đã đọc
+              </Button>
+            )}
+          </Box>
+
+          <Box sx={{ flex: 1, overflowY: "auto", maxHeight: 380 }}>
+            {notifications.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                  Không có thông báo nào
+                </Typography>
+              </Box>
+            ) : (
+              notifications.map((noti) => (
+                <Box
+                  key={noti.id}
+                  onClick={() => handleNotiClick(noti)}
+                  sx={{
+                    p: 2,
+                    borderBottom: "1px solid rgba(0,0,0,0.04)",
+                    cursor: "pointer",
+                    bgcolor: noti.daDoc ? "transparent" : "rgba(141,19,19,0.03)",
+                    position: "relative",
+                    transition: "background-color 150ms ease",
+                    "&:hover": {
+                      bgcolor: "rgba(0,0,0,0.02)",
+                    },
+                  }}
+                >
+                  {!noti.daDoc && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        left: 6,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        bgcolor: COLORS.primary,
+                      }}
+                    />
+                  )}
+                  <Stack spacing={0.5} sx={{ pl: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: noti.daDoc ? 600 : 800,
+                        fontSize: 13.5,
+                        color: "#1F2937",
+                      }}
+                    >
+                      {noti.tieuDe || noti.type || "Thông báo"}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 12.5,
+                        color: "text.secondary",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {noti.noiDung || noti.message}
+                    </Typography>
+                    <Typography
+                      sx={{ fontSize: 11, color: "text.secondary", mt: 0.5 }}
+                    >
+                      {noti.thoiGianTao
+                        ? new Date(noti.thoiGianTao).toLocaleString("vi-VN")
+                        : ""}
+                    </Typography>
+                  </Stack>
+                </Box>
+              ))
+            )}
+          </Box>
+        </Popover>
+
+        <Dialog
+          open={Boolean(selectedNoti)}
+          onClose={() => setSelectedNoti(null)}
+          PaperProps={{
+            sx: {
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: 480,
+              p: 1,
+            },
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: 800, fontSize: 18, color: "#1F2937" }}>
+            {selectedNoti?.tieuDe || selectedNoti?.type || "Thông báo chi tiết"}
+          </DialogTitle>
+          <DialogContent>
+            <Typography
+              sx={{
+                fontSize: 14.5,
+                color: "#374151",
+                mb: 2,
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {selectedNoti?.noiDung || selectedNoti?.message}
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+              Thời gian:{" "}
+              {selectedNoti?.thoiGianTao
+                ? new Date(selectedNoti.thoiGianTao).toLocaleString("vi-VN")
+                : ""}
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setSelectedNoti(null)}
+              sx={{
+                color: COLORS.primary,
+                fontWeight: 700,
+              }}
+            >
+              Đóng
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </ThemeProvider>
   );

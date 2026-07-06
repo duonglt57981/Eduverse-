@@ -41,7 +41,6 @@ import {
   CategoryRounded,
   FolderOpenRounded,
   CheckCircleRounded,
-  TrendingUpRounded,
   SchoolRounded,
   VisibilityRounded,
   FilterListRounded,
@@ -74,6 +73,7 @@ interface CategoryItem {
   tenDanhMuc: string;
   ngayTao: string | null;
   trangThai: string | null;
+  maDanhMuc?: string;
 }
 
 export default function AdminCategoriesPage() {
@@ -90,6 +90,7 @@ export default function AdminCategoriesPage() {
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState("");
+  const [categoryCode, setCategoryCode] = useState("");
 
   // Detail dialog
   const [detailOpen, setDetailOpen] = useState(false);
@@ -139,6 +140,7 @@ export default function AdminCategoriesPage() {
     setDialogMode("add");
     setEditingId(null);
     setCategoryName("");
+    setCategoryCode("");
     setDialogOpen(true);
   };
 
@@ -147,6 +149,7 @@ export default function AdminCategoriesPage() {
     setDialogMode("edit");
     setEditingId(cat.id);
     setCategoryName(cat.tenDanhMuc);
+    setCategoryCode(cat.maDanhMuc || "");
     setDialogOpen(true);
   };
 
@@ -172,11 +175,15 @@ export default function AdminCategoriesPage() {
     try {
       let res;
       if (dialogMode === "add") {
-        res = await danhMucService.create({ tenDanhMuc: categoryName.trim() });
+        res = await danhMucService.create({
+          tenDanhMuc: categoryName.trim(),
+          maDanhMuc: categoryCode.trim() || undefined,
+        });
       } else {
         res = await danhMucService.update({
           id: editingId!,
           tenDanhMuc: categoryName.trim(),
+          maDanhMuc: categoryCode.trim() || undefined,
         });
       }
       if (res.status) {
@@ -283,13 +290,11 @@ export default function AdminCategoriesPage() {
     (c) => c.trangThai === "Inactive",
   ).length;
 
-  // Generate category prefix (first 2 letters)
-  const getPrefix = (name: string) => {
-    const words = name.trim().split(/\s+/);
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
+  // Get short display code from maDanhMuc (e.g. IT001 -> IT, DM003 -> DM)
+  const getShortCode = (code?: string) => {
+    if (!code) return "??";
+    const match = code.match(/^([A-Z]+)\d{3}$/);
+    return match ? match[1] : code.substring(0, 2).toUpperCase();
   };
 
   // Category prefix chip colors
@@ -801,6 +806,30 @@ export default function AdminCategoriesPage() {
                         pl: 3,
                       }}
                     >
+                      STT
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 800,
+                        color: COLORS.textSecondary,
+                        fontSize: 12,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        py: 2,
+                      }}
+                    >
+                      Mã danh mục
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 800,
+                        color: COLORS.textSecondary,
+                        fontSize: 12,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        py: 2,
+                      }}
+                    >
                       Tên danh mục
                     </TableCell>
                     <TableCell
@@ -846,7 +875,7 @@ export default function AdminCategoriesPage() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
+                      <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                         <CircularProgress
                           size={32}
                           sx={{ color: COLORS.primary }}
@@ -864,7 +893,7 @@ export default function AdminCategoriesPage() {
                     </TableRow>
                   ) : categories.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
+                      <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                         <FolderOpenRounded
                           sx={{ fontSize: 48, color: "#CBD5E1", mb: 1 }}
                         />
@@ -899,14 +928,39 @@ export default function AdminCategoriesPage() {
                             "&:last-child td": { borderBottom: "none" },
                           }}
                         >
-                          {/* Category Name with prefix chip */}
+                          {/* STT */}
                           <TableCell sx={{ py: 2.5, pl: 3 }}>
+                            <Typography
+                              sx={{
+                                fontWeight: 600,
+                                color: COLORS.textSecondary,
+                                fontSize: 13.5,
+                              }}
+                            >
+                              {(pageIndex - 1) * pageSize + idx + 1}
+                            </Typography>
+                          </TableCell>
+
+                          {/* Code */}
+                          <TableCell sx={{ py: 2.5 }}>
+                            <Typography
+                              sx={{
+                                fontWeight: 700,
+                                color: COLORS.primary,
+                                fontSize: 13.5,
+                                letterSpacing: "0.5px",
+                              }}
+                            >
+                              {cat.maDanhMuc}
+                            </Typography>
+                          </TableCell>
+
+                          {/* Category Name with prefix chip */}
+                          <TableCell sx={{ py: 2.5 }}>
                             <Stack
                               direction="row"
+                              alignItems="center"
                               spacing={2}
-                              sx={{
-                                alignItems: "center",
-                              }}
                             >
                               <Box
                                 sx={{
@@ -928,7 +982,7 @@ export default function AdminCategoriesPage() {
                                     letterSpacing: "0.5px",
                                   }}
                                 >
-                                  {getPrefix(cat.tenDanhMuc)}
+                                  {getShortCode(cat.maDanhMuc)}
                                 </Typography>
                               </Box>
                               <Box>
@@ -1151,6 +1205,41 @@ export default function AdminCategoriesPage() {
                   mb: 1,
                 }}
               >
+                Mã danh mục
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder="VD: IT001, AI001 (để trống sẽ tự sinh DM001...)"
+                value={categoryCode}
+                onChange={(e) => setCategoryCode(e.target.value.toUpperCase())}
+                sx={{
+                  mb: 2.5,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "14px",
+                    height: 48,
+                    "& fieldset": { borderColor: "#E2E8F0" },
+                    "&:hover fieldset": { borderColor: COLORS.primary },
+                    "&.Mui-focused fieldset": {
+                      borderColor: COLORS.primary,
+                      borderWidth: 2,
+                    },
+                  },
+                  "& .MuiInputBase-input": {
+                    fontSize: 14,
+                    fontWeight: 500,
+                    letterSpacing: "1px",
+                  },
+                }}
+              />
+
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  color: COLORS.textDark,
+                  fontSize: 13.5,
+                  mb: 1,
+                }}
+              >
                 Tên danh mục
               </Typography>
               <TextField
@@ -1277,13 +1366,9 @@ export default function AdminCategoriesPage() {
                           }}
                         >
                           <Typography
-                            sx={{
-                              fontWeight: 900,
-                              fontSize: 18,
-                              color: "#fff",
-                            }}
+                            sx={{ fontWeight: 900, fontSize: 18, color: "#fff" }}
                           >
-                            {getPrefix(detailItem.tenDanhMuc)}
+                            {getShortCode(detailItem.maDanhMuc)}
                           </Typography>
                         </Box>
                         <Box>
@@ -1307,6 +1392,31 @@ export default function AdminCategoriesPage() {
 
                     {/* Info Grid */}
                     <Grid container spacing={2}>
+                      <Grid size={{ xs: 6 }}>
+                        <Typography
+                          sx={{
+                            color: COLORS.textSecondary,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                            mb: 0.5,
+                          }}
+                        >
+                          Mã danh mục
+                        </Typography>
+                        <Typography
+                          sx={{
+                            color: COLORS.primary,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            letterSpacing: "0.5px",
+                            mb: 1.5,
+                          }}
+                        >
+                          {detailItem.maDanhMuc}
+                        </Typography>
+                      </Grid>
                       <Grid size={{ xs: 6 }}>
                         <Typography
                           sx={{

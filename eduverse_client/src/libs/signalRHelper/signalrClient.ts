@@ -9,12 +9,10 @@ class signalrClient {
   getConnection() {
     if (this.connection) return this.connection;
 
-    if (!API_URL) {
-      throw new Error('NEXT_PUBLIC_API_URL is not defined');
-    }
+    const hubUrl = API_URL || 'http://localhost:5002';
 
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${API_URL}/notificationHub`, {
+      .withUrl(`${hubUrl}/notificationHub`, {
         // ❗ KHÔNG dùng localStorage trực tiếp ngoài client
         accessTokenFactory: () => {
           if (typeof window === 'undefined') return '';

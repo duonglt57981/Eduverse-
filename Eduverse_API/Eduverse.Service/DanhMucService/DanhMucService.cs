@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.DanhMucRepository;
 using Eduverse.Service.Common;
 using Eduverse.Service.DanhMucService.Dto;
@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Eduverse.Service.DanhMucService
@@ -17,10 +18,40 @@ namespace Eduverse.Service.DanhMucService
     {
         private readonly IDanhMucRepository _danhMucRepository;
         private readonly IMapper _mapper;
+        private static readonly Regex MaDanhMucRegex = new Regex(@"^[A-Z]{2,10}[0-9]{3}$", RegexOptions.Compiled);
+
         public DanhMucService(IDanhMucRepository danhMucRepository, IMapper mapper) : base(danhMucRepository)
         {
             _danhMucRepository = danhMucRepository;
             _mapper = mapper;
+        }
+
+        private void ValidateMaDanhMuc(string maDanhMuc)
+        {
+            if (!MaDanhMucRegex.IsMatch(maDanhMuc))
+                throw new Exception("Mã danh mục không hợp lệ. Định dạng yêu cầu: chữ hoa + 3 chữ số (VD: IT001, AI001, DM001)");
+        }
+
+        private async Task<string> GenerateNextDMCode()
+        {
+            var allCodes = await GetQueryable()
+                .Where(x => !x.IsDeleted && x.MaDanhMuc != null && x.MaDanhMuc.StartsWith("DM"))
+                .Select(x => x.MaDanhMuc!)
+                .ToListAsync();
+
+            int maxNumber = 0;
+            var dmRegex = new Regex(@"^DM(\d{3})$");
+            foreach (var code in allCodes)
+            {
+                var match = dmRegex.Match(code);
+                if (match.Success)
+                {
+                    int num = int.Parse(match.Groups[1].Value);
+                    if (num > maxNumber) maxNumber = num;
+                }
+            }
+
+            return $"DM{(maxNumber + 1).ToString("D3")}";
         }
 
         public async Task<DanhMucDto> Create(CreateDanhMucRequest request)
@@ -34,9 +65,26 @@ namespace Eduverse.Service.DanhMucService
             if (exists)
                 throw new Exception("Tên danh mục đã tồn tại");
 
+            string maDanhMuc;
+            if (!string.IsNullOrWhiteSpace(request.MaDanhMuc))
+            {
+                maDanhMuc = request.MaDanhMuc.Trim().ToUpper();
+                ValidateMaDanhMuc(maDanhMuc);
+
+                var codeDuplicate = await GetQueryable()
+                    .AnyAsync(x => x.MaDanhMuc != null && x.MaDanhMuc == maDanhMuc && !x.IsDeleted);
+                if (codeDuplicate)
+                    throw new Exception($"Mã danh mục '{maDanhMuc}' đã tồn tại");
+            }
+            else
+            {
+                maDanhMuc = await GenerateNextDMCode();
+            }
+
             var danhMuc = new DanhMuc
             {
                 Id = Guid.NewGuid(),
+                MaDanhMuc = maDanhMuc,
                 TenDanhMuc = request.TenDanhMuc,
                 NgayTao = DateTime.UtcNow,
                 TrangThai = "HDH",
@@ -96,6 +144,7 @@ namespace Eduverse.Service.DanhMucService
             var dtoQuery = query.Select(x => new DanhMucDto
             {
                 Id = x.Id,
+                MaDanhMuc = x.MaDanhMuc,
                 TenDanhMuc = x.TenDanhMuc,
                 NgayTao = x.NgayTao,
                 TrangThai = x.TrangThai
@@ -123,6 +172,23 @@ namespace Eduverse.Service.DanhMucService
                 throw new Exception("Tên danh mục đã tồn tại");
 
             entity.TenDanhMuc = request.TenDanhMuc;
+
+            if (!string.IsNullOrWhiteSpace(request.MaDanhMuc))
+            {
+                var newCode = request.MaDanhMuc.Trim().ToUpper();
+                ValidateMaDanhMuc(newCode);
+
+                var codeDuplicate = await GetQueryable()
+                    .AnyAsync(x => x.Id != request.Id
+                                   && x.MaDanhMuc != null
+                                   && x.MaDanhMuc == newCode
+                                   && !x.IsDeleted);
+                if (codeDuplicate)
+                    throw new Exception($"Mã danh mục '{newCode}' đã tồn tại");
+
+                entity.MaDanhMuc = newCode;
+            }
+
             entity.UpdatedDate = DateTime.UtcNow;
 
             await UpdateAsync(entity);
