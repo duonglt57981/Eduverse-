@@ -959,8 +959,8 @@ export default function AdminCategoriesPage() {
                           <TableCell sx={{ py: 2.5 }}>
                             <Stack
                               direction="row"
-                              alignItems="center"
                               spacing={2}
+                              sx={{ alignItems:"center" }}
                             >
                               <Box
                                 sx={{

@@ -257,7 +257,7 @@ export function PhanSection({
             component="div"
             direction="row"
             spacing={1}
-            alignItems="center"
+            sx={{ alignItems: "center" }}
           >
             {isOpen ? (
               <ExpandLessIcon sx={{ color: R, fontSize: 18 }} />
@@ -344,8 +344,7 @@ export function PhanSection({
           component="div"
           direction="row"
           spacing={1}
-          alignItems="center"
-          sx={{ py: 2 }}
+          sx={{ alignItems: "center", py: 2 }}
         >
           <CircularProgress size={16} sx={{ color: alpha(R, 0.5) }} />
           <Typography sx={{ fontSize: 12.5, color: TEXT_GRAY }}>

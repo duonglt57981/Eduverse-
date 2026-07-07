@@ -216,7 +216,10 @@ export default function AdminThongBaoPage() {
   };
 
   const handleSubmitForm = async () => {
-    if (!formState.tieuDe?.trim() || !(formState.noiDung || formState.message)?.trim()) {
+    if (
+      !formState.tieuDe?.trim() ||
+      !(formState.noiDung || formState.message)?.trim()
+    ) {
       Swal.fire({
         icon: "warning",
         title: "Thiếu thông tin",
@@ -506,8 +509,10 @@ export default function AdminThongBaoPage() {
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={2}
-                alignItems={{ xs: "stretch", md: "center" }}
-                justifyContent="space-between"
+                sx={{
+                  alignItems: { xs: "stretch", md: "center" },
+                  justifyContent: "space-between",
+                }}
               >
                 <Typography
                   variant="h6"
@@ -519,10 +524,13 @@ export default function AdminThongBaoPage() {
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1.5}
-                  alignItems="center"
+                  sx={{ alignItems: "center" }}
                 >
                   {/* Search bar */}
-                  <form onSubmit={handleSearchSubmit} style={{ display: "flex" }}>
+                  <form
+                    onSubmit={handleSearchSubmit}
+                    style={{ display: "flex" }}
+                  >
                     <TextField
                       placeholder="Tìm kiếm thông báo..."
                       value={search}
@@ -546,17 +554,19 @@ export default function AdminThongBaoPage() {
                           fontWeight: 500,
                         },
                       }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchRounded
-                              sx={{
-                                color: COLORS.textSecondary,
-                                fontSize: 20,
-                              }}
-                            />
-                          </InputAdornment>
-                        ),
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SearchRounded
+                                sx={{
+                                  color: COLORS.textSecondary,
+                                  fontSize: 20,
+                                }}
+                              />
+                            </InputAdornment>
+                          ),
+                        },
                       }}
                     />
                   </form>
@@ -794,12 +804,12 @@ export default function AdminThongBaoPage() {
                                 {noti.tieuDe || "Không tiêu đề"}
                               </Typography>
                               <Typography
+                                noWrap
                                 sx={{
                                   color: COLORS.textSecondary,
                                   fontSize: 12,
-                                  noWrap: true,
-                                  textOverflow: "ellipsis",
                                   overflow: "hidden",
+                                  textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
                                   mt: 0.5,
                                 }}
@@ -845,7 +855,7 @@ export default function AdminThongBaoPage() {
                             <Stack
                               direction="row"
                               spacing={0.5}
-                              justifyContent="center"
+                              sx={{ justifyContent: "center" }}
                             >
                               {!noti.daDoc && (
                                 <Tooltip title="Đánh dấu đã đọc">
@@ -861,9 +871,7 @@ export default function AdminThongBaoPage() {
                                       "&:hover": { bgcolor: "#D1FAE5" },
                                     }}
                                   >
-                                    <CheckCircleRounded
-                                      sx={{ fontSize: 16 }}
-                                    />
+                                    <CheckCircleRounded sx={{ fontSize: 16 }} />
                                   </IconButton>
                                 </Tooltip>
                               )}
@@ -973,19 +981,28 @@ export default function AdminThongBaoPage() {
             onClose={() => setDialogOpen(false)}
             maxWidth="sm"
             fullWidth
-            PaperProps={{
-              sx: { borderRadius: "24px", p: 1.5 },
+            slotProps={{
+              paper: {
+                sx: { borderRadius: "24px", p: 1.5 },
+              },
             }}
           >
-            <DialogTitle sx={{ fontWeight: 850, color: COLORS.primary, fontSize: 20 }}>
-              {dialogMode === "add" ? "Tạo thông báo mới" : "Chỉnh sửa thông báo"}
+            <DialogTitle
+              sx={{ fontWeight: 850, color: COLORS.primary, fontSize: 20 }}
+            >
+              {dialogMode === "add"
+                ? "Tạo thông báo mới"
+                : "Chỉnh sửa thông báo"}
             </DialogTitle>
             <DialogContent sx={{ px: 3, py: 1 }}>
               <Stack spacing={2.5} sx={{ mt: 1.5 }}>
                 {/* Tiêu đề */}
                 <Stack spacing={0.75}>
-                  <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
-                    Tiêu đề thông báo <span style={{ color: "#EF4444" }}>*</span>
+                  <Typography
+                    sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}
+                  >
+                    Tiêu đề thông báo{" "}
+                    <span style={{ color: "#EF4444" }}>*</span>
                   </Typography>
                   <TextField
                     fullWidth
@@ -999,16 +1016,21 @@ export default function AdminThongBaoPage() {
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "14px",
                         "&:hover fieldset": { borderColor: COLORS.primary },
-                        "&.Mui-focused fieldset": { borderColor: COLORS.primary },
-                      }
+                        "&.Mui-focused fieldset": {
+                          borderColor: COLORS.primary,
+                        },
+                      },
                     }}
                   />
                 </Stack>
 
                 {/* Nội dung */}
                 <Stack spacing={0.75}>
-                  <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
-                    Nội dung thông báo <span style={{ color: "#EF4444" }}>*</span>
+                  <Typography
+                    sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}
+                  >
+                    Nội dung thông báo{" "}
+                    <span style={{ color: "#EF4444" }}>*</span>
                   </Typography>
                   <TextField
                     fullWidth
@@ -1028,8 +1050,10 @@ export default function AdminThongBaoPage() {
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "14px",
                         "&:hover fieldset": { borderColor: COLORS.primary },
-                        "&.Mui-focused fieldset": { borderColor: COLORS.primary },
-                      }
+                        "&.Mui-focused fieldset": {
+                          borderColor: COLORS.primary,
+                        },
+                      },
                     }}
                   />
                 </Stack>
@@ -1037,7 +1061,9 @@ export default function AdminThongBaoPage() {
                 {/* Phân loại & Type */}
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2.5}>
                   <Stack spacing={0.75} sx={{ flex: 1 }}>
-                    <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
+                    <Typography
+                      sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}
+                    >
                       Phân loại
                     </Typography>
                     <FormControl fullWidth>
@@ -1051,8 +1077,12 @@ export default function AdminThongBaoPage() {
                         }
                         sx={{
                           borderRadius: "14px",
-                          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: COLORS.primary },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: COLORS.primary },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: COLORS.primary,
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: COLORS.primary,
+                          },
                         }}
                       >
                         {Object.keys(loaiLabel).map((key) => (
@@ -1065,7 +1095,9 @@ export default function AdminThongBaoPage() {
                   </Stack>
 
                   <Stack spacing={0.75} sx={{ flex: 1 }}>
-                    <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
+                    <Typography
+                      sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}
+                    >
                       Loại thông báo (type)
                     </Typography>
                     <TextField
@@ -1079,8 +1111,10 @@ export default function AdminThongBaoPage() {
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "14px",
                           "&:hover fieldset": { borderColor: COLORS.primary },
-                          "&.Mui-focused fieldset": { borderColor: COLORS.primary },
-                        }
+                          "&.Mui-focused fieldset": {
+                            borderColor: COLORS.primary,
+                          },
+                        },
                       }}
                     />
                   </Stack>
@@ -1088,7 +1122,9 @@ export default function AdminThongBaoPage() {
 
                 {/* Đường dẫn */}
                 <Stack spacing={0.75}>
-                  <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
+                  <Typography
+                    sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}
+                  >
                     Đường dẫn liên kết (Link)
                   </Typography>
                   <TextField
@@ -1102,15 +1138,19 @@ export default function AdminThongBaoPage() {
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "14px",
                         "&:hover fieldset": { borderColor: COLORS.primary },
-                        "&.Mui-focused fieldset": { borderColor: COLORS.primary },
-                      }
+                        "&.Mui-focused fieldset": {
+                          borderColor: COLORS.primary,
+                        },
+                      },
                     }}
                   />
                 </Stack>
 
                 {/* Người nhận */}
                 <Stack spacing={0.75}>
-                  <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
+                  <Typography
+                    sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}
+                  >
                     ID người nhận (idNguoiDung)
                   </Typography>
                   <TextField
@@ -1127,8 +1167,10 @@ export default function AdminThongBaoPage() {
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "14px",
                         "&:hover fieldset": { borderColor: COLORS.primary },
-                        "&.Mui-focused fieldset": { borderColor: COLORS.primary },
-                      }
+                        "&.Mui-focused fieldset": {
+                          borderColor: COLORS.primary,
+                        },
+                      },
                     }}
                   />
                 </Stack>
@@ -1149,9 +1191,10 @@ export default function AdminThongBaoPage() {
                           "& .MuiSwitch-switchBase.Mui-checked": {
                             color: COLORS.primary,
                           },
-                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                            backgroundColor: COLORS.primary,
-                          },
+                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                            {
+                              backgroundColor: COLORS.primary,
+                            },
                         }}
                       />
                     }
@@ -1176,9 +1219,10 @@ export default function AdminThongBaoPage() {
                           "& .MuiSwitch-switchBase.Mui-checked": {
                             color: COLORS.primary,
                           },
-                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                            backgroundColor: COLORS.primary,
-                          },
+                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                            {
+                              backgroundColor: COLORS.primary,
+                            },
                         }}
                       />
                     }
@@ -1223,8 +1267,10 @@ export default function AdminThongBaoPage() {
             onClose={() => setDetailOpen(false)}
             maxWidth="xs"
             fullWidth
-            PaperProps={{
-              sx: { borderRadius: "24px", p: 1 },
+            slotProps={{
+              paper: {
+                sx: { borderRadius: "24px", p: 1 },
+              },
             }}
           >
             <DialogTitle sx={{ fontWeight: 800, color: COLORS.primary }}>
@@ -1233,7 +1279,10 @@ export default function AdminThongBaoPage() {
             <DialogContent>
               <Stack spacing={2} sx={{ mt: 1 }}>
                 <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
                     Tiêu đề:
                   </Typography>
                   <Typography sx={{ fontWeight: 700 }}>
@@ -1241,7 +1290,10 @@ export default function AdminThongBaoPage() {
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
                     Nội dung:
                   </Typography>
                   <Typography sx={{ whiteSpace: "pre-wrap" }}>
@@ -1249,18 +1301,25 @@ export default function AdminThongBaoPage() {
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
                     Loại:
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
                     {detailItem?.loaiThongBao
-                      ? loaiLabel[detailItem.loaiThongBao] || detailItem.loaiThongBao
+                      ? loaiLabel[detailItem.loaiThongBao] ||
+                        detailItem.loaiThongBao
                       : "—"}
                   </Typography>
                 </Box>
                 {detailItem?.link && (
                   <Box>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary" }}
+                    >
                       Link liên kết:
                     </Typography>
                     <Typography
@@ -1275,7 +1334,10 @@ export default function AdminThongBaoPage() {
                   </Box>
                 )}
                 <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
                     Thời gian tạo:
                   </Typography>
                   <Typography>{formatDate(detailItem?.thoiGianTao)}</Typography>

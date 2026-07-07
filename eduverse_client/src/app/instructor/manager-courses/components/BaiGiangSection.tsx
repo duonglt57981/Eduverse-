@@ -403,7 +403,10 @@ export function BaiGiangSection({
               component="div"
               direction="row"
               spacing={1}
-              alignItems="center"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+              }}
             >
               <Typography sx={{ fontSize: 11, color: TEXT_GRAY }}>
                 Video
@@ -487,7 +490,7 @@ export function BaiGiangSection({
             component="div"
             direction="row"
             spacing={0.5}
-            alignItems="center"
+            sx={{ alignItems: "center" }}
           >
             <Tooltip
               title={resolveVideoUrl(bg) ? "Xem video" : "Chưa có video"}
@@ -547,8 +550,7 @@ export function BaiGiangSection({
           component="div"
           direction="row"
           spacing={1}
-          alignItems="center"
-          sx={{ py: 1 }}
+          sx={{ alignItems: "center", py: 1 }}
         >
           <CircularProgress size={14} sx={{ color: alpha(R, 0.5) }} />
           <Typography sx={{ fontSize: 11.5, color: TEXT_GRAY }}>
@@ -682,9 +684,11 @@ export function BaiGiangSection({
             <Box>
               <Stack
                 direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mb: 1 }}
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 1,
+                }}
               >
                 <Typography
                   sx={{ fontSize: 13, fontWeight: 600, color: TEXT_DARK }}

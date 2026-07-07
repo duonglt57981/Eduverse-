@@ -57,7 +57,7 @@ export function BulkActionBar({
         },
       }}
     >
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Box
           sx={{
             width: 22,
@@ -79,7 +79,7 @@ export function BulkActionBar({
         </Typography>
       </Stack>
 
-      <Stack direction="row" spacing={0.75} alignItems="center">
+      <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
         {loading && <CircularProgress size={15} sx={{ color: "#fff" }} />}
         <Button
           size="small"
