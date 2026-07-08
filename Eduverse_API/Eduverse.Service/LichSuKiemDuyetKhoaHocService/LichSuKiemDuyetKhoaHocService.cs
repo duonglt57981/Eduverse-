@@ -252,7 +252,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             // 6. Lấy danh sách bài giảng thuộc các phần học
             var baiGiangs = await _baiGiangRepository.GetQueryable()
                 .AsNoTracking()
-                .Where(x =>phanIds.Contains(x.IdPhan) && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet") && x.TrangThaiPheDuyet != "DaDuyet") 
+                .Where(x =>phanIds.Contains(x.IdPhan) && x.IdBanGhiTruoc == null)  
                 .ToListAsync();
 
             // 7. Cập nhật trạng thái cho từng bài giảng thành "Đang duyệt"

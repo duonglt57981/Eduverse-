@@ -17,6 +17,9 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public double? GiaGoc { get; set; }
         public string? CapDo { get; set; }
         public string? UrlHinhAnh { get; set; }
-        
+        public bool IsBanHienTai { get; set; }
+
+        public List<Guid> DanhSachDanhMuc { get; set; }
+
     }
 }

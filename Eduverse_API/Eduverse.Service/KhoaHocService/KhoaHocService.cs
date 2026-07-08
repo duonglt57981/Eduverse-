@@ -2326,26 +2326,28 @@ namespace Eduverse.Service.KhoaHocService
                 out var nguoiTao);
 
             var khoaHoc = await GetQueryable()
-                .Where(x => x.Id == idKhoaHoc
-                         && x.IsBanHienTai
-                         && !x.IsDeleted
-                         && x.TrangThaiPheDuyet == "DaDuyet"
-                         && x.TrangThai == "HoatDong"
-                         && x.CreatedId == nguoiTao)
+                .Where(x => x.Id == idKhoaHoc && x.CreatedId == nguoiTao)
                 .Select(x => new GetToUpdateKhoaHoc
                 {
                     Id = x.Id,
                     TieuDe = x.TieuDe,
                     MoTa = x.MoTa,
                     Gia = x.Gia,
-                    GiaGoc = x.GiaGoc,
+                    GiaGoc = x.GiaGoc,  
                     CapDo = x.CapDo,
-                    UrlHinhAnh = x.HinhAnhKhoaHoc
+                    UrlHinhAnh = x.HinhAnhKhoaHoc,
+                    IsBanHienTai = x.IsBanHienTai
                 })
                 .FirstOrDefaultAsync();
 
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học hoặc bạn không có quyền.");
+
+            khoaHoc.DanhSachDanhMuc = await _danhMuc_KhoaHocRepository
+                .GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc)
+                .Select(x => x.IdDanhMuc)
+                .ToListAsync();
 
             return khoaHoc;
         }
@@ -2407,11 +2409,8 @@ namespace Eduverse.Service.KhoaHocService
             if (request.Gia < 0)
                 throw new Exception("Giá không hợp lệ");
 
-            if (request.GiaGoc < request.Gia)
-                throw new Exception("Giá gốc phải lớn hơn hoặc bằng giá");
-
-            if (request.Img == null)
-                throw new Exception("Vui lòng chọn ảnh cho khóa học");
+            if (request.Gia > 100000000)
+                throw new Exception("Giá không hợp lệ");
 
             var danhMucIds = request.DanhSachDanhMuc.Distinct().ToList();
 
@@ -2426,26 +2425,21 @@ namespace Eduverse.Service.KhoaHocService
             if (invalidIds.Any())
                 throw new Exception($"Danh mục không tồn tại: {string.Join(",", invalidIds)}");
 
-            var upLoadResult = await _cloudinaryService.UploadImageAsync(request.Img);
+            //var upLoadResult = await _cloudinaryService.UploadImageAsync(request.Img);
 
             var isFree = request.Gia <= 0;
-
-            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
-            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.MoTa);
-            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.CapDo);
 
             var khoaHoc = new KhoaHoc
             {
                 IsBanHienTai = true,
                 TieuDe = request.TieuDe.Trim(),
-                MoTa = request.MoTa.Trim(),
+                MoTa = request.MoTa,
                 GiaGoc = request.GiaGoc,
                 Gia = request.Gia,
                 CapDo = request.CapDo,
                 LoaiKhoaHoc = isFree ? "Khóa học miễn phí" : "Khóa học trả phí",
-                HinhAnhKhoaHoc = upLoadResult.UrlImg.Trim(),
-                IdHinhAnhKhoaHoc = upLoadResult.PublicId,
-                CreatedDate = DateTime.UtcNow,
+                //HinhAnhKhoaHoc = upLoadResult.UrlImg.Trim(),
+                //IdHinhAnhKhoaHoc = upLoadResult.PublicId,
                 TrangThai = "DangSua",
                 TrangThaiPheDuyet = "DangSua",
 
@@ -2498,6 +2492,12 @@ namespace Eduverse.Service.KhoaHocService
             if (banGoc.CreatedId != nguoiTao)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
 
+            if (banGoc.HinhAnhKhoaHoc == null && request.Img == null)
+                throw new Exception("Vui lòng chọn ảnh cho khóa học");
+
+            if (banGoc.MoTa == null)
+                throw new Exception("Vui lòng chọn ảnh cho khóa học");
+
             // ── Validation ───────────────────────────────────────
             if (string.IsNullOrWhiteSpace(request.TieuDe))
                 throw new Exception("Tên khóa học không được để trống");
@@ -2532,12 +2532,25 @@ namespace Eduverse.Service.KhoaHocService
 
             if (request.Img != null)
             {
-                var upload = await _cloudinaryService.UpdateImageAsync(banGoc.IdHinhAnhKhoaHoc, request.Img);
-                if (upload == null)
-                    throw new Exception("Upload hình ảnh thất bại");
+                if(banGoc.HinhAnhKhoaHoc == null)
+                {
+                    var upload = await _cloudinaryService.UploadImageAsync(request.Img);
+                    if (upload == null)
+                        throw new Exception("Upload hình ảnh thất bại");
 
-                hinhAnh = upload.UrlImg;
-                idHinhAnh = upload.PublicId;
+                    hinhAnh = upload.UrlImg;
+                    idHinhAnh = upload.PublicId;
+                }
+
+                if(banGoc.HinhAnhKhoaHoc != null)
+                {
+                    var upload = await _cloudinaryService.UpdateImageAsync(banGoc.IdHinhAnhKhoaHoc, request.Img);
+                    if (upload == null)
+                        throw new Exception("Upload hình ảnh thất bại");
+
+                    hinhAnh = upload.UrlImg;
+                    idHinhAnh = upload.PublicId;
+                }
             }
 
             var isFree = request.Gia <= 0;
