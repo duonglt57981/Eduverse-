@@ -1,7 +1,6 @@
 export interface CreateKhoaHocRequest {
   tieuDe?: string;
   moTa?: string;
-  gia?: number;
   giaGoc?: number;
   capDo?: string;
   img?: File;
@@ -17,4 +16,5 @@ export interface UpdateKhoaHocRequest {
   capDo?: string;
   img?: File;
   danhSachDanhMuc?: string[];
+  isBanHienTai: boolean;
 }

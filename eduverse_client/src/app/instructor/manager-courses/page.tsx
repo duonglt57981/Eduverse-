@@ -1,727 +1,467 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/static-components */
-// src/app/instructor/manager-courses/page.tsx
 "use client";
-import AuthGuard from "@/src/components/AuthGuard";
-import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Box,
   Typography,
-  Grid,
-  Paper,
-  Stack,
-  IconButton,
+  Tabs,
+  Tab,
   TextField,
-  Tooltip,
-  Skeleton,
-  Menu,
-  MenuItem,
   InputAdornment,
+  Select,
+  MenuItem,
+  Button,
+  Chip,
+  CircularProgress,
+  Pagination,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-
-import AddIcon from "@mui/icons-material/Add";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
-import ClearIcon from "@mui/icons-material/Clear";
-import SchoolIcon from "@mui/icons-material/School";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-
+import AddIcon from "@mui/icons-material/Add";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import AuthGuard from "@/src/components/AuthGuard";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
-import {
-  R,
-  RedBtn,
-  PageWrap,
-  isDraftCourse,
-  isCurrentVersion,
-  canGuiDuyet,
-  canSuaTiep,
-  isPendingApproval,
-} from "./types/constants";
-import { useToast } from "./components/useToast";
-import { ConfirmDialog } from "./components/ConfirmDialog";
-import { CourseDialog } from "./components/CourseDialog";
-import { CourseDetailPanel } from "./components/CourseDetailPanel";
-import { CourseListItem } from "./components/CourseListItem";
-import { BulkActionBar } from "./components/BulkActionBar";
+import { KhoaHocType, KhoaHocSearch } from "@/src/types/khoaHoc/Dto/dto";
+import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
-const khoaHocSvc = new KhoaHocService();
+// ====== Định nghĩa kiểu PagedList ======
+interface PagedList<T> {
+  items: T[];
+  pageIndex?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPage?: number;
+}
 
-export default function TeacherCourseManager() {
-  const { show, ToastComponent } = useToast();
+// ====== Bảng màu thương hiệu EduVerse ======
+const MAU = {
+  chinh: "#8B1313",
+  chinhDam: "#5C0D0D",
+  chinhNhat: "#FBEFEF",
+  vien: "#F0DEDE",
+  chuDen: "#231313",
+  chuXam: "#8A7676",
+};
 
-  const [courses, setCourses] = useState<KhoaHocType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<KhoaHocType | null>(null);
-  const [search, setSearch] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editCourse, setEditCourse] = useState<KhoaHocType | null>(null);
-  const [confirmDel, setConfirmDel] = useState<KhoaHocType | null>(null);
-  const [delLoading, setDelLoading] = useState(false);
-  const [menuAnchor, setMenuAnchor] = useState<{
-    el: HTMLElement;
-    course: KhoaHocType;
-  } | null>(null);
-  const [expandedDrafts, setExpandedDrafts] = useState<Record<string, boolean>>(
-    {},
+// ====== Đường dẫn ======
+const duongDanChiTietKhoaHoc = (id: string) =>
+  `/instructor/manager-courses/${id}/manager/basics`;
+const duongDanTaoKhoaHocMoi = "/instructor/manager-courses/create/1";
+const SO_LUONG_MOI_TRANG = 20;
+
+// ====== Helper ======
+function thongTinTrangThaiPheDuyet(trangThai?: string): {
+  nhan: string;
+  mau: "default" | "warning" | "success" | "error";
+} {
+  switch (trangThai) {
+    case "ChoDuyet":
+      return { nhan: "Chờ duyệt", mau: "warning" };
+    case "DaDuyet":
+      return { nhan: "Đã duyệt", mau: "success" };
+    case "TuChoi":
+      return { nhan: "Từ chối", mau: "error" };
+    case "DangSua":
+      return { nhan: "Đang sửa", mau: "default" };
+    default:
+      return { nhan: trangThai ?? "Không rõ", mau: "default" };
+  }
+}
+
+// ====== Nội dung trang ======
+function KhoaHocContent() {
+  const router = useRouter();
+  const khoaHocService = useMemo(() => new KhoaHocService(), []);
+
+  const [tabDangChon, setTabDangChon] = useState<"khoa-hoc" | "goi-khoa-hoc">(
+    "khoa-hoc",
   );
+  const [tuKhoaTimKiem, setTuKhoaTimKiem] = useState("");
+  const [sapXep, setSapXep] = useState("moi-nhat");
+  const [trangHienTai, setTrangHienTai] = useState(1);
+  const [dangTai, setDangTai] = useState(true);
+  const [loi, setLoi] = useState<string | null>(null);
+  const [danhSachKhoaHoc, setDanhSachKhoaHoc] = useState<KhoaHocType[]>([]);
+  const [tongSoTrang, setTongSoTrang] = useState(1);
 
-  // Tích chọn hàng loạt
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkLoading, setBulkLoading] = useState(false);
+  // Hàm lấy danh sách
+  const layDanhSachKhoaHoc = useCallback(
+    async (signal?: AbortSignal) => {
+      setDangTai(true);
+      setLoi(null);
+      try {
+        const searchParams: KhoaHocSearch = {
+          timKiem: tuKhoaTimKiem || undefined,
+          sapXep,
+          pageNumber: trangHienTai,
+          pageSize: SO_LUONG_MOI_TRANG,
+        };
 
-  const loadingRef = useRef(false);
-  const hasLoadedRef = useRef(false);
-  const initialExpandedSetRef = useRef(false);
+        // Gọi API và nhận về ApiResponse<PagedList<KhoaHocType>>
+        const response = await khoaHocService.GetListForManager(searchParams);
 
-  const loadCourses = useCallback(async () => {
-    if (loadingRef.current) return;
-    loadingRef.current = true;
-    setLoading(true);
-    try {
-      const res = await khoaHocSvc.GetListForManager({
-        pageIndex: 1,
-        pageSize: 50,
-      });
-      const items = (res as { items?: KhoaHocType[] }).items ?? [];
-      setCourses(items);
+        if (signal?.aborted) return;
 
-      // Tự động mở rộng bản nháp lần đầu
-      if (!initialExpandedSetRef.current && items.length > 0) {
-        const newExpanded: Record<string, boolean> = {};
-        items.forEach((c: KhoaHocType) => {
-          if (isDraftCourse(c) && c.idBanGhiTruoc) {
-            newExpanded[c.idBanGhiTruoc] = true;
-          }
-        });
-        setExpandedDrafts(newExpanded);
-        initialExpandedSetRef.current = true;
-      }
-
-      if (items.length > 0) {
-        setSelected((prev) => {
-          if (!prev) return items[0];
-          const fresh = items.find((c) => c.id === prev.id);
-          return fresh ?? items[0];
-        });
-      } else {
-        setSelected(null);
-      }
-    } catch {
-      show("Không thể tải danh sách khóa học", "error");
-    } finally {
-      setLoading(false);
-      loadingRef.current = false;
-    }
-  }, [show]);
-
-  useEffect(() => {
-    if (!hasLoadedRef.current) {
-      hasLoadedRef.current = true;
-      loadCourses();
-    }
-  }, [loadCourses]);
-
-  const updateCourseInList = useCallback((updatedCourse: KhoaHocType) => {
-    setCourses((prev) =>
-      prev.map((c) => (c.id === updatedCourse.id ? updatedCourse : c)),
-    );
-    setSelected((prev) =>
-      prev?.id === updatedCourse.id ? updatedCourse : prev,
-    );
-  }, []);
-
-  const filtered = useMemo(
-    () =>
-      courses.filter(
-        (c) =>
-          !search ||
-          (c.tieuDe ?? "").toLowerCase().includes(search.toLowerCase()),
-      ),
-    [courses, search],
-  );
-
-  const { mainRows, draftsByParentId } = useMemo(() => {
-    const drafts: Record<string, KhoaHocType[]> = {};
-    const mains: KhoaHocType[] = [];
-
-    for (const c of filtered) {
-      if (isDraftCourse(c)) {
-        const parentId = c.idBanGhiTruoc as string;
-        if (parentId) {
-          if (!drafts[parentId]) drafts[parentId] = [];
-          drafts[parentId].push(c);
-        } else {
-          mains.push(c);
+        // Kiểm tra response
+        if (!response || response.status === false || !response.data) {
+          setLoi(response?.message || "Không có dữ liệu khóa học.");
+          setDanhSachKhoaHoc([]);
+          setTongSoTrang(1);
+          return;
         }
-      } else {
-        mains.push(c);
+
+        // Lấy data (PagedList)
+        const data: PagedList<KhoaHocType> = response.data;
+        setDanhSachKhoaHoc(data.items || []);
+        setTongSoTrang(Math.max(1, data.totalPage ?? 1));
+      } catch (err) {
+        if (signal?.aborted) return;
+        console.error("❌ Lỗi fetch:", err);
+        setLoi("Có lỗi xảy ra khi tải danh sách khóa học.");
+        setDanhSachKhoaHoc([]);
+      } finally {
+        if (!signal?.aborted) setDangTai(false);
       }
-    }
-    return { mainRows: mains, draftsByParentId: drafts };
-  }, [filtered]);
-
-  const handleDelete = async () => {
-    if (!confirmDel) return;
-    if (isPendingApproval(confirmDel.trangThaiPheDuyet)) {
-      show(
-        "Không thể xoá khóa học khi đang ở trạng thái Chờ duyệt / Đang duyệt",
-        "error",
-      );
-      setConfirmDel(null);
-      return;
-    }
-    setDelLoading(true);
-    try {
-      await khoaHocSvc.DeleteKhoaHoc(confirmDel.id!);
-      show("Đã xoá khóa học");
-      setConfirmDel(null);
-      if (selected?.id === confirmDel.id) setSelected(null);
-      loadCourses();
-    } catch {
-      show("Lỗi khi xoá khóa học", "error");
-    } finally {
-      setDelLoading(false);
-    }
-  };
-
-  const handleEdit = (course: KhoaHocType) => {
-    setEditCourse(course);
-    setDialogOpen(true);
-    setMenuAnchor(null);
-  };
-
-  const toggleDraftRow = (parentId: string) => {
-    setExpandedDrafts((prev) => ({
-      ...prev,
-      [parentId]: !prev[parentId],
-    }));
-  };
-
-  // ─── Tích chọn hàng loạt ────────────────────────────────────────
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const clearSelection = () => setSelectedIds(new Set());
-
-  const selectedCourses = useMemo(
-    () => courses.filter((c) => c.id && selectedIds.has(c.id)),
-    [courses, selectedIds],
-  );
-  const approvableSelected = selectedCourses.filter((c) =>
-    canGuiDuyet(c.trangThaiPheDuyet),
-  );
-  const editableSelected = selectedCourses.filter((c) =>
-    canSuaTiep(c.trangThaiPheDuyet),
+    },
+    [tuKhoaTimKiem, sapXep, trangHienTai, khoaHocService],
   );
 
-  const runBulkStatusChange = async (
-    targets: KhoaHocType[],
-    apiCall: (id: string) => Promise<any>,
-    successMsg: string,
-  ) => {
-    if (targets.length === 0 || bulkLoading) return;
-    setBulkLoading(true);
-    try {
-      const results = await Promise.allSettled(
-        targets.map((c) => apiCall(c.id!)),
-      );
-      const failed = results.filter((r) => r.status === "rejected").length;
-      const ok = results.length - failed;
-      if (ok > 0) show(`${successMsg} (${ok} bản ghi)`);
-      if (failed > 0) show(`${failed} bản ghi thao tác thất bại`, "error");
-      clearSelection();
-      await loadCourses();
-    } finally {
-      setBulkLoading(false);
-    }
-  };
+  // Gọi fetch khi các dependency thay đổi
+  useEffect(() => {
+    const abortController = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Cần gọi async để fetch dữ liệu, không thể tránh setState trong effect này
+    layDanhSachKhoaHoc(abortController.signal);
+    return () => abortController.abort();
+  }, [layDanhSachKhoaHoc]);
 
-  const handleBulkGuiDuyet = async () => {
-    if (approvableSelected.length === 0 || bulkLoading) return;
-    setBulkLoading(true);
-    try {
-      const ids = approvableSelected.map((c) => c.id!);
-      const result = await khoaHocSvc.ChuyenTTChoDuyetBatch(ids);
-      const data = result.data ?? [];
-      const successCount = data.length;
-      const failed = ids.length - successCount;
-      if (successCount > 0) show(`Đã gửi phê duyệt (${successCount} khóa học)`);
-      if (failed > 0) show(`${failed} khóa học thao tác thất bại`, "error");
-      clearSelection();
-      await loadCourses();
-    } catch (error: any) {
-      const msg =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Lỗi gửi phê duyệt hàng loạt";
-      show(msg, "error");
-    } finally {
-      setBulkLoading(false);
-    }
+  const xuLyBamKhoaHoc = (id?: string) => {
+    if (!id) return;
+    router.push(duongDanChiTietKhoaHoc(id));
   };
-
-  const handleBulkSuaTiep = async () => {
-    if (editableSelected.length === 0 || bulkLoading) return;
-    setBulkLoading(true);
-    try {
-      const ids = editableSelected.map((c) => c.id!);
-      const result = await khoaHocSvc.ChuyenTTDangSuaBatch(ids);
-      const data = result.data ?? [];
-      const successCount = data.length;
-      const failed = ids.length - successCount;
-      if (successCount > 0)
-        show(`Đã chuyển về Đang sửa (${successCount} khóa học)`);
-      if (failed > 0) show(`${failed} khóa học thao tác thất bại`, "error");
-      clearSelection();
-      await loadCourses();
-    } catch (error: any) {
-      const msg =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Lỗi sửa tiếp hàng loạt";
-      show(msg, "error");
-    } finally {
-      setBulkLoading(false);
-    }
-  };
-
-  const stats = useMemo(
-    () => ({
-      total: courses.length,
-      active: courses.filter((c) => c.trangThai === "HoatDong").length,
-      pending: courses.filter(
-        (c) =>
-          c.trangThaiPheDuyet === "ChoDuyet" ||
-          c.trangThaiPheDuyet === "DangDuyet",
-      ).length,
-      draft: courses.filter((c) => c.trangThaiPheDuyet === "DangSua").length,
-      current: courses.filter((c) => isCurrentVersion(c)).length,
-      draftVersions: courses.filter((c) => isDraftCourse(c)).length,
-    }),
-    [courses],
-  );
 
   return (
-    <AuthGuard allowedRoles={["GiaoVien", "Admin"]}>
-      <DashboardShell>
-        <PageWrap>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 3,
-              flexWrap: "wrap",
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography sx={{ fontWeight: 900, fontSize: 22, color: R }}>
-                Quản lý khóa học
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "#999", mt: 0.25 }}>
-                Tạo và quản lý nội dung giảng dạy của bạn
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1.5}>
-              <Tooltip title="Tải lại">
-                <IconButton
-                  onClick={loadCourses}
-                  sx={{
-                    border: "1.5px solid rgba(141, 19, 19, 0.15)",
-                    borderRadius: 3,
-                    bgcolor: "#fff",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      bgcolor: "rgba(141, 19, 19, 0.04)",
-                      borderColor: R,
-                    },
-                  }}
-                >
-                  <RefreshIcon sx={{ color: R, fontSize: 20 }} />
-                </IconButton>
-              </Tooltip>
-              <RedBtn
-                startIcon={<AddIcon />}
-                onClick={() => {
-                  setEditCourse(null);
-                  setDialogOpen(true);
-                }}
-              >
-                Tạo khóa học
-              </RedBtn>
-            </Stack>
-          </Box>
+    <Box>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: { xs: "flex-start", sm: "center" },
+          justifyContent: "space-between",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography sx={{ fontWeight: 800, fontSize: 28, color: MAU.chuDen }}>
+            Các khóa học
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: MAU.chuXam, mt: 0.5 }}>
+            Quản lý và theo dõi toàn bộ khóa học bạn đang giảng dạy
+          </Typography>
+        </Box>
 
-          {/* Thống kê */}
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            {[
-              {
-                label: "Tổng khóa học",
-                val: stats.total,
-                color: R,
-                bg: alpha(R, 0.08),
-              },
-              {
-                label: "Đang hoạt động",
-                val: stats.active,
-                color: "#2e7d32",
-                bg: "#e8f5e9",
-              },
-              {
-                label: "Chờ / đang duyệt",
-                val: stats.pending,
-                color: "#e65100",
-                bg: "#fff3e0",
-              },
-              {
-                label: "Đang chỉnh sửa",
-                val: stats.draft,
-                color: "#37474f",
-                bg: "#eceff1",
-              },
-              {
-                label: "Bản chính",
-                val: stats.current,
-                color: "#1565c0",
-                bg: "#e3f2fd",
-              },
-              {
-                label: "Bản nháp",
-                val: stats.draftVersions,
-                color: "#e65100",
-                bg: "#fff3e0",
-              },
-            ].map((s) => (
-              <Grid key={s.label} size={{ xs: 6, sm: 4, md: 2 }}>
-                <Paper
-                  sx={{
-                    p: 2.25,
-                    borderRadius: "8px",
-                    border: "1px solid rgba(141, 19, 19, 0.08)",
-                    borderLeft: `4px solid ${s.color}`,
-                    boxShadow: "0 2px 8px rgba(141, 19, 19, 0.01)",
-                    bgcolor: "#fff",
-                    transition: "all 0.2s ease-in-out",
-                    "&:hover": {
-                      transform: "translateY(-1px)",
-                      boxShadow: "0 4px 12px rgba(141, 19, 19, 0.03)",
-                      borderColor: alpha(s.color, 0.3),
-                    },
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: 24,
-                      fontWeight: 900,
-                      color: s.color,
-                      lineHeight: 1.1,
-                    }}
-                  >
-                    {s.val}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 11,
-                      color: "#777",
-                      mt: 0.5,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {s.label}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => router.push(duongDanTaoKhoaHocMoi)}
+          sx={{
+            bgcolor: MAU.chinh,
+            textTransform: "none",
+            fontWeight: 700,
+            px: 3,
+            py: 1,
+            borderRadius: "12px",
+            boxShadow: "0 6px 16px rgba(139,19,19,0.25)",
+            "&:hover": {
+              bgcolor: MAU.chinhDam,
+              boxShadow: "0 8px 20px rgba(139,19,19,0.32)",
+            },
+          }}
+        >
+          Khóa học mới
+        </Button>
+      </Box>
 
-          {/* Danh sách và chi tiết khóa học */}
-          <Grid container spacing={3}>
-            {/* Danh sách khóa học */}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Paper
+      {/* Tabs */}
+      <Tabs
+        value={tabDangChon}
+        onChange={(_, gt) => setTabDangChon(gt)}
+        sx={{
+          borderBottom: `1px solid ${MAU.vien}`,
+          mb: 3,
+          minHeight: 40,
+          "& .MuiTab-root": {
+            textTransform: "none",
+            fontWeight: 600,
+            fontSize: 14,
+            minHeight: 40,
+            color: MAU.chuXam,
+          },
+          "& .Mui-selected": { color: `${MAU.chinh} !important` },
+          "& .MuiTabs-indicator": {
+            bgcolor: MAU.chinh,
+            height: 3,
+            borderRadius: "3px 3px 0 0",
+          },
+        }}
+      >
+        <Tab label="Các khóa học" value="khoa-hoc" />
+      </Tabs>
+
+      {/* Toolbar */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 1.5,
+          mb: 3,
+        }}
+      >
+        <TextField
+          size="small"
+          placeholder="Tìm kiếm khóa học của bạn"
+          value={tuKhoaTimKiem}
+          onChange={(e) => {
+            setTrangHienTai(1);
+            setTuKhoaTimKiem(e.target.value);
+          }}
+          sx={{
+            width: 300,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "12px",
+              bgcolor: MAU.chinhNhat,
+              "& fieldset": { borderColor: "transparent" },
+              "&:hover fieldset": { borderColor: MAU.vien },
+              "&.Mui-focused fieldset": { borderColor: MAU.chinh },
+            },
+          }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: MAU.chinh, fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+
+        <Select
+          size="small"
+          value={sapXep}
+          onChange={(e) => setSapXep(e.target.value)}
+          sx={{
+            minWidth: 170,
+            borderRadius: "12px",
+            color: MAU.chinh,
+            fontWeight: 600,
+            bgcolor: MAU.chinhNhat,
+            "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+          }}
+        >
+          <MenuItem value="moi-nhat">Mới nhất</MenuItem>
+          <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
+          <MenuItem value="ten-a-z">Tên A-Z</MenuItem>
+          <MenuItem value="hoc-vien-nhieu-nhat">Nhiều học viên nhất</MenuItem>
+        </Select>
+      </Box>
+
+      {/* Trạng thái tải / lỗi */}
+      {dangTai && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress sx={{ color: MAU.chinh }} />
+        </Box>
+      )}
+
+      {!dangTai && loi && (
+        <Box
+          sx={{
+            textAlign: "center",
+            py: 6,
+            borderRadius: "16px",
+            bgcolor: "#FDECEC",
+          }}
+        >
+          <Typography sx={{ color: "#c62828", fontWeight: 600 }}>
+            {loi}
+          </Typography>
+        </Box>
+      )}
+
+      {!dangTai && !loi && danhSachKhoaHoc.length === 0 && (
+        <Box
+          sx={{
+            textAlign: "center",
+            py: 8,
+            borderRadius: "16px",
+            border: `1px dashed ${MAU.vien}`,
+          }}
+        >
+          <SchoolOutlinedIcon
+            sx={{ fontSize: 40, color: MAU.chinh, opacity: 0.5, mb: 1 }}
+          />
+          <Typography sx={{ color: MAU.chuXam, fontWeight: 500 }}>
+            Bạn chưa có khóa học nào.
+          </Typography>
+        </Box>
+      )}
+
+      {/* Danh sách khóa học */}
+      {!dangTai && !loi && danhSachKhoaHoc.length > 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {danhSachKhoaHoc.map((khoaHoc) => {
+            const pheDuyet = thongTinTrangThaiPheDuyet(
+              khoaHoc.trangThaiPheDuyet,
+            );
+            return (
+              <Box
+                key={khoaHoc.id}
+                onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
                 sx={{
-                  borderRadius: "8px",
-                  border: "1px solid rgba(141, 19, 19, 0.08)",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 20px rgba(141, 19, 19, 0.01)",
-                  bgcolor: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2.5,
+                  border: `1px solid ${MAU.vien}`,
+                  borderRadius: "16px",
+                  p: 1.5,
+                  cursor: "pointer",
+                  transition: "all .18s ease",
+                  "&:hover": {
+                    boxShadow: "0 8px 22px rgba(139,19,19,0.10)",
+                    borderColor: MAU.chinh,
+                    transform: "translateY(-2px)",
+                  },
                 }}
               >
                 <Box
                   sx={{
-                    p: 2.5,
-                    borderBottom: "1px solid rgba(141, 19, 19, 0.06)",
-                    bgcolor: "#faf9f6",
+                    position: "relative",
+                    width: 128,
+                    height: 84,
+                    flexShrink: 0,
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    bgcolor: MAU.chinhNhat,
                   }}
                 >
-                  <BulkActionBar
-                    selectedCount={selectedIds.size}
-                    approvableCount={approvableSelected.length}
-                    editableCount={editableSelected.length}
-                    onApprove={handleBulkGuiDuyet}
-                    onContinueEdit={handleBulkSuaTiep}
-                    onClear={clearSelection}
-                    loading={bulkLoading}
-                    itemLabel="khóa học"
-                  />
-                  <TextField
-                    fullWidth
-                    placeholder="Tìm kiếm khóa học..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon
-                              sx={{
-                                color: "rgba(141, 19, 19, 0.6)",
-                                fontSize: 20,
-                              }}
-                            />
-                          </InputAdornment>
-                        ),
-                        endAdornment: search ? (
-                          <InputAdornment position="end">
-                            <IconButton
-                              size="small"
-                              onClick={() => setSearch("")}
-                            >
-                              <ClearIcon sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </InputAdornment>
-                        ) : null,
-                        sx: {
-                          height: 46,
-                          borderRadius: "8px",
-                          fontSize: 14.5,
-                          bgcolor: "#ffffff",
-                          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.02)",
-                          transition: "all 0.2s ease",
-                          "& fieldset": {
-                            borderColor: "rgba(141, 19, 19, 0.15)",
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "rgba(141, 19, 19, 0.35)",
-                          },
-                          "&.Mui-focused": {
-                            boxShadow: "0 0 0 3px rgba(141, 19, 19, 0.05)",
-                          },
-                          "&.Mui-focused fieldset": { borderColor: R },
-                        },
-                      },
-                    }}
-                  />
-                </Box>
-
-                <Box
-                  sx={{ maxHeight: "calc(100vh - 340px)", overflowY: "auto" }}
-                >
-                  {loading ? (
-                    Array.from({ length: 4 }).map((_, i) => (
-                      <Box
-                        key={i}
-                        sx={{ p: 2, borderBottom: "1px solid #faf0f0" }}
-                      >
-                        <Skeleton
-                          variant="rectangular"
-                          height={14}
-                          width="70%"
-                          sx={{ mb: 1, borderRadius: 1 }}
-                        />
-                        <Skeleton
-                          variant="rectangular"
-                          height={10}
-                          width="45%"
-                          sx={{ borderRadius: 1 }}
-                        />
-                      </Box>
-                    ))
-                  ) : mainRows.length === 0 ? (
-                    <Box sx={{ textAlign: "center", py: 6 }}>
-                      <SchoolIcon
-                        sx={{ fontSize: 40, color: alpha(R, 0.15), mb: 1 }}
-                      />
-                      <Typography sx={{ fontSize: 13, color: "#bbb" }}>
-                        Không tìm thấy khóa học
-                      </Typography>
-                    </Box>
+                  {khoaHoc.hinhAnhKhoaHoc ? (
+                    <Image
+                      src={khoaHoc.hinhAnhKhoaHoc}
+                      alt={khoaHoc.tieuDe ?? "Khóa học"}
+                      fill
+                      sizes="128px"
+                      style={{ objectFit: "cover" }}
+                      unoptimized // Nếu URL ảnh từ domain ngoài, cần unoptimized
+                    />
                   ) : (
-                    mainRows.map((c) => {
-                      const relatedDrafts = draftsByParentId[c.id!] ?? [];
-                      const hasDraftToggle = relatedDrafts.length > 0;
-                      const isExpanded = !!expandedDrafts[c.id!];
-                      return (
-                        <Box key={c.id}>
-                          <CourseListItem
-                            course={c}
-                            isDraft={isDraftCourse(c)}
-                            isSelected={selected?.id === c.id}
-                            onSelect={() => setSelected(c)}
-                            onOpenMenu={(e) =>
-                              setMenuAnchor({ el: e.currentTarget, course: c })
-                            }
-                            hasDraftToggle={hasDraftToggle}
-                            draftExpanded={isExpanded}
-                            onToggleDraft={() => toggleDraftRow(c.id!)}
-                            checked={selectedIds.has(c.id!)}
-                            onToggleCheck={() => toggleSelect(c.id!)}
-                          />
-                          {hasDraftToggle &&
-                            isExpanded &&
-                            relatedDrafts.map((d) => (
-                              <CourseListItem
-                                key={d.id}
-                                course={d}
-                                isDraft
-                                checked={selectedIds.has(d.id!)}
-                                onToggleCheck={() => toggleSelect(d.id!)}
-                                isNestedDraftRow
-                                isSelected={selected?.id === d.id}
-                                onSelect={() => setSelected(d)}
-                                onOpenMenu={(e) =>
-                                  setMenuAnchor({
-                                    el: e.currentTarget,
-                                    course: d,
-                                  })
-                                }
-                              />
-                            ))}
-                        </Box>
-                      );
-                    })
+                    <Box
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <ArticleOutlinedIcon
+                        sx={{ color: MAU.chinh, opacity: 0.4 }}
+                      />
+                    </Box>
                   )}
                 </Box>
-              </Paper>
-            </Grid>
 
-            {/* Chi tiết khóa học */}
-            <Grid size={{ xs: 12, md: 8 }}>
-              <Paper
-                sx={{
-                  borderRadius: "8px",
-                  border: "1px solid rgba(141, 19, 19, 0.08)",
-                  p: 3.5,
-                  boxShadow: "0 4px 20px rgba(141, 19, 19, 0.01)",
-                  minHeight: 450,
-                  bgcolor: "#fff",
-                }}
-              >
-                {!selected ? (
-                  <Box sx={{ textAlign: "center", py: 10 }}>
-                    <SchoolIcon
-                      sx={{ fontSize: 64, color: alpha(R, 0.1), mb: 2 }}
-                    />
-                    <Typography sx={{ color: "#bbb", fontSize: 14 }}>
-                      Chọn một khóa học để xem nội dung
-                    </Typography>
-                  </Box>
-                ) : (
-                  <CourseDetailPanel
-                    key={selected.id}
-                    course={selected}
-                    onRefresh={loadCourses}
-                    onEdit={() => {
-                      setEditCourse(selected);
-                      setDialogOpen(true);
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: 15.5,
+                      color: MAU.chuDen,
+                      mb: 0.75,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
-                    onCourseUpdate={updateCourseInList}
-                  />
-                )}
-              </Paper>
-            </Grid>
-          </Grid>
+                  >
+                    {khoaHoc.tieuDe ?? "Chưa đặt tên"}
+                  </Typography>
 
-          {/* Menu Context */}
-          <Menu
-            open={!!menuAnchor}
-            anchorEl={menuAnchor?.el}
-            onClose={() => setMenuAnchor(null)}
-          >
-            <Tooltip
-              title={
-                menuAnchor &&
-                isPendingApproval(menuAnchor.course.trangThaiPheDuyet)
-                  ? "Không thể chỉnh sửa khi khóa học đang Chờ duyệt / Đang duyệt"
-                  : ""
-              }
-            >
-              <span>
-                <MenuItem
-                  onClick={() => menuAnchor && handleEdit(menuAnchor.course)}
-                  disabled={
-                    !!menuAnchor &&
-                    isPendingApproval(menuAnchor.course.trangThaiPheDuyet)
-                  }
-                >
-                  <EditIcon sx={{ fontSize: 16, mr: 1 }} /> Chỉnh sửa thông tin
-                </MenuItem>
-              </span>
-            </Tooltip>
-            <Tooltip
-              title={
-                menuAnchor &&
-                isPendingApproval(menuAnchor.course.trangThaiPheDuyet)
-                  ? "Không thể xoá khi khóa học đang Chờ duyệt / Đang duyệt"
-                  : ""
-              }
-            >
-              <span>
-                <MenuItem
-                  sx={{ color: R }}
-                  onClick={() => {
-                    if (menuAnchor) {
-                      setConfirmDel(menuAnchor.course);
-                      setMenuAnchor(null);
-                    }
-                  }}
-                  disabled={
-                    !!menuAnchor &&
-                    isPendingApproval(menuAnchor.course.trangThaiPheDuyet)
-                  }
-                >
-                  <DeleteIcon sx={{ fontSize: 16, mr: 1 }} /> Xoá khóa học
-                </MenuItem>
-              </span>
-            </Tooltip>
-          </Menu>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Chip
+                      label={pheDuyet.nhan}
+                      color={pheDuyet.mau}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 11,
+                        borderRadius: "8px",
+                      }}
+                    />
+                    {khoaHoc.trangThai && (
+                      <Typography
+                        sx={{
+                          fontSize: 12,
+                          color: MAU.chuXam,
+                          fontWeight: 700,
+                          letterSpacing: 0.3,
+                        }}
+                      >
+                        {khoaHoc.trangThai.toUpperCase()}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
 
-          {/* Dialog tạo/sửa khóa học */}
-          <CourseDialog
-            open={dialogOpen}
-            onClose={() => {
-              setDialogOpen(false);
-              setEditCourse(null);
+      {/* Phân trang */}
+      {!dangTai && !loi && danhSachKhoaHoc.length > 0 && tongSoTrang > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <Pagination
+            count={tongSoTrang}
+            page={trangHienTai}
+            onChange={(_, trang) => setTrangHienTai(trang)}
+            shape="rounded"
+            sx={{
+              "& .MuiPaginationItem-root": {
+                color: MAU.chuDen,
+                fontWeight: 600,
+                borderRadius: "10px",
+              },
+              "& .Mui-selected": {
+                bgcolor: `${MAU.chinh} !important`,
+                color: "#fff",
+              },
             }}
-            onSaved={loadCourses}
-            editCourse={editCourse}
           />
+        </Box>
+      )}
+    </Box>
+  );
+}
 
-          {/* Dialog xác nhận xóa */}
-          <ConfirmDialog
-            open={!!confirmDel}
-            title="Xoá khóa học"
-            message={`Bạn chắc chắn muốn xoá "${confirmDel?.tieuDe}"? Hành động này không thể hoàn tác.`}
-            onConfirm={handleDelete}
-            onCancel={() => setConfirmDel(null)}
-            loading={delLoading}
-          />
-
-          {/* Toast notifications */}
-          {ToastComponent}
-        </PageWrap>
+// ====== Trang (bọc AuthGuard + DashboardShell) ======
+export default function InstructorCoursesPage() {
+  return (
+    <AuthGuard allowedRoles={["GiaoVien"]}>
+      <DashboardShell>
+        <Box
+          sx={{
+            p: { xs: 2, md: 4 },
+            borderRadius: "24px",
+            border: "1px solid rgba(139,19,19,0.06)",
+            bgcolor: "#ffffff",
+            boxShadow: "0 10px 30px rgba(139,19,19,0.05)",
+          }}
+        >
+          <KhoaHocContent />
+        </Box>
       </DashboardShell>
     </AuthGuard>
   );

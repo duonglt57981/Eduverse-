@@ -141,11 +141,9 @@ export default class KhoaHocService {
   }
 
   //Lấy thông tin khóa học để cập nhật
-  async GetToUpdateKhoaHoc(
-    idKhoaHoc: string,
-  ): Promise<ApiResponse<GetToUpdateKhoaHoc>> {
+  async GetToUpdateKhoaHoc(idKhoaHoc: string): Promise<GetToUpdateKhoaHoc> {
     try {
-      const response = await apiService.get<ApiResponse<GetToUpdateKhoaHoc>>(
+      const response = await apiService.get<GetToUpdateKhoaHoc>(
         `/KhoaHoc/khoahoc-get-toupdatekhoahoc/${idKhoaHoc}`,
       );
       return response.data;
@@ -209,11 +207,6 @@ export default class KhoaHocService {
       const response = await apiService.put<ApiResponse<KhoaHocType>>(
         "/KhoaHoc/khoahoc-put",
         request,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
       );
       return response.data;
     } catch (error) {
