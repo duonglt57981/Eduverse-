@@ -163,8 +163,6 @@ export default function RegisterPage() {
           const roles: string[] = result.payload.roles || [];
           if (roles.includes('Admin')) {
             router.push('/admin/dashboard');
-          } else if (roles.includes('GiaoVien')) {
-            router.push('/instructor/dashboard');
           } else {
             router.push('/student/dashboard');
           }

@@ -74,6 +74,18 @@ import {
   type CourseCardItem,
 } from "./dashboard-data";
 import { apiService } from "@/src/services/index";
+import {
+  Badge,
+  Popover,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import { useSignalR } from "@/src/hook/useSignalR";
+import { thongBaoService } from "@/src/services/ThongBaoService";
+import { ThongBao } from "@/src/types/thongbao";
+import Swal from "sweetalert2";
 
 // --- CRIMSON RED DESIGN PALETTE ---
 const COLORS = {
@@ -775,6 +787,86 @@ export default function DashboardShell({
   const roles = useSelector((s) => s.auth.roles) || [];
   const user = useSelector((s) => s.auth.user);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifications, setNotifications] = useState<ThongBao[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [notiAnchorEl, setNotiAnchorEl] = useState<HTMLButtonElement | null>(
+    null,
+  );
+  const [selectedNoti, setSelectedNoti] = useState<ThongBao | null>(null);
+  const openNotiPopover = Boolean(notiAnchorEl);
+
+  useEffect(() => {
+    if (user) {
+      thongBaoService.getMyNotifications().then((res) => {
+        console.log("Eduverse Notifications Response:", res);
+        if (res.status && res.data) {
+          setNotifications(res.data);
+        }
+      });
+      thongBaoService.getUnreadCount().then((res) => {
+        console.log("Eduverse Unread Count Response:", res);
+        if (res.status && typeof res.data === "number") {
+          setUnreadCount(res.data);
+        }
+      });
+    }
+  }, [user]);
+
+  useSignalR("ReceiveNotification", (newNoti: ThongBao) => {
+    setNotifications((prev) => {
+      if (prev.some((n) => n.id === newNoti.id)) return prev;
+      return [newNoti, ...prev].slice(0, 50);
+    });
+    setUnreadCount((prev) => prev + 1);
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener("mouseenter", Swal.stopTimer);
+        toast.addEventListener("mouseleave", Swal.resumeTimer);
+      },
+    });
+    Toast.fire({
+      icon: "info",
+      title: newNoti.tieuDe || "Thông báo mới",
+      text: newNoti.noiDung || newNoti.message || "",
+    });
+  });
+
+  const handleNotiClick = async (noti: ThongBao) => {
+    setNotiAnchorEl(null);
+    if (!noti.daDoc) {
+      try {
+        await thongBaoService.markAsRead(noti.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === noti.id ? { ...n, daDoc: true } : n)),
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error("Lỗi đánh dấu đã đọc:", err);
+      }
+    }
+
+    if (noti.link) {
+      router.push(noti.link);
+    } else {
+      setSelectedNoti(noti);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await thongBaoService.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, daDoc: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Lỗi đánh dấu tất cả đã đọc:", err);
+    }
+  };
   const [authChecked, setAuthChecked] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
@@ -822,7 +914,8 @@ export default function DashboardShell({
     };
     window.addEventListener("avatar_updated", handleAvatarUpdate);
     handleAvatarUpdate();
-    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
+    return () =>
+      window.removeEventListener("avatar_updated", handleAvatarUpdate);
   }, []);
 
   useEffect(() => {
@@ -836,7 +929,7 @@ export default function DashboardShell({
         } else {
           setError(response.message || "Không thể lấy dữ liệu Dashboard");
         }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         setError(
           typeof err === "string" ? err : "Đã xảy ra lỗi khi tải dữ liệu",
@@ -1001,213 +1094,190 @@ export default function DashboardShell({
         {/* 1. HEADER NAVIGATION (Fixed)                              */}
         {/* ========================================================= */}
         {pathname.startsWith("/admin") ? (
-        <Box
-          component="header"
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: headerHeight,
-            zIndex: 1200,
-            px: { xs: 2, md: 4 },
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
-            bgcolor: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ alignItems: "center", flexShrink: 0 }}
-          >
-            <IconButton
-              onClick={() => setMobileOpen(true)}
-              sx={{
-                display: { xs: "inline-flex", lg: "none" },
-                color: COLORS.primary,
-              }}
-            >
-              <MenuRounded />
-            </IconButton>
-
-            {/* Logo */}
-            <Box
-              onClick={() => {
-                router.push(getHomeRoute());
-              }}
-              sx={{
-                width: { xs: 110, sm: 130, lg: 150 },
-                display: "flex",
-                alignItems: "center",
-                cursor: "pointer",
-              }}
-            >
-              <Image
-                src="/auth/img/logo_nentrang.png"
-                alt="EduVerse"
-                width={150}
-                height={46}
-                priority
-                style={{ width: "100%", height: "auto" }}
-              />
-            </Box>
-          </Stack>
-
-          {/* Search bar (Center) */}
-          <Paper
-            elevation={0}
+          <Box
+            component="header"
             sx={{
-              flex: 1,
-              maxWidth: 720,
-              mx: { md: 3, lg: 5 },
-              display: { xs: "none", md: "flex" },
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: headerHeight,
+              zIndex: 1200,
+              px: { xs: 2, md: 4 },
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
+              bgcolor: "#ffffff",
+              display: "flex",
               alignItems: "center",
-              gap: 1.5,
-              px: 2.5,
-              py: 0.85,
-              borderRadius: "50px",
-              bgcolor: COLORS.white,
-              border: "1px solid rgba(0,0,0,0.12)",
-              transition: "border-color 150ms ease, box-shadow 150ms ease",
-              "&:focus-within": {
-                borderColor: "rgba(0,0,0,0.3)",
-                boxShadow: "0 0 0 3px rgba(0,0,0,0.03)",
-              },
+              justifyContent: "space-between",
             }}
           >
-            <SearchRounded sx={{ color: "rgba(0,0,0,0.35)", fontSize: 18 }} />
-            <InputBase
-              placeholder={
-                pathname.startsWith("/admin")
-                  ? "Tìm kiếm báo cáo..."
-                  : pathname.startsWith("/instructor")
-                    ? "Tìm kiếm học viên, khóa học hoặc dữ liệu..."
-                    : "Tìm kiếm nội dung bất kỳ"
-              }
-              sx={{ flex: 1, fontSize: 13.5, fontWeight: 400 }}
-            />
-          </Paper>
-
-          {/* Actions & Avatar (Right) */}
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ alignItems: "center", flexShrink: 0 }}
-          >
-            {/* Search Toggle Mobile */}
-            <IconButton
-              sx={{
-                display: { xs: "flex", md: "none" },
-                color: "rgba(31,41,55,0.65)",
-              }}
-            >
-              <SearchRounded />
-            </IconButton>
-
-            {roles.includes("Admin") && (
-              <Stack
-                direction="row"
-                spacing={1.5}
-                sx={{
-                  display: { xs: "none", md: "flex" },
-                  alignItems: "center",
-                }}
-              >
-                <Button
-                  variant="outlined"
-                  startIcon={
-                    <CalendarMonthRounded
-                      sx={{ color: "rgba(31,41,55,0.6)" }}
-                    />
-                  }
-                  endIcon={
-                    <ChevronRightRounded
-                      sx={{
-                        transform: "rotate(90deg)",
-                        color: "rgba(31,41,55,0.6)",
-                      }}
-                    />
-                  }
-                  sx={{
-                    borderRadius: "10px",
-                    borderColor: "rgba(0,0,0,0.12)",
-                    color: "#1F2937",
-                    px: 2,
-                    py: 0.8,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    textTransform: "none",
-                    bgcolor: "#ffffff",
-                    "&:hover": {
-                      borderColor: "rgba(0,0,0,0.2)",
-                      bgcolor: "#F9FAFB",
-                    },
-                  }}
-                >
-                  01 Th11, 2023 - 30 Th11, 2023
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={
-                    <ArrowForwardRounded sx={{ transform: "rotate(90deg)" }} />
-                  }
-                  sx={{
-                    borderRadius: "10px",
-                    bgcolor: "#8D1313",
-                    color: "#ffffff",
-                    px: 2,
-                    py: 0.8,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    textTransform: "none",
-                    boxShadow: "none",
-                    "&:hover": {
-                      bgcolor: "#7F1D1D",
-                      boxShadow: "none",
-                    },
-                  }}
-                >
-                  Xuất báo cáo
-                </Button>
-              </Stack>
-            )}
-
-            {/* User Avatar + Role Badge */}
             <Stack
               direction="row"
-              sx={{ alignItems: "center", pl: 0.5, gap: 1.5 }}
+              spacing={2}
+              sx={{ alignItems: "center", flexShrink: 0 }}
             >
-              {roles.includes("GiaoVien") && (
-                <>
-                  {pathname.startsWith("/instructor") ? (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => router.push("/student/dashboard")}
-                      startIcon={<ChevronLeftRounded />}
-                      sx={{
-                        borderRadius: "10px",
-                        borderColor: "rgba(0,0,0,0.12)",
-                        color: "#1F2937",
-                        px: 1.5,
-                        py: 0.6,
-                        fontSize: 12.5,
-                        fontWeight: 600,
-                        textTransform: "none",
-                        display: { xs: "none", md: "flex" },
-                        "&:hover": {
-                          borderColor: COLORS.primary,
-                          bgcolor: "rgba(141,19,19,0.03)",
-                          color: COLORS.primary,
-                        },
-                      }}
-                    >
-                      Học viên
-                    </Button>
-                  ) : (
+              <IconButton
+                onClick={() => setMobileOpen(true)}
+                sx={{
+                  display: { xs: "inline-flex", lg: "none" },
+                  color: COLORS.primary,
+                }}
+              >
+                <MenuRounded />
+              </IconButton>
+
+              {/* Logo */}
+              <Box
+                onClick={() => {
+                  router.push(getHomeRoute());
+                }}
+                sx={{
+                  width: { xs: 110, sm: 130, lg: 150 },
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <Image
+                  src="/auth/img/logo_nentrang.png"
+                  alt="EduVerse"
+                  width={150}
+                  height={46}
+                  priority
+                  style={{ width: "100%", height: "auto" }}
+                />
+              </Box>
+            </Stack>
+
+            {/* Search bar (Center) */}
+            <Paper
+              elevation={0}
+              sx={{
+                flex: 1,
+                maxWidth: 720,
+                mx: { md: 3, lg: 5 },
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                gap: 1.5,
+                px: 2.5,
+                py: 0.85,
+                borderRadius: "50px",
+                bgcolor: COLORS.white,
+                border: "1px solid rgba(0,0,0,0.12)",
+                transition: "border-color 150ms ease, box-shadow 150ms ease",
+                "&:focus-within": {
+                  borderColor: "rgba(0,0,0,0.3)",
+                  boxShadow: "0 0 0 3px rgba(0,0,0,0.03)",
+                },
+              }}
+            >
+              <SearchRounded sx={{ color: "rgba(0,0,0,0.35)", fontSize: 18 }} />
+              <InputBase
+                placeholder={
+                  pathname.startsWith("/admin")
+                    ? "Tìm kiếm báo cáo..."
+                    : pathname.startsWith("/instructor")
+                      ? "Tìm kiếm học viên, khóa học hoặc dữ liệu..."
+                      : "Tìm kiếm nội dung bất kỳ"
+                }
+                sx={{ flex: 1, fontSize: 13.5, fontWeight: 400 }}
+              />
+            </Paper>
+
+            {/* Actions & Avatar (Right) */}
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ alignItems: "center", flexShrink: 0 }}
+            >
+              {/* Search Toggle Mobile */}
+              <IconButton
+                sx={{
+                  display: { xs: "flex", md: "none" },
+                  color: "rgba(31,41,55,0.65)",
+                }}
+              >
+                <SearchRounded />
+              </IconButton>
+
+              {roles.includes("Admin") && (
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  sx={{
+                    display: { xs: "none", md: "flex" },
+                    alignItems: "center",
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    startIcon={
+                      <CalendarMonthRounded
+                        sx={{ color: "rgba(31,41,55,0.6)" }}
+                      />
+                    }
+                    endIcon={
+                      <ChevronRightRounded
+                        sx={{
+                          transform: "rotate(90deg)",
+                          color: "rgba(31,41,55,0.6)",
+                        }}
+                      />
+                    }
+                    sx={{
+                      borderRadius: "10px",
+                      borderColor: "rgba(0,0,0,0.12)",
+                      color: "#1F2937",
+                      px: 2,
+                      py: 0.8,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      textTransform: "none",
+                      bgcolor: "#ffffff",
+                      "&:hover": {
+                        borderColor: "rgba(0,0,0,0.2)",
+                        bgcolor: "#F9FAFB",
+                      },
+                    }}
+                  >
+                    01 Th11, 2023 - 30 Th11, 2023
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={
+                      <ArrowForwardRounded
+                        sx={{ transform: "rotate(90deg)" }}
+                      />
+                    }
+                    sx={{
+                      borderRadius: "10px",
+                      bgcolor: "#8D1313",
+                      color: "#ffffff",
+                      px: 2,
+                      py: 0.8,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      textTransform: "none",
+                      boxShadow: "none",
+                      "&:hover": {
+                        bgcolor: "#7F1D1D",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    Xuất báo cáo
+                  </Button>
+                </Stack>
+              )}
+
+              {/* User Avatar + Role Badge */}
+              <Stack
+                direction="row"
+                sx={{ alignItems: "center", pl: 0.5, gap: 1.5 }}
+              >
+                {!pathname.startsWith("/instructor") &&
+                  !pathname.startsWith("/admin") &&
+                  roles.includes("GiaoVien") && (
                     <Button
                       variant="outlined"
                       size="small"
@@ -1230,362 +1300,400 @@ export default function DashboardShell({
                         },
                       }}
                     >
-                      Giảng viên
+                      Trang giảng viên
                     </Button>
                   )}
-                </>
-              )}
-              <IconButton
-                onClick={() => router.push("/student/favorites")}
-                sx={{
-                  color: "rgba(31,41,55,0.55)",
-                  display: { xs: "none", sm: "flex" },
-                }}
-              >
-                <FavoriteBorderRounded sx={{ fontSize: 22 }} />
-              </IconButton>
-              <IconButton
-                onClick={() => router.push("/student/cart")}
-                sx={{
-                  color: "rgba(31,41,55,0.55)",
-                  display: { xs: "none", sm: "flex" },
-                }}
-              >
-                <ShoppingCartRounded sx={{ fontSize: 22 }} />
-              </IconButton>
-              <IconButton
-                sx={{
-                  color: "rgba(31,41,55,0.55)",
-                  display: { xs: "none", sm: "flex" },
-                }}
-              >
-                <NotificationsNoneRounded sx={{ fontSize: 22 }} />
-              </IconButton>
-              {pathname.startsWith("/instructor") && (
+
+                {pathname.startsWith("/instructor") && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => router.push("/student/dashboard")}
+                    startIcon={<ChevronLeftRounded />}
+                    sx={{
+                      borderRadius: "10px",
+                      borderColor: "rgba(0,0,0,0.12)",
+                      color: "#1F2937",
+                      px: 1.5,
+                      py: 0.6,
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      textTransform: "none",
+                      display: { xs: "none", md: "flex" },
+                      "&:hover": {
+                        borderColor: COLORS.primary,
+                        bgcolor: "rgba(141,19,19,0.03)",
+                        color: COLORS.primary,
+                      },
+                    }}
+                  >
+                    Về trang học viên
+                  </Button>
+                )}
                 <IconButton
+                  onClick={() => router.push("/student/favorites")}
                   sx={{
                     color: "rgba(31,41,55,0.55)",
                     display: { xs: "none", sm: "flex" },
                   }}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
+                  <FavoriteBorderRounded sx={{ fontSize: 22 }} />
                 </IconButton>
-              )}
-
-              <Stack
-                sx={{
-                  display: { xs: "none", sm: "flex" },
-                  textAlign: "right",
-                  mr: 0.5,
-                }}
-              >
-                <Typography
+                <IconButton
+                  onClick={() => router.push("/student/cart")}
                   sx={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "#1F2937",
-                    lineHeight: 1.3,
+                    color: "rgba(31,41,55,0.55)",
+                    display: { xs: "none", sm: "flex" },
                   }}
                 >
-                  {pathname.startsWith("/admin")
-                    ? "Admin Panel"
-                    : pathname.startsWith("/instructor")
-                      ? `GS. ${dashboardData?.welcomeStats?.userName || "Giảng viên"}`
-                      : dashboardData?.welcomeStats?.userName || "Học viên"}
-                </Typography>
-                <Typography
+                  <ShoppingCartRounded sx={{ fontSize: 22 }} />
+                </IconButton>
+                <IconButton
+                  onClick={(e) => setNotiAnchorEl(e.currentTarget)}
                   sx={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: COLORS.primary,
-                    letterSpacing: "0.3px",
+                    color: "rgba(31,41,55,0.55)",
+                    display: { xs: "none", sm: "flex" },
                   }}
                 >
-                  {pathname.startsWith("/admin")
-                    ? "SUPER ADMINISTRATOR"
-                    : pathname.startsWith("/instructor")
-                      ? "Premium Instructor"
-                      : "Học viên"}
-                </Typography>
-              </Stack>
-              <Avatar
-                src={userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined}
-                onClick={handleAvatarClick}
-                sx={{
-                  width: 38,
-                  height: 38,
-                  fontSize: 13.5,
-                  fontWeight: 800,
-                  bgcolor: "#111827",
-                  color: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                {dashboardData?.welcomeStats?.userName
-                  ? dashboardData.welcomeStats.userName
-                      .split(" ")
-                      .pop()
-                      ?.substring(0, 2)
-                      .toUpperCase()
-                  : user?.hoTen
-                    ? user.hoTen.split(" ").pop()?.substring(0, 2).toUpperCase()
-                    : "HV"}
-              </Avatar>
-
-              <Menu
-                anchorEl={anchorEl}
-                open={openMenu}
-                onClose={handleMenuClose}
-                onClick={handleMenuClose}
-                slotProps={{
-                  paper: {
-                    elevation: 0,
-                    sx: {
-                      width: 290,
-                      overflow: "visible",
-                      filter: "drop-shadow(0px 4px 20px rgba(0,0,0,0.08))",
-                      mt: 1.5,
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      borderRadius: "12px",
-                      "& .MuiMenuItem-root": {
-                        px: 2.5,
-                        py: 1.1,
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color: "#1F2937",
-                        fontFamily: '"Be Vietnam Pro", sans-serif',
-                        "&:hover": {
-                          bgcolor: "rgba(141,19,19,0.04)",
-                          color: "#8D1313",
-                        },
-                      },
-                    },
-                  },
-                }}
-                transformOrigin={{ horizontal: "right", vertical: "top" }}
-                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              >
-                {/* Header User info */}
-                <Box
-                  sx={{
-                    px: 2.5,
-                    py: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                  }}
-                >
-                  <Avatar
-                    src={userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined}
+                  <Badge badgeContent={unreadCount} color="error">
+                    <NotificationsNoneRounded sx={{ fontSize: 22 }} />
+                  </Badge>
+                </IconButton>
+                {pathname.startsWith("/instructor") && (
+                  <IconButton
                     sx={{
-                      width: 44,
-                      height: 44,
-                      bgcolor: "#111827",
-                      fontWeight: 800,
+                      color: "rgba(31,41,55,0.55)",
+                      display: { xs: "none", sm: "flex" },
                     }}
                   >
-                    {dashboardData?.welcomeStats?.userName
-                      ? dashboardData.welcomeStats.userName
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </IconButton>
+                )}
+
+                <Stack
+                  sx={{
+                    display: { xs: "none", sm: "flex" },
+                    textAlign: "right",
+                    mr: 0.5,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: "#1F2937",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {pathname.startsWith("/admin")
+                      ? "Admin Panel"
+                      : pathname.startsWith("/instructor")
+                        ? `GS. ${dashboardData?.welcomeStats?.userName || "Giảng viên"}`
+                        : dashboardData?.welcomeStats?.userName || "Học viên"}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: COLORS.primary,
+                      letterSpacing: "0.3px",
+                    }}
+                  >
+                    {pathname.startsWith("/admin")
+                      ? "SUPER ADMINISTRATOR"
+                      : pathname.startsWith("/instructor")
+                        ? "Premium Instructor"
+                        : "Học viên"}
+                  </Typography>
+                </Stack>
+                <Avatar
+                  src={
+                    userAvatar ||
+                    dashboardData?.welcomeStats?.avatarUrl ||
+                    undefined
+                  }
+                  onClick={handleAvatarClick}
+                  sx={{
+                    width: 38,
+                    height: 38,
+                    fontSize: 13.5,
+                    fontWeight: 800,
+                    bgcolor: "#111827",
+                    color: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  {dashboardData?.welcomeStats?.userName
+                    ? dashboardData.welcomeStats.userName
+                        .split(" ")
+                        .pop()
+                        ?.substring(0, 2)
+                        .toUpperCase()
+                    : user?.hoTen
+                      ? user.hoTen
                           .split(" ")
                           .pop()
                           ?.substring(0, 2)
                           .toUpperCase()
-                      : user?.hoTen
-                        ? user.hoTen
+                      : "HV"}
+                </Avatar>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={openMenu}
+                  onClose={handleMenuClose}
+                  onClick={handleMenuClose}
+                  slotProps={{
+                    paper: {
+                      elevation: 0,
+                      sx: {
+                        width: 290,
+                        overflow: "visible",
+                        filter: "drop-shadow(0px 4px 20px rgba(0,0,0,0.08))",
+                        mt: 1.5,
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        borderRadius: "12px",
+                        "& .MuiMenuItem-root": {
+                          px: 2.5,
+                          py: 1.1,
+                          fontSize: 14,
+                          fontWeight: 500,
+                          color: "#1F2937",
+                          fontFamily: '"Be Vietnam Pro", sans-serif',
+                          "&:hover": {
+                            bgcolor: "rgba(141,19,19,0.04)",
+                            color: "#8D1313",
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  transformOrigin={{ horizontal: "right", vertical: "top" }}
+                  anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                >
+                  {/* Header User info */}
+                  <Box
+                    sx={{
+                      px: 2.5,
+                      py: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Avatar
+                      src={
+                        userAvatar ||
+                        dashboardData?.welcomeStats?.avatarUrl ||
+                        undefined
+                      }
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        bgcolor: "#111827",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {dashboardData?.welcomeStats?.userName
+                        ? dashboardData.welcomeStats.userName
                             .split(" ")
                             .pop()
                             ?.substring(0, 2)
                             .toUpperCase()
-                        : "HV"}
-                  </Avatar>
-                  <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography
-                      noWrap
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: 14.5,
-                        color: "#1F2937",
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {dashboardData?.welcomeStats?.userName ||
-                        user?.hoTen ||
-                        "Học viên"}
-                    </Typography>
-                    <Typography
-                      noWrap
-                      sx={{
-                        fontSize: 11.5,
-                        color: "text.secondary",
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {user?.email || "email@example.com"}
-                    </Typography>
+                        : user?.hoTen
+                          ? user.hoTen
+                              .split(" ")
+                              .pop()
+                              ?.substring(0, 2)
+                              .toUpperCase()
+                          : "HV"}
+                    </Avatar>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography
+                        noWrap
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 14.5,
+                          color: "#1F2937",
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {dashboardData?.welcomeStats?.userName ||
+                          user?.hoTen ||
+                          "Học viên"}
+                      </Typography>
+                      <Typography
+                        noWrap
+                        sx={{
+                          fontSize: 11.5,
+                          color: "text.secondary",
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {user?.email || "email@example.com"}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
 
-                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
-                {/* Section 1 */}
-                <MenuItem onClick={() => router.push("/student/dashboard")}>
-                  Học tập
-                </MenuItem>
-                <MenuItem
-                  onClick={() => router.push("/student/cart")}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    width: "100%",
-                  }}
-                >
-                  <Typography
-                    sx={{ fontSize: "inherit", fontWeight: "inherit" }}
-                  >
-                    Giỏ hàng của tôi
-                  </Typography>
-                  <Box
+                  {/* Section 1 */}
+                  <MenuItem onClick={() => router.push("/student/dashboard")}>
+                    Học tập
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => router.push("/student/cart")}
                     sx={{
-                      bgcolor: "#7C3AED",
-                      color: "#fff",
-                      borderRadius: "50%",
-                      width: 20,
-                      height: 20,
-                      display: "grid",
-                      placeItems: "center",
-                      fontSize: 11,
-                      fontWeight: 700,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
                     }}
                   >
-                    1
-                  </Box>
-                </MenuItem>
-                <MenuItem onClick={() => router.push("/student/favorites")}>
-                  Danh sách mong ước
-                </MenuItem>
-                {roles.includes("GiaoVien") && (
-                  <MenuItem
-                    onClick={() => router.push("/instructor/dashboard")}
-                  >
-                    Bảng điều khiển của giảng viên
-                  </MenuItem>
-                )}
-
-                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
-
-                {/* Section 2 */}
-                <MenuItem onClick={() => router.push("/student/dashboard")}>
-                  Thông báo.
-                </MenuItem>
-                <MenuItem onClick={() => router.push("/student/dashboard")}>
-                  Tin nhắn
-                </MenuItem>
-
-                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
-
-                {/* Section 3 */}
-                <MenuItem onClick={() => router.push("/settings")}>
-                  Cài đặt tài khoản
-                </MenuItem>
-                <MenuItem onClick={() => router.push("/student/dashboard")}>
-                  Phương thức thanh toán
-                </MenuItem>
-                <MenuItem onClick={() => router.push("/student/dashboard")}>
-                  Thuê bao
-                </MenuItem>
-                <MenuItem onClick={() => router.push("/student/dashboard")}>
-                  Ưu đãi Udemy
-                </MenuItem>
-                <MenuItem onClick={() => router.push("/student/dashboard")}>
-                  Lịch sử mua
-                </MenuItem>
-
-                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
-
-                {/* Section 4 */}
-                <MenuItem
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    width: "100%",
-                  }}
-                >
-                  <Typography
-                    sx={{ fontSize: "inherit", fontWeight: "inherit" }}
-                  >
-                    Ngôn ngữ
-                  </Typography>
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    sx={{ alignItems: "center", color: "text.secondary" }}
-                  >
-                    <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
-                      Tiếng Việt
+                    <Typography
+                      sx={{ fontSize: "inherit", fontWeight: "inherit" }}
+                    >
+                      Giỏ hàng của tôi
                     </Typography>
-                    <LanguageRounded sx={{ fontSize: 16 }} />
-                  </Stack>
-                </MenuItem>
+                    <Box
+                      sx={{
+                        bgcolor: "#7C3AED",
+                        color: "#fff",
+                        borderRadius: "50%",
+                        width: 20,
+                        height: 20,
+                        display: "grid",
+                        placeItems: "center",
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}
+                    >
+                      1
+                    </Box>
+                  </MenuItem>
+                  <MenuItem onClick={() => router.push("/student/favorites")}>
+                    Danh sách mong ước
+                  </MenuItem>
+                  {roles.includes("GiaoVien") && (
+                    <MenuItem
+                      onClick={() => router.push("/instructor/dashboard")}
+                    >
+                      Bảng điều khiển của giảng viên
+                    </MenuItem>
+                  )}
 
-                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
-                {/* Section 5 */}
-                <MenuItem onClick={() => router.push("/student/profile")}>
-                  Hồ sơ công khai
-                </MenuItem>
-                <MenuItem onClick={() => router.push("/student/profile")}>
-                  Chỉnh sửa hồ sơ
-                </MenuItem>
+                  {/* Section 2 */}
+                  <MenuItem onClick={() => router.push("/student/dashboard")}>
+                    Thông báo.
+                  </MenuItem>
+                  <MenuItem onClick={() => router.push("/student/dashboard")}>
+                    Tin nhắn
+                  </MenuItem>
 
-                <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
-                {/* Section 6 */}
-                <MenuItem onClick={() => router.push("/student/dashboard")}>
-                  Trợ giúp và Hỗ trợ
-                </MenuItem>
-                <MenuItem
-                  onClick={handleLogout}
-                  sx={{
-                    color: "#DC2626",
-                    "&:hover": {
-                      bgcolor: "rgba(220,38,38,0.04)",
-                      color: "#B91C1C",
-                    },
-                  }}
-                >
-                  Đăng xuất
-                </MenuItem>
-              </Menu>
+                  {/* Section 3 */}
+                  <MenuItem onClick={() => router.push("/settings")}>
+                    Cài đặt tài khoản
+                  </MenuItem>
+                  <MenuItem onClick={() => router.push("/student/dashboard")}>
+                    Phương thức thanh toán
+                  </MenuItem>
+                  <MenuItem onClick={() => router.push("/student/dashboard")}>
+                    Thuê bao
+                  </MenuItem>
+                  <MenuItem onClick={() => router.push("/student/dashboard")}>
+                    Ưu đãi Udemy
+                  </MenuItem>
+                  <MenuItem onClick={() => router.push("/student/dashboard")}>
+                    Lịch sử mua
+                  </MenuItem>
+
+                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+
+                  {/* Section 4 */}
+                  <MenuItem
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontSize: "inherit", fontWeight: "inherit" }}
+                    >
+                      Ngôn ngữ
+                    </Typography>
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      sx={{ alignItems: "center", color: "text.secondary" }}
+                    >
+                      <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
+                        Tiếng Việt
+                      </Typography>
+                      <LanguageRounded sx={{ fontSize: 16 }} />
+                    </Stack>
+                  </MenuItem>
+
+                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+
+                  {/* Section 5 */}
+                  <MenuItem onClick={() => router.push("/student/profile")}>
+                    Hồ sơ công khai
+                  </MenuItem>
+                  <MenuItem onClick={() => router.push("/student/profile")}>
+                    Chỉnh sửa hồ sơ
+                  </MenuItem>
+
+                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+
+                  {/* Section 6 */}
+                  <MenuItem onClick={() => router.push("/student/dashboard")}>
+                    Trợ giúp và Hỗ trợ
+                  </MenuItem>
+                  <MenuItem
+                    onClick={handleLogout}
+                    sx={{
+                      color: "#DC2626",
+                      "&:hover": {
+                        bgcolor: "rgba(220,38,38,0.04)",
+                        color: "#B91C1C",
+                      },
+                    }}
+                  >
+                    Đăng xuất
+                  </MenuItem>
+                </Menu>
+              </Stack>
             </Stack>
-          </Stack>
-        </Box>
+          </Box>
         ) : (
           <DashboardHeader onMenuClick={undefined} />
         )}
-
-
-
         {/* ========================================================= */}
         {/* SIDEBAR DRAWER (COLLAPSED FOR MOBILE/TABLET)              */}
-        {/* ========================================================= */}        {!pathname.startsWith("/instructor") && (
+        {/* ========================================================= */}{" "}
+        {!pathname.startsWith("/instructor") && (
           <Drawer
             open={mobileOpen}
             onClose={() => setMobileOpen(false)}
@@ -1605,13 +1713,14 @@ export default function DashboardShell({
             <SidebarContent onLogout={handleLogout} roles={roles} />
           </Drawer>
         )}
-
         {/* ========================================================= */}
         {/* MAIN LAYOUT STRUCTURE                                     */}
         {/* ========================================================= */}
         <Box
           sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
-        >          {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
+        >
+          {" "}
+          {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
           {!pathname.startsWith("/instructor") && (
             <Box
               sx={{
@@ -1626,7 +1735,6 @@ export default function DashboardShell({
               <SidebarContent onLogout={handleLogout} roles={roles} />
             </Box>
           )}
-
           {/* 2. MAIN CONTENT SCROLL AREA (Expanded Single Column Layout) */}
           <Box
             sx={{
@@ -1704,7 +1812,9 @@ export default function DashboardShell({
                       >
                         <Avatar
                           src={
-                            userAvatar || dashboardData?.welcomeStats?.avatarUrl || undefined
+                            userAvatar ||
+                            dashboardData?.welcomeStats?.avatarUrl ||
+                            undefined
                           }
                           sx={{
                             width: 80,
@@ -3502,6 +3612,191 @@ export default function DashboardShell({
             </Box>
           </Box>
         </Box>
+        <Popover
+          anchorEl={notiAnchorEl}
+          open={openNotiPopover}
+          onClose={() => setNotiAnchorEl(null)}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "right",
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          slotProps={{
+            paper: {
+              sx: {
+                width: 360,
+                maxHeight: 480,
+                borderRadius: "16px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                border: "1px solid rgba(0,0,0,0.08)",
+                mt: 1.5,
+                display: "flex",
+                flexDirection: "column",
+              },
+            },
+          }}
+        >
+          <Box
+            sx={{
+              p: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
+            }}
+          >
+            <Typography
+              sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937" }}
+            >
+              Thông báo
+            </Typography>
+            {unreadCount > 0 && (
+              <Button
+                size="small"
+                onClick={handleMarkAllAsRead}
+                sx={{
+                  color: COLORS.primary,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  p: 0,
+                  minWidth: 0,
+                  "&:hover": {
+                    bgcolor: "transparent",
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                Đánh dấu tất cả đã đọc
+              </Button>
+            )}
+          </Box>
+
+          <Box sx={{ flex: 1, overflowY: "auto", maxHeight: 380 }}>
+            {notifications.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                  Không có thông báo nào
+                </Typography>
+              </Box>
+            ) : (
+              notifications.map((noti) => (
+                <Box
+                  key={noti.id}
+                  onClick={() => handleNotiClick(noti)}
+                  sx={{
+                    p: 2,
+                    borderBottom: "1px solid rgba(0,0,0,0.04)",
+                    cursor: "pointer",
+                    bgcolor: noti.daDoc
+                      ? "transparent"
+                      : "rgba(141,19,19,0.03)",
+                    position: "relative",
+                    transition: "background-color 150ms ease",
+                    "&:hover": {
+                      bgcolor: "rgba(0,0,0,0.02)",
+                    },
+                  }}
+                >
+                  {!noti.daDoc && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        left: 6,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        bgcolor: COLORS.primary,
+                      }}
+                    />
+                  )}
+                  <Stack spacing={0.5} sx={{ pl: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: noti.daDoc ? 600 : 800,
+                        fontSize: 13.5,
+                        color: "#1F2937",
+                      }}
+                    >
+                      {noti.tieuDe || noti.type || "Thông báo"}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 12.5,
+                        color: "text.secondary",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {noti.noiDung || noti.message}
+                    </Typography>
+                    <Typography
+                      sx={{ fontSize: 11, color: "text.secondary", mt: 0.5 }}
+                    >
+                      {noti.thoiGianTao
+                        ? new Date(noti.thoiGianTao).toLocaleString("vi-VN")
+                        : ""}
+                    </Typography>
+                  </Stack>
+                </Box>
+              ))
+            )}
+          </Box>
+        </Popover>
+        <Dialog
+          open={Boolean(selectedNoti)}
+          onClose={() => setSelectedNoti(null)}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: "16px",
+                width: "100%",
+                maxWidth: 480,
+                p: 1,
+              },
+            },
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: 800, fontSize: 18, color: "#1F2937" }}>
+            {selectedNoti?.tieuDe || selectedNoti?.type || "Thông báo chi tiết"}
+          </DialogTitle>
+          <DialogContent>
+            <Typography
+              sx={{
+                fontSize: 14.5,
+                color: "#374151",
+                mb: 2,
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {selectedNoti?.noiDung || selectedNoti?.message}
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+              Thời gian:{" "}
+              {selectedNoti?.thoiGianTao
+                ? new Date(selectedNoti.thoiGianTao).toLocaleString("vi-VN")
+                : ""}
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setSelectedNoti(null)}
+              sx={{
+                color: COLORS.primary,
+                fontWeight: 700,
+              }}
+            >
+              Đóng
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </ThemeProvider>
   );

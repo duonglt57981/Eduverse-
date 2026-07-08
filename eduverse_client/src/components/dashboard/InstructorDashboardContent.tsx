@@ -349,7 +349,7 @@ export default function InstructorDashboardContent() {
               <Button
                 variant="contained"
                 startIcon={<AccountBalanceWalletRounded />}
-                onClick={() => router.push("/instructor/doanh-thu")}
+                onClick={() => router.push("/instructor/money")}
                 sx={{
                   borderRadius: "12px",
                   bgcolor: "#fff",

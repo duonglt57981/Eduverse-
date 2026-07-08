@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +8,7 @@ namespace Eduverse.Model.Entities
 {
     public class DanhMuc : AuditableEntity
     {
+        public string? MaDanhMuc { get; set; }
         public string? TenDanhMuc { get; set; }
         public DateTime? NgayTao { get; set; }
         public string? TrangThai { get; set; }
