@@ -54,7 +54,11 @@ namespace Eduverse.Api.Controller
         public async Task<IActionResult> KiemTraMaGiamGia([FromBody] ApDungMaGiamGiaDto dto)
         {
             var result = await _service.KiemTraMaGiamGiaAsync(dto);
-            return Ok(DataResponse.Success(result, result.ThongBao));
+            var soMaHopLe = result.KetQua.Count(k => k.HopLe);
+            var thongBao = soMaHopLe > 0
+                ? $"Áp dụng thành công {soMaHopLe}/{result.KetQua.Count} mã giảm giá"
+                : "Không có mã giảm giá nào áp dụng được";
+            return Ok(DataResponse.Success(result, thongBao));
         }
         [AllowAnonymous]
         [HttpPost("webhook")]

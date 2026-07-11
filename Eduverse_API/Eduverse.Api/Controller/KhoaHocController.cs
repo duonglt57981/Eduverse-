@@ -211,5 +211,21 @@ namespace Eduverse.Api.Controller
                 return DataResponse<bool>.False(ex.Message);
             }
         }
+
+
+        [HttpGet("khoahoc-getlist-daduyet")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<KhoaHocMiniDto>>> GetApprovedListForSelect()
+        {
+            try
+            {
+                var result = await _khoaHocService.GetApprovedListForSelect();
+                return DataResponse<List<KhoaHocMiniDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<KhoaHocMiniDto>>.False(ex.Message);
+            }
+        }
     }
 }

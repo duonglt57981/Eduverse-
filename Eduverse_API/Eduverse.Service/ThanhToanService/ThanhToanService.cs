@@ -7,6 +7,7 @@ using Eduverse.Repository.DonHangRepositoryRepository;
 using Eduverse.Repository.GioHangChiTietRepository;
 using Eduverse.Repository.GioHangRepository;
 using Eduverse.Repository.KhoaHocRepository;
+using Eduverse.Repository.KhuyenMai_KhoaHocRepository;
 using Eduverse.Repository.KhuyenMaiRepository;
 using Eduverse.Repository.ThanhToanRepository;
 using Eduverse.Repository.ThongBao;
@@ -39,6 +40,7 @@ namespace Eduverse.Service.ThanhToanService
         private readonly IKhoaHocRepository _khoaHocRepo;
         private readonly IGioHangRepository _gioHangRepo;
         private readonly IGioHangChiTietRepository _gioHangChiTietRepo;
+        private readonly IKhuyenMai_KhoaHocRepository _khuyenMai_KhoaHocRepository;
         private readonly IEmailService _emailService;
         private readonly IKhuyenMaiRepository _khuyenMaiRepository;
         private readonly IThongBaoRepository _thongBaoRepository;
@@ -54,6 +56,7 @@ namespace Eduverse.Service.ThanhToanService
             IKhoaHocRepository khoaHocRepo,
             IGioHangRepository gioHangRepo,
             IGioHangChiTietRepository gioHangChiTietRepo,
+            IKhuyenMai_KhoaHocRepository khuyenMai_KhoaHocRepository,
             IEmailService emailService,
             IKhuyenMaiRepository khuyenMaiRepository,
             IThongBaoRepository thongBaoRepository,
@@ -71,6 +74,7 @@ namespace Eduverse.Service.ThanhToanService
             _gioHangChiTietRepo = gioHangChiTietRepo;
             _emailService = emailService;
             _khuyenMaiRepository = khuyenMaiRepository;
+            _khuyenMai_KhoaHocRepository = khuyenMai_KhoaHocRepository;
             _thongBaoRepository = thongBaoRepository;
             _userRepository = userRepository;
             _payOS = payOS;
@@ -88,24 +92,29 @@ namespace Eduverse.Service.ThanhToanService
 
             double tongTien = khoaHocs.Sum(k => k.Gia ?? 0);
             double giamGia = 0;
-            if (!string.IsNullOrEmpty(dto.MaGiamGia))
-            {
-                var now = DateTime.Now;
-                var km = await _khuyenMaiRepository.GetQueryable()
-                    .FirstOrDefaultAsync(x =>
-                        x.MaGiamGia == dto.MaGiamGia &&
-                        !x.IsDeleted &&
-                        x.NgayBatDau <= now &&
-                        x.NgayKetThuc >= now &&
-                        x.SoLuongHieuLuc > 0);
 
-                if (km != null)
+            if (dto.DanhSachMaGiamGia != null && dto.DanhSachMaGiamGia.Any())
+            {
+                var ketQuaMa = await TinhKetQuaNhieuMaGiamGiaAsync(dto.DanhSachMaGiamGia, khoaHocs);
+                giamGia = ketQuaMa.TongSoTienGiam;
+
+                var maCodeHopLe = ketQuaMa.KetQua.Where(k => k.HopLe).Select(k => k.MaGiamGia).ToList();
+                if (maCodeHopLe.Any())
                 {
-                    giamGia = tongTien * (km.PhanTramGiam ?? 0) / 100.0;
-                    // Giảm số lượng hiệu lực
-                    km.SoLuongHieuLuc -= 1;
-                    km.UpdatedDate = DateTime.Now;
-                    _khuyenMaiRepository.Update(km);
+                    var khuyenMaisDaDung = await _khuyenMaiRepository.GetQueryable()
+                        .Where(x => maCodeHopLe.Contains(x.MaGiamGia))
+                        .ToListAsync();
+
+                    foreach (var km in khuyenMaisDaDung)
+                    {
+                        if (km.SoLuongHieuLuc.HasValue)
+                        {
+                            km.SoLuongHieuLuc -= 1;
+                            km.UpdatedDate = DateTime.Now;
+                            _khuyenMaiRepository.Update(km);
+                        }
+                    }
+                    await _khuyenMaiRepository.SaveAsync();
                 }
             }
 
@@ -164,7 +173,7 @@ namespace Eduverse.Service.ThanhToanService
             };
 
             var paymentLink = await _payOS.PaymentRequests.CreateAsync(paymentRequest);
-            
+
             return new TaoThanhToanResponseDto
             {
                 DonHangId = donHang.Id,
@@ -174,52 +183,16 @@ namespace Eduverse.Service.ThanhToanService
                 SoTien = tongTien
             };
         }
-        public async Task<ApDungMaGiamGiaResponseDto> KiemTraMaGiamGiaAsync(ApDungMaGiamGiaDto dto)
+
+        public async Task<ApDungNhieuMaGiamGiaResponseDto> KiemTraMaGiamGiaAsync(ApDungMaGiamGiaDto dto)
         {
             var khoaHocs = await _khoaHocRepo.GetQueryable()
                 .Where(k => dto.KhoaHocIds.Contains(k.Id))
                 .ToListAsync();
 
-            double soTienGoc = khoaHocs.Sum(k => k.Gia ?? 0);
-
-            if (string.IsNullOrEmpty(dto.MaGiamGia))
-                return new ApDungMaGiamGiaResponseDto
-                {
-                    HopLe = false,
-                    ThongBao = "Vui lòng nhập mã giảm giá",
-                    SoTienGoc = soTienGoc,
-                    SoTienSauGiam = soTienGoc
-                };
-
-            var now = DateTime.Now;
-            var km = await _khuyenMaiRepository.GetQueryable()
-                .FirstOrDefaultAsync(x =>
-                    x.MaGiamGia == dto.MaGiamGia &&
-                    !x.IsDeleted &&
-                    x.NgayBatDau <= now &&
-                    x.NgayKetThuc >= now &&
-                    x.SoLuongHieuLuc > 0);
-
-            if (km == null)
-                return new ApDungMaGiamGiaResponseDto
-                {
-                    HopLe = false,
-                    ThongBao = "Mã giảm giá không hợp lệ hoặc đã hết hạn",
-                    SoTienGoc = soTienGoc,
-                    SoTienSauGiam = soTienGoc
-                };
-
-            double soTienGiam = soTienGoc * (km.PhanTramGiam ?? 0) / 100.0;
-            return new ApDungMaGiamGiaResponseDto
-            {
-                HopLe = true,
-                ThongBao = $"Áp dụng thành công! Giảm {km.PhanTramGiam}%",
-                PhanTramGiam = km.PhanTramGiam ?? 0,
-                SoTienGoc = soTienGoc,
-                SoTienGiam = soTienGiam,
-                SoTienSauGiam = soTienGoc - soTienGiam
-            };
+            return await TinhKetQuaNhieuMaGiamGiaAsync(dto.DanhSachMa, khoaHocs);
         }
+
 
         public async Task<bool> XuLyWebhookAsync(Webhook webhook)
         {
@@ -438,7 +411,90 @@ namespace Eduverse.Service.ThanhToanService
 
             return result;
         }
-        
+        private async Task<ApDungNhieuMaGiamGiaResponseDto> TinhKetQuaNhieuMaGiamGiaAsync(
+            List<string> danhSachMa, List<KhoaHoc> khoaHocsTrongGio)
+        {
+            var soTienGoc = khoaHocsTrongGio.Sum(k => k.Gia ?? 0);
+            var ketQua = new List<KetQuaApDungMaDto>();
+            var idsDaDuocGiam = new HashSet<Guid>();
+
+            var now = DateTime.Now;
+            var maCodeList = (danhSachMa ?? new List<string>())
+                .Where(m => !string.IsNullOrWhiteSpace(m))
+                .Select(m => m.Trim().ToUpper())
+                .Distinct()
+                .ToList();
+
+            foreach (var ma in maCodeList)
+            {
+                var km = await _khuyenMaiRepository.GetQueryable()
+                    .FirstOrDefaultAsync(x =>
+                        x.MaGiamGia == ma &&
+                        !x.IsDeleted &&
+                        (x.NgayBatDau == null || x.NgayBatDau <= now) &&
+                        (x.NgayKetThuc == null || x.NgayKetThuc >= now) &&
+                        (x.SoLuongHieuLuc == null || x.SoLuongHieuLuc > 0));
+
+                if (km == null)
+                {
+                    ketQua.Add(new KetQuaApDungMaDto
+                    {
+                        MaGiamGia = ma,
+                        HopLe = false,
+                        ThongBao = "Mã không hợp lệ hoặc đã hết hạn"
+                    });
+                    continue;
+                }
+
+                var idsKhoaHocApDung = await _khuyenMai_KhoaHocRepository.GetQueryable()
+                    .Where(x => x.IdKhuyenMai == km.Id)
+                    .Select(x => x.IdKhoaHoc)
+                    .ToListAsync();
+
+                var ungVien = khoaHocsTrongGio
+                    .Where(k => idsKhoaHocApDung.Contains(k.Id) && !idsDaDuocGiam.Contains(k.Id))
+                    .OrderByDescending(k => k.Gia ?? 0)
+                    .ToList();
+
+                if (!ungVien.Any())
+                {
+                    ketQua.Add(new KetQuaApDungMaDto
+                    {
+                        MaGiamGia = ma,
+                        HopLe = false,
+                        ThongBao = "Mã không áp dụng được cho khóa học nào còn lại trong giỏ"
+                    });
+                    continue;
+                }
+
+                var khoaHocDuocChon = ungVien.First();
+                var soTienGiam = (khoaHocDuocChon.Gia ?? 0) * (km.PhanTramGiam ?? 0) / 100.0;
+
+                idsDaDuocGiam.Add(khoaHocDuocChon.Id);
+
+                ketQua.Add(new KetQuaApDungMaDto
+                {
+                    MaGiamGia = ma,
+                    HopLe = true,
+                    ThongBao = $"Giảm {km.PhanTramGiam}% cho \"{khoaHocDuocChon.TieuDe}\"",
+                    PhanTramGiam = km.PhanTramGiam ?? 0,
+                    IdKhoaHocDuocGiam = khoaHocDuocChon.Id,
+                    TenKhoaHocDuocGiam = khoaHocDuocChon.TieuDe,
+                    SoTienGiam = soTienGiam
+                });
+            }
+
+            var tongGiam = ketQua.Where(k => k.HopLe).Sum(k => k.SoTienGiam);
+
+            return new ApDungNhieuMaGiamGiaResponseDto
+            {
+                KetQua = ketQua,
+                SoTienGoc = soTienGoc,
+                TongSoTienGiam = tongGiam,
+                SoTienSauGiam = soTienGoc - tongGiam
+            };
+        }
+
     }
 }
 

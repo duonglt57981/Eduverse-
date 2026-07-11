@@ -9,7 +9,7 @@ namespace Eduverse.Service.ThanhToanService.Dto
         public class TaoThanhToanDto
         {
             public List<Guid> KhoaHocIds { get; set; } = new();
-            public string? MaGiamGia { get; set; }
+            public List<string>? DanhSachMaGiamGia { get; set; }
         }
 
         public class TaoThanhToanResponseDto
@@ -20,13 +20,13 @@ namespace Eduverse.Service.ThanhToanService.Dto
             public string? QrCode { get; set; }
             public double SoTien { get; set; }
         }
-        public class ApDungMaGiamGiaDto
-        {
-            public string MaGiamGia { get; set; } = "";
-            public List<Guid> KhoaHocIds { get; set; } = new();
-        }
+    public class ApDungMaGiamGiaDto
+    {
+        public List<Guid> KhoaHocIds { get; set; } = new();
+        public List<string> DanhSachMa { get; set; } = new();
+    }
 
-        public class ApDungMaGiamGiaResponseDto
+    public class ApDungMaGiamGiaResponseDto
         {
             public bool HopLe { get; set; }
             public string? ThongBao { get; set; }
@@ -91,4 +91,23 @@ namespace Eduverse.Service.ThanhToanService.Dto
             public string? VirtualAccountNumber { get; set; }
             public string? Currency { get; set; }
         }
+
+    public class KetQuaApDungMaDto
+    {
+        public string MaGiamGia { get; set; }
+        public bool HopLe { get; set; }
+        public string ThongBao { get; set; }
+        public int PhanTramGiam { get; set; }
+        public Guid? IdKhoaHocDuocGiam { get; set; }
+        public string? TenKhoaHocDuocGiam { get; set; }
+        public double SoTienGiam { get; set; }
+    }
+
+    public class ApDungNhieuMaGiamGiaResponseDto
+    {
+        public List<KetQuaApDungMaDto> KetQua { get; set; } = new();
+        public double SoTienGoc { get; set; }
+        public double TongSoTienGiam { get; set; }
+        public double SoTienSauGiam { get; set; }
+    }
 }

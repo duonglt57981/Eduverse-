@@ -39,7 +39,7 @@ namespace Eduverse.Service.KhoaHocService
         //
         Task<double> TinhPhanTramHoanThanh(Guid? idDangKy, DateTime? ngayDangKy = null);
         Task SwapPendingBaiGiang(Guid idDangKy, List<Guid> phanIds);
-
+        Task<List<KhoaHocMiniDto>> GetApprovedListForSelect();
 
     }
 }

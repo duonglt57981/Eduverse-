@@ -35,7 +35,6 @@ using Eduverse.Service.TienDoHocTapService;
 using Eduverse.Service.TienDoHocTapService.Request;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
 
@@ -2771,6 +2770,27 @@ namespace Eduverse.Service.KhoaHocService
             await DeleteAsync(khoaHoc);
             await SaveAsync();
             return true;
+        }
+
+        // danh sách khóa học đã được duyệt dùng để áp dụng khuyến mãi
+        public async Task<List<KhoaHocMiniDto>> GetApprovedListForSelect()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out var userId))
+                throw new UnauthorizedAccessException("Không thể xác định người dùng.");
+
+            return await GetAll()
+                .Where(x => x.CreatedId == userId
+                         && x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.IsBanHienTai == true)
+                .OrderByDescending(x => x.CreatedDate)
+                .Select(x => new KhoaHocMiniDto
+                {
+                    Id = x.Id,
+                    TieuDe = x.TieuDe,
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
+                })
+                .ToListAsync();
         }
     }
 }
