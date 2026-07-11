@@ -13,3 +13,25 @@ export interface AutoSaveRequest {
   idCauHoi: string;
   idDapAnChons: string[];
 }
+
+export interface UpdateBaiKiemTraRequest {
+  idBaiKiemTra?: string;
+  tenBaiKiemTra?: string;
+  moTa?: string;
+  diemDat?: number;
+  gioiHanThoiGian?: number;
+  choLamLai?: boolean;
+  soLanLamToiDa?: number;
+  danhSachCauHoi: UpdateCauHoiRequest[];
+}
+
+export interface CreateBaiKiemTraRequest {
+  idPhan?: string;
+  tenBaiKiemTra?: string;
+  moTa?: string;
+  diemDat?: number;
+  gioiHanThoiGian?: number;
+  choLamLai?: boolean;
+  soLanLamToiDa?: number;
+  danhSachCauHoi: CreateCauHoiRequest[];
+}

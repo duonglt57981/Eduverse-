@@ -2,22 +2,69 @@ import {
   AutoSaveDapAnDto,
   BaiKiemTraLamBaiDto,
   ContinueQuizFullDto,
+  CreateBaiKiemTraDto,
   GetQuizToLearningDto,
   HeartbeatResultDto,
   KetQuaLanKiemTraDto,
   LanLamBaiKiemTraDto,
   LichSuLamBaiDto,
   ReviewQuizDto,
+  UpdateBaiKiemTraDto,
 } from "../types/baiKiemTra/Dto/baiKiemTraDto";
 import { ApiResponse } from "../types/types";
 import { apiService } from ".";
 import {
   AutoSaveRequest,
+  CreateBaiKiemTraRequest,
   StartQuizRequest,
   SubmitQuizRequest,
+  UpdateBaiKiemTraRequest,
 } from "../types/baiKiemTra/Request/QuizzRequest";
 
 export default class BaiKiemTraService {
+  async CreateBaiKiemTra(
+    request: CreateBaiKiemTraRequest,
+  ): Promise<ApiResponse<CreateBaiKiemTraDto>> {
+    try {
+      const response = await apiService.post<ApiResponse<CreateBaiKiemTraDto>>(
+        `/baikiemtra`,
+        request,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating quiz:", error);
+      throw error;
+    }
+  }
+
+  async UpdateBaiKiemTra(
+    id: string,
+    request: UpdateBaiKiemTraRequest,
+  ): Promise<ApiResponse<UpdateBaiKiemTraDto>> {
+    try {
+      const response = await apiService.put<ApiResponse<UpdateBaiKiemTraDto>>(
+        `/baikiemtra/${id}`,
+        request,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating quiz:", error);
+      throw error;
+    }
+  }
+
+  async DeleteBaiKiemTra(id: string): Promise<ApiResponse<boolean>> {
+    try {
+      const response = await apiService.delete<ApiResponse<boolean>>(
+        `/baikiemtra/${id}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+      throw error;
+    }
+  }
+
   async GetQuizToLearning(
     idDangKi: string,
   ): Promise<ApiResponse<GetQuizToLearningDto>> {

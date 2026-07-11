@@ -223,8 +223,7 @@ export function TaiLieuSection({
           component="div"
           direction="row"
           spacing={1}
-          alignItems="center"
-          sx={{ py: 1 }}
+          sx={{ alignItems: "center", py: 1 }}
         >
           <CircularProgress size={14} sx={{ color: alpha(R, 0.5) }} />
           <Typography sx={{ fontSize: 11.5, color: TEXT_GRAY }}>

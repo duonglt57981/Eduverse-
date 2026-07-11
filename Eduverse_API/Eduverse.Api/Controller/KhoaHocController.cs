@@ -133,7 +133,7 @@ namespace Eduverse.Api.Controller
 
         [HttpGet("khoahoc-get-toupdatekhoahoc/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<GetToUpdateKhoaHoc>> GetToUpdateKhoaHoc([FromQuery] Guid  idKhoaHoc)
+        public async Task<DataResponse<GetToUpdateKhoaHoc>> GetToUpdateKhoaHoc(Guid  idKhoaHoc)
         {
             try
             {

@@ -9,6 +9,7 @@ export interface PhanHocType {
   idKhoaHoc?: Guid;
 
   DanhSachBaiGiang?: BaiGiangType[];
+  DanhDachBaiKiemTra?: BaiKiemTraDto[];
 }
 
 export interface GetToUpdatePhanDto {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/instructor/manager-courses/components/RichTextEditor.tsx
 "use client";
 
@@ -258,11 +259,11 @@ const MenuBar = ({ editor }: { editor: any }) => {
             size="small"
             onClick={() => editor.chain().focus().setTextAlign("left").run()}
             sx={{
-              color: isActive({ textAlign: "left" }) ? R : "#555",
-              bgcolor: isActive({ textAlign: "left" })
-                ? alpha(R, 0.1)
-                : "transparent",
-              "&:hover": { bgcolor: alpha(R, 0.05) },
+              color: isActive("left") ? R : "#555",
+              bgcolor: isActive("left") ? alpha(R, 0.1) : "transparent",
+              "&:hover": {
+                bgcolor: alpha(R, 0.05),
+              },
             }}
           >
             <FormatAlignLeftIcon sx={{ fontSize: 18 }} />
@@ -273,11 +274,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
             size="small"
             onClick={() => editor.chain().focus().setTextAlign("center").run()}
             sx={{
-              color: isActive({ textAlign: "center" }) ? R : "#555",
-              bgcolor: isActive({ textAlign: "center" })
+              color: isActive("paragraph", { textAlign: "center" })
+                ? R
+                : "#555",
+              bgcolor: isActive("paragraph", { textAlign: "center" })
                 ? alpha(R, 0.1)
                 : "transparent",
-              "&:hover": { bgcolor: alpha(R, 0.05) },
+              "&:hover": {
+                bgcolor: alpha(R, 0.05),
+              },
             }}
           >
             <FormatAlignCenterIcon sx={{ fontSize: 18 }} />
@@ -288,11 +293,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
             size="small"
             onClick={() => editor.chain().focus().setTextAlign("right").run()}
             sx={{
-              color: isActive({ textAlign: "right" }) ? R : "#555",
-              bgcolor: isActive({ textAlign: "right" })
+              color: isActive("paragraph", { textAlign: "center" })
+                ? R
+                : "#555",
+              bgcolor: isActive("paragraph", { textAlign: "center" })
                 ? alpha(R, 0.1)
                 : "transparent",
-              "&:hover": { bgcolor: alpha(R, 0.05) },
+              "&:hover": {
+                bgcolor: alpha(R, 0.05),
+              },
             }}
           >
             <FormatAlignRightIcon sx={{ fontSize: 18 }} />
@@ -303,11 +312,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
             size="small"
             onClick={() => editor.chain().focus().setTextAlign("justify").run()}
             sx={{
-              color: isActive({ textAlign: "justify" }) ? R : "#555",
-              bgcolor: isActive({ textAlign: "justify" })
+              color: isActive("paragraph", { textAlign: "center" })
+                ? R
+                : "#555",
+              bgcolor: isActive("paragraph", { textAlign: "center" })
                 ? alpha(R, 0.1)
                 : "transparent",
-              "&:hover": { bgcolor: alpha(R, 0.05) },
+              "&:hover": {
+                bgcolor: alpha(R, 0.05),
+              },
             }}
           >
             <FormatAlignJustifyIcon sx={{ fontSize: 18 }} />
