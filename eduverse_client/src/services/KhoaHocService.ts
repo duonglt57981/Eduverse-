@@ -10,6 +10,12 @@ import {
 import { ApiResponse, PagedList } from "../types/types";
 import { apiService } from "./index";
 
+export interface KhoaHocMiniDto {
+  id: string;
+  tieuDe: string;
+  hinhAnhKhoaHoc?: string | null;
+}
+
 export default class KhoaHocService {
   // lấy danh sách khi chưa đăng nhập
   async GetList(
@@ -173,7 +179,7 @@ export default class KhoaHocService {
 
       const response =
         await apiService.get<ApiResponse<PagedList<KhoaHocType>>>(url);
-      return response.data;
+      return response.data; // Trả về dữ liệu từ response
     } catch (error) {
       console.error("Error fetching course list for manager:", error);
       throw error;
@@ -181,24 +187,25 @@ export default class KhoaHocService {
   }
 
   async CreateKhoaHoc(
-    request: CreateKhoaHocRequest,
-  ): Promise<ApiResponse<KhoaHocType>> {
-    try {
-      const response = await apiService.post<ApiResponse<KhoaHocType>>(
-        "/KhoaHoc/khoahoc-create",
-        request,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+  request: FormData,
+): Promise<ApiResponse<KhoaHocType>> {
+  try {
+    const response = await apiService.post<ApiResponse<KhoaHocType>>(
+      "/KhoaHoc/khoahoc-create",
+      request,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error creating course:", error);
-      throw error;
-    }
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating course:", error);
+    throw error;
   }
+}
 
   async UpdateKhoaHoc(
     request: UpdateKhoaHocRequest,
@@ -226,6 +233,16 @@ export default class KhoaHocService {
       throw error;
     }
   }
+  async GetApprovedListForSelect(): Promise<ApiResponse<KhoaHocMiniDto[]>> {
+  try {
+    return await apiService.get<KhoaHocMiniDto[]>(
+      "/KhoaHoc/khoahoc-getlist-daduyet",
+    );
+  } catch (error) {
+    console.error("Error fetching approved courses:", error);
+    throw error;
+  }
+}
 
   private getUserIdFromToken(): string {
     const userStr = localStorage.getItem("AccessToken");
@@ -242,3 +259,4 @@ export default class KhoaHocService {
     throw new Error("User not authenticated - No userId found");
   }
 }
+

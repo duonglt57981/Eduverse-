@@ -129,6 +129,7 @@ export default function CurriculumContent({
 
   useEffect(() => {
     if (phans.length === 0 && idKhoaHoc) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       themPhanTuDong();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -219,7 +220,7 @@ export default function CurriculumContent({
                   ? {
                       ...bg,
                       danhSachTaiLieu: (bg.danhSachTaiLieu ?? []).filter(
-                        (tl) => tl.id !== taiLieuId,
+                        (tl: TaiLieuType) => tl.id !== taiLieuId,
                       ),
                     }
                   : bg,

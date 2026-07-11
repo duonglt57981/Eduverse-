@@ -41,7 +41,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import AuthGuard from "@/src/components/AuthGuard";
 import DangKiService from "@/src/services/DangKiService";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { KhoaHocType } from "@/src/app/instructor/manager-courses/types";
+import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 

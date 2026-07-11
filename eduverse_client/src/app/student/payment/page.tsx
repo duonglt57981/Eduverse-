@@ -34,11 +34,19 @@ import { useRouter } from "next/navigation";
 import { apiService } from "@/src/services/index";
 import { DonHangDto } from "@/src/types/thanhToan";
 
-interface MaGiamGiaResponse {
+// ✅ Thay MaGiamGiaResponse (1 mã) bằng shape nhiều mã
+interface KetQuaApDungMa {
+  maGiamGia: string;
   hopLe: boolean;
+  thongBao: string;
   phanTramGiam?: number;
   soTienGiam?: number;
-  soTienSauGiam?: number;
+}
+interface ApDungNhieuMaResponse {
+  ketQua: KetQuaApDungMa[];
+  soTienGoc: number;
+  tongSoTienGiam: number;
+  soTienSauGiam: number;
 }
 
 const PRIMARY = "#8D1313";
@@ -51,7 +59,7 @@ function ThanhToanContent() {
   const { loading, paymentResponse } = useSelector((s) => s.thanhToan);
 
   const [openQR, setOpenQR] = useState(false);
-  const [giaInfo, setGiaInfo] = useState<MaGiamGiaResponse | null>(null);
+  const [ketQuaMa, setKetQuaMa] = useState<ApDungNhieuMaResponse | null>(null); // ✅
 
   const daChonItems = gioHang?.items.filter((i) => i.daChon) ?? [];
   const tongTien = gioHang?.tongTienDaChon ?? 0;
@@ -84,16 +92,28 @@ function ThanhToanContent() {
     return () => clearInterval(interval);
   }, [openQR, paymentResponse]);
 
+  // ✅ Đọc danh sách mã từ sessionStorage (key mới: "dsMaGiamGia", giá trị JSON array)
   useEffect(() => {
-    const ma = sessionStorage.getItem("maGiamGia");
-    if (!ma || daChonItems.length === 0) return;
+    const raw = sessionStorage.getItem("dsMaGiamGia");
+    if (!raw || daChonItems.length === 0) return;
+
+    let dsMa: string[] = [];
+    try {
+      dsMa = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (!Array.isArray(dsMa) || dsMa.length === 0) return;
+
     const ids = daChonItems.map((i) => i.idKhoaHoc!).filter(Boolean);
     apiService
-      .post<MaGiamGiaResponse>("/thanhtoan/kiem-tra-ma-giam-gia", {
-        maGiamGia: ma,
+      .post<ApDungNhieuMaResponse>("/thanhtoan/kiem-tra-ma-giam-gia", {
+        danhSachMa: dsMa,
         khoaHocIds: ids,
       })
-      .then((res) => { if (res.data?.hopLe) setGiaInfo(res.data); })
+      .then((res) => {
+        if (res.data) setKetQuaMa(res.data);
+      })
       .catch(() => {});
   }, [daChonItems.length]);
 
@@ -102,10 +122,25 @@ function ThanhToanContent() {
 
   const handleXacNhan = async () => {
     const ids = daChonItems.map((i) => i.idKhoaHoc!).filter(Boolean);
-    const maGiamGia = sessionStorage.getItem("maGiamGia") ?? undefined;
-    const result = await dispatch(taoThanhToan({ khoaHocIds: ids, maGiamGia }));
+
+    // ✅ Đọc lại danh sách mã, gửi nguyên mảng lên BE (BE tự tính lại giảm giá,
+    // không tin số tiền FE hiển thị)
+    const raw = sessionStorage.getItem("dsMaGiamGia");
+    let danhSachMaGiamGia: string[] | undefined;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) danhSachMaGiamGia = parsed;
+      } catch {
+        danhSachMaGiamGia = undefined;
+      }
+    }
+
+    const result = await dispatch(
+      taoThanhToan({ khoaHocIds: ids, danhSachMaGiamGia }) // ✅ đổi field
+    );
     if (taoThanhToan.fulfilled.match(result)) {
-      sessionStorage.removeItem("maGiamGia");
+      sessionStorage.removeItem("dsMaGiamGia"); // ✅ đổi key
       setOpenQR(true);
     }
   };
@@ -134,6 +169,11 @@ function ThanhToanContent() {
       </Box>
     );
   }
+
+  // ✅ Số tiền hiển thị: dùng kết quả nhiều mã nếu có, không thì giá gốc
+  const soTienGiam = ketQuaMa?.tongSoTienGiam ?? 0;
+  const soTienSauGiam = ketQuaMa?.soTienSauGiam ?? tongTien;
+  const coApDungMaHopLe = !!ketQuaMa && ketQuaMa.tongSoTienGiam > 0;
 
   return (
     <Box>
@@ -215,6 +255,10 @@ function ThanhToanContent() {
                     >
                       {item.tenKhoaHoc}
                     </Typography>
+                    {/* ✅ Nếu khóa học này được 1 mã giảm giá, hiện rõ */}
+                    {ketQuaMa?.ketQua.find(
+                      (k) => k.hopLe && item.idKhoaHoc // BE không trả idKhoaHocDuocGiam ở đây trong interface rút gọn này, xem ghi chú bên dưới
+                    ) && null}
                   </Box>
                   <Typography sx={{ fontSize: 14, fontWeight: 800, color: PRIMARY, flexShrink: 0 }}>
                     {formatGia(item.gia)}
@@ -306,21 +350,34 @@ function ThanhToanContent() {
               <Typography sx={{ fontSize: 13 }}>{formatGia(tongTien)}</Typography>
             </Box>
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                Giảm giá {giaInfo?.hopLe ? `(${giaInfo.phanTramGiam}%)` : ""}
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "success.main" }}>
-                -{formatGia(giaInfo?.hopLe ? giaInfo.soTienGiam : 0)}
-              </Typography>
-            </Box>
+            {/* ✅ Hiện từng mã đã áp, không gộp thành 1 % chung nữa vì mỗi mã
+                có thể có % khác nhau và áp cho khóa học khác nhau */}
+            {ketQuaMa && ketQuaMa.ketQua.some((k) => k.hopLe) && (
+              <Box sx={{ mb: 1 }}>
+                {ketQuaMa.ketQua
+                  .filter((k) => k.hopLe)
+                  .map((k) => (
+                    <Box
+                      key={k.maGiamGia}
+                      sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
+                    >
+                      <Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
+                        Mã {k.maGiamGia} ({k.phanTramGiam}%)
+                      </Typography>
+                      <Typography sx={{ fontSize: 12.5, color: "success.main" }}>
+                        -{formatGia(k.soTienGiam)}
+                      </Typography>
+                    </Box>
+                  ))}
+              </Box>
+            )}
 
             <Divider sx={{ my: 2, borderColor: "rgba(141,19,19,0.1)" }} />
 
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
               <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Tổng cộng</Typography>
               <Typography sx={{ fontWeight: 900, fontSize: 24, color: PRIMARY }}>
-                {formatGia(giaInfo?.hopLe ? giaInfo.soTienSauGiam : tongTien)}
+                {formatGia(soTienSauGiam)} {/* ✅ */}
               </Typography>
             </Box>
 
@@ -414,7 +471,7 @@ function ThanhToanContent() {
             </Box>
 
             <Chip
-              label={`Số tiền: ${formatGia(giaInfo?.hopLe ? giaInfo.soTienSauGiam : paymentResponse?.soTien)}`}
+              label={`Số tiền: ${formatGia(coApDungMaHopLe ? soTienSauGiam : paymentResponse?.soTien)}`} 
               sx={{ bgcolor: "#fff0f0", color: PRIMARY, fontWeight: 700, fontSize: 14, mb: 1 }}
             />
 

@@ -1,6 +1,6 @@
 export interface TaoThanhToanDto {
   khoaHocIds: string[];
-  maGiamGia?: string;
+  danhSachMaGiamGia?: string[];
   returnUrl?: string;
   cancelUrl?: string;
 }
