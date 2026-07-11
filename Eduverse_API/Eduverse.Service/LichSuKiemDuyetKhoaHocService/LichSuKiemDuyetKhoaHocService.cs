@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet.Actions;
+using CloudinaryDotNet.Actions;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
@@ -44,6 +44,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Eduverse.Service.ElasticsearchService;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
@@ -68,6 +69,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IGeminiService _geminiService;
         private readonly ILogger<LichSuKiemDuyetKhoaHocService> _logger;
         private readonly IMapper _mapper;
+        private readonly IElasticsearchService _elasticsearchService;
 
 
         public LichSuKiemDuyetKhoaHocService(
@@ -88,6 +90,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             ICauHoiRepository cauHoiRepository,
             IDapAnRepository dapAnRepository,
             IMapper mapper,
+            IElasticsearchService elasticsearchService,
         IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
@@ -105,6 +108,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             _cauHoiRepository = cauHoiRepository;
             _dapAnRepository = dapAnRepository;
             _mapper = mapper;
+            _elasticsearchService = elasticsearchService;
         }
 
         #region GetDanhSachKiemDuyet
@@ -689,6 +693,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                  _khoaHocRepository.Update(khoaHocNhap);
                 await _khoaHocRepository.SaveAsync();
+
+                try { await _elasticsearchService.DeleteCourseAsync(khoaHocNhap.Id); } catch {}
             }
             // ── DaDuyet ─────────────────────────────────────────
             else
@@ -731,6 +737,16 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                      _khoaHocRepository.Update(khoaHocNhap);
                 }
                 await _khoaHocRepository.SaveAsync();
+
+                try
+                {
+                    await _elasticsearchService.IndexCourseAsync(khoaHocNhap.Id);
+                    if (khoaHocNhap.IdBanGhiTruoc.HasValue)
+                    {
+                        await _elasticsearchService.IndexCourseAsync(khoaHocNhap.IdBanGhiTruoc.Value);
+                    }
+                }
+                catch {}
             }
 
             // ── Ghi lịch sử ─────────────────────────────────────

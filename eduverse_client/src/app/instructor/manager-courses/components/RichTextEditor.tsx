@@ -45,9 +45,11 @@ interface RichTextEditorProps {
   helperText?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const MenuBar = ({ editor }: { editor: any }) => {
   if (!editor) return null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isActive = (name: string, attrs?: any) => {
     if (attrs) {
       return editor.isActive(name, attrs);
