@@ -12,16 +12,18 @@ echo [2] Run ALL
 echo [3] Run API 
 echo [4] Run Client 
 echo [5] Build Docker Images
-echo [6] Exit
+echo [6] Run Elasticsearch
+echo [7] Exit
 echo ===================================================
-set /p MENU_CHOICE="Enter your choice (1-6): "
+set /p MENU_CHOICE="Enter your choice (1-7): "
 
 if "%MENU_CHOICE%"=="1" goto :GIT_SYNC
 if "%MENU_CHOICE%"=="2" goto :RUN_ALL
 if "%MENU_CHOICE%"=="3" goto :RUN_API
 if "%MENU_CHOICE%"=="4" goto :RUN_CLIENT
 if "%MENU_CHOICE%"=="5" goto :DOCKER_BUILD
-if "%MENU_CHOICE%"=="6" exit
+if "%MENU_CHOICE%"=="6" goto :RUN_ELASTICSEARCH
+if "%MENU_CHOICE%"=="7" exit
 
 echo Invalid choice. Please press any key to try again...
 pause > nul
@@ -41,6 +43,10 @@ goto :MAIN_MENU
 
 :RUN_CLIENT
 start "Eduverse Client" cmd /c "%~dp0commands\run_client.bat"
+goto :MAIN_MENU
+
+:RUN_ELASTICSEARCH
+start "Eduverse Elasticsearch" cmd /c "%~dp0commands\run_elasticsearch.bat"
 goto :MAIN_MENU
 
 :DOCKER_BUILD

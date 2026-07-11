@@ -244,6 +244,30 @@ export default class KhoaHocService {
   }
 }
 
+  async GetSearchSuggestions(query: string): Promise<ApiResponse<string[]>> {
+    try {
+      const response = await apiService.get<ApiResponse<string[]>>(
+        `/KhoaHoc/autocomplete?query=${encodeURIComponent(query)}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching search suggestions:", error);
+      throw error;
+    }
+  }
+
+  async SyncElasticsearch(): Promise<ApiResponse<string>> {
+    try {
+      const response = await apiService.post<ApiResponse<string>>(
+        `/KhoaHoc/sync-elasticsearch`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error syncing elasticsearch:", error);
+      throw error;
+    }
+  }
+
   private getUserIdFromToken(): string {
     const userStr = localStorage.getItem("AccessToken");
     if (userStr) {

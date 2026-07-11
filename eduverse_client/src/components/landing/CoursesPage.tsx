@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import KhoaHocService from '@/src/services/KhoaHocService';
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
@@ -258,6 +259,30 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mapToCatalogItem = (kh: any): CourseCatalogItem => {
+  return {
+    id: kh.id,
+    title: kh.tieuDe || 'Khóa học không tên',
+    instructor: kh.tenGiangVien || 'Chưa cập nhật',
+    rating: 4.8,
+    students: kh.soLuongHocVien || 0,
+    price: kh.gia === 0 || kh.gia === null ? 'Miễn phí' : `${kh.gia?.toLocaleString('vi-VN')}đ`,
+    originalPrice: kh.giaGoc && kh.giaGoc > 0 ? `${kh.giaGoc?.toLocaleString('vi-VN')}đ` : '',
+    level: kh.capDo || 'Mọi cấp độ',
+    duration: kh.tongThoiLuong ? `${Math.round(kh.tongThoiLuong / 60)} giờ` : 'Chưa cập nhật',
+    category: kh.loaiKhoaHoc || 'Khác',
+    badge: kh.gia === 0 || kh.gia === null ? 'Miễn phí' : undefined,
+    tags: [kh.capDo || 'Tự chọn', kh.gia === 0 || kh.gia === null ? 'Free' : 'Pro'],
+    palette: {
+      from: '#8d1313',
+      to: '#c2410c',
+      bg: '#fff7f4'
+    },
+    isFree: kh.gia === 0 || kh.gia === null
+  };
+};
+
 export default function CoursesPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -265,34 +290,65 @@ export default function CoursesPage() {
   const [freeOnly, setFreeOnly] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
 
-  const filteredCourses = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+  const [courses, setCourses] = useState<CourseCatalogItem[]>([]);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const [pageIndex, setPageIndex] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
+  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-    const result = courseCatalog.filter((course) => {
-      const matchSearch =
-        !normalizedSearch ||
-        course.title.toLowerCase().includes(normalizedSearch) ||
-        course.instructor.toLowerCase().includes(normalizedSearch) ||
-        course.tags.some((tag) => tag.toLowerCase().includes(normalizedSearch));
+  const courseService = useMemo(() => new KhoaHocService(), []);
 
-      const matchCategory =
-        activeCategory === 'all' ? true : course.category === activeCategory;
-
-      const matchFree = freeOnly ? course.isFree : true;
-      const matchLevel =
-        selectedLevels.length === 0 ? true : selectedLevels.includes(course.level);
-
-      return matchSearch && matchCategory && matchFree && matchLevel;
-    });
-
-    return [...result].sort((a, b) => {
-      if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'price-low') {
-        return parseInt(a.price.replace(/\D/g, '') || '0', 10) - parseInt(b.price.replace(/\D/g, '') || '0', 10);
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoading(true);
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const searchParams: any = {
+          pageIndex,
+          pageSize,
+          keyword: search || undefined,
+          capDo: selectedLevels.length > 0 ? selectedLevels[0] : undefined,
+          loaiKhoaHoc: activeCategory !== 'all' ? activeCategory : undefined,
+          isFree: freeOnly || undefined,
+          sortPrice: sortBy === 'price-low' ? 'asc' : sortBy === 'rating' ? 'desc' : undefined
+        };
+        const response = await courseService.GetList(searchParams);
+        if (response?.status && response.data) {
+          const mapped = (response.data.items || []).map(mapToCatalogItem);
+          setCourses(mapped);
+          setTotalCourses(response.data.totalCount || 0);
+        }
+      } catch (err) {
+        console.error("Error fetching courses from ES backend:", err);
+      } finally {
+        setLoading(false);
       }
-      return 0;
-    });
-  }, [activeCategory, freeOnly, search, selectedLevels, sortBy]);
+    };
+    fetchCourses();
+  }, [search, activeCategory, sortBy, freeOnly, selectedLevels, pageIndex, pageSize, courseService]);
+
+  const handleSearchChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const val = event.target.value;
+    setSearch(val);
+    if (val.trim().length > 1) {
+      try {
+        const res = await courseService.GetSearchSuggestions(val);
+        if (res?.status && res.data) {
+          setSuggestions(res.data);
+          setShowSuggestions(true);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const filteredCourses = courses;
 
   const toggleLevel = (level: string) => {
     setSelectedLevels((current) =>
@@ -355,42 +411,77 @@ export default function CoursesPage() {
                 tập được cá nhân hóa, công nghệ hiện đại và cộng đồng học viên dẫn đầu.
               </Typography>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3, alignItems: 'stretch' }}>
-                <TextFieldAny
-                  fullWidth
-                  variant="outlined"
-                  value={search}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
-                  placeholder="Tìm kiếm khóa học, kỹ năng..."
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    maxWidth: 420,
-                    '& .MuiOutlinedInput-root': {
-                      height: 48,
-                      bgcolor: '#fff',
-                      borderRadius: 2.8,
-                      transition: 'box-shadow 160ms ease, border-color 160ms ease',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.12)',
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3, alignItems: 'stretch', width: '100%' }}>
+                <Box sx={{ position: 'relative', width: '100%', maxWidth: 420 }}>
+                  <TextFieldAny
+                    fullWidth
+                    variant="outlined"
+                    value={search}
+                    onChange={handleSearchChange}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    placeholder="Tìm kiếm khóa học, kỹ năng..."
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: 48,
+                        bgcolor: '#fff',
+                        borderRadius: 2.8,
+                        transition: 'box-shadow 160ms ease, border-color 160ms ease',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(17,17,17,0.12)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(127,29,29,0.38)',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#7f1d1d',
+                        },
+                        '&.Mui-focused': {
+                          boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
+                        },
                       },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(127,29,29,0.38)',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#7f1d1d',
-                      },
-                      '&.Mui-focused': {
-                        boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
-                      },
-                    },
-                  }}
-                />
+                    }}
+                  />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <Paper
+                      elevation={4}
+                      sx={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        zIndex: 10,
+                        mt: 1,
+                        maxHeight: 250,
+                        overflowY: 'auto',
+                        borderRadius: 2,
+                        border: '1px solid rgba(17,17,17,0.08)',
+                        bgcolor: '#fff',
+                      }}
+                    >
+                      {suggestions.map((suggestion, idx) => (
+                        <MenuItem
+                          key={idx}
+                          onClick={() => {
+                            setSearch(suggestion);
+                            setShowSuggestions(false);
+                          }}
+                          sx={{ py: 1.2, px: 2, fontSize: 14.5 }}
+                        >
+                          <SearchRounded sx={{ fontSize: 16, mr: 1.5, color: 'rgba(24,24,27,0.38)' }} />
+                          {suggestion}
+                        </MenuItem>
+                      ))}
+                    </Paper>
+                  )}
+                </Box>
                 <Button
                   variant="contained"
                   sx={{

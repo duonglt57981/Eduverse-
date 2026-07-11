@@ -1,4 +1,4 @@
-﻿using Eduverse.Model;
+using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
@@ -38,6 +38,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
+using Eduverse.Service.ElasticsearchService;
 
 
 
@@ -64,6 +65,7 @@ namespace Eduverse.Service.KhoaHocService
         private readonly IBaiGiangService _baiGiangService;
         private readonly ITaiLieuService _taiLieuService;
         private readonly EduverseContext _eduverseContext;
+        private readonly IElasticsearchService _elasticsearchService;
 
         public KhoaHocService(
             IMemoryCache memoryCache,
@@ -86,7 +88,8 @@ namespace Eduverse.Service.KhoaHocService
             ICauHoiRepository cauHoiRepository,
             IBaiGiangService baiGiangService,
             ITaiLieuService taiLieuService,
-            EduverseContext eduverseContext
+            EduverseContext eduverseContext,
+            IElasticsearchService elasticsearchService
 
         ) : base(khoaHocRepository)
         {
@@ -109,6 +112,7 @@ namespace Eduverse.Service.KhoaHocService
             _baiGiangService = baiGiangService;
             _taiLieuService = taiLieuService;
             _eduverseContext = eduverseContext;
+            _elasticsearchService = elasticsearchService;
         }
         
 
@@ -117,108 +121,7 @@ namespace Eduverse.Service.KhoaHocService
         public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search)
         {
             search ??= new KhoaHocSearch();
-
-            IQueryable<KhoaHoc> query = GetQueryable()
-                .Where(x => x.TrangThai == "HoatDong" && x.TrangThaiPheDuyet == "DaDuyet");
-
-            // Keyword
-            if (!string.IsNullOrWhiteSpace(search.Keyword))
-            {
-                var keyword = search.Keyword.Trim();
-
-                query = query.Where(x =>
-                    x.TieuDe.Contains(keyword) ||
-                    x.LoaiKhoaHoc.Contains(keyword));
-            }
-
-            if (!string.IsNullOrWhiteSpace(search.TieuDe))
-            {
-                var tieuDe = search.TieuDe.Trim();
-
-                query = query.Where(x =>
-                    x.TieuDe.Contains(tieuDe));
-            }
-
-            if (!string.IsNullOrWhiteSpace(search.CapDo))
-            {
-                query = query.Where(x =>
-                    x.CapDo == search.CapDo);
-            }
-
-            if (!string.IsNullOrWhiteSpace(search.LoaiKhoaHoc))
-            {
-                query = query.Where(x =>
-                    x.LoaiKhoaHoc == search.LoaiKhoaHoc);
-            }
-
-            if (search.GiaFrom.HasValue)
-            {
-                query = query.Where(x =>
-                    x.Gia >= search.GiaFrom.Value);
-            }
-
-            if (search.GiaTo.HasValue)
-            {
-                query = query.Where(x =>
-                    x.Gia <= search.GiaTo.Value);
-            }
-
-            if (search.TongBaiGiangFrom.HasValue)
-            {
-                query = query.Where(x =>
-                    x.TongBaiGiang >= search.TongBaiGiangFrom.Value);
-            }
-
-            if (search.TongBaiGiangTo.HasValue)
-            {
-                query = query.Where(x =>
-                    x.TongBaiGiang <= search.TongBaiGiangTo.Value);
-            }
-
-            if (search.IsFree == true)
-            {
-                query = query.Where(x => x.Gia == 0);
-            }
-
-            // Validate
-            if (search.GiaFrom > search.GiaTo)
-            {
-                throw new Exception("Giá bắt đầu không được lớn hơn giá kết thúc");
-            }
-
-            if (search.TongBaiGiangFrom > search.TongBaiGiangTo)
-            {
-                throw new Exception("Số bài giảng bắt đầu không được lớn hơn số bài giảng kết thúc");
-            }
-
-            // Sort
-            query = search.SortPrice?.ToLower() switch
-            {
-                "asc" => query.OrderBy(x => x.Gia),
-                "desc" => query.OrderByDescending(x => x.Gia),
-                _ => query.OrderByDescending(x => x.NgayTao)
-            };
-
-            var dtoQuery = query.Select(kh => new KhoaHocDto
-            {
-                Id = kh.Id,
-                TieuDe = kh.TieuDe,
-                MoTa = kh.MoTa,
-                Gia = kh.Gia,
-                GiaGoc = kh.GiaGoc,
-                LoaiKhoaHoc = kh.LoaiKhoaHoc,
-                HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
-                URLViewPreviewKhoaHoc = kh.URLViewPreviewKhoaHoc,
-                CapDo = kh.CapDo,
-                TongThoiLuong = kh.TongThoiLuong,
-                TongBaiGiang = kh.TongBaiGiang,
-                SoLuongHocVien = kh.SoLuongHocVien,
-                NgayTao = kh.NgayTao,
-
-                DaDangKy = false
-            });
-
-            return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
+            return await _elasticsearchService.SearchCoursesAsync(search);
         }
         #endregion
 
@@ -233,112 +136,14 @@ namespace Eduverse.Service.KhoaHocService
 
             search ??= new KhoaHocSearch();
 
-            IQueryable<KhoaHoc> query = GetQueryable()
-                 .AsNoTracking()
-                 .Where(kh => (kh.TrangThai == "HoatDong")
-                            && kh.TrangThaiPheDuyet == "DaDuyet"
-                            && !_dangKyKhoaHocRepository
-                                .GetQueryable()
-                                .Any(dk => dk.IdNguoiDangKi == userId&& dk.IdKhoaHoc == kh.Id));
+            var registeredCourseIds = await _dangKyKhoaHocRepository.GetQueryable()
+                .Where(dk => dk.IdNguoiDangKi == userId && !dk.IsDeleted && dk.IdKhoaHoc.HasValue)
+                .Select(dk => dk.IdKhoaHoc!.Value)
+                .ToListAsync();
 
-            // Keyword
-            if (!string.IsNullOrWhiteSpace(search.Keyword))
-            {
-                var keyword = search.Keyword.Trim();
+            search.ExcludeCourseIds = registeredCourseIds;
 
-                query = query.Where(x =>
-                    x.TieuDe.Contains(keyword) ||
-                    x.LoaiKhoaHoc.Contains(keyword));
-            }
-
-            if (!string.IsNullOrWhiteSpace(search.TieuDe))
-            {
-                var tieuDe = search.TieuDe.Trim();
-
-                query = query.Where(x =>
-                    x.TieuDe.Contains(tieuDe));
-            }
-
-            if (!string.IsNullOrWhiteSpace(search.CapDo))
-            {
-                query = query.Where(x =>
-                    x.CapDo == search.CapDo);
-            }
-
-            if (!string.IsNullOrWhiteSpace(search.LoaiKhoaHoc))
-            {
-                query = query.Where(x =>
-                    x.LoaiKhoaHoc == search.LoaiKhoaHoc);
-            }
-
-            if (search.GiaFrom.HasValue)
-            {
-                query = query.Where(x =>
-                    x.Gia >= search.GiaFrom.Value);
-            }
-
-            if (search.GiaTo.HasValue)
-            {
-                query = query.Where(x =>
-                    x.Gia <= search.GiaTo.Value);
-            }
-
-            if (search.TongBaiGiangFrom.HasValue)
-            {
-                query = query.Where(x =>
-                    x.TongBaiGiang >= search.TongBaiGiangFrom.Value);
-            }
-            
-            if (search.TongBaiGiangTo.HasValue)
-            {
-                query = query.Where(x =>
-                    x.TongBaiGiang <= search.TongBaiGiangTo.Value);
-            }
-
-            if (search.IsFree == true)
-            {
-                query = query.Where(x => x.Gia == 0);
-            }
-
-            // Validate
-            if (search.GiaFrom > search.GiaTo)
-            {
-                throw new Exception("Giá bắt đầu không được lớn hơn giá kết thúc");
-            }
-
-            if (search.TongBaiGiangFrom > search.TongBaiGiangTo)
-            {
-                throw new Exception("Số bài giảng bắt đầu không được lớn hơn số bài giảng kết thúc");
-            }
-
-            // Sort
-            query = search.SortPrice?.ToLower() switch
-            {
-                "asc" => query.OrderBy(x => x.Gia),
-                "desc" => query.OrderByDescending(x => x.Gia),
-                _ => query.OrderByDescending(x => x.NgayTao)
-            };
-
-            var dtoQuery = query.Select(kh => new KhoaHocDto
-            {
-                Id = kh.Id,
-                TieuDe = kh.TieuDe,
-                MoTa = kh.MoTa,
-                Gia = kh.Gia,
-                GiaGoc = kh.GiaGoc,
-                LoaiKhoaHoc = kh.LoaiKhoaHoc,
-                HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
-                URLViewPreviewKhoaHoc = kh.URLViewPreviewKhoaHoc,
-                CapDo = kh.CapDo,
-                TongThoiLuong = kh.TongThoiLuong,
-                TongBaiGiang = kh.TongBaiGiang,
-                SoLuongHocVien = kh.SoLuongHocVien,
-                NgayTao = kh.NgayTao,
-
-                DaDangKy = false
-            });
-
-            return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
+            return await _elasticsearchService.SearchCoursesAsync(search);
         }
         #endregion
 
@@ -2178,6 +1983,10 @@ namespace Eduverse.Service.KhoaHocService
                 }
             }
 
+            foreach (var kh in khoaHocToUpdate)
+            {
+                try { await _elasticsearchService.IndexCourseAsync(kh.Id); } catch {}
+            }
             var resultDtos = _mapper.MapList<KhoaHoc, KhoaHocDto>(khoaHocToUpdate);
             return resultDtos.ToList();
         }
@@ -2314,6 +2123,10 @@ namespace Eduverse.Service.KhoaHocService
                 }
             }
 
+            foreach (var kh in khoaHocToUpdate)
+            {
+                try { await _elasticsearchService.IndexCourseAsync(kh.Id); } catch {}
+            }
             var resultDtos = _mapper.MapList<KhoaHoc, KhoaHocDto>(khoaHocToUpdate);
             return resultDtos.ToList();
         }
@@ -2459,6 +2272,16 @@ namespace Eduverse.Service.KhoaHocService
 
             var KhoaHocDto = _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
             KhoaHocDto.DanhMucs = _mapper.MapToList<DanhMuc_KhoaHoc, DanhMuc_KhoaHocDto>(khoaHocDanhMucs);
+
+            try
+            {
+                await _elasticsearchService.IndexCourseAsync(khoaHoc.Id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Elasticsearch Indexing failed during creation: {ex.Message}");
+            }
+
             return KhoaHocDto;
         }
         #endregion
@@ -2573,6 +2396,8 @@ namespace Eduverse.Service.KhoaHocService
                 await UpdateDanhMuc(banGoc.Id, danhMucMoi);
                 await SaveAsync();
 
+                try { await _elasticsearchService.IndexCourseAsync(banGoc.Id); } catch {}
+
                 return _mapper.Map<KhoaHoc, KhoaHocDto>(banGoc);
             }
 
@@ -2593,6 +2418,8 @@ namespace Eduverse.Service.KhoaHocService
                 await UpdateAsync(banGoc);
                 await UpdateDanhMuc(banGoc.Id, danhMucMoi);
                 await SaveAsync();
+
+                try { await _elasticsearchService.IndexCourseAsync(banGoc.Id); } catch {}
 
                 return _mapper.Map<KhoaHoc, KhoaHocDto>(banGoc);
             }
@@ -2705,6 +2532,17 @@ namespace Eduverse.Service.KhoaHocService
 
 
             await SaveAsync();
+
+            try
+            {
+                if (banGoc != null) await _elasticsearchService.IndexCourseAsync(banGoc.Id);
+                if (banNhap != null) await _elasticsearchService.IndexCourseAsync(banNhap.Id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Elasticsearch Indexing failed during update: {ex.Message}");
+            }
+
             return _mapper.Map<KhoaHoc, KhoaHocDto>(banNhap);
         }
         #endregion
@@ -2770,7 +2608,27 @@ namespace Eduverse.Service.KhoaHocService
 
             await DeleteAsync(khoaHoc);
             await SaveAsync();
+
+            try
+            {
+                await _elasticsearchService.DeleteCourseAsync(idKhoaHoc);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Elasticsearch deletion failed: {ex.Message}");
+            }
+
             return true;
+        }
+
+        public async Task<List<string>> GetSearchSuggestions(string query)
+        {
+            return await _elasticsearchService.GetSearchSuggestionsAsync(query);
+        }
+
+        public async Task SyncElasticsearch()
+        {
+            await _elasticsearchService.BulkIndexAllCoursesAsync();
         }
     }
 }
