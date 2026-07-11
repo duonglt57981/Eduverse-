@@ -198,7 +198,10 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Button
               onClick={() => router.push("/student/explore")}
               sx={{
-                color: pathname === "/student/explore" ? "primary.main" : "text.primary",
+                color:
+                  pathname === "/student/explore"
+                    ? "primary.main"
+                    : "text.primary",
                 fontWeight: 600,
                 fontSize: 14,
                 textTransform: "none",
@@ -228,7 +231,9 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 onClick={() => router.push("/instructor/manager-courses")}
                 sx={{
-                  color: pathname.startsWith("/instructor/manager-courses") ? "primary.main" : "text.primary",
+                  color: pathname.startsWith("/instructor/manager-courses")
+                    ? "primary.main"
+                    : "text.primary",
                   fontWeight: 600,
                   fontSize: 14,
                   textTransform: "none",
@@ -239,9 +244,26 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 Quản lý khóa học
               </Button>
               <Button
+                onClick={() => router.push("/instructor/manager-promotions")}
+                sx={{
+                  color: pathname.startsWith("/instructor/manager-promotions")
+                    ? "primary.main"
+                    : "text.primary",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  textTransform: "none",
+                  px: 1.5,
+                  "&:hover": { color: "primary.main", bgcolor: "transparent" },
+                }}
+              >
+                Khuyến mãi
+              </Button>
+              <Button
                 onClick={() => router.push("/instructor/money")}
                 sx={{
-                  color: pathname.startsWith("/instructor/money") ? "primary.main" : "text.primary",
+                  color: pathname.startsWith("/instructor/money")
+                    ? "primary.main"
+                    : "text.primary",
                   fontWeight: 600,
                   fontSize: 14,
                   textTransform: "none",
@@ -254,7 +276,9 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 onClick={() => router.push("/instructor/bank")}
                 sx={{
-                  color: pathname.startsWith("/instructor/bank") ? "primary.main" : "text.primary",
+                  color: pathname.startsWith("/instructor/bank")
+                    ? "primary.main"
+                    : "text.primary",
                   fontWeight: 600,
                   fontSize: 14,
                   textTransform: "none",
@@ -272,7 +296,10 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 onClick={() => router.push("/admin/dashboard")}
                 sx={{
-                  color: pathname === "/admin/dashboard" ? "primary.main" : "text.primary",
+                  color:
+                    pathname === "/admin/dashboard"
+                      ? "primary.main"
+                      : "text.primary",
                   fontWeight: 600,
                   fontSize: 14,
                   textTransform: "none",
@@ -285,7 +312,10 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 onClick={() => router.push("/admin/approve-courses")}
                 sx={{
-                  color: pathname === "/admin/approve-courses" ? "primary.main" : "text.primary",
+                  color:
+                    pathname === "/admin/approve-courses"
+                      ? "primary.main"
+                      : "text.primary",
                   fontWeight: 600,
                   fontSize: 14,
                   textTransform: "none",
@@ -298,7 +328,10 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 onClick={() => router.push("/admin/users")}
                 sx={{
-                  color: pathname === "/admin/users" ? "primary.main" : "text.primary",
+                  color:
+                    pathname === "/admin/users"
+                      ? "primary.main"
+                      : "text.primary",
                   fontWeight: 600,
                   fontSize: 14,
                   textTransform: "none",
@@ -313,7 +346,14 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </Stack>
 
         {/* Center Search Pill */}
-        <Box sx={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "center" }}>
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
           <Paper
             elevation={0}
             sx={{
@@ -334,7 +374,9 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               },
             }}
           >
-            <SearchRounded sx={{ color: "rgba(24,24,27,0.42)", fontSize: 18 }} />
+            <SearchRounded
+              sx={{ color: "rgba(24,24,27,0.42)", fontSize: 18 }}
+            />
             <InputBase
               placeholder={getSearchPlaceholder()}
               sx={{ flex: 1, fontSize: 13.5 }}
@@ -343,7 +385,11 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </Box>
 
         {/* Right Actions & Buttons */}
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flexShrink: 0 }}>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ alignItems: "center", flexShrink: 0 }}
+        >
           {/* Student Mode Roles buttons */}
           {isStudentMode && (
             <>
@@ -357,7 +403,10 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     fontSize: 14,
                     textTransform: "none",
                     px: 1.5,
-                    "&:hover": { color: "primary.main", bgcolor: "transparent" },
+                    "&:hover": {
+                      color: "primary.main",
+                      bgcolor: "transparent",
+                    },
                   }}
                 >
                   Trang giảng viên
@@ -372,7 +421,10 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     fontSize: 14,
                     textTransform: "none",
                     px: 1.5,
-                    "&:hover": { color: "primary.main", bgcolor: "transparent" },
+                    "&:hover": {
+                      color: "primary.main",
+                      bgcolor: "transparent",
+                    },
                   }}
                 >
                   Trở thành Giảng viên
@@ -431,11 +483,16 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Stack
                 direction="row"
                 spacing={1}
-                sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}
+                sx={{
+                  display: { xs: "none", md: "flex" },
+                  alignItems: "center",
+                }}
               >
                 <Button
                   variant="outlined"
-                  startIcon={<CalendarMonthRounded sx={{ color: "text.secondary" }} />}
+                  startIcon={
+                    <CalendarMonthRounded sx={{ color: "text.secondary" }} />
+                  }
                   sx={{
                     borderRadius: "10px",
                     borderColor: "divider",
@@ -452,7 +509,9 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 </Button>
                 <Button
                   variant="contained"
-                  startIcon={<ArrowForwardRounded sx={{ transform: "rotate(90deg)" }} />}
+                  startIcon={
+                    <ArrowForwardRounded sx={{ transform: "rotate(90deg)" }} />
+                  }
                   sx={{
                     borderRadius: "10px",
                     bgcolor: "primary.main",
@@ -591,7 +650,15 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
             {/* Header User info */}
-            <Box sx={{ px: 2.5, py: 2, display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                px: 2.5,
+                py: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
               <Avatar
                 src={userAvatar || undefined}
                 sx={{

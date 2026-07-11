@@ -90,7 +90,7 @@ export default function Step5Page() {
 
       // Gọi API tạo khóa học
       const createResponse = await khoaHocService.CreateKhoaHoc(payload);
-      const khoaHocId = createResponse.id;
+      const khoaHocId = createResponse.data.id;
       router.push(`/instructor/manager-courses/${khoaHocId}/manager/basics`);
     } catch (err) {
       console.error(err);

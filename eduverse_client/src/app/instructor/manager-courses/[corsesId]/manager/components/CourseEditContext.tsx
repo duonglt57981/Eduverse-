@@ -70,10 +70,9 @@ export function CourseEditProvider({
   const refreshData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await khoaHocService.GetToUpdateKhoaHoc(coursesId);
-      if (result?.status !== false && result?.data) {
-        const data = result.data;
-        // Gán đầy đủ thuộc tính, thêm mặc định cho các trường bắt buộc
+      const data = await khoaHocService.GetToUpdateKhoaHoc(coursesId);
+
+      if (data) {
         const khoaHoc: KhoaHocType = {
           id: data.id,
           tieuDe: data.tieuDe,
@@ -82,12 +81,13 @@ export function CourseEditProvider({
           giaGoc: data.giaGoc,
           capDo: data.capDo,
           hinhAnhKhoaHoc: data.urlHinhAnh,
-          // Các trường còn lại mặc định
+
           daDangKy: false,
           ngayDangKy: new Date(),
           soBaiGiangHoanThanh: 0,
           phanTramHoanThanh: 0,
         };
+
         setThongTinState(khoaHoc);
       }
 
@@ -136,6 +136,7 @@ export function CourseEditProvider({
   }, [coursesId, khoaHocService, phanService, baiGiangService, taiLieuService]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshData().catch(() => {});
   }, [refreshData]);
 
