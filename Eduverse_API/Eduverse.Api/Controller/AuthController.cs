@@ -100,6 +100,14 @@ namespace Eduverse.Api.Controller
             return new DataResponse<string> { Status = true, Message = result };
         }
 
+        [HttpPost("verify-otp")]
+        [AllowAnonymous]
+        public async Task<DataResponse<string>> VerifyOtp([FromBody] VerifyOtpRequest request)
+        {
+            var resetToken = await _authService.VerifyOtpAsync(request);
+            return new DataResponse<string> { Status = true, Message = "Xác minh thành công", Data = resetToken };
+        }
+
         [HttpPost("change-password")]
         [Authorize]
         public async Task<DataResponse<string>> ChangePassword([FromBody] ChangePasswordRequest request)

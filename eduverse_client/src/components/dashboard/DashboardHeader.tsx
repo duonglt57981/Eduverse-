@@ -53,13 +53,17 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("user_avatar");
-      if (stored) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUserAvatar(stored);
+    const handleAvatarUpdate = () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("user_avatar");
+        if (stored) {
+          setUserAvatar(stored);
+        }
       }
-    }
+    };
+    window.addEventListener("avatar_updated", handleAvatarUpdate);
+    handleAvatarUpdate();
+    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
   }, []);
 
   const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {

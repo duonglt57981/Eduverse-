@@ -3,7 +3,8 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
-import { login, externalLogin } from '../../../store/auth/AuthSlice';
+import { login } from '../../../store/auth/AuthSlice';
+import GoogleAuthButton from '../../../components/auth/GoogleAuthButton';
 import {
   Box,
   Button,
@@ -67,96 +68,12 @@ function EyeOffIcon(props: React.ComponentProps<typeof SvgIcon>) {
   );
 }
 
-function GoogleGlyph(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 48 48">
-      <path
-        fill="currentColor"
-        d="M24 21.7v4.6h6.5c-.9 3.9-4.3 5.7-6.5 5.7-3.9 0-7.3-3.2-7.3-8s3.3-8 7.3-8c2.2 0 3.8.9 4.7 1.7l3.2-3.1C30 12.7 27.3 11.5 24 11.5c-6.9 0-12.5 5.6-12.5 12.5S17.1 36.5 24 36.5c7.3 0 12.1-5.1 12.1-12.3 0-.8-.1-1.5-.2-2.2H24Z"
-      />
-    </SvgIcon>
-  );
-}
-
-function FacebookGlyph(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="M13.5 22v-8.2h2.8l.4-3.2h-3.2V8.6c0-.9.3-1.6 1.7-1.6H17V4.2c-.3 0-1.4-.2-2.7-.2-2.7 0-4.5 1.6-4.5 4.7v1.9H7v3.2h2.9V22h3.6Z"
-      />
-    </SvgIcon>
-  );
-}
-
 export default function LoginPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { loading, error } = useSelector((s) => s.auth);
-
-  const handleExternalLogin = (provider: 'google' | 'facebook') => {
-    const width = 500;
-    const height = 650;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
-    let url = `/auth/oauth-callback?provider=${provider}`;
-
-    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/oauth-callback?provider=${provider}`);
-
-    if (provider === 'google' && googleClientId) {
-      url = `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?client_id=${googleClientId}` +
-        `&redirect_uri=${redirectUri}` +
-        `&response_type=id_token` +
-        `&scope=openid%20profile%20email` +
-        `&nonce=nonce_${Date.now()}` +
-        `&state=state_${provider}`;
-    } else if (provider === 'facebook' && facebookAppId) {
-      url = `https://www.facebook.com/v18.0/dialog/oauth` +
-        `?client_id=${facebookAppId}` +
-        `&redirect_uri=${redirectUri}` +
-        `&response_type=token` +
-        `&scope=public_profile,email` +
-        `&state=state_${provider}`;
-    }
-
-    const popup = window.open(
-      url,
-      `Đăng nhập ${provider === 'google' ? 'Google' : 'Facebook'}`,
-      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
-    );
-
-    if (!popup) {
-      alert('Vui lòng bỏ chặn popup để tiếp tục đăng nhập.');
-      return;
-    }
-
-    const messageListener = async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data?.type === 'OAUTH_SUCCESS') {
-        window.removeEventListener('message', messageListener);
-        const payload = event.data.payload;
-
-        const result = await dispatch(externalLogin(payload));
-        if (externalLogin.fulfilled.match(result)) {
-          const roles: string[] = result.payload.roles || [];
-          if (roles.includes('Admin')) {
-            router.push('/admin/dashboard');
-          } else if (roles.includes('GiaoVien')) {
-            router.push('/instructor/dashboard');
-          } else {
-            router.push('/student/dashboard');
-          }
-        }
-      }
-    };
-
-    window.addEventListener('message', messageListener);
-  };
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const [googleSize, setGoogleSize] = useState({ width: 0, height: 40 });
 
   const [form, setForm] = useState({ userName: '', password: '' });
   const [showPass, setShowPass] = useState(false);
@@ -424,7 +341,7 @@ export default function LoginPage() {
               bgcolor: '#f9f8f6',
             }}
           >
-            <Box sx={{ width: '100%', maxWidth: 440, my: 'auto' }}>
+            <Box sx={{ width: '100%', maxWidth: 400, my: 'auto' }}>
               <Typography
                 variant="h4"
                 sx={{ fontSize: { xs: 28, sm: 32 }, mb: 0.75, color: 'text.primary' }}
@@ -435,7 +352,7 @@ export default function LoginPage() {
                 Truy cập vào tài khoản EduVerse của bạn
               </Typography>
 
-              {error && (
+              {(error || googleError) && (
                 <Paper
                   elevation={0}
                   sx={{
@@ -449,7 +366,7 @@ export default function LoginPage() {
                     fontSize: 13,
                   }}
                 >
-                  {error}
+                  {error || googleError}
                 </Paper>
               )}
 
@@ -561,6 +478,10 @@ export default function LoginPage() {
                     sx={{
                       mt: 0.5,
                       width: '100%',
+                      display: 'flex',
+                      height: googleSize.height,
+                      minHeight: googleSize.height,
+                      boxSizing: 'border-box',
                       background:
                         'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
                       boxShadow: '0 14px 34px rgba(127,29,29,0.26)',
@@ -582,7 +503,7 @@ export default function LoginPage() {
 
               <Divider
                 sx={{
-                  my: 3,
+                  my: 2.5,
                   color: '#9a9a9a',
                   '&::before, &::after': { borderColor: 'rgba(17,17,17,0.10)' },
                   fontSize: 12.5,
@@ -591,44 +512,7 @@ export default function LoginPage() {
                 Hoặc tiếp tục với
               </Divider>
 
-              <Stack direction="row" spacing={1.5}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => handleExternalLogin('google')}
-                  startIcon={<GoogleGlyph sx={{ fontSize: 18 }} />}
-                  sx={{
-                    borderRadius: 999,
-                    borderColor: 'rgba(17,17,17,0.14)',
-                    color: '#2a2a2a',
-                    bgcolor: '#fff',
-                    '&:hover': {
-                      borderColor: 'rgba(17,17,17,0.22)',
-                      bgcolor: 'rgba(255,255,255,0.92)',
-                    },
-                  }}
-                >
-                  Google
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => handleExternalLogin('facebook')}
-                  startIcon={<FacebookGlyph sx={{ fontSize: 18 }} />}
-                  sx={{
-                    borderRadius: 999,
-                    borderColor: 'rgba(17,17,17,0.14)',
-                    color: '#2a2a2a',
-                    bgcolor: '#fff',
-                    '&:hover': {
-                      borderColor: 'rgba(17,17,17,0.22)',
-                      bgcolor: 'rgba(255,255,255,0.92)',
-                    },
-                  }}
-                >
-                  Facebook
-                </Button>
-              </Stack>
+              <GoogleAuthButton text="signin_with" onError={setGoogleError} onSize={setGoogleSize} />
 
               <Typography
                 sx={{

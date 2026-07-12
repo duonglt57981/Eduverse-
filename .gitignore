@@ -19,3 +19,6 @@ publish/
 
 # Documents
 Tailieu_*
+
+# Temp backups
+.claude_tmp_delete/

@@ -2,7 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
-import { forgotPassword, resetPassword, clearError, clearSuccess } from '../../../store/auth/AuthSlice';
+import {
+  forgotPassword,
+  verifyOtp,
+  resetPassword,
+  clearError,
+  clearSuccess,
+} from '../../../store/auth/AuthSlice';
 import {
   Box,
   Button,
@@ -20,22 +26,67 @@ import {
   VisibilityOffRounded,
   VisibilityRounded,
   CheckCircleOutlineRounded,
-  KeyRounded
+  KeyRounded,
+  LockResetRounded,
 } from '@mui/icons-material';
+
+const MAROON = '#7f1d1d';
+const GREEN = '#0a5a3a';
+
+// Style dùng chung cho các ô nhập liệu
+const inputSx = {
+  borderRadius: 3,
+  bgcolor: 'rgba(17,17,17,0.03)',
+  pr: 2,
+  py: 0.5,
+  transition: 'box-shadow 160ms ease, background 160ms ease',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(17,17,17,0.06)',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(17,17,17,0.12)',
+  },
+  '&.Mui-focused': {
+    boxShadow: '0 0 0 4px rgba(127,29,29,0.1)',
+    bgcolor: 'rgba(17,17,17,0.02)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(127,29,29,0.3)',
+  },
+} as const;
+
+// Style dùng chung cho nút hành động chính
+const primaryButtonSx = {
+  borderRadius: 3,
+  py: 1.75,
+  fontWeight: 800,
+  fontSize: 15,
+  textTransform: 'none',
+  background: 'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
+  boxShadow: '0 10px 25px rgba(127,29,29,0.2)',
+  '&:hover': {
+    background: 'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
+    boxShadow: '0 12px 28px rgba(127,29,29,0.25)',
+  },
+  '&.Mui-disabled': {
+    background: 'rgba(17,17,17,0.08)',
+    color: 'rgba(17,17,17,0.35)',
+  },
+} as const;
 
 const RequirementItem = ({ checked, label }: { checked: boolean; label: string }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
     <CheckCircleOutlineRounded
       sx={{
         fontSize: 16,
-        color: checked ? '#0a5a3a' : 'rgba(17,17,17,0.25)',
+        color: checked ? GREEN : 'rgba(17,17,17,0.25)',
         transition: 'color 160ms ease',
       }}
     />
     <Typography
       variant="caption"
       sx={{
-        color: checked ? '#0a5a3a' : 'rgba(17,17,17,0.55)',
+        color: checked ? GREEN : 'rgba(17,17,17,0.55)',
         fontWeight: checked ? 600 : 400,
         transition: 'color 160ms ease',
       }}
@@ -45,27 +96,52 @@ const RequirementItem = ({ checked, label }: { checked: boolean; label: string }
   </Stack>
 );
 
+// Chỉ báo tiến trình 3 bước
+const StepIndicator = ({ current }: { current: number }) => (
+  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    {[1, 2, 3].map((s) => (
+      <Box
+        key={s}
+        sx={{
+          flex: 1,
+          height: 4,
+          borderRadius: 2,
+          bgcolor: s <= current ? MAROON : 'rgba(17,17,17,0.1)',
+          transition: 'background 240ms ease',
+        }}
+      />
+    ))}
+  </Stack>
+);
+
 export default function ForgotPasswordPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { loading, error, successMessage } = useSelector((s) => s.auth);
-  
-  const [step, setStep] = useState(1); // 1: Nhập email, 2: Nhập OTP & Mật khẩu mới
+
+  // 1: Nhập email | 2: Xác minh OTP | 3: Đặt mật khẩu mới
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [otpSentMessage, setOtpSentMessage] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
 
-  // Password requirements state
+  // Điều kiện mật khẩu
   const hasMinLength = newPassword.length >= 8;
   const hasUppercase = /[A-Z]/.test(newPassword);
   const hasLowercase = /[a-z]/.test(newPassword);
   const hasDigit = /\d/.test(newPassword);
   const hasSpecial = /[^A-Za-z0-9]/.test(newPassword);
-  const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasDigit && hasSpecial;
+  const isPasswordValid =
+    hasMinLength && hasUppercase && hasLowercase && hasDigit && hasSpecial;
+  const passwordsMatch =
+    confirmPassword.length > 0 && newPassword === confirmPassword;
 
-  // Clear redux state when mounting/unmounting
+  // Xóa trạng thái redux khi mount/unmount
   useEffect(() => {
     dispatch(clearError());
     dispatch(clearSuccess());
@@ -75,27 +151,69 @@ export default function ForgotPasswordPage() {
     };
   }, [dispatch]);
 
+  // Đồng hồ đếm ngược để gửi lại OTP
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const timer = setTimeout(() => {
+      setResendCountdown((c) => (c <= 1 ? 0 : c - 1));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
+
+  // Bước 1 -> gửi OTP tới email
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     dispatch(clearError());
     dispatch(clearSuccess());
-    
-    const result = await dispatch(forgotPassword(email));
+
+    const result = await dispatch(forgotPassword(email.trim()));
     if (forgotPassword.fulfilled.match(result)) {
-      setOtpSentMessage(result.payload as string);
+      // Cố tình KHÔNG hiển thị nội dung phản hồi từ backend ra màn hình,
+      // để mã OTP không bao giờ lộ trên giao diện. OTP chỉ được gửi qua email.
       setStep(2);
-      dispatch(clearSuccess()); // Clear to allow step 2 success message later
+      setResendCountdown(60);
+      dispatch(clearSuccess());
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  // Gửi lại OTP (khi đã hết đếm ngược)
+  const handleResendOtp = async () => {
+    if (resendCountdown > 0 || loading) return;
+    dispatch(clearError());
+    dispatch(clearSuccess());
+    setOtp('');
+
+    const result = await dispatch(forgotPassword(email.trim()));
+    if (forgotPassword.fulfilled.match(result)) {
+      setResendCountdown(60);
+      dispatch(clearSuccess());
+    }
+  };
+
+  // Bước 2 -> xác minh OTP, nhận reset token
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isPasswordValid) return;
-    
+    if (otp.length < 6) return;
     dispatch(clearError());
     dispatch(clearSuccess());
 
-    const result = await dispatch(resetPassword({ email, token: otp, newPassword }));
+    const result = await dispatch(verifyOtp({ email: email.trim(), otp }));
+    if (verifyOtp.fulfilled.match(result)) {
+      setResetToken((result.payload as string) || '');
+      setStep(3);
+    }
+  };
+
+  // Bước 3 -> đặt mật khẩu mới bằng reset token
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isPasswordValid || !passwordsMatch || !resetToken) return;
+    dispatch(clearError());
+    dispatch(clearSuccess());
+
+    const result = await dispatch(
+      resetPassword({ email: email.trim(), resetToken, newPassword }),
+    );
     if (resetPassword.fulfilled.match(result)) {
       setTimeout(() => {
         router.push('/auth/login');
@@ -103,13 +221,31 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleGoBack = () => {
+  // Nút quay lại theo từng bước
+  const handleBack = () => {
     dispatch(clearError());
     dispatch(clearSuccess());
-    setStep(1);
-    setOtp('');
-    setNewPassword('');
+    if (step === 3) {
+      // Quay lại bước OTP: cần xác minh lại (mã cũ đã dùng)
+      setResetToken('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setOtp('');
+      setStep(2);
+    } else if (step === 2) {
+      setOtp('');
+      setResendCountdown(0);
+      setStep(1);
+    }
   };
+
+  const titleByStep = step === 1 ? 'Quên mật khẩu' : step === 2 ? 'Xác minh OTP' : 'Đặt lại mật khẩu';
+  const subtitleByStep =
+    step === 1
+      ? 'Nhập email đã đăng ký. Hệ thống sẽ gửi một mã OTP gồm 6 chữ số để xác nhận đặt lại mật khẩu.'
+      : step === 2
+        ? `Chúng tôi đã gửi mã OTP đến ${email}. Vui lòng nhập mã gồm 6 chữ số để tiếp tục.`
+        : 'Xác minh thành công. Hãy tạo mật khẩu mới cho tài khoản của bạn.';
 
   return (
     <Box
@@ -120,6 +256,7 @@ export default function ForgotPasswordPage() {
         justifyContent: 'center',
         bgcolor: '#f9f8f6',
         px: 2,
+        py: 4,
         background: 'radial-gradient(circle at 50% 50%, #fefefe 0%, #f5f3f0 100%)',
       }}
     >
@@ -138,43 +275,48 @@ export default function ForgotPasswordPage() {
         }}
       >
         <Stack spacing={3}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-            <IconButton
-              component="a"
-              href={step === 1 ? "/auth/login" : undefined}
-              onClick={step === 2 ? handleGoBack : undefined}
-              aria-label="Quay lại"
-              size="small"
-              sx={{
-                border: '1px solid rgba(17,17,17,0.08)',
-                bgcolor: 'rgba(17,17,17,0.01)',
-                '&:hover': {
-                  bgcolor: 'rgba(17,17,17,0.05)',
-                }
-              }}
-            >
-              <ArrowBackRounded fontSize="small" />
-            </IconButton>
-            <Typography variant="h5" sx={{ fontWeight: 850, letterSpacing: '-0.6px', color: '#111' }}>
-              {step === 1 ? 'Quên mật khẩu' : 'Xác thực OTP'}
-            </Typography>
+          <Stack spacing={2}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+              <IconButton
+                component="a"
+                href={step === 1 ? '/auth/login' : undefined}
+                onClick={step === 1 ? undefined : handleBack}
+                aria-label="Quay lại"
+                size="small"
+                sx={{
+                  border: '1px solid rgba(17,17,17,0.08)',
+                  bgcolor: 'rgba(17,17,17,0.01)',
+                  '&:hover': {
+                    bgcolor: 'rgba(17,17,17,0.05)',
+                  },
+                }}
+              >
+                <ArrowBackRounded fontSize="small" />
+              </IconButton>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 850, letterSpacing: '-0.6px', color: '#111' }}
+              >
+                {titleByStep}
+              </Typography>
+            </Stack>
+
+            <StepIndicator current={step} />
           </Stack>
 
           <Typography variant="body2" sx={{ color: 'rgba(17,17,17,0.6)', lineHeight: 1.5 }}>
-            {step === 1 
-              ? 'Nhập email đã đăng ký. Hệ thống sẽ gửi một mã OTP 6 số để xác nhận đặt lại mật khẩu.'
-              : `Mã OTP đã được gửi đến email ${email}. Vui lòng kiểm tra và nhập mã để tiếp tục.`
-            }
+            {subtitleByStep}
           </Typography>
 
-          {/* Hiển thị lỗi từ backend nếu có */}
+          {/* Lỗi từ backend */}
           {error ? (
             <Box
+              role="alert"
               sx={{
                 borderRadius: 3,
                 border: '1px solid rgba(127,29,29,0.2)',
                 bgcolor: 'rgba(127,29,29,0.05)',
-                color: '#7f1d1d',
+                color: MAROON,
                 px: 2.5,
                 py: 1.5,
                 fontSize: 13,
@@ -186,33 +328,35 @@ export default function ForgotPasswordPage() {
             </Box>
           ) : null}
 
-          {/* Hiển thị thông báo gửi OTP thành công (cho bước 2) */}
-          {step === 2 && otpSentMessage ? (
+          {/* Nhắc kiểm tra email — CỐ ĐỊNH, không lấy nội dung từ backend nên
+              mã OTP không bao giờ bị hiển thị ra màn hình. */}
+          {step === 2 && !error ? (
             <Box
               sx={{
                 borderRadius: 3,
                 border: '1px solid rgba(10,90,58,0.2)',
                 bgcolor: 'rgba(10,90,58,0.05)',
-                color: '#0a5a3a',
+                color: GREEN,
                 px: 2.5,
                 py: 1.5,
                 fontSize: 13,
                 fontWeight: 600,
-                lineHeight: 1.4,
+                lineHeight: 1.5,
               }}
             >
-              {otpSentMessage}
+              Mã OTP đã được gửi tới email của bạn. Nếu chưa thấy, vui lòng kiểm tra mục Spam/Quảng cáo.
+              Mã có hiệu lực trong 5 phút.
             </Box>
           ) : null}
 
-          {/* Hiển thị thông báo thành công chung */}
-          {successMessage ? (
+          {/* Thông báo đặt lại thành công */}
+          {successMessage && step === 3 ? (
             <Box
               sx={{
                 borderRadius: 3,
                 border: '1px solid rgba(10,90,58,0.2)',
                 bgcolor: 'rgba(10,90,58,0.05)',
-                color: '#0a5a3a',
+                color: GREEN,
                 px: 2.5,
                 py: 1.5,
                 fontSize: 13,
@@ -224,11 +368,15 @@ export default function ForgotPasswordPage() {
             </Box>
           ) : null}
 
+          {/* ============ BƯỚC 1: NHẬP EMAIL ============ */}
           {step === 1 ? (
             <Box component="form" onSubmit={handleSendOtp}>
               <Stack spacing={2.5}>
                 <FormControl fullWidth>
-                  <Typography variant="caption" sx={{ mb: 1, fontWeight: 700, color: 'rgba(17,17,17,0.7)' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ mb: 1, fontWeight: 700, color: 'rgba(17,17,17,0.7)' }}
+                  >
                     Địa chỉ Email
                   </Typography>
                   <OutlinedInput
@@ -237,106 +385,109 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="email"
+                    inputProps={{ 'aria-label': 'Địa chỉ email' }}
                     endAdornment={
                       <InputAdornment position="end">
                         <EmailRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
                       </InputAdornment>
                     }
-                    sx={{
-                      borderRadius: 3,
-                      bgcolor: 'rgba(17,17,17,0.03)',
-                      pr: 2,
-                      py: 0.5,
-                      transition: 'box-shadow 160ms ease, background 160ms ease',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.06)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.12)',
-                      },
-                      '&.Mui-focused': {
-                        boxShadow: '0 0 0 4px rgba(127,29,29,0.1)',
-                        bgcolor: 'rgba(17,17,17,0.02)',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(127,29,29,0.3)',
-                      },
-                    }}
+                    sx={inputSx}
                   />
                 </FormControl>
 
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={loading}
-                  sx={{
-                    borderRadius: 3,
-                    py: 1.75,
-                    fontWeight: 800,
-                    fontSize: 15,
-                    textTransform: 'none',
-                    background:
-                      'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-                    boxShadow: '0 10px 25px rgba(127,29,29,0.2)',
-                    '&:hover': {
-                      background:
-                        'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
-                      boxShadow: '0 12px 28px rgba(127,29,29,0.25)',
-                    },
-                    '&.Mui-disabled': {
-                      background: 'rgba(17,17,17,0.08)',
-                      color: 'rgba(17,17,17,0.35)',
-                    }
-                  }}
-                >
+                <Button type="submit" variant="contained" disabled={loading} sx={primaryButtonSx}>
                   {loading ? 'Đang gửi mã...' : 'Gửi mã OTP'}
                 </Button>
               </Stack>
             </Box>
-          ) : (
-            <Box component="form" onSubmit={handleResetPassword}>
+          ) : null}
+
+          {/* ============ BƯỚC 2: XÁC MINH OTP ============ */}
+          {step === 2 ? (
+            <Box component="form" onSubmit={handleVerifyOtp}>
               <Stack spacing={2.5}>
                 <FormControl fullWidth>
-                  <Typography variant="caption" sx={{ mb: 0.75, fontWeight: 700, color: 'rgba(17,17,17,0.7)' }}>
-                    Mã xác thực OTP (6 chữ số)
+                  <Typography
+                    variant="caption"
+                    sx={{ mb: 0.75, fontWeight: 700, color: 'rgba(17,17,17,0.7)' }}
+                  >
+                    Mã xác minh OTP (6 chữ số)
                   </Typography>
                   <OutlinedInput
                     type="text"
                     placeholder="Nhập 6 số OTP"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))
+                    }
                     required
-                    inputProps={{ maxLength: 6, style: { textAlign: 'center', letterSpacing: '8px', fontSize: '18px', fontWeight: 'bold' } }}
+                    autoFocus
+                    inputProps={{
+                      inputMode: 'numeric',
+                      autoComplete: 'one-time-code',
+                      maxLength: 6,
+                      'aria-label': 'Mã xác minh OTP gồm 6 chữ số',
+                      style: {
+                        textAlign: 'center',
+                        letterSpacing: '8px',
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                      },
+                    }}
                     endAdornment={
                       <InputAdornment position="end">
                         <KeyRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
                       </InputAdornment>
                     }
-                    sx={{
-                      borderRadius: 3,
-                      bgcolor: 'rgba(17,17,17,0.03)',
-                      pr: 2,
-                      py: 0.5,
-                      transition: 'box-shadow 160ms ease, background 160ms ease',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.06)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.12)',
-                      },
-                      '&.Mui-focused': {
-                        boxShadow: '0 0 0 4px rgba(127,29,29,0.1)',
-                        bgcolor: 'rgba(17,17,17,0.02)',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(127,29,29,0.3)',
-                      },
-                    }}
+                    sx={inputSx}
                   />
                 </FormControl>
 
+                {/* Gửi lại OTP + đồng hồ đếm ngược */}
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" sx={{ color: 'rgba(17,17,17,0.55)' }}>
+                    Không nhận được mã?
+                  </Typography>
+                  <Button
+                    variant="text"
+                    onClick={handleResendOtp}
+                    disabled={resendCountdown > 0 || loading}
+                    sx={{
+                      textTransform: 'none',
+                      color: MAROON,
+                      fontWeight: 700,
+                      fontSize: 13,
+                      minWidth: 0,
+                      '&:hover': { bgcolor: 'rgba(127,29,29,0.04)' },
+                      '&.Mui-disabled': { color: 'rgba(17,17,17,0.35)' },
+                    }}
+                  >
+                    {resendCountdown > 0 ? `Gửi lại sau ${resendCountdown}s` : 'Gửi lại mã OTP'}
+                  </Button>
+                </Stack>
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={loading || otp.length < 6}
+                  sx={primaryButtonSx}
+                >
+                  {loading ? 'Đang xác minh...' : 'Xác minh OTP'}
+                </Button>
+              </Stack>
+            </Box>
+          ) : null}
+
+          {/* ============ BƯỚC 3: ĐẶT MẬT KHẨU MỚI ============ */}
+          {step === 3 ? (
+            <Box component="form" onSubmit={handleResetPassword}>
+              <Stack spacing={2.5}>
                 <FormControl fullWidth>
-                  <Typography variant="caption" sx={{ mb: 0.75, fontWeight: 700, color: 'rgba(17,17,17,0.7)' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ mb: 0.75, fontWeight: 700, color: 'rgba(17,17,17,0.7)' }}
+                  >
                     Mật khẩu mới
                   </Typography>
                   <OutlinedInput
@@ -345,6 +496,8 @@ export default function ForgotPasswordPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
+                    autoComplete="new-password"
+                    inputProps={{ 'aria-label': 'Mật khẩu mới' }}
                     endAdornment={
                       <InputAdornment position="end">
                         <IconButton
@@ -353,35 +506,69 @@ export default function ForgotPasswordPage() {
                           onClick={() => setShowPass((v) => !v)}
                           size="small"
                         >
-                          {showPass ? <VisibilityOffRounded fontSize="small" /> : <VisibilityRounded fontSize="small" />}
+                          {showPass ? (
+                            <VisibilityOffRounded fontSize="small" />
+                          ) : (
+                            <VisibilityRounded fontSize="small" />
+                          )}
                         </IconButton>
                       </InputAdornment>
                     }
-                    sx={{
-                      borderRadius: 3,
-                      bgcolor: 'rgba(17,17,17,0.03)',
-                      pr: 1.5,
-                      py: 0.5,
-                      transition: 'box-shadow 160ms ease, background 160ms ease',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.06)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.12)',
-                      },
-                      '&.Mui-focused': {
-                        boxShadow: '0 0 0 4px rgba(127,29,29,0.1)',
-                        bgcolor: 'rgba(17,17,17,0.02)',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(127,29,29,0.3)',
-                      },
-                    }}
+                    sx={{ ...inputSx, pr: 1.5 }}
                   />
                 </FormControl>
 
-                {/* Password strength indicators */}
-                <Stack spacing={1} sx={{ bgcolor: 'rgba(17,17,17,0.01)', p: 2, borderRadius: 3, border: '1px solid rgba(17,17,17,0.04)' }}>
+                <FormControl fullWidth>
+                  <Typography
+                    variant="caption"
+                    sx={{ mb: 0.75, fontWeight: 700, color: 'rgba(17,17,17,0.7)' }}
+                  >
+                    Xác nhận mật khẩu mới
+                  </Typography>
+                  <OutlinedInput
+                    type={showConfirm ? 'text' : 'password'}
+                    placeholder="Nhập lại mật khẩu mới"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    error={confirmPassword.length > 0 && !passwordsMatch}
+                    inputProps={{ 'aria-label': 'Xác nhận mật khẩu mới' }}
+                    endAdornment={
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label={showConfirm ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                          edge="end"
+                          onClick={() => setShowConfirm((v) => !v)}
+                          size="small"
+                        >
+                          {showConfirm ? (
+                            <VisibilityOffRounded fontSize="small" />
+                          ) : (
+                            <VisibilityRounded fontSize="small" />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    }
+                    sx={{ ...inputSx, pr: 1.5 }}
+                  />
+                  {confirmPassword.length > 0 && !passwordsMatch ? (
+                    <Typography variant="caption" sx={{ mt: 0.75, color: MAROON, fontWeight: 600 }}>
+                      Mật khẩu xác nhận không khớp.
+                    </Typography>
+                  ) : null}
+                </FormControl>
+
+                {/* Điều kiện mật khẩu */}
+                <Stack
+                  spacing={1}
+                  sx={{
+                    bgcolor: 'rgba(17,17,17,0.01)',
+                    p: 2,
+                    borderRadius: 3,
+                    border: '1px solid rgba(17,17,17,0.04)',
+                  }}
+                >
                   <Typography variant="caption" sx={{ fontWeight: 700, color: 'rgba(17,17,17,0.65)' }}>
                     Yêu cầu mật khẩu mới:
                   </Typography>
@@ -389,54 +576,24 @@ export default function ForgotPasswordPage() {
                   <RequirementItem checked={hasUppercase} label="Chứa ít nhất 1 chữ in hoa (A-Z)" />
                   <RequirementItem checked={hasLowercase} label="Chứa ít nhất 1 chữ thường (a-z)" />
                   <RequirementItem checked={hasDigit} label="Chứa ít nhất 1 chữ số (0-9)" />
-                  <RequirementItem checked={hasSpecial} label="Chứa ít nhất 1 ký tự đặc biệt (@, #, $, ...)" />
+                  <RequirementItem
+                    checked={hasSpecial}
+                    label="Chứa ít nhất 1 ký tự đặc biệt (@, #, $, ...)"
+                  />
                 </Stack>
 
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={loading || !isPasswordValid || otp.length < 6}
-                  sx={{
-                    borderRadius: 3,
-                    py: 1.75,
-                    fontWeight: 800,
-                    fontSize: 15,
-                    textTransform: 'none',
-                    background:
-                      'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-                    boxShadow: '0 10px 25px rgba(127,29,29,0.2)',
-                    '&:hover': {
-                      background:
-                        'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
-                      boxShadow: '0 12px 28px rgba(127,29,29,0.25)',
-                    },
-                    '&.Mui-disabled': {
-                      background: 'rgba(17,17,17,0.08)',
-                      color: 'rgba(17,17,17,0.35)',
-                    }
-                  }}
+                  disabled={loading || !isPasswordValid || !passwordsMatch}
+                  startIcon={<LockResetRounded />}
+                  sx={primaryButtonSx}
                 >
                   {loading ? 'Đang thực hiện...' : 'Đặt lại mật khẩu'}
                 </Button>
-
-                <Button
-                  variant="text"
-                  onClick={handleGoBack}
-                  sx={{
-                    textTransform: 'none',
-                    color: '#7f1d1d',
-                    fontWeight: 700,
-                    fontSize: 13,
-                    '&:hover': {
-                      bgcolor: 'rgba(127,29,29,0.04)',
-                    }
-                  }}
-                >
-                  Gửi lại mã OTP / Thay đổi Email
-                </Button>
               </Stack>
             </Box>
-          )}
+          ) : null}
         </Stack>
       </Paper>
     </Box>

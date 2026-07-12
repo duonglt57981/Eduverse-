@@ -19,10 +19,17 @@ import thanhToanReducer from "./thanhToan/ThanhToanSlice";
 import muaSauReducer from "./danhSachMuonMuaSau/DanhSachMuonMuaSauSlice";
 import rutTienReducer from "./rutTien/RutTienSlice"
 
-const persistConfig = { key: "root", storage };
+// Chỉ lưu (persist) user & roles của auth.
+// KHÔNG lưu loading/error/successMessage — đây là trạng thái tạm thời;
+// nếu lưu lại, nút "Đăng nhập" có thể bị kẹt ở "Đang đăng nhập..." sau khi tải lại trang.
+const authPersistConfig = {
+  key: "auth",
+  storage,
+  whitelist: ["user", "roles"],
+};
 
 const rootReducer = combineReducers({
-  auth: authReducer,
+  auth: persistReducer(authPersistConfig, authReducer),
   counter: counterReducer,
   khoaHoc: khoaHocReducer,
   gioHang: gioHangReducer,
@@ -30,6 +37,9 @@ const rootReducer = combineReducers({
   muaSau: muaSauReducer,
   rutTien: rutTienReducer,
 });
+
+// auth tự persist riêng ở trên nên loại khỏi persist gốc để tránh lưu trùng trạng thái tạm thời.
+const persistConfig = { key: "root", storage, blacklist: ["auth"] };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
