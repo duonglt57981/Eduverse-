@@ -100,7 +100,7 @@ export const changePassword = createAsyncThunk(
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async (
-    data: { userId?: string; email?: string; token: string; newPassword: string },
+    data: { email: string; resetToken: string; newPassword: string },
     { rejectWithValue },
   ) => {
     try {
@@ -108,6 +108,19 @@ export const resetPassword = createAsyncThunk(
       return res.message;
     } catch (err: unknown) {
       const message = typeof err === "string" ? err : "Có lỗi xảy ra";
+      return rejectWithValue(message);
+    }
+  },
+);
+
+export const verifyOtp = createAsyncThunk(
+  "auth/verifyOtp",
+  async (data: { email: string; otp: string }, { rejectWithValue }) => {
+    try {
+      const res = await apiService.post<string>("/auth/verify-otp", data);
+      return res.data; // reset token ngắn hạn
+    } catch (err: unknown) {
+      const message = typeof err === "string" ? err : "Xác minh OTP thất bại";
       return rejectWithValue(message);
     }
   },
@@ -220,6 +233,17 @@ const authSlice = createSlice({
         state.successMessage = action.payload as string;
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(verifyOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

@@ -39,6 +39,7 @@ import AllInclusiveIcon from "@mui/icons-material/AllInclusive";
 import FolderIcon from "@mui/icons-material/Folder";
 import CloseIcon from "@mui/icons-material/Close";
 import AuthGuard from "@/src/components/AuthGuard";
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import DangKiService from "@/src/services/DangKiService";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
@@ -1119,20 +1120,22 @@ function CourseRegistrationContent() {
 export default function CourseRegistrationPage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
-      <Box sx={{ py: { xs: 2.5, md: 4.5 } }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2.5, md: 4.5 },
-            borderRadius: "28px",
-            border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "#ffffff",
-            boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
-          }}
-        >
-          <CourseRegistrationContent />
-        </Paper>
-      </Box>
+      <StudentDashboardShell>
+        <Box sx={{ py: { xs: 2.5, md: 4.5 } }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2.5, md: 4.5 },
+              borderRadius: "28px",
+              border: "1px solid rgba(141,19,19,0.06)",
+              bgcolor: "#ffffff",
+              boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+            }}
+          >
+            <CourseRegistrationContent />
+          </Paper>
+        </Box>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }
