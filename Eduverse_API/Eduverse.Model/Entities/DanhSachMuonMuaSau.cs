@@ -12,3 +12,4 @@ namespace Eduverse.Model.Entities
         public Guid? IdKhoaHoc { get; set; }
     }
 }
+ 

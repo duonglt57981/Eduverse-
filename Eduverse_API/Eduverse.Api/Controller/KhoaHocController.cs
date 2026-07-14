@@ -212,8 +212,6 @@ namespace Eduverse.Api.Controller
             }
         }
 
-<<<<<<< HEAD
-
         [HttpGet("khoahoc-getlist-daduyet")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<List<KhoaHocMiniDto>>> GetApprovedListForSelect()
@@ -226,7 +224,9 @@ namespace Eduverse.Api.Controller
             catch (Exception ex)
             {
                 return DataResponse<List<KhoaHocMiniDto>>.False(ex.Message);
-=======
+            }
+        }
+
         [HttpGet("autocomplete")]
         [AllowAnonymous]
         public async Task<DataResponse<List<string>>> GetSuggestions([FromQuery] string query)
@@ -243,7 +243,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost("sync-elasticsearch")]
-        [AllowAnonymous] // Allow developers or administrators to trigger sync easily
+        [AllowAnonymous]
         public async Task<DataResponse<string>> SyncElasticsearch()
         {
             try
@@ -254,7 +254,6 @@ namespace Eduverse.Api.Controller
             catch (Exception ex)
             {
                 return DataResponse<string>.False(ex.Message);
->>>>>>> 06116137c0747b794872a2aab2e59ca3d70c356b
             }
         }
     }
