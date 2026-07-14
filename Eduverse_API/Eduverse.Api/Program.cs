@@ -194,14 +194,14 @@ namespace Eduverse.Api
                     }
                 });
             });
-            builder.Services.AddCors(opt =>
-            {
-                opt.AddPolicy("AllowFrontend", policy =>
-                    policy.WithOrigins("http://localhost:3000") 
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials()); 
-            });
+            //builder.Services.AddCors(opt =>
+            //{
+            //    opt.AddPolicy("AllowFrontend", policy =>
+            //        policy.WithOrigins("http://localhost:3000") 
+            //              .AllowAnyHeader()
+            //              .AllowAnyMethod()
+            //              .AllowCredentials()); 
+            //});
 
 
 
