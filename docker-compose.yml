@@ -53,6 +53,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Eduverse;User Id=sa;Password=YourStr0ng!Password;TrustServerCertificate=True;Encrypt=False;
       - Elasticsearch__Url=http://elasticsearch:9200
+      - AllowedOrigins__0=http://${SERVER_HOST:-localhost}:3000
+      - AllowedOrigins__1=http://localhost:3000
+      - FrontendUrl=http://${SERVER_HOST:-localhost}:3000
+      - BackendUrl=http://${SERVER_HOST:-localhost}:5002
     ports:
       - "5002:5002"
     depends_on:
@@ -69,12 +73,13 @@ services:
       context: ./eduverse_client
       dockerfile: Dockerfile
       target: prod
+      args:
+        NEXT_PUBLIC_API_URL: http://${SERVER_HOST:-localhost}:5002
     pull_policy: never
     container_name: eduverse_client
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://110.172.29.244:5002
     ports:
       - "3000:3000"
     depends_on:
