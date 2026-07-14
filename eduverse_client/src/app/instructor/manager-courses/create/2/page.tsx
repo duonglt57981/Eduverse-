@@ -25,7 +25,7 @@ export default function Step2Page() {
   const isValid = formData.tieuDe && formData.tieuDe.length > 0 && !tieuDeError;
 
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
       <StepWrapper
         onNext={() => router.push("/instructor/manager-courses/create/3")}
         onBack={() => router.push("/instructor/manager-courses/create/1")}

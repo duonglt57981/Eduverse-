@@ -47,7 +47,7 @@ const MAU = {
 
 // ====== Đường dẫn ======
 const duongDanChiTietKhoaHoc = (id: string) =>
-  `/instructor/manager-courses/${id}/manager/basics`;
+  `/instructor/manager-courses/${id}/manager/curriculum`;
 const duongDanTaoKhoaHocMoi = "/instructor/manager-courses/create/1";
 const SO_LUONG_MOI_TRANG = 20;
 
@@ -104,13 +104,13 @@ function KhoaHocContent() {
 
         if (signal?.aborted) return;
 
-        // Kiểm tra response
-        if (!response || response.status === false || !response.data) {
-          setLoi(response?.message || "Không có dữ liệu khóa học.");
-          setDanhSachKhoaHoc([]);
-          setTongSoTrang(1);
-          return;
-        }
+        // // Kiểm tra response
+        // if (!response || response.status === false || !response.data) {
+        //   setLoi(response?.message || "Không có dữ liệu khóa học.");
+        //   setDanhSachKhoaHoc([]);
+        //   setTongSoTrang(1);
+        //   return;
+        // }
 
         // Lấy data (PagedList)
         const data: PagedList<KhoaHocType> = response.data;
@@ -449,7 +449,7 @@ function KhoaHocContent() {
 // ====== Trang (bọc AuthGuard + DashboardShell) ======
 export default function InstructorCoursesPage() {
   return (
-    <AuthGuard allowedRoles={["GiaoVien"]}>
+    <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
       <DashboardShell>
         <Box
           sx={{

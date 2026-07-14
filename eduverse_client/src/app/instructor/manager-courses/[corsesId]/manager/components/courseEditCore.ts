@@ -43,7 +43,6 @@ export function thongTinTrangThai(trangThai: TrangThaiKhoaHoc): {
   }
 }
 
-// Tính tổng thời lượng (giây) từ danh sách bài giảng
 export function tinhTongThoiLuongGiay(phans: PhanHocType[]): number {
   return phans.reduce(
     (tongPhan, phan) =>
@@ -106,7 +105,6 @@ export function kiemTraDieuKienGuiDuyet(
     });
   }
 
-  // Kiểm tra bài kiểm tra rỗng (nếu có)
   const coBaiKiemTraRong = phans.some((p) =>
     (p.DanhDachBaiKiemTra ?? []).some((kt) => (kt.cauHois ?? []).length === 0),
   );

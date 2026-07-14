@@ -91,7 +91,9 @@ export default function Step5Page() {
       // Gọi API tạo khóa học
       const createResponse = await khoaHocService.CreateKhoaHoc(payload);
       const khoaHocId = createResponse.id;
-      router.push(`/instructor/manager-courses/${khoaHocId}/manager/basics`);
+      router.push(
+        `/instructor/manager-courses/${khoaHocId}/manager/curriculum`,
+      );
     } catch (err) {
       console.error(err);
       setError("Đã xảy ra lỗi khi tạo khóa học");
@@ -101,7 +103,7 @@ export default function Step5Page() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
       <StepWrapper
         onNext={handleCreate}
         onBack={() => router.push("/instructor/manager-courses/create/2")}

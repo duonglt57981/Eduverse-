@@ -131,7 +131,7 @@ export default function CourseStatusAction({
     );
   }
 
-  // Mặc định: trạng thái "Đang sửa" hoặc chưa xác định
+  // Mặc định: "Đang sửa"
   return (
     <>
       <Button

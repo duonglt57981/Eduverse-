@@ -3,6 +3,7 @@ export interface CreateBaiGiangRequest {
   laBaiGiangFree?: boolean;
   idPhan?: string;
   video?: File;
+  thuTuSapXep?: number;
 }
 
 export interface UpdateBaiGiangRequest {

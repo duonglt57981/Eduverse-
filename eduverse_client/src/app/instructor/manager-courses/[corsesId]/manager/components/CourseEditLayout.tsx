@@ -49,6 +49,7 @@ interface Props {
   onGuiPheDuyet: () => Promise<void>;
   onSuaTiep: () => Promise<void>;
   onDiChuyenDenTuValidate: (diChuyenDen: MucThieu["diChuyenDen"]) => void;
+  onRefreshData?: () => void;
 }
 
 export default function CourseEditLayout({
@@ -67,12 +68,12 @@ export default function CourseEditLayout({
   onGuiPheDuyet,
   onSuaTiep,
   onDiChuyenDenTuValidate,
+  onRefreshData,
 }: Props) {
   const [anchorXemTruoc, setAnchorXemTruoc] = useState<null | HTMLElement>(
     null,
   );
   const trangThaiHienThi = thongTinTrangThai(trangThai);
-  const daKhoa = trangThai === "DangDuyet";
 
   if (loading) {
     return (
@@ -298,7 +299,7 @@ export default function CourseEditLayout({
         </Box>
 
         <Box sx={{ flex: 1, px: { xs: 2, md: 4 }, py: 4, minWidth: 0 }}>
-          {daKhoa && (
+          {trangThai === "DangDuyet" && (
             <Box
               sx={{
                 mb: 3,
@@ -323,8 +324,8 @@ export default function CourseEditLayout({
 
           <Box
             sx={{
-              pointerEvents: daKhoa ? "none" : "auto",
-              opacity: daKhoa ? 0.6 : 1,
+              pointerEvents: trangThai === "DangDuyet" ? "none" : "auto",
+              opacity: trangThai === "DangDuyet" ? 0.6 : 1,
               transition: "opacity .15s ease",
             }}
           >

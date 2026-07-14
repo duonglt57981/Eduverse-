@@ -1,6 +1,9 @@
 import { apiService } from ".";
 import { TaiLieuType } from "../types/TaiLieu/Dto/TaiLieuDto";
-import { CreateTaiLieuRequest } from "../types/TaiLieu/Request/TaiLieuRequest";
+import {
+  CreateTaiLieuRequest,
+  UpdateTaiLieuRequest,
+} from "../types/TaiLieu/Request/TaiLieuRequest";
 import { ApiResponse } from "../types/types";
 
 export default class TaiLieuService {
@@ -11,7 +14,7 @@ export default class TaiLieuService {
       const response = await apiService.get<ApiResponse<TaiLieuType[]>>(
         `/TaiLieu/tailieu-getlistformanager/${idBaiGiang}`,
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching phan hoc for update:", error);
       throw error;
@@ -24,6 +27,26 @@ export default class TaiLieuService {
     try {
       const response = await apiService.post<ApiResponse<TaiLieuType>>(
         "/TaiLieu/tailieu-create",
+        request,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating tai lieu:", error);
+      throw error;
+    }
+  }
+
+  async UpdateTaiLieu(
+    request: UpdateTaiLieuRequest,
+  ): Promise<ApiResponse<TaiLieuType>> {
+    try {
+      const response = await apiService.post<ApiResponse<TaiLieuType>>(
+        "/TaiLieu/tailieu-update",
         request,
         {
           headers: {

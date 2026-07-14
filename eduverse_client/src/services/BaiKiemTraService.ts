@@ -1,5 +1,6 @@
 import {
   AutoSaveDapAnDto,
+  BaiKiemTraDto,
   BaiKiemTraLamBaiDto,
   ContinueQuizFullDto,
   CreateBaiKiemTraDto,
@@ -22,12 +23,26 @@ import {
 } from "../types/baiKiemTra/Request/QuizzRequest";
 
 export default class BaiKiemTraService {
+  async GetListForManager(
+    idPhan: string,
+  ): Promise<ApiResponse<BaiKiemTraDto[]>> {
+    try {
+      const response = await apiService.get<ApiResponse<BaiKiemTraDto[]>>(
+        `/BaiKiemTra/getlistformanager/${idPhan}`,
+      );
+      return response;
+    } catch (error) {
+      console.error("Error getting quiz to learning:", error);
+      throw error;
+    }
+  }
+
   async CreateBaiKiemTra(
     request: CreateBaiKiemTraRequest,
   ): Promise<ApiResponse<CreateBaiKiemTraDto>> {
     try {
       const response = await apiService.post<ApiResponse<CreateBaiKiemTraDto>>(
-        `/baikiemtra`,
+        `/BaiKiemTra/create`,
         request,
       );
       return response.data;
@@ -38,12 +53,11 @@ export default class BaiKiemTraService {
   }
 
   async UpdateBaiKiemTra(
-    id: string,
     request: UpdateBaiKiemTraRequest,
   ): Promise<ApiResponse<UpdateBaiKiemTraDto>> {
     try {
       const response = await apiService.put<ApiResponse<UpdateBaiKiemTraDto>>(
-        `/baikiemtra/${id}`,
+        `/BaiKiemTra/update/${request.idBaiKiemTra}`,
         request,
       );
       return response.data;
@@ -56,7 +70,7 @@ export default class BaiKiemTraService {
   async DeleteBaiKiemTra(id: string): Promise<ApiResponse<boolean>> {
     try {
       const response = await apiService.delete<ApiResponse<boolean>>(
-        `/baikiemtra/${id}`,
+        `/BaiKiemTra/delete/${id}`,
       );
       return response.data;
     } catch (error) {
@@ -69,8 +83,6 @@ export default class BaiKiemTraService {
     idDangKi: string,
   ): Promise<ApiResponse<GetQuizToLearningDto>> {
     try {
-      // FIX: URL trước đó để literal "{IdDangKi}" chứ không interpolate biến thật
-      // -> luôn gọi sai endpoint. Đã sửa thành template string với idDangKi truyền vào.
       const response = await apiService.get<ApiResponse<GetQuizToLearningDto>>(
         `/BaiKiemTra/getquizz-learning/${idDangKi}`,
       );

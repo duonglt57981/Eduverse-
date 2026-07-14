@@ -1,6 +1,6 @@
 "use client";
 
-import BasicInfoContent from "../components/BasicInfoContent";
+import BasicInfoContent from "./components/BasicInfoContent";
 
 export default function BasicsPage() {
   return <BasicInfoContent />;
