@@ -2620,7 +2620,6 @@ namespace Eduverse.Service.KhoaHocService
             return true;
         }
 
-<<<<<<< HEAD
         // danh sách khóa học đã được duyệt dùng để áp dụng khuyến mãi
         public async Task<List<KhoaHocMiniDto>> GetApprovedListForSelect()
         {
@@ -2640,7 +2639,7 @@ namespace Eduverse.Service.KhoaHocService
                     HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
                 })
                 .ToListAsync();
-=======
+        }
         public async Task<List<string>> GetSearchSuggestions(string query)
         {
             return await _elasticsearchService.GetSearchSuggestionsAsync(query);
@@ -2649,7 +2648,6 @@ namespace Eduverse.Service.KhoaHocService
         public async Task SyncElasticsearch()
         {
             await _elasticsearchService.BulkIndexAllCoursesAsync();
->>>>>>> 06116137c0747b794872a2aab2e59ca3d70c356b
         }
     }
 }
