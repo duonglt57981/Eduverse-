@@ -741,12 +741,13 @@ namespace Eduverse.Service.AuthService
             return Convert.ToBase64String(bytes);
         }
 
-        private static void SetRefreshTokenCookie(HttpResponse response, string token)
+        private void SetRefreshTokenCookie(HttpResponse response, string token)
         {
             response.Cookies.Append("refreshToken", token, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                // Mặc định true (bảo mật). Đặt Auth:CookieSecure=false khi triển khai qua HTTP (vd IP), khuyến nghị dùng HTTPS.
+                Secure = !string.Equals(_config["Auth:CookieSecure"], "false", System.StringComparison.OrdinalIgnoreCase),
                 SameSite = SameSiteMode.Strict,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
