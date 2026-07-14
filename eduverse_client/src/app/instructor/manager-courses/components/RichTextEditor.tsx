@@ -11,8 +11,9 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import { Box, Typography, IconButton, Stack, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { R } from "../types/constants";
-
+import { COLORS  } from "../../../admin/approve-courses/types/constants";
+const R = COLORS.primary;
+//R cua instructor ko ton tai nen toi dung mau cua admin
 // Icons
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";

@@ -272,13 +272,13 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     level: kh.capDo || 'Mọi cấp độ',
     duration: kh.tongThoiLuong ? `${Math.round(kh.tongThoiLuong / 60)} giờ` : 'Chưa cập nhật',
     category: kh.loaiKhoaHoc || 'Khác',
-    badge: kh.gia === 0 || kh.gia === null ? 'Miễn phí' : undefined,
+    badge: kh.gia === 0 || kh.gia === null ? "Miễn phí" : "",
     tags: [kh.capDo || 'Tự chọn', kh.gia === 0 || kh.gia === null ? 'Free' : 'Pro'],
-    palette: {
-      from: '#8d1313',
-      to: '#c2410c',
-      bg: '#fff7f4'
-    },
+    palette: [
+      '#8d1313',
+      '#c2410c',
+      '#fff7f4'
+    ],
     isFree: kh.gia === 0 || kh.gia === null
   };
 };
