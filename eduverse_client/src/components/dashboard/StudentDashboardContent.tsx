@@ -1137,7 +1137,7 @@ export default function StudentDashboardContent() {
           >
             {welcomeStats?.userName || user?.hoTen
               ? (() => {
-                  const name = (user?.hoTen || welcomeStats.userName).trim();
+                  const name = (user?.hoTen || welcomeStats?.userName || '').trim();
                   const parts = name.split(/\s+/);
                   if (parts.length === 0) return "HV";
                   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
