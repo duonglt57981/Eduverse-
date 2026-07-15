@@ -36,26 +36,26 @@ export default function LoginPage() {
           elevation={0}
           sx={{
             width: '100%',
-            maxWidth: 400,
-            borderRadius: '24px',
+            maxWidth: 500,
+            borderRadius: '28px',
             border: '1px solid rgba(0, 0, 0, 0.08)',
-            boxShadow: '0 12px 30px rgba(30, 41, 59, 0.04)',
+            boxShadow: '0 16px 40px rgba(30, 41, 59, 0.06)',
             backgroundColor: '#ffffff',
-            p: { xs: 4, sm: 5 },
+            p: { xs: 5, sm: 6.5 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 4,
+            gap: 5,
           }}
         >
           {/* Logo & Header */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }}>
-            <Box sx={{ width: 170, height: 'auto', mb: 1, display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2.5, width: '100%' }}>
+            <Box sx={{ width: 250, height: 'auto', mb: 1, display: 'flex', justifyContent: 'center' }}>
               <Image
                 src="/auth/img/logo_nentrang.png"
                 alt="EduVerse"
-                width={170}
-                height={51}
+                width={270}
+                height={70}
                 priority
                 style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
               />
@@ -63,13 +63,13 @@ export default function LoginPage() {
             <Box sx={{ textAlign: 'center' }}>
               <Typography
                 variant="h5"
-                sx={{ fontWeight: 800, color: '#1E293B', fontSize: 22, letterSpacing: '-0.5px', mb: 1 }}
+                sx={{ fontWeight: 800, color: '#1E293B', fontSize: 26, letterSpacing: '-0.5px', mb: 1.5 }}
               >
                 Chào mừng trở lại!
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ color: '#64748B', fontSize: 14, lineHeight: 1.5 }}
+                sx={{ color: '#64748B', fontSize: 15.5, lineHeight: 1.6 }}
               >
                 Đăng nhập bằng tài khoản Google để tiếp tục hành trình học tập tại EduVerse
               </Typography>
@@ -82,13 +82,13 @@ export default function LoginPage() {
               elevation={0}
               sx={{
                 width: '100%',
-                px: 2.5,
-                py: 1.5,
-                borderRadius: '12px',
+                px: 3,
+                py: 2,
+                borderRadius: '14px',
                 border: '1px solid #FECACA',
                 background: '#FEF2F2',
                 color: '#991B1B',
-                fontSize: 13,
+                fontSize: 14.5,
                 fontWeight: 500,
               }}
             >
@@ -97,18 +97,19 @@ export default function LoginPage() {
           )}
 
           {/* Google Login Button Container */}
-          <Box 
-            sx={{ 
-              width: '100%', 
-              display: 'flex', 
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
               justifyContent: 'center',
-              py: 0.5
+              py: 1
             }}
           >
-            <GoogleAuthButton 
-              text="signin_with" 
-              onError={setGoogleError} 
-              onSize={setGoogleSize} 
+            <GoogleAuthButton
+              text="signin_with"
+              theme="filled_blue"
+              onError={setGoogleError}
+              onSize={setGoogleSize}
             />
           </Box>
 
@@ -116,7 +117,7 @@ export default function LoginPage() {
           <Typography
             sx={{
               textAlign: 'center',
-              fontSize: 12,
+              fontSize: 13,
               color: '#94A3B8',
               lineHeight: 1.6,
             }}
