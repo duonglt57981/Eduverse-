@@ -141,8 +141,8 @@ export default function PrivacyPage() {
             {/* Footer contact */}
             <Typography variant="body2" sx={{ textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
               Nếu bạn có bất kỳ câu hỏi nào về Chính sách Bảo mật, vui lòng liên hệ ban quản trị tại{' '}
-              <a href="mailto:support@eduverse.id.vn" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
-                support@eduverse.id.vn
+              <a href="mailto:admin.eduverse@gmail.com" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
+                admin.eduverse@gmail.com
               </a>.
             </Typography>
           </Paper>

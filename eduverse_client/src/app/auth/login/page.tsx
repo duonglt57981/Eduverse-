@@ -1,13 +1,14 @@
 'use client';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import NextLink from 'next/link';
 import GoogleAuthButton from '../../../components/auth/GoogleAuthButton';
 import {
   Box,
   CssBaseline,
   Paper,
   Typography,
+  Link as MuiLink,
 } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { createAppTheme } from '@/src/theme/createAppTheme';
@@ -30,8 +31,51 @@ export default function LoginPage() {
           bgcolor: '#F8FAFC',
           px: 2.5,
           py: 4,
+          position: 'relative',
         }}
       >
+        {/* Floating Back to Home button */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: { xs: 16, sm: 24 },
+            left: { xs: 16, sm: 24 },
+          }}
+        >
+          <MuiLink
+            component={NextLink}
+            href="/"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: '#64748B',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: 14.5,
+              transition: 'color 200ms ease',
+              '&:hover': {
+                color: '#8B1313',
+              },
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Quay lại trang chủ
+          </MuiLink>
+        </Box>
+
         <Paper
           elevation={0}
           sx={{
@@ -51,14 +95,16 @@ export default function LoginPage() {
           {/* Logo & Header */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2.5, width: '100%' }}>
             <Box sx={{ width: 250, height: 'auto', mb: 1, display: 'flex', justifyContent: 'center' }}>
-              <Image
-                src="/auth/img/logo_nentrang.png"
-                alt="EduVerse"
-                width={270}
-                height={70}
-                priority
-                style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-              />
+              <NextLink href="/" style={{ display: 'block', width: '100%' }}>
+                <Image
+                  src="/auth/img/logo_nentrang.png"
+                  alt="EduVerse"
+                  width={270}
+                  height={70}
+                  priority
+                  style={{ width: '100%', height: 'auto', objectFit: 'contain', cursor: 'pointer' }}
+                />
+              </NextLink>
             </Box>
             <Box sx={{ textAlign: 'center' }}>
               <Typography
@@ -120,16 +166,40 @@ export default function LoginPage() {
               fontSize: 13,
               color: '#94A3B8',
               lineHeight: 1.6,
+              position: 'relative',
+              zIndex: 10,
             }}
           >
             Bằng cách đăng nhập, bạn đồng ý với{' '}
-            <Link href="/auth/terms" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
+            <MuiLink
+              component={NextLink}
+              href="/auth/terms"
+              sx={{
+                color: '#8B1313',
+                textDecoration: 'none',
+                fontWeight: 600,
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
               Điều khoản Dịch vụ
-            </Link>{' '}
+            </MuiLink>{' '}
             và{' '}
-            <Link href="/auth/privacy" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
+            <MuiLink
+              component={NextLink}
+              href="/auth/privacy"
+              sx={{
+                color: '#8B1313',
+                textDecoration: 'none',
+                fontWeight: 600,
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
               Chính sách Bảo mật
-            </Link>{' '}
+            </MuiLink>{' '}
             của EduVerse.
           </Typography>
         </Paper>
