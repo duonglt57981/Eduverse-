@@ -1,523 +1,137 @@
 'use client';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useDispatch, useSelector } from '../../../store/hook';
-import { login } from '../../../store/auth/AuthSlice';
+import Link from 'next/link';
 import GoogleAuthButton from '../../../components/auth/GoogleAuthButton';
 import {
   Box,
-  Button,
-  Checkbox,
   CssBaseline,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  IconButton,
-  InputAdornment,
-  Link as MuiLink,
-  OutlinedInput,
   Paper,
-  Stack,
-  SvgIcon,
   Typography,
 } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { createAppTheme } from '@/src/theme/createAppTheme';
 
-function ArrowRightIcon(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="M13.2 5.2a1 1 0 0 1 1.4 0l6.1 6.1a1 1 0 0 1 0 1.4l-6.1 6.1a1 1 0 1 1-1.4-1.4l4.4-4.4H4a1 1 0 1 1 0-2h13.6l-4.4-4.4a1 1 0 0 1 0-1.4Z"
-      />
-    </SvgIcon>
-  );
-}
-
-function MailIcon(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="M20 6H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm0 3.2-7.3 4.6a1.3 1.3 0 0 1-1.4 0L4 9.2V8l8 5 8-5v1.2Z"
-      />
-    </SvgIcon>
-  );
-}
-
-function EyeIcon(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="M12 5c6 0 10 7 10 7s-4 7-10 7S2 12 2 12s4-7 10-7Zm0 2c-3.3 0-6.1 3.1-7.6 5 1.5 1.9 4.3 5 7.6 5s6.1-3.1 7.6-5c-1.5-1.9-4.3-5-7.6-5Zm0 2.2A2.8 2.8 0 1 1 9.2 12 2.8 2.8 0 0 1 12 9.2Zm0 1.8a1 1 0 1 0 1 1 1 1 0 0 0-1-1Z"
-      />
-    </SvgIcon>
-  );
-}
-
-function EyeOffIcon(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="m4.7 3.3 16 16a1 1 0 1 1-1.4 1.4l-2.2-2.2A10.9 10.9 0 0 1 12 19C6 19 2 12 2 12a19.5 19.5 0 0 1 4.3-5.2L3.3 4.7a1 1 0 0 1 1.4-1.4Zm3.1 5.9A17.1 17.1 0 0 0 4.4 12c1.5 1.9 4.3 5 7.6 5 1.2 0 2.3-.4 3.3-.9l-1.7-1.7a2.9 2.9 0 0 1-1.6.4A2.8 2.8 0 0 1 9.2 12c0-.6.2-1.1.4-1.6L7.8 9.2Zm4.4-2.1c6 .1 9.8 6.9 9.8 6.9a18.6 18.6 0 0 1-3.4 4.2l-2.1-2.1a2.8 2.8 0 0 0-3.8-3.8L10 9.4a2.8 2.8 0 0 1 4.7-1.4l1.5 1.5a9.7 9.7 0 0 0-4-1.4Z"
-      />
-    </SvgIcon>
-  );
-}
-
 export default function LoginPage() {
-  const dispatch = useDispatch();
-  const router = useRouter();
-  const { loading, error } = useSelector((s) => s.auth);
   const [googleError, setGoogleError] = useState<string | null>(null);
-  const [googleSize, setGoogleSize] = useState({ width: 0, height: 40 });
-
-  const [form, setForm] = useState({ userName: '', password: '' });
-  const [showPass, setShowPass] = useState(false);
-  const [remember, setRemember] = useState(false);
+  const [googleSize, setGoogleSize] = useState({ width: 0, height: 44 });
 
   const theme = useMemo(() => createAppTheme('light'), []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await dispatch(login(form));
-    if (login.fulfilled.match(result)) {
-      const roles: string[] = result.payload.roles || [];
-      if (roles.includes('Admin')) {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/student/dashboard');
-      }
-    }
-  };
-
-  const inputSx = {
-    height: 50,
-    borderRadius: 3,
-    bgcolor: 'rgba(17,17,17,0.035)',
-    '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'rgba(17,17,17,0.08)',
-    },
-    '&:hover .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'rgba(17,17,17,0.16)',
-    },
-    '&.Mui-focused': {
-      bgcolor: 'rgba(17,17,17,0.03)',
-      boxShadow: '0 0 0 4px rgba(139,19,19,0.14)',
-    },
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'rgba(139,19,19,0.38)',
-    },
-  } as const;
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box
         sx={{
-          height: '100vh',
+          minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          px: { xs: 1.5, sm: 2.5, md: 4 },
-          py: { xs: 2, sm: 3 },
-          bgcolor: '#F7F5F2',
-          overflow: 'hidden',
+          bgcolor: '#F8FAFC',
+          px: 2.5,
+          py: 4,
         }}
       >
-        <Box
+        <Paper
+          elevation={0}
           sx={{
             width: '100%',
-            maxWidth: 1240,
-            height: { xs: 'auto', md: 'min(760px, 90vh)' },
-            display: { xs: 'block', md: 'flex' },
-            borderRadius: { xs: 4, md: 6 },
-            overflow: 'hidden',
-            boxShadow: '0 28px 80px rgba(52,32,32,0.16)',
-            border: '1px solid rgba(17,17,17,0.06)',
-            backgroundColor: '#fff',
+            maxWidth: 400,
+            borderRadius: '24px',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 12px 30px rgba(30, 41, 59, 0.04)',
+            backgroundColor: '#ffffff',
+            p: { xs: 4, sm: 5 },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 4,
           }}
         >
-          <Box
-            sx={{
-              width: { xs: '100%', md: '46%' },
-              color: '#fff',
-              px: { xs: 2.5, sm: 4, md: 4 },
-              py: { xs: 2.5, sm: 3, md: 3 },
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              position: 'relative',
-              overflow: 'hidden',
-              background:
-                'linear-gradient(160deg, #9b1c1c 0%, #8B1313 50%, #5c1111 100%)',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: -110,
-                right: -110,
-                width: 360,
-                height: 360,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.06)',
-                pointerEvents: 'none',
-              },
-            }}
-          >
-            <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  width: { xs: 210, sm: 250, md: 290 },
-                }}
-              >
-                <Image
-                  src="/auth/img/logo_nedo.png"
-                  alt="EduVerse"
-                  width={290}
-                  height={87}
-                  priority
-                  style={{ width: '100%', height: 'auto' }}
-                />
-              </Box>
-
-              <Box sx={{ maxWidth: 520 }}>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    fontSize: { xs: 28, sm: 34, md: 36 },
-                    lineHeight: 1.15,
-                    color: '#ffffff',
-                  }}
-                >
-                  Chào mừng bạn trở lại
-                  <br />
-                  với tri thức đỉnh cao.
-                </Typography>
-                <Typography
-                  sx={{
-                    mt: 1.5,
-                    maxWidth: 440,
-                    color: 'rgba(255,255,255,0.72)',
-                    fontSize: 14,
-                    lineHeight: 1.8,
-                  }}
-                >
-                  Hành trình chinh phục sự nghiệp của bạn bắt đầu từ việc không
-                  ngừng học hỏi tại môi trường chuẩn quốc tế.
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  mt: { xs: 2, md: 3 },
-                  borderRadius: 4,
-                  overflow: 'hidden',
-                  height: { xs: 160, sm: 190, md: 200 },
-                  bgcolor: 'rgba(0,0,0,0.22)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  boxShadow: '0 22px 50px rgba(0,0,0,0.28)',
-                  position: 'relative',
-                }}
-              >
-                <Image
-                  src="/auth/img/Illustration_Section_v2.png"
-                  alt="EduVerse learning space"
-                  fill
-                  priority
-                  sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 46vw"
-                  style={{
-                    objectFit: 'cover',
-                    objectPosition: 'center center',
-                    transform: 'scale(1.18)',
-                  }}
-                />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    background:
-                      'linear-gradient(180deg, rgba(20,8,8,0.04) 0%, rgba(78,0,0,0.12) 62%, rgba(120,0,0,0.24) 100%)',
-                  }}
-                />
-              </Box>
-            </Stack>
-
-            <Stack
-              direction="row"
-              spacing={1.25}
-              sx={{
-                mt: { xs: 2, md: 2.5 },
-                position: 'relative',
-                zIndex: 1,
-              }}
-            >
-              {[
-                { label: 'Mentor chất lượng', icon: 'M12 2 9.3 7.6 3 8.3l4.7 4-1.4 6 5.7-3.3 5.7 3.3-1.4-6 4.7-4-6.3-.7L12 2Z' },
-                { label: 'Nội dung thực chiến', icon: 'M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2.5 4h7v2h-7V8Zm0 4h7v2h-7v-2Z' },
-                { label: 'Chứng nhận uy tín', icon: 'M12 2a6 6 0 0 0-3 11.2V22l3-1.7 3 1.7v-8.8A6 6 0 0 0 12 2Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z' },
-              ].map((f) => (
-                <Paper
-                  key={f.label}
-                  elevation={0}
-                  sx={{
-                    flex: 1,
-                    px: 1.25,
-                    py: 1.25,
-                    borderRadius: 3,
-                    backgroundColor: 'rgba(255,255,255,0.09)',
-                    border: '1px solid rgba(255,255,255,0.14)',
-                    color: 'rgba(255,255,255,0.88)',
-                  }}
-                >
-                  <Stack spacing={0.75} sx={{ alignItems: 'center' }}>
-                    <SvgIcon sx={{ fontSize: 22, opacity: 0.85 }} viewBox="0 0 24 24">
-                      <path fill="currentColor" d={f.icon} />
-                    </SvgIcon>
-                    <Typography
-                      sx={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        textAlign: 'center',
-                        letterSpacing: '-0.1px',
-                      }}
-                    >
-                      {f.label}
-                    </Typography>
-                  </Stack>
-                </Paper>
-              ))}
-            </Stack>
-          </Box>
-
-          <Box
-            sx={{
-              flex: 1,
-              width: '100%',
-              height: { md: '100%' },
-              overflowY: { md: 'auto' },
-              px: { xs: 2.5, sm: 4, md: 5 },
-              py: { xs: 3, md: 4 },
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              bgcolor: '#F7F5F2',
-            }}
-          >
-            <Box sx={{ width: '100%', maxWidth: 400, my: 'auto' }}>
+          {/* Logo & Header */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }}>
+            <Box sx={{ width: 170, height: 'auto', mb: 1, display: 'flex', justifyContent: 'center' }}>
+              <Image
+                src="/auth/img/logo_nentrang.png"
+                alt="EduVerse"
+                width={170}
+                height={51}
+                priority
+                style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+              />
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
               <Typography
-                variant="h4"
-                sx={{ fontSize: { xs: 28, sm: 32 }, mb: 0.75, color: 'text.primary' }}
+                variant="h5"
+                sx={{ fontWeight: 800, color: '#1E293B', fontSize: 22, letterSpacing: '-0.5px', mb: 1 }}
               >
-                Đăng nhập
+                Chào mừng trở lại!
               </Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 3 }}>
-                Truy cập vào tài khoản EduVerse của bạn
-              </Typography>
-
-              {(error || googleError) && (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    mb: 2,
-                    px: 2,
-                    py: 1.25,
-                    borderRadius: 2.5,
-                    border: '1px solid #f5bcbc',
-                    background: '#fff0f0',
-                    color: '#b42318',
-                    fontSize: 13,
-                  }}
-                >
-                  {error || googleError}
-                </Paper>
-              )}
-
-              <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75, color: 'text.primary' }}>
-                      Email hoặc tên đăng nhập
-                    </Typography>
-                    <FormControl fullWidth>
-                      <OutlinedInput
-                        placeholder="name@company.com"
-                        value={form.userName}
-                        onChange={(e) =>
-                          setForm({ ...form, userName: e.target.value })
-                        }
-                        autoComplete="username"
-                        inputProps={{ inputMode: 'email' }}
-                        endAdornment={
-                          <InputAdornment position="end">
-                            <MailIcon sx={{ fontSize: 18, color: '#8a8a8a' }} />
-                          </InputAdornment>
-                        }
-                        sx={{ ...inputSx, pr: 1.25 }}
-                      />
-                    </FormControl>
-                  </Box>
-
-                  <Box>
-                    <Stack
-                      direction="row"
-                      sx={{
-                        mb: 0.75,
-                        alignItems: 'baseline',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}>
-                        Mật khẩu
-                      </Typography>
-                      <MuiLink
-                        href="/auth/forgot-password"
-                        underline="none"
-                        sx={{
-                          fontSize: 12.5,
-                          fontWeight: 700,
-                          color: '#8B1313',
-                          '&:hover': { color: '#5c1111' },
-                        }}
-                      >
-                        Quên mật khẩu?
-                      </MuiLink>
-                    </Stack>
-                    <FormControl fullWidth>
-                      <OutlinedInput
-                        type={showPass ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={form.password}
-                        onChange={(e) =>
-                          setForm({ ...form, password: e.target.value })
-                        }
-                        autoComplete={remember ? 'current-password' : 'off'}
-                        endAdornment={
-                          <InputAdornment position="end">
-                            <IconButton
-                              aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                              onClick={() => setShowPass((v) => !v)}
-                              edge="end"
-                              size="small"
-                              sx={{ color: '#7a7a7a' }}
-                            >
-                              {showPass ? (
-                                <EyeOffIcon sx={{ fontSize: 18 }} />
-                              ) : (
-                                <EyeIcon sx={{ fontSize: 18 }} />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        }
-                        sx={inputSx}
-                      />
-                    </FormControl>
-                  </Box>
-
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={remember}
-                        onChange={(e) => setRemember(e.target.checked)}
-                        sx={{
-                          color: 'rgba(17,17,17,0.35)',
-                          '&.Mui-checked': { color: '#8B1313' },
-                        }}
-                      />
-                    }
-                    label={
-                      <Typography sx={{ fontSize: 13, color: '#525252' }}>
-                        Ghi nhớ đăng nhập
-                      </Typography>
-                    }
-                    sx={{ mt: -0.75 }}
-                  />
-
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={loading}
-                    endIcon={<ArrowRightIcon sx={{ fontSize: 18 }} />}
-                    sx={{
-                      mt: 0.5,
-                      width: '100%',
-                      display: 'flex',
-                      height: googleSize.height,
-                      minHeight: googleSize.height,
-                      boxSizing: 'border-box',
-                      background:
-                        'linear-gradient(90deg, #8B1313 0%, #8B1313 55%, #6b1414 100%)',
-                      boxShadow: '0 14px 34px rgba(139,19,19,0.26)',
-                      '&:hover': {
-                        background:
-                          'linear-gradient(90deg, #8B1313 0%, #6b1414 60%, #5c1111 100%)',
-                        boxShadow: '0 16px 42px rgba(139,19,19,0.32)',
-                      },
-                      '&.Mui-disabled': {
-                        background: 'rgba(139,19,19,0.35)',
-                        color: 'rgba(255,255,255,0.9)',
-                      },
-                    }}
-                  >
-                    {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-                  </Button>
-                </Stack>
-              </Box>
-
-              <Divider
-                sx={{
-                  my: 2.5,
-                  color: '#9a9a9a',
-                  '&::before, &::after': { borderColor: 'rgba(17,17,17,0.10)' },
-                  fontSize: 12.5,
-                }}
-              >
-                Hoặc tiếp tục với
-              </Divider>
-
-              <GoogleAuthButton text="signin_with" onError={setGoogleError} onSize={setGoogleSize} />
-
               <Typography
-                sx={{
-                  mt: 3,
-                  textAlign: 'center',
-                  fontSize: 13.5,
-                  color: '#6b6b6b',
-                }}
+                variant="body2"
+                sx={{ color: '#64748B', fontSize: 14, lineHeight: 1.5 }}
               >
-                Chưa có tài khoản?{' '}
-                <MuiLink
-                  href="/auth/register"
-                  underline="none"
-                  sx={{
-                    fontWeight: 800,
-                    color: '#8B1313',
-                    '&:hover': { color: '#5c1111' },
-                  }}
-                >
-                  Đăng ký ngay
-                </MuiLink>
+                Đăng nhập bằng tài khoản Google để tiếp tục hành trình học tập tại EduVerse
               </Typography>
             </Box>
+          </Box>
 
-            <Typography
+          {/* Alert Error */}
+          {googleError && (
+            <Paper
+              elevation={0}
               sx={{
-                mt: 4,
-                fontSize: 12,
-                color: '#9b9b9b',
-                textAlign: 'center',
+                width: '100%',
+                px: 2.5,
+                py: 1.5,
+                borderRadius: '12px',
+                border: '1px solid #FECACA',
+                background: '#FEF2F2',
+                color: '#991B1B',
+                fontSize: 13,
+                fontWeight: 500,
               }}
             >
+              {googleError}
+            </Paper>
+          )}
 
-            </Typography>
+          {/* Google Login Button Container */}
+          <Box 
+            sx={{ 
+              width: '100%', 
+              display: 'flex', 
+              justifyContent: 'center',
+              py: 0.5
+            }}
+          >
+            <GoogleAuthButton 
+              text="signin_with" 
+              onError={setGoogleError} 
+              onSize={setGoogleSize} 
+            />
           </Box>
-        </Box>
+
+          {/* Elegant Footer */}
+          <Typography
+            sx={{
+              textAlign: 'center',
+              fontSize: 12,
+              color: '#94A3B8',
+              lineHeight: 1.6,
+            }}
+          >
+            Bằng cách đăng nhập, bạn đồng ý với{' '}
+            <Link href="/terms" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
+              Điều khoản Dịch vụ
+            </Link>{' '}
+            và{' '}
+            <Link href="/privacy" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
+              Chính sách Bảo mật
+            </Link>{' '}
+            của EduVerse.
+          </Typography>
+        </Paper>
       </Box>
     </ThemeProvider>
   );
