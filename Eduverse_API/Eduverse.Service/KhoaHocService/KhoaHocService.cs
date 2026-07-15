@@ -330,9 +330,18 @@ namespace Eduverse.Service.KhoaHocService
                         .AsNoTracking()
                         .CountAsync(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted),
                     TimeSpan.FromMinutes(10));
+                Guid.TryParse(
+                _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId);
+            // Check đã đăng ký chưa
+            var daDangKy = userId != Guid.Empty && await _dangKyKhoaHocRepository
+                .GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                           && x.IdNguoiDangKi == userId
+                           && !x.IsDeleted);
 
-                // Cache: thông tin khóa học
-                var khoaHoc = await GetOrCreateCacheAsync(
+            // Cache: thông tin khóa học
+            var khoaHoc = await GetOrCreateCacheAsync(
                     CacheKeys.KhoaHoc(idKhoaHoc),
                     async () =>
                     {
@@ -350,6 +359,9 @@ namespace Eduverse.Service.KhoaHocService
                                 HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
                                 LoaiKhoaHoc = x.LoaiKhoaHoc,
                                 SoLuongHocVien = soHocVien,
+                                Gia = x.Gia,     
+                                GiaGoc = x.GiaGoc,
+                                DaDangKy = daDangKy,
                                 DanhSachPhanHoc = new List<PhanHocDto>()
                             })
                             .FirstOrDefaultAsync();
