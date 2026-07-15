@@ -196,7 +196,7 @@ export default function AdminSettingsPage() {
 
           <Grid container spacing={4} sx={{ alignItems: 'flex-start' }}>
             {/* Sidebar navigation */}
-            <Grid item xs={12} md={3.5} lg={3}>
+            <Grid size={{ xs: 12, md: 3.5, lg: 3 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -270,7 +270,7 @@ export default function AdminSettingsPage() {
             </Grid>
 
             {/* Content Area */}
-            <Grid item xs={12} md={8.5} lg={9}>
+            <Grid size={{ xs: 12, md: 8.5, lg: 9 }}>
               {/* Tab 1: Account */}
               {activeTab === 0 && (
                 <Paper
@@ -309,7 +309,7 @@ export default function AdminSettingsPage() {
                   </Stack>
 
                   <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         label="Họ và tên"
@@ -324,7 +324,7 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         label="Địa chỉ Email"
@@ -344,7 +344,7 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         label="Số điện thoại"
@@ -404,12 +404,12 @@ export default function AdminSettingsPage() {
                   </Typography>
 
                   <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Alert severity="warning" sx={{ borderRadius: '14px', mb: 1 }}>
                         Quản trị viên cần định kỳ đổi mật khẩu mạnh để phòng ngừa các cuộc tấn công khai thác quyền truy cập.
                       </Alert>
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         type="password"
@@ -430,8 +430,8 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}></Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         type="password"
@@ -452,7 +452,7 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         type="password"
@@ -474,11 +474,11 @@ export default function AdminSettingsPage() {
                       />
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Divider sx={{ my: 2, borderColor: 'rgba(0,0,0,0.06)' }} />
                     </Grid>
 
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <FormControl fullWidth>
                         <InputLabel id="session-timeout-label">Thời gian hết hạn phiên làm việc</InputLabel>
                         <Select
@@ -499,7 +499,7 @@ export default function AdminSettingsPage() {
                       </FormControl>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <FormControlLabel
                         control={
                           <Switch
@@ -560,7 +560,7 @@ export default function AdminSettingsPage() {
                   </Typography>
 
                   <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         label="Tên cổng thông tin LMS"
@@ -575,7 +575,7 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         label="Email liên hệ hệ thống"
@@ -590,7 +590,7 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <FormControl fullWidth>
                         <InputLabel id="max-upload-label">Giới hạn dung lượng tải lên tối đa</InputLabel>
                         <Select
@@ -611,11 +611,11 @@ export default function AdminSettingsPage() {
                       </FormControl>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Divider sx={{ my: 1, borderColor: 'rgba(0,0,0,0.06)' }} />
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <FormControlLabel
                         control={
                           <Switch
@@ -637,7 +637,7 @@ export default function AdminSettingsPage() {
                       />
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <FormControlLabel
                         control={
                           <Switch
@@ -700,7 +700,7 @@ export default function AdminSettingsPage() {
                   </Typography>
 
                   <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <TextField
                         fullWidth
                         label="Google OAuth Client ID"
@@ -715,7 +715,7 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         label="Cloudinary Cloud Name"
@@ -730,7 +730,7 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField
                         fullWidth
                         label="Elasticsearch Connection Node"
@@ -745,7 +745,7 @@ export default function AdminSettingsPage() {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <TextField
                         fullWidth
                         type="password"
