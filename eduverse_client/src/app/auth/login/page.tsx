@@ -123,11 +123,11 @@ export default function LoginPage() {
             }}
           >
             Bằng cách đăng nhập, bạn đồng ý với{' '}
-            <Link href="/terms" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
+            <Link href="/auth/terms" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
               Điều khoản Dịch vụ
             </Link>{' '}
             và{' '}
-            <Link href="/privacy" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
+            <Link href="/auth/privacy" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
               Chính sách Bảo mật
             </Link>{' '}
             của EduVerse.
