@@ -124,15 +124,17 @@ export default function AdminSettingsPage() {
     setProfile(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSecurityChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSecurityChange = (e: any) => {
     const name = e.target.name as string;
-    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setSecurity(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSystemChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSystemChange = (e: any) => {
     const name = e.target.name as string;
-    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setSystem(prev => ({ ...prev, [name]: value }));
   };
 
