@@ -34,7 +34,7 @@ export function LandingThemeProvider({ children }: { children: React.ReactNode }
 export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
   const user = useSelector((s) => s.auth.user);
   const roles = useSelector((s) => s.auth.roles) || [];
-  
+
   const filteredNavItems = navItems.filter((item) => {
     if (item.href === '/favorite' && !user) {
       return false;
@@ -110,22 +110,12 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
           </Stack>
 
           <Stack direction="row" spacing={1.25}>
+
             <Chip
               component={Link}
               href="/auth/login"
               clickable
               label="Đăng nhập"
-              sx={{
-                bgcolor: 'transparent',
-                color: 'text.primary',
-                fontWeight: 800,
-              }}
-            />
-            <Chip
-              component={Link}
-              href="/auth/register"
-              clickable
-              label="Đăng ký"
               sx={{
                 bgcolor: 'primary.main',
                 color: '#fff',
