@@ -211,7 +211,7 @@ export default function DoanhThuPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   p: 1.5,
-                  bgcolor: "#f9f8f6",
+                  bgcolor: "#F7F5F2",
                   borderRadius: 2,
                 }}
               >

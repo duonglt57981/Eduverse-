@@ -15,7 +15,7 @@ import { getOptimalHlsUrl, buildCloudinaryHlsUrl } from "../utils/cloudinary";
 import { VIDEO_JS_STYLES } from "../utils/videoHelpers";
 import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
 
-const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#6B1414";
 const LOAD_TIMEOUT_MS = 30000;
 

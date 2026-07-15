@@ -34,7 +34,7 @@ import {
   taoYeuCauRutTien,
 } from "@/src/store/rutTien/RutTienSlice";
 
-const PRIMARY = "#8D1313";
+const PRIMARY = "#8B1313";
 
 const trangThaiColor: Record<string, "warning" | "success" | "error" | "info"> = {
   ChoDuyet: "warning",

@@ -51,11 +51,11 @@ import {
 } from "@mui/icons-material";
 
 const COLORS = {
-  primary: "#8D1313", // Crimson Red
+  primary: "#8B1313", // Crimson Red
   primaryLight: "#B91C1C", // Light Crimson
   primaryDark: "#7F1D1D", // Dark Crimson
   primaryBgLight: "#FFF5F5", // Extra light pink/red background
-  bgLight: "#FFF8F6", // Premium cream-rose background
+  bgLight: "#F7F5F2", // Premium cream-rose background
   white: "#FFFFFF",
   textDark: "#1E293B", // Slate 800
   textSecondary: "#64748B", // Slate 500

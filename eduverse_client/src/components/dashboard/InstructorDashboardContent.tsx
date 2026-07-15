@@ -1,6 +1,8 @@
 "use client";
+import { COLORS } from "@/src/theme/tokens";
 
 import { useEffect, useState } from "react";
+import { apiService } from "@/src/services/index";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { getSoDu } from "@/src/store/rutTien/RutTienSlice";
@@ -41,13 +43,6 @@ import {
 } from "@mui/icons-material";
 
 // Crimson palette matching the premium design theme
-const COLORS = {
-  primary: "#8D1313",
-  primaryLight: "#B91C1C",
-  primaryDark: "#7F1D1D",
-  bgLight: "#FFF8F6",
-  white: "#FFFFFF",
-};
 
 // --- MOCK DATA ---
 const instructorStats = [
@@ -171,7 +166,7 @@ function RevenueBarChart({
   data: typeof revenueMonths;
   highlightIndex: number;
 }) {
-  const maxVal = Math.max(...data.map((d) => d.value));
+  const maxVal = data.length ? Math.max(1, ...data.map((d) => d.value)) : 1;
   return (
     <Stack
       direction="row"
@@ -232,44 +227,60 @@ export default function InstructorDashboardContent() {
     dispatch(getSoDu());
   }, [dispatch]);
 
+  // Dữ liệu dashboard giảng viên THẬT từ /dashboard (backend trả theo vai trò GiaoVien)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [dash, setDash] = useState<any>(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res = await apiService.get<any>("/dashboard");
+        if (res?.status && res.data) setDash(res.data);
+      } catch (e) {
+        console.error("Error fetching instructor dashboard:", e);
+      }
+    })();
+  }, []);
+
   const formatTien = (n: number) => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
     return n.toLocaleString("vi-VN");
   };
 
-  // Sửa instructorStats thành biến thường (không phải const ngoài component) để dùng soDu
+  // Dữ liệu thật cho biểu đồ / tăng trưởng / hoàn thành / học viên mới
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chartMonths: any[] = dash?.monthlyEnrollments ?? [];
+  const growthCount: number = dash?.newStudentsThisMonth ?? 0;
+  const growthPct: number = dash?.studentGrowthPercent ?? 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const completionData: any[] = dash?.completionByCourse ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recentStudentsData: any[] = dash?.recentStudents ?? [];
+
   const instructorStats = [
     {
       label: "Tổng khóa học",
-      value: "12",
+      value: dash ? String(dash.totalCourses ?? 0) : "—",
       icon: SchoolRounded,
       iconBg: "rgba(141, 19, 19, 0.06)",
       iconColor: COLORS.primary,
     },
     {
       label: "Tổng học viên",
-      value: "1,240",
+      value: dash ? (dash.totalStudents ?? 0).toLocaleString("vi-VN") : "—",
       icon: PeopleAltRounded,
       iconBg: "rgba(141, 19, 19, 0.06)",
       iconColor: COLORS.primary,
     },
     {
       label: "Doanh thu cá nhân",
-      value: formatTien(soDu),
+      value: dash ? formatTien(dash.totalRevenue ?? 0) : formatTien(soDu),
       suffix: "VNĐ",
       icon: AttachMoneyRounded,
       iconBg: "rgba(141, 19, 19, 0.06)",
       iconColor: COLORS.primary,
       onClick: () => router.push("/instructor/money"),
-    },
-    {
-      label: "Rating trung bình",
-      value: "4.9",
-      suffix: "/5",
-      icon: StarRounded,
-      iconBg: "rgba(141, 19, 19, 0.06)",
-      iconColor: "#F59E0B",
     },
   ];
   return (
@@ -283,7 +294,7 @@ export default function InstructorDashboardContent() {
           borderRadius: "24px",
           overflow: "visible",
           background:
-            "linear-gradient(135deg, #4A0E0E 0%, #7F1D1D 40%, #8D1313 100%)",
+            "linear-gradient(135deg, #4A0E0E 0%, #7F1D1D 40%, #8B1313 100%)",
           color: "#fff",
           position: "relative",
           minHeight: { xs: 220, md: 260 },
@@ -442,7 +453,7 @@ export default function InstructorDashboardContent() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+          gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
           gap: 2.5,
         }}
       >
@@ -558,16 +569,16 @@ export default function InstructorDashboardContent() {
               <Typography
                 sx={{ fontSize: 18, fontWeight: 800, color: "#1F2937" }}
               >
-                Biểu đồ doanh thu
+                Học viên mới theo tháng
               </Typography>
               <Typography
                 sx={{ fontSize: 12.5, color: "rgba(31,41,55,0.5)", mt: 0.3 }}
               >
-                Thống kê thu nhập 7 tháng gần nhất
+                Số lượt đăng ký 7 tháng gần nhất
               </Typography>
             </Box>
             <Chip
-              label="Năm 2024"
+              label={`Năm ${new Date().getFullYear()}`}
               size="small"
               sx={{
                 fontWeight: 700,
@@ -580,8 +591,8 @@ export default function InstructorDashboardContent() {
             />
           </Stack>
           <RevenueBarChart
-            data={revenueMonths}
-            highlightIndex={highlightMonth}
+            data={chartMonths}
+            highlightIndex={chartMonths.length ? chartMonths.length - 1 : 0}
           />
         </Paper>
 
@@ -630,7 +641,7 @@ export default function InstructorDashboardContent() {
                   <Typography
                     sx={{ fontSize: 13, fontWeight: 800, color: "#10B981" }}
                   >
-                    +24%
+                    {growthPct >= 0 ? "+" : ""}{growthPct}%
                   </Typography>
                 </Box>
               </Box>
@@ -643,7 +654,7 @@ export default function InstructorDashboardContent() {
                     lineHeight: 1,
                   }}
                 >
-                  312
+                  {growthCount.toLocaleString("vi-VN")}
                 </Typography>
                 <Typography
                   sx={{
@@ -674,8 +685,8 @@ export default function InstructorDashboardContent() {
               Tỷ lệ hoàn thành
             </Typography>
             <Stack spacing={2}>
-              {completionRates.map((item) => (
-                <Box key={item.name}>
+              {completionData.map((item) => (
+                <Box key={item.title}>
                   <Stack
                     direction="row"
                     sx={{ justifyContent: "space-between", mb: 0.8 }}
@@ -683,7 +694,7 @@ export default function InstructorDashboardContent() {
                     <Typography
                       sx={{ fontSize: 13, fontWeight: 600, color: "#1F2937" }}
                     >
-                      {item.name}
+                      {item.title}
                     </Typography>
                     <Typography
                       sx={{
@@ -821,9 +832,9 @@ export default function InstructorDashboardContent() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {latestStudents.map((student) => (
+                {recentStudentsData.map((student, idx) => (
                   <TableRow
-                    key={student.id}
+                    key={idx}
                     sx={{
                       "&:last-child td": { borderBottom: 0 },
                       "&:hover": { bgcolor: "rgba(141,19,19,0.015)" },
@@ -916,7 +927,7 @@ export default function InstructorDashboardContent() {
                       <Typography
                         sx={{ fontSize: 12.5, color: "rgba(31,41,55,0.5)" }}
                       >
-                        {student.lastActivity}
+                        {student.time}
                       </Typography>
                     </TableCell>
                   </TableRow>

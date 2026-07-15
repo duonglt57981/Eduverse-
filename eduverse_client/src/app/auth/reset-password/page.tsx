@@ -25,7 +25,7 @@ export default function ResetPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: '#f9f8f6',
+        bgcolor: '#F7F5F2',
         px: 2,
       }}
     >
@@ -42,7 +42,7 @@ export default function ResetPasswordPage() {
         }}
       >
         <Stack spacing={2.5} sx={{ alignItems: 'center' }}>
-          <CircularProgress size={28} sx={{ color: '#7f1d1d' }} />
+          <CircularProgress size={28} sx={{ color: '#8B1313' }} />
           <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>
             Đang chuyển hướng...
           </Typography>
@@ -54,7 +54,7 @@ export default function ResetPasswordPage() {
             component="a"
             href="/auth/forgot-password"
             sx={{
-              color: '#7f1d1d',
+              color: '#8B1313',
               fontWeight: 700,
               fontSize: 14,
               textDecoration: 'none',

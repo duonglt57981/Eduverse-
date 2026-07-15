@@ -81,6 +81,10 @@ namespace Eduverse.Api.Controller
                     {
                         return await GetAdminDashboardDataAsync();
                     }
+                    if (roles.Contains("GiaoVien"))
+                    {
+                        return await GetInstructorDashboardDataAsync(loggedInUserId.Value);
+                    }
                 }
             }
             catch (Exception ex)
@@ -221,39 +225,7 @@ namespace Eduverse.Api.Controller
                 }
             }
 
-            if (!continueCourses.Any())
-            {
-                continueCourses.Add(new
-                {
-                    id = "c-fallback-1",
-                    title = "WEB2064 - Lập trình Javascript nâng cao",
-                    subtitle = "8. Async Javascript: Promises & Callbacks",
-                    contentType = "Bài viết",
-                    duration = "1 phút học",
-                    progress = 70,
-                    thumbnailGradient = "linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%)"
-                });
-                continueCourses.Add(new
-                {
-                    id = "c-fallback-2",
-                    title = "Vue JS 3 For Modern Web Development...",
-                    subtitle = "13. Setting up Vue JS",
-                    contentType = "Bài giảng",
-                    duration = "7 phút học",
-                    progress = 45,
-                    thumbnailGradient = "linear-gradient(135deg, #10B981 0%, #059669 100%)"
-                });
-                continueCourses.Add(new
-                {
-                    id = "c-fallback-3",
-                    title = "Software Engineering 101: Plan and Execute...",
-                    subtitle = "2. Your Turn: Architecture",
-                    contentType = "Bài tập",
-                    duration = "15 phút học",
-                    progress = 90,
-                    thumbnailGradient = "linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)"
-                });
-            }
+            // (Bỏ dữ liệu giả: 'đang học dở' lấy từ đăng ký thật, rỗng nếu chưa có)
 
             var certList = certificates.Select((c, i) => (object)new
             {
@@ -266,19 +238,7 @@ namespace Eduverse.Api.Controller
                 thumbnailGradient = GetGradient(i + 4)
             }).ToList();
 
-            if (!certList.Any())
-            {
-                certList.Add(new
-                {
-                    id = "cert-fallback-1",
-                    title = "ISTQB® Certified Tester Foundation Level (CTFL)",
-                    subtitle = "Brightest",
-                    contentType = "Luyện thi chứng chỉ",
-                    duration = "Hoàn thành",
-                    progress = 100,
-                    thumbnailGradient = "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)"
-                });
-            }
+            // (Bỏ dữ liệu giả: chứng chỉ lấy từ dữ liệu thật, rỗng nếu chưa có)
 
             var continueLearning = new
             {
@@ -307,13 +267,13 @@ namespace Eduverse.Api.Controller
                 id = cat.Id.ToString(),
                 title = cat.TenDanhMuc,
                 //iconName = defaultSectorIcons[i % defaultSectorIcons.Length],
-                subfields = GetSubfields(cat.TenDanhMuc),
+                subfields = new List<string>(),
                 bgLight = "#FFF8F6",
                 iconColor = "#8D1313"
             }).ToList();
 
             // 4. Interested Skills Badges
-            var interestedSkills = new List<string> { "AI", "Python", "ReactJS", "SQL Server", "AWS", "UI/UX" };
+            var interestedSkills = categories.Select(cat => cat.TenDanhMuc).Where(n => !string.IsNullOrWhiteSpace(n)).Take(6).ToList();
 
             var unregisteredCourses = courses
                 .Where(c => !registeredCourseIds.Contains(c.Id))
@@ -326,7 +286,7 @@ namespace Eduverse.Api.Controller
                 id = c.Id.ToString(),
                 title = c.TieuDe,
                 instructor = c.CreatedBy,
-                studentsCount = c.SoLuongHocVien ?? 1500,
+                studentsCount = c.SoLuongHocVien ?? 0,
                 level = c.CapDo ?? "Trung cấp",
 
                 gia = c.Gia,
@@ -343,8 +303,8 @@ namespace Eduverse.Api.Controller
                 title = premiumCourse?.TieuDe ?? "Thiết kế hệ thống chuyên sâu",
                 description = premiumCourse?.MoTa ?? "Học cách thiết kế hệ thống có tính sẵn sàng cao, chịu tải hàng triệu người dùng từ các chuyên gia đầu ngành.",
                 instructor = premiumCourse?.CreatedBy?? "An Danh",
-                rating = 4.9,
-                studentsCount = premiumCourse?.SoLuongHocVien ?? 2500,
+                rating = 0, // KhoaHoc chưa có hệ thống đánh giá
+                studentsCount = premiumCourse?.SoLuongHocVien ?? 0,
                 level = premiumCourse?.CapDo ?? "Nâng cao",
                 gia = premiumCourse.Gia,
                 giagoc = premiumCourse.GiaGoc,
@@ -354,8 +314,8 @@ namespace Eduverse.Api.Controller
                     id = c.Id.ToString(),
                     title = c.TieuDe,
                     instructor = premiumCourse?.CreatedBy ?? "An Danh",
-                    rating = 4.7,
-                    studentsCount = c.SoLuongHocVien ?? 1000,
+                    rating = 0, // KhoaHoc chưa có hệ thống đánh giá
+                    studentsCount = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Cơ bản",
                     gia = c.Gia,
                     giagoc = c.GiaGoc,
@@ -372,8 +332,8 @@ namespace Eduverse.Api.Controller
                     id = c.Id.ToString(),
                     title = c.TieuDe,
                     instructor = premiumCourse?.CreatedBy ?? "An Danh",
-                    rating = 4.8,
-                    studentsCount = c.SoLuongHocVien ?? 1800,
+                    rating = 0, // KhoaHoc chưa có hệ thống đánh giá
+                    studentsCount = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Trung cấp",
                     gia = c.Gia,
                     giagoc = c.GiaGoc,
@@ -437,6 +397,137 @@ namespace Eduverse.Api.Controller
 
         }
 
+        // ===== Dashboard cho GIẢNG VIÊN (dữ liệu thật, không dữ liệu giả) =====
+        private async Task<DataResponse<object>> GetInstructorDashboardDataAsync(Guid instructorId)
+        {
+            AppUser user = null;
+            try { user = await _userManager.FindByIdAsync(instructorId.ToString()); }
+            catch (Exception ex) { Console.WriteLine("Error finding instructor: " + ex.Message); }
+            var fullName = user?.HoTen ?? "Giảng viên";
+            var avatarUrl = user?.AnhDaiDien;
+
+            // Khóa học của giảng viên (CreatedId == instructorId)
+            var myCourses = new List<KhoaHoc>();
+            try
+            {
+                myCourses = await _khoaHocService.GetQueryable()
+                    .Where(c => c.CreatedId == instructorId && c.IsDeleted == false && c.TrangThai != "DaXoa")
+                    .ToListAsync();
+            }
+            catch (Exception ex) { Console.WriteLine("Error fetching instructor courses: " + ex.Message); }
+            var myCourseIds = myCourses.Select(c => c.Id).ToList();
+            int totalCourses = myCourses.Count;
+
+            // Đăng ký vào các khóa của giảng viên (lọc trong bộ nhớ cho an toàn)
+            var allRegs = new List<DangKyKhoaHoc>();
+            try
+            {
+                allRegs = await _dangKyKhoaHocService.GetQueryable().Where(r => r.IsDeleted == false).ToListAsync();
+            }
+            catch (Exception ex) { Console.WriteLine("Error fetching registrations: " + ex.Message); }
+            var myRegs = allRegs.Where(r => r.IdKhoaHoc.HasValue && myCourseIds.Contains(r.IdKhoaHoc.Value)).ToList();
+
+            int totalStudents = myRegs.Where(r => r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
+            double totalRevenue = myRegs.Sum(r => r.GiaDangKy ?? 0);
+
+            // Tiến độ học tập của các đăng ký (dùng cho tỷ lệ hoàn thành + tiến độ học viên)
+            var allProgress = new List<TienDoHocTap>();
+            try
+            {
+                allProgress = await _tienDoHocTapService.GetQueryable().Where(p => p.IsDeleted == false && p.IdDangKi.HasValue).ToListAsync();
+            }
+            catch (Exception ex) { Console.WriteLine("Error fetching progress: " + ex.Message); }
+
+            // Tăng trưởng học viên: tháng này so với tháng trước
+            var nowDate = DateTime.Now;
+            var curMonthStart = new DateTime(nowDate.Year, nowDate.Month, 1);
+            var prevMonthStart = curMonthStart.AddMonths(-1);
+            int newThisMonth = myRegs.Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= curMonthStart && r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
+            int newPrevMonth = myRegs.Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= prevMonthStart && r.ThoiGianDK.Value < curMonthStart && r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
+            double studentGrowthPercent = newPrevMonth > 0
+                ? Math.Round((double)(newThisMonth - newPrevMonth) / newPrevMonth * 100, 0)
+                : (newThisMonth > 0 ? 100 : 0);
+
+            // Học viên mới theo 7 tháng gần nhất
+            var monthlyEnrollments = new List<object>();
+            for (int i = 6; i >= 0; i--)
+            {
+                var mStart = curMonthStart.AddMonths(-i);
+                var mEnd = mStart.AddMonths(1);
+                int cnt = myRegs.Count(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= mStart && r.ThoiGianDK.Value < mEnd);
+                monthlyEnrollments.Add(new { label = "Tháng " + mStart.Month, value = cnt });
+            }
+
+            // Tỷ lệ hoàn thành theo khóa (từ TienDoHocTap)
+            var completionByCourse = new List<object>();
+            try
+            {
+                var regIdToCourse = new Dictionary<Guid, Guid>();
+                foreach (var r in myRegs)
+                {
+                    if (r.IdKhoaHoc.HasValue) regIdToCourse[r.Id] = r.IdKhoaHoc.Value;
+                }
+                var grouped = allProgress
+                    .Where(p => p.IdDangKi.HasValue && regIdToCourse.ContainsKey(p.IdDangKi.Value))
+                    .GroupBy(p => regIdToCourse[p.IdDangKi.Value])
+                    .Select(g => new
+                    {
+                        courseId = g.Key,
+                        rate = g.Count() > 0 ? (int)Math.Round((double)g.Count(x => x.ThoiGianHoanThanh.HasValue) / g.Count() * 100) : 0
+                    })
+                    .OrderByDescending(x => x.rate)
+                    .Take(4)
+                    .ToList();
+                foreach (var gc in grouped)
+                {
+                    var course = myCourses.FirstOrDefault(c => c.Id == gc.courseId);
+                    if (course != null) completionByCourse.Add(new { title = course.TieuDe, rate = gc.rate });
+                }
+            }
+            catch (Exception ex) { Console.WriteLine("Error computing completion: " + ex.Message); }
+
+            // Học viên mới nhất
+            var recentStudents = new List<object>();
+            try
+            {
+                var sorted = myRegs.Where(r => r.ThoiGianDK.HasValue && r.IdNguoiDangKi.HasValue).OrderByDescending(r => r.ThoiGianDK).Take(6).ToList();
+                foreach (var reg in sorted)
+                {
+                    var student = await _userManager.FindByIdAsync(reg.IdNguoiDangKi.Value.ToString());
+                    var course = myCourses.FirstOrDefault(c => c.Id == reg.IdKhoaHoc);
+                    var diff = DateTime.Now - (reg.ThoiGianDK ?? DateTime.Now);
+                    string timeStr = diff.TotalMinutes < 60 ? ((int)Math.Max(1, diff.TotalMinutes)) + " phút trước"
+                        : diff.TotalHours < 24 ? ((int)diff.TotalHours) + " giờ trước"
+                        : ((int)diff.TotalDays) + " ngày trước";
+                    int totalLec = course?.TongBaiGiang ?? 0;
+                    int doneLec = allProgress.Count(pr => pr.IdDangKi == reg.Id && pr.ThoiGianHoanThanh.HasValue);
+                    int progress = totalLec > 0 ? (int)Math.Round((double)doneLec / totalLec * 100) : 0;
+                    if (progress > 100) progress = 100;
+                    recentStudents.Add(new { name = student?.HoTen ?? "Học viên", course = course?.TieuDe ?? "", progress = progress, time = timeStr });
+                }
+            }
+            catch (Exception ex) { Console.WriteLine("Error recent students: " + ex.Message); }
+
+            return new DataResponse<object>
+            {
+                Status = true,
+                Data = new
+                {
+                    role = "GiaoVien",
+                    fullName = fullName,
+                    avatarUrl = avatarUrl,
+                    totalCourses = totalCourses,
+                    totalStudents = totalStudents,
+                    totalRevenue = totalRevenue,
+                    newStudentsThisMonth = newThisMonth,
+                    studentGrowthPercent = studentGrowthPercent,
+                    monthlyEnrollments = monthlyEnrollments,
+                    completionByCourse = completionByCourse,
+                    recentStudents = recentStudents
+                }
+            };
+        }
+
         private async Task<DataResponse<object>> GetAdminDashboardDataAsync()
         {
             var loggedInUserId = UserId;
@@ -468,7 +559,7 @@ namespace Eduverse.Api.Controller
             double totalRevenue = allRegistrations.Sum(r => r.GiaDangKy ?? 0);
 
             // 2. Fetch total students (users count)
-            int totalStudents = 12450;
+            int totalStudents = 0;
             try
             {
                 totalStudents = await _userManager.Users.Where(u => !u.IsDeleted).CountAsync();
@@ -479,7 +570,7 @@ namespace Eduverse.Api.Controller
             }
 
             // 3. Fetch total courses
-            int totalCourses = 6;
+            int totalCourses = 0;
             try
             {
                 totalCourses = await _khoaHocService.GetQueryable()
@@ -506,9 +597,8 @@ namespace Eduverse.Api.Controller
 
             double completionRate = progressRecords.Any()
                 ? Math.Round(progressRecords.Average(p => p.ThoiGianXem ?? 0), 1)
-                : 78.4;
+                : 0;
             if (completionRate > 100) completionRate = 100;
-            if (completionRate <= 0) completionRate = 78.4;
 
             // 5. Revenue Trend (12 Months of the current year)
             var currentYear = DateTime.Now.Year;
@@ -537,12 +627,7 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error calculating student growth: " + ex.Message);
             }
 
-            // Fallback for student growth if all 0
-            if (studentGrowth.All(c => c == 0))
-            {
-                studentGrowth = new int[] { 3400, 4800, 3900, 6200, 8100, 7200, 9500 };
-                totalStudents = 12450;
-            }
+            // (Bỏ dữ liệu giả: dùng số liệu thật kể cả khi bằng 0)
 
             // 7. Best Selling Courses
             var courses = new List<KhoaHoc>();
@@ -584,12 +669,7 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error grouping course registrations: " + ex.Message);
             }
 
-            if (!bestSellingCourses.Any())
-            {
-                bestSellingCourses.Add(new { title = "UI/UX Design Masterclass", percentage = 92 });
-                bestSellingCourses.Add(new { title = "Web Development Bootcamp", percentage = 78 });
-                bestSellingCourses.Add(new { title = "Data Science Fundamentals", percentage = 64 });
-            }
+            // (Bỏ dữ liệu giả: danh sách khóa học bán chạy lấy từ đăng ký thật)
 
             // 8. Heatmap Activity Grid (140 days)
             var heatmap = new List<int>();
@@ -606,14 +686,7 @@ namespace Eduverse.Api.Controller
                 heatmap.Add(activityCounts.GetValueOrDefault(date, 0));
             }
 
-            if (heatmap.All(c => c == 0))
-            {
-                var rand = new Random();
-                for (int i = 0; i < 140; i++)
-                {
-                    heatmap.Add(rand.Next(0, 5));
-                }
-            }
+            // (Bỏ dữ liệu ngẫu nhiên giả: heatmap dùng hoạt động đăng ký thật)
 
             // 9. Recent Online Activities
             var recentActivities = new List<object>();
@@ -651,12 +724,31 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error calculating recent activities: " + ex.Message);
             }
 
-            if (!recentActivities.Any())
+            // (Bỏ dữ liệu giả: hoạt động gần đây lấy từ đăng ký thật)
+
+            // ===== Xu hướng THẬT: tháng hiện tại so với tháng trước (không dùng số cứng) =====
+            var nowDate = DateTime.Now;
+            var curMonthStart = new DateTime(nowDate.Year, nowDate.Month, 1);
+            var prevMonthStart = curMonthStart.AddMonths(-1);
+
+            double revThisMonth = allRegistrations.Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= curMonthStart).Sum(r => r.GiaDangKy ?? 0);
+            double revPrevMonth = allRegistrations.Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= prevMonthStart && r.ThoiGianDK.Value < curMonthStart).Sum(r => r.GiaDangKy ?? 0);
+
+            int stuThisMonth = 0, stuPrevMonth = 0;
+            try
             {
-                recentActivities.Add(new { type = "registration", title = "Lê Văn A vừa đăng ký React Native 2024", time = "2 phút trước", subtitle = "Thanh toán thành công" });
-                recentActivities.Add(new { type = "quiz", title = "Nguyễn Thị B vừa hoàn thành bài thi cuối khóa", time = "15 phút trước", subtitle = "Điểm số: 9.5/10" });
-                recentActivities.Add(new { type = "premium", title = "Trần Minh C đã gia hạn gói Premium", time = "45 phút trước", subtitle = "+2.500.000đ" });
+                stuThisMonth = await _userManager.Users.CountAsync(u => !u.IsDeleted && u.CreatedDate >= curMonthStart);
+                stuPrevMonth = await _userManager.Users.CountAsync(u => !u.IsDeleted && u.CreatedDate >= prevMonthStart && u.CreatedDate < curMonthStart);
             }
+            catch (Exception ex) { Console.WriteLine("Error trend students: " + ex.Message); }
+
+            int crsThisMonth = courses.Count(c => c.NgayTao.HasValue && c.NgayTao.Value >= curMonthStart);
+            int crsPrevMonth = courses.Count(c => c.NgayTao.HasValue && c.NgayTao.Value >= prevMonthStart && c.NgayTao.Value < curMonthStart);
+
+            double revenueTrendPct = revPrevMonth > 0 ? Math.Round((revThisMonth - revPrevMonth) / revPrevMonth * 100, 1) : (revThisMonth > 0 ? 100 : 0);
+            double studentsTrendPct = stuPrevMonth > 0 ? Math.Round((double)(stuThisMonth - stuPrevMonth) / stuPrevMonth * 100, 1) : (stuThisMonth > 0 ? 100 : 0);
+            double coursesTrendPct = crsPrevMonth > 0 ? Math.Round((double)(crsThisMonth - crsPrevMonth) / crsPrevMonth * 100, 1) : (crsThisMonth > 0 ? 100 : 0);
+            double completionTrendPct = 0; // completionRate là snapshot trung bình, không có mốc so sánh theo tháng
 
             return new DataResponse<object>
             {
@@ -673,7 +765,11 @@ namespace Eduverse.Api.Controller
                         totalCourses = totalCourses,
                         totalRevenue = totalRevenue,
                         totalStudents = totalStudents,
-                        completionRate = completionRate
+                        completionRate = completionRate,
+                        revenueTrendPct = revenueTrendPct,
+                        studentsTrendPct = studentsTrendPct,
+                        coursesTrendPct = coursesTrendPct,
+                        completionTrendPct = completionTrendPct
                     },
                     revenueTrend = revenueTrend,
                     studentGrowth = studentGrowth,

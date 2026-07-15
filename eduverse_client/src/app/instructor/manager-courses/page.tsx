@@ -1,4 +1,5 @@
 "use client";
+import { MAU } from "@/src/theme/tokens";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -36,14 +37,6 @@ interface PagedList<T> {
 }
 
 // ====== Bảng màu thương hiệu EduVerse ======
-const MAU = {
-  chinh: "#8B1313",
-  chinhDam: "#5C0D0D",
-  chinhNhat: "#FBEFEF",
-  vien: "#F0DEDE",
-  chuDen: "#231313",
-  chuXam: "#8A7676",
-};
 
 // ====== Đường dẫn ======
 const duongDanChiTietKhoaHoc = (id: string) =>
@@ -106,7 +99,7 @@ function KhoaHocContent() {
 
         // Kiểm tra response
         if (!response || response.status === false || !response.data) {
-          setLoi(response?.message || "Không có dữ liệu khóa học.");
+          // "Chưa có khóa học" không phải lỗi → để danh sách rỗng hiển thị empty state thân thiện
           setDanhSachKhoaHoc([]);
           setTongSoTrang(1);
           return;
@@ -232,6 +225,7 @@ function KhoaHocContent() {
           sx={{
             width: 300,
             "& .MuiOutlinedInput-root": {
+              height: 44,
               borderRadius: "12px",
               bgcolor: MAU.chinhNhat,
               "& fieldset": { borderColor: "transparent" },
@@ -256,11 +250,13 @@ function KhoaHocContent() {
           onChange={(e) => setSapXep(e.target.value)}
           sx={{
             minWidth: 170,
+            height: 44,
             borderRadius: "12px",
             color: MAU.chinh,
             fontWeight: 600,
             bgcolor: MAU.chinhNhat,
             "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+            "& .MuiSelect-select": { display: "flex", alignItems: "center" },
           }}
         >
           <MenuItem value="moi-nhat">Mới nhất</MenuItem>
@@ -296,17 +292,73 @@ function KhoaHocContent() {
         <Box
           sx={{
             textAlign: "center",
-            py: 8,
-            borderRadius: "16px",
-            border: `1px dashed ${MAU.vien}`,
+            py: { xs: 6, sm: 9 },
+            px: 3,
+            borderRadius: "20px",
+            border: `1.5px dashed ${MAU.vien}`,
+            background: "linear-gradient(180deg, #FFFFFF 0%, #FDF6F6 100%)",
           }}
         >
-          <SchoolOutlinedIcon
-            sx={{ fontSize: 40, color: MAU.chinh, opacity: 0.5, mb: 1 }}
-          />
-          <Typography sx={{ color: MAU.chuXam, fontWeight: 500 }}>
-            Bạn chưa có khóa học nào.
+          <Box
+            sx={{
+              width: 88,
+              height: 88,
+              mx: "auto",
+              mb: 2.5,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background:
+                "radial-gradient(circle at 30% 30%, #FBEFEF 0%, #F3D5D5 100%)",
+              boxShadow: "0 10px 24px rgba(139,19,19,0.12)",
+            }}
+          >
+            <SchoolOutlinedIcon sx={{ fontSize: 44, color: MAU.chinh }} />
+          </Box>
+          <Typography
+            sx={{ fontWeight: 800, fontSize: 19, color: MAU.chuDen, mb: 0.75 }}
+          >
+            {tuKhoaTimKiem
+              ? "Không tìm thấy khóa học phù hợp"
+              : "Chưa có khóa học nào"}
           </Typography>
+          <Typography
+            sx={{
+              color: MAU.chuXam,
+              fontSize: 14,
+              maxWidth: 440,
+              mx: "auto",
+              mb: 3,
+              lineHeight: 1.65,
+            }}
+          >
+            {tuKhoaTimKiem
+              ? `Không có khóa học nào khớp với "${tuKhoaTimKiem}". Hãy thử từ khóa khác.`
+              : "Bắt đầu hành trình giảng dạy bằng cách tạo khóa học đầu tiên và chia sẻ kiến thức tới học viên."}
+          </Typography>
+          {!tuKhoaTimKiem && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => router.push(duongDanTaoKhoaHocMoi)}
+              sx={{
+                bgcolor: MAU.chinh,
+                textTransform: "none",
+                fontWeight: 700,
+                px: 3,
+                py: 1,
+                borderRadius: "12px",
+                boxShadow: "0 6px 16px rgba(139,19,19,0.25)",
+                "&:hover": {
+                  bgcolor: MAU.chinhDam,
+                  boxShadow: "0 8px 20px rgba(139,19,19,0.32)",
+                },
+              }}
+            >
+              Tạo khóa học đầu tiên
+            </Button>
+          )}
         </Box>
       )}
 

@@ -644,7 +644,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     color: "#1F2937",
                     "&:hover": {
                       bgcolor: "rgba(141,19,19,0.04)",
-                      color: "#8D1313",
+                      color: "#8B1313",
                     },
                   },
                 },
@@ -728,7 +728,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
             <Divider sx={{ my: 0.5 }} />
 
-            <MenuItem onClick={() => router.push("/settings")}>
+            <MenuItem onClick={() => router.push(roles.includes("Admin") ? "/admin/settings" : "/settings")}>
               <ListItemIcon sx={{ minWidth: "32px !important" }}>
                 <SettingsRounded fontSize="small" />
               </ListItemIcon>

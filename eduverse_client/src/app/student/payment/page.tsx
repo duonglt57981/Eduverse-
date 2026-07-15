@@ -50,7 +50,7 @@ interface ApDungNhieuMaResponse {
   soTienSauGiam: number;
 }
 
-const PRIMARY = "#8D1313";
+const PRIMARY = "#8B1313";
 const steps = ["Giỏ hàng", "Thanh toán", "Hoàn tất"];
 
 function ThanhToanContent() {

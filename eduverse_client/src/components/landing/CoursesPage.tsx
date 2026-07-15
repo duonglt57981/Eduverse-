@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import KhoaHocService from '@/src/services/KhoaHocService';
+import { danhMucService } from '@/src/services/danhmucService';
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
@@ -11,7 +12,6 @@ import {
   QueryStatsRounded,
   SchoolRounded,
   SearchRounded,
-  StarRounded,
   TimerRounded,
 } from '@mui/icons-material';
 import {
@@ -32,9 +32,8 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  courseCatalog,
-  courseCategories,
   type CourseCatalogItem,
+  type CourseCategory,
 } from './landing-data';
 import {
   CourseVisual,
@@ -82,7 +81,7 @@ function CategoryCard({
           display: 'grid',
           placeItems: 'center',
           bgcolor: active ? 'rgba(141,19,19,0.12)' : 'rgba(141,19,19,0.06)',
-          color: '#8d1313',
+          color: '#8B1313',
           mb: 1.5,
         }}
       >
@@ -153,7 +152,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             p: 0,
             borderRadius: '50%',
             bgcolor: 'rgba(255,255,255,0.9)',
-            color: '#8d1313',
+            color: '#8B1313',
           }}
         >
           <FavoriteBorderRounded sx={{ fontSize: 18 }} />
@@ -181,7 +180,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             height: 26,
             borderRadius: 2.8,
             bgcolor: 'rgba(141,19,19,0.06)',
-            color: '#8d1313',
+            color: '#8B1313',
             fontWeight: 800,
           }}
         />
@@ -190,15 +189,8 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
       <Typography sx={{ mt: 1.35, fontSize: 22, fontWeight: 900, lineHeight: 1.24, letterSpacing: '-0.4px' }}>
         {course.title}
       </Typography>
-      <Typography sx={{ mt: 0.7, fontSize: 13.5, color: 'rgba(24,24,27,0.58)' }}>
-        Giảng viên: {course.instructor}
-      </Typography>
 
       <Stack direction="row" spacing={1.1} sx={{ mt: 1.4, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Stack direction="row" spacing={0.4} sx={{ alignItems: 'center' }}>
-          <StarRounded sx={{ fontSize: 18, color: '#efb21a' }} />
-          <Typography sx={{ fontSize: 13.5, fontWeight: 800 }}>{course.rating}</Typography>
-        </Stack>
         <Typography sx={{ fontSize: 13, color: 'rgba(24,24,27,0.54)' }}>
           ({course.students} học viên)
         </Typography>
@@ -222,7 +214,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
         <Typography sx={{ fontSize: 13.5, color: 'rgba(24,24,27,0.38)', textDecoration: 'line-through' }}>
           {course.originalPrice}
         </Typography>
-        <Typography sx={{ fontSize: 28, fontWeight: 900, color: '#8d1313' }}>
+        <Typography sx={{ fontSize: 28, fontWeight: 900, color: '#8B1313' }}>
           {course.price}
         </Typography>
       </Stack>
@@ -265,7 +257,7 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     id: kh.id,
     title: kh.tieuDe || 'Khóa học không tên',
     instructor: kh.tenGiangVien || 'Chưa cập nhật',
-    rating: 4.8,
+    rating: 0, // hệ thống chưa lưu đánh giá khóa học
     students: kh.soLuongHocVien || 0,
     price: kh.gia === 0 || kh.gia === null ? 'Miễn phí' : `${kh.gia?.toLocaleString('vi-VN')}đ`,
     originalPrice: kh.giaGoc && kh.giaGoc > 0 ? `${kh.giaGoc?.toLocaleString('vi-VN')}đ` : '',
@@ -275,7 +267,7 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     badge: kh.gia === 0 || kh.gia === null ? "Miễn phí" : "",
     tags: [kh.capDo || 'Tự chọn', kh.gia === 0 || kh.gia === null ? 'Free' : 'Pro'],
     palette: [
-      '#8d1313',
+      '#8B1313',
       '#c2410c',
       '#fff7f4'
     ],
@@ -300,6 +292,30 @@ export default function CoursesPage() {
 
   const courseService = useMemo(() => new KhoaHocService(), []);
 
+  // Danh mục thật từ phần quản lý danh mục của Admin (/danhmuc, công khai)
+  const [categories, setCategories] = useState<CourseCategory[]>([]);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await danhMucService.getList({ pageIndex: 1, pageSize: 100 });
+        if (active && res.status && res.data) {
+          setCategories(
+            (res.data.items || []).map((dm) => ({
+              label: dm.tenDanhMuc || 'Danh mục',
+              value: dm.tenDanhMuc || '',
+            })),
+          );
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
@@ -308,9 +324,8 @@ export default function CoursesPage() {
         const searchParams: any = {
           pageIndex,
           pageSize,
-          keyword: search || undefined,
+          keyword: (search || (activeCategory !== 'all' ? activeCategory : '')) || undefined,
           capDo: selectedLevels.length > 0 ? selectedLevels[0] : undefined,
-          loaiKhoaHoc: activeCategory !== 'all' ? activeCategory : undefined,
           isFree: freeOnly || undefined,
           sortPrice: sortBy === 'price-low' ? 'asc' : sortBy === 'rating' ? 'desc' : undefined
         };
@@ -393,7 +408,7 @@ export default function CoursesPage() {
               >
                 Khám phá hàng trăm
                 <br />
-                <Box component="span" sx={{ color: '#8d1313' }}>
+                <Box component="span" sx={{ color: '#8B1313' }}>
                   khóa học
                 </Box>{' '}
                 chất lượng
@@ -552,7 +567,7 @@ export default function CoursesPage() {
                   bgcolor: '#fff',
                 }}
               >
-                <Typography sx={{ fontSize: 24, fontWeight: 900, color: '#8d1313' }}>
+                <Typography sx={{ fontSize: 24, fontWeight: 900, color: '#8B1313' }}>
                   15K+
                 </Typography>
                 <Typography sx={{ fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
@@ -578,11 +593,10 @@ export default function CoursesPage() {
                 gap: 2,
               }}
             >
-              {courseCategories.map((category) => (
+              {categories.slice(0, 8).map((category) => (
                 <CategoryCard
                   key={category.value}
                   label={category.label}
-                  count={category.count}
                   active={activeCategory === category.value}
                   onClick={() => setActiveCategory(category.value)}
                 />
@@ -594,7 +608,7 @@ export default function CoursesPage() {
                 component={Link}
                 href="/courses"
                 endIcon={<ArrowForwardRounded />}
-                sx={{ color: '#8d1313' }}
+                sx={{ color: '#8B1313' }}
               >
                 Xem tất cả danh mục
               </Button>
@@ -631,7 +645,7 @@ export default function CoursesPage() {
                     setSearch('');
                     setSortBy('newest');
                   }}
-                  sx={{ color: '#8d1313' }}
+                  sx={{ color: '#8B1313' }}
                 >
                   Xóa tất cả
                 </Button>
@@ -639,7 +653,7 @@ export default function CoursesPage() {
 
               <Stack spacing={2.2}>
                 <FilterGroup title="Danh mục">
-                  {courseCategories.map((category) => (
+                  {categories.map((category) => (
                     <Button
                       key={category.value}
                       onClick={() => setActiveCategory(category.value)}
@@ -648,7 +662,7 @@ export default function CoursesPage() {
                         px: 1.4,
                         py: 1,
                         borderRadius: 2.8,
-                        color: activeCategory === category.value ? '#8d1313' : 'rgba(24,24,27,0.7)',
+                        color: activeCategory === category.value ? '#8B1313' : 'rgba(24,24,27,0.7)',
                         bgcolor:
                           activeCategory === category.value
                             ? 'rgba(141,19,19,0.06)'
@@ -656,7 +670,6 @@ export default function CoursesPage() {
                       }}
                     >
                       <span>{category.label}</span>
-                      <span>({category.count})</span>
                     </Button>
                   ))}
                 </FilterGroup>
@@ -695,7 +708,7 @@ export default function CoursesPage() {
                           px: 1.2,
                           py: 1,
                           borderRadius: 2.8,
-                          color: selected ? '#8d1313' : 'rgba(24,24,27,0.72)',
+                          color: selected ? '#8B1313' : 'rgba(24,24,27,0.72)',
                           bgcolor: selected ? 'rgba(141,19,19,0.06)' : 'transparent',
                         }}
                       >
@@ -739,18 +752,18 @@ export default function CoursesPage() {
                   label="Tất cả"
                   onClick={() => setActiveCategory('all')}
                   sx={{
-                    bgcolor: activeCategory === 'all' ? '#8d1313' : '#fff',
+                    bgcolor: activeCategory === 'all' ? '#8B1313' : '#fff',
                     color: activeCategory === 'all' ? '#fff' : 'rgba(24,24,27,0.74)',
                   }}
                 />
-                {courseCategories.map((category) => (
+                {categories.map((category) => (
                   <Chip
                     key={category.value}
                     label={category.label}
                     onClick={() => setActiveCategory(category.value)}
                     sx={{
                       bgcolor:
-                        activeCategory === category.value ? '#8d1313' : '#fff',
+                        activeCategory === category.value ? '#8B1313' : '#fff',
                       color:
                         activeCategory === category.value
                           ? '#fff'
@@ -784,7 +797,7 @@ export default function CoursesPage() {
                     bgcolor: 'rgba(255,255,255,0.7)',
                   }}
                 >
-                  <QueryStatsRounded sx={{ fontSize: 34, color: '#8d1313' }} />
+                  <QueryStatsRounded sx={{ fontSize: 34, color: '#8B1313' }} />
                   <Typography sx={{ mt: 1.2, fontSize: 22, fontWeight: 900 }}>
                     Không tìm thấy khóa học
                   </Typography>

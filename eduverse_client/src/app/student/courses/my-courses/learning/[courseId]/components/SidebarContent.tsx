@@ -31,7 +31,7 @@ import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 
-const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED = "#8B1313";
 
 interface SidebarContentProps {
   khoaHoc: KhoaHocType;

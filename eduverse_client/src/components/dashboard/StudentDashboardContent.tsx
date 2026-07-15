@@ -47,13 +47,13 @@ import {
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
 const C = {
-  primary: "#8D1313",
+  primary: "#8B1313",
   primaryLight: "#B91C1C",
   primaryDark: "#7F1D1D",
   white: "#FFFFFF",
   textDark: "#1F2937",
   textSecondary: "#4B5563",
-  gradientAI: "linear-gradient(135deg, #8D1313 0%, #7C3AED 100%)",
+  gradientAI: "linear-gradient(135deg, #8B1313 0%, #7C3AED 100%)",
   gradientTeal: "linear-gradient(135deg, #0D9488 0%, #005F55 100%)",
   gradientCrimson: "linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)",
   purpleAI: "#7C3AED",
@@ -63,8 +63,8 @@ const C = {
 const LEVEL_GRADIENT: Record<string, string> = {
   "Cơ bản": "linear-gradient(135deg, #10B981 0%, #059669 100%)",
   "Trung cấp": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)",
-  "Nâng cao": "linear-gradient(135deg, #8D1313 0%, #7C3AED 100%)",
-  "Cao cấp": "linear-gradient(135deg, #8D1313 0%, #7C3AED 100%)",
+  "Nâng cao": "linear-gradient(135deg, #8B1313 0%, #7C3AED 100%)",
+  "Cao cấp": "linear-gradient(135deg, #8B1313 0%, #7C3AED 100%)",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -534,7 +534,7 @@ function HoverPanel({
             }}
             startIcon={
               isFavorited(course.id) ? (
-                <FavoriteRounded sx={{ color: "#8d1313" }} />
+                <FavoriteRounded sx={{ color: "#8B1313" }} />
               ) : (
                 <FavoriteBorderRounded />
               )
@@ -700,20 +700,20 @@ function CourseCard({
               width: 26,
               height: 26,
               bgcolor: "rgba(255, 255, 255, 0.95)",
-              color: favorited ? "#8d1313" : "rgba(31, 41, 55, 0.4)",
+              color: favorited ? "#8B1313" : "rgba(31, 41, 55, 0.4)",
               boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
               zIndex: 5,
               transition: "all 150ms ease",
               p: 0,
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 1)",
-                color: "#8d1313",
+                color: "#8B1313",
                 transform: "scale(1.08)",
               },
             }}
           >
             {favorited ? (
-              <FavoriteRounded sx={{ fontSize: 16, color: "#8d1313" }} />
+              <FavoriteRounded sx={{ fontSize: 16, color: "#8B1313" }} />
             ) : (
               <FavoriteBorderRounded sx={{ fontSize: 16 }} />
             )}
@@ -748,7 +748,7 @@ function CourseCard({
                 position: "absolute",
                 bottom: 8,
                 left: 8,
-                bgcolor: (course.gia ?? 0) === 0 ? "#10B981" : "#8D1313",
+                bgcolor: (course.gia ?? 0) === 0 ? "#10B981" : "#8B1313",
                 color: "#fff",
                 fontWeight: 900,
                 fontSize: 9.5,

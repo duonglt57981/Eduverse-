@@ -18,7 +18,7 @@ import { getDonHang } from '../../../store/thanhToan/ThanhToanSlice';
 import AuthGuard from '@/src/components/AuthGuard';
 import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 
-const PRIMARY = '#8D1313';
+const PRIMARY = '#8B1313';
 
 function PaymentResultContent() {
   const searchParams = useSearchParams();
