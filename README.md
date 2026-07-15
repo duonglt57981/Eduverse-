@@ -25,7 +25,7 @@ For the live deployment hosted on your server (`110.172.29.244`).
 | Service | Public Address / Link | Port | Details |
 | :--- | :--- | :--- | :--- |
 | **Frontend Client** | [https://eduverse.website](https://eduverse.website) <br> [https://www.eduverse.website](https://www.eduverse.website) | `443` (HTTPS) | Main production website |
-| **API Backend** | [https://api.eduverse.website](https://api.eduverse.website) | `443` (HTTPS) | Production API endpoint |
+| **API Backend** | [https://api.eduverse.website/swagger/index.html](https://api.eduverse.website/swagger/index.html) | `443` (HTTPS) | Production API endpoint |
 | **NPM Admin Panel** | [http://110.172.29.244:81](http://110.172.29.244:81) | `81` (HTTP) | Nginx Proxy Manager dashboard |
 
 ### 🔑 Default Credentials (Nginx Proxy Manager)
