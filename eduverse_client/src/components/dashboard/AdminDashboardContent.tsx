@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { COLORS } from "@/src/theme/tokens";
 
 import { useEffect, useMemo, useState } from "react";
 import { apiService } from "@/src/services/index";
@@ -34,17 +35,6 @@ import {
 } from "@mui/icons-material";
 
 // Crimson palette matches the design theme
-const COLORS = {
-  primary: "#8D1313", // Crimson Red
-  primaryLight: "#B91C1C", // Light Crimson
-  primaryDark: "#7F1D1D", // Dark Crimson
-  bgLight: "#FFF8F6", // Premium cream-rose background
-  white: "#FFFFFF",
-  textDark: "#1F2937",
-  textSecondary: "#4B5563",
-  green: "#10B981",
-  grey: "#9CA3AF",
-};
 
 // SVG-based monthly revenue line chart
 function RevenueLineChart({ data }: { data: number[] }) {
@@ -619,12 +609,16 @@ export default function AdminDashboardContent() {
     recentActivities,
   } = dashboardData;
 
+  // % xu hướng THẬT từ API (không fix cứng)
+  const fmtTrend = (p: number) => `${(p ?? 0) > 0 ? "+" : ""}${p ?? 0}%`;
+  const trendUp = (p: number) => ((p ?? 0) > 0 ? true : (p ?? 0) < 0 ? false : null);
+
   const cardStats = [
     {
       title: "TỔNG DOANH THU",
       value: (welcomeStats.totalRevenue || 0).toLocaleString("vi-VN") + "đ",
-      trend: "+12.5%",
-      isUp: true,
+      trend: fmtTrend(welcomeStats.revenueTrendPct),
+      isUp: trendUp(welcomeStats.revenueTrendPct),
       icon: (
         <MonetizationOnRounded sx={{ color: COLORS.primary, fontSize: 22 }} />
       ),
@@ -633,24 +627,24 @@ export default function AdminDashboardContent() {
     {
       title: "TỔNG HỌC VIÊN",
       value: (welcomeStats.totalStudents || 0).toLocaleString(),
-      trend: "+8.2%",
-      isUp: true,
+      trend: fmtTrend(welcomeStats.studentsTrendPct),
+      isUp: trendUp(welcomeStats.studentsTrendPct),
       icon: <PeopleRounded sx={{ color: "#7C3AED", fontSize: 22 }} />,
       iconBg: "rgba(124,58,237,0.05)",
     },
     {
       title: "TỔNG KHÓA HỌC",
       value: (welcomeStats.totalCourses || 0).toString(),
-      trend: "-0.0%",
-      isUp: null,
+      trend: fmtTrend(welcomeStats.coursesTrendPct),
+      isUp: trendUp(welcomeStats.coursesTrendPct),
       icon: <SchoolRounded sx={{ color: "#0EA5E9", fontSize: 22 }} />,
       iconBg: "rgba(14,165,233,0.05)",
     },
     {
       title: "TỶ LỆ HOÀN THÀNH",
       value: `${welcomeStats.completionRate || 0}%`,
-      trend: "+4.1%",
-      isUp: true,
+      trend: fmtTrend(welcomeStats.completionTrendPct),
+      isUp: trendUp(welcomeStats.completionTrendPct),
       icon: (
         <AssignmentTurnedInRounded sx={{ color: "#10B981", fontSize: 22 }} />
       ),

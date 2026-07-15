@@ -30,7 +30,7 @@ import {
   LockResetRounded,
 } from '@mui/icons-material';
 
-const MAROON = '#7f1d1d';
+const MAROON = '#8B1313';
 const GREEN = '#0a5a3a';
 
 // Style dùng chung cho các ô nhập liệu
@@ -47,11 +47,11 @@ const inputSx = {
     borderColor: 'rgba(17,17,17,0.12)',
   },
   '&.Mui-focused': {
-    boxShadow: '0 0 0 4px rgba(127,29,29,0.1)',
+    boxShadow: '0 0 0 4px rgba(139,19,19,0.1)',
     bgcolor: 'rgba(17,17,17,0.02)',
   },
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'rgba(127,29,29,0.3)',
+    borderColor: 'rgba(139,19,19,0.3)',
   },
 } as const;
 
@@ -62,11 +62,11 @@ const primaryButtonSx = {
   fontWeight: 800,
   fontSize: 15,
   textTransform: 'none',
-  background: 'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-  boxShadow: '0 10px 25px rgba(127,29,29,0.2)',
+  background: 'linear-gradient(90deg, #8B1313 0%, #8B1313 55%, #6b1414 100%)',
+  boxShadow: '0 10px 25px rgba(139,19,19,0.2)',
   '&:hover': {
-    background: 'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
-    boxShadow: '0 12px 28px rgba(127,29,29,0.25)',
+    background: 'linear-gradient(90deg, #8B1313 0%, #6b1414 60%, #5c1111 100%)',
+    boxShadow: '0 12px 28px rgba(139,19,19,0.25)',
   },
   '&.Mui-disabled': {
     background: 'rgba(17,17,17,0.08)',
@@ -254,7 +254,7 @@ export default function ForgotPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: '#f9f8f6',
+        bgcolor: '#F7F5F2',
         px: 2,
         py: 4,
         background: 'radial-gradient(circle at 50% 50%, #fefefe 0%, #f5f3f0 100%)',
@@ -314,8 +314,8 @@ export default function ForgotPasswordPage() {
               role="alert"
               sx={{
                 borderRadius: 3,
-                border: '1px solid rgba(127,29,29,0.2)',
-                bgcolor: 'rgba(127,29,29,0.05)',
+                border: '1px solid rgba(139,19,19,0.2)',
+                bgcolor: 'rgba(139,19,19,0.05)',
                 color: MAROON,
                 px: 2.5,
                 py: 1.5,
@@ -459,7 +459,7 @@ export default function ForgotPasswordPage() {
                       fontWeight: 700,
                       fontSize: 13,
                       minWidth: 0,
-                      '&:hover': { bgcolor: 'rgba(127,29,29,0.04)' },
+                      '&:hover': { bgcolor: 'rgba(139,19,19,0.04)' },
                       '&.Mui-disabled': { color: 'rgba(17,17,17,0.35)' },
                     }}
                   >

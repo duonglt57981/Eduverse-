@@ -67,6 +67,7 @@ namespace Eduverse.Api.Controller
                         u.UserName,
                         u.Email,
                         u.HoTen,
+                        u.AnhDaiDien,
                         u.PhoneNumber,
                         u.DiaChi,
                         u.ChucVu,

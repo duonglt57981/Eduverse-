@@ -35,7 +35,7 @@ function ContactField({
   return (
     <TextField
       fullWidth
-      label={label}
+      placeholder={label}
       multiline={multiline}
       rows={rows}
       variant="outlined"
@@ -48,30 +48,23 @@ function ContactField({
             borderColor: 'rgba(17,17,17,0.08)',
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'rgba(127,29,29,0.3)',
+            borderColor: 'rgba(139,19,19,0.3)',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#7f1d1d',
+            borderColor: '#8B1313',
           },
           '&.Mui-focused': {
             bgcolor: '#fff',
-            boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
+            boxShadow: '0 0 0 4px rgba(139,19,19,0.12)',
           },
         },
         '& input.MuiOutlinedInput-input': {
           padding: '16px 14px',
           lineHeight: '1.4',
         },
-        '& .MuiInputLabel-root': {
+        '& input::placeholder, & textarea::placeholder': {
           color: 'rgba(17,17,17,0.5)',
-          fontSize: 14,
-          transform: 'translate(14px, 16px) scale(1)',
-          '&.MuiInputLabel-shrink': {
-            transform: 'translate(14px, -9px) scale(0.75)',
-          },
-          '&.Mui-focused': {
-            color: '#7f1d1d',
-          },
+          opacity: 1,
         },
       }}
     />
@@ -179,12 +172,12 @@ export default function ContactPage() {
                   px: 2.8,
                   py: 1.25,
                   borderRadius: 2.8,
-                  background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
-                  boxShadow: '0 10px 24px rgba(127,29,29,0.18)',
+                  background: 'linear-gradient(90deg, #9f1717 0%, #8B1313 100%)',
+                  boxShadow: '0 10px 24px rgba(139,19,19,0.18)',
                   transition: 'background 160ms ease, box-shadow 160ms ease',
                   '&:hover': {
-                    background: 'linear-gradient(90deg, #7f1d1d 0%, #6b1414 100%)',
-                    boxShadow: '0 12px 28px rgba(127,29,29,0.24)',
+                    background: 'linear-gradient(90deg, #8B1313 0%, #6b1414 100%)',
+                    boxShadow: '0 12px 28px rgba(139,19,19,0.24)',
                   },
                 }}
               >
@@ -215,7 +208,7 @@ export default function ContactPage() {
                           display: 'grid',
                           placeItems: 'center',
                           bgcolor: 'rgba(141,19,19,0.08)',
-                          color: '#8d1313',
+                          color: '#8B1313',
                           flexShrink: 0,
                         }}
                       >

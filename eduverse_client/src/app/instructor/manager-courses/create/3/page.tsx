@@ -178,7 +178,7 @@ export default function Step5Page() {
                     label={cat.tenDanhMuc}
                     size="small"
                     onDelete={() => toggleCategory(id)}
-                    sx={{ bgcolor: "#fdf2f3", color: "#7A1F2B" }}
+                    sx={{ bgcolor: "#fdf2f3", color: "#8B1313" }}
                   />
                 ) : null;
               })}
@@ -219,13 +219,13 @@ export default function Step5Page() {
                     sx={{
                       width: 160,
                       borderRadius: 2,
-                      borderColor: isSelected ? "#7A1F2B" : "#e0e0e0",
+                      borderColor: isSelected ? "#8B1313" : "#e0e0e0",
                       borderWidth: isSelected ? 2 : 1,
                       cursor: "pointer",
                       transition: "0.15s",
                       bgcolor: isSelected ? "#fdf2f3" : "#fff",
                       "&:hover": {
-                        borderColor: "#7A1F2B",
+                        borderColor: "#8B1313",
                         bgcolor: "#fdf2f3",
                       },
                     }}
@@ -243,7 +243,7 @@ export default function Step5Page() {
                         sx={{
                           fontWeight: isSelected ? 700 : 500,
                           fontSize: 15,
-                          color: isSelected ? "#7A1F2B" : "#1A1A1A",
+                          color: isSelected ? "#8B1313" : "#1A1A1A",
                         }}
                       >
                         {cat.tenDanhMuc}

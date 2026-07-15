@@ -1,4 +1,5 @@
 "use client";
+import { MAU } from "@/src/theme/tokens";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
@@ -32,13 +33,6 @@ import KhoaHocService, {
   KhoaHocMiniDto,
 } from "@/src/services/KhoaHocService";
 
-const MAU = {
-  chinh: "#7A1F2B",
-  chinhDam: "#611722",
-  chinhNhat: "#FDF2F3",
-  vien: "#E7DADC",
-  chuXam: "#6A6F73",
-};
 
 function conHieuLuc(km: KhuyenMaiDto): boolean {
   if (!km.ngayKetThuc) return true;

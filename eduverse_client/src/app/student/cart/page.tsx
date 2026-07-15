@@ -34,7 +34,7 @@ interface ApDungNhieuMaResponse {
   soTienSauGiam: number;
 }
 
-const PRIMARY = "#8D1313";
+const PRIMARY = "#8B1313";
 
 const formatThoiLuong = (phut?: number) => {
   if (!phut) return null;

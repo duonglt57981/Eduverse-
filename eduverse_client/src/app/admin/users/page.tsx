@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
+import { COLORS } from "@/src/theme/tokens";
 
 import { useEffect, useState, useTransition } from 'react';
 import AuthGuard from '@/src/components/AuthGuard';
@@ -54,24 +55,13 @@ import {
 } from '@mui/icons-material';
 
 // Cohesive Crimson color palette matching the Eduverse platform
-const COLORS = {
-  primary: '#8D1313',       // Crimson Red
-  primaryLight: '#B91C1C',  // Light Crimson
-  primaryDark: '#7F1D1D',   // Dark Crimson
-  bgLight: '#FFF8F6',       // Premium cream-rose background
-  white: '#FFFFFF',
-  textDark: '#1F2937',
-  textSecondary: '#4B5563',
-  green: '#10B981',
-  grey: '#9CA3AF',
-  red: '#DC2626',
-};
 
 interface UserItem {
   id: string;
   userName: string;
   email: string | null;
   hoTen: string | null;
+  anhDaiDien: string | null;
   phoneNumber: string | null;
   diaChi: string | null;
   chucVu: string | null;
@@ -801,6 +791,7 @@ export default function AdminUsersPage() {
                       <TableCell sx={{ pl: 3 }}>
                         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                           <Avatar
+                            src={user.anhDaiDien || undefined}
                             sx={{
                               width: 44,
                               height: 44,

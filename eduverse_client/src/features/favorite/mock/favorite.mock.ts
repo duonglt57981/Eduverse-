@@ -151,7 +151,7 @@ export const MOCK_COURSES: CourseData[] = [
     level: "Trung cấp",
     isFree: false,
     tags: ["SQL Server", "Database", "T-SQL"],
-    palette: ["#1a0f0f", "#8d1313", "#200d0d"],
+    palette: ["#1a0f0f", "#8B1313", "#200d0d"],
     badge: "Quan trọng",
     description: "Tối ưu hóa Store Procedures, thiết kế Indexes hợp lý, đọc Execution Plan và khắc phục điểm nghẽn hiệu năng."
   },

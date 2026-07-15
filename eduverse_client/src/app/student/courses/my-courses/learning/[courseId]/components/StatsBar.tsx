@@ -8,7 +8,7 @@ import {
 } from "@mui/icons-material";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
-const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED = "#8B1313";
 
 interface StatsBarProps {
   khoaHoc: KhoaHocType;

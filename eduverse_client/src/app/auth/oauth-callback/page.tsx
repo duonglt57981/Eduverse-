@@ -15,7 +15,8 @@ import {
   CssBaseline,
   Alert,
 } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '@/src/theme/createAppTheme';
 
 function OAuthCallbackContent() {
   const searchParams = useSearchParams();
@@ -30,20 +31,7 @@ function OAuthCallbackContent() {
 
   // Theme definition
   const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: 'light',
-          primary: { main: isGoogle ? '#4285F4' : '#1877f2' },
-          text: { primary: '#1c1e21', secondary: '#606770' },
-          background: { default: isGoogle ? '#f8f9fa' : '#f0f2f5' },
-        },
-        shape: { borderRadius: 12 },
-        typography: {
-          fontFamily: '"Be Vietnam Pro", "Roboto", system-ui, -apple-system, sans-serif',
-          button: { textTransform: 'none', fontWeight: 600 },
-        },
-      }),
+    () => createAppTheme('light', isGoogle ? '#4285F4' : '#1877f2'),
     [isGoogle]
   );
 

@@ -15,7 +15,7 @@ import QrCode2Icon from "@mui/icons-material/QrCode2";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { getTatCaYeuCau, xuLyYeuCau } from "@/src/store/rutTien/RutTienSlice";
 
-const PRIMARY = "#8D1313";
+const PRIMARY = "#8B1313";
 
 // Thêm hinhAnhQR và tenTaiKhoan vào interface
 interface YeuCauRutTien {

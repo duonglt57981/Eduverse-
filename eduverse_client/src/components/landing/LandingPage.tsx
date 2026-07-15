@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -16,19 +17,82 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import KhoaHocService from '@/src/services/KhoaHocService';
+import { danhMucService } from '@/src/services/danhmucService';
 import {
   benefits,
-  featuredCourses,
   mentorHighlights,
-  stats,
   testimonials,
+  type LandingCourse,
+  type LandingStat,
 } from './landing-data';
 import {
   CourseVisual,
   SectionHeading,
 } from './landing-shared';
 
+// Định dạng số theo kiểu Việt Nam (vd 1234 -> "1.234")
+function formatCount(n: number): string {
+  return (n || 0).toLocaleString('vi-VN');
+}
+
+// Map khóa học thật -> thẻ "khóa học nổi bật" (không có tên GV/đánh giá trong API)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapFeatured(kh: any): LandingCourse {
+  const isFree = kh?.gia === 0 || kh?.gia == null;
+  return {
+    badge: isFree ? 'Miễn phí' : (kh?.capDo || 'Khóa học'),
+    title: kh?.tieuDe || 'Khóa học',
+    subtitle: `${kh?.capDo || 'Mọi cấp độ'} • ${kh?.tongBaiGiang ?? 0} bài giảng`,
+    price: isFree ? 'Miễn phí' : `${(kh?.gia ?? 0).toLocaleString('vi-VN')}đ`,
+    palette: ['#8B1313', '#c2410c', '#fff7f4'],
+  };
+}
+
 export default function LandingPage() {
+  // 100% dữ liệu thật (KHÔNG dùng dữ liệu mẫu): khóa học nổi bật + số liệu tính từ DB
+  const [featured, setFeatured] = useState<LandingCourse[]>([]);
+  const [realStats, setRealStats] = useState<LandingStat[]>([]);
+  const courseService = useMemo(() => new KhoaHocService(), []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const courseParams: any = { pageIndex: 1, pageSize: 500 };
+        const [courseRes, catRes] = await Promise.all([
+          courseService.GetList(courseParams),
+          danhMucService.getList({ pageIndex: 1, pageSize: 500 }),
+        ]);
+        if (!active) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let items: any[] = [];
+        let totalCourses = 0;
+        if (courseRes?.status && courseRes.data) {
+          items = courseRes.data.items || [];
+          totalCourses = courseRes.data.totalCount || items.length;
+          setFeatured(items.slice(0, 3).map(mapFeatured));
+        }
+        const totalStudents = items.reduce((sum, c) => sum + (c?.soLuongHocVien || 0), 0);
+        const totalLectures = items.reduce((sum, c) => sum + (c?.tongBaiGiang || 0), 0);
+        const totalCategories =
+          catRes?.status && catRes.data ? (catRes.data.items || []).length : 0;
+        setRealStats([
+          { value: formatCount(totalStudents), label: 'Học viên' },
+          { value: formatCount(totalCourses), label: 'Khóa học' },
+          { value: formatCount(totalLectures), label: 'Bài giảng' },
+          { value: formatCount(totalCategories), label: 'Danh mục' },
+        ]);
+      } catch (err) {
+        console.error('Error fetching landing data:', err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [courseService]);
+
   return (
     <>
       <Box
@@ -206,7 +270,7 @@ export default function LandingPage() {
               py: { xs: 2, md: 3 },
             }}
           >
-            {stats.map((item) => (
+            {realStats.map((item) => (
               <Paper
                 key={item.label}
                 elevation={0}
@@ -217,7 +281,7 @@ export default function LandingPage() {
                   bgcolor: 'rgba(255,255,255,0.76)',
                 }}
               >
-                <Typography sx={{ fontSize: { xs: 26, md: 34 }, fontWeight: 900, color: '#a21a1a' }}>
+                <Typography sx={{ fontSize: { xs: 26, md: 34 }, fontWeight: 900, color: '#8B1313' }}>
                   {item.value}
                 </Typography>
                 <Typography sx={{ mt: 0.75, fontSize: 12.5, fontWeight: 800, color: 'rgba(24,24,27,0.56)', textTransform: 'uppercase' }}>
@@ -244,7 +308,7 @@ export default function LandingPage() {
                 gap: 2.2,
               }}
             >
-              {featuredCourses.map((course) => (
+              {featured.map((course) => (
                 <Paper
                   key={course.title}
                   elevation={0}
@@ -267,11 +331,6 @@ export default function LandingPage() {
                   <Typography sx={{ mt: 0.75, fontSize: 13, color: 'rgba(24,24,27,0.58)' }}>
                     {course.subtitle}
                   </Typography>
-                  <Stack direction="row" spacing={0.35} sx={{ mt: 1.25, color: '#efb21a' }}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <StarRounded key={star} sx={{ fontSize: 18 }} />
-                    ))}
-                  </Stack>
                   <Stack
                     direction="row"
                     sx={{ mt: 1.75, alignItems: 'center', justifyContent: 'space-between' }}
@@ -301,7 +360,7 @@ export default function LandingPage() {
                 component={Link}
                 href="/courses"
                 endIcon={<ArrowForwardRounded />} 
-                sx={{ color: '#8d1313' }}
+                sx={{ color: '#8B1313' }}
               >
                 Xem toàn bộ khóa học
               </Button>
@@ -349,7 +408,7 @@ export default function LandingPage() {
                         display: 'grid',
                         placeItems: 'center',
                         bgcolor: 'rgba(127,29,29,0.08)',
-                        color: '#8d1313',
+                        color: '#8B1313',
                         mb: 1.5,
                       }}
                     >
@@ -407,7 +466,7 @@ export default function LandingPage() {
                       fontWeight: 900,
                       background:
                         index % 2 === 0
-                          ? 'linear-gradient(135deg, #321212, #8d1313)'
+                          ? 'linear-gradient(135deg, #321212, #8B1313)'
                           : 'linear-gradient(135deg, #2d313d, #5f6677)',
                     }}
                   >

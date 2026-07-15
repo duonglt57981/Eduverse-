@@ -33,7 +33,7 @@ import {
 } from "@mui/icons-material";
 import { SelectedAnswers } from "../../hooks/useQuiz";
 
-const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#6B1414";
 
 interface DapAn {

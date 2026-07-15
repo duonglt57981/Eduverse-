@@ -16,7 +16,7 @@ import { useDispatch, useSelector } from "@/src/store/hook";
 import { getNganHangs, xoaNganHang } from "@/src/store/rutTien/RutTienSlice";
 import { apiService } from '@/src/services';
 
-const PRIMARY = "#8D1313";
+const PRIMARY = "#8B1313";
 
 const NGAN_HANG_LIST = [
   { ten: "Vietcombank", bin: "970436" },

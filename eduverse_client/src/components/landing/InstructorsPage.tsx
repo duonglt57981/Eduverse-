@@ -128,10 +128,10 @@ function FeaturedMentorCard({ mentor }: { mentor: InstructorItem }) {
           <Chip
             label="GIẢNG VIÊN NỔI BẬT"
             size="small"
-            sx={{ mb: 1, bgcolor: 'rgba(141,19,19,0.08)', color: '#8d1313', fontWeight: 900 }}
+            sx={{ mb: 1, bgcolor: 'rgba(141,19,19,0.08)', color: '#8B1313', fontWeight: 900 }}
           />
           <Typography sx={{ fontSize: 21, fontWeight: 900 }}>{mentor.name}</Typography>
-          <Typography sx={{ mt: 0.6, fontSize: 13.5, color: '#8d1313', fontWeight: 800 }}>
+          <Typography sx={{ mt: 0.6, fontSize: 13.5, color: '#8B1313', fontWeight: 800 }}>
             {mentor.specialization}
           </Typography>
           <Typography sx={{ mt: 1, fontSize: 13, lineHeight: 1.8, color: 'rgba(24,24,27,0.58)' }}>
@@ -206,7 +206,7 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
       <Typography sx={{ mt: 1.1, textAlign: 'center', fontSize: 21, fontWeight: 900 }}>
         {mentor.name}
       </Typography>
-      <Typography sx={{ mt: 0.5, textAlign: 'center', fontSize: 13, color: '#8d1313', fontWeight: 800 }}>
+      <Typography sx={{ mt: 0.5, textAlign: 'center', fontSize: 13, color: '#8B1313', fontWeight: 800 }}>
         {mentor.specialization}
       </Typography>
       <Typography sx={{ mt: 0.9, textAlign: 'center', fontSize: 13, lineHeight: 1.8, color: 'rgba(24,24,27,0.58)' }}>
@@ -228,7 +228,7 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
               width: 36,
               height: 36,
               bgcolor: 'rgba(141,19,19,0.06)',
-              color: '#8d1313',
+              color: '#8B1313',
               '&:hover': { bgcolor: 'rgba(141,19,19,0.12)' },
             }}
           >
@@ -385,7 +385,7 @@ export default function InstructorsPage() {
                     border: '1px solid rgba(141,19,19,0.08)',
                   }}
                 />
-                <Box sx={{ position: 'absolute', top: 34, left: 26, width: 8, height: 8, borderRadius: '50%', bgcolor: '#8d1313' }} />
+                <Box sx={{ position: 'absolute', top: 34, left: 26, width: 8, height: 8, borderRadius: '50%', bgcolor: '#8B1313' }} />
                 <Box sx={{ position: 'absolute', bottom: 58, right: 34, width: 10, height: 10, borderRadius: '50%', bgcolor: '#efb7b7' }} />
                 <MentorPortrait mentor={featuredMentors[0] ?? instructorCatalog[0]} size={194} ring />
               </Box>
@@ -400,7 +400,7 @@ export default function InstructorsPage() {
                 description="Những mentor nổi bật với kinh nghiệm thực chiến, tư duy hiện đại và đánh giá rất cao từ học viên."
                 align="center"
               />
-              <Button endIcon={<ArrowForwardRounded />} sx={{ color: '#8d1313', mt: 1.5 }}>
+              <Button endIcon={<ArrowForwardRounded />} sx={{ color: '#8B1313', mt: 1.5 }}>
                 Xem hồ sơ đầy đủ
               </Button>
             </Box>
@@ -511,7 +511,7 @@ export default function InstructorsPage() {
                 bgcolor: '#f2eeea',
               }}
             >
-              <Typography sx={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', color: '#a32020', textTransform: 'uppercase' }}>
+              <Typography sx={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', color: '#8B1313', textTransform: 'uppercase' }}>
                 Cảm nhận học viên
               </Typography>
               <Typography sx={{ mt: 1.1, fontSize: 38, lineHeight: 1.05, letterSpacing: '-1px', fontWeight: 900 }}>

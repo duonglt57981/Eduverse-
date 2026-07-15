@@ -33,7 +33,7 @@ export default function FavoriteEmpty() {
           display: 'grid',
           placeItems: 'center',
           mb: 3,
-          color: '#8d1313',
+          color: '#8B1313',
           animation: 'pulse 2s infinite ease-in-out',
           '@keyframes pulse': {
             '0%': { transform: 'scale(1)' },

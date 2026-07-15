@@ -16,7 +16,7 @@ interface Props {
 
 // ====== Bảng màu ======
 const MAU = {
-  chinh: "#7A1F2B",
+  chinh: "#8B1313",
   chinhDam: "#611722",
   chinhNhat: "#F8ECEE",
   vien: "#EFE0E2",

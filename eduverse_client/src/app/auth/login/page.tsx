@@ -22,7 +22,8 @@ import {
   SvgIcon,
   Typography,
 } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '@/src/theme/createAppTheme';
 
 function ArrowRightIcon(props: React.ComponentProps<typeof SvgIcon>) {
   return (
@@ -79,37 +80,7 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [remember, setRemember] = useState(false);
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: 'light',
-          primary: { main: '#7f1d1d' },
-          text: { primary: '#141414', secondary: '#6f6f6f' },
-          background: { default: '#f9f8f6', paper: '#ffffff' },
-        },
-        shape: { borderRadius: 14 },
-        typography: {
-          fontFamily:
-            '"Be Vietnam Pro","Roboto",system-ui,-apple-system,Segoe UI,Arial,sans-serif',
-          h3: { fontWeight: 800, letterSpacing: '-0.6px' },
-          h4: { fontWeight: 800, letterSpacing: '-0.6px' },
-          button: { textTransform: 'none', fontWeight: 700 },
-        },
-        components: {
-          MuiButton: {
-            styleOverrides: {
-              root: {
-                borderRadius: 999,
-                paddingTop: 12,
-                paddingBottom: 12,
-              },
-            },
-          },
-        },
-      }),
-    [],
-  );
+  const theme = useMemo(() => createAppTheme('light'), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,10 +107,10 @@ export default function LoginPage() {
     },
     '&.Mui-focused': {
       bgcolor: 'rgba(17,17,17,0.03)',
-      boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
+      boxShadow: '0 0 0 4px rgba(139,19,19,0.14)',
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'rgba(127,29,29,0.38)',
+      borderColor: 'rgba(139,19,19,0.38)',
     },
   } as const;
 
@@ -154,7 +125,7 @@ export default function LoginPage() {
           justifyContent: 'center',
           px: { xs: 1.5, sm: 2.5, md: 4 },
           py: { xs: 2, sm: 3 },
-          bgcolor: '#f9f8f6',
+          bgcolor: '#F7F5F2',
           overflow: 'hidden',
         }}
       >
@@ -183,7 +154,7 @@ export default function LoginPage() {
               position: 'relative',
               overflow: 'hidden',
               background:
-                'linear-gradient(160deg, #9b1c1c 0%, #7f1d1d 50%, #5c1111 100%)',
+                'linear-gradient(160deg, #9b1c1c 0%, #8B1313 50%, #5c1111 100%)',
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -336,7 +307,7 @@ export default function LoginPage() {
               flexDirection: 'column',
               justifyContent: 'space-between',
               alignItems: 'center',
-              bgcolor: '#f9f8f6',
+              bgcolor: '#F7F5F2',
             }}
           >
             <Box sx={{ width: '100%', maxWidth: 400, my: 'auto' }}>
@@ -411,7 +382,7 @@ export default function LoginPage() {
                         sx={{
                           fontSize: 12.5,
                           fontWeight: 700,
-                          color: '#7f1d1d',
+                          color: '#8B1313',
                           '&:hover': { color: '#5c1111' },
                         }}
                       >
@@ -456,7 +427,7 @@ export default function LoginPage() {
                         onChange={(e) => setRemember(e.target.checked)}
                         sx={{
                           color: 'rgba(17,17,17,0.35)',
-                          '&.Mui-checked': { color: '#7f1d1d' },
+                          '&.Mui-checked': { color: '#8B1313' },
                         }}
                       />
                     }
@@ -481,15 +452,15 @@ export default function LoginPage() {
                       minHeight: googleSize.height,
                       boxSizing: 'border-box',
                       background:
-                        'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-                      boxShadow: '0 14px 34px rgba(127,29,29,0.26)',
+                        'linear-gradient(90deg, #8B1313 0%, #8B1313 55%, #6b1414 100%)',
+                      boxShadow: '0 14px 34px rgba(139,19,19,0.26)',
                       '&:hover': {
                         background:
-                          'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
-                        boxShadow: '0 16px 42px rgba(127,29,29,0.32)',
+                          'linear-gradient(90deg, #8B1313 0%, #6b1414 60%, #5c1111 100%)',
+                        boxShadow: '0 16px 42px rgba(139,19,19,0.32)',
                       },
                       '&.Mui-disabled': {
-                        background: 'rgba(127,29,29,0.35)',
+                        background: 'rgba(139,19,19,0.35)',
                         color: 'rgba(255,255,255,0.9)',
                       },
                     }}
@@ -526,7 +497,7 @@ export default function LoginPage() {
                   underline="none"
                   sx={{
                     fontWeight: 800,
-                    color: '#7f1d1d',
+                    color: '#8B1313',
                     '&:hover': { color: '#5c1111' },
                   }}
                 >

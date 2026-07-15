@@ -2,7 +2,7 @@ import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 
 export const MAU = {
-  chinh: "#7A1F2B",
+  chinh: "#8B1313",
   chinhDam: "#611722",
   chinhNhat: "#FDF2F3",
   vien: "#E7DADC",

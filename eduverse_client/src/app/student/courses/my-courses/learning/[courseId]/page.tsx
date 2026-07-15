@@ -53,7 +53,7 @@ import DOMPurify from "dompurify";
 const baiKiemTraSvc = new BaiKiemTraService();
 
 // Constants
-const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#6B1414";
 const SIDEBAR_W = 380;
 const HEADER_H = 86;

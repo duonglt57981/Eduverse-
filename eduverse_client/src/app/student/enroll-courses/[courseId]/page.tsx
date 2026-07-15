@@ -48,7 +48,7 @@ import { apiService } from "@/src/services/index";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const RED = "#8D1313";
+const RED = "#8B1313";
 const RED_HOVER = "#6B1010";
 const RED_SOFT = "#fdf2f2";
 

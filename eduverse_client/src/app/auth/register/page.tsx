@@ -25,7 +25,8 @@ import {
   SvgIcon,
   Typography,
 } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '@/src/theme/createAppTheme';
 import {
   ArrowBackRounded,
   BadgeRounded,
@@ -79,26 +80,7 @@ export default function RegisterPage() {
     dispatch(clearSuccess());
   }, [dispatch]);
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: 'light',
-          primary: { main: '#7f1d1d' },
-          background: { default: '#f9f8f6', paper: '#ffffff' },
-          text: { primary: '#141414', secondary: '#6f6f6f' },
-        },
-        shape: { borderRadius: 14 },
-        typography: {
-          fontFamily:
-            '"Be Vietnam Pro","Roboto",system-ui,-apple-system,Segoe UI,Arial,sans-serif',
-          h3: { fontWeight: 900, letterSpacing: '-0.8px' },
-          h4: { fontWeight: 900, letterSpacing: '-0.6px' },
-          button: { textTransform: 'none', fontWeight: 800 },
-        },
-      }),
-    [],
-  );
+  const theme = useMemo(() => createAppTheme('light'), []);
 
   const strength = useMemo(() => getStrength(form.password), [form.password]);
   const strengthLabel = ['', 'Yếu', 'Trung bình', 'Mạnh'][strength.score] || '';
@@ -203,10 +185,10 @@ export default function RegisterPage() {
     },
     '&.Mui-focused': {
       bgcolor: 'rgba(17,17,17,0.03)',
-      boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
+      boxShadow: '0 0 0 4px rgba(139,19,19,0.14)',
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'rgba(127,29,29,0.38)',
+      borderColor: 'rgba(139,19,19,0.38)',
     },
   } as const;
 
@@ -250,7 +232,7 @@ export default function RegisterPage() {
               position: 'relative',
               overflow: 'hidden',
               background:
-                'linear-gradient(160deg, #9b1c1c 0%, #7f1d1d 50%, #5c1111 100%)',
+                'linear-gradient(160deg, #9b1c1c 0%, #8B1313 50%, #5c1111 100%)',
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -474,7 +456,7 @@ export default function RegisterPage() {
                     fontSize: 13,
                     fontWeight: 800,
                     color: 'rgba(17,17,17,0.65)',
-                    '&:hover': { color: '#7f1d1d' },
+                    '&:hover': { color: '#8B1313' },
                   }}
                 >
                   <ArrowBackRounded sx={{ fontSize: 18 }} />
@@ -734,18 +716,18 @@ export default function RegisterPage() {
                               py: 0.25,
                               pl: 0.5,
                               color: 'rgba(17,17,17,0.35)',
-                              '&.Mui-checked': { color: '#7f1d1d' },
+                              '&.Mui-checked': { color: '#8B1313' },
                             }}
                           />
                         }
                         label={
                           <Typography sx={{ mt: 0.2, fontSize: 11.5, color: 'rgba(17,17,17,0.65)' }}>
                             Tôi đồng ý với{' '}
-                            <MuiLink component={Link} href="/terms" underline="hover" sx={{ color: '#7f1d1d', fontWeight: 800 }}>
+                            <MuiLink component={Link} href="/terms" underline="hover" sx={{ color: '#8B1313', fontWeight: 800 }}>
                               Điều khoản dịch vụ
                             </MuiLink>{' '}
                             và{' '}
-                            <MuiLink component={Link} href="/privacy" underline="hover" sx={{ color: '#7f1d1d', fontWeight: 800 }}>
+                            <MuiLink component={Link} href="/privacy" underline="hover" sx={{ color: '#8B1313', fontWeight: 800 }}>
                               Chính sách bảo mật
                             </MuiLink>
                             .
@@ -763,7 +745,7 @@ export default function RegisterPage() {
                               py: 0.25,
                               pl: 0.5,
                               color: 'rgba(17,17,17,0.35)',
-                              '&.Mui-checked': { color: '#7f1d1d' },
+                              '&.Mui-checked': { color: '#8B1313' },
                             }}
                           />
                         }
@@ -791,11 +773,11 @@ export default function RegisterPage() {
                         borderRadius: 999,
                         py: 1.25,
                         background:
-                          'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-                        boxShadow: '0 10px 24px rgba(127,29,29,0.2)',
+                          'linear-gradient(90deg, #8B1313 0%, #8B1313 55%, #6b1414 100%)',
+                        boxShadow: '0 10px 24px rgba(139,19,19,0.2)',
                         '&:hover': {
                           background:
-                            'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
+                            'linear-gradient(90deg, #8B1313 0%, #6b1414 60%, #5c1111 100%)',
                         },
                       }}
                     >
@@ -821,7 +803,7 @@ export default function RegisterPage() {
                   component={Link}
                   href="/auth/login"
                   underline="none"
-                  sx={{ color: '#7f1d1d', fontWeight: 900, '&:hover': { color: '#5c1111' } }}
+                  sx={{ color: '#8B1313', fontWeight: 900, '&:hover': { color: '#5c1111' } }}
                 >
                   Đăng nhập ngay
                 </MuiLink>
