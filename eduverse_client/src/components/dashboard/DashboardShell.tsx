@@ -1171,10 +1171,12 @@ export default function DashboardShell({
                   router.push(getHomeRoute());
                 }}
                 sx={{
-                  width: { xs: 110, sm: 130, lg: 150 },
+                  width: { xs: 120, sm: 140, lg: 150 },
                   display: "flex",
                   alignItems: "center",
                   cursor: "pointer",
+                  transition: "opacity 150ms ease",
+                  "&:hover": { opacity: 0.85 },
                 }}
               >
                 <Image
@@ -1183,7 +1185,7 @@ export default function DashboardShell({
                   width={150}
                   height={46}
                   priority
-                  style={{ width: "100%", height: "auto" }}
+                  style={{ width: "100%", height: "auto", display: "block" }}
                 />
               </Box>
             </Stack>
@@ -1431,9 +1433,10 @@ export default function DashboardShell({
                         : "Học viên"}
                   </Typography>
                 </Stack>
-                <Avatar
+                 <Avatar
                   src={
                     userAvatar ||
+                    user?.anhDaiDien ||
                     dashboardData?.welcomeStats?.avatarUrl ||
                     undefined
                   }
@@ -1441,11 +1444,18 @@ export default function DashboardShell({
                   sx={{
                     width: 38,
                     height: 38,
-                    fontSize: 13.5,
-                    fontWeight: 800,
-                    bgcolor: "#111827",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    bgcolor: "#8B1313",
                     color: "#fff",
+                    border: "2px solid #fff",
+                    boxShadow: `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
+                    transition: "all 200ms ease",
                     cursor: "pointer",
+                    "&:hover": {
+                      boxShadow: `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
+                      transform: "scale(1.05)",
+                    },
                   }}
                 >
                   {dashboardData?.welcomeStats?.userName

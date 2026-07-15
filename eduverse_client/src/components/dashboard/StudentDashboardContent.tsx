@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { apiService } from "@/src/services/index";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
+import { useSelector } from "@/src/store/hook";
 import {
   Box,
   Button,
@@ -43,6 +44,7 @@ import {
   AccessTimeRounded,
   MenuBookRounded,
   ArrowForwardRounded,
+  WorkspacePremiumRounded,
 } from "@mui/icons-material";
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
@@ -929,6 +931,24 @@ function SectionHeader({
 export default function StudentDashboardContent() {
   const router = useRouter();
   const { fetchFavorites } = useFavorite();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = useSelector((state: any) => state.auth.user);
+  const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const handleAvatarUpdate = () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("user_avatar");
+        if (stored) {
+          setUserAvatar(stored);
+        }
+      }
+    };
+    window.addEventListener("avatar_updated", handleAvatarUpdate);
+    handleAvatarUpdate();
+    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
+  }, []);
+
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1087,80 +1107,166 @@ export default function StudentDashboardContent() {
       <Paper
         elevation={0}
         sx={{
-          p: { xs: 2.5, md: 3 },
+          p: { xs: 3, md: 4 },
           borderRadius: "24px",
           bgcolor: C.white,
-          border: "1px solid rgba(141,19,19,0.06)",
-          boxShadow: "0 6px 20px rgba(141,19,19,0.015)",
+          border: `1px solid rgba(139,19,19,0.08)`,
+          background: "linear-gradient(135deg, rgba(139,19,19,0.02) 0%, rgba(255,255,255,1) 100%)",
+          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 4,
+          flexWrap: "wrap",
+          mb: 4,
         }}
       >
-        <Stack direction="row" spacing={3} sx={{ alignItems: "center" }}>
+        <Stack direction="row" sx={{ alignItems: "center", gap: 3, flex: 1, minWidth: 280 }}>
           <Avatar
-            src={welcomeStats?.avatarUrl || undefined}
+            src={userAvatar || user?.anhDaiDien || welcomeStats?.avatarUrl || undefined}
             sx={{
               width: 72,
               height: 72,
-              bgcolor: "rgba(141,19,19,0.06)",
-              color: C.primary,
-              fontSize: 24,
-              fontWeight: 900,
-              boxShadow: "0 8px 20px rgba(141,19,19,0.08)",
-              border: "2px solid rgba(141,19,19,0.1)",
+              bgcolor: C.primary,
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: 22,
+              border: "3px solid #fff",
+              boxShadow: `0 0 0 3px rgba(139,19,19,0.12), 0 8px 24px rgba(139,19,19,0.12)`,
             }}
           >
-            {welcomeStats?.userName
-              ?.split(" ")
-              .pop()
-              ?.substring(0, 2)
-              .toUpperCase() ?? "HV"}
+            {welcomeStats?.userName || user?.hoTen
+              ? (() => {
+                  const name = (user?.hoTen || welcomeStats.userName).trim();
+                  const parts = name.split(/\s+/);
+                  if (parts.length === 0) return "HV";
+                  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+                  return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+                })()
+              : "HV"}
           </Avatar>
           <Box>
             <Typography
               sx={{
-                fontSize: { xs: 18, md: 22 },
+                fontSize: { xs: 20, md: 24 },
                 fontWeight: 900,
                 color: C.textDark,
+                letterSpacing: "-0.5px",
+                mb: 0.5,
               }}
             >
-              Chào mừng {welcomeStats?.userName || "học viên"} trở lại! 👋
+              Chào mừng {user?.hoTen || welcomeStats?.userName || "học viên"} trở lại! 👋
             </Typography>
-            <Stack
-              direction="row"
-              spacing={1.5}
-              sx={{ mt: 0.5, alignItems: "center", flexWrap: "wrap" }}
+            <Typography
+              sx={{
+                fontSize: 14,
+                color: C.textSecondary,
+                fontWeight: 500,
+                lineHeight: 1.5,
+                maxWidth: 480,
+              }}
             >
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "rgba(31,41,55,0.45)",
-                }}
-              >
-                Sinh viên
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  color: "rgba(31,41,55,0.3)",
-                  display: { xs: "none", sm: "inline" },
-                }}
-              >
-                •
-              </Typography>
-              <Typography
-                component="a"
-                href="/student/profile"
-                sx={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: C.primary,
-                  textDecoration: "none",
-                  "&:hover": { textDecoration: "underline" },
-                }}
-              >
-                Chỉnh sửa nghề nghiệp và sở thích
-              </Typography>
-            </Stack>
+              {welcomeStats?.subtitle || "Khám phá các khóa học mới và tiếp tục hành trình nâng cao tri thức của bạn ngay hôm nay."}
+            </Typography>
+          </Box>
+        </Stack>
+
+        {/* Right side stats */}
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            flexShrink: 0,
+            width: { xs: "100%", sm: "auto" },
+            justifyContent: "space-between",
+            gap: 2,
+          }}
+        >
+          {/* Courses Count */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(139,19,19,0.03)",
+              border: "1px solid rgba(139,19,19,0.06)",
+              borderRadius: "16px",
+              p: 2,
+              minWidth: { xs: 90, sm: 110 },
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
+                borderColor: "rgba(139,19,19,0.15)",
+              }
+            }}
+          >
+            <SchoolRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
+            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
+              {welcomeStats?.totalCourses || 0}
+            </Typography>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
+              Khóa học
+            </Typography>
+          </Box>
+
+          {/* Progress Percent */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(139,19,19,0.03)",
+              border: "1px solid rgba(139,19,19,0.06)",
+              borderRadius: "16px",
+              p: 2,
+              minWidth: { xs: 90, sm: 110 },
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
+                borderColor: "rgba(139,19,19,0.15)",
+              }
+            }}
+          >
+            <TrendingUpRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
+            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
+              {welcomeStats?.progressPercent || 0}%
+            </Typography>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
+              Tiến độ
+            </Typography>
+          </Box>
+
+          {/* Certificates Count */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(139,19,19,0.03)",
+              border: "1px solid rgba(139,19,19,0.06)",
+              borderRadius: "16px",
+              p: 2,
+              minWidth: { xs: 90, sm: 110 },
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
+                borderColor: "rgba(139,19,19,0.15)",
+              }
+            }}
+          >
+            <WorkspacePremiumRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
+            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
+              {welcomeStats?.certificatesCount || 0}
+            </Typography>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
+              Chứng chỉ
+            </Typography>
           </Box>
         </Stack>
       </Paper>

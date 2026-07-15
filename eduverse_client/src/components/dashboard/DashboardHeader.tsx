@@ -175,17 +175,21 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         {/* Logo */}
         <Box
           sx={{
-            width: { xs: 120, sm: 140, lg: 170 },
+            width: { xs: 120, sm: 140, lg: 150 },
+            display: "flex",
+            alignItems: "center",
             cursor: "pointer",
             flexShrink: 0,
+            transition: "opacity 150ms ease",
+            "&:hover": { opacity: 0.85 },
           }}
           onClick={() => router.push(getHomeRoute())}
         >
           <Image
             src="/auth/img/logo_nentrang.png"
             alt="EduVerse"
-            width={170}
-            height={52}
+            width={150}
+            height={46}
             priority
             style={{ width: "100%", height: "auto", display: "block" }}
           />
@@ -604,17 +608,23 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
           {/* User Avatar dropdown */}
           <Avatar
-            src={userAvatar || undefined}
+            src={userAvatar || user?.anhDaiDien || undefined}
             onClick={handleAvatarClick}
             sx={{
-              width: 42,
-              height: 42,
-              fontSize: 14,
-              fontWeight: 800,
-              cursor: "pointer",
-              background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+              width: 38,
+              height: 38,
+              bgcolor: "#8B1313",
               color: "#fff",
-              "&:hover": { opacity: 0.9 },
+              fontSize: 14,
+              fontWeight: 700,
+              border: "2px solid #fff",
+              boxShadow: `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
+              transition: "all 200ms ease",
+              cursor: "pointer",
+              "&:hover": {
+                boxShadow: `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
+                transform: "scale(1.05)",
+              },
             }}
           >
             {userInitials}
