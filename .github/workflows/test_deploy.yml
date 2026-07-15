@@ -1,0 +1,170 @@
+name: CI/CD Deploy to Ubuntu (Test Dev Manual)
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  pull_code:
+    name: 1. Pull Latest Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Pull Code
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 110.172.29.244
+          username: root
+          password: '@Sieutoc!Zp2%kwNI@97'
+          port: 22
+          script: |
+            echo "=== Step 1: Pulling Latest Code ==="
+            cd Eduverse/
+            echo "Retrieving latest changes from main branch..."
+            git fetch origin main
+            git reset --hard origin/main
+
+  setup_env:
+    name: 2. Setup Environment Files
+    needs: pull_code
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Write Envs
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          API_ENV: |
+            Email__Host=smtp.gmail.com
+            Email__Port=587
+            Email__From=your-email@gmail.com
+            Email__Username=your-email@gmail.com
+            Email__Password=your-smtp-app-password
+            Authentication__Google__ClientId=400320263690-pjr1vmnu3h8p2k305f5bqscqo0rtidls.apps.googleusercontent.com
+            Auth__CookieSecure=true
+          CLIENT_ENV: |
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=400320263690-pjr1vmnu3h8p2k305f5bqscqo0rtidls.apps.googleusercontent.com
+            NEXT_PUBLIC_API_URL=https://110.172.29.244:5002
+        with:
+          host: 110.172.29.244
+          username: root
+          password: '@Sieutoc!Zp2%kwNI@97'
+          port: 22
+          envs: API_ENV,CLIENT_ENV
+          script: |
+            echo "=== Step 2: Injecting Environment Config ==="
+            cd Eduverse/
+            
+            if [ ! -z "$API_ENV" ]; then
+              echo "Writing API environment variables..."
+              echo "$API_ENV" > Eduverse_API/.env
+            else
+              echo "API_ENV secret is empty, skipping..."
+            fi
+            
+            if [ ! -z "$CLIENT_ENV" ]; then
+              echo "Writing Client environment variables..."
+              echo "$CLIENT_ENV" > eduverse_client/.env.local
+            else
+              echo "CLIENT_ENV secret is empty, skipping..."
+            fi
+
+  build_images:
+    name: 3. Build Docker Images
+    needs: setup_env
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Build Images
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 110.172.29.244
+          username: root
+          password: '@Sieutoc!Zp2%kwNI@97'
+          port: 22
+          script: |
+            echo "=== Step 3: Building Docker Images ==="
+            cd Eduverse/
+            if command -v docker-compose &> /dev/null; then
+              echo "Using docker-compose build..."
+              docker-compose build
+            else
+              echo "Using docker compose build..."
+              docker compose build
+            fi
+
+  start_containers:
+    name: 4. Start Docker Containers
+    needs: build_images
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Start Containers
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 110.172.29.244
+          username: root
+          password: '@Sieutoc!Zp2%kwNI@97'
+          port: 22
+          script: |
+            echo "=== Step 4: Starting Docker Containers ==="
+            cd Eduverse/
+            if command -v docker-compose &> /dev/null; then
+              echo "Using docker-compose up..."
+              docker-compose up -d
+            else
+              echo "Using docker compose up..."
+              docker compose up -d
+            fi
+
+  verify_containers:
+    name: 5. Verify Running Containers
+    needs: start_containers
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Verify Status
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 110.172.29.244
+          username: root
+          password: '@Sieutoc!Zp2%kwNI@97'
+          port: 22
+          script: |
+            echo "=== Step 5: Verifying Container Startup ==="
+            cd Eduverse/
+            
+            get_running_count() {
+              if command -v docker-compose &> /dev/null; then
+                docker-compose ps --filter "status=running" -q | wc -l
+              else
+                docker compose ps --filter "status=running" -q | wc -l
+              fi
+            }
+            
+            print_status() {
+              if command -v docker-compose &> /dev/null; then
+                docker-compose ps
+              else
+                docker compose ps
+              fi
+            }
+            
+            echo "Waiting for containers to start..."
+            sleep 5
+            
+            # Loop for up to 90 seconds (18 iterations x 5 seconds) to allow database healthcheck to pass
+            for i in {1..18}; do
+              RUNNING_COUNT=$(get_running_count)
+              echo "Currently running containers: $RUNNING_COUNT of 5"
+              if [ "$RUNNING_COUNT" -eq 5 ]; then
+                echo "All 5 containers are successfully running!"
+                break
+              fi
+              sleep 5
+            done
+            
+            echo "Final container status:"
+            print_status
+            
+            FINAL_COUNT=$(get_running_count)
+            if [ "$FINAL_COUNT" -ne 5 ]; then
+              echo "Error: Only $FINAL_COUNT of 5 containers are running."
+              exit 1
+            fi
+            
+            echo "Deployment Finished Successfully!"
