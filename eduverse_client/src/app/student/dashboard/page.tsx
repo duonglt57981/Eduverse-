@@ -1,16 +1,16 @@
 'use client';
 
 import AuthGuard from '@/src/components/AuthGuard';
-import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
-import StudentDashboardContent from '@/src/components/dashboard/StudentDashboardContent';
+import StudentHomeShell from '@/src/components/dashboard/StudentHomeShell';
+import StudentHomeContent from '@/src/components/dashboard/StudentHomeContent';
 
 export default function StudentDashboardPage() {
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <StudentDashboardShell>
-        <StudentDashboardContent/>
-      </StudentDashboardShell>
+      <StudentHomeShell>
+        <StudentHomeContent />
+      </StudentHomeShell>
     </AuthGuard>
   );
 }
-
+// eduverse-home-ui-active--------
