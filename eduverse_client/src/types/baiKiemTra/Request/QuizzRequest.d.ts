@@ -20,18 +20,48 @@ export interface UpdateBaiKiemTraRequest {
   moTa?: string;
   diemDat?: number;
   gioiHanThoiGian?: number;
+  thuTuSapXep?: number;
   choLamLai?: boolean;
   soLanLamToiDa?: number;
   danhSachCauHoi: UpdateCauHoiRequest[];
+}
+
+export interface UpdateCauHoiRequest {
+  id: string;
+  tenCauHoi?: string;
+  noiDungCauHoi?: string;
+  doKho?: string;
+  thuTuSapXep?: number;
+  danhSachDapAns: UpdateDapAnRequest[];
+}
+
+export interface UpdateDapAnRequest {
+  id?: string;
+  noiDungDapAn?: string;
+  laDapAnDung: boolean;
+  thuTuSapXep?: number;
 }
 
 export interface CreateBaiKiemTraRequest {
   idPhan?: string;
   tenBaiKiemTra?: string;
   moTa?: string;
-  diemDat?: number;
-  gioiHanThoiGian?: number;
-  choLamLai?: boolean;
-  soLanLamToiDa?: number;
+  thuTuSapXep?: number;
   danhSachCauHoi: CreateCauHoiRequest[];
+}
+
+export interface CreateCauHoiRequest {
+  tenCauHoi?: string;
+  noiDungCauHoi?: string;
+  loaiCauHoi?: string;
+  diem?: number;
+  doKho?: string;
+  thuTuSapXep?: number;
+  danhSachDapAn: CreateDapAnRequest[];
+}
+
+export interface CreateDapAnRequest {
+  noiDungDapAn?: string;
+  laDapAnDung?: boolean;
+  thuTuSapXep?: number;
 }

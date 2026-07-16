@@ -31,7 +31,7 @@ export default class PhanService {
       const response = await apiService.get<ApiResponse<PhanDto[]>>(
         `/PhanHoc/phanhoc-getlistformanager/${idKhoaHoc}`,
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching phan hoc for update:", error);
       throw error;

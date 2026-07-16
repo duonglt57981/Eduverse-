@@ -22,7 +22,7 @@ export default function Step1Page() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
       <StepWrapper onNext={handleNext} showBack={false} disableNext={!selected}>
         <Box
           sx={{

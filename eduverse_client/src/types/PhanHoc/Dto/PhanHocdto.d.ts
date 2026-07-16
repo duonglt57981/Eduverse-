@@ -7,7 +7,7 @@ export interface PhanHocType {
   thuTuSapXep?: number;
   ngayTao?: Date;
   idKhoaHoc?: Guid;
-
+  thuTuSapXep?: number;
   DanhSachBaiGiang?: BaiGiangType[];
   DanhDachBaiKiemTra?: BaiKiemTraDto[];
 }
@@ -16,5 +16,6 @@ export interface GetToUpdatePhanDto {
   id?: string;
   tenPhan?: string;
   mieuTa?: string;
+  thuTuSapXep?: number;
   thuTuSapXep?: number;
 }

@@ -101,7 +101,7 @@ export default class KhoaHocService {
       const response = await apiService.get<ApiResponse<KhoaHocType>>(
         `/KhoaHoc/khoahoc-learning/${idDangKyKhoaHoc}`,
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching learning course:", error);
       throw error;
@@ -173,7 +173,7 @@ export default class KhoaHocService {
 
       const response =
         await apiService.get<ApiResponse<PagedList<KhoaHocType>>>(url);
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching course list for manager:", error);
       throw error;

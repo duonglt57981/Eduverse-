@@ -1,134 +1,160 @@
 "use client";
 
-import { ReactNode } from "react";
-import { useRouter, useParams, usePathname } from "next/navigation";
-import KhoaHocService from "@/src/services/KhoaHocService";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  CourseEditProvider,
   useCourseEdit,
+  CourseEditProvider,
 } from "./components/CourseEditContext";
-import { tinhTongThoiLuongGiay } from "./components/courseEditCore";
-import CourseEditLayout, { NhomSidebar } from "./components/CourseEditLayout";
+import CourseEditLayout from "./components/CourseEditLayout";
+import { tinhTongThoiLuongGiay, MucThieu } from "./components/courseEditCore";
+import KhoaHocService from "@/src/services/KhoaHocService";
+import { useState } from "react";
 
-const DUONG_DAN_THEO_KEY: Record<string, string> = {
-  curriculum: "curriculum",
-  basics: "basics",
-};
-
-function KhungChinhSuaKhoaHoc({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const params = useParams<{ corsesId: string }>();
+function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const idKhoaHoc = params.corsesId;
-
+  const router = useRouter();
   const {
+    thongTin,
+    phans,
     trangThai,
     setTrangThai,
     lyDoTuChoi,
-    thongTin,
-    phans,
     loading,
     refreshData,
+    idKhoaHoc,
   } = useCourseEdit();
 
-  const tongGiay = tinhTongThoiLuongGiay(phans);
-  const tongPhut = Math.floor(tongGiay / 60);
-  const activeKey = pathname?.split("/").pop() || "curriculum";
-
-  const diChuyenDenSegment = (segment: string) => {
-    router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/${segment}`);
-  };
-
+  const [dangXuLy, setDangXuLy] = useState(false);
   const khoaHocService = new KhoaHocService();
 
-  const guiPheDuyet = async () => {
-    try {
-      const result = await khoaHocService.ChuyenTTChoDuyetBatch([idKhoaHoc]);
-      if (result.status !== false) {
-        setTrangThai("ChoDuyet");
-        await refreshData();
-      }
-    } catch (error) {
-      console.error("Lỗi gửi phê duyệt:", error);
-    }
-  };
+  // Xác định tab đang active (dựa trên đường dẫn)
+  const activeKey = pathname?.includes("/basics") ? "basics" : "curriculum";
 
-  const suaTiep = async () => {
-    try {
-      const result = await khoaHocService.ChuyenTTDangSuaBatch([idKhoaHoc]);
-      if (result.status !== false) {
-        setTrangThai("DangSua");
-        await refreshData();
-      }
-    } catch (error) {
-      console.error("Lỗi chuyển trạng thái:", error);
-    }
-  };
+  // Tính thời lượng
+  const tongGiay = tinhTongThoiLuongGiay(phans);
+  const tongPhut = Math.floor(tongGiay / 60);
+  const thoiLuongHienThi = tongPhut > 0 ? `${tongPhut} phút` : "Chưa có video";
 
-  const nhomSidebar: NhomSidebar[] = [
+  // Xác định trạng thái hoàn thành cho sidebar
+  const basicsHoanThanh = Boolean(
+    thongTin.tieuDe &&
+    thongTin.tieuDe.trim().length >= 10 &&
+    thongTin.moTa &&
+    thongTin.moTa.length > 200 &&
+    thongTin.capDo &&
+    thongTin.hinhAnhKhoaHoc,
+  );
+
+  const curriculumHoanThanh = phans.some((p) =>
+    (p.DanhSachBaiGiang ?? []).some((bg) => bg.urlBaiGiang),
+  );
+
+  const nhomSidebar = [
     {
-      tieuDe: "Tạo nội dung của bạn",
-      muc: [
-        {
-          key: "curriculum",
-          nhan: "Chương trình giảng dạy",
-          hoanThanh: tongGiay >= 30 * 60,
-        },
-      ],
-    },
-    {
-      tieuDe: "Đăng tải khóa học của bạn",
+      tieuDe: "Khóa học",
       muc: [
         {
           key: "basics",
-          nhan: "Trang đích của khóa học",
-          hoanThanh: !!thongTin.hinhAnhKhoaHoc,
+          nhan: "Thông tin cơ bản",
+          hoanThanh: basicsHoanThanh,
+        },
+        {
+          key: "curriculum",
+          nhan: "Chương trình giảng dạy",
+          hoanThanh: curriculumHoanThanh,
         },
       ],
     },
   ];
 
+  // Điều hướng sidebar – sửa đường dẫn
+  const handleNavigateSidebar = (key: string) => {
+    router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/${key}`);
+  };
+
+  // Quay lại danh sách khóa học
+  const handleBack = () => {
+    router.push("/instructor/manager-courses");
+  };
+
+  // Gửi phê duyệt
+  const handleGuiPheDuyet = async () => {
+    setDangXuLy(true);
+    try {
+      const res = await khoaHocService.ChuyenTTChoDuyetBatch(idKhoaHoc);
+      if (res.status !== false) {
+        setTrangThai("ChoDuyet");
+        await refreshData();
+      } else {
+        alert(res.message || "Gửi phê duyệt thất bại");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Đã xảy ra lỗi");
+    } finally {
+      setDangXuLy(false);
+    }
+  };
+
+  // Sửa tiếp
+  const handleSuaTiep = async () => {
+    setDangXuLy(true);
+    try {
+      const res = await khoaHocService.ChuyenTTDangSuaBatch(idKhoaHoc);
+      if (res.status !== false) {
+        setTrangThai("DangSua");
+        await refreshData();
+      } else {
+        alert(res.message || "Không thể chuyển về trạng thái sửa");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Đã xảy ra lỗi");
+    } finally {
+      setDangXuLy(false);
+    }
+  };
+
+  // Xử lý khi validate thiếu
+  const handleDiChuyenDenTuValidate = (
+    diChuyenDen: MucThieu["diChuyenDen"],
+  ) => {
+    if (diChuyenDen === "basics") {
+      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
+    } else {
+      router.push(
+        `/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`,
+      );
+    }
+  };
+
   return (
     <CourseEditLayout
-      tenKhoaHoc={thongTin.tieuDe || "Khóa học chưa có tiêu đề"}
+      tenKhoaHoc={thongTin.tieuDe || "Chưa đặt tên"}
       trangThai={trangThai}
-      thoiLuongDaTai={`Đã tải lên video có nội dung dài ${tongPhut} phút.`}
+      thoiLuongDaTai={thoiLuongHienThi}
       thongTinKhoaHoc={thongTin}
       phans={phans}
       lyDoTuChoi={lyDoTuChoi}
       nhomSidebar={nhomSidebar}
       activeKey={activeKey}
-      loading={loading}
-      onBack={() => router.push("/instructor/manager-courses")}
-      onNavigateSidebar={(key) =>
-        diChuyenDenSegment(DUONG_DAN_THEO_KEY[key] ?? key)
-      }
-      onGuiPheDuyet={guiPheDuyet}
-      onSuaTiep={suaTiep}
-      onDiChuyenDenTuValidate={(diChuyenDen) =>
-        diChuyenDenSegment(DUONG_DAN_THEO_KEY[diChuyenDen] ?? diChuyenDen)
-      }
+      loading={loading || dangXuLy}
+      onBack={handleBack}
+      onNavigateSidebar={handleNavigateSidebar}
+      onGuiPheDuyet={handleGuiPheDuyet}
+      onSuaTiep={handleSuaTiep}
+      onDiChuyenDenTuValidate={handleDiChuyenDenTuValidate}
+      onRefreshData={refreshData}
     >
       {children}
     </CourseEditLayout>
   );
 }
 
-export default function ManageCourseLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const params = useParams<{ corsesId: string }>();
-  const coursesId = params.corsesId;
-
-  if (!coursesId) {
-    return <div>Loading...</div>;
-  }
-
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <CourseEditProvider coursesId={coursesId}>
-      <KhungChinhSuaKhoaHoc>{children}</KhungChinhSuaKhoaHoc>
+    <CourseEditProvider>
+      <LayoutContent>{children}</LayoutContent>
     </CourseEditProvider>
   );
 }

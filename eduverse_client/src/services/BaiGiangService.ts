@@ -15,51 +15,9 @@ export default class BaiGiangService {
       const response = await apiService.get<ApiResponse<BaiGiangDto[]>>(
         `/BaiGiang/baigiang-getlistformanager/${idPhan}`,
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching phan hoc for update:", error);
-      throw error;
-    }
-  }
-
-  async ChuyenTTDangSua(id: string): Promise<ApiResponse<BaiGiangType>> {
-    try {
-      const formData = new FormData();
-      formData.append("id", id);
-
-      const response = await apiService.post<ApiResponse<BaiGiangType>>(
-        `/BaiGiang/baigiang-chuyentrangthai-dangsua`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error changing status to 'Đang sửa':", error);
-      throw error;
-    }
-  }
-
-  async ChuyenTTChoDuyet(id: string): Promise<ApiResponse<BaiGiangType>> {
-    try {
-      const formData = new FormData();
-      formData.append("id", id);
-
-      const response = await apiService.post<ApiResponse<BaiGiangType>>(
-        `/BaiGiang/baigiang-chuyentrangthai-choduyet`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error changing status to 'Chờ duyệt':", error);
       throw error;
     }
   }

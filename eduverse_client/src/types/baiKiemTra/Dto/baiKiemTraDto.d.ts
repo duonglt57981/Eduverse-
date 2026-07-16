@@ -15,7 +15,8 @@ export interface AutoSaveDapAnDto {
 export interface CauHoiDto {
   id: string;
   noiDung: string;
-  dapAn: DapAnDto[];
+  thuTuSapXep?: number;
+  dapAns: DapAnDto[];
   // ... các thuộc tính khác
 }
 
@@ -51,6 +52,8 @@ export interface BaiKiemTraDto {
   trangThai?: string;
   trangThaiPheDuyet?: string;
   isSwap?: boolean;
+  thuTuSapXep?: number;
+  cauHois: CauHoiDto[];
 }
 
 // ---------- BaiKiemTraLamBaiDto ----------
@@ -104,13 +107,10 @@ export interface CreateBaiKiemTraDto {
   idPhan?: string;
   tenBaiKiemTra?: string;
   moTa?: string;
-  diemDat?: number;
-  gioiHanThoiGian?: number;
-  choLamLai?: boolean;
-  soLanLamToiDa?: number;
   soCauHoi?: number;
   trangThai?: string;
   trangThaiPheDuyet?: string;
+  thuTuSapXep?: number;
   danhSachCauHoi: CauHoiDto[];
 }
 
@@ -126,11 +126,9 @@ export interface UpdateBaiKiemTraDto {
   id: string;
   tenBaiKiemTra?: string;
   moTa?: string;
-  diemDat?: number;
-  gioiHanThoiGian?: number;
-  choLamLai?: boolean;
-  soLanLamToiDa?: number;
   idPhan?: string;
+  thuTuSapXep?: number;
+  danhSachCauHoi: UpdateCauHoiRequest[];
 }
 
 export interface LanLamBaiKiemTraDto {
@@ -215,4 +213,19 @@ export interface PhanHocQuizDto {
   tenPhan?: string;
   thuTuSapXep?: number;
   danhSachBaiKiemTra?: BaiKiemTraDto[];
+}
+
+export interface CauHoiDto {
+  id?: string;
+  tenCauHoi?: string;
+  noiDungCauHoi?: string;
+  loaiCauHoi?: string;
+  diem?: number;
+  thuTuSapXep?: number;
+  idBaiKiemTra?: string;
+  doKho?: string;
+  trangThai?: string;
+  trangThaiPheDuyet?: string;
+  idBanGhiTruoc?: string;
+  isBanHienTai?: boolean;
 }

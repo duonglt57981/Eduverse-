@@ -1,7 +1,7 @@
 "use client";
 
+import CurriculumContent from "./components/CurriculumContent";
 import { useCourseEdit } from "../components/CourseEditContext";
-import CurriculumContent from "../components/CurriculumContent";
 
 export default function CurriculumPage() {
   const { phans, setPhans, idKhoaHoc } = useCourseEdit();
