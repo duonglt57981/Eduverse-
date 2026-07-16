@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -71,6 +71,7 @@
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.72.0" />
     <PackageReference Include="NETCore.MailKit" Version="2.1.0" />
     <PackageReference Include="payOS" Version="2.1.0" />
+    <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.11.0" />
   </ItemGroup>
 
   <ItemGroup>

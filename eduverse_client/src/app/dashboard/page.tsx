@@ -30,10 +30,10 @@ export default function DashboardPage() {
         minHeight: '100vh',
         display: 'grid',
         placeItems: 'center',
-        bgcolor: '#FFF8F6',
+        bgcolor: '#F7F5F2',
       }}
     >
-      <CircularProgress sx={{ color: '#8D1313' }} />
+      <CircularProgress sx={{ color: '#8B1313' }} />
     </Box>
   );
 }

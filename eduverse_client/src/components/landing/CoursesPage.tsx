@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import KhoaHocService from '@/src/services/KhoaHocService';
+import { danhMucService } from '@/src/services/danhmucService';
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
@@ -10,7 +12,6 @@ import {
   QueryStatsRounded,
   SchoolRounded,
   SearchRounded,
-  StarRounded,
   TimerRounded,
 } from '@mui/icons-material';
 import {
@@ -29,11 +30,11 @@ import {
   Switch,
   TextField,
   Typography,
+  Checkbox,
 } from '@mui/material';
 import {
-  courseCatalog,
-  courseCategories,
   type CourseCatalogItem,
+  type CourseCategory,
 } from './landing-data';
 import {
   CourseVisual,
@@ -81,7 +82,7 @@ function CategoryCard({
           display: 'grid',
           placeItems: 'center',
           bgcolor: active ? 'rgba(141,19,19,0.12)' : 'rgba(141,19,19,0.06)',
-          color: '#8d1313',
+          color: '#8B1313',
           mb: 1.5,
         }}
       >
@@ -152,7 +153,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             p: 0,
             borderRadius: '50%',
             bgcolor: 'rgba(255,255,255,0.9)',
-            color: '#8d1313',
+            color: '#8B1313',
           }}
         >
           <FavoriteBorderRounded sx={{ fontSize: 18 }} />
@@ -180,7 +181,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             height: 26,
             borderRadius: 2.8,
             bgcolor: 'rgba(141,19,19,0.06)',
-            color: '#8d1313',
+            color: '#8B1313',
             fontWeight: 800,
           }}
         />
@@ -189,20 +190,14 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
       <Typography sx={{ mt: 1.35, fontSize: 22, fontWeight: 900, lineHeight: 1.24, letterSpacing: '-0.4px' }}>
         {course.title}
       </Typography>
-      <Typography sx={{ mt: 0.7, fontSize: 13.5, color: 'rgba(24,24,27,0.58)' }}>
-        Giảng viên: {course.instructor}
-      </Typography>
 
-      <Stack direction="row" spacing={1.1} sx={{ mt: 1.4, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Stack direction="row" spacing={0.4} sx={{ alignItems: 'center' }}>
-          <StarRounded sx={{ fontSize: 18, color: '#efb21a' }} />
-          <Typography sx={{ fontSize: 13.5, fontWeight: 800 }}>{course.rating}</Typography>
-        </Stack>
-        <Typography sx={{ fontSize: 13, color: 'rgba(24,24,27,0.54)' }}>
-          ({course.students} học viên)
+      <Stack direction="row" spacing={1} sx={{ mt: 1.4, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Rating value={course.rating} precision={0.1} readOnly size="small" />
+        <Typography sx={{ fontSize: 13, color: 'rgba(24,24,27,0.54)', fontWeight: 700 }}>
+          {course.rating.toFixed(1)}
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'rgba(24,24,27,0.54)' }}>
-          {course.level}
+          ({course.students} học viên) • {course.level}
         </Typography>
       </Stack>
 
@@ -221,7 +216,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
         <Typography sx={{ fontSize: 13.5, color: 'rgba(24,24,27,0.38)', textDecoration: 'line-through' }}>
           {course.originalPrice}
         </Typography>
-        <Typography sx={{ fontSize: 28, fontWeight: 900, color: '#8d1313' }}>
+        <Typography sx={{ fontSize: 28, fontWeight: 900, color: '#8B1313' }}>
           {course.price}
         </Typography>
       </Stack>
@@ -258,41 +253,130 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mapToCatalogItem = (kh: any): CourseCatalogItem => {
+  // Stable hash based on course ID to generate a consistent rating between 4.0 and 5.0
+  const charCodeSum = (kh.id || '').split('').reduce((sum: number, char: string) => sum + char.charCodeAt(0), 0);
+  const mockRating = 4.0 + (charCodeSum % 11) * 0.1; // yields: 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0
+
+  return {
+    id: kh.id,
+    title: kh.tieuDe || 'Khóa học không tên',
+    instructor: kh.tenGiangVien || 'Chưa cập nhật',
+    rating: mockRating,
+    students: kh.soLuongHocVien || 0,
+    price: kh.gia === 0 || kh.gia === null ? 'Miễn phí' : `${kh.gia?.toLocaleString('vi-VN')}đ`,
+    originalPrice: kh.giaGoc && kh.giaGoc > 0 ? `${kh.giaGoc?.toLocaleString('vi-VN')}đ` : '',
+    level: kh.capDo || 'Mọi cấp độ',
+    duration: kh.tongThoiLuong ? `${Math.round(kh.tongThoiLuong / 60)} giờ` : 'Chưa cập nhật',
+    category: kh.loaiKhoaHoc || 'Khác',
+    badge: kh.gia === 0 || kh.gia === null ? "Miễn phí" : "",
+    tags: [kh.capDo || 'Tự chọn', kh.gia === 0 || kh.gia === null ? 'Free' : 'Pro'],
+    palette: [
+      '#8B1313',
+      '#c2410c',
+      '#fff7f4'
+    ],
+    isFree: kh.gia === 0 || kh.gia === null
+  };
+};
+
 export default function CoursesPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<CourseSortOption>('newest');
   const [freeOnly, setFreeOnly] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+  const [minRating, setMinRating] = useState<number | null>(null);
+
+  const [courses, setCourses] = useState<CourseCatalogItem[]>([]);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const [pageIndex, setPageIndex] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
+  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const courseService = useMemo(() => new KhoaHocService(), []);
+
+  // Danh mục thật từ phần quản lý danh mục của Admin (/danhmuc, công khai)
+  const [categories, setCategories] = useState<CourseCategory[]>([]);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await danhMucService.getList({ pageIndex: 1, pageSize: 100 });
+        if (active && res.status && res.data) {
+          setCategories(
+            (res.data.items || []).map((dm) => ({
+              label: dm.tenDanhMuc || 'Danh mục',
+              value: dm.tenDanhMuc || '',
+            })),
+          );
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoading(true);
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const searchParams: any = {
+          pageIndex,
+          pageSize,
+          keyword: (search || (activeCategory !== 'all' ? activeCategory : '')) || undefined,
+          capDo: selectedLevels.length > 0 ? selectedLevels[0] : undefined,
+          isFree: freeOnly || undefined,
+          sortPrice: sortBy === 'price-low' ? 'asc' : sortBy === 'rating' ? 'desc' : undefined
+        };
+        const response = await courseService.GetList(searchParams);
+        if (response?.status && response.data) {
+          const mapped = (response.data.items || []).map(mapToCatalogItem);
+          setCourses(mapped);
+          setTotalCourses(response.data.totalCount || 0);
+        }
+      } catch (err) {
+        console.error("Error fetching courses from ES backend:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, [search, activeCategory, sortBy, freeOnly, selectedLevels, pageIndex, pageSize, courseService]);
+
+  const handleSearchChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const val = event.target.value;
+    setSearch(val);
+    if (val.trim().length > 1) {
+      try {
+        const res = await courseService.GetSearchSuggestions(val);
+        if (res?.status && res.data) {
+          setSuggestions(res.data);
+          setShowSuggestions(true);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
 
   const filteredCourses = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    const result = courseCatalog.filter((course) => {
-      const matchSearch =
-        !normalizedSearch ||
-        course.title.toLowerCase().includes(normalizedSearch) ||
-        course.instructor.toLowerCase().includes(normalizedSearch) ||
-        course.tags.some((tag) => tag.toLowerCase().includes(normalizedSearch));
-
-      const matchCategory =
-        activeCategory === 'all' ? true : course.category === activeCategory;
-
-      const matchFree = freeOnly ? course.isFree : true;
-      const matchLevel =
-        selectedLevels.length === 0 ? true : selectedLevels.includes(course.level);
-
-      return matchSearch && matchCategory && matchFree && matchLevel;
-    });
-
-    return [...result].sort((a, b) => {
-      if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'price-low') {
-        return parseInt(a.price.replace(/\D/g, '') || '0', 10) - parseInt(b.price.replace(/\D/g, '') || '0', 10);
-      }
-      return 0;
-    });
-  }, [activeCategory, freeOnly, search, selectedLevels, sortBy]);
+    let result = courses;
+    if (minRating !== null) {
+      result = result.filter((c) => c.rating >= minRating);
+    }
+    return result;
+  }, [courses, minRating]);
 
   const toggleLevel = (level: string) => {
     setSelectedLevels((current) =>
@@ -337,7 +421,7 @@ export default function CoursesPage() {
               >
                 Khám phá hàng trăm
                 <br />
-                <Box component="span" sx={{ color: '#8d1313' }}>
+                <Box component="span" sx={{ color: '#8B1313' }}>
                   khóa học
                 </Box>{' '}
                 chất lượng
@@ -355,42 +439,77 @@ export default function CoursesPage() {
                 tập được cá nhân hóa, công nghệ hiện đại và cộng đồng học viên dẫn đầu.
               </Typography>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3, alignItems: 'stretch' }}>
-                <TextFieldAny
-                  fullWidth
-                  variant="outlined"
-                  value={search}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
-                  placeholder="Tìm kiếm khóa học, kỹ năng..."
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    maxWidth: 420,
-                    '& .MuiOutlinedInput-root': {
-                      height: 48,
-                      bgcolor: '#fff',
-                      borderRadius: 2.8,
-                      transition: 'box-shadow 160ms ease, border-color 160ms ease',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(17,17,17,0.12)',
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3, alignItems: 'stretch', width: '100%' }}>
+                <Box sx={{ position: 'relative', width: '100%', maxWidth: 420 }}>
+                  <TextFieldAny
+                    fullWidth
+                    variant="outlined"
+                    value={search}
+                    onChange={handleSearchChange}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    placeholder="Tìm kiếm khóa học, kỹ năng..."
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: 48,
+                        bgcolor: '#fff',
+                        borderRadius: 2.8,
+                        transition: 'box-shadow 160ms ease, border-color 160ms ease',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(17,17,17,0.12)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(127,29,29,0.38)',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#7f1d1d',
+                        },
+                        '&.Mui-focused': {
+                          boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
+                        },
                       },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(127,29,29,0.38)',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#7f1d1d',
-                      },
-                      '&.Mui-focused': {
-                        boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
-                      },
-                    },
-                  }}
-                />
+                    }}
+                  />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <Paper
+                      elevation={4}
+                      sx={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        zIndex: 10,
+                        mt: 1,
+                        maxHeight: 250,
+                        overflowY: 'auto',
+                        borderRadius: 2,
+                        border: '1px solid rgba(17,17,17,0.08)',
+                        bgcolor: '#fff',
+                      }}
+                    >
+                      {suggestions.map((suggestion, idx) => (
+                        <MenuItem
+                          key={idx}
+                          onClick={() => {
+                            setSearch(suggestion);
+                            setShowSuggestions(false);
+                          }}
+                          sx={{ py: 1.2, px: 2, fontSize: 14.5 }}
+                        >
+                          <SearchRounded sx={{ fontSize: 16, mr: 1.5, color: 'rgba(24,24,27,0.38)' }} />
+                          {suggestion}
+                        </MenuItem>
+                      ))}
+                    </Paper>
+                  )}
+                </Box>
                 <Button
                   variant="contained"
                   sx={{
@@ -461,7 +580,7 @@ export default function CoursesPage() {
                   bgcolor: '#fff',
                 }}
               >
-                <Typography sx={{ fontSize: 24, fontWeight: 900, color: '#8d1313' }}>
+                <Typography sx={{ fontSize: 24, fontWeight: 900, color: '#8B1313' }}>
                   15K+
                 </Typography>
                 <Typography sx={{ fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
@@ -471,44 +590,7 @@ export default function CoursesPage() {
             </Box>
           </Box>
 
-          <Box sx={{ py: { xs: 4, md: 6 } }}>
-            <Box sx={{ mb: 3.5 }}>
-              <SectionHeading
-                title="Danh mục phổ biến"
-                description="Bắt đầu hành trình của bạn với các lĩnh vực đang dẫn đầu xu hướng."
-                align="center"
-              />
-            </Box>
 
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))', lg: 'repeat(6, minmax(0, 1fr))' },
-                gap: 2,
-              }}
-            >
-              {courseCategories.map((category) => (
-                <CategoryCard
-                  key={category.value}
-                  label={category.label}
-                  count={category.count}
-                  active={activeCategory === category.value}
-                  onClick={() => setActiveCategory(category.value)}
-                />
-              ))}
-            </Box>
-
-            <Stack direction="row" sx={{ justifyContent: 'center', mt: 4 }}>
-              <Button
-                component={Link}
-                href="/courses"
-                endIcon={<ArrowForwardRounded />}
-                sx={{ color: '#8d1313' }}
-              >
-                Xem tất cả danh mục
-              </Button>
-            </Stack>
-          </Box>
 
           <Box
             sx={{
@@ -522,7 +604,7 @@ export default function CoursesPage() {
             <Paper
               elevation={0}
               sx={{
-                p: 2.4,
+                p: 3,
                 borderRadius: 2.8,
                 border: '1px solid rgba(17,17,17,0.08)',
                 bgcolor: '#fff',
@@ -530,7 +612,7 @@ export default function CoursesPage() {
                 top: { lg: 100 },
               }}
             >
-              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography sx={{ fontSize: 22, fontWeight: 900 }}>Bộ lọc</Typography>
                 <Button
                   onClick={() => {
@@ -539,35 +621,97 @@ export default function CoursesPage() {
                     setSelectedLevels([]);
                     setSearch('');
                     setSortBy('newest');
+                    setMinRating(null);
                   }}
-                  sx={{ color: '#8d1313' }}
+                  disabled={activeCategory === 'all' && !freeOnly && selectedLevels.length === 0 && search === '' && sortBy === 'newest' && minRating === null}
+                  sx={{
+                    color: '#8B1313',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    '&.Mui-disabled': {
+                      color: 'rgba(24,24,27,0.3)',
+                    },
+                  }}
                 >
                   Xóa tất cả
                 </Button>
               </Stack>
 
-              <Stack spacing={2.2}>
+              <Stack spacing={2.5}>
                 <FilterGroup title="Danh mục">
-                  {courseCategories.map((category) => (
-                    <Button
-                      key={category.value}
-                      onClick={() => setActiveCategory(category.value)}
-                      sx={{
-                        justifyContent: 'space-between',
-                        px: 1.4,
-                        py: 1,
-                        borderRadius: 2.8,
-                        color: activeCategory === category.value ? '#8d1313' : 'rgba(24,24,27,0.7)',
-                        bgcolor:
-                          activeCategory === category.value
-                            ? 'rgba(141,19,19,0.06)'
-                            : 'transparent',
-                      }}
-                    >
-                      <span>{category.label}</span>
-                      <span>({category.count})</span>
-                    </Button>
-                  ))}
+                  <Box
+                    sx={{
+                      maxHeight: '320px',
+                      overflowY: 'auto',
+                      pr: 1,
+                      '&::-webkit-scrollbar': {
+                        width: '6px',
+                      },
+                      '&::-webkit-scrollbar-track': {
+                        background: 'transparent',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: 'rgba(139,19,19,0.2)',
+                        borderRadius: '4px',
+                      },
+                      '&::-webkit-scrollbar-thumb:hover': {
+                        background: 'rgba(139,19,19,0.4)',
+                      },
+                    }}
+                  >
+                    <Stack spacing={1.5}>
+                      {categories.map((category) => (
+                        <FormControlLabel
+                          key={category.value}
+                          control={
+                            <Checkbox
+                              checked={activeCategory === category.value}
+                              onChange={() => {
+                                if (activeCategory === category.value) {
+                                  setActiveCategory('all');
+                                } else {
+                                  setActiveCategory(category.value);
+                                }
+                              }}
+                              size="small"
+                              sx={{
+                                color: 'rgba(24,24,27,0.23)',
+                                p: 0,
+                                mr: 1.5,
+                                mt: '2px',
+                                '&.Mui-checked': {
+                                  color: '#8B1313',
+                                },
+                              }}
+                            />
+                          }
+                          label={category.label}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            width: '100%',
+                            m: 0,
+                            py: 0.5,
+                            px: 1,
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'background-color 150ms ease',
+                            '&:hover': {
+                              bgcolor: 'rgba(141, 19, 19, 0.04)',
+                            },
+                            '& .MuiFormControlLabel-label': {
+                              fontSize: 14.5,
+                              fontWeight: activeCategory === category.value ? 700 : 500,
+                              color: activeCategory === category.value ? '#8B1313' : '#475569',
+                              textAlign: 'left',
+                              lineHeight: 1.4,
+                              userSelect: 'none',
+                            },
+                          }}
+                        />
+                      ))}
+                    </Stack>
+                  </Box>
                 </FilterGroup>
 
                 <Divider />
@@ -582,12 +726,30 @@ export default function CoursesPage() {
                 <Divider />
 
                 <FilterGroup title="Đánh giá">
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <Button
+                    onClick={() => setMinRating(minRating === 4.5 ? null : 4.5)}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      width: '100%',
+                      px: 1.2,
+                      py: 0.8,
+                      borderRadius: 2.8,
+                      color: minRating === 4.5 ? '#8B1313' : 'rgba(24,24,27,0.72)',
+                      bgcolor: minRating === 4.5 ? 'rgba(141,19,19,0.06)' : 'transparent',
+                      textTransform: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.2,
+                      '&:hover': {
+                        bgcolor: minRating === 4.5 ? 'rgba(141,19,19,0.1)' : 'rgba(24,24,27,0.04)',
+                      },
+                    }}
+                  >
                     <Rating value={4.5} precision={0.5} readOnly size="small" />
-                    <Typography sx={{ fontSize: 13.5, color: 'rgba(24,24,27,0.64)' }}>
+                    <Typography sx={{ fontSize: 13.5, fontWeight: minRating === 4.5 ? 700 : 500 }}>
                       4.5 trở lên
                     </Typography>
-                  </Stack>
+                  </Button>
                 </FilterGroup>
 
                 <Divider />
@@ -604,7 +766,7 @@ export default function CoursesPage() {
                           px: 1.2,
                           py: 1,
                           borderRadius: 2.8,
-                          color: selected ? '#8d1313' : 'rgba(24,24,27,0.72)',
+                          color: selected ? '#8B1313' : 'rgba(24,24,27,0.72)',
                           bgcolor: selected ? 'rgba(141,19,19,0.06)' : 'transparent',
                         }}
                       >
@@ -643,31 +805,7 @@ export default function CoursesPage() {
                 </Select>
               </Stack>
 
-              <Stack direction="row" spacing={1} sx={{ mb: 2.2, flexWrap: 'wrap' }}>
-                <Chip
-                  label="Tất cả"
-                  onClick={() => setActiveCategory('all')}
-                  sx={{
-                    bgcolor: activeCategory === 'all' ? '#8d1313' : '#fff',
-                    color: activeCategory === 'all' ? '#fff' : 'rgba(24,24,27,0.74)',
-                  }}
-                />
-                {courseCategories.map((category) => (
-                  <Chip
-                    key={category.value}
-                    label={category.label}
-                    onClick={() => setActiveCategory(category.value)}
-                    sx={{
-                      bgcolor:
-                        activeCategory === category.value ? '#8d1313' : '#fff',
-                      color:
-                        activeCategory === category.value
-                          ? '#fff'
-                          : 'rgba(24,24,27,0.74)',
-                    }}
-                  />
-                ))}
-              </Stack>
+
 
               <Box
                 sx={{
@@ -693,7 +831,7 @@ export default function CoursesPage() {
                     bgcolor: 'rgba(255,255,255,0.7)',
                   }}
                 >
-                  <QueryStatsRounded sx={{ fontSize: 34, color: '#8d1313' }} />
+                  <QueryStatsRounded sx={{ fontSize: 34, color: '#8B1313' }} />
                   <Typography sx={{ mt: 1.2, fontSize: 22, fontWeight: 900 }}>
                     Không tìm thấy khóa học
                   </Typography>

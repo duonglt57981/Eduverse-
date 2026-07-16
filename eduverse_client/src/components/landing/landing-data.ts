@@ -431,7 +431,7 @@ export const courseCatalog: CourseCatalogItem[] = [
     level: 'Trung cấp',
     isFree: false,
     tags: ['SQL Server', 'Database', 'T-SQL'],
-    palette: ['#1a0f0f', '#8d1313', '#200d0d'],
+    palette: ['#1a0f0f', '#8B1313', '#200d0d'],
   },
 ];
 
@@ -456,7 +456,7 @@ export const instructorCatalog: InstructorItem[] = [
     experience: '12 năm',
     category: 'ai-data',
     featured: true,
-    palette: ['#1f0f12', '#8d1313', '#251013'],
+    palette: ['#1f0f12', '#8B1313', '#251013'],
     socials: [
       { label: 'LinkedIn', href: '#' },
       { label: 'Email', href: '#' },
@@ -633,28 +633,28 @@ export const aboutValues: AboutValueItem[] = [
 
 export const aboutTimeline: AboutTimelineItem[] = [
   {
-    year: '2020',
+    year: 'Quý 1 · 2026',
     title: 'Hình thành ý tưởng EduVerse',
     description:
-      'Đội ngũ sáng lập bắt đầu xây dựng mô hình học tập số tập trung vào người đi làm và kỹ năng thực chiến.',
+      'Đội ngũ sáng lập bắt đầu phác thảo mô hình học tập số, tập trung vào người đi làm và kỹ năng thực chiến.',
   },
   {
-    year: '2021',
-    title: 'Ra mắt nền tảng phiên bản đầu',
+    year: 'Quý 2 · 2026',
+    title: 'Xây dựng nền tảng',
     description:
-      'EduVerse giới thiệu các khóa học đầu tiên về công nghệ, thiết kế và quản trị với mô hình giảng viên đồng hành.',
+      'Bắt tay phát triển hệ thống khóa học, công cụ cho giảng viên và trải nghiệm học tập trực tuyến đầu tiên.',
   },
   {
-    year: '2023',
-    title: 'Mở rộng cộng đồng học viên',
+    year: 'Quý 3 · 2026',
+    title: 'Ra mắt phiên bản đầu tiên',
     description:
-      'Nền tảng đạt hàng nghìn học viên, phát triển dashboard học tập, chứng chỉ và trải nghiệm cá nhân hóa.',
+      'Giới thiệu những khóa học đầu tiên về công nghệ, thiết kế và quản trị cùng mô hình giảng viên đồng hành.',
   },
   {
-    year: '2026',
-    title: 'Tăng tốc hệ sinh thái học tập',
+    year: 'Định hướng 2027',
+    title: 'Mở rộng hệ sinh thái học tập',
     description:
-      'EduVerse mở rộng danh mục nội dung, đội ngũ giảng viên và hệ thống hỗ trợ nghề nghiệp cho học viên.',
+      'Từng bước mở rộng danh mục nội dung, hoàn thiện dashboard học tập, chứng chỉ và hỗ trợ nghề nghiệp cho học viên.',
   },
 ];
 

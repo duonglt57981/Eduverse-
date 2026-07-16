@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { COLORS } from "@/src/theme/tokens";
+import { createAppTheme } from "@/src/theme/createAppTheme";
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import Image from "next/image";
@@ -51,7 +53,6 @@ import {
   Stack,
   ThemeProvider,
   Typography,
-  createTheme,
   Avatar,
   TextField,
   MenuItem,
@@ -64,17 +65,6 @@ import { useDispatch, useSelector } from "@/src/store/hook";
 import { apiService } from "@/src/services/index";
 
 // --- CRIMSON RED DESIGN PALETTE ---
-const COLORS = {
-  primary: "#8D1313", // Crimson Red (Đỏ đô chủ đạo)
-  primaryLight: "#B91C1C", // Light Crimson
-  primaryDark: "#7F1D1D", // Dark Crimson
-  bgLight: "#FFF8F6", // Premium cream-rose background
-  purpleAI: "#7C3AED", // AI Accent
-  gradientAI: "linear-gradient(135deg, #8D1313 0%, #7C3AED 100%)",
-  gradientCrimson: "linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)",
-  gradientCrimsonHover: "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
-  white: "#FFFFFF",
-};
 
 // Sidebar navigation items
 const sidebarPrimaryItems = [
@@ -311,23 +301,7 @@ export default function LearningPathsPage() {
   };
 
   const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: "light",
-          primary: { main: COLORS.primary },
-          background: { default: COLORS.bgLight, paper: COLORS.white },
-          text: { primary: "#1F2937", secondary: "#4B5563" },
-        },
-        shape: { borderRadius: 16 },
-        typography: {
-          fontFamily:
-            '"Be Vietnam Pro","Roboto",system-ui,-apple-system,Segoe UI,Arial,sans-serif',
-          h3: { fontWeight: 900, letterSpacing: "-1.0px" },
-          h4: { fontWeight: 900, letterSpacing: "-0.7px" },
-          button: { textTransform: "none", fontWeight: 800 },
-        },
-      }),
+    () => createAppTheme("light", COLORS.primary, COLORS.primaryDark),
     [],
   );
 

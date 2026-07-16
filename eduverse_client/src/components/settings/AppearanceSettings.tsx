@@ -40,7 +40,7 @@ export default function AppearanceSettings() {
 
   // Preview styling variables based on selected theme & accent
   const isDarkPreview = theme.palette.mode === 'dark';
-  const previewBg = isDarkPreview ? '#121212' : '#f6f3f1';
+  const previewBg = isDarkPreview ? '#121212' : '#F7F5F2';
   const previewPaper = isDarkPreview ? '#1e1e1e' : '#ffffff';
   const previewTextPrimary = isDarkPreview ? '#ffffff' : '#19171c';
   const previewTextSecondary = isDarkPreview ? '#a09ba5' : '#69656c';

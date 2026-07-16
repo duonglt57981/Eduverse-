@@ -256,7 +256,7 @@ export default function Step5Page() {
                         ? "0 2px 8px rgba(122,31,43,0.15)"
                         : "none",
                       "&:hover": {
-                        borderColor: "#7A1F2B",
+                        borderColor: "#8B1313",
                         bgcolor: "#fdf2f3",
                         transform: "translateY(-2px)",
                         boxShadow: "0 4px 10px rgba(122,31,43,0.12)",

@@ -65,7 +65,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
           minHeight: '100vh',
           display: 'grid',
           placeItems: 'center',
-          bgcolor: '#FFF8F6',
+          bgcolor: '#F7F5F2',
         }}
       >
         <Paper
@@ -121,7 +121,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
               py: 1.5,
               borderRadius: '50px',
               border: 'none',
-              background: 'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
+              background: 'linear-gradient(90deg, #8B1313 0%, #7f1d1d 55%, #6b1414 100%)',
               color: '#fff',
               fontSize: 14,
               fontWeight: 700,

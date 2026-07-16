@@ -33,15 +33,24 @@ import {
 import { useRouter } from "next/navigation";
 import { apiService } from "@/src/services/index";
 import { DonHangDto } from "@/src/types/thanhToan";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
-interface MaGiamGiaResponse {
+// ✅ Thay MaGiamGiaResponse (1 mã) bằng shape nhiều mã
+interface KetQuaApDungMa {
+  maGiamGia: string;
   hopLe: boolean;
+  thongBao: string;
   phanTramGiam?: number;
   soTienGiam?: number;
-  soTienSauGiam?: number;
+}
+interface ApDungNhieuMaResponse {
+  ketQua: KetQuaApDungMa[];
+  soTienGoc: number;
+  tongSoTienGiam: number;
+  soTienSauGiam: number;
 }
 
-const PRIMARY = "#8D1313";
+const PRIMARY = "#8B1313";
 const steps = ["Giỏ hàng", "Thanh toán", "Hoàn tất"];
 
 function ThanhToanContent() {
@@ -51,10 +60,14 @@ function ThanhToanContent() {
   const { loading, paymentResponse } = useSelector((s) => s.thanhToan);
 
   const [openQR, setOpenQR] = useState(false);
-  const [giaInfo, setGiaInfo] = useState<MaGiamGiaResponse | null>(null);
+  const [ketQuaMa, setKetQuaMa] = useState<ApDungNhieuMaResponse | null>(null); // ✅
 
   const daChonItems = gioHang?.items.filter((i) => i.daChon) ?? [];
   const tongTien = gioHang?.tongTienDaChon ?? 0;
+
+  const THOI_GIAN_QR = 5*60; // 5 phút (giây)
+  const [countdown, setCountdown] = useState(THOI_GIAN_QR);
+  const [hetHan, setHetHan] = useState(false);
 
   useEffect(() => {
     dispatch(getGioHang());
@@ -66,7 +79,7 @@ function ThanhToanContent() {
     const interval = setInterval(async () => {
       try {
         const data = await apiService.get<DonHangDto>(
-          `/thanhtoan/don-hang/${paymentResponse.donHangId}`
+          `/thanhtoan/don-hang/${paymentResponse.donHangId}`,
         );
         const trangThai = data?.data?.trangThai;
         if (trangThai === 1) {
@@ -74,7 +87,7 @@ function ThanhToanContent() {
           setOpenQR(false);
           dispatch(getGioHang());
           router.push(
-            `/student/payment-result?code=00&orderCode=${paymentResponse.maGiaoDich?.replace("EDU", "")}`
+            `/student/payment-result?code=00&orderCode=${paymentResponse.maGiaoDich?.replace("EDU", "")}`,
           );
         }
       } catch (e) {
@@ -85,15 +98,55 @@ function ThanhToanContent() {
   }, [openQR, paymentResponse]);
 
   useEffect(() => {
-    const ma = sessionStorage.getItem("maGiamGia");
-    if (!ma || daChonItems.length === 0) return;
+    if (!openQR) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCountdown(THOI_GIAN_QR);
+      setHetHan(false);
+      return;
+    }
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setHetHan(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [openQR]);
+
+  const formatCountdown = (s: number) => {
+    const m = Math.floor(s / 60)
+      .toString()
+      .padStart(2, "0");
+    const sec = (s % 60).toString().padStart(2, "0");
+    return `${m}:${sec}`;
+  };
+
+  // ✅ Đọc danh sách mã từ sessionStorage (key mới: "dsMaGiamGia", giá trị JSON array)
+  useEffect(() => {
+    const raw = sessionStorage.getItem("dsMaGiamGia");
+    if (!raw || daChonItems.length === 0) return;
+
+    let dsMa: string[] = [];
+    try {
+      dsMa = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (!Array.isArray(dsMa) || dsMa.length === 0) return;
+
     const ids = daChonItems.map((i) => i.idKhoaHoc!).filter(Boolean);
     apiService
-      .post<MaGiamGiaResponse>("/thanhtoan/kiem-tra-ma-giam-gia", {
-        maGiamGia: ma,
+      .post<ApDungNhieuMaResponse>("/thanhtoan/kiem-tra-ma-giam-gia", {
+        danhSachMa: dsMa,
         khoaHocIds: ids,
       })
-      .then((res) => { if (res.data?.hopLe) setGiaInfo(res.data); })
+      .then((res) => {
+        if (res.data) setKetQuaMa(res.data);
+      })
       .catch(() => {});
   }, [daChonItems.length]);
 
@@ -102,10 +155,26 @@ function ThanhToanContent() {
 
   const handleXacNhan = async () => {
     const ids = daChonItems.map((i) => i.idKhoaHoc!).filter(Boolean);
-    const maGiamGia = sessionStorage.getItem("maGiamGia") ?? undefined;
-    const result = await dispatch(taoThanhToan({ khoaHocIds: ids, maGiamGia }));
+
+    // ✅ Đọc lại danh sách mã, gửi nguyên mảng lên BE (BE tự tính lại giảm giá,
+    // không tin số tiền FE hiển thị)
+    const raw = sessionStorage.getItem("dsMaGiamGia");
+    let danhSachMaGiamGia: string[] | undefined;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0)
+          danhSachMaGiamGia = parsed;
+      } catch {
+        danhSachMaGiamGia = undefined;
+      }
+    }
+
+    const result = await dispatch(
+      taoThanhToan({ khoaHocIds: ids, danhSachMaGiamGia }), // ✅ đổi field
+    );
     if (taoThanhToan.fulfilled.match(result)) {
-      sessionStorage.removeItem("maGiamGia");
+      sessionStorage.removeItem("dsMaGiamGia"); // ✅ đổi key
       setOpenQR(true);
     }
   };
@@ -135,11 +204,18 @@ function ThanhToanContent() {
     );
   }
 
+  // ✅ Số tiền hiển thị: dùng kết quả nhiều mã nếu có, không thì giá gốc
+  const soTienGiam = ketQuaMa?.tongSoTienGiam ?? 0;
+  const soTienSauGiam = ketQuaMa?.soTienSauGiam ?? tongTien;
+  const coApDungMaHopLe = !!ketQuaMa && ketQuaMa.tongSoTienGiam > 0;
+
   return (
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontSize: 26, fontWeight: 900, color: PRIMARY, mb: 0.5 }}>
+        <Typography
+          sx={{ fontSize: 26, fontWeight: 900, color: PRIMARY, mb: 0.5 }}
+        >
           Thanh toán
         </Typography>
         <Typography sx={{ color: "rgba(31,41,55,0.55)", fontSize: 14 }}>
@@ -167,7 +243,9 @@ function ThanhToanContent() {
       <Grid container spacing={3}>
         {/* Left: Order info + Instructions */}
         <Grid size={{ xs: 12, md: 7 }}>
-          <Typography sx={{ fontSize: 16, fontWeight: 800, mb: 2, color: "text.primary" }}>
+          <Typography
+            sx={{ fontSize: 16, fontWeight: 800, mb: 2, color: "text.primary" }}
+          >
             Thông tin đơn hàng
           </Typography>
 
@@ -182,7 +260,10 @@ function ThanhToanContent() {
           >
             <Stack spacing={2}>
               {daChonItems.map((item) => (
-                <Box key={item.id} sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                <Box
+                  key={item.id}
+                  sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                >
                   <Box
                     sx={{
                       width: 64,
@@ -197,7 +278,11 @@ function ThanhToanContent() {
                       <img
                         src={item.hinhAnh}
                         alt={item.tenKhoaHoc}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
                       />
                     )}
                   </Box>
@@ -215,8 +300,19 @@ function ThanhToanContent() {
                     >
                       {item.tenKhoaHoc}
                     </Typography>
+                    {/* ✅ Nếu khóa học này được 1 mã giảm giá, hiện rõ */}
+                    {ketQuaMa?.ketQua.find(
+                      (k) => k.hopLe && item.idKhoaHoc, // BE không trả idKhoaHocDuocGiam ở đây trong interface rút gọn này, xem ghi chú bên dưới
+                    ) && null}
                   </Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 800, color: PRIMARY, flexShrink: 0 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 800,
+                      color: PRIMARY,
+                      flexShrink: 0,
+                    }}
+                  >
                     {formatGia(item.gia)}
                   </Typography>
                 </Box>
@@ -256,7 +352,10 @@ function ThanhToanContent() {
                 "Xác nhận OTP trên điện thoại",
                 "Hệ thống tự động kích hoạt khóa học sau khi nhận tiền",
               ].map((step, i) => (
-                <Box key={i} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
+                <Box
+                  key={i}
+                  sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}
+                >
                   <Box
                     sx={{
                       width: 22,
@@ -274,7 +373,13 @@ function ThanhToanContent() {
                   >
                     {i + 1}
                   </Box>
-                  <Typography sx={{ fontSize: 13, color: "text.secondary", lineHeight: 1.6 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "text.secondary",
+                      lineHeight: 1.6,
+                    }}
+                  >
                     {step}
                   </Typography>
                 </Box>
@@ -295,32 +400,75 @@ function ThanhToanContent() {
               top: 80,
             }}
           >
-            <Typography sx={{ fontWeight: 800, fontSize: 15, mb: 2, color: "text.primary" }}>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: 15,
+                mb: 2,
+                color: "text.primary",
+              }}
+            >
               Tóm tắt đơn hàng
             </Typography>
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+            >
               <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
                 Tạm tính ({daChonItems.length} khóa học)
               </Typography>
-              <Typography sx={{ fontSize: 13 }}>{formatGia(tongTien)}</Typography>
+              <Typography sx={{ fontSize: 13 }}>
+                {formatGia(tongTien)}
+              </Typography>
             </Box>
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                Giảm giá {giaInfo?.hopLe ? `(${giaInfo.phanTramGiam}%)` : ""}
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "success.main" }}>
-                -{formatGia(giaInfo?.hopLe ? giaInfo.soTienGiam : 0)}
-              </Typography>
-            </Box>
+            {/* ✅ Hiện từng mã đã áp, không gộp thành 1 % chung nữa vì mỗi mã
+                có thể có % khác nhau và áp cho khóa học khác nhau */}
+            {ketQuaMa && ketQuaMa.ketQua.some((k) => k.hopLe) && (
+              <Box sx={{ mb: 1 }}>
+                {ketQuaMa.ketQua
+                  .filter((k) => k.hopLe)
+                  .map((k) => (
+                    <Box
+                      key={k.maGiamGia}
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 0.5,
+                      }}
+                    >
+                      <Typography
+                        sx={{ fontSize: 12.5, color: "text.secondary" }}
+                      >
+                        Mã {k.maGiamGia} ({k.phanTramGiam}%)
+                      </Typography>
+                      <Typography
+                        sx={{ fontSize: 12.5, color: "success.main" }}
+                      >
+                        -{formatGia(k.soTienGiam)}
+                      </Typography>
+                    </Box>
+                  ))}
+              </Box>
+            )}
 
             <Divider sx={{ my: 2, borderColor: "rgba(141,19,19,0.1)" }} />
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Tổng cộng</Typography>
-              <Typography sx={{ fontWeight: 900, fontSize: 24, color: PRIMARY }}>
-                {formatGia(giaInfo?.hopLe ? giaInfo.soTienSauGiam : tongTien)}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
+              <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
+                Tổng cộng
+              </Typography>
+              <Typography
+                sx={{ fontWeight: 900, fontSize: 24, color: PRIMARY }}
+              >
+                {formatGia(soTienSauGiam)} {/* ✅ */}
               </Typography>
             </Box>
 
@@ -352,18 +500,41 @@ function ThanhToanContent() {
 
             <Stack spacing={1}>
               {[
-                { icon: <ShieldIcon fontSize="small" />, text: "Thanh toán an toàn & bảo mật 100%" },
-                { icon: <LoopIcon fontSize="small" />, text: "Hoàn tiền trong 30 ngày nếu không hài lòng" },
-                { icon: <SchoolIcon fontSize="small" />, text: "Truy cập trọn đời sau khi mua" },
+                {
+                  icon: <ShieldIcon fontSize="small" />,
+                  text: "Thanh toán an toàn & bảo mật 100%",
+                },
+                {
+                  icon: <LoopIcon fontSize="small" />,
+                  text: "Hoàn tiền trong 30 ngày nếu không hài lòng",
+                },
+                {
+                  icon: <SchoolIcon fontSize="small" />,
+                  text: "Truy cập trọn đời sau khi mua",
+                },
               ].map((item, i) => (
-                <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                  <Box sx={{ color: "success.main", display: "flex" }}>{item.icon}</Box>
-                  <Typography sx={{ fontSize: 12, color: "text.secondary" }}>{item.text}</Typography>
+                <Box
+                  key={i}
+                  sx={{ display: "flex", gap: 1, alignItems: "center" }}
+                >
+                  <Box sx={{ color: "success.main", display: "flex" }}>
+                    {item.icon}
+                  </Box>
+                  <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                    {item.text}
+                  </Typography>
                 </Box>
               ))}
             </Stack>
 
-            <Typography sx={{ fontSize: 11, color: "text.disabled", textAlign: "center", mt: 2 }}>
+            <Typography
+              sx={{
+                fontSize: 11,
+                color: "text.disabled",
+                textAlign: "center",
+                mt: 2,
+              }}
+            >
               Bằng cách xác nhận, bạn đồng ý với Điều khoản dịch vụ của EduVerse
             </Typography>
           </Card>
@@ -412,10 +583,131 @@ function ThanhToanContent() {
                 <CircularProgress sx={{ color: PRIMARY }} />
               )}
             </Box>
+            <Box sx={{ mt: 1.5, mb: 1 }}>
+              {hetHan ? (
+                <Box>
+                  <Alert
+                    severity="error"
+                    sx={{ borderRadius: 2, mb: 1, fontSize: 12 }}
+                  >
+                    Mã QR đã hết hạn! Vui lòng tạo đơn hàng mới.
+                  </Alert>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={() => {
+                      setOpenQR(false);
+                      setHetHan(false);
+                    }}
+                    sx={{
+                      borderColor: PRIMARY,
+                      color: PRIMARY,
+                      borderRadius: 2,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Tạo lại đơn hàng
+                  </Button>
+                </Box>
+              ) : (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 1,
+                      mb: 0.5,
+                    }}
+                  >
+                    <AccessTimeIcon
+                      sx={{
+                        fontSize: 18,
+                        color:
+                          countdown <= 60
+                            ? "error.main"
+                            : countdown <= 180
+                              ? "#d97706"
+                              : "text.secondary",
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: 20,
+                        fontWeight: 900,
+                        fontFamily: "monospace",
+                        color:
+                          countdown <= 60
+                            ? "error.main"
+                            : countdown <= 180
+                              ? "#d97706"
+                              : "text.primary",
+                        animation:
+                          countdown <= 30
+                            ? "blink 1s step-end infinite"
+                            : "none",
+                        "@keyframes blink": {
+                          "0%,100%": { opacity: 1 },
+                          "50%": { opacity: 0.3 },
+                        },
+                      }}
+                    >
+                      {formatCountdown(countdown)}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        color:
+                          countdown <= 60
+                            ? "error.main"
+                            : countdown <= 180
+                              ? "#d97706"
+                              : "text.secondary",
+                      }}
+                    >
+                      {countdown <= 60
+                        ? "⚠️ Sắp hết hạn!"
+                        : countdown <= 180
+                          ? "Còn ít thời gian"
+                          : "còn lại"}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      height: 4,
+                      bgcolor: "#f0f0f0",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: "100%",
+                        width: `${(countdown / THOI_GIAN_QR) * 100}%`,
+                        bgcolor:
+                          countdown <= 60
+                            ? "error.main"
+                            : countdown <= 180
+                              ? "#d97706"
+                              : PRIMARY,
+                        borderRadius: 2,
+                        transition: "width 1s linear, background-color 0.3s",
+                      }}
+                    />
+                  </Box>
+                </Box>
+              )}
+            </Box>
 
             <Chip
-              label={`Số tiền: ${formatGia(giaInfo?.hopLe ? giaInfo.soTienSauGiam : paymentResponse?.soTien)}`}
-              sx={{ bgcolor: "#fff0f0", color: PRIMARY, fontWeight: 700, fontSize: 14, mb: 1 }}
+              label={`Số tiền: ${formatGia(coApDungMaHopLe ? soTienSauGiam : paymentResponse?.soTien)}`}
+              sx={{
+                bgcolor: "#fff0f0",
+                color: PRIMARY,
+                fontWeight: 700,
+                fontSize: 14,
+                mb: 1,
+              }}
             />
 
             {paymentResponse?.maGiaoDich && (
@@ -424,11 +716,23 @@ function ThanhToanContent() {
               </Typography>
             )}
 
-            <Alert severity="info" sx={{ textAlign: "left", fontSize: 12, mb: 2 }}>
-              Hệ thống đang chờ xác nhận thanh toán. Sau khi chuyển khoản thành công, trang sẽ tự động chuyển.
+            <Alert
+              severity="info"
+              sx={{ textAlign: "left", fontSize: 12, mb: 2 }}
+            >
+              Hệ thống đang chờ xác nhận thanh toán. Sau khi chuyển khoản thành
+              công, trang sẽ tự động chuyển.
             </Alert>
 
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                mb: 2,
+              }}
+            >
               <CircularProgress size={16} sx={{ color: PRIMARY }} />
               <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
                 Đang chờ xác nhận...

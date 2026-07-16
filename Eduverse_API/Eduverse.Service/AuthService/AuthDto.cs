@@ -60,11 +60,16 @@ namespace Eduverse.Service.AuthService
         [Required][EmailAddress] public string Email { get; set; }
     }
 
+    public class VerifyOtpRequest
+    {
+        [Required][EmailAddress] public string Email { get; set; }
+        [Required] public string Otp { get; set; }
+    }
+
     public class ResetPasswordRequest
     {
-        public string? UserId { get; set; }
-        public string? Email { get; set; }
-        [Required] public string Token { get; set; }
+        [Required][EmailAddress] public string Email { get; set; }
+        [Required] public string ResetToken { get; set; }
         [Required][MinLength(8, ErrorMessage = "Mật khẩu mới phải có ít nhất 8 ký tự")] public string NewPassword { get; set; }
     }
 

@@ -14,8 +14,17 @@ node_modules/
 dist/
 publish/
 
-# Env
-.env
 
 # Documents
 Tailieu_*
+
+# Temp backups
+.claude_tmp_delete/
+
+
+# Documents
+Tailieu_*
+
+# Nginx Proxy Manager persistent data
+npm/data/
+npm/letsencrypt/

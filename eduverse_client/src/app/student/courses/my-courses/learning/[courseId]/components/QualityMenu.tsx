@@ -8,7 +8,7 @@ import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
 import { QualityLevel, CLOUDINARY_PROFILES } from "../types";
 import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
 
-const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#6B1414";
 
 interface QualityMenuProps {

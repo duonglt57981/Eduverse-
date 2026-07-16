@@ -17,7 +17,7 @@ import { QuizEntry } from "./QuizEntry";
 import { QuizView } from "./QuizView";
 import { QuizResult } from "./QuizResult";
 
-const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#6B1414";
 
 // Điểm tối đa luôn là 100 theo thang chấm của backend (xem KetQuaLanKiemTraDto.tongDiemToiDa)

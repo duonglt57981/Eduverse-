@@ -10,6 +10,12 @@ import {
 import { ApiResponse, PagedList } from "../types/types";
 import { apiService } from "./index";
 
+export interface KhoaHocMiniDto {
+  id: string;
+  tieuDe: string;
+  hinhAnhKhoaHoc?: string | null;
+}
+
 export default class KhoaHocService {
   // lấy danh sách khi chưa đăng nhập
   async GetList(
@@ -224,6 +230,40 @@ export default class KhoaHocService {
       throw error;
     }
   }
+  async GetApprovedListForSelect(): Promise<ApiResponse<KhoaHocMiniDto[]>> {
+  try {
+    return await apiService.get<KhoaHocMiniDto[]>(
+      "/KhoaHoc/khoahoc-getlist-daduyet",
+    );
+  } catch (error) {
+    console.error("Error fetching approved courses:", error);
+    throw error;
+  }
+}
+
+  async GetSearchSuggestions(query: string): Promise<ApiResponse<string[]>> {
+    try {
+      const response = await apiService.get<ApiResponse<string[]>>(
+        `/KhoaHoc/autocomplete?query=${encodeURIComponent(query)}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching search suggestions:", error);
+      throw error;
+    }
+  }
+
+  async SyncElasticsearch(): Promise<ApiResponse<string>> {
+    try {
+      const response = await apiService.post<ApiResponse<string>>(
+        `/KhoaHoc/sync-elasticsearch`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error syncing elasticsearch:", error);
+      throw error;
+    }
+  }
 
   private getUserIdFromToken(): string {
     const userStr = localStorage.getItem("AccessToken");
@@ -240,3 +280,4 @@ export default class KhoaHocService {
     throw new Error("User not authenticated - No userId found");
   }
 }
+

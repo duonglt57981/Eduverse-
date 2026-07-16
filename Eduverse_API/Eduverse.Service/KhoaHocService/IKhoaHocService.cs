@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Eduverse.Service.Common;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
@@ -42,7 +42,9 @@ namespace Eduverse.Service.KhoaHocService
         //
         Task<double> TinhPhanTramHoanThanh(Guid? idDangKy, DateTime? ngayDangKy = null);
         Task SwapPendingBaiGiang(Guid idDangKy, List<Guid> phanIds);
+        Task<List<KhoaHocMiniDto>> GetApprovedListForSelect();
 
-
+        Task<List<string>> GetSearchSuggestions(string query);
+        Task SyncElasticsearch();
     }
 }

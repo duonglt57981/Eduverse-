@@ -18,15 +18,23 @@ import { getKhoaHocPaged } from "@/src/store/khoaHoc/KhoaHocSlice";
 import { apiService } from "@/src/services/index";
 import { useRouter } from "next/navigation";
 
-interface MaGiamGiaResponse {
+interface KetQuaApDungMa {
+  maGiamGia: string;
   hopLe: boolean;
-  thongBao?: string;
+  thongBao: string;
   phanTramGiam?: number;
+  idKhoaHocDuocGiam?: string;
+  tenKhoaHocDuocGiam?: string;
   soTienGiam?: number;
-  soTienSauGiam?: number;
+}
+interface ApDungNhieuMaResponse {
+  ketQua: KetQuaApDungMa[];
+  soTienGoc: number;
+  tongSoTienGiam: number;
+  soTienSauGiam: number;
 }
 
-const PRIMARY = "#8D1313";
+const PRIMARY = "#8B1313";
 
 const formatThoiLuong = (phut?: number) => {
   if (!phut) return null;
@@ -45,17 +53,20 @@ function GioHangContent() {
   const [alertMessage, setAlertMessage] = useState("");
   const [alertSeverity, setAlertSeverity] = useState<"success" | "error">("success");
   const { gioHang, loading } = useSelector((s) => s.gioHang);
-  const [maGiamGia, setMaGiamGia] = useState("");
-  const [giaInfo, setGiaInfo] = useState<MaGiamGiaResponse | null>(null);
   const [apDungLoading, setApDungLoading] = useState(false);
   const [dangKyLoading, setDangKyLoading] = useState(false);
+  const [vuaThayDoiGioHang, setVuaThayDoiGioHang] = useState(false);
   const { items: savedItems } = useSelector((s) => s.muaSau);
+
+  // ── Mã giảm giá: hỗ trợ nhiều mã cùng lúc ──
+  const [maDangNhap, setMaDangNhap] = useState("");
+  const [dsMaDaThem, setDsMaDaThem] = useState<string[]>([]);
+  const [ketQuaMa, setKetQuaMa] = useState<ApDungNhieuMaResponse | null>(null);
 
   const items = gioHang?.items ?? [];
   const tongTien = gioHang?.tongTien ?? 0;
-  const tongThanhToan = giaInfo?.hopLe ? (giaInfo.soTienSauGiam ?? tongTien) : tongTien;
+  const tongThanhToan = ketQuaMa ? ketQuaMa.soTienSauGiam : tongTien;
 
-  // Phân loại khóa học miễn phí và có phí
   const mienphi = items.filter((i) => !i.gia || i.gia === 0);
   const coPhí = items.filter((i) => i.gia && i.gia > 0);
   const tatCaLaMienPhi = items.length > 0 && coPhí.length === 0;
@@ -69,23 +80,55 @@ function GioHangContent() {
   const formatGia = (gia?: number) =>
     gia && gia > 0 ? `${gia.toLocaleString("vi-VN")} ₫` : "Miễn phí";
 
-  const handleApDungMa = async () => {
-    if (!maGiamGia.trim()) return;
+  // Bất cứ khi nào giỏ hàng thay đổi thành phần (thêm/xoá), toàn bộ mã đã
+  // áp dụng phải reset — vì kết quả được tính "đóng băng" tại một danh sách
+  // khóa học cụ thể, không tự đồng bộ với BE.
+  const resetMaGiamGiaSauKhiDoiGioHang = () => {
+    setKetQuaMa(null);
+    setDsMaDaThem([]);
+    setMaDangNhap("");
+    setVuaThayDoiGioHang(true);
+  };
+
+  const tinhLaiMa = async (danhSachMa: string[]) => {
+    if (danhSachMa.length === 0) {
+      setKetQuaMa(null);
+      return;
+    }
     setApDungLoading(true);
     try {
-      const res = await apiService.post<MaGiamGiaResponse>(
+      const res = await apiService.post<ApDungNhieuMaResponse>(
         "/thanhtoan/kiem-tra-ma-giam-gia",
-        { maGiamGia, khoaHocIds: coPhí.map((i) => i.idKhoaHoc!).filter(Boolean) }
+        { danhSachMa, khoaHocIds: coPhí.map((i) => i.idKhoaHoc!).filter(Boolean) }
       );
-      setGiaInfo(res.data);
+      setKetQuaMa(res.data);
+      setVuaThayDoiGioHang(false);
     } catch {
-      setGiaInfo({ hopLe: false, thongBao: "Có lỗi xảy ra" });
+      setKetQuaMa(null);
     } finally {
       setApDungLoading(false);
     }
   };
 
-  // Đăng ký toàn bộ khóa học miễn phí trong giỏ
+  const handleThemMa = async () => {
+    if (!maDangNhap.trim()) return;
+    const maMoi = maDangNhap.trim().toUpperCase();
+    if (dsMaDaThem.includes(maMoi)) {
+      setMaDangNhap("");
+      return;
+    }
+    const dsMoi = [...dsMaDaThem, maMoi];
+    setDsMaDaThem(dsMoi);
+    setMaDangNhap("");
+    await tinhLaiMa(dsMoi);
+  };
+
+  const handleXoaMa = async (ma: string) => {
+    const dsMoi = dsMaDaThem.filter((m) => m !== ma);
+    setDsMaDaThem(dsMoi);
+    await tinhLaiMa(dsMoi);
+  };
+
   const handleDangKyMienPhi = async () => {
     const dsMienPhi = items.filter((i) => !i.gia || i.gia === 0);
     if (dsMienPhi.length === 0) return;
@@ -101,7 +144,6 @@ function GioHangContent() {
       const thanhCong = results.filter((r) => r.status === "fulfilled").length;
       const thatBai = results.filter((r) => r.status === "rejected").length;
 
-      // Xóa khỏi giỏ các khóa đã đăng ký thành công
       for (let i = 0; i < results.length; i++) {
         if (results[i].status === "fulfilled") {
           await dispatch(xoaKhoiGioHang(dsMienPhi[i].idKhoaHoc!));
@@ -182,7 +224,6 @@ function GioHangContent() {
               return (
                 <Box key={item.id}>
                   <Box sx={{ display: "flex", gap: 2, py: 2.5, alignItems: "flex-start" }}>
-                    {/* Thumbnail */}
                     <Box sx={{ width: 130, height: 80, flexShrink: 0, borderRadius: "10px", overflow: "hidden", bgcolor: "#f0f0f0" }}>
                       {item.hinhAnh ? (
                         <img src={item.hinhAnh} alt={item.tenKhoaHoc ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -191,7 +232,6 @@ function GioHangContent() {
                       )}
                     </Box>
 
-                    {/* Thông tin */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
                         <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.4, color: "text.primary" }}>
@@ -222,6 +262,7 @@ function GioHangContent() {
                           onClick={async () => {
                             await dispatch(xoaKhoiGioHang(item.idKhoaHoc!));
                             dispatch(getGioHang());
+                            resetMaGiamGiaSauKhiDoiGioHang();
                           }}
                           sx={{ color: PRIMARY, fontSize: 12, p: 0, minWidth: 0, fontWeight: 600 }}>
                           Xóa
@@ -233,6 +274,7 @@ function GioHangContent() {
                               await dispatch(xoaKhoiGioHang(item.idKhoaHoc!));
                               dispatch(getGioHang());
                               dispatch(getDanhSachMuaSau());
+                              resetMaGiamGiaSauKhiDoiGioHang();
                             }}
                             sx={{ color: PRIMARY, fontSize: 12, p: 0, minWidth: 0, fontWeight: 600 }}>
                             Lưu để mua sau
@@ -241,7 +283,6 @@ function GioHangContent() {
                       </Box>
                     </Box>
 
-                    {/* Giá */}
                     <Box sx={{ textAlign: "right", flexShrink: 0 }}>
                       {laMienPhi ? (
                         <Typography sx={{ fontWeight: 800, fontSize: 16, color: "success.main" }}>
@@ -273,7 +314,6 @@ function GioHangContent() {
             bgcolor: "rgba(141,19,19,0.015)", p: 3 }}>
 
             {tatCaLaMienPhi ? (
-              /* Toàn bộ miễn phí */
               <>
                 <Box sx={{ textAlign: "center", mb: 2 }}>
                   <SchoolIcon sx={{ fontSize: 48, color: "success.main", mb: 1 }} />
@@ -294,9 +334,7 @@ function GioHangContent() {
                 </Button>
               </>
             ) : (
-              /* Có khóa học trả phí */
               <>
-                {/* Nếu có cả miễn phí lẫn trả phí, hiện cảnh báo */}
                 {mienphi.length > 0 && (
                   <Alert severity="info" sx={{ borderRadius: "10px", mb: 2, fontSize: 12 }}>
                     <strong>{mienphi.length} khóa học miễn phí</strong> sẽ được đăng ký tự động khi thanh toán
@@ -308,13 +346,13 @@ function GioHangContent() {
                   {tongThanhToan > 0 ? `${tongThanhToan.toLocaleString("vi-VN")} ₫` : "Miễn phí"}
                 </Typography>
 
-                {giaInfo?.hopLe && (
+                {ketQuaMa && ketQuaMa.tongSoTienGiam > 0 && (
                   <Box sx={{ mb: 1.5 }}>
                     <Typography sx={{ fontSize: 13, color: "text.secondary", textDecoration: "line-through" }}>
                       {formatGia(tongTien)}
                     </Typography>
                     <Typography sx={{ fontSize: 13, color: "success.main", fontWeight: 700 }}>
-                      Tiết kiệm {formatGia(giaInfo.soTienGiam)} ({giaInfo.phanTramGiam}% giảm)
+                      Tiết kiệm {formatGia(ketQuaMa.tongSoTienGiam)}
                     </Typography>
                   </Box>
                 )}
@@ -322,8 +360,8 @@ function GioHangContent() {
                 <Button fullWidth variant="contained" size="large"
                   disabled={items.length === 0 || loading}
                   onClick={() => {
-                    if (giaInfo?.hopLe) sessionStorage.setItem("maGiamGia", maGiamGia);
-                    else sessionStorage.removeItem("maGiamGia");
+                    if (dsMaDaThem.length > 0) sessionStorage.setItem("dsMaGiamGia", JSON.stringify(dsMaDaThem));
+                    else sessionStorage.removeItem("dsMaGiamGia");
                     router.push("/student/payment");
                   }}
                   endIcon={<ArrowForwardIcon />}
@@ -337,29 +375,55 @@ function GioHangContent() {
 
                 <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1, color: "text.primary" }}>Mã ưu đãi</Typography>
                 <Typography sx={{ fontSize: 12, color: "text.secondary", mb: 1.5 }}>
-                  Áp dụng mã coupon hoặc khuyến mãi
+                  Có thể áp dụng nhiều mã cùng lúc, mỗi mã chỉ giảm cho 1 khóa học
                 </Typography>
 
+                {dsMaDaThem.length > 0 && (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 1.5 }}>
+                    {ketQuaMa?.ketQua.map((kq) => (
+                      <Chip
+                        key={kq.maGiamGia}
+                        label={
+                          kq.hopLe
+                            ? `${kq.maGiamGia} (-${formatGia(kq.soTienGiam)})`
+                            : `${kq.maGiamGia} (không áp dụng)`
+                        }
+                        onDelete={() => handleXoaMa(kq.maGiamGia)}
+                        size="small"
+                        color={kq.hopLe ? "success" : "default"}
+                        sx={{ fontWeight: 600 }}
+                      />
+                    ))}
+                  </Box>
+                )}
+
                 <Box sx={{ display: "flex", gap: 1 }}>
-                  <TextField size="small" fullWidth placeholder="Nhập mã..."
-                    value={maGiamGia}
-                    onChange={(e) => { setMaGiamGia(e.target.value); setGiaInfo(null); }}
-                    error={giaInfo !== null && !giaInfo.hopLe}
+                  <TextField size="small" fullWidth placeholder="Nhập mã rồi Enter..."
+                    value={maDangNhap}
+                    onChange={(e) => setMaDangNhap(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleThemMa(); }}
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px", fontSize: 13, bgcolor: "#fff",
                       "&.Mui-focused fieldset": { borderColor: PRIMARY } } }}
                   />
                   <Button variant="outlined" size="small"
-                    disabled={apDungLoading || !maGiamGia.trim()}
-                    onClick={handleApDungMa}
+                    disabled={apDungLoading || !maDangNhap.trim()}
+                    onClick={handleThemMa}
                     sx={{ borderColor: PRIMARY, color: PRIMARY, borderRadius: "8px", px: 2,
                       whiteSpace: "nowrap", flexShrink: 0, fontWeight: 700,
                       "&:hover": { bgcolor: "#fff0f0", borderColor: PRIMARY } }}>
-                    {apDungLoading ? <CircularProgress size={14} sx={{ color: PRIMARY }} /> : "Áp dụng"}
+                    {apDungLoading ? <CircularProgress size={14} sx={{ color: PRIMARY }} /> : "Thêm"}
                   </Button>
                 </Box>
-                {giaInfo && (
-                  <Typography sx={{ fontSize: 12, color: giaInfo.hopLe ? "success.main" : "error.main", mt: 0.75 }}>
-                    {giaInfo.thongBao}
+
+                {ketQuaMa?.ketQua.some((k) => !k.hopLe) && (
+                  <Typography sx={{ fontSize: 11.5, color: "error.main", mt: 0.75 }}>
+                    {ketQuaMa.ketQua.filter((k) => !k.hopLe).map((k) => `${k.maGiamGia}: ${k.thongBao}`).join(" • ")}
+                  </Typography>
+                )}
+
+                {vuaThayDoiGioHang && !ketQuaMa && (
+                  <Typography sx={{ fontSize: 11.5, color: "#e65100", mt: 0.75 }}>
+                    Giỏ hàng đã thay đổi — vui lòng áp dụng lại mã giảm giá nếu cần.
                   </Typography>
                 )}
               </>
@@ -400,6 +464,7 @@ function GioHangContent() {
                         await dispatch(chuyenVaoGioHang(item.idKhoaHoc!));
                         dispatch(getGioHang());
                         dispatch(getDanhSachMuaSau());
+                        resetMaGiamGiaSauKhiDoiGioHang();
                       }}
                       sx={{ color: PRIMARY, fontSize: 12, p: 0, minWidth: 0, fontWeight: 700 }}>
                       Chuyển vào giỏ hàng
@@ -514,6 +579,7 @@ function GioHangContent() {
                               setAlertSeverity("success");
                               setOpen(true);
                               dispatch(getGioHang());
+                              resetMaGiamGiaSauKhiDoiGioHang();
                             } catch {
                               setAlertMessage("Lỗi thêm vào giỏ hàng");
                               setAlertSeverity("error");

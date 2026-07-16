@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet.Actions;
+using CloudinaryDotNet.Actions;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
@@ -44,6 +44,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Eduverse.Service.ElasticsearchService;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
@@ -68,6 +69,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IGeminiService _geminiService;
         private readonly ILogger<LichSuKiemDuyetKhoaHocService> _logger;
         private readonly IMapper _mapper;
+        private readonly IElasticsearchService _elasticsearchService;
         private readonly IBaiKiemTraRepository _baiKiemTraRepository;
 
         public LichSuKiemDuyetKhoaHocService(
@@ -88,7 +90,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             ICauHoiRepository cauHoiRepository,
             IDapAnRepository dapAnRepository,
             IMapper mapper,
-            IHttpContextAccessor? httpContextAccessor = null) : base(repository)
+            IElasticsearchService elasticsearchService,
+        IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
             _phanRepository = phanRepository;
@@ -106,6 +109,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             _cauHoiRepository = cauHoiRepository;
             _dapAnRepository = dapAnRepository;
             _mapper = mapper;
+            _elasticsearchService = elasticsearchService;
         }
 
         #region GetDanhSachKiemDuyet

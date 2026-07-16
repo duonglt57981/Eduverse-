@@ -1,6 +1,18 @@
-version: '3.8'
-
 services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - eduverse_net
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
@@ -35,14 +47,23 @@ services:
     pull_policy: never
     container_name: eduverse_api
     restart: unless-stopped
+    env_file:
+      - ./Eduverse_API/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Eduverse;User Id=sa;Password=YourStr0ng!Password;TrustServerCertificate=True;Encrypt=False;
-    ports:
-      - "5002:5002"
+      - Elasticsearch__Url=http://elasticsearch:9200
+      - AllowedOrigins__0=https://eduverse.website
+      - AllowedOrigins__1=https://www.eduverse.website
+      - AllowedOrigins__2=https://localhost:3000
+      - AllowedOrigins__3=https://${SERVER_HOST:-localhost}
+      - FrontendUrl=https://eduverse.website
+      - BackendUrl=https://api.eduverse.website
     depends_on:
       sqlserver:
         condition: service_healthy
+      elasticsearch:
+        condition: service_started
     networks:
       - eduverse_net
 
@@ -52,21 +73,38 @@ services:
       context: ./eduverse_client
       dockerfile: Dockerfile
       target: prod
+      args:
+        NEXT_PUBLIC_API_URL: https://api.eduverse.website
     pull_policy: never
     container_name: eduverse_client
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:5002
-    ports:
-      - "3000:3000"
     depends_on:
       - api
     networks:
       - eduverse_net
 
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: eduverse_npm
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+    depends_on:
+      - api
+      - client
+    networks:
+      - eduverse_net
+
 volumes:
   sqlserver_data:
+  es_data:
 
 networks:
   eduverse_net:

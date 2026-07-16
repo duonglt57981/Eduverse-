@@ -43,6 +43,11 @@ import {
   LockRounded,
   CheckCircleRounded,
   RadioButtonUncheckedRounded,
+  MenuBookRounded,
+  CategoryRounded,
+  FactCheckRounded,
+  PaymentRounded,
+  SettingsRounded,
 } from "@mui/icons-material";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import AuthGuard from "@/src/components/AuthGuard";
@@ -51,10 +56,10 @@ import Swal from "sweetalert2";
 
 // Premium color tokens based on the EduVerse design
 const COLORS = {
-  primary: "#801414", // Deep Crimson
+  primary: "#8B1313", // Deep Crimson
   primaryLight: "#B91C1C", // Light Crimson
   primaryBgLight: "#FFF5F5", // Extra light pink/red background
-  bgLight: "#FFF8F6", // Premium cream-rose background
+  bgLight: "#F7F5F2", // Premium cream-rose background
   white: "#FFFFFF",
   textDark: "#1E293B", // Slate 800
   textSecondary: "#64748B", // Slate 500
@@ -86,6 +91,76 @@ interface RoleStats {
   totalUsersAssigned: number;
   mostPopularRole: string;
 }
+
+// ===== Cấu hình quyền hạn (data-driven). Backend lưu mỗi mã quyền dưới dạng role-claim =====
+interface PermissionItem {
+  label: string;
+  code: string;
+  desc?: string;
+}
+interface PermissionGroup {
+  title: string;
+  icon: typeof PeopleAltRounded;
+  permissions: PermissionItem[];
+}
+const PERMISSION_GROUPS: PermissionGroup[] = [
+  {
+    title: "Quản lý người dùng",
+    icon: PeopleAltRounded,
+    permissions: [
+      { label: "Xem người dùng", code: "User.View", desc: "Xem danh sách và hồ sơ chi tiết" },
+      { label: "Chỉnh sửa thông tin", code: "User.Edit", desc: "Cập nhật dữ liệu người dùng" },
+      { label: "Xóa người dùng", code: "User.Delete", desc: "Vô hiệu hóa hoặc xóa tài khoản" },
+    ],
+  },
+  {
+    title: "Quản lý khóa học",
+    icon: MenuBookRounded,
+    permissions: [
+      { label: "Xem khóa học", code: "Course.View" },
+      { label: "Tạo mới", code: "Course.Create" },
+      { label: "Sửa nội dung", code: "Course.Edit" },
+      { label: "Xóa khóa học", code: "Course.Delete" },
+    ],
+  },
+  {
+    title: "Quản lý danh mục",
+    icon: CategoryRounded,
+    permissions: [
+      { label: "Xem danh mục", code: "Category.View" },
+      { label: "Tạo / Sửa danh mục", code: "Category.Manage" },
+      { label: "Xóa danh mục", code: "Category.Delete" },
+    ],
+  },
+  {
+    title: "Kiểm duyệt nội dung",
+    icon: FactCheckRounded,
+    permissions: [
+      { label: "Duyệt khóa học", code: "Course.Approve" },
+      { label: "Quản lý bài kiểm tra", code: "Test.Manage" },
+    ],
+  },
+  {
+    title: "Tài chính",
+    icon: PaymentRounded,
+    permissions: [
+      { label: "Xem thanh toán", code: "Payment.View" },
+      { label: "Duyệt rút tiền", code: "Withdrawal.Approve" },
+    ],
+  },
+  {
+    title: "Hệ thống & Vai trò",
+    icon: SettingsRounded,
+    permissions: [
+      { label: "Quản lý vai trò & quyền", code: "Role.Manage" },
+      { label: "Cấu hình hệ thống", code: "System.Settings" },
+    ],
+  },
+];
+const TOTAL_PERMISSIONS = PERMISSION_GROUPS.reduce(
+  (sum, g) => sum + g.permissions.length,
+  0,
+);
 
 export default function AdminRolesPage() {
   const [roles, setRoles] = useState<RoleItem[]>([]);
@@ -616,7 +691,7 @@ export default function AdminRolesPage() {
                     variant="h5"
                     sx={{ fontWeight: 800, color: COLORS.textDark, mt: 0.5 }}
                   >
-                    124
+                    {TOTAL_PERMISSIONS}
                   </Typography>
                 </Box>
               </Paper>
@@ -1026,7 +1101,7 @@ export default function AdminRolesPage() {
               <Box
                 sx={{
                   p: 3,
-                  bgcolor: "#801414",
+                  bgcolor: "#8B1313",
                   color: COLORS.white,
                   display: "flex",
                   justifyContent: "space-between",
@@ -1092,267 +1167,117 @@ export default function AdminRolesPage() {
                 </Stack>
               </Box>
 
-              {/* Grid content containing Modules */}
-              <Box sx={{ p: 4 }}>
-                <Grid container spacing={4} sx={{ width: "100%", m: 0 }}>
-                  {/* Module 1: Quản lý người dùng */}
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ mb: 2 }}>
-                      <Stack
-                        direction="row"
-                        spacing={1.5}
-                        sx={{ mb: 3, alignItems: "center" }}
-                      >
-                        <PeopleAltRounded
-                          sx={{ color: COLORS.primary, fontSize: 22 }}
-                        />
-                        <Typography
-                          sx={{
-                            fontWeight: 800,
-                            color: COLORS.textDark,
-                            fontSize: 16,
-                          }}
-                        >
-                          Quản lý người dùng
-                        </Typography>
-                      </Stack>
-
-                      {/* Switch items list */}
-                      <Stack spacing={2.5}>
-                        {/* Switch 1: Xem thông tin */}
-                        <Stack
-                          direction="row"
-                          sx={{
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Box>
+              {/* Ma trận quyền — render data-driven từ PERMISSION_GROUPS */}
+              <Box sx={{ p: { xs: 2.5, md: 4 } }}>
+                <Grid container spacing={3} sx={{ width: "100%", m: 0 }}>
+                  {PERMISSION_GROUPS.map((group) => {
+                    const GroupIcon = group.icon;
+                    return (
+                      <Grid size={{ xs: 12, md: 6 }} key={group.title}>
+                        <Box sx={{ height: "100%" }}>
+                          <Stack
+                            direction="row"
+                            spacing={1.25}
+                            sx={{ mb: 2, alignItems: "center" }}
+                          >
+                            <GroupIcon
+                              sx={{ color: COLORS.primary, fontSize: 20 }}
+                            />
                             <Typography
                               sx={{
-                                fontWeight: 700,
+                                fontWeight: 800,
                                 color: COLORS.textDark,
-                                fontSize: 14,
+                                fontSize: 15,
                               }}
                             >
-                              Xem thông tin người dùng
+                              {group.title}
                             </Typography>
-                            <Typography
-                              sx={{
-                                color: COLORS.textSecondary,
-                                fontSize: 12,
-                                mt: 0.25,
-                              }}
-                            >
-                              Cho phép xem danh sách và hồ sơ chi tiết
-                            </Typography>
-                          </Box>
-                          <Switch
-                            checked={
-                              selectedRole.name === "Admin" ||
-                              permissions.includes("User.View")
-                            }
-                            onChange={() => handleTogglePermission("User.View")}
-                            disabled={selectedRole.name === "Admin"}
-                            sx={{
-                              "& .MuiSwitch-switchBase.Mui-checked": {
-                                color: COLORS.primary,
-                              },
-                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                { bgcolor: COLORS.primary },
-                            }}
-                          />
-                        </Stack>
-
-                        {/* Switch 2: Chỉnh sửa thông tin */}
-                        <Stack
-                          direction="row"
-                          sx={{
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Box>
-                            <Typography
-                              sx={{
-                                fontWeight: 700,
-                                color: COLORS.textDark,
-                                fontSize: 14,
-                              }}
-                            >
-                              Chỉnh sửa thông tin
-                            </Typography>
-                            <Typography
-                              sx={{
-                                color: COLORS.textSecondary,
-                                fontSize: 12,
-                                mt: 0.25,
-                              }}
-                            >
-                              Cho phép cập nhật dữ liệu người dùng
-                            </Typography>
-                          </Box>
-                          <Switch
-                            checked={
-                              selectedRole.name === "Admin" ||
-                              permissions.includes("User.Edit")
-                            }
-                            onChange={() => handleTogglePermission("User.Edit")}
-                            disabled={selectedRole.name === "Admin"}
-                            sx={{
-                              "& .MuiSwitch-switchBase.Mui-checked": {
-                                color: COLORS.primary,
-                              },
-                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                { bgcolor: COLORS.primary },
-                            }}
-                          />
-                        </Stack>
-
-                        {/* Switch 3: Xóa người dùng */}
-                        <Stack
-                          direction="row"
-                          sx={{
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Box>
-                            <Typography
-                              sx={{
-                                fontWeight: 700,
-                                color: COLORS.textDark,
-                                fontSize: 14,
-                              }}
-                            >
-                              Xóa người dùng
-                            </Typography>
-                            <Typography
-                              sx={{
-                                color: COLORS.textSecondary,
-                                fontSize: 12,
-                                mt: 0.25,
-                              }}
-                            >
-                              Vô hiệu hóa hoặc xóa vĩnh viễn tài khoản
-                            </Typography>
-                          </Box>
-                          <Switch
-                            checked={
-                              selectedRole.name === "Admin" ||
-                              permissions.includes("User.Delete")
-                            }
-                            onChange={() =>
-                              handleTogglePermission("User.Delete")
-                            }
-                            disabled={selectedRole.name === "Admin"}
-                            sx={{
-                              "& .MuiSwitch-switchBase.Mui-checked": {
-                                color: COLORS.primary,
-                              },
-                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                { bgcolor: COLORS.primary },
-                            }}
-                          />
-                        </Stack>
-                      </Stack>
-                    </Box>
-                  </Grid>
-
-                  {/* Module 2: Quản lý khóa học */}
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ mb: 2 }}>
-                      <Stack
-                        direction="row"
-                        spacing={1.5}
-                        sx={{ mb: 3, alignItems: "center" }}
-                      >
-                        <AssignmentIndRounded
-                          sx={{ color: COLORS.primary, fontSize: 22 }}
-                        />
-                        <Typography
-                          sx={{
-                            fontWeight: 800,
-                            color: COLORS.textDark,
-                            fontSize: 16,
-                          }}
-                        >
-                          Quản lý khóa học
-                        </Typography>
-                      </Stack>
-
-                      {/* Card layout selections */}
-                      <Grid container spacing={2} sx={{ width: "100%", m: 0 }}>
-                        {[
-                          { label: "Xem khóa học", code: "Course.View" },
-                          { label: "Tạo mới", code: "Course.Create" },
-                          { label: "Sửa nội dung", code: "Course.Edit" },
-                          { label: "Xóa khóa học", code: "Course.Delete" },
-                        ].map((item) => {
-                          const isChecked =
-                            selectedRole.name === "Admin" ||
-                            permissions.includes(item.code);
-                          return (
-                            <Grid size={{ xs: 6 }} key={item.code}>
-                              <Box
-                                onClick={() =>
-                                  handleTogglePermission(item.code)
-                                }
-                                sx={{
-                                  p: 2,
-                                  borderRadius: "10px",
-                                  border: isChecked
-                                    ? `1.5px solid ${COLORS.primary}`
-                                    : "1.5px solid #E2E8F0",
-                                  bgcolor: isChecked
-                                    ? COLORS.primaryBgLight
-                                    : COLORS.white,
-                                  cursor:
-                                    selectedRole.name === "Admin"
-                                      ? "default"
-                                      : "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  transition: "all 150ms ease",
-                                  "&:hover": {
-                                    borderColor:
-                                      selectedRole.name === "Admin"
-                                        ? "none"
-                                        : COLORS.primaryLight,
-                                  },
-                                }}
-                              >
-                                <Typography
+                          </Stack>
+                          <Stack spacing={1.25}>
+                            {group.permissions.map((item) => {
+                              const isAdmin = selectedRole.name === "Admin";
+                              const isChecked =
+                                isAdmin || permissions.includes(item.code);
+                              return (
+                                <Box
+                                  key={item.code}
+                                  onClick={() => {
+                                    if (!isAdmin)
+                                      handleTogglePermission(item.code);
+                                  }}
                                   sx={{
-                                    fontSize: 13.5,
-                                    fontWeight: 700,
-                                    color: isChecked
-                                      ? COLORS.primary
-                                      : COLORS.textDark,
+                                    px: 2,
+                                    py: 1.5,
+                                    borderRadius: "10px",
+                                    border: isChecked
+                                      ? `1.5px solid ${COLORS.primary}`
+                                      : `1.5px solid ${COLORS.greyBorder}`,
+                                    bgcolor: isChecked
+                                      ? COLORS.primaryBgLight
+                                      : COLORS.white,
+                                    cursor: isAdmin ? "not-allowed" : "pointer",
+                                    opacity: isAdmin ? 0.9 : 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: 1.5,
+                                    transition: "all 150ms ease",
+                                    "&:hover": {
+                                      borderColor: isAdmin
+                                        ? undefined
+                                        : COLORS.primary,
+                                    },
                                   }}
                                 >
-                                  {item.label}
-                                </Typography>
-                                {isChecked ? (
-                                  <CheckCircleRounded
-                                    sx={{ color: COLORS.primary, fontSize: 20 }}
-                                  />
-                                ) : (
-                                  <RadioButtonUncheckedRounded
-                                    sx={{
-                                      color: COLORS.textSecondary,
-                                      fontSize: 20,
-                                    }}
-                                  />
-                                )}
-                              </Box>
-                            </Grid>
-                          );
-                        })}
+                                  <Box sx={{ minWidth: 0 }}>
+                                    <Typography
+                                      sx={{
+                                        fontWeight: 700,
+                                        color: isChecked
+                                          ? COLORS.primary
+                                          : COLORS.textDark,
+                                        fontSize: 13.5,
+                                      }}
+                                    >
+                                      {item.label}
+                                    </Typography>
+                                    {item.desc ? (
+                                      <Typography
+                                        sx={{
+                                          color: COLORS.textSecondary,
+                                          fontSize: 12,
+                                          mt: 0.25,
+                                        }}
+                                      >
+                                        {item.desc}
+                                      </Typography>
+                                    ) : null}
+                                  </Box>
+                                  {isChecked ? (
+                                    <CheckCircleRounded
+                                      sx={{
+                                        color: COLORS.primary,
+                                        fontSize: 22,
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                  ) : (
+                                    <RadioButtonUncheckedRounded
+                                      sx={{
+                                        color: COLORS.textSecondary,
+                                        fontSize: 22,
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                  )}
+                                </Box>
+                              );
+                            })}
+                          </Stack>
+                        </Box>
                       </Grid>
-                    </Box>
-                  </Grid>
+                    );
+                  })}
                 </Grid>
               </Box>
             </Card>

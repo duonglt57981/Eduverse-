@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
-import { register, clearError, clearSuccess, externalLogin } from '../../../store/auth/AuthSlice';
+import { register, clearError, clearSuccess } from '../../../store/auth/AuthSlice';
+import GoogleAuthButton from '../../../components/auth/GoogleAuthButton';
 import {
   Box,
   Button,
@@ -24,7 +25,8 @@ import {
   SvgIcon,
   Typography,
 } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '@/src/theme/createAppTheme';
 import {
   ArrowBackRounded,
   BadgeRounded,
@@ -37,62 +39,6 @@ import {
   VisibilityOffRounded,
   VisibilityRounded,
 } from '@mui/icons-material';
-
-function GoogleGlyph(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="M12 10.2v3.9h5.5c-.2 1.2-.9 2.2-1.8 2.9v2.4h3c1.8-1.7 2.8-4.2 2.8-7.2 0-.7-.1-1.3-.2-2H12Z"
-      />
-      <path
-        fill="currentColor"
-        d="M12 22c2.6 0 4.7-.8 6.3-2.2l-3-2.4c-.8.6-1.9 1-3.3 1-2.5 0-4.6-1.7-5.4-4h-3V17c1.6 3.2 4.9 5 8.4 5Z"
-      />
-      <path
-        fill="currentColor"
-        d="M6.6 14.4a6.3 6.3 0 0 1 0-4.8V7.1h-3A10 10 0 0 0 2 12c0 1.6.4 3.1 1.1 4.4l3.5-2Z"
-      />
-      <path
-        fill="currentColor"
-        d="M12 5.6c1.4 0 2.6.5 3.6 1.4l2.7-2.7A9.4 9.4 0 0 0 12 2C8.5 2 5.2 3.9 3.6 7.1l3 2.5c.8-2.3 2.9-4 5.4-4Z"
-      />
-    </SvgIcon>
-  );
-}
-
-function FacebookGlyph(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="M13.5 22v-8h2.7l.4-3H13.5V9.1c0-.9.2-1.6 1.6-1.6h1.6V4.9c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3V11H7.5v3H10v8h3.5Z"
-      />
-    </SvgIcon>
-  );
-}
-
-function GithubGlyph(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="M12 2C6.5 2 2 6.6 2 12.3c0 4.6 2.9 8.4 6.9 9.8.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.6 1 1.6 1 .9 1.6 2.4 1.1 3 .8.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.2-.4-1.2.1-2.6 0 0 .8-.3 2.7 1a9 9 0 0 1 4.9 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7 1 .7 2v3c0 .3.2.6.7.5 4-1.4 6.9-5.2 6.9-9.8C22 6.6 17.5 2 12 2Z"
-      />
-    </SvgIcon>
-  );
-}
-
-function LinkedInGlyph(props: React.ComponentProps<typeof SvgIcon>) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path
-        fill="currentColor"
-        d="M6.5 9H3.7v12h2.8V9ZM5.1 3.5a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2ZM20.5 14.1c0-3.1-1.6-4.6-3.9-4.6-1.8 0-2.6 1-3.1 1.7V9H10.8v12h2.8v-6.7c0-1.8.3-3.5 2.5-3.5s2.2 2 2.2 3.6V21h2.8v-6.9Z"
-      />
-    </SvgIcon>
-  );
-}
 
 function getStrength(password: string) {
   let score = 0;
@@ -111,67 +57,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const { loading, error, successMessage } = useSelector((s) => s.auth);
 
-  const handleExternalLogin = (provider: 'google' | 'facebook') => {
-    const width = 500;
-    const height = 650;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
-    let url = `/auth/oauth-callback?provider=${provider}`;
-
-    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/oauth-callback?provider=${provider}`);
-    const nonce = crypto.randomUUID();
-    if (provider === 'google' && googleClientId) {
-      url = `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?client_id=${googleClientId}` +
-        `&redirect_uri=${redirectUri}` +
-        `&response_type=id_token` +
-        `&scope=openid%20profile%20email` +
-        `&nonce=nonce_${nonce}` +
-        `&state=state_${provider}`;
-    } else if (provider === 'facebook' && facebookAppId) {
-      url = `https://www.facebook.com/v18.0/dialog/oauth` +
-        `?client_id=${facebookAppId}` +
-        `&redirect_uri=${redirectUri}` +
-        `&response_type=token` +
-        `&scope=public_profile,email` +
-        `&state=state_${provider}`;
-    }
-
-    const popup = window.open(
-      url,
-      `Đăng nhập ${provider === 'google' ? 'Google' : 'Facebook'}`,
-      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
-    );
-
-    if (!popup) {
-      setLocalError('Vui lòng bỏ chặn popup để tiếp tục đăng nhập.');
-      return;
-    }
-
-    const messageListener = async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data?.type === 'OAUTH_SUCCESS') {
-        window.removeEventListener('message', messageListener);
-        const payload = event.data.payload;
-
-        const result = await dispatch(externalLogin(payload));
-        if (externalLogin.fulfilled.match(result)) {
-          const roles: string[] = result.payload.roles || [];
-          if (roles.includes('Admin')) {
-            router.push('/admin/dashboard');
-          } else {
-            router.push('/student/dashboard');
-          }
-        }
-      }
-    };
-
-    window.addEventListener('message', messageListener);
-  };
 
   const [form, setForm] = useState({
     hoTen: '',
@@ -182,9 +67,11 @@ export default function RegisterPage() {
   });
   const [confirmPass, setConfirmPass] = useState('');
   const [showPass, setShowPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreeNews, setAgreeNews] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [googleSize, setGoogleSize] = useState({ width: 0, height: 40 });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Clear Redux messages khi mount trang để không hiện message cũ
@@ -193,26 +80,7 @@ export default function RegisterPage() {
     dispatch(clearSuccess());
   }, [dispatch]);
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: 'light',
-          primary: { main: '#7f1d1d' },
-          background: { default: '#f9f8f6', paper: '#ffffff' },
-          text: { primary: '#141414', secondary: '#6f6f6f' },
-        },
-        shape: { borderRadius: 14 },
-        typography: {
-          fontFamily:
-            '"Be Vietnam Pro","Roboto",system-ui,-apple-system,Segoe UI,Arial,sans-serif',
-          h3: { fontWeight: 900, letterSpacing: '-0.8px' },
-          h4: { fontWeight: 900, letterSpacing: '-0.6px' },
-          button: { textTransform: 'none', fontWeight: 800 },
-        },
-      }),
-    [],
-  );
+  const theme = useMemo(() => createAppTheme('light'), []);
 
   const strength = useMemo(() => getStrength(form.password), [form.password]);
   const strengthLabel = ['', 'Yếu', 'Trung bình', 'Mạnh'][strength.score] || '';
@@ -306,7 +174,7 @@ export default function RegisterPage() {
   };
 
   const inputSx = {
-    height: 50,
+    height: 44,
     borderRadius: 3,
     bgcolor: 'rgba(17,17,17,0.035)',
     '& .MuiOutlinedInput-notchedOutline': {
@@ -317,10 +185,10 @@ export default function RegisterPage() {
     },
     '&.Mui-focused': {
       bgcolor: 'rgba(17,17,17,0.03)',
-      boxShadow: '0 0 0 4px rgba(127,29,29,0.14)',
+      boxShadow: '0 0 0 4px rgba(139,19,19,0.14)',
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'rgba(127,29,29,0.38)',
+      borderColor: 'rgba(139,19,19,0.38)',
     },
   } as const;
 
@@ -364,7 +232,7 @@ export default function RegisterPage() {
               position: 'relative',
               overflow: 'hidden',
               background:
-                'linear-gradient(160deg, #9b1c1c 0%, #7f1d1d 50%, #5c1111 100%)',
+                'linear-gradient(160deg, #9b1c1c 0%, #8B1313 50%, #5c1111 100%)',
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -562,16 +430,21 @@ export default function RegisterPage() {
               width: '100%',
               height: { md: '100%' },
               overflowY: { md: 'auto' },
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
               px: { xs: 2.5, sm: 4, md: 5 },
-              py: { xs: 3, md: 4 },
+              py: { xs: 2.5, md: 2.5 },
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               bgcolor: 'background.default',
             }}
           >
-            <Box sx={{ width: '100%', maxWidth: 440, my: 'auto' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Box sx={{ width: '100%', maxWidth: 400, my: 'auto' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
                 <MuiLink
                   component={Link}
                   href="/"
@@ -583,7 +456,7 @@ export default function RegisterPage() {
                     fontSize: 13,
                     fontWeight: 800,
                     color: 'rgba(17,17,17,0.65)',
-                    '&:hover': { color: '#7f1d1d' },
+                    '&:hover': { color: '#8B1313' },
                   }}
                 >
                   <ArrowBackRounded sx={{ fontSize: 18 }} />
@@ -594,7 +467,7 @@ export default function RegisterPage() {
               <Typography variant="h4" sx={{ fontSize: { xs: 26, sm: 30 }, mb: 0.75, color: 'text.primary' }}>
                 Đăng ký tài khoản
               </Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 3 }}>
+              <Typography sx={{ color: 'text.secondary', fontSize: 14, mb: 1.5 }}>
                 Chào mừng bạn! Hãy điền thông tin để bắt đầu.
               </Typography>
 
@@ -654,7 +527,7 @@ export default function RegisterPage() {
               ) : null}
 
               <Box component="form" onSubmit={handleSubmit} sx={{ mt: 0.5 }}>
-                <Grid container spacing={1.5}>
+                <Grid container spacing={1}>
                   <Grid size={{ xs: 12 }}>
                     <FormControl fullWidth error={!!fieldErrors.hoTen}>
                       <OutlinedInput
@@ -763,7 +636,20 @@ export default function RegisterPage() {
                         placeholder="Xác nhận mật khẩu"
                         value={confirmPass}
                         onChange={(e) => { setConfirmPass(e.target.value); setFieldErrors((p) => ({ ...p, confirmPass: '' })); }}
-                        type={showPass ? 'text' : 'password'}
+                        type={showConfirmPass ? 'text' : 'password'}
+                        endAdornment={
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label={showConfirmPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                              edge="end"
+                              onClick={() => setShowConfirmPass((v) => !v)}
+                              size="small"
+                              sx={{ color: 'rgba(17,17,17,0.55)' }}
+                            >
+                              {showConfirmPass ? <VisibilityOffRounded /> : <VisibilityRounded />}
+                            </IconButton>
+                          </InputAdornment>
+                        }
                         sx={inputSx}
                       />
                       {(confirmMismatch || fieldErrors.confirmPass) && (
@@ -830,18 +716,18 @@ export default function RegisterPage() {
                               py: 0.25,
                               pl: 0.5,
                               color: 'rgba(17,17,17,0.35)',
-                              '&.Mui-checked': { color: '#7f1d1d' },
+                              '&.Mui-checked': { color: '#8B1313' },
                             }}
                           />
                         }
                         label={
                           <Typography sx={{ mt: 0.2, fontSize: 11.5, color: 'rgba(17,17,17,0.65)' }}>
                             Tôi đồng ý với{' '}
-                            <MuiLink component={Link} href="/terms" underline="hover" sx={{ color: '#7f1d1d', fontWeight: 800 }}>
+                            <MuiLink component={Link} href="/terms" underline="hover" sx={{ color: '#8B1313', fontWeight: 800 }}>
                               Điều khoản dịch vụ
                             </MuiLink>{' '}
                             và{' '}
-                            <MuiLink component={Link} href="/privacy" underline="hover" sx={{ color: '#7f1d1d', fontWeight: 800 }}>
+                            <MuiLink component={Link} href="/privacy" underline="hover" sx={{ color: '#8B1313', fontWeight: 800 }}>
                               Chính sách bảo mật
                             </MuiLink>
                             .
@@ -859,7 +745,7 @@ export default function RegisterPage() {
                               py: 0.25,
                               pl: 0.5,
                               color: 'rgba(17,17,17,0.35)',
-                              '&.Mui-checked': { color: '#7f1d1d' },
+                              '&.Mui-checked': { color: '#8B1313' },
                             }}
                           />
                         }
@@ -880,14 +766,18 @@ export default function RegisterPage() {
                       disabled={loading}
                       sx={{
                         width: '100%',
+                        display: 'flex',
+                        height: googleSize.height,
+                        minHeight: googleSize.height,
+                        boxSizing: 'border-box',
                         borderRadius: 999,
                         py: 1.25,
                         background:
-                          'linear-gradient(90deg, #8b1a1a 0%, #7f1d1d 55%, #6b1414 100%)',
-                        boxShadow: '0 10px 24px rgba(127,29,29,0.2)',
+                          'linear-gradient(90deg, #8B1313 0%, #8B1313 55%, #6b1414 100%)',
+                        boxShadow: '0 10px 24px rgba(139,19,19,0.2)',
                         '&:hover': {
                           background:
-                            'linear-gradient(90deg, #7f1d1d 0%, #6b1414 60%, #5c1111 100%)',
+                            'linear-gradient(90deg, #8B1313 0%, #6b1414 60%, #5c1111 100%)',
                         },
                       }}
                     >
@@ -897,46 +787,14 @@ export default function RegisterPage() {
                 </Grid>
               </Box>
 
-              <Divider sx={{ my: 1.5, opacity: 0.35 }}>
+              <Divider sx={{ my: 2.5, opacity: 0.35 }}>
                 <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: 'rgba(17,17,17,0.45)' }}>
                   HOẶC TIẾP TỤC VỚI
                 </Typography>
               </Divider>
 
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
-                {[
-                  { key: 'google', icon: <GoogleGlyph /> },
-                  { key: 'facebook', icon: <FacebookGlyph /> },
-                  { key: 'github', icon: <GithubGlyph /> },
-                  { key: 'linkedin', icon: <LinkedInGlyph /> },
-                ].map((b) => (
-                  <Button
-                    key={b.key}
-                    type="button"
-                    variant="outlined"
-                    onClick={() => {
-                      if (b.key === 'google' || b.key === 'facebook') {
-                        handleExternalLogin(b.key);
-                      } else {
-                        setLocalError('Chức năng liên kết tài khoản này chưa được tích hợp.');
-                      }
-                    }}
-                    sx={{
-                      height: 38,
-                      borderRadius: 2.5,
-                      borderColor: 'rgba(17,17,17,0.10)',
-                      color: 'rgba(17,17,17,0.75)',
-                      '&:hover': {
-                        borderColor: 'rgba(127,29,29,0.35)',
-                        backgroundColor: 'rgba(127,29,29,0.04)',
-                      },
-                    }}
-                  >
-                    <Box sx={{ display: 'grid', placeItems: 'center' }}>
-                      {b.icon}
-                    </Box>
-                  </Button>
-                ))}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0 }}>
+                <GoogleAuthButton text="signup_with" onError={setLocalError} onSize={setGoogleSize} />
               </Box>
 
               <Typography sx={{ mt: 1.75, textAlign: 'center', fontSize: 12.5, color: 'rgba(17,17,17,0.60)' }}>
@@ -945,7 +803,7 @@ export default function RegisterPage() {
                   component={Link}
                   href="/auth/login"
                   underline="none"
-                  sx={{ color: '#7f1d1d', fontWeight: 900, '&:hover': { color: '#5c1111' } }}
+                  sx={{ color: '#8B1313', fontWeight: 900, '&:hover': { color: '#5c1111' } }}
                 >
                   Đăng nhập ngay
                 </MuiLink>

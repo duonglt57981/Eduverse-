@@ -4,7 +4,7 @@ import { Box, IconButton, Tooltip } from "@mui/material";
 import { OpenInFull as OpenInFullIcon } from "@mui/icons-material";
 import { VideoPlayer } from "./VideoPlayer";
 
-const PRIMARY_RED = "#8B1A1A";
+const PRIMARY_RED = "#8B1313";
 
 interface MiniPlayerProps {
   url: string;

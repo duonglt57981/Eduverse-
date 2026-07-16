@@ -38,14 +38,17 @@ import DevicesIcon from "@mui/icons-material/Devices";
 import AllInclusiveIcon from "@mui/icons-material/AllInclusive";
 import FolderIcon from "@mui/icons-material/Folder";
 import CloseIcon from "@mui/icons-material/Close";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AuthGuard from "@/src/components/AuthGuard";
+import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import DangKiService from "@/src/services/DangKiService";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { apiService } from "@/src/services/index";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const RED = "#8D1313";
+const RED = "#8B1313";
 const RED_HOVER = "#6B1010";
 const RED_SOFT = "#fdf2f2";
 
@@ -344,9 +347,18 @@ function CourseRegistrationContent() {
   }
 
   const phanHocs = khoaHoc.danhSachPhanHoc ?? [];
-  const gia = khoaHoc.gia ?? 0;
-  const isFree = khoaHoc.loaiKhoaHoc === "Khóa học miễn phí" || gia === 0;
-
+  const gia = khoaHoc.gia ?? khoaHoc.giaGoc ?? 0;
+  const isFree =
+    khoaHoc.loaiKhoaHoc !== "Khóa học trả phí" &&
+    (!khoaHoc.gia || khoaHoc.gia <= 0);
+  console.log(
+    "DEBUG gia:",
+    khoaHoc.gia,
+    "| loai:",
+    khoaHoc.loaiKhoaHoc,
+    "| isFree:",
+    isFree,
+  );
   return (
     <Box>
       <Grid container spacing={3}>
@@ -797,7 +809,11 @@ function CourseRegistrationContent() {
                     color: isFree ? "#2d7a35" : RED,
                   }}
                 >
-                  {isFree ? "Miễn phí" : `${gia.toLocaleString("vi-VN")}₫`}
+                  {isFree
+                    ? "Miễn phí"
+                    : gia > 0
+                      ? `${gia.toLocaleString("vi-VN")}₫`
+                      : "Liên hệ"}
                 </Typography>
                 {khoaHoc.giaGoc && khoaHoc.giaGoc !== gia && (
                   <Typography
@@ -813,44 +829,156 @@ function CourseRegistrationContent() {
               </Stack>
 
               {!enrolled ? (
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<SchoolIcon />}
-                  onClick={() => setModalOpen(true)}
-                  sx={{
-                    bgcolor: isFree ? "#2d7a35" : RED,
-                    "&:hover": { bgcolor: isFree ? "#245f2a" : RED_HOVER },
-                    textTransform: "none",
-                    fontWeight: 700,
-                    fontSize: 14.5,
-                    borderRadius: 2.5,
-                    py: 1.35,
-                    mb: 1.5,
-                    boxShadow: `0 8px 20px ${alpha(isFree ? "#2d7a35" : RED, 0.3)}`,
-                  }}
-                >
-                  {isFree ? "Đăng ký miễn phí" : "Đăng ký ngay"}
-                </Button>
-              ) : (
-                <Alert
-                  icon={<CheckCircleIcon fontSize="inherit" />}
-                  severity="success"
-                  sx={{ mb: 1.5, borderRadius: 2.5 }}
-                  action={
-                    <Button
-                      size="small"
-                      onClick={() =>
-                        router.push(`/hoc-vien/khoa-hoc-cua-toi/${khoaHoc.id}`)
+                isFree ? (
+                  // Khóa học miễn phí → đăng ký thẳng
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<SchoolIcon />}
+                    onClick={async () => {
+                      try {
+                        await apiService.post(
+                          `/dangkikhoahoc/dangki-khoahoc/${khoaHoc.id}`,
+                        );
+                        setEnrolled(true);
+                      } catch (e: any) {
+                        const msg =
+                          e?.response?.data?.message ?? "Có lỗi xảy ra";
+                        if (msg.includes("đã đăng ký")) {
+                          setEnrolled(true);
+                        } else {
+                          alert(msg);
+                        }
                       }
-                      sx={{ color: "#1b5e20", fontWeight: 700 }}
+                    }}
+                    sx={{
+                      bgcolor: "#2d7a35",
+                      "&:hover": { bgcolor: "#245f2a" },
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: 14.5,
+                      borderRadius: 2.5,
+                      py: 1.35,
+                      mb: 1.5,
+                      boxShadow: `0 8px 20px ${alpha("#2d7a35", 0.3)}`,
+                    }}
+                  >
+                    Đăng ký miễn phí
+                  </Button>
+                ) : (
+                  // Khóa học trả phí → thêm vào giỏ rồi chuyển sang giỏ hàng
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<ShoppingCartIcon />}
+                    onClick={async () => {
+                      try {
+                        await apiService.post(`/GioHang/${khoaHoc.id}`);
+                        router.push("/student/cart");
+                      } catch (e: any) {
+                        const msg = e?.response?.data?.message ?? "";
+                        const status = e?.response?.status;
+
+                        if (status === 409) {
+                          router.push("/student/cart");
+                        } else if (
+                          msg.includes("sở hữu") ||
+                          msg.includes("đã mua")
+                        ) {
+                          setEnrolled(true);
+                          setSnackbar({
+                            open: true,
+                            message: "Bạn đã sở hữu khóa học này!",
+                            severity: "success",
+                          });
+                        } else {
+                          setSnackbar({
+                            open: true,
+                            message: msg || "Có lỗi xảy ra",
+                            severity: "error",
+                          });
+                        }
+                      }
+                    }}
+                    sx={{
+                      bgcolor: RED,
+                      "&:hover": { bgcolor: RED_HOVER },
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: 14.5,
+                      borderRadius: 2.5,
+                      py: 1.35,
+                      mb: 1.5,
+                      boxShadow: `0 8px 20px ${alpha(RED, 0.3)}`,
+                    }}
+                  >
+                    Mua ngay
+                  </Button>
+                )
+              ) : (
+                <Box sx={{ mb: 1.5 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "#f0fdf4",
+                      border: "1.5px solid #86efac",
+                      borderRadius: "14px",
+                      p: 2,
+                      mb: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        bgcolor: "#22c55e",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
                     >
-                      Vào học
-                    </Button>
-                  }
-                >
-                  Đã đăng ký
-                </Alert>
+                      <CheckCircleIcon sx={{ color: "#fff", fontSize: 20 }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 13.5,
+                          color: "#15803d",
+                        }}
+                      >
+                        Khóa học của bạn
+                      </Typography>
+                      <Typography sx={{ fontSize: 12, color: "#16a34a" }}>
+                        Bạn đã sở hữu khóa học này
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<SchoolIcon />}
+                    onClick={() =>
+                      router.push(`/hoc-vien/khoa-hoc-cua-toi/${khoaHoc.id}`)
+                    }
+                    sx={{
+                      bgcolor: "#22c55e",
+                      "&:hover": { bgcolor: "#16a34a" },
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: 14.5,
+                      borderRadius: 2.5,
+                      py: 1.35,
+                      boxShadow: "0 8px 20px rgba(34,197,94,0.3)",
+                    }}
+                  >
+                    Vào học ngay
+                  </Button>
+                </Box>
               )}
 
               <Stack
@@ -1124,20 +1252,22 @@ function CourseRegistrationContent() {
 export default function CourseRegistrationPage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
-      <Box sx={{ py: { xs: 2.5, md: 4.5 } }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2.5, md: 4.5 },
-            borderRadius: "28px",
-            border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "#ffffff",
-            boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
-          }}
-        >
-          <CourseRegistrationContent />
-        </Paper>
-      </Box>
+      <StudentDashboardShell>
+        <Box sx={{ py: { xs: 2.5, md: 4.5 } }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2.5, md: 4.5 },
+              borderRadius: "28px",
+              border: "1px solid rgba(141,19,19,0.06)",
+              bgcolor: "#ffffff",
+              boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+            }}
+          >
+            <CourseRegistrationContent />
+          </Paper>
+        </Box>
+      </StudentDashboardShell>
     </AuthGuard>
   );
 }

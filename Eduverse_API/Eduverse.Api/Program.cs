@@ -194,18 +194,31 @@ namespace Eduverse.Api
                     }
                 });
             });
-            builder.Services.AddCors(opt =>
-            {
-                opt.AddPolicy("AllowFrontend", policy =>
-                    policy.WithOrigins("http://localhost:3000") 
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials()); 
-            });
+            //builder.Services.AddCors(opt =>
+            //{
+            //    opt.AddPolicy("AllowFrontend", policy =>
+            //        policy.WithOrigins("http://localhost:3000") 
+            //              .AllowAnyHeader()
+            //              .AllowAnyMethod()
+            //              .AllowCredentials()); 
+            //});
 
 
 
             // Add services to the container.
+
+            // CORS: cho phép frontend (đọc danh sách origin từ cấu hình AllowedOrigins).
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    var corsOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? System.Array.Empty<string>();
+                    policy.WithOrigins(corsOrigins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
 
             builder.Services.AddControllers()
             .AddJsonOptions(options =>
@@ -219,11 +232,9 @@ namespace Eduverse.Api
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            app.UseSwagger();
+            app.UseSwaggerUI();
+            
             app.UseExceptionHandler(errApp =>
             {
                 errApp.Run(async ctx =>
@@ -246,13 +257,6 @@ namespace Eduverse.Api
                 });
             });
             app.UseCors("AllowFrontend");
-            app.UseCors(c =>
-            {
-                c.WithOrigins(builder.Configuration.GetSection("AllowedOrigins").Get<string[]>())
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
-            });
             app.UseHttpsRedirection();
 
             app.UseAuthentication();

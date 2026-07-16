@@ -103,4 +103,5 @@ export interface AuthResponse {
   hoTen: string;
   email: string;
   roles: string[];
+  anhDaiDien?: string;
 }

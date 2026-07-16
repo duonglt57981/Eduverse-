@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Paper, Typography } from "@mui/material";
-import DashboardHeader from "./DashboardHeader";
+import StudentHomeHeader from "./StudentHomeHeader";
 
 interface StudentDashboardShellProps {
   children: React.ReactNode;
@@ -60,7 +60,7 @@ export default function StudentDashboardShell({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <DashboardHeader />
+      <StudentHomeHeader />
 
       <Box
         sx={{

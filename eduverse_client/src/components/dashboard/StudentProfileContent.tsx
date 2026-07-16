@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
+import { COLORS } from "@/src/theme/tokens";
 
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { apiService } from '@/src/services/index';
@@ -60,17 +61,6 @@ import {
 const TextFieldAny = TextField as any;
 
 // Crimson Red Palette
-const COLORS = {
-  primary: '#8D1313',       // Crimson Red
-  primaryLight: '#B91C1C',  // Light Crimson
-  primaryDark: '#7F1D1D',   // Dark Crimson
-  bgLight: '#FFF8F6',       // Premium cream-rose background
-  white: '#FFFFFF',
-  textDark: '#1F2937',
-  textSecondary: '#4B5563',
-  green: '#10B981',
-  grey: '#9CA3AF',
-};
 
 interface StudentProfileContentProps {
   onlyBecomeInstructor?: boolean;
@@ -1623,7 +1613,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                     sx={{
                       p: { xs: 3.5, md: 4.5 },
                       borderRadius: '20px',
-                      background: 'linear-gradient(135deg, #3A0B0B 0%, #8D1313 100%)',
+                      background: 'linear-gradient(135deg, #3A0B0B 0%, #8B1313 100%)',
                       color: '#ffffff',
                       height: '100%',
                       display: 'flex',

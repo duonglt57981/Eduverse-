@@ -55,7 +55,7 @@ export function useFavorite() {
         text: `Bạn có chắc chắn muốn bỏ khóa học "${courseTitle}" khỏi danh sách yêu thích?`,
         icon: "warning",
         showCancelButton: true,
-        confirmButtonColor: "#8d1313",
+        confirmButtonColor: "#8B1313",
         cancelButtonColor: "rgba(24, 24, 27, 0.4)",
         confirmButtonText: "Bỏ yêu thích",
         cancelButtonText: "Hủy",

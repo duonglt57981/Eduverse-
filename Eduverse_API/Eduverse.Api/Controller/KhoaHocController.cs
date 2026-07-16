@@ -1,4 +1,4 @@
-﻿using Eduverse.Service.Common;
+using Eduverse.Service.Common;
 using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
@@ -226,6 +226,51 @@ namespace Eduverse.Api.Controller
             catch (Exception ex)
             {
                 return DataResponse<bool>.False(ex.Message);
+            }
+        }
+
+        [HttpGet("khoahoc-getlist-daduyet")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<KhoaHocMiniDto>>> GetApprovedListForSelect()
+        {
+            try
+            {
+                var result = await _khoaHocService.GetApprovedListForSelect();
+                return DataResponse<List<KhoaHocMiniDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<KhoaHocMiniDto>>.False(ex.Message);
+            }
+        }
+
+        [HttpGet("autocomplete")]
+        [AllowAnonymous]
+        public async Task<DataResponse<List<string>>> GetSuggestions([FromQuery] string query)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetSearchSuggestions(query);
+                return DataResponse<List<string>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<string>>.False(ex.Message);
+            }
+        }
+
+        [HttpPost("sync-elasticsearch")]
+        [AllowAnonymous]
+        public async Task<DataResponse<string>> SyncElasticsearch()
+        {
+            try
+            {
+                await _khoaHocService.SyncElasticsearch();
+                return DataResponse<string>.Success("Elasticsearch index populated successfully.");
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<string>.False(ex.Message);
             }
         }
     }

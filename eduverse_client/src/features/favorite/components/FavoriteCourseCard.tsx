@@ -68,7 +68,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
   const LEVEL_GRADIENT: Record<string, string> = {
     'Cơ bản': 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
     'Trung cấp': 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
-    'Nâng cao': 'linear-gradient(135deg, #8D1313 0%, #7C3AED 100%)',
+    'Nâng cao': 'linear-gradient(135deg, #8B1313 0%, #7C3AED 100%)',
     'Người mới bắt đầu': 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
   };
 
@@ -119,7 +119,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
             top: 12,
             left: 12,
             bgcolor: 'rgba(255,255,255,0.92)',
-            color: '#8d1313',
+            color: '#8B1313',
             fontWeight: 800,
             fontSize: 10,
             height: 20,
@@ -140,13 +140,13 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
             width: 30,
             height: 30,
             bgcolor: 'rgba(255,255,255,0.95)',
-            color: '#8d1313',
+            color: '#8B1313',
             boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
             zIndex: 5,
             transition: 'all 150ms ease',
             p: 0,
             '&:hover': {
-              bgcolor: '#8d1313',
+              bgcolor: '#8B1313',
               color: '#ffffff',
               transform: 'scale(1.08)',
             },
@@ -280,7 +280,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
               sx={{
                 fontSize: 18,
                 fontWeight: 900,
-                color: '#8d1313',
+                color: '#8B1313',
               }}
             >
               {formatPrice(course.giaTien)}
@@ -320,11 +320,11 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
               fontWeight: 700,
               fontSize: 13,
               borderColor: 'rgba(141,19,19,0.2)',
-              color: '#8d1313',
+              color: '#8B1313',
               textTransform: 'none',
               '&:hover': {
                 bgcolor: 'rgba(141,19,19,0.05)',
-                borderColor: '#8d1313',
+                borderColor: '#8B1313',
               },
             }}
           >

@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Eduverse.Service.Dto;
 using Eduverse.Service.KhoaHocService.Dto;
 using System;
@@ -36,6 +36,8 @@ namespace Eduverse.Service.KhoaHocService.Request
         public bool? IsFree { get; set; }
 
         public string? SortPrice { get; set; }
+
+        public List<Guid>? ExcludeCourseIds { get; set; }
     }
 }
 

@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Chip, CssBaseline, Divider, Paper, Stack, ThemeProvider, Typography, Box, createTheme, useMediaQuery } from '@mui/material';
+import { Chip, CssBaseline, Divider, Paper, Stack, ThemeProvider, Typography, Box, useMediaQuery } from '@mui/material';
+import { createAppTheme } from '@/src/theme/createAppTheme';
 import type { Theme } from '@mui/material/styles';
 import { navItems } from './landing-data';
 import { useThemeSettings } from '@/src/contexts/ThemeSettingsContext';
@@ -10,22 +11,7 @@ import { useSelector } from '@/src/store/hook';
 import React from 'react';
 
 export function createLandingTheme(): Theme {
-  return createTheme({
-    palette: {
-      mode: 'light',
-      primary: { main: '#8d1313' },
-      background: { default: '#f7f3ef', paper: '#ffffff' },
-      text: { primary: '#19171c', secondary: '#69656c' },
-    },
-    shape: { borderRadius: 2.8 },
-    typography: {
-      fontFamily:
-        '"Be Vietnam Pro","Roboto",system-ui,-apple-system,Segoe UI,Arial,sans-serif',
-      h3: { fontWeight: 900 },
-      h4: { fontWeight: 900 },
-      button: { textTransform: 'none', fontWeight: 800 },
-    },
-  });
+  return createAppTheme();
 }
 
 export function LandingThemeProvider({ children }: { children: React.ReactNode }) {
@@ -33,33 +19,10 @@ export function LandingThemeProvider({ children }: { children: React.ReactNode }
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const activeMode = themeMode === 'system' ? (prefersDarkMode ? 'dark' : 'light') : themeMode;
 
-  const theme = React.useMemo(() => {
-    return createTheme({
-      palette: {
-        mode: activeMode,
-        primary: {
-          main: currentAccent.value,
-          dark: currentAccent.hoverColor,
-        },
-        background: {
-          default: activeMode === 'dark' ? '#121212' : '#f7f3ef',
-          paper: activeMode === 'dark' ? '#1e1e1e' : '#ffffff',
-        },
-        text: {
-          primary: activeMode === 'dark' ? '#ffffff' : '#19171c',
-          secondary: activeMode === 'dark' ? '#a09ba5' : '#69656c',
-        },
-      },
-      shape: { borderRadius: 2.8 },
-      typography: {
-        fontFamily:
-          '"Be Vietnam Pro","Roboto",system-ui,-apple-system,Segoe UI,Arial,sans-serif',
-        h3: { fontWeight: 900 },
-        h4: { fontWeight: 900 },
-        button: { textTransform: 'none', fontWeight: 800 },
-      },
-    });
-  }, [activeMode, currentAccent]);
+  const theme = React.useMemo(
+    () => createAppTheme(activeMode, currentAccent.value, currentAccent.hoverColor),
+    [activeMode, currentAccent],
+  );
 
   return (
     <ThemeProvider theme={theme}>
@@ -71,7 +34,7 @@ export function LandingThemeProvider({ children }: { children: React.ReactNode }
 export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
   const user = useSelector((s) => s.auth.user);
   const roles = useSelector((s) => s.auth.roles) || [];
-  
+
   const filteredNavItems = navItems.filter((item) => {
     if (item.href === '/favorite' && !user) {
       return false;
@@ -147,22 +110,12 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
           </Stack>
 
           <Stack direction="row" spacing={1.25}>
+
             <Chip
               component={Link}
               href="/auth/login"
               clickable
               label="Đăng nhập"
-              sx={{
-                bgcolor: 'transparent',
-                color: 'text.primary',
-                fontWeight: 800,
-              }}
-            />
-            <Chip
-              component={Link}
-              href="/auth/register"
-              clickable
-              label="Đăng ký"
               sx={{
                 bgcolor: 'primary.main',
                 color: '#fff',
@@ -180,62 +133,104 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
 }
 
 export function LandingFooter() {
+  const columns: { title: string; links: { label: string; href?: string }[] }[] = [
+    {
+      title: 'Khám phá',
+      links: [
+        { label: 'Khóa học', href: '/courses' },
+        { label: 'Giảng viên', href: '/instructors' },
+        { label: 'Lộ trình học', href: '/learning-paths' },
+      ],
+    },
+    {
+      title: 'Về EduVerse',
+      links: [
+        { label: 'Giới thiệu', href: '/about-us' },
+        { label: 'Liên hệ', href: '/contact' },
+        { label: 'Câu hỏi thường gặp', href: '/contact' },
+      ],
+    },
+    {
+      title: 'Hỗ trợ',
+      links: [
+        { label: 'Trung tâm trợ giúp', href: '/contact' },
+        { label: 'Điều khoản dịch vụ' },
+        { label: 'Chính sách bảo mật' },
+      ],
+    },
+  ];
+  const linkSx = {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.72)',
+    textDecoration: 'none',
+    cursor: 'pointer',
+    width: 'fit-content',
+    transition: 'color 150ms ease',
+    '&:hover': { color: '#fff' },
+  };
   return (
     <Paper
+      component="footer"
       elevation={0}
       sx={{
-        mt: { xs: 4, md: 5 },
-        px: { xs: 2.5, md: 3.5 },
-        py: { xs: 3, md: 4 },
-        borderRadius: 2.8,
+        mt: { xs: 5, md: 8 },
+        mx: { xs: -2, sm: -3, md: -4 },
+        mb: { xs: -2, md: -3 },
         bgcolor: '#6d0f0f',
+        borderRadius: 0,
       }}
     >
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr 1fr 1fr' },
-          gap: 3,
-        }}
-      >
-        <Box>
-          <Typography sx={{ fontSize: 18, fontWeight: 900, color: '#fff' }}>EduVerse</Typography>
-          <Typography sx={{ mt: 1.25, fontSize: 13, lineHeight: 1.8, color: 'rgba(255,255,255,0.7)' }}>
-            Nền tảng e-learning thế hệ mới cho người đi làm và những ai muốn
-            tăng tốc kỹ năng thực chiến.
-          </Typography>
-        </Box>
-        {[
-          { title: 'Khám phá', links: ['Khóa học mới', 'Giảng viên nổi bật', 'Sự kiện'] },
-          { title: 'Hỗ trợ', links: ['Trung tâm trợ giúp', 'Chính sách bảo mật', 'Điều khoản dịch vụ'] },
-          { title: 'Liên hệ', links: ['Giới thiệu', 'Chính sách', 'Điều khoản'] },
-        ].map((group) => (
-          <Box key={group.title}>
-            <Typography sx={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{group.title}</Typography>
-            <Stack spacing={0.9} sx={{ mt: 1.5 }}>
-              {group.links.map((item) => (
-                <Typography key={item} sx={{ fontSize: 13, color: 'rgba(255,255,255,0.72)' }}>
-                  {item}
-                </Typography>
-              ))}
-            </Stack>
+      <Box sx={{ px: { xs: 2.5, sm: 4, md: 6 }, py: { xs: 4, md: 5 } }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: '1.6fr 1fr 1fr 1fr' },
+            gap: { xs: 3, md: 4 },
+          }}
+        >
+          <Box>
+            <Typography sx={{ fontSize: 20, fontWeight: 900, color: '#fff' }}>EduVerse</Typography>
+            <Typography sx={{ mt: 1.25, fontSize: 13, lineHeight: 1.85, color: 'rgba(255,255,255,0.7)', maxWidth: 320 }}>
+              Nền tảng e-learning thế hệ mới cho người đi làm và những ai muốn tăng tốc kỹ năng thực chiến.
+            </Typography>
           </Box>
-        ))}
-      </Box>
-      <Divider sx={{ my: 3, borderColor: 'rgba(255,255,255,0.1)' }} />
-      <Stack direction={{ xs: 'column', md: 'row' }} sx={{ justifyContent: 'space-between', gap: 1.5 }}>
-        <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-          © 2026 EduVerse. Tất cả quyền được bảo lưu.
-        </Typography>
-        <Stack direction="row" spacing={2}>
-          <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-            Chính sách bảo mật
+          {columns.map((column) => (
+            <Box key={column.title}>
+              <Typography sx={{ fontSize: 13.5, fontWeight: 900, color: '#fff', letterSpacing: '0.02em' }}>
+                {column.title}
+              </Typography>
+              <Stack spacing={1.1} sx={{ mt: 1.75 }}>
+                {column.links.map((item) =>
+                  item.href ? (
+                    <Typography key={item.label} component={Link} href={item.href} sx={linkSx}>
+                      {item.label}
+                    </Typography>
+                  ) : (
+                    <Typography key={item.label} sx={linkSx}>
+                      {item.label}
+                    </Typography>
+                  ),
+                )}
+              </Stack>
+            </Box>
+          ))}
+        </Box>
+        <Divider sx={{ my: { xs: 3, md: 3.5 }, borderColor: 'rgba(255,255,255,0.12)' }} />
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, gap: 1.5 }}
+        >
+          <Typography sx={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)' }}>
+            © 2026 EduVerse. Tất cả quyền được bảo lưu.
           </Typography>
-          <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-            Điều khoản dịch vụ
+          <Typography sx={{ fontSize: 12.5, color: 'rgba(255,255,255,0.72)' }}>
+            Email hỗ trợ:{' '}
+            <Box component="span" sx={{ color: '#fff', fontWeight: 700 }}>
+              support@eduverse.edu.vn
+            </Box>
           </Typography>
         </Stack>
-      </Stack>
+      </Box>
     </Paper>
   );
 }

@@ -22,7 +22,7 @@ export default function Page() {
             boxShadow: '0 10px 30px rgba(141,19,19,0.015)'
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 900, color: '#8D1313', mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 900, color: '#8B1313', mb: 2 }}>
             Quản lý danh mục
           </Typography>
           <Typography sx={{ color: 'rgba(31,41,55,0.6)', lineHeight: 1.6 }}>

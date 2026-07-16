@@ -55,7 +55,6 @@ import {
   Stack,
   ThemeProvider,
   Typography,
-  createTheme,
   Tab,
   Tabs,
   Avatar,
@@ -64,6 +63,8 @@ import {
 } from "@mui/material";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
+import { createAppTheme } from "@/src/theme/createAppTheme";
+import { COLORS } from "@/src/theme/tokens";
 import DashboardHeader from "./DashboardHeader";
 import {
   getSidebarItemsByRole,
@@ -87,19 +88,7 @@ import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 import Swal from "sweetalert2";
 
-// --- CRIMSON RED DESIGN PALETTE ---
-const COLORS = {
-  primary: "#8D1313", // Crimson Red (Đỏ đô chủ đạo)
-  primaryLight: "#B91C1C", // Light Crimson
-  primaryDark: "#7F1D1D", // Dark Crimson
-  bgLight: "#FFF8F6", // Premium cream-rose background
-  purpleAI: "#7C3AED", // AI Accent
-  gradientAI: "linear-gradient(135deg, #8D1313 0%, #7C3AED 100%)",
-  gradientCrimson: "linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)",
-  gradientCrimsonHover: "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
-  gradientTech: "linear-gradient(135deg, #0284C7 0%, #0EA5E9 100%)",
-  white: "#FFFFFF",
-};
+// --- Bảng màu dùng chung (đồng bộ từ src/theme/tokens) ---
 
 // Custom Carousel row with next/prev navigation buttons instead of scrollbars
 function CarouselRow({ children }: { children: React.ReactNode }) {
@@ -519,7 +508,7 @@ function SidebarContent({
                   p: 2,
                   borderRadius: "16px",
                   background:
-                    "linear-gradient(135deg, #4A0E0E 0%, #8D1313 100%)",
+                    "linear-gradient(135deg, #4A0E0E 0%, #8B1313 100%)",
                   color: "#fff",
                   cursor: "pointer",
                   transition: "transform 200ms ease, box-shadow 200ms ease",
@@ -948,24 +937,74 @@ export default function DashboardShell({
     router.replace("/auth/login");
   };
 
+  // Xuất báo cáo tổng quan ra file CSV (mở được bằng Excel) từ dữ liệu thật
+  const handleExportReport = async () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: any = dashboardData;
+      if (!data?.welcomeStats) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res = await apiService.get<any>("/dashboard");
+        if (res?.status && res.data) data = res.data;
+      }
+      const ws = data?.welcomeStats || {};
+      const fmtVnd = (n: number) => (n || 0).toLocaleString("vi-VN") + " đ";
+      const now = new Date();
+      const NL = String.fromCharCode(10);
+      const BOM = String.fromCharCode(0xfeff);
+      const esc = (v: unknown) =>
+        '"' + String(v ?? "").split('"').join('""') + '"';
+      const rows: string[][] = [];
+      rows.push(["BÁO CÁO TỔNG QUAN — EDUVERSE"]);
+      rows.push(["Thời điểm xuất", now.toLocaleString("vi-VN")]);
+      rows.push([]);
+      rows.push(["Chỉ số", "Giá trị"]);
+      rows.push(["Tổng khóa học", String(ws.totalCourses ?? 0)]);
+      rows.push(["Tổng học viên", String(ws.totalStudents ?? 0)]);
+      rows.push(["Tổng doanh thu", fmtVnd(ws.totalRevenue)]);
+      if (ws.completionRate != null)
+        rows.push(["Tỷ lệ hoàn thành", String(ws.completionRate) + "%"]);
+      if (Array.isArray(data?.revenueTrend) && data.revenueTrend.length) {
+        rows.push([]);
+        rows.push(["Doanh thu theo tháng", ""]);
+        data.revenueTrend.forEach((v: number, i: number) =>
+          rows.push(["Tháng " + (i + 1), fmtVnd(v)]),
+        );
+      }
+      if (
+        Array.isArray(data?.bestSellingCourses) &&
+        data.bestSellingCourses.length
+      ) {
+        rows.push([]);
+        rows.push(["Khóa học bán chạy", "Tỷ lệ"]);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data.bestSellingCourses.forEach((c: any) =>
+          rows.push([String(c?.title ?? ""), String(c?.percentage ?? 0) + "%"]),
+        );
+      }
+      const csv = rows.map((r) => r.map(esc).join(",")).join(NL);
+      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const pad = (x: number) => String(x).padStart(2, "0");
+      a.download =
+        "bao-cao-eduverse-" +
+        now.getFullYear() +
+        pad(now.getMonth() + 1) +
+        pad(now.getDate()) +
+        ".csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export report error:", err);
+    }
+  };
+
   const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: "light",
-          primary: { main: COLORS.primary },
-          background: { default: COLORS.bgLight, paper: COLORS.white },
-          text: { primary: "#1F2937", secondary: "#4B5563" },
-        },
-        shape: { borderRadius: 16 },
-        typography: {
-          fontFamily:
-            '"Be Vietnam Pro","Roboto",system-ui,-apple-system,Segoe UI,Arial,sans-serif',
-          h3: { fontWeight: 900, letterSpacing: "-1.0px" },
-          h4: { fontWeight: 900, letterSpacing: "-0.7px" },
-          button: { textTransform: "none", fontWeight: 800 },
-        },
-      }),
+    () => createAppTheme("light", COLORS.primary, COLORS.primaryDark),
     [],
   );
 
@@ -1132,10 +1171,12 @@ export default function DashboardShell({
                   router.push(getHomeRoute());
                 }}
                 sx={{
-                  width: { xs: 110, sm: 130, lg: 150 },
+                  width: { xs: 120, sm: 140, lg: 150 },
                   display: "flex",
                   alignItems: "center",
                   cursor: "pointer",
+                  transition: "opacity 150ms ease",
+                  "&:hover": { opacity: 0.85 },
                 }}
               >
                 <Image
@@ -1144,7 +1185,7 @@ export default function DashboardShell({
                   width={150}
                   height={46}
                   priority
-                  style={{ width: "100%", height: "auto" }}
+                  style={{ width: "100%", height: "auto", display: "block" }}
                 />
               </Box>
             </Stack>
@@ -1210,40 +1251,8 @@ export default function DashboardShell({
                   }}
                 >
                   <Button
-                    variant="outlined"
-                    startIcon={
-                      <CalendarMonthRounded
-                        sx={{ color: "rgba(31,41,55,0.6)" }}
-                      />
-                    }
-                    endIcon={
-                      <ChevronRightRounded
-                        sx={{
-                          transform: "rotate(90deg)",
-                          color: "rgba(31,41,55,0.6)",
-                        }}
-                      />
-                    }
-                    sx={{
-                      borderRadius: "10px",
-                      borderColor: "rgba(0,0,0,0.12)",
-                      color: "#1F2937",
-                      px: 2,
-                      py: 0.8,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      textTransform: "none",
-                      bgcolor: "#ffffff",
-                      "&:hover": {
-                        borderColor: "rgba(0,0,0,0.2)",
-                        bgcolor: "#F9FAFB",
-                      },
-                    }}
-                  >
-                    01 Th11, 2023 - 30 Th11, 2023
-                  </Button>
-                  <Button
                     variant="contained"
+                    onClick={handleExportReport}
                     startIcon={
                       <ArrowForwardRounded
                         sx={{ transform: "rotate(90deg)" }}
@@ -1251,7 +1260,7 @@ export default function DashboardShell({
                     }
                     sx={{
                       borderRadius: "10px",
-                      bgcolor: "#8D1313",
+                      bgcolor: "#8B1313",
                       color: "#ffffff",
                       px: 2,
                       py: 0.8,
@@ -1330,24 +1339,28 @@ export default function DashboardShell({
                     Về trang học viên
                   </Button>
                 )}
-                <IconButton
-                  onClick={() => router.push("/student/favorites")}
-                  sx={{
-                    color: "rgba(31,41,55,0.55)",
-                    display: { xs: "none", sm: "flex" },
-                  }}
-                >
-                  <FavoriteBorderRounded sx={{ fontSize: 22 }} />
-                </IconButton>
-                <IconButton
-                  onClick={() => router.push("/student/cart")}
-                  sx={{
-                    color: "rgba(31,41,55,0.55)",
-                    display: { xs: "none", sm: "flex" },
-                  }}
-                >
-                  <ShoppingCartRounded sx={{ fontSize: 22 }} />
-                </IconButton>
+                {!pathname.startsWith("/admin") && (
+                  <>
+                    <IconButton
+                      onClick={() => router.push("/student/favorites")}
+                      sx={{
+                        color: "rgba(31,41,55,0.55)",
+                        display: { xs: "none", sm: "flex" },
+                      }}
+                    >
+                      <FavoriteBorderRounded sx={{ fontSize: 22 }} />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => router.push("/student/cart")}
+                      sx={{
+                        color: "rgba(31,41,55,0.55)",
+                        display: { xs: "none", sm: "flex" },
+                      }}
+                    >
+                      <ShoppingCartRounded sx={{ fontSize: 22 }} />
+                    </IconButton>
+                  </>
+                )}
                 <IconButton
                   onClick={(e) => setNotiAnchorEl(e.currentTarget)}
                   sx={{
@@ -1420,9 +1433,10 @@ export default function DashboardShell({
                         : "Học viên"}
                   </Typography>
                 </Stack>
-                <Avatar
+                 <Avatar
                   src={
                     userAvatar ||
+                    user?.anhDaiDien ||
                     dashboardData?.welcomeStats?.avatarUrl ||
                     undefined
                   }
@@ -1430,11 +1444,18 @@ export default function DashboardShell({
                   sx={{
                     width: 38,
                     height: 38,
-                    fontSize: 13.5,
-                    fontWeight: 800,
-                    bgcolor: "#111827",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    bgcolor: "#8B1313",
                     color: "#fff",
+                    border: "2px solid #fff",
+                    boxShadow: `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
+                    transition: "all 200ms ease",
                     cursor: "pointer",
+                    "&:hover": {
+                      boxShadow: `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
+                      transform: "scale(1.05)",
+                    },
                   }}
                 >
                   {dashboardData?.welcomeStats?.userName
@@ -1476,7 +1497,7 @@ export default function DashboardShell({
                           fontFamily: '"Be Vietnam Pro", sans-serif',
                           "&:hover": {
                             bgcolor: "rgba(141,19,19,0.04)",
-                            color: "#8D1313",
+                            color: "#8B1313",
                           },
                         },
                       },
@@ -1553,124 +1574,158 @@ export default function DashboardShell({
 
                   <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
-                  {/* Section 1 */}
-                  <MenuItem onClick={() => router.push("/student/dashboard")}>
-                    Học tập
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => router.push("/student/cart")}
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      width: "100%",
-                    }}
-                  >
-                    <Typography
-                      sx={{ fontSize: "inherit", fontWeight: "inherit" }}
-                    >
-                      Giỏ hàng của tôi
-                    </Typography>
-                    <Box
-                      sx={{
-                        bgcolor: "#7C3AED",
-                        color: "#fff",
-                        borderRadius: "50%",
-                        width: 20,
-                        height: 20,
-                        display: "grid",
-                        placeItems: "center",
-                        fontSize: 11,
-                        fontWeight: 700,
-                      }}
-                    >
-                      1
-                    </Box>
-                  </MenuItem>
-                  <MenuItem onClick={() => router.push("/student/favorites")}>
-                    Danh sách mong ước
-                  </MenuItem>
-                  {roles.includes("GiaoVien") && (
-                    <MenuItem
-                      onClick={() => router.push("/instructor/dashboard")}
-                    >
-                      Bảng điều khiển của giảng viên
-                    </MenuItem>
+                  {!pathname.startsWith("/admin") ? (
+                    <>
+                      {/* Section 1 */}
+                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                        Học tập
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => router.push("/student/cart")}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          width: "100%",
+                        }}
+                      >
+                        <Typography
+                          sx={{ fontSize: "inherit", fontWeight: "inherit" }}
+                        >
+                          Giỏ hàng của tôi
+                        </Typography>
+                        <Box
+                          sx={{
+                            bgcolor: "#7C3AED",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            width: 20,
+                            height: 20,
+                            display: "grid",
+                            placeItems: "center",
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          1
+                        </Box>
+                      </MenuItem>
+                      <MenuItem onClick={() => router.push("/student/favorites")}>
+                        Danh sách mong ước
+                      </MenuItem>
+                      {roles.includes("GiaoVien") && (
+                        <MenuItem
+                          onClick={() => router.push("/instructor/dashboard")}
+                        >
+                          Bảng điều khiển của giảng viên
+                        </MenuItem>
+                      )}
+
+                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+
+                      {/* Section 2 */}
+                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                        Thông báo.
+                      </MenuItem>
+                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                        Tin nhắn
+                      </MenuItem>
+
+                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+
+                      {/* Section 3 */}
+                      <MenuItem onClick={() => router.push("/settings")}>
+                        Cài đặt tài khoản
+                      </MenuItem>
+                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                        Phương thức thanh toán
+                      </MenuItem>
+                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                        Thuê bao
+                      </MenuItem>
+                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                        Ưu đãi Udemy
+                      </MenuItem>
+                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                        Lịch sử mua
+                      </MenuItem>
+
+                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+
+                      {/* Section 4 */}
+                      <MenuItem
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          width: "100%",
+                        }}
+                      >
+                        <Typography
+                          sx={{ fontSize: "inherit", fontWeight: "inherit" }}
+                        >
+                          Ngôn ngữ
+                        </Typography>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          sx={{ alignItems: "center", color: "text.secondary" }}
+                        >
+                          <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
+                            Tiếng Việt
+                          </Typography>
+                          <LanguageRounded sx={{ fontSize: 16 }} />
+                        </Stack>
+                      </MenuItem>
+
+                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+
+                      {/* Section 5 */}
+                      <MenuItem onClick={() => router.push("/student/profile")}>
+                        Hồ sơ công khai
+                      </MenuItem>
+                      <MenuItem onClick={() => router.push("/student/profile")}>
+                        Chỉnh sửa hồ sơ
+                      </MenuItem>
+
+                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+
+                      {/* Section 6 */}
+                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                        Trợ giúp và Hỗ trợ
+                      </MenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <MenuItem onClick={() => router.push("/admin/settings")}>
+                        Cài đặt tài khoản
+                      </MenuItem>
+                      <MenuItem
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          width: "100%",
+                        }}
+                      >
+                        <Typography
+                          sx={{ fontSize: "inherit", fontWeight: "inherit" }}
+                        >
+                          Ngôn ngữ
+                        </Typography>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          sx={{ alignItems: "center", color: "text.secondary" }}
+                        >
+                          <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
+                            Tiếng Việt
+                          </Typography>
+                          <LanguageRounded sx={{ fontSize: 16 }} />
+                        </Stack>
+                      </MenuItem>
+                    </>
                   )}
-
-                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
-
-                  {/* Section 2 */}
-                  <MenuItem onClick={() => router.push("/student/dashboard")}>
-                    Thông báo.
-                  </MenuItem>
-                  <MenuItem onClick={() => router.push("/student/dashboard")}>
-                    Tin nhắn
-                  </MenuItem>
-
-                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
-
-                  {/* Section 3 */}
-                  <MenuItem onClick={() => router.push("/settings")}>
-                    Cài đặt tài khoản
-                  </MenuItem>
-                  <MenuItem onClick={() => router.push("/student/dashboard")}>
-                    Phương thức thanh toán
-                  </MenuItem>
-                  <MenuItem onClick={() => router.push("/student/dashboard")}>
-                    Thuê bao
-                  </MenuItem>
-                  <MenuItem onClick={() => router.push("/student/dashboard")}>
-                    Ưu đãi Udemy
-                  </MenuItem>
-                  <MenuItem onClick={() => router.push("/student/dashboard")}>
-                    Lịch sử mua
-                  </MenuItem>
-
-                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
-
-                  {/* Section 4 */}
-                  <MenuItem
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      width: "100%",
-                    }}
-                  >
-                    <Typography
-                      sx={{ fontSize: "inherit", fontWeight: "inherit" }}
-                    >
-                      Ngôn ngữ
-                    </Typography>
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
-                      sx={{ alignItems: "center", color: "text.secondary" }}
-                    >
-                      <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
-                        Tiếng Việt
-                      </Typography>
-                      <LanguageRounded sx={{ fontSize: 16 }} />
-                    </Stack>
-                  </MenuItem>
-
-                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
-
-                  {/* Section 5 */}
-                  <MenuItem onClick={() => router.push("/student/profile")}>
-                    Hồ sơ công khai
-                  </MenuItem>
-                  <MenuItem onClick={() => router.push("/student/profile")}>
-                    Chỉnh sửa hồ sơ
-                  </MenuItem>
-
-                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
-
-                  {/* Section 6 */}
-                  <MenuItem onClick={() => router.push("/student/dashboard")}>
-                    Trợ giúp và Hỗ trợ
-                  </MenuItem>
                   <MenuItem
                     onClick={handleLogout}
                     sx={{
