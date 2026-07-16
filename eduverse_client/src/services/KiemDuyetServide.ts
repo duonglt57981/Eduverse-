@@ -31,11 +31,11 @@ export default class KiemDuyetService {
     idKhoaHoc: string,
   ): Promise<ApiResponse<KiemDuyetDetailDto>> {
     try {
-      const response = await apiService.get<ApiResponse<KiemDuyetDetailDto>>(
+      const response = await apiService.get<KiemDuyetDetailDto>(
         `/KiemDuyetKhoaHoc/kiemduyet-khoahoc-getdetail/${idKhoaHoc}`,
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching course approval list:", error);
       throw error;

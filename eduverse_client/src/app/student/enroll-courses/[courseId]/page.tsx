@@ -41,7 +41,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import AuthGuard from "@/src/components/AuthGuard";
 import DangKiService from "@/src/services/DangKiService";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { KhoaHocType } from "@/src/app/instructor/manager-courses/types";
+import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -434,7 +434,7 @@ function CourseRegistrationContent() {
                     px: 1.5,
                     py: 0.6,
                     color: "#ddd",
-                    alignItems:"center"
+                    alignItems: "center",
                   }}
                 >
                   {item.icon}
@@ -523,7 +523,7 @@ function CourseRegistrationContent() {
                           borderRadius: 3,
                           px: 1.75,
                           py: 1,
-                          alignItems:"center"
+                          alignItems: "center",
                         }}
                       >
                         {item.icon}
@@ -560,8 +560,8 @@ function CourseRegistrationContent() {
                         sx={{
                           p: 2,
                           background: `linear-gradient(90deg, ${RED_SOFT}, #fff)`,
-                          alignItems:"center",
-                        justifyContent:"space-between"
+                          alignItems: "center",
+                          justifyContent: "space-between",
                         }}
                       >
                         <Stack
@@ -1054,10 +1054,15 @@ function CourseRegistrationContent() {
       >
         <Stack
           direction="row"
-          sx={{ px: 2, py: 1.25, bgcolor: "#1c1d1f",alignItems:"center",
-          justifyContent:"space-between" }}
+          sx={{
+            px: 2,
+            py: 1.25,
+            bgcolor: "#1c1d1f",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
-          <Stack direction="row" spacing={1} sx={{alignItems:"center"}}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <PlayCircleIcon sx={{ fontSize: 18, color: RED }} />
             <Typography sx={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>
               {videoPlayer.title}

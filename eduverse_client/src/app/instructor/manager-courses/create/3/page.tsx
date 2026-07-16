@@ -20,6 +20,7 @@ import KhoaHocService from "@/src/services/KhoaHocService";
 import { danhMucService } from "@/src/services/danhmucService";
 import { DanhMucDto } from "@/src/types/khoaHoc";
 import AuthGuard from "@/src/components/AuthGuard";
+import { CreateKhoaHocRequest } from "@/src/types/khoaHoc/Request/request";
 
 export default function Step5Page() {
   const router = useRouter();
@@ -35,7 +36,6 @@ export default function Step5Page() {
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
-  // Lấy danh sách danh mục khi component mount hoặc tìm kiếm thay đổi
   useEffect(() => {
     const fetchDanhMuc = async () => {
       setLoadingDanhMuc(true);
@@ -68,7 +68,6 @@ export default function Step5Page() {
   };
 
   const handleCreate = async () => {
-    // Kiểm tra đã chọn danh mục chưa
     if (selected.length === 0) {
       setError("Vui lòng chọn ít nhất một danh mục.");
       return;
@@ -78,19 +77,16 @@ export default function Step5Page() {
     setError(null);
 
     try {
-      // Cập nhật context
       setFormData({ danhSachDanhMuc: selected });
 
-      // Tạo payload dạng FormData
-      const payload = new FormData();
-      if (formData.tieuDe) {
-        payload.append("tieuDe", formData.tieuDe);
-      }
-      selected.forEach((id) => payload.append("danhSachDanhMuc", id));
+      // Truyền object thường thay vì FormData
+      const payload: CreateKhoaHocRequest = {
+        tieuDe: formData.tieuDe,
+        danhSachDanhMuc: selected,
+      };
 
-      // Gọi API tạo khóa học
       const createResponse = await khoaHocService.CreateKhoaHoc(payload);
-      const khoaHocId = createResponse.id;
+      const khoaHocId = createResponse.data.id;
       router.push(
         `/instructor/manager-courses/${khoaHocId}/manager/curriculum`,
       );
@@ -133,38 +129,60 @@ export default function Step5Page() {
               textAlign: "center",
               color: "#7B8794",
               fontSize: 14,
-              mb: 2,
+              mb: 3,
             }}
           >
             Nếu bạn không chắc chắn về danh mục phù hợp, bạn có thể thay đổi
             sau.
           </Typography>
 
-          {/* Ô tìm kiếm */}
-          <TextField
-            size="small"
-            placeholder="Tìm danh mục..."
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            sx={{ mb: 3, width: "100%", maxWidth: 400 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
+          {/* Ô tìm kiếm - căn giữa */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              mb: 3,
             }}
-          />
+          >
+            <TextField
+              size="small"
+              placeholder="Tìm danh mục..."
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              sx={{
+                width: "100%",
+                maxWidth: 400,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 3,
+                  bgcolor: "#fafafa",
+                  "&:hover fieldset": {
+                    borderColor: "#7A1F2B",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#7A1F2B",
+                  },
+                },
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" sx={{ color: "#9AA5B1" }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Box>
 
           {/* Hiển thị các danh mục đã chọn */}
           {selected.length > 0 && (
             <Box
               sx={{
-                mb: 2,
+                mb: 3,
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: 1,
                 flexWrap: "wrap",
               }}
@@ -180,7 +198,15 @@ export default function Step5Page() {
                     label={cat.tenDanhMuc}
                     size="small"
                     onDelete={() => toggleCategory(id)}
-                    sx={{ bgcolor: "#fdf2f3", color: "#7A1F2B" }}
+                    sx={{
+                      bgcolor: "#fdf2f3",
+                      color: "#7A1F2B",
+                      fontWeight: 500,
+                      "& .MuiChip-deleteIcon": {
+                        color: "#7A1F2B",
+                        "&:hover": { color: "#5c1620" },
+                      },
+                    }}
                   />
                 ) : null;
               })}
@@ -190,7 +216,7 @@ export default function Step5Page() {
           {/* Loading danh mục */}
           {loadingDanhMuc && (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress />
+              <CircularProgress sx={{ color: "#7A1F2B" }} />
             </Box>
           )}
 
@@ -220,15 +246,20 @@ export default function Step5Page() {
                     variant="outlined"
                     sx={{
                       width: 160,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       borderColor: isSelected ? "#7A1F2B" : "#e0e0e0",
                       borderWidth: isSelected ? 2 : 1,
                       cursor: "pointer",
-                      transition: "0.15s",
+                      transition: "all 0.2s ease",
                       bgcolor: isSelected ? "#fdf2f3" : "#fff",
+                      boxShadow: isSelected
+                        ? "0 2px 8px rgba(122,31,43,0.15)"
+                        : "none",
                       "&:hover": {
                         borderColor: "#7A1F2B",
                         bgcolor: "#fdf2f3",
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 4px 10px rgba(122,31,43,0.12)",
                       },
                     }}
                     onClick={() => toggleCategory(cat.id)}
@@ -246,6 +277,7 @@ export default function Step5Page() {
                           fontWeight: isSelected ? 700 : 500,
                           fontSize: 15,
                           color: isSelected ? "#7A1F2B" : "#1A1A1A",
+                          textAlign: "center",
                         }}
                       >
                         {cat.tenDanhMuc}
@@ -259,7 +291,7 @@ export default function Step5Page() {
 
           {/* Hiển thị lỗi */}
           {error && (
-            <Alert severity="error" sx={{ mt: 3 }}>
+            <Alert severity="error" sx={{ mt: 3, borderRadius: 2 }}>
               {error}
             </Alert>
           )}
@@ -267,7 +299,7 @@ export default function Step5Page() {
           {/* Loading khi đang tạo khóa học */}
           {loading && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-              <CircularProgress />
+              <CircularProgress sx={{ color: "#7A1F2B" }} />
             </Box>
           )}
         </Box>

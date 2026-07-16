@@ -1,9 +1,5 @@
 export interface CreateKhoaHocRequest {
   tieuDe?: string;
-  moTa?: string;
-  giaGoc?: number;
-  capDo?: string;
-  img?: File;
   danhSachDanhMuc?: string[];
 }
 

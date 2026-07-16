@@ -11,7 +11,7 @@ export default class TaiLieuService {
     idBaiGiang: string,
   ): Promise<ApiResponse<TaiLieuType[]>> {
     try {
-      const response = await apiService.get<ApiResponse<TaiLieuType[]>>(
+      const response = await apiService.get<TaiLieuType[]>(
         `/TaiLieu/tailieu-getlistformanager/${idBaiGiang}`,
       );
       return response;

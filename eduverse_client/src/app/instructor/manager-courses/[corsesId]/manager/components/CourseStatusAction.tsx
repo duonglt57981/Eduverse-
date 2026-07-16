@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -16,6 +16,7 @@ import {
   IconButton,
   Alert,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
@@ -27,6 +28,7 @@ import {
   TrangThaiKhoaHoc,
   kiemTraDieuKienGuiDuyet,
   MucThieu,
+  kiemTraCoBanGhiDangSua,
 } from "./courseEditCore";
 
 interface Props {
@@ -35,7 +37,6 @@ interface Props {
   phans: PhanHocType[];
   lyDoTuChoi?: string | null;
   onGuiPheDuyet: () => Promise<void>;
-  onSuaTiep: () => Promise<void>;
   onDiChuyenDen: (diChuyenDen: MucThieu["diChuyenDen"]) => void;
 }
 
@@ -45,14 +46,31 @@ export default function CourseStatusAction({
   phans,
   lyDoTuChoi,
   onGuiPheDuyet,
-  onSuaTiep,
   onDiChuyenDen,
 }: Props) {
   const [dangXuLy, setDangXuLy] = useState(false);
   const [moPopupThieu, setMoPopupThieu] = useState(false);
   const [danhSachThieu, setDanhSachThieu] = useState<MucThieu[]>([]);
 
+  // Sử dụng useMemo thay vì useEffect + setState
+  const { coDangSua, chiTiet } = useMemo(() => {
+    return kiemTraCoBanGhiDangSua(thongTinKhoaHoc, phans);
+  }, [thongTinKhoaHoc, phans]);
+
+  // Lấy danh sách các loại đang ở DangSua để hiển thị
+  const dangSuaList = useMemo((): string[] => {
+    const list: string[] = [];
+    if (chiTiet.khoaHoc) list.push("Khóa học");
+    if (chiTiet.baiGiang) list.push("Bài giảng");
+    if (chiTiet.taiLieu) list.push("Tài liệu");
+    if (chiTiet.baiKiemTra) list.push("Bài kiểm tra");
+    if (chiTiet.cauHoi) list.push("Câu hỏi");
+    if (chiTiet.dapAn) list.push("Đáp án");
+    return list;
+  }, [chiTiet]);
+
   const xuLyBamGuiPheDuyet = async () => {
+    // Kiểm tra điều kiện gửi duyệt
     const ketQua = kiemTraDieuKienGuiDuyet(thongTinKhoaHoc, phans);
     if (!ketQua.hopLe) {
       setDanhSachThieu(ketQua.danhSachThieu);
@@ -67,20 +85,12 @@ export default function CourseStatusAction({
     }
   };
 
-  const xuLyBamSuaTiep = async () => {
-    try {
-      setDangXuLy(true);
-      await onSuaTiep();
-    } finally {
-      setDangXuLy(false);
-    }
-  };
-
   const dongPopupVaDiChuyen = (diChuyenDen: MucThieu["diChuyenDen"]) => {
     setMoPopupThieu(false);
     onDiChuyenDen(diChuyenDen);
   };
 
+  // ===== TRẠNG THÁI ĐANG DUYỆT =====
   if (trangThai === "DangDuyet") {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -92,14 +102,21 @@ export default function CourseStatusAction({
     );
   }
 
+  // ===== TRẠNG THÁI TỪ CHỐI =====
   if (trangThai === "TuChoi") {
     return (
-      <Typography sx={{ fontSize: 13, color: "#ffb4b4", maxWidth: 360 }}>
-        Bị từ chối{lyDoTuChoi ? `: ${lyDoTuChoi}` : "."}
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Typography sx={{ fontSize: 13, color: "#ffb4b4", maxWidth: 360 }}>
+          Bị từ chối{lyDoTuChoi ? `: ${lyDoTuChoi}` : "."}
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: "#8A93A3" }}>
+          Vui lòng chỉnh sửa và gửi lại
+        </Typography>
+      </Box>
     );
   }
 
+  // ===== TRẠNG THÁI ĐÃ DUYỆT =====
   if (trangThai === "DaDuyet") {
     return (
       <Typography sx={{ fontSize: 13, color: "#8be0a6" }}>
@@ -108,52 +125,111 @@ export default function CourseStatusAction({
     );
   }
 
+  // ===== TRẠNG THÁI CHỜ DUYỆT =====
   if (trangThai === "ChoDuyet") {
     return (
-      <Button
-        variant="outlined"
-        onClick={xuLyBamSuaTiep}
-        disabled={dangXuLy}
-        sx={{
-          textTransform: "none",
-          fontWeight: 700,
-          color: "#fff",
-          borderColor: "rgba(255,255,255,0.4)",
-          "&:hover": { borderColor: "#fff", bgcolor: "rgba(255,255,255,0.08)" },
-        }}
-      >
-        {dangXuLy ? (
-          <CircularProgress size={18} sx={{ color: "#fff" }} />
-        ) : (
-          "Sửa tiếp"
-        )}
-      </Button>
+      <Typography sx={{ fontSize: 13, color: "#FFB74D" }}>
+        Đang chờ phê duyệt
+      </Typography>
     );
   }
 
-  // Mặc định: "Đang sửa"
+  // ===== TRẠNG THÁI ĐANG SỬA (Mặc định) =====
+  // Kiểm tra nếu KHÔNG có bản ghi DangSua nào => disabled nút Gửi phê duyệt
+  const isDisabled = !coDangSua;
+
   return (
     <>
-      <Button
-        variant="contained"
-        onClick={xuLyBamGuiPheDuyet}
-        disabled={dangXuLy}
-        sx={{
-          bgcolor: MAU.chinh,
-          textTransform: "none",
-          fontWeight: 700,
-          px: 3,
-          boxShadow: "none",
-          "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
+      <Tooltip
+        title={
+          isDisabled ? (
+            <Box sx={{ p: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, mb: 0.5, color: "#fff" }}
+              >
+                Không có nội dung nào ở trạng thái Đang sửa
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ display: "block", color: "#aaa" }}
+              >
+                Cần ít nhất một bản ghi ở trạng thái Đang sửa để gửi duyệt.
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ display: "block", color: "#888", mt: 0.5 }}
+              >
+                Các loại cần kiểm tra: Khóa học, Bài giảng, Tài liệu, Bài kiểm
+                tra, Câu hỏi, Đáp án
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ p: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, mb: 0.5, color: "#fff" }}
+              >
+                Đang có các mục ở trạng thái Đang sửa:
+              </Typography>
+              {dangSuaList.map((item) => (
+                <Typography
+                  key={item}
+                  variant="caption"
+                  sx={{ display: "block", color: "#ddd" }}
+                >
+                  • {item}
+                </Typography>
+              ))}
+            </Box>
+          )
+        }
+        placement="bottom"
+        arrow
+        slotProps={{
+          tooltip: {
+            sx: {
+              bgcolor: "#1c1d1f",
+              maxWidth: 320,
+              borderRadius: "8px",
+              p: 1,
+            },
+          },
         }}
       >
-        {dangXuLy ? (
-          <CircularProgress size={18} sx={{ color: "#fff" }} />
-        ) : (
-          "Gửi Phê Duyệt"
-        )}
-      </Button>
+        <span>
+          <Button
+            variant="contained"
+            onClick={xuLyBamGuiPheDuyet}
+            disabled={isDisabled || dangXuLy}
+            sx={{
+              bgcolor: MAU.chinh,
+              textTransform: "none",
+              fontWeight: 700,
+              px: 3,
+              boxShadow: "none",
+              opacity: isDisabled ? 0.5 : 1,
+              "&:hover": {
+                bgcolor: isDisabled ? MAU.chinh : MAU.chinhDam,
+                boxShadow: "none",
+              },
+              "&.Mui-disabled": {
+                bgcolor: MAU.chinh,
+                opacity: 0.5,
+                color: "#fff",
+              },
+            }}
+          >
+            {dangXuLy ? (
+              <CircularProgress size={18} sx={{ color: "#fff" }} />
+            ) : (
+              "Gửi Phê Duyệt"
+            )}
+          </Button>
+        </span>
+      </Tooltip>
 
+      {/* Popup thiếu điều kiện */}
       <Dialog
         open={moPopupThieu}
         onClose={() => setMoPopupThieu(false)}
@@ -217,7 +293,7 @@ export default function CourseStatusAction({
           >
             Để sau
           </Button>
-          {danhSachThieu[0] && (
+          {danhSachThieu.length > 0 && (
             <Button
               variant="contained"
               onClick={() => dongPopupVaDiChuyen(danhSachThieu[0].diChuyenDen)}

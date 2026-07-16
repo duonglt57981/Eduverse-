@@ -8,7 +8,7 @@ import {
 import CourseEditLayout from "./components/CourseEditLayout";
 import { tinhTongThoiLuongGiay, MucThieu } from "./components/courseEditCore";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,20 +22,26 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     loading,
     refreshData,
     idKhoaHoc,
+    clearState,
+    saveState,
   } = useCourseEdit();
 
   const [dangXuLy, setDangXuLy] = useState(false);
   const khoaHocService = new KhoaHocService();
 
-  // Xác định tab đang active (dựa trên đường dẫn)
+  // Lưu state khi rời trang
+  useEffect(() => {
+    return () => {
+      saveState();
+    };
+  }, [saveState]);
+
   const activeKey = pathname?.includes("/basics") ? "basics" : "curriculum";
 
-  // Tính thời lượng
   const tongGiay = tinhTongThoiLuongGiay(phans);
   const tongPhut = Math.floor(tongGiay / 60);
   const thoiLuongHienThi = tongPhut > 0 ? `${tongPhut} phút` : "Chưa có video";
 
-  // Xác định trạng thái hoàn thành cho sidebar
   const basicsHoanThanh = Boolean(
     thongTin.tieuDe &&
     thongTin.tieuDe.trim().length >= 10 &&
@@ -67,66 +73,48 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     },
   ];
 
-  // Điều hướng sidebar – sửa đường dẫn
   const handleNavigateSidebar = (key: string) => {
+    saveState(); // Lưu trước khi chuyển tab
     router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/${key}`);
   };
 
-  // Quay lại danh sách khóa học
   const handleBack = () => {
+    clearState(); // Xóa state khi quay lại danh sách
     router.push("/instructor/manager-courses");
   };
 
-  // Gửi phê duyệt
-  const handleGuiPheDuyet = async () => {
+  const handleGuiPheDuyet = useCallback(async () => {
     setDangXuLy(true);
     try {
       const res = await khoaHocService.ChuyenTTChoDuyetBatch(idKhoaHoc);
       if (res.status !== false) {
         setTrangThai("ChoDuyet");
         await refreshData();
+        alert("Đã gửi phê duyệt thành công!");
       } else {
         alert(res.message || "Gửi phê duyệt thất bại");
       }
     } catch (error) {
       console.error(error);
-      alert("Đã xảy ra lỗi");
+      alert("Đã xảy ra lỗi khi gửi phê duyệt");
     } finally {
       setDangXuLy(false);
     }
-  };
+  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData]);
 
-  // Sửa tiếp
-  const handleSuaTiep = async () => {
-    setDangXuLy(true);
-    try {
-      const res = await khoaHocService.ChuyenTTDangSuaBatch(idKhoaHoc);
-      if (res.status !== false) {
-        setTrangThai("DangSua");
-        await refreshData();
+  const handleDiChuyenDenTuValidate = useCallback(
+    (diChuyenDen: MucThieu["diChuyenDen"]) => {
+      saveState();
+      if (diChuyenDen === "basics") {
+        router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
       } else {
-        alert(res.message || "Không thể chuyển về trạng thái sửa");
+        router.push(
+          `/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`,
+        );
       }
-    } catch (error) {
-      console.error(error);
-      alert("Đã xảy ra lỗi");
-    } finally {
-      setDangXuLy(false);
-    }
-  };
-
-  // Xử lý khi validate thiếu
-  const handleDiChuyenDenTuValidate = (
-    diChuyenDen: MucThieu["diChuyenDen"],
-  ) => {
-    if (diChuyenDen === "basics") {
-      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
-    } else {
-      router.push(
-        `/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`,
-      );
-    }
-  };
+    },
+    [idKhoaHoc, router, saveState],
+  );
 
   return (
     <CourseEditLayout
@@ -142,7 +130,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       onBack={handleBack}
       onNavigateSidebar={handleNavigateSidebar}
       onGuiPheDuyet={handleGuiPheDuyet}
-      onSuaTiep={handleSuaTiep}
       onDiChuyenDenTuValidate={handleDiChuyenDenTuValidate}
       onRefreshData={refreshData}
     >

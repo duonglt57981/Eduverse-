@@ -98,7 +98,7 @@ export default class KhoaHocService {
     idDangKyKhoaHoc: string,
   ): Promise<ApiResponse<KhoaHocType>> {
     try {
-      const response = await apiService.get<ApiResponse<KhoaHocType>>(
+      const response = await apiService.get<KhoaHocType>(
         `/KhoaHoc/khoahoc-learning/${idDangKyKhoaHoc}`,
       );
       return response;
@@ -109,12 +109,11 @@ export default class KhoaHocService {
   }
 
   async ChuyenTTChoDuyetBatch(
-    ids: string[],
+    idKhoaHoc: string,
   ): Promise<ApiResponse<KhoaHocType[]>> {
     try {
       const response = await apiService.post<ApiResponse<KhoaHocType[]>>(
-        `/KhoaHoc/khoahoc-chuyentrangthai-choduyet-batch`,
-        { ids },
+        `/KhoaHoc/khoahoc-chuyentrangthai-choduyet-batch/${idKhoaHoc}`,
       );
       return response.data;
     } catch (error) {
@@ -171,8 +170,7 @@ export default class KhoaHocService {
       const queryString = params.toString();
       const url = `/KhoaHoc/khoahoc-getlistformanager${queryString ? `?${queryString}` : ""}`;
 
-      const response =
-        await apiService.get<ApiResponse<PagedList<KhoaHocType>>>(url);
+      const response = await apiService.get<PagedList<KhoaHocType>>(url);
       return response;
     } catch (error) {
       console.error("Error fetching course list for manager:", error);
@@ -184,7 +182,7 @@ export default class KhoaHocService {
     request: CreateKhoaHocRequest,
   ): Promise<ApiResponse<KhoaHocType>> {
     try {
-      const response = await apiService.post<ApiResponse<KhoaHocType>>(
+      const response = await apiService.post<KhoaHocType>(
         "/KhoaHoc/khoahoc-create",
         request,
         {
@@ -193,7 +191,7 @@ export default class KhoaHocService {
           },
         },
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error creating course:", error);
       throw error;

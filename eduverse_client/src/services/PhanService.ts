@@ -28,7 +28,7 @@ export default class PhanService {
 
   async GetListPhanManager(idKhoaHoc: string): Promise<ApiResponse<PhanDto[]>> {
     try {
-      const response = await apiService.get<ApiResponse<PhanDto[]>>(
+      const response = await apiService.get<PhanDto[]>(
         `/PhanHoc/phanhoc-getlistformanager/${idKhoaHoc}`,
       );
       return response;

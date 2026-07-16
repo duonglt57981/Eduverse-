@@ -12,7 +12,7 @@ export default class BaiGiangService {
     idPhan: string,
   ): Promise<ApiResponse<BaiGiangDto[]>> {
     try {
-      const response = await apiService.get<ApiResponse<BaiGiangDto[]>>(
+      const response = await apiService.get<BaiGiangDto[]>(
         `/BaiGiang/baigiang-getlistformanager/${idPhan}`,
       );
       return response;

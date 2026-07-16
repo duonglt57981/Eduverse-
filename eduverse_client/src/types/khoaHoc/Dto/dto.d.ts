@@ -50,5 +50,7 @@ export interface GetToUpdateKhoaHoc {
   giaGoc?: number;
   capDo?: string;
   urlHinhAnh?: string;
+  trangThai?: string;
+  trangThaiPheDuyet?: string;
   danhSachDanhMuc?: string[];
 }

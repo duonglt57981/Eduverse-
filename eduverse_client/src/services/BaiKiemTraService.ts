@@ -27,7 +27,7 @@ export default class BaiKiemTraService {
     idPhan: string,
   ): Promise<ApiResponse<BaiKiemTraDto[]>> {
     try {
-      const response = await apiService.get<ApiResponse<BaiKiemTraDto[]>>(
+      const response = await apiService.get<BaiKiemTraDto[]>(
         `/BaiKiemTra/getlistformanager/${idPhan}`,
       );
       return response;
@@ -56,6 +56,11 @@ export default class BaiKiemTraService {
     request: UpdateBaiKiemTraRequest,
   ): Promise<ApiResponse<UpdateBaiKiemTraDto>> {
     try {
+      console.log("Request gửi lên API:", JSON.stringify(request, null, 2));
+      console.log(
+        "Danh sách câu hỏi:",
+        request.danhSachCauHoi.map((ch) => ({ id: ch.id, ten: ch.tenCauHoi })),
+      );
       const response = await apiService.put<ApiResponse<UpdateBaiKiemTraDto>>(
         `/BaiKiemTra/update/${request.idBaiKiemTra}`,
         request,

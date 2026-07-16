@@ -156,3 +156,75 @@ export function kiemTraDieuKienGuiDuyet(
 
   return { hopLe: danhSachThieu.length === 0, danhSachThieu };
 }
+
+export function kiemTraCoBanGhiDangSua(
+  thongTin: KhoaHocType,
+  phans: PhanHocType[],
+): {
+  coDangSua: boolean;
+  chiTiet: {
+    khoaHoc: boolean;
+    baiGiang: boolean;
+    taiLieu: boolean;
+    baiKiemTra: boolean;
+    cauHoi: boolean;
+    dapAn: boolean;
+  };
+} {
+  let coDangSua = false;
+  const chiTiet = {
+    khoaHoc: false,
+    baiGiang: false,
+    taiLieu: false,
+    baiKiemTra: false,
+    cauHoi: false,
+    dapAn: false,
+  };
+
+  if (
+    thongTin?.trangThaiPheDuyet === "DangSua" ||
+    thongTin?.trangThai === "DangSua"
+  ) {
+    chiTiet.khoaHoc = true;
+    coDangSua = true;
+  }
+
+  for (const phan of phans) {
+    for (const bg of phan.DanhSachBaiGiang ?? []) {
+      if (bg.trangThaiPheDuyet === "DangSua" || bg.trangThai === "DangSua") {
+        chiTiet.baiGiang = true;
+        coDangSua = true;
+      }
+      for (const tl of bg.danhSachTaiLieu ?? []) {
+        if (tl.trangThaiPheDuyet === "DangSua" || tl.trangThai === "DangSua") {
+          chiTiet.taiLieu = true;
+          coDangSua = true;
+        }
+      }
+    }
+
+    for (const kt of phan.DanhDachBaiKiemTra ?? []) {
+      if (kt.trangThaiPheDuyet === "DangSua" || kt.trangThai === "DangSua") {
+        chiTiet.baiKiemTra = true;
+        coDangSua = true;
+      }
+      for (const q of kt.cauHois ?? []) {
+        if (q.trangThaiPheDuyet === "DangSua" || q.trangThai === "DangSua") {
+          chiTiet.cauHoi = true;
+          coDangSua = true;
+        }
+        for (const da of q.danhSachDapAn ?? []) {
+          if (
+            da.trangThaiPheDuyet === "DangSua" ||
+            da.trangThai === "DangSua"
+          ) {
+            chiTiet.dapAn = true;
+            coDangSua = true;
+          }
+        }
+      }
+    }
+  }
+
+  return { coDangSua, chiTiet };
+}

@@ -7,13 +7,17 @@ import {
   alpha,
   Skeleton,
   Collapse,
-  Chip, // added
+  Chip,
 } from "@mui/material";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import FolderIcon from "@mui/icons-material/Folder";
+import QuizRoundedIcon from "@mui/icons-material/QuizRounded";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { COLORS, isTrangThaiCho } from "../types/constants";
 import StatusChip from "./StatusChip";
 import { useState } from "react";
@@ -98,6 +102,163 @@ function TaiLieuRow({ taiLieu, active, onClick, nested = false }: any) {
         </Typography>
         <StatusChip trangThai={taiLieu.trangThaiPheDuyet} size="small" />
       </Stack>
+    </Box>
+  );
+}
+
+// --- Bài kiểm tra row (có thể mở rộng để xem câu hỏi/đáp án) ---
+function BaiKiemTraRow({ baiKiemTra, active, onClick }: any) {
+  const [expanded, setExpanded] = useState(false);
+  const isPending = isTrangThaiCho(baiKiemTra.trangThaiPheDuyet);
+  const cauHois: any[] = baiKiemTra.cauHois ?? [];
+
+  return (
+    <Box>
+      <Box
+        sx={{
+          px: 1.5,
+          py: 1,
+          borderRadius: 1.5,
+          border: `1.5px solid ${active ? COLORS.primary : isPending ? COLORS.gold : COLORS.line}`,
+          bgcolor: active
+            ? COLORS.primarySoft
+            : isPending
+              ? COLORS.goldSoft
+              : COLORS.paperRaised,
+          cursor: "pointer",
+          transition: "border-color .12s ease, background-color .12s ease",
+          "&:hover": { borderColor: COLORS.primary },
+        }}
+      >
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <QuizRoundedIcon
+            sx={{
+              color: isPending ? COLORS.gold : COLORS.primary,
+              fontSize: 17,
+            }}
+            onClick={onClick}
+          />
+          <Typography
+            variant="body2"
+            onClick={onClick}
+            sx={{
+              flex: 1,
+              color: COLORS.ink,
+              fontWeight: active || isPending ? 600 : 400,
+            }}
+            noWrap
+          >
+            {baiKiemTra.tenBaiKiemTra || baiKiemTra.tieuDe}
+          </Typography>
+          <StatusChip trangThai={baiKiemTra.trangThaiPheDuyet} size="small" />
+          {cauHois.length > 0 && (
+            <ExpandMoreIcon
+              onClick={(e: any) => {
+                e.stopPropagation();
+                setExpanded((v) => !v);
+              }}
+              sx={{
+                fontSize: 18,
+                color: COLORS.inkSoft,
+                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform .15s",
+                cursor: "pointer",
+              }}
+            />
+          )}
+        </Stack>
+      </Box>
+      {cauHois.length > 0 && (
+        <Collapse in={expanded}>
+          <Stack spacing={0.75} sx={{ mt: 0.75, ml: 2.5 }}>
+            {cauHois.map((ch: any, chIndex: number) => (
+              <CauHoiRow key={ch.idCauHoi ?? `ch-${chIndex}`} cauHoi={ch} />
+            ))}
+          </Stack>
+        </Collapse>
+      )}
+    </Box>
+  );
+}
+
+// --- Câu hỏi (nested trong bài kiểm tra) ---
+function CauHoiRow({ cauHoi }: any) {
+  const [expanded, setExpanded] = useState(false);
+  const dapAns: any[] = cauHoi.dapAns ?? [];
+
+  return (
+    <Box
+      sx={{
+        px: 1.25,
+        py: 0.75,
+        borderRadius: 1.5,
+        border: `1.5px solid ${COLORS.line}`,
+        bgcolor: COLORS.paper,
+      }}
+    >
+      <Stack
+        direction="row"
+        spacing={1}
+        onClick={() => setExpanded((v) => !v)}
+        sx={{
+          alignItems: "center",
+          cursor: dapAns.length > 0 ? "pointer" : "default",
+        }}
+      >
+        <HelpOutlineRoundedIcon sx={{ color: COLORS.inkSoft, fontSize: 14 }} />
+        <Typography
+          variant="body2"
+          sx={{ flex: 1, color: COLORS.ink, fontSize: 13 }}
+          noWrap
+        >
+          {cauHoi.noiDungCauHoi || cauHoi.tieuDe}
+        </Typography>
+        {dapAns.length > 0 && (
+          <ExpandMoreIcon
+            sx={{
+              fontSize: 16,
+              color: COLORS.inkSoft,
+              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform .15s",
+            }}
+          />
+        )}
+      </Stack>
+      {dapAns.length > 0 && (
+        <Collapse in={expanded}>
+          <Stack spacing={0.5} sx={{ mt: 0.75, ml: 2.25 }}>
+            {dapAns.map((da: any, daIndex: number) => (
+              <Stack
+                key={da.idDapAn ?? `da-${daIndex}`}
+                direction="row"
+                spacing={0.75}
+                sx={{ alignItems: "center" }}
+              >
+                {da.dapAnDung || da.isDung ? (
+                  <CheckCircleIcon
+                    sx={{ color: COLORS.primary, fontSize: 14 }}
+                  />
+                ) : (
+                  <RadioButtonUncheckedIcon
+                    sx={{ color: COLORS.inkSoft, fontSize: 14 }}
+                  />
+                )}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color:
+                      da.dapAnDung || da.isDung ? COLORS.ink : COLORS.inkSoft,
+                    fontWeight: da.dapAnDung || da.isDung ? 600 : 400,
+                  }}
+                  noWrap
+                >
+                  {da.noiDungDapAn || da.tieuDe}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
+        </Collapse>
+      )}
     </Box>
   );
 }
@@ -207,10 +368,16 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
     return selected.item[key] === item[key];
   };
 
-  const phanHocs: any[] = detail?.phanHocs ?? [];
-  const allBaiGiang: any[] =
+  // API thực tế trả về "phans" (mỗi phần đã chứa sẵn baiGiangs/baiKiemTras
+  // bên trong), không phải "phanHocs" + danh sách phẳng lọc theo idPhan. Vẫn
+  // giữ fallback sang "phanHocs" + danh sách phẳng để tương thích ngược nếu
+  // có nơi khác trả dữ liệu theo format cũ.
+  const phans: any[] = detail?.phans ?? detail?.phanHocs ?? [];
+  const flatBaiGiang: any[] =
     detail?.baiGiangs ?? detail?.baiGiangChoDuyet ?? [];
-  const allTaiLieu: any[] = detail?.taiLieus ?? detail?.taiLieuChoDuyet ?? [];
+  const flatTaiLieu: any[] = detail?.taiLieus ?? detail?.taiLieuChoDuyet ?? [];
+  const flatBaiKiemTra: any[] =
+    detail?.baiKiemTras ?? detail?.baiKiemTraChoDuyet ?? [];
 
   const sortPending = (arr: any[]) =>
     [...arr].sort((x, y) => {
@@ -219,11 +386,30 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
       return px - py;
     });
 
-  const taiLieuOfBaiGiang = (idBaiGiang: string) =>
-    sortPending(allTaiLieu.filter((tl) => tl.idBaiGiang === idBaiGiang));
+  // Tài liệu của 1 bài giảng: ưu tiên lấy từ bg.taiLieus (API thật, đã lồng
+  // sẵn); nếu không có thì fallback lọc từ danh sách phẳng theo idBaiGiang
+  // (format cũ).
+  const taiLieuOfBaiGiang = (bg: any) => {
+    if (Array.isArray(bg.taiLieus) && bg.taiLieus.length > 0) {
+      return sortPending(bg.taiLieus);
+    }
+    return sortPending(
+      flatTaiLieu.filter((tl) => tl.idBaiGiang === bg.idBaiGiang),
+    );
+  };
+
+  // Bài kiểm tra của 1 phần: ưu tiên lấy từ phan.baiKiemTras (API thật, đã
+  // lồng sẵn câu hỏi/đáp án bên trong); fallback lọc từ danh sách phẳng theo
+  // idPhan (format cũ).
+  const baiKiemTraOfPhan = (phan: any, phanId: any) => {
+    if (Array.isArray(phan.baiKiemTras) && phan.baiKiemTras.length > 0) {
+      return sortPending(phan.baiKiemTras);
+    }
+    return sortPending(flatBaiKiemTra.filter((bkt) => bkt.idPhan === phanId));
+  };
 
   const renderBaiGiangWithTaiLieu = (bg: any) => {
-    const taiLieus = taiLieuOfBaiGiang(bg.idBaiGiang);
+    const taiLieus = taiLieuOfBaiGiang(bg);
     return (
       <Box key={bg.idBaiGiang}>
         <BaiGiangRow
@@ -248,7 +434,22 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
     );
   };
 
-  if (allBaiGiang.length === 0 && allTaiLieu.length === 0) {
+  const tongSoBaiGiangTrongPhan = phans.reduce(
+    (sum, p) => sum + (p.baiGiangs?.length ?? 0),
+    0,
+  );
+  const tongSoBaiKiemTraTrongPhan = phans.reduce(
+    (sum, p) => sum + (p.baiKiemTras?.length ?? 0),
+    0,
+  );
+
+  if (
+    tongSoBaiGiangTrongPhan === 0 &&
+    tongSoBaiKiemTraTrongPhan === 0 &&
+    flatBaiGiang.length === 0 &&
+    flatTaiLieu.length === 0 &&
+    flatBaiKiemTra.length === 0
+  ) {
     return (
       <Typography
         variant="caption"
@@ -259,23 +460,41 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
     );
   }
 
-  if (phanHocs.length > 0) {
-    const idsCoPhan = new Set(phanHocs.map((p) => p.id || p.idPhan));
-    const baiGiangKhongCoPhan = allBaiGiang.filter(
-      (bg) => !idsCoPhan.has(bg.idPhan),
+  if (phans.length > 0) {
+    // Bài giảng/bài kiểm tra thuộc "phần" không có trong danh sách phans
+    // (chỉ áp dụng khi dùng danh sách phẳng ở format cũ; API thật đã lồng
+    // sẵn baiGiangs/baiKiemTras trong từng phan nên trường hợp này thường sẽ
+    // rỗng).
+    const idsCoPhan = new Set(
+      phans.map((p) => p.id ?? p.idPhan).filter(Boolean),
+    );
+    const baiGiangKhongCoPhan = flatBaiGiang.filter(
+      (bg) => bg.idPhan && !idsCoPhan.has(bg.idPhan),
     );
 
     return (
       <Stack spacing={1} sx={{ p: 1.5 }}>
-        {phanHocs.map((phan: any) => {
-          const id = phan.id || phan.idPhan;
+        {phans.map((phan: any, phanIndex: number) => {
+          // Phan trả về từ API thật không có field id/idPhan riêng, nên
+          // dùng chỉ số làm khoá dự phòng.
+          const id = phan.id ?? phan.idPhan ?? `phan-${phanIndex}`;
+          // Ưu tiên bài giảng lồng sẵn trong phan (API thật); fallback lọc
+          // từ danh sách phẳng theo idPhan (format cũ).
           const baiGiangs = sortPending(
-            allBaiGiang.filter((bg) => bg.idPhan === id),
+            Array.isArray(phan.baiGiangs) && phan.baiGiangs.length > 0
+              ? phan.baiGiangs
+              : flatBaiGiang.filter((bg) => bg.idPhan === id),
           );
-          if (baiGiangs.length === 0) return null;
-          const soLuongCho = baiGiangs.filter((bg) =>
+          const baiKiemTras = baiKiemTraOfPhan(phan, id);
+          if (baiGiangs.length === 0 && baiKiemTras.length === 0) return null;
+
+          const soLuongChoBaiGiang = baiGiangs.filter((bg) =>
             isTrangThaiCho(bg.trangThaiPheDuyet),
           ).length;
+          const soLuongChoBaiKiemTra = baiKiemTras.filter((bkt) =>
+            isTrangThaiCho(bkt.trangThaiPheDuyet),
+          ).length;
+          const soLuongCho = soLuongChoBaiGiang + soLuongChoBaiKiemTra;
           const isExpanded = expandedPhan[id] !== false;
 
           return (
@@ -326,7 +545,7 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
                   />
                 )}
                 <Typography variant="caption" sx={{ color: COLORS.inkSoft }}>
-                  {baiGiangs.length}
+                  {baiGiangs.length + baiKiemTras.length}
                 </Typography>
                 <ExpandMoreIcon
                   sx={{
@@ -340,6 +559,14 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
               <Collapse in={isExpanded}>
                 <Stack spacing={1} sx={{ p: 1 }}>
                   {baiGiangs.map((bg: any) => renderBaiGiangWithTaiLieu(bg))}
+                  {baiKiemTras.map((bkt: any, bktIndex: number) => (
+                    <BaiKiemTraRow
+                      key={bkt.idBaiKiemTra ?? `bkt-${bktIndex}`}
+                      baiKiemTra={bkt}
+                      active={isActive("baiKiemTra", bkt)}
+                      onClick={() => onSelectContent("baiKiemTra", bkt)}
+                    />
+                  ))}
                 </Stack>
               </Collapse>
             </Box>
@@ -358,7 +585,17 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
 
   return (
     <Stack spacing={1} sx={{ p: 1.5 }}>
-      {sortPending(allBaiGiang).map((bg: any) => renderBaiGiangWithTaiLieu(bg))}
+      {sortPending(flatBaiGiang).map((bg: any) =>
+        renderBaiGiangWithTaiLieu(bg),
+      )}
+      {sortPending(flatBaiKiemTra).map((bkt: any, bktIndex: number) => (
+        <BaiKiemTraRow
+          key={bkt.idBaiKiemTra ?? `bkt-${bktIndex}`}
+          baiKiemTra={bkt}
+          active={isActive("baiKiemTra", bkt)}
+          onClick={() => onSelectContent("baiKiemTra", bkt)}
+        />
+      ))}
     </Stack>
   );
 }

@@ -47,7 +47,6 @@ interface Props {
   onBack: () => void;
   onNavigateSidebar: (key: string) => void;
   onGuiPheDuyet: () => Promise<void>;
-  onSuaTiep: () => Promise<void>;
   onDiChuyenDenTuValidate: (diChuyenDen: MucThieu["diChuyenDen"]) => void;
   onRefreshData?: () => void;
 }
@@ -66,7 +65,6 @@ export default function CourseEditLayout({
   onBack,
   onNavigateSidebar,
   onGuiPheDuyet,
-  onSuaTiep,
   onDiChuyenDenTuValidate,
   onRefreshData,
 }: Props) {
@@ -213,7 +211,6 @@ export default function CourseEditLayout({
               phans={phans}
               lyDoTuChoi={lyDoTuChoi}
               onGuiPheDuyet={onGuiPheDuyet}
-              onSuaTiep={onSuaTiep}
               onDiChuyenDen={onDiChuyenDenTuValidate}
             />
 
