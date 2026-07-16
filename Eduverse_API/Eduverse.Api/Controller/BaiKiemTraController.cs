@@ -64,7 +64,7 @@ namespace Eduverse.Api.Controller
 
         [HttpPut("update/{id}")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<UpdateBaiKiemTraDto>> UpdateBaiKiemTra([FromBody] UpdateBaiKiemTraRequest request)
+        public async Task<DataResponse<UpdateBaiKiemTraDto>> UpdateBaiKiemTra( UpdateBaiKiemTraRequest request)
         {
             try
             {

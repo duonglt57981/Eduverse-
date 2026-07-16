@@ -8,7 +8,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Request
 {
     public class KiemDuyetKhoaHocRequest
     {
-        public Guid? IdBanNhap { get; set; }
+        public Guid? IdKhoaHoc { get; set; }
         public string TrangThaiPheDuyet { get; set; }
         public string? LyDo { get; set; }
     }
