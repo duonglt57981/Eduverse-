@@ -1,10 +1,11 @@
-﻿using Eduverse.Service.KhoaHocService;
-using Eduverse.Service.Common;
+﻿using Eduverse.Service.Common;
+using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Hinet.Api.Dto;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using static Eduverse.Service.KhoaHocService.KhoaHocService;
 
 namespace Eduverse.Api.Controller
 {
@@ -100,18 +101,18 @@ namespace Eduverse.Api.Controller
             }
         }
 
-        [HttpPost("khoahoc-chuyentrangthai-choduyet-batch")]
+        [HttpPost("khoahoc-chuyentrangthai-choduyet-batch/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<List<KhoaHocDto>>> ChuyenTTChoDuyetBatch(BatchIdsRequest request)
+        public async Task<DataResponse<KhoaHocDto>> ChuyenTTChoDuyetBatch(Guid idKhoaHoc)
         {
             try
             {
-                var result = await _khoaHocService.ChuyenTrangThaiChoDuyet(request);
-                return DataResponse<List<KhoaHocDto>>.Success(result);
+                var result = await _khoaHocService.ChuyenTrangThaiChoDuyet(idKhoaHoc);
+                return DataResponse<KhoaHocDto>.Success(result);
             }
             catch (Exception ex)
             {
-                return DataResponse<List<KhoaHocDto>>.False(ex.Message);
+                return DataResponse<KhoaHocDto>.False(ex.Message);
             }
         }
 
@@ -193,6 +194,22 @@ namespace Eduverse.Api.Controller
             catch (Exception ex)
             {
                 return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPost("createfullkhoahocdraft/{IdKhoaHoc}")]
+        //[Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDraftResultDto>> CreateFullKhoaHocDraft(Guid IdKhoaHoc)
+        {
+            try
+            {
+                var result = await _khoaHocService.CreateFullKhoaHocDraft(IdKhoaHoc);
+                return DataResponse<KhoaHocDraftResultDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDraftResultDto>.False(ex.Message);
             }
         }
 

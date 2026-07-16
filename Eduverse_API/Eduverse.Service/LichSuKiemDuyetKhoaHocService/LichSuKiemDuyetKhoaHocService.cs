@@ -68,7 +68,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IGeminiService _geminiService;
         private readonly ILogger<LichSuKiemDuyetKhoaHocService> _logger;
         private readonly IMapper _mapper;
-
+        private readonly IBaiKiemTraRepository _baiKiemTraRepository;
 
         public LichSuKiemDuyetKhoaHocService(
             ILichSuKiemDuyetKhoaHocRepository repository,
@@ -79,25 +79,26 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             ITaiLieuRepository taiLieuRepository,
             IBaiKiemTraRepository kiemTraRepository,
             IDanhMuc_KhoaHocRepository danhMuc_KhoaHocRepository,
-            IDanhMucRepository _danhMucRepository,
+            IDanhMucRepository danhMucRepository,
             IDanhMuc_KhoaHocService danhMuc_KhoaHocService,
             IGeminiService geminiService,
             ILogger<LichSuKiemDuyetKhoaHocService> logger,
-            IBaiKiemTraRepository _baiKiemTraRepository,
+            IBaiKiemTraRepository baiKiemTraRepository,  
             ILanLamBaiKiemTraRepository lanLamBaiKiemTraRepository,
             ICauHoiRepository cauHoiRepository,
             IDapAnRepository dapAnRepository,
             IMapper mapper,
-        IHttpContextAccessor? httpContextAccessor = null) : base(repository)
+            IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
             _phanRepository = phanRepository;
-            _baiKiemTraRepository = _baiKiemTraRepository;
+            _baiKiemTraRepository = baiKiemTraRepository;   
             _baiGiangRepository = baiGiangRepository;
             _taiLieuRepository = taiLieuRepository;
             _kiemTraRepository = kiemTraRepository;
             this._httpContextAccessor = httpContextAccessor;
             _danhMuc_KhoaHocRepository = danhMuc_KhoaHocRepository;
+            _danhMucRepository = danhMucRepository;
             _danhMuc_KhoaHocService = danhMuc_KhoaHocService;
             _geminiService = geminiService;
             _logger = logger;
@@ -217,147 +218,249 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
 
         #region GetDetailKiemDuyet
+
+        #region GetDetailKiemDuyet
+
         public async Task<KiemDuyetDetailDto> GetDetailKiemDuyet(Guid idKhoaHoc)
         {
-            // 1. Lấy tất cả các phiên bản của khóa học (gốc và các bản nháp)
-            var khoaHocVersions = await _khoaHocRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.Id == idKhoaHoc || x.IdBanGhiTruoc == idKhoaHoc)
-                .ToListAsync();
+            // 1. Lấy đúng bản khóa học theo Id được truyền vào
+            var targetVersion = await _khoaHocRepository.GetAll()
+                .FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
 
-            if (khoaHocVersions == null || !khoaHocVersions.Any())
+            if (targetVersion == null)
                 return null;
 
-            // 2. Ưu tiên bản nháp (có IdBanGhiTruoc != null), nếu không thì bản hiện tại (IsBanHienTai == true)
-            var targetVersion = khoaHocVersions.FirstOrDefault(x => x.IdBanGhiTruoc != null)
-                                ?? khoaHocVersions.FirstOrDefault(x => x.IsBanHienTai == true)
-                                ?? khoaHocVersions.First();
-
-
-            
-
-            // 4. Xác định Id gốc để truy vấn các phần học (dùng Id của bản hiện tại hoặc IdBanGhiTruoc nếu có)
-            var idKhoaHocGoc = targetVersion.IsBanHienTai == true ? targetVersion.Id : targetVersion.IdBanGhiTruoc;
-            if (!idKhoaHocGoc.HasValue)
-                idKhoaHocGoc = targetVersion.Id;
-
-            // 5. Lấy danh sách phần học thuộc khóa học gốc
-            var phans = await _phanRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdKhoaHoc == idKhoaHocGoc.Value)
+            // 2. Lấy toàn bộ cây dữ liệu (không dùng khóa ngoại, so khớp thủ công qua Id list)
+            var phans = await _phanRepository.GetAll()
+                .Where(x => x.IdKhoaHoc == targetVersion.Id)
                 .ToListAsync();
 
             var phanIds = phans.Select(p => p.Id).ToList();
 
-            // 6. Lấy danh sách bài giảng thuộc các phần học
-            var baiGiangs = await _baiGiangRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x =>phanIds.Contains(x.IdPhan) && x.IdBanGhiTruoc == null)  
+            var baiGiangs = await _baiGiangRepository.GetAll()
+                .Where(x => phanIds.Contains(x.IdPhan))
                 .ToListAsync();
 
-            // 7. Cập nhật trạng thái cho từng bài giảng thành "Đang duyệt"
-           
+            var baiGiangIds = baiGiangs.Select(b => b.Id).ToList();
 
-            // 8. Lấy danh sách Id gốc của bài giảng (ưu tiên IdBanGhiTruoc nếu có) để truy vấn tài liệu
-            var idBaiGiangGocList = baiGiangs
-                .Select(b => b.IdBanGhiTruoc == null ? b.Id : b.IdBanGhiTruoc)
-                .Where(id => id.HasValue)
-                .Select(id => id.Value)
-                .Distinct()
-                .ToList();
-
-        
-            var taiLieus = await _taiLieuRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => idBaiGiangGocList.Contains(x.IdBaiGiang))
+            var taiLieus = await _taiLieuRepository.GetAll()
+                .Where(x => baiGiangIds.Contains(x.IdBaiGiang))
                 .ToListAsync();
 
-            
-            
+            var baiKiemTras = await _baiKiemTraRepository.GetAll()
+                .Where(x => x.IdPhan.HasValue && phanIds.Contains(x.IdPhan.Value))
+                .ToListAsync();
 
-            
-            if(targetVersion.TrangThaiPheDuyet == "ChoDuyet" || targetVersion.TrangThaiPheDuyet == null)
+            var baiKiemTraIds = baiKiemTras.Select(b => b.Id).ToList();
+
+            var cauHois = await _cauHoiRepository.GetAll()
+                .Where(x => baiKiemTraIds.Contains(x.IdBaiKiemTra.Value))
+                .ToListAsync();
+
+            var cauHoiIds = cauHois.Select(c => c.Id).ToList();
+
+            var dapAns = await _dapAnRepository.GetAll()
+                .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value))
+                .ToListAsync();
+
+            // 3. Chuyển toàn bộ cây sang trạng thái "DangDuyet" — mỗi item xử lý ĐỘC LẬP
+            if (targetVersion.TrangThaiPheDuyet == "ChoDuyet" || targetVersion.TrangThaiPheDuyet == null)
             {
                 targetVersion.TrangThaiPheDuyet = "DangDuyet";
                 targetVersion.TrangThai = "DangDuyet";
 
                 _khoaHocRepository.Update(targetVersion);
-                await _khoaHocRepository.SaveAsync();
-
-                var KiemDuyet = new LichSuKiemDuyetKhoaHoc
+                _khoaHocRepository.SaveAsync();
+                await CreateAsync(new LichSuKiemDuyetKhoaHoc
                 {
                     IdDoiDuong = targetVersion.Id,
                     LoaiDoiTuong = "KhoaHoc",
-                    TrangThaiPheDuyet = "DangDuyet",
-
-                };
-
-                await  CreateAsync(KiemDuyet);
-                await SaveAsync();
+                    TrangThaiPheDuyet = "DangDuyet"
+                });
             }
 
-            if (baiGiangs.Any())
+            foreach (var phan in phans)
             {
-                foreach(var item in baiGiangs)
+                if (phan.TrangThaiPheDuyet == "ChoDuyet" || phan.TrangThaiPheDuyet == null)
                 {
-                    if(item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                    phan.TrangThaiPheDuyet = "DangDuyet";
+                    phan.TrangThai = "DangDuyet";
+
+                     _phanRepository.Update(phan);
+
+                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
                     {
-                        foreach (var bg in baiGiangs)
-                        {
-                            bg.TrangThaiPheDuyet = "DangDuyet";
-                            bg.TrangThai = "DangDuyet";
-                        }
-
-                        _baiGiangRepository.Update(item);
-                        await _baiGiangRepository.SaveAsync();
-
-                        var KiemDuyet = new LichSuKiemDuyetKhoaHoc
-                        {
-                            IdDoiDuong = item.Id,
-                            LoaiDoiTuong = "BaiGiang",
-                            TrangThaiPheDuyet = "DangDuyet",
-
-                        };
-
-                        await CreateAsync(KiemDuyet);
-                        await SaveAsync();
-                    }
-                    
+                        IdDoiDuong = phan.Id,
+                        LoaiDoiTuong = "Phan",
+                        TrangThaiPheDuyet = "DangDuyet"
+                    });
                 }
             }
 
-            if (taiLieus.Any())
+            foreach (var item in baiGiangs)
             {
-                foreach (var item in taiLieus)
+                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
                 {
-                    if(item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                    item.TrangThaiPheDuyet = "DangDuyet";
+                    item.TrangThai = "DangDuyet";
+
+                    _baiGiangRepository.Update(item);
+
+                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
                     {
-                        foreach (var tl in taiLieus)
-                        {
-                            tl.TrangThaiPheDuyet = "DangDuyet";
-                            tl.TrangThai = "DangDuyet";
-                        }
-
-                        _taiLieuRepository.Update(item);
-                        await _taiLieuRepository.SaveAsync();
-
-                        var KiemDuyet = new LichSuKiemDuyetKhoaHoc
-                        {
-                            IdDoiDuong = targetVersion.Id,
-                            LoaiDoiTuong = "TaiLieu",
-                            TrangThaiPheDuyet = "DangDuyet",
-
-                        };
-
-                        await CreateAsync(KiemDuyet);
-                        await SaveAsync();
-                    }
-                    
+                        IdDoiDuong = item.Id,
+                        LoaiDoiTuong = "BaiGiang",
+                        TrangThaiPheDuyet = "DangDuyet"
+                    });
                 }
             }
-            
 
-            // 12. Map sang DTO để trả về
+            foreach (var item in taiLieus)
+            {
+                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                {
+                    item.TrangThaiPheDuyet = "DangDuyet";
+                    item.TrangThai = "DangDuyet";
+
+                     _taiLieuRepository.Update(item);
+
+                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
+                    {
+                        IdDoiDuong = item.Id,
+                        LoaiDoiTuong = "TaiLieu",
+                        TrangThaiPheDuyet = "DangDuyet"
+                    });
+                }
+            }
+
+            foreach (var item in baiKiemTras)
+            {
+                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                {
+                    item.TrangThaiPheDuyet = "DangDuyet";
+                    item.TrangThai = "DangDuyet";
+
+                     _baiKiemTraRepository.Update(item);
+
+                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
+                    {
+                        IdDoiDuong = item.Id,
+                        LoaiDoiTuong = "BaiKiemTra",
+                        TrangThaiPheDuyet = "DangDuyet"
+                    });
+                }
+            }
+
+            // DapAn có TrangThai/TrangThaiPheDuyet riêng theo DTO → chuyển trạng thái tương tự
+            foreach (var item in dapAns)
+            {
+                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                {
+                    item.TrangThaiPheDuyet = "DangDuyet";
+                    item.TrangThai = "DangDuyet";
+
+                     _dapAnRepository.Update(item);
+
+                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
+                    {
+                        IdDoiDuong = item.Id,
+                        LoaiDoiTuong = "DapAn",
+                        TrangThaiPheDuyet = "DangDuyet"
+                    });
+                }
+            }
+
+            // Lưu toàn bộ thay đổi trạng thái + lịch sử kiểm duyệt trong 1 lần
+            await SaveAsync();
+
+            // 4. Dựng cây lồng nhau: Phan -> BaiGiang -> TaiLieu, Phan -> BaiKiemTra -> CauHoi -> DapAn
+            var taiLieuLookup = taiLieus.ToLookup(t => t.IdBaiGiang);
+            var baiGiangLookup = baiGiangs.ToLookup(b => b.IdPhan);
+            var dapAnLookup = dapAns.Where(d => d.IdCauHoi.HasValue).ToLookup(d => d.IdCauHoi.Value);
+            var cauHoiLookup = cauHois.ToLookup(c => c.IdBaiKiemTra);
+            var baiKiemTraLookup = baiKiemTras
+                .Where(b => b.IdPhan.HasValue)
+                .ToLookup(b => b.IdPhan.Value);
+
+            var phanDtos = phans.Select(p => new PhanChoDuyetDto
+            {
+                TenPhan = p.TenPhan,
+                MieuTa = p.MieuTa,
+                ThuTuSapXep = p.ThuTuSapXep,
+                TrangThai = p.TrangThai,
+                TrangThaiPheDuyet = p.TrangThaiPheDuyet,
+                NgayTao = p.CreatedDate,
+                IdKhoaHoc = p.IdKhoaHoc,
+                IdBanGhiTruoc = p.IdBanGhiTruoc,
+                IsBanHienTai = p.IsBanHienTai,
+
+                BaiGiangs = baiGiangLookup[p.Id].Select(b => new BaiGiangChoDuyetDto
+                {
+                    IdBaiGiang = b.Id,
+                    TieuDe = b.TieuDe,
+                    LoaiBaiGiang = b.LoaiBaiGiang,
+                    URLBaiGiang = b.URLBaiGiang,
+                    ThoiLuong = b.ThoiLuong,
+                    LaBaiGiangFree = b.LaBaiGiangFree,
+                    TrangThai = b.TrangThai,
+                    TrangThaiPheDuyet = b.TrangThaiPheDuyet,
+                    IdPhan = b.IdPhan,
+                    IsBanHienTai = b.IsBanHienTai,
+                    IdBanGhiTruoc = b.IdBanGhiTruoc,
+
+                    TaiLieus = taiLieuLookup[b.Id].Select(t => new TaiLieuChoDuyetDto
+                    {
+                        IdTaiLieu = t.Id,
+                        LoaiTaiLieu = t.LoaiTaiLieu,
+                        TenTaiLieu = t.TenTaiLieu,
+                        URL = t.URL,
+                        IdDocument = t.IdDocument,
+                        TrangThai = t.TrangThai,
+                        TrangThaiPheDuyet = t.TrangThaiPheDuyet,
+                        IdBaiGiang = t.IdBaiGiang
+                    }).ToList()
+                }).ToList(),
+
+                BaiKiemTras = baiKiemTraLookup[p.Id].Select(bkt => new BaiKiemTraChoDuyetDto
+                {
+                    Id = bkt.Id,
+                    TenBaiKiemTra = bkt.TenBaiKiemTra,
+                    MoTa = bkt.MoTa,
+                    DiemDat = bkt.DiemDat,
+                    GioiHanThoiGian = bkt.GioiHanThoiGian,
+                    ChoLamLai = bkt.ChoLamLai,
+                    SoLanLamToiDa = bkt.SoLanLamToiDa,
+                    IdPhan = bkt.IdPhan,
+                    IsBanHienTai = bkt.IsBanHienTai,
+                    IdBanGhiTruoc = bkt.IdBanGhiTruoc,
+                    TrangThai = bkt.TrangThai,
+                    TrangThaiPheDuyet = bkt.TrangThaiPheDuyet,
+                    CauHois = cauHoiLookup[bkt.Id].Select(c => new CauHoiChoDuyetDto
+                    {
+                        Id = c.Id,
+                        IdBaiKiemTra = c.IdBaiKiemTra.Value,
+                        TenCauHoi = c.TenCauHoi,
+                        NoiDungCauHoi = c.NoiDungCauHoi,
+                        DoKho = c.DoKho,
+                        LoaiCauHoi = c.LoaiCauHoi,
+                        ThuTuSapXep = c.ThuTuSapXep,
+
+                        DapAns = dapAnLookup[c.Id].Select(d => new DapAnChoDuyetDto
+                        {
+                            NoiDungDapAn = d.NoiDungDapAn,
+                            LaDapAnDung = d.LaDapAnDung,
+                            ThuTuSapXep = d.ThuTuSapXep,
+                            IdCauHoi = d.IdCauHoi,
+                            TrangThai = d.TrangThai,
+                            TrangThaiPheDuyet = d.TrangThaiPheDuyet,
+                            IdBanGhiTruoc = d.IdBanGhiTruoc,
+                            IsBanHienTai = d.IsBanHienTai
+                        }).ToList()
+                    }).ToList()
+                }).ToList()
+            }).ToList();
+
+            // 5. Map thông tin Khóa học + gán cây Phần đã dựng ở trên
             var result = new KiemDuyetDetailDto
             {
                 IdKhoaHoc = targetVersion.Id,
@@ -369,46 +472,17 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 CapDo = targetVersion.CapDo,
                 TrangThai = targetVersion.TrangThai,
                 TrangThaiPheDuyet = targetVersion.TrangThaiPheDuyet,
+                IdBanGhiTruoc = targetVersion.IdBanGhiTruoc,
                 IsBanHienTai = targetVersion.IsBanHienTai,
                 CreateBy = targetVersion.CreatedBy,
-
-                PhanHocs = phans.Select(p => new PhanHocDto
-                {
-                    Id = p.Id,
-                    TenPhan = p.TenPhan,
-                    MieuTa = p.MieuTa,
-                    IdKhoaHoc = p.IdKhoaHoc
-                }).ToList(),
-
-                BaiGiangs = baiGiangs.Select(b => new BaiGiangChoDuyetDto
-                {
-                    IdBaiGiang = b.Id,
-                    TieuDe = b.TieuDe,
-                    LoaiBaiGiang = b.LoaiBaiGiang,
-                    URLBaiGiang = b.URLBaiGiang,
-                    ThoiLuong = b.ThoiLuong,
-                    LaBaiGiangFree = b.LaBaiGiangFree,
-                    IdPhan = b.IdPhan,
-                    TrangThai = b.TrangThai,
-                    TrangThaiPheDuyet = b.TrangThaiPheDuyet,
-                    IsBanHienTai = b.IsBanHienTai,
-                    IdBanGhiTruoc = b.IdBanGhiTruoc
-                }).ToList(),
-
-                TaiLieus = taiLieus.Select(t => new TaiLieuChoDuyetDto
-                {
-                    IdTaiLieu = t.Id,
-                    TenTaiLieu = t.TenTaiLieu,
-                    LoaiTaiLieu = t.LoaiTaiLieu,
-                    URL = t.URL,
-                    IdBaiGiang = t.IdBaiGiang,
-                    TrangThai = t.TrangThai,
-                    TrangThaiPheDuyet = t.TrangThaiPheDuyet
-                }).ToList()
+                Phans = phanDtos
             };
 
             return result;
         }
+
+        #endregion
+
         #endregion
 
 
@@ -889,6 +963,72 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         #endregion
 
 
+         #region KiemDuyetTaiLieu
+                public async Task<KiemDuyetKhoaHocDto> KiemDuyetTaiLieu(KiemDuyetKhoaHocRequest request)
+                {
+                    // ── Kiểm tra quyền ──────────────────────────────────
+                    var role = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
+                    if (role != "Admin")
+                        throw new UnauthorizedAccessException("Chỉ Admin mới có quyền kiểm duyệt");
+
+                    if (request.TrangThaiPheDuyet != "DaDuyet" && request.TrangThaiPheDuyet != "TuChoi")
+                        throw new Exception("Trạng thái phê duyệt không hợp lệ.");
+
+                    if (request.TrangThaiPheDuyet == "TuChoi" && string.IsNullOrWhiteSpace(request.LyDo))
+                        throw new Exception("Phải nhập lý do khi từ chối");
+
+                    var baiKiemTraNhap = await _taiLieuRepository.GetByIdAsync(request.IdBanNhap);
+                    if (baiKiemTraNhap == null)
+                        throw new Exception("Không tìm thấy bản nháp");
+
+                    if (baiKiemTraNhap.TrangThaiPheDuyet != "ChoDuyet")
+                        throw new Exception("Bài giảng không ở trạng thái chờ duyệt.");
+
+                    var ngayDuyet = DateTime.Now;
+
+                    // ── TuChoi ──────────────────────────────────────────
+                    if (request.TrangThaiPheDuyet == "TuChoi")
+                    {
+                        baiKiemTraNhap.TrangThaiPheDuyet = "TuChoi";
+                        baiKiemTraNhap.TrangThai = "TuChoi";
+
+                        _taiLieuRepository.Update(baiKiemTraNhap);
+                        _taiLieuRepository.Delete(baiKiemTraNhap);
+                    }
+                    // ── DaDuyet ─────────────────────────────────────────
+                    else
+                    {
+                        baiKiemTraNhap.TrangThaiPheDuyet = "DaDuyet";
+                        baiKiemTraNhap.TrangThai = "HoatDong";
+                        _taiLieuRepository.Update(baiKiemTraNhap);
+                
+                    }
+
+                    // ── Ghi lịch sử ─────────────────────────────────────
+                    var lichSu = new LichSuKiemDuyetKhoaHoc
+                    {
+                        Id = Guid.NewGuid(),
+                        IdDoiDuong = request.IdBanNhap,
+                        LoaiDoiTuong = "TaiLieu",
+                        LyDo = request.LyDo,
+                        NgayDuyet = ngayDuyet
+                    };
+
+                    await CreateAsync(lichSu);
+                    await _taiLieuRepository.SaveAsync();
+                    await SaveAsync();
+
+                    return new KiemDuyetKhoaHocDto
+                    {
+                        IdDoiTuong = baiKiemTraNhap.Id,
+                        LoaiDoiTuong = lichSu.LoaiDoiTuong,
+                        TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+                        NgayDuyet = ngayDuyet
+                    };
+                }
+                #endregion
+
+
         #region KiemDuyetBaiKiemTra
         public async Task<KiemDuyetKhoaHocDto> KiemDuyetBaiKiemTra(KiemDuyetKhoaHocRequest request)
         {
@@ -965,72 +1105,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             return new KiemDuyetKhoaHocDto
             {
                 IdDoiTuong = baiKiemTraNhap.IdBanGhiTruoc ?? baiKiemTraNhap.Id,
-                LoaiDoiTuong = lichSu.LoaiDoiTuong,
-                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
-                NgayDuyet = ngayDuyet
-            };
-        }
-        #endregion
-
-
-        #region KiemDuyetTaiLieu
-        public async Task<KiemDuyetKhoaHocDto> KiemDuyetTaiLieu(KiemDuyetKhoaHocRequest request)
-        {
-            // ── Kiểm tra quyền ──────────────────────────────────
-            var role = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
-            if (role != "Admin")
-                throw new UnauthorizedAccessException("Chỉ Admin mới có quyền kiểm duyệt");
-
-            if (request.TrangThaiPheDuyet != "DaDuyet" && request.TrangThaiPheDuyet != "TuChoi")
-                throw new Exception("Trạng thái phê duyệt không hợp lệ.");
-
-            if (request.TrangThaiPheDuyet == "TuChoi" && string.IsNullOrWhiteSpace(request.LyDo))
-                throw new Exception("Phải nhập lý do khi từ chối");
-
-            var baiKiemTraNhap = await _taiLieuRepository.GetByIdAsync(request.IdBanNhap);
-            if (baiKiemTraNhap == null)
-                throw new Exception("Không tìm thấy bản nháp");
-
-            if (baiKiemTraNhap.TrangThaiPheDuyet != "ChoDuyet")
-                throw new Exception("Bài giảng không ở trạng thái chờ duyệt.");
-
-            var ngayDuyet = DateTime.Now;
-
-            // ── TuChoi ──────────────────────────────────────────
-            if (request.TrangThaiPheDuyet == "TuChoi")
-            {
-                baiKiemTraNhap.TrangThaiPheDuyet = "TuChoi";
-                baiKiemTraNhap.TrangThai = "TuChoi";
-
-                _taiLieuRepository.Update(baiKiemTraNhap);
-                _taiLieuRepository.Delete(baiKiemTraNhap);
-            }
-            // ── DaDuyet ─────────────────────────────────────────
-            else
-            {
-                baiKiemTraNhap.TrangThaiPheDuyet = "DaDuyet";
-                baiKiemTraNhap.TrangThai = "HoatDong";
-                _taiLieuRepository.Update(baiKiemTraNhap);
-                
-            }
-
-            // ── Ghi lịch sử ─────────────────────────────────────
-            var lichSu = new LichSuKiemDuyetKhoaHoc
-            {
-                Id = Guid.NewGuid(),
-                IdDoiDuong = request.IdBanNhap,
-                LoaiDoiTuong = "TaiLieu",
-                LyDo = request.LyDo,
-                NgayDuyet = ngayDuyet
-            };
-
-            await CreateAsync(lichSu);
-            await _taiLieuRepository.SaveAsync();
-            await SaveAsync();
-
-            return new KiemDuyetKhoaHocDto
-            {
-                IdDoiTuong = baiKiemTraNhap.Id,
                 LoaiDoiTuong = lichSu.LoaiDoiTuong,
                 TrangThaiPheDuyet = request.TrangThaiPheDuyet,
                 NgayDuyet = ngayDuyet

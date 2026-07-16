@@ -57,6 +57,23 @@ namespace Eduverse.Api.Controller
         }
 
 
+        [HttpPost("tailieu-update")]
+        [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<TaiLieuDto>> UpdateTaiLieu([FromForm] UpdateTaiLieuRequest request)
+        {
+            try
+            {
+                var result = await _taiLieuService.UpdateTaiLieu(request);
+                return DataResponse<TaiLieuDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<TaiLieuDto>.False(ex.Message);
+            }
+        }
+
+
         [HttpDelete("tailieu-delete/{id}")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteTaiLieu( Guid id)

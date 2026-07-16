@@ -1,12 +1,13 @@
-﻿using Eduverse.Service.Common;
-using Eduverse.Model.Entities;
+﻿using Eduverse.Model.Entities;
+using Eduverse.Service.Common;
+using Eduverse.Service.KhoaHocService.Dto;
+using Eduverse.Service.KhoaHocService.Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Eduverse.Service.KhoaHocService.Dto;
-using Eduverse.Service.KhoaHocService.Request;
+using static Eduverse.Service.KhoaHocService.KhoaHocService;
 
 namespace Eduverse.Service.KhoaHocService
 {
@@ -24,7 +25,7 @@ namespace Eduverse.Service.KhoaHocService
 
         Task<List<KhoaHocDto>> ChuyenTrangThaiDangSua(BatchIdsRequest request);
 
-        Task<List<KhoaHocDto>> ChuyenTrangThaiChoDuyet(BatchIdsRequest request);
+        Task<KhoaHocDto> ChuyenTrangThaiChoDuyet(Guid idKhoaHoc);
 
         Task<GetToUpdateKhoaHoc> GetToUpdateKhoaHoc(Guid IdKhoaHoc);
 
@@ -33,6 +34,8 @@ namespace Eduverse.Service.KhoaHocService
         Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request);
 
         Task<KhoaHocDto> UpdateKhoaHoc(UpdateKhoaHocRequest request);
+
+        Task<KhoaHocDraftResultDto> CreateFullKhoaHocDraft(Guid IdKhoaHoc);
 
         Task<bool> DeleteKhoaHoc(Guid id);
 
