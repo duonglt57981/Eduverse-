@@ -11,9 +11,10 @@ namespace Eduverse.Service.CauHoiService.Request
     {
         public string? TenCauHoi { get; set; }
         public string? NoiDungCauHoi { get; set; }
-        public string? LoaiCauHoi { get; set; }      // VD: "MotDapAn", "NhieuDapAn", "DungSai"...
+        public string? LoaiCauHoi { get; set; }      
         public double? Diem { get; set; }
         public string? DoKho { get; set; }           // VD: "De", "TrungBinh", "Kho"
+        public int? ThuTuSapXep { get; set; }
 
         public List<CreateDapAnRequest> DanhSachDapAn { get; set; } = new();
     }

@@ -16,13 +16,7 @@ namespace Eduverse.Service.BaiKiemTraService.Request
 
         public string? MoTa { get; set; }
 
-        public double? DiemDat { get; set; }
-
-        public int? GioiHanThoiGian { get; set; }
-
-        public bool? ChoLamLai { get; set; }
-
-        public int? SoLanLamToiDa { get; set; }
+        public int? ThuTuSapXep { get; set; }
 
         public List<UpdateCauHoiRequest> DanhSachCauHoi { get; set; }
     }

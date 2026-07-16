@@ -13,6 +13,7 @@ namespace Eduverse.Service.BaiGiangService.Request
         public string? TieuDe { get; set; }
         public bool? LaBaiGiangFree { get; set; } = false;
         public Guid? IdPhan { get; set; }
+        public int? ThuTuSapXep { get; set; }
         //
         public IFormFile? Video { get; set; }
     }

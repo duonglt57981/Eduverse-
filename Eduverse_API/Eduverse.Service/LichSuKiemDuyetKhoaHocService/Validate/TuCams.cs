@@ -95,7 +95,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Validate
             "jackass", "twat", "wanker", "prick", "nigger", "retard",
 
             // 2. Violence (Bạo lực cụ thể)
-            "kill", "killing", "murder", "slaughter", "execute",
+            "kill", "killing", "murder", "slaughter",
             "assassinate", "assault", "rape", "molest",
             "terrorism", "terrorist", "genocide", "massacre",
             "behead", "lynch", "mass murder", "serial killer", "homicide",

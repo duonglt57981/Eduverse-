@@ -1,11 +1,13 @@
 using AutoMapper;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
+using Eduverse.Repository.BaiKiemTraRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Repository.TienDoHocTapRepository;
 using Eduverse.Service.BaiGiangService;
+using Eduverse.Service.BaiKiemTraService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.KhoaHocService;
@@ -34,7 +36,7 @@ namespace Eduverse.Service.PhanService
         private readonly ITienDoHocTapRepository _tienDoHocTapRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
-
+        private readonly IBaiKiemTraRepository _baiKiemTraRepository;
         
         public PhanService(
             IPhanRepository phanRepository,
@@ -46,7 +48,8 @@ namespace Eduverse.Service.PhanService
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             ITienDoHocTapRepository tienDoHocTapRepository,
             IKhoaHocService khoaHocService,
-            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService
+            ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
+            IBaiKiemTraRepository baiKiemTraRepository
             ) : base(phanRepository)
         {
             _mapper = mapper;
@@ -57,6 +60,7 @@ namespace Eduverse.Service.PhanService
             _tienDoHocTapRepository = tienDoHocTapRepository;
             _khoaHocService = khoaHocService;
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
+            _baiKiemTraRepository = baiKiemTraRepository;
             this._httpContextAccessor = httpContextAccessor;
         }
 
@@ -92,7 +96,6 @@ namespace Eduverse.Service.PhanService
 
         public async Task<List<PhanHocDto>> GetListForManager(Guid IdKhoaHoc)
         {
-            // Lấy userId từ token
             var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdClaim, out var userId))
             {
@@ -100,17 +103,19 @@ namespace Eduverse.Service.PhanService
             }
 
             var query = GetAll()
-                .Where(x => x.TrangThaiPheDuyet != "TuChoi"
-                    && x.TrangThai != "DaXoa"
-                    && x.CreatedId == userId
-                    && x.IdKhoaHoc == IdKhoaHoc)
-                .OrderBy(x => x.CreatedDate)
+                .Where(x => x.CreatedId == userId
+                            && x.IdKhoaHoc == IdKhoaHoc
+                            && x.TrangThaiPheDuyet != "TuChoi"
+                            && x.TrangThai != "DaXoa")
+                .AsNoTracking() 
+                .OrderBy(x => x.ThuTuSapXep ?? 0) 
                 .Select(x => new PhanHocDto
                 {
                     Id = x.Id,
-                    IdKhoaHoc  = IdKhoaHoc,
+                    IdKhoaHoc = x.IdKhoaHoc, 
                     TenPhan = x.TenPhan,
                     TrangThai = x.TrangThai,
+                    ThuTuSapXep = x.ThuTuSapXep,
                     TrangThaiPheDuyet = x.TrangThaiPheDuyet,
                     IsBanHienTai = x.IsBanHienTai,
                     IdBanGhiTruoc = x.IdBanGhiTruoc
@@ -135,9 +140,6 @@ namespace Eduverse.Service.PhanService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học");
 
-            var maxThuTu = await GetQueryable()
-                .Where(x => x.IdKhoaHoc == request.IdKhoaHoc)
-                .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
             var content = $"{request.TenPhan} {request.MieuTa}";
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(content);
@@ -149,9 +151,9 @@ namespace Eduverse.Service.PhanService
                 IdKhoaHoc = request.IdKhoaHoc,
                 TenPhan = request.TenPhan.Trim(),
                 MieuTa = request.MieuTa,
-                ThuTuSapXep = maxThuTu + 1,
-                TrangThai = "HoatDong",
-                TrangThaiPheDuyet = "DaDuyet"
+                ThuTuSapXep = request.ThuTuSapXep,
+                TrangThai = "DangSua",
+                TrangThaiPheDuyet = "DangSua"
 
             };
 
@@ -234,6 +236,70 @@ namespace Eduverse.Service.PhanService
             return true;
 
 
+        }
+
+
+        public async Task UpdateStructure(UpdateCourseStructureRequest request)
+        {
+            var phans = await
+                GetQueryable()
+                .Where(x =>
+                    x.IdKhoaHoc == request.IdKhoaHoc &&
+                    x.IsBanHienTai)
+                .ToListAsync();
+
+            var phanIds = phans.Select(x => x.Id).ToList();
+
+            var baiGiangs = await _baiGiangService
+                .GetQueryable()
+                .Where(x =>
+                    x.IsBanHienTai &&
+                    phanIds.Contains(x.IdPhan))
+                .ToListAsync();
+
+            var baiKiemTras = await _baiKiemTraRepository
+                .GetQueryable()
+                .Where(x =>
+                    x.IsBanHienTai &&
+                    x.IdPhan.HasValue &&
+                    phanIds.Contains(x.IdPhan.Value))
+                .ToListAsync();
+
+            var phanDict = phans.ToDictionary(x => x.Id);
+            var baiGiangDict = baiGiangs.ToDictionary(x => x.Id);
+            var baiKiemTraDict = baiKiemTras.ToDictionary(x => x.Id);
+
+            foreach (var section in request.Sections)
+            {
+                if (!phanDict.TryGetValue(section.IdPhan, out var phan))
+                    continue;
+
+                phan.ThuTuSapXep = section.ThuTuSapXep;
+
+                foreach (var item in section.Items)
+                {
+                    if (item.Loai == "BaiGiang")
+                    {
+                        if (!baiGiangDict.TryGetValue(item.Id, out var baiGiang))
+                            continue;
+
+                        baiGiang.IdPhan = section.IdPhan;
+
+                        baiGiang.ThuTuSapXep = item.ThuTuSapXep;
+                    }
+                    else if (item.Loai == "BaiKiemTra")
+                    {
+                        if (!baiKiemTraDict.TryGetValue(item.Id, out var baiKiemTra))
+                            continue;
+
+                        baiKiemTra.IdPhan = section.IdPhan;
+
+                        baiKiemTra.ThuTuSapXep = item.ThuTuSapXep;
+                    }
+                }
+            }
+
+            await SaveAsync();
         }
     }
 }

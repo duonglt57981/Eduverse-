@@ -113,7 +113,7 @@ namespace Eduverse.Service.TaiLieuService
         }
 
 
-        public async Task<TaiLieuDto> UpdateKhoaHoc(UpdateTaiLieuRequest request)
+        public async Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
 

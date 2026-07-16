@@ -153,6 +153,93 @@ namespace Eduverse.Service.CloudinaryService
             return (false, null);
         }
 
+
+        public async Task<CloudinaryVideoDto> UpdateVideoBaiGiangAsync(string publicId,IFormFile file,CancellationToken cancellationToken = default)
+        {
+            // ── 1. Kiểm tra tham số ──────────────────────────────────────
+            if (string.IsNullOrWhiteSpace(publicId))
+                throw new ArgumentException("PublicId không được để trống", nameof(publicId));
+
+            if (file == null || file.Length == 0)
+                throw new Exception("File không hợp lệ");
+
+            // ── 2. Validate kích thước và định dạng ──────────────────────
+            const long maxSize = 2L * 1024 * 1024 * 1024; // 2GB
+            if (file.Length > maxSize)
+                throw new Exception("Video không được vượt quá 2GB");
+
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            string[] allowedExtensions = { ".mp4", ".mov", ".avi", ".mkv", ".webm" };
+            if (!allowedExtensions.Contains(extension))
+                throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
+
+            // ── 3. Kiểm tra video cũ có tồn tại (bắt buộc để ghi đè) ──────
+            try
+            {
+                var existingResource = await _cloudinary.GetResourceAsync(
+                    new GetResourceParams(publicId) { ResourceType = ResourceType.Video },
+                    cancellationToken
+                );
+
+                if (existingResource == null || string.IsNullOrEmpty(existingResource.PublicId))
+                    throw new Exception($"Không tìm thấy video với PublicId: {publicId}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Không thể xác minh video cũ: {ex.Message}");
+            }
+
+            // ── 4. Upload ghi đè ──────────────────────────────────────────
+            await using var inputStream = file.OpenReadStream();
+
+            var uploadParams = new VideoUploadParams
+            {
+                File = new FileDescription(file.FileName, inputStream),
+                PublicId = publicId,
+                Folder = "eduverse/bai-giang",
+                UseFilename = false,        // dùng publicId chỉ định, không dùng tên file
+                UniqueFilename = false,     // không thêm hậu tố ngẫu nhiên
+                Overwrite = true,           // ghi đè lên video cũ
+                EagerAsync = true,
+                EagerTransforms = new List<Transformation>
+        {
+            new Transformation().RawTransformation("sp_sd/vc_h264,ac_aac,f_m3u8"),
+            new Transformation().RawTransformation("sp_full_hd/vc_h264,ac_aac,f_m3u8"),
+        },
+            };
+
+            var uploadResult = await _cloudinary.UploadLargeAsync(
+                uploadParams,
+                bufferSize: 100 * 1024 * 1024,
+                cancellationToken: cancellationToken
+            );
+
+            if (uploadResult == null)
+                throw new Exception("Upload thất bại: Không nhận được phản hồi");
+
+            if (uploadResult.Error != null)
+                throw new Exception($"Upload thất bại: {uploadResult.Error.Message}");
+
+            if (string.IsNullOrEmpty(uploadResult.PublicId))
+                throw new Exception("Upload thất bại: Không lấy được PublicId");
+
+            var thoiLuong = uploadResult.Duration > 0
+                ? (int)Math.Round(uploadResult.Duration)
+                : 0;
+
+            // ── 5. Chờ HLS ready ──────────────────────────────────────────
+            var (hlsReady, hlsUrl) = await WaitForHlsReadyAsync(publicId, cancellationToken);
+            if (!hlsReady || string.IsNullOrEmpty(hlsUrl))
+                throw new Exception("Cloudinary xử lý HLS quá lâu. Vui lòng thử lại sau.");
+
+            return new CloudinaryVideoDto
+            {
+                IdVideoBaiGiang = publicId,
+                URLBaiGiang = hlsUrl,
+                ThoiLuong = thoiLuong,
+            };
+        }
+
         #endregion
 
 

@@ -50,7 +50,6 @@ namespace Eduverse.Service.BaiGiangService
 
         public async Task<List<BaiGiangDto>> GetListForManager(Guid IdPhan)
         {
-            // Lấy userId từ token
             var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdClaim, out var userId))
             {
@@ -58,15 +57,16 @@ namespace Eduverse.Service.BaiGiangService
             }
 
             var query = GetAll()
-                .Where(x => x.TrangThaiPheDuyet != "TuChoi"
-                    && x.TrangThai != "DaXoa"
-                    && x.CreatedId == userId
-                    && x.IdPhan == IdPhan)
-                .OrderBy(x => x.CreatedDate)
+                .Where(x => x.IdPhan == IdPhan
+                            && x.CreatedId == userId
+                            && x.TrangThaiPheDuyet != "TuChoi"
+                            && x.TrangThai != "DaXoa")
+                .AsNoTracking() 
+                .OrderBy(x => x.ThuTuSapXep ?? 0) 
                 .Select(x => new BaiGiangDto
                 {
                     Id = x.Id,
-                    IdPhan = IdPhan,
+                    IdPhan = x.IdPhan, 
                     TieuDe = x.TieuDe,
                     LoaiBaiGiang = x.LoaiBaiGiang,
                     ThuTuSapXep = x.ThuTuSapXep,
@@ -187,9 +187,6 @@ namespace Eduverse.Service.BaiGiangService
 
             int thoiLuongBaiGiang = (int)uploadResult.ThoiLuong;
 
-            var maxThuTu = await GetQueryable()
-                .Where(x => x.IdPhan == request.IdPhan.Value)
-                .MaxAsync(x => (int?)x.ThuTuSapXep) ?? 0;
 
             //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
 
@@ -200,7 +197,7 @@ namespace Eduverse.Service.BaiGiangService
                 LoaiBaiGiang = request.Video == null ? "Bài giảng tài liệu" : "Bài giảng video",
                 IdVideoBaiGiang = uploadResult.IdVideoBaiGiang,
                 URLBaiGiang = uploadResult.URLBaiGiang.Trim(),
-                ThuTuSapXep = maxThuTu + 1,
+                ThuTuSapXep = request.ThuTuSapXep,
                 ThoiLuong = thoiLuongBaiGiang,
                 LaBaiGiangFree = request.LaBaiGiangFree,
                 TrangThai = "DangSua",
@@ -245,12 +242,6 @@ namespace Eduverse.Service.BaiGiangService
             if (string.IsNullOrWhiteSpace(request.TieuDe))
                 throw new Exception("Tên bài giảng không được để trống");
 
-            if (request.IdPhan == null)
-                throw new Exception("Id phần học không hợp lệ");
-
-            var phanHoc = await _phanRepository.GetByIdAsync(request.IdPhan.Value);
-            if (phanHoc == null)
-                throw new Exception("Không tìm thấy phần học");
 
             var thuTuDaTon = await GetQueryable()
                 .AnyAsync(x =>
@@ -268,7 +259,16 @@ namespace Eduverse.Service.BaiGiangService
             string idVideo = banGoc.IdVideoBaiGiang;
             int? thoiLuong = banGoc.ThoiLuong;
 
-            if (request.Video != null)
+            if (request.Video != null && (banGoc.TrangThai == "DangSua" || banGoc.TrangThai == "TuChoi"))
+            {
+                var upload = await _cloudinaryService.UpdateVideoBaiGiangAsync(idVideo,request.Video);
+                if (upload == null)
+                    throw new Exception("Upload hình ảnh thất bại");
+
+                video = upload.URLBaiGiang;
+                idVideo = upload.IdVideoBaiGiang;
+
+            }else if (request.Video != null && banGoc.TrangThai == "DaDuyet")
             {
                 var upload = await _cloudinaryService.UploadVideoBaiGiangAsync(request.Video);
                 if (upload == null)
@@ -276,14 +276,12 @@ namespace Eduverse.Service.BaiGiangService
 
                 video = upload.URLBaiGiang;
                 idVideo = upload.IdVideoBaiGiang;
-
             }
 
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
 
             if((banGoc.TrangThaiPheDuyet == "DangSua") && banGoc.IsBanHienTai == true && banGoc != null)
             {
-                banGoc.IdPhan = request.IdPhan.Value;
                 banGoc.TieuDe = request.TieuDe;
                 banGoc.ThuTuSapXep = request.ThuTuSapXep == null? banGoc.ThuTuSapXep : request.ThuTuSapXep;
                 banGoc.LaBaiGiangFree = request.LaBaiGiangFree;
@@ -294,6 +292,7 @@ namespace Eduverse.Service.BaiGiangService
                 banGoc.IsPendingSwap = false;
                 banGoc.TrangThai = "DangSua";
                 banGoc.TrangThaiPheDuyet = "DangSua";
+                banGoc.ThuTuSapXep = request.ThuTuSapXep;
 
                 
 
@@ -327,7 +326,6 @@ namespace Eduverse.Service.BaiGiangService
                            $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
                     );
 
-                banNhap.IdPhan = request.IdPhan.Value;
                 banNhap.IdBanGhiTruoc = banGoc.Id;
                 banNhap.TieuDe = request.TieuDe;
                 banNhap.ThuTuSapXep = request.ThuTuSapXep == 0 ? banGoc.ThuTuSapXep : request.ThuTuSapXep;
@@ -349,7 +347,6 @@ namespace Eduverse.Service.BaiGiangService
             {
                 var banNhapBaiGiang = new BaiGiang
                 {
-                    IdPhan = request.IdPhan.Value,
                     IdBanGhiTruoc = banGoc.Id,
                     TieuDe = request.TieuDe,
                     ThuTuSapXep = request.ThuTuSapXep == 0 ? banGoc.ThuTuSapXep : request.ThuTuSapXep,

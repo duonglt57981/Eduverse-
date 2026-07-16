@@ -28,24 +28,24 @@ namespace Eduverse.Api.Controller
         }
 
 
-        //[HttpGet("getquizz-learning/{IdDangKi}")]
-        //[Authorize(Roles = "Admin,GiaoVien,HocVien")]
-        //public async Task<DataResponse<GetQuizToLearningDto>> GetQuizToLearning(Guid IdDangKi)
-        //{
-        //    try
-        //    {
-        //        var result = await _baiKiemTraService.GetQuizToLearning(IdDangKi);
-        //        return DataResponse<GetQuizToLearningDto>.Success(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return DataResponse<GetQuizToLearningDto>.False(ex.Message);
-        //    }
+        [HttpGet("getlistformanager/{IdPhan}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<BaiKiemTraDto>>> GetListForManager(Guid IdPhan)
+        {
+            try
+            {
+                var result = await _baiKiemTraService.GetListForManager(IdPhan);
+                return DataResponse<List<BaiKiemTraDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<BaiKiemTraDto>>.False(ex.Message);
+            }
 
-        //}
+        }
 
 
-        [HttpPost("baikiemtra")]
+        [HttpPost("create")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ( CreateBaiKiemTraRequest request)
         {
@@ -62,7 +62,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPut("baikiemtra/{id}")]
+        [HttpPut("update/{id}")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<UpdateBaiKiemTraDto>> UpdateBaiKiemTra([FromBody] UpdateBaiKiemTraRequest request)
         {
@@ -78,7 +78,7 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpDelete("baikiemtra/{Id}")]
+        [HttpDelete("delete/{Id}")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<bool>> DeleteBaiKiemTra( Guid Id)
         {

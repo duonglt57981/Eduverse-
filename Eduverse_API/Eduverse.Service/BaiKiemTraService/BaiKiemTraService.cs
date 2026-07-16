@@ -87,6 +87,62 @@ namespace Eduverse.Service.BaiKiemTraService
             _khoaHocRepository = khoaHocRepository;
         }
 
+        #region GetListForManager
+        public async Task<List<BaiKiemTraDto>> GetListForManager(Guid idPhan)
+        {
+            var baiKiemTras = await GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdPhan == idPhan && !x.IsDeleted)
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            if (baiKiemTras.Count == 0)
+                return new List<BaiKiemTraDto>();
+
+            var baiKiemTraIds = baiKiemTras.Select(x => x.Id).ToList();
+
+            var cauHois = await _cauHoiService
+                .GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdBaiKiemTra.HasValue && baiKiemTraIds.Contains(x.IdBaiKiemTra.Value) && !x.IsDeleted)
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            var cauHoiIds = cauHois.Select(x => x.Id).ToList();
+
+            var dapAns = await _dapAnService
+                .GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value) && !x.IsDeleted)
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            var result = baiKiemTras.Select(bkt =>
+            {
+                var item = _mapper.Map<BaiKiemTra, BaiKiemTraDto>(bkt);
+
+                item.DanhSachCauHois = cauHois
+                    .Where(c => c.IdBaiKiemTra == bkt.Id)
+                    .Select(c =>
+                    {
+                        var cauHoiDto = _mapper.Map<CauHoi, CauHoiDto>(c);
+                        cauHoiDto.DanhSachDapAns = dapAns
+                            .Where(d => d.IdCauHoi == c.Id)
+                            .Select(d => _mapper.Map<DapAn, CreateDapAnDto>(d))
+                            .ToList();
+                        return cauHoiDto;
+                    })
+                    .ToList();
+                
+                item.SoCauHoi = item.DanhSachCauHois.Count;
+
+                return item;
+            }).ToList();
+
+            return result;
+        }
+        #endregion
+
         //public async Task<GetQuizToLearningDto> GetQuizToLearning(Guid idDangKy)
         //{
         //    // ─── 1. Lấy userId từ token ───
@@ -396,19 +452,19 @@ namespace Eduverse.Service.BaiKiemTraService
             if (request.MoTa != null && request.MoTa.Length > 1000)
                 throw new Exception("Mô tả không được vượt quá 1000 ký tự.");
 
-            if (request.DiemDat < 50 || request.DiemDat > 100)
-                throw new Exception("Điểm đạt phải từ 50 đến 100.");
+            //if (request.DiemDat < 50 || request.DiemDat > 100)
+            //    throw new Exception("Điểm đạt phải từ 50 đến 100.");
 
-            if (request.GioiHanThoiGian < 0 || request.GioiHanThoiGian > 1000000000)
-                throw new Exception("Giới hạn thời gian làm bài không hợp lệ.");
+            //if (request.GioiHanThoiGian < 0 || request.GioiHanThoiGian > 1000000000)
+            //    throw new Exception("Giới hạn thời gian làm bài không hợp lệ.");
 
-            if (request.ChoLamLai == true && request.SoLanLamToiDa <= 0)
-                throw new Exception("Khi cho phép làm lại, số lần làm lại tối đa phải lớn hơn 0.");
+            //if (request.ChoLamLai == true && request.SoLanLamToiDa <= 0)
+            //    throw new Exception("Khi cho phép làm lại, số lần làm lại tối đa phải lớn hơn 0.");
 
-            if (request.ChoLamLai == false && request.SoLanLamToiDa > 0)
-                throw new Exception("Khi không cho phép làm lại, không được nhập số lần làm lại tối đa.");
+            //if (request.ChoLamLai == false && request.SoLanLamToiDa > 0)
+            //    throw new Exception("Khi không cho phép làm lại, không được nhập số lần làm lại tối đa.");
 
-            if(request.SoLanLamToiDa <= 0 || request.SoLanLamToiDa > 1000000000)
+            //if(request.SoLanLamToiDa <= 0 || request.SoLanLamToiDa > 1000000000)
 
             // ===== 2. VALIDATE CÂU HỎI =====
             if (request.DanhSachCauHoi == null || !request.DanhSachCauHoi.Any())
@@ -474,7 +530,7 @@ namespace Eduverse.Service.BaiKiemTraService
                 if (cauHoi.DanhSachDapAn == null || cauHoi.DanhSachDapAn.Count < 2)
                     throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
 
-                if (cauHoi.DanhSachDapAn.Count > 6)
+                if (cauHoi.DanhSachDapAn.Count > 15)
                     throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được vượt quá 6 đáp án.");
 
 
@@ -531,13 +587,14 @@ namespace Eduverse.Service.BaiKiemTraService
                 IdPhan = request.IdPhan.Value,
                 TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
                 MoTa = request.MoTa?.Trim(),
-                DiemDat = request.DiemDat ?? 0,
-                GioiHanThoiGian = request.GioiHanThoiGian,
-                ChoLamLai = request.ChoLamLai,
-                SoLanLamToiDa = request.ChoLamLai.Value ? request.SoLanLamToiDa : 0,
+                DiemDat = 100,
+                GioiHanThoiGian = 0,
+                ChoLamLai = true,
+                SoLanLamToiDa = 0,
                 TrangThai = "DangSua",
                 TrangThaiPheDuyet = "DangSua",
                 IsBanHienTai = true,
+                ThuTuSapXep = request.ThuTuSapXep
             };
         }
 
@@ -559,9 +616,9 @@ namespace Eduverse.Service.BaiKiemTraService
                     NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
                     LoaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI",
                     DoKho = cauHoiReq.DoKho,
-                    ThuTuSapXep = thuTuCauHoi++,
-                    TrangThai = "HoatDong",
-                    TrangThaiPheDuyet = "TheoBKT",
+                    ThuTuSapXep = cauHoiReq.ThuTuSapXep,
+                    TrangThai = "DangSua",
+                    TrangThaiPheDuyet = "DangSua",
                     IsBanHienTai = true,
                 };
 
@@ -577,8 +634,8 @@ namespace Eduverse.Service.BaiKiemTraService
                         NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
                         LaDapAnDung = dapAnReq.LaDapAnDung,
                         ThuTuSapXep = dapAnReq.ThuTuSapXep ?? thuTuDapAn,
-                        TrangThai = "HoatDong",
-                        TrangThaiPheDuyet = "TheoBKT",
+                        TrangThai = "DangSua",
+                        TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
                     });
                     thuTuDapAn++;
@@ -706,18 +763,17 @@ namespace Eduverse.Service.BaiKiemTraService
                 var banNhap = await GetQueryable()
                     .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id && !x.IsDeleted);
 
-                if (banNhap != null)
-                {
-                    // Nếu đã có bản nháp, cập nhật bản nháp
-                    await UpdateDraftAsync(banNhap, banGoc, request, nguoiTao);
-                    return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhap);
-                }
-                else
-                {
+                //if (banNhap != null)
+                //{
+                //    // Nếu đã có bản nháp, cập nhật bản nháp
+                //    await UpdateDraftAsync(banNhap, banGoc, request, nguoiTao);
+                //    return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhap);
+                //}
+
                     // Tạo bản nháp mới từ bản gốc
                     var banNhapMoi = await CreateDraftFromOriginalAsync(banGoc, request, nguoiTao);
                     return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhapMoi);
-                }
+                
             }
 
             throw new Exception($"Không thể xử lý bài kiểm tra ở trạng thái: {banGoc.TrangThaiPheDuyet}");
@@ -740,26 +796,26 @@ namespace Eduverse.Service.BaiKiemTraService
             if (request.MoTa != null && request.MoTa.Length > 1000)
                 throw new Exception("Mô tả không được vượt quá 1000 ký tự");
 
-            // Validate điểm đạt
-            if (request.DiemDat < 50 || request.DiemDat > 100)
-                throw new Exception("Điểm đạt phải từ 50 đến 100");
+            //// Validate điểm đạt
+            //if (request.DiemDat < 50 || request.DiemDat > 100)
+            //    throw new Exception("Điểm đạt phải từ 50 đến 100");
 
-            // Validate thời gian
-            if (request.GioiHanThoiGian < 0 || request.GioiHanThoiGian > 1000000000)
-                throw new Exception("Thời gian làm bài không hợp lệ (0 - 1.000.000.000)");
+            //// Validate thời gian
+            //if (request.GioiHanThoiGian < 0 || request.GioiHanThoiGian > 1000000000)
+            //    throw new Exception("Thời gian làm bài không hợp lệ (0 - 1.000.000.000)");
 
-            if (request.GioiHanThoiGian < 1)
-                throw new Exception("Thời gian làm bài phải lớn hơn 0 phút");
+            //if (request.GioiHanThoiGian < 1)
+            //    throw new Exception("Thời gian làm bài phải lớn hơn 0 phút");
 
-            // Validate số lần làm lại
-            if (request.ChoLamLai == true && request.SoLanLamToiDa <= 0)
-                throw new Exception("Vui lòng nhập số lần làm lại tối đa khi cho phép làm lại.");
+            //// Validate số lần làm lại
+            //if (request.ChoLamLai == true && request.SoLanLamToiDa <= 0)
+            //    throw new Exception("Vui lòng nhập số lần làm lại tối đa khi cho phép làm lại.");
 
-            if (request.ChoLamLai == true && request.SoLanLamToiDa > 10)
-                throw new Exception("Số lần làm lại tối đa không được vượt quá 10.");
+            //if (request.ChoLamLai == true && request.SoLanLamToiDa > 10)
+            //    throw new Exception("Số lần làm lại tối đa không được vượt quá 10.");
 
-            if (request.ChoLamLai == false && request.SoLanLamToiDa > 0)
-                throw new Exception("Không thể nhập số lần làm lại tối đa khi không cho phép làm lại.");
+            //if (request.ChoLamLai == false && request.SoLanLamToiDa > 0)
+            //    throw new Exception("Không thể nhập số lần làm lại tối đa khi không cho phép làm lại.");
 
             // Validate câu hỏi
             if (request.DanhSachCauHoi == null || !request.DanhSachCauHoi.Any())
@@ -861,15 +917,16 @@ namespace Eduverse.Service.BaiKiemTraService
         {
             banGoc.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
             banGoc.MoTa = request.MoTa?.Trim();
-            banGoc.DiemDat = request.DiemDat;
-            banGoc.GioiHanThoiGian = request.GioiHanThoiGian;
-            banGoc.ChoLamLai = request.ChoLamLai;
-            banGoc.SoLanLamToiDa = request.ChoLamLai == true ? request.SoLanLamToiDa : 0;
+            banGoc.DiemDat = 100;
+            banGoc.GioiHanThoiGian = 0;
+            banGoc.ChoLamLai = true;
+            banGoc.SoLanLamToiDa = 0;
             banGoc.TrangThaiPheDuyet = "DangSua";
             banGoc.TrangThai = "DangSua";
             banGoc.IsBanHienTai = true;
             banGoc.UpdatedDate = DateTime.Now;
             banGoc.UpdatedBy = nguoiTao.ToString();
+            banGoc.ThuTuSapXep = request.ThuTuSapXep;
 
             await UpdateAsync(banGoc);
             await SaveAsync();
@@ -886,15 +943,16 @@ namespace Eduverse.Service.BaiKiemTraService
             banNhap.IdBanGhiTruoc = banGoc.Id;
             banNhap.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
             banNhap.MoTa = request.MoTa?.Trim();
-            banNhap.DiemDat = request.DiemDat;
-            banNhap.GioiHanThoiGian = request.GioiHanThoiGian;
-            banNhap.ChoLamLai = request.ChoLamLai;
-            banNhap.SoLanLamToiDa = request.ChoLamLai == true ? request.SoLanLamToiDa : 0;
+            banNhap.DiemDat = 100;
+            banNhap.GioiHanThoiGian = 0;
+            banNhap.ChoLamLai = true;
+            banNhap.SoLanLamToiDa = 0;
             banNhap.TrangThaiPheDuyet = "DangSua";
             banNhap.TrangThai = "DangSua";
             banNhap.IsBanHienTai = false;
             banNhap.UpdatedDate = DateTime.Now;
             banNhap.UpdatedBy = nguoiTao.ToString();
+            banNhap.ThuTuSapXep = request.ThuTuSapXep;
 
             await UpdateAsync(banNhap);
             await SaveAsync();
@@ -915,14 +973,15 @@ namespace Eduverse.Service.BaiKiemTraService
                 IdPhan = banGoc.IdPhan,
                 TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
                 MoTa = request.MoTa?.Trim(),
-                DiemDat = request.DiemDat,
-                GioiHanThoiGian = request.GioiHanThoiGian,
-                ChoLamLai = request.ChoLamLai,
+                DiemDat = 100,
+                GioiHanThoiGian = 0,
+                ChoLamLai = true,
                 SoLanLamLai = 0,
-                SoLanLamToiDa = request.ChoLamLai == true ? request.SoLanLamToiDa : 0,
+                SoLanLamToiDa = 0,
                 TrangThai = "DangSua",
                 TrangThaiPheDuyet = "DangSua",
                 IsBanHienTai = false,
+                ThuTuSapXep = request.ThuTuSapXep
             };
 
             await CreateAsync(banNhapMoi);
@@ -952,9 +1011,7 @@ namespace Eduverse.Service.BaiKiemTraService
             {
                 foreach (var c in canXoa)
                 {
-                    c.IsDeleted = true;
-                    c.UpdatedDate = DateTime.Now;
-                    await _cauHoiService.UpdateAsync(c);
+                    await _cauHoiService.DeleteAsync(c);
                 }
                 await _cauHoiService.SaveAsync();
             }
@@ -1125,23 +1182,65 @@ namespace Eduverse.Service.BaiKiemTraService
 
         public async Task<bool> DeleteQuiz(Guid id)
         {
-            var quiz = await GetByIdOrThrowAsync(id);
+            var quiz = await GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == id);
 
+            if (quiz == null)
+                throw new Exception("Không tìm thấy bài kiểm tra.");
+
+            // Kiểm tra đã có học viên đăng ký chưa
             var coNguoiHoc = await (
-                 from ph in _phanRepository.GetQueryable()
-                 join dk in _dangKyKhoaHocRepository.GetQueryable()
-                     on ph.IdKhoaHoc equals dk.IdKhoaHoc
-                 where ph.Id == quiz.IdPhan
-                 select dk.Id
-             ).AnyAsync();
-            quiz.TrangThai = coNguoiHoc == null ? "DaXoa" : "NgungHoatDong"; // nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
-                                                                                 //nếu isdele = true + HoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc;
+                from ph in _phanRepository.GetQueryable()
+                join dk in _dangKyKhoaHocRepository.GetQueryable()
+                    on ph.IdKhoaHoc equals dk.IdKhoaHoc
+                where ph.Id == quiz.IdPhan
+                select dk.Id
+            ).AnyAsync();
+
+            var trangThaiMoi = coNguoiHoc
+                ? "NgungHoatDong"
+                : "DaXoa";
+
+            quiz.TrangThai = trangThaiMoi;
+
+            // Cập nhật câu hỏi
+            var cauHois = await _cauHoiService.GetQueryable()
+                .Where(x => x.IdBaiKiemTra == id)
+                .ToListAsync();
+
+            foreach (var cauHoi in cauHois)
+            {
+                cauHoi.TrangThai = trangThaiMoi;
+                cauHoi.IsDeleted = true;
+            }
+
+            var cauHoiIds = cauHois.Select(x => x.Id).ToList();
+
+            var dapAns = await _dapAnService.GetQueryable()
+                .Where(x => cauHoiIds.Contains(x.IdCauHoi.Value))
+                .ToListAsync();
+
+            foreach (var dapAn in dapAns)
+            {
+                dapAn.TrangThai = trangThaiMoi;
+                dapAn.IsDeleted = true;
+            }
 
             await UpdateAsync(quiz);
 
+            foreach (var cauHoi in cauHois)
+            {
+                await _cauHoiService.UpdateAsync(cauHoi);
+            }
+
+            foreach (var dapAn in dapAns)
+            {
+                await _dapAnService.UpdateAsync(dapAn);
+            }
+
             return true;
         }
-        
+
         #region StartQuiz
         public async Task<LanLamBaiKiemTraDto> StartQuiz(StartQuizRequest request)
         {
@@ -1405,7 +1504,6 @@ namespace Eduverse.Service.BaiKiemTraService
             // 5. Tính điểm theo trọng số độ khó (tổng 100)
             var trongSoMap = new Dictionary<string, int> { { "De", 1 }, { "TrungBinh", 2 }, { "Kho", 3 } };
             var tongTrongSo = cauHois.Sum(x => trongSoMap.GetValueOrDefault(x.DoKho ?? "De", 1));
-
             var diemTheoCauHoi = new Dictionary<Guid, double>();
             foreach (var ch in cauHois)
             {

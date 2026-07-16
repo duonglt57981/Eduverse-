@@ -14,6 +14,7 @@ namespace Eduverse.Service.TaiLieuService
         Task<List<TaiLieuDto>> GetListForManager(Guid IdBaiGiang);
 
         Task<TaiLieuDto> CreateTaiLieu(CreateTaiLieuRequest request);
+        Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request);
 
         Task<bool> DeleteTaiLieu(Guid id);
     }

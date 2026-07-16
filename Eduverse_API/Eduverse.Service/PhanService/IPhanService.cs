@@ -21,5 +21,7 @@ namespace Eduverse.Service.PhanService
         Task<PhanHocDto> UpdatePhanHoc(UpdatePhanRequest request);
 
         Task<bool> DeletePhanHoc(Guid id);
+
+        Task UpdateStructure(UpdateCourseStructureRequest request);
     }
 }
