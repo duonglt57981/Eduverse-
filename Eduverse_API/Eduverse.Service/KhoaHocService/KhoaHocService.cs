@@ -84,9 +84,8 @@ namespace Eduverse.Service.KhoaHocService
             IBaiGiangService baiGiangService,
             ITaiLieuService taiLieuService,
             EduverseContext eduverseContext,
-            IElasticsearchService elasticsearchService
-            IDapAnService dapAnService,
-            EduverseContext eduverseContext
+            IElasticsearchService elasticsearchService,
+            IDapAnService dapAnService
 
         ) : base(khoaHocRepository)
         {
@@ -2043,12 +2042,7 @@ namespace Eduverse.Service.KhoaHocService
                 }
             }
 
-            foreach (var kh in khoaHocToUpdate)
-            {
-                try { await _elasticsearchService.IndexCourseAsync(kh.Id); } catch {}
-            }
-            var resultDtos = _mapper.MapList<KhoaHoc, KhoaHocDto>(khoaHocToUpdate);
-            return resultDtos.ToList();
+            return _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
         }
 
 
