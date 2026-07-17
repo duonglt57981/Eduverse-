@@ -10,7 +10,7 @@ using System.Security.Claims;
 namespace Eduverse.Api.Controller
 {
     [Route("api/[controller]")]
-    [Authorize(Roles = "HocVien")]
+    [Authorize(Roles = "HocVien,GiaoVien")]
     [ApiController]
     public class GioHangController : EduverseController
     {
