@@ -30,6 +30,7 @@ import {
 } from "@mui/material";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
+import { clearGioHang } from "@/src/store/gioHang/GioHangSlice";
 
 const RED = "#8B1313";
 const RED_DARK = "#6D0F0F";
@@ -66,6 +67,7 @@ export default function StudentHomeHeader() {
   const handleLogout = async () => {
     setAnchorEl(null);
     await dispatch(logout());
+    dispatch(clearGioHang());
     router.replace("/auth/login");
   };
 

@@ -1,746 +1,253 @@
-"use client";
-
-import { useState } from "react";
 import {
-  Box,
-  Typography,
-  Button,
-  Stack,
-  LinearProgress,
-  alpha,
-  Tooltip,
-  IconButton,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
+  Box, Typography, Button, LinearProgress, Stack,
+  Chip, IconButton, Tooltip, Dialog, DialogTitle,
+  DialogContent, DialogActions,
 } from "@mui/material";
-// FIX: MUI v9 - import named từ root package "@mui/icons-material" thay vì
-// subpath (subpath không resolve được ở v9, gây lỗi "Module not found").
 import {
-  CheckCircle as CheckCircleIcon,
-  RadioButtonUnchecked as RadioButtonUncheckedIcon,
-  CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon,
-  CheckBox as CheckBoxIcon,
-  Timer as TimerIcon,
-  Flag as FlagIcon,
-  NavigateNext as NavigateNextIcon,
-  NavigateBefore as NavigateBeforeIcon,
-  Send as SendIcon,
-  WarningAmber as WarningAmberIcon,
+  AccessTimeRounded, ChevronLeftRounded, ChevronRightRounded,
+  SendRounded, GridViewRounded, CheckCircleRounded,
 } from "@mui/icons-material";
-import { SelectedAnswers } from "../../hooks/useQuiz";
+import { useState, useEffect } from "react";
+import type { CauHoiLamBaiDto } from "../../hooks/useQuiz";
 
-const PRIMARY_RED = "#8B1313";
-const PRIMARY_RED_DARK = "#6B1414";
-
-interface DapAn {
-  id: string;
-  noiDung: string;
-}
-
-interface CauHoi {
-  id: string;
-  noiDung: string;
-  loai?: "single" | "multi" | string;
-  // Khớp với CauHoiLamBaiDto: field là "dapAn"
-  dapAn?: DapAn[];
-}
+const RED = "#8D1313";
+const LABELS = ["A", "B", "C", "D", "E", "F"];
 
 interface QuizViewProps {
-  tieuDe: string;
-  danhSachCauHoi: CauHoi[];
-  selectedAnswers: SelectedAnswers;
-  currentQuestion: number;
-  timeLeft: number | null;
-  submitting?: boolean;
-  onSelectAnswer: (cauHoiId: string, dapAnId: string, isMulti: boolean) => void;
-  onGoToQuestion: (idx: number) => void;
-  onSubmit: () => void;
+  cauHois: CauHoiLamBaiDto[];
+  traLois: Record<string, string[]>;
+  cauHoiHienTai: number;
+  thoiGianConLai: number;
+  coGioiHanThoiGian: boolean;
+  formatTimer: (s: number) => string;
+  loading: boolean;
+  onChonDapAn: (idCauHoi: string, idDapAn: string) => void;
+  onSetCauHoi: (i: number) => void;
+  onNopBai: () => void;
 }
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
+export function QuizView({
+  cauHois, traLois, cauHoiHienTai, thoiGianConLai,
+  coGioiHanThoiGian, formatTimer, loading,
+  onChonDapAn, onSetCauHoi, onNopBai,
+}: QuizViewProps) {
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [openOverview, setOpenOverview] = useState(false);
 
-export const QuizView = ({
-  tieuDe,
-  danhSachCauHoi,
-  selectedAnswers,
-  currentQuestion,
-  timeLeft,
-  submitting = false,
-  onSelectAnswer,
-  onGoToQuestion,
-  onSubmit,
-}: QuizViewProps) => {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [flagged, setFlagged] = useState<Set<number>>(new Set());
+  const cauHoi = cauHois[cauHoiHienTai];
+  const tongCau = cauHois.length;
+  const soDaTraLoi = cauHois.filter((c) => (traLois[c.id] ?? []).length > 0).length;
+  const progress = ((cauHoiHienTai + 1) / tongCau) * 100;
 
-  const total = danhSachCauHoi.length;
-  const cauHoi = danhSachCauHoi[currentQuestion];
-  const isMulti = cauHoi?.loai === "multi";
-  const answered = Object.keys(selectedAnswers).filter(
-    (k) => selectedAnswers[k].length > 0,
-  ).length;
-  const unanswered = total - answered;
-  const progress = total > 0 ? (answered / total) * 100 : 0;
-
-  const isTimeCritical = timeLeft !== null && timeLeft <= 120;
-  const isTimeWarning = timeLeft !== null && timeLeft <= 300;
-
-  const toggleFlag = (idx: number) => {
-    setFlagged((prev) => {
-      const s = new Set(prev);
-      s.has(idx) ? s.delete(idx) : s.add(idx);
-      return s;
-    });
-  };
-
-  const getQuestionStatus = (
-    idx: number,
-  ): "answered" | "flagged" | "current" | "empty" => {
-    const q = danhSachCauHoi[idx];
-    if (idx === currentQuestion) return "current";
-    if (flagged.has(idx)) return "flagged";
-    if (q && selectedAnswers[q.id]?.length > 0) return "answered";
-    return "empty";
-  };
+  const sapHetGio = coGioiHanThoiGian && thoiGianConLai <= 60;
+  const canhoHetGio = coGioiHanThoiGian && thoiGianConLai <= 180;
+  const isMulti = cauHoi?.loaiCauHoi === 2;
 
   if (!cauHoi) return null;
 
-  // Lấy danh sách đáp án từ field "dapAn" (CauHoiLamBaiDto)
-  const danhSachDapAn: DapAn[] = cauHoi.dapAn ?? [];
+  const selected = traLois[cauHoi.id] ?? [];
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        bgcolor: "grey.50",
-      }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Top bar */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          bgcolor: "#fff",
-          borderBottom: `1px solid ${alpha(PRIMARY_RED, 0.12)}`,
-          px: { xs: 2, md: 3 },
-          py: 1.25,
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-        }}
-      >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 700, color: "text.primary", lineHeight: 1.2 }}
-            noWrap
-          >
-            {tieuDe}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {answered}/{total} câu đã trả lời
-          </Typography>
-        </Box>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+        px: 2.5, py: 1.5, borderBottom: "1px solid rgba(0,0,0,0.06)", bgcolor: "#fff", flexShrink: 0 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 700, color: "rgba(31,41,55,0.5)" }}>
+          {cauHoiHienTai + 1} / {tongCau}
+        </Typography>
 
-        {/* Timer */}
-        {timeLeft !== null && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 1.5,
-              bgcolor: isTimeCritical
-                ? alpha("#dc2626", 0.08)
-                : isTimeWarning
-                  ? alpha("#f59e0b", 0.08)
-                  : alpha(PRIMARY_RED, 0.06),
-              border: `1px solid ${
-                isTimeCritical
-                  ? alpha("#dc2626", 0.3)
-                  : isTimeWarning
-                    ? alpha("#f59e0b", 0.3)
-                    : alpha(PRIMARY_RED, 0.15)
-              }`,
-            }}
-          >
-            <TimerIcon
-              sx={{
-                fontSize: 16,
-                color: isTimeCritical
-                  ? "#dc2626"
-                  : isTimeWarning
-                    ? "#d97706"
-                    : PRIMARY_RED,
-                animation: isTimeCritical
-                  ? "pulse 1s ease-in-out infinite"
-                  : "none",
-                "@keyframes pulse": {
-                  "0%, 100%": { opacity: 1 },
-                  "50%": { opacity: 0.4 },
-                },
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          {coGioiHanThoiGian && (
+            <Chip
+              icon={<AccessTimeRounded sx={{ fontSize: "14px !important" }} />}
+              label={formatTimer(thoiGianConLai)}
+              size="small"
+              sx={{ fontWeight: 900, fontFamily: "monospace", fontSize: 13,
+                bgcolor: sapHetGio ? "rgba(220,38,38,0.08)" : canhoHetGio ? "rgba(245,158,11,0.08)" : "rgba(0,0,0,0.04)",
+                color: sapHetGio ? "#DC2626" : canhoHetGio ? "#D97706" : "#374151",
+                animation: sapHetGio ? "blink 1s step-end infinite" : "none",
+                "@keyframes blink": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.35 } },
+                "& .MuiChip-icon": { color: "inherit !important" },
               }}
             />
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 800,
-                fontVariantNumeric: "tabular-nums",
-                color: isTimeCritical
-                  ? "#dc2626"
-                  : isTimeWarning
-                    ? "#d97706"
-                    : PRIMARY_RED,
-                fontSize: "0.85rem",
-                letterSpacing: "0.05em",
-              }}
-            >
-              {formatTime(timeLeft)}
-            </Typography>
-          </Box>
-        )}
-
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={
-            submitting ? (
-              <CircularProgress size={14} color="inherit" />
-            ) : (
-              <SendIcon />
-            )
-          }
-          onClick={() => setConfirmOpen(true)}
-          disabled={submitting}
-          sx={{
-            bgcolor: PRIMARY_RED,
-            fontWeight: 700,
-            borderRadius: 1.5,
-            flexShrink: 0,
-            "&:hover": { bgcolor: PRIMARY_RED_DARK },
-          }}
-        >
-          Nộp bài
-        </Button>
+          )}
+          <Tooltip title="Tổng quan">
+            <IconButton size="small" onClick={() => setOpenOverview(true)}
+              sx={{ bgcolor: "rgba(0,0,0,0.04)", "&:hover": { bgcolor: "rgba(141,19,19,0.08)" } }}>
+              <GridViewRounded sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Box>
 
-      {/* Progress bar */}
-      <LinearProgress
-        variant="determinate"
-        value={progress}
-        sx={{
-          height: 3,
-          bgcolor: alpha(PRIMARY_RED, 0.1),
-          "& .MuiLinearProgress-bar": { bgcolor: PRIMARY_RED },
-          flexShrink: 0,
-        }}
-      />
+      {/* Progress */}
+      <LinearProgress variant="determinate" value={progress}
+        sx={{ height: 3, bgcolor: "rgba(0,0,0,0.04)",
+          "& .MuiLinearProgress-bar": { bgcolor: RED } }} />
 
-      {/* Main content */}
-      <Box sx={{ flex: 1, overflow: "auto", display: "flex", gap: 0 }}>
-        {/* Question panel */}
-        <Box
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            display: "flex",
-            flexDirection: "column",
-            py: { xs: 3, md: 5 },
-            px: { xs: 2, md: 6 },
-            maxWidth: 720,
-            mx: "auto",
-            width: "100%",
-          }}
-        >
-          {/* Question header */}
-          <Box sx={{ mb: 3 }}>
-            <Stack
-              sx={{
-                mb: 1.5,
-                alignItems: "center",
-                flexDirection: "row",
-                gap: 1,
-              }}
-            >
-              <Chip
-                label={`Câu ${currentQuestion + 1}/${total}`}
-                size="small"
-                sx={{
-                  bgcolor: PRIMARY_RED,
-                  color: "#fff",
-                  fontWeight: 700,
-                  fontSize: "0.7rem",
-                  height: 22,
-                }}
-              />
-              {isMulti && (
-                <Chip
-                  label="Nhiều đáp án"
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    borderColor: alpha(PRIMARY_RED, 0.4),
-                    color: PRIMARY_RED,
-                    fontSize: "0.65rem",
-                    height: 22,
-                    fontWeight: 600,
-                  }}
-                />
-              )}
-              <Box sx={{ flex: 1 }} />
-              <Tooltip
-                title={
-                  flagged.has(currentQuestion)
-                    ? "Bỏ đánh dấu"
-                    : "Đánh dấu câu này"
-                }
-              >
-                <IconButton
-                  size="small"
-                  onClick={() => toggleFlag(currentQuestion)}
-                  sx={{
-                    color: flagged.has(currentQuestion)
-                      ? "#f59e0b"
-                      : "text.disabled",
-                    "&:hover": { color: "#f59e0b" },
-                  }}
-                >
-                  <FlagIcon sx={{ fontSize: 18 }} />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                lineHeight: 1.5,
-                color: "text.primary",
-                fontSize: { xs: "1rem", md: "1.1rem" },
-              }}
-            >
-              {cauHoi.noiDung}
-            </Typography>
-            {isMulti && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ mt: 0.5, display: "block" }}
-              >
-                Chọn tất cả đáp án đúng
-              </Typography>
-            )}
-          </Box>
-
-          {/* Answers */}
-          <Stack
-            sx={{ mb: 4, display: "flex", flexDirection: "column", gap: 1.25 }}
-          >
-            {danhSachDapAn.map((dapAn, idx) => {
-              const isSelected =
-                selectedAnswers[cauHoi.id]?.includes(dapAn.id) ?? false;
-              const letter = String.fromCharCode(65 + idx); // A, B, C, D…
-
-              return (
-                <Box
-                  key={dapAn.id}
-                  onClick={() => onSelectAnswer(cauHoi.id, dapAn.id, isMulti)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 1.5,
-                    px: 2,
-                    py: 1.5,
-                    borderRadius: 2,
-                    cursor: "pointer",
-                    border: "2px solid",
-                    borderColor: isSelected ? PRIMARY_RED : alpha("#000", 0.1),
-                    bgcolor: isSelected ? alpha(PRIMARY_RED, 0.04) : "#fff",
-                    transition: "all 0.15s",
-                    "&:hover": {
-                      borderColor: alpha(PRIMARY_RED, 0.5),
-                      bgcolor: alpha(PRIMARY_RED, 0.025),
-                    },
-                    userSelect: "none",
-                  }}
-                >
-                  {/* Checkbox / Radio icon */}
-                  <Box sx={{ mt: 0.1, flexShrink: 0 }}>
-                    {isMulti ? (
-                      isSelected ? (
-                        <CheckBoxIcon
-                          sx={{ color: PRIMARY_RED, fontSize: 20 }}
-                        />
-                      ) : (
-                        <CheckBoxOutlineBlankIcon
-                          sx={{ color: "text.disabled", fontSize: 20 }}
-                        />
-                      )
-                    ) : isSelected ? (
-                      <CheckCircleIcon
-                        sx={{ color: PRIMARY_RED, fontSize: 20 }}
-                      />
-                    ) : (
-                      <RadioButtonUncheckedIcon
-                        sx={{ color: "text.disabled", fontSize: 20 }}
-                      />
-                    )}
-                  </Box>
-
-                  {/* Letter badge */}
-                  <Box
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: isSelected ? PRIMARY_RED : alpha("#000", 0.06),
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "0.7rem",
-                        fontWeight: 800,
-                        color: isSelected ? "#fff" : "text.secondary",
-                        lineHeight: 1,
-                      }}
-                    >
-                      {letter}
-                    </Typography>
-                  </Box>
-
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      lineHeight: 1.55,
-                      fontWeight: isSelected ? 600 : 400,
-                      color: isSelected ? "text.primary" : "text.secondary",
-                      flex: 1,
-                    }}
-                  >
-                    {dapAn.noiDung}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Stack>
-
-          {/* Navigation */}
-          <Stack
-            sx={{ mt: "auto", display: "flex", flexDirection: "row", gap: 1.5 }}
-          >
-            <Button
-              variant="outlined"
-              startIcon={<NavigateBeforeIcon />}
-              onClick={() => onGoToQuestion(Math.max(0, currentQuestion - 1))}
-              disabled={currentQuestion === 0}
-              sx={{
-                borderColor: alpha(PRIMARY_RED, 0.35),
-                color: PRIMARY_RED,
-                fontWeight: 600,
-                borderRadius: 1.5,
-                "&:hover": {
-                  borderColor: PRIMARY_RED,
-                  bgcolor: alpha(PRIMARY_RED, 0.04),
-                },
-                "&.Mui-disabled": { borderColor: "divider" },
-              }}
-            >
-              Câu trước
-            </Button>
-            <Box sx={{ flex: 1 }} />
-            {currentQuestion < total - 1 ? (
-              <Button
-                variant="contained"
-                endIcon={<NavigateNextIcon />}
-                onClick={() => onGoToQuestion(currentQuestion + 1)}
-                sx={{
-                  bgcolor: PRIMARY_RED,
-                  fontWeight: 700,
-                  borderRadius: 1.5,
-                  "&:hover": { bgcolor: PRIMARY_RED_DARK },
-                }}
-              >
-                Câu tiếp
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                endIcon={<SendIcon />}
-                onClick={() => setConfirmOpen(true)}
-                sx={{
-                  bgcolor: PRIMARY_RED,
-                  fontWeight: 700,
-                  borderRadius: 1.5,
-                  "&:hover": { bgcolor: PRIMARY_RED_DARK },
-                }}
-              >
-                Nộp bài
-              </Button>
-            )}
-          </Stack>
-        </Box>
-
-        {/* Question navigator sidebar */}
-        <Box
-          sx={{
-            width: 200,
-            flexShrink: 0,
-            borderLeft: `1px solid ${alpha(PRIMARY_RED, 0.1)}`,
-            bgcolor: "#fff",
-            py: 2.5,
-            px: 2,
-            display: { xs: "none", md: "block" },
-            overflowY: "auto",
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 800,
-              color: "text.secondary",
-              letterSpacing: "0.08em",
-              display: "block",
-              mb: 1.5,
-              fontSize: "0.65rem",
-            }}
-          >
-            DANH SÁCH CÂU HỎI
+      {/* Câu hỏi */}
+      <Box sx={{ flex: 1, overflow: "auto", p: 3 }}>
+        <Box sx={{ mb: 3.5 }}>
+          {cauHoi.doKho && (
+            <Chip label={cauHoi.doKho} size="small" sx={{ mb: 1.5, fontWeight: 700, fontSize: 11,
+              bgcolor: "rgba(0,0,0,0.05)", color: "rgba(31,41,55,0.6)" }} />
+          )}
+          {isMulti && (
+            <Chip label="Nhiều đáp án đúng" size="small" color="info" sx={{ mb: 1.5, ml: 1, fontWeight: 700, fontSize: 11 }} />
+          )}
+          <Typography sx={{ fontSize: 16, fontWeight: 800, color: "#1F2937", lineHeight: 1.6, mb: 0.5 }}>
+            Câu {cauHoiHienTai + 1}. {cauHoi.tenCauHoi}
           </Typography>
-
-          {/* Legend */}
-          <Stack
-            sx={{ mb: 2, display: "flex", flexDirection: "column", gap: 0.5 }}
-          >
-            {[
-              { color: PRIMARY_RED, label: "Đang làm", fill: true },
-              { color: PRIMARY_RED, label: "Đã trả lời", fill: false },
-              { color: "#f59e0b", label: "Đánh dấu", fill: false },
-              { color: alpha("#000", 0.15), label: "Chưa làm", fill: false },
-            ].map((l) => (
-              <Stack
-                key={l.label}
-                sx={{ flexDirection: "row", gap: 1, alignItems: "center" }}
-              >
-                <Box
-                  sx={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 0.5,
-                    bgcolor: l.fill ? l.color : "transparent",
-                    border: `2px solid ${l.color}`,
-                    flexShrink: 0,
-                  }}
-                />
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontSize: "0.62rem" }}
-                >
-                  {l.label}
-                </Typography>
-              </Stack>
-            ))}
-          </Stack>
-
-          {/* Grid */}
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-            {danhSachCauHoi.map((_, idx) => {
-              const status = getQuestionStatus(idx);
-              const bgMap = {
-                current: PRIMARY_RED,
-                answered: "transparent",
-                flagged: "transparent",
-                empty: alpha("#000", 0.04),
-              };
-              const borderMap = {
-                current: PRIMARY_RED,
-                answered: PRIMARY_RED,
-                flagged: "#f59e0b",
-                empty: alpha("#000", 0.15),
-              };
-              const colorMap = {
-                current: "#fff",
-                answered: PRIMARY_RED,
-                flagged: "#d97706",
-                empty: "text.secondary",
-              };
-
-              return (
-                <Box
-                  key={idx}
-                  onClick={() => onGoToQuestion(idx)}
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    bgcolor: bgMap[status],
-                    border: `2px solid ${borderMap[status]}`,
-                    transition: "all 0.12s",
-                    "&:hover": { transform: "scale(1.1)" },
-                    position: "relative",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: "0.68rem",
-                      fontWeight: status === "current" ? 800 : 600,
-                      color: colorMap[status],
-                      lineHeight: 1,
-                    }}
-                  >
-                    {idx + 1}
-                  </Typography>
-                  {flagged.has(idx) && (
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: -4,
-                        right: -4,
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        bgcolor: "#f59e0b",
-                      }}
-                    />
-                  )}
-                </Box>
-              );
-            })}
-          </Box>
-
-          {/* Summary */}
-          <Box
-            sx={{
-              mt: 2.5,
-              pt: 2,
-              borderTop: `1px solid ${alpha(PRIMARY_RED, 0.1)}`,
-            }}
-          >
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 0.25 }}
-            >
-              Đã làm: <strong style={{ color: PRIMARY_RED }}>{answered}</strong>
-              /{total}
+          {cauHoi.noiDungCauHoi && cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi && (
+            <Typography sx={{ fontSize: 14, color: "rgba(31,41,55,0.65)", lineHeight: 1.7 }}>
+              {cauHoi.noiDungCauHoi}
             </Typography>
-            {flagged.size > 0 && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mb: 0.25 }}
-              >
-                Đánh dấu:{" "}
-                <strong style={{ color: "#d97706" }}>{flagged.size}</strong>
-              </Typography>
-            )}
-            {unanswered > 0 && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block" }}
-              >
-                Chưa làm:{" "}
-                <strong style={{ color: "#374151" }}>{unanswered}</strong>
-              </Typography>
-            )}
-          </Box>
+          )}
+          {cauHoi.diem && (
+            <Typography sx={{ fontSize: 11.5, color: "rgba(31,41,55,0.38)", mt: 0.5, fontWeight: 600 }}>
+              ({cauHoi.diem} điểm)
+            </Typography>
+          )}
         </Box>
+
+        {/* Đáp án */}
+        <Stack spacing={1.5}>
+          {cauHoi.dapAns.map((da, i) => {
+            const isSelected = selected.includes(da.id);
+            return (
+              <Box key={da.id} onClick={() => onChonDapAn(cauHoi.id, da.id)}
+                sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 2,
+                  borderRadius: "12px", cursor: "pointer",
+                  border: `2px solid ${isSelected ? RED : "rgba(0,0,0,0.08)"}`,
+                  bgcolor: isSelected ? "rgba(141,19,19,0.04)" : "#fff",
+                  transition: "all 0.15s",
+                  "&:hover": { borderColor: isSelected ? RED : "rgba(141,19,19,0.3)", bgcolor: "rgba(141,19,19,0.02)" } }}>
+                {/* Label A/B/C */}
+                <Box sx={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  bgcolor: isSelected ? RED : "rgba(0,0,0,0.05)",
+                  color: isSelected ? "#fff" : "rgba(31,41,55,0.4)",
+                  fontWeight: 800, fontSize: 13 }}>
+                  {isMulti ? (
+                    isSelected
+                      ? <CheckCircleRounded sx={{ fontSize: 18 }} />
+                      : <Box sx={{ width: 16, height: 16, borderRadius: "3px", border: "2px solid rgba(0,0,0,0.2)" }} />
+                  ) : (LABELS[i] ?? (i + 1))}
+                </Box>
+                <Typography sx={{ fontSize: 14, lineHeight: 1.6, flex: 1,
+                  fontWeight: isSelected ? 600 : 400, color: "#1F2937" }}>
+                  {da.noiDungDapAn}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Stack>
       </Box>
 
-      {/* Confirm submit dialog */}
-      <Dialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        sx={{ "& .MuiDialog-paper": { borderRadius: 3 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>
-          Xác nhận nộp bài
-        </DialogTitle>
+      {/* Navigation */}
+      <Box sx={{ px: 2.5, py: 2, borderTop: "1px solid rgba(0,0,0,0.06)", bgcolor: "#fff", flexShrink: 0 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Button variant="outlined" startIcon={<ChevronLeftRounded />}
+            disabled={cauHoiHienTai === 0}
+            onClick={() => onSetCauHoi(cauHoiHienTai - 1)}
+            sx={{ borderRadius: "10px", fontWeight: 700, borderColor: "rgba(0,0,0,0.12)", color: "#374151",
+              "&:hover": { borderColor: RED, color: RED } }}>
+            Trước
+          </Button>
+          <Box sx={{ flex: 1, textAlign: "center" }}>
+            <Typography sx={{ fontSize: 12, color: "rgba(31,41,55,0.45)", fontWeight: 600 }}>
+              Đã trả lời {soDaTraLoi}/{tongCau}
+            </Typography>
+          </Box>
+          {cauHoiHienTai < tongCau - 1 ? (
+            <Button variant="outlined" endIcon={<ChevronRightRounded />}
+              onClick={() => onSetCauHoi(cauHoiHienTai + 1)}
+              sx={{ borderRadius: "10px", fontWeight: 700, borderColor: "rgba(0,0,0,0.12)", color: "#374151",
+                "&:hover": { borderColor: RED, color: RED } }}>
+              Tiếp
+            </Button>
+          ) : (
+            <Button variant="contained" endIcon={<SendRounded />}
+              onClick={() => setOpenConfirm(true)} disabled={loading}
+              sx={{ borderRadius: "10px", fontWeight: 800,
+                background: `linear-gradient(135deg, ${RED}, #7C3AED)`, boxShadow: "none" }}>
+              Nộp bài
+            </Button>
+          )}
+        </Stack>
+      </Box>
+
+      {/* Confirm dialog */}
+      <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}
+        maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: "16px" } } }}>
+        <DialogTitle sx={{ fontWeight: 900 }}>Xác nhận nộp bài?</DialogTitle>
         <DialogContent>
-          {unanswered > 0 && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 1.25,
-                bgcolor: alpha("#f59e0b", 0.08),
-                border: `1px solid ${alpha("#f59e0b", 0.3)}`,
-                borderRadius: 1.5,
-                px: 2,
-                py: 1.5,
-                mb: 2,
-              }}
-            >
-              <WarningAmberIcon
-                sx={{ color: "#d97706", fontSize: 20, mt: 0.1, flexShrink: 0 }}
-              />
-              <Typography
-                variant="body2"
-                sx={{ color: "#92400e", lineHeight: 1.5 }}
-              >
-                Bạn còn <strong>{unanswered} câu</strong> chưa trả lời. Câu chưa
-                trả lời sẽ bị tính là sai.
+          <Typography sx={{ fontSize: 14, mb: 1.5 }}>
+            Đã trả lời <strong style={{ color: RED }}>{soDaTraLoi}/{tongCau}</strong> câu.
+          </Typography>
+          {soDaTraLoi < tongCau && (
+            <Box sx={{ p: 2, borderRadius: "10px", bgcolor: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.2)" }}>
+              <Typography sx={{ fontSize: 13, color: "#D97706", fontWeight: 600 }}>
+                ⚠️ Còn {tongCau - soDaTraLoi} câu chưa trả lời, sẽ bị tính 0 điểm.
               </Typography>
             </Box>
           )}
-          <Typography variant="body2" color="text.secondary">
-            Bạn có chắc muốn nộp bài không? Sau khi nộp bạn sẽ không thể thay
-            đổi câu trả lời.
-          </Typography>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button
-            onClick={() => setConfirmOpen(false)}
-            variant="outlined"
-            sx={{
-              borderColor: "divider",
-              color: "text.secondary",
-              borderRadius: 1.5,
-              fontWeight: 600,
-            }}
-          >
-            Quay lại
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setOpenConfirm(false)} sx={{ color: "#666", borderRadius: "10px" }}>Quay lại</Button>
+          <Button variant="contained" disabled={loading}
+            onClick={() => { setOpenConfirm(false); onNopBai(); }}
+            sx={{ background: `linear-gradient(135deg, ${RED}, #7C3AED)`, borderRadius: "10px", fontWeight: 800, boxShadow: "none" }}>
+            Xác nhận nộp
           </Button>
-          <Button
-            onClick={() => {
-              setConfirmOpen(false);
-              onSubmit();
-            }}
+        </DialogActions>
+      </Dialog>
+
+      {/* Overview dialog */}
+      <Dialog open={openOverview} onClose={() => setOpenOverview(false)}
+        maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: "16px" } } }}>
+        <DialogTitle sx={{ fontWeight: 900, pb: 0.5 }}>Tổng quan</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 2 }}>
+            Đã trả lời: <strong>{soDaTraLoi}/{tongCau}</strong> câu
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {cauHois.map((c, i) => {
+              const daTraLoi = (traLois[c.id] ?? []).length > 0;
+              const isHienTai = i === cauHoiHienTai;
+              return (
+                <Box key={c.id}
+                  onClick={() => { onSetCauHoi(i); setOpenOverview(false); }}
+                  sx={{ width: 40, height: 40, borderRadius: "10px", display: "flex",
+                    alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", fontWeight: 800, fontSize: 13,
+                    border: `2px solid ${isHienTai ? RED : daTraLoi ? "#10B981" : "rgba(0,0,0,0.1)"}`,
+                    bgcolor: isHienTai ? RED : daTraLoi ? "rgba(16,185,129,0.07)" : "transparent",
+                    color: isHienTai ? "#fff" : daTraLoi ? "#10B981" : "rgba(31,41,55,0.38)",
+                    "&:hover": { borderColor: RED } }}>
+                  {i + 1}
+                </Box>
+              );
+            })}
+          </Box>
+          <Stack direction="row" spacing={2} sx={{ mt: 2.5 }}>
+            {[{ c: RED, l: "Đang xem" }, { c: "#10B981", l: "Đã trả lời" }, { c: "rgba(0,0,0,0.1)", l: "Chưa trả lời" }]
+              .map((item, i) => (
+                <Stack key={i} direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+                  <Box sx={{ width: 12, height: 12, borderRadius: "3px", bgcolor: item.c }} />
+                  <Typography sx={{ fontSize: 11, color: "text.secondary" }}>{item.l}</Typography>
+                </Stack>
+              ))}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => { setOpenConfirm(true); setOpenOverview(false); }}
             variant="contained"
-            disabled={submitting}
-            sx={{
-              bgcolor: PRIMARY_RED,
-              fontWeight: 700,
-              borderRadius: 1.5,
-              "&:hover": { bgcolor: PRIMARY_RED_DARK },
-            }}
-          >
-            {submitting ? "Đang nộp..." : "Nộp bài"}
+            sx={{ background: `linear-gradient(135deg, ${RED}, #7C3AED)`, borderRadius: "10px", fontWeight: 800, boxShadow: "none" }}>
+            Nộp bài ngay
           </Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
-};
+}

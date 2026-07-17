@@ -1,338 +1,200 @@
-"use client";
-
 import {
-  Box,
-  Typography,
-  Button,
-  Stack,
-  Divider,
-  alpha,
-  Chip,
+  Box, Typography, Button, Stack, Alert, LinearProgress, Chip, Divider,
 } from "@mui/material";
-// FIX: MUI v9 - import named từ root package "@mui/icons-material" thay vì
-// subpath (subpath không resolve được ở v9 và đổi tên hậu tố Outline -> Outlined).
 import {
-  Quiz as QuizIcon,
-  Timer as TimerIcon,
-  HelpOutlined as HelpOutlineIcon,
-  Replay as ReplayIcon,
-  CheckCircleOutlined as CheckCircleOutlineIcon,
-  Star as StarIcon,
+  QuizRounded, AccessTimeRounded, EmojiEventsRounded,
+  CheckCircleRounded, ReplayRounded, LockRounded,
+  InfoOutlined, PlayArrowRounded, HistoryRounded,
 } from "@mui/icons-material";
+import type { BaiKiemTraInfoDto, LichSuLamBaiDto } from "../../hooks/useQuiz";
 
-const PRIMARY_RED = "#8B1313";
-const PRIMARY_RED_DARK = "#6B1414";
-
-interface BaiKiemTraInfo {
-  tieuDe?: string;
-  moTa?: string;
-  thoiGianGioiHan?: number | null;
-  soLuongCauHoi?: number;
-  diemToiDa?: number;
-  soLanLamToiDa?: number;
-  diemDat?: number;
-}
+const RED = "#8D1313";
 
 interface QuizEntryProps {
-  baiKiemTra: BaiKiemTraInfo;
-  soLanDaLam?: number;
-  diemCaoNhat?: number | null;
-  daQua?: boolean;
-  canRetake?: boolean;
-  onStart: () => void;
-  onContinue?: () => void;
-  hasDraft?: boolean;
-  loading?: boolean;
+  info: BaiKiemTraInfoDto;
+  lichSu: LichSuLamBaiDto[];
+  canRetake: boolean;
+  loading: boolean;
+  lanLamDoDang?: LichSuLamBaiDto;
+  onBatDau: () => void;
+  onTiepTuc: (id: string) => void;
+  onXemLai: (id: string) => void;
 }
 
-export const QuizEntry = ({
-  baiKiemTra,
-  soLanDaLam = 0,
-  diemCaoNhat,
-  daQua = false,
-  canRetake = true,
-  onStart,
-  onContinue,
-  hasDraft = false,
-  loading = false,
-}: QuizEntryProps) => {
-  const stats = [
-    {
-      icon: <HelpOutlineIcon sx={{ fontSize: 18 }} />,
-      label: "Số câu hỏi",
-      value: `${baiKiemTra.soLuongCauHoi ?? "?"} câu`,
-    },
-    {
-      icon: <TimerIcon sx={{ fontSize: 18 }} />,
-      label: "Thời gian",
-      value: baiKiemTra.thoiGianGioiHan
-        ? `${baiKiemTra.thoiGianGioiHan} phút`
-        : "Không giới hạn",
-    },
-    {
-      icon: <StarIcon sx={{ fontSize: 18 }} />,
-      label: "Điểm đạt",
-      value: baiKiemTra.diemDat
-        ? `${baiKiemTra.diemDat}/${baiKiemTra.diemToiDa ?? 10}`
-        : `${baiKiemTra.diemToiDa ?? 10} điểm`,
-    },
-    {
-      icon: <ReplayIcon sx={{ fontSize: 18 }} />,
-      label: "Số lần làm",
-      value: baiKiemTra.soLanLamToiDa
-        ? `${soLanDaLam}/${baiKiemTra.soLanLamToiDa} lần`
-        : `${soLanDaLam} lần`,
-    },
-  ];
+export function QuizEntry({
+  info, lichSu, canRetake, loading, lanLamDoDang,
+  onBatDau, onTiepTuc, onXemLai,
+}: QuizEntryProps) {
+  const soLanDaLam = lichSu.length;
+  const diemCaoNhat = lichSu.length > 0
+    ? Math.max(...lichSu.map((l) => l.tongDiem ?? 0)) : null;
+  const daDat = lichSu.some((l) => l.dat);
+  const hetLuot = !canRetake && soLanDaLam > 0;
 
   return (
-    <Box
-      sx={{
-        maxWidth: 560,
-        mx: "auto",
-        my: 4,
-        px: { xs: 2, md: 0 },
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          borderRadius: "12px 12px 0 0",
-          bgcolor: PRIMARY_RED,
-          px: 3,
-          py: 3,
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-        }}
-      >
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: "50%",
-            bgcolor: alpha("#fff", 0.15),
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <QuizIcon sx={{ color: "#fff", fontSize: 26 }} />
+    <Box sx={{ maxWidth: 520, mx: "auto", py: 3 }}>
+      {/* Icon + Tên */}
+      <Box sx={{ textAlign: "center", mb: 3 }}>
+        <Box sx={{ width: 68, height: 68, borderRadius: "18px",
+          background: `linear-gradient(135deg, ${RED}, #7C3AED)`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          mx: "auto", mb: 2, boxShadow: `0 8px 24px rgba(141,19,19,0.22)` }}>
+          <QuizRounded sx={{ fontSize: 34, color: "#fff" }} />
         </Box>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography
-            variant="overline"
-            sx={{
-              color: alpha("#fff", 0.7),
-              fontSize: "0.65rem",
-              letterSpacing: "0.1em",
-              display: "block",
-              lineHeight: 1,
-              mb: 0.4,
-            }}
-          >
-            BÀI KIỂM TRA
+        <Typography sx={{ fontSize: 20, fontWeight: 900, color: "#1F2937", mb: 0.5 }}>
+          {info.tenBaiKiemTra}
+        </Typography>
+        {info.moTa && (
+          <Typography sx={{ fontSize: 13.5, color: "rgba(31,41,55,0.55)", lineHeight: 1.65 }}>
+            {info.moTa}
           </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              color: "#fff",
-              fontWeight: 800,
-              lineHeight: 1.25,
-              fontSize: "1.05rem",
-            }}
-          >
-            {baiKiemTra.tieuDe ?? "Kiểm tra"}
-          </Typography>
-        </Box>
-        {daQua && (
-          <Chip
-            label="Đã qua"
-            size="small"
-            icon={
-              <CheckCircleOutlineIcon
-                sx={{ fontSize: "14px !important", color: "#fff !important" }}
-              />
-            }
-            sx={{
-              ml: "auto",
-              bgcolor: alpha("#fff", 0.2),
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: "0.68rem",
-              flexShrink: 0,
-            }}
-          />
         )}
       </Box>
 
-      {/* Body */}
-      <Box
-        sx={{
-          border: `1px solid ${alpha(PRIMARY_RED, 0.15)}`,
-          borderTop: "none",
-          borderRadius: "0 0 12px 12px",
-          bgcolor: "background.paper",
-          overflow: "hidden",
-        }}
-      >
-        {/* Stats grid */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            borderBottom: `1px solid ${alpha(PRIMARY_RED, 0.1)}`,
-          }}
-        >
-          {stats.map((s, i) => (
-            <Box
-              key={i}
-              sx={{
-                px: 2.5,
-                py: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                borderRight:
-                  i % 2 === 0 ? `1px solid ${alpha(PRIMARY_RED, 0.1)}` : "none",
-                borderBottom:
-                  i < 2 ? `1px solid ${alpha(PRIMARY_RED, 0.1)}` : "none",
-              }}
-            >
-              <Box sx={{ color: PRIMARY_RED, opacity: 0.7, display: "flex" }}>
-                {s.icon}
-              </Box>
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{
-                    display: "block",
-                    lineHeight: 1.2,
-                    fontSize: "0.68rem",
-                  }}
-                >
-                  {s.label}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 700, lineHeight: 1.3 }}
-                >
-                  {s.value}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
-
-        {/* Điểm cao nhất (nếu đã làm) */}
-        {soLanDaLam > 0 && diemCaoNhat != null && (
-          <Box
-            sx={{
-              px: 3,
-              py: 1.75,
-              bgcolor: daQua
-                ? alpha(PRIMARY_RED, 0.04)
-                : alpha("#f59e0b", 0.06),
-              borderBottom: `1px solid ${alpha(PRIMARY_RED, 0.1)}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Điểm cao nhất của bạn
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 800,
-                color: daQua ? PRIMARY_RED : "#b45309",
-              }}
-            >
-              {diemCaoNhat}/{baiKiemTra.diemToiDa ?? 10}
-            </Typography>
+      {/* Stats */}
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.5, mb: 3 }}>
+        {[
+          { icon: <QuizRounded sx={{ fontSize: 20 }} />, label: "Số câu", value: `${info.soCauHoi ?? "?"} câu` },
+          { icon: <AccessTimeRounded sx={{ fontSize: 20 }} />, label: "Thời gian", value: info.gioiHanThoiGian ? `${info.gioiHanThoiGian} phút` : "Không giới hạn" },
+          { icon: <EmojiEventsRounded sx={{ fontSize: 20 }} />, label: "Điểm đạt", value: `${info.diemDat ?? 50}%` },
+        ].map((s, i) => (
+          <Box key={i} sx={{ p: 2, borderRadius: "12px", textAlign: "center",
+            border: "1px solid rgba(141,19,19,0.1)", bgcolor: "rgba(141,19,19,0.015)" }}>
+            <Box sx={{ color: RED, mb: 0.5 }}>{s.icon}</Box>
+            <Typography sx={{ fontSize: 14, fontWeight: 800, color: "#1F2937" }}>{s.value}</Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.45)", fontWeight: 600 }}>{s.label}</Typography>
           </Box>
-        )}
+        ))}
+      </Box>
 
-        {/* Mô tả */}
-        {baiKiemTra.moTa && (
-          <Box
-            sx={{
-              px: 3,
-              py: 2,
-              borderBottom: `1px solid ${alpha(PRIMARY_RED, 0.1)}`,
-            }}
-          >
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ lineHeight: 1.6 }}
-            >
-              {baiKiemTra.moTa}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Actions */}
-        <Box sx={{ px: 3, py: 2.5 }}>
-          <Stack spacing={1.25}>
-            {hasDraft && onContinue && (
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={onContinue}
-                disabled={loading}
-                sx={{
-                  borderColor: PRIMARY_RED,
-                  color: PRIMARY_RED,
-                  fontWeight: 700,
-                  borderRadius: 1.5,
-                  "&:hover": {
-                    borderColor: PRIMARY_RED_DARK,
-                    bgcolor: alpha(PRIMARY_RED, 0.05),
-                  },
-                }}
-              >
-                Tiếp tục làm bài
-              </Button>
-            )}
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={onStart}
-              disabled={loading || (!canRetake && soLanDaLam > 0)}
-              sx={{
-                bgcolor: PRIMARY_RED,
-                fontWeight: 700,
-                borderRadius: 1.5,
-                py: 1.1,
-                fontSize: "0.9rem",
-                "&:hover": { bgcolor: PRIMARY_RED_DARK },
-                "&.Mui-disabled": { bgcolor: "action.disabledBackground" },
-              }}
-            >
-              {loading
-                ? "Đang tải..."
-                : soLanDaLam === 0
-                  ? "Bắt đầu kiểm tra"
-                  : !canRetake
-                    ? "Đã hết lượt làm"
-                    : "Làm lại"}
+      {/* Bài đang làm dở */}
+      {lanLamDoDang && (
+        <Alert severity="warning" sx={{ borderRadius: "12px", mb: 2 }}
+          action={
+            <Button size="small" sx={{ fontWeight: 800, color: "#D97706" }}
+              onClick={() => onTiepTuc(lanLamDoDang.idLanLamBaiKiemTra)}>
+              Tiếp tục
             </Button>
-            {!canRetake && soLanDaLam > 0 && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ textAlign: "center", display: "block" }}
-              >
-                Bạn đã dùng hết {baiKiemTra.soLanLamToiDa} lần làm bài
-              </Typography>
+          }>
+          Bạn có bài làm chưa hoàn thành (lần {lanLamDoDang.lamLanThu}).
+        </Alert>
+      )}
+
+      {/* Kết quả trước đó */}
+      {soLanDaLam > 0 && !lanLamDoDang && (
+        <Box sx={{ p: 2.5, borderRadius: "14px", mb: 3,
+          border: `1.5px solid ${daDat ? "rgba(16,185,129,0.2)" : "rgba(141,19,19,0.15)"}`,
+          bgcolor: daDat ? "rgba(16,185,129,0.03)" : "rgba(141,19,19,0.02)" }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
+            {daDat
+              ? <CheckCircleRounded sx={{ color: "#10B981" }} />
+              : <EmojiEventsRounded sx={{ color: RED }} />}
+            <Typography sx={{ fontWeight: 800, fontSize: 14, color: daDat ? "#10B981" : RED }}>
+              {daDat ? "Bạn đã đạt bài kiểm tra này!" : "Chưa đạt — Thử lại nhé!"}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={3} sx={{ mb: diemCaoNhat != null ? 1.5 : 0 }}>
+            <Box>
+              <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.45)", fontWeight: 600 }}>Số lần đã làm</Typography>
+              <Typography sx={{ fontSize: 17, fontWeight: 900, color: "#1F2937" }}>{soLanDaLam} lần</Typography>
+            </Box>
+            {diemCaoNhat != null && (
+              <Box>
+                <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.45)", fontWeight: 600 }}>Điểm cao nhất</Typography>
+                <Typography sx={{ fontSize: 17, fontWeight: 900, color: "#1F2937" }}>{diemCaoNhat.toFixed(1)}</Typography>
+              </Box>
             )}
           </Stack>
+          {diemCaoNhat != null && (
+            <LinearProgress variant="determinate" value={Math.min(100, diemCaoNhat)}
+              sx={{ height: 5, borderRadius: 3, bgcolor: "rgba(0,0,0,0.06)",
+                "& .MuiLinearProgress-bar": { bgcolor: daDat ? "#10B981" : RED, borderRadius: 3 } }} />
+          )}
         </Box>
+      )}
+
+      {/* Lưu ý */}
+      <Box sx={{ p: 2.5, borderRadius: "14px", bgcolor: "rgba(59,130,246,0.04)",
+        border: "1px solid rgba(59,130,246,0.1)", mb: 3 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1.5 }}>
+          <InfoOutlined sx={{ fontSize: 15, color: "#3B82F6" }} />
+          <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: "#1E40AF" }}>Lưu ý</Typography>
+        </Stack>
+        <Stack spacing={0.8}>
+          {[
+            "Đọc kỹ câu hỏi trước khi chọn",
+            info.gioiHanThoiGian ? `Thời gian: ${info.gioiHanThoiGian} phút` : "Không giới hạn thời gian",
+            `Điểm đạt: ${info.diemDat ?? 50}% trở lên`,
+            info.choLamLai
+              ? `Được làm lại${info.soLanLamToiDa ? ` (tối đa ${info.soLanLamToiDa} lần)` : ""}`
+              : "Chỉ được làm 1 lần",
+            "Hệ thống tự động lưu khi bạn chọn đáp án",
+          ].map((note, i) => (
+            <Stack key={i} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
+              <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: "#3B82F6", mt: 0.85, flexShrink: 0 }} />
+              <Typography sx={{ fontSize: 12.5, color: "rgba(31,41,55,0.65)" }}>{note}</Typography>
+            </Stack>
+          ))}
+        </Stack>
       </Box>
+
+      {/* Buttons */}
+      <Stack spacing={1.5}>
+        {hetLuot ? (
+          <Button fullWidth variant="contained" disabled
+            startIcon={<LockRounded />}
+            sx={{ py: 1.5, borderRadius: "12px", fontWeight: 800, fontSize: 15 }}>
+            Đã hết lượt làm bài
+          </Button>
+        ) : (
+          <Button fullWidth variant="contained" size="large"
+            onClick={onBatDau}
+            disabled={loading || !!lanLamDoDang}
+            startIcon={soLanDaLam > 0 ? <ReplayRounded /> : <PlayArrowRounded />}
+            sx={{ py: 1.5, borderRadius: "12px", fontWeight: 900, fontSize: 15,
+              background: `linear-gradient(135deg, ${RED}, #7C3AED)`,
+              boxShadow: `0 8px 20px rgba(141,19,19,0.2)` }}>
+            {loading ? "Đang chuẩn bị..." : soLanDaLam > 0 ? "Làm lại" : "Bắt đầu làm bài"}
+          </Button>
+        )}
+
+        {/* Xem lại bài làm cũ */}
+        {lichSu.filter((l) => l.thoiGianNop).length > 0 && (
+          <>
+            <Divider sx={{ opacity: 0.4 }} />
+            <Typography sx={{ fontSize: 12, fontWeight: 700, color: "rgba(31,41,55,0.4)", textAlign: "center" }}>
+              Lịch sử làm bài
+            </Typography>
+            <Stack spacing={1}>
+              {lichSu.filter((l) => l.thoiGianNop).slice(0, 3).map((l) => (
+                <Box key={l.idLanLamBaiKiemTra}
+                  onClick={() => onXemLai(l.idLanLamBaiKiemTra)}
+                  sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                    p: 1.5, borderRadius: "10px", cursor: "pointer",
+                    border: "1px solid rgba(0,0,0,0.07)", bgcolor: "#fff",
+                    "&:hover": { borderColor: RED, bgcolor: "rgba(141,19,19,0.02)" } }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    <HistoryRounded sx={{ fontSize: 16, color: "rgba(31,41,55,0.4)" }} />
+                    <Box>
+                      <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>Lần {l.lamLanThu}</Typography>
+                      <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.45)" }}>
+                        {l.thoiGianNop ? new Date(l.thoiGianNop).toLocaleDateString("vi-VN") : ""}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    <Typography sx={{ fontSize: 13, fontWeight: 800, color: l.dat ? "#10B981" : RED }}>
+                      {l.tongDiem?.toFixed(1) ?? "—"}đ
+                    </Typography>
+                    <Chip label={l.dat ? "Đạt" : "Chưa đạt"} size="small"
+                      color={l.dat ? "success" : "error"} sx={{ fontWeight: 800, height: 20, fontSize: 10 }} />
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
+          </>
+        )}
+      </Stack>
     </Box>
   );
-};
+}

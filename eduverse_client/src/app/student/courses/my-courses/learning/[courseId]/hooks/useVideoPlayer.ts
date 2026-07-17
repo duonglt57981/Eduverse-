@@ -15,7 +15,7 @@ interface UseVideoPlayerReturn {
   handleTimeUpdate: (
     ct: number,
     sendProgress: (id: string, time: number) => void,
-  ) => void;
+  ) => void;  
   lastUpdateTimeRef: React.MutableRefObject<Record<string, number>>;
 }
 
