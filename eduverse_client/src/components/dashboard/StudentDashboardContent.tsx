@@ -937,8 +937,8 @@ export default function StudentDashboardContent() {
 
   useEffect(() => {
     const handleAvatarUpdate = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("user_avatar");
+      if (typeof window !== "undefined" && user?.email) {
+        const stored = localStorage.getItem(`user_avatar_${user.email}`);
         if (stored) {
           setUserAvatar(stored);
         }
@@ -947,7 +947,7 @@ export default function StudentDashboardContent() {
     window.addEventListener("avatar_updated", handleAvatarUpdate);
     handleAvatarUpdate();
     return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
-  }, []);
+  }, [user?.email]);
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -963,7 +963,7 @@ export default function StudentDashboardContent() {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await apiService.get<DashboardData>("/dashboard");
+        const res = await apiService.get<DashboardData>("/dashboard?role=HocVien");
         if (res.status && res.data) {
           setData(res.data);
           // Set default selected skill

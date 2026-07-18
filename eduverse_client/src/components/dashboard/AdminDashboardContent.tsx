@@ -556,7 +556,7 @@ export default function AdminDashboardContent() {
     const fetchAdminData = async () => {
       try {
         setLoading(true);
-        const res = await apiService.get<any>("/dashboard");
+        const res = await apiService.get<any>("/dashboard?role=Admin");
         if (res.status && res.data) {
           setDashboardData(res.data);
         } else {
@@ -1012,6 +1012,8 @@ export default function AdminDashboardContent() {
                     <th style={{ padding: "12px 8px" }}>Học viên</th>
                     <th style={{ padding: "12px 8px" }}>Chuyên môn</th>
                     <th style={{ padding: "12px 8px" }}>Kinh nghiệm</th>
+                    <th style={{ padding: "12px 8px" }}>Bằng cấp</th>
+                    <th style={{ padding: "12px 8px" }}>CV</th>
                     <th style={{ padding: "12px 8px" }}>Lý do</th>
                     <th style={{ padding: "12px 8px" }}>Trạng thái</th>
                     <th style={{ padding: "12px 8px", textAlign: "right" }}>
@@ -1052,7 +1054,7 @@ export default function AdminDashboardContent() {
                         style={{
                           padding: "16px 8px",
                           color: "rgba(31,41,55,0.7)",
-                          maxWidth: 200,
+                          maxWidth: 150,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -1065,7 +1067,38 @@ export default function AdminDashboardContent() {
                         style={{
                           padding: "16px 8px",
                           color: "rgba(31,41,55,0.7)",
-                          maxWidth: 200,
+                          maxWidth: 150,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                        title={req.bangCap}
+                      >
+                        {req.bangCap || "Chưa cập nhật"}
+                      </td>
+                      <td style={{ padding: "16px 8px" }}>
+                        {req.cvUrl ? (
+                          <a
+                            href={req.cvUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              color: COLORS.primary,
+                              fontWeight: 700,
+                              textDecoration: "underline",
+                            }}
+                          >
+                            Xem CV
+                          </a>
+                        ) : (
+                          "Không có"
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          padding: "16px 8px",
+                          color: "rgba(31,41,55,0.7)",
+                          maxWidth: 150,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",

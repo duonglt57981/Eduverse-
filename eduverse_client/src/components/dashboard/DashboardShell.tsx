@@ -894,8 +894,8 @@ export default function DashboardShell({
 
   useEffect(() => {
     const handleAvatarUpdate = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("user_avatar");
+      if (typeof window !== "undefined" && user?.email) {
+        const stored = localStorage.getItem(`user_avatar_${user.email}`);
         if (stored) {
           setUserAvatar(stored);
         }
@@ -905,14 +905,17 @@ export default function DashboardShell({
     handleAvatarUpdate();
     return () =>
       window.removeEventListener("avatar_updated", handleAvatarUpdate);
-  }, []);
+  }, [user?.email]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        let role = "HocVien";
+        if (pathname.startsWith("/instructor")) role = "GiaoVien";
+        else if (pathname.startsWith("/admin")) role = "Admin";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response = await apiService.get<any>("/dashboard");
+        const response = await apiService.get<any>(`/dashboard?role=${role}`);
         if (response.status && response.data) {
           setDashboardData(response.data);
         } else {
@@ -930,7 +933,7 @@ export default function DashboardShell({
     };
 
     fetchDashboardData();
-  }, []);
+  }, [pathname]);
 
   const handleLogout = async () => {
     await dispatch(logout());
@@ -943,8 +946,11 @@ export default function DashboardShell({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let data: any = dashboardData;
       if (!data?.welcomeStats) {
+        let role = "HocVien";
+        if (pathname.startsWith("/instructor")) role = "GiaoVien";
+        else if (pathname.startsWith("/admin")) role = "Admin";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await apiService.get<any>("/dashboard");
+        const res = await apiService.get<any>(`/dashboard?role=${role}`);
         if (res?.status && res.data) data = res.data;
       }
       const ws = data?.welcomeStats || {};

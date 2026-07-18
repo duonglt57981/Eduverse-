@@ -1095,8 +1095,8 @@ export default function StudentHomeContent() {
 
   useEffect(() => {
     const handleAvatarUpdate = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("user_avatar");
+      if (typeof window !== "undefined" && user?.email) {
+        const stored = localStorage.getItem(`user_avatar_${user.email}`);
         if (stored) {
           setUserAvatar(stored);
         }
@@ -1105,7 +1105,7 @@ export default function StudentHomeContent() {
     window.addEventListener("avatar_updated", handleAvatarUpdate);
     handleAvatarUpdate();
     return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
-  }, []);
+  }, [user?.email]);
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1121,7 +1121,7 @@ export default function StudentHomeContent() {
     try {
       setLoading(true);
       setError(null);
-      const res = await apiService.get<DashboardData>("/dashboard");
+      const res = await apiService.get<DashboardData>("/dashboard?role=HocVien");
       if (res.status && res.data) {
         setData(res.data);
         if (res.data.interestedSkills?.length) {

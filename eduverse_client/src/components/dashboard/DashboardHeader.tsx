@@ -54,8 +54,8 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   useEffect(() => {
     const handleAvatarUpdate = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("user_avatar");
+      if (typeof window !== "undefined" && user?.email) {
+        const stored = localStorage.getItem(`user_avatar_${user.email}`);
         if (stored) {
           setUserAvatar(stored);
         }
@@ -64,7 +64,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     window.addEventListener("avatar_updated", handleAvatarUpdate);
     handleAvatarUpdate();
     return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
-  }, []);
+  }, [user?.email]);
 
   const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);

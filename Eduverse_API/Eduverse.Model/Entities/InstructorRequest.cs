@@ -24,6 +24,14 @@ namespace Eduverse.Model.Entities
         [MaxLength(2000)]
         public string LyDo { get; set; } = string.Empty; // Reason/Motivation
 
+        [Required]
+        [MaxLength(2000)]
+        public string BangCap { get; set; } = string.Empty; // Certificates/Degrees
+
+        [Required]
+        [MaxLength(1000)]
+        public string CvUrl { get; set; } = string.Empty; // Cloudinary CV URL
+
         public int Status { get; set; } // 0 = Pending, 1 = Approved, 2 = Rejected
 
         [MaxLength(2000)]

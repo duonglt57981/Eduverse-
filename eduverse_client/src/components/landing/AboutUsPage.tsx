@@ -77,7 +77,7 @@ export default function AboutUsPage() {
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3 }}>
                 <Button
                   component={Link}
-                  href="/auth/register"
+                  href="/auth/login"
                   variant="contained"
                   sx={{
                     px: 2.8,
@@ -227,11 +227,6 @@ export default function AboutUsPage() {
                       borderRadius: 2.8,
                       border: '1px solid rgba(127,18,18,0.22)',
                       bgcolor: '#fff',
-                      transition: 'transform 180ms ease, box-shadow 180ms ease',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 24px 38px rgba(24,18,20,0.08)',
-                      },
                     }}
                   >
                     <Box
@@ -399,7 +394,7 @@ export default function AboutUsPage() {
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: 'minmax(320px, 0.9fr) minmax(0, 1.1fr)' },
               gap: 2,
-              alignItems: 'start',
+              alignItems: 'stretch',
             }}
           >
             <Paper
@@ -409,6 +404,10 @@ export default function AboutUsPage() {
                 borderRadius: 2.8,
                 border: '1px solid rgba(17,17,17,0.08)',
                 bgcolor: '#f2eeea',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
               }}
             >
               <Typography sx={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', color: '#8B1313', textTransform: 'uppercase' }}>
@@ -450,22 +449,27 @@ export default function AboutUsPage() {
                     borderRadius: 2.8,
                     border: '1px solid rgba(17,17,17,0.08)',
                     bgcolor: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
                   }}
                 >
-                  <Stack direction="row" spacing={0.35} sx={{ color: '#efb21a' }}>
+                  <Stack direction="row" spacing={0.35} sx={{ color: '#efb21a', flexShrink: 0 }}>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <StarRounded key={star} sx={{ fontSize: 18 }} />
                     ))}
                   </Stack>
-                  <Typography sx={{ mt: 1.4, fontSize: 14, lineHeight: 1.9, color: 'rgba(24,24,27,0.68)' }}>
+                  <Typography sx={{ mt: 1.4, fontSize: 14, lineHeight: 1.9, color: 'rgba(24,24,27,0.68)', flexGrow: 1 }}>
                     {item.quote}
                   </Typography>
-                  <Typography sx={{ mt: 1.8, fontSize: 14.5, fontWeight: 900 }}>
-                    {item.name}
-                  </Typography>
-                  <Typography sx={{ mt: 0.45, fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
-                    {item.role}
-                  </Typography>
+                  <Box sx={{ mt: 1.8, flexShrink: 0 }}>
+                    <Typography sx={{ fontSize: 14.5, fontWeight: 900 }}>
+                      {item.name}
+                    </Typography>
+                    <Typography sx={{ mt: 0.45, fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
+                      {item.role}
+                    </Typography>
+                  </Box>
                 </Paper>
               ))}
             </Box>
@@ -506,7 +510,7 @@ export default function AboutUsPage() {
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 3, justifyContent: 'center' }}>
                 <Button
                   component={Link}
-                  href="/auth/register"
+                  href="/auth/login"
                   variant="contained"
                   sx={{ px: 2.8, py: 1.25, borderRadius: 2.8, bgcolor: '#fff', color: '#7f1d1d' }}
                 >

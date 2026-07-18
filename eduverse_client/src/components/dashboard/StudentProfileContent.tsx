@@ -33,6 +33,7 @@ import {
   FormControl,
   InputLabel,
   Tooltip,
+  Checkbox,
 } from '@mui/material';
 import {
   CameraAltRounded,
@@ -56,6 +57,7 @@ import {
   ZoomInRounded,
   ZoomOutRounded,
   CheckRounded,
+  CloudUploadRounded,
 } from '@mui/icons-material';
 
 const TextFieldAny = TextField as any;
@@ -76,7 +78,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
   const [instructorRequest, setInstructorRequest] = useState<any>(null);
   const [specialty, setSpecialty] = useState('');
   const [experience, setExperience] = useState('');
+  const [bangCap, setBangCap] = useState('');
   const [motivation, setMotivation] = useState('');
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Form fields
   const [fullName, setFullName] = useState('');
@@ -178,6 +183,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
         setInstructorRequest(res.data);
         setSpecialty(res.data.chuyenMon || '');
         setExperience(res.data.kinhNghiem || '');
+        setBangCap(res.data.bangCap || '');
         setMotivation(res.data.lyDo || '');
       }
     } catch (err) {
@@ -186,17 +192,39 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
   };
 
   const handleSubmitUpgrade = async () => {
-    if (!specialty.trim() || !experience.trim() || !motivation.trim()) {
+    if (!specialty.trim() || !experience.trim() || !bangCap.trim() || !motivation.trim()) {
       showToast('Vui lòng điền đầy đủ các thông tin đăng ký', 'error');
+      return;
+    }
+
+    if (!cvFile) {
+      showToast('Vui lòng tải lên tài liệu CV của bạn', 'error');
+      return;
+    }
+
+    if (cvFile.size > 10 * 1024 * 1024) {
+      showToast('Tệp CV tối đa là 10MB', 'error');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      showToast('Bạn phải đồng ý với điều khoản giảng viên', 'error');
       return;
     }
 
     try {
       setSaveLoading(true);
-      const res = await apiService.post<any>('/profile/upgrade-request', {
-        chuyenMon: specialty,
-        kinhNghiem: experience,
-        lyDo: motivation,
+      const formData = new FormData();
+      formData.append('chuyenMon', specialty);
+      formData.append('kinhNghiem', experience);
+      formData.append('bangCap', bangCap);
+      formData.append('lyDo', motivation);
+      formData.append('cvFile', cvFile);
+
+      const res = await apiService.post<any>('/profile/upgrade-request', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       if (res.status) {
@@ -463,7 +491,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
         if (res.status && res.data) {
           showToast(cropType === 'avatar' ? 'Ảnh đại diện đã được lưu' : 'Ảnh bìa đã được lưu', 'success');
           if (cropType === 'avatar') {
-            localStorage.setItem("user_avatar", res.data.url);
+            localStorage.setItem(`user_avatar_${email}`, res.data.url);
             window.dispatchEvent(new Event("avatar_updated"));
           }
           setProfile((prev: any) => ({
@@ -1859,6 +1887,31 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
 
                         <Grid size={{ xs: 12 }}>
                           <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
+                            <MilitaryTechRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
+                            <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
+                              Bằng cấp & Chứng chỉ chuyên môn
+                            </Typography>
+                          </Stack>
+                          <TextFieldAny
+                            fullWidth
+                            multiline
+                            rows={3}
+                            value={bangCap}
+                            onChange={(e: any) => setBangCap(e.target.value)}
+                            placeholder="Liệt kê các bằng tốt nghiệp đại học, chứng chỉ chuyên môn, chứng chỉ sư phạm..."
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(141,19,19,0.01)',
+                                '&:hover fieldset': { borderColor: COLORS.primaryLight },
+                                '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: '2px' },
+                              }
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
                             <LocalFireDepartmentRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
                             <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
                               Lý do & Kế hoạch giảng dạy tại EduVerse
@@ -1879,6 +1932,88 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                                 '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: '2px' },
                               }
                             }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
+                            <CloudUploadRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
+                            <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
+                              Tải lên CV / Hồ sơ năng lực (Tối đa 10MB)
+                            </Typography>
+                          </Stack>
+                          <Box
+                            sx={{
+                              border: '2px dashed rgba(141,19,19,0.2)',
+                              borderRadius: '16px',
+                              p: 4,
+                              textAlign: 'center',
+                              bgcolor: 'rgba(141,19,19,0.01)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              '&:hover': {
+                                borderColor: COLORS.primary,
+                                bgcolor: 'rgba(141,19,19,0.03)'
+                              }
+                            }}
+                            component="label"
+                          >
+                            <input
+                              type="file"
+                              hidden
+                              accept=".pdf,.doc,.docx"
+                              onChange={(e: any) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  const file = e.target.files[0];
+                                  if (file.size > 10 * 1024 * 1024) {
+                                    showToast('Tệp CV tối đa 10MB', 'error');
+                                  } else {
+                                    setCvFile(file);
+                                  }
+                                }
+                              }}
+                            />
+                            <CloudUploadRounded sx={{ fontSize: 40, color: COLORS.primary, mb: 1.5, opacity: 0.8 }} />
+                            <Typography sx={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>
+                              {cvFile ? cvFile.name : 'Chọn tệp tin CV hoặc kéo thả vào đây'}
+                            </Typography>
+                            <Typography sx={{ fontSize: 12, color: COLORS.textSecondary, mt: 0.5 }}>
+                              Hỗ trợ định dạng: PDF, DOC, DOCX (Tối đa 10MB)
+                            </Typography>
+                          </Box>
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={agreedToTerms}
+                                onChange={(e: any) => setAgreedToTerms(e.target.checked)}
+                                sx={{
+                                  color: COLORS.primaryLight,
+                                  '&.Mui-focused': {
+                                    color: COLORS.primary,
+                                  },
+                                  '&.Mui-checked': {
+                                    color: COLORS.primary,
+                                  },
+                                }}
+                              />
+                            }
+                            label={
+                              <Typography sx={{ fontSize: 13.5, color: COLORS.textDark, userSelect: 'none' }}>
+                                Tôi đồng ý với các{' '}
+                                <a
+                                  href="/auth/terms"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ color: COLORS.primary, fontWeight: 700, textDecoration: 'underline' }}
+                                >
+                                  Điều khoản dành cho Giảng viên
+                                </a>{' '}
+                                tại EduVerse.
+                              </Typography>
+                            }
                           />
                         </Grid>
 
