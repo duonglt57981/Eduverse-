@@ -73,9 +73,6 @@ export default function PrivacyPage() {
               >
                 Chính sách Bảo mật
               </Typography>
-              <Typography variant="body2" sx={{ color: '#94A3B8', fontSize: 13.5 }}>
-                Cập nhật lần cuối: 15 tháng 7, 2026
-              </Typography>
             </Box>
 
             <Divider sx={{ mb: 4, borderColor: 'rgba(0, 0, 0, 0.06)' }} />
@@ -141,8 +138,8 @@ export default function PrivacyPage() {
             {/* Footer contact */}
             <Typography variant="body2" sx={{ textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
               Nếu bạn có bất kỳ câu hỏi nào về Chính sách Bảo mật, vui lòng liên hệ ban quản trị tại{' '}
-              <a href="mailto:admin.eduverse@gmail.com" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
-                admin.eduverse@gmail.com
+              <a href="mailto:admin.eduverse10@gmail.com" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 600 }}>
+                admin.eduverse10@gmail.com
               </a>.
             </Typography>
           </Paper>

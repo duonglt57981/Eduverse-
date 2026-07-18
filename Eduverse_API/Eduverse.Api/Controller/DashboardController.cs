@@ -46,7 +46,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpGet]
-        public async Task<DataResponse<object>> GetDashboardData()
+        public async Task<DataResponse<object>> GetDashboardData([FromQuery] string? role)
         {
             var loggedInUserId = UserId;
             if (loggedInUserId == null)
@@ -77,13 +77,29 @@ namespace Eduverse.Api.Controller
                 if (user != null)
                 {
                     roles = await _userManager.GetRolesAsync(user);
-                    if (roles.Contains("Admin"))
+
+                    if (!string.IsNullOrEmpty(role))
                     {
-                        return await GetAdminDashboardDataAsync();
+                        if (role == "Admin" && roles.Contains("Admin"))
+                        {
+                            return await GetAdminDashboardDataAsync();
+                        }
+                        if (role == "GiaoVien" && roles.Contains("GiaoVien"))
+                        {
+                            return await GetInstructorDashboardDataAsync(loggedInUserId.Value);
+                        }
+                        // If role == "HocVien", fall through to student dashboard data
                     }
-                    if (roles.Contains("GiaoVien"))
+                    else
                     {
-                        return await GetInstructorDashboardDataAsync(loggedInUserId.Value);
+                        if (roles.Contains("Admin"))
+                        {
+                            return await GetAdminDashboardDataAsync();
+                        }
+                        if (roles.Contains("GiaoVien"))
+                        {
+                            return await GetInstructorDashboardDataAsync(loggedInUserId.Value);
+                        }
                     }
                 }
             }

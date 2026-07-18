@@ -52,8 +52,8 @@ export default function StudentHomeHeader() {
 
   useEffect(() => {
     const handleAvatarUpdate = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("user_avatar");
+      if (typeof window !== "undefined" && user?.email) {
+        const stored = localStorage.getItem(`user_avatar_${user.email}`);
         if (stored) setUserAvatar(stored);
       }
     };
@@ -61,7 +61,7 @@ export default function StudentHomeHeader() {
     handleAvatarUpdate();
     return () =>
       window.removeEventListener("avatar_updated", handleAvatarUpdate);
-  }, []);
+  }, [user?.email]);
 
   const handleLogout = async () => {
     setAnchorEl(null);
