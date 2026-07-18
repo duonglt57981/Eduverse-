@@ -41,6 +41,12 @@ namespace Eduverse.Service.GioHangService
         }
         public async Task<GioHangDto> ThemVaoGioHangAsync(GioHangRequest request)
         {
+            var khoaHoc = await _khoaHocRepo.GetByIdAsync(request.IdKhoaHoc);
+
+            if (khoaHoc.CreatedId == request.IdNguoiDung)
+            {
+                throw new InvalidOperationException("Bạn không thể mua khóa học do chính mình tạo.");
+            }
             var daMua = await _dangKyKhoaHocRepository.GetQueryable()
                 .AnyAsync(x =>
                     x.IdNguoiDangKi == request.IdNguoiDung &&

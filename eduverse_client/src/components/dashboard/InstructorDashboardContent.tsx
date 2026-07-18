@@ -234,7 +234,7 @@ export default function InstructorDashboardContent() {
     (async () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await apiService.get<any>("/dashboard");
+        const res = await apiService.get<any>("/dashboard?role=GiaoVien");
         if (res?.status && res.data) setDash(res.data);
       } catch (e) {
         console.error("Error fetching instructor dashboard:", e);
@@ -340,6 +340,7 @@ export default function InstructorDashboardContent() {
               <Button
                 variant="outlined"
                 startIcon={<AddRounded />}
+                onClick={() => router.push("/instructor/manager-courses/create/1")}
                 sx={{
                   borderRadius: "12px",
                   borderColor: "rgba(255,255,255,0.4)",
@@ -374,27 +375,6 @@ export default function InstructorDashboardContent() {
                 }}
               >
                 Rút tiền ({formatTien(soDu)}đ)
-              </Button>
-              <Button
-                variant="contained"
-                sx={{
-                  borderRadius: "12px",
-                  bgcolor: "rgba(255,255,255,0.15)",
-                  color: "#fff",
-                  px: 2.5,
-                  py: 1,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  textTransform: "none",
-                  boxShadow: "none",
-                  backdropFilter: "blur(10px)",
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.25)",
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Xem báo cáo
               </Button>
             </Stack>
           </Box>
@@ -1090,41 +1070,7 @@ export default function InstructorDashboardContent() {
         </Paper>
       </Box>
 
-      {/* ============================================== */}
-      {/* 5. FLOATING CTA BUTTON                         */}
-      {/* ============================================== */}
-      <Box
-        sx={{
-          position: "fixed",
-          bottom: 24,
-          left: { xs: 16, lg: 304 },
-          zIndex: 1100,
-        }}
-      >
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          sx={{
-            borderRadius: "16px",
-            bgcolor: COLORS.primary,
-            color: "#fff",
-            px: 3,
-            py: 1.5,
-            fontSize: 14,
-            fontWeight: 700,
-            textTransform: "none",
-            boxShadow: "0 8px 24px rgba(141,19,19,0.3)",
-            "&:hover": {
-              bgcolor: COLORS.primaryDark,
-              boxShadow: "0 12px 32px rgba(141,19,19,0.4)",
-              transform: "translateY(-2px)",
-            },
-            transition: "all 200ms ease",
-          }}
-        >
-          Tạo khóa học mới
-        </Button>
-      </Box>
+
     </>
   );
 }

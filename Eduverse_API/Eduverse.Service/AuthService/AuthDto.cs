@@ -33,6 +33,7 @@ namespace Eduverse.Service.AuthService
 
     public class AuthResponse
     {
+        public string Id { get; set; }
         public string AccessToken { get; set; }
         public string UserName { get; set; }
         public string? HoTen { get; set; }

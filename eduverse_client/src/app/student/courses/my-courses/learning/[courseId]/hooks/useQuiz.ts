@@ -1,326 +1,497 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import BaiKiemTraService from "@/src/services/BaiKiemTraService";
-import {
-  BaiKiemTraLamBaiDto,
-  LanLamBaiKiemTraDto,
-  ReviewQuizDto,
-  ContinueQuizFullDto,
-} from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
-import {
-  AutoSaveRequest,
-  SubmitQuizRequest,
-} from "@/src/types/baiKiemTra/Request/QuizzRequest";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { apiService } from "@/src/services/index";
 
-const QuizSvc = new BaiKiemTraService();
+// ── Types (map từ BE DTOs) ─────────────────────────────────────────────────────
 
-export type QuizPhase =
-  | "idle"
-  | "loading"
-  | "doing"
-  | "submitting"
-  | "result"
-  | "error";
-
-export interface SelectedAnswers {
-  [cauHoiId: string]: string[];
+export interface DapAnLamBaiDto {
+  id: string;
+  noiDungDapAn?: string;
+  thuTuSapXep?: number;
 }
 
-export interface UseQuizReturn {
-  phase: QuizPhase;
-  quiz: BaiKiemTraLamBaiDto | null;
-  lanLamBai: LanLamBaiKiemTraDto | null;
-  review: ReviewQuizDto | null;
-  selectedAnswers: SelectedAnswers;
-  currentQuestion: number;
-  timeLeft: number | null;
-  errorMsg: string;
-  savingCauHoi: string | null;
-  startQuiz: (idBaiKiemTra: string, idDangKyKhoaHoc: string) => Promise<void>;
-  continueQuiz: (idLanLamBai: string) => Promise<void>;
-  selectAnswer: (cauHoiId: string, dapAnId: string, isMulti: boolean) => void;
-  goToQuestion: (idx: number) => void;
-  submitQuiz: () => Promise<void>;
-  resetQuiz: () => void;
+export interface DapAnReviewDto {
+  id: string;
+  noiDungDapAn?: string;
+  laDapAnDung?: boolean;
 }
 
-type ApiErrorShape = {
-  response?: {
-    data?: {
-      message?: string;
-    };
+export interface CauHoiLamBaiDto {
+  id: string;
+  tenCauHoi?: string;
+  noiDungCauHoi?: string;
+  loaiCauHoi?: number;
+  diem?: number;
+  dapAns: DapAnLamBaiDto[];
+  dapAnDaChon?: string[];
+  daTraLoi: boolean;
+  doKho?: string;
+}
+
+export interface BaiKiemTraLamBaiDto {
+  id: string;
+  tenBaiKiemTra?: string;
+  moTa?: string;
+  gioiHanThoiGian?: number; // phút
+  cauHois: CauHoiLamBaiDto[];
+}
+
+// BaiKiemTraDto (thông tin tổng quan)
+export interface BaiKiemTraInfoDto {
+  id: string;
+  tenBaiKiemTra?: string;
+  moTa?: string;
+  diemDat?: number;
+  gioiHanThoiGian?: number;
+  choLamLai?: boolean;
+  soLanLamToiDa?: number;
+  soCauHoi?: number;
+}
+
+export interface KetQuaLanKiemTraDto {
+  idLanLamBaiKiemTra: string;
+  dat: boolean;
+  tongDiem: number;
+  soCauDung: number;
+  soCauSai: number;
+  tongSoCau: number;
+  thoiGianNop?: string;
+  datYeuCau: boolean;
+  tongDiemToiDa: number;
+  thoiGianBatDau?: string;
+  thoiGianKetThuc?: string;
+}
+
+export interface CauHoiReviewDto {
+  idCauHoi: string;
+  tenCauHoi?: string;
+  noiDungCauHoi?: string;
+  idDapAnChon?: string;
+  idDapAnDung?: string;
+  laDung: boolean;
+  diemNhanDuoc: number;
+  dapAns: DapAnReviewDto[];
+}
+
+export interface ReviewQizzDto {
+  idLanLamBaiKiemTra: string;
+  tongDiem: number;
+  thoiGianNop?: string;
+  dat: boolean;
+  cauHois: CauHoiReviewDto[];
+}
+
+export interface ContinueQuizFullDto {
+  idLanLamBaiKiemTra: string;
+  idBaiKiemTra: string;
+  tenBaiKiemTra: string;
+  currentQuestionIndex: number;
+  currentQuestionId?: string;
+  savedAnswers: Record<string, string[]>;
+  allQuestions: CauHoiLamBaiDto[];
+  progress: {
+    soCauDaLam: number;
+    tongSoCau: number;
+    phanTram: number;
+    daHoanThanh: boolean;
   };
-};
+  thoiGian: {
+    thoiGianBatDau: string;
+    thoiGianDaLam: number;
+    thoiGianConLai: number;
+    gioiHanThoiGian: number;
+    coGioiHan: boolean;
+  };
+}
 
-const getErrorMessage = (err: unknown, fallback: string): string => {
-  const error = err as ApiErrorShape;
-  return error?.response?.data?.message ?? fallback;
-};
+export interface AutoSaveDapAnDto {
+  success: boolean;
+  soCauDaLam: number;
+  tongSoCau: number;
+  daHoanThanh: boolean;
+  nextQuestionId?: string;
+  thoiGianConLai: number;
+  coGioiHan: boolean;
+  message: string;
+}
 
-export const useQuiz = (): UseQuizReturn => {
-  const [phase, setPhase] = useState<QuizPhase>("idle");
-  const [quiz, setQuiz] = useState<BaiKiemTraLamBaiDto | null>(null);
-  const [lanLamBai, setLanLamBai] = useState<LanLamBaiKiemTraDto | null>(null);
-  const [review, setReview] = useState<ReviewQuizDto | null>(null);
-  const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswers>({});
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [savingCauHoi, setSavingCauHoi] = useState<string | null>(null);
+export interface LichSuLamBaiDto {
+  idLanLamBaiKiemTra: string;
+  lamLanThu?: number;
+  dat?: boolean;
+  tongDiem?: number;
+  thoiGianBatDau?: string;
+  thoiGianNop?: string;
+}
 
-  const lanLamBaiRef = useRef<LanLamBaiKiemTraDto | null>(null);
-  const selectedAnswersRef = useRef<SelectedAnswers>({});
+export type QuizPhase = "entry" | "doing" | "submitting" | "result" | "review";
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
+
+export function useQuiz(
+  idBaiKiemTra: string | undefined,
+  idDangKi: string | undefined,
+  userId: string | undefined,
+) {
+  const [phase, setPhase] = useState<QuizPhase>("entry");
+  const [info, setInfo] = useState<BaiKiemTraInfoDto | null>(null);
+  const [cauHois, setCauHois] = useState<CauHoiLamBaiDto[]>([]);
+  const [ketQua, setKetQua] = useState<KetQuaLanKiemTraDto | null>(null);
+  const [review, setReview] = useState<ReviewQizzDto | null>(null);
+  const [lichSu, setLichSu] = useState<LichSuLamBaiDto[]>([]);
+  const [canRetake, setCanRetake] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const [idLanLam, setIdLanLam] = useState<string>("");
+  const [cauHoiHienTai, setCauHoiHienTai] = useState(0);
+  // traLois: idCauHoi → list idDapAn (support multi-choice)
+  const [traLois, setTraLois] = useState<Record<string, string[]>>({});
+  const [thoiGianConLai, setThoiGianConLai] = useState(0);
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const autoSaveQueueRef = useRef<Set<string>>(new Set());
+  const savingRef = useRef(false);
 
+  // ── Load thông tin bài + lịch sử ──────────────────────────────────────────
   useEffect(() => {
-    lanLamBaiRef.current = lanLamBai;
-  }, [lanLamBai]);
-  useEffect(() => {
-    selectedAnswersRef.current = selectedAnswers;
-  }, [selectedAnswers]);
-
-  const clearAllIntervals = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (heartbeatRef.current) {
-      clearInterval(heartbeatRef.current);
-      heartbeatRef.current = null;
-    }
-  }, []);
-
-  const startBackgroundTasks = useCallback(
-    (timeLimitMinutes: number | null | undefined, idLanLamBai: string) => {
-      clearAllIntervals();
-
-      if (timeLimitMinutes && timeLimitMinutes > 0) {
-        setTimeLeft(timeLimitMinutes * 60);
-        timerRef.current = setInterval(() => {
-          setTimeLeft((prev) => {
-            if (prev === null || prev <= 1) {
-              if (timerRef.current) {
-                clearInterval(timerRef.current);
-              }
-              timerRef.current = null;
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-
-      // Heartbeat mỗi 15 giây
-      heartbeatRef.current = setInterval(async () => {
-        try {
-          await QuizSvc.Heartbeat(idLanLamBai);
-        } catch {
-          // Fail silently
-        }
-      }, 15000);
-    },
-    [clearAllIntervals],
-  );
-
-  const autoSaveSingleAnswer = useCallback(
-    async (idLanLamBai: string, cauHoiId: string, dapAnIds: string[]) => {
-      if (autoSaveQueueRef.current.has(cauHoiId)) return;
-      autoSaveQueueRef.current.add(cauHoiId);
-      setSavingCauHoi(cauHoiId);
+    if (!idBaiKiemTra || !userId) return;
+    const load = async () => {
+      setLoading(true);
       try {
-        const request: AutoSaveRequest = {
-          idLanLamBaiKiemTra: idLanLamBai,
-          idCauHoi: cauHoiId,
-          idDapAnChons: dapAnIds,
-        };
-        await QuizSvc.AutoSaveDapAn(request);
+        const [infoRes, histRes, retakeRes] = await Promise.all([
+          apiService.get<BaiKiemTraInfoDto>(`/baikimtra/${idBaiKiemTra}`),
+          apiService.get<LichSuLamBaiDto[]>(
+            `/baikimtra/${idBaiKiemTra}/history/${userId}`,
+          ),
+          apiService.get<boolean>(
+            `/baikimtra/${idBaiKiemTra}/can-retake/${userId}`,
+          ),
+        ]);
+        setInfo(infoRes.data);
+        setLichSu(histRes.data ?? []);
+        setCanRetake(retakeRes.data);
       } catch {
-        // Fail silently
+        setError("Không thể tải thông tin bài kiểm tra");
       } finally {
-        autoSaveQueueRef.current.delete(cauHoiId);
-        setSavingCauHoi((prev) => (prev === cauHoiId ? null : prev));
+        setLoading(false);
       }
-    },
-    [],
-  );
+    };
+    load();
+  }, [idBaiKiemTra, userId]);
 
-  const startQuiz = useCallback(
-    async (idBaiKiemTra: string, idDangKyKhoaHoc: string) => {
-      setPhase("loading");
-      setErrorMsg("");
-      try {
-        const quizRes = await QuizSvc.GetQuizzForStudent(idBaiKiemTra);
-        const quizData = quizRes.data;
-        setQuiz(quizData);
-
-        const startRes = await QuizSvc.StartQuizz({
-          idBaiKiemTra,
-          idDangKi: idDangKyKhoaHoc,
-        });
-        const lanData = startRes.data;
-        setLanLamBai(lanData);
-
-        setSelectedAnswers({});
-        setCurrentQuestion(0);
-        setReview(null);
-        setPhase("doing");
-
-        // Lấy thời gian giới hạn từ quizData
-        const timeLimit = quizData?.gioiHanThoiGian;
-        startBackgroundTasks(timeLimit, lanData.id);
-      } catch (err: unknown) {
-        setErrorMsg(getErrorMessage(err, "Không thể bắt đầu bài kiểm tra."));
-        setPhase("error");
-      }
-    },
-    [startBackgroundTasks],
-  );
-
-  const continueQuiz = useCallback(
-    async (idLanLamBai: string) => {
-      setPhase("loading");
-      setErrorMsg("");
-      try {
-        const res = await QuizSvc.ContinueQuiz(idLanLamBai);
-        const data: ContinueQuizFullDto = res.data;
-
-        // Map dữ liệu từ ContinueQuizFullDto sang các state
-        const lanLamData: LanLamBaiKiemTraDto = {
-          id: data.idLanLamBaiKiemTra,
-          idBaiKiemTra: data.idBaiKiemTra,
-          thoiGianBatDau: new Date(data.thoiGian.thoiGianBatDau),
-        };
-
-        setQuiz(null); // Quiz không có trong response này, có thể lấy từ allQuestions
-        setLanLamBai(lanLamData);
-
-        // Khôi phục đáp án đã lưu
-        const restored: SelectedAnswers = {};
-        Object.entries(data.savedAnswers).forEach(([cauHoiId, dapAnIds]) => {
-          restored[cauHoiId] = dapAnIds;
-        });
-        setSelectedAnswers(restored);
-        setCurrentQuestion(data.currentQuestionIndex);
-        setReview(null);
-        setPhase("doing");
-
-        startBackgroundTasks(data.thoiGian.gioiHanThoiGian / 60, idLanLamBai);
-        setTimeLeft(data.thoiGian.thoiGianConLai);
-      } catch (err: unknown) {
-        setErrorMsg(getErrorMessage(err, "Không thể tiếp tục bài kiểm tra."));
-        setPhase("error");
-      }
-    },
-    [startBackgroundTasks],
-  );
-
-  const selectAnswer = useCallback(
-    (cauHoiId: string, dapAnId: string, isMulti: boolean) => {
-      const idLanLamBai = lanLamBaiRef.current?.id;
-      if (!idLanLamBai) return;
-
-      setSelectedAnswers((prev) => {
-        const current = prev[cauHoiId] ?? [];
-        let next: string[];
-
-        if (isMulti) {
-          next = current.includes(dapAnId)
-            ? current.filter((id) => id !== dapAnId)
-            : [...current, dapAnId];
-        } else {
-          next = current[0] === dapAnId ? [] : [dapAnId];
-        }
-
-        // AutoSave ngay lập tức với đáp án mới
-        autoSaveSingleAnswer(idLanLamBai, cauHoiId, next);
-
-        return { ...prev, [cauHoiId]: next };
-      });
-    },
-    [autoSaveSingleAnswer],
-  );
-
-  const goToQuestion = useCallback((idx: number) => {
-    setCurrentQuestion(idx);
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatRef.current) clearInterval(heartbeatRef.current);
   }, []);
 
-  const submitQuiz = useCallback(async () => {
-    const current = lanLamBaiRef.current;
-    const id = current?.id;
-    if (!id) return;
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, []);
 
+  const nopBai = useCallback(async () => {
+    if (!idLanLam || !cauHois.length) return;
+    stopTimer();
+    stopHeartbeat();
     setPhase("submitting");
-    clearAllIntervals();
-
     try {
-      const cauTraLois = Object.entries(selectedAnswersRef.current).map(
-        ([idCauHoi, idDapAnChons]) => ({
-          idCauHoi,
-          idDapAnChons,
-        }),
-      );
-
-      const submitRequest: SubmitQuizRequest = {
-        idLanLamBaiKiemTra: id,
-        cauTraLois,
+      const payload = {
+        idLanLamBaiKiemTra: idLanLam,
+        cauTraLois: cauHois.map((c) => ({
+          idCauHoi: c.id,
+          idDapAnChons: traLois[c.id] ?? [],
+        })),
       };
-
-      await QuizSvc.SubMitQuizz(submitRequest);
-
-      // Lấy review chi tiết sau khi nộp
-      const reviewRes = await QuizSvc.GetReviewQuiz(id);
-      setReview(reviewRes.data);
+      const res = await apiService.post<KetQuaLanKiemTraDto>(
+        "/baikimtra/submit",
+        payload,
+      );
+      setKetQua(res.data);
       setPhase("result");
-    } catch (err: unknown) {
-      setErrorMsg(getErrorMessage(err, "Có lỗi khi nộp bài."));
-      setPhase("error");
-    }
-  }, [clearAllIntervals]);
 
-  const resetQuiz = useCallback(() => {
-    clearAllIntervals();
-    setPhase("idle");
-    setQuiz(null);
-    setLanLamBai(null);
+      // Refresh lịch sử
+      if (userId && idBaiKiemTra) {
+        const histRes = await apiService.get<LichSuLamBaiDto[]>(
+          `/baikimtra/${idBaiKiemTra}/history/${userId}`,
+        );
+        setLichSu(histRes.data ?? []);
+        const retakeRes = await apiService.get<boolean>(
+          `/baikimtra/${idBaiKiemTra}/can-retake/${userId}`,
+        );
+        setCanRetake(retakeRes.data);
+      }
+    } catch {
+      setError("Không thể nộp bài. Vui lòng thử lại.");
+      setPhase("doing");
+    }
+  }, [
+    idLanLam,
+    cauHois,
+    traLois,
+    stopTimer,
+    stopHeartbeat,
+    userId,
+    idBaiKiemTra,
+  ]);
+
+  // ── Timer ──────────────────────────────────────────────────────────────────
+  const startTimer = useCallback((giayConLai: number) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setThoiGianConLai(giayConLai);
+    timerRef.current = setInterval(() => {
+      setThoiGianConLai((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          // Tự nộp khi hết giờ
+          nopBai();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  // ── Heartbeat ──────────────────────────────────────────────────────────────
+  const startHeartbeat = useCallback((id: string) => {
+    if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+    heartbeatRef.current = setInterval(async () => {
+      try {
+        const res = await apiService.post<{ thoiGianConLai?: number }>(
+          `/baikimtra/heartbeat-timequiz/${id}`,
+        );
+        if (res.data?.thoiGianConLai != null) {
+          setThoiGianConLai(res.data.thoiGianConLai);
+        }
+      } catch {
+        /* ignore */
+      }
+    }, 10000); // 10s
+  }, []);
+
+  useEffect(
+    () => () => {
+      stopTimer();
+      stopHeartbeat();
+    },
+    [stopTimer, stopHeartbeat],
+  );
+
+  // ── Bắt đầu làm bài ───────────────────────────────────────────────────────
+  const batDauLamBai = useCallback(async () => {
+    if (!idBaiKiemTra) return;
+    setLoading(true);
+    setError("");
+    try {
+      // 1. Start quiz → lấy idLanLamBaiKiemTra
+      const startRes = await apiService.post<{
+        id: string;
+        thoiGianBatDau: string;
+      }>("/baikimtra/start", { idBaiKiemTra, idDangKi: idDangKi ?? null });
+      const newIdLanLam = startRes.data.id;
+      setIdLanLam(newIdLanLam);
+
+      // 2. Lấy câu hỏi cho học viên (không có đáp án đúng)
+      const quizRes = await apiService.get<BaiKiemTraLamBaiDto>(
+        `/baikimtra/${idBaiKiemTra}/for-student`,
+      );
+      const questions = quizRes.data.cauHois ?? [];
+      setCauHois(questions);
+      setTraLois({});
+      setCauHoiHienTai(0);
+      setPhase("doing");
+
+      // 3. Khởi động timer
+      if (quizRes.data.gioiHanThoiGian) {
+        startTimer(quizRes.data.gioiHanThoiGian * 60);
+      }
+
+      // 4. Heartbeat
+      startHeartbeat(newIdLanLam);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      setError(msg ?? "Không thể bắt đầu làm bài");
+    } finally {
+      setLoading(false);
+    }
+  }, [idBaiKiemTra, idDangKi, startTimer, startHeartbeat]);
+
+  // ── Tiếp tục bài làm dở ───────────────────────────────────────────────────
+  const tiepTucLamBai = useCallback(
+    async (idLanLamCu: string) => {
+      setLoading(true);
+      try {
+        const res = await apiService.get<ContinueQuizFullDto>(
+          `/baikimtra/continue-full/${idLanLamCu}`,
+        );
+        const d = res.data;
+        setIdLanLam(idLanLamCu);
+        setCauHois(d.allQuestions ?? []);
+        setCauHoiHienTai(d.currentQuestionIndex);
+
+        // Convert savedAnswers từ Record<Guid, List<Guid>>
+        const restored: Record<string, string[]> = {};
+        Object.entries(d.savedAnswers ?? {}).forEach(([k, v]) => {
+          restored[k] = v;
+        });
+        setTraLois(restored);
+        setPhase("doing");
+
+        if (d.thoiGian?.coGioiHan && d.thoiGian.thoiGianConLai > 0) {
+          startTimer(d.thoiGian.thoiGianConLai);
+        }
+        startHeartbeat(idLanLamCu);
+      } catch {
+        setError("Không thể tiếp tục bài làm");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [startTimer, startHeartbeat],
+  );
+
+  // ── Chọn đáp án + auto-save ────────────────────────────────────────────────
+  const chonDapAn = useCallback(
+    async (idCauHoi: string, idDapAn: string) => {
+      // Update local state ngay
+      setTraLois((prev) => {
+        const current = prev[idCauHoi] ?? [];
+        // Single choice: replace; multi-choice: toggle
+        const cauHoi = cauHois.find((c) => c.id === idCauHoi);
+        const isMulti = cauHoi?.loaiCauHoi === 2; // 2 = multiple choice
+        if (isMulti) {
+          const updated = current.includes(idDapAn)
+            ? current.filter((x) => x !== idDapAn)
+            : [...current, idDapAn];
+          return { ...prev, [idCauHoi]: updated };
+        }
+        return { ...prev, [idCauHoi]: [idDapAn] };
+      });
+
+      // Auto-save lên BE (debounce bằng savingRef)
+      if (savingRef.current || !idLanLam) return;
+      savingRef.current = true;
+      try {
+        const cauHoi = cauHois.find((c) => c.id === idCauHoi);
+        const isMulti = cauHoi?.loaiCauHoi === 2;
+        const current = traLois[idCauHoi] ?? [];
+        const updated = isMulti
+          ? current.includes(idDapAn)
+            ? current.filter((x) => x !== idDapAn)
+            : [...current, idDapAn]
+          : [idDapAn];
+
+        const res = await apiService.post<AutoSaveDapAnDto>(
+          "/baikimtra/auto-save",
+          {
+            idLanLamBaiKiemTra: idLanLam,
+            idCauHoi,
+            idDapAnChons: updated,
+          },
+        );
+
+        // Cập nhật thời gian từ BE
+        if (res.data?.coGioiHan && res.data.thoiGianConLai > 0) {
+          setThoiGianConLai(res.data.thoiGianConLai);
+        }
+
+        // Tự động chuyển câu tiếp
+        if (res.data?.nextQuestionId) {
+          const nextIdx = cauHois.findIndex(
+            (c) => c.id === res.data.nextQuestionId,
+          );
+          if (nextIdx !== -1) setCauHoiHienTai(nextIdx);
+        }
+      } catch {
+        /* ignore auto-save errors */
+      } finally {
+        savingRef.current = false;
+      }
+    },
+    [cauHois, idLanLam, traLois],
+  );
+
+  // ── Nộp bài ───────────────────────────────────────────────────────────────
+
+  // ── Xem lại bài làm ───────────────────────────────────────────────────────
+  const xemLaiBai = useCallback(
+    async (idLanLamBai?: string) => {
+      const id = idLanLamBai ?? idLanLam;
+      if (!id) return;
+      setLoading(true);
+      try {
+        const res = await apiService.get<ReviewQizzDto>(
+          `/baikimtra/review/${id}`,
+        );
+        setReview(res.data);
+        setPhase("review");
+      } catch {
+        setError("Không thể tải kết quả chi tiết");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [idLanLam],
+  );
+
+  const lamLaiDau = useCallback(() => {
+    stopTimer();
+    stopHeartbeat();
+    setPhase("entry");
+    setKetQua(null);
     setReview(null);
-    setSelectedAnswers({});
-    setCurrentQuestion(0);
-    setTimeLeft(null);
-    setErrorMsg("");
-    setSavingCauHoi(null);
-    autoSaveQueueRef.current.clear();
-  }, [clearAllIntervals]);
+    setTraLois({});
+    setCauHoiHienTai(0);
+    setError("");
+    setIdLanLam("");
+  }, [stopTimer, stopHeartbeat]);
 
-  // Auto submit khi hết giờ
-  useEffect(() => {
-    if (timeLeft === 0 && phase === "doing") {
-      submitQuiz();
-    }
-  }, [timeLeft, phase, submitQuiz]);
+  const formatTimer = (giay: number) => {
+    const m = Math.floor(giay / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (giay % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
-  // Cleanup khi unmount
-  useEffect(() => {
-    return () => clearAllIntervals();
-  }, [clearAllIntervals]);
+  const soLanDaLam = lichSu.length;
+  const lanLamDoDang = lichSu.find((l) => !l.thoiGianNop); // chưa nộp = đang dở
 
   return {
     phase,
-    quiz,
-    lanLamBai,
+    // Alias để tương thích code cũ
+    quiz: info,
+    selectedAnswers: traLois,
+    currentQuestion: cauHoiHienTai,
+    timeLeft: thoiGianConLai,
+    errorMsg: error,
+    startQuiz: batDauLamBai,
+    continueQuiz: tiepTucLamBai,
+    selectAnswer: chonDapAn,
+    goToQuestion: setCauHoiHienTai,
+    submitQuiz: nopBai,
+    resetQuiz: lamLaiDau,
+    // API mới
+    info,
+    cauHois,
+    ketQua,
     review,
-    selectedAnswers,
-    currentQuestion,
-    timeLeft,
-    errorMsg,
-    savingCauHoi,
-    startQuiz,
-    continueQuiz,
-    selectAnswer,
-    goToQuestion,
-    submitQuiz,
-    resetQuiz,
+    lichSu,
+    canRetake,
+    loading,
+    error,
+    traLois,
+    cauHoiHienTai,
+    setCauHoiHienTai,
+    thoiGianConLai,
+    formatTimer,
+    soLanDaLam,
+    lanLamDoDang,
+    batDauLamBai,
+    tiepTucLamBai,
+    chonDapAn,
+    nopBai,
+    xemLaiBai,
+    lamLaiDau,
   };
-};
+}

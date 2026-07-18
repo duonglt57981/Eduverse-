@@ -4,8 +4,6 @@ import { GioHangDto } from "../../types/gioHang.d";
 import { PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
-
-
 type ApiResponse<T> = {
   status: boolean;
   message: string;
@@ -69,14 +67,17 @@ export const toggleChon = createAsyncThunk(
   async (khoaHocId: string, { rejectWithValue }) => {
     try {
       const res = await apiService.put<GioHangDto>(
-  `/giohang/${khoaHocId}/chon`,
-  {}
-);
-console.log("items after toggle:", res.data?.items?.map(i => ({
-  id: i.idKhoaHoc,
-  daChon: i.daChon
-})));
-return res.data;
+        `/giohang/${khoaHocId}/chon`,
+        {},
+      );
+      console.log(
+        "items after toggle:",
+        res.data?.items?.map((i) => ({
+          id: i.idKhoaHoc,
+          daChon: i.daChon,
+        })),
+      );
+      return res.data;
     } catch (err: unknown) {
       console.log("toggleChon error:", err);
       return rejectWithValue(typeof err === "string" ? err : "Lỗi");
@@ -103,6 +104,11 @@ const gioHangSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    clearGioHang: (state) => {
+    state.gioHang = null;
+    state.error = null;
+    state.loading = false;
+  },
   },
   extraReducers: (builder) => {
     const setLoading = (state: GioHangState) => {
@@ -119,6 +125,7 @@ const gioHangSlice = createSlice({
     const setError = (state: GioHangState, action: PayloadAction<unknown>) => {
       state.loading = false;
       state.error = (action.payload as string) ?? "Có lỗi xảy ra";
+      state.gioHang = null;
     };
 
     builder
@@ -133,9 +140,9 @@ const gioHangSlice = createSlice({
       .addCase(xoaKhoiGioHang.rejected, setError)
       .addCase(toggleChon.pending, setLoading)
       .addCase(toggleChon.fulfilled, setData)
-      .addCase(toggleChon.rejected, setError)
+      .addCase(toggleChon.rejected, setError);
   },
 });
 
-export const { clearError } = gioHangSlice.actions;
+export const { clearError, clearGioHang } = gioHangSlice.actions;
 export default gioHangSlice.reducer;

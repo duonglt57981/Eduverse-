@@ -120,14 +120,15 @@ namespace Eduverse.Api.Controller
                 "Thành công"
             ));
         }
-        //[HttpPost("confirm-webhook")]
-        //public async Task<IActionResult> ConfirmWebhook()
-        //{
-        //    var ngrokUrl = "https://chapleted-unautographed-asia.ngrok-free.dev";
-        //    var result = await _payOS.Webhooks.ConfirmAsync(
-        //        $"{ngrokUrl}/api/thanhtoan/webhook"
-        //    );
-        //    return Ok(result);
-        //}
+        [AllowAnonymous]
+[HttpPost("confirm-webhook")]
+public async Task<IActionResult> ConfirmWebhook()
+{
+    var backendUrl = _config["BackendUrl"] ?? "https://eduverseapi-production-5a5e.up.railway.app";
+    var result = await _payOS.Webhooks.ConfirmAsync(
+        $"{backendUrl}/api/thanhtoan/webhook"
+    );
+    return Ok(result);
+}
     }
 }

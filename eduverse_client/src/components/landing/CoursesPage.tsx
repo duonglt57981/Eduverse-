@@ -723,34 +723,7 @@ export default function CoursesPage() {
                   />
                 </FilterGroup>
 
-                <Divider />
 
-                <FilterGroup title="Đánh giá">
-                  <Button
-                    onClick={() => setMinRating(minRating === 4.5 ? null : 4.5)}
-                    sx={{
-                      justifyContent: 'flex-start',
-                      width: '100%',
-                      px: 1.2,
-                      py: 0.8,
-                      borderRadius: 2.8,
-                      color: minRating === 4.5 ? '#8B1313' : 'rgba(24,24,27,0.72)',
-                      bgcolor: minRating === 4.5 ? 'rgba(141,19,19,0.06)' : 'transparent',
-                      textTransform: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.2,
-                      '&:hover': {
-                        bgcolor: minRating === 4.5 ? 'rgba(141,19,19,0.1)' : 'rgba(24,24,27,0.04)',
-                      },
-                    }}
-                  >
-                    <Rating value={4.5} precision={0.5} readOnly size="small" />
-                    <Typography sx={{ fontSize: 13.5, fontWeight: minRating === 4.5 ? 700 : 500 }}>
-                      4.5 trở lên
-                    </Typography>
-                  </Button>
-                </FilterGroup>
 
                 <Divider />
 

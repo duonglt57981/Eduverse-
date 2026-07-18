@@ -37,6 +37,7 @@ interface KetQuaProps {
   canRetake?: boolean;
   onRetake?: () => void;
   onClose?: () => void;
+  onXemLai?: () => void;
 }
 
 function formatDuration(seconds: number): string {
@@ -58,6 +59,7 @@ export const QuizResult = ({
   canRetake = false,
   onRetake,
   onClose,
+  onXemLai,
 }: KetQuaProps) => {
   const phanTram = diemToiDa > 0 ? Math.round((diem / diemToiDa) * 100) : 0;
   const nguongDat = diemDat ?? diemToiDa * 0.5;
@@ -415,6 +417,29 @@ export const QuizResult = ({
                   Làm lại
                 </Button>
               )}
+
+              {/* ← thêm button này */}
+              {onXemLai && (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<SchoolIcon />}
+                  onClick={onXemLai}
+                  sx={{
+                    borderColor: "#3b82f6",
+                    color: "#3b82f6",
+                    fontWeight: 700,
+                    borderRadius: 1.5,
+                    "&:hover": {
+                      borderColor: "#2563eb",
+                      bgcolor: alpha("#3b82f6", 0.04),
+                    },
+                  }}
+                >
+                  Xem lại kết quả
+                </Button>
+              )}
+
               {onClose && (
                 <Button
                   fullWidth

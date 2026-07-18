@@ -150,7 +150,7 @@ export default function LandingPage() {
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 3.25 }}>
                 <Button
                   component={Link}
-                  href="/auth/register"
+                  href="/auth/login"
                   variant="contained"
                   endIcon={<ArrowForwardRounded />}
                   sx={{
@@ -526,58 +526,7 @@ export default function LandingPage() {
             </Box>
           </Box>
 
-          <Paper
-            elevation={0}
-            sx={{
-              mt: { xs: 2, md: 4 },
-              p: { xs: 3, md: 5 },
-              borderRadius: 2.8,
-              overflow: 'hidden',
-              position: 'relative',
-              color: '#fff',
-              background:
-                'radial-gradient(circle at top right, rgba(255,255,255,0.12), transparent 25%), linear-gradient(135deg, #8d1010 0%, #6f0f0f 100%)',
-            }}
-          >
-            <Box
-              sx={{
-                position: 'absolute',
-                right: -60,
-                top: -40,
-                width: 220,
-                height: 220,
-                borderRadius: '50%',
-                bgcolor: 'rgba(255,255,255,0.08)',
-              }}
-            />
-            <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: { xs: 28, md: 40 } }}>
-                Sẵn sàng nâng tầm sự nghiệp của bạn?
-              </Typography>
-              <Typography sx={{ mt: 1.5, maxWidth: 660, mx: 'auto', lineHeight: 1.9, color: 'rgba(255,255,255,0.82)' }}>
-                Bắt đầu với lộ trình học tập thông minh, mentor chất lượng và trải nghiệm
-                học trực tuyến hiện đại dành riêng cho người đi làm.
-              </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 3, justifyContent: 'center' }}>
-                <Button
-                  component={Link}
-                  href="/auth/register"
-                  variant="contained"
-                  sx={{ px: 2.6, py: 1.25, borderRadius: 2.8, bgcolor: '#fff', color: '#7f1d1d' }}
-                >
-                  Đăng ký miễn phí
-                </Button>
-                <Button
-                  component={Link}
-                  href="/auth/login"
-                  variant="outlined"
-                  sx={{ px: 2.6, py: 1.25, borderRadius: 2.8, borderColor: 'rgba(255,255,255,0.3)', color: '#fff' }}
-                >
-                  Tư vấn khóa học
-                </Button>
-              </Stack>
-            </Box>
-          </Paper>
+
     </>
   );
 }

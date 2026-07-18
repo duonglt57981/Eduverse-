@@ -118,7 +118,15 @@ namespace Eduverse.Service.KhoaHocService
         public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search)
         {
             search ??= new KhoaHocSearch();
-            return await _elasticsearchService.SearchCoursesAsync(search);
+            try
+            {
+                return await _elasticsearchService.SearchCoursesAsync(search);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Elasticsearch failed: {ex.Message}. Falling back to database.");
+                return await GetListFromDatabaseAsync(search);
+            }
         }
         #endregion
 
@@ -140,9 +148,122 @@ namespace Eduverse.Service.KhoaHocService
 
             search.ExcludeCourseIds = registeredCourseIds;
 
-            return await _elasticsearchService.SearchCoursesAsync(search);
+            try
+            {
+                return await _elasticsearchService.SearchCoursesAsync(search);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Elasticsearch failed: {ex.Message}. Falling back to database.");
+                return await GetListFromDatabaseAsync(search);
+            }
         }
         #endregion
+
+        private async Task<PagedList<KhoaHocDto>> GetListFromDatabaseAsync(KhoaHocSearch search)
+        {
+            var query = GetAll()
+                .Where(x => x.TrangThaiPheDuyet == "DaDuyet" && x.TrangThai == "HoatDong" && x.IsBanHienTai);
+
+            // Keyword Search
+            if (!string.IsNullOrWhiteSpace(search.Keyword))
+            {
+                var kw = search.Keyword.Trim().ToLower();
+                query = query.Where(x => (x.TieuDe != null && x.TieuDe.ToLower().Contains(kw)) ||
+                                         (x.MoTa != null && x.MoTa.ToLower().Contains(kw)) ||
+                                         (x.LoaiKhoaHoc != null && x.LoaiKhoaHoc.ToLower().Contains(kw)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.TieuDe))
+            {
+                var td = search.TieuDe.Trim().ToLower();
+                query = query.Where(x => x.TieuDe != null && x.TieuDe.ToLower().Contains(td));
+            }
+
+            // Category filter
+            if (!string.IsNullOrWhiteSpace(search.LoaiKhoaHoc))
+            {
+                query = query.Where(x => x.LoaiKhoaHoc == search.LoaiKhoaHoc);
+            }
+
+            // Level filter
+            if (!string.IsNullOrWhiteSpace(search.CapDo))
+            {
+                query = query.Where(x => x.CapDo == search.CapDo);
+            }
+
+            // Price filter
+            if (search.IsFree == true)
+            {
+                query = query.Where(x => x.Gia == 0 || x.Gia == null);
+            }
+            else
+            {
+                if (search.GiaFrom.HasValue)
+                {
+                    query = query.Where(x => x.Gia >= search.GiaFrom.Value);
+                }
+                if (search.GiaTo.HasValue)
+                {
+                    query = query.Where(x => x.Gia <= search.GiaTo.Value);
+                }
+            }
+
+            // Lecture count range filter
+            if (search.TongBaiGiangFrom.HasValue)
+            {
+                query = query.Where(x => x.TongBaiGiang >= search.TongBaiGiangFrom.Value);
+            }
+            if (search.TongBaiGiangTo.HasValue)
+            {
+                query = query.Where(x => x.TongBaiGiang <= search.TongBaiGiangTo.Value);
+            }
+
+            // Exclude course IDs (for registered courses)
+            if (search.ExcludeCourseIds != null && search.ExcludeCourseIds.Any())
+            {
+                query = query.Where(x => !search.ExcludeCourseIds.Contains(x.Id));
+            }
+
+            // Sorting
+            if (search.SortPrice?.ToLower() == "asc")
+            {
+                query = query.OrderBy(x => x.Gia);
+            }
+            else if (search.SortPrice?.ToLower() == "desc")
+            {
+                query = query.OrderByDescending(x => x.Gia);
+            }
+            else
+            {
+                query = query.OrderByDescending(x => x.NgayTao);
+            }
+
+            var itemsQuery = query.Select(x => new KhoaHocDto
+            {
+                Id = x.Id,
+                TieuDe = x.TieuDe,
+                MoTa = x.MoTa,
+                Gia = x.Gia,
+                GiaGoc = x.GiaGoc,
+                LoaiKhoaHoc = x.LoaiKhoaHoc,
+                HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+                CapDo = x.CapDo,
+                TongThoiLuong = x.TongThoiLuong,
+                TongBaiGiang = x.TongBaiGiang,
+                SoLuongHocVien = x.SoLuongHocVien,
+                NgayTao = x.NgayTao,
+                NgayCapNhat = x.NgayCapNhat,
+                TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                TrangThai = x.TrangThai,
+                CreatedId = x.CreatedId,
+                CreatedDate = x.CreatedDate,
+                IsBanHienTai = x.IsBanHienTai,
+                IdBanGhiTruoc = x.IdBanGhiTruoc
+            });
+
+            return await PagedList<KhoaHocDto>.CreateAsync(itemsQuery, search);
+        }
 
 
         #region GetListDangKi
@@ -2030,16 +2151,16 @@ namespace Eduverse.Service.KhoaHocService
 
             // Cache: thông tin khóa học
             var khoaHoc = await GetOrCreateCacheAsync(
-                CacheKeys.KhoaHoc(idKhoaHoc),
-                async () =>
-                {
-                    var result = await GetAll()
-                        .AsNoTracking()
-                        .Where(x => x.Id == idKhoaHoc
-                                && (x.TrangThaiPheDuyet == "DaDuyet")
-                                && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
-                                && (x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
-                                && x.IsBanHienTai == true)
+    CacheKeys.KhoaHoc(idKhoaHoc),
+    async () =>
+    {
+        var result = await GetAll()
+            .AsNoTracking()
+            .Where(x => x.Id == idKhoaHoc
+                    && x.IsDeleted == false  // ← đơn giản hóa
+                    && (x.TrangThaiPheDuyet == "DaDuyet")
+                    && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
+                    && x.IsBanHienTai == true)
                         .Select(x => new KhoaHocDto
                         {
                             Id = x.Id,
@@ -2066,11 +2187,10 @@ namespace Eduverse.Service.KhoaHocService
                     var list = await _phanRepository.GetAll()
                         .AsNoTracking()
                         .Where(x => x.IdKhoaHoc == idKhoaHoc
-                                 && x.TrangThai == "HoatDong"
-                                 && x.TrangThaiPheDuyet == "DaDuyet"
-                                 && x.DeletedId == null && (x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
-                                 && x.TrangThai != "BanNhap"
-                                 && x.IsBanHienTai == true)
+         && x.TrangThai == "HoatDong"
+         && x.TrangThaiPheDuyet == "DaDuyet"
+         && x.IsDeleted == false  // ← thay thế
+         && x.IsBanHienTai == true)
                         .OrderBy(x => x.ThuTuSapXep)
                         .Select(x => new PhanHocDto
                         {
@@ -2106,11 +2226,10 @@ namespace Eduverse.Service.KhoaHocService
                 () => _baiGiangRepository.GetQueryable()
                     .AsNoTracking()
                     .Where(x => phanIds.Contains(x.IdPhan)
-                             && !x.IsDeleted
-                             && (x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
-                             && x.TrangThai != "ChoDuyet"
-                             && x.TrangThai != "DangSua"
-                             && x.IsBanHienTai == true)
+         && x.IsDeleted == false  // ← thay thế
+         && x.TrangThai != "ChoDuyet"
+         && x.TrangThai != "DangSua"
+         && x.IsBanHienTai == true)
                     .OrderBy(x => x.ThuTuSapXep)
                     .Select(x => new BaiGiangDto
                     {

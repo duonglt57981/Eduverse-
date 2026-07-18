@@ -570,7 +570,6 @@ export default function KhoaHocLearningPage() {
                   soLanLamToiDa: quizDangChon.soLanLamToiDa,
                 }}
                 idDangKyKhoaHoc={khoaHoc.idDangKiKhoaHoc ?? ""}
-                canRetake={quizDangChon.choLamLai ?? true}
                 onClose={handleCloseQuiz}
               />
             </Box>

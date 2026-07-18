@@ -30,6 +30,7 @@ import {
 } from "@mui/material";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
+import { clearGioHang } from "@/src/store/gioHang/GioHangSlice";
 
 const RED = "#8B1313";
 const RED_DARK = "#6D0F0F";
@@ -52,8 +53,8 @@ export default function StudentHomeHeader() {
 
   useEffect(() => {
     const handleAvatarUpdate = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("user_avatar");
+      if (typeof window !== "undefined" && user?.email) {
+        const stored = localStorage.getItem(`user_avatar_${user.email}`);
         if (stored) setUserAvatar(stored);
       }
     };
@@ -61,11 +62,12 @@ export default function StudentHomeHeader() {
     handleAvatarUpdate();
     return () =>
       window.removeEventListener("avatar_updated", handleAvatarUpdate);
-  }, []);
+  }, [user?.email]);
 
   const handleLogout = async () => {
     setAnchorEl(null);
     await dispatch(logout());
+    dispatch(clearGioHang());
     router.replace("/auth/login");
   };
 

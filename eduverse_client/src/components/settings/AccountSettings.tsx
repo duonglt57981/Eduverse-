@@ -150,7 +150,7 @@ export default function AccountSettings() {
 
       if (res.status && res.data?.url) {
         const newUrl = res.data.url;
-        localStorage.setItem("user_avatar", newUrl);
+        localStorage.setItem(`user_avatar_${profile.email}`, newUrl);
         window.dispatchEvent(new Event("avatar_updated"));
         setProfile((prev) => ({ ...prev, anhDaiDien: newUrl }));
         setTempProfile((prev) => ({ ...prev, anhDaiDien: newUrl }));
@@ -163,7 +163,7 @@ export default function AccountSettings() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
-        localStorage.setItem("user_avatar", base64);
+        localStorage.setItem(`user_avatar_${profile.email}`, base64);
         window.dispatchEvent(new Event("avatar_updated"));
         setTempProfile((prev) => ({ ...prev, anhDaiDien: base64 }));
         if (!isEditing) {
