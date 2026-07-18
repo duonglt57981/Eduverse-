@@ -1380,16 +1380,16 @@ namespace Eduverse.Service.KhoaHocService
 
             // Cache: thông tin khóa học
             var khoaHoc = await GetOrCreateCacheAsync(
-                CacheKeys.KhoaHoc(idKhoaHoc),
-                async () =>
-                {
-                    var result = await GetAll()
-                        .AsNoTracking()
-                        .Where(x => x.Id == idKhoaHoc
-                                && (x.TrangThaiPheDuyet == "DaDuyet")
-                                && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
-                                && (x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
-                                && x.IsBanHienTai == true)
+    CacheKeys.KhoaHoc(idKhoaHoc),
+    async () =>
+    {
+        var result = await GetAll()
+            .AsNoTracking()
+            .Where(x => x.Id == idKhoaHoc
+                    && x.IsDeleted == false  // ← đơn giản hóa
+                    && (x.TrangThaiPheDuyet == "DaDuyet")
+                    && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
+                    && x.IsBanHienTai == true)
                         .Select(x => new KhoaHocDto
                         {
                             Id = x.Id,
@@ -1416,11 +1416,10 @@ namespace Eduverse.Service.KhoaHocService
                     var list = await _phanRepository.GetAll()
                         .AsNoTracking()
                         .Where(x => x.IdKhoaHoc == idKhoaHoc
-                                 && x.TrangThai == "HoatDong"
-                                 && x.TrangThaiPheDuyet == "DaDuyet"
-                                 && x.DeletedId == null &&(x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
-                                 && x.TrangThai != "BanNhap"
-                                 && x.IsBanHienTai == true)
+         && x.TrangThai == "HoatDong"
+         && x.TrangThaiPheDuyet == "DaDuyet"
+         && x.IsDeleted == false  // ← thay thế
+         && x.IsBanHienTai == true)
                         .OrderBy(x => x.ThuTuSapXep)
                         .Select(x => new PhanHocDto
                         {
@@ -1456,11 +1455,10 @@ namespace Eduverse.Service.KhoaHocService
                 () => _baiGiangRepository.GetQueryable()
                     .AsNoTracking()
                     .Where(x => phanIds.Contains(x.IdPhan)
-                             && !x.IsDeleted
-                             && (x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
-                             && x.TrangThai != "ChoDuyet"
-                             && x.TrangThai != "DangSua"
-                             && x.IsBanHienTai == true)
+         && x.IsDeleted == false  // ← thay thế
+         && x.TrangThai != "ChoDuyet"
+         && x.TrangThai != "DangSua"
+         && x.IsBanHienTai == true)
                     .OrderBy(x => x.ThuTuSapXep)
                     .Select(x => new BaiGiangDto
                     {
