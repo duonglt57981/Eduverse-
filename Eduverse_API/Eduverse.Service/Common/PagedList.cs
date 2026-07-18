@@ -40,5 +40,21 @@ namespace Eduverse.Service.Common
                 return new PagedList<T>(items, search.PageIndex, search.PageSize, totalCount);
             }
         }
+
+        public static PagedList<T> CreateFromList(IEnumerable<T> source, SearchBase search)
+        {
+            var list = source.ToList();
+            var totalCount = list.Count;
+            var pageIndex = search.PageIndex < 1 ? 1 : search.PageIndex;
+            var pageSize = search.PageSize <= 0 ? 20 : search.PageSize; 
+
+            var items = list
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new PagedList<T>(items, pageIndex, pageSize, totalCount);
+        }
+
     }
 }

@@ -178,7 +178,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "c8c17b9a-90cf-45c7-8fba-247778a77f19",
+                            ConcurrencyStamp = "800e3a5f-9584-4084-9bec-e01f148766c1",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -187,9 +187,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAENL2JX2s5kCIea2vHOSmCztJ7aKe7+VwkjaIhwmvf5nlIOlXVVjqocJKaJtXpGgveA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEHumgR0DqcptCqYEHV4hhIjvo9seW0gSly861y2bqpqrpG0n8KV8NPPo8mdwa0+Y3Q==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "9efd219f-99cf-4254-a7e5-f8e360a2d04c",
+                            SecurityStamp = "cb7226c6-116e-4f90-b928-9e5ba70dfabb",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -1594,7 +1594,7 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("IdDoiDuong")
+                    b.Property<Guid?>("IdDoiTuong")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdNguoiDuyet")

@@ -58,7 +58,7 @@ namespace Eduverse.Api.Controller
 
         [HttpPost("kiemduyet-khoahoc")]
         [Authorize(Roles = "Admin")]
-        public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc([FromForm] KiemDuyetKhoaHocRequest request)
+        public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request)
         {
             try
             {

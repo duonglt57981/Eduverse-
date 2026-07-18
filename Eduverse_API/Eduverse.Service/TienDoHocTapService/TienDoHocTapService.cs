@@ -176,8 +176,6 @@ namespace Eduverse.Service.TienDoHocTapService
                     .Where(x => x.IdKhoaHoc == dangKy.IdKhoaHoc && !x.IsDeleted)
                     .Select(x => x.Id)
                     .ToListAsync();
-
-                await _khoaHocService.SwapPendingBaiGiang(request.IdDangKyKhoaHoc, phanIds);
             }
         }
         #endregion

@@ -45,6 +45,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Eduverse.Service.ElasticsearchService;
+using System.Linq.Expressions;
+using Eduverse.Repository.DangKyKhoaHocRepository;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
@@ -71,6 +73,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IMapper _mapper;
         private readonly IElasticsearchService _elasticsearchService;
         private readonly IBaiKiemTraRepository _baiKiemTraRepository;
+        private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
 
         public LichSuKiemDuyetKhoaHocService(
             ILichSuKiemDuyetKhoaHocRepository repository,
@@ -91,6 +94,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             IDapAnRepository dapAnRepository,
             IMapper mapper,
             IElasticsearchService elasticsearchService,
+            IDangKyKhoaHocRepository dangKyKhoaHocRepository,
         IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
@@ -110,6 +114,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             _dapAnRepository = dapAnRepository;
             _mapper = mapper;
             _elasticsearchService = elasticsearchService;
+            _dangKyKhoaHocRepository = dangKyKhoaHocRepository;
         }
 
         #region GetDanhSachKiemDuyet
@@ -289,13 +294,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     phan.TrangThai = "DangDuyet";
 
                      _phanRepository.Update(phan);
-
-                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
-                    {
-                        IdDoiTuong = phan.Id,
-                        LoaiDoiTuong = "Phan",
-                        TrangThaiPheDuyet = "DangDuyet"
-                    });
                 }
             }
 
@@ -308,12 +306,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                     _baiGiangRepository.Update(item);
 
-                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
-                    {
-                        IdDoiTuong = item.Id,
-                        LoaiDoiTuong = "BaiGiang",
-                        TrangThaiPheDuyet = "DangDuyet"
-                    });
                 }
             }
 
@@ -325,13 +317,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     item.TrangThai = "DangDuyet";
 
                      _taiLieuRepository.Update(item);
-
-                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
-                    {
-                        IdDoiTuong = item.Id,
-                        LoaiDoiTuong = "TaiLieu",
-                        TrangThaiPheDuyet = "DangDuyet"
-                    });
                 }
             }
 
@@ -343,13 +328,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     item.TrangThai = "DangDuyet";
 
                      _baiKiemTraRepository.Update(item);
-
-                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
-                    {
-                        IdDoiTuong = item.Id,
-                        LoaiDoiTuong = "BaiKiemTra",
-                        TrangThaiPheDuyet = "DangDuyet"
-                    });
                 }
             }
 
@@ -361,14 +339,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     item.TrangThaiPheDuyet = "DangDuyet";
                     item.TrangThai = "DangDuyet";
 
-                     _dapAnRepository.Update(item);
-
-                    await CreateAsync(new LichSuKiemDuyetKhoaHoc
-                    {
-                        IdDoiTuong = item.Id,
-                        LoaiDoiTuong = "DapAn",
-                        TrangThaiPheDuyet = "DangDuyet"
-                    });
+                    _dapAnRepository.Update(item);
                 }
             }
 
@@ -735,6 +706,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             if (role != "Admin")
                 throw new UnauthorizedAccessException("Chỉ Admin mới có quyền kiểm duyệt");
 
+            if (request.TrangThaiPheDuyet == null)
+                throw new Exception("Vui lòng chọn Duyệt khóa học ");
+
             if (request.TrangThaiPheDuyet != "DaDuyet" && request.TrangThaiPheDuyet != "TuChoi")
                 throw new Exception("Trạng thái phê duyệt không hợp lệ.");
 
@@ -745,11 +719,11 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học");
 
-            if (khoaHoc.TrangThaiPheDuyet != "ChoDuyet")
+            if (khoaHoc.TrangThaiPheDuyet != "ChoDuyet" && khoaHoc.TrangThaiPheDuyet != "DangDuyet")
                 throw new Exception("Khóa học không ở trạng thái chờ duyệt.");
 
             var ngayDuyet = DateTime.Now;
-            var lichSuList = new List<LichSuKiemDuyetKhoaHoc>();
+            var lichSuList = new LichSuKiemDuyetKhoaHoc();
 
             // ── Lấy toàn bộ cây con của khóa học ──────────────────
             var phans = await _phanRepository
@@ -770,7 +744,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 .Where(x => idBaiGiangs.Contains(x.IdBaiGiang))
                 .ToListAsync();
 
-            var baiKiemTras = await _baiKiemTraService
+            var baiKiemTras = await _baiKiemTraRepository
                 .GetQueryable()
                 .Where(x => idPhans.Contains(x.IdPhan.Value))
                 .ToListAsync();
@@ -793,12 +767,14 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 khoaHoc.TrangThaiPheDuyet = "TuChoi";
                 khoaHoc.TrangThai = "DaXoa";
                 _khoaHocRepository.Update(khoaHoc);
+                await _khoaHocRepository.SaveAsync();
 
                 foreach (var phan in phans)
                 {
                     phan.TrangThaiPheDuyet = "TuChoi";
                     phan.TrangThai = "DaXoa";
                     _phanRepository.Update(phan);
+                    await _phanRepository.SaveAsync();
                 }
 
                 foreach (var bg in baiGiangs)
@@ -806,6 +782,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     bg.TrangThaiPheDuyet = "TuChoi";
                     bg.TrangThai = "DaXoa";
                     _baiGiangRepository.Update(bg);
+                    await _baiGiangRepository.SaveAsync();
                 }
 
                 foreach (var tl in taiLieus)
@@ -813,13 +790,15 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     tl.TrangThaiPheDuyet = "TuChoi";
                     tl.TrangThai = "DaXoa";
                     _taiLieuRepository.Update(tl);
+                    await _taiLieuRepository.SaveAsync();
                 }
 
                 foreach (var bkt in baiKiemTras)
                 {
                     bkt.TrangThaiPheDuyet = "TuChoi";
                     bkt.TrangThai = "DaXoa";
-                    _baiKiemTraService.UpdateAsync(bkt);
+                    _baiKiemTraRepository.Update(bkt);
+                    await _baiKiemTraRepository.SaveAsync();
                 }
 
                 foreach (var ch in cauHois)
@@ -827,6 +806,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     ch.TrangThaiPheDuyet = "TuChoi";
                     ch.TrangThai = "DaXoa";
                     _cauHoiRepository.Update(ch);
+                    await _cauHoiRepository.SaveAsync();
                 }
 
                 foreach (var da in dapAns)
@@ -834,6 +814,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     da.TrangThaiPheDuyet = "TuChoi";
                     da.TrangThai = "DaXoa";
                     _dapAnRepository.Update(da);
+                    await _dapAnRepository.SaveAsync();
                 }
             }
             // ── DaDuyet ─────────────────────────────────────────
@@ -842,29 +823,24 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 khoaHoc.TrangThaiPheDuyet = "DaDuyet";
                 khoaHoc.TrangThai = "HoatDong";
                 _khoaHocRepository.Update(khoaHoc);
+                await _khoaHocRepository.SaveAsync();
 
                 foreach (var phan in phans)
                 {
                     phan.TrangThaiPheDuyet = "DaDuyet";
                     phan.TrangThai = "HoatDong";
                     _phanRepository.Update(phan);
+                    await _phanRepository.SaveAsync();
                 }
 
                 foreach (var bg in baiGiangs)
                 {
-                    if (!bg.IdBanGhiTruoc.HasValue)
-                    {
                         bg.TrangThaiPheDuyet = "DaDuyet";
                         bg.TrangThai = "HoatDong";
-                        bg.IsBanHienTai = true;
-                    }
-                    else
-                    {
-                        bg.TrangThaiPheDuyet = "DaDuyet";
-                        bg.TrangThai = "BanSwap";
-                        bg.IsBanHienTai = false;
-                    }
+                        await _phanRepository.SaveAsync();
+
                     _baiGiangRepository.Update(bg);
+                    await _baiGiangRepository.SaveAsync();
                 }
 
                 foreach (var tl in taiLieus)
@@ -872,23 +848,16 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     tl.TrangThaiPheDuyet = "DaDuyet";
                     tl.TrangThai = "HoatDong";
                     _taiLieuRepository.Update(tl);
+                    await _taiLieuRepository.SaveAsync();
                 }
 
                 foreach (var bkt in baiKiemTras)
                 {
-                    if (!bkt.IdBanGhiTruoc.HasValue)
-                    {
                         bkt.TrangThaiPheDuyet = "DaDuyet";
                         bkt.TrangThai = "HoatDong";
-                        bkt.IsBanHienTai = true;
-                    }
-                    else
-                    {
-                        bkt.TrangThaiPheDuyet = "DaDuyet";
-                        bkt.TrangThai = "BanSwap";
-                        bkt.IsBanHienTai = false;
-                    }
-                    _baiKiemTraService.UpdateAsync(bkt);
+
+                    _baiKiemTraRepository.Update(bkt);
+                    await _baiKiemTraRepository.SaveAsync();
                 }
 
                 foreach (var ch in cauHois)
@@ -896,6 +865,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     ch.TrangThaiPheDuyet = "DaDuyet";
                     ch.TrangThai = "HoatDong";
                     _cauHoiRepository.Update(ch);
+                    await _cauHoiRepository.SaveAsync();
                 }
 
                 foreach (var da in dapAns)
@@ -903,99 +873,84 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     da.TrangThaiPheDuyet = "DaDuyet";
                     da.TrangThai = "HoatDong";
                     _dapAnRepository.Update(da);
+                    await _dapAnRepository.SaveAsync();
                 }
+                //update đăng kí khóa học 
+
+                await CapNhatDangKyKhoaHoc(khoaHoc.Id, khoaHoc.IdBanGhiTruoc.Value);
+                //update tiến độ bài giảng
+
             }
 
-            // ── Lưu tất cả thay đổi ──────────────────────────────
-            await _khoaHocRepository.SaveAsync();
-            await _phanRepository.SaveAsync();
-            await _baiGiangRepository.SaveAsync();
-            await _taiLieuRepository.SaveAsync();
-            await _baiKiemTraService.SaveAsync();
-            await _cauHoiRepository.SaveAsync();
-            await _dapAnRepository.SaveAsync();
 
-            // ── Ghi lịch sử kiểm duyệt cho khóa học và toàn bộ nội dung con ──
-            lichSuList.Add(new LichSuKiemDuyetKhoaHoc
+            var GetLichSuKiemDuyetKhoaHoc = await GetQueryable().Where(x => x.IdDoiTuong == khoaHoc.Id).FirstOrDefaultAsync();
+
+
+            if(GetLichSuKiemDuyetKhoaHoc != null)
             {
-                Id = Guid.NewGuid(),
-                IdDoiTuong = khoaHoc.Id,
-                LoaiDoiTuong = "KhoaHoc",
-                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
-                LyDo = request.LyDo,
-                NgayDuyet = ngayDuyet
-            });
+                lichSuList = new LichSuKiemDuyetKhoaHoc
+                {
+                    Id = GetLichSuKiemDuyetKhoaHoc.Id,
+                    IdDoiTuong = GetLichSuKiemDuyetKhoaHoc.Id,
+                    LoaiDoiTuong = GetLichSuKiemDuyetKhoaHoc.LoaiDoiTuong,
+                    TrangThaiPheDuyet = GetLichSuKiemDuyetKhoaHoc.TrangThaiPheDuyet,
+                    LyDo = GetLichSuKiemDuyetKhoaHoc.LyDo,
+                    NgayDuyet = ngayDuyet
+                };
 
-            lichSuList.AddRange(phans.Select(phan => new LichSuKiemDuyetKhoaHoc
-            {
-                Id = Guid.NewGuid(),
-                IdDoiTuong = phan.Id,
-                LoaiDoiTuong = "Phan",
-                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
-                LyDo = request.LyDo,
-                NgayDuyet = ngayDuyet
-            }));
-
-            lichSuList.AddRange(baiGiangs.Select(bg => new LichSuKiemDuyetKhoaHoc
-            {
-                Id = Guid.NewGuid(),
-                IdDoiTuong = bg.Id,
-                LoaiDoiTuong = "BaiGiang",
-                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
-                LyDo = request.LyDo,
-                NgayDuyet = ngayDuyet
-            }));
-
-            lichSuList.AddRange(taiLieus.Select(tl => new LichSuKiemDuyetKhoaHoc
-            {
-                Id = Guid.NewGuid(),
-                IdDoiTuong = tl.Id,
-                LoaiDoiTuong = "TaiLieu",
-                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
-                LyDo = request.LyDo,
-                NgayDuyet = ngayDuyet
-            }));
-
-            lichSuList.AddRange(baiKiemTras.Select(bkt => new LichSuKiemDuyetKhoaHoc
-            {
-                Id = Guid.NewGuid(),
-                IdDoiTuong = bkt.Id,
-                LoaiDoiTuong = "BaiKiemTra",
-                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
-                LyDo = request.LyDo,
-                NgayDuyet = ngayDuyet
-            }));
-
-            lichSuList.AddRange(cauHois.Select(ch => new LichSuKiemDuyetKhoaHoc
-            {
-                Id = Guid.NewGuid(),
-                IdDoiTuong = ch.Id,
-                LoaiDoiTuong = "CauHoi",
-                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
-                LyDo = request.LyDo,
-                NgayDuyet = ngayDuyet
-            }));
-
-            lichSuList.AddRange(dapAns.Select(da => new LichSuKiemDuyetKhoaHoc
-            {
-                Id = Guid.NewGuid(),
-                IdDoiTuong = da.Id,
-                LoaiDoiTuong = "DapAn",
-                TrangThaiPheDuyet = request.TrangThaiPheDuyet,
-                LyDo = request.LyDo,
-                NgayDuyet = ngayDuyet
-            }));
-
-            await CreateAsync(lichSuList);
-            await SaveAsync();
+                await UpdateAsync(lichSuList);
+                await SaveAsync();
+            }
 
             return new KiemDuyetKhoaHocDto
             {
-                IdDoiTuong = khoaHoc.Id,
+                IdDoiTuong = request.IdKhoaHoc,
                 LoaiDoiTuong = "KhoaHoc",
                 TrangThaiPheDuyet = request.TrangThaiPheDuyet,
                 NgayDuyet = ngayDuyet
             };
+        }
+
+        private async Task<bool> CapNhatDangKyKhoaHoc(Guid idKhoaHocMoi, Guid idKhoaHocCu)
+        {
+            try
+            {
+                var danhSachDangKyCu = await _dangKyKhoaHocRepository.GetQueryable()
+                    .Where(x => x.IdKhoaHoc == idKhoaHocCu && !x.IsDeleted)
+                    .ToListAsync();
+
+                if (danhSachDangKyCu.Any())
+                {
+                    var danhSachDangKyMoi = danhSachDangKyCu.Select(dk => new DangKyKhoaHoc
+                    {
+                        Id = Guid.NewGuid(),
+                        IdKhoaHoc = idKhoaHocMoi,
+                        IdNguoiDangKi = dk.IdNguoiDangKi,
+                        TrangThai = dk.TrangThai,
+                    }).ToList();
+
+                    foreach (var item in danhSachDangKyMoi)
+                    {
+                        _dangKyKhoaHocRepository.Add(item);
+                        await _dangKyKhoaHocRepository.SaveAsync();
+                    }
+
+                    foreach (var dkCu in danhSachDangKyCu)
+                    {
+                        _dangKyKhoaHocRepository.Delete(dkCu);
+                    }
+                    await _dangKyKhoaHocRepository.SaveAsync();
+
+                    return true;
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi cập nhật đăng ký khóa học: {ex.Message}");
+            }
         }
         #endregion
 

@@ -16,6 +16,8 @@ namespace Eduverse.Service.CauHoiService.Dto
         public string? DoKho { get; set; }
         public string? LoaiCauHoi { get; set; }
         public int? ThuTuSapXep { get; set; }
+        public string? TrangThai { get; set; }
+        public string? TrangThaiPheDuyet { get; set; }
 
         public List<CreateDapAnDto> DanhSachDapAns { get; set; }
     }

@@ -595,7 +595,7 @@ namespace Eduverse.Service.KhoaHocService
 
                 return khoaHoc;
             }
-            #endregion
+        #endregion
 
 
         //#region getLearning Realtime
@@ -1044,8 +1044,830 @@ namespace Eduverse.Service.KhoaHocService
         //#endregion
 
 
-        #region GetLearning with Cache & Realtime
+        //   #region GetLearning with Cache & Realtime
 
+
+        //   #region Cache Keys
+        //   private static class CacheKeys
+        //   {
+        //       public static string SoHocVien(Guid? khoaHocId) => $"SoHocVien_{khoaHocId}";
+        //       public static string SoCauHoiOfQuiz(List<Guid> quizIds) => $"SoCauHoiOfQuiz_{string.Join("_", quizIds.OrderBy(x => x))}";
+        //       public static string KhoaHoc(Guid? khoaHocId) => $"KhoaHoc_{khoaHocId}";
+        //       public static string PhanHocs(Guid? khoaHocId) => $"PhanHocs_{khoaHocId}";
+        //       public static string BaiGiangs(List<Guid> phanIds) => $"BaiGiangs_{string.Join("_", phanIds.OrderBy(x => x))}";
+        //       public static string BaiKiemTra(List<Guid> phanIds) => $"BaiKiemTra_{string.Join("_", phanIds.OrderBy(x => x))}";
+        //       public static string BaiKiemTraFull(List<Guid> phanIds) => $"BaiKiemTraFull_{string.Join("_", phanIds.OrderBy(x => x))}";
+        //       public static string TaiLieus(List<Guid> baiGiangIds) => $"TaiLieus_{string.Join("_", baiGiangIds.OrderBy(x => x))}";
+        //   }
+        //   #endregion
+
+
+        //   #region TinhPhanTramHoanThanh (Real-time - NO CACHE)
+        //   public async Task<double> TinhPhanTramHoanThanh(Guid? idDangKy, DateTime? ngayDangKy = null)
+        //   {
+        //       var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
+        //           .AsNoTracking()
+        //           .Where(x => x.Id == idDangKy && !x.IsDeleted)
+        //           .Select(x => new { x.IdKhoaHoc, x.IdNguoiDangKi, x.CreatedDate })
+        //           .FirstOrDefaultAsync();
+
+        //       if (dangKy == null)
+        //           throw new Exception("Bạn chưa đăng ký khóa học này");
+
+        //       var idKhoaHoc = dangKy.IdKhoaHoc;
+        //       var userId = dangKy.IdNguoiDangKi;
+        //       var ngayDK = ngayDangKy ?? dangKy.CreatedDate;
+
+        //       var phanIds = await GetOrCreateCacheAsync(
+        //           CacheKeys.PhanHocs(idKhoaHoc),
+        //           async () => await _phanRepository.GetQueryable()
+        //               .AsNoTracking()
+        //               .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+        //               .Select(x => x.Id)
+        //               .ToListAsync(),
+        //           TimeSpan.FromMinutes(30));
+
+        //       if (!phanIds.Any())
+        //           return 0;
+
+        //       // Lấy tất cả bài giảng GỐC (chuẩn để tính tổng số)
+        //       var baiGiangGocIds = await GetOrCreateCacheAsync(
+        //           CacheKeys.BaiGiangs(phanIds),
+        //           async () => await _baiGiangRepository.GetQueryable()
+        //               .AsNoTracking()
+        //               .Where(x => phanIds.Contains(x.IdPhan)
+        //                        && !x.IsDeleted
+        //                        && x.TrangThai == "HoatDong"
+        //                        && x.IsBanHienTai == true)
+        //               .Select(x => x.Id)
+        //               .ToListAsync(),
+        //           TimeSpan.FromMinutes(30));
+
+        //       var tongBaiGiang = baiGiangGocIds.Count;
+
+        //       // Lấy tiến độ hoàn thành của user
+        //       var tienDoHoanThanhIds = await _tienDoHocTapRepository.GetQueryable()
+        //           .AsNoTracking()
+        //           .Where(x => x.IdDangKi == idDangKy
+        //                    && x.IdBaiGiang.HasValue
+        //                    && x.TrangThai == "HoanThanh"
+        //                    && !x.IsDeleted)
+        //           .Select(x => x.IdBaiGiang!.Value)
+        //           .ToListAsync();
+
+        //       // Tách ID gốc và ID swap
+        //       var idsKhopGoc = tienDoHoanThanhIds.Where(id => baiGiangGocIds.Contains(id)).ToHashSet();
+        //       var idsLa = tienDoHoanThanhIds.Where(id => !baiGiangGocIds.Contains(id)).Distinct().ToList();
+
+        //       var idsGocQuyDoiTuSwap = new HashSet<Guid>();
+        //       if (idsLa.Any())
+        //       {
+        //           var draftMap = await _baiGiangRepository.GetQueryable()
+        //               .AsNoTracking()
+        //               .Where(x => idsLa.Contains(x.Id)
+        //                        && x.IdBanGhiTruoc.HasValue
+        //                        && x.IsBanHienTai == false
+        //                        && !x.IsDeleted)
+        //               .Select(x => new { x.Id, x.IdBanGhiTruoc, x.CreatedDate })
+        //               .ToListAsync();
+
+        //           foreach (var d in draftMap)
+        //           {
+        //               // Nếu swap tạo SAU ngày đăng ký (học viên cũ) => quy đổi về gốc
+        //               if (baiGiangGocIds.Contains(d.IdBanGhiTruoc!.Value) && d.CreatedDate > ngayDK)
+        //               {
+        //                   idsGocQuyDoiTuSwap.Add(d.IdBanGhiTruoc!.Value);
+        //               }
+        //               // Còn swap tạo trước ngày đăng ký (học viên mới) => giữ nguyên ID swap (không quy đổi)
+        //               // Nhưng những ID swap này đã nằm trong idsLa và sẽ không được đếm nếu không quy đổi.
+        //               // Vì vậy, nếu swap tạo trước ngày đăng ký, ta cũng cần quy đổi để đếm? 
+        //               // KHÔNG: vì tổng số bài giảng là số gốc, nên chỉ đếm khi quy đổi về gốc.
+        //               // Nhưng học viên mới đã lưu tiến độ theo swap, nên ta cần quy đổi về gốc để tính đúng.
+        //               // => Quy đổi tất cả swap về gốc, không phân biệt ngày.
+        //           }
+        //           // Sửa: quy đổi tất cả swap về gốc (vì chuẩn là gốc)
+        //           // Nếu swap không có IdBanGhiTruoc hợp lệ thì bỏ qua.
+        //           foreach (var d in draftMap)
+        //           {
+        //               if (baiGiangGocIds.Contains(d.IdBanGhiTruoc!.Value))
+        //               {
+        //                   idsGocQuyDoiTuSwap.Add(d.IdBanGhiTruoc!.Value);
+        //               }
+        //           }
+        //       }
+
+        //       var hoanThanhBaiGiang = idsKhopGoc.Union(idsGocQuyDoiTuSwap).Count();
+
+        //       // Bài kiểm tra
+        //       var baiKiemTraTheoPhans = await GetOrCreateCacheAsync(
+        //           CacheKeys.BaiKiemTra(phanIds),
+        //           async () => await _baiKiemTraRepository.GetQueryable()
+        //               .AsNoTracking()
+        //               .Where(x => phanIds.Contains(x.IdPhan.Value)
+        //                        && !x.IsDeleted
+        //                        && x.TrangThai == "HoatDong")
+        //               .Select(x => new { x.Id, x.IdPhan, x.DiemDat })
+        //               .ToListAsync(),
+        //           TimeSpan.FromMinutes(30));
+
+        //       var baiKiemTraIds = baiKiemTraTheoPhans.Select(x => x.Id).ToList();
+
+        //       if (!baiKiemTraIds.Any())
+        //       {
+        //           var phanTrambg = tongBaiGiang == 0 ? 0 : Math.Round((double)hoanThanhBaiGiang / tongBaiGiang * 100, 2);
+        //           if (phanTrambg >= 100)
+        //               await SwapPendingBaiGiang(idDangKy.Value, phanIds);
+        //           return phanTrambg;
+        //       }
+
+        //       // Xử lý quiz tương tự (giữ nguyên)
+        //       var lanLamHoanThanhList = await _lanLamBaiKiemTraService.GetQueryable()
+        //           .AsNoTracking()
+        //           .Where(x => baiKiemTraIds.Contains(x.IdBaiKiemTra.Value)
+        //                    && x.IdNguoiDung == userId
+        //                    && x.TrangThai == "HoanThanh"
+        //                    && !x.IsDeleted)
+        //           .OrderBy(x => x.ThoiGianNop)
+        //           .Select(x => new { x.IdBaiKiemTra, x.TongDiemLanKiemTra, x.ThoiGianNop })
+        //           .ToListAsync();
+
+        //       var lanLamHoanThanhNhat = lanLamHoanThanhList
+        //           .GroupBy(x => x.IdBaiKiemTra)
+        //           .Select(g => g.OrderBy(x => x.ThoiGianNop).First())
+        //           .ToDictionary(x => x.IdBaiKiemTra!.Value, x => x.TongDiemLanKiemTra);
+
+        //       var diemDatMap = baiKiemTraTheoPhans
+        //           .ToDictionary(x => x.Id, x => x.DiemDat ?? 0);
+
+        //       var quizDatIds = lanLamHoanThanhNhat
+        //           .Where(x => x.Value >= diemDatMap.GetValueOrDefault(x.Key, 0))
+        //           .Select(x => x.Key)
+        //           .ToHashSet();
+
+        //       var baiKiemTraByPhan = baiKiemTraTheoPhans
+        //           .GroupBy(x => x.IdPhan)
+        //           .ToDictionary(x => x.Key, x => x.Select(q => q.Id).ToList());
+
+        //       var soPhanHoanThanhQuiz = baiKiemTraByPhan
+        //           .Count(phan => phan.Value.All(quizId => quizDatIds.Contains(quizId)));
+
+        //       var tongPhanCoQuiz = baiKiemTraByPhan.Count;
+        //       var tongItem = tongBaiGiang + tongPhanCoQuiz;
+        //       var hoanThanhItem = hoanThanhBaiGiang + soPhanHoanThanhQuiz;
+
+        //       var phanTram = tongItem == 0 ? 0 : Math.Round((double)hoanThanhItem / tongItem * 100, 2);
+
+        //       if (phanTram >= 100)
+        //       {
+        //           await SwapPendingBaiGiang(idDangKy.Value, phanIds);
+        //           await SwapPendingBaiKiemTra(idDangKy.Value, phanIds);
+        //       }
+
+        //       return phanTram;
+        //   }
+        //   #endregion
+
+
+        //   #region GetLearning
+        //   public async Task<KhoaHocDto> GetLearning(Guid idDangKy)
+        //   {
+        //       Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiDangKi);
+
+        //       if (idDangKy == Guid.Empty)
+        //           throw new ArgumentException("Id đăng ký không hợp lệ");
+
+        //       var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
+        //           .AsNoTracking()
+        //           .Where(x => x.Id == idDangKy && !x.IsDeleted && x.IdNguoiDangKi == nguoiDangKi)
+        //           .Select(x => new { x.Id, x.IdKhoaHoc, x.IdNguoiDangKi, x.CreatedDate })
+        //           .FirstOrDefaultAsync();
+
+        //       if (dangKy == null)
+        //           throw new Exception("Bạn chưa đăng ký khóa học này");
+
+        //       var idKhoaHoc = dangKy.IdKhoaHoc;
+        //       var userId = nguoiDangKi;
+        //       var ngayDangKy = dangKy.CreatedDate;
+
+        //       // Cache: số học viên
+        //       var soHocVien = await GetOrCreateCacheAsync(
+        //           CacheKeys.SoHocVien(idKhoaHoc),
+        //           () => _dangKyKhoaHocRepository.GetQueryable()
+        //               .AsNoTracking()
+        //               .CountAsync(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted),
+        //           TimeSpan.FromMinutes(10));
+
+        //       // Cache: thông tin khóa học
+        //       var khoaHoc = await GetOrCreateCacheAsync(
+        //           CacheKeys.KhoaHoc(idKhoaHoc),
+        //           async () =>
+        //           {
+        //               var result = await GetAll()
+        //                   .AsNoTracking()
+        //                   .Where(x => x.Id == idKhoaHoc
+        //                           && (x.TrangThaiPheDuyet == "DaDuyet")
+        //                           && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
+        //                           && (x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
+        //                           && x.IsBanHienTai == true)
+        //                   .Select(x => new KhoaHocDto
+        //                   {
+        //                       Id = x.Id,
+        //                       TieuDe = x.TieuDe,
+        //                       MoTa = x.MoTa,
+        //                       HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+        //                       LoaiKhoaHoc = x.LoaiKhoaHoc,
+        //                       SoLuongHocVien = soHocVien,
+        //                       DanhSachPhanHoc = new List<PhanHocDto>()
+        //                   })
+        //                   .FirstOrDefaultAsync();
+        //               return result;
+        //           },
+        //           TimeSpan.FromMinutes(30));
+
+        //       if (khoaHoc == null)
+        //           throw new Exception("Không tìm thấy khóa học");
+
+        //       // Cache: danh sách phần học
+        //       var phanHocs = await GetOrCreateCacheAsync(
+        //           CacheKeys.PhanHocs(idKhoaHoc),
+        //           async () =>
+        //           {
+        //               var list = await _phanRepository.GetAll()
+        //                   .AsNoTracking()
+        //                   .Where(x => x.IdKhoaHoc == idKhoaHoc
+        //                            && x.TrangThai == "HoatDong"
+        //                            && x.TrangThaiPheDuyet == "DaDuyet"
+        //                            && x.DeletedId == null &&(x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
+        //                            && x.TrangThai != "BanNhap"
+        //                            && x.IsBanHienTai == true)
+        //                   .OrderBy(x => x.ThuTuSapXep)
+        //                   .Select(x => new PhanHocDto
+        //                   {
+        //                       Id = x.Id,
+        //                       IdKhoaHoc = x.IdKhoaHoc,
+        //                       TenPhan = x.TenPhan,
+        //                       MieuTa = x.MieuTa,
+        //                       ThuTuSapXep = x.ThuTuSapXep,
+        //                       DanhSachBaiGiang = new List<BaiGiangDto>()
+        //                   })
+        //                   .ToListAsync();
+
+        //               for (int i = 0; i < list.Count; i++)
+        //                   list[i].ThuTuSapXep = i + 1;
+
+        //               return list;
+        //           },
+        //           TimeSpan.FromMinutes(30));
+
+        //       khoaHoc.DanhSachPhanHoc = phanHocs;
+
+        //       if (!phanHocs.Any())
+        //       {
+        //           khoaHoc.PhanTramHoanThanh = 0;
+        //           return khoaHoc;
+        //       }
+
+        //       var phanIds = phanHocs.Select(x => x.Id).ToList();
+
+        //       // Cache: bài giảng GỐC
+        //       var baiGiangsGoc = await GetOrCreateCacheAsync(
+        //           CacheKeys.BaiGiangs(phanIds),
+        //           () => _baiGiangRepository.GetQueryable()
+        //               .AsNoTracking()
+        //               .Where(x => phanIds.Contains(x.IdPhan)
+        //                        && !x.IsDeleted
+        //                        && (x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
+        //                        && x.TrangThai != "ChoDuyet"
+        //                        && x.TrangThai != "DangSua"
+        //                        && x.IsBanHienTai == true)
+        //               .OrderBy(x => x.ThuTuSapXep)
+        //               .Select(x => new BaiGiangDto
+        //               {
+        //                   Id = x.Id,
+        //                   IdPhan = x.IdPhan,
+        //                   TieuDe = x.TieuDe,
+        //                   LoaiBaiGiang = x.LoaiBaiGiang,
+        //                   IdVideoBaiGiang = x.IdVideoBaiGiang,
+        //                   URLBaiGiang = x.URLBaiGiang,
+        //                   ThuTuSapXep = x.ThuTuSapXep,
+        //                   ThoiLuong = x.ThoiLuong,
+        //                   LaBaiGiangFree = x.LaBaiGiangFree,
+        //                   DanhSachTaiLieu = new List<TaiLieuDto>()
+        //               })
+        //               .ToListAsync(),
+        //           TimeSpan.FromMinutes(30));
+
+        //       var baiGiangGocIds = baiGiangsGoc.Select(x => x.Id).ToList();
+
+        //       // Lấy TẤT CẢ swap (không phân biệt ngày tạo)
+        //       var allSwaps = await _baiGiangRepository.GetQueryable()
+        //           .AsNoTracking()
+        //           .Where(x => x.IdBanGhiTruoc.HasValue
+        //                    && baiGiangGocIds.Contains(x.IdBanGhiTruoc.Value)
+        //                    && x.TrangThaiPheDuyet == "DaDuyet"
+        //                    && x.TrangThai == "BanSwap"
+        //                    && x.IsBanHienTai == false
+        //                    && !x.IsDeleted)
+        //           .OrderByDescending(x => x.CreatedDate)
+        //           .Select(x => new
+        //           {
+        //               x.Id,
+        //               x.IdBanGhiTruoc,
+        //               x.CreatedDate,
+        //               x.TieuDe,
+        //               x.LoaiBaiGiang,
+        //               x.IdVideoBaiGiang,
+        //               x.URLBaiGiang,
+        //               x.ThoiLuong
+        //           })
+        //           .ToListAsync();
+
+        //       var swapMoiNhatByGoc = allSwaps
+        //           .GroupBy(x => x.IdBanGhiTruoc!.Value)
+        //           .ToDictionary(
+        //               g => g.Key,
+        //               g => g.OrderByDescending(x => x.CreatedDate).First());
+
+        //       // Lấy tiến độ của user trước để biết ID nào đang được dùng
+        //       var tienDoRaw = await _tienDoHocTapRepository.GetQueryable()
+        //           .AsNoTracking()
+        //           .Where(x => x.IdDangKi == idDangKy
+        //                    && x.IdBaiGiang.HasValue
+        //                    && !x.IsDeleted)
+        //           .Select(x => new { x.IdBaiGiang, x.ThoiGianXem, x.TrangThai })
+        //           .ToListAsync();
+
+        //       var tienDoIds = tienDoRaw.Select(t => t.IdBaiGiang!.Value).ToHashSet();
+
+        //       // Tạo danh sách bài giảng hiển thị
+        //       var baiGiangs = new List<BaiGiangDto>();
+        //       foreach (var bgGoc in baiGiangsGoc)
+        //       {
+        //           BaiGiangDto item;
+        //           if (swapMoiNhatByGoc.TryGetValue(bgGoc.Id, out var swap))
+        //           {
+        //               // Quyết định dùng swap hay gốc:
+        //               // 1. Nếu tiến độ đang dùng swap đó -> dùng swap
+        //               // 2. Hoặc swap tạo trước/ bằng ngày đăng ký (học viên mới) -> dùng swap
+        //               // 3. Ngược lại -> dùng gốc
+        //               if (tienDoIds.Contains(swap.Id) || swap.CreatedDate <= ngayDangKy)
+        //               {
+        //                   // Dùng swap
+        //                   item = new BaiGiangDto
+        //                   {
+        //                       Id = swap.Id,
+        //                       IdGoc = bgGoc.Id,
+        //                       IdPhan = bgGoc.IdPhan,
+        //                       TieuDe = swap.TieuDe,
+        //                       LoaiBaiGiang = swap.LoaiBaiGiang,
+        //                       IdVideoBaiGiang = swap.IdVideoBaiGiang,
+        //                       URLBaiGiang = swap.URLBaiGiang,
+        //                       ThuTuSapXep = bgGoc.ThuTuSapXep,
+        //                       ThoiLuong = swap.ThoiLuong,
+        //                       LaBaiGiangFree = bgGoc.LaBaiGiangFree,
+        //                       DanhSachTaiLieu = new List<TaiLieuDto>()
+        //                   };
+        //               }
+        //               else
+        //               {
+        //                   // Dùng gốc
+        //                   item = new BaiGiangDto
+        //                   {
+        //                       Id = bgGoc.Id,
+        //                       IdGoc = bgGoc.Id,
+        //                       IdPhan = bgGoc.IdPhan,
+        //                       TieuDe = bgGoc.TieuDe,
+        //                       LoaiBaiGiang = bgGoc.LoaiBaiGiang,
+        //                       IdVideoBaiGiang = bgGoc.IdVideoBaiGiang,
+        //                       URLBaiGiang = bgGoc.URLBaiGiang,
+        //                       ThuTuSapXep = bgGoc.ThuTuSapXep,
+        //                       ThoiLuong = bgGoc.ThoiLuong,
+        //                       LaBaiGiangFree = bgGoc.LaBaiGiangFree,
+        //                       DanhSachTaiLieu = new List<TaiLieuDto>()
+        //                   };
+        //               }
+        //           }
+        //           else
+        //           {
+        //               // Không có swap
+        //               item = new BaiGiangDto
+        //               {
+        //                   Id = bgGoc.Id,
+        //                   IdGoc = bgGoc.Id,
+        //                   IdPhan = bgGoc.IdPhan,
+        //                   TieuDe = bgGoc.TieuDe,
+        //                   LoaiBaiGiang = bgGoc.LoaiBaiGiang,
+        //                   IdVideoBaiGiang = bgGoc.IdVideoBaiGiang,
+        //                   URLBaiGiang = bgGoc.URLBaiGiang,
+        //                   ThuTuSapXep = bgGoc.ThuTuSapXep,
+        //                   ThoiLuong = bgGoc.ThoiLuong,
+        //                   LaBaiGiangFree = bgGoc.LaBaiGiangFree,
+        //                   DanhSachTaiLieu = new List<TaiLieuDto>()
+        //               };
+        //           }
+        //           baiGiangs.Add(item);
+        //       }
+
+        //       // Tài liệu cache theo gốc
+        //       var taiLieuList = await GetOrCreateCacheAsync(
+        //           CacheKeys.TaiLieus(baiGiangGocIds),
+        //           () => _taiLieuRepository.GetQueryable()
+        //               .AsNoTracking()
+        //               .Where(x => baiGiangGocIds.Contains(x.IdBaiGiang) && !x.IsDeleted)
+        //               .Select(x => new TaiLieuDto
+        //               {
+        //                   Id = x.Id,
+        //                   IdBaiGiang = x.IdBaiGiang,
+        //                   TenTaiLieu = x.TenTaiLieu,
+        //                   LoaiTaiLieu = x.LoaiTaiLieu,
+        //                   URL = x.URL
+        //               })
+        //               .ToListAsync(),
+        //           TimeSpan.FromMinutes(60));
+
+        //       var baiKiemTraList = await GetOrCreateCacheAsync(
+        //                CacheKeys.BaiKiemTraFull(phanIds),   // ← key riêng, không conflict
+        //                async () => await _baiKiemTraRepository.GetQueryable()
+        //                    .AsNoTracking()
+        //                    .Where(x => phanIds.Contains(x.IdPhan.Value)
+        //                             && !x.IsDeleted
+        //                             && x.TrangThai == "HoatDong")
+        //                    .Select(x => new
+        //                    {
+        //                        x.Id,
+        //                        x.IdPhan,
+        //                        x.DiemDat,
+        //                        x.TenBaiKiemTra   
+        //                    })
+        //    .ToListAsync(),
+        //TimeSpan.FromMinutes(30));
+
+        //       Console.WriteLine($"=== DEBUG BaiKiemTra ===");
+        //       Console.WriteLine($"phanIds: [{string.Join(", ", phanIds)}]");
+        //       Console.WriteLine($"baiKiemTraList.Count: {baiKiemTraList.Count}");
+        //       foreach (var b in baiKiemTraList)
+        //           Console.WriteLine($"  -> Id={b.Id}, IdPhan={b.IdPhan}, TieuDe={b.TenBaiKiemTra}");
+
+
+
+        //       var baiKiemTraIds = baiKiemTraList.Select(x => x.Id).ToList();
+
+        //       // Cache: số câu hỏi theo từng bài kiểm tra
+        //       var soCauHoiMap = new Dictionary<Guid, int>();
+        //       if (baiKiemTraIds.Any())
+        //       {
+        //           soCauHoiMap = await GetOrCreateCacheAsync(
+        //               CacheKeys.SoCauHoiOfQuiz(baiKiemTraIds),
+        //               async () =>
+        //               {
+        //                   var counts = await _cauHoiService.GetQueryable()
+        //                       .AsNoTracking()
+        //                       .Where(x => x.IdBaiKiemTra.HasValue
+        //                                && baiKiemTraIds.Contains(x.IdBaiKiemTra.Value)
+        //                                && !x.IsDeleted)
+        //                       .GroupBy(x => x.IdBaiKiemTra!.Value)  // group theo Guid (không nullable)
+        //                       .Select(g => new { IdBaiKiemTra = g.Key, SoCauHoi = g.Count() })
+        //                       .ToListAsync();
+        //                   return counts.ToDictionary(x => x.IdBaiKiemTra, x => x.SoCauHoi); // Key giờ là Guid
+        //               },
+        //               TimeSpan.FromMinutes(30));
+        //       }
+
+        //       var baiKiemTraByPhan = baiKiemTraList
+        //           .Where(x => x.IdPhan.HasValue)
+        //           .GroupBy(x => x.IdPhan!.Value)
+        //           .ToDictionary(
+        //               g => g.Key,
+        //               g => g.Select(x => new BaiKiemTraDto
+        //               {
+
+        //                   Id = x.Id,
+        //                   IdPhan = x.IdPhan,
+        //                   TenBaiKiemTra = x.TenBaiKiemTra,
+        //                   DiemDat = x.DiemDat,
+        //                   SoCauHoi = soCauHoiMap.GetValueOrDefault(x.Id, 0),
+        //                   DanhSachCauHois = new List<CauHoiDto>()
+        //               }).ToList());
+
+        //       // sau khi build baiKiemTraByPhan
+        //       Console.WriteLine($"baiKiemTraByPhan.Keys: [{string.Join(", ", baiKiemTraByPhan.Keys)}]");
+        //       Console.WriteLine($"phanHocs Ids: [{string.Join(", ", phanHocs.Select(x => x.Id))}]");
+
+        //       // Map tiến độ: key là ID hiển thị
+        //       var tienDoDict = new Dictionary<Guid, (int ThoiGianXem, string TrangThai)>();
+        //       var idHienThiSet = baiGiangs.Select(b => b.Id).ToHashSet();
+        //       var gocToHienThi = baiGiangs.ToDictionary(b => b.IdGoc, b => b.Id);
+
+        //       foreach (var t in tienDoRaw)
+        //       {
+        //           var idRaw = t.IdBaiGiang!.Value;
+        //           if (idHienThiSet.Contains(idRaw))
+        //           {
+        //               tienDoDict[idRaw] = (t.ThoiGianXem ?? 0, t.TrangThai);
+        //           }
+        //           else if (gocToHienThi.TryGetValue(idRaw, out var idHienThi))
+        //           {
+        //               tienDoDict[idHienThi] = (t.ThoiGianXem ?? 0, t.TrangThai);
+        //           }
+        //           else
+        //           {
+        //               // Fallback
+        //               tienDoDict[idRaw] = (t.ThoiGianXem ?? 0, t.TrangThai);
+        //           }
+        //       }
+
+        //       // Tính % hoàn thành
+        //       var phanTram = await TinhPhanTramHoanThanh(idDangKy, ngayDangKy);
+
+        //       var taiLieuLookup = taiLieuList
+        //           .GroupBy(x => x.IdBaiGiang)
+        //           .ToDictionary(x => x.Key, x => x.ToList());
+
+        //       // Gán dữ liệu
+        //       int tongBaiGiang = 0, tongThoiLuong = 0, hoanThanhBaiGiang = 0;
+        //       foreach (var bg in baiGiangs)
+        //       {
+        //           tongBaiGiang++;
+        //           tongThoiLuong += bg.ThoiLuong ?? 0;
+        //           if (tienDoDict.TryGetValue(bg.Id, out var td))
+        //           {
+        //               bg.DaHoanThanh = td.TrangThai == "HoanThanh";
+        //               bg.ThoiGianXem = td.ThoiGianXem;
+        //               if (bg.DaHoanThanh) hoanThanhBaiGiang++;
+        //           }
+        //           // Tài liệu theo ID gốc
+        //           if (taiLieuLookup.TryGetValue(bg.IdGoc, out var tls))
+        //               bg.DanhSachTaiLieu = tls;
+        //       }
+
+        //       // Gắn vào phần học
+        //       var baiGiangByPhan = baiGiangs
+        //           .GroupBy(x => x.IdPhan)
+        //           .ToDictionary(x => x.Key, x => x.ToList());
+
+        //       foreach (var phan in phanHocs)
+        //       {
+        //           if (baiGiangByPhan.TryGetValue(phan.Id, out var list))
+        //               phan.DanhSachBaiGiang = list;
+
+        //           if (baiKiemTraByPhan.TryGetValue(phan.Id, out var listBkt))
+        //               phan.DanhSachBaiKiemTra = listBkt;
+        //       }
+
+        //       khoaHoc.TongBaiGiang = tongBaiGiang;
+        //       khoaHoc.TongThoiLuong = tongThoiLuong;
+        //       khoaHoc.SoBaiGiangHoanThanh = hoanThanhBaiGiang;
+        //       khoaHoc.PhanTramHoanThanh = phanTram;
+
+        //       return khoaHoc;
+        //   }
+        //   #endregion
+
+
+        //   #region SwapPendingBaiGiang
+        //   public async Task SwapPendingBaiGiang(Guid idDangKy, List<Guid> phanIds)
+        //   {
+        //       var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
+        //           .AsNoTracking()
+        //           .Where(x => x.Id == idDangKy && !x.IsDeleted)
+        //           .Select(x => new { x.CreatedDate })
+        //           .FirstOrDefaultAsync();
+
+        //       if (dangKy == null)
+        //           return;
+
+        //       var ngayDangKy = dangKy.CreatedDate;
+
+        //       var baiGiangGocList = await _baiGiangRepository.GetQueryable()
+        //           .Where(x => phanIds.Contains(x.IdPhan) && !x.IsDeleted && x.IsBanHienTai == true)
+        //           .Select(x => x.Id)
+        //           .ToListAsync();
+
+        //       if (!baiGiangGocList.Any())
+        //           return;
+
+        //       // Lấy swap tạo SAU ngày đăng ký (chỉ swap cho học viên cũ)
+        //       var draftList = await _baiGiangRepository.GetQueryable()
+        //           .Where(x => x.IdBanGhiTruoc.HasValue
+        //                    && baiGiangGocList.Contains(x.IdBanGhiTruoc.Value)
+        //                    && x.TrangThaiPheDuyet == "DaDuyet"
+        //                    && x.IsBanHienTai == false
+        //                    && !x.IsDeleted
+        //                    && x.CreatedDate > ngayDangKy)
+        //           .Select(x => new { x.Id, x.IdBanGhiTruoc, x.CreatedDate })
+        //           .ToListAsync();
+
+        //       if (!draftList.Any())
+        //           return;
+
+        //       var draftMoiNhatByGoc = draftList
+        //           .GroupBy(x => x.IdBanGhiTruoc!.Value)
+        //           .Select(g => new
+        //           {
+        //               IdGoc = g.Key,
+        //               IdDraftMoiNhat = g.OrderByDescending(x => x.CreatedDate).First().Id
+        //           })
+        //           .ToDictionary(x => x.IdGoc, x => x.IdDraftMoiNhat);
+
+        //       var draftToGocMap = draftList
+        //           .ToDictionary(x => x.Id, x => x.IdBanGhiTruoc!.Value);
+
+        //       var tienDoList = await _tienDoHocTapRepository.GetQueryable()
+        //           .Where(x => x.IdDangKi == idDangKy
+        //                    && x.IdBaiGiang.HasValue
+        //                    && x.TrangThai == "HoanThanh"
+        //                    && !x.IsDeleted)
+        //           .ToListAsync();
+
+        //       if (!tienDoList.Any())
+        //           return;
+
+        //       foreach (var tienDo in tienDoList)
+        //       {
+        //           var idHienTai = tienDo.IdBaiGiang!.Value;
+        //           Guid? idGoc = null;
+
+        //           if (baiGiangGocList.Contains(idHienTai))
+        //               idGoc = idHienTai;
+        //           else if (draftToGocMap.TryGetValue(idHienTai, out var idGocTuDraft)
+        //                 && baiGiangGocList.Contains(idGocTuDraft))
+        //               idGoc = idGocTuDraft;
+
+        //           if (!idGoc.HasValue)
+        //               continue;
+
+        //           if (draftMoiNhatByGoc.TryGetValue(idGoc.Value, out var idDraftMoiNhat))
+        //           {
+        //               if (idHienTai == idDraftMoiNhat)
+        //                   continue;
+
+        //               Console.WriteLine($"SWAP: {idHienTai} (gốc: {idGoc}) -> {idDraftMoiNhat}");
+        //               tienDo.IdBaiGiang = idDraftMoiNhat;
+        //               _tienDoHocTapRepository.Update(tienDo);
+        //           }
+        //       }
+
+        //       await _tienDoHocTapRepository.SaveAsync();
+        //   }
+        //   #endregion
+
+
+        //   #region SwapPendingBaiKiemTra
+        //   public async Task SwapPendingBaiKiemTra(Guid idDangKy, List<Guid> phanIds)
+        //   {
+        //       var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
+        //           .AsNoTracking()
+        //           .Where(x => x.Id == idDangKy && !x.IsDeleted)
+        //           .Select(x => new { x.IdNguoiDangKi, x.CreatedDate })
+        //           .FirstOrDefaultAsync();
+
+        //       if (dangKy == null)
+        //           return;
+
+        //       var userId = dangKy.IdNguoiDangKi;
+        //       var ngayDangKy = dangKy.CreatedDate;
+
+        //       var baiKiemTraGocList = await _baiKiemTraRepository.GetQueryable()
+        //           .Where(x => phanIds.Contains(x.IdPhan.Value) && !x.IsDeleted && x.IsBanHienTai == true)
+        //           .Select(x => x.Id)
+        //           .ToListAsync();
+
+        //       if (!baiKiemTraGocList.Any())
+        //           return;
+
+        //       var draftList = await _baiKiemTraRepository.GetQueryable()
+        //           .Where(x => x.IdBanGhiTruoc.HasValue
+        //                    && baiKiemTraGocList.Contains(x.IdBanGhiTruoc.Value)
+        //                    && x.TrangThaiPheDuyet == "DaDuyet"
+        //                    && x.IsBanHienTai == false
+        //                    && !x.IsDeleted
+        //                    && x.CreatedDate > ngayDangKy)
+        //           .Select(x => new { x.Id, x.IdBanGhiTruoc, x.CreatedDate })
+        //           .ToListAsync();
+
+        //       if (!draftList.Any())
+        //           return;
+
+        //       var draftMoiNhatByGoc = draftList
+        //           .GroupBy(x => x.IdBanGhiTruoc!.Value)
+        //           .Select(g => new
+        //           {
+        //               IdGoc = g.Key,
+        //               IdDraftMoiNhat = g.OrderByDescending(x => x.CreatedDate).First().Id
+        //           })
+        //           .ToDictionary(x => x.IdGoc, x => x.IdDraftMoiNhat);
+
+        //       var draftToGocMap = draftList
+        //           .ToDictionary(x => x.Id, x => x.IdBanGhiTruoc!.Value);
+
+        //       var lanLamList = await _lanLamBaiKiemTraService.GetQueryable()
+        //           .Where(x => x.IdNguoiDung == userId
+        //                    && x.IdBaiKiemTra.HasValue
+        //                    && !x.IsDeleted)
+        //           .ToListAsync();
+
+        //       if (!lanLamList.Any())
+        //           return;
+
+        //       Guid? ResolveGoc(Guid idHienTai)
+        //       {
+        //           if (baiKiemTraGocList.Contains(idHienTai))
+        //               return idHienTai;
+        //           if (draftToGocMap.TryGetValue(idHienTai, out var idGocTuDraft)
+        //               && baiKiemTraGocList.Contains(idGocTuDraft))
+        //               return idGocTuDraft;
+        //           return null;
+        //       }
+
+        //       var idsGocDangBiKhoa = lanLamList
+        //           .Where(x => x.TrangThai == "DangLam")
+        //           .Select(x => ResolveGoc(x.IdBaiKiemTra!.Value))
+        //           .Where(id => id.HasValue)
+        //           .Select(id => id!.Value)
+        //           .ToHashSet();
+
+        //       var lanLamCanSwap = lanLamList
+        //           .Where(x => x.TrangThai == "HoanThanh" || x.TrangThai == null)
+        //           .ToList();
+
+        //       if (!lanLamCanSwap.Any())
+        //           return;
+
+        //       foreach (var lanLam in lanLamCanSwap)
+        //       {
+        //           var idHienTai = lanLam.IdBaiKiemTra!.Value;
+        //           var idGoc = ResolveGoc(idHienTai);
+        //           if (!idGoc.HasValue)
+        //               continue;
+        //           if (idsGocDangBiKhoa.Contains(idGoc.Value))
+        //               continue;
+        //           if (draftMoiNhatByGoc.TryGetValue(idGoc.Value, out var idDraftMoiNhat))
+        //           {
+        //               if (idHienTai == idDraftMoiNhat)
+        //                   continue;
+        //               Console.WriteLine($"SWAP QUIZ: {idHienTai} (gốc: {idGoc}) -> {idDraftMoiNhat}");
+        //               lanLam.IdBaiKiemTra = idDraftMoiNhat;
+        //               await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
+        //           }
+        //       }
+
+        //       await _lanLamBaiKiemTraService.SaveAsync();
+        //   }
+        //   #endregion
+
+
+        //   #region Helper Methods
+        //   private class DraftInfo
+        //   {
+        //       public Guid Id { get; set; }
+        //       public Guid? IdBanGhiTruoc { get; set; }
+        //       public string TieuDe { get; set; }
+        //       public string LoaiBaiGiang { get; set; }
+        //       public string IdVideoBaiGiang { get; set; }
+        //       public string URLBaiGiang { get; set; }
+        //       public int? ThoiLuong { get; set; }
+        //       public DateTime CreatedDate { get; set; }
+        //   }
+
+        //   private async Task<T> GetOrCreateCacheAsync<T>(string cacheKey, Func<Task<T>> factory, TimeSpan expiration)
+        //   {
+        //       if (_memoryCache.TryGetValue(cacheKey, out T cachedData))
+        //           return cachedData;
+
+        //       var data = await factory();
+        //       _memoryCache.Set(cacheKey, data, new MemoryCacheEntryOptions
+        //       {
+        //           AbsoluteExpirationRelativeToNow = expiration,
+        //           SlidingExpiration = TimeSpan.FromMinutes(5),
+        //           Priority = CacheItemPriority.Normal
+        //       });
+        //       return data;
+        //   }
+
+        //   public void InvalidateCourseCache(Guid khoaHocId, List<Guid> phanIds = null)
+        //   {
+        //       _memoryCache.Remove(CacheKeys.SoHocVien(khoaHocId));
+        //       _memoryCache.Remove(CacheKeys.KhoaHoc(khoaHocId));
+        //       _memoryCache.Remove(CacheKeys.PhanHocs(khoaHocId));
+        //       if (phanIds != null && phanIds.Any())
+        //       {
+        //           _memoryCache.Remove(CacheKeys.BaiGiangs(phanIds));
+        //           _memoryCache.Remove(CacheKeys.BaiKiemTra(phanIds));
+        //           _memoryCache.Remove(CacheKeys.BaiKiemTraFull(phanIds));
+        //       }
+        //   }
+
+        //   public void ClearAllCache()
+        //   {
+        //       if (_memoryCache is MemoryCache memoryCache)
+        //           memoryCache.Compact(1.0);
+        //   }
+        //   #endregion
+
+        //   #endregion
+
+
+        #region GetLearning with Cache & Realtime
 
         #region Cache Keys
         private static class CacheKeys
@@ -1061,8 +1883,7 @@ namespace Eduverse.Service.KhoaHocService
         }
         #endregion
 
-
-        #region TinhPhanTramHoanThanh (Real-time - NO CACHE)
+        #region TinhPhanTramHoanThanh (Real-time - NO CACHE, KHÔNG SWAP)
         public async Task<double> TinhPhanTramHoanThanh(Guid? idDangKy, DateTime? ngayDangKy = null)
         {
             var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
@@ -1076,7 +1897,6 @@ namespace Eduverse.Service.KhoaHocService
 
             var idKhoaHoc = dangKy.IdKhoaHoc;
             var userId = dangKy.IdNguoiDangKi;
-            var ngayDK = ngayDangKy ?? dangKy.CreatedDate;
 
             var phanIds = await GetOrCreateCacheAsync(
                 CacheKeys.PhanHocs(idKhoaHoc),
@@ -1104,8 +1924,9 @@ namespace Eduverse.Service.KhoaHocService
                 TimeSpan.FromMinutes(30));
 
             var tongBaiGiang = baiGiangGocIds.Count;
+            var baiGiangGocSet = baiGiangGocIds.ToHashSet();
 
-            // Lấy tiến độ hoàn thành của user
+            // Lấy tiến độ hoàn thành của user (chỉ tính khớp với bài giảng gốc)
             var tienDoHoanThanhIds = await _tienDoHocTapRepository.GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.IdDangKi == idDangKy
@@ -1115,48 +1936,10 @@ namespace Eduverse.Service.KhoaHocService
                 .Select(x => x.IdBaiGiang!.Value)
                 .ToListAsync();
 
-            // Tách ID gốc và ID swap
-            var idsKhopGoc = tienDoHoanThanhIds.Where(id => baiGiangGocIds.Contains(id)).ToHashSet();
-            var idsLa = tienDoHoanThanhIds.Where(id => !baiGiangGocIds.Contains(id)).Distinct().ToList();
-
-            var idsGocQuyDoiTuSwap = new HashSet<Guid>();
-            if (idsLa.Any())
-            {
-                var draftMap = await _baiGiangRepository.GetQueryable()
-                    .AsNoTracking()
-                    .Where(x => idsLa.Contains(x.Id)
-                             && x.IdBanGhiTruoc.HasValue
-                             && x.IsBanHienTai == false
-                             && !x.IsDeleted)
-                    .Select(x => new { x.Id, x.IdBanGhiTruoc, x.CreatedDate })
-                    .ToListAsync();
-
-                foreach (var d in draftMap)
-                {
-                    // Nếu swap tạo SAU ngày đăng ký (học viên cũ) => quy đổi về gốc
-                    if (baiGiangGocIds.Contains(d.IdBanGhiTruoc!.Value) && d.CreatedDate > ngayDK)
-                    {
-                        idsGocQuyDoiTuSwap.Add(d.IdBanGhiTruoc!.Value);
-                    }
-                    // Còn swap tạo trước ngày đăng ký (học viên mới) => giữ nguyên ID swap (không quy đổi)
-                    // Nhưng những ID swap này đã nằm trong idsLa và sẽ không được đếm nếu không quy đổi.
-                    // Vì vậy, nếu swap tạo trước ngày đăng ký, ta cũng cần quy đổi để đếm? 
-                    // KHÔNG: vì tổng số bài giảng là số gốc, nên chỉ đếm khi quy đổi về gốc.
-                    // Nhưng học viên mới đã lưu tiến độ theo swap, nên ta cần quy đổi về gốc để tính đúng.
-                    // => Quy đổi tất cả swap về gốc, không phân biệt ngày.
-                }
-                // Sửa: quy đổi tất cả swap về gốc (vì chuẩn là gốc)
-                // Nếu swap không có IdBanGhiTruoc hợp lệ thì bỏ qua.
-                foreach (var d in draftMap)
-                {
-                    if (baiGiangGocIds.Contains(d.IdBanGhiTruoc!.Value))
-                    {
-                        idsGocQuyDoiTuSwap.Add(d.IdBanGhiTruoc!.Value);
-                    }
-                }
-            }
-
-            var hoanThanhBaiGiang = idsKhopGoc.Union(idsGocQuyDoiTuSwap).Count();
+            var hoanThanhBaiGiang = tienDoHoanThanhIds
+                .Where(id => baiGiangGocSet.Contains(id))
+                .Distinct()
+                .Count();
 
             // Bài kiểm tra
             var baiKiemTraTheoPhans = await GetOrCreateCacheAsync(
@@ -1175,12 +1958,9 @@ namespace Eduverse.Service.KhoaHocService
             if (!baiKiemTraIds.Any())
             {
                 var phanTrambg = tongBaiGiang == 0 ? 0 : Math.Round((double)hoanThanhBaiGiang / tongBaiGiang * 100, 2);
-                if (phanTrambg >= 100)
-                    await SwapPendingBaiGiang(idDangKy.Value, phanIds);
                 return phanTrambg;
             }
 
-            // Xử lý quiz tương tự (giữ nguyên)
             var lanLamHoanThanhList = await _lanLamBaiKiemTraService.GetQueryable()
                 .AsNoTracking()
                 .Where(x => baiKiemTraIds.Contains(x.IdBaiKiemTra.Value)
@@ -1217,18 +1997,11 @@ namespace Eduverse.Service.KhoaHocService
 
             var phanTram = tongItem == 0 ? 0 : Math.Round((double)hoanThanhItem / tongItem * 100, 2);
 
-            if (phanTram >= 100)
-            {
-                await SwapPendingBaiGiang(idDangKy.Value, phanIds);
-                await SwapPendingBaiKiemTra(idDangKy.Value, phanIds);
-            }
-
             return phanTram;
         }
         #endregion
 
-
-        #region GetLearning
+        #region GetLearning (KHÔNG SWAP)
         public async Task<KhoaHocDto> GetLearning(Guid idDangKy)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiDangKi);
@@ -1246,8 +2019,6 @@ namespace Eduverse.Service.KhoaHocService
                 throw new Exception("Bạn chưa đăng ký khóa học này");
 
             var idKhoaHoc = dangKy.IdKhoaHoc;
-            var userId = nguoiDangKi;
-            var ngayDangKy = dangKy.CreatedDate;
 
             // Cache: số học viên
             var soHocVien = await GetOrCreateCacheAsync(
@@ -1297,7 +2068,7 @@ namespace Eduverse.Service.KhoaHocService
                         .Where(x => x.IdKhoaHoc == idKhoaHoc
                                  && x.TrangThai == "HoatDong"
                                  && x.TrangThaiPheDuyet == "DaDuyet"
-                                 && x.DeletedId == null &&(x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
+                                 && x.DeletedId == null && (x.DeletedDate > dangKy.CreatedDate || x.DeletedDate < dangKy.CreatedDate)
                                  && x.TrangThai != "BanNhap"
                                  && x.IsBanHienTai == true)
                         .OrderBy(x => x.ThuTuSapXep)
@@ -1329,8 +2100,8 @@ namespace Eduverse.Service.KhoaHocService
 
             var phanIds = phanHocs.Select(x => x.Id).ToList();
 
-            // Cache: bài giảng GỐC
-            var baiGiangsGoc = await GetOrCreateCacheAsync(
+            // Cache: bài giảng GỐC (dùng trực tiếp, không xử lý swap)
+            var baiGiangs = await GetOrCreateCacheAsync(
                 CacheKeys.BaiGiangs(phanIds),
                 () => _baiGiangRepository.GetQueryable()
                     .AsNoTracking()
@@ -1344,6 +2115,7 @@ namespace Eduverse.Service.KhoaHocService
                     .Select(x => new BaiGiangDto
                     {
                         Id = x.Id,
+                        IdGoc = x.Id,
                         IdPhan = x.IdPhan,
                         TieuDe = x.TieuDe,
                         LoaiBaiGiang = x.LoaiBaiGiang,
@@ -1357,38 +2129,9 @@ namespace Eduverse.Service.KhoaHocService
                     .ToListAsync(),
                 TimeSpan.FromMinutes(30));
 
-            var baiGiangGocIds = baiGiangsGoc.Select(x => x.Id).ToList();
+            var baiGiangGocIds = baiGiangs.Select(x => x.Id).ToList();
 
-            // Lấy TẤT CẢ swap (không phân biệt ngày tạo)
-            var allSwaps = await _baiGiangRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdBanGhiTruoc.HasValue
-                         && baiGiangGocIds.Contains(x.IdBanGhiTruoc.Value)
-                         && x.TrangThaiPheDuyet == "DaDuyet"
-                         && x.TrangThai == "BanSwap"
-                         && x.IsBanHienTai == false
-                         && !x.IsDeleted)
-                .OrderByDescending(x => x.CreatedDate)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.IdBanGhiTruoc,
-                    x.CreatedDate,
-                    x.TieuDe,
-                    x.LoaiBaiGiang,
-                    x.IdVideoBaiGiang,
-                    x.URLBaiGiang,
-                    x.ThoiLuong
-                })
-                .ToListAsync();
-
-            var swapMoiNhatByGoc = allSwaps
-                .GroupBy(x => x.IdBanGhiTruoc!.Value)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.OrderByDescending(x => x.CreatedDate).First());
-
-            // Lấy tiến độ của user trước để biết ID nào đang được dùng
+            // Tiến độ của user
             var tienDoRaw = await _tienDoHocTapRepository.GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.IdDangKi == idDangKy
@@ -1396,77 +2139,6 @@ namespace Eduverse.Service.KhoaHocService
                          && !x.IsDeleted)
                 .Select(x => new { x.IdBaiGiang, x.ThoiGianXem, x.TrangThai })
                 .ToListAsync();
-
-            var tienDoIds = tienDoRaw.Select(t => t.IdBaiGiang!.Value).ToHashSet();
-
-            // Tạo danh sách bài giảng hiển thị
-            var baiGiangs = new List<BaiGiangDto>();
-            foreach (var bgGoc in baiGiangsGoc)
-            {
-                BaiGiangDto item;
-                if (swapMoiNhatByGoc.TryGetValue(bgGoc.Id, out var swap))
-                {
-                    // Quyết định dùng swap hay gốc:
-                    // 1. Nếu tiến độ đang dùng swap đó -> dùng swap
-                    // 2. Hoặc swap tạo trước/ bằng ngày đăng ký (học viên mới) -> dùng swap
-                    // 3. Ngược lại -> dùng gốc
-                    if (tienDoIds.Contains(swap.Id) || swap.CreatedDate <= ngayDangKy)
-                    {
-                        // Dùng swap
-                        item = new BaiGiangDto
-                        {
-                            Id = swap.Id,
-                            IdGoc = bgGoc.Id,
-                            IdPhan = bgGoc.IdPhan,
-                            TieuDe = swap.TieuDe,
-                            LoaiBaiGiang = swap.LoaiBaiGiang,
-                            IdVideoBaiGiang = swap.IdVideoBaiGiang,
-                            URLBaiGiang = swap.URLBaiGiang,
-                            ThuTuSapXep = bgGoc.ThuTuSapXep,
-                            ThoiLuong = swap.ThoiLuong,
-                            LaBaiGiangFree = bgGoc.LaBaiGiangFree,
-                            DanhSachTaiLieu = new List<TaiLieuDto>()
-                        };
-                    }
-                    else
-                    {
-                        // Dùng gốc
-                        item = new BaiGiangDto
-                        {
-                            Id = bgGoc.Id,
-                            IdGoc = bgGoc.Id,
-                            IdPhan = bgGoc.IdPhan,
-                            TieuDe = bgGoc.TieuDe,
-                            LoaiBaiGiang = bgGoc.LoaiBaiGiang,
-                            IdVideoBaiGiang = bgGoc.IdVideoBaiGiang,
-                            URLBaiGiang = bgGoc.URLBaiGiang,
-                            ThuTuSapXep = bgGoc.ThuTuSapXep,
-                            ThoiLuong = bgGoc.ThoiLuong,
-                            LaBaiGiangFree = bgGoc.LaBaiGiangFree,
-                            DanhSachTaiLieu = new List<TaiLieuDto>()
-                        };
-                    }
-                }
-                else
-                {
-                    // Không có swap
-                    item = new BaiGiangDto
-                    {
-                        Id = bgGoc.Id,
-                        IdGoc = bgGoc.Id,
-                        IdPhan = bgGoc.IdPhan,
-                        TieuDe = bgGoc.TieuDe,
-                        LoaiBaiGiang = bgGoc.LoaiBaiGiang,
-                        IdVideoBaiGiang = bgGoc.IdVideoBaiGiang,
-                        URLBaiGiang = bgGoc.URLBaiGiang,
-                        ThuTuSapXep = bgGoc.ThuTuSapXep,
-                        ThoiLuong = bgGoc.ThoiLuong,
-                        LaBaiGiangFree = bgGoc.LaBaiGiangFree,
-                        DanhSachTaiLieu = new List<TaiLieuDto>()
-                    };
-                }
-                baiGiangs.Add(item);
-            }
 
             // Tài liệu cache theo gốc
             var taiLieuList = await GetOrCreateCacheAsync(
@@ -1486,29 +2158,21 @@ namespace Eduverse.Service.KhoaHocService
                 TimeSpan.FromMinutes(60));
 
             var baiKiemTraList = await GetOrCreateCacheAsync(
-                     CacheKeys.BaiKiemTraFull(phanIds),   // ← key riêng, không conflict
-                     async () => await _baiKiemTraRepository.GetQueryable()
-                         .AsNoTracking()
-                         .Where(x => phanIds.Contains(x.IdPhan.Value)
-                                  && !x.IsDeleted
-                                  && x.TrangThai == "HoatDong")
-                         .Select(x => new
-                         {
-                             x.Id,
-                             x.IdPhan,
-                             x.DiemDat,
-                             x.TenBaiKiemTra   
-                         })
-         .ToListAsync(),
-     TimeSpan.FromMinutes(30));
-
-            Console.WriteLine($"=== DEBUG BaiKiemTra ===");
-            Console.WriteLine($"phanIds: [{string.Join(", ", phanIds)}]");
-            Console.WriteLine($"baiKiemTraList.Count: {baiKiemTraList.Count}");
-            foreach (var b in baiKiemTraList)
-                Console.WriteLine($"  -> Id={b.Id}, IdPhan={b.IdPhan}, TieuDe={b.TenBaiKiemTra}");
-
-           
+                CacheKeys.BaiKiemTraFull(phanIds),
+                async () => await _baiKiemTraRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(x => phanIds.Contains(x.IdPhan.Value)
+                             && !x.IsDeleted
+                             && x.TrangThai == "HoatDong")
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.IdPhan,
+                        x.DiemDat,
+                        x.TenBaiKiemTra
+                    })
+                    .ToListAsync(),
+                TimeSpan.FromMinutes(30));
 
             var baiKiemTraIds = baiKiemTraList.Select(x => x.Id).ToList();
 
@@ -1525,10 +2189,10 @@ namespace Eduverse.Service.KhoaHocService
                             .Where(x => x.IdBaiKiemTra.HasValue
                                      && baiKiemTraIds.Contains(x.IdBaiKiemTra.Value)
                                      && !x.IsDeleted)
-                            .GroupBy(x => x.IdBaiKiemTra!.Value)  // group theo Guid (không nullable)
+                            .GroupBy(x => x.IdBaiKiemTra!.Value)
                             .Select(g => new { IdBaiKiemTra = g.Key, SoCauHoi = g.Count() })
                             .ToListAsync();
-                        return counts.ToDictionary(x => x.IdBaiKiemTra, x => x.SoCauHoi); // Key giờ là Guid
+                        return counts.ToDictionary(x => x.IdBaiKiemTra, x => x.SoCauHoi);
                     },
                     TimeSpan.FromMinutes(30));
             }
@@ -1540,7 +2204,6 @@ namespace Eduverse.Service.KhoaHocService
                     g => g.Key,
                     g => g.Select(x => new BaiKiemTraDto
                     {
-
                         Id = x.Id,
                         IdPhan = x.IdPhan,
                         TenBaiKiemTra = x.TenBaiKiemTra,
@@ -1549,35 +2212,15 @@ namespace Eduverse.Service.KhoaHocService
                         DanhSachCauHois = new List<CauHoiDto>()
                     }).ToList());
 
-            // sau khi build baiKiemTraByPhan
-            Console.WriteLine($"baiKiemTraByPhan.Keys: [{string.Join(", ", baiKiemTraByPhan.Keys)}]");
-            Console.WriteLine($"phanHocs Ids: [{string.Join(", ", phanHocs.Select(x => x.Id))}]");
-
-            // Map tiến độ: key là ID hiển thị
+            // Map tiến độ trực tiếp theo Id (không còn ánh xạ swap/gốc)
             var tienDoDict = new Dictionary<Guid, (int ThoiGianXem, string TrangThai)>();
-            var idHienThiSet = baiGiangs.Select(b => b.Id).ToHashSet();
-            var gocToHienThi = baiGiangs.ToDictionary(b => b.IdGoc, b => b.Id);
-
             foreach (var t in tienDoRaw)
             {
-                var idRaw = t.IdBaiGiang!.Value;
-                if (idHienThiSet.Contains(idRaw))
-                {
-                    tienDoDict[idRaw] = (t.ThoiGianXem ?? 0, t.TrangThai);
-                }
-                else if (gocToHienThi.TryGetValue(idRaw, out var idHienThi))
-                {
-                    tienDoDict[idHienThi] = (t.ThoiGianXem ?? 0, t.TrangThai);
-                }
-                else
-                {
-                    // Fallback
-                    tienDoDict[idRaw] = (t.ThoiGianXem ?? 0, t.TrangThai);
-                }
+                tienDoDict[t.IdBaiGiang!.Value] = (t.ThoiGianXem ?? 0, t.TrangThai);
             }
 
             // Tính % hoàn thành
-            var phanTram = await TinhPhanTramHoanThanh(idDangKy, ngayDangKy);
+            var phanTram = await TinhPhanTramHoanThanh(idDangKy, dangKy.CreatedDate);
 
             var taiLieuLookup = taiLieuList
                 .GroupBy(x => x.IdBaiGiang)
@@ -1595,7 +2238,6 @@ namespace Eduverse.Service.KhoaHocService
                     bg.ThoiGianXem = td.ThoiGianXem;
                     if (bg.DaHoanThanh) hoanThanhBaiGiang++;
                 }
-                // Tài liệu theo ID gốc
                 if (taiLieuLookup.TryGetValue(bg.IdGoc, out var tls))
                     bg.DanhSachTaiLieu = tls;
             }
@@ -1623,212 +2265,7 @@ namespace Eduverse.Service.KhoaHocService
         }
         #endregion
 
-
-        #region SwapPendingBaiGiang
-        public async Task SwapPendingBaiGiang(Guid idDangKy, List<Guid> phanIds)
-        {
-            var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.Id == idDangKy && !x.IsDeleted)
-                .Select(x => new { x.CreatedDate })
-                .FirstOrDefaultAsync();
-
-            if (dangKy == null)
-                return;
-
-            var ngayDangKy = dangKy.CreatedDate;
-
-            var baiGiangGocList = await _baiGiangRepository.GetQueryable()
-                .Where(x => phanIds.Contains(x.IdPhan) && !x.IsDeleted && x.IsBanHienTai == true)
-                .Select(x => x.Id)
-                .ToListAsync();
-
-            if (!baiGiangGocList.Any())
-                return;
-
-            // Lấy swap tạo SAU ngày đăng ký (chỉ swap cho học viên cũ)
-            var draftList = await _baiGiangRepository.GetQueryable()
-                .Where(x => x.IdBanGhiTruoc.HasValue
-                         && baiGiangGocList.Contains(x.IdBanGhiTruoc.Value)
-                         && x.TrangThaiPheDuyet == "DaDuyet"
-                         && x.IsBanHienTai == false
-                         && !x.IsDeleted
-                         && x.CreatedDate > ngayDangKy)
-                .Select(x => new { x.Id, x.IdBanGhiTruoc, x.CreatedDate })
-                .ToListAsync();
-
-            if (!draftList.Any())
-                return;
-
-            var draftMoiNhatByGoc = draftList
-                .GroupBy(x => x.IdBanGhiTruoc!.Value)
-                .Select(g => new
-                {
-                    IdGoc = g.Key,
-                    IdDraftMoiNhat = g.OrderByDescending(x => x.CreatedDate).First().Id
-                })
-                .ToDictionary(x => x.IdGoc, x => x.IdDraftMoiNhat);
-
-            var draftToGocMap = draftList
-                .ToDictionary(x => x.Id, x => x.IdBanGhiTruoc!.Value);
-
-            var tienDoList = await _tienDoHocTapRepository.GetQueryable()
-                .Where(x => x.IdDangKi == idDangKy
-                         && x.IdBaiGiang.HasValue
-                         && x.TrangThai == "HoanThanh"
-                         && !x.IsDeleted)
-                .ToListAsync();
-
-            if (!tienDoList.Any())
-                return;
-
-            foreach (var tienDo in tienDoList)
-            {
-                var idHienTai = tienDo.IdBaiGiang!.Value;
-                Guid? idGoc = null;
-
-                if (baiGiangGocList.Contains(idHienTai))
-                    idGoc = idHienTai;
-                else if (draftToGocMap.TryGetValue(idHienTai, out var idGocTuDraft)
-                      && baiGiangGocList.Contains(idGocTuDraft))
-                    idGoc = idGocTuDraft;
-
-                if (!idGoc.HasValue)
-                    continue;
-
-                if (draftMoiNhatByGoc.TryGetValue(idGoc.Value, out var idDraftMoiNhat))
-                {
-                    if (idHienTai == idDraftMoiNhat)
-                        continue;
-
-                    Console.WriteLine($"SWAP: {idHienTai} (gốc: {idGoc}) -> {idDraftMoiNhat}");
-                    tienDo.IdBaiGiang = idDraftMoiNhat;
-                    _tienDoHocTapRepository.Update(tienDo);
-                }
-            }
-
-            await _tienDoHocTapRepository.SaveAsync();
-        }
-        #endregion
-
-
-        #region SwapPendingBaiKiemTra
-        public async Task SwapPendingBaiKiemTra(Guid idDangKy, List<Guid> phanIds)
-        {
-            var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.Id == idDangKy && !x.IsDeleted)
-                .Select(x => new { x.IdNguoiDangKi, x.CreatedDate })
-                .FirstOrDefaultAsync();
-
-            if (dangKy == null)
-                return;
-
-            var userId = dangKy.IdNguoiDangKi;
-            var ngayDangKy = dangKy.CreatedDate;
-
-            var baiKiemTraGocList = await _baiKiemTraRepository.GetQueryable()
-                .Where(x => phanIds.Contains(x.IdPhan.Value) && !x.IsDeleted && x.IsBanHienTai == true)
-                .Select(x => x.Id)
-                .ToListAsync();
-
-            if (!baiKiemTraGocList.Any())
-                return;
-
-            var draftList = await _baiKiemTraRepository.GetQueryable()
-                .Where(x => x.IdBanGhiTruoc.HasValue
-                         && baiKiemTraGocList.Contains(x.IdBanGhiTruoc.Value)
-                         && x.TrangThaiPheDuyet == "DaDuyet"
-                         && x.IsBanHienTai == false
-                         && !x.IsDeleted
-                         && x.CreatedDate > ngayDangKy)
-                .Select(x => new { x.Id, x.IdBanGhiTruoc, x.CreatedDate })
-                .ToListAsync();
-
-            if (!draftList.Any())
-                return;
-
-            var draftMoiNhatByGoc = draftList
-                .GroupBy(x => x.IdBanGhiTruoc!.Value)
-                .Select(g => new
-                {
-                    IdGoc = g.Key,
-                    IdDraftMoiNhat = g.OrderByDescending(x => x.CreatedDate).First().Id
-                })
-                .ToDictionary(x => x.IdGoc, x => x.IdDraftMoiNhat);
-
-            var draftToGocMap = draftList
-                .ToDictionary(x => x.Id, x => x.IdBanGhiTruoc!.Value);
-
-            var lanLamList = await _lanLamBaiKiemTraService.GetQueryable()
-                .Where(x => x.IdNguoiDung == userId
-                         && x.IdBaiKiemTra.HasValue
-                         && !x.IsDeleted)
-                .ToListAsync();
-
-            if (!lanLamList.Any())
-                return;
-
-            Guid? ResolveGoc(Guid idHienTai)
-            {
-                if (baiKiemTraGocList.Contains(idHienTai))
-                    return idHienTai;
-                if (draftToGocMap.TryGetValue(idHienTai, out var idGocTuDraft)
-                    && baiKiemTraGocList.Contains(idGocTuDraft))
-                    return idGocTuDraft;
-                return null;
-            }
-
-            var idsGocDangBiKhoa = lanLamList
-                .Where(x => x.TrangThai == "DangLam")
-                .Select(x => ResolveGoc(x.IdBaiKiemTra!.Value))
-                .Where(id => id.HasValue)
-                .Select(id => id!.Value)
-                .ToHashSet();
-
-            var lanLamCanSwap = lanLamList
-                .Where(x => x.TrangThai == "HoanThanh" || x.TrangThai == null)
-                .ToList();
-
-            if (!lanLamCanSwap.Any())
-                return;
-
-            foreach (var lanLam in lanLamCanSwap)
-            {
-                var idHienTai = lanLam.IdBaiKiemTra!.Value;
-                var idGoc = ResolveGoc(idHienTai);
-                if (!idGoc.HasValue)
-                    continue;
-                if (idsGocDangBiKhoa.Contains(idGoc.Value))
-                    continue;
-                if (draftMoiNhatByGoc.TryGetValue(idGoc.Value, out var idDraftMoiNhat))
-                {
-                    if (idHienTai == idDraftMoiNhat)
-                        continue;
-                    Console.WriteLine($"SWAP QUIZ: {idHienTai} (gốc: {idGoc}) -> {idDraftMoiNhat}");
-                    lanLam.IdBaiKiemTra = idDraftMoiNhat;
-                    await _lanLamBaiKiemTraService.UpdateAsync(lanLam);
-                }
-            }
-
-            await _lanLamBaiKiemTraService.SaveAsync();
-        }
-        #endregion
-
-
         #region Helper Methods
-        private class DraftInfo
-        {
-            public Guid Id { get; set; }
-            public Guid? IdBanGhiTruoc { get; set; }
-            public string TieuDe { get; set; }
-            public string LoaiBaiGiang { get; set; }
-            public string IdVideoBaiGiang { get; set; }
-            public string URLBaiGiang { get; set; }
-            public int? ThoiLuong { get; set; }
-            public DateTime CreatedDate { get; set; }
-        }
-
         private async Task<T> GetOrCreateCacheAsync<T>(string cacheKey, Func<Task<T>> factory, TimeSpan expiration)
         {
             if (_memoryCache.TryGetValue(cacheKey, out T cachedData))
@@ -1857,7 +2294,7 @@ namespace Eduverse.Service.KhoaHocService
             }
         }
 
-        public void ClearAllCache()
+        private void ClearAllCache()
         {
             if (_memoryCache is MemoryCache memoryCache)
                 memoryCache.Compact(1.0);
@@ -1865,7 +2302,6 @@ namespace Eduverse.Service.KhoaHocService
         #endregion
 
         #endregion
-
 
         public async Task<KhoaHocDto> ChuyenTrangThaiChoDuyet(Guid idKhoaHoc)
         {
@@ -1906,7 +2342,6 @@ namespace Eduverse.Service.KhoaHocService
             {
                 khoaHocNhap.TrangThaiPheDuyet = "ChoDuyet";
                 khoaHocNhap.TrangThai = "ChoDuyet";
-                khoaHocNhap.UpdatedDate = DateTime.UtcNow;
                 khoaHocToUpdate.Add(khoaHocNhap);
             }
 
@@ -1960,8 +2395,8 @@ namespace Eduverse.Service.KhoaHocService
 
                 foreach (var bkt in baiKiemTras)
                 {
-                    bkt.TrangThaiPheDuyet = "DaDuyet";
-                    bkt.TrangThai = "HoatDong";
+                    bkt.TrangThaiPheDuyet = "ChoDuyet";
+                    bkt.TrangThai = "ChoDuyet";
                     baiKiemTraToUpdate.Add(bkt);
                 }
                 var allBaiKiemTraIds = await _baiKiemTraRepository.GetQueryable()
@@ -2230,20 +2665,49 @@ namespace Eduverse.Service.KhoaHocService
                 throw new UnauthorizedAccessException("Không thể xác định người dùng.");
             }
 
-            var query = GetAll()
-                .Where(x => x.IsBanHienTai == true
-                         && x.CreatedId == userId);
+            // ── Query lấy tất cả khóa học gốc của user (chưa xóa) ──
+            var query = GetQueryable()
+                .Where(x => x.CreatedId == userId
+                         && x.IsBanHienTai == true
+                         && !x.IsDeleted);
 
-            // Áp dụng tìm kiếm
+            // ── Áp dụng filter ──
+
+            // 1. Filter theo từ khóa
             if (!string.IsNullOrEmpty(search.Keyword))
             {
-                query = query.Where(x => x.TieuDe.Contains(search.Keyword) ||
-                                          (x.MoTa != null && x.MoTa.Contains(search.Keyword)));
+                query = query.Where(x => x.TieuDe != null && x.TieuDe.Contains(search.Keyword));
             }
 
-            query = query.OrderByDescending(x => x.CreatedDate);
+            // ── Sắp xếp ──
+            if (!string.IsNullOrEmpty(search.SapXep))
+            {
+                switch (search.SapXep)
+                {
+                    case "moi-nhat":
+                        query = query.OrderByDescending(x => x.CreatedDate);
+                        break;
+                    case "cu-nhat":
+                        query = query.OrderBy(x => x.CreatedDate);
+                        break;
+                    case "ten-a-z":
+                        query = query.OrderBy(x => x.TieuDe ?? "");
+                        break;
+                    case "ten-z-a":
+                        query = query.OrderByDescending(x => x.TieuDe ?? "");
+                        break;
+                    default:
+                        query = query.OrderByDescending(x => x.CreatedDate);
+                        break;
+                }
+            }
+            else
+            {
+                query = query.OrderByDescending(x => x.CreatedDate);
+            }
 
-            var rootQuery = query.Select(x => new KhoaHocDto
+            // ── Map sang DTO ──
+            var dtoQuery = query.Select(x => new KhoaHocDto
             {
                 Id = x.Id,
                 TieuDe = x.TieuDe,
@@ -2256,58 +2720,12 @@ namespace Eduverse.Service.KhoaHocService
                 TrangThaiPheDuyet = x.TrangThaiPheDuyet,
                 CreatedId = x.CreatedId,
                 CreatedDate = x.CreatedDate,
-                IsBanHienTai = true,
+                IsBanHienTai = x.IsBanHienTai,
                 IdBanGhiTruoc = x.IdBanGhiTruoc,
-
             });
 
-            // Phân trang theo SỐ LƯỢNG BẢN GỐC (giữ nguyên page size như cũ)
-            var pagedRoots = await PagedList<KhoaHocDto>.CreateAsync(rootQuery, search);
-
-            if (!pagedRoots.Items.Any())
-                return pagedRoots;
-
-            // ── Lấy TẤT CẢ nháp đang mở (chưa xóa mềm) của các khóa học gốc trong trang này ──
-            var rootIds = pagedRoots.Items.Select(x => x.Id).ToList();
-
-            var draftMap = await GetAll()
-                .Where(x => x.IdBanGhiTruoc != null
-                         && rootIds.Contains(x.IdBanGhiTruoc.Value)
-                         && x.IsBanHienTai == false
-                         && !x.IsDeleted)
-                .Select(x => new KhoaHocDto
-                {
-                    Id = x.Id,
-                    TieuDe = x.TieuDe,
-                    MoTa = x.MoTa,
-                    Gia = x.Gia,
-                    GiaGoc = x.GiaGoc,
-                    CapDo = x.CapDo,
-                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
-                    TrangThai = x.TrangThai,
-                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
-                    CreatedId = x.CreatedId,
-                    CreatedDate = x.CreatedDate,
-                    IsBanHienTai = false,
-                    IdBanGhiTruoc = x.IdBanGhiTruoc,
-                })
-                .ToListAsync();
-
-            var draftLookup = draftMap.ToDictionary(d => d.IdBanGhiTruoc!.Value, d => d);
-
-            // ── Xen kẽ: gốc → nháp (nếu có) → gốc tiếp theo → ... ──
-            var interleaved = new List<KhoaHocDto>(pagedRoots.Items.Count + draftMap.Count);
-            foreach (var root in pagedRoots.Items)
-            {
-                interleaved.Add(root);
-
-                if (draftLookup.TryGetValue(root.Id, out var draft))
-                    interleaved.Add(draft);
-            }
-
-            pagedRoots.Items = interleaved;
-
-            return pagedRoots;
+            // ── Phân trang ──
+            return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
         }
 
 
@@ -2756,9 +3174,12 @@ namespace Eduverse.Service.KhoaHocService
                         IdHinhAnhKhoaHoc = KhoaHocRoot.IdHinhAnhKhoaHoc,
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = false,
+                        IsBanHienTai = true,
                         IdBanGhiTruoc = KhoaHocRoot.Id
                     };
+                    await CreateAsync(khoaHocDraftEntity);
+                    await SaveAsync();
+
                 }
                 else if (KhoaHocRoot.TrangThaiPheDuyet == "TuChoi")
                 {
@@ -2778,22 +3199,23 @@ namespace Eduverse.Service.KhoaHocService
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
-                        IdBanGhiTruoc = KhoaHocRoot.Id
+                        IdBanGhiTruoc = null
                     };
+
+                    await CreateAsync(khoaHocDraftEntity);
+                    await SaveAsync();
                 }
                 else
                 {
                     throw new Exception($"Trạng thái khóa học '{KhoaHocRoot.TrangThaiPheDuyet}' không hợp lệ để tạo bản nháp");
                 }
 
-                await CreateAsync(khoaHocDraftEntity);
-                await SaveAsync();
+                
                 await CopyDanhMucAsync(KhoaHocRoot.Id, khoaHocDraftEntity.Id);
 
                 var khoaHocResult = _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHocDraftEntity);
                 var idKhoaHocDraftMoi = khoaHocDraftEntity.Id;
 
-                // ── Bước 2: Clone toàn bộ PHẦN từ khóa học GỐC sang khóa học NHÁP ──
                 var danhSachPhanRoot = await _phanRepository.GetAll()
                     .Where(x => x.IdKhoaHoc == IdKhoaHoc && x.IsBanHienTai == true && !x.IsDeleted)
                     .ToListAsync();
@@ -2815,9 +3237,11 @@ namespace Eduverse.Service.KhoaHocService
                             ThuTuSapXep = phanRoot.ThuTuSapXep,
                             TrangThai = "DangSua",
                             TrangThaiPheDuyet = "DangSua",
-                            IsBanHienTai = false,
+                            IsBanHienTai = true,
                             IdBanGhiTruoc = phanRoot.Id
                         };
+                        _phanRepository.Add(phanDraftMoi);
+                        await _phanRepository.SaveAsync();
                     }
                     else if (phanRoot.TrangThaiPheDuyet == "TuChoi")
                     {
@@ -2832,16 +3256,17 @@ namespace Eduverse.Service.KhoaHocService
                             TrangThai = "DangSua",
                             TrangThaiPheDuyet = "DangSua",
                             IsBanHienTai = true,
-                            IdBanGhiTruoc = phanRoot.Id
+                            IdBanGhiTruoc = phanRoot.IdBanGhiTruoc
                         };
+                        _phanRepository.Add(phanDraftMoi);
+                        await _phanRepository.SaveAsync();
                     }
                     else
                     {
                         throw new Exception($"Trạng thái Phần '{phanRoot.TenPhan}' ({phanRoot.TrangThaiPheDuyet}) không hợp lệ để tạo bản nháp");
                     }
 
-                    _phanRepository.Add(phanDraftMoi);
-                    await _phanRepository.SaveAsync();
+                    
 
                     var phanDraftDto = new PhanDraftDto
                     {
@@ -2853,7 +3278,22 @@ namespace Eduverse.Service.KhoaHocService
                     danhSachPhanDraft.Add(phanDraftDto);
                 }
 
+
+
                 await transaction.CommitAsync();
+
+
+                //Xóa sau khi tạo bản mới
+                if (KhoaHocRoot.TrangThaiPheDuyet == "TuChoi")
+                {
+                    
+                }else if (KhoaHocRoot.TrangThaiPheDuyet == "DaDuyet")
+                {
+                    KhoaHocRoot.TrangThai = "NgungHoatDong";
+                }
+                await UpdateAsync(KhoaHocRoot);
+                await DeleteAsync(KhoaHocRoot);
+                await SaveAsync();
 
                 return new KhoaHocDraftResultDto
                 {
@@ -2901,12 +3341,15 @@ namespace Eduverse.Service.KhoaHocService
                         ThuTuSapXep = bgRoot.ThuTuSapXep,
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = false,
+                        IsBanHienTai = true,
                         IdBanGhiTruoc = bgRoot.Id,
                         LoaiBaiGiang = bgRoot.LoaiBaiGiang,
                         LaBaiGiangFree = bgRoot.LaBaiGiangFree
                     };
-                }else if (bgRoot.TrangThaiPheDuyet == "ChuChoi")
+                    _baiGiangRepository.Add(bgDraft);
+                    await _baiGiangRepository.SaveAsync();
+                }
+                else if (bgRoot.TrangThaiPheDuyet == "TuChoi")
                 {
                      bgDraft = new BaiGiang
                     {
@@ -2919,11 +3362,13 @@ namespace Eduverse.Service.KhoaHocService
                         ThuTuSapXep = bgRoot.ThuTuSapXep,
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = false,
-                        IdBanGhiTruoc = bgRoot.Id,
+                        IsBanHienTai = true,
+                        IdBanGhiTruoc = bgRoot.IdBanGhiTruoc,
                         LoaiBaiGiang = bgRoot.LoaiBaiGiang,
                         LaBaiGiangFree = bgRoot.LaBaiGiangFree
                     };
+                    _baiGiangRepository.Add(bgDraft);
+                    await _baiGiangRepository.SaveAsync();
                 }
                 else
                 {
@@ -2931,8 +3376,7 @@ namespace Eduverse.Service.KhoaHocService
                 }
 
 
-                _baiGiangRepository.Add(bgDraft);
-                await _baiGiangRepository.SaveAsync();
+                
 
                 var danhSachTaiLieu = await CloneTaiLieuAsync(bgRoot.Id, bgDraft.Id);
 
@@ -3018,9 +3462,11 @@ namespace Eduverse.Service.KhoaHocService
                         ThuTuSapXep = bktRoot.ThuTuSapXep,
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = false,
+                        IsBanHienTai = true,
                         IdBanGhiTruoc = bktRoot.Id
                     };
+                    _baiKiemTraRepository.Add(bktDraft);
+                    await _baiKiemTraRepository.SaveAsync();
                 }
                 else if (bktRoot.TrangThaiPheDuyet == "TuChoi")
                 {
@@ -3037,16 +3483,17 @@ namespace Eduverse.Service.KhoaHocService
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
-                        IdBanGhiTruoc = bktRoot.Id
+                        IdBanGhiTruoc = bktRoot.IdBanGhiTruoc
                     };
+                    _baiKiemTraRepository.Add(bktDraft);
+                    await _baiKiemTraRepository.SaveAsync();
                 }
                 else
                 {
                     throw new Exception($"Trạng thái Bài kiểm tra '{bktRoot.TenBaiKiemTra}' ({bktRoot.TrangThaiPheDuyet}) không hợp lệ để tạo bản nháp");
                 }
 
-                 _baiKiemTraRepository.Add(bktDraft);
-                await _baiKiemTraRepository.SaveAsync();
+                
 
                 await CloneCauHoiVaDapAnAsync(bktRoot.Id, bktDraft.Id);
 
@@ -3086,10 +3533,13 @@ namespace Eduverse.Service.KhoaHocService
                         NoiDungCauHoi = chRoot.NoiDungCauHoi,
                         DoKho = chRoot.DoKho,
                         ThuTuSapXep = chRoot.ThuTuSapXep,
-                        IsBanHienTai = false,
+                        IsBanHienTai = true,
                         IdBanGhiTruoc = chRoot.Id
                     };
-                }else if (chRoot.TrangThaiPheDuyet == "TuChoi")
+                    await _cauHoiService.CreateAsync(chDraft);
+                    await _cauHoiService.SaveAsync();
+                }
+                else if (chRoot.TrangThaiPheDuyet == "TuChoi")
                 {
                      chDraft = new CauHoi
                     {
@@ -3103,8 +3553,10 @@ namespace Eduverse.Service.KhoaHocService
                         DoKho = chRoot.DoKho,
                         ThuTuSapXep = chRoot.ThuTuSapXep,
                         IsBanHienTai = true,
-                        IdBanGhiTruoc = chRoot.Id
-                    };
+                        IdBanGhiTruoc = chRoot.IdBanGhiTruoc
+                     };
+                    await _cauHoiService.CreateAsync(chDraft);
+                    await _cauHoiService.SaveAsync();
                 }
                 else
                 {
@@ -3112,8 +3564,7 @@ namespace Eduverse.Service.KhoaHocService
                 }
 
 
-                await _cauHoiService.CreateAsync(chDraft);
-                await _cauHoiService.SaveAsync();
+                
 
                 var danhSachDapAnRoot = await _dapAnService.GetQueryable()
                 .Where(x => x.IdCauHoi == chRoot.Id && !x.IsDeleted)
@@ -3135,8 +3586,10 @@ namespace Eduverse.Service.KhoaHocService
                             TrangThai = "DangSua",
                             TrangThaiPheDuyet = "DangSua",
                             IdBanGhiTruoc = daRoot.Id,
-                            IsBanHienTai = false
+                            IsBanHienTai = true
                         };
+                        await _dapAnService.CreateAsync(daDraft);
+                        await _dapAnService.SaveAsync();
                     }
                     else if (daRoot.TrangThaiPheDuyet == "TuChoi")
                     {
@@ -3149,17 +3602,16 @@ namespace Eduverse.Service.KhoaHocService
                             ThuTuSapXep = daRoot.ThuTuSapXep,
                             TrangThai = "DangSua",
                             TrangThaiPheDuyet = "DangSua",
-                            IdBanGhiTruoc = daRoot.Id,
+                            IdBanGhiTruoc = daRoot.IdBanGhiTruoc,
                             IsBanHienTai = true
                         };
+                        await _dapAnService.CreateAsync(daDraft);
+                        await _dapAnService.SaveAsync();
                     }
                     else
                     {
                         throw new Exception($"Trạng thái Đáp án '{daRoot.Id}' ({daRoot.TrangThaiPheDuyet}) không hợp lệ để tạo bản nháp");
                     }
-
-                    await _dapAnService.CreateAsync(daDraft);
-                    await _dapAnService.SaveAsync();
                 }
 
                 

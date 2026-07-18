@@ -12,5 +12,6 @@ namespace Eduverse.Service.KhoaHocService.Request
         public string? Keyword { get; set; }
         public int LoaiBan { get; set; } = 0;
         public string? TrangThaiPheDuyet { get; set; }
+        public string? SapXep { get; set; }
     }
 }
