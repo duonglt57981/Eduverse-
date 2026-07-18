@@ -257,7 +257,7 @@ namespace Eduverse.Api
                 });
             });
             app.UseCors("AllowFrontend");
-            // app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseAuthentication();
             app.UseAuthorization();
