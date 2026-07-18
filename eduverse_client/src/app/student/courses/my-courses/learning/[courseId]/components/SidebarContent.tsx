@@ -313,10 +313,10 @@ export const SidebarContent = ({
 
                   {/* Quiz đặt ở CUỐI danh sách bài giảng của phần học */}
                   {(quizTheoPhan?.get(phan.id!) ?? []).map((quiz) => {
-                    const isQuizSelected = idQuizDangChon === quiz.idPhan;
+                    const isQuizSelected = idQuizDangChon === quiz.id;
                     return (
                       <ListItemButton
-                        key={quiz.idPhan}
+                        key={quiz.id}
                         selected={isQuizSelected}
                         onClick={() => onSelectQuiz?.(quiz)}
                         sx={{
