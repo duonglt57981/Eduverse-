@@ -105,5 +105,45 @@ namespace Eduverse.Api.Controller
             };
         }
         #endregion
+
+        #region GetStats
+        [HttpGet("stats")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<DanhMucStatsDto>> GetStats()
+        {
+            var result = await _danhMucService.GetStats();
+            return new DataResponse<DanhMucStatsDto>
+            {
+                Status = true,
+                Message = "Lấy thống kê danh mục thành công",
+                Data = result
+            };
+        }
+        #endregion
+
+        #region UpdateStatus
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<bool>> UpdateStatus(Guid id, [FromBody] UpdateDanhMucStatusRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.TrangThai))
+            {
+                return new DataResponse<bool>
+                {
+                    Status = false,
+                    Message = "Trạng thái không hợp lệ",
+                    Data = false
+                };
+            }
+
+            var result = await _danhMucService.UpdateStatus(id, request.TrangThai);
+            return new DataResponse<bool>
+            {
+                Status = result,
+                Message = result ? "Cập nhật trạng thái thành công" : "Cập nhật trạng thái thất bại",
+                Data = result
+            };
+        }
+        #endregion
     }
 }

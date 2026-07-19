@@ -99,6 +99,7 @@ interface KhoaHocDto {
   instructor?: string;
   title?: string;
   subtitle?: string;
+  categoryNames?: string[];
 }
 
 interface DashboardData {
@@ -1179,39 +1180,9 @@ export default function StudentHomeContent() {
   const filteredSkillCourses = useMemo(() => {
     if (!data?.skillsCourses) return [];
     if (!selectedSkill) return data.skillsCourses;
-    const s = selectedSkill.toLowerCase();
-    return data.skillsCourses.filter((c) => {
-      const t = (c.tieuDe || c.title || "").toLowerCase();
-      if (s === "test")
-        return (
-          t.includes("ai") ||
-          t.includes("machine learning") ||
-          t.includes("llm") ||
-          t.includes("python") ||
-          t.includes("chatbot")
-        );
-      if (s === "python") return t.includes("python") || t.includes("data");
-      if (s === "reactjs")
-        return (
-          t.includes("react") || t.includes("javascript") || t.includes("html")
-        );
-      if (s === "sql server") return t.includes("sql") || t.includes("dữ liệu");
-      if (s === "aws")
-        return (
-          t.includes("aws") ||
-          t.includes("cloud") ||
-          t.includes("microservices") ||
-          t.includes("docker")
-        );
-      if (s === "ui/ux")
-        return (
-          t.includes("figma") ||
-          t.includes("ui") ||
-          t.includes("ux") ||
-          t.includes("thiết kế")
-        );
-      return true;
-    });
+    return data.skillsCourses.filter((course) =>
+      course.categoryNames?.includes(selectedSkill),
+    );
   }, [selectedSkill, data]);
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
@@ -1304,7 +1275,6 @@ export default function StudentHomeContent() {
     welcomeStats,
     continueLearning,
     interestedSkills,
-    nextSectors,
     premiumSelection,
     historyRecommendation,
   } = data;
@@ -1710,77 +1680,6 @@ export default function StudentHomeContent() {
       </Box>
 
       {/* ── 4. Lĩnh vực sẽ học tiếp theo (data-gated) ───────────────── */}
-      {nextSectors && nextSectors.length > 0 && (
-        <Box>
-          <SectionHeader title="Lĩnh vực sẽ học tiếp theo" />
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "1fr 1fr",
-                md: "repeat(4, minmax(0,1fr))",
-              },
-              gap: 2,
-            }}
-          >
-            {nextSectors.map((sec) => (
-              <Paper
-                key={sec.id}
-                elevation={0}
-                sx={{
-                  p: 2.25,
-                  borderRadius: "14px",
-                  border: `1px solid ${C.border}`,
-                  bgcolor: C.white,
-                  transition: "border-color 200ms ease, box-shadow 200ms ease",
-                  "&:hover": {
-                    borderColor: C.primaryBorder,
-                    boxShadow: "0 8px 24px rgba(139,19,19,0.06)",
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: "11px",
-                    bgcolor: C.primaryTint,
-                    color: C.primary,
-                    display: "grid",
-                    placeItems: "center",
-                    mb: 1.25,
-                  }}
-                >
-                  <AutoStoriesRounded />
-                </Box>
-                <Typography
-                  sx={{ fontSize: 14.5, fontWeight: 800, color: C.textDark, mb: 0.75 }}
-                >
-                  {sec.title}
-                </Typography>
-                <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.6 }}>
-                  {(sec.subfields ?? []).slice(0, 4).map((sf, i) => (
-                    <Chip
-                      key={i}
-                      label={sf}
-                      size="small"
-                      sx={{
-                        bgcolor: "#F4F1EE",
-                        color: C.textSecondary,
-                        fontWeight: 600,
-                        fontSize: 11,
-                        height: 22,
-                      }}
-                    />
-                  ))}
-                </Stack>
-              </Paper>
-            ))}
-          </Box>
-        </Box>
-      )}
-
       {/* ── 5. Khóa học theo kỹ năng (data-gated) ───────────────────── */}
       {interestedSkills && interestedSkills.length > 0 && (
         <Box>

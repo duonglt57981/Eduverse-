@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import { danhMucService } from "@/src/services/danhmucService";
+import { DanhMucStatsDto } from "@/src/types/danhmuc";
 import Swal from "sweetalert2";
 import {
   Box,
@@ -31,6 +32,9 @@ import {
   TextField,
   Tooltip,
   Typography,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   SearchRounded,
@@ -41,9 +45,9 @@ import {
   CategoryRounded,
   FolderOpenRounded,
   CheckCircleRounded,
-  SchoolRounded,
   VisibilityRounded,
   FilterListRounded,
+  ClearRounded,
 } from "@mui/icons-material";
 
 // Cohesive Crimson color palette matching the Eduverse platform
@@ -64,8 +68,6 @@ const COLORS = {
   redBg: "#FEF2F2",
   blue: "#3B82F6",
   blueBg: "#EFF6FF",
-  purple: "#8B5CF6",
-  purpleBg: "#F5F3FF",
 };
 
 interface CategoryItem {
@@ -76,6 +78,14 @@ interface CategoryItem {
   maDanhMuc?: string;
 }
 
+const normalizeCategoryStatus = (status: string | null | undefined) =>
+  status === "TamAn" ||
+  status === "KHD" ||
+  status === "Inactive" ||
+  status === "Tạm ẩn"
+    ? "TamAn"
+    : "HoatDong";
+
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -83,7 +93,10 @@ export default function AdminCategoriesPage() {
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("ALL");
   const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState<DanhMucStatsDto | null>(null);
 
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -91,16 +104,39 @@ export default function AdminCategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState("");
   const [categoryCode, setCategoryCode] = useState("");
+  const [categoryStatus, setCategoryStatus] = useState("HoatDong");
 
   // Detail dialog
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailItem, setDetailItem] = useState<CategoryItem | null>(null);
 
+  // Debounce search effect
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPageIndex(1);
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  const fetchStats = async () => {
+    try {
+      const res = await danhMucService.getStats();
+      if (res.status && res.data) {
+        setStats(res.data);
+      }
+    } catch (err) {
+      console.error("Error loading stats", err);
+    }
+  };
+
   const fetchCategories = async () => {
     setLoading(true);
     try {
       const res = await danhMucService.getList({
-        keyword: search || undefined,
+        keyword: debouncedSearch || undefined,
+        trangThai: filterStatus === "ALL" ? undefined : filterStatus,
         pageIndex,
         pageSize,
       });
@@ -125,9 +161,11 @@ export default function AdminCategoriesPage() {
   };
 
   useEffect(() => {
+    // Data fetching intentionally starts when the pagination or filters change.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCategories();
-  }, [pageIndex]);
+    fetchStats();
+  }, [pageIndex, debouncedSearch, filterStatus]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +179,7 @@ export default function AdminCategoriesPage() {
     setEditingId(null);
     setCategoryName("");
     setCategoryCode("");
+    setCategoryStatus("HoatDong");
     setDialogOpen(true);
   };
 
@@ -150,6 +189,7 @@ export default function AdminCategoriesPage() {
     setEditingId(cat.id);
     setCategoryName(cat.tenDanhMuc);
     setCategoryCode(cat.maDanhMuc || "");
+    setCategoryStatus(normalizeCategoryStatus(cat.trangThai));
     setDialogOpen(true);
   };
 
@@ -178,33 +218,33 @@ export default function AdminCategoriesPage() {
         res = await danhMucService.create({
           tenDanhMuc: categoryName.trim(),
           maDanhMuc: categoryCode.trim() || undefined,
+          trangThai: categoryStatus,
         });
       } else {
         res = await danhMucService.update({
           id: editingId!,
           tenDanhMuc: categoryName.trim(),
           maDanhMuc: categoryCode.trim() || undefined,
+          trangThai: categoryStatus,
         });
       }
+
       if (res.status) {
         Swal.fire({
           icon: "success",
-          title: "Thành công",
-          text:
-            dialogMode === "add"
-              ? "Thêm danh mục mới thành công!"
-              : "Cập nhật danh mục thành công!",
-          confirmButtonColor: COLORS.primary,
-          timer: 2000,
+          title: dialogMode === "add" ? "Thêm thành công" : "Cập nhật thành công",
+          text: dialogMode === "add" ? "Đã thêm danh mục mới" : "Đã cập nhật thông tin danh mục",
+          timer: 1500,
           showConfirmButton: false,
         });
         setDialogOpen(false);
         fetchCategories();
+        fetchStats();
       } else {
         Swal.fire({
           icon: "error",
-          title: "Lỗi",
-          text: res.message || "Thao tác thất bại",
+          title: "Có lỗi xảy ra",
+          text: res.message || "Không thể thực hiện tác vụ",
           confirmButtonColor: COLORS.primary,
         });
       }
@@ -212,8 +252,8 @@ export default function AdminCategoriesPage() {
       console.error(err);
       Swal.fire({
         icon: "error",
-        title: "Lỗi hệ thống",
-        text: "Không thể kết nối đến máy chủ",
+        title: "Có lỗi xảy ra",
+        text: err.response?.data?.message || "Không thể gửi dữ liệu lên server",
         confirmButtonColor: COLORS.primary,
       });
     } finally {
@@ -374,7 +414,7 @@ export default function AdminCategoriesPage() {
           {/* Statistics Cards */}
           <Grid container spacing={3} sx={{ width: "100%", m: 0, mb: 4 }}>
             {/* Card 1: Total Categories */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -441,13 +481,13 @@ export default function AdminCategoriesPage() {
                     fontSize: "2rem",
                   }}
                 >
-                  {totalCount}
+                  {stats?.totalCount ?? 0}
                 </Typography>
               </Paper>
             </Grid>
 
             {/* Card 2: Active */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -481,7 +521,7 @@ export default function AdminCategoriesPage() {
                     />
                   </Box>
                   <Chip
-                    label="Ổn định"
+                    label="Hoạt động"
                     size="small"
                     sx={{
                       bgcolor: "rgba(16,185,129,0.1)",
@@ -514,13 +554,13 @@ export default function AdminCategoriesPage() {
                     fontSize: "2rem",
                   }}
                 >
-                  {activeCount}
+                  {stats?.activeCount ?? 0}
                 </Typography>
               </Paper>
             </Grid>
 
             {/* Card 3: Inactive */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -554,7 +594,7 @@ export default function AdminCategoriesPage() {
                     />
                   </Box>
                   <Chip
-                    label="Cần duyệt"
+                    label="Tạm ẩn"
                     size="small"
                     sx={{
                       bgcolor: "rgba(245,158,11,0.1)",
@@ -587,83 +627,11 @@ export default function AdminCategoriesPage() {
                     fontSize: "2rem",
                   }}
                 >
-                  {inactiveCount}
+                  {stats?.inactiveCount ?? 0}
                 </Typography>
               </Paper>
             </Grid>
 
-            {/* Card 4: Courses Linked */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: "24px",
-                  border: "1px solid rgba(141,19,19,0.06)",
-                  bgcolor: COLORS.white,
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
-                }}
-              >
-                <Stack
-                  direction="row"
-                  sx={{
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      borderRadius: "16px",
-                      bgcolor: COLORS.purpleBg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <SchoolRounded
-                      sx={{ color: COLORS.purple, fontSize: 24 }}
-                    />
-                  </Box>
-                  <Chip
-                    label="Liên kết"
-                    size="small"
-                    sx={{
-                      bgcolor: "rgba(139,92,246,0.1)",
-                      color: COLORS.purple,
-                      fontWeight: 800,
-                      fontSize: 11,
-                      borderRadius: "10px",
-                    }}
-                  />
-                </Stack>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: COLORS.textSecondary,
-                    fontWeight: 800,
-                    letterSpacing: "0.5px",
-                    textTransform: "uppercase",
-                    display: "block",
-                    mb: 0.5,
-                  }}
-                >
-                  Khóa học liên kết
-                </Typography>
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 900,
-                    color: COLORS.textDark,
-                    lineHeight: 1.1,
-                    fontSize: "2rem",
-                  }}
-                >
-                  —
-                </Typography>
-              </Paper>
-            </Grid>
           </Grid>
 
           {/* Main Table Card */}
@@ -704,17 +672,14 @@ export default function AdminCategoriesPage() {
                   }}
                 >
                   {/* Search */}
-                  <form
-                    onSubmit={handleSearchSubmit}
-                    style={{ display: "flex" }}
-                  >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
                     <TextField
-                      placeholder="Tìm kiếm..."
+                      placeholder="Tìm kiếm danh mục..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       size="small"
                       sx={{
-                        width: 220,
+                        width: 240,
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "14px",
                           bgcolor: "#F8FAFC",
@@ -743,35 +708,75 @@ export default function AdminCategoriesPage() {
                               />
                             </InputAdornment>
                           ),
+                          endAdornment: search ? (
+                            <InputAdornment position="end">
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  setSearch("");
+                                  setDebouncedSearch("");
+                                  setPageIndex(1);
+                                }}
+                                sx={{ p: 0.5 }}
+                              >
+                                <ClearRounded sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </InputAdornment>
+                          ) : null,
                         },
                       }}
                     />
-                  </form>
+                  </Box>
 
-                  {/* Filter button */}
-                  <Tooltip title="Bộ lọc">
-                    <IconButton
+                  {/* Status Filter */}
+                  <FormControl size="small" sx={{ width: 160 }}>
+                    <Select
+                      value={filterStatus}
+                      onChange={(e) => {
+                        setFilterStatus(e.target.value);
+                        setPageIndex(1);
+                      }}
+                      displayEmpty
                       sx={{
-                        border: "1px solid #E2E8F0",
                         borderRadius: "14px",
-                        width: 42,
+                        bgcolor: "#F8FAFC",
                         height: 42,
-                        "&:hover": { bgcolor: COLORS.primaryBgLight },
+                        fontSize: 13.5,
+                        fontWeight: 600,
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#E2E8F0",
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: COLORS.primary,
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: COLORS.primary,
+                          borderWidth: 1.5,
+                        },
                       }}
                     >
-                      <FilterListRounded
-                        sx={{ color: COLORS.textSecondary, fontSize: 20 }}
-                      />
-                    </IconButton>
-                  </Tooltip>
+                      <MenuItem value="ALL" sx={{ fontWeight: 600, fontSize: 13.5 }}>
+                        Trạng thái: Tất cả
+                      </MenuItem>
+                      <MenuItem value="HoatDong" sx={{ fontWeight: 600, fontSize: 13.5 }}>
+                        Đang hoạt động
+                      </MenuItem>
+                      <MenuItem value="TamAn" sx={{ fontWeight: 600, fontSize: 13.5 }}>
+                        Tạm ẩn
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
 
-                  {/* Refresh button */}
-                  <Tooltip title="Làm mới dữ liệu">
+                  {/* Reset/Refresh button */}
+                  <Tooltip title="Đặt lại bộ lọc">
                     <IconButton
                       onClick={() => {
                         setSearch("");
+                        setDebouncedSearch("");
+                        setFilterStatus("ALL");
                         setPageIndex(1);
                         fetchCategories();
+                        fetchStats();
                       }}
                       sx={{
                         border: "1px solid #E2E8F0",
@@ -918,7 +923,7 @@ export default function AdminCategoriesPage() {
                     categories.map((cat, idx) => {
                       const pc = getPrefixColor(idx);
                       const isActive =
-                        cat.trangThai === "Active" || !cat.trangThai;
+                        normalizeCategoryStatus(cat.trangThai) === "HoatDong";
                       return (
                         <TableRow
                           key={cat.id}
@@ -955,36 +960,51 @@ export default function AdminCategoriesPage() {
                             </Typography>
                           </TableCell>
 
-                          {/* Category Name with prefix chip */}
+                          {/* Category Name with prefix chip or optional image */}
                           <TableCell sx={{ py: 2.5 }}>
                             <Stack
                               direction="row"
                               spacing={2}
-                              sx={{ alignItems:"center" }}
+                              sx={{ alignItems: "center" }}
                             >
-                              <Box
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: "12px",
-                                  bgcolor: pc.bg,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <Typography
+                              {(cat as any).hinhAnh ? (
+                                <Box
+                                  component="img"
+                                  src={(cat as any).hinhAnh}
                                   sx={{
-                                    fontWeight: 900,
-                                    fontSize: 13,
-                                    color: pc.color,
-                                    letterSpacing: "0.5px",
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: "12px",
+                                    objectFit: "cover",
+                                    flexShrink: 0,
+                                    border: "1px solid rgba(0,0,0,0.05)",
+                                  }}
+                                />
+                              ) : (
+                                <Box
+                                  sx={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: "12px",
+                                    bgcolor: pc.bg,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
                                   }}
                                 >
-                                  {getShortCode(cat.maDanhMuc)}
-                                </Typography>
-                              </Box>
+                                  <Typography
+                                    sx={{
+                                      fontWeight: 900,
+                                      fontSize: 13,
+                                      color: pc.color,
+                                      letterSpacing: "0.5px",
+                                    }}
+                                  >
+                                    {getShortCode(cat.maDanhMuc)}
+                                  </Typography>
+                                </Box>
+                              )}
                               <Box>
                                 <Typography
                                   sx={{
@@ -1008,35 +1028,37 @@ export default function AdminCategoriesPage() {
                             </Stack>
                           </TableCell>
 
-                          {/* Status */}
+                          {/* Read-only status; update it from the edit dialog */}
                           <TableCell sx={{ py: 2.5 }}>
-                            <Chip
-                              label={isActive ? "Hoạt động" : "Tạm ẩn"}
-                              size="small"
-                              icon={
-                                <Box
-                                  sx={{
-                                    width: 7,
-                                    height: 7,
-                                    borderRadius: "50%",
-                                    bgcolor: isActive
-                                      ? COLORS.green
-                                      : COLORS.orange,
-                                    ml: 1,
-                                  }}
-                                />
-                              }
-                              sx={{
-                                bgcolor: isActive
-                                  ? COLORS.greenBg
-                                  : COLORS.orangeBg,
-                                color: isActive ? "#065F46" : "#92400E",
-                                fontWeight: 700,
-                                fontSize: 12.5,
-                                borderRadius: "10px",
-                                pl: 0.5,
-                              }}
-                            />
+                            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                              <Chip
+                                label={isActive ? "Hoạt động" : "Tạm ẩn"}
+                                size="small"
+                                icon={
+                                  <Box
+                                    sx={{
+                                      width: 7,
+                                      height: 7,
+                                      borderRadius: "50%",
+                                      bgcolor: isActive
+                                        ? COLORS.green
+                                        : COLORS.orange,
+                                      ml: 1,
+                                    }}
+                                  />
+                                }
+                                sx={{
+                                  bgcolor: isActive
+                                    ? COLORS.greenBg
+                                    : COLORS.orangeBg,
+                                  color: isActive ? "#065F46" : "#92400E",
+                                  fontWeight: 700,
+                                  fontSize: 12.5,
+                                  borderRadius: "10px",
+                                  pl: 0.5,
+                                }}
+                              />
+                            </Stack>
                           </TableCell>
 
                           {/* Created Date */}
@@ -1265,6 +1287,47 @@ export default function AdminCategoriesPage() {
                   "& .MuiInputBase-input": { fontSize: 14, fontWeight: 500 },
                 }}
               />
+
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  color: COLORS.textDark,
+                  fontSize: 13.5,
+                  mt: 2.5,
+                  mb: 1,
+                }}
+              >
+                Trạng thái hoạt động
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={categoryStatus}
+                  onChange={(e) => setCategoryStatus(e.target.value)}
+                  sx={{
+                    borderRadius: "14px",
+                    height: 48,
+                    fontSize: 14,
+                    fontWeight: 500,
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#E2E8F0",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: COLORS.primary,
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: COLORS.primary,
+                      borderWidth: 2,
+                    },
+                  }}
+                >
+                  <MenuItem value="HoatDong" sx={{ fontSize: 14, fontWeight: 500 }}>
+                    Đang hoạt động
+                  </MenuItem>
+                  <MenuItem value="TamAn" sx={{ fontSize: 14, fontWeight: 500 }}>
+                    Tạm ẩn
+                  </MenuItem>
+                </Select>
+              </FormControl>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
               <Button
@@ -1456,21 +1519,21 @@ export default function AdminCategoriesPage() {
                         </Typography>
                         <Chip
                           label={
-                            detailItem.trangThai === "Active" ||
-                            !detailItem.trangThai
+                            normalizeCategoryStatus(detailItem.trangThai) ===
+                            "HoatDong"
                               ? "Hoạt động"
                               : "Tạm ẩn"
                           }
                           size="small"
                           sx={{
                             bgcolor:
-                              detailItem.trangThai === "Active" ||
-                              !detailItem.trangThai
+                              normalizeCategoryStatus(detailItem.trangThai) ===
+                              "HoatDong"
                                 ? COLORS.greenBg
                                 : COLORS.orangeBg,
                             color:
-                              detailItem.trangThai === "Active" ||
-                              !detailItem.trangThai
+                              normalizeCategoryStatus(detailItem.trangThai) ===
+                              "HoatDong"
                                 ? "#065F46"
                                 : "#92400E",
                             fontWeight: 700,

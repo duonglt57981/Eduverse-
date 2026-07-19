@@ -5,6 +5,7 @@ using Eduverse.Service.DanhMucService.Dto;
 using Eduverse.Service.DanhMucService.Request;
 using Microsoft.EntityFrameworkCore;
 using Eduverse.Service.Core.Mapper;
+using Eduverse.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,18 +19,35 @@ namespace Eduverse.Service.DanhMucService
     {
         private readonly IDanhMucRepository _danhMucRepository;
         private readonly IMapper _mapper;
+        private readonly EduverseContext _context;
         private static readonly Regex MaDanhMucRegex = new Regex(@"^[A-Z]{2,10}[0-9]{3}$", RegexOptions.Compiled);
+        private const string HoatDong = "HoatDong";
+        private const string TamAn = "TamAn";
 
-        public DanhMucService(IDanhMucRepository danhMucRepository, IMapper mapper) : base(danhMucRepository)
+        public DanhMucService(IDanhMucRepository danhMucRepository, IMapper mapper, EduverseContext context) : base(danhMucRepository)
         {
             _danhMucRepository = danhMucRepository;
             _mapper = mapper;
+            _context = context;
         }
 
         private void ValidateMaDanhMuc(string maDanhMuc)
         {
             if (!MaDanhMucRegex.IsMatch(maDanhMuc))
                 throw new Exception("Mã danh mục không hợp lệ. Định dạng yêu cầu: chữ hoa + 3 chữ số (VD: IT001, AI001, DM001)");
+        }
+
+        private static string NormalizeTrangThai(string? trangThai)
+        {
+            if (string.IsNullOrWhiteSpace(trangThai))
+                return HoatDong;
+
+            return trangThai.Trim() switch
+            {
+                HoatDong or "HDH" or "Active" or "Hoạt động" => HoatDong,
+                TamAn or "KHD" or "Inactive" or "Tạm ẩn" => TamAn,
+                _ => throw new Exception("Trạng thái không hợp lệ. Chỉ chấp nhận HoatDong hoặc TamAn")
+            };
         }
 
         private async Task<string> GenerateNextDMCode()
@@ -87,7 +105,7 @@ namespace Eduverse.Service.DanhMucService
                 MaDanhMuc = maDanhMuc,
                 TenDanhMuc = request.TenDanhMuc,
                 NgayTao = DateTime.UtcNow,
-                TrangThai = "HDH",
+                TrangThai = NormalizeTrangThai(request.TrangThai),
                 CreatedDate = DateTime.UtcNow,
                 IsDeleted = false
             };
@@ -95,7 +113,9 @@ namespace Eduverse.Service.DanhMucService
             await CreateAsync(danhMuc);
             await SaveAsync();
 
-            return _mapper.Map<DanhMuc, DanhMucDto>(danhMuc);
+            var result = _mapper.Map<DanhMuc, DanhMucDto>(danhMuc);
+            result.TrangThai = NormalizeTrangThai(result.TrangThai);
+            return result;
         }
 
         public async Task<bool> Delete(Guid id)
@@ -105,7 +125,7 @@ namespace Eduverse.Service.DanhMucService
                 throw new Exception("Không tìm thấy danh mục");
 
             entity.IsDeleted = true;
-            entity.TrangThai = "KHD";
+            entity.TrangThai = TamAn;
             entity.DeletedDate = DateTime.UtcNow;
 
             await UpdateAsync(entity);
@@ -122,7 +142,9 @@ namespace Eduverse.Service.DanhMucService
 
             if (entity == null) return null;
 
-            return _mapper.Map<DanhMuc, DanhMucDto>(entity);
+            var result = _mapper.Map<DanhMuc, DanhMucDto>(entity);
+            result.TrangThai = NormalizeTrangThai(result.TrangThai);
+            return result;
         }
 
         public async Task<PagedList<DanhMucDto>> GetList(DanhMucSearch search)
@@ -139,6 +161,23 @@ namespace Eduverse.Service.DanhMucService
                 query = query.Where(x => x.TenDanhMuc != null && x.TenDanhMuc.Contains(keyword));
             }
 
+            if (!string.IsNullOrWhiteSpace(search.TrangThai) && search.TrangThai != "ALL")
+            {
+                var status = NormalizeTrangThai(search.TrangThai);
+                query = status == HoatDong
+                    ? query.Where(x =>
+                        x.TrangThai == HoatDong ||
+                        x.TrangThai == "HDH" ||
+                        x.TrangThai == "Active" ||
+                        x.TrangThai == "Hoạt động" ||
+                        string.IsNullOrEmpty(x.TrangThai))
+                    : query.Where(x =>
+                        x.TrangThai == TamAn ||
+                        x.TrangThai == "KHD" ||
+                        x.TrangThai == "Inactive" ||
+                        x.TrangThai == "Tạm ẩn");
+            }
+
             query = query.OrderByDescending(x => x.NgayTao);
 
             var dtoQuery = query.Select(x => new DanhMucDto
@@ -147,7 +186,13 @@ namespace Eduverse.Service.DanhMucService
                 MaDanhMuc = x.MaDanhMuc,
                 TenDanhMuc = x.TenDanhMuc,
                 NgayTao = x.NgayTao,
-                TrangThai = x.TrangThai
+                TrangThai =
+                    x.TrangThai == TamAn ||
+                    x.TrangThai == "KHD" ||
+                    x.TrangThai == "Inactive" ||
+                    x.TrangThai == "Tạm ẩn"
+                        ? TamAn
+                        : HoatDong
             });
 
             return await PagedList<DanhMucDto>.CreateAsync(dtoQuery, search);
@@ -189,12 +234,63 @@ namespace Eduverse.Service.DanhMucService
                 entity.MaDanhMuc = newCode;
             }
 
+            if (!string.IsNullOrWhiteSpace(request.TrangThai))
+            {
+                entity.TrangThai = NormalizeTrangThai(request.TrangThai);
+            }
+
             entity.UpdatedDate = DateTime.UtcNow;
 
             await UpdateAsync(entity);
             await SaveAsync();
 
-            return _mapper.Map<DanhMuc, DanhMucDto>(entity);
+            var result = _mapper.Map<DanhMuc, DanhMucDto>(entity);
+            result.TrangThai = NormalizeTrangThai(result.TrangThai);
+            return result;
+        }
+
+        public async Task<DanhMucStatsDto> GetStats()
+        {
+            var query = GetQueryable().Where(x => !x.IsDeleted);
+
+            int total = await query.CountAsync();
+            int active = await query.CountAsync(x =>
+                x.TrangThai == HoatDong ||
+                x.TrangThai == "HDH" ||
+                x.TrangThai == "Active" ||
+                x.TrangThai == "Hoạt động" ||
+                string.IsNullOrEmpty(x.TrangThai));
+            // Mọi danh mục không hoạt động đều được tính là tạm ẩn, bao gồm
+            // cả các giá trị trạng thái cũ hoặc chưa được chuẩn hóa trong DB.
+            int inactive = total - active;
+
+            int linkedCourses = await _context.danhMuc_KhoaHocs
+                .Where(dmkh => !dmkh.IsDeleted)
+                .Select(dmkh => dmkh.IdKhoaHoc)
+                .Distinct()
+                .CountAsync();
+
+            return new DanhMucStatsDto
+            {
+                TotalCount = total,
+                ActiveCount = active,
+                InactiveCount = inactive,
+                LinkedCoursesCount = linkedCourses
+            };
+        }
+
+        public async Task<bool> UpdateStatus(Guid id, string status)
+        {
+            var entity = await GetByIdAsync(id);
+            if (entity == null || entity.IsDeleted)
+                throw new Exception("Không tìm thấy danh mục");
+
+            entity.TrangThai = NormalizeTrangThai(status);
+            entity.UpdatedDate = DateTime.UtcNow;
+
+            await UpdateAsync(entity);
+            await SaveAsync();
+            return true;
         }
     }
 }
