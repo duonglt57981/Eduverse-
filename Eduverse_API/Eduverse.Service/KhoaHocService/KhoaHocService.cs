@@ -61,7 +61,7 @@ namespace Eduverse.Service.KhoaHocService
         private readonly EduverseContext _eduverseContext;
         private readonly IElasticsearchService _elasticsearchService;
         private readonly IDapAnService _dapAnService;
-
+        private readonly IMemoryCache _cache;
         public KhoaHocService(
             IMemoryCache memoryCache,
             IKhoaHocRepository khoaHocRepository,
@@ -85,7 +85,8 @@ namespace Eduverse.Service.KhoaHocService
             ITaiLieuService taiLieuService,
             EduverseContext eduverseContext,
             IElasticsearchService elasticsearchService,
-            IDapAnService dapAnService
+            IDapAnService dapAnService,
+            IMemoryCache cache
 
         ) : base(khoaHocRepository)
         {
@@ -110,6 +111,7 @@ namespace Eduverse.Service.KhoaHocService
             _eduverseContext = eduverseContext;
             _elasticsearchService = elasticsearchService;
             _dapAnService = dapAnService;
+            _cache = cache;
         }
         
 
@@ -2123,41 +2125,43 @@ namespace Eduverse.Service.KhoaHocService
         #endregion
 
         #region GetLearning (KHÔNG SWAP)
-        public async Task<KhoaHocDto> GetLearning(Guid idDangKy)
-        {
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiDangKi);
+            public async Task<KhoaHocDto> GetLearning(Guid idDangKy)
+            {
+                Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiDangKi);
 
-            if (idDangKy == Guid.Empty)
-                throw new ArgumentException("Id đăng ký không hợp lệ");
+                if (idDangKy == Guid.Empty)
+                    throw new ArgumentException("Id đăng ký không hợp lệ");
 
-            var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.Id == idDangKy && !x.IsDeleted && x.IdNguoiDangKi == nguoiDangKi)
-                .Select(x => new { x.Id, x.IdKhoaHoc, x.IdNguoiDangKi, x.CreatedDate })
-                .FirstOrDefaultAsync();
+                var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
+                    .AsNoTracking()
+                    .Where(x => x.Id == idDangKy && !x.IsDeleted && x.IdNguoiDangKi == nguoiDangKi)
+                    .Select(x => new { x.Id, x.IdKhoaHoc, x.IdNguoiDangKi, x.CreatedDate })
+                    .FirstOrDefaultAsync();
 
-            if (dangKy == null)
-                throw new Exception("Bạn chưa đăng ký khóa học này");
+                if (dangKy == null)
+                    throw new Exception("Bạn chưa đăng ký khóa học này");   
 
-            var idKhoaHoc = dangKy.IdKhoaHoc;
+                var idKhoaHoc = dangKy.IdKhoaHoc;
+
+                _cache.Remove(CacheKeys.KhoaHoc(idKhoaHoc));
+                _cache.Remove(CacheKeys.PhanHocs(idKhoaHoc));
 
             // Cache: số học viên
             var soHocVien = await GetOrCreateCacheAsync(
-                CacheKeys.SoHocVien(idKhoaHoc),
-                () => _dangKyKhoaHocRepository.GetQueryable()
-                    .AsNoTracking()
-                    .CountAsync(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted),
-                TimeSpan.FromMinutes(10));
+                    CacheKeys.SoHocVien(idKhoaHoc),
+                    () => _dangKyKhoaHocRepository.GetQueryable()
+                        .AsNoTracking()
+                        .CountAsync(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted),
+                    TimeSpan.FromMinutes(10));
 
-            // Cache: thông tin khóa học
-            var khoaHoc = await GetOrCreateCacheAsync(
-    CacheKeys.KhoaHoc(idKhoaHoc),
-    async () =>
-    {
+                // Cache: thông tin khóa học
+                var khoaHoc = await GetOrCreateCacheAsync(
+        CacheKeys.KhoaHoc(idKhoaHoc),
+        async () =>
+        {
         var result = await GetAll()
             .AsNoTracking()
             .Where(x => x.Id == idKhoaHoc
-                    && x.IsDeleted == false  // ← đơn giản hóa
                     && (x.TrangThaiPheDuyet == "DaDuyet")
                     && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
                     && x.IsBanHienTai == true)
@@ -2172,9 +2176,21 @@ namespace Eduverse.Service.KhoaHocService
                             DanhSachPhanHoc = new List<PhanHocDto>()
                         })
                         .FirstOrDefaultAsync();
-                    return result;
+            // THÊM LOG NÀY
+            Console.WriteLine($"[DEBUG] Query idKhoaHoc: {idKhoaHoc}");
+            Console.WriteLine($"[DEBUG] Result: {(result == null ? "NULL" : result.TieuDe)}");
+
+            // Thử query không có điều kiện để xem data thật
+            var check = await GetAll()
+                .AsNoTracking()
+                .Where(x => x.Id == idKhoaHoc)
+                .Select(x => new { x.Id, x.TieuDe, x.TrangThai, x.TrangThaiPheDuyet, x.IsBanHienTai, x.IsDeleted })
+                .FirstOrDefaultAsync();
+            Console.WriteLine($"[DEBUG] Raw data: {System.Text.Json.JsonSerializer.Serialize(check)}");
+            return result;
                 },
                 TimeSpan.FromMinutes(30));
+
 
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học");

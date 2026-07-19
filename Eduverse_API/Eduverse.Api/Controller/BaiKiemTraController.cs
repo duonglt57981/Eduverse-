@@ -214,6 +214,7 @@ namespace Eduverse.Api.Controller
         /// Kiểm tra có được làm lại hay không.
         /// </summary>
         [HttpGet("{idBaiKiemTra}/can-retake/{idNguoiDung}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<bool>>CheckCanRetake(Guid idBaiKiemTra)
         {
             try

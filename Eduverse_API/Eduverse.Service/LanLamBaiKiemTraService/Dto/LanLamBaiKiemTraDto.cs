@@ -8,6 +8,7 @@ namespace Eduverse.Service.LanLamBaiKiemTraService.Dto
 {
     public class LanLamBaiKiemTraDto
     {
+        public Guid Id { get; set; }
         public DateTime? ThoiGianBatDau { get; set; }
         public DateTime? ThoiGianNop { get; set; }
 
