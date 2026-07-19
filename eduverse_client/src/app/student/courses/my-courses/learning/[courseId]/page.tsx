@@ -45,12 +45,9 @@ import { useProgress } from "./hooks/useProgress";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
-import BaiKiemTraService from "@/src/services/BaiKiemTraService";
 
 // Import DOMPurify để làm sạch HTML
 import DOMPurify from "dompurify";
-
-const baiKiemTraSvc = new BaiKiemTraService();
 
 // Constants
 const PRIMARY_RED = "#8B1313";
@@ -99,9 +96,6 @@ export default function KhoaHocLearningPage() {
   const [showMini, setShowMini] = useState(false);
 
   // ── Quiz state ──
-  const [quizTheoPhan, setQuizTheoPhan] = useState<
-    Map<string, BaiKiemTraDto[]>
-  >(new Map());
   const [quizDangChon, setQuizDangChon] = useState<BaiKiemTraDto | null>(null);
 
   const mainScrollRef = useRef<HTMLDivElement>(null);
@@ -120,6 +114,17 @@ export default function KhoaHocLearningPage() {
     [tongBai, soBaiHoanThanh],
   );
 
+  // ── Quiz theo phần: lấy thẳng từ dữ liệu khóa học, không cần gọi API riêng ──
+  const quizTheoPhan = useMemo(() => {
+    const map = new Map<string, BaiKiemTraDto[]>();
+    khoaHoc?.danhSachPhanHoc?.forEach((phan) => {
+      if (phan.id && (phan.danhSachBaiKiemTra?.length ?? 0) > 0) {
+        map.set(phan.id, phan.danhSachBaiKiemTra!);
+      }
+    });
+    return map;
+  }, [khoaHoc]);
+
   // ── Init progress from data ──
   useEffect(() => {
     if (danhSachTatCa.length > 0) {
@@ -130,28 +135,6 @@ export default function KhoaHocLearningPage() {
       initProgress(danhSachTatCa);
     }
   }, [danhSachTatCa, initProgress]);
-
-  // ── Load quiz theo phần học ──
-  useEffect(() => {
-    const idDangKy = khoaHoc?.idDangKiKhoaHoc;
-    if (!idDangKy) return;
-
-    baiKiemTraSvc
-      .GetQuizToLearning(idDangKy)
-      .then((res) => {
-        const danhSachTheoPhan = res.data?.danhSachTheoPhan ?? [];
-        const map = new Map<string, BaiKiemTraDto[]>();
-        danhSachTheoPhan.forEach((phan) => {
-          if (phan.idPhan) {
-            map.set(phan.idPhan, phan.danhSachBaiKiemTra ?? []);
-          }
-        });
-        setQuizTheoPhan(map);
-      })
-      .catch((err) => {
-        console.error("❌ [KhoaHocLearningPage] Lỗi tải quiz:", err);
-      });
-  }, [khoaHoc?.idDangKiKhoaHoc]);
 
   // ── Auto select first incomplete lesson ──
   useEffect(() => {
@@ -313,7 +296,6 @@ export default function KhoaHocLearningPage() {
       );
     }
 
-    // Có video hợp lệ
     return (
       <VideoPlayer
         key={baiGiang.id}
@@ -328,12 +310,10 @@ export default function KhoaHocLearningPage() {
 
   // ── Loading & Error ──
   if (loading) {
-    console.log("⏳ [KhoaHocLearningPage] Loading...");
     return <CourseSkeleton />;
   }
 
   if (error) {
-    console.log("❌ [KhoaHocLearningPage] Error:", error);
     return (
       <Box
         sx={{
@@ -372,7 +352,6 @@ export default function KhoaHocLearningPage() {
   }
 
   if (!khoaHoc) {
-    console.log("⚠️ [KhoaHocLearningPage] Không có dữ liệu khóa học");
     return (
       <Box
         sx={{
@@ -409,9 +388,6 @@ export default function KhoaHocLearningPage() {
       </Box>
     );
   }
-
-  console.log("✅ [KhoaHocLearningPage] Render với khóa học:", khoaHoc.tieuDe);
-  console.log("📚 [KhoaHocLearningPage] Số bài học:", danhSachTatCa.length);
 
   // ── Render ──
   return (
@@ -569,7 +545,7 @@ export default function KhoaHocLearningPage() {
                   diemDat: quizDangChon.diemDat,
                   soLanLamToiDa: quizDangChon.soLanLamToiDa,
                 }}
-                idDangKyKhoaHoc={khoaHoc.idDangKiKhoaHoc ?? ""}
+                idDangKyKhoaHoc={courseId ?? ""}
                 onClose={handleCloseQuiz}
               />
             </Box>
@@ -682,7 +658,6 @@ export default function KhoaHocLearningPage() {
 
                 <StatsBar khoaHoc={khoaHoc} />
 
-                {/* ===================== PHẦN SỬA MÔ TẢ ===================== */}
                 {khoaHoc.moTa && (
                   <Paper
                     elevation={0}
@@ -743,7 +718,6 @@ export default function KhoaHocLearningPage() {
                     />
                   </Paper>
                 )}
-                {/* ======================================================== */}
               </Box>
             </>
           )}

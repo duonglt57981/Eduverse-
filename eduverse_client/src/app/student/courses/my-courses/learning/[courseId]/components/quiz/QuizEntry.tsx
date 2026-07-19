@@ -1,5 +1,6 @@
 import {
   Box, Typography, Button, Stack, Alert, LinearProgress, Chip, Divider,
+  CircularProgress,
 } from "@mui/material";
 import {
   QuizRounded, AccessTimeRounded, EmojiEventsRounded,
@@ -16,13 +17,14 @@ interface QuizEntryProps {
   canRetake: boolean;
   loading: boolean;
   lanLamDoDang?: LichSuLamBaiDto;
+  error?: string;
   onBatDau: () => void;
   onTiepTuc: (id: string) => void;
   onXemLai: (id: string) => void;
 }
 
 export function QuizEntry({
-  info, lichSu, canRetake, loading, lanLamDoDang,
+  info, lichSu, canRetake, loading, lanLamDoDang,error,
   onBatDau, onTiepTuc, onXemLai,
 }: QuizEntryProps) {
   const soLanDaLam = lichSu.length;
@@ -150,13 +152,21 @@ export function QuizEntry({
           <Button fullWidth variant="contained" size="large"
             onClick={onBatDau}
             disabled={loading || !!lanLamDoDang}
-            startIcon={soLanDaLam > 0 ? <ReplayRounded /> : <PlayArrowRounded />}
+            startIcon={loading
+              ? <CircularProgress size={18} sx={{ color: "#fff" }} />
+              : soLanDaLam > 0 ? <ReplayRounded /> : <PlayArrowRounded />}
             sx={{ py: 1.5, borderRadius: "12px", fontWeight: 900, fontSize: 15,
               background: `linear-gradient(135deg, ${RED}, #7C3AED)`,
               boxShadow: `0 8px 20px rgba(141,19,19,0.2)` }}>
             {loading ? "Đang chuẩn bị..." : soLanDaLam > 0 ? "Làm lại" : "Bắt đầu làm bài"}
           </Button>
         )}
+
+        {error && (
+  <Alert severity="error" sx={{ borderRadius: "12px", mt: 1.5, fontSize: 13 }}>
+    {error}
+  </Alert>
+)}
 
         {/* Xem lại bài làm cũ */}
         {lichSu.filter((l) => l.thoiGianNop).length > 0 && (

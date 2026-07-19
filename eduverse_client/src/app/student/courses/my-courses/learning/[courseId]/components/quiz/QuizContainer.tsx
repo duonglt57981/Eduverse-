@@ -14,10 +14,34 @@ import { QuizEntry } from "./QuizEntry";
 import { QuizView } from "./QuizView";
 import { QuizResult } from "./QuizResult";
 import { QuizReview } from "./QuizReview";
-import { useSelector } from "@/src/store/hook";
 
 const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#6B1414";
+
+// Lấy userId từ JWT token trong localStorage
+function getUserIdFromToken(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const token = localStorage.getItem("AccessToken");
+  if (!token) return undefined;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return undefined;
+    const payload = JSON.parse(
+      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    const keys = [
+      "sub",
+      "id",
+      "userId",
+      "nameid",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
+    ];
+    for (const key of keys) {
+      if (payload[key]) return String(payload[key]);
+    }
+  } catch {}
+  return undefined;
+}
 
 interface BaiKiemTraBasic {
   id: string;
@@ -41,9 +65,9 @@ export const QuizContainer = ({
   idDangKyKhoaHoc,
   onClose,
 }: QuizContainerProps) => {
-  // Lấy user từ Redux store
-  const user = useSelector((state) => state.auth.user);
-  const userId = user?.id;
+  const userId = getUserIdFromToken();
+  console.log("[QuizContainer] idDangKyKhoaHoc:", idDangKyKhoaHoc);
+console.log("[QuizContainer] baiKiemTra.id:", baiKiemTra.id);
 
   const {
     phase,
@@ -67,7 +91,7 @@ export const QuizContainer = ({
     nopBai,
     xemLaiBai,
     lamLaiDau,
-  } = useQuiz(baiKiemTra.id, idDangKyKhoaHoc, userId ?? undefined);
+  } = useQuiz(baiKiemTra.id, idDangKyKhoaHoc, userId);
 
   useEffect(() => {
     return () => {
@@ -77,7 +101,6 @@ export const QuizContainer = ({
 
   // ── Phase: entry → màn hình giới thiệu ──
   if (phase === "entry") {
-    // Chờ info load xong
     if (loading && !info) {
       return (
         <Box
@@ -90,11 +113,7 @@ export const QuizContainer = ({
             gap: 2,
           }}
         >
-          <CircularProgress
-            sx={{ color: PRIMARY_RED }}
-            size={40}
-            thickness={3.5}
-          />
+          <CircularProgress sx={{ color: PRIMARY_RED }} size={40} thickness={3.5} />
           <Typography color="text.secondary" variant="body2">
             Đang tải bài kiểm tra…
           </Typography>
@@ -118,9 +137,7 @@ export const QuizContainer = ({
             mx: "auto",
           }}
         >
-          <ErrorOutlineIcon
-            sx={{ fontSize: 52, color: alpha(PRIMARY_RED, 0.5) }}
-          />
+          <ErrorOutlineIcon sx={{ fontSize: 52, color: alpha(PRIMARY_RED, 0.5) }} />
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
             Có lỗi xảy ra
           </Typography>
@@ -151,6 +168,7 @@ export const QuizContainer = ({
         lichSu={lichSu}
         canRetake={canRetake}
         loading={loading}
+        error={error} 
         lanLamDoDang={lanLamDoDang}
         onBatDau={batDauLamBai}
         onTiepTuc={tiepTucLamBai}
@@ -206,10 +224,10 @@ export const QuizContainer = ({
   if (phase === "review" && review) {
     return (
       <QuizReview
-      review={review}
-      tieuDe={baiKiemTra.tieuDe}
-      onQuayLai={lamLaiDau}
-    />
+        review={review}
+        tieuDe={baiKiemTra.tieuDe}
+        onQuayLai={lamLaiDau}
+      />
     );
   }
 
