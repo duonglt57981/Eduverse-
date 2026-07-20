@@ -1,5 +1,6 @@
 import {
   GetToUpdateKhoaHoc,
+  KhoaHocDraftResultType,
   KhoaHocSearch,
   KhoaHocType,
 } from "../types/khoaHoc/Dto/dto";
@@ -219,6 +220,16 @@ export default class KhoaHocService {
     }
   }
 
+  createFullKhoaHocDraft = async (
+    idKhoaHoc: string,
+  ): Promise<ApiResponse<KhoaHocDraftResultType>> => {
+    const response = await apiService.post<ApiResponse<KhoaHocDraftResultType>>(
+      `/KhoaHoc/createfullkhoahocdraft/${idKhoaHoc}`,
+    );
+
+    return response.data;
+  };
+
   async DeleteKhoaHoc(id: string): Promise<ApiResponse<boolean>> {
     try {
       const response = await apiService.delete<ApiResponse<boolean>>(
@@ -231,15 +242,15 @@ export default class KhoaHocService {
     }
   }
   async GetApprovedListForSelect(): Promise<ApiResponse<KhoaHocMiniDto[]>> {
-  try {
-    return await apiService.get<KhoaHocMiniDto[]>(
-      "/KhoaHoc/khoahoc-getlist-daduyet",
-    );
-  } catch (error) {
-    console.error("Error fetching approved courses:", error);
-    throw error;
+    try {
+      return await apiService.get<KhoaHocMiniDto[]>(
+        "/KhoaHoc/khoahoc-getlist-daduyet",
+      );
+    } catch (error) {
+      console.error("Error fetching approved courses:", error);
+      throw error;
+    }
   }
-}
 
   async GetSearchSuggestions(query: string): Promise<ApiResponse<string[]>> {
     try {
@@ -280,4 +291,3 @@ export default class KhoaHocService {
     throw new Error("User not authenticated - No userId found");
   }
 }
-

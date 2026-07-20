@@ -1,3 +1,6 @@
+import { PhanDto } from "../../khoaHoc";
+import { PhanHocType } from "../../PhanHoc/Dto/PhanHocdto";
+
 export interface KhoaHocType {
   id?: Guid;
   tieuDe?: string;
@@ -27,6 +30,7 @@ export interface KhoaHocType {
   phanTramHoanThanh: double;
 
   danhSachPhanHoc?: PhanHocType[];
+  createdBy?: string;
 }
 
 export type KhoaHocSearch = SearchBase & {
@@ -53,4 +57,9 @@ export interface GetToUpdateKhoaHoc {
   trangThai?: string;
   trangThaiPheDuyet?: string;
   danhSachDanhMuc?: string[];
+}
+
+export interface KhoaHocDraftResultType {
+  khoaHoc: KhoaHocType;
+  phan: PhanHocType;
 }

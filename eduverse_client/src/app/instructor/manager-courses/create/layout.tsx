@@ -83,7 +83,7 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
             value={((currentStep + 1) / total) * 100}
             sx={{
               height: 3,
-              "& .MuiLinearProgress-bar": { bgcolor: "#8B1313" },
+              "& .MuiLinearProgress-bar": { bgcolor: "#7A1F2B" },
               bgcolor: "#f2d9db",
             }}
           />

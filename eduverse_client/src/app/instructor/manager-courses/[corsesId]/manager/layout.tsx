@@ -52,7 +52,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   );
 
   const curriculumHoanThanh = phans.some((p) =>
-    (p.DanhSachBaiGiang ?? []).some((bg) => bg.urlBaiGiang),
+    (p.DanhSachBaiGiang ?? []).some((bg) => bg.uRLBaiGiang),
   );
 
   const nhomSidebar = [

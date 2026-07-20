@@ -73,6 +73,9 @@ export default function CourseEditLayout({
   );
   const trangThaiHienThi = thongTinTrangThai(trangThai);
 
+  // Kiểm tra nếu đang ở trạng thái không cho phép chỉnh sửa
+  const isReadOnly = trangThai === "ChoDuyet" || trangThai === "DangDuyet";
+
   if (loading) {
     return (
       <Box
@@ -253,7 +256,10 @@ export default function CourseEditLayout({
                     return (
                       <Box
                         key={m.key}
-                        onClick={() => onNavigateSidebar(m.key)}
+                        onClick={() => {
+                          if (isReadOnly) return;
+                          onNavigateSidebar(m.key);
+                        }}
                         sx={{
                           display: "flex",
                           alignItems: "center",
@@ -263,10 +269,13 @@ export default function CourseEditLayout({
                           borderLeft: dangChon
                             ? `3px solid ${MAU.chinh}`
                             : "3px solid transparent",
-                          cursor: "pointer",
+                          cursor: isReadOnly ? "not-allowed" : "pointer",
                           borderRadius: "4px",
                           bgcolor: dangChon ? MAU.chinhNhat : "transparent",
-                          "&:hover": { bgcolor: MAU.chinhNhat },
+                          opacity: isReadOnly ? 0.6 : 1,
+                          "&:hover": {
+                            bgcolor: isReadOnly ? "transparent" : MAU.chinhNhat,
+                          },
                         }}
                       >
                         {m.hoanThanh ? (
@@ -296,33 +305,33 @@ export default function CourseEditLayout({
         </Box>
 
         <Box sx={{ flex: 1, px: { xs: 2, md: 4 }, py: 4, minWidth: 0 }}>
-          {trangThai === "DangDuyet" && (
+          {isReadOnly && (
             <Box
               sx={{
                 mb: 3,
                 px: 2,
                 py: 1.25,
                 borderRadius: "10px",
-                bgcolor: "#EFF6FF",
-                border: "1px solid #CFE3FE",
+                bgcolor: "#FFF8E1",
+                border: "1px solid #FFE082",
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
               }}
             >
               <Typography
-                sx={{ fontSize: 13.5, color: "#1D4ED8", fontWeight: 600 }}
+                sx={{ fontSize: 13.5, color: "#F57C00", fontWeight: 600 }}
               >
-                Khóa học đang được duyệt — mọi nội dung tạm khóa, không thể
-                chỉnh sửa cho đến khi có kết quả.
+                ⏳ Khóa học đang trong quá trình duyệt — mọi nội dung bị khóa,
+                không thể chỉnh sửa cho đến khi có kết quả phê duyệt.
               </Typography>
             </Box>
           )}
 
           <Box
             sx={{
-              pointerEvents: trangThai === "DangDuyet" ? "none" : "auto",
-              opacity: trangThai === "DangDuyet" ? 0.6 : 1,
+              pointerEvents: isReadOnly ? "none" : "auto",
+              opacity: isReadOnly ? 0.6 : 1,
               transition: "opacity .15s ease",
             }}
           >

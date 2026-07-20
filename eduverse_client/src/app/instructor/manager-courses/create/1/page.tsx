@@ -57,7 +57,7 @@ export default function Step1Page() {
               width: "100%",
               maxWidth: 400,
               borderRadius: 3,
-              borderColor: selected ? "#8B1313" : "#e0e0e0",
+              borderColor: selected ? "#7A1F2B" : "#e0e0e0",
               borderWidth: selected ? 2 : 1,
               bgcolor: selected ? "#fdf2f3" : "#ffffff",
               boxShadow: selected
@@ -68,7 +68,7 @@ export default function Step1Page() {
               "&:hover": {
                 boxShadow: "0 8px 32px rgba(122, 31, 43, 0.12)",
                 transform: "translateY(-4px)",
-                borderColor: selected ? "#8B1313" : "#b0b0b0",
+                borderColor: selected ? "#7A1F2B" : "#b0b0b0",
               },
             }}
             onClick={handleSelect}
@@ -83,7 +83,7 @@ export default function Step1Page() {
             >
               <Box
                 sx={{
-                  color: selected ? "#8B1313" : "#666",
+                  color: selected ? "#7A1F2B" : "#666",
                   fontSize: 48,
                   mb: 2,
                 }}
@@ -95,7 +95,7 @@ export default function Step1Page() {
                   fontWeight: 700,
                   fontSize: 20,
                   mb: 1.5,
-                  color: selected ? "#8B1313" : "#1A1A1A",
+                  color: selected ? "#7A1F2B" : "#1A1A1A",
                 }}
               >
                 Khóa học

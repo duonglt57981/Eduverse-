@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const COLORS = {
-  primary: "#8B1313",
+  primary: "#7A1F2B",
   primaryDark: "#5A171F",
   primarySoft: "#F4E3DE",
   ink: "#241A1C",
