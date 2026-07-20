@@ -25,6 +25,7 @@ namespace Eduverse.Api.Controller
         private readonly IService<TienDoHocTap> _tienDoHocTapService;
         private readonly IService<ChungChi> _chungChiService;
         private readonly IService<BaiKiemTra> _baiKiemTraService;
+        private readonly IService<DanhMuc_KhoaHoc> _danhMucKhoaHocService;
         private readonly UserManager<AppUser> _userManager;
 
         public DashboardController(
@@ -34,6 +35,7 @@ namespace Eduverse.Api.Controller
             IService<TienDoHocTap> tienDoHocTapService,
             IService<ChungChi> chungChiService,
             IService<BaiKiemTra> baiKiemTraService,
+            IService<DanhMuc_KhoaHoc> danhMucKhoaHocService,
             UserManager<AppUser> userManager)
         {
             _khoaHocService = khoaHocService;
@@ -42,6 +44,7 @@ namespace Eduverse.Api.Controller
             _tienDoHocTapService = tienDoHocTapService;
             _chungChiService = chungChiService;
             _baiKiemTraService = baiKiemTraService;
+            _danhMucKhoaHocService = danhMucKhoaHocService;
             _userManager = userManager;
         }
 
@@ -269,7 +272,14 @@ namespace Eduverse.Api.Controller
             try
             {
                 categories = await _danhMucService.GetQueryable()
-                    .Take(4)
+                    .Where(cat =>
+                        !cat.IsDeleted &&
+                        (cat.TrangThai == "HoatDong" ||
+                         cat.TrangThai == "HDH" ||
+                         cat.TrangThai == "Active" ||
+                         cat.TrangThai == "Hoạt động" ||
+                         string.IsNullOrEmpty(cat.TrangThai)))
+                    .OrderBy(cat => cat.TenDanhMuc)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -289,12 +299,34 @@ namespace Eduverse.Api.Controller
             }).ToList();
 
             // 4. Interested Skills Badges
-            var interestedSkills = categories.Select(cat => cat.TenDanhMuc).Where(n => !string.IsNullOrWhiteSpace(n)).Take(6).ToList();
+            var interestedSkills = categories
+                .Select(cat => cat.TenDanhMuc)
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .ToList();
 
             var unregisteredCourses = courses
                 .Where(c => !registeredCourseIds.Contains(c.Id))
                 .ToList();
 
+            var activeCategoryIds = categories.Select(cat => cat.Id).ToList();
+            var courseCategoryLinks = await _danhMucKhoaHocService.GetQueryable()
+                .Where(link =>
+                    !link.IsDeleted &&
+                    activeCategoryIds.Contains(link.IdDanhMuc))
+                .ToListAsync();
+
+            var categoryNameById = categories.ToDictionary(
+                cat => cat.Id,
+                cat => cat.TenDanhMuc ?? string.Empty);
+            var categoryNamesByCourseId = courseCategoryLinks
+                .GroupBy(link => link.IdKhoaHoc)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group
+                        .Select(link => categoryNameById[link.IdDanhMuc])
+                        .Where(name => !string.IsNullOrWhiteSpace(name))
+                        .Distinct()
+                        .ToList());
 
             // 5. Skills Courses
             var skillCourses = unregisteredCourses.Select((c, i) => new
@@ -307,6 +339,7 @@ namespace Eduverse.Api.Controller
 
                 gia = c.Gia,
                 giaGoc = c.GiaGoc,
+                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
 
                 thumbnailGradient = GetGradient(i + 2)
             }).ToList();

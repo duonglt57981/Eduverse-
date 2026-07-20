@@ -13,6 +13,8 @@ namespace Eduverse.Service.DanhMucService.Request
 
         [Required(ErrorMessage = "Tên danh mục không được để trống")]
         public string? TenDanhMuc { get; set; }
+
+        public string? TrangThai { get; set; }
     }
 
 }

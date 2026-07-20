@@ -1,4 +1,4 @@
-﻿using Eduverse.Service.Common;
+using Eduverse.Service.Common;
 using Eduverse.Service.DanhMucService.Dto;
 using Eduverse.Service.DanhMucService.Request;
 using System;
@@ -16,5 +16,7 @@ namespace Eduverse.Service.DanhMucService
         Task<DanhMucDto> Create(CreateDanhMucRequest request);
         Task<DanhMucDto> Update(UpdateDanhMucRequest request);
         Task<bool> Delete(Guid id);
+        Task<DanhMucStatsDto> GetStats();
+        Task<bool> UpdateStatus(Guid id, string status);
     }
 }

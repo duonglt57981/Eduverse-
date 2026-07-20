@@ -4,6 +4,7 @@ import {
   CreateDanhMucRequest,
   UpdateDanhMucRequest,
   DanhMucSearch,
+  DanhMucStatsDto,
 } from "@/src/types/danhmuc";
 import { ApiResponse, PagedList } from "@/src/types/types";
 
@@ -13,6 +14,7 @@ export const danhMucService = {
   ): Promise<ApiResponse<PagedList<DanhMucDto>>> {
     const params = new URLSearchParams();
     if (search?.keyword) params.append("keyword", search.keyword);
+    if (search?.trangThai) params.append("trangThai", search.trangThai);
     if (search?.pageIndex) params.append("pageIndex", String(search.pageIndex));
     if (search?.pageSize) params.append("pageSize", String(search.pageSize));
 
@@ -39,5 +41,13 @@ export const danhMucService = {
 
   async getAllForSidebar(): Promise<ApiResponse<DanhMucDto[]>> {
     return apiService.get<DanhMucDto[]>("/danhmuc");
+  },
+
+  async getStats(): Promise<ApiResponse<DanhMucStatsDto>> {
+    return apiService.get<DanhMucStatsDto>("/danhmuc/stats");
+  },
+
+  async updateStatus(id: string, status: string): Promise<ApiResponse<boolean>> {
+    return apiService.put<boolean>(`/danhmuc/${id}/status`, { trangThai: status });
   },
 };
