@@ -446,11 +446,11 @@ namespace Eduverse.Service.BaiKiemTraService
             if (request.TenBaiKiemTra.Length < 3)
                 throw new Exception("Tên bài kiểm tra phải có ít nhất 3 ký tự.");
 
-            if (request.TenBaiKiemTra.Length > 255)
-                throw new Exception("Tên bài kiểm tra không được vượt quá 255 ký tự.");
+            if (request.TenBaiKiemTra.Length > 99)
+                throw new Exception("Tên bài kiểm tra không được vượt quá 99 ký tự.");
 
-            if (request.MoTa != null && request.MoTa.Length > 1000)
-                throw new Exception("Mô tả không được vượt quá 1000 ký tự.");
+            if (request.MoTa != null && request.MoTa.Length > 999)
+                throw new Exception("Mô tả không được vượt quá 999 ký tự.");
 
             //if (request.DiemDat < 50 || request.DiemDat > 100)
             //    throw new Exception("Điểm đạt phải từ 50 đến 100.");
@@ -467,11 +467,11 @@ namespace Eduverse.Service.BaiKiemTraService
             //if(request.SoLanLamToiDa <= 0 || request.SoLanLamToiDa > 1000000000)
 
             // ===== 2. VALIDATE CÂU HỎI =====
-            if (request.DanhSachCauHoi == null || !request.DanhSachCauHoi.Any())
-                throw new Exception("Bài kiểm tra phải có ít nhất một câu hỏi.");
-
             if (request.DanhSachCauHoi.Count > 50)
                 throw new Exception("Bài kiểm tra không được vượt quá 50 câu hỏi.");
+
+            if (request.DanhSachCauHoi.Count < 2)
+                throw new Exception("Bài kiểm tra phải có ít nhất 2 câu hỏi.");
 
             // ⭐ TỐI ƯU: Validate tất cả trong 1 lần duyệt
             ValidateQuestions(request.DanhSachCauHoi);
@@ -521,8 +521,11 @@ namespace Eduverse.Service.BaiKiemTraService
                 if (string.IsNullOrWhiteSpace(cauHoi.NoiDungCauHoi))
                     throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được để trống.");
 
-                if (cauHoi.NoiDungCauHoi.Length > 1000)
-                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được vượt quá 1000 ký tự.");
+                if (cauHoi.NoiDungCauHoi.Length < 3)
+                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} phải > 3 kí tự");
+
+                if (cauHoi.NoiDungCauHoi.Length > 255)
+                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được vượt quá 255 ký tự.");
 
                 if (string.IsNullOrWhiteSpace(cauHoi.DoKho) || !validDoKho.Contains(cauHoi.DoKho))
                     throw new Exception($"Độ khó '{cauHoi.DoKho}' không hợp lệ. Chỉ chấp nhận: De, TrungBinh, Kho.");
@@ -531,7 +534,7 @@ namespace Eduverse.Service.BaiKiemTraService
                     throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
 
                 if (cauHoi.DanhSachDapAn.Count > 15)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được vượt quá 6 đáp án.");
+                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được vượt quá 15 đáp án.");
 
 
                 // ⭐ KIỂM TRA ĐÁP ÁN TRÙNG VÀ RỖNG
@@ -546,6 +549,8 @@ namespace Eduverse.Service.BaiKiemTraService
 
                 cauHoiIndex++;
             }
+
+            
 
             // ⭐ KIỂM TRA CÂU HỎI TRÙNG NHAU
             var cauHoiTrung = questions
@@ -569,8 +574,8 @@ namespace Eduverse.Service.BaiKiemTraService
                 if (string.IsNullOrWhiteSpace(dapAn.NoiDungDapAn))
                     throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' có đáp án bị để trống.");
 
-                if (cauHoi.NoiDungCauHoi.Length > 1000)
-                    throw new Exception("Đáp án không được vượt quá 1000 kí tự");
+                if (cauHoi.NoiDungCauHoi.Length > 99)
+                    throw new Exception("Đáp án không được vượt quá 99 kí tự");
 
                 var trimmed = dapAn.NoiDungDapAn.Trim();
                 if (!noiDungDapAns.Add(trimmed))
@@ -643,7 +648,6 @@ namespace Eduverse.Service.BaiKiemTraService
                 thuTuCauHoi++;
             }
 
-            // ⭐ BULK INSERT: Lưu tất cả câu hỏi và đáp án trong 1 lần
             if (cauHois.Any())
             {
                 await _cauHoiService.CreateRange(cauHois);
@@ -659,10 +663,8 @@ namespace Eduverse.Service.BaiKiemTraService
             return (cauHois, dapAns);
         }
 
-        // =====  Lấy kết quả  =====
         private async Task<CreateBaiKiemTraDto> GetQuizResultAsync(Guid baiKiemTraId)
         {
-            // ⭐ JOIN để lấy tất cả dữ liệu trong 1 query
             var query = from c in _cauHoiService.GetQueryable()
                         join d in _dapAnService.GetQueryable() on c.Id equals d.IdCauHoi into dapAnGroup
                         where c.IdBaiKiemTra == baiKiemTraId && !c.IsDeleted
@@ -700,12 +702,16 @@ namespace Eduverse.Service.BaiKiemTraService
                     LoaiCauHoi = x.CauHoi.LoaiCauHoi,
                     DoKho = x.CauHoi.DoKho,
                     ThuTuSapXep = x.CauHoi.ThuTuSapXep,
+                    TrangThai = x.CauHoi.TrangThai,
+                    TrangThaiPheDuyet= x.CauHoi.TrangThaiPheDuyet,
                     DanhSachDapAns = x.DapAns.Select(d => new CreateDapAnDto
                     {
                         Id = d.Id,
                         NoiDungDapAn = d.NoiDungDapAn,
                         LaDapAnDung = d.LaDapAnDung,
-                        ThuTuSapXep = d.ThuTuSapXep
+                        ThuTuSapXep = d.ThuTuSapXep,
+                        TrangThai = d.TrangThai,
+                        TrangThaiPheDuyet = d.TrangThaiPheDuyet
                     }).ToList()
                 }).ToList()
             };
@@ -739,44 +745,46 @@ namespace Eduverse.Service.BaiKiemTraService
                 await UpdateDirectlyAsync(banGoc, request, nguoiTao);
                 return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banGoc);
             }
-
-            // ─── TRƯỜNG HỢP 2: Chờ duyệt (ChoDuyet) ──────────────
-            //  ChoDuyet => DangSua mới có thể sửa tiếp
-            if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
-                throw new Exception("Chuyển sang DangSua để sửa tiếp");
-            
-            // ─── TRƯỜNG HỢP 3: Đang duyệt (DangDuyet) ────────────
-            // ❌ DangDuyet thì không làm được gì cả
-            if (banGoc.TrangThaiPheDuyet == "DangDuyet")
-                throw new Exception(
-                    $"❌ BÀI KIỂM TRA ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
-                    $"Hệ thống đang kiểm duyệt bài kiểm tra này.\n" +
-                    $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
-                    $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
-                );
-
-            // ─── TRƯỜNG HỢP 4: Đã duyệt (DaDuyet) ─────────────────
-            // ✅ DaDuyet => xóa mềm (tạo bản nháp mới)
-            if (banGoc.TrangThaiPheDuyet == "DaDuyet")
+            else
             {
-                // Kiểm tra đã có bản nháp chưa
-                var banNhap = await GetQueryable()
-                    .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id && !x.IsDeleted);
-
-                //if (banNhap != null)
-                //{
-                //    // Nếu đã có bản nháp, cập nhật bản nháp
-                //    await UpdateDraftAsync(banNhap, banGoc, request, nguoiTao);
-                //    return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhap);
-                //}
-
-                    // Tạo bản nháp mới từ bản gốc
-                    var banNhapMoi = await CreateDraftFromOriginalAsync(banGoc, request, nguoiTao);
-                    return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhapMoi);
-                
+                throw new Exception($"Không thể xử lý bài kiểm tra ở trạng thái: {banGoc.TrangThaiPheDuyet}");
             }
 
-            throw new Exception($"Không thể xử lý bài kiểm tra ở trạng thái: {banGoc.TrangThaiPheDuyet}");
+            //// ─── TRƯỜNG HỢP 2: Chờ duyệt (ChoDuyet) ──────────────
+            ////  ChoDuyet => DangSua mới có thể sửa tiếp
+            //if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
+            //    throw new Exception("Chuyển sang DangSua để sửa tiếp");
+            
+            //// ─── TRƯỜNG HỢP 3: Đang duyệt (DangDuyet) ────────────
+            //// ❌ DangDuyet thì không làm được gì cả
+            //if (banGoc.TrangThaiPheDuyet == "DangDuyet")
+            //    throw new Exception(
+            //        $"❌ BÀI KIỂM TRA ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
+            //        $"Hệ thống đang kiểm duyệt bài kiểm tra này.\n" +
+            //        $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
+            //        $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
+            //    );
+
+            //// ─── TRƯỜNG HỢP 4: Đã duyệt (DaDuyet) ─────────────────
+            //// ✅ DaDuyet => xóa mềm (tạo bản nháp mới)
+            //if (banGoc.TrangThaiPheDuyet == "DaDuyet")
+            //{
+            //    // Kiểm tra đã có bản nháp chưa
+            //    var banNhap = await GetQueryable()
+            //        .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id && !x.IsDeleted);
+
+            //    //if (banNhap != null)
+            //    //{
+            //    //    // Nếu đã có bản nháp, cập nhật bản nháp
+            //    //    await UpdateDraftAsync(banNhap, banGoc, request, nguoiTao);
+            //    //    return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhap);
+            //    //}
+
+            //        // Tạo bản nháp mới từ bản gốc
+            //        var banNhapMoi = await CreateDraftFromOriginalAsync(banGoc, request, nguoiTao);
+            //        return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhapMoi);
+                
+            //}
         }
 
         // ===== VALIDATE REQUEST =====
@@ -1226,16 +1234,16 @@ namespace Eduverse.Service.BaiKiemTraService
                 dapAn.IsDeleted = true;
             }
 
-            await UpdateAsync(quiz);
+            await DeleteAsync(quiz);
 
             foreach (var cauHoi in cauHois)
             {
-                await _cauHoiService.UpdateAsync(cauHoi);
+                await _cauHoiService.DeleteAsync(cauHoi);
             }
 
             foreach (var dapAn in dapAns)
             {
-                await _dapAnService.UpdateAsync(dapAn);
+                await _dapAnService.DeleteAsync(dapAn);
             }
 
             return true;

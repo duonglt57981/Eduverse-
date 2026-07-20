@@ -21,6 +21,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Xabe.FFmpeg;
+using Xabe.FFmpeg.Downloader;
 
 namespace Eduverse.Api
 {
@@ -327,6 +329,23 @@ namespace Eduverse.Api
                         await roleManager.CreateAsync(new AppRole { Name = role });
                 }
             }
+
+            // Đặt đường dẫn nơi bạn muốn lưu FFmpeg(ví dụ: thư mục của ứng dụng)
+            string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg");
+            if (!Directory.Exists(ffmpegPath))
+                Directory.CreateDirectory(ffmpegPath);
+
+            // Kiểm tra nếu chưa có ffmpeg.exe thì tải về
+            if (!File.Exists(Path.Combine(ffmpegPath, "ffmpeg.exe")))
+            {
+                Console.WriteLine("Đang tải FFmpeg...");
+                await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official, ffmpegPath);
+                Console.WriteLine("Tải FFmpeg thành công!");
+            }
+
+            // Cấu hình Xabe.FFmpeg sử dụng thư mục vừa tải
+            FFmpeg.SetExecutablesPath(ffmpegPath);
+
             app.Run();
         }
         private static void AddDependencyInjection(this IServiceCollection services)

@@ -25,6 +25,7 @@ namespace Eduverse.Service.BaiKiemTraService.Dto
         public string? TrangThai { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
         public bool IsSwap { get; set; }
+        public int? ThuTuSapXep { get; set; }
 
         public List<CauHoiDto> DanhSachCauHois { get; set; }
     }

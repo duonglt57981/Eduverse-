@@ -122,6 +122,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
 
+            var LichSuKiemDuyet = await GetQueryable().FirstOrDefaultAsync();
+
             var KiemDuyetList = await GetQueryable().Select(x => new { x.Id, x.CreatedId }).ToListAsync();
 
 
@@ -178,7 +180,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             var khoaHocQuery = _khoaHocRepository.GetQueryable()
                 .AsNoTracking()
-                .Where(x => idKhoaHocs.Contains(x.Id));
+                .Where(x => idKhoaHocs.Contains(x.Id) || (x.Id ==LichSuKiemDuyet.IdDoiTuong && x.TrangThaiPheDuyet == "DangDuyet"));
 
             if (!string.IsNullOrWhiteSpace(search.Keyword))
                 khoaHocQuery = khoaHocQuery.Where(x => x.TieuDe.Contains(search.Keyword));
