@@ -34,6 +34,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { clearGioHang } from "@/src/store/gioHang/GioHangSlice";
@@ -115,9 +116,23 @@ export default function StudentHomeHeader() {
 
   const handleLogout = async () => {
     setAnchorEl(null);
-    await dispatch(logout());
-    dispatch(clearGioHang());
-    router.replace("/auth/login");
+    const result = await Swal.fire({
+      title: "Xác nhận đăng xuất",
+      text: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: RED,
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Đăng xuất",
+      cancelButtonText: "Hủy",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      await dispatch(logout());
+      dispatch(clearGioHang());
+      router.replace("/auth/login");
+    }
   };
 
   const handleNotificationClick = async (notification: ThongBao) => {
