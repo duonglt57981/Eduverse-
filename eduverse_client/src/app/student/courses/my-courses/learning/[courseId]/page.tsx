@@ -31,7 +31,6 @@ import {
   VideoLibrary as VideoLibraryIcon,
 } from "@mui/icons-material";
 
-// Import components
 import { VideoPlayer } from "./components/VideoPlayer";
 import { MiniPlayer } from "./components/MiniPlayer";
 import { StatsBar } from "./components/StatsBar";
@@ -39,21 +38,28 @@ import { CourseSkeleton } from "./components/CourseSkeleton";
 import { SidebarContent } from "./components/SidebarContent";
 import { QuizContainer } from "./components/quiz/QuizContainer";
 
-// Import hooks
 import { useCourseData } from "./hooks/useCourseData";
 import { useProgress } from "./hooks/useProgress";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 
-// Import DOMPurify để làm sạch HTML
 import DOMPurify from "dompurify";
 
-// Constants
 const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#6B1414";
 const SIDEBAR_W = 380;
 const HEADER_H = 86;
+
+// Interface khớp với response thực tế từ BE (camelCase)
+// Không sửa file type gốc, chỉ dùng nội bộ ở đây
+interface PhanHocApi {
+  id?: string;
+  tenPhan?: string;
+  thuTuSapXep?: number;
+  danhSachBaiGiang?: BaiGiangType[];
+  danhSachBaiKiemTra?: BaiKiemTraDto[];
+}
 
 export default function KhoaHocLearningPage() {
   const theme = useTheme();
@@ -68,7 +74,7 @@ export default function KhoaHocLearningPage() {
   console.log("📌 [KhoaHocLearningPage] courseId:", courseId);
 
   // ── Hooks ──
-  const { khoaHoc, loading, error, danhSachTatCa, setDanhSachTatCa } =
+  const { khoaHoc, loading, error, danhSachTatCa, setDanhSachTatCa, getPhanHocApi } =
     useCourseData(courseId);
   const {
     progressMap,
@@ -94,8 +100,6 @@ export default function KhoaHocLearningPage() {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [searchTerm, setSearchTerm] = useState("");
   const [showMini, setShowMini] = useState(false);
-
-  // ── Quiz state ──
   const [quizDangChon, setQuizDangChon] = useState<BaiKiemTraDto | null>(null);
 
   const mainScrollRef = useRef<HTMLDivElement>(null);
@@ -104,9 +108,7 @@ export default function KhoaHocLearningPage() {
   // ── Stats ──
   const tongBai = danhSachTatCa.length;
   const soBaiHoanThanh = useMemo(
-    () =>
-      danhSachTatCa.filter((b) => progressMap.get(b.id!)?.daHoanThanh === true)
-        .length,
+    () => danhSachTatCa.filter((b) => progressMap.get(b.id!)?.daHoanThanh === true).length,
     [danhSachTatCa, progressMap],
   );
   const phanTramHoanThanh = useMemo(
@@ -114,34 +116,30 @@ export default function KhoaHocLearningPage() {
     [tongBai, soBaiHoanThanh],
   );
 
-  // ── Quiz theo phần: lấy thẳng từ dữ liệu khóa học, không cần gọi API riêng ──
+  // ── Quiz theo phần — dùng getPhanHocApi() để lấy đúng field camelCase từ BE ──
   const quizTheoPhan = useMemo(() => {
     const map = new Map<string, BaiKiemTraDto[]>();
-    khoaHoc?.danhSachPhanHoc?.forEach((phan) => {
-      if (phan.id && (phan.DanhDachBaiKiemTra?.length ?? 0) > 0) {
-        map.set(phan.id, phan.DanhDachBaiKiemTra!);
+    getPhanHocApi().forEach((phan: PhanHocApi) => {
+      if (phan.id && (phan.danhSachBaiKiemTra?.length ?? 0) > 0) {
+        map.set(phan.id, phan.danhSachBaiKiemTra!);
       }
     });
     return map;
-  }, [khoaHoc]);
+  }, [getPhanHocApi]);
 
-  // ── Init progress from data ──
+  // ── Init progress ──
   useEffect(() => {
     if (danhSachTatCa.length > 0) {
-      console.log(
-        "🔄 [KhoaHocLearningPage] Init progress, số bài:",
-        danhSachTatCa.length,
-      );
+      console.log("🔄 [KhoaHocLearningPage] Init progress, số bài:", danhSachTatCa.length);
       initProgress(danhSachTatCa);
     }
   }, [danhSachTatCa, initProgress]);
 
-  // ── Auto select first incomplete lesson ──
+  // ── Auto select first lesson ──
   useEffect(() => {
     if (danhSachTatCa.length > 0 && !baiGiang) {
       console.log("🔄 [KhoaHocLearningPage] Auto select first lesson");
-      const first =
-        danhSachTatCa.find((l) => !l.daHoanThanh) ?? danhSachTatCa[0];
+      const first = danhSachTatCa.find((l) => !l.daHoanThanh) ?? danhSachTatCa[0];
       chonBaiGiang(first, danhSachTatCa);
     }
   }, [danhSachTatCa, baiGiang, chonBaiGiang]);
@@ -228,70 +226,36 @@ export default function KhoaHocLearningPage() {
 
   // ── Render video area ──
   const renderVideoArea = () => {
-    if (loading) {
-      return <CourseSkeleton />;
-    }
+    if (loading) return <CourseSkeleton />;
 
     if (!danhSachTatCa.length) {
       return (
-        <Box
-          sx={{
-            height: 280,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "#f5f5f5",
-            color: "text.secondary",
-          }}
-        >
+        <Box sx={{ height: 280, display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          bgcolor: "#f5f5f5", color: "text.secondary" }}>
           <VideoLibraryIcon sx={{ fontSize: 64, opacity: 0.3, mb: 2 }} />
           <Typography variant="h6">Chưa có bài giảng</Typography>
-          <Typography variant="body2">
-            Khóa học này chưa có nội dung bài giảng.
-          </Typography>
+          <Typography variant="body2">Khóa học này chưa có nội dung bài giảng.</Typography>
         </Box>
       );
     }
 
     if (!baiGiang) {
       return (
-        <Box
-          sx={{
-            height: 280,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "#fafafa",
-          }}
-        >
+        <Box sx={{ height: 280, display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", bgcolor: "#fafafa" }}>
           <MenuBookIcon sx={{ fontSize: 72, color: alpha(PRIMARY_RED, 0.2) }} />
-          <Typography variant="h6" color="text.secondary">
-            Chọn bài giảng để bắt đầu học
-          </Typography>
+          <Typography variant="h6" color="text.secondary">Chọn bài giảng để bắt đầu học</Typography>
         </Box>
       );
     }
 
     if (!baiGiang.urlBaiGiang) {
       return (
-        <Box
-          sx={{
-            height: 280,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "#fafafa",
-          }}
-        >
-          <Typography variant="h6" color="text.secondary">
-            Bài giảng này chưa có video
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {baiGiang.tieuDe}
-          </Typography>
+        <Box sx={{ height: 280, display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", bgcolor: "#fafafa" }}>
+          <Typography variant="h6" color="text.secondary">Bài giảng này chưa có video</Typography>
+          <Typography variant="body2" color="text.secondary">{baiGiang.tieuDe}</Typography>
         </Box>
       );
     }
@@ -309,41 +273,19 @@ export default function KhoaHocLearningPage() {
   };
 
   // ── Loading & Error ──
-  if (loading) {
-    return <CourseSkeleton />;
-  }
+  if (loading) return <CourseSkeleton />;
 
   if (error) {
     return (
-      <Box
-        sx={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: 3,
-        }}
-      >
+      <Box sx={{ height: "100vh", display: "flex", alignItems: "center",
+        justifyContent: "center", p: 3 }}>
         <Paper sx={{ maxWidth: 480, p: 4, textAlign: "center" }}>
-          <Typography
-            variant="h6"
-            color="error"
-            gutterBottom
-            sx={{ fontWeight: 700 }}
-          >
+          <Typography variant="h6" color="error" gutterBottom sx={{ fontWeight: 700 }}>
             Lỗi truy cập
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            {error}
-          </Typography>
-          <Button
-            variant="contained"
-            href="/"
-            sx={{
-              bgcolor: PRIMARY_RED,
-              "&:hover": { bgcolor: PRIMARY_RED_DARK },
-            }}
-          >
+          <Typography color="text.secondary" sx={{ mb: 3 }}>{error}</Typography>
+          <Button variant="contained" href="/"
+            sx={{ bgcolor: PRIMARY_RED, "&:hover": { bgcolor: PRIMARY_RED_DARK } }}>
             Về trang chủ
           </Button>
         </Paper>
@@ -353,15 +295,8 @@ export default function KhoaHocLearningPage() {
 
   if (!khoaHoc) {
     return (
-      <Box
-        sx={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: 3,
-        }}
-      >
+      <Box sx={{ height: "100vh", display: "flex", alignItems: "center",
+        justifyContent: "center", p: 3 }}>
         <Paper sx={{ maxWidth: 480, p: 4, textAlign: "center" }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
             Không tải được khóa học
@@ -370,17 +305,9 @@ export default function KhoaHocLearningPage() {
             Dữ liệu khóa học trống hoặc không hợp lệ. Vui lòng thử lại.
           </Typography>
           <Stack direction="row" spacing={1.5} sx={{ justifyContent: "center" }}>
-            <Button variant="outlined" onClick={() => window.location.reload()}>
-              Tải lại
-            </Button>
-            <Button
-              variant="contained"
-              href="/"
-              sx={{
-                bgcolor: PRIMARY_RED,
-                "&:hover": { bgcolor: PRIMARY_RED_DARK },
-              }}
-            >
+            <Button variant="outlined" onClick={() => window.location.reload()}>Tải lại</Button>
+            <Button variant="contained" href="/"
+              sx={{ bgcolor: PRIMARY_RED, "&:hover": { bgcolor: PRIMARY_RED_DARK } }}>
               Về trang chủ
             </Button>
           </Stack>
@@ -391,59 +318,27 @@ export default function KhoaHocLearningPage() {
 
   // ── Render ──
   return (
-    <Box
-      sx={{
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "grey.50",
-        overflow: "hidden",
-      }}
-    >
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column",
+      bgcolor: "grey.50", overflow: "hidden" }}>
+
       {/* Header */}
-      <AppBar
-        position="static"
-        color="default"
-        elevation={0}
-        sx={{
-          borderBottom: `2px solid ${PRIMARY_RED}`,
+      <AppBar position="static" color="default" elevation={0}
+        sx={{ borderBottom: `2px solid ${PRIMARY_RED}`,
           bgcolor: alpha(theme.palette.background.paper, 0.95),
-          backdropFilter: "blur(8px)",
-          flexShrink: 0,
-        }}
-      >
+          backdropFilter: "blur(8px)", flexShrink: 0 }}>
         <Toolbar sx={{ minHeight: HEADER_H, gap: 2, px: { xs: 2, md: 3 } }}>
           <Box sx={{ width: { xs: 120, sm: 140, lg: 170 }, cursor: "pointer" }}>
-            <Link
-              href={dashboardPath}
-              style={{ display: "block", width: "100%" }}
-            >
-              <Image
-                src="/auth/img/logo_nentrang.png"
-                alt="EduVerse"
-                width={170}
-                height={52}
-                style={{ width: "100%", height: "auto", display: "block" }}
-                priority
-              />
+            <Link href={dashboardPath} style={{ display: "block", width: "100%" }}>
+              <Image src="/auth/img/logo_nentrang.png" alt="EduVerse"
+                width={170} height={52}
+                style={{ width: "100%", height: "auto", display: "block" }} priority />
             </Link>
           </Box>
           {isMobile && (
-            <IconButton
-              onClick={() => setSidebarOpen(true)}
-              sx={{
-                border: `1.5px solid ${
-                  sidebarOpen ? PRIMARY_RED : theme.palette.divider
-                }`,
-                bgcolor: sidebarOpen ? alpha(PRIMARY_RED, 0.1) : "transparent",
-              }}
-            >
-              <MenuBookIcon
-                sx={{
-                  color: sidebarOpen ? PRIMARY_RED : "inherit",
-                  fontSize: 20,
-                }}
-              />
+            <IconButton onClick={() => setSidebarOpen(true)}
+              sx={{ border: `1.5px solid ${sidebarOpen ? PRIMARY_RED : theme.palette.divider}`,
+                bgcolor: sidebarOpen ? alpha(PRIMARY_RED, 0.1) : "transparent" }}>
+              <MenuBookIcon sx={{ color: sidebarOpen ? PRIMARY_RED : "inherit", fontSize: 20 }} />
             </IconButton>
           )}
           <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -452,59 +347,27 @@ export default function KhoaHocLearningPage() {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                alignItems: "center",
-                display: { xs: "none", sm: "flex" },
-                bgcolor: alpha(PRIMARY_RED, 0.05),
-                px: 1.5,
-                py: 0.5,
-                borderRadius: 2,
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 600, color: PRIMARY_RED }}
-              >
+            <Stack direction="row" spacing={1}
+              sx={{ alignItems: "center", display: { xs: "none", sm: "flex" },
+                bgcolor: alpha(PRIMARY_RED, 0.05), px: 1.5, py: 0.5, borderRadius: 2 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: PRIMARY_RED }}>
                 {phanTramHoanThanh}%
               </Typography>
               <Box sx={{ width: 80 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={phanTramHoanThanh}
-                  sx={{
-                    height: 6,
-                    borderRadius: 3,
+                <LinearProgress variant="determinate" value={phanTramHoanThanh}
+                  sx={{ height: 6, borderRadius: 3,
                     backgroundColor: alpha(PRIMARY_RED, 0.15),
-                    "& .MuiLinearProgress-bar": {
-                      backgroundColor: PRIMARY_RED,
-                      borderRadius: 3,
-                    },
-                  }}
-                />
+                    "& .MuiLinearProgress-bar": { backgroundColor: PRIMARY_RED, borderRadius: 3 } }} />
               </Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontWeight: 500 }}
-              >
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
                 {soBaiHoanThanh}/{tongBai}
               </Typography>
             </Stack>
             {coTiepTheo && (
-              <Button
-                variant="contained"
-                size="small"
-                endIcon={<NavigateNextIcon />}
+              <Button variant="contained" size="small" endIcon={<NavigateNextIcon />}
                 onClick={goToNextLesson}
-                sx={{
-                  bgcolor: PRIMARY_RED,
-                  "&:hover": { bgcolor: PRIMARY_RED_DARK },
-                  whiteSpace: "nowrap",
-                }}
-              >
+                sx={{ bgcolor: PRIMARY_RED, "&:hover": { bgcolor: PRIMARY_RED_DARK },
+                  whiteSpace: "nowrap" }}>
                 Tiếp
               </Button>
             )}
@@ -513,26 +376,11 @@ export default function KhoaHocLearningPage() {
       </AppBar>
 
       {/* Body */}
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          overflow: "hidden",
-          position: "relative",
-        }}
-      >
+      <Box sx={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
         {/* Main content */}
-        <Box
-          ref={mainScrollRef}
-          sx={{
-            flex: 1,
-            overflowY: "auto",
-            minWidth: 0,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* Quiz section (thay video khi đang chọn quiz) */}
+        <Box ref={mainScrollRef}
+          sx={{ flex: 1, overflowY: "auto", minWidth: 0, display: "flex", flexDirection: "column" }}>
+
           {quizDangChon ? (
             <Box sx={{ flex: 1, minHeight: 0 }}>
               <QuizContainer
@@ -551,68 +399,32 @@ export default function KhoaHocLearningPage() {
             </Box>
           ) : (
             <>
-              {/* Video section */}
               <Box ref={videoSectionRef} sx={{ flexShrink: 0 }}>
                 {renderVideoArea()}
               </Box>
 
-              {/* Info section */}
-              <Box
-                sx={{
-                  p: { xs: 3, md: 4 },
-                  flex: 1,
-                  maxWidth: 1200,
-                  mx: "auto",
-                  width: "100%",
-                }}
-              >
+              <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, maxWidth: 1200, mx: "auto", width: "100%" }}>
                 {baiGiang && (
-                  <Stack
-                    direction="row"
-                    spacing={0.75}
-                    sx={{ mb: 2, alignItems: "center", flexWrap: "wrap" }}
-                  >
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {khoaHoc.danhSachPhanHoc?.find((p) => p.id === idPhanPlay)
-                        ?.tenPhan ?? ""}
+                  <Stack direction="row" spacing={0.75}
+                    sx={{ mb: 2, alignItems: "center", flexWrap: "wrap" }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                      {(khoaHoc.danhSachPhanHoc as unknown as PhanHocApi[])
+                        ?.find((p) => p.id === idPhanPlay)?.tenPhan ?? ""}
                     </Typography>
-                    <ChevronRightIcon
-                      sx={{ fontSize: 16, color: "text.disabled" }}
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 600, color: PRIMARY_RED }}
-                    >
+                    <ChevronRightIcon sx={{ fontSize: 16, color: "text.disabled" }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: PRIMARY_RED }}>
                       {baiGiang.tieuDe}
                     </Typography>
                   </Stack>
                 )}
 
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={3}
-                  sx={{
-                    mb: 4,
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                  }}
-                >
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={3}
+                  sx={{ mb: 4, justifyContent: "space-between", alignItems: "flex-start" }}>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 800, mb: 1, color: "text.primary" }}
-                    >
+                    <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: "text.primary" }}>
                       {baiGiang?.tieuDe ?? khoaHoc.tieuDe}
                     </Typography>
-                    <Stack
-                      direction="row"
-                      spacing={1.5}
-                      sx={{ alignItems: "center", flexWrap: "wrap" }}
-                    >
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flexWrap: "wrap" }}>
                       {baiGiang && (
                         <Typography variant="caption" color="text.secondary">
                           Bài {currentIdx + 1}/{danhSachTatCa.length} ·{" "}
@@ -621,36 +433,16 @@ export default function KhoaHocLearningPage() {
                         </Typography>
                       )}
                       {baiGiang && isBaiHoanThanh(baiGiang.id!) && (
-                        <Chip
-                          label="✓ Hoàn thành"
-                          size="small"
-                          variant="outlined"
-                          icon={
-                            <CheckCircleIcon
-                              sx={{ fontSize: "14px !important" }}
-                            />
-                          }
-                          sx={{
-                            color: PRIMARY_RED,
-                            borderColor: PRIMARY_RED,
-                            height: 22,
-                          }}
-                        />
+                        <Chip label="✓ Hoàn thành" size="small" variant="outlined"
+                          icon={<CheckCircleIcon sx={{ fontSize: "14px !important" }} />}
+                          sx={{ color: PRIMARY_RED, borderColor: PRIMARY_RED, height: 22 }} />
                       )}
                     </Stack>
                   </Box>
                   {coTiepTheo && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      endIcon={<NavigateNextIcon />}
+                    <Button variant="contained" size="small" endIcon={<NavigateNextIcon />}
                       onClick={goToNextLesson}
-                      sx={{
-                        bgcolor: PRIMARY_RED,
-                        "&:hover": { bgcolor: PRIMARY_RED_DARK },
-                        flexShrink: 0,
-                      }}
-                    >
+                      sx={{ bgcolor: PRIMARY_RED, "&:hover": { bgcolor: PRIMARY_RED_DARK }, flexShrink: 0 }}>
                       Bài tiếp theo
                     </Button>
                   )}
@@ -659,63 +451,28 @@ export default function KhoaHocLearningPage() {
                 <StatsBar khoaHoc={khoaHoc} />
 
                 {khoaHoc.moTa && (
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: { xs: 2.5, md: 3 },
-                      mt: 3,
-                      borderRadius: 3,
+                  <Paper elevation={0}
+                    sx={{ p: { xs: 2.5, md: 3 }, mt: 3, borderRadius: 3,
                       border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
                       boxShadow: `0px 2px 10px ${alpha(theme.palette.common.black, 0.03)}`,
-                      backgroundColor: "background.paper",
-                    }}
-                  >
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 800, mb: 1.5, color: "text.primary" }}
-                    >
+                      backgroundColor: "background.paper" }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5, color: "text.primary" }}>
                       Mô tả khóa học
                     </Typography>
-                    <Box
-                      sx={{
-                        fontSize: "0.875rem",
-                        fontWeight: 400,
-                        lineHeight: 1.7,
-                        color: "text.secondary",
-                        "& p": { margin: "0 0 0.75em 0" },
-                        "& ul, & ol": {
-                          paddingLeft: "1.5em",
-                          margin: "0.5em 0 0.75em 0",
-                        },
-                        "& li": { marginBottom: "0.25em" },
-                        "& h1, & h2, & h3, & h4, & h5, & h6": {
-                          margin: "0.75em 0 0.25em 0",
-                          fontWeight: 700,
-                          color: "text.primary",
-                        },
-                        "& img": {
-                          maxWidth: "100%",
-                          height: "auto",
-                          borderRadius: 1,
-                          margin: "0.5em 0",
-                        },
-                        "& a": {
-                          color: PRIMARY_RED,
-                          textDecoration: "underline",
-                          "&:hover": { color: PRIMARY_RED_DARK },
-                        },
-                        "& blockquote": {
-                          borderLeft: `4px solid ${PRIMARY_RED}`,
-                          paddingLeft: "1.5em",
-                          margin: "0.75em 0",
-                          color: "text.secondary",
-                          fontStyle: "italic",
-                        },
-                      }}
-                      dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(khoaHoc.moTa),
-                      }}
-                    />
+                    <Box sx={{ fontSize: "0.875rem", fontWeight: 400, lineHeight: 1.7,
+                      color: "text.secondary",
+                      "& p": { margin: "0 0 0.75em 0" },
+                      "& ul, & ol": { paddingLeft: "1.5em", margin: "0.5em 0 0.75em 0" },
+                      "& li": { marginBottom: "0.25em" },
+                      "& h1, & h2, & h3, & h4, & h5, & h6": { margin: "0.75em 0 0.25em 0",
+                        fontWeight: 700, color: "text.primary" },
+                      "& img": { maxWidth: "100%", height: "auto", borderRadius: 1, margin: "0.5em 0" },
+                      "& a": { color: PRIMARY_RED, textDecoration: "underline",
+                        "&:hover": { color: PRIMARY_RED_DARK } },
+                      "& blockquote": { borderLeft: `4px solid ${PRIMARY_RED}`,
+                        paddingLeft: "1.5em", margin: "0.75em 0",
+                        color: "text.secondary", fontStyle: "italic" } }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(khoaHoc.moTa) }} />
                   </Paper>
                 )}
               </Box>
@@ -725,19 +482,10 @@ export default function KhoaHocLearningPage() {
 
         {/* Desktop sidebar */}
         {!isMobile && (
-          <Box
-            sx={{
-              width: sidebarOpen ? SIDEBAR_W : 0,
-              flexShrink: 0,
-              transition: "width 0.28s cubic-bezier(0.4,0,0.2,1)",
-              borderLeft: sidebarOpen
-                ? `1px solid ${theme.palette.divider}`
-                : "none",
-              bgcolor: "background.paper",
-              overflow: "hidden",
-              height: "100%",
-            }}
-          >
+          <Box sx={{ width: sidebarOpen ? SIDEBAR_W : 0, flexShrink: 0,
+            transition: "width 0.28s cubic-bezier(0.4,0,0.2,1)",
+            borderLeft: sidebarOpen ? `1px solid ${theme.palette.divider}` : "none",
+            bgcolor: "background.paper", overflow: "hidden", height: "100%" }}>
             <SidebarContent
               khoaHoc={khoaHoc}
               baiGiang={baiGiang}
@@ -760,12 +508,8 @@ export default function KhoaHocLearningPage() {
 
         {/* Mobile drawer */}
         {isMobile && (
-          <Drawer
-            anchor="right"
-            open={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-            sx={{ "& .MuiDrawer-paper": { width: "85%", maxWidth: 360 } }}
-          >
+          <Drawer anchor="right" open={sidebarOpen} onClose={() => setSidebarOpen(false)}
+            sx={{ "& .MuiDrawer-paper": { width: "85%", maxWidth: 360 } }}>
             <SidebarContent
               khoaHoc={khoaHoc}
               baiGiang={baiGiang}
@@ -788,39 +532,18 @@ export default function KhoaHocLearningPage() {
           </Drawer>
         )}
 
-        {/* Sidebar toggle tab */}
+        {/* Sidebar toggle */}
         {!sidebarOpen && !isMobile && (
-          <Box
-            onClick={() => setSidebarOpen(true)}
-            sx={{
-              position: "absolute",
-              right: 0,
-              top: "50%",
-              transform: "translateY(-50%)",
-              zIndex: 10,
-              bgcolor: PRIMARY_RED,
-              borderRadius: "8px 0 0 8px",
-              cursor: "pointer",
+          <Box onClick={() => setSidebarOpen(true)}
+            sx={{ position: "absolute", right: 0, top: "50%",
+              transform: "translateY(-50%)", zIndex: 10, bgcolor: PRIMARY_RED,
+              borderRadius: "8px 0 0 8px", cursor: "pointer",
               boxShadow: `-3px 0 14px ${alpha(PRIMARY_RED, 0.4)}`,
-              width: 30,
-              py: 3,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 1,
-              transition: "all 0.2s",
-              "&:hover": { width: 36, bgcolor: PRIMARY_RED_DARK },
-            }}
-          >
+              width: 30, py: 3, display: "flex", flexDirection: "column",
+              alignItems: "center", gap: 1, transition: "all 0.2s",
+              "&:hover": { width: 36, bgcolor: PRIMARY_RED_DARK } }}>
             <ChevronLeftIcon sx={{ color: "#fff", fontSize: 18 }} />
-            <Typography
-              sx={{
-                writingMode: "vertical-rl",
-                color: "#fff",
-                fontSize: 9,
-                fontWeight: 700,
-              }}
-            >
+            <Typography sx={{ writingMode: "vertical-rl", color: "#fff", fontSize: 9, fontWeight: 700 }}>
               NỘI DUNG
             </Typography>
           </Box>
