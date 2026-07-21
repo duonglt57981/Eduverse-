@@ -1742,6 +1742,7 @@ namespace Eduverse.Service.BaiKiemTraService
                     IdLanLamBaiKiemTra = x.Id,
                     LamLanThu = x.LamLanThu,
                     Dat = x.Dat,
+                    TongDiem = x.TongDiemLanKiemTra,
                     ThoiGianBatDau = x.ThoiGianBatDau,
                     ThoiGianNop = x.ThoiGianNop
                 })
