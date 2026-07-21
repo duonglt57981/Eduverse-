@@ -72,10 +72,7 @@ namespace Eduverse.Service.PhanService
 
             var Phan = await GetQueryable()
                 .Where(x => x.Id == IdPhan
-                         && x.IsBanHienTai
                          && !x.IsDeleted
-                         && x.TrangThaiPheDuyet == "DaDuyet"
-                         && x.TrangThai == "HoatDong"
                          && x.CreatedId == nguoiTao)
                 .Select(x => new GetToUpdatePhanDto
                 {
@@ -105,8 +102,7 @@ namespace Eduverse.Service.PhanService
             var query = GetAll()
                 .Where(x => x.CreatedId == userId
                             && x.IdKhoaHoc == IdKhoaHoc
-                            && x.TrangThaiPheDuyet != "TuChoi"
-                            && x.TrangThai != "DaXoa")
+                            && x.IsDeleted == false)
                 .AsNoTracking() 
                 .OrderBy(x => x.ThuTuSapXep ?? 0) 
                 .Select(x => new PhanHocDto

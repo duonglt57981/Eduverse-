@@ -47,6 +47,7 @@ using System.Threading.Tasks;
 using Eduverse.Service.ElasticsearchService;
 using System.Linq.Expressions;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Elastic.Clients.Elasticsearch;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
@@ -118,113 +119,41 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         }
 
         #region GetDanhSachKiemDuyet
+
         public async Task<PagedList<KhoaHocKiemDuyetListDto>> GetDanhSachKiemDuyet(KhoaHocKiemDuyetSearchDto search)
         {
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
 
-            var LichSuKiemDuyet = await GetQueryable().FirstOrDefaultAsync();
-
-            var KiemDuyetList = await GetQueryable().Select(x => new { x.Id, x.CreatedId }).ToListAsync();
-
-
-            var phanList = await _phanRepository.GetQueryable()
-                .AsNoTracking()
-                .Select(p => new { p.Id, p.IdKhoaHoc })
+            var lichSuDangDuyetIds = await GetQueryable()
+                .Where(x => x.CreatedId == userId && x.TrangThaiPheDuyet == "DangDuyet")
+                .Select(x => x.IdDoiTuong)
                 .ToListAsync();
-
-            var allBaiGiang = await _baiGiangRepository.GetQueryable()
-                .AsNoTracking()
-                .Select(x => new { x.Id, x.IdPhan, x.TrangThaiPheDuyet, x.TrangThai, x.IsDeleted })
-                .ToListAsync();
-
-            var taiLieuChoDuyet = await _taiLieuRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.TrangThaiPheDuyet == "DangDuyet" || x.TrangThaiPheDuyet == "ChoDuyet")
-                .Select(x => new { x.IdBaiGiang })
-                .ToListAsync();
-
-            var khoaHocChoDuyet = await _khoaHocRepository.GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.TrangThaiPheDuyet == "DangDuyet" || x.TrangThaiPheDuyet == "ChoDuyet")
-                .Select(x => x.Id)
-                .ToListAsync();
-
-            var phanToKhoaHoc = phanList
-                .Where(p => p.IdKhoaHoc.HasValue)
-                .ToDictionary(p => p.Id, p => p.IdKhoaHoc.Value);
-
-            var baiGiangChoDuyet = allBaiGiang.Where(x => x.TrangThaiPheDuyet == "DangDuyet" || x.TrangThaiPheDuyet == "ChoDuyet").ToList();
-
-            var bgWithKhoaHoc = baiGiangChoDuyet
-                .Where(bg => phanToKhoaHoc.ContainsKey(bg.IdPhan))
-                .Select(bg => phanToKhoaHoc[bg.IdPhan])
-                .ToList();
-
-            var baiGiangToKhoaHoc = allBaiGiang
-                .Where(bg => phanToKhoaHoc.ContainsKey(bg.IdPhan))
-                .ToDictionary(bg => bg.Id, bg => phanToKhoaHoc[bg.IdPhan]);
-
-            var tlWithKhoaHoc = taiLieuChoDuyet
-                .Where(tl => baiGiangToKhoaHoc.ContainsKey(tl.IdBaiGiang))
-                .Select(tl => baiGiangToKhoaHoc[tl.IdBaiGiang])
-                .ToList();
-
-            var idKhoaHocs = bgWithKhoaHoc
-                .Concat(tlWithKhoaHoc)
-                .Concat(khoaHocChoDuyet)
-                .Distinct()
-                .ToList();
-
-            if (!idKhoaHocs.Any())
-                return new PagedList<KhoaHocKiemDuyetListDto>(new List<KhoaHocKiemDuyetListDto>(), search.PageIndex, search.PageSize, 0);
 
             var khoaHocQuery = _khoaHocRepository.GetQueryable()
                 .AsNoTracking()
-                .Where(x => idKhoaHocs.Contains(x.Id) || (x.Id ==LichSuKiemDuyet.IdDoiTuong && x.TrangThaiPheDuyet == "DangDuyet"));
+                .Where(x =>
+                    x.TrangThaiPheDuyet == "ChoDuyet" ||
+                    lichSuDangDuyetIds.Contains(x.Id));
 
             if (!string.IsNullOrWhiteSpace(search.Keyword))
                 khoaHocQuery = khoaHocQuery.Where(x => x.TieuDe.Contains(search.Keyword));
 
-            var khoaHocList = await khoaHocQuery
-                .Select(x => new { x.Id, x.TieuDe, x.CreatedDate, x.TrangThai, x.TrangThaiPheDuyet, x.CreatedBy })
-                .ToListAsync();
+            var query = khoaHocQuery
+                .OrderBy(x => x.CreatedDate)
+                .Select(x => new KhoaHocKiemDuyetListDto
+                {
+                    IdKhoaHoc = x.Id,
+                    TieuDe = x.TieuDe,
+                    TrangThai = x.TrangThai,
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                    CreateBy = x.CreatedBy,
+                    CreateDate = x.CreatedDate
+                });
 
-            var fullList = khoaHocList.Select(kh => new KhoaHocKiemDuyetListDto
-            {
-                IdKhoaHoc = kh.Id,
-                TieuDe = kh.TieuDe,
-                TrangThai = kh.TrangThai,
-                TrangThaiPheDuyet = kh.TrangThaiPheDuyet,
-                CreateBy = kh.CreatedBy,
-                SoBaiGiangChoDuyet = bgWithKhoaHoc.Count(x => x == kh.Id),
-                SoTaiLieuChoDuyet = tlWithKhoaHoc.Count(x => x == kh.Id)
-            }).OrderBy(x => x.CreateDate).ToList();
-
-            var totalCount = fullList.Count;
-            search.PageIndex = search.PageIndex < 1 ? 1 : search.PageIndex;
-
-            List<KhoaHocKiemDuyetListDto> pagedItems;
-            int pageIndex;
-            int pageSize;
-
-            if (search.PageSize == -1)
-            {
-                pagedItems = fullList;
-                pageIndex = 1;
-                pageSize = totalCount;
-            }
-            else
-            {
-                pagedItems = fullList
-                    .Skip((search.PageIndex - 1) * search.PageSize)
-                    .Take(search.PageSize)
-                    .ToList();
-                pageIndex = search.PageIndex;
-                pageSize = search.PageSize;
-            }
-
-            return new PagedList<KhoaHocKiemDuyetListDto>(pagedItems, pageIndex, pageSize, totalCount);
+            return await PagedList<KhoaHocKiemDuyetListDto>.CreateAsync(query, search);
         }
+
         #endregion
 
 
@@ -241,35 +170,39 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             // 2. Lấy toàn bộ cây dữ liệu (không dùng khóa ngoại, so khớp thủ công qua Id list)
             var phans = await _phanRepository.GetAll()
-                .Where(x => x.IdKhoaHoc == targetVersion.Id)
+                .Where(x => x.IdKhoaHoc == targetVersion.Id && (x.TrangThai == "ChoDuyet" || x.TrangThai == "DangDuyet"))
+                .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
             var phanIds = phans.Select(p => p.Id).ToList();
 
             var baiGiangs = await _baiGiangRepository.GetAll()
-                .Where(x => phanIds.Contains(x.IdPhan))
+                .Where(x => phanIds.Contains(x.IdPhan) && (x.TrangThai == "ChoDuyet" || x.TrangThai == "DangDuyet"))
+                .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
             var baiGiangIds = baiGiangs.Select(b => b.Id).ToList();
 
             var taiLieus = await _taiLieuRepository.GetAll()
-                .Where(x => baiGiangIds.Contains(x.IdBaiGiang))
+                .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && (x.TrangThai == "ChoDuyet" || x.TrangThai == "DangDuyet"))
                 .ToListAsync();
 
             var baiKiemTras = await _baiKiemTraRepository.GetAll()
-                .Where(x => x.IdPhan.HasValue && phanIds.Contains(x.IdPhan.Value))
+                .Where(x => x.IdPhan.HasValue && phanIds.Contains(x.IdPhan.Value) && (x.TrangThai == "ChoDuyet" || x.TrangThai == "DangDuyet"))
+                .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
             var baiKiemTraIds = baiKiemTras.Select(b => b.Id).ToList();
 
             var cauHois = await _cauHoiRepository.GetAll()
-                .Where(x => baiKiemTraIds.Contains(x.IdBaiKiemTra.Value))
+                .Where(x => baiKiemTraIds.Contains(x.IdBaiKiemTra.Value) && (x.TrangThai == "ChoDuyet" || x.TrangThai == "DangDuyet"))
+                .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
             var cauHoiIds = cauHois.Select(c => c.Id).ToList();
 
             var dapAns = await _dapAnRepository.GetAll()
-                .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value))
+                .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value) && (x.TrangThai == "ChoDuyet" || x.TrangThai == "DangDuyet"))
                 .ToListAsync();
 
             // 3. Chuyển toàn bộ cây sang trạng thái "DangDuyet" — mỗi item xử lý ĐỘC LẬP
@@ -280,12 +213,15 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                 _khoaHocRepository.Update(targetVersion);
                 _khoaHocRepository.SaveAsync();
-                await CreateAsync(new LichSuKiemDuyetKhoaHoc
+                var KiemDuyetKhoaHoc =  new LichSuKiemDuyetKhoaHoc
                 {
                     IdDoiTuong = targetVersion.Id,
                     LoaiDoiTuong = "KhoaHoc",
                     TrangThaiPheDuyet = "DangDuyet"
-                });
+                };
+
+                await CreateAsync(KiemDuyetKhoaHoc);
+                await SaveAsync();
             }
 
             foreach (var phan in phans)
@@ -359,6 +295,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             var phanDtos = phans.Select(p => new PhanChoDuyetDto
             {
+                Id = p.Id,
                 TenPhan = p.TenPhan,
                 MieuTa = p.MieuTa,
                 ThuTuSapXep = p.ThuTuSapXep,
@@ -422,6 +359,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                         DapAns = dapAnLookup[c.Id].Select(d => new DapAnChoDuyetDto
                         {
+                            Id = d.Id,
                             NoiDungDapAn = d.NoiDungDapAn,
                             LaDapAnDung = d.LaDapAnDung,
                             ThuTuSapXep = d.ThuTuSapXep,
@@ -704,9 +642,14 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         public async Task<KiemDuyetKhoaHocDto> KiemDuyetFullKhoaHoc(KiemDuyetKhoaHocRequest request)
         {
             // ── Kiểm tra quyền ──────────────────────────────────
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
             var role = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
             if (role != "Admin")
                 throw new UnauthorizedAccessException("Chỉ Admin mới có quyền kiểm duyệt");
+
+            var GetKiemDuyetByKhoaHoc = await GetQueryable().Where(x => x.IdDoiTuong == request.IdKhoaHoc && x.CreatedId == userId).FirstOrDefaultAsync();
+            if (GetKiemDuyetByKhoaHoc == null)
+                throw new Exception("Khóa học này đã có người khác đang duyệt!");
 
             if (request.TrangThaiPheDuyet == null)
                 throw new Exception("Vui lòng chọn Duyệt khóa học ");
@@ -724,8 +667,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             if (khoaHoc.TrangThaiPheDuyet != "ChoDuyet" && khoaHoc.TrangThaiPheDuyet != "DangDuyet")
                 throw new Exception("Khóa học không ở trạng thái chờ duyệt.");
 
+            
+
             var ngayDuyet = DateTime.Now;
-            var lichSuList = new LichSuKiemDuyetKhoaHoc();
 
             // ── Lấy toàn bộ cây con của khóa học ──────────────────
             var phans = await _phanRepository
@@ -888,19 +832,14 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             var GetLichSuKiemDuyetKhoaHoc = await GetQueryable().Where(x => x.IdDoiTuong == khoaHoc.Id).FirstOrDefaultAsync();
 
 
-            if(GetLichSuKiemDuyetKhoaHoc != null)
+            if (GetLichSuKiemDuyetKhoaHoc != null)
             {
-                lichSuList = new LichSuKiemDuyetKhoaHoc
-                {
-                    Id = GetLichSuKiemDuyetKhoaHoc.Id,
-                    IdDoiTuong = GetLichSuKiemDuyetKhoaHoc.Id,
-                    LoaiDoiTuong = GetLichSuKiemDuyetKhoaHoc.LoaiDoiTuong,
-                    TrangThaiPheDuyet = GetLichSuKiemDuyetKhoaHoc.TrangThaiPheDuyet,
-                    LyDo = GetLichSuKiemDuyetKhoaHoc.LyDo,
-                    NgayDuyet = ngayDuyet
-                };
+                GetLichSuKiemDuyetKhoaHoc.IdDoiTuong = request.IdKhoaHoc;
+                GetLichSuKiemDuyetKhoaHoc.TrangThaiPheDuyet = request.TrangThaiPheDuyet;
+                GetLichSuKiemDuyetKhoaHoc.LyDo = request.LyDo;
+                GetLichSuKiemDuyetKhoaHoc.NgayDuyet = DateTime.UtcNow;
 
-                await UpdateAsync(lichSuList);
+                await UpdateAsync(GetLichSuKiemDuyetKhoaHoc);
                 await SaveAsync();
             }
 

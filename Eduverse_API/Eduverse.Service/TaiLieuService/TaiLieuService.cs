@@ -58,10 +58,8 @@ namespace Eduverse.Service.TaiLieuService
                 throw new UnauthorizedAccessException("Không thể xác định người dùng.");
             }
 
-            var query = GetAll()
-                .Where(x => x.TrangThaiPheDuyet != "TuChoi"
-                    && x.TrangThai != "DaXoa"
-                    && x.CreatedId == userId
+            var query = GetQueryable()
+                .Where(x => x.CreatedId == userId
                     && x.IdBaiGiang == IdBaiGiang)
                 .OrderBy(x => x.CreatedDate)
                 .Select(x => new TaiLieuDto

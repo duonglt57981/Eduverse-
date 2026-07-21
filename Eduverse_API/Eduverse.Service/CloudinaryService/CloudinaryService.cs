@@ -90,10 +90,17 @@ namespace Eduverse.Service.CloudinaryService
                 EagerAsync = true, // xử lý ngầm, không chờ — tránh timeout
                 EagerTransforms = new List<Transformation>
         {
-            // SD  – 480p
-            new Transformation().RawTransformation("sp_sd/vc_h264,ac_aac,f_m3u8"),
-            // FHD – 1080p
-            new Transformation().RawTransformation("sp_full_hd/vc_h264,ac_aac,f_m3u8"),
+            // 360p
+            new Transformation().RawTransformation("c_limit,w_640,h_360/vc_h264,ac_aac,f_m3u8"),
+
+            // 480p
+            new Transformation().RawTransformation("c_limit,w_854,h_480/vc_h264,ac_aac,f_m3u8"),
+
+            // 720p (HD)
+            new Transformation().RawTransformation("c_limit,w_1280,h_720/vc_h264,ac_aac,f_m3u8"),
+
+            // 1080p (Full HD)
+            new Transformation().RawTransformation("c_limit,w_1920,h_1080/vc_h264,ac_aac,f_m3u8"),
         },
             };
 

@@ -31,6 +31,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
 
     public class PhanChoDuyetDto
     {
+        public Guid? Id { get; set; }
         public string? TenPhan { get; set; }
 
         public string? MieuTa { get; set; }
@@ -115,6 +116,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
 
     public class DapAnChoDuyetDto
     {
+        public Guid Id { get; set; }
         public string? NoiDungDapAn { get; set; }
         public bool? LaDapAnDung { get; set; }
         public int? ThuTuSapXep { get; set; }

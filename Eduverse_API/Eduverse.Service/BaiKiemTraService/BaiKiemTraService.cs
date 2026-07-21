@@ -946,62 +946,62 @@ namespace Eduverse.Service.BaiKiemTraService
         }
 
         // ===== CẬP NHẬT BẢN NHÁP =====
-        private async Task UpdateDraftAsync(BaiKiemTra banNhap, BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
-        {
-            banNhap.IdBanGhiTruoc = banGoc.Id;
-            banNhap.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
-            banNhap.MoTa = request.MoTa?.Trim();
-            banNhap.DiemDat = 100;
-            banNhap.GioiHanThoiGian = 0;
-            banNhap.ChoLamLai = true;
-            banNhap.SoLanLamToiDa = 0;
-            banNhap.TrangThaiPheDuyet = "DangSua";
-            banNhap.TrangThai = "DangSua";
-            banNhap.IsBanHienTai = false;
-            banNhap.UpdatedDate = DateTime.Now;
-            banNhap.UpdatedBy = nguoiTao.ToString();
-            banNhap.ThuTuSapXep = request.ThuTuSapXep;
+        //private async Task UpdateDraftAsync(BaiKiemTra banNhap, BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
+        //{
+        //    banNhap.IdBanGhiTruoc = banGoc.Id;
+        //    banNhap.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
+        //    banNhap.MoTa = request.MoTa?.Trim();
+        //    banNhap.DiemDat = 100;
+        //    banNhap.GioiHanThoiGian = 0;
+        //    banNhap.ChoLamLai = true;
+        //    banNhap.SoLanLamToiDa = 0;
+        //    banNhap.TrangThaiPheDuyet = "DangSua";
+        //    banNhap.TrangThai = "DangSua";
+        //    banNhap.IsBanHienTai = false;
+        //    banNhap.UpdatedDate = DateTime.Now;
+        //    banNhap.UpdatedBy = nguoiTao.ToString();
+        //    banNhap.ThuTuSapXep = request.ThuTuSapXep;
 
-            await UpdateAsync(banNhap);
-            await SaveAsync();
+        //    await UpdateAsync(banNhap);
+        //    await SaveAsync();
 
-            if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
-            {
-                await UpdateQuestionsAndAnswersAsync(banNhap.Id, request.DanhSachCauHoi);
-            }
-        }
+        //    if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
+        //    {
+        //        await UpdateQuestionsAndAnswersAsync(banNhap.Id, request.DanhSachCauHoi);
+        //    }
+        //}
 
-        // ===== TẠO BẢN NHÁP MỚI =====
-        private async Task<BaiKiemTra> CreateDraftFromOriginalAsync(BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
-        {
-            var banNhapMoi = new BaiKiemTra
-            {
-                Id = Guid.NewGuid(),
-                IdBanGhiTruoc = banGoc.Id,
-                IdPhan = banGoc.IdPhan,
-                TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
-                MoTa = request.MoTa?.Trim(),
-                DiemDat = 100,
-                GioiHanThoiGian = 0,
-                ChoLamLai = true,
-                SoLanLamLai = 0,
-                SoLanLamToiDa = 0,
-                TrangThai = "DangSua",
-                TrangThaiPheDuyet = "DangSua",
-                IsBanHienTai = false,
-                ThuTuSapXep = request.ThuTuSapXep
-            };
+        //// ===== TẠO BẢN NHÁP MỚI =====
+        //private async Task<BaiKiemTra> CreateDraftFromOriginalAsync(BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
+        //{
+        //    var banNhapMoi = new BaiKiemTra
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        IdBanGhiTruoc = banGoc.Id,
+        //        IdPhan = banGoc.IdPhan,
+        //        TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
+        //        MoTa = request.MoTa?.Trim(),
+        //        DiemDat = 100,
+        //        GioiHanThoiGian = 0,
+        //        ChoLamLai = true,
+        //        SoLanLamLai = 0,
+        //        SoLanLamToiDa = 0,
+        //        TrangThai = "DangSua",
+        //        TrangThaiPheDuyet = "DangSua",
+        //        IsBanHienTai = false,
+        //        ThuTuSapXep = request.ThuTuSapXep
+        //    };
 
-            await CreateAsync(banNhapMoi);
-            await SaveAsync();
+        //    await CreateAsync(banNhapMoi);
+        //    await SaveAsync();
 
-            if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
-            {
-                await CopyQuestionsAndAnswersAsync(banGoc.Id, banNhapMoi.Id, request.DanhSachCauHoi);
-            }
+        //    if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
+        //    {
+        //        await CopyQuestionsAndAnswersAsync(banGoc.Id, banNhapMoi.Id, request.DanhSachCauHoi);
+        //    }
 
-            return banNhapMoi;
-        }
+        //    return banNhapMoi;
+        //}
 
         // ===== CẬP NHẬT CÂU HỎI VÀ ĐÁP ÁN =====
         private async Task UpdateQuestionsAndAnswersAsync(Guid idBaiKiemTra, List<UpdateCauHoiRequest> cauHoiRequests)
@@ -1054,8 +1054,8 @@ namespace Eduverse.Service.BaiKiemTraService
                         LoaiCauHoi = loaiCauHoi,
                         DoKho = cauHoiReq.DoKho,
                         ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0,
-                        TrangThai = "HoatDong",
-                        TrangThaiPheDuyet = "ChoDuyet",
+                        TrangThai = "DangSua",
+                        TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
                     };
                     await _cauHoiService.CreateAsync(cauHoiMoi);
@@ -1070,8 +1070,8 @@ namespace Eduverse.Service.BaiKiemTraService
                             NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
                             LaDapAnDung = dapAnReq.LaDapAnDung,
                             ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
-                            TrangThai = "HoatDong",
-                            TrangThaiPheDuyet = "ChoDuyet",
+                            TrangThai = "DangSua",
+                            TrangThaiPheDuyet = "DangSua",
                             IsBanHienTai = true,
                         };
                         await _dapAnService.CreateAsync(dapAnMoi);
@@ -1099,9 +1099,7 @@ namespace Eduverse.Service.BaiKiemTraService
             {
                 foreach (var d in canXoa)
                 {
-                    d.IsDeleted = true;
-                    d.UpdatedDate = DateTime.Now;
-                    await _dapAnService.UpdateAsync(d);
+                    await _dapAnService.DeleteAsync(d);
                 }
                 await _dapAnService.SaveAsync();
             }
@@ -1114,7 +1112,6 @@ namespace Eduverse.Service.BaiKiemTraService
                     dapAnCu.NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim();
                     dapAnCu.LaDapAnDung = dapAnReq.LaDapAnDung;
                     dapAnCu.ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0;
-                    dapAnCu.UpdatedDate = DateTime.Now;
                     await _dapAnService.UpdateAsync(dapAnCu);
                 }
                 else
@@ -1126,8 +1123,8 @@ namespace Eduverse.Service.BaiKiemTraService
                         NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
                         LaDapAnDung = dapAnReq.LaDapAnDung,
                         ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
-                        TrangThai = "HoatDong",
-                        TrangThaiPheDuyet = "ChoDuyet",
+                        TrangThai = "DangSua",
+                        TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
                     };
                     await _dapAnService.CreateAsync(dapAnMoi);
@@ -1136,55 +1133,55 @@ namespace Eduverse.Service.BaiKiemTraService
             await _dapAnService.SaveAsync();
         }
 
-        // ===== COPY CÂU HỎI VÀ ĐÁP ÁN =====
-        private async Task CopyQuestionsAndAnswersAsync(Guid idBaiKiemTraGoc, Guid idBaiKiemTraMoi, List<UpdateCauHoiRequest> cauHoiRequests)
-        {
-            foreach (var cauHoiReq in cauHoiRequests)
-            {
-                var soDapAnDung = cauHoiReq.DanhSachDapAns?.Count(d => d.LaDapAnDung == true) ?? 0;
-                var loaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI";
+        //// ===== COPY CÂU HỎI VÀ ĐÁP ÁN =====
+        //private async Task CopyQuestionsAndAnswersAsync(Guid idBaiKiemTraGoc, Guid idBaiKiemTraMoi, List<UpdateCauHoiRequest> cauHoiRequests)
+        //{
+        //    foreach (var cauHoiReq in cauHoiRequests)
+        //    {
+        //        var soDapAnDung = cauHoiReq.DanhSachDapAns?.Count(d => d.LaDapAnDung == true) ?? 0;
+        //        var loaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI";
 
-                var cauHoiMoi = new CauHoi
-                {
-                    Id = Guid.NewGuid(),
-                    IdBaiKiemTra = idBaiKiemTraMoi,
-                    TenCauHoi = cauHoiReq.TenCauHoi?.Trim(),
-                    NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
-                    LoaiCauHoi = loaiCauHoi,
-                    DoKho = cauHoiReq.DoKho,
-                    ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0,
-                    TrangThai = "HoatDong",
-                    TrangThaiPheDuyet = "ChoDuyet",
-                    IsBanHienTai = true,
-                };
-                await _cauHoiService.CreateAsync(cauHoiMoi);
-                await _cauHoiService.SaveAsync();
+        //        var cauHoiMoi = new CauHoi
+        //        {
+        //            Id = Guid.NewGuid(),
+        //            IdBaiKiemTra = idBaiKiemTraMoi,
+        //            TenCauHoi = cauHoiReq.TenCauHoi?.Trim(),
+        //            NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
+        //            LoaiCauHoi = loaiCauHoi,
+        //            DoKho = cauHoiReq.DoKho,
+        //            ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0,
+        //            TrangThai = "DangSua",
+        //            TrangThaiPheDuyet = "DangSua",
+        //            IsBanHienTai = true,
+        //        };
+        //        await _cauHoiService.CreateAsync(cauHoiMoi);
+        //        await _cauHoiService.SaveAsync();
 
-                foreach (var dapAnReq in cauHoiReq.DanhSachDapAns)
-                {
-                    var dapAnMoi = new DapAn
-                    {
-                        Id = Guid.NewGuid(),
-                        IdCauHoi = cauHoiMoi.Id,
-                        NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
-                        LaDapAnDung = dapAnReq.LaDapAnDung,
-                        ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
-                        TrangThai = "HoatDong",
-                        TrangThaiPheDuyet = "ChoDuyet",
-                        IsBanHienTai = true,
-                    };
-                    await _dapAnService.CreateAsync(dapAnMoi);
-                }
-                await _dapAnService.SaveAsync();
-            }
-        }
+        //        foreach (var dapAnReq in cauHoiReq.DanhSachDapAns)
+        //        {
+        //            var dapAnMoi = new DapAn
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                IdCauHoi = cauHoiMoi.Id,
+        //                NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
+        //                LaDapAnDung = dapAnReq.LaDapAnDung,
+        //                ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
+        //                TrangThai = "DangSua",
+        //                TrangThaiPheDuyet = "DangSua",
+        //                IsBanHienTai = true,
+        //            };
+        //            await _dapAnService.CreateAsync(dapAnMoi);
+        //        }
+        //        await _dapAnService.SaveAsync();
+        //    }
+        //}
 
-        // ===== HELPER: LẤY USER ID =====
-        private Guid GetCurrentUserId()
-        {
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            return Guid.TryParse(userId, out var result) ? result : Guid.Empty;
-        }
+        //// ===== HELPER: LẤY USER ID =====
+        //private Guid GetCurrentUserId()
+        //{
+        //    var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    return Guid.TryParse(userId, out var result) ? result : Guid.Empty;
+        //}
 
         #endregion
 
