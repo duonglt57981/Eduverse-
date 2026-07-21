@@ -167,10 +167,6 @@ function formatLessonDuration(seconds?: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-/**
- * API có thể trả về theo nhiều dạng tuỳ vào việc service đã unwrap hay chưa.
- * Hàm này cố gắng tìm ra object khoá học thật sự (có field "id" + "tieuDe").
- */
 function extractKhoaHoc(res: any): any | null {
   if (!res) return null;
   const candidates = [res, res.data, res.data?.data, res.data?.data?.data];
@@ -182,7 +178,6 @@ function extractKhoaHoc(res: any): any | null {
   return null;
 }
 
-/** Tìm bài giảng free đầu tiên có video trong toàn bộ khóa học */
 function findFirstFreeVideo(
   khoaHoc: any,
 ): { url: string; title: string } | null {
@@ -220,6 +215,7 @@ function CourseRegistrationContent() {
     url: string | null;
     title: string;
   }>({ open: false, url: null, title: "" });
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -302,6 +298,7 @@ function CourseRegistrationContent() {
       url: String(bg.urlBaiGiang),
       title: bg.tieuDe,
     });
+    setIsVideoLoading(true);
   };
 
   const handleOpenPreviewVideo = (preview: { url: string; title: string }) => {
@@ -310,10 +307,12 @@ function CourseRegistrationContent() {
       url: String(preview.url),
       title: preview.title,
     });
+    setIsVideoLoading(true);
   };
 
   const handleCloseVideo = () => {
     setVideoPlayer({ open: false, url: null, title: "" });
+    setIsVideoLoading(true);
   };
 
   const previewVideo = findFirstFreeVideo(khoaHoc);
@@ -351,14 +350,9 @@ function CourseRegistrationContent() {
   const isFree =
     khoaHoc.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!khoaHoc.gia || khoaHoc.gia <= 0);
-  console.log(
-    "DEBUG gia:",
-    khoaHoc.gia,
-    "| loai:",
-    khoaHoc.loaiKhoaHoc,
-    "| isFree:",
-    isFree,
-  );
+
+  const giangVien = khoaHoc.createdBy || "Không xác định";
+
   return (
     <Box>
       <Grid container spacing={3}>
@@ -389,7 +383,7 @@ function CourseRegistrationContent() {
             >
               {khoaHoc.tieuDe}
             </Typography>
-            <Typography
+            <Box
               sx={{
                 color: "#c9c9c9",
                 fontSize: 13,
@@ -400,9 +394,26 @@ function CourseRegistrationContent() {
                 WebkitLineClamp: 3,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
+                "& img": { maxWidth: "100%" },
+                "& ul, & ol": { pl: 2 },
+                "& p": { mb: 1 },
+              }}
+              dangerouslySetInnerHTML={{ __html: khoaHoc.moTa || "" }}
+            />
+
+            {/* Hiển thị tên giảng viên */}
+            <Typography
+              sx={{
+                color: "#ddd",
+                fontSize: 13,
+                mb: 1.5,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
               }}
             >
-              {khoaHoc.moTa}
+              <SchoolIcon sx={{ fontSize: 16, color: RED }} />
+              Giảng viên: <strong>{giangVien}</strong>
             </Typography>
 
             <Stack
@@ -495,17 +506,18 @@ function CourseRegistrationContent() {
                   <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 2 }}>
                     Mô tả khóa học
                   </Typography>
-                  <Typography
+                  <Box
                     sx={{
                       fontSize: 13.5,
                       color: "text.secondary",
                       lineHeight: 1.9,
                       mb: 3,
-                      whiteSpace: "pre-line",
+                      "& img": { maxWidth: "100%" },
+                      "& ul, & ol": { pl: 2 },
+                      "& p": { mb: 1 },
                     }}
-                  >
-                    {khoaHoc.moTa}
-                  </Typography>
+                    dangerouslySetInnerHTML={{ __html: khoaHoc.moTa || "" }}
+                  />
                   <Divider sx={{ mb: 2.5, borderColor: "#f3d9d9" }} />
                   <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
                     {[
@@ -739,7 +751,6 @@ function CourseRegistrationContent() {
         <Grid size={{ xs: 12, md: 4 }}>
           <SidebarCard>
             <ThumbBox bgimg={khoaHoc.hinhAnhKhoaHoc}>
-              {/* Lớp neo giữa tuyệt đối — fix lỗi nút Play bị lệch xuống dưới */}
               <Box
                 sx={{
                   position: "absolute",
@@ -830,7 +841,6 @@ function CourseRegistrationContent() {
 
               {!enrolled ? (
                 isFree ? (
-                  // Khóa học miễn phí → đăng ký thẳng
                   <Button
                     fullWidth
                     variant="contained"
@@ -866,7 +876,6 @@ function CourseRegistrationContent() {
                     Đăng ký miễn phí
                   </Button>
                 ) : (
-                  // Khóa học trả phí → thêm vào giỏ rồi chuyển sang giỏ hàng
                   <Button
                     fullWidth
                     variant="contained"
@@ -1164,7 +1173,7 @@ function CourseRegistrationContent() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Video preview player ── */}
+      {/* ── Video preview player (modal nhỏ gọn, tỉ lệ 16:9) ── */}
       <Dialog
         open={videoPlayer.open}
         onClose={handleCloseVideo}
@@ -1173,58 +1182,129 @@ function CourseRegistrationContent() {
         slotProps={{
           paper: {
             sx: {
-              borderRadius: 3,
-              bgcolor: "#000",
+              borderRadius: "20px",
+              bgcolor: "#111214",
               overflow: "hidden",
+              boxShadow: "0 24px 70px rgba(0,0,0,0.55)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              m: 2,
+            },
+          },
+          backdrop: {
+            sx: {
+              backgroundColor: "rgba(10,10,10,0.7)",
+              backdropFilter: "blur(6px)",
             },
           },
         }}
       >
+        {/* Header nhỏ gọn */}
         <Stack
           direction="row"
           sx={{
-            px: 2,
-            py: 1.25,
-            bgcolor: "#1c1d1f",
+            px: 2.25,
+            py: 1.5,
             alignItems: "center",
             justifyContent: "space-between",
+            gap: 2,
           }}
         >
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <PlayCircleIcon sx={{ fontSize: 18, color: RED }} />
-            <Typography sx={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>
+          <Stack
+            direction="row"
+            spacing={1.25}
+            sx={{ alignItems: "center", minWidth: 0 }}
+          >
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: "50%",
+                bgcolor: alpha(RED, 0.18),
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <PlayCircleIcon sx={{ fontSize: 17, color: RED }} />
+            </Box>
+            <Typography
+              sx={{
+                color: "#fff",
+                fontSize: 13.5,
+                fontWeight: 600,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {videoPlayer.title}
             </Typography>
           </Stack>
           <IconButton
             size="small"
             onClick={handleCloseVideo}
-            sx={{ color: "#fff" }}
+            sx={{
+              color: "rgba(255,255,255,0.7)",
+              bgcolor: "rgba(255,255,255,0.06)",
+              "&:hover": {
+                bgcolor: "rgba(255,255,255,0.14)",
+                color: "#fff",
+              },
+              flexShrink: 0,
+            }}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
         </Stack>
+
+        {/* Khung video tỉ lệ 16:9 */}
         <Box
           sx={{
             position: "relative",
             width: "100%",
-            pt: "56.25%",
+            aspectRatio: "16 / 9",
             bgcolor: "#000",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          {videoPlayer.url && (
+          {isVideoLoading && (
+            <CircularProgress
+              sx={{ color: RED, position: "absolute", zIndex: 5 }}
+              size={40}
+              thickness={4}
+            />
+          )}
+
+          {videoPlayer.url ? (
             <Box
               component="video"
               src={videoPlayer.url}
               controls
               autoPlay
+              playsInline
+              preload="auto"
+              crossOrigin="anonymous"
+              onCanPlay={() => setIsVideoLoading(false)}
+              onError={(e) => {
+                console.error("Video error:", e);
+                setIsVideoLoading(false);
+              }}
+              onWaiting={() => setIsVideoLoading(true)}
+              onPlaying={() => setIsVideoLoading(false)}
               sx={{
-                position: "absolute",
-                inset: 0,
                 width: "100%",
                 height: "100%",
+                objectFit: "contain",
+                backgroundColor: "#000",
               }}
             />
+          ) : (
+            <Typography sx={{ color: "#fff", fontSize: 13 }}>
+              Không thể tải video
+            </Typography>
           )}
         </Box>
       </Dialog>

@@ -199,7 +199,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPost("createfullkhoahocdraft/{IdKhoaHoc}")]
-        //[Authorize(Roles = "Admin,GiaoVien")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<KhoaHocDraftResultDto>> CreateFullKhoaHocDraft(Guid IdKhoaHoc)
         {
             try

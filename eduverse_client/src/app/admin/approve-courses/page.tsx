@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -147,7 +146,7 @@ export default function DuyetKhoaHocPage() {
     setActionLoading(true);
     try {
       const res = await kiemDuyetService.KiemDuyetKhoaHoc({
-        idBanNhap: id,
+        idKhoaHoc: id,
         trangThaiPheDuyet: isDuyet ? "DaDuyet" : "TuChoi",
       });
       if (res?.status) {
@@ -169,7 +168,7 @@ export default function DuyetKhoaHocPage() {
       // idKhoaHoc, trangThaiPheDuyet: "TuChoi" thay isDuyet: false, và lyDo
       // (không phải ghiChu) để truyền lý do từ chối.
       const res = await kiemDuyetService.KiemDuyetKhoaHoc({
-        idBanNhap: id,
+        idKhoaHoc: id,
         trangThaiPheDuyet: "TuChoi",
         lyDo: ghiChuValue,
       });
@@ -186,7 +185,6 @@ export default function DuyetKhoaHocPage() {
       setActionLoading(false);
     }
   };
-
   const trangThaiKhoaHoc = detail
     ? normalizeTrangThai(detail.trangThaiPheDuyet)
     : null;
@@ -494,7 +492,6 @@ export default function DuyetKhoaHocPage() {
             </Box>
           </Box>
         </Box>
-
       </DashboardShell>
     </AuthGuard>
   );

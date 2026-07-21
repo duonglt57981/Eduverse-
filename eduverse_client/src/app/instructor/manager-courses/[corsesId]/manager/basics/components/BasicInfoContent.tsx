@@ -27,7 +27,7 @@ import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import AttachMoneyRoundedIcon from "@mui/icons-material/AttachMoneyRounded";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { DanhMucDto } from "@/src/types/khoaHoc";
 import { danhMucService } from "@/src/services/danhmucService";
@@ -101,8 +101,15 @@ function SectionHeader({
 }
 
 export default function BasicInfoContent() {
-  const { thongTin, setThongTin, refreshData, idKhoaHoc, loading } =
-    useCourseEdit();
+  const {
+    thongTin,
+    setThongTin,
+    refreshData,
+    idKhoaHoc,
+    loading,
+    isReadOnly,
+    trangThai,
+  } = useCourseEdit();
   const [loadingSave, setLoadingSave] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -119,7 +126,6 @@ export default function BasicInfoContent() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Dùng useMemo để ổn định tham chiếu service, tránh effect chạy lại không cần thiết
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
   // Lấy danh sách danh mục để hiển thị trong dropdown
@@ -141,7 +147,6 @@ export default function BasicInfoContent() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     const fetchData = async () => {
       if (!idKhoaHoc) return;
       try {
@@ -179,10 +184,10 @@ export default function BasicInfoContent() {
       setLoiTieuDe(null);
     }
 
-    if (thongTin.gia !== undefined && thongTin.gia < 0) {
+    if (thongTin.giaGoc !== undefined && thongTin.giaGoc < 0) {
       setLoiGia("Giá không được nhỏ hơn 0");
       hopLe = false;
-    } else if (thongTin.gia !== undefined && thongTin.gia > 100000000) {
+    } else if (thongTin.giaGoc !== undefined && thongTin.giaGoc > 100000000) {
       setLoiGia("Giá không được lớn hơn 100,000,000");
       hopLe = false;
     } else {
@@ -228,6 +233,7 @@ export default function BasicInfoContent() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isReadOnly) return;
     const file = e.target.files?.[0] || null;
     validateAndSetImage(file);
   };
@@ -235,6 +241,7 @@ export default function BasicInfoContent() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
+    if (isReadOnly) return;
     const file = e.dataTransfer.files?.[0] || null;
     validateAndSetImage(file);
   };
@@ -257,6 +264,11 @@ export default function BasicInfoContent() {
   };
 
   const handleSave = async () => {
+    if (isReadOnly) {
+      setError("Không thể chỉnh sửa khi khóa học đang chờ duyệt");
+      return;
+    }
+
     setError(null);
     setSuccess(null);
 
@@ -273,7 +285,7 @@ export default function BasicInfoContent() {
       payload.append("moTa", thongTin.moTa || "");
       payload.append("capDo", thongTin.capDo || "");
       payload.append("isBanHienTai", String(isBanHienTai));
-      payload.append("gia", String(thongTin.gia ?? 0));
+      payload.append("giaGoc", String(thongTin.giaGoc ?? 0));
       danhSachDanhMucId.forEach((id) => payload.append("danhSachDanhMuc", id));
       if (imageFile) payload.append("img", imageFile);
 
@@ -283,7 +295,7 @@ export default function BasicInfoContent() {
         return;
       }
       setSuccess("Cập nhật thông tin thành công!");
-      await refreshData(); // reload toàn bộ dữ liệu từ server
+      await refreshData();
       setImageFile(null);
     } catch (err) {
       console.error(err);
@@ -341,6 +353,17 @@ export default function BasicInfoContent() {
           </Typography>
         </Box>
 
+        {isReadOnly && (
+          <Alert
+            severity={trangThai === "DaDuyet" ? "success" : "info"}
+            sx={{ mb: 2 }}
+          >
+            {trangThai === "DaDuyet"
+              ? "Khóa học đã được duyệt. Bạn không thể chỉnh sửa thông tin."
+              : "Khóa học đang trong quá trình duyệt. Bạn không thể chỉnh sửa thông tin trong giai đoạn này."}
+          </Alert>
+        )}
+
         {(error || success) && (
           <Box sx={{ mb: 2 }}>
             {error && <Alert severity="error">{error}</Alert>}
@@ -368,11 +391,13 @@ export default function BasicInfoContent() {
                 placeholder="VD: Lập trình React từ cơ bản đến nâng cao"
                 value={tenKhoaHoc}
                 onChange={(e) => {
+                  if (isReadOnly) return;
                   setThongTin({ tieuDe: e.target.value });
                   if (loiTieuDe) setLoiTieuDe(null);
                 }}
                 error={!!loiTieuDe}
                 helperText={loiTieuDe}
+                disabled={isReadOnly}
                 slotProps={{
                   htmlInput: { maxLength: DO_DAI_TIEU_DE_TOI_DA },
                 }}
@@ -407,16 +432,30 @@ export default function BasicInfoContent() {
                   border: loiMoTa ? "1px solid #D32F2F" : "1px solid #E3E6EB",
                 }}
               >
-                <RichTextEditor
-                  key={thongTin.moTa}
-                  value={thongTin.moTa || ""}
-                  onChange={(html) => {
-                    setThongTin({ moTa: html });
-                    if (loiMoTa) setLoiMoTa(null);
-                  }}
-                  placeholder="Nhập mô tả chi tiết về khóa học..."
-                  minHeight={200}
-                />
+                {isReadOnly ? (
+                  <Box
+                    sx={{
+                      p: 2,
+                      minHeight: 200,
+                      bgcolor: "#f9f9f9",
+                      borderRadius: 2,
+                      "& img": { maxWidth: "100%" },
+                      "& *": { maxWidth: "100%" },
+                    }}
+                    dangerouslySetInnerHTML={{ __html: thongTin.moTa || "" }}
+                  />
+                ) : (
+                  <RichTextEditor
+                    key={thongTin.moTa}
+                    value={thongTin.moTa || ""}
+                    onChange={(html) => {
+                      setThongTin({ moTa: html });
+                      if (loiMoTa) setLoiMoTa(null);
+                    }}
+                    placeholder="Nhập mô tả chi tiết về khóa học..."
+                    minHeight={200}
+                  />
+                )}
               </Box>
               <Typography
                 sx={{
@@ -440,7 +479,7 @@ export default function BasicInfoContent() {
               />
               <Stack spacing={2}>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                  <FormControl fullWidth>
+                  <FormControl fullWidth disabled={isReadOnly}>
                     <InputLabel>Cấp độ</InputLabel>
                     <Select
                       value={thongTin.capDo || ""}
@@ -467,7 +506,7 @@ export default function BasicInfoContent() {
                 </Stack>
 
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                  <FormControl fullWidth>
+                  <FormControl fullWidth disabled={isReadOnly}>
                     <InputLabel>Danh mục</InputLabel>
                     <Select
                       multiple
@@ -514,7 +553,7 @@ export default function BasicInfoContent() {
               </Stack>
             </Paper>
 
-            {/* Giá */}
+            {/* Giá khóa học */}
             <Paper elevation={0} sx={cardSx}>
               <SectionHeader
                 icon={<AttachMoneyRoundedIcon fontSize="small" />}
@@ -526,15 +565,17 @@ export default function BasicInfoContent() {
                 type="text"
                 inputMode="numeric"
                 placeholder="VD: 500.000"
-                value={thongTin.gia !== undefined ? thongTin.gia : ""}
+                value={thongTin.giaGoc !== undefined ? thongTin.giaGoc : ""}
                 onChange={(e) => {
+                  if (isReadOnly) return;
                   const raw = e.target.value.replace(/\D/g, "");
                   const val = raw === "" ? undefined : Number(raw);
-                  setThongTin({ gia: val });
+                  setThongTin({ giaGoc: val });
                   if (loiGia) setLoiGia(null);
                 }}
                 error={!!loiGia}
                 helperText={loiGia}
+                disabled={isReadOnly}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -592,26 +633,28 @@ export default function BasicInfoContent() {
                         sx={{ width: "100%", height: "100%", borderRadius: 0 }}
                         variant="square"
                       />
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setImageFile(null);
-                          setLoiHinhAnh(null);
-                          setThongTin({ hinhAnhKhoaHoc: undefined });
-                        }}
-                        sx={{
-                          position: "absolute",
-                          top: 6,
-                          right: 6,
-                          bgcolor: "rgba(255,255,255,0.92)",
-                          boxShadow: 1,
-                          width: 26,
-                          height: 26,
-                          "&:hover": { bgcolor: "#fff" },
-                        }}
-                      >
-                        <CloseRoundedIcon sx={{ fontSize: 16 }} />
-                      </IconButton>
+                      {!isReadOnly && (
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setImageFile(null);
+                            setLoiHinhAnh(null);
+                            setThongTin({ hinhAnhKhoaHoc: undefined });
+                          }}
+                          sx={{
+                            position: "absolute",
+                            top: 6,
+                            right: 6,
+                            bgcolor: "rgba(255,255,255,0.92)",
+                            boxShadow: 1,
+                            width: 26,
+                            height: 26,
+                            "&:hover": { bgcolor: "#fff" },
+                          }}
+                        >
+                          <CloseRoundedIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      )}
                     </>
                   ) : (
                     <Box
@@ -677,10 +720,12 @@ export default function BasicInfoContent() {
                       hidden
                       ref={fileInputRef}
                       onChange={handleFileChange}
+                      disabled={isReadOnly}
                     />
                     <Button
                       variant="outlined"
                       onClick={() => fileInputRef.current?.click()}
+                      disabled={isReadOnly}
                       sx={{
                         flexShrink: 0,
                         textTransform: "none",
@@ -720,20 +765,25 @@ export default function BasicInfoContent() {
               <Button
                 variant="contained"
                 onClick={handleSave}
-                disabled={loadingSave || loading}
+                disabled={loadingSave || loading || isReadOnly}
                 sx={{
-                  bgcolor: MAU.chinh,
+                  bgcolor: isReadOnly ? "#9AA2B1" : MAU.chinh,
                   textTransform: "none",
                   fontWeight: 700,
                   borderRadius: 2,
                   px: 4,
                   py: 1,
                   boxShadow: "none",
-                  "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
+                  "&:hover": {
+                    bgcolor: isReadOnly ? "#9AA2B1" : MAU.chinhDam,
+                    boxShadow: "none",
+                  },
                 }}
               >
                 {loadingSave ? (
                   <CircularProgress size={22} color="inherit" />
+                ) : isReadOnly ? (
+                  "Đang chờ duyệt"
                 ) : (
                   "Lưu thay đổi"
                 )}

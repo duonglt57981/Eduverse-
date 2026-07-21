@@ -52,12 +52,10 @@ export default function CourseStatusAction({
   const [moPopupThieu, setMoPopupThieu] = useState(false);
   const [danhSachThieu, setDanhSachThieu] = useState<MucThieu[]>([]);
 
-  // Sử dụng useMemo thay vì useEffect + setState
   const { coDangSua, chiTiet } = useMemo(() => {
     return kiemTraCoBanGhiDangSua(thongTinKhoaHoc, phans);
   }, [thongTinKhoaHoc, phans]);
 
-  // Lấy danh sách các loại đang ở DangSua để hiển thị
   const dangSuaList = useMemo((): string[] => {
     const list: string[] = [];
     if (chiTiet.khoaHoc) list.push("Khóa học");
@@ -70,7 +68,6 @@ export default function CourseStatusAction({
   }, [chiTiet]);
 
   const xuLyBamGuiPheDuyet = async () => {
-    // Kiểm tra điều kiện gửi duyệt
     const ketQua = kiemTraDieuKienGuiDuyet(thongTinKhoaHoc, phans);
     if (!ketQua.hopLe) {
       setDanhSachThieu(ketQua.danhSachThieu);
@@ -102,6 +99,18 @@ export default function CourseStatusAction({
     );
   }
 
+  // ===== TRẠNG THÁI CHỜ DUYỆT =====
+  if (trangThai === "ChoDuyet") {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <LockOutlinedIcon sx={{ fontSize: 18, color: "#FFB74D" }} />
+        <Typography sx={{ fontSize: 13, color: "#FFB74D" }}>
+          ⏳ Đang chờ phê duyệt — không thể chỉnh sửa
+        </Typography>
+      </Box>
+    );
+  }
+
   // ===== TRẠNG THÁI TỪ CHỐI =====
   if (trangThai === "TuChoi") {
     return (
@@ -125,17 +134,7 @@ export default function CourseStatusAction({
     );
   }
 
-  // ===== TRẠNG THÁI CHỜ DUYỆT =====
-  if (trangThai === "ChoDuyet") {
-    return (
-      <Typography sx={{ fontSize: 13, color: "#FFB74D" }}>
-        Đang chờ phê duyệt
-      </Typography>
-    );
-  }
-
   // ===== TRẠNG THÁI ĐANG SỬA (Mặc định) =====
-  // Kiểm tra nếu KHÔNG có bản ghi DangSua nào => disabled nút Gửi phê duyệt
   const isDisabled = !coDangSua;
 
   return (

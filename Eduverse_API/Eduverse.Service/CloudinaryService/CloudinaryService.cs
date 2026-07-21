@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using CloudinaryDotNet;
+﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Eduverse.Service.CloudinaryService.Dto;
+using Microsoft.AspNetCore.Http;
+using Xabe.FFmpeg;
+using Xabe.FFmpeg.Downloader;
 
 
 namespace Eduverse.Service.CloudinaryService
@@ -20,19 +22,62 @@ namespace Eduverse.Service.CloudinaryService
         #region uploadvideo
         public async Task<CloudinaryVideoDto> UploadVideoBaiGiangAsync(IFormFile file, CancellationToken cancellationToken = default)
         {
+            // ── 0. Đảm bảo FFmpeg đã sẵn sàng ──
+            string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg");
+            if (!Directory.Exists(ffmpegPath))
+                Directory.CreateDirectory(ffmpegPath);
+
+            string ffmpegExe = Path.Combine(ffmpegPath, "ffmpeg.exe");
+            if (!File.Exists(ffmpegExe))
+            {
+                await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official, ffmpegPath);
+            }
+            FFmpeg.SetExecutablesPath(ffmpegPath);
+
             if (file == null || file.Length == 0)
                 throw new Exception("File không hợp lệ");
 
-            const long maxSize = 2L * 1024 * 1024 * 1024;
+            // Tối đa 100MB
+            const long maxSize = 100L * 1024 * 1024;
             if (file.Length > maxSize)
-                throw new Exception("Video không được vượt quá 2GB");
+                throw new Exception("Video không được vượt quá 100MB");
 
             var extension = Path.GetExtension(file.FileName).ToLower();
             string[] allowedExtensions = [".mp4", ".mov", ".avi", ".mkv", ".webm"];
             if (!allowedExtensions.Contains(extension))
                 throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
 
-            // ── 2. Upload ────────────────────────────────────────────────
+            // ── 1b. Kiểm tra độ phân giải TRƯỚC KHI upload lên Cloudinary ──
+            // Lưu file tạm ra đĩa để FFmpeg đọc metadata (FFmpeg cần path, không đọc trực tiếp Stream)
+            const int minResolution = 480;
+            var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}{extension}");
+
+            try
+            {
+                await using (var tempStream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await using var probeStream = file.OpenReadStream();
+                    await probeStream.CopyToAsync(tempStream, cancellationToken);
+                }
+
+                var mediaInfo = await FFmpeg.GetMediaInfo(tempFilePath, cancellationToken);
+                var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
+
+                if (videoStream == null)
+                    throw new Exception("Không đọc được thông tin video. File có thể bị lỗi hoặc không đúng định dạng.");
+
+                var canhNho = Math.Min(videoStream.Width, videoStream.Height);
+                if (canhNho < minResolution)
+                    throw new Exception(
+                        $"Độ phân giải video quá thấp ({videoStream.Width}x{videoStream.Height}). Yêu cầu tối thiểu 480p.");
+            }
+            finally
+            {
+                if (File.Exists(tempFilePath))
+                    File.Delete(tempFilePath);
+            }
+
+            // ── 2. Upload (chỉ chạy tới đây khi đã chắc chắn đạt chuẩn) ───
             await using var inputStream = file.OpenReadStream();
 
             var uploadParams = new VideoUploadParams
@@ -85,7 +130,6 @@ namespace Eduverse.Service.CloudinaryService
                 ThoiLuong = thoiLuong,
             };
         }
-
 
         // ── Polling: chờ derived có m3u8 ────────────────────────────────
         private async Task<(bool ready, string? hlsUrl)> WaitForHlsReadyAsync(string publicId,CancellationToken cancellationToken,int maxRetry = 60,int delaySeconds = 5)
@@ -154,97 +198,128 @@ namespace Eduverse.Service.CloudinaryService
         }
 
 
-        public async Task<CloudinaryVideoDto> UpdateVideoBaiGiangAsync(string publicId,IFormFile file,CancellationToken cancellationToken = default)
+        
+
+        public async Task<CloudinaryVideoDto> UpdateVideoBaiGiangAsync(string publicId, IFormFile file, CancellationToken cancellationToken = default)
         {
-            // ── 1. Kiểm tra tham số ──────────────────────────────────────
-            if (string.IsNullOrWhiteSpace(publicId))
-                throw new ArgumentException("PublicId không được để trống", nameof(publicId));
+        // ── 1. Kiểm tra tham số ──────────────────────────────────────
+        if (string.IsNullOrWhiteSpace(publicId))
+            throw new ArgumentException("PublicId không được để trống", nameof(publicId));
 
-            if (file == null || file.Length == 0)
-                throw new Exception("File không hợp lệ");
+        if (file == null || file.Length == 0)
+            throw new Exception("File không hợp lệ");
 
-            // ── 2. Validate kích thước và định dạng ──────────────────────
-            const long maxSize = 2L * 1024 * 1024 * 1024; // 2GB
-            if (file.Length > maxSize)
-                throw new Exception("Video không được vượt quá 2GB");
+        // ── 2. Validate kích thước và định dạng ──────────────────────
+        const long maxSize = 100L * 1024 * 1024; // 100MB
+        if (file.Length > maxSize)
+            throw new Exception("Video không được vượt quá 100MB");
 
-            var extension = Path.GetExtension(file.FileName).ToLower();
-            string[] allowedExtensions = { ".mp4", ".mov", ".avi", ".mkv", ".webm" };
-            if (!allowedExtensions.Contains(extension))
-                throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
+        var extension = Path.GetExtension(file.FileName).ToLower();
+        string[] allowedExtensions = { ".mp4", ".mov", ".avi", ".mkv", ".webm" };
+        if (!allowedExtensions.Contains(extension))
+            throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
 
-            // ── 3. Kiểm tra video cũ có tồn tại (bắt buộc để ghi đè) ──────
-            try
+        // ── 2b. Kiểm tra độ phân giải TRƯỚC KHI upload lên Cloudinary ──
+        // Lưu file tạm ra đĩa để FFmpeg đọc metadata (FFmpeg cần path, không đọc trực tiếp Stream)
+        const int minResolution = 480;
+        var tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}{extension}");
+
+        try
+        {
+            await using (var tempStream = new FileStream(tempFilePath, FileMode.Create))
             {
-                var existingResource = await _cloudinary.GetResourceAsync(
-                    new GetResourceParams(publicId) { ResourceType = ResourceType.Video },
-                    cancellationToken
-                );
-
-                if (existingResource == null || string.IsNullOrEmpty(existingResource.PublicId))
-                    throw new Exception($"Không tìm thấy video với PublicId: {publicId}");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Không thể xác minh video cũ: {ex.Message}");
+                await using var uploadStreamForProbe = file.OpenReadStream();
+                await uploadStreamForProbe.CopyToAsync(tempStream, cancellationToken);
             }
 
-            // ── 4. Upload ghi đè ──────────────────────────────────────────
-            await using var inputStream = file.OpenReadStream();
+            var mediaInfo = await FFmpeg.GetMediaInfo(tempFilePath, cancellationToken);
+            var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
 
-            var uploadParams = new VideoUploadParams
-            {
-                File = new FileDescription(file.FileName, inputStream),
-                PublicId = publicId,
-                Folder = "eduverse/bai-giang",
-                UseFilename = false,        // dùng publicId chỉ định, không dùng tên file
-                UniqueFilename = false,     // không thêm hậu tố ngẫu nhiên
-                Overwrite = true,           // ghi đè lên video cũ
-                EagerAsync = true,
-                EagerTransforms = new List<Transformation>
+            if (videoStream == null)
+                throw new Exception("Không đọc được thông tin video. File có thể bị lỗi hoặc không đúng định dạng.");
+
+            var canhNho = Math.Min(videoStream.Width, videoStream.Height);
+            if (canhNho < minResolution)
+                throw new Exception(
+                    $"Độ phân giải video quá thấp ({videoStream.Width}x{videoStream.Height}). Yêu cầu tối thiểu 480p.");
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+                File.Delete(tempFilePath);
+        }
+
+        // ── 3. Kiểm tra video cũ có tồn tại (bắt buộc để ghi đè) ──────
+        try
+        {
+            var existingResource = await _cloudinary.GetResourceAsync(
+                new GetResourceParams(publicId) { ResourceType = ResourceType.Video },
+                cancellationToken
+            );
+
+            if (existingResource == null || string.IsNullOrEmpty(existingResource.PublicId))
+                throw new Exception($"Không tìm thấy video với PublicId: {publicId}");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Không thể xác minh video cũ: {ex.Message}");
+        }
+
+        // ── 4. Upload ghi đè (chỉ chạy tới đây khi đã chắc chắn đạt chuẩn) ──
+        await using var inputStream = file.OpenReadStream();
+
+        var uploadParams = new VideoUploadParams
+        {
+            File = new FileDescription(file.FileName, inputStream),
+            PublicId = publicId,
+            Folder = "eduverse/bai-giang",
+            UseFilename = false,
+            UniqueFilename = false,
+            Overwrite = true,
+            EagerAsync = true,
+            EagerTransforms = new List<Transformation>
         {
             new Transformation().RawTransformation("sp_sd/vc_h264,ac_aac,f_m3u8"),
             new Transformation().RawTransformation("sp_full_hd/vc_h264,ac_aac,f_m3u8"),
         },
-            };
+        };
 
-            var uploadResult = await _cloudinary.UploadLargeAsync(
-                uploadParams,
-                bufferSize: 100 * 1024 * 1024,
-                cancellationToken: cancellationToken
-            );
+        var uploadResult = await _cloudinary.UploadLargeAsync(
+            uploadParams,
+            bufferSize: 100 * 1024 * 1024,
+            cancellationToken: cancellationToken
+        );
 
-            if (uploadResult == null)
-                throw new Exception("Upload thất bại: Không nhận được phản hồi");
+        if (uploadResult == null)
+            throw new Exception("Upload thất bại: Không nhận được phản hồi");
 
-            if (uploadResult.Error != null)
-                throw new Exception($"Upload thất bại: {uploadResult.Error.Message}");
+        if (uploadResult.Error != null)
+            throw new Exception($"Upload thất bại: {uploadResult.Error.Message}");
 
-            if (string.IsNullOrEmpty(uploadResult.PublicId))
-                throw new Exception("Upload thất bại: Không lấy được PublicId");
+        if (string.IsNullOrEmpty(uploadResult.PublicId))
+            throw new Exception("Upload thất bại: Không lấy được PublicId");
 
-            var thoiLuong = uploadResult.Duration > 0
-                ? (int)Math.Round(uploadResult.Duration)
-                : 0;
+        var thoiLuong = uploadResult.Duration > 0
+            ? (int)Math.Round(uploadResult.Duration)
+            : 0;
 
-            // ── 5. Chờ HLS ready ──────────────────────────────────────────
-            var (hlsReady, hlsUrl) = await WaitForHlsReadyAsync(publicId, cancellationToken);
-            if (!hlsReady || string.IsNullOrEmpty(hlsUrl))
-                throw new Exception("Cloudinary xử lý HLS quá lâu. Vui lòng thử lại sau.");
+        // ── 5. Chờ HLS ready ──────────────────────────────────────────
+        var (hlsReady, hlsUrl) = await WaitForHlsReadyAsync(publicId, cancellationToken);
+        if (!hlsReady || string.IsNullOrEmpty(hlsUrl))
+            throw new Exception("Cloudinary xử lý HLS quá lâu. Vui lòng thử lại sau.");
 
-            return new CloudinaryVideoDto
-            {
-                IdVideoBaiGiang = publicId,
-                URLBaiGiang = hlsUrl,
-                ThoiLuong = thoiLuong,
-            };
+        return new CloudinaryVideoDto
+        {
+            IdVideoBaiGiang = publicId,
+            URLBaiGiang = hlsUrl,
+            ThoiLuong = thoiLuong,
+        };
         }
-
         #endregion
 
 
         #region Logic upload image, delete image
-        public async Task<CloudinaryImgDto> UploadImageAsync(IFormFile file)
+    public async Task<CloudinaryImgDto> UploadImageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 throw new Exception("File không hợp lệ");
@@ -330,6 +405,7 @@ namespace Eduverse.Service.CloudinaryService
                 UrlImg = uploadResult.SecureUrl.ToString()
             };
         }
+
         #endregion
 
 

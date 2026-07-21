@@ -233,6 +233,9 @@ namespace Eduverse.Service.BaiGiangService
                    $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin ."
                );
 
+            if (banGoc.TrangThaiPheDuyet == "DaDuyet")
+                throw new Exception("Khóa học đang ở chế độ Đã Duyệt không thể sửa");
+
             if (banGoc == null)
                 throw new Exception("Không tim thấy bài giảng");
 

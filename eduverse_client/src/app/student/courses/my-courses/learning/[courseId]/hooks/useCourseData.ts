@@ -27,7 +27,7 @@ export const useCourseData = (
 
   const flatten = useCallback((d: KhoaHocType | null): BaiGiangType[] => {
     if (!d) return [];
-    return d.danhSachPhanHoc?.flatMap((p) => p.danhSachBaiGiang ?? []) ?? [];
+    return d.danhSachPhanHoc?.flatMap((p) => p.DanhSachBaiGiang ?? []) ?? [];
   }, []);
 
   useEffect(() => {

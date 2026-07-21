@@ -83,7 +83,7 @@ export const SidebarContent = ({
       .map((phan) => ({
         ...phan,
         danhSachBaiGiang:
-          phan.danhSachBaiGiang?.filter((bg: BaiGiangType) =>
+          phan.DanhSachBaiGiang?.filter((bg: BaiGiangType) =>
             bg.tieuDe?.toLowerCase().includes(lower),
           ) ?? [],
       }))
@@ -191,11 +191,11 @@ export const SidebarContent = ({
           const isOpen = phanDangMo.has(phan.id!);
           const isPlaying = phan.id === idPhanPlay;
           const doneCnt =
-            phan.danhSachBaiGiang?.filter(
+            phan.DanhSachBaiGiang?.filter(
               (b: BaiGiangType) => progressMap.get(b.id!)?.daHoanThanh === true,
             ).length ?? 0;
           const totalMin = Math.floor(
-            (phan.danhSachBaiGiang?.reduce(
+            (phan.DanhSachBaiGiang?.reduce(
               (s: number, b: BaiGiangType) => s + (b.thoiLuong ?? 0),
               0,
             ) ?? 0) / 60,
@@ -212,7 +212,7 @@ export const SidebarContent = ({
                   transition: "background-color 0.2s",
                   "&:hover": {
                     bgcolor: alpha(PRIMARY_RED, 0.06),
-                  }
+                  },
                 }}
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -225,7 +225,7 @@ export const SidebarContent = ({
                     {phan.thuTuSapXep ?? idx + 1}. {phan.tenPhan}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {doneCnt}/{phan.danhSachBaiGiang?.length ?? 0} bài ·{" "}
+                    {doneCnt}/{phan.DanhSachBaiGiang?.length ?? 0} bài ·{" "}
                     {totalMin}p
                   </Typography>
                 </Box>
@@ -237,7 +237,7 @@ export const SidebarContent = ({
               </ListItemButton>
               <Collapse in={isOpen}>
                 <List disablePadding>
-                  {phan.danhSachBaiGiang?.map((bg: BaiGiangType, i: number) => {
+                  {phan.DanhSachBaiGiang?.map((bg: BaiGiangType, i: number) => {
                     const bgDone =
                       progressMap.get(bg.id!)?.daHoanThanh === true;
                     const isSelected = baiGiang?.id === bg.id;
@@ -257,7 +257,7 @@ export const SidebarContent = ({
                             transition: "all 0.2s",
                             "&:hover": {
                               bgcolor: alpha(PRIMARY_RED, 0.04),
-                            }
+                            },
                           }}
                         >
                           <ListItemIcon sx={{ minWidth: 30 }}>

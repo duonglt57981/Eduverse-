@@ -58,6 +58,7 @@ import {
   ZoomOutRounded,
   CheckRounded,
   CloudUploadRounded,
+  SchoolRounded,
 } from '@mui/icons-material';
 
 const TextFieldAny = TextField as any;
@@ -82,6 +83,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
   const [motivation, setMotivation] = useState('');
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [openTermsDialog, setOpenTermsDialog] = useState(false);
 
   // Form fields
   const [fullName, setFullName] = useState('');
@@ -1639,14 +1641,14 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                 <Grid size={{ xs: 12, md: 5.2 }}>
                   <Box
                     sx={{
-                      p: { xs: 3.5, md: 4.5 },
+                      p: { xs: 4, md: 5 },
                       borderRadius: '20px',
                       background: 'linear-gradient(135deg, #3A0B0B 0%, #8B1313 100%)',
                       color: '#ffffff',
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'center',
+                      justifyContent: 'flex-start',
                       position: 'relative',
                       overflow: 'hidden',
                       boxShadow: '0 12px 30px rgba(141,19,19,0.18)',
@@ -1665,6 +1667,24 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                         pointerEvents: 'none',
                       }}
                     />
+
+                    {/* Top Icon Badge */}
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: '14px',
+                        bgcolor: 'rgba(255,255,255,0.12)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mb: 2.5,
+                      }}
+                    >
+                      <SchoolRounded sx={{ color: '#fff', fontSize: 26 }} />
+                    </Box>
 
                     <Typography
                       variant="overline"
@@ -1942,45 +1962,147 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               Tải lên CV / Hồ sơ năng lực (Tối đa 10MB)
                             </Typography>
                           </Stack>
-                          <Box
-                            sx={{
-                              border: '2px dashed rgba(141,19,19,0.2)',
-                              borderRadius: '16px',
-                              p: 4,
-                              textAlign: 'center',
-                              bgcolor: 'rgba(141,19,19,0.01)',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              '&:hover': {
-                                borderColor: COLORS.primary,
-                                bgcolor: 'rgba(141,19,19,0.03)'
+
+                          <input
+                            type="file"
+                            id="cv-upload-input"
+                            accept=".pdf,.doc,.docx"
+                            style={{ display: 'none' }}
+                            onChange={(e: any) => {
+                              if (e.target.files && e.target.files[0]) {
+                                const file = e.target.files[0];
+                                if (file.size > 10 * 1024 * 1024) {
+                                  showToast('Tệp CV tối đa 10MB', 'error');
+                                } else {
+                                  setCvFile(file);
+                                }
                               }
                             }}
-                            component="label"
-                          >
-                            <input
-                              type="file"
-                              hidden
-                              accept=".pdf,.doc,.docx"
-                              onChange={(e: any) => {
-                                if (e.target.files && e.target.files[0]) {
-                                  const file = e.target.files[0];
-                                  if (file.size > 10 * 1024 * 1024) {
-                                    showToast('Tệp CV tối đa 10MB', 'error');
-                                  } else {
-                                    setCvFile(file);
-                                  }
-                                }
+                          />
+
+                          {!cvFile ? (
+                            <Box
+                              component="label"
+                              htmlFor="cv-upload-input"
+                              sx={{
+                                display: 'block',
+                                border: '2px dashed rgba(139, 19, 19, 0.25)',
+                                borderRadius: '16px',
+                                p: { xs: 3, sm: 4 },
+                                textAlign: 'center',
+                                background: 'linear-gradient(135deg, rgba(139,19,19,0.015) 0%, rgba(255,255,255,1) 100%)',
+                                cursor: 'pointer',
+                                transition: 'all 0.25s ease-in-out',
+                                '&:hover': {
+                                  borderColor: COLORS.primary,
+                                  bgcolor: 'rgba(139,19,19,0.03)',
+                                  boxShadow: '0 8px 24px rgba(139,19,19,0.06)',
+                                  '& .upload-icon-box': {
+                                    transform: 'scale(1.08)',
+                                    bgcolor: 'rgba(139,19,19,0.12)',
+                                  },
+                                },
                               }}
-                            />
-                            <CloudUploadRounded sx={{ fontSize: 40, color: COLORS.primary, mb: 1.5, opacity: 0.8 }} />
-                            <Typography sx={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>
-                              {cvFile ? cvFile.name : 'Chọn tệp tin CV hoặc kéo thả vào đây'}
-                            </Typography>
-                            <Typography sx={{ fontSize: 12, color: COLORS.textSecondary, mt: 0.5 }}>
-                              Hỗ trợ định dạng: PDF, DOC, DOCX (Tối đa 10MB)
-                            </Typography>
-                          </Box>
+                            >
+                              <Box
+                                className="upload-icon-box"
+                                sx={{
+                                  width: 54,
+                                  height: 54,
+                                  borderRadius: '16px',
+                                  bgcolor: 'rgba(139,19,19,0.06)',
+                                  color: COLORS.primary,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  mx: 'auto',
+                                  mb: 1.5,
+                                  transition: 'all 0.25s ease-in-out',
+                                }}
+                              >
+                                <CloudUploadRounded sx={{ fontSize: 28 }} />
+                              </Box>
+
+                              <Typography sx={{ fontSize: 14.5, fontWeight: 700, color: COLORS.textDark, mb: 0.5 }}>
+                                Chọn tệp tin CV hoặc kéo thả vào đây
+                              </Typography>
+                              <Typography sx={{ fontSize: 12.5, color: COLORS.textSecondary }}>
+                                Hỗ trợ định dạng: PDF, DOC, DOCX (Tối đa 10MB)
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                border: '1.5px solid rgba(16, 185, 129, 0.3)',
+                                borderRadius: '16px',
+                                p: 2.5,
+                                bgcolor: 'rgba(16, 185, 129, 0.03)',
+                                transition: 'all 0.2s ease',
+                              }}
+                            >
+                              <Stack direction="row" spacing={2} sx={{ alignItems: 'center', minWidth: 0 }}>
+                                <Box
+                                  sx={{
+                                    width: 46,
+                                    height: 46,
+                                    borderRadius: '12px',
+                                    bgcolor: 'rgba(16, 185, 129, 0.1)',
+                                    color: '#10B981',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <CheckCircleRounded sx={{ fontSize: 24 }} />
+                                </Box>
+                                <Box sx={{ minWidth: 0 }}>
+                                  <Typography
+                                    noWrap
+                                    sx={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}
+                                  >
+                                    {cvFile.name}
+                                  </Typography>
+                                  <Typography sx={{ fontSize: 12, color: COLORS.textSecondary }}>
+                                    {(cvFile.size / (1024 * 1024)).toFixed(2)} MB • Đã sẵn sàng gửi
+                                  </Typography>
+                                </Box>
+                              </Stack>
+
+                              <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                                <Button
+                                  component="label"
+                                  htmlFor="cv-upload-input"
+                                  size="small"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 700,
+                                    fontSize: 12.5,
+                                    color: COLORS.primary,
+                                    bgcolor: 'rgba(139,19,19,0.06)',
+                                    borderRadius: '10px',
+                                    px: 1.5,
+                                    '&:hover': { bgcolor: 'rgba(139,19,19,0.12)' },
+                                  }}
+                                >
+                                  Thay đổi
+                                </Button>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setCvFile(null)}
+                                  sx={{
+                                    color: COLORS.textSecondary,
+                                    '&:hover': { color: '#DC2626', bgcolor: 'rgba(220,38,38,0.08)' },
+                                  }}
+                                >
+                                  <CloseRounded sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </Stack>
+                            </Box>
+                          )}
                         </Grid>
 
                         <Grid size={{ xs: 12 }}>
@@ -2004,10 +2126,8 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               <Typography sx={{ fontSize: 13.5, color: COLORS.textDark, userSelect: 'none' }}>
                                 Tôi đồng ý với các{' '}
                                 <a
-                                  href="/auth/terms"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ color: COLORS.primary, fontWeight: 700, textDecoration: 'underline' }}
+                                  onClick={() => setOpenTermsDialog(true)}
+                                  style={{ color: COLORS.primary, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
                                 >
                                   Điều khoản dành cho Giảng viên
                                 </a>{' '}
@@ -2048,6 +2168,104 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                             </Button>
                           </Stack>
                         </Grid>
+
+                        {/* Modal Dialog Điều khoản Giảng viên */}
+                        <Dialog
+                          open={openTermsDialog}
+                          onClose={() => setOpenTermsDialog(false)}
+                          maxWidth="md"
+                          fullWidth
+                          slotProps={{
+                            paper: {
+                              sx: {
+                                borderRadius: '20px',
+                                p: { xs: 1, sm: 2 },
+                              },
+                            },
+                          }}
+                        >
+                          <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography component="span" sx={{ fontWeight: 900, color: '#1E293B', fontSize: { xs: 18, sm: 22 } }}>
+                              Điều khoản & Quy định Hợp tác Giảng viên
+                            </Typography>
+                            <IconButton onClick={() => setOpenTermsDialog(false)}>
+                              <CloseRounded />
+                            </IconButton>
+                          </DialogTitle>
+                          <Divider />
+                          <DialogContent sx={{ py: 3 }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, color: '#334155' }}>
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                  1. Quyền Sở hữu Trí tuệ & Bản quyền Nội dung
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                  - Giảng viên luôn giữ trọn vẹn quyền sở hữu trí tuệ đối với tài liệu, bài giảng và nội dung khóa học do mình tự biên soạn.<br />
+                                  - Bằng việc cấp phép phân phối khóa học trên EduVerse, Giảng viên đồng ý cấp cho EduVerse quyền không độc quyền (non-exclusive) để tiếp thị, quảng bá và phân phối khóa học tới học viên trên toàn cầu.<br />
+                                  - Giảng viên cam kết nội dung tải lên là chính chủ, không sao chép trái phép hoặc vi phạm bản quyền của bất kỳ cá nhân hay tổ chức nào khác.
+                                </Typography>
+                              </Box>
+
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                  2. Phân chia Doanh thu & Quy trình Thanh toán
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                  - <strong>Tỷ lệ phân chia:</strong> Giảng viên nhận tỷ lệ doanh thu theo thỏa thuận trong từng chương trình khuyến mại hoặc bán hàng trực tiếp trên EduVerse.<br />
+                                  - <strong>Rút tiền:</strong> Yêu cầu rút tiền được xử lý định kỳ thông qua tài khoản ngân hàng chính chủ đã được liên kết và xác minh trên hệ thống.<br />
+                                  - <strong>Nghĩa vụ thuế:</strong> Giảng viên có trách nhiệm thực hiện khai báo và nộp thuế thu nhập cá nhân theo đúng quy định của pháp luật Việt Nam đối với nguồn thu nhập từ nền tảng.
+                                </Typography>
+                              </Box>
+
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                  3. Quy chuẩn Chất lượng & Tương tác Học viên
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                  - Video bài giảng cần đảm bảo hình ảnh rõ nét, âm thanh trong trẻo, không chứa nội dung phản cảm, kích động hoặc vi phạm pháp luật.<br />
+                                  - Giảng viên có trách nhiệm phản hồi và giải đáp các thắc mắc (Q&A) của học viên liên quan đến bài giảng trong vòng 48 giờ làm việc.<br />
+                                  - Nghiêm cấm chèn liên kết lừa đảo, quảng cáo dịch vụ bên ngoài trái phép hoặc chủ động lôi kéo học viên thanh toán ngoài hệ thống EduVerse.
+                                </Typography>
+                              </Box>
+
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                  4. Quy trình Duyệt & Quản lý Khóa học
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                  - Tất cả khóa học mới tạo hoặc chỉnh sửa nội dung lớn sẽ trải qua quy trình duyệt bởi Ban Quản trị EduVerse trước khi phát hành.<br />
+                                  - EduVerse bảo lưu quyền tạm ẩn hoặc hạ khóa học nếu nhận được các khiếu nại xác đáng về vi phạm bản quyền, nội dung sai lệch hoặc giả mạo bằng cấp.
+                                </Typography>
+                              </Box>
+
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                  5. Bảo mật Thông tin & Hỗ trợ
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                  - Thông tin cá nhân, CV và hồ sơ năng lực của Giảng viên được EduVerse bảo mật nghiêm ngặt theo chính sách quyền riêng tư.<br />
+                                  - Nếu cần hỗ trợ thêm thông tin về thủ tục nâng cấp tài khoản Giảng viên, bạn có thể liên hệ trực tiếp với bộ phận Hỗ trợ Giảng viên qua email: <a href="mailto:instructor@eduverse.website" style={{ color: COLORS.primary, fontWeight: 700 }}>instructor@eduverse.website</a>.
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </DialogContent>
+                          <DialogActions sx={{ p: 2, pt: 1 }}>
+                            <Button
+                              variant="contained"
+                              onClick={() => setOpenTermsDialog(false)}
+                              sx={{
+                                bgcolor: COLORS.primary,
+                                color: '#fff',
+                                fontWeight: 700,
+                                borderRadius: '10px',
+                                px: 3.5,
+                                '&:hover': { bgcolor: COLORS.primaryLight },
+                              }}
+                            >
+                              Tôi đã hiểu
+                            </Button>
+                          </DialogActions>
+                        </Dialog>
                       </Grid>
                     )}
                   </Box>

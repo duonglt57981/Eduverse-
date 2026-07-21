@@ -118,8 +118,8 @@ export default function KhoaHocLearningPage() {
   const quizTheoPhan = useMemo(() => {
     const map = new Map<string, BaiKiemTraDto[]>();
     khoaHoc?.danhSachPhanHoc?.forEach((phan) => {
-      if (phan.id && (phan.danhSachBaiKiemTra?.length ?? 0) > 0) {
-        map.set(phan.id, phan.danhSachBaiKiemTra!);
+      if (phan.id && (phan.DanhDachBaiKiemTra?.length ?? 0) > 0) {
+        map.set(phan.id, phan.DanhDachBaiKiemTra!);
       }
     });
     return map;

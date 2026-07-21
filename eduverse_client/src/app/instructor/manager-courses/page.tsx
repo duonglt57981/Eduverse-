@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { MAU } from "@/src/theme/tokens";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -17,17 +17,23 @@ import {
   Chip,
   CircularProgress,
   Pagination,
+  IconButton,
+  Tooltip,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
 import AuthGuard from "@/src/components/AuthGuard";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType, KhoaHocSearch } from "@/src/types/khoaHoc/Dto/dto";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
-// ====== Định nghĩa kiểu PagedList ======
+// ====== Kiểu PagedList dùng cho dữ liệu phân trang trả về từ API ======
 interface PagedList<T> {
   items: T[];
   pageIndex?: number;
@@ -37,6 +43,14 @@ interface PagedList<T> {
 }
 
 // ====== Bảng màu thương hiệu EduVerse ======
+const MAU = {
+  chinh: "#8B1313",
+  chinhDam: "#5C0D0D",
+  chinhNhat: "#FBEFEF",
+  vien: "#F0DEDE",
+  chuDen: "#231313",
+  chuXam: "#8A7676",
+};
 
 // ====== Đường dẫn ======
 const duongDanChiTietKhoaHoc = (id: string) =>
@@ -44,7 +58,7 @@ const duongDanChiTietKhoaHoc = (id: string) =>
 const duongDanTaoKhoaHocMoi = "/instructor/manager-courses/create/1";
 const SO_LUONG_MOI_TRANG = 20;
 
-// ====== Helper ======
+// ====== Helper: lấy nhãn + màu hiển thị theo trạng thái phê duyệt ======
 function thongTinTrangThaiPheDuyet(trangThai?: string): {
   nhan: string;
   mau: "default" | "warning" | "success" | "error";
@@ -63,14 +77,27 @@ function thongTinTrangThaiPheDuyet(trangThai?: string): {
   }
 }
 
+// ====== Helper: trích message lỗi an toàn từ nhiều kiểu response khác nhau ======
+function trichXuatThongBaoLoi(err: unknown, macDinh: string): string {
+  if (err && typeof err === "object") {
+    const anyErr = err as any;
+    const messageTuApi =
+      anyErr?.response?.data?.message ??
+      anyErr?.response?.data?.errors ??
+      anyErr?.data?.message ??
+      anyErr?.message;
+    if (typeof messageTuApi === "string" && messageTuApi.trim().length > 0) {
+      return messageTuApi;
+    }
+  }
+  return macDinh;
+}
+
 // ====== Nội dung trang ======
 function KhoaHocContent() {
   const router = useRouter();
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
-  const [tabDangChon, setTabDangChon] = useState<"khoa-hoc" | "goi-khoa-hoc">(
-    "khoa-hoc",
-  );
   const [tuKhoaTimKiem, setTuKhoaTimKiem] = useState("");
   const [sapXep, setSapXep] = useState("moi-nhat");
   const [trangHienTai, setTrangHienTai] = useState(1);
@@ -78,60 +105,176 @@ function KhoaHocContent() {
   const [loi, setLoi] = useState<string | null>(null);
   const [danhSachKhoaHoc, setDanhSachKhoaHoc] = useState<KhoaHocType[]>([]);
   const [tongSoTrang, setTongSoTrang] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  // Hàm lấy danh sách
+  // Chỉ lưu id của khóa học đang xử lý (tạo bản nháp) để disable đúng nút đó,
+  // tránh việc disable toàn bộ danh sách khi chỉ 1 item đang xử lý.
+  const [dangXuLyId, setDangXuLyId] = useState<string | null>(null);
+
+  // Thông báo lỗi dạng Snackbar khi thao tác (vd: tạo bản nháp thất bại)
+  const [thongBaoLoiThaoTac, setThongBaoLoiThaoTac] = useState<string | null>(
+    null,
+  );
+
+  // Hàm lấy danh sách khóa học từ API
   const layDanhSachKhoaHoc = useCallback(
     async (signal?: AbortSignal) => {
       setDangTai(true);
       setLoi(null);
       try {
         const searchParams: KhoaHocSearch = {
-          timKiem: tuKhoaTimKiem || undefined,
-          sapXep,
           pageNumber: trangHienTai,
           pageSize: SO_LUONG_MOI_TRANG,
+          keyword: tuKhoaTimKiem || undefined,
+          loaiBan: 0,
+          trangThaiPheDuyet: undefined,
         };
 
-        // Gọi API và nhận về ApiResponse<PagedList<KhoaHocType>>
         const response = await khoaHocService.GetListForManager(searchParams);
 
         if (signal?.aborted) return;
 
-        // // Kiểm tra response
-        // if (!response || response.status === false || !response.data) {
-        //   setLoi(response?.message || "Không có dữ liệu khóa học.");
-        //   setDanhSachKhoaHoc([]);
-        //   setTongSoTrang(1);
-        //   return;
-        // }
+        if (!response || response.status === false || !response.data) {
+          setLoi(response?.message || "Không có dữ liệu khóa học.");
+          setDanhSachKhoaHoc([]);
+          setTongSoTrang(1);
+          setTotalCount(0);
+          return;
+        }
 
-        // Lấy data (PagedList)
         const data: PagedList<KhoaHocType> = response.data;
         setDanhSachKhoaHoc(data.items || []);
+        setTotalCount(data.totalCount || 0);
         setTongSoTrang(Math.max(1, data.totalPage ?? 1));
       } catch (err) {
         if (signal?.aborted) return;
-        console.error("❌ Lỗi fetch:", err);
+        console.error("Lỗi fetch danh sách khóa học:", err);
         setLoi("Có lỗi xảy ra khi tải danh sách khóa học.");
         setDanhSachKhoaHoc([]);
+        setTongSoTrang(1);
+        setTotalCount(0);
       } finally {
         if (!signal?.aborted) setDangTai(false);
       }
     },
-    [tuKhoaTimKiem, sapXep, trangHienTai, khoaHocService],
+    [tuKhoaTimKiem, trangHienTai, khoaHocService],
   );
 
-  // Gọi fetch khi các dependency thay đổi
   useEffect(() => {
     const abortController = new AbortController();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Cần gọi async để fetch dữ liệu, không thể tránh setState trong effect này
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching hợp lệ, có AbortController cleanup, không gây vòng lặp render
     layDanhSachKhoaHoc(abortController.signal);
     return () => abortController.abort();
   }, [layDanhSachKhoaHoc]);
 
+  // Xử lý xem chi tiết khóa học
+  const handleViewDetail = (khoaHoc: KhoaHocType) => {
+    if (khoaHoc.id) {
+      router.push(duongDanChiTietKhoaHoc(khoaHoc.id));
+    }
+  };
+
+  // Xử lý chỉnh sửa: gọi API tạo bản nháp trước khi điều hướng sang trang sửa
+  const handleEdit = async (khoaHoc: KhoaHocType) => {
+    if (!khoaHoc.id || dangXuLyId) return;
+
+    // Nếu khóa học đang ở trạng thái "Đang sửa" → chuyển thẳng với ID hiện tại
+    if (khoaHoc.trangThaiPheDuyet === "DangSua") {
+      router.push(duongDanChiTietKhoaHoc(khoaHoc.id));
+      return;
+    }
+
+    // Các trạng thái khác: tạo bản nháp trước khi chuyển
+    setDangXuLyId(khoaHoc.id);
+    setThongBaoLoiThaoTac(null);
+
+    try {
+      const response = await khoaHocService.createFullKhoaHocDraft(khoaHoc.id);
+
+      if (response?.status && response?.data?.khoaHoc?.id) {
+        router.push(
+          `/instructor/manager-courses/${response.data.khoaHoc.id}/manager/curriculum`,
+        );
+        return;
+      }
+
+      setThongBaoLoiThaoTac(
+        response?.message ||
+          "Không thể tạo bản nháp cho khóa học này. Vui lòng kiểm tra lại trạng thái khóa học.",
+      );
+    } catch (error) {
+      console.error("Lỗi khi tạo bản nháp:", error);
+      setThongBaoLoiThaoTac(
+        trichXuatThongBaoLoi(
+          error,
+          "Có lỗi xảy ra khi tạo bản nháp. Vui lòng thử lại sau.",
+        ),
+      );
+    } finally {
+      setDangXuLyId(null);
+    }
+  };
+
+  // Xác định các action cần hiển thị dựa trên trạng thái phê duyệt
+  const getAvailableActions = (trangThaiPheDuyet?: string) => {
+    switch (trangThaiPheDuyet) {
+      case "DaDuyet":
+        return {
+          showEdit: true,
+          showView: true,
+          editLabel: "Chỉnh sửa",
+          viewLabel: "Chi tiết",
+        };
+      case "TuChoi":
+        return {
+          showEdit: true,
+          showView: true,
+          editLabel: "Chỉnh sửa",
+          viewLabel: "Chi tiết",
+        };
+      case "DangSua":
+        return {
+          showEdit: true,
+          showView: false,
+          editLabel: "Chỉnh sửa",
+          viewLabel: "",
+        };
+      case "ChoDuyet":
+        return {
+          showEdit: false,
+          showView: true,
+          editLabel: "",
+          viewLabel: "Xem chi tiết",
+        };
+      case "DangDuyet":
+        return {
+          showEdit: false,
+          showView: true,
+          editLabel: "",
+          viewLabel: "Xem chi tiết",
+        };
+      default:
+        return {
+          showEdit: true,
+          showView: true,
+          editLabel: "Chỉnh sửa",
+          viewLabel: "Chi tiết",
+        };
+    }
+  };
+
   const xuLyBamKhoaHoc = (id?: string) => {
     if (!id) return;
     router.push(duongDanChiTietKhoaHoc(id));
+  };
+
+  // Xử lý thay đổi trang
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    page: number,
+  ) => {
+    setTrangHienTai(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -153,6 +296,7 @@ function KhoaHocContent() {
           </Typography>
           <Typography sx={{ fontSize: 14, color: MAU.chuXam, mt: 0.5 }}>
             Quản lý và theo dõi toàn bộ khóa học bạn đang giảng dạy
+            {totalCount > 0 && ` (${totalCount} khóa học)`}
           </Typography>
         </Box>
 
@@ -180,8 +324,7 @@ function KhoaHocContent() {
 
       {/* Tabs */}
       <Tabs
-        value={tabDangChon}
-        onChange={(_, gt) => setTabDangChon(gt)}
+        value="khoa-hoc"
         sx={{
           borderBottom: `1px solid ${MAU.vien}`,
           mb: 3,
@@ -225,7 +368,6 @@ function KhoaHocContent() {
           sx={{
             width: 300,
             "& .MuiOutlinedInput-root": {
-              height: 44,
               borderRadius: "12px",
               bgcolor: MAU.chinhNhat,
               "& fieldset": { borderColor: "transparent" },
@@ -250,13 +392,11 @@ function KhoaHocContent() {
           onChange={(e) => setSapXep(e.target.value)}
           sx={{
             minWidth: 170,
-            height: 44,
             borderRadius: "12px",
             color: MAU.chinh,
             fontWeight: 600,
             bgcolor: MAU.chinhNhat,
             "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-            "& .MuiSelect-select": { display: "flex", alignItems: "center" },
           }}
         >
           <MenuItem value="moi-nhat">Mới nhất</MenuItem>
@@ -266,13 +406,14 @@ function KhoaHocContent() {
         </Select>
       </Box>
 
-      {/* Trạng thái tải / lỗi */}
+      {/* Trạng thái tải */}
       {dangTai && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress sx={{ color: MAU.chinh }} />
         </Box>
       )}
 
+      {/* Trạng thái lỗi tải danh sách */}
       {!dangTai && loi && (
         <Box
           sx={{
@@ -285,80 +426,46 @@ function KhoaHocContent() {
           <Typography sx={{ color: "#c62828", fontWeight: 600 }}>
             {loi}
           </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => layDanhSachKhoaHoc()}
+            sx={{ mt: 2, textTransform: "none" }}
+          >
+            Thử lại
+          </Button>
         </Box>
       )}
 
+      {/* Trạng thái rỗng */}
       {!dangTai && !loi && danhSachKhoaHoc.length === 0 && (
         <Box
           sx={{
             textAlign: "center",
-            py: { xs: 6, sm: 9 },
-            px: 3,
-            borderRadius: "20px",
-            border: `1.5px dashed ${MAU.vien}`,
-            background: "linear-gradient(180deg, #FFFFFF 0%, #FDF6F6 100%)",
+            py: 8,
+            borderRadius: "16px",
+            border: `1px dashed ${MAU.vien}`,
           }}
         >
-          <Box
+          <SchoolOutlinedIcon
+            sx={{ fontSize: 40, color: MAU.chinh, opacity: 0.5, mb: 1 }}
+          />
+          <Typography sx={{ color: MAU.chuXam, fontWeight: 500 }}>
+            Bạn chưa có khóa học nào.
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => router.push(duongDanTaoKhoaHocMoi)}
             sx={{
-              width: 88,
-              height: 88,
-              mx: "auto",
-              mb: 2.5,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background:
-                "radial-gradient(circle at 30% 30%, #FBEFEF 0%, #F3D5D5 100%)",
-              boxShadow: "0 10px 24px rgba(139,19,19,0.12)",
+              mt: 2,
+              bgcolor: MAU.chinh,
+              textTransform: "none",
+              fontWeight: 700,
+              "&:hover": { bgcolor: MAU.chinhDam },
             }}
           >
-            <SchoolOutlinedIcon sx={{ fontSize: 44, color: MAU.chinh }} />
-          </Box>
-          <Typography
-            sx={{ fontWeight: 800, fontSize: 19, color: MAU.chuDen, mb: 0.75 }}
-          >
-            {tuKhoaTimKiem
-              ? "Không tìm thấy khóa học phù hợp"
-              : "Chưa có khóa học nào"}
-          </Typography>
-          <Typography
-            sx={{
-              color: MAU.chuXam,
-              fontSize: 14,
-              maxWidth: 440,
-              mx: "auto",
-              mb: 3,
-              lineHeight: 1.65,
-            }}
-          >
-            {tuKhoaTimKiem
-              ? `Không có khóa học nào khớp với "${tuKhoaTimKiem}". Hãy thử từ khóa khác.`
-              : "Bắt đầu hành trình giảng dạy bằng cách tạo khóa học đầu tiên và chia sẻ kiến thức tới học viên."}
-          </Typography>
-          {!tuKhoaTimKiem && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => router.push(duongDanTaoKhoaHocMoi)}
-              sx={{
-                bgcolor: MAU.chinh,
-                textTransform: "none",
-                fontWeight: 700,
-                px: 3,
-                py: 1,
-                borderRadius: "12px",
-                boxShadow: "0 6px 16px rgba(139,19,19,0.25)",
-                "&:hover": {
-                  bgcolor: MAU.chinhDam,
-                  boxShadow: "0 8px 20px rgba(139,19,19,0.32)",
-                },
-              }}
-            >
-              Tạo khóa học đầu tiên
-            </Button>
-          )}
+            Tạo khóa học mới
+          </Button>
         </Box>
       )}
 
@@ -369,19 +476,24 @@ function KhoaHocContent() {
             const pheDuyet = thongTinTrangThaiPheDuyet(
               khoaHoc.trangThaiPheDuyet,
             );
+
+            const isDraft = khoaHoc.isBanHienTai === false;
+            const actions = getAvailableActions(khoaHoc.trangThaiPheDuyet);
+            const dangXuLyItemNay = dangXuLyId === khoaHoc.id;
+
             return (
               <Box
                 key={khoaHoc.id}
-                onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
-                  border: `1px solid ${MAU.vien}`,
+                  border: `1px solid ${isDraft ? MAU.chinh : MAU.vien}`,
                   borderRadius: "16px",
                   p: 1.5,
-                  cursor: "pointer",
                   transition: "all .18s ease",
+                  bgcolor: isDraft ? MAU.chinhNhat : "transparent",
+                  position: "relative",
                   "&:hover": {
                     boxShadow: "0 8px 22px rgba(139,19,19,0.10)",
                     borderColor: MAU.chinh,
@@ -389,82 +501,216 @@ function KhoaHocContent() {
                   },
                 }}
               >
+                {/* Phần click vào khóa học để xem chi tiết */}
                 <Box
+                  onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
                   sx={{
-                    position: "relative",
-                    width: 128,
-                    height: 84,
-                    flexShrink: 0,
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                    bgcolor: MAU.chinhNhat,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2.5,
+                    flex: 1,
+                    cursor: "pointer",
+                    minWidth: 0,
                   }}
                 >
-                  {khoaHoc.hinhAnhKhoaHoc ? (
-                    <Image
-                      src={khoaHoc.hinhAnhKhoaHoc}
-                      alt={khoaHoc.tieuDe ?? "Khóa học"}
-                      fill
-                      sizes="128px"
-                      style={{ objectFit: "cover" }}
-                      unoptimized // Nếu URL ảnh từ domain ngoài, cần unoptimized
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <ArticleOutlinedIcon
-                        sx={{ color: MAU.chinh, opacity: 0.4 }}
-                      />
-                    </Box>
-                  )}
-                </Box>
-
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
+                  <Box
                     sx={{
-                      fontWeight: 700,
-                      fontSize: 15.5,
-                      color: MAU.chuDen,
-                      mb: 0.75,
+                      position: "relative",
+                      width: 128,
+                      height: 84,
+                      flexShrink: 0,
+                      borderRadius: "12px",
                       overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      bgcolor: MAU.chinhNhat,
                     }}
                   >
-                    {khoaHoc.tieuDe ?? "Chưa đặt tên"}
-                  </Typography>
-
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Chip
-                      label={pheDuyet.nhan}
-                      color={pheDuyet.mau}
-                      size="small"
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: 11,
-                        borderRadius: "8px",
-                      }}
-                    />
-                    {khoaHoc.trangThai && (
-                      <Typography
+                    {khoaHoc.hinhAnhKhoaHoc ? (
+                      <Image
+                        src={khoaHoc.hinhAnhKhoaHoc}
+                        alt={khoaHoc.tieuDe ?? "Khóa học"}
+                        fill
+                        sizes="128px"
+                        style={{ objectFit: "cover" }}
+                        unoptimized
+                      />
+                    ) : (
+                      <Box
                         sx={{
-                          fontSize: 12,
-                          color: MAU.chuXam,
-                          fontWeight: 700,
-                          letterSpacing: 0.3,
+                          width: "100%",
+                          height: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        {khoaHoc.trangThai.toUpperCase()}
-                      </Typography>
+                        <ArticleOutlinedIcon
+                          sx={{ color: MAU.chinh, opacity: 0.4 }}
+                        />
+                      </Box>
+                    )}
+
+                    {isDraft && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          bgcolor: MAU.chinh,
+                          color: "#fff",
+                          fontSize: 9,
+                          fontWeight: 700,
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: "4px",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Nháp
+                      </Box>
                     )}
                   </Box>
+
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 15.5,
+                        color: MAU.chuDen,
+                        mb: 0.75,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {khoaHoc.tieuDe ?? "Chưa đặt tên"}
+                      {isDraft && (
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontSize: 11,
+                            color: MAU.chinh,
+                            fontWeight: 600,
+                            ml: 1,
+                          }}
+                        >
+                          (Bản nháp)
+                        </Typography>
+                      )}
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <Chip
+                        label={pheDuyet.nhan}
+                        color={pheDuyet.mau}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: 11,
+                          borderRadius: "8px",
+                        }}
+                      />
+
+                      {khoaHoc.capDo && (
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            color: MAU.chuXam,
+                            fontWeight: 500,
+                          }}
+                        >
+                          • {khoaHoc.capDo}
+                        </Typography>
+                      )}
+
+                      {khoaHoc.giaGoc !== undefined &&
+                        khoaHoc.giaGoc !== null && (
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              color: MAU.chuXam,
+                              fontWeight: 500,
+                            }}
+                          >
+                            •{" "}
+                            {khoaHoc.giaGoc === 0
+                              ? "Miễn phí"
+                              : `${khoaHoc.giaGoc.toLocaleString()}đ`}
+                          </Typography>
+                        )}
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Phần action buttons - hiển thị khi hover (luôn hiện trên mobile) */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    opacity: 0,
+                    transition: "opacity 0.2s ease",
+                    ".MuiBox-root:hover > &": {
+                      opacity: 1,
+                    },
+                    "@media (max-width: 600px)": {
+                      opacity: 1,
+                    },
+                  }}
+                >
+                  {actions.showView && (
+                    <Tooltip title={actions.viewLabel}>
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDetail(khoaHoc);
+                        }}
+                        sx={{
+                          color: MAU.chinh,
+                          "&:hover": {
+                            bgcolor: MAU.chinhNhat,
+                          },
+                        }}
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {actions.showEdit && (
+                    <Tooltip title={actions.editLabel}>
+                      <span>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(khoaHoc);
+                          }}
+                          sx={{
+                            color: MAU.chinh,
+                            "&:hover": {
+                              bgcolor: MAU.chinhNhat,
+                            },
+                          }}
+                          disabled={dangXuLyItemNay}
+                        >
+                          {dangXuLyItemNay ? (
+                            <CircularProgress
+                              size={20}
+                              sx={{ color: MAU.chinh }}
+                            />
+                          ) : (
+                            <EditIcon />
+                          )}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  )}
                 </Box>
               </Box>
             );
@@ -478,7 +724,7 @@ function KhoaHocContent() {
           <Pagination
             count={tongSoTrang}
             page={trangHienTai}
-            onChange={(_, trang) => setTrangHienTai(trang)}
+            onChange={handlePageChange}
             shape="rounded"
             sx={{
               "& .MuiPaginationItem-root": {
@@ -494,6 +740,23 @@ function KhoaHocContent() {
           />
         </Box>
       )}
+
+      {/* Snackbar thông báo lỗi khi thao tác (vd: tạo bản nháp thất bại) */}
+      <Snackbar
+        open={!!thongBaoLoiThaoTac}
+        autoHideDuration={6000}
+        onClose={() => setThongBaoLoiThaoTac(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setThongBaoLoiThaoTac(null)}
+          severity="error"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {thongBaoLoiThaoTac}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

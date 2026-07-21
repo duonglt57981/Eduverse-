@@ -174,12 +174,12 @@ namespace Eduverse.Service.PhanService
             if (string.IsNullOrWhiteSpace(request.TenPhan))
                 throw new Exception("Vui lòng nhập tên phần học");
 
-            var khoaHocExists = await _khoaHocRepository
-                .GetQueryable()
-                .AnyAsync(x => x.Id == request.IdKhoaHoc);
+            //var khoaHocExists = await _khoaHocRepository
+            //    .GetQueryable()
+            //    .AnyAsync(x => x.Id == request.IdKhoaHoc);
 
-            if (!khoaHocExists)
-                throw new Exception("Không tìm thấy khóa học");
+            //if (!khoaHocExists)
+            //    throw new Exception("Không tìm thấy khóa học");
 
             var entity = await GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted);
@@ -190,23 +190,26 @@ namespace Eduverse.Service.PhanService
             if (entity.CreatedId != nguoiTao)
                 throw new Exception("Bạn không có quyền hạn để sửa phần học này!");
 
-            var thuTuDaTon = await GetQueryable()
-                .AnyAsync(x =>
-                    x.IdKhoaHoc == request.IdKhoaHoc &&
-                    x.ThuTuSapXep == request.ThuTuSapXep &&
-                    x.Id != request.Id && !x.IsDeleted);
+            if (entity.TrangThaiPheDuyet == "DaDuyet")
+                throw new Exception("Khóa học đang ở chế độ Đã Duyệt không thể sửa");
 
-            if (thuTuDaTon)
-                throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại trong phần học này");
+            //var thuTuDaTon = await GetQueryable()
+            //    .AnyAsync(x =>
+            //        x.IdKhoaHoc == request.IdKhoaHoc &&
+            //        x.ThuTuSapXep == request.ThuTuSapXep &&
+            //        x.Id != request.Id && !x.IsDeleted);
+
+            //if (thuTuDaTon)
+            //    throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại trong phần học này");
 
             var content = $"{request.TenPhan} {request.MieuTa}";
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(content);
 
-            entity.IdKhoaHoc = request.IdKhoaHoc;
+            
             entity.TenPhan = request.TenPhan.Trim();
             entity.ThuTuSapXep = request.ThuTuSapXep;
-            entity.TrangThai = "HoatDong";
-            entity.TrangThaiPheDuyet = "DaDuyet";
+            entity.TrangThai = "DangSua";
+            entity.TrangThaiPheDuyet = "DangSua";
 
             await UpdateAsync(entity);
             await SaveAsync();

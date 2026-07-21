@@ -21,6 +21,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Xabe.FFmpeg;
+using Xabe.FFmpeg.Downloader;
 
 namespace Eduverse.Api
 {
@@ -269,53 +271,6 @@ namespace Eduverse.Api
             using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<EduverseContext>();
-
-                try
-                {
-                    dbContext.Database.ExecuteSqlRaw(@"
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'Message')
-                            ALTER TABLE thongBaos ADD Message nvarchar(max) NOT NULL DEFAULT '.';
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'Link')
-                            ALTER TABLE thongBaos ADD Link nvarchar(max) NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'FromUser')
-                            ALTER TABLE thongBaos ADD FromUser uniqueidentifier NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'ToUser')
-                            ALTER TABLE thongBaos ADD ToUser uniqueidentifier NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'IsRead')
-                            ALTER TABLE thongBaos ADD IsRead bit NOT NULL DEFAULT 0;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'Type')
-                            ALTER TABLE thongBaos ADD Type nvarchar(250) NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'SendToFrontEndUser')
-                            ALTER TABLE thongBaos ADD SendToFrontEndUser bit NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'ItemId')
-                            ALTER TABLE thongBaos ADD ItemId uniqueidentifier NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'ItemName')
-                            ALTER TABLE thongBaos ADD ItemName nvarchar(max) NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'ItemType')
-                            ALTER TABLE thongBaos ADD ItemType uniqueidentifier NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'IsDisplay')
-                            ALTER TABLE thongBaos ADD IsDisplay bit NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'DonViId')
-                            ALTER TABLE thongBaos ADD DonViId uniqueidentifier NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'Email')
-                            ALTER TABLE thongBaos ADD Email nvarchar(max) NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'ProductId')
-                            ALTER TABLE thongBaos ADD ProductId nvarchar(max) NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'ProductName')
-                            ALTER TABLE thongBaos ADD ProductName nvarchar(max) NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'NguoiTao')
-                            ALTER TABLE thongBaos ADD NguoiTao uniqueidentifier NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'FileDinhKem')
-                            ALTER TABLE thongBaos ADD FileDinhKem nvarchar(max) NULL;
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('thongBaos') AND name = 'IsXuatBan')
-                            ALTER TABLE thongBaos ADD IsXuatBan bit NULL;
-                    ");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error executing raw migration for thongBaos: " + ex.Message);
-                }
-
                 dbContext.Database.Migrate();
 
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
@@ -327,6 +282,23 @@ namespace Eduverse.Api
                         await roleManager.CreateAsync(new AppRole { Name = role });
                 }
             }
+
+            // Đặt đường dẫn nơi bạn muốn lưu FFmpeg(ví dụ: thư mục của ứng dụng)
+            string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg");
+            if (!Directory.Exists(ffmpegPath))
+                Directory.CreateDirectory(ffmpegPath);
+
+            // Kiểm tra nếu chưa có ffmpeg.exe thì tải về
+            if (!File.Exists(Path.Combine(ffmpegPath, "ffmpeg.exe")))
+            {
+                Console.WriteLine("Đang tải FFmpeg...");
+                await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official, ffmpegPath);
+                Console.WriteLine("Tải FFmpeg thành công!");
+            }
+
+            // Cấu hình Xabe.FFmpeg sử dụng thư mục vừa tải
+            FFmpeg.SetExecutablesPath(ffmpegPath);
+
             app.Run();
         }
         private static void AddDependencyInjection(this IServiceCollection services)

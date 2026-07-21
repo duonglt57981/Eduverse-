@@ -33,7 +33,7 @@ import FormatColorTextIcon from "@mui/icons-material/FormatColorText";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
 
 const MAU = {
-  chinh: "#8B1313",
+  chinh: "#7A1F2B",
   chinhNhat: "#F8ECEE",
   vien: "#E7DADC",
   chuXam: "#6a6f73",

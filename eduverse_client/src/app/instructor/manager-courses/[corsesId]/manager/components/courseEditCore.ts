@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 
 export const MAU = {
-  chinh: "#8B1313",
+  chinh: "#7A1F2B",
   chinhDam: "#611722",
   chinhNhat: "#FDF2F3",
   vien: "#E7DADC",
@@ -41,6 +42,13 @@ export function thongTinTrangThai(trangThai: TrangThaiKhoaHoc): {
     default:
       return { nhan: trangThai, mau: "default" };
   }
+}
+
+export function laDangSua(entity: any): boolean {
+  return (
+    entity?.trangThai === "DangSua" ||
+    entity?.trangThaiPheDuyet === "DangSua"
+  );
 }
 
 export function tinhTongThoiLuongGiay(phans: PhanHocType[]): number {
@@ -181,22 +189,19 @@ export function kiemTraCoBanGhiDangSua(
     dapAn: false,
   };
 
-  if (
-    thongTin?.trangThaiPheDuyet === "DangSua" ||
-    thongTin?.trangThai === "DangSua"
-  ) {
+  if (laDangSua(thongTin)) {
     chiTiet.khoaHoc = true;
     coDangSua = true;
   }
 
   for (const phan of phans) {
     for (const bg of phan.DanhSachBaiGiang ?? []) {
-      if (bg.trangThaiPheDuyet === "DangSua" || bg.trangThai === "DangSua") {
+      if (laDangSua(bg)) {
         chiTiet.baiGiang = true;
         coDangSua = true;
       }
-      for (const tl of bg.danhSachTaiLieu ?? []) {
-        if (tl.trangThaiPheDuyet === "DangSua" || tl.trangThai === "DangSua") {
+      for (const tl of ((bg as any).DanhSachTaiLieu ?? [])) {
+        if (laDangSua(tl)) {
           chiTiet.taiLieu = true;
           coDangSua = true;
         }
@@ -204,20 +209,17 @@ export function kiemTraCoBanGhiDangSua(
     }
 
     for (const kt of phan.DanhDachBaiKiemTra ?? []) {
-      if (kt.trangThaiPheDuyet === "DangSua" || kt.trangThai === "DangSua") {
+      if (laDangSua(kt)) {
         chiTiet.baiKiemTra = true;
         coDangSua = true;
       }
       for (const q of kt.cauHois ?? []) {
-        if (q.trangThaiPheDuyet === "DangSua" || q.trangThai === "DangSua") {
+        if (laDangSua(q)) {
           chiTiet.cauHoi = true;
           coDangSua = true;
         }
-        for (const da of q.danhSachDapAn ?? []) {
-          if (
-            da.trangThaiPheDuyet === "DangSua" ||
-            da.trangThai === "DangSua"
-          ) {
+        for (const da of q.dapAns ?? []) {
+          if (laDangSua(da)) {
             chiTiet.dapAn = true;
             coDangSua = true;
           }
