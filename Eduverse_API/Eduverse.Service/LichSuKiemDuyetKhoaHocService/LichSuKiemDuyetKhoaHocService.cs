@@ -96,6 +96,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             IMapper mapper,
             IElasticsearchService elasticsearchService,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
+            
         IHttpContextAccessor? httpContextAccessor = null) : base(repository)
         {
             _khoaHocRepository = khoaHocRepository;
@@ -124,7 +125,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
 
-            var lichSuDangDuyetIds = await GetQueryable()
+            var lichSuDangDuyetIds =  await GetQueryable()
                 .Where(x => x.CreatedId == userId && x.TrangThaiPheDuyet == "DangDuyet")
                 .Select(x => x.IdDoiTuong)
                 .ToListAsync();
@@ -208,12 +209,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             // 3. Chuyển toàn bộ cây sang trạng thái "DangDuyet" — mỗi item xử lý ĐỘC LẬP
             if (targetVersion.TrangThaiPheDuyet == "ChoDuyet" || targetVersion.TrangThaiPheDuyet == null)
             {
-                targetVersion.TrangThaiPheDuyet = "DangDuyet";
-                targetVersion.TrangThai = "DangDuyet";
-
-                _khoaHocRepository.Update(targetVersion);
-                _khoaHocRepository.SaveAsync();
-                var KiemDuyetKhoaHoc =  new LichSuKiemDuyetKhoaHoc
+                var KiemDuyetKhoaHoc = new LichSuKiemDuyetKhoaHoc
                 {
                     IdDoiTuong = targetVersion.Id,
                     LoaiDoiTuong = "KhoaHoc",
@@ -222,6 +218,13 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                 await CreateAsync(KiemDuyetKhoaHoc);
                 await SaveAsync();
+
+                targetVersion.TrangThaiPheDuyet = "DangDuyet";
+                targetVersion.TrangThai = "DangDuyet";
+
+                _khoaHocRepository.Update(targetVersion);
+                _khoaHocRepository.SaveAsync();
+                
             }
 
             foreach (var phan in phans)
