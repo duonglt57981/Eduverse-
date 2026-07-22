@@ -1,5 +1,10 @@
+"use client";
 import { Chip, Box } from "@mui/material";
-import { COLORS, FONTS, normalizeTrangThai } from "../types/constants"; // removed TrangThaiKiemDuyet
+import {
+  COLORS,
+  FONTS,
+  normalizeTrangThai,
+} from "@/src/app/admin/approve-courses/types/constants"; // removed TrangThaiKiemDuyet
 import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";

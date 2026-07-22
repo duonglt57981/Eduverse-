@@ -74,7 +74,7 @@ export default function CourseEditLayout({
   const trangThaiHienThi = thongTinTrangThai(trangThai);
 
   // Kiểm tra nếu đang ở trạng thái không cho phép chỉnh sửa
-  const isReadOnly = trangThai === "ChoDuyet" || trangThai === "DangDuyet";
+  const isReadOnly = trangThai !== "DangSua";
 
   if (loading) {
     return (
@@ -257,7 +257,7 @@ export default function CourseEditLayout({
                       <Box
                         key={m.key}
                         onClick={() => {
-                          if (isReadOnly) return;
+                          // Cho phép chuyển tab ngay cả khi readOnly
                           onNavigateSidebar(m.key);
                         }}
                         sx={{
@@ -269,12 +269,11 @@ export default function CourseEditLayout({
                           borderLeft: dangChon
                             ? `3px solid ${MAU.chinh}`
                             : "3px solid transparent",
-                          cursor: isReadOnly ? "not-allowed" : "pointer",
+                          cursor: "pointer",
                           borderRadius: "4px",
                           bgcolor: dangChon ? MAU.chinhNhat : "transparent",
-                          opacity: isReadOnly ? 0.6 : 1,
                           "&:hover": {
-                            bgcolor: isReadOnly ? "transparent" : MAU.chinhNhat,
+                            bgcolor: MAU.chinhNhat,
                           },
                         }}
                       >
@@ -305,6 +304,7 @@ export default function CourseEditLayout({
         </Box>
 
         <Box sx={{ flex: 1, px: { xs: 2, md: 4 }, py: 4, minWidth: 0 }}>
+          {/* Thông báo read-only - KHÔNG khóa tương tác */}
           {isReadOnly && (
             <Box
               sx={{
@@ -322,21 +322,17 @@ export default function CourseEditLayout({
               <Typography
                 sx={{ fontSize: 13.5, color: "#F57C00", fontWeight: 600 }}
               >
-                ⏳ Khóa học đang trong quá trình duyệt — mọi nội dung bị khóa,
-                không thể chỉnh sửa cho đến khi có kết quả phê duyệt.
+                {trangThai === "DaDuyet"
+                  ? "✅ Khóa học đã được duyệt — bạn chỉ có thể xem nội dung."
+                  : trangThai === "TuChoi"
+                    ? "❌ Khóa học bị từ chối — bạn chỉ có thể xem nội dung."
+                    : "⏳ Khóa học đang trong quá trình duyệt — bạn chỉ có thể xem nội dung."}
               </Typography>
             </Box>
           )}
 
-          <Box
-            sx={{
-              pointerEvents: isReadOnly ? "none" : "auto",
-              opacity: isReadOnly ? 0.6 : 1,
-              transition: "opacity .15s ease",
-            }}
-          >
-            {children}
-          </Box>
+          {/* Children không bị khóa tương tác */}
+          {children}
         </Box>
       </Box>
     </Box>

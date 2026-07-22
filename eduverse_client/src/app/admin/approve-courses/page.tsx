@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Stack,
@@ -12,61 +13,107 @@ import {
   Tab,
   Skeleton,
   Pagination,
+  IconButton,
   alpha,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
+import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
-import DashboardShell from "@/src/components/dashboard/DashboardShell";
-
-import {
-  NoiDungViewer,
-  MoTaKhoaHoc,
-  KhoaHocAccordionItem,
-  KhoiTenKhoaHoc,
-  KhoiTuChoiForm,
-} from "./types/index";
+import KiemDuyetService from "@/src/services/KiemDuyetServide";
 import {
   COLORS,
   FONTS,
   boxSx,
-  SCROLL_AREA_HEIGHT,
   TABS,
   PAGE_SIZE,
   normalizeListResponse,
-  normalizeDetailResponse,
-  normalizeTrangThai,
-  isTrangThaiCho,
 } from "./types/constants";
-import KiemDuyetService from "@/src/services/KiemDuyetServide";
+import { StatusChip } from "./types";
+import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
 const kiemDuyetService = new KiemDuyetService();
 
+// Base URL cho ảnh tĩnh (khác với base URL của API JSON, ví dụ API là
+// https://api.eduverse.vn/api nhưng ảnh nằm ở https://api.eduverse.vn).
+// Chỉnh biến env NEXT_PUBLIC_FILE_BASE_URL trong .env.local cho khớp backend.
+const FILE_BASE_URL =
+  process.env.NEXT_PUBLIC_FILE_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "";
+
+function resolveImageUrl(path?: string | null): string | null {
+  if (!path) return null;
+  // Đã là URL tuyệt đối (http/https) -> dùng luôn
+  if (/^https?:\/\//i.test(path)) return path;
+  // Đường dẫn tương đối -> ghép với base URL file
+  const base = FILE_BASE_URL.replace(/\/$/, "");
+  const rel = path.startsWith("/") ? path : `/${path}`;
+  return base ? `${base}${rel}` : path;
+}
+
+function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
+  const [errored, setErrored] = useState(false);
+  const resolved = resolveImageUrl(src);
+
+  if (!resolved || errored) {
+    return (
+      <Box
+        sx={{
+          width: 96,
+          height: 64,
+          borderRadius: 1.5,
+          flexShrink: 0,
+          bgcolor: COLORS.paper,
+          border: `1px dashed ${COLORS.line}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ImageRoundedIcon sx={{ color: alpha(COLORS.primary, 0.25) }} />
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      component="img"
+      src={resolved}
+      alt={alt}
+      onError={() => setErrored(true)}
+      sx={{
+        width: 96,
+        height: 64,
+        borderRadius: 1.5,
+        objectFit: "cover",
+        flexShrink: 0,
+        bgcolor: COLORS.line,
+      }}
+    />
+  );
+}
+
 export default function DuyetKhoaHocPage() {
+  const router = useRouter();
+
   const [tab, setTab] = useState<"ChoDuyet" | "TatCa" | "DaDuyet" | "TuChoi">(
     "ChoDuyet",
   );
   const [keyword, setKeyword] = useState("");
+  const [keywordInput, setKeywordInput] = useState("");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [items, setItems] = useState<any[]>([]);
   const [totalPage, setTotalPage] = useState(1);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detail, setDetail] = useState<any>(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [ghiChu, setGhiChu] = useState("");
-  const [showTuChoi, setShowTuChoi] = useState(false);
-
   const searchParams = useMemo(() => {
-    const params: any = { page, pageSize: PAGE_SIZE };
-    if (keyword.trim()) params.keyword = keyword.trim();
-    if (tab !== "TatCa") params.trangThai = tab;
+    const params: any = { trang: page, soLuong: PAGE_SIZE };
+    if (keyword.trim()) params.tuKhoa = keyword.trim();
+    if (tab !== "TatCa") params.trangThaiPheDuyet = tab;
     return params;
   }, [keyword, tab, page]);
 
@@ -77,17 +124,8 @@ export default function DuyetKhoaHocPage() {
       const { list, totalPage: tp } = normalizeListResponse(res, PAGE_SIZE);
       setItems(list);
       setTotalPage(tp);
-      if (list.length > 0) {
-        setSelectedId((prev) => prev ?? list[0].idKhoaHoc ?? list[0].id);
-        setExpandedId((prev) => prev ?? list[0].idKhoaHoc ?? list[0].id);
-      } else {
-        setSelectedId(null);
-        setExpandedId(null);
-        setSelectedContent(null);
-        setDetail(null);
-      }
     } catch (error) {
-      console.error("Lỗi tải danh sách:", error);
+      console.error("Lỗi tải danh sách kiểm duyệt:", error);
       setItems([]);
       setTotalPage(1);
     } finally {
@@ -100,104 +138,20 @@ export default function DuyetKhoaHocPage() {
     fetchList();
   }, [fetchList]);
 
-  useEffect(() => {
-    if (!selectedId) {
-      // Reset về rỗng khi bỏ chọn — cũng là đồng bộ state với dependency
-      // bên ngoài (selectedId), không phải setState tuỳ tiện; tắt rule ở
-      // đúng dòng này vì rule chưa nhận diện được trường hợp hợp lệ này.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDetail(null);
-      return;
-    }
-    let cancelled = false;
-    const fetchDetail = async () => {
-      setDetailLoading(true);
-      try {
-        const res =
-          await kiemDuyetService.GetDetailKiemDuyetKhoaHoc(selectedId);
-        if (!cancelled) setDetail(normalizeDetailResponse(res));
-      } catch (error) {
-        console.error("Lỗi tải chi tiết:", error);
-        if (!cancelled) setDetail(null);
-      } finally {
-        if (!cancelled) setDetailLoading(false);
-      }
-    };
-    fetchDetail();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedId]);
-
-  const handleToggleExpand = (id: string) => {
-    const willExpand = expandedId !== id;
-    setExpandedId(willExpand ? id : null);
-    if (willExpand) {
-      setSelectedId(id);
-      setSelectedContent(null);
-    }
-  };
-
-  const handleSelectContent = (loai: "baiGiang" | "taiLieu", item: any) => {
-    setSelectedContent({ loai, item });
-  };
-
-  const handleDuyet = async (id: string, isDuyet: boolean) => {
-    setActionLoading(true);
-    try {
-      const res = await kiemDuyetService.KiemDuyetKhoaHoc({
-        idKhoaHoc: id,
-        trangThaiPheDuyet: isDuyet ? "DaDuyet" : "TuChoi",
-      });
-      if (res?.status) {
-        await fetchList();
-        const detailRes = await kiemDuyetService.GetDetailKiemDuyetKhoaHoc(id);
-        setDetail(normalizeDetailResponse(detailRes));
-      }
-    } catch (error) {
-      console.error("Lỗi duyệt:", error);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleTuChoi = async (id: string, ghiChuValue: string) => {
-    setActionLoading(true);
-    try {
-      // FIX: dùng đúng field của KiemDuyetKhoaHocRequest — idBanNhap thay
-      // idKhoaHoc, trangThaiPheDuyet: "TuChoi" thay isDuyet: false, và lyDo
-      // (không phải ghiChu) để truyền lý do từ chối.
-      const res = await kiemDuyetService.KiemDuyetKhoaHoc({
-        idKhoaHoc: id,
-        trangThaiPheDuyet: "TuChoi",
-        lyDo: ghiChuValue,
-      });
-      if (res?.status) {
-        await fetchList();
-        const detailRes = await kiemDuyetService.GetDetailKiemDuyetKhoaHoc(id);
-        setDetail(normalizeDetailResponse(detailRes));
-        setShowTuChoi(false);
-        setGhiChu("");
-      }
-    } catch (error) {
-      console.error("Lỗi từ chối:", error);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-  const trangThaiKhoaHoc = detail
-    ? normalizeTrangThai(detail.trangThaiPheDuyet)
-    : null;
-  const isChoDuyet = isTrangThaiCho(trangThaiKhoaHoc);
-
   const handleTabChange = (_: any, newTab: string) => {
     setTab(newTab as any);
     setPage(1);
   };
 
-  const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKeyword(e.target.value);
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setKeyword(keywordInput);
     setPage(1);
+  };
+
+  const handleOpenCourse = (id: string) => {
+    if (!id) return;
+    router.push(`/admin/approve-courses/${id}`);
   };
 
   return (
@@ -216,280 +170,182 @@ export default function DuyetKhoaHocPage() {
             Kiểm duyệt khóa học
           </Typography>
 
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              gap: 3,
-              alignItems: "flex-start",
-            }}
-          >
-            {/* Cột trái */}
-            <Box
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                maxHeight: { md: SCROLL_AREA_HEIGHT },
-                overflowY: { md: "auto" },
-                pr: { md: 2 },
-                "&::-webkit-scrollbar": { width: 6 },
-                "&::-webkit-scrollbar-track": { background: "transparent" },
-                "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: alpha(COLORS.primary, 0.22),
-                  borderRadius: 999,
-                },
-                "&::-webkit-scrollbar-thumb:hover": {
-                  backgroundColor: alpha(COLORS.primary, 0.35),
-                },
-                scrollbarWidth: "thin",
-                scrollbarColor: `${alpha(COLORS.primary, 0.22)} transparent`,
-              }}
-            >
-              <KhoiTenKhoaHoc
-                detail={detail}
-                isChoDuyet={isChoDuyet}
-                actionLoading={actionLoading}
-                onDuyet={() => detail && handleDuyet(detail.idKhoaHoc, true)}
-                onTuChoiClick={() => setShowTuChoi(true)}
-              />
-
-              {showTuChoi && (
-                <KhoiTuChoiForm
-                  ghiChu={ghiChu}
-                  onChange={setGhiChu}
-                  onCancel={() => {
-                    setShowTuChoi(false);
-                    setGhiChu("");
-                  }}
-                  onConfirm={() =>
-                    detail && handleTuChoi(detail.idKhoaHoc, ghiChu)
-                  }
-                  actionLoading={actionLoading}
-                />
-              )}
-
-              <Box sx={{ ...boxSx, p: 2.5, minHeight: 420 }}>
-                {detailLoading ? (
-                  <Skeleton variant="rounded" height={380} />
-                ) : detail ? (
-                  <NoiDungViewer selected={selectedContent} />
-                ) : (
-                  <Box
-                    sx={{
-                      minHeight: 380,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <SchoolRoundedIcon
-                      sx={{
-                        fontSize: 40,
-                        color: alpha(COLORS.primary, 0.2),
-                        mb: 1.5,
-                      }}
-                    />
-                    <Typography sx={{ color: COLORS.inkSoft }}>
-                      Chọn một khóa học bên phải để bắt đầu kiểm duyệt.
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-
-              <Box sx={{ ...boxSx, p: 2.5 }}>
-                <Typography
-                  sx={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: COLORS.inkSoft,
-                    mb: 1.25,
-                  }}
-                >
-                  Mô tả khóa học
-                </Typography>
-                {detail?.moTa ? (
-                  <MoTaKhoaHoc html={detail.moTa} />
-                ) : (
-                  <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
-                    Khóa học chưa có mô tả.
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-
-            {/* Cột phải */}
-            <Box
-              sx={{
-                width: { xs: "100%", md: 360 },
-                flexShrink: 0,
-                position: { md: "sticky" },
-                top: { md: 0 },
-                alignSelf: "flex-start",
-                ...boxSx,
-                display: "flex",
-                flexDirection: "column",
-                maxHeight: { md: SCROLL_AREA_HEIGHT },
-                overflow: "hidden",
-              }}
-            >
-              <Box
+          <Box sx={{ ...boxSx, p: 2 }}>
+            {/* Thanh tìm kiếm + tabs */}
+            <Box component="form" onSubmit={handleSearchSubmit} sx={{ mb: 2 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Tìm khóa học, giảng viên..."
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
                 sx={{
-                  p: 2,
-                  borderBottom: `1px solid ${COLORS.line}`,
-                  bgcolor: COLORS.paper,
-                  flexShrink: 0,
+                  bgcolor: "#fff",
+                  mb: 1.5,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    "& fieldset": { borderColor: COLORS.line },
+                    "&:hover fieldset": { borderColor: COLORS.primary },
+                    "&.Mui-focused fieldset": { borderColor: COLORS.primary },
+                  },
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon
+                          sx={{ color: COLORS.inkSoft, fontSize: 19 }}
+                        />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              <Tabs
+                value={tab}
+                onChange={handleTabChange}
+                variant="scrollable"
+                scrollButtons={false}
+                slotProps={{
+                  indicator: {
+                    style: { backgroundColor: COLORS.primary, height: 2 },
+                  },
+                }}
+                sx={{
+                  minHeight: 32,
+                  "& .MuiTab-root": {
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: COLORS.inkSoft,
+                    minHeight: 32,
+                    fontSize: 12.5,
+                    px: 1.25,
+                    minWidth: "auto",
+                  },
+                  "& .Mui-selected": {
+                    color: `${COLORS.primary} !important`,
+                  },
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: COLORS.inkSoft,
-                    mb: 1.5,
-                  }}
-                >
-                  Danh sách khóa học
+                {TABS.map((t) => (
+                  <Tab key={t.value} value={t.value} label={t.label} />
+                ))}
+              </Tabs>
+            </Box>
+
+            {/* Danh sách khóa học */}
+            {loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rounded"
+                    height={92}
+                    sx={{ borderRadius: 2 }}
+                  />
+                ))}
+              </Stack>
+            ) : items.length === 0 ? (
+              <Box sx={{ py: 7, textAlign: "center" }}>
+                <SchoolRoundedIcon
+                  sx={{ fontSize: 36, color: COLORS.line, mb: 1 }}
+                />
+                <Typography sx={{ color: COLORS.inkSoft }}>
+                  Không có khóa học nào.
                 </Typography>
-                <TextField
-                  size="small"
-                  fullWidth
-                  placeholder="Tìm khóa học, giảng viên..."
-                  value={keyword}
-                  onChange={handleKeywordChange}
-                  sx={{
-                    bgcolor: "#fff",
-                    mb: 1.5,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1.5,
-                      "& fieldset": { borderColor: COLORS.line },
-                      "&:hover fieldset": { borderColor: COLORS.primary },
-                      "&.Mui-focused fieldset": { borderColor: COLORS.primary },
-                    },
-                  }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon
-                            sx={{ color: COLORS.inkSoft, fontSize: 19 }}
+              </Box>
+            ) : (
+              <Stack spacing={1.5}>
+                {items.map((item: any) => {
+                  const id = item.idKhoaHoc;
+                  const trangThaiPheDuyet =
+                    item.trangThaiPheDuyet ?? item.trangThai;
+
+                  return (
+                    <Box
+                      key={id}
+                      onClick={() => handleOpenCourse(id)}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 1.5,
+                        border: `1px solid ${COLORS.line}`,
+                        borderRadius: 2.5,
+                        cursor: "pointer",
+                        transition: "all .15s ease",
+                        bgcolor: "#fff",
+                        "&:hover": {
+                          boxShadow: `0 2px 10px ${alpha(COLORS.primary, 0.12)}`,
+                          borderColor: COLORS.primary,
+                        },
+                      }}
+                    >
+                      <CourseThumbnail
+                        src={item.hinhAnhKhoaHoc}
+                        alt={item.tieuDe}
+                      />
+
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: 15,
+                            color: COLORS.ink,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            mb: 0.75,
+                          }}
+                        >
+                          {item.tieuDe}
+                        </Typography>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          useFlexGap
+                          sx={{ alignItems: "center", flexWrap: "wrap" }}
+                        >
+                          <StatusChip
+                            trangThai={trangThaiPheDuyet}
+                            size="small"
                           />
-                        </InputAdornment>
-                      ),
+                        </Stack>
+                      </Box>
+
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenCourse(id);
+                        }}
+                        sx={{ color: alpha(COLORS.ink, 0.5) }}
+                      >
+                        <VisibilityRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  );
+                })}
+              </Stack>
+            )}
+
+            {!loading && items.length > 0 && totalPage > 1 && (
+              <Stack direction="row" sx={{ justifyContent: "center", pt: 2.5 }}>
+                <Pagination
+                  count={totalPage}
+                  page={page}
+                  onChange={(_, v) => setPage(v)}
+                  shape="rounded"
+                  size="small"
+                  sx={{
+                    "& .Mui-selected": {
+                      bgcolor: `${COLORS.primary} !important`,
+                      color: "#fff",
                     },
                   }}
                 />
-                <Tabs
-                  value={tab}
-                  onChange={handleTabChange}
-                  variant="scrollable"
-                  scrollButtons={false}
-                  slotProps={{
-                    indicator: {
-                      style: { backgroundColor: COLORS.primary, height: 2 },
-                    },
-                  }}
-                  sx={{
-                    minHeight: 32,
-                    "& .MuiTab-root": {
-                      textTransform: "none",
-                      fontWeight: 600,
-                      color: COLORS.inkSoft,
-                      minHeight: 32,
-                      fontSize: 12.5,
-                      px: 1.25,
-                      minWidth: "auto",
-                    },
-                    "& .Mui-selected": {
-                      color: `${COLORS.primary} !important`,
-                    },
-                  }}
-                >
-                  {TABS.map((t) => (
-                    <Tab key={t.value} value={t.value} label={t.label} />
-                  ))}
-                </Tabs>
-              </Box>
-
-              <Box sx={{ flex: 1, overflowY: "auto", p: 1.5 }}>
-                {loading ? (
-                  <Stack spacing={1.25}>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton
-                        key={i}
-                        variant="rounded"
-                        height={64}
-                        sx={{ borderRadius: 2 }}
-                      />
-                    ))}
-                  </Stack>
-                ) : items.length === 0 ? (
-                  <Box sx={{ py: 7, textAlign: "center" }}>
-                    <SchoolRoundedIcon
-                      sx={{ fontSize: 36, color: COLORS.line, mb: 1 }}
-                    />
-                    <Typography sx={{ color: COLORS.inkSoft }}>
-                      Không có khóa học nào.
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Stack spacing={1.25}>
-                    {items.map((item: any) => {
-                      const id = item.idKhoaHoc ?? item.id;
-                      const isExpanded = expandedId === id;
-                      return (
-                        <KhoaHocAccordionItem
-                          key={id}
-                          item={item}
-                          isSelectedCourse={selectedId === id}
-                          isExpanded={isExpanded}
-                          detail={isExpanded ? detail : null}
-                          detailLoading={isExpanded && detailLoading}
-                          selectedContent={selectedContent}
-                          onToggleExpand={handleToggleExpand}
-                          onSelectContent={handleSelectContent}
-                        />
-                      );
-                    })}
-                  </Stack>
-                )}
-              </Box>
-
-              {!loading && items.length > 0 && (
-                <Stack
-                  direction="row"
-                  sx={{
-                    justifyContent: "center",
-                    p: 1.5,
-                    borderTop: `1px solid ${COLORS.line}`,
-                    bgcolor: COLORS.paper,
-                    flexShrink: 0,
-                  }}
-                >
-                  <Pagination
-                    count={totalPage}
-                    page={page}
-                    onChange={(_, v) => setPage(v)}
-                    shape="rounded"
-                    size="small"
-                    sx={{
-                      "& .Mui-selected": {
-                        bgcolor: `${COLORS.primary} !important`,
-                        color: "#fff",
-                      },
-                    }}
-                  />
-                </Stack>
-              )}
-            </Box>
+              </Stack>
+            )}
           </Box>
         </Box>
       </DashboardShell>

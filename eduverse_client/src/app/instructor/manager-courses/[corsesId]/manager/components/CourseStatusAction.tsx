@@ -135,7 +135,7 @@ export default function CourseStatusAction({
   }
 
   // ===== TRẠNG THÁI ĐANG SỬA (Mặc định) =====
-  const isDisabled = !coDangSua;
+  const isDisabled = !coDangSua || trangThai !== "DangSua";
 
   return (
     <>

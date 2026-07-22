@@ -101,15 +101,8 @@ function SectionHeader({
 }
 
 export default function BasicInfoContent() {
-  const {
-    thongTin,
-    setThongTin,
-    refreshData,
-    idKhoaHoc,
-    loading,
-    isReadOnly,
-    trangThai,
-  } = useCourseEdit();
+  const { thongTin, setThongTin, refreshData, idKhoaHoc, loading, trangThai } =
+    useCourseEdit();
   const [loadingSave, setLoadingSave] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -127,6 +120,9 @@ export default function BasicInfoContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
+
+  // Kiểm tra có thể chỉnh sửa hay không (chỉ DangSua mới cho sửa)
+  const isEditable = trangThai === "DangSua";
 
   // Lấy danh sách danh mục để hiển thị trong dropdown
   useEffect(() => {
@@ -233,7 +229,7 @@ export default function BasicInfoContent() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     const file = e.target.files?.[0] || null;
     validateAndSetImage(file);
   };
@@ -241,7 +237,7 @@ export default function BasicInfoContent() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    if (isReadOnly) return;
+    if (!isEditable) return;
     const file = e.dataTransfer.files?.[0] || null;
     validateAndSetImage(file);
   };
@@ -264,8 +260,8 @@ export default function BasicInfoContent() {
   };
 
   const handleSave = async () => {
-    if (isReadOnly) {
-      setError("Không thể chỉnh sửa khi khóa học đang chờ duyệt");
+    if (!isEditable) {
+      setError("Không thể chỉnh sửa khi khóa học không ở trạng thái Đang sửa");
       return;
     }
 
@@ -353,14 +349,16 @@ export default function BasicInfoContent() {
           </Typography>
         </Box>
 
-        {isReadOnly && (
+        {!isEditable && (
           <Alert
             severity={trangThai === "DaDuyet" ? "success" : "info"}
             sx={{ mb: 2 }}
           >
             {trangThai === "DaDuyet"
-              ? "Khóa học đã được duyệt. Bạn không thể chỉnh sửa thông tin."
-              : "Khóa học đang trong quá trình duyệt. Bạn không thể chỉnh sửa thông tin trong giai đoạn này."}
+              ? "Khóa học đã được duyệt. Bạn chỉ có thể xem thông tin."
+              : trangThai === "TuChoi"
+                ? "Khóa học bị từ chối. Bạn chỉ có thể xem thông tin."
+                : "Khóa học đang trong quá trình duyệt. Bạn chỉ có thể xem thông tin."}
           </Alert>
         )}
 
@@ -391,13 +389,13 @@ export default function BasicInfoContent() {
                 placeholder="VD: Lập trình React từ cơ bản đến nâng cao"
                 value={tenKhoaHoc}
                 onChange={(e) => {
-                  if (isReadOnly) return;
+                  if (!isEditable) return;
                   setThongTin({ tieuDe: e.target.value });
                   if (loiTieuDe) setLoiTieuDe(null);
                 }}
                 error={!!loiTieuDe}
                 helperText={loiTieuDe}
-                disabled={isReadOnly}
+                disabled={!isEditable}
                 slotProps={{
                   htmlInput: { maxLength: DO_DAI_TIEU_DE_TOI_DA },
                 }}
@@ -432,7 +430,7 @@ export default function BasicInfoContent() {
                   border: loiMoTa ? "1px solid #D32F2F" : "1px solid #E3E6EB",
                 }}
               >
-                {isReadOnly ? (
+                {!isEditable ? (
                   <Box
                     sx={{
                       p: 2,
@@ -479,7 +477,7 @@ export default function BasicInfoContent() {
               />
               <Stack spacing={2}>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                  <FormControl fullWidth disabled={isReadOnly}>
+                  <FormControl fullWidth disabled={!isEditable}>
                     <InputLabel>Cấp độ</InputLabel>
                     <Select
                       value={thongTin.capDo || ""}
@@ -506,12 +504,13 @@ export default function BasicInfoContent() {
                 </Stack>
 
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                  <FormControl fullWidth disabled={isReadOnly}>
+                  <FormControl fullWidth disabled={!isEditable}>
                     <InputLabel>Danh mục</InputLabel>
                     <Select
                       multiple
                       value={danhSachDanhMucId}
                       onChange={(e) => {
+                        if (!isEditable) return;
                         const value = e.target.value;
                         setDanhSachDanhMucId(
                           typeof value === "string" ? value.split(",") : value,
@@ -567,7 +566,7 @@ export default function BasicInfoContent() {
                 placeholder="VD: 500.000"
                 value={thongTin.giaGoc !== undefined ? thongTin.giaGoc : ""}
                 onChange={(e) => {
-                  if (isReadOnly) return;
+                  if (!isEditable) return;
                   const raw = e.target.value.replace(/\D/g, "");
                   const val = raw === "" ? undefined : Number(raw);
                   setThongTin({ giaGoc: val });
@@ -575,7 +574,7 @@ export default function BasicInfoContent() {
                 }}
                 error={!!loiGia}
                 helperText={loiGia}
-                disabled={isReadOnly}
+                disabled={!isEditable}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -633,7 +632,7 @@ export default function BasicInfoContent() {
                         sx={{ width: "100%", height: "100%", borderRadius: 0 }}
                         variant="square"
                       />
-                      {!isReadOnly && (
+                      {isEditable && (
                         <IconButton
                           size="small"
                           onClick={() => {
@@ -720,12 +719,12 @@ export default function BasicInfoContent() {
                       hidden
                       ref={fileInputRef}
                       onChange={handleFileChange}
-                      disabled={isReadOnly}
+                      disabled={!isEditable}
                     />
                     <Button
                       variant="outlined"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={isReadOnly}
+                      disabled={!isEditable}
                       sx={{
                         flexShrink: 0,
                         textTransform: "none",
@@ -746,49 +745,49 @@ export default function BasicInfoContent() {
               </Stack>
             </Paper>
 
-            {/* Thanh lưu */}
-            <Box
-              sx={{
-                position: "sticky",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                mt: 2,
-                py: 2,
-                bgcolor: "rgba(255,255,255,0.9)",
-                backdropFilter: "blur(6px)",
-                borderTop: "1px solid #E3E6EB",
-                display: "flex",
-                justifyContent: "flex-end",
-              }}
-            >
-              <Button
-                variant="contained"
-                onClick={handleSave}
-                disabled={loadingSave || loading || isReadOnly}
+            {/* Thanh lưu - chỉ hiển thị khi có thể chỉnh sửa */}
+            {isEditable && (
+              <Box
                 sx={{
-                  bgcolor: isReadOnly ? "#9AA2B1" : MAU.chinh,
-                  textTransform: "none",
-                  fontWeight: 700,
-                  borderRadius: 2,
-                  px: 4,
-                  py: 1,
-                  boxShadow: "none",
-                  "&:hover": {
-                    bgcolor: isReadOnly ? "#9AA2B1" : MAU.chinhDam,
-                    boxShadow: "none",
-                  },
+                  position: "sticky",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  mt: 2,
+                  py: 2,
+                  bgcolor: "rgba(255,255,255,0.9)",
+                  backdropFilter: "blur(6px)",
+                  borderTop: "1px solid #E3E6EB",
+                  display: "flex",
+                  justifyContent: "flex-end",
                 }}
               >
-                {loadingSave ? (
-                  <CircularProgress size={22} color="inherit" />
-                ) : isReadOnly ? (
-                  "Đang chờ duyệt"
-                ) : (
-                  "Lưu thay đổi"
-                )}
-              </Button>
-            </Box>
+                <Button
+                  variant="contained"
+                  onClick={handleSave}
+                  disabled={loadingSave || loading}
+                  sx={{
+                    bgcolor: MAU.chinh,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    px: 4,
+                    py: 1,
+                    boxShadow: "none",
+                    "&:hover": {
+                      bgcolor: MAU.chinhDam,
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  {loadingSave ? (
+                    <CircularProgress size={22} color="inherit" />
+                  ) : (
+                    "Lưu thay đổi"
+                  )}
+                </Button>
+              </Box>
+            )}
           </>
         )}
       </Box>

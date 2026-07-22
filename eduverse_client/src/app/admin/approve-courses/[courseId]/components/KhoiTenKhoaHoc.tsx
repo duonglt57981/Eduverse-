@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
@@ -8,7 +9,7 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
-import { boxSx, COLORS, FONTS } from "../types/constants";
+import { boxSx, COLORS, FONTS } from "../../types/constants";
 import StatusChip from "./StatusChip";
 
 export default function KhoiTenKhoaHoc({
@@ -25,7 +26,7 @@ export default function KhoiTenKhoaHoc({
           <Avatar
             variant="rounded"
             src={detail.hinhAnhKhoaHoc}
-            sx={{ width: 56, height: 56, borderRadius: 1.5 }}
+            sx={{ width: 229, height: 139, borderRadius: 1.5 }} // ✅ tăng kích thước
           />
         )}
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -35,7 +36,7 @@ export default function KhoiTenKhoaHoc({
           >
             <Typography
               sx={{
-                fontFamily: FONTS.display,
+                fontFamily: FONTS.body,
                 fontWeight: 600,
                 fontSize: 22,
                 color: COLORS.ink,
@@ -45,7 +46,6 @@ export default function KhoiTenKhoaHoc({
             >
               {detail?.tieuDe || detail?.tenKhoaHoc || "Tên khóa học"}
             </Typography>
-            {detail && <StatusChip trangThai={detail.trangThaiPheDuyet} />}
           </Stack>
           {detail && (
             <Stack

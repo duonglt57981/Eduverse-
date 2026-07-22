@@ -369,7 +369,11 @@ export default function KhoaHocLearningPage() {
           <Typography color="text.secondary" sx={{ mb: 3 }}>
             Dữ liệu khóa học trống hoặc không hợp lệ. Vui lòng thử lại.
           </Typography>
-          <Stack direction="row" spacing={1.5} sx={{ justifyContent: "center" }}>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{ justifyContent: "center" }}
+          >
             <Button variant="outlined" onClick={() => window.location.reload()}>
               Tải lại
             </Button>

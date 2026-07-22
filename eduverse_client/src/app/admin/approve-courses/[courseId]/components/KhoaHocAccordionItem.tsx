@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
@@ -18,7 +19,7 @@ import QuizRoundedIcon from "@mui/icons-material/QuizRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
-import { COLORS, isTrangThaiCho } from "../types/constants";
+import { COLORS, isTrangThaiCho } from "../../types/constants";
 import StatusChip from "./StatusChip";
 import { useState } from "react";
 

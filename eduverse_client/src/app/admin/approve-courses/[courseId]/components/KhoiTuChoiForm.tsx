@@ -1,6 +1,7 @@
+"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Stack, TextField, Button, alpha } from "@mui/material";
-import { COLORS } from "../types/constants";
+import { COLORS } from "@/src/app/admin/approve-courses/types/constants";
 
 export default function KhoiTuChoiForm({
   ghiChu,

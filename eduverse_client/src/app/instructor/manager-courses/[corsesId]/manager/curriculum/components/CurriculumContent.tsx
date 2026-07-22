@@ -80,6 +80,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
+import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
 type LoaiMucThem = "BaiGiang" | "BaiKiemTra";
 
@@ -789,7 +790,7 @@ export default function CurriculumContent() {
     deleteTaiLieu,
     loading: contextLoading,
     refreshData,
-    isReadOnly,
+    trangThai,
   } = useCourseEdit();
 
   // ===== State =====
@@ -903,6 +904,9 @@ export default function CurriculumContent() {
     name: "",
   });
 
+  // Kiểm tra có thể chỉnh sửa hay không (chỉ DangSua mới cho sửa)
+  const isEditable = trangThai === "DangSua";
+
   // ===== Sensors cho DnD =====
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -967,7 +971,7 @@ export default function CurriculumContent() {
 
   // 1. Sắp xếp phần
   const handleDragEndSections = async (event: DragEndEvent) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -1012,7 +1016,7 @@ export default function CurriculumContent() {
 
   // 2. Sắp xếp các mục trong phần
   const handleDragEndItems = async (event: DragEndEvent, phanId: string) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -1085,7 +1089,7 @@ export default function CurriculumContent() {
     quizId: string,
     newCauHois: any[],
   ) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
 
     // Cập nhật state
     setPhans(
@@ -1138,12 +1142,12 @@ export default function CurriculumContent() {
   // ===== CÁC HÀM CRUD =====
 
   const moThemPhan = () => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     setPhanForm({ mode: "add", tenPhan: "", mieuTa: "" });
   };
 
   const moSuaPhan = (phanId: string) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     const phan = phans.find((p) => p.id === phanId);
     if (!phan) return;
     setPhanForm({
@@ -1195,7 +1199,7 @@ export default function CurriculumContent() {
   };
 
   const xoaPhan = async (phanId: string) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     setDeleteDialog({
       open: true,
       onConfirm: async () => {
@@ -1220,7 +1224,7 @@ export default function CurriculumContent() {
   };
 
   const xoaBaiGiang = async (phanId: string, baiGiangId: string) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     setDeleteDialog({
       open: true,
       onConfirm: async () => {
@@ -1294,7 +1298,7 @@ export default function CurriculumContent() {
   };
 
   const handleEditLecture = (phanId: string, lectureId: string) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     const phan = phans.find((p) => p.id === phanId);
     if (!phan) return;
     const bg = phan.DanhSachBaiGiang?.find((b) => b.id === lectureId);
@@ -1343,13 +1347,12 @@ export default function CurriculumContent() {
       setTempVideoFiles((prev) => ({ ...prev, [lectureId]: file }));
     }
 
-    // Truyền tiêu đề và trạng thái miễn phí MỚI trực tiếp, không phụ thuộc vào state vừa set
     await saveBaiGiang(phanId, lectureId, title.trim(), isFree);
     setEditingLecture(null);
   };
 
   const xoaBaiKiemTra = async (phanId: string, baiKiemTraId: string) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     setDeleteDialog({
       open: true,
       onConfirm: async () => {
@@ -1586,7 +1589,7 @@ export default function CurriculumContent() {
   };
 
   const handleEditQuiz = (phanId: string, quizId: string) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     const phan = phans.find((p) => p.id === phanId);
     if (!phan) return;
     const quiz = phan.DanhDachBaiKiemTra?.find((kt) => kt.id === quizId);
@@ -1710,7 +1713,7 @@ export default function CurriculumContent() {
     file: File,
     tenTaiLieu?: string,
   ) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     setLoading(true);
     try {
       await createTaiLieu(phanId, baiGiangId, file, tenTaiLieu);
@@ -1739,7 +1742,7 @@ export default function CurriculumContent() {
     baiGiangId: string,
     taiLieuId: string,
   ) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     setDeleteDialog({
       open: true,
       onConfirm: async () => {
@@ -1793,7 +1796,7 @@ export default function CurriculumContent() {
   const tongPhut = Math.floor(tongThoiLuong / 60);
 
   const handleVideoFileSelect = async (baiGiangId: string, file: File) => {
-    if (isReadOnly) return;
+    if (!isEditable) return;
     const result = await validateVideoFile(file);
     if (!result.valid) {
       alert(`File không hợp lệ: ${result.error}`);
@@ -1808,7 +1811,7 @@ export default function CurriculumContent() {
   };
 
   const chonTuyChonThemMuc = (tuyChon: TuyChonThemMuc) => {
-    if (!menuAnchor || tuyChon.disabled || isReadOnly) return;
+    if (!menuAnchor || tuyChon.disabled || !isEditable) return;
     const phanId = menuAnchor.phanId;
     if (!phanId) return;
 
@@ -1886,6 +1889,20 @@ export default function CurriculumContent() {
           Tổng thời lượng: {tongPhut} phút
         </Typography>
 
+        {/* Thông báo khi không thể chỉnh sửa */}
+        {!isEditable && (
+          <Alert
+            severity={trangThai === "DaDuyet" ? "success" : "info"}
+            sx={{ mb: 3 }}
+          >
+            {trangThai === "DaDuyet"
+              ? "Khóa học đã được duyệt. Bạn không thể chỉnh sửa chương trình giảng dạy."
+              : trangThai === "TuChoi"
+                ? "Khóa học bị từ chối. Vui lòng chỉnh sửa và gửi lại."
+                : "Khóa học đang trong quá trình duyệt. Bạn không thể chỉnh sửa chương trình giảng dạy trong giai đoạn này."}
+          </Alert>
+        )}
+
         {(loading || contextLoading) && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
             <CircularProgress sx={{ color: MAU.chinh }} />
@@ -1950,33 +1967,35 @@ export default function CurriculumContent() {
                           >
                             {phan.tenPhan || "Phần mới"}
                           </Typography>
-                          <IconButton
-                            size="small"
-                            onClick={() => moSuaPhan(phanId)}
-                            disabled={isReadOnly}
-                          >
-                            <EditOutlined
-                              fontSize="small"
-                              sx={{ color: "#9AA2B1" }}
-                            />
-                          </IconButton>
-                          <Tooltip title="Xóa phần">
-                            <IconButton
-                              size="small"
-                              onClick={() => xoaPhan(phanId)}
-                              disabled={isReadOnly}
-                            >
-                              <DeleteOutlined
-                                fontSize="small"
-                                sx={{ color: "#9AA2B1" }}
-                              />
-                            </IconButton>
-                          </Tooltip>
+                          {isEditable && (
+                            <>
+                              <IconButton
+                                size="small"
+                                onClick={() => moSuaPhan(phanId)}
+                              >
+                                <EditOutlined
+                                  fontSize="small"
+                                  sx={{ color: "#9AA2B1" }}
+                                />
+                              </IconButton>
+                              <Tooltip title="Xóa phần">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => xoaPhan(phanId)}
+                                >
+                                  <DeleteOutlined
+                                    fontSize="small"
+                                    sx={{ color: "#9AA2B1" }}
+                                  />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          )}
                           <DragIndicator
                             sx={{
                               fontSize: 20,
                               color: "#C7CCD6",
-                              cursor: "grab",
+                              cursor: isEditable ? "grab" : "default",
                             }}
                           />
                         </Box>
@@ -2039,35 +2058,47 @@ export default function CurriculumContent() {
                                           }}
                                           secondaryAction={
                                             <Box
-                                              sx={{ display: "flex", gap: 0.5 }}
+                                              sx={{
+                                                display: "flex",
+                                                gap: 0.5,
+                                              }}
                                             >
-                                              <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                  handleEditLecture(
-                                                    phanId,
-                                                    itemId,
-                                                  )
-                                                }
-                                                disabled={isReadOnly}
-                                              >
-                                                <EditOutlined
-                                                  fontSize="small"
-                                                  sx={{ color: "#9AA2B1" }}
-                                                />
-                                              </IconButton>
-                                              <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                  xoaBaiGiang(phanId, itemId)
-                                                }
-                                                disabled={isReadOnly}
-                                              >
-                                                <DeleteOutlined
-                                                  fontSize="small"
-                                                  sx={{ color: "#9AA2B1" }}
-                                                />
-                                              </IconButton>
+                                              {isEditable && (
+                                                <>
+                                                  <IconButton
+                                                    size="small"
+                                                    onClick={() =>
+                                                      handleEditLecture(
+                                                        phanId,
+                                                        itemId,
+                                                      )
+                                                    }
+                                                  >
+                                                    <EditOutlined
+                                                      fontSize="small"
+                                                      sx={{
+                                                        color: "#9AA2B1",
+                                                      }}
+                                                    />
+                                                  </IconButton>
+                                                  <IconButton
+                                                    size="small"
+                                                    onClick={() =>
+                                                      xoaBaiGiang(
+                                                        phanId,
+                                                        itemId,
+                                                      )
+                                                    }
+                                                  >
+                                                    <DeleteOutlined
+                                                      fontSize="small"
+                                                      sx={{
+                                                        color: "#9AA2B1",
+                                                      }}
+                                                    />
+                                                  </IconButton>
+                                                </>
+                                              )}
                                               <IconButton
                                                 size="small"
                                                 onClick={() =>
@@ -2398,98 +2429,111 @@ export default function CurriculumContent() {
                                                         bg.thoiLuong ?? 0,
                                                       )}
                                                     </Typography>
-                                                    <Button
-                                                      component="label"
-                                                      size="small"
-                                                      startIcon={
-                                                        <EditOutlined fontSize="small" />
-                                                      }
-                                                      sx={{
-                                                        textTransform: "none",
-                                                        color: MAU.chinh,
-                                                        fontWeight: 600,
-                                                      }}
-                                                    >
-                                                      Thay video
-                                                      <input
-                                                        type="file"
-                                                        accept="video/*"
-                                                        hidden
-                                                        onChange={async (e) => {
-                                                          const file =
-                                                            e.target.files?.[0];
-                                                          if (file) {
-                                                            await handleVideoFileSelect(
-                                                              itemId,
-                                                              file,
-                                                            );
-                                                            e.target.value = "";
+                                                    {isEditable && (
+                                                      <>
+                                                        <Button
+                                                          component="label"
+                                                          size="small"
+                                                          startIcon={
+                                                            <EditOutlined fontSize="small" />
                                                           }
-                                                        }}
-                                                      />
-                                                    </Button>
-                                                    <Box
-                                                      sx={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        gap: 1,
-                                                      }}
-                                                    >
-                                                      <Typography
-                                                        sx={{
-                                                          fontSize: 12.5,
-                                                          color: "#8A93A3",
-                                                        }}
-                                                      >
-                                                        Miễn phí xem thử:
-                                                      </Typography>
-                                                      <Switch
-                                                        size="small"
-                                                        checked={
-                                                          !!bg.laBaiGiangFree
-                                                        }
-                                                        onChange={(e) => {
-                                                          const phan =
-                                                            phans.find(
-                                                              (p) =>
-                                                                p.id === phanId,
-                                                            );
-                                                          if (phan) {
-                                                            const updatedBg =
-                                                              phan.DanhSachBaiGiang?.map(
-                                                                (b) =>
-                                                                  b.id ===
-                                                                  itemId
-                                                                    ? {
-                                                                        ...b,
-                                                                        laBaiGiangFree:
-                                                                          e
-                                                                            .target
-                                                                            .checked,
-                                                                      }
-                                                                    : b,
+                                                          sx={{
+                                                            textTransform:
+                                                              "none",
+                                                            color: MAU.chinh,
+                                                            fontWeight: 600,
+                                                          }}
+                                                        >
+                                                          Thay video
+                                                          <input
+                                                            type="file"
+                                                            accept="video/*"
+                                                            hidden
+                                                            onChange={async (
+                                                              e,
+                                                            ) => {
+                                                              const file =
+                                                                e.target
+                                                                  .files?.[0];
+                                                              if (file) {
+                                                                await handleVideoFileSelect(
+                                                                  itemId,
+                                                                  file,
+                                                                );
+                                                                e.target.value =
+                                                                  "";
+                                                              }
+                                                            }}
+                                                          />
+                                                        </Button>
+                                                        <Box
+                                                          sx={{
+                                                            display: "flex",
+                                                            alignItems:
+                                                              "center",
+                                                            gap: 1,
+                                                          }}
+                                                        >
+                                                          <Typography
+                                                            sx={{
+                                                              fontSize: 12.5,
+                                                              color: "#8A93A3",
+                                                            }}
+                                                          >
+                                                            Miễn phí xem thử:
+                                                          </Typography>
+                                                          <Switch
+                                                            size="small"
+                                                            checked={
+                                                              !!bg.laBaiGiangFree
+                                                            }
+                                                            onChange={(e) => {
+                                                              const phan =
+                                                                phans.find(
+                                                                  (p) =>
+                                                                    p.id ===
+                                                                    phanId,
+                                                                );
+                                                              if (phan) {
+                                                                const updatedBg =
+                                                                  phan.DanhSachBaiGiang?.map(
+                                                                    (b) =>
+                                                                      b.id ===
+                                                                      itemId
+                                                                        ? {
+                                                                            ...b,
+                                                                            laBaiGiangFree:
+                                                                              e
+                                                                                .target
+                                                                                .checked,
+                                                                          }
+                                                                        : b,
+                                                                  );
+                                                                const updatedPhans =
+                                                                  phans.map(
+                                                                    (p) =>
+                                                                      p.id ===
+                                                                      phanId
+                                                                        ? {
+                                                                            ...p,
+                                                                            DanhSachBaiGiang:
+                                                                              updatedBg,
+                                                                          }
+                                                                        : p,
+                                                                  );
+                                                                setPhans(
+                                                                  updatedPhans,
+                                                                );
+                                                              }
+                                                              saveBaiGiang(
+                                                                phanId,
+                                                                itemId,
                                                               );
-                                                            const updatedPhans =
-                                                              phans.map((p) =>
-                                                                p.id === phanId
-                                                                  ? {
-                                                                      ...p,
-                                                                      DanhSachBaiGiang:
-                                                                        updatedBg,
-                                                                    }
-                                                                  : p,
-                                                              );
-                                                            setPhans(
-                                                              updatedPhans,
-                                                            );
-                                                          }
-                                                          saveBaiGiang(
-                                                            phanId,
-                                                            itemId,
-                                                          );
-                                                        }}
-                                                      />
-                                                    </Box>
+                                                            }}
+                                                          />
+                                                        </Box>
+                                                      </>
+                                                    )}
                                                   </Box>
                                                 ) : (
                                                   <Box
@@ -2504,16 +2548,16 @@ export default function CurriculumContent() {
                                                       border:
                                                         "1px dashed #E3E6EB",
                                                       borderRadius: "10px",
-                                                      cursor: isReadOnly
-                                                        ? "default"
-                                                        : "pointer",
+                                                      cursor: isEditable
+                                                        ? "pointer"
+                                                        : "default",
                                                       "&:hover": {
-                                                        borderColor: isReadOnly
-                                                          ? "#E3E6EB"
-                                                          : MAU.chinh,
-                                                        bgcolor: isReadOnly
-                                                          ? "transparent"
-                                                          : `${MAU.chinh}0F`,
+                                                        borderColor: isEditable
+                                                          ? MAU.chinh
+                                                          : "#E3E6EB",
+                                                        bgcolor: isEditable
+                                                          ? `${MAU.chinh}0F`
+                                                          : "transparent",
                                                       },
                                                     }}
                                                   >
@@ -2533,36 +2577,42 @@ export default function CurriculumContent() {
                                                             ]?.name
                                                           }
                                                         </Typography>
-                                                        <Button
-                                                          size="small"
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setTempVideoFiles(
-                                                              (prev) => {
-                                                                const newState =
-                                                                  { ...prev };
-                                                                delete newState[
-                                                                  itemId
-                                                                ];
-                                                                return newState;
-                                                              },
-                                                            );
-                                                            setToast({
-                                                              open: true,
-                                                              message:
-                                                                "Đã hủy chọn video",
-                                                              severity: "info",
-                                                            });
-                                                          }}
-                                                          sx={{
-                                                            textTransform:
-                                                              "none",
-                                                            color: "error.main",
-                                                            fontWeight: 600,
-                                                          }}
-                                                        >
-                                                          Hủy bỏ
-                                                        </Button>
+                                                        {isEditable && (
+                                                          <Button
+                                                            size="small"
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              setTempVideoFiles(
+                                                                (prev) => {
+                                                                  const newState =
+                                                                    {
+                                                                      ...prev,
+                                                                    };
+                                                                  delete newState[
+                                                                    itemId
+                                                                  ];
+                                                                  return newState;
+                                                                },
+                                                              );
+                                                              setToast({
+                                                                open: true,
+                                                                message:
+                                                                  "Đã hủy chọn video",
+                                                                severity:
+                                                                  "info",
+                                                              });
+                                                            }}
+                                                            sx={{
+                                                              textTransform:
+                                                                "none",
+                                                              color:
+                                                                "error.main",
+                                                              fontWeight: 600,
+                                                            }}
+                                                          >
+                                                            Hủy bỏ
+                                                          </Button>
+                                                        )}
                                                       </>
                                                     ) : (
                                                       <>
@@ -2578,26 +2628,30 @@ export default function CurriculumContent() {
                                                             fontWeight: 600,
                                                           }}
                                                         >
-                                                          Tải lên video
+                                                          {isEditable
+                                                            ? "Tải lên video"
+                                                            : "Chưa có video"}
                                                         </Typography>
                                                       </>
                                                     )}
-                                                    <input
-                                                      type="file"
-                                                      accept="video/*"
-                                                      hidden
-                                                      onChange={async (e) => {
-                                                        const file =
-                                                          e.target.files?.[0];
-                                                        if (file) {
-                                                          await handleVideoFileSelect(
-                                                            itemId,
-                                                            file,
-                                                          );
-                                                          e.target.value = "";
-                                                        }
-                                                      }}
-                                                    />
+                                                    {isEditable && (
+                                                      <input
+                                                        type="file"
+                                                        accept="video/*"
+                                                        hidden
+                                                        onChange={async (e) => {
+                                                          const file =
+                                                            e.target.files?.[0];
+                                                          if (file) {
+                                                            await handleVideoFileSelect(
+                                                              itemId,
+                                                              file,
+                                                            );
+                                                            e.target.value = "";
+                                                          }
+                                                        }}
+                                                      />
+                                                    )}
                                                   </Box>
                                                 )}
 
@@ -2619,20 +2673,22 @@ export default function CurriculumContent() {
                                                       <ListItem
                                                         key={tl.id}
                                                         secondaryAction={
-                                                          <IconButton
-                                                            edge="end"
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                              e.stopPropagation();
-                                                              xoaTaiLieu(
-                                                                phanId,
-                                                                itemId,
-                                                                tl.id as string,
-                                                              );
-                                                            }}
-                                                          >
-                                                            <DeleteOutlined fontSize="small" />
-                                                          </IconButton>
+                                                          isEditable && (
+                                                            <IconButton
+                                                              edge="end"
+                                                              size="small"
+                                                              onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                xoaTaiLieu(
+                                                                  phanId,
+                                                                  itemId,
+                                                                  tl.id as string,
+                                                                );
+                                                              }}
+                                                            >
+                                                              <DeleteOutlined fontSize="small" />
+                                                            </IconButton>
+                                                          )
                                                         }
                                                         sx={{
                                                           cursor: "pointer",
@@ -2676,118 +2732,215 @@ export default function CurriculumContent() {
                                                       </ListItem>
                                                     ))}
                                                   </List>
-                                                  {addResourceForm[itemId]
-                                                    ?.open ? (
-                                                    <Box
-                                                      sx={{
-                                                        display: "flex",
-                                                        flexDirection: "column",
-                                                        gap: 1,
-                                                        mt: 1,
-                                                        p: 1.5,
-                                                        bgcolor: "#F5F6F8",
-                                                        borderRadius: "8px",
-                                                      }}
-                                                    >
-                                                      <TextField
-                                                        variant="standard"
-                                                        placeholder="Nhập tên tài liệu"
-                                                        value={
-                                                          addResourceForm[
-                                                            itemId
-                                                          ]?.tenTaiLieu || ""
-                                                        }
-                                                        onChange={(e) =>
-                                                          setAddResourceForm(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [itemId]: {
-                                                                ...prev[itemId],
-                                                                tenTaiLieu:
-                                                                  e.target
-                                                                    .value,
-                                                              },
-                                                            }),
-                                                          )
-                                                        }
-                                                        required
-                                                      />
-                                                      <Box
-                                                        sx={{
-                                                          display: "flex",
-                                                          gap: 1,
-                                                          alignItems: "center",
-                                                        }}
-                                                      >
-                                                        <Button
-                                                          component="label"
-                                                          variant="outlined"
-                                                          startIcon={
-                                                            <AttachFile />
-                                                          }
+                                                  {isEditable && (
+                                                    <>
+                                                      {addResourceForm[itemId]
+                                                        ?.open ? (
+                                                        <Box
                                                           sx={{
-                                                            textTransform:
-                                                              "none",
-                                                            borderColor:
-                                                              MAU.chinh,
-                                                            color: MAU.chinh,
-                                                            fontWeight: 600,
+                                                            display: "flex",
+                                                            flexDirection:
+                                                              "column",
+                                                            gap: 1,
+                                                            mt: 1,
+                                                            p: 1.5,
+                                                            bgcolor: "#F5F6F8",
+                                                            borderRadius: "8px",
                                                           }}
                                                         >
-                                                          {addResourceForm[
-                                                            itemId
-                                                          ]?.file
-                                                            ? "Thay đổi file"
-                                                            : "Chọn file"}
-                                                          <input
-                                                            type="file"
-                                                            hidden
-                                                            onChange={(e) => {
-                                                              const file =
-                                                                e.target
-                                                                  .files?.[0];
-                                                              if (file) {
+                                                          <TextField
+                                                            variant="standard"
+                                                            placeholder="Nhập tên tài liệu"
+                                                            value={
+                                                              addResourceForm[
+                                                                itemId
+                                                              ]?.tenTaiLieu ||
+                                                              ""
+                                                            }
+                                                            onChange={(e) =>
+                                                              setAddResourceForm(
+                                                                (prev) => ({
+                                                                  ...prev,
+                                                                  [itemId]: {
+                                                                    ...prev[
+                                                                      itemId
+                                                                    ],
+                                                                    tenTaiLieu:
+                                                                      e.target
+                                                                        .value,
+                                                                  },
+                                                                }),
+                                                              )
+                                                            }
+                                                            required
+                                                          />
+                                                          <Box
+                                                            sx={{
+                                                              display: "flex",
+                                                              gap: 1,
+                                                              alignItems:
+                                                                "center",
+                                                            }}
+                                                          >
+                                                            <Button
+                                                              component="label"
+                                                              variant="outlined"
+                                                              startIcon={
+                                                                <AttachFile />
+                                                              }
+                                                              sx={{
+                                                                textTransform:
+                                                                  "none",
+                                                                borderColor:
+                                                                  MAU.chinh,
+                                                                color:
+                                                                  MAU.chinh,
+                                                                fontWeight: 600,
+                                                              }}
+                                                            >
+                                                              {addResourceForm[
+                                                                itemId
+                                                              ]?.file
+                                                                ? "Thay đổi file"
+                                                                : "Chọn file"}
+                                                              <input
+                                                                type="file"
+                                                                hidden
+                                                                onChange={(
+                                                                  e,
+                                                                ) => {
+                                                                  const file =
+                                                                    e.target
+                                                                      .files?.[0];
+                                                                  if (file) {
+                                                                    setAddResourceForm(
+                                                                      (
+                                                                        prev,
+                                                                      ) => ({
+                                                                        ...prev,
+                                                                        [itemId]:
+                                                                          {
+                                                                            ...prev[
+                                                                              itemId
+                                                                            ],
+                                                                            file,
+                                                                          },
+                                                                      }),
+                                                                    );
+                                                                  }
+                                                                }}
+                                                              />
+                                                            </Button>
+                                                            {addResourceForm[
+                                                              itemId
+                                                            ]?.file && (
+                                                              <Typography
+                                                                variant="body2"
+                                                                sx={{
+                                                                  color:
+                                                                    "#6B7280",
+                                                                }}
+                                                              >
+                                                                {
+                                                                  addResourceForm[
+                                                                    itemId
+                                                                  ]?.file?.name
+                                                                }
+                                                              </Typography>
+                                                            )}
+                                                          </Box>
+                                                          <Box
+                                                            sx={{
+                                                              display: "flex",
+                                                              gap: 1,
+                                                              justifyContent:
+                                                                "flex-end",
+                                                            }}
+                                                          >
+                                                            <Button
+                                                              size="small"
+                                                              onClick={() =>
                                                                 setAddResourceForm(
                                                                   (prev) => ({
                                                                     ...prev,
                                                                     [itemId]: {
-                                                                      ...prev[
-                                                                        itemId
-                                                                      ],
-                                                                      file,
+                                                                      tenTaiLieu:
+                                                                        "",
+                                                                      file: null,
+                                                                      open: false,
                                                                     },
                                                                   }),
-                                                                );
+                                                                )
                                                               }
-                                                            }}
-                                                          />
-                                                        </Button>
-                                                        {addResourceForm[itemId]
-                                                          ?.file && (
-                                                          <Typography
-                                                            variant="body2"
-                                                            sx={{
-                                                              color: "#6B7280",
-                                                            }}
-                                                          >
-                                                            {
-                                                              addResourceForm[
-                                                                itemId
-                                                              ]?.file?.name
-                                                            }
-                                                          </Typography>
-                                                        )}
-                                                      </Box>
-                                                      <Box
-                                                        sx={{
-                                                          display: "flex",
-                                                          gap: 1,
-                                                          justifyContent:
-                                                            "flex-end",
-                                                        }}
-                                                      >
+                                                              sx={{
+                                                                textTransform:
+                                                                  "none",
+                                                                color:
+                                                                  "#8A93A3",
+                                                              }}
+                                                            >
+                                                              Hủy bỏ
+                                                            </Button>
+                                                            <Button
+                                                              size="small"
+                                                              variant="contained"
+                                                              onClick={() => {
+                                                                const form =
+                                                                  addResourceForm[
+                                                                    itemId
+                                                                  ];
+                                                                if (
+                                                                  !form?.tenTaiLieu ||
+                                                                  !form.tenTaiLieu.trim()
+                                                                ) {
+                                                                  setToast({
+                                                                    open: true,
+                                                                    message:
+                                                                      "Vui lòng nhập tên tài liệu",
+                                                                    severity:
+                                                                      "error",
+                                                                  });
+                                                                  return;
+                                                                }
+                                                                if (
+                                                                  form?.file
+                                                                ) {
+                                                                  uploadTaiLieu(
+                                                                    phanId,
+                                                                    itemId,
+                                                                    form.file,
+                                                                    form.tenTaiLieu.trim(),
+                                                                  );
+                                                                } else {
+                                                                  setToast({
+                                                                    open: true,
+                                                                    message:
+                                                                      "Vui lòng chọn file",
+                                                                    severity:
+                                                                      "error",
+                                                                  });
+                                                                }
+                                                              }}
+                                                              sx={{
+                                                                bgcolor:
+                                                                  MAU.chinh,
+                                                                textTransform:
+                                                                  "none",
+                                                                fontWeight: 700,
+                                                                "&:hover": {
+                                                                  bgcolor:
+                                                                    MAU.chinhDam,
+                                                                },
+                                                              }}
+                                                            >
+                                                              Thêm
+                                                            </Button>
+                                                          </Box>
+                                                        </Box>
+                                                      ) : (
                                                         <Button
                                                           size="small"
+                                                          startIcon={<Add />}
                                                           onClick={() =>
                                                             setAddResourceForm(
                                                               (prev) => ({
@@ -2796,7 +2949,7 @@ export default function CurriculumContent() {
                                                                   tenTaiLieu:
                                                                     "",
                                                                   file: null,
-                                                                  open: false,
+                                                                  open: true,
                                                                 },
                                                               }),
                                                             )
@@ -2804,88 +2957,14 @@ export default function CurriculumContent() {
                                                           sx={{
                                                             textTransform:
                                                               "none",
-                                                            color: "#8A93A3",
+                                                            color: MAU.chinh,
+                                                            fontWeight: 600,
                                                           }}
                                                         >
-                                                          Hủy bỏ
+                                                          Thêm tài liệu
                                                         </Button>
-                                                        <Button
-                                                          size="small"
-                                                          variant="contained"
-                                                          onClick={() => {
-                                                            const form =
-                                                              addResourceForm[
-                                                                itemId
-                                                              ];
-                                                            if (
-                                                              !form?.tenTaiLieu ||
-                                                              !form.tenTaiLieu.trim()
-                                                            ) {
-                                                              setToast({
-                                                                open: true,
-                                                                message:
-                                                                  "Vui lòng nhập tên tài liệu",
-                                                                severity:
-                                                                  "error",
-                                                              });
-                                                              return;
-                                                            }
-                                                            if (form?.file) {
-                                                              uploadTaiLieu(
-                                                                phanId,
-                                                                itemId,
-                                                                form.file,
-                                                                form.tenTaiLieu.trim(),
-                                                              );
-                                                            } else {
-                                                              setToast({
-                                                                open: true,
-                                                                message:
-                                                                  "Vui lòng chọn file",
-                                                                severity:
-                                                                  "error",
-                                                              });
-                                                            }
-                                                          }}
-                                                          sx={{
-                                                            bgcolor: MAU.chinh,
-                                                            textTransform:
-                                                              "none",
-                                                            fontWeight: 700,
-                                                            "&:hover": {
-                                                              bgcolor:
-                                                                MAU.chinhDam,
-                                                            },
-                                                          }}
-                                                        >
-                                                          Thêm
-                                                        </Button>
-                                                      </Box>
-                                                    </Box>
-                                                  ) : (
-                                                    <Button
-                                                      size="small"
-                                                      startIcon={<Add />}
-                                                      onClick={() =>
-                                                        setAddResourceForm(
-                                                          (prev) => ({
-                                                            ...prev,
-                                                            [itemId]: {
-                                                              tenTaiLieu: "",
-                                                              file: null,
-                                                              open: true,
-                                                            },
-                                                          }),
-                                                        )
-                                                      }
-                                                      sx={{
-                                                        textTransform: "none",
-                                                        color: MAU.chinh,
-                                                        fontWeight: 600,
-                                                      }}
-                                                    >
-                                                      Thêm tài liệu
-                                                    </Button>
+                                                      )}
+                                                    </>
                                                   )}
                                                 </Box>
                                               </Box>
@@ -3198,32 +3277,47 @@ export default function CurriculumContent() {
                                           }}
                                           secondaryAction={
                                             <Box
-                                              sx={{ display: "flex", gap: 0.5 }}
+                                              sx={{
+                                                display: "flex",
+                                                gap: 0.5,
+                                              }}
                                             >
-                                              <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                  handleEditQuiz(phanId, itemId)
-                                                }
-                                                disabled={isReadOnly}
-                                              >
-                                                <EditOutlined
-                                                  fontSize="small"
-                                                  sx={{ color: "#9AA2B1" }}
-                                                />
-                                              </IconButton>
-                                              <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                  xoaBaiKiemTra(phanId, itemId)
-                                                }
-                                                disabled={isReadOnly}
-                                              >
-                                                <DeleteOutlined
-                                                  fontSize="small"
-                                                  sx={{ color: "#9AA2B1" }}
-                                                />
-                                              </IconButton>
+                                              {isEditable && (
+                                                <>
+                                                  <IconButton
+                                                    size="small"
+                                                    onClick={() =>
+                                                      handleEditQuiz(
+                                                        phanId,
+                                                        itemId,
+                                                      )
+                                                    }
+                                                  >
+                                                    <EditOutlined
+                                                      fontSize="small"
+                                                      sx={{
+                                                        color: "#9AA2B1",
+                                                      }}
+                                                    />
+                                                  </IconButton>
+                                                  <IconButton
+                                                    size="small"
+                                                    onClick={() =>
+                                                      xoaBaiKiemTra(
+                                                        phanId,
+                                                        itemId,
+                                                      )
+                                                    }
+                                                  >
+                                                    <DeleteOutlined
+                                                      fontSize="small"
+                                                      sx={{
+                                                        color: "#9AA2B1",
+                                                      }}
+                                                    />
+                                                  </IconButton>
+                                                </>
+                                              )}
                                               <IconButton
                                                 size="small"
                                                 onClick={() =>
@@ -3347,7 +3441,7 @@ export default function CurriculumContent() {
                         </DndContext>
 
                         {/* FORM THÊM MỚI BÀI GIẢNG / BÀI KIỂM TRA */}
-                        {addForm?.phanId === phanId && !isReadOnly && (
+                        {addForm?.phanId === phanId && isEditable && (
                           <Box
                             sx={{
                               display: "flex",
@@ -3411,7 +3505,9 @@ export default function CurriculumContent() {
                                       borderColor: MAU.chinh,
                                       color: MAU.chinh,
                                       fontWeight: 600,
-                                      "&:hover": { bgcolor: `${MAU.chinh}0F` },
+                                      "&:hover": {
+                                        bgcolor: `${MAU.chinh}0F`,
+                                      },
                                     }}
                                   >
                                     {addForm.file
@@ -3568,40 +3664,40 @@ export default function CurriculumContent() {
                           </Box>
                         )}
 
-                        <Button
-                          startIcon={<Add />}
-                          onClick={(e) => {
-                            if (isReadOnly) return;
-                            const rect =
-                              e.currentTarget.getBoundingClientRect();
-                            setMenuAnchor({
-                              position: {
-                                top: rect.bottom + 6,
-                                left: rect.left,
-                              },
-                              phanId,
-                            });
-                          }}
-                          disabled={isReadOnly}
-                          sx={{
-                            alignSelf: "flex-start",
-                            textTransform: "none",
-                            fontWeight: 700,
-                            color: MAU.chinh,
-                            border: `1px solid ${MAU.chinh}`,
-                            borderRadius: "10px",
-                            px: 2,
-                            mt: 1,
-                            bgcolor: "#fff",
-                            "&:hover": { bgcolor: `${MAU.chinh}0F` },
-                          }}
-                        >
-                          Mục trong chương trình giảng dạy
-                        </Button>
+                        {isEditable && (
+                          <Button
+                            startIcon={<Add />}
+                            onClick={(e) => {
+                              const rect =
+                                e.currentTarget.getBoundingClientRect();
+                              setMenuAnchor({
+                                position: {
+                                  top: rect.bottom + 6,
+                                  left: rect.left,
+                                },
+                                phanId,
+                              });
+                            }}
+                            sx={{
+                              alignSelf: "flex-start",
+                              textTransform: "none",
+                              fontWeight: 700,
+                              color: MAU.chinh,
+                              border: `1px solid ${MAU.chinh}`,
+                              borderRadius: "10px",
+                              px: 2,
+                              mt: 1,
+                              bgcolor: "#fff",
+                              "&:hover": { bgcolor: `${MAU.chinh}0F` },
+                            }}
+                          >
+                            Mục trong chương trình giảng dạy
+                          </Button>
+                        )}
                       </Box>
 
                       {/* Form chỉnh sửa phần */}
-                      {isEditingPhan && !isReadOnly && (
+                      {isEditingPhan && isEditable && (
                         <Box
                           sx={{
                             mt: 1,
@@ -3678,7 +3774,7 @@ export default function CurriculumContent() {
         </DndContext>
 
         {/* Nút thêm phần mới */}
-        {phanForm?.mode === "add" && !isReadOnly ? (
+        {phanForm?.mode === "add" && isEditable ? (
           <Box
             sx={{
               mt: 2.5,
@@ -3737,7 +3833,7 @@ export default function CurriculumContent() {
           <Button
             startIcon={<Add />}
             onClick={moThemPhan}
-            disabled={loading || isReadOnly}
+            disabled={loading || !isEditable}
             sx={{
               mt: 2.5,
               textTransform: "none",
@@ -3795,7 +3891,7 @@ export default function CurriculumContent() {
                 <MenuItem
                   key={tuyChon.title}
                   onClick={() => chonTuyChonThemMuc(tuyChon)}
-                  disabled={tuyChon.disabled || isReadOnly}
+                  disabled={tuyChon.disabled || !isEditable}
                   sx={{
                     display: "flex",
                     alignItems: "flex-start",
@@ -3805,10 +3901,10 @@ export default function CurriculumContent() {
                     mx: 1,
                     borderRadius: "12px",
                     whiteSpace: "normal",
-                    opacity: tuyChon.disabled || isReadOnly ? 0.5 : 1,
+                    opacity: tuyChon.disabled || !isEditable ? 0.5 : 1,
                     "&:hover": {
                       bgcolor:
-                        tuyChon.disabled || isReadOnly
+                        tuyChon.disabled || !isEditable
                           ? "transparent"
                           : "#F5F6F8",
                     },
@@ -3978,7 +4074,11 @@ export default function CurriculumContent() {
               onClick={() =>
                 setDeleteDialog({ open: false, onConfirm: () => {} })
               }
-              sx={{ textTransform: "none", fontWeight: 700, color: MAU.chuXam }}
+              sx={{
+                textTransform: "none",
+                fontWeight: 700,
+                color: MAU.chuXam,
+              }}
             >
               Hủy bỏ
             </Button>

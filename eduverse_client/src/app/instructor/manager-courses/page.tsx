@@ -93,6 +93,35 @@ function trichXuatThongBaoLoi(err: unknown, macDinh: string): string {
   return macDinh;
 }
 
+// ====== Helper: trích id bản nháp mới tạo từ nhiều shape response khác nhau ======
+// apiService (interceptor axios) có thể đã tự unwrap response.data ở tầng service,
+// nên response ở đây có thể là { status, data: {...} } hoặc thẳng là {...} luôn.
+// Dò nhiều nhánh phổ biến để tránh báo lỗi oan khi backend thực tế đã tạo thành công.
+function trichXuatIdBanNhap(response: any): string | undefined {
+  if (!response) return undefined;
+  return (
+    response?.data?.khoaHoc?.id ??
+    response?.data?.khoaHocMoi?.id ??
+    response?.data?.id ??
+    response?.khoaHoc?.id ??
+    response?.khoaHocMoi?.id ??
+    response?.id ??
+    response?.data?.data?.khoaHoc?.id ??
+    response?.data?.data?.id
+  );
+}
+
+// ====== Helper: xác định request có thành công hay không ======
+// Hỗ trợ nhiều field báo trạng thái khác nhau (status / success / isSuccess),
+// chỉ coi là thất bại khi có field nào đó khẳng định rõ ràng là false.
+function laThanhCong(response: any): boolean {
+  if (!response) return false;
+  if (response.status === false) return false;
+  if (response.success === false) return false;
+  if (response.isSuccess === false) return false;
+  return true;
+}
+
 // ====== Nội dung trang ======
 function KhoaHocContent() {
   const router = useRouter();
@@ -191,10 +220,16 @@ function KhoaHocContent() {
     try {
       const response = await khoaHocService.createFullKhoaHocDraft(khoaHoc.id);
 
-      if (response?.status && response?.data?.khoaHoc?.id) {
-        router.push(
-          `/instructor/manager-courses/${response.data.khoaHoc.id}/manager/curriculum`,
-        );
+      // Log tạm để xác định chính xác shape thực tế backend trả về.
+      // Có thể xoá dòng này sau khi xác nhận cấu trúc ổn định.
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[createFullKhoaHocDraft] response:", response);
+      }
+
+      const idBanNhap = trichXuatIdBanNhap(response);
+
+      if (laThanhCong(response) && idBanNhap) {
+        router.push(duongDanChiTietKhoaHoc(idBanNhap));
         return;
       }
 

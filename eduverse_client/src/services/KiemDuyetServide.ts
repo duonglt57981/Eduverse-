@@ -58,38 +58,6 @@ export default class KiemDuyetService {
     }
   }
 
-  async KiemDuyetBaiGiang(
-    request: KiemDuyetKhoaHocRequest,
-  ): Promise<ApiResponse<KiemDuyetKhoaHocDto>> {
-    try {
-      const response = await apiService.post<ApiResponse<KiemDuyetKhoaHocDto>>(
-        `/KiemDuyetKhoaHoc/kiemduyet-baigiang`,
-        request,
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching course approval list:", error);
-      throw error;
-    }
-  }
-
-  async KiemDuyetTaiLieu(
-    request: KiemDuyetKhoaHocRequest,
-  ): Promise<ApiResponse<KiemDuyetKhoaHocDto>> {
-    try {
-      const response = await apiService.post<ApiResponse<KiemDuyetKhoaHocDto>>(
-        `/KiemDuyetKhoaHoc/kiemduyet-tailieu`,
-        request,
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching course approval list:", error);
-      throw error;
-    }
-  }
-
   async GetLichSuKiemDuyet(
     idKhoaHoc: string,
   ): Promise<ApiResponse<KiemDuyetDetailDto>> {

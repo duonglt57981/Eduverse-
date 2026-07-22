@@ -1,6 +1,7 @@
+"use client";
 import { useState } from "react";
 import { Box, Button, alpha } from "@mui/material";
-import { COLORS, FONTS } from "../types/constants";
+import { COLORS, FONTS } from "@/src/app/admin/approve-courses/types/constants";
 
 export default function MoTaKhoaHoc({ html }: { html: string }) {
   const [expanded, setExpanded] = useState(false);

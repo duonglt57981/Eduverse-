@@ -5,9 +5,7 @@ export interface KiemDuyetSearchDto extends SearchBase {
 export interface KhoaHocKiemDuyetListDto {
   idKhoaHoc: string; // Guid
   tieuDe: string;
-  soBaiGiangChoDuyet: number; // int
-  soTaiLieuChoDuyet: number; // int
-  createDate?: Date | null; // DateTime?
+  hinhAnhKhoaHoc?: string | null;
   trangThai: string;
   trangThaiPheDuyet: string;
   createBy: string;
@@ -55,7 +53,6 @@ export interface TaiLieuChoDuyetDto {
   idBaiGiang: string; // Guid
   createBy?: string | null;
 }
-
 
 export interface KiemDuyetKhoaHocDto {
   idDoiTuong?: string | null; // Guid?

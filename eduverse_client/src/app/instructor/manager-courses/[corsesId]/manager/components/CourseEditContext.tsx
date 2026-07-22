@@ -986,10 +986,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
   }, [saveState]);
 
   // ---- isReadOnly ----
-  const isReadOnly =
-    trangThai === "ChoDuyet" ||
-    trangThai === "DangDuyet" ||
-    trangThai === "DaDuyet";
+  const isReadOnly = trangThai !== "DangSua";
 
   const value: CourseEditContextValue = {
     idKhoaHoc,
