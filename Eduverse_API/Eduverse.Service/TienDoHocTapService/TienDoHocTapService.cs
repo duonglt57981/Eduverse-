@@ -178,7 +178,7 @@ namespace Eduverse.Service.TienDoHocTapService
                     .ToListAsync();
             }
         }
-        #endregion
+        #endregion 
 
         #region HoanThanhBaiGiang
         public async Task<double> HoanThanhBaiGiang(Guid? idDangKy, Guid? idBaiGiang, int thoiGianXem)

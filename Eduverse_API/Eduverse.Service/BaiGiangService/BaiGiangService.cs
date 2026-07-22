@@ -56,11 +56,9 @@ namespace Eduverse.Service.BaiGiangService
                 throw new UnauthorizedAccessException("Không thể xác định người dùng.");
             }
 
-            var query = GetAll()
+            var query = GetQueryable()
                 .Where(x => x.IdPhan == IdPhan
-                            && x.CreatedId == userId
-                            && x.TrangThaiPheDuyet != "TuChoi"
-                            && x.TrangThai != "DaXoa")
+                            && x.CreatedId == userId)
                 .AsNoTracking() 
                 .OrderBy(x => x.ThuTuSapXep ?? 0) 
                 .Select(x => new BaiGiangDto
