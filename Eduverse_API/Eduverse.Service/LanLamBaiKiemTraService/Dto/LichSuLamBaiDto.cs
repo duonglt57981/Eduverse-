@@ -13,7 +13,7 @@ namespace Eduverse.Service.LanLamBaiKiemTraService.Dto
         public int? LamLanThu { get; set; }
 
         public bool? Dat { get; set; }
-
+        public double? TongDiem { get; set; }
         public DateTime? ThoiGianBatDau { get; set; }
 
         public DateTime? ThoiGianNop { get; set; }

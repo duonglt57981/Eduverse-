@@ -18,19 +18,11 @@ export function useSignalR(eventName: string, handler: (data: any) => void) {
     const connection = signalRClient.getConnection();
 
     const wrappedHandler = (data: any) => {
-      handlerRef.current(data);
+      if (mounted) handlerRef.current(data);
     };
 
-    const start = async () => {
-      await signalRClient.start();
-
-      if (!mounted) return;
-
-      connection.off(eventName);
-      connection.on(eventName, wrappedHandler);
-    };
-
-    start();
+    connection.on(eventName, wrappedHandler);
+    void signalRClient.start();
 
     return () => {
       mounted = false;

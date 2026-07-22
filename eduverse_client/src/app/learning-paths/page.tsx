@@ -60,6 +60,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { apiService } from "@/src/services/index";
@@ -296,8 +297,22 @@ export default function LearningPathsPage() {
   }, []);
 
   const handleLogout = async () => {
-    await dispatch(logout());
-    router.replace("/auth/login");
+    const result = await Swal.fire({
+      title: "Xác nhận đăng xuất",
+      text: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: COLORS.primary,
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Đăng xuất",
+      cancelButtonText: "Hủy",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      await dispatch(logout());
+      router.replace("/auth/login");
+    }
   };
 
   const theme = useMemo(

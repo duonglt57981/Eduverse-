@@ -1718,12 +1718,16 @@ namespace Eduverse.Service.BaiKiemTraService
                 return false;
 
             var soLanDaLam = await _lanLamBaiKiemTraService
-                .GetQueryable()
-                .AsNoTracking()
-                .CountAsync(x =>
-                    x.IdNguoiDung == idNguoiDung &&
-                    x.IdBaiKiemTra == idBaiKiemTra &&
-                    !x.IsDeleted);
+            .GetQueryable()
+            .AsNoTracking()
+            .CountAsync(x =>
+            x.IdNguoiDung == idNguoiDung &&
+            x.IdBaiKiemTra == idBaiKiemTra &&
+            x.ThoiGianNop != null &&   // ← chỉ đếm lần đã nộp
+            !x.IsDeleted);
+
+            if (!baiKiemTra.SoLanLamToiDa.HasValue || baiKiemTra.SoLanLamToiDa.Value == 0)
+                return true;
 
             return soLanDaLam < (baiKiemTra.SoLanLamToiDa ?? 1);
         }
@@ -1747,6 +1751,7 @@ namespace Eduverse.Service.BaiKiemTraService
                     IdLanLamBaiKiemTra = x.Id,
                     LamLanThu = x.LamLanThu,
                     Dat = x.Dat,
+                    TongDiem = x.TongDiemLanKiemTra,
                     ThoiGianBatDau = x.ThoiGianBatDau,
                     ThoiGianNop = x.ThoiGianNop
                 })

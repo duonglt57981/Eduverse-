@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { apiService } from "@/src/services/index";
 
-// ── Types (map từ BE DTOs) ─────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface DapAnLamBaiDto {
   id: string;
@@ -38,7 +38,6 @@ export interface BaiKiemTraLamBaiDto {
   cauHois: CauHoiLamBaiDto[];
 }
 
-// BaiKiemTraDto (thông tin tổng quan)
 export interface BaiKiemTraInfoDto {
   id: string;
   tenBaiKiemTra?: string;
@@ -121,7 +120,7 @@ export interface LichSuLamBaiDto {
   idLanLamBaiKiemTra: string;
   lamLanThu?: number;
   dat?: boolean;
-  tongDiem?: number;
+  tongDiem?: number;       // điểm lần đó
   thoiGianBatDau?: string;
   thoiGianNop?: string;
 }
@@ -147,13 +146,15 @@ export function useQuiz(
 
   const [idLanLam, setIdLanLam] = useState<string>("");
   const [cauHoiHienTai, setCauHoiHienTai] = useState(0);
-  // traLois: idCauHoi → list idDapAn (support multi-choice)
   const [traLois, setTraLois] = useState<Record<string, string[]>>({});
   const [thoiGianConLai, setThoiGianConLai] = useState(0);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const savingRef = useRef(false);
+
+  // ── Ref để tránh stale closure trong timer ────────────────────────────────
+  const nopBaiRef = useRef<() => Promise<void>>(async () => {});
 
   // ── Load thông tin bài + lịch sử ──────────────────────────────────────────
   useEffect(() => {
@@ -162,15 +163,9 @@ export function useQuiz(
       setLoading(true);
       try {
         const [infoRes, histRes, retakeRes] = await Promise.all([
-          apiService.get<BaiKiemTraLamBaiDto>(
-            `/baikiemtra/${idBaiKiemTra}/quiz`,
-          ),
-          apiService.get<LichSuLamBaiDto[]>(
-            `/baikiemtra/${idBaiKiemTra}/history/${userId}`,
-          ),
-          apiService.get<boolean>(
-            `/baikiemtra/${idBaiKiemTra}/can-retake/${userId}`,
-          ),
+          apiService.get<BaiKiemTraLamBaiDto>(`/baikiemtra/${idBaiKiemTra}/quiz`),
+          apiService.get<LichSuLamBaiDto[]>(`/baikiemtra/${idBaiKiemTra}/history/${userId}`),
+          apiService.get<boolean>(`/baikiemtra/${idBaiKiemTra}/can-retake/${userId}`),
         ]);
         setInfo(infoRes.data);
         setLichSu(histRes.data ?? []);
@@ -192,8 +187,8 @@ export function useQuiz(
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
+  // ── Nộp bài ───────────────────────────────────────────────────────────────
   const nopBai = useCallback(async () => {
-    console.log("[nopBai] idLanLam:", idLanLam, "cauHois:", cauHois.length);
     if (!idLanLam) {
       setError("Chưa có ID lần làm bài — thử bắt đầu lại");
       return;
@@ -202,7 +197,6 @@ export function useQuiz(
       setError("Không có câu hỏi");
       return;
     }
-    if (!idLanLam || !cauHois.length) return;
     stopTimer();
     stopHeartbeat();
     setPhase("submitting");
@@ -214,39 +208,31 @@ export function useQuiz(
           idDapAnChons: traLois[c.id] ?? [],
         })),
       };
-      const res = await apiService.post<KetQuaLanKiemTraDto>(
-        "/baikiemtra/submit",
-        payload,
-      );
+      const res = await apiService.post<KetQuaLanKiemTraDto>("/baikiemtra/submit", payload);
       setKetQua(res.data);
       setPhase("result");
 
-      // Refresh lịch sử
+      // Refresh lịch sử + điểm cao nhất
       if (userId && idBaiKiemTra) {
-        const histRes = await apiService.get<LichSuLamBaiDto[]>(
-          `/baikiemtra/${idBaiKiemTra}/history/${userId}`,
-        );
+        const [histRes, retakeRes] = await Promise.all([
+          apiService.get<LichSuLamBaiDto[]>(`/baikiemtra/${idBaiKiemTra}/history/${userId}`),
+          apiService.get<boolean>(`/baikiemtra/${idBaiKiemTra}/can-retake/${userId}`),
+        ]);
         setLichSu(histRes.data ?? []);
-        const retakeRes = await apiService.get<boolean>(
-          `/baikiemtra/${idBaiKiemTra}/can-retake/${userId}`,
-        );
         setCanRetake(retakeRes.data);
       }
     } catch {
       setError("Không thể nộp bài. Vui lòng thử lại.");
       setPhase("doing");
     }
-  }, [
-    idLanLam,
-    cauHois,
-    traLois,
-    stopTimer,
-    stopHeartbeat,
-    userId,
-    idBaiKiemTra,
-  ]);
+  }, [idLanLam, cauHois, traLois, stopTimer, stopHeartbeat, userId, idBaiKiemTra]);
 
-  // ── Timer ──────────────────────────────────────────────────────────────────
+  // ── Cập nhật ref mỗi khi nopBai thay đổi (tránh stale closure trong timer) ─
+  useEffect(() => {
+    nopBaiRef.current = nopBai;
+  }, [nopBai]);
+
+  // ── Timer — dùng ref để luôn gọi phiên bản mới nhất của nopBai ────────────
   const startTimer = useCallback((giayConLai: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
     setThoiGianConLai(giayConLai);
@@ -254,14 +240,14 @@ export function useQuiz(
       setThoiGianConLai((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          // Tự nộp khi hết giờ
-          nopBai();
+          // Gọi qua ref → luôn là bản mới nhất, không bị stale closure
+          nopBaiRef.current();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, []);
+  }, []); // deps rỗng là đúng — ref không cần khai báo dep
 
   // ── Heartbeat ──────────────────────────────────────────────────────────────
   const startHeartbeat = useCallback((id: string) => {
@@ -277,7 +263,7 @@ export function useQuiz(
       } catch {
         /* ignore */
       }
-    }, 10000); // 10s
+    }, 10000);
   }, []);
 
   useEffect(
@@ -298,25 +284,17 @@ export function useQuiz(
         idBaiKiemTra,
         idDangKi: idDangKi ?? null,
       });
-      console.log("[batDauLamBai] Full startRes:", JSON.stringify(startRes));
-      console.log("[batDauLamBai] startRes.data:", startRes.data);
-      console.log("[batDauLamBai] Gửi lên BE:", {
-        idBaiKiemTra,
-        idDangKi: idDangKi ?? null,
-      });
-      // ── CHECK LỖI TỪ BE ──
+
       if (!startRes.status || !startRes.data) {
         setError(startRes.message ?? "Không thể bắt đầu làm bài");
         setLoading(false);
-        return; // ← dừng lại, không lấy quiz
+        return;
       }
 
       const newIdLanLam =
         startRes.data?.id ??
         startRes.data?.idLanLamBaiKiemTra ??
         (startRes as any)?.id;
-
-      console.log("[QUIZ] idLanLam:", newIdLanLam);
 
       if (!newIdLanLam) {
         setError("Không nhận được ID lần làm bài");
@@ -336,18 +314,24 @@ export function useQuiz(
       setCauHoiHienTai(0);
       setPhase("doing");
 
-      if (quizRes.data?.gioiHanThoiGian) {
-        startTimer(quizRes.data.gioiHanThoiGian * 60);
+      // Ưu tiên lấy thời gian từ info (đã load trước), fallback sang quizRes
+      const gioiHanPhut =
+        info?.gioiHanThoiGian ??
+        quizRes.data?.gioiHanThoiGian ??
+        0;
+
+      if (gioiHanPhut > 0) {
+        startTimer(gioiHanPhut * 60);
       }
+
       startHeartbeat(newIdLanLam);
     } catch (e: unknown) {
-      console.error("[QUIZ] Lỗi:", e);
       const msg = (e as any)?.response?.data?.message;
       setError(msg ?? "Không thể bắt đầu làm bài");
     } finally {
       setLoading(false);
     }
-  }, [idBaiKiemTra, idDangKi, startTimer, startHeartbeat]);
+  }, [idBaiKiemTra, idDangKi, info, startTimer, startHeartbeat]);
 
   // ── Tiếp tục bài làm dở ───────────────────────────────────────────────────
   const tiepTucLamBai = useCallback(
@@ -362,7 +346,6 @@ export function useQuiz(
         setCauHois(d.allQuestions ?? []);
         setCauHoiHienTai(d.currentQuestionIndex);
 
-        // Convert savedAnswers từ Record<Guid, List<Guid>>
         const restored: Record<string, string[]> = {};
         Object.entries(d.savedAnswers ?? {}).forEach(([k, v]) => {
           restored[k] = v;
@@ -386,12 +369,10 @@ export function useQuiz(
   // ── Chọn đáp án + auto-save ────────────────────────────────────────────────
   const chonDapAn = useCallback(
     async (idCauHoi: string, idDapAn: string) => {
-      // Update local state ngay
       setTraLois((prev) => {
         const current = prev[idCauHoi] ?? [];
-        // Single choice: replace; multi-choice: toggle
         const cauHoi = cauHois.find((c) => c.id === idCauHoi);
-        const isMulti = cauHoi?.loaiCauHoi === 2; // 2 = multiple choice
+        const isMulti = cauHoi?.loaiCauHoi === 2;
         if (isMulti) {
           const updated = current.includes(idDapAn)
             ? current.filter((x) => x !== idDapAn)
@@ -401,7 +382,6 @@ export function useQuiz(
         return { ...prev, [idCauHoi]: [idDapAn] };
       });
 
-      // Auto-save lên BE (debounce bằng savingRef)
       if (savingRef.current || !idLanLam) return;
       savingRef.current = true;
       try {
@@ -414,25 +394,18 @@ export function useQuiz(
             : [...current, idDapAn]
           : [idDapAn];
 
-        const res = await apiService.post<AutoSaveDapAnDto>(
-          "/baikiemtra/auto-save",
-          {
-            idLanLamBaiKiemTra: idLanLam,
-            idCauHoi,
-            idDapAnChons: updated,
-          },
-        );
+        const res = await apiService.post<AutoSaveDapAnDto>("/baikiemtra/auto-save", {
+          idLanLamBaiKiemTra: idLanLam,
+          idCauHoi,
+          idDapAnChons: updated,
+        });
 
-        // Cập nhật thời gian từ BE
         if (res.data?.coGioiHan && res.data.thoiGianConLai > 0) {
           setThoiGianConLai(res.data.thoiGianConLai);
         }
 
-        // Tự động chuyển câu tiếp
         if (res.data?.nextQuestionId) {
-          const nextIdx = cauHois.findIndex(
-            (c) => c.id === res.data.nextQuestionId,
-          );
+          const nextIdx = cauHois.findIndex((c) => c.id === res.data.nextQuestionId);
           if (nextIdx !== -1) setCauHoiHienTai(nextIdx);
         }
       } catch {
@@ -444,8 +417,6 @@ export function useQuiz(
     [cauHois, idLanLam, traLois],
   );
 
-  // ── Nộp bài ───────────────────────────────────────────────────────────────
-
   // ── Xem lại bài làm ───────────────────────────────────────────────────────
   const xemLaiBai = useCallback(
     async (idLanLamBai?: string) => {
@@ -453,9 +424,7 @@ export function useQuiz(
       if (!id) return;
       setLoading(true);
       try {
-        const res = await apiService.get<ReviewQizzDto>(
-          `/baikiemtra/review/${id}`,
-        );
+        const res = await apiService.get<ReviewQizzDto>(`/baikiemtra/review/${id}`);
         setReview(res.data);
         setPhase("review");
       } catch {
@@ -480,19 +449,16 @@ export function useQuiz(
   }, [stopTimer, stopHeartbeat]);
 
   const formatTimer = (giay: number) => {
-    const m = Math.floor(giay / 60)
-      .toString()
-      .padStart(2, "0");
+    const m = Math.floor(giay / 60).toString().padStart(2, "0");
     const s = (giay % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
   const soLanDaLam = lichSu.length;
-  const lanLamDoDang = lichSu.find((l) => !l.thoiGianNop); // chưa nộp = đang dở
+  const lanLamDoDang = lichSu.find((l) => !l.thoiGianNop);
 
   return {
     phase,
-    // Alias để tương thích code cũ
     quiz: info,
     selectedAnswers: traLois,
     currentQuestion: cauHoiHienTai,
@@ -504,7 +470,6 @@ export function useQuiz(
     goToQuestion: setCauHoiHienTai,
     submitQuiz: nopBai,
     resetQuiz: lamLaiDau,
-    // API mới
     info,
     cauHois,
     ketQua,

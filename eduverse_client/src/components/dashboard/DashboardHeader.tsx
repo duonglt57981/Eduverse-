@@ -32,6 +32,7 @@ import {
   Avatar,
   useTheme,
 } from "@mui/material";
+import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
 
@@ -74,8 +75,23 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   const handleLogout = async () => {
-    await dispatch(logout());
-    router.replace("/auth/login");
+    setAnchorEl(null);
+    const result = await Swal.fire({
+      title: "Xác nhận đăng xuất",
+      text: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#8B1313",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Đăng xuất",
+      cancelButtonText: "Hủy",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      await dispatch(logout());
+      router.replace("/auth/login");
+    }
   };
 
   const hoTen = user?.hoTen || "Học viên EduVerse";
@@ -459,24 +475,28 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           {/* Instructor Mode Role switch */}
           {isInstructorMode && (
             <Button
-              variant="outlined"
               size="small"
               onClick={() => router.push("/student/dashboard")}
-              startIcon={<ChevronLeftRounded />}
               sx={{
-                borderRadius: "10px",
-                borderColor: "divider",
-                color: "text.primary",
-                px: 1.5,
-                py: 0.6,
-                fontSize: 12.5,
-                fontWeight: 600,
+                borderRadius: "999px",
+                bgcolor: "rgba(139, 19, 19, 0.06)",
+                border: "1px solid rgba(139, 19, 19, 0.16)",
+                color: "#8B1313",
+                px: 2,
+                py: 0.75,
+                fontSize: 13,
+                fontWeight: 700,
                 textTransform: "none",
-                display: { xs: "none", md: "flex" },
+                whiteSpace: "nowrap",
+                display: { xs: "none", md: "inline-flex" },
+                alignItems: "center",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
-                  borderColor: "primary.main",
-                  bgcolor: "rgba(141,19,19,0.03)",
-                  color: "primary.main",
+                  bgcolor: "rgba(139, 19, 19, 0.12)",
+                  borderColor: "#8B1313",
+                  color: "#6D0F0F",
+                  boxShadow: "0 4px 12px rgba(139, 19, 19, 0.12)",
+                  transform: "translateY(-1px)",
                 },
               }}
             >
@@ -538,24 +558,28 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </Stack>
 
               <Button
-                variant="outlined"
                 size="small"
                 onClick={() => router.push("/student/dashboard")}
-                startIcon={<ChevronLeftRounded />}
                 sx={{
-                  borderRadius: "10px",
-                  borderColor: "divider",
-                  color: "text.primary",
-                  px: 1.5,
-                  py: 0.6,
-                  fontSize: 12.5,
-                  fontWeight: 600,
+                  borderRadius: "999px",
+                  bgcolor: "rgba(139, 19, 19, 0.06)",
+                  border: "1px solid rgba(139, 19, 19, 0.16)",
+                  color: "#8B1313",
+                  px: 2,
+                  py: 0.75,
+                  fontSize: 13,
+                  fontWeight: 700,
                   textTransform: "none",
-                  display: { xs: "none", md: "flex" },
+                  whiteSpace: "nowrap",
+                  display: { xs: "none", md: "inline-flex" },
+                  alignItems: "center",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                   "&:hover": {
-                    borderColor: "primary.main",
-                    bgcolor: "rgba(141,19,19,0.03)",
-                    color: "primary.main",
+                    bgcolor: "rgba(139, 19, 19, 0.12)",
+                    borderColor: "#8B1313",
+                    color: "#6D0F0F",
+                    boxShadow: "0 4px 12px rgba(139, 19, 19, 0.12)",
+                    transform: "translateY(-1px)",
                   },
                 }}
               >

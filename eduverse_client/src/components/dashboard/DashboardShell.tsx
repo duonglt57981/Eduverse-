@@ -865,6 +865,25 @@ export default function DashboardShell({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+  const handleLogout = async () => {
+    setAnchorEl(null);
+    const result = await Swal.fire({
+      title: "Xác nhận đăng xuất",
+      text: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#8B1313",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Đăng xuất",
+      cancelButtonText: "Hủy",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      await dispatch(logout());
+      router.replace("/auth/login");
+    }
+  };
   const activeRoles = useMemo(() => {
     let list = [...roles];
     if (!pathname.startsWith("/instructor")) {
@@ -934,11 +953,6 @@ export default function DashboardShell({
 
     fetchDashboardData();
   }, [pathname]);
-
-  const handleLogout = async () => {
-    await dispatch(logout());
-    router.replace("/auth/login");
-  };
 
   // Xuất báo cáo tổng quan ra file CSV (mở được bằng Excel) từ dữ liệu thật
   const handleExportReport = async () => {

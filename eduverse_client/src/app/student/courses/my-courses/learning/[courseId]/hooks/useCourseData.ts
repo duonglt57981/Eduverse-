@@ -6,8 +6,19 @@ import { useState, useEffect, useCallback } from "react";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
+import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 
 const KhoaHocSvc = new KhoaHocService();
+
+// Interface khớp với response thực tế từ BE (camelCase)
+// Không sửa file type gốc, chỉ dùng nội bộ trong hook này
+interface PhanHocApi {
+  id?: string;
+  tenPhan?: string;
+  thuTuSapXep?: number;
+  danhSachBaiGiang?: BaiGiangType[];
+  danhSachBaiKiemTra?: BaiKiemTraDto[];
+}
 
 interface UseCourseDataReturn {
   khoaHoc: KhoaHocType | null;
@@ -15,6 +26,8 @@ interface UseCourseDataReturn {
   error: string;
   danhSachTatCa: BaiGiangType[];
   setDanhSachTatCa: (data: BaiGiangType[]) => void;
+  // Thêm để dùng trong page.tsx
+  getPhanHocApi: () => PhanHocApi[];
 }
 
 export const useCourseData = (
@@ -24,10 +37,10 @@ export const useCourseData = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [danhSachTatCa, setDanhSachTatCa] = useState<BaiGiangType[]>([]);
+  const [phanHocApi, setPhanHocApi] = useState<PhanHocApi[]>([]);
 
-  const flatten = useCallback((d: KhoaHocType | null): BaiGiangType[] => {
-    if (!d) return [];
-    return d.danhSachPhanHoc?.flatMap((p) => p.DanhSachBaiGiang ?? []) ?? [];
+  const flatten = useCallback((phanHocs: PhanHocApi[]): BaiGiangType[] => {
+    return phanHocs.flatMap((p) => p.danhSachBaiGiang ?? []);
   }, []);
 
   useEffect(() => {
@@ -38,7 +51,6 @@ export const useCourseData = (
         return;
       }
 
-      // Kiểm tra định dạng GUID
       const guidRegex = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
       if (!guidRegex.test(courseId)) {
         setError("ID khóa học không hợp lệ");
@@ -53,41 +65,35 @@ export const useCourseData = (
         const res = await KhoaHocSvc.getLearningKhoaHoc(courseId);
         console.log("📦 [useCourseData] Full response:", res);
 
-        // --- Lấy data từ nhiều vị trí có thể ---
         let data: KhoaHocType | null = null;
 
-        if (res) {
-          // Trường hợp res.data là object chính (như API trả về)
-          if (
-            res?.data &&
-            typeof res.data === "object" &&
-            !Array.isArray(res.data)
-          ) {
-            data = res.data;
-          }
+        if (res?.data && typeof res.data === "object" && !Array.isArray(res.data)) {
+          data = res.data;
         }
 
         if (!data) {
-          console.warn(
-            "⚠️ [useCourseData] Không tìm thấy dữ liệu trong response",
-          );
+          console.warn("⚠️ [useCourseData] Không tìm thấy dữ liệu trong response");
           setError("Không tìm thấy dữ liệu khóa học");
           setKhoaHoc(null);
           setDanhSachTatCa([]);
+          setPhanHocApi([]);
           return;
         }
 
         console.log("✅ [useCourseData] Dữ liệu khóa học:", data);
         setKhoaHoc(data);
 
-        const ds = flatten(data);
+        // Cast sang PhanHocApi[] để dùng đúng field camelCase từ BE
+        const phans = (data.danhSachPhanHoc as unknown as PhanHocApi[]) ?? [];
+        setPhanHocApi(phans);
+
+        const ds = flatten(phans);
         setDanhSachTatCa(ds);
         console.log("📚 [useCourseData] Số bài giảng:", ds.length);
         console.log("📹 [useCourseData] URL video mẫu:", ds[0]?.urlBaiGiang);
       } catch (err) {
         console.error("❌ [useCourseData] Lỗi:", err);
-        const status = (err as { response?: { status?: number } })?.response
-          ?.status;
+        const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 401 || status === 403) {
           setError("Bạn không có quyền truy cập.");
         } else if (status === 404) {
@@ -97,6 +103,7 @@ export const useCourseData = (
         }
         setKhoaHoc(null);
         setDanhSachTatCa([]);
+        setPhanHocApi([]);
       } finally {
         setLoading(false);
       }
@@ -105,5 +112,7 @@ export const useCourseData = (
     loadData();
   }, [courseId]);
 
-  return { khoaHoc, loading, error, danhSachTatCa, setDanhSachTatCa };
+  const getPhanHocApi = useCallback(() => phanHocApi, [phanHocApi]);
+
+  return { khoaHoc, loading, error, danhSachTatCa, setDanhSachTatCa, getPhanHocApi };
 };

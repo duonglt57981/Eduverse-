@@ -424,61 +424,112 @@ function QuanLyKhuyenMaiContent() {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ pt: 0.5 }}>
-            <TextField
-              size="small"
-              label="Mã giảm giá *"
-              value={form.maGiamGia}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, maGiamGia: e.target.value.toUpperCase() }))
-              }
-              placeholder="VD: HE2026"
-            />
-            <TextField
-              size="small"
-              type="number"
-              label="Phần trăm giảm (%) *"
-              value={form.phanTramGiam}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, phanTramGiam: e.target.value }))
-              }
-              slotProps={{
-                input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
-              }}
-            />
+          <Stack
+            spacing={2}
+            sx={{
+              pt: 0.5,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                minHeight: "44px",
+                bgcolor: "#ffffff",
+                "& fieldset": {
+                  borderColor: "#E5E7EB",
+                },
+                "&:hover fieldset": {
+                  borderColor: "#9CA3AF",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: MAU.chinh,
+                },
+              },
+              "& .MuiOutlinedInput-input": {
+                py: "10px",
+                px: "14px",
+                fontSize: "14px",
+              },
+            }}
+          >
+            <Box>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+                Mã giảm giá *
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                value={form.maGiamGia}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, maGiamGia: e.target.value.toUpperCase() }))
+                }
+                placeholder="VD: HE2026"
+              />
+            </Box>
+
+            <Box>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+                Phần trăm giảm (%) *
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                value={form.phanTramGiam}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, phanTramGiam: e.target.value }))
+                }
+                placeholder="VD: 20"
+                slotProps={{
+                  input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
+                }}
+              />
+            </Box>
+
             <Stack direction="row" spacing={1.5}>
-              <TextField
-                size="small"
-                type="date"
-                label="Ngày bắt đầu"
-                value={form.ngayBatDau}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, ngayBatDau: e.target.value }))
-                }
-                fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-              <TextField
-                size="small"
-                type="date"
-                label="Ngày kết thúc"
-                value={form.ngayKetThuc}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, ngayKetThuc: e.target.value }))
-                }
-                fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+                  Ngày bắt đầu
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  value={form.ngayBatDau}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, ngayBatDau: e.target.value }))
+                  }
+                />
+              </Box>
+
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+                  Ngày kết thúc
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  value={form.ngayKetThuc}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, ngayKetThuc: e.target.value }))
+                  }
+                />
+              </Box>
             </Stack>
-            <TextField
-              size="small"
-              type="number"
-              label="Số lượng hiệu lực (để trống = không giới hạn)"
-              value={form.soLuongHieuLuc}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, soLuongHieuLuc: e.target.value }))
-              }
-            />
+
+            <Box>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+                Số lượng hiệu lực (để trống = không giới hạn)
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                value={form.soLuongHieuLuc}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, soLuongHieuLuc: e.target.value }))
+                }
+                placeholder="VD: 50"
+              />
+            </Box>
 
             <Box>
               <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 1, color: "#1F2937" }}>
