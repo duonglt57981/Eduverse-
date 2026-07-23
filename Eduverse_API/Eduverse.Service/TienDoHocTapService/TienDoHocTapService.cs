@@ -105,10 +105,9 @@ namespace Eduverse.Service.TienDoHocTapService
             if (dangKy == null)
                 throw new Exception("Đăng ký không tồn tại");
 
-            Guid idChuan = await GetBaiGiangIdChuanChoTienDo(request.IdBaiGiang, dangKy.CreatedDate);
 
             var baiGiangInfo = await _baiGiangRepository.GetQueryable()
-                .Where(x => x.Id == idChuan && !x.IsDeleted)
+                .Where(x => x.Id == request.IdBaiGiang && !x.IsDeleted)
                 .Select(x => new { x.ThoiLuong })
                 .FirstOrDefaultAsync();
 
@@ -120,7 +119,7 @@ namespace Eduverse.Service.TienDoHocTapService
             var tienDo = await _tienDoHocTapRepository.GetQueryable()
                 .FirstOrDefaultAsync(x =>
                     x.IdDangKi == request.IdDangKyKhoaHoc &&
-                    x.IdBaiGiang == idChuan &&
+                    x.IdBaiGiang == request.IdBaiGiang &&
                     !x.IsDeleted);
 
             var now = DateTime.UtcNow;
@@ -131,7 +130,7 @@ namespace Eduverse.Service.TienDoHocTapService
                 {
                     Id = Guid.NewGuid(),
                     IdDangKi = request.IdDangKyKhoaHoc,
-                    IdBaiGiang = idChuan,
+                    IdBaiGiang = request.IdBaiGiang,
                     ThoiGianXem = request.ThoiGianXem,
                     LanCuoiXem = now,
                     TrangThai = request.ThoiGianXem >= nguongHoanThanh ? "HoanThanh" : "DangHoc",

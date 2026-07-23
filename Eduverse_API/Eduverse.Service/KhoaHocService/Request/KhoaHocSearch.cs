@@ -36,8 +36,6 @@ namespace Eduverse.Service.KhoaHocService.Request
         public bool? IsFree { get; set; }
 
         public string? SortPrice { get; set; }
-
-        public List<Guid>? ExcludeCourseIds { get; set; }
     }
 }
 

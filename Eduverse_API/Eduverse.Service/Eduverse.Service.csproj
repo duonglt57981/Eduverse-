@@ -69,6 +69,7 @@
     <PackageReference Include="CloudinaryDotNet" Version="1.29.1" />
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.72.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.11" />
     <PackageReference Include="NETCore.MailKit" Version="2.1.0" />
     <PackageReference Include="payOS" Version="2.1.0" />
     <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.11.0" />

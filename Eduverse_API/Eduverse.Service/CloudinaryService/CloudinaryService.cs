@@ -204,9 +204,6 @@ namespace Eduverse.Service.CloudinaryService
             return (false, null);
         }
 
-
-        
-
         public async Task<CloudinaryVideoDto> UpdateVideoBaiGiangAsync(string publicId, IFormFile file, CancellationToken cancellationToken = default)
         {
         // ── 1. Kiểm tra tham số ──────────────────────────────────────
@@ -323,8 +320,6 @@ namespace Eduverse.Service.CloudinaryService
         };
         }
         #endregion
-
-
         #region Logic upload image, delete image
     public async Task<CloudinaryImgDto> UploadImageAsync(IFormFile file)
         {

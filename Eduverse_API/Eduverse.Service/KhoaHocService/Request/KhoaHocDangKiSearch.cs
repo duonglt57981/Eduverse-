@@ -10,5 +10,14 @@ namespace Eduverse.Service.KhoaHocService.Request
     public class KhoaHocDangKiSearch : SearchBase
     {
         public string? Keyword { get; set; }
+
+        // Lọc theo trạng thái: "TatCa", "DaDuyet", "ChoDuyet", "DangDuyet", "TuChoi", "DangSua"
+        public string? TrangThai { get; set; } = "TatCa";
+
+        // Sắp xếp ngày tạo: "Cu" (cũ nhất trước) | "Moi" (mới nhất trước)
+        public string? SapXepNgay { get; set; }
+
+        // Sắp xếp tên: "AZ" | "ZA"
+        public string? SapXepTen { get; set; }
     }
 }
