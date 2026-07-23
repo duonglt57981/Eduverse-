@@ -341,12 +341,13 @@ namespace Eduverse.Api.Controller
                 giaGoc = c.GiaGoc,
                 categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
 
+                daDangKy = registeredCourseIds.Contains(c.Id),
                 thumbnailGradient = GetGradient(i + 2)
             }).ToList();
 
 
             // 6. Premium Selection
-            var premiumCourse = courses.FirstOrDefault(c => c.CapDo == "Nâng cao") ?? courses.FirstOrDefault();
+            var premiumCourse = courses.Where(c => !registeredCourseIds.Contains(c.Id)).FirstOrDefault(c => c.CapDo == "Nâng cao") ?? courses.FirstOrDefault();
             var premiumSelection = new
             {
                 title = premiumCourse?.TieuDe ?? "Thiết kế hệ thống chuyên sâu",
@@ -357,8 +358,9 @@ namespace Eduverse.Api.Controller
                 level = premiumCourse?.CapDo ?? "Nâng cao",
                 gia = premiumCourse.Gia,
                 giagoc = premiumCourse.GiaGoc,
+                daDangKy = premiumCourse != null && registeredCourseIds.Contains(premiumCourse.Id),
                 thumbnailGradient = "linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)",
-                relatedCourses = courses.Take(3).Select((c, i) => new
+                relatedCourses = courses.Where(c => !registeredCourseIds.Contains(c.Id)).Take(3).Select((c, i) => new
                 {
                     id = c.Id.ToString(),
                     title = c.TieuDe,
@@ -368,6 +370,7 @@ namespace Eduverse.Api.Controller
                     level = c.CapDo ?? "Cơ bản",
                     gia = c.Gia,
                     giagoc = c.GiaGoc,
+                    daDangKy = registeredCourseIds.Contains(c.Id),
                     thumbnailGradient = GetGradient(i + 1)
                 }).ToList()
             };
@@ -386,6 +389,7 @@ namespace Eduverse.Api.Controller
                     level = c.CapDo ?? "Trung cấp",
                     gia = c.Gia,
                     giagoc = c.GiaGoc,
+                    daDangKy = registeredCourseIds.Contains(c.Id),
                     thumbnailGradient = GetGradient(i + 3)
                 }).ToList()
             };
