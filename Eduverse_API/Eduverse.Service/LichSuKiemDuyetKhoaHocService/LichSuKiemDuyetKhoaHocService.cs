@@ -824,9 +824,23 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     _dapAnRepository.Update(da);
                     await _dapAnRepository.SaveAsync();
                 }
-                //update đăng kí khóa học 
+                // Chỉ thay thế bản cũ khi đây là một phiên bản cập nhật.
+                if (khoaHoc.IdBanGhiTruoc.HasValue)
+                {
+                    var khoaHocCu = await _khoaHocRepository
+                        .GetByIdAsync(khoaHoc.IdBanGhiTruoc.Value);
 
-                await CapNhatDangKyKhoaHoc(khoaHoc.Id, khoaHoc.IdBanGhiTruoc.Value);
+                    if (khoaHocCu != null)
+                    {
+                        khoaHocCu.IsBanHienTai = false;
+                        _khoaHocRepository.Update(khoaHocCu);
+                        await _khoaHocRepository.SaveAsync();
+                    }
+
+                    await CapNhatDangKyKhoaHoc(
+                        khoaHoc.Id,
+                        khoaHoc.IdBanGhiTruoc.Value);
+                }
                 //update tiến độ bài giảng
 
             }
@@ -844,6 +858,27 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                 await UpdateAsync(GetLichSuKiemDuyetKhoaHoc);
                 await SaveAsync();
+            }
+
+            try
+            {
+                if (request.TrangThaiPheDuyet == "DaDuyet")
+                {
+                    await _elasticsearchService.IndexCourseAsync(khoaHoc.Id);
+
+                    if (khoaHoc.IdBanGhiTruoc.HasValue)
+                    {
+                        await _elasticsearchService.DeleteCourseAsync(khoaHoc.IdBanGhiTruoc.Value);
+                    }
+                }
+                else
+                {
+                    await _elasticsearchService.DeleteCourseAsync(khoaHoc.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Elasticsearch approval sync failed: {ex.Message}");
             }
 
             return new KiemDuyetKhoaHocDto

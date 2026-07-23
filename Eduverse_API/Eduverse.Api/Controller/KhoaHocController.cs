@@ -260,7 +260,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost("sync-elasticsearch")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         public async Task<DataResponse<string>> SyncElasticsearch()
         {
             try

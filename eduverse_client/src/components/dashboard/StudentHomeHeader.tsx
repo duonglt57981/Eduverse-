@@ -43,7 +43,6 @@ import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 
 const RED = "#8B1313";
-const RED_DARK = "#6D0F0F";
 const RED_TINT = "#FBEFEF";
 const BORDER = "#ECE7E4";
 const INK = "#1F2937";
@@ -53,6 +52,7 @@ const HEADER_H = 74;
 export default function StudentHomeHeader() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const user = useSelector((state: any) => state.auth.user);
   const roles = useSelector((state: any) => state.auth.roles) || [];
@@ -193,6 +193,15 @@ export default function StudentHomeHeader() {
     router.push(path);
   };
 
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const keyword = searchQuery.trim();
+    const queryString = keyword
+      ? `?keyword=${encodeURIComponent(keyword)}`
+      : "";
+    router.push(`/student/explore${queryString}`);
+  };
+
   return (
     <Box
       component="header"
@@ -244,7 +253,10 @@ export default function StudentHomeHeader() {
 
         {/* Khám phá */}
         <Button
-          onClick={() => router.push("/student/explore")}
+          onClick={() => {
+            window.dispatchEvent(new Event("eduverse:reset-explore"));
+            router.push("/student/explore");
+          }}
           sx={{
             display: { xs: "none", md: "inline-flex" },
             textTransform: "none",
@@ -264,6 +276,8 @@ export default function StudentHomeHeader() {
 
         {/* Search */}
         <Box
+          component="form"
+          onSubmit={handleSearchSubmit}
           sx={{
             flex: 1,
             maxWidth: 520,
@@ -283,9 +297,19 @@ export default function StudentHomeHeader() {
             },
           }}
         >
-          <SearchRounded sx={{ fontSize: 20, color: "#94A3B8" }} />
+          <IconButton
+            type="submit"
+            aria-label="Tìm kiếm khóa học"
+            size="small"
+            sx={{ p: 0.25, color: "#94A3B8" }}
+          >
+            <SearchRounded sx={{ fontSize: 20 }} />
+          </IconButton>
           <InputBase
             placeholder="Tìm kiếm nội dung bất kỳ..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            inputProps={{ "aria-label": "Từ khóa tìm kiếm" }}
             sx={{ flex: 1, fontSize: 14, color: INK }}
           />
         </Box>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import KhoaHocService from '@/src/services/KhoaHocService';
@@ -8,7 +8,6 @@ import { danhMucService } from '@/src/services/danhmucService';
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
-  MenuBookRounded,
   QueryStatsRounded,
   SchoolRounded,
   SearchRounded,
@@ -18,6 +17,7 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Divider,
   FormControlLabel,
   InputAdornment,
@@ -27,7 +27,6 @@ import {
   Select,
   type SelectChangeEvent,
   Stack,
-  Switch,
   TextField,
   Typography,
   Checkbox,
@@ -36,67 +35,13 @@ import {
   type CourseCatalogItem,
   type CourseCategory,
 } from './landing-data';
-import {
-  CourseVisual,
-  SectionHeading,
-} from './landing-shared';
+import { CourseVisual } from './landing-shared';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
 
-type CourseSortOption = 'newest' | 'rating' | 'price-low';
-
-function CategoryCard({
-  label,
-  count,
-  active,
-  onClick,
-}: {
-  label: string;
-  count?: number;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Paper
-      elevation={0}
-      onClick={onClick}
-      sx={{
-        p: 2.25,
-        borderRadius: 2.8,
-        border: active ? '1px solid rgba(141,19,19,0.24)' : '1px solid rgba(17,17,17,0.07)',
-        bgcolor: active ? 'rgba(141,19,19,0.05)' : '#fff',
-        cursor: 'pointer',
-        transition: 'all 180ms ease',
-        '&:hover': {
-          transform: 'translateY(-3px)',
-          boxShadow: '0 18px 30px rgba(24,18,20,0.08)',
-        },
-      }}
-    >
-      <Box
-        sx={{
-          width: 44,
-          height: 44,
-          borderRadius: 2.8,
-          display: 'grid',
-          placeItems: 'center',
-          bgcolor: active ? 'rgba(141,19,19,0.12)' : 'rgba(141,19,19,0.06)',
-          color: '#8B1313',
-          mb: 1.5,
-        }}
-      >
-        <MenuBookRounded />
-      </Box>
-      <Typography sx={{ fontSize: 16, fontWeight: 900 }}>{label}</Typography>
-      {count ? (
-        <Typography sx={{ mt: 0.65, fontSize: 12.5, color: 'rgba(24,24,27,0.56)' }}>
-          {count} khóa học
-        </Typography>
-      ) : null}
-    </Paper>
-  );
-}
+type CourseSortOption = 'newest' | 'price-low' | 'price-high';
+type PriceFilter = 'all' | 'free' | 'paid';
 
 function FilterGroup({
   title,
@@ -258,44 +203,55 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
   // Stable hash based on course ID to generate a consistent rating between 4.0 and 5.0
   const charCodeSum = (kh.id || '').split('').reduce((sum: number, char: string) => sum + char.charCodeAt(0), 0);
   const mockRating = 4.0 + (charCodeSum % 11) * 0.1; // yields: 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0
+  const isFree = kh.loaiKhoaHoc === 'Khóa học miễn phí';
+  const durationSeconds = Number(kh.tongThoiLuong || 0);
+  const durationHours = Math.floor(durationSeconds / 3600);
+  const durationMinutes = Math.floor((durationSeconds % 3600) / 60);
+  const duration = durationSeconds > 0
+    ? `${durationHours > 0 ? `${durationHours} giờ ` : ''}${durationMinutes} phút`.trim()
+    : 'Chưa cập nhật';
 
   return {
     id: kh.id,
     title: kh.tieuDe || 'Khóa học không tên',
-    instructor: kh.tenGiangVien || 'Chưa cập nhật',
+    instructor: kh.tenGiangVien || kh.createdBy || 'Chưa cập nhật',
     rating: mockRating,
     students: kh.soLuongHocVien || 0,
-    price: kh.gia === 0 || kh.gia === null ? 'Miễn phí' : `${kh.gia?.toLocaleString('vi-VN')}đ`,
+    price: isFree ? 'Miễn phí' : kh.gia != null ? `${kh.gia.toLocaleString('vi-VN')}đ` : 'Chưa cập nhật',
     originalPrice: kh.giaGoc && kh.giaGoc > 0 ? `${kh.giaGoc?.toLocaleString('vi-VN')}đ` : '',
     level: kh.capDo || 'Mọi cấp độ',
-    duration: kh.tongThoiLuong ? `${Math.round(kh.tongThoiLuong / 60)} giờ` : 'Chưa cập nhật',
+    duration,
     category: kh.loaiKhoaHoc || 'Khác',
-    badge: kh.gia === 0 || kh.gia === null ? "Miễn phí" : "",
-    tags: [kh.capDo || 'Tự chọn', kh.gia === 0 || kh.gia === null ? 'Free' : 'Pro'],
+    badge: isFree ? 'Miễn phí' : 'Trả phí',
+    tags: [kh.capDo || 'Tự chọn', isFree ? 'Free' : 'Pro'],
     palette: [
       '#8B1313',
       '#c2410c',
       '#fff7f4'
     ],
-    isFree: kh.gia === 0 || kh.gia === null
+    isFree
   };
 };
 
-export default function CoursesPage() {
-  const [search, setSearch] = useState('');
+export default function CoursesPage({
+  initialSearch = '',
+}: {
+  initialSearch?: string;
+}) {
+  const [search, setSearch] = useState(initialSearch);
+  const [appliedSearch, setAppliedSearch] = useState(initialSearch.trim());
+  const [searchRevision, setSearchRevision] = useState(0);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<CourseSortOption>('newest');
-  const [freeOnly, setFreeOnly] = useState(false);
-  const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
-  const [minRating, setMinRating] = useState<number | null>(null);
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
+  const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const [courses, setCourses] = useState<CourseCatalogItem[]>([]);
   const [totalCourses, setTotalCourses] = useState(0);
   const [pageIndex, setPageIndex] = useState(1);
-  const [pageSize, setPageSize] = useState(9);
+  const pageSize = -1;
   const [loading, setLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const courseService = useMemo(() => new KhoaHocService(), []);
 
@@ -310,7 +266,7 @@ export default function CoursesPage() {
           setCategories(
             (res.data.items || []).map((dm) => ({
               label: dm.tenDanhMuc || 'Danh mục',
-              value: dm.tenDanhMuc || '',
+              value: dm.id,
             })),
           );
         }
@@ -324,6 +280,8 @@ export default function CoursesPage() {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchCourses = async () => {
       setLoading(true);
       try {
@@ -331,60 +289,66 @@ export default function CoursesPage() {
         const searchParams: any = {
           pageIndex,
           pageSize,
-          keyword: (search || (activeCategory !== 'all' ? activeCategory : '')) || undefined,
-          capDo: selectedLevels.length > 0 ? selectedLevels[0] : undefined,
-          isFree: freeOnly || undefined,
-          sortPrice: sortBy === 'price-low' ? 'asc' : sortBy === 'rating' ? 'desc' : undefined
+          keyword: appliedSearch || undefined,
+          danhMucId: activeCategory !== 'all' ? activeCategory : undefined,
+          capDo: selectedLevel || undefined,
+          loaiKhoaHoc: priceFilter === 'free'
+            ? 'Khóa học miễn phí'
+            : priceFilter === 'paid'
+              ? 'Khóa học trả phí'
+              : undefined,
+          sortPrice: sortBy === 'price-low' ? 'asc' : sortBy === 'price-high' ? 'desc' : undefined
         };
-        const response = await courseService.GetList(searchParams);
+        const response = await courseService.GetList(searchParams, controller.signal);
         if (response?.status && response.data) {
           const mapped = (response.data.items || []).map(mapToCatalogItem);
           setCourses(mapped);
           setTotalCourses(response.data.totalCount || 0);
         }
       } catch (err) {
-        console.error("Error fetching courses from ES backend:", err);
+        if (!controller.signal.aborted) {
+          console.error("Error fetching courses from ES backend:", err);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
     fetchCourses();
-  }, [search, activeCategory, sortBy, freeOnly, selectedLevels, pageIndex, pageSize, courseService]);
+    return () => controller.abort();
+  }, [appliedSearch, searchRevision, activeCategory, sortBy, priceFilter, selectedLevel, pageIndex, pageSize, courseService]);
 
-  const handleSearchChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const val = event.target.value;
-    setSearch(val);
-    if (val.trim().length > 1) {
-      try {
-        const res = await courseService.GetSearchSuggestions(val);
-        if (res?.status && res.data) {
-          setSuggestions(res.data);
-          setShowSuggestions(true);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
   };
 
-  const filteredCourses = useMemo(() => {
-    let result = courses;
-    if (minRating !== null) {
-      result = result.filter((c) => c.rating >= minRating);
-    }
-    return result;
-  }, [courses, minRating]);
+  const submitSearch = () => {
+    setAppliedSearch(search.trim());
+    setSearchRevision((current) => current + 1);
+    setPageIndex(1);
+  };
 
   const toggleLevel = (level: string) => {
-    setSelectedLevels((current) =>
-      current.includes(level)
-        ? current.filter((item) => item !== level)
-        : [...current, level],
-    );
+    setSelectedLevel((current) => current === level ? null : level);
+    setPageIndex(1);
   };
+
+  const resetFilters = useCallback(() => {
+    setActiveCategory('all');
+    setPriceFilter('all');
+    setSelectedLevel(null);
+    setSearch('');
+    setAppliedSearch('');
+    setSearchRevision((current) => current + 1);
+    setSortBy('newest');
+    setPageIndex(1);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('eduverse:reset-explore', resetFilters);
+    return () => window.removeEventListener('eduverse:reset-explore', resetFilters);
+  }, [resetFilters]);
 
   return (
     <>
@@ -446,8 +410,12 @@ export default function CoursesPage() {
                     variant="outlined"
                     value={search}
                     onChange={handleSearchChange}
-                    onFocus={() => setShowSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        submitSearch();
+                      }
+                    }}
                     placeholder="Tìm kiếm khóa học, kỹ năng..."
                     InputProps={{
                       startAdornment: (
@@ -477,41 +445,11 @@ export default function CoursesPage() {
                       },
                     }}
                   />
-                  {showSuggestions && suggestions.length > 0 && (
-                    <Paper
-                      elevation={4}
-                      sx={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        right: 0,
-                        zIndex: 10,
-                        mt: 1,
-                        maxHeight: 250,
-                        overflowY: 'auto',
-                        borderRadius: 2,
-                        border: '1px solid rgba(17,17,17,0.08)',
-                        bgcolor: '#fff',
-                      }}
-                    >
-                      {suggestions.map((suggestion, idx) => (
-                        <MenuItem
-                          key={idx}
-                          onClick={() => {
-                            setSearch(suggestion);
-                            setShowSuggestions(false);
-                          }}
-                          sx={{ py: 1.2, px: 2, fontSize: 14.5 }}
-                        >
-                          <SearchRounded sx={{ fontSize: 16, mr: 1.5, color: 'rgba(24,24,27,0.38)' }} />
-                          {suggestion}
-                        </MenuItem>
-                      ))}
-                    </Paper>
-                  )}
                 </Box>
                 <Button
                   variant="contained"
+                  onClick={submitSearch}
+                  startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
                   sx={{
                     px: 3.2,
                     height: 48,
@@ -615,15 +553,8 @@ export default function CoursesPage() {
               <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography sx={{ fontSize: 22, fontWeight: 900 }}>Bộ lọc</Typography>
                 <Button
-                  onClick={() => {
-                    setActiveCategory('all');
-                    setFreeOnly(false);
-                    setSelectedLevels([]);
-                    setSearch('');
-                    setSortBy('newest');
-                    setMinRating(null);
-                  }}
-                  disabled={activeCategory === 'all' && !freeOnly && selectedLevels.length === 0 && search === '' && sortBy === 'newest' && minRating === null}
+                  onClick={resetFilters}
+                  disabled={activeCategory === 'all' && priceFilter === 'all' && selectedLevel === null && search === '' && appliedSearch === '' && sortBy === 'newest'}
                   sx={{
                     color: '#8B1313',
                     fontWeight: 700,
@@ -638,7 +569,7 @@ export default function CoursesPage() {
               </Stack>
 
               <Stack spacing={2.5}>
-                <FilterGroup title="Danh mục">
+                <FilterGroup title="Chủ đề">
                   <Box
                     sx={{
                       maxHeight: '320px',
@@ -660,7 +591,7 @@ export default function CoursesPage() {
                     }}
                   >
                     <Stack spacing={1.5}>
-                      {categories.map((category) => (
+                      {(showAllCategories ? categories : categories.slice(0, 6)).map((category) => (
                         <FormControlLabel
                           key={category.value}
                           control={
@@ -672,6 +603,7 @@ export default function CoursesPage() {
                                 } else {
                                   setActiveCategory(category.value);
                                 }
+                                setPageIndex(1);
                               }}
                               size="small"
                               sx={{
@@ -710,6 +642,21 @@ export default function CoursesPage() {
                           }}
                         />
                       ))}
+                      {categories.length > 6 ? (
+                        <Button
+                          onClick={() => setShowAllCategories((current) => !current)}
+                          sx={{
+                            alignSelf: 'flex-start',
+                            minWidth: 0,
+                            px: 1,
+                            color: '#8B1313',
+                            fontWeight: 800,
+                            textTransform: 'none',
+                          }}
+                        >
+                          {showAllCategories ? 'Thu gọn' : `Hiển thị thêm (${categories.length - 6})`}
+                        </Button>
+                      ) : null}
                     </Stack>
                   </Box>
                 </FilterGroup>
@@ -717,10 +664,27 @@ export default function CoursesPage() {
                 <Divider />
 
                 <FilterGroup title="Giá">
-                  <FormControlLabel
-                    control={<Switch checked={freeOnly} onChange={(event) => setFreeOnly(event.target.checked)} />}
-                    label="Chỉ hiện khóa miễn phí"
-                  />
+                  {([
+                    { value: 'free', label: 'Miễn phí' },
+                    { value: 'paid', label: 'Trả phí' },
+                  ] as const).map((option) => (
+                    <FormControlLabel
+                      key={option.value}
+                      control={(
+                        <Checkbox
+                          checked={priceFilter === option.value}
+                          onChange={() => {
+                            setPriceFilter((current) => current === option.value ? 'all' : option.value);
+                            setPageIndex(1);
+                          }}
+                          size="small"
+                          sx={{ color: 'rgba(24,24,27,0.3)', '&.Mui-checked': { color: '#8B1313' } }}
+                        />
+                      )}
+                      label={option.label}
+                      sx={{ m: 0, '& .MuiFormControlLabel-label': { fontSize: 14.5, fontWeight: 600 } }}
+                    />
+                  ))}
                 </FilterGroup>
 
 
@@ -728,26 +692,30 @@ export default function CoursesPage() {
                 <Divider />
 
                 <FilterGroup title="Cấp độ">
-                  {['Người mới bắt đầu', 'Trung cấp', 'Nâng cao'].map((level) => {
-                    const selected = selectedLevels.includes(level);
+                  {['Tất cả cấp độ', 'Người mới bắt đầu', 'Trung cấp', 'Nâng cao'].map((level) => {
+                    const selected = selectedLevel === level;
                     return (
-                      <Button
+                      <FormControlLabel
                         key={level}
-                        onClick={() => toggleLevel(level)}
+                        control={(
+                          <Checkbox
+                            checked={selected}
+                            onChange={() => toggleLevel(level)}
+                            size="small"
+                            sx={{ color: 'rgba(24,24,27,0.3)', '&.Mui-checked': { color: '#8B1313' } }}
+                          />
+                        )}
+                        label={level}
                         sx={{
-                          justifyContent: 'flex-start',
-                          px: 1.2,
-                          py: 1,
-                          borderRadius: 2.8,
+                          m: 0,
                           color: selected ? '#8B1313' : 'rgba(24,24,27,0.72)',
-                          bgcolor: selected ? 'rgba(141,19,19,0.06)' : 'transparent',
+                          '& .MuiFormControlLabel-label': { fontSize: 14.5, fontWeight: selected ? 800 : 600 },
                         }}
-                      >
-                        {level}
-                      </Button>
+                      />
                     );
                   })}
                 </FilterGroup>
+
               </Stack>
             </Paper>
 
@@ -762,42 +730,82 @@ export default function CoursesPage() {
                 }}
               >
                 <Typography sx={{ fontSize: 20, fontWeight: 900 }}>
-                  {filteredCourses.length} khóa học được tìm thấy
+                  {loading ? 'Đang tìm khóa học…' : `${totalCourses} khóa học được tìm thấy`}
                 </Typography>
                 <Select<CourseSortOption>
                   size="small"
                   value={sortBy}
                   onChange={(event: SelectChangeEvent<CourseSortOption>) =>
-                    setSortBy(event.target.value as CourseSortOption)
+                    {
+                      setSortBy(event.target.value as CourseSortOption);
+                      setPageIndex(1);
+                    }
                   }
                   sx={{ minWidth: 170, borderRadius: 2.8, bgcolor: '#fff' }}
                 >
                   <MenuItem value="newest">Mới nhất</MenuItem>
-                  <MenuItem value="rating">Đánh giá cao</MenuItem>
                   <MenuItem value="price-low">Giá thấp trước</MenuItem>
+                  <MenuItem value="price-high">Giá cao trước</MenuItem>
                 </Select>
               </Stack>
-
-
-
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
-                  gap: 2,
-                }}
-              >
-                {filteredCourses.map((course) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
-              </Box>
-
-              {filteredCourses.length === 0 ? (
+              {loading ? (
+                <Paper
+                  role="status"
+                  aria-live="polite"
+                  elevation={0}
+                  sx={{
+                    minHeight: 220,
+                    display: 'grid',
+                    placeItems: 'center',
+                    p: 4,
+                    borderRadius: 2.8,
+                    border: '1px solid rgba(139,19,19,0.10)',
+                    bgcolor: 'rgba(255,255,255,0.82)',
+                    boxShadow: '0 16px 36px rgba(60,20,20,0.05)',
+                  }}
+                >
+                  <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
+                    <Box sx={{ position: 'relative', width: 56, height: 56 }}>
+                      <CircularProgress
+                        variant="determinate"
+                        value={100}
+                        size={56}
+                        thickness={4}
+                        sx={{ color: 'rgba(139,19,19,0.12)' }}
+                      />
+                      <CircularProgress
+                        size={56}
+                        thickness={4}
+                        sx={{ position: 'absolute', inset: 0, color: '#8B1313' }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: 19, fontWeight: 900, color: '#1f2937' }}>
+                        Đang tìm khóa học phù hợp
+                      </Typography>
+                      <Typography sx={{ mt: 0.6, fontSize: 14, color: 'rgba(24,24,27,0.56)' }}>
+                        Vui lòng chờ trong giây lát…
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Paper>
+              ) : courses.length > 0 ? (
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
+                    gap: 2,
+                  }}
+                >
+                  {courses.map((course) => (
+                    <CourseCard key={course.id} course={course} />
+                  ))}
+                </Box>
+              ) : (
                 <Paper
                   elevation={0}
                   sx={{
                     p: 4,
-                    mt: 2,
                     borderRadius: 2.8,
                     border: '1px dashed rgba(17,17,17,0.14)',
                     textAlign: 'center',
@@ -812,7 +820,7 @@ export default function CoursesPage() {
                     Hãy thử từ khóa khác hoặc xóa bộ lọc để xem thêm lựa chọn.
                   </Typography>
                 </Paper>
-              ) : null}
+              )}
             </Box>
           </Box>
     </>

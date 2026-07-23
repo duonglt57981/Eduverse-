@@ -21,6 +21,7 @@ export default class KhoaHocService {
   // lấy danh sách khi chưa đăng nhập
   async GetList(
     searchParams?: KhoaHocSearch,
+    signal?: AbortSignal,
   ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
     try {
       const params = new URLSearchParams();
@@ -37,8 +38,8 @@ export default class KhoaHocService {
       const url = `/KhoaHoc/khoahoc-list${queryString ? `?${queryString}` : ""}`;
 
       const response =
-        await apiService.get<ApiResponse<PagedList<KhoaHocType>>>(url);
-      return response.data;
+        await apiService.get<PagedList<KhoaHocType>>(url, { signal });
+      return response;
     } catch (error) {
       console.error("Error fetching course list:", error);
       throw error;
@@ -62,8 +63,8 @@ export default class KhoaHocService {
       const queryString = params.toString();
       const url = `/KhoaHoc/khoahoc-by/${userId}${queryString ? `?${queryString}` : ""}`;
       const response =
-        await apiService.get<ApiResponse<PagedList<KhoaHocType>>>(url);
-      return response.data;
+        await apiService.get<PagedList<KhoaHocType>>(url);
+      return response;
     } catch (error) {
       console.error("Error fetching learning course by user:", error);
       throw error;
@@ -254,10 +255,10 @@ export default class KhoaHocService {
 
   async GetSearchSuggestions(query: string): Promise<ApiResponse<string[]>> {
     try {
-      const response = await apiService.get<ApiResponse<string[]>>(
+      const response = await apiService.get<string[]>(
         `/KhoaHoc/autocomplete?query=${encodeURIComponent(query)}`,
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching search suggestions:", error);
       throw error;
@@ -266,10 +267,10 @@ export default class KhoaHocService {
 
   async SyncElasticsearch(): Promise<ApiResponse<string>> {
     try {
-      const response = await apiService.post<ApiResponse<string>>(
+      const response = await apiService.post<string>(
         `/KhoaHoc/sync-elasticsearch`,
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error syncing elasticsearch:", error);
       throw error;
