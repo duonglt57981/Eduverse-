@@ -1333,6 +1333,7 @@ namespace Eduverse.Service.BaiKiemTraService
                 throw new Exception("Bài kiểm tra không cho phép làm lại.");
 
             if (baiKiemTra.SoLanLamToiDa.HasValue &&
+                baiKiemTra.SoLanLamToiDa.Value > 0 && 
                 soLanDaLam >= baiKiemTra.SoLanLamToiDa.Value)
                 throw new Exception("Đã vượt quá số lần làm bài.");
 
@@ -1519,7 +1520,7 @@ namespace Eduverse.Service.BaiKiemTraService
 
             var tongDiemToiDaTinh = diemTheoCauHoi.Values.Sum();
             var chenh = Math.Round(100 - tongDiemToiDaTinh, 2);
-            if (Math.Abs(chenh) > 0.01 && cauHois.Any())
+            if (Math.Abs(chenh) >= 0.01 && cauHois.Any())
             {
                 var cauCuoiId = cauHois.Last().Id;
                 diemTheoCauHoi[cauCuoiId] = Math.Round(diemTheoCauHoi[cauCuoiId] + chenh, 2);
@@ -1579,7 +1580,7 @@ namespace Eduverse.Service.BaiKiemTraService
 
             // 7. Cập nhật lần làm bài
             tongDiem = Math.Round(tongDiem, 2);
-            var datYeuCau = tongDiem >= (baiKiemTra.DiemDat ?? 0);
+            var datYeuCau = Math.Round(tongDiem) >= (baiKiemTra.DiemDat ?? 0);
 
             lanLam.ThoiGianNop = DateTime.Now;
             lanLam.Dat = datYeuCau;
