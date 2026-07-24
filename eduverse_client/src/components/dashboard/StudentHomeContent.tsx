@@ -1788,7 +1788,11 @@ export default function StudentHomeContent() {
             linkText="Chỉnh sửa"
             href="/student/profile"
           />
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5, minWidth: 0 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: "center", mb: 1.5, minWidth: 0 }}
+          >
             <IconButton
               aria-label="Xem kỹ năng phía trước"
               onClick={() => scrollSkills(-1)}
