@@ -155,7 +155,7 @@ function GioHangContent() {
         setAlertMessage(`Đăng ký thành công ${thanhCong} khóa học miễn phí!`);
         setAlertSeverity("success");
         setOpen(true);
-        setTimeout(() => router.push("/student/my-courses"), 1500);
+        setTimeout(() => router.push("/student/courses/my-courses"), 1500);
       } else if (thanhCong > 0) {
         setAlertMessage(`Đăng ký ${thanhCong} thành công, ${thatBai} thất bại (có thể đã đăng ký)`);
         setAlertSeverity("success");

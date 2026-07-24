@@ -67,12 +67,18 @@ export const useCourseData = (
 
         let data: KhoaHocType | null = null;
 
-        if (res?.data && typeof res.data === "object" && !Array.isArray(res.data)) {
+        if (
+          res?.data &&
+          typeof res.data === "object" &&
+          !Array.isArray(res.data)
+        ) {
           data = res.data;
         }
 
         if (!data) {
-          console.warn("⚠️ [useCourseData] Không tìm thấy dữ liệu trong response");
+          console.warn(
+            "⚠️ [useCourseData] Không tìm thấy dữ liệu trong response",
+          );
           setError("Không tìm thấy dữ liệu khóa học");
           setKhoaHoc(null);
           setDanhSachTatCa([]);
@@ -93,7 +99,8 @@ export const useCourseData = (
         console.log("📹 [useCourseData] URL video mẫu:", ds[0]?.urlBaiGiang);
       } catch (err) {
         console.error("❌ [useCourseData] Lỗi:", err);
-        const status = (err as { response?: { status?: number } })?.response?.status;
+        const status = (err as { response?: { status?: number } })?.response
+          ?.status;
         if (status === 401 || status === 403) {
           setError("Bạn không có quyền truy cập.");
         } else if (status === 404) {
@@ -114,5 +121,12 @@ export const useCourseData = (
 
   const getPhanHocApi = useCallback(() => phanHocApi, [phanHocApi]);
 
-  return { khoaHoc, loading, error, danhSachTatCa, setDanhSachTatCa, getPhanHocApi };
+  return {
+    khoaHoc,
+    loading,
+    error,
+    danhSachTatCa,
+    setDanhSachTatCa,
+    getPhanHocApi,
+  };
 };
