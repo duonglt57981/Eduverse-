@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import DOMPurify from "dompurify";
 import { apiService } from "@/src/services/index";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
 import { useSelector } from "@/src/store/hook";
@@ -1141,7 +1142,17 @@ export default function StudentHomeContent() {
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [showFullPremiumDescription, setShowFullPremiumDescription] = useState(false);
+  const [premiumDescriptionHtml, setPremiumDescriptionHtml] = useState("");
   const tabsRef = useRef<HTMLDivElement>(null);
+  const skillScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollSkills = (direction: -1 | 1) => {
+    skillScrollRef.current?.scrollBy({
+      left: direction * Math.min(skillScrollRef.current.clientWidth * 0.75, 640),
+      behavior: "smooth",
+    });
+  };
 
   const load = useCallback(async () => {
     try {
@@ -1152,6 +1163,10 @@ export default function StudentHomeContent() {
       );
       if (res.status && res.data) {
         setData(res.data);
+        setPremiumDescriptionHtml(
+          DOMPurify.sanitize(res.data.premiumSelection?.description || ""),
+        );
+        setShowFullPremiumDescription(false);
         if (res.data.interestedSkills?.length) {
           setSelectedSkill(res.data.interestedSkills[0]);
         }
@@ -1773,26 +1788,75 @@ export default function StudentHomeContent() {
             linkText="Chỉnh sửa"
             href="/student/profile"
           />
-          <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mb: 1 }}>
-            {interestedSkills.map((skill) => (
-              <Chip
-                key={skill}
-                label={skill}
-                onClick={() => setSelectedSkill(skill)}
-                sx={{
-                  fontWeight: 700,
-                  fontSize: 12.5,
-                  cursor: "pointer",
-                  bgcolor: selectedSkill === skill ? C.primary : "#fff",
-                  color: selectedSkill === skill ? "#fff" : C.textSecondary,
-                  border: `1px solid ${selectedSkill === skill ? C.primary : C.border2}`,
-                  "&:hover": {
-                    bgcolor:
-                      selectedSkill === skill ? C.primaryDark : C.primaryTint,
-                  },
-                }}
-              />
-            ))}
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5, minWidth: 0 }}>
+            <IconButton
+              aria-label="Xem kỹ năng phía trước"
+              onClick={() => scrollSkills(-1)}
+              size="small"
+              sx={{
+                flexShrink: 0,
+                border: `1px solid ${C.border2}`,
+                bgcolor: C.white,
+                color: C.primary,
+                boxShadow: "0 4px 12px rgba(31, 41, 55, 0.06)",
+                "&:hover": { bgcolor: C.primaryTint },
+              }}
+            >
+              <ChevronLeftRounded />
+            </IconButton>
+
+            <Stack
+              ref={skillScrollRef}
+              direction="row"
+              spacing={1}
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                overflowX: "auto",
+                scrollBehavior: "smooth",
+                scrollSnapType: "x proximity",
+                py: 0.5,
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
+              }}
+            >
+              {interestedSkills.map((skill) => (
+                <Chip
+                  key={skill}
+                  label={skill}
+                  onClick={() => setSelectedSkill(skill)}
+                  sx={{
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    bgcolor: selectedSkill === skill ? C.primary : "#fff",
+                    color: selectedSkill === skill ? "#fff" : C.textSecondary,
+                    border: `1px solid ${selectedSkill === skill ? C.primary : C.border2}`,
+                    "&:hover": {
+                      bgcolor: selectedSkill === skill ? C.primaryDark : C.primaryTint,
+                    },
+                  }}
+                />
+              ))}
+            </Stack>
+
+            <IconButton
+              aria-label="Xem thêm kỹ năng"
+              onClick={() => scrollSkills(1)}
+              size="small"
+              sx={{
+                flexShrink: 0,
+                border: `1px solid ${C.border2}`,
+                bgcolor: C.white,
+                color: C.primary,
+                boxShadow: "0 4px 12px rgba(31, 41, 55, 0.06)",
+                "&:hover": { bgcolor: C.primaryTint },
+              }}
+            >
+              <ChevronRightRounded />
+            </IconButton>
           </Stack>
           {filteredSkillCourses.length > 0 ? (
             <CarouselRow>
@@ -1902,16 +1966,63 @@ export default function StudentHomeContent() {
             </Grid>
             <Grid size={{ xs: 12, md: 7 }}>
               {premiumSelection.description && (
-                <Typography
-                  sx={{
-                    fontSize: 14,
-                    color: C.textSecondary,
-                    mb: 1.5,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {premiumSelection.description}
-                </Typography>
+                <Box sx={{ mb: 2 }}>
+                  <Box
+                    sx={{
+                      position: "relative",
+                      maxHeight: showFullPremiumDescription ? "none" : 190,
+                      overflow: "hidden",
+                      fontSize: 14,
+                      color: C.textSecondary,
+                      lineHeight: 1.7,
+                      "& h1, & h2, & h3": {
+                        color: C.textDark,
+                        fontSize: 16,
+                        lineHeight: 1.4,
+                        mt: 1.25,
+                        mb: 0.75,
+                      },
+                      "& p": { my: 0.75 },
+                      "& ul, & ol": { my: 0.75, pl: 2.5 },
+                      "& li": { mb: 0.35 },
+                      "& hr": { border: 0, borderTop: `1px solid ${C.border}`, my: 1.25 },
+                      ...(!showFullPremiumDescription && {
+                        "&::after": {
+                          content: '""',
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: 64,
+                          pointerEvents: "none",
+                          background:
+                            "linear-gradient(180deg, rgba(247,245,242,0) 0%, #F7F5F2 88%)",
+                        },
+                      }),
+                    }}
+                    dangerouslySetInnerHTML={{ __html: premiumDescriptionHtml }}
+                  />
+                  <Button
+                    size="small"
+                    onClick={() => setShowFullPremiumDescription((current) => !current)}
+                    endIcon={
+                      showFullPremiumDescription
+                        ? <ChevronLeftRounded sx={{ transform: "rotate(90deg)" }} />
+                        : <ChevronRightRounded sx={{ transform: "rotate(90deg)" }} />
+                    }
+                    sx={{
+                      mt: 0.75,
+                      px: 0,
+                      minWidth: 0,
+                      color: C.primary,
+                      fontWeight: 800,
+                      textTransform: "none",
+                      "&:hover": { bgcolor: "transparent", color: C.primaryDark },
+                    }}
+                  >
+                    {showFullPremiumDescription ? "Thu gọn" : "Xem tất cả"}
+                  </Button>
+                </Box>
               )}
               {premiumSelection.relatedCourses &&
               premiumSelection.relatedCourses.length > 0 ? (
