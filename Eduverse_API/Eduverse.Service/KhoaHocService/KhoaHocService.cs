@@ -282,8 +282,8 @@ namespace Eduverse.Service.KhoaHocService
 
             var query =
                 from dk in _dangKyKhoaHocRepository.GetQueryable().AsNoTracking()
-                join kh in GetAll().AsNoTracking()
-                    on dk.IdKhoaHoc equals kh.Id
+                join kh in GetQueryable()
+                   on dk.IdKhoaHoc equals kh.Id
                 where dk.IdNguoiDangKi == userId
                 && (kh.TrangThaiPheDuyet == "DaDuyet")
                 && (kh.TrangThai == "HoatDong" || kh.TrangThai == "NgungHoatDong")

@@ -133,9 +133,10 @@ namespace Eduverse.Api.Controller
             var courses = new List<KhoaHoc>();
             try
             {
-                courses = await _khoaHocService.GetQueryable()
-                    .Where(c => c.IsDeleted == false)
-                    .ToListAsync();
+                courses = await _khoaHocService.GetQueryable().Where(c =>
+                            c.TrangThaiPheDuyet == "DaDuyet" &&
+                            c.TrangThai == "HoatDong")
+                        .ToListAsync();
             }
             catch (Exception ex)
             {
