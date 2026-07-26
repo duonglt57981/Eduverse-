@@ -32,6 +32,24 @@ namespace Eduverse.Api.Controller
             {
                 return DataResponse<DangKyKhoaHocMienPhiDto>.False(ex.Message);
             }
-        } 
+        }
+
+        [HttpGet("by-khoahoc/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<Guid?>> GetIdDangKyByKhoaHoc(Guid idKhoaHoc)
+        {
+            try
+            {
+                Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
+                var dangKy = await _dangKyKhoaHocService.GetByKhoaHocAndUser(idKhoaHoc, userId);
+                if (dangKy == null)
+                    return DataResponse<Guid?>.False("Bạn chưa đăng ký khóa học này");
+                return DataResponse<Guid?>.Success(dangKy.Id);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<Guid?>.False(ex.Message);
+            }
+        }
     }
 }

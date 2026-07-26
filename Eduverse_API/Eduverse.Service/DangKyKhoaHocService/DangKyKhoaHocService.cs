@@ -87,5 +87,12 @@ namespace Eduverse.Service.DangKyKhoaHocService
 
             return _mapper.Map<DangKyKhoaHoc,DangKyKhoaHocMienPhiDto>(dangKy);
         }
+        public async Task<Model.Entities.DangKyKhoaHoc?> GetByKhoaHocAndUser(Guid idKhoaHoc, Guid userId)
+        {
+            return await GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
+                                   && x.IdNguoiDangKi == userId
+                                   && !x.IsDeleted);
+        }
     }
 }
