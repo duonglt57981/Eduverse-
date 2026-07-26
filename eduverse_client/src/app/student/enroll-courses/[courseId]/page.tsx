@@ -971,9 +971,20 @@ function CourseRegistrationContent() {
                     fullWidth
                     variant="contained"
                     startIcon={<SchoolIcon />}
-                    onClick={() =>
-                      router.push(`/hoc-vien/khoa-hoc-cua-toi/${khoaHoc.id}`)
-                    }
+                    onClick={async () => {
+                      try {
+                        const res = await apiService.get<string>(
+                          `/dangkikhoahoc/by-khoahoc/${khoaHoc?.id}`,
+                        );
+                        if (res.data) {
+                          router.push(
+                            `/student/courses/my-courses/learning/${res.data}`,
+                          );
+                        }
+                      } catch {
+                        alert("Không tìm thấy thông tin đăng ký!");
+                      }
+                    }}
                     sx={{
                       bgcolor: "#22c55e",
                       "&:hover": { bgcolor: "#16a34a" },

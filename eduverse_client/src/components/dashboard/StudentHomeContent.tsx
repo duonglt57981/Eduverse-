@@ -74,7 +74,6 @@ const LEVEL_GRADIENT: Record<string, string> = {
   "Cao cấp": "linear-gradient(135deg, #7F1D1D 0%, #B91C1C 100%)",
 };
 
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface KhoaHocDto {
   id: string;
@@ -426,7 +425,6 @@ function HoverPanel({
 
   const gradient = getGradient(course);
   const isFree = (course.gia ?? 0) === 0;
-  
 
   return (
     <Box
@@ -577,7 +575,9 @@ function HoverPanel({
               startIcon={<PlayCircleFilledRounded />}
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/hoc-vien/khoa-hoc-cua-toi/${course.id}`);
+                router.push(
+                  `/student/courses/my-courses/learning/${course.id}`,
+                );
               }}
               sx={{
                 borderRadius: "12px",
@@ -1142,14 +1142,16 @@ export default function StudentHomeContent() {
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
-  const [showFullPremiumDescription, setShowFullPremiumDescription] = useState(false);
+  const [showFullPremiumDescription, setShowFullPremiumDescription] =
+    useState(false);
   const [premiumDescriptionHtml, setPremiumDescriptionHtml] = useState("");
   const tabsRef = useRef<HTMLDivElement>(null);
   const skillScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollSkills = (direction: -1 | 1) => {
     skillScrollRef.current?.scrollBy({
-      left: direction * Math.min(skillScrollRef.current.clientWidth * 0.75, 640),
+      left:
+        direction * Math.min(skillScrollRef.current.clientWidth * 0.75, 640),
       behavior: "smooth",
     });
   };
@@ -1839,7 +1841,8 @@ export default function StudentHomeContent() {
                     color: selectedSkill === skill ? "#fff" : C.textSecondary,
                     border: `1px solid ${selectedSkill === skill ? C.primary : C.border2}`,
                     "&:hover": {
-                      bgcolor: selectedSkill === skill ? C.primaryDark : C.primaryTint,
+                      bgcolor:
+                        selectedSkill === skill ? C.primaryDark : C.primaryTint,
                     },
                   }}
                 />
@@ -1989,7 +1992,11 @@ export default function StudentHomeContent() {
                       "& p": { my: 0.75 },
                       "& ul, & ol": { my: 0.75, pl: 2.5 },
                       "& li": { mb: 0.35 },
-                      "& hr": { border: 0, borderTop: `1px solid ${C.border}`, my: 1.25 },
+                      "& hr": {
+                        border: 0,
+                        borderTop: `1px solid ${C.border}`,
+                        my: 1.25,
+                      },
                       ...(!showFullPremiumDescription && {
                         "&::after": {
                           content: '""',
@@ -2008,11 +2015,19 @@ export default function StudentHomeContent() {
                   />
                   <Button
                     size="small"
-                    onClick={() => setShowFullPremiumDescription((current) => !current)}
+                    onClick={() =>
+                      setShowFullPremiumDescription((current) => !current)
+                    }
                     endIcon={
-                      showFullPremiumDescription
-                        ? <ChevronLeftRounded sx={{ transform: "rotate(90deg)" }} />
-                        : <ChevronRightRounded sx={{ transform: "rotate(90deg)" }} />
+                      showFullPremiumDescription ? (
+                        <ChevronLeftRounded
+                          sx={{ transform: "rotate(90deg)" }}
+                        />
+                      ) : (
+                        <ChevronRightRounded
+                          sx={{ transform: "rotate(90deg)" }}
+                        />
+                      )
                     }
                     sx={{
                       mt: 0.75,
@@ -2021,7 +2036,10 @@ export default function StudentHomeContent() {
                       color: C.primary,
                       fontWeight: 800,
                       textTransform: "none",
-                      "&:hover": { bgcolor: "transparent", color: C.primaryDark },
+                      "&:hover": {
+                        bgcolor: "transparent",
+                        color: C.primaryDark,
+                      },
                     }}
                   >
                     {showFullPremiumDescription ? "Thu gọn" : "Xem tất cả"}
