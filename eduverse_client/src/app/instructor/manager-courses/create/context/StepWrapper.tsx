@@ -20,8 +20,6 @@ const MAU = {
   chinhDam: "#611722",
   chinhNhat: "#F8ECEE",
   vien: "#EFE0E2",
-  disabledBg: "#F3D9DC",
-  disabledText: "#B98890",
 };
 
 export default function StepWrapper({
@@ -37,79 +35,92 @@ export default function StepWrapper({
       sx={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "calc(100vh - 180px)",
+        minHeight: "calc(100vh - 200px)",
         height: "100%",
       }}
     >
       {/* Nội dung bước */}
-      <Box sx={{ flex: 1 }}>{children}</Box>
+      <Box sx={{ flex: 1, pb: 4 }}>{children}</Box>
 
-      {/* Thanh điều hướng */}
+      {/* Thanh điều hướng sticky */}
       <Box
         sx={{
           position: "sticky",
           bottom: 0,
-          mt: 4,
-          pt: 2.5,
-          pb: 2,
-          borderTop: `1px solid ${MAU.vien}`,
+          bgcolor: "#F8F9FB",
+          pt: 2,
+          pb: { xs: 2, sm: 3 },
+          mt: "auto",
+          zIndex: 5,
           display: "flex",
           alignItems: "center",
-          justifyContent: showBack && onBack ? "space-between" : "flex-end",
-          gap: 2,
-          bgcolor: "#ffffff",
+          justifyContent: "space-between",
+          px: { xs: 2, sm: 4 },
         }}
       >
-        {showBack && onBack ? (
+          {showBack && onBack ? (
+            <Button
+              variant="outlined"
+              onClick={onBack}
+              startIcon={<ArrowBackIcon sx={{ fontSize: 13 }} />}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                color: "#4B5563",
+                borderColor: "#D1D5DB",
+                px: { xs: 2.5, sm: 3 },
+                py: 1.2,
+                borderRadius: "10px",
+                fontSize: 14,
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: "#F3F4F6",
+                  borderColor: "#9CA3AF",
+                  color: "#111827",
+                },
+                "&:focus-visible": {
+                  outline: "2px solid #7A1F2B",
+                },
+              }}
+            >
+              Quay lại
+            </Button>
+          ) : (
+            <Box />
+          )}
+
           <Button
-            variant="text"
-            onClick={onBack}
-            startIcon={<ArrowBackIcon sx={{ fontSize: 14 }} />}
+            variant="contained"
+            onClick={onNext}
+            disabled={disableNext}
+            endIcon={<ArrowForwardIcon sx={{ fontSize: 13 }} />}
             sx={{
+              bgcolor: MAU.chinh,
               textTransform: "none",
-              fontWeight: 600,
-              color: MAU.chinh,
-              px: 2,
-              py: 1,
+              fontWeight: 700,
+              fontSize: 14,
+              px: { xs: 3, sm: 4 },
+              py: 1.2,
               borderRadius: "10px",
-              "&:hover": { bgcolor: MAU.chinhNhat },
+              boxShadow: "0 4px 12px rgba(122,31,43,0.15)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: MAU.chinhDam,
+                boxShadow: "0 6px 16px rgba(122,31,43,0.25)",
+                transform: "translateY(-1px)",
+              },
+              "&.Mui-disabled": {
+                bgcolor: "#E5E7EB",
+                color: "#9CA3AF",
+                boxShadow: "none",
+              },
+              "&:focus-visible": {
+                outline: "2px solid #7A1F2B",
+              },
             }}
           >
-            Quay lại
+            {nextLabel}
           </Button>
-        ) : (
-          <Box />
-        )}
-
-        <Button
-          variant="contained"
-          onClick={onNext}
-          disabled={disableNext}
-          endIcon={<ArrowForwardIcon sx={{ fontSize: 14 }} />}
-          sx={{
-            bgcolor: MAU.chinh,
-            textTransform: "none",
-            fontWeight: 700,
-            fontSize: 15,
-            px: 4,
-            py: 1.2,
-            borderRadius: "12px",
-            boxShadow: `0 8px 18px rgba(122,31,43,0.28)`,
-            transition: "all .18s ease",
-            "&:hover": {
-              bgcolor: MAU.chinhDam,
-              boxShadow: `0 10px 22px rgba(122,31,43,0.35)`,
-              transform: "translateY(-1px)",
-            },
-            "&.Mui-disabled": {
-              bgcolor: MAU.disabledBg,
-              color: MAU.disabledText,
-              boxShadow: "none",
-            },
-          }}
-        >
-          {nextLabel}
-        </Button>
       </Box>
     </Box>
   );

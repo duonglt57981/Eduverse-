@@ -44,6 +44,7 @@ import {
   AutoStoriesRounded,
   InboxRounded,
   PlayCircleFilledRounded,
+  SchoolRounded,
 } from "@mui/icons-material";
 
 // ─── Palette (brand maroon, toned neutrals) ──────────────────────────────────
@@ -156,10 +157,14 @@ function fmtDuration(seconds?: number) {
 }
 
 function getGradient(course: KhoaHocDto) {
-  if (course.thumbnailGradient) return course.thumbnailGradient;
-  return (
-    LEVEL_GRADIENT[course.capDo ?? course.level ?? ""] ?? C.gradientCrimson
-  );
+  return "#F1F5F9";
+}
+
+function isValidImage(url?: string): boolean {
+  if (!url) return false;
+  const t = url.trim();
+  if (!t || t === "không có" || t === "aaaaaaaa" || t === "string" || t === "null" || t === "undefined") return false;
+  return t.startsWith("http") || t.startsWith("/") || t.startsWith(".");
 }
 
 function initialsOf(name?: string) {
@@ -736,27 +741,31 @@ function CourseCard({
         <Box
           sx={{
             height: 136,
-            background: course.hinhAnhKhoaHoc
+            background: isValidImage(course.hinhAnhKhoaHoc)
               ? `url(${course.hinhAnhKhoaHoc}) center/cover no-repeat`
-              : gradient,
+              : "#F1F5F9",
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {!course.hinhAnhKhoaHoc && (
-            <Typography
-              sx={{
-                color: "#fff",
-                fontSize: 20,
-                fontWeight: 900,
-                opacity: 0.12,
-                userSelect: "none",
-              }}
-            >
-              EduVerse
-            </Typography>
+          {!isValidImage(course.hinhAnhKhoaHoc) && (
+            <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
+              <SchoolRounded sx={{ color: "#94A3B8", fontSize: 32 }} />
+              <Typography
+                sx={{
+                  color: "#94A3B8",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  mt: 0.75,
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                }}
+              >
+                EDUVERSE
+              </Typography>
+            </Stack>
           )}
           {(course.capDo || course.level) && (
             <Chip
@@ -1134,6 +1143,8 @@ export default function StudentHomeContent() {
       window.removeEventListener("avatar_updated", handleAvatarUpdate);
   }, [user?.email]);
 
+  const [courseImages, setCourseImages] = useState<Record<string, string>>({});
+  const [titleImages, setTitleImages] = useState<Record<string, string>>({});
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1160,6 +1171,27 @@ export default function StudentHomeContent() {
     try {
       setLoading(true);
       setError(null);
+
+      // Fetch approved courses to retrieve real image urls (bypassing dashboard endpoint omissions)
+      try {
+        const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
+        const items = approvedRes.data || [];
+        const imgMap: Record<string, string> = {};
+        const tMap: Record<string, string> = {};
+        items.forEach((item: any) => {
+          if (item.id && item.hinhAnhKhoaHoc) {
+            imgMap[item.id] = item.hinhAnhKhoaHoc;
+          }
+          if (item.tieuDe && item.hinhAnhKhoaHoc) {
+            tMap[item.tieuDe] = item.hinhAnhKhoaHoc;
+          }
+        });
+        setCourseImages(imgMap);
+        setTitleImages(tMap);
+      } catch (err) {
+        console.error("Failed to load course image map:", err);
+      }
+
       const res = await apiService.get<DashboardData>(
         "/dashboard?role=HocVien",
       );
@@ -1870,7 +1902,10 @@ export default function StudentHomeContent() {
               {filteredSkillCourses.map((c, i) => (
                 <CourseCard
                   key={c.id || i}
-                  course={c}
+                  course={{
+                    ...c,
+                    hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.tieuDe || ""],
+                  }}
                   onAddCart={handleAddCart}
                   onClick={handleOpenCourse}
                 />
@@ -1897,24 +1932,42 @@ export default function StudentHomeContent() {
                 elevation={0}
                 sx={{
                   height: "100%",
-                  minHeight: 200,
+                  minHeight: 250,
                   borderRadius: "16px",
                   overflow: "hidden",
                   position: "relative",
                   p: { xs: 3, md: 3.5 },
-                  color: "#fff",
-                  background:
-                    premiumSelection.thumbnailGradient || C.gradientCrimson,
+                  color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff" : C.textDark,
+                  background: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""])
+                    ? `url(${premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]}) center/cover no-repeat`
+                    : "#F1F5F9",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "flex-end",
                 }}
               >
+                {!isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) && (
+                  <Stack sx={{ alignItems: "center", justifyContent: "center", position: "absolute", inset: 0, bottom: 60 }}>
+                    <SchoolRounded sx={{ color: "#94A3B8", fontSize: 48 }} />
+                    <Typography
+                      sx={{
+                        color: "#94A3B8",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        mt: 1,
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      EDUVERSE
+                    </Typography>
+                  </Stack>
+                )}
                 <Chip
                   icon={
                     <WorkspacePremiumRounded
                       sx={{
-                        color: "#fff !important",
+                        color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff !important" : "#991B1B !important",
                         fontSize: "15px !important",
                       }}
                     />
@@ -1925,8 +1978,8 @@ export default function StudentHomeContent() {
                     position: "absolute",
                     top: 16,
                     left: 16,
-                    bgcolor: "rgba(255,255,255,0.18)",
-                    color: "#fff",
+                    bgcolor: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "rgba(255,255,255,0.18)" : "rgba(153, 27, 27, 0.08)",
+                    color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff" : "#991B1B",
                     fontWeight: 800,
                     fontSize: 10.5,
                   }}
@@ -2052,7 +2105,10 @@ export default function StudentHomeContent() {
                   {premiumSelection.relatedCourses.map((c, i) => (
                     <CourseCard
                       key={c.id || i}
-                      course={c}
+                      course={{
+                        ...c,
+                        hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.title || c.tieuDe || ""],
+                      }}
                       onAddCart={handleAddCart}
                       onClick={handleOpenCourse}
                       width={220}
@@ -2099,7 +2155,10 @@ export default function StudentHomeContent() {
               {historyRecommendation.courses.map((c, i) => (
                 <CourseCard
                   key={c.id || i}
-                  course={c}
+                  course={{
+                    ...c,
+                    hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.title || c.tieuDe || ""],
+                  }}
                   onAddCart={handleAddCart}
                   onClick={handleOpenCourse}
                 />

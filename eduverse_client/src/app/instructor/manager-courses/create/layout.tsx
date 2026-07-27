@@ -7,16 +7,98 @@ import {
   Stepper,
   Step,
   StepLabel,
-  LinearProgress,
   IconButton,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import CheckIcon from "@mui/icons-material/Check";
+import StepConnector, { stepConnectorClasses } from "@mui/material/StepConnector";
+import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import { CourseCreateProvider } from "./context/CourseCreateContext";
 
-// ✅ Chỉ còn 3 bước
+// ✅ 3 Bước
 const STEPS = ["Chọn loại", "Thông tin", "Danh mục"];
+
+// Tùy chỉnh Connector nối giữa các bước
+const QontoConnector = styled(StepConnector)(() => ({
+  [`&.${stepConnectorClasses.alternativeLabel}`]: {
+    top: 14,
+    left: "calc(-50% + 20px)",
+    right: "calc(50% + 20px)",
+  },
+  [`&.${stepConnectorClasses.active}`]: {
+    [`& .${stepConnectorClasses.line}`]: {
+      borderColor: "#7A1F2B",
+    },
+  },
+  [`&.${stepConnectorClasses.completed}`]: {
+    [`& .${stepConnectorClasses.line}`]: {
+      borderColor: "#7A1F2B",
+    },
+  },
+  [`& .${stepConnectorClasses.line}`]: {
+    borderColor: "#E5E7EB",
+    borderTopWidth: 2,
+    borderRadius: 1,
+    transition: "border-color 0.2s ease",
+  },
+}));
+
+// Tùy chỉnh Icon hiển thị cho từng bước
+function QontoStepIcon(props: { active?: boolean; completed?: boolean; icon?: ReactNode }) {
+  const { active, completed, icon } = props;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        height: 30,
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1,
+      }}
+    >
+      {completed ? (
+        <Box
+          sx={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            bgcolor: "#7A1F2B",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            boxShadow: "0 2px 6px rgba(122,31,43,0.3)",
+          }}
+        >
+          <CheckIcon sx={{ fontSize: 16, fontWeight: "bold" }} />
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            border: `2px solid ${active ? "#7A1F2B" : "#D1D5DB"}`,
+            bgcolor: active ? "#fff" : "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: active ? "#7A1F2B" : "#9CA3AF",
+            fontSize: 13,
+            fontWeight: 700,
+            boxShadow: active ? "0 2px 8px rgba(122,31,43,0.15)" : "none",
+            transition: "all 0.2s ease",
+          }}
+        >
+          {icon}
+        </Box>
+      )}
+    </Box>
+  );
+}
 
 export default function CreateLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -33,75 +115,174 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
-          bgcolor: "#fff",
+          bgcolor: "#F8F9FB",
         }}
       >
         {/* Header */}
-        <Box sx={{ borderBottom: "1px solid #eee" }}>
+        <Box
+          component="header"
+          sx={{
+            bgcolor: "#ffffff",
+            borderBottom: "1px solid #E5E7EB",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+          }}
+        >
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              px: 3,
-              py: 1.5,
+              px: { xs: 2, sm: 4 },
+              py: 1,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {/* Left side: Logo & Step indicator */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, sm: 2 } }}>
               <Image
                 src="/khoahoc/1-removebg-preview.png"
                 alt="EduVerse"
-                width={180}
-                height={60}
+                width={140}
+                height={50}
                 style={{ objectFit: "contain" }}
                 priority
               />
-              <Box sx={{ width: "1px", height: 20, bgcolor: "#ddd" }} />
-              <Typography sx={{ fontSize: 14, color: "#333" }}>
-                Bước {currentStep + 1} trong {total}
-              </Typography>
+              <Box sx={{ width: "1px", height: 20, bgcolor: "#E5E7EB" }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: 13, sm: 15 },
+                    fontWeight: 600,
+                    color: "#111827",
+                    display: { xs: "none", sm: "block" },
+                  }}
+                >
+                  Tạo khóa học
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: { xs: 13, sm: 15 },
+                    color: "#6B7280",
+                    display: { xs: "block", sm: "block" },
+                  }}
+                >
+                  <Box component="span" sx={{ display: { sm: "inline", xs: "none" } }}>
+                    |{" "}
+                  </Box>
+                  Bước {currentStep + 1} / {total}
+                </Typography>
+              </Box>
             </Box>
+
+            {/* Right side: Exit Button */}
             <Box
+              component="button"
+              onClick={handleExit}
+              aria-label="Thoát luồng tạo khóa học"
               sx={{
                 display: "flex",
                 alignItems: "center",
                 gap: 0.5,
                 cursor: "pointer",
+                bgcolor: "transparent",
+                border: "none",
+                py: 0.8,
+                px: 1.5,
+                borderRadius: "8px",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: "#F3F4F6",
+                },
+                "&:focus-visible": {
+                  outline: "2px solid #7A1F2B",
+                },
               }}
-              onClick={handleExit}
             >
-              <Typography sx={{ fontSize: 14, color: "#666" }}>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#4B5563",
+                }}
+              >
                 Thoát
               </Typography>
-              <IconButton size="small" sx={{ color: "#666" }}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
+              <CloseIcon sx={{ fontSize: 18, color: "#4B5563" }} />
             </Box>
           </Box>
-          <LinearProgress
-            variant="determinate"
-            value={((currentStep + 1) / total) * 100}
+        </Box>
+
+        {/* Stepper Section */}
+        <Box
+          sx={{
+            bgcolor: "#ffffff",
+            borderBottom: "1px solid #E5E7EB",
+            pt: 3,
+            pb: 2.5,
+          }}
+        >
+          <Box sx={{ maxWidth: 700, mx: "auto", px: { xs: 2, sm: 4 } }}>
+            <Stepper
+              activeStep={currentStep}
+              alternativeLabel
+              connector={<QontoConnector />}
+            >
+              {STEPS.map((label) => (
+                <Step key={label}>
+                  <StepLabel
+                    {...({ StepIconComponent: QontoStepIcon } as any)}
+                    sx={{
+                      "& .MuiStepLabel-label": {
+                        fontSize: { xs: 11, sm: 13 },
+                        fontWeight: 500,
+                        color: "#9CA3AF",
+                        mt: 0.8,
+                        transition: "color 0.2s ease",
+                      },
+                      "& .MuiStepLabel-label.Mui-active": {
+                        color: "#7A1F2B",
+                        fontWeight: 600,
+                      },
+                      "& .MuiStepLabel-label.Mui-completed": {
+                        color: "#4B5563",
+                        fontWeight: 600,
+                      },
+                    }}
+                  >
+                    {label}
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          </Box>
+        </Box>
+
+        {/* Main Content Area */}
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            px: { xs: 2, sm: 4 },
+            py: { xs: 3, sm: 4 },
+          }}
+        >
+          <Box
             sx={{
-              height: 3,
-              "& .MuiLinearProgress-bar": { bgcolor: "#7A1F2B" },
-              bgcolor: "#f2d9db",
+              width: "100%",
+              maxWidth: 1000,
+              mx: "auto",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
             }}
-          />
+          >
+            {children}
+          </Box>
         </Box>
-
-        {/* Stepper */}
-        <Box sx={{ px: 4, py: 3 }}>
-          <Stepper activeStep={currentStep} alternativeLabel>
-            {STEPS.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </Box>
-
-        {/* Nội dung chính */}
-        <Box sx={{ flex: 1, px: 4, py: 2 }}>{children}</Box>
       </Box>
     </CourseCreateProvider>
   );

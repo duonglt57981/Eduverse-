@@ -3,20 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import KhoaHocService from '@/src/services/KhoaHocService';
 import { danhMucService } from '@/src/services/danhmucService';
-import { useFavorite } from '@/src/features/favorite/hooks/useFavorite';
-import { useSelector } from '@/src/store/hook';
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
-  FavoriteRounded,
   QueryStatsRounded,
   SchoolRounded,
   SearchRounded,
   TimerRounded,
-  TuneRounded,
 } from '@mui/icons-material';
 import {
   Box,
@@ -26,7 +21,6 @@ import {
   Divider,
   FormControlLabel,
   InputAdornment,
-  IconButton,
   MenuItem,
   Paper,
   Rating,
@@ -36,20 +30,29 @@ import {
   TextField,
   Typography,
   Checkbox,
-  Tooltip,
+  IconButton,
 } from '@mui/material';
 import {
   type CourseCatalogItem,
   type CourseCategory,
 } from './landing-data';
-import { CourseVisual } from './landing-shared';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
 
 type CourseSortOption = 'newest' | 'price-low' | 'price-high';
 type PriceFilter = 'all' | 'free' | 'paid';
-type RatingFilter = 4 | 4.5 | null;
+
+const BRAND_COLORS = {
+  primary: '#991B1B',      // Đỏ đô
+  primaryHover: '#7F1D1D',
+  primarySoft: '#FEF2F2',
+  primaryBorder: '#FECACA',
+  textTitle: '#111827',
+  textBody: '#374151',
+  textMuted: '#6B7280',
+  borderLight: '#E5E7EB',
+};
 
 function FilterGroup({
   title,
@@ -62,12 +65,12 @@ function FilterGroup({
     <Box>
       <Typography
         sx={{
-          mb: 1.2,
+          mb: 1.5,
           fontSize: 12,
-          fontWeight: 900,
+          fontWeight: 700,
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: 'rgba(24,24,27,0.6)',
+          letterSpacing: '0.05em',
+          color: BRAND_COLORS.textMuted,
         }}
       >
         {title}
@@ -77,156 +80,287 @@ function FilterGroup({
   );
 }
 
-function CourseCard({
-  course,
-  favorited,
-  favoriteLoading,
-  onToggleFavorite,
-}: {
-  course: CourseCatalogItem;
-  favorited: boolean;
-  favoriteLoading: boolean;
-  onToggleFavorite: (course: CourseCatalogItem) => void;
-}) {
-  const detailHref = `/student/enroll-courses/${course.id}`;
+function CourseCard({ course }: { course: CourseCatalogItem }) {
+  const isFree = course.isFree;
+  const imageUrl = course.hinhAnhKhoaHoc;
+
+  // Handle "Chưa cập nhật" values gracefully
+  const hasCategory = course.category && course.category !== 'Chưa cập nhật' && course.category !== 'Khác';
+  const hasLevel = course.level && course.level !== 'Chưa cập nhật';
+  const displayInstructor = course.instructor === 'Chưa cập nhật' ? 'EduVerse' : course.instructor;
+  const isPricePending = course.price === 'Chưa cập nhật';
+  const displayPrice = isPricePending ? 'Đang cập nhật' : course.price;
+  const hasDuration = course.duration && course.duration !== 'Chưa cập nhật';
 
   return (
     <Paper
       elevation={0}
       sx={{
-        p: 1.75,
-        borderRadius: 2.8,
-        border: '1px solid rgba(17,17,17,0.08)',
-        bgcolor: '#fff',
-        transition: 'transform 180ms ease, box-shadow 180ms ease',
+        p: 2,
+        borderRadius: '18px',
+        border: `1px solid ${BRAND_COLORS.borderLight}`,
+        bgcolor: '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 22px 36px rgba(24,18,20,0.1)',
+          transform: 'translateY(-3px)',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.04)',
+          borderColor: BRAND_COLORS.primaryBorder,
         },
       }}
     >
-      <Box sx={{ position: 'relative' }}>
-        <CourseVisual palette={course.palette} badge={course.badge} />
-        <Tooltip title={favorited ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}>
-          <IconButton
-            aria-label={favorited ? `Bỏ yêu thích ${course.title}` : `Yêu thích ${course.title}`}
-            disabled={favoriteLoading}
-            onClick={() => onToggleFavorite(course)}
+      {/* Course Image area */}
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          pt: '56.25%', // 16:9 Aspect Ratio
+          overflow: 'hidden',
+          borderRadius: '12px',
+          bgcolor: '#F3F4F6',
+        }}
+      >
+        {imageUrl ? (
+          <Box
+            component="img"
+            src={imageUrl}
+            alt={course.title}
             sx={{
               position: 'absolute',
-              top: 14,
-              right: 14,
-              width: 34,
-              height: 34,
-              p: 0,
-              borderRadius: '50%',
-              bgcolor: 'rgba(255,255,255,0.9)',
-              color: '#8B1313',
-              boxShadow: '0 8px 18px rgba(58,20,20,0.14)',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.5s ease',
               '&:hover': {
-                bgcolor: '#fff',
-                transform: 'scale(1.06)',
+                transform: 'scale(1.05)',
+              },
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#9CA3AF',
+              gap: 1,
+            }}
+          >
+            <SchoolRounded sx={{ fontSize: 32 }} />
+            <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              EduVerse
+            </Typography>
+          </Box>
+        )}
+
+        {/* Free/Paid badge */}
+        <Chip
+          label={course.badge}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            height: 22,
+            fontSize: 10.5,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            bgcolor: isFree ? '#E8F5E9' : BRAND_COLORS.primarySoft,
+            color: isFree ? '#2E7D32' : BRAND_COLORS.primary,
+            borderRadius: '6px',
+            border: `1px solid ${isFree ? '#C8E6C9' : BRAND_COLORS.primaryBorder}`,
+          }}
+        />
+
+        {/* Favorite icon */}
+        <IconButton
+          aria-label="Thêm vào danh sách yêu thích"
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            width: 32,
+            height: 32,
+            bgcolor: 'rgba(255,255,255,0.75)',
+            backdropFilter: 'blur(8px)',
+            color: '#4B5563',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              bgcolor: '#ffffff',
+              color: BRAND_COLORS.primary,
+              transform: 'scale(1.08)',
+            },
+          }}
+        >
+          <FavoriteBorderRounded sx={{ fontSize: 16 }} />
+        </IconButton>
+      </Box>
+
+      {/* Course details */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, mt: 2 }}>
+        {/* Categories & Level */}
+        <Stack direction="row" spacing={0.8} sx={{ flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
+          {hasCategory && (
+            <Chip
+              label={course.category}
+              size="small"
+              sx={{
+                height: 22,
+                fontSize: 11,
+                fontWeight: 600,
+                bgcolor: '#F3F4F6',
+                color: BRAND_COLORS.textBody,
+                borderRadius: '4px',
+              }}
+            />
+          )}
+          {hasLevel && (
+            <Chip
+              label={course.level}
+              size="small"
+              sx={{
+                height: 22,
+                fontSize: 11,
+                fontWeight: 600,
+                bgcolor: '#EFF6FF',
+                color: '#2563EB',
+                borderRadius: '4px',
+              }}
+            />
+          )}
+        </Stack>
+
+        {/* Title */}
+        <Typography
+          sx={{
+            fontSize: 16.5,
+            fontWeight: 700,
+            color: BRAND_COLORS.textTitle,
+            lineHeight: 1.4,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            height: 46,
+            mb: 0.5,
+            transition: 'color 0.2s ease',
+            '&:hover': {
+              color: BRAND_COLORS.primary,
+            },
+          }}
+          title={course.title}
+        >
+          {course.title}
+        </Typography>
+
+        {/* Instructor */}
+        <Typography sx={{ fontSize: 13, color: BRAND_COLORS.textMuted, mb: 1.5 }}>
+          Giảng viên: {displayInstructor}
+        </Typography>
+
+        <Box sx={{ flex: 1 }} />
+
+        {/* Ratings */}
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', mb: 1.5 }}>
+          <Typography sx={{ fontSize: 13.5, color: '#F59E0B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 0.25 }}>
+            ★ {course.rating.toFixed(1)}
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: BRAND_COLORS.textMuted }}>
+            · ({course.students.toLocaleString()} học viên)
+          </Typography>
+        </Stack>
+
+        <Divider sx={{ my: 1.5, borderColor: '#F3F4F6' }} />
+
+        {/* Price & Duration info */}
+        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
+            {course.originalPrice && !isPricePending && (
+              <Typography sx={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through' }}>
+                {course.originalPrice}
+              </Typography>
+            )}
+            <Typography
+              sx={{
+                fontSize: isPricePending ? 15 : 18,
+                fontWeight: 800,
+                color: isPricePending ? BRAND_COLORS.textMuted : BRAND_COLORS.primary,
+              }}
+            >
+              {displayPrice}
+            </Typography>
+          </Stack>
+          {hasDuration && (
+            <Typography sx={{ fontSize: 12.5, color: BRAND_COLORS.textMuted, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <TimerRounded sx={{ fontSize: 15, color: '#9CA3AF' }} />
+              {course.duration}
+            </Typography>
+          )}
+        </Stack>
+
+        {/* Action Buttons */}
+        <Stack direction="row" spacing={1} sx={{ width: '100%', mt: 'auto' }}>
+          <Button
+            component={Link}
+            href="/auth/login"
+            variant="outlined"
+            sx={{
+              flex: 1,
+              height: 40,
+              fontSize: 13,
+              fontWeight: 600,
+              borderRadius: '10px',
+              textTransform: 'none',
+              borderColor: '#D1D5DB',
+              color: BRAND_COLORS.textBody,
+              transition: 'all 200ms ease',
+              '&:hover': {
+                bgcolor: '#F9FAFB',
+                borderColor: BRAND_COLORS.textMuted,
+                color: BRAND_COLORS.textTitle,
               },
             }}
           >
-            {favorited ? (
-              <FavoriteRounded sx={{ fontSize: 19 }} />
-            ) : (
-              <FavoriteBorderRounded sx={{ fontSize: 19 }} />
-            )}
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      <Stack direction="row" spacing={0.8} sx={{ mt: 1.5, flexWrap: 'wrap' }}>
-        {course.tags.slice(0, 2).map((tag) => (
-          <Chip
-            key={tag}
-            label={tag}
-            size="small"
+            Chi tiết
+          </Button>
+          <Button
+            component={Link}
+            href="/auth/login"
+            variant="contained"
+            endIcon={<ArrowForwardRounded sx={{ fontSize: '16px !important' }} />}
             sx={{
-              height: 26,
-              borderRadius: 2.8,
-              bgcolor: 'rgba(17,17,17,0.05)',
+              flex: 1,
+              height: 40,
+              fontSize: 13,
               fontWeight: 700,
+              borderRadius: '10px',
+              textTransform: 'none',
+              bgcolor: BRAND_COLORS.primary,
+              boxShadow: 'none',
+              transition: 'all 200ms ease',
+              '&:hover': {
+                bgcolor: BRAND_COLORS.primaryHover,
+                boxShadow: '0 4px 12px rgba(153, 27, 27, 0.15)',
+              },
             }}
-          />
-        ))}
-        <Chip
-          label={course.duration}
-          size="small"
-          sx={{
-            height: 26,
-            borderRadius: 2.8,
-            bgcolor: 'rgba(141,19,19,0.06)',
-            color: '#8B1313',
-            fontWeight: 800,
-          }}
-        />
-      </Stack>
-
-      <Typography sx={{ mt: 1.35, fontSize: 22, fontWeight: 900, lineHeight: 1.24, letterSpacing: '-0.4px' }}>
-        {course.title}
-      </Typography>
-
-      <Stack direction="row" spacing={1} sx={{ mt: 1.4, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Rating value={course.rating} precision={0.1} readOnly size="small" />
-        <Typography sx={{ fontSize: 13, color: 'rgba(24,24,27,0.54)', fontWeight: 700 }}>
-          {course.rating.toFixed(1)}
-        </Typography>
-        <Typography sx={{ fontSize: 13, color: 'rgba(24,24,27,0.54)' }}>
-          ({course.students} học viên) • {course.level}
-        </Typography>
-      </Stack>
-
-      <Stack direction="row" spacing={1.4} sx={{ mt: 1.25, color: 'rgba(24,24,27,0.54)', flexWrap: 'wrap' }}>
-        <Stack direction="row" spacing={0.65} sx={{ alignItems: 'center' }}>
-          <SchoolRounded sx={{ fontSize: 17 }} />
-          <Typography sx={{ fontSize: 12.5 }}>{course.category}</Typography>
+          >
+            Đăng ký
+          </Button>
         </Stack>
-        <Stack direction="row" spacing={0.65} sx={{ alignItems: 'center' }}>
-          <TimerRounded sx={{ fontSize: 17 }} />
-          <Typography sx={{ fontSize: 12.5 }}>{course.duration}</Typography>
-        </Stack>
-      </Stack>
-
-      <Stack direction="row" spacing={1.2} sx={{ mt: 1.5, alignItems: 'baseline' }}>
-        <Typography sx={{ fontSize: 13.5, color: 'rgba(24,24,27,0.38)', textDecoration: 'line-through' }}>
-          {course.originalPrice}
-        </Typography>
-        <Typography sx={{ fontSize: 28, fontWeight: 900, color: '#8B1313' }}>
-          {course.price}
-        </Typography>
-      </Stack>
-
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} sx={{ mt: 1.75 }}>
-        <Button
-          component={Link}
-          href={detailHref}
-          variant="outlined"
-          sx={{
-            flex: 1,
-            borderRadius: 2.8,
-            borderColor: 'rgba(17,17,17,0.12)',
-            color: 'rgba(24,24,27,0.78)',
-          }}
-        >
-          Xem chi tiết
-        </Button>
-        <Button
-          component={Link}
-          href={detailHref}
-          variant="contained"
-          endIcon={<ArrowForwardRounded />}
-          sx={{
-            flex: 1,
-            borderRadius: 2.8,
-            background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
-          }}
-        >
-          Đăng ký ngay
-        </Button>
-      </Stack>
+      </Box>
     </Paper>
   );
 }
@@ -235,13 +369,7 @@ function CourseCard({
 const mapToCatalogItem = (kh: any): CourseCatalogItem => {
   // Stable hash based on course ID to generate a consistent rating between 4.0 and 5.0
   const charCodeSum = (kh.id || '').split('').reduce((sum: number, char: string) => sum + char.charCodeAt(0), 0);
-  const fallbackRating = 4.0 + (charCodeSum % 11) * 0.1;
-  const rating = Number(
-    kh.diemDanhGiaTrungBinh ??
-    kh.danhGiaTrungBinh ??
-    kh.rating ??
-    fallbackRating,
-  );
+  const mockRating = 4.0 + (charCodeSum % 11) * 0.1; // yields: 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0
   const isFree = kh.loaiKhoaHoc === 'Khóa học miễn phí';
   const durationSeconds = Number(kh.tongThoiLuong || 0);
   const durationHours = Math.floor(durationSeconds / 3600);
@@ -254,7 +382,7 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     id: kh.id,
     title: kh.tieuDe || 'Khóa học không tên',
     instructor: kh.tenGiangVien || kh.createdBy || 'Chưa cập nhật',
-    rating: Number.isFinite(rating) ? Math.min(5, Math.max(0, rating)) : fallbackRating,
+    rating: mockRating,
     students: kh.soLuongHocVien || 0,
     price: isFree ? 'Miễn phí' : kh.gia != null ? `${kh.gia.toLocaleString('vi-VN')}đ` : 'Chưa cập nhật',
     originalPrice: kh.giaGoc && kh.giaGoc > 0 ? `${kh.giaGoc?.toLocaleString('vi-VN')}đ` : '',
@@ -268,6 +396,7 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
       '#c2410c',
       '#fff7f4'
     ],
+    hinhAnhKhoaHoc: kh.hinhAnhKhoaHoc || kh.urlHinhAnh,
     isFree
   };
 };
@@ -284,7 +413,6 @@ export default function CoursesPage({
   const [sortBy, setSortBy] = useState<CourseSortOption>('newest');
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
-  const [minimumRating, setMinimumRating] = useState<RatingFilter>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   const [courses, setCourses] = useState<CourseCatalogItem[]>([]);
@@ -294,43 +422,6 @@ export default function CoursesPage({
   const [loading, setLoading] = useState(false);
 
   const courseService = useMemo(() => new KhoaHocService(), []);
-  const router = useRouter();
-  const user = useSelector((state) => state.auth.user);
-  const {
-    fetchFavorites,
-    isFavorited,
-    loading: favoriteLoading,
-    toggleFavorite,
-  } = useFavorite();
-
-  useEffect(() => {
-    if (user) {
-      void fetchFavorites();
-    }
-  }, [fetchFavorites, user]);
-
-  const visibleCourses = useMemo(
-    () => minimumRating === null
-      ? courses
-      : courses.filter((course) => course.rating >= minimumRating),
-    [courses, minimumRating],
-  );
-
-  const activeFilterCount = [
-    activeCategory !== 'all',
-    priceFilter !== 'all',
-    selectedLevel !== null,
-    minimumRating !== null,
-    appliedSearch !== '',
-  ].filter(Boolean).length;
-
-  const handleToggleFavorite = (course: CourseCatalogItem) => {
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
-    void toggleFavorite(course.id, course.title);
-  };
 
   // Danh mục thật từ phần quản lý danh mục của Admin (/danhmuc, công khai)
   const [categories, setCategories] = useState<CourseCategory[]>([]);
@@ -406,13 +497,6 @@ export default function CoursesPage({
     setPageIndex(1);
   };
 
-  const applyQuickSearch = (keyword: string) => {
-    setSearch(keyword);
-    setAppliedSearch(keyword);
-    setSearchRevision((current) => current + 1);
-    setPageIndex(1);
-  };
-
   const toggleLevel = (level: string) => {
     setSelectedLevel((current) => current === level ? null : level);
     setPageIndex(1);
@@ -422,7 +506,6 @@ export default function CoursesPage({
     setActiveCategory('all');
     setPriceFilter('all');
     setSelectedLevel(null);
-    setMinimumRating(null);
     setSearch('');
     setAppliedSearch('');
     setSearchRevision((current) => current + 1);
@@ -435,615 +518,556 @@ export default function CoursesPage({
     return () => window.removeEventListener('eduverse:reset-explore', resetFilters);
   }, [resetFilters]);
 
+  const hasAnyFilterActive = activeCategory !== 'all' || priceFilter !== 'all' || selectedLevel !== null || search !== '' || appliedSearch !== '' || sortBy !== 'newest';
+
   return (
-    <>
+    <Box sx={{ width: '100%', pt: 3 }}>
+      {/* Modern Compact Hero Section */}
       <Box
+        sx={{
+          py: { xs: 4, sm: 5, md: 6 },
+          px: 0,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '1.1fr 0.9fr' },
+          gap: { xs: 4, lg: 6 },
+          alignItems: 'center',
+          mb: 6,
+        }}
+      >
+        <Box>
+          <Chip
+            label="Nền tảng học tập chuẩn quốc tế"
             sx={{
-              pt: { xs: 5, md: 7 },
-              pb: { xs: 4, md: 5 },
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 0.96fr) minmax(440px, 1.04fr)' },
-              gap: { xs: 4, md: 5 },
-              alignItems: 'center',
+              bgcolor: BRAND_COLORS.primarySoft,
+              color: BRAND_COLORS.primary,
+              fontWeight: 800,
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              mb: 2.5,
+              border: `1px solid ${BRAND_COLORS.primaryBorder}`,
+              borderRadius: '6px',
+              height: 26,
+            }}
+          />
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: 34, sm: 44, md: 52 },
+              lineHeight: 1.12,
+              letterSpacing: '-1.5px',
+              fontWeight: 800,
+              color: BRAND_COLORS.textTitle,
+              mb: 2.5,
             }}
           >
-            <Box>
-              <Chip
-                label="Nền tảng học tập chuẩn quốc tế"
-                sx={{
-                  bgcolor: 'rgba(159,23,23,0.08)',
-                  color: '#9f1717',
-                  fontWeight: 900,
-                  mb: 2.25,
-                }}
-              />
-              <Typography
-                variant="h1"
-                sx={{
-                  fontSize: { xs: 36, sm: 48, md: 64 },
-                  lineHeight: 1.04,
-                  letterSpacing: '-1.6px',
-                  fontWeight: 900,
-                  maxWidth: 680,
-                  color: '#1a1a1a',
-                }}
-              >
-                Khám phá hàng trăm
-                <br />
-                <Box component="span" sx={{ color: '#8B1313' }}>
-                  khóa học
-                </Box>{' '}
-                chất lượng
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 2.25,
-                  maxWidth: 620,
-                  fontSize: 15.5,
-                  lineHeight: 1.9,
-                  color: 'rgba(24,24,27,0.62)',
-                }}
-              >
-                Học từ chuyên gia hàng đầu và nâng cấp kỹ năng với lộ trình học
-                tập được cá nhân hóa, công nghệ hiện đại và cộng đồng học viên dẫn đầu.
-              </Typography>
+            Khám phá hàng trăm{' '}
+            <Box component="span" sx={{ color: BRAND_COLORS.primary }}>
+              khóa học
+            </Box>{' '}
+            chất lượng
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 15.5,
+              lineHeight: 1.6,
+              color: BRAND_COLORS.textBody,
+              mb: 4,
+              maxWidth: 580,
+            }}
+          >
+            Học từ chuyên gia hàng đầu và nâng cấp kỹ năng với lộ trình học tập được cá nhân hóa, công nghệ hiện đại và cộng đồng học viên dẫn đầu.
+          </Typography>
 
-              <Paper
-                component="form"
-                elevation={0}
-                onSubmit={(event) => {
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ maxWidth: 520 }}>
+            <TextFieldAny
+              fullWidth
+              variant="outlined"
+              value={search}
+              onChange={handleSearchChange}
+              onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+                if (event.key === 'Enter') {
                   event.preventDefault();
                   submitSearch();
-                }}
+                }
+              }}
+              placeholder="Bạn muốn học kỹ năng gì?"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded sx={{ color: '#9CA3AF' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  height: 52,
+                  bgcolor: '#F9FAFB',
+                  borderRadius: '12px',
+                  fontSize: 14.5,
+                  transition: 'all 200ms ease',
+                  '& fieldset': { borderColor: BRAND_COLORS.borderLight },
+                  '&:hover fieldset': { borderColor: BRAND_COLORS.primary },
+                  '&.Mui-focused fieldset': { borderColor: BRAND_COLORS.primary, borderWidth: 1.5 },
+                  '&.Mui-focused': { bgcolor: '#ffffff' },
+                },
+              }}
+            />
+            <Button
+              variant="contained"
+              onClick={submitSearch}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+              sx={{
+                px: 4,
+                height: 52,
+                borderRadius: '12px',
+                bgcolor: BRAND_COLORS.primary,
+                fontWeight: 700,
+                fontSize: 14.5,
+                textTransform: 'none',
+                whiteSpace: 'nowrap',
+                boxShadow: 'none',
+                transition: 'all 200ms ease',
+                '&:hover': {
+                  bgcolor: BRAND_COLORS.primaryHover,
+                  boxShadow: '0 4px 14px rgba(153, 27, 27, 0.2)',
+                },
+              }}
+            >
+              Tìm kiếm ngay
+            </Button>
+          </Stack>
+        </Box>
+
+        <Box sx={{ position: 'relative', display: { xs: 'none', lg: 'block' } }}>
+          <Box
+            sx={{
+              position: 'relative',
+              width: '100%',
+              height: 360,
+              borderRadius: '24px',
+              overflow: 'hidden',
+              boxShadow: '0 12px 36px rgba(0,0,0,0.05)',
+              border: `1px solid ${BRAND_COLORS.borderLight}`,
+            }}
+          >
+            <Image
+              src="/auth/img/Illustration_Section_v2.png"
+              alt="EduVerse learning space"
+              fill
+              priority
+              sizes="(max-width: 900px) 100vw, 48vw"
+              style={{
+                objectFit: 'cover',
+                objectPosition: 'center center',
+              }}
+            />
+          </Box>
+
+          <Paper
+            elevation={0}
+            sx={{
+              position: 'absolute',
+              left: 24,
+              bottom: -16,
+              px: 2.5,
+              py: 1.8,
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.7)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.06)',
+              bgcolor: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <Typography sx={{ fontSize: 24, fontWeight: 900, color: BRAND_COLORS.primary, lineHeight: 1.1 }}>
+              15K+
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: BRAND_COLORS.textMuted, fontWeight: 600, mt: 0.5 }}>
+              Học viên tham gia học tập
+            </Typography>
+          </Paper>
+        </Box>
+      </Box>
+
+      {/* Sidebar Filter & Grid Panel */}
+      <Box
+        sx={{
+          pb: 8,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '280px minmax(0, 1fr)' },
+          gap: 4,
+          alignItems: 'start',
+        }}
+      >
+        {/* Left Filter Card */}
+        <Paper
+          elevation={0}
+          component="aside"
+          sx={{
+            p: 3,
+            borderRadius: '16px',
+            border: `1px solid ${BRAND_COLORS.borderLight}`,
+            bgcolor: '#ffffff',
+            position: { lg: 'sticky' },
+            top: { lg: 100 },
+            maxHeight: { lg: 'calc(100vh - 140px)' },
+            overflowY: { lg: 'auto' },
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: '#E5E7EB',
+              borderRadius: '999px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: '#D1D5DB',
+            },
+          }}
+        >
+          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography sx={{ fontSize: 16, fontWeight: 800, color: BRAND_COLORS.textTitle }}>Bộ lọc</Typography>
+            <Button
+              onClick={resetFilters}
+              disabled={!hasAnyFilterActive}
+              sx={{
+                color: BRAND_COLORS.primary,
+                fontWeight: 700,
+                fontSize: 13,
+                textTransform: 'none',
+                minWidth: 0,
+                p: 0,
+                '&.Mui-disabled': {
+                  color: '#9CA3AF',
+                },
+                '&:hover': {
+                  bgcolor: 'transparent',
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              Xóa tất cả
+            </Button>
+          </Stack>
+
+          <Stack spacing={3}>
+            {/* Category Filter */}
+            <FilterGroup title="Chủ đề">
+              <Box
                 sx={{
-                  mt: 3,
-                  p: 0.75,
-                  pl: { xs: 1, sm: 1.5 },
-                  display: 'flex',
-                  alignItems: 'center',
-                  width: '100%',
-                  maxWidth: 610,
-                  borderRadius: 4,
-                  border: '1px solid rgba(127,29,29,0.14)',
-                  bgcolor: 'rgba(255,255,255,0.96)',
-                  boxShadow: '0 18px 44px rgba(83,32,32,0.11)',
-                  transition: 'border-color 160ms ease, box-shadow 160ms ease',
-                  '&:focus-within': {
-                    borderColor: 'rgba(127,29,29,0.5)',
-                    boxShadow: '0 20px 48px rgba(127,29,29,0.16)',
+                  maxHeight: '260px',
+                  overflowY: 'auto',
+                  pr: 0.5,
+                  '&::-webkit-scrollbar': {
+                    width: '4px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'transparent',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: '#E5E7EB',
+                    borderRadius: '2px',
                   },
                 }}
               >
-                <Box sx={{ position: 'relative', flex: 1, minWidth: 0 }}>
-                  <TextFieldAny
-                    fullWidth
-                    variant="standard"
-                    value={search}
-                    onChange={handleSearchChange}
-                    placeholder="Bạn muốn học kỹ năng gì?"
-                    inputProps={{ 'aria-label': 'Tìm kiếm khóa học' }}
-                    InputProps={{
-                      disableUnderline: true,
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Box
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              display: 'grid',
-                              placeItems: 'center',
-                              borderRadius: 2.4,
-                              bgcolor: 'rgba(139,19,19,0.08)',
-                              color: '#8B1313',
-                            }}
-                          >
-                            <SearchRounded sx={{ fontSize: 20 }} />
-                          </Box>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiInputBase-root': {
-                        minHeight: 50,
-                        px: 0.5,
-                        fontSize: 15.5,
-                      },
-                    }}
-                  />
-                </Box>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
-                  sx={{
-                    px: { xs: 2, sm: 3.2 },
-                    height: 50,
-                    borderRadius: 3.2,
-                    whiteSpace: 'nowrap',
-                    background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
-                    boxShadow: '0 10px 24px rgba(127,29,29,0.22)',
-                    transition: 'background 160ms ease, box-shadow 160ms ease',
-                    '&:hover': {
-                      background: 'linear-gradient(90deg, #7f1d1d 0%, #6b1414 100%)',
-                      boxShadow: '0 10px 24px rgba(127,29,29,0.24)',
-                    },
-                  }}
-                >
-                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                    Tìm khóa học
-                  </Box>
-                  <SearchRounded sx={{ display: { xs: 'block', sm: 'none' } }} />
-                </Button>
-              </Paper>
-
-              <Stack
-                direction="row"
-                spacing={0.8}
-                sx={{ mt: 1.6, alignItems: 'center', flexWrap: 'wrap', rowGap: 0.8 }}
-              >
-                <Typography sx={{ fontSize: 12.5, color: 'rgba(24,24,27,0.48)', fontWeight: 700 }}>
-                  Tìm nhanh:
-                </Typography>
-                {['Lập trình', 'Thiết kế', 'Marketing'].map((keyword) => (
-                  <Chip
-                    key={keyword}
-                    label={keyword}
-                    size="small"
-                    clickable
-                    onClick={() => applyQuickSearch(keyword)}
-                    sx={{
-                      bgcolor: 'rgba(255,255,255,0.72)',
-                      border: '1px solid rgba(17,17,17,0.08)',
-                      fontWeight: 700,
-                      '&:hover': { bgcolor: '#fff', color: '#8B1313' },
-                    }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-
-            <Box sx={{ position: 'relative' }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 1.5,
-                  borderRadius: 2.8,
-                  border: '1px solid rgba(127,29,29,0.18)',
-                  boxShadow: '0 26px 50px rgba(90, 26, 26, 0.14)',
-                  bgcolor: '#fff7f4',
-                }}
-              >
-                <Box
-                  sx={{
-                    position: 'relative',
-                    overflow: 'hidden',
-                    borderRadius: 2.8,
-                    minHeight: { xs: 270, sm: 340, md: 360 },
-                    background:
-                      'linear-gradient(135deg, rgba(255,247,240,0.96), rgba(255,240,233,0.94))',
-                  }}
-                >
-                  <Image
-                    src="/auth/img/Illustration_Section_v2.png"
-                    alt="EduVerse learning space"
-                    fill
-                    priority
-                    sizes="(max-width: 900px) 100vw, 48vw"
-                    style={{
-                      objectFit: 'cover',
-                      objectPosition: 'center center',
-                      transform: 'scale(1.08)',
-                    }}
-                  />
-                </Box>
-              </Paper>
-
-              <Paper
-                elevation={0}
-                sx={{
-                  position: 'absolute',
-                  left: { xs: 10, md: 24 },
-                  bottom: { xs: 10, md: -16 },
-                  px: 2.2,
-                  py: 1.5,
-                  borderRadius: 2.8,
-                  border: '1px solid rgba(17,17,17,0.08)',
-                  boxShadow: '0 18px 32px rgba(30,24,26,0.10)',
-                  bgcolor: '#fff',
-                }}
-              >
-                <Typography sx={{ fontSize: 24, fontWeight: 900, color: '#8B1313' }}>
-                  15K+
-                </Typography>
-                <Typography sx={{ fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
-                  Học viên tham gia học tập
-                </Typography>
-              </Paper>
-            </Box>
-          </Box>
-
-
-
-          <Box
-            sx={{
-              py: { xs: 4, md: 6 },
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', lg: '300px minmax(0, 1fr)' },
-              gap: 2.5,
-              alignItems: 'start',
-            }}
-          >
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 3.5,
-                border: '1px solid rgba(139,19,19,0.10)',
-                background: 'linear-gradient(180deg, #ffffff 0%, #fffdfc 100%)',
-                boxShadow: '0 18px 46px rgba(77,31,31,0.07)',
-                position: { lg: 'sticky' },
-                top: { lg: 100 },
-              }}
-            >
-              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Stack direction="row" spacing={1.1} sx={{ alignItems: 'center' }}>
-                  <Box
-                    sx={{
-                      width: 38,
-                      height: 38,
-                      display: 'grid',
-                      placeItems: 'center',
-                      borderRadius: 2.5,
-                      bgcolor: 'rgba(139,19,19,0.08)',
-                      color: '#8B1313',
-                    }}
-                  >
-                    <TuneRounded sx={{ fontSize: 21 }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: 20, fontWeight: 900, lineHeight: 1.1 }}>
-                      Bộ lọc
-                    </Typography>
-                    <Typography sx={{ mt: 0.35, fontSize: 11.5, color: 'rgba(24,24,27,0.46)' }}>
-                      {activeFilterCount > 0 ? `${activeFilterCount} tiêu chí đang chọn` : 'Chọn khóa học phù hợp'}
-                    </Typography>
-                  </Box>
-                </Stack>
-                <Button
-                  onClick={resetFilters}
-                  disabled={activeFilterCount === 0 && search === '' && sortBy === 'newest'}
-                  sx={{
-                    color: '#8B1313',
-                    fontWeight: 700,
-                    minWidth: 0,
-                    px: 1,
-                    textTransform: 'none',
-                    '&.Mui-disabled': {
-                      color: 'rgba(24,24,27,0.3)',
-                    },
-                  }}
-                >
-                  Xóa tất cả
-                </Button>
-              </Stack>
-
-              <Stack spacing={2.5}>
-                <FilterGroup title="Chủ đề">
-                  <Box
-                    sx={{
-                      maxHeight: '320px',
-                      overflowY: 'auto',
-                      pr: 1,
-                      '&::-webkit-scrollbar': {
-                        width: '6px',
-                      },
-                      '&::-webkit-scrollbar-track': {
-                        background: 'transparent',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: 'rgba(139,19,19,0.2)',
-                        borderRadius: '4px',
-                      },
-                      '&::-webkit-scrollbar-thumb:hover': {
-                        background: 'rgba(139,19,19,0.4)',
-                      },
-                    }}
-                  >
-                    <Stack spacing={1.5}>
-                      {(showAllCategories ? categories : categories.slice(0, 6)).map((category) => (
-                        <FormControlLabel
-                          key={category.value}
-                          control={
-                            <Checkbox
-                              checked={activeCategory === category.value}
-                              onChange={() => {
-                                if (activeCategory === category.value) {
-                                  setActiveCategory('all');
-                                } else {
-                                  setActiveCategory(category.value);
-                                }
-                                setPageIndex(1);
-                              }}
-                              size="small"
-                              sx={{
-                                color: 'rgba(24,24,27,0.23)',
-                                p: 0,
-                                mr: 1.5,
-                                mt: '2px',
-                                '&.Mui-checked': {
-                                  color: '#8B1313',
-                                },
-                              }}
-                            />
-                          }
-                          label={category.label}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            width: '100%',
-                            m: 0,
-                            py: 0.5,
-                            px: 1,
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            transition: 'background-color 150ms ease',
-                            '&:hover': {
-                              bgcolor: 'rgba(141, 19, 19, 0.04)',
-                            },
-                            '& .MuiFormControlLabel-label': {
-                              fontSize: 14.5,
-                              fontWeight: activeCategory === category.value ? 700 : 500,
-                              color: activeCategory === category.value ? '#8B1313' : '#475569',
-                              textAlign: 'left',
-                              lineHeight: 1.4,
-                              userSelect: 'none',
-                            },
-                          }}
-                        />
-                      ))}
-                      {categories.length > 6 ? (
-                        <Button
-                          onClick={() => setShowAllCategories((current) => !current)}
-                          sx={{
-                            alignSelf: 'flex-start',
-                            minWidth: 0,
-                            px: 1,
-                            color: '#8B1313',
-                            fontWeight: 800,
-                            textTransform: 'none',
-                          }}
-                        >
-                          {showAllCategories ? 'Thu gọn' : `Hiển thị thêm (${categories.length - 6})`}
-                        </Button>
-                      ) : null}
-                    </Stack>
-                  </Box>
-                </FilterGroup>
-
-                <Divider />
-
-                <FilterGroup title="Giá">
-                  {([
-                    { value: 'free', label: 'Miễn phí' },
-                    { value: 'paid', label: 'Trả phí' },
-                  ] as const).map((option) => (
+                <Stack spacing={1}>
+                  {(showAllCategories ? categories : categories.slice(0, 6)).map((category) => (
                     <FormControlLabel
-                      key={option.value}
-                      control={(
+                      key={category.value}
+                      control={
                         <Checkbox
-                          checked={priceFilter === option.value}
+                          checked={activeCategory === category.value}
                           onChange={() => {
-                            setPriceFilter((current) => current === option.value ? 'all' : option.value);
+                            if (activeCategory === category.value) {
+                              setActiveCategory('all');
+                            } else {
+                              setActiveCategory(category.value);
+                            }
                             setPageIndex(1);
                           }}
                           size="small"
-                          sx={{ color: 'rgba(24,24,27,0.3)', '&.Mui-checked': { color: '#8B1313' } }}
+                          sx={{
+                            color: '#D1D5DB',
+                            p: 0,
+                            mr: 1.2,
+                            '&.Mui-checked': {
+                              color: BRAND_COLORS.primary,
+                            },
+                          }}
                         />
-                      )}
-                      label={option.label}
-                      sx={{ m: 0, '& .MuiFormControlLabel-label': { fontSize: 14.5, fontWeight: 600 } }}
+                      }
+                      label={category.label}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        m: 0,
+                        py: 0.5,
+                        px: 1,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'background-color 150ms ease',
+                        '&:hover': {
+                          bgcolor: '#F3F4F6',
+                        },
+                        '& .MuiFormControlLabel-label': {
+                          fontSize: 13.5,
+                          fontWeight: activeCategory === category.value ? 700 : 500,
+                          color: activeCategory === category.value ? BRAND_COLORS.primary : BRAND_COLORS.textBody,
+                          textAlign: 'left',
+                          lineHeight: 1.3,
+                          userSelect: 'none',
+                        },
+                      }}
                     />
                   ))}
-                </FilterGroup>
+                  {categories.length > 6 ? (
+                    <Button
+                      onClick={() => setShowAllCategories((current) => !current)}
+                      sx={{
+                        alignSelf: 'flex-start',
+                        minWidth: 0,
+                        px: 1,
+                        py: 0.5,
+                        color: BRAND_COLORS.primary,
+                        fontWeight: 700,
+                        fontSize: 13,
+                        textTransform: 'none',
+                        '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+                      }}
+                    >
+                      {showAllCategories ? 'Thu gọn' : `Hiển thị thêm (${categories.length - 6})`}
+                    </Button>
+                  ) : null}
+                </Stack>
+              </Box>
+            </FilterGroup>
 
+            <Divider sx={{ borderColor: BRAND_COLORS.borderLight }} />
 
-
-                <Divider />
-
-                <FilterGroup title="Cấp độ">
-                  {['Người mới bắt đầu', 'Trung cấp', 'Nâng cao'].map((level) => {
-                    const selected = selectedLevel === level;
-                    return (
-                      <FormControlLabel
-                        key={level}
-                        control={(
-                          <Checkbox
-                            checked={selected}
-                            onChange={() => toggleLevel(level)}
-                            size="small"
-                            sx={{ color: 'rgba(24,24,27,0.3)', '&.Mui-checked': { color: '#8B1313' } }}
-                          />
-                        )}
-                        label={level}
-                        sx={{
-                          m: 0,
-                          color: selected ? '#8B1313' : 'rgba(24,24,27,0.72)',
-                          '& .MuiFormControlLabel-label': { fontSize: 14.5, fontWeight: selected ? 800 : 600 },
-                        }}
-                      />
-                    );
-                  })}
-                </FilterGroup>
-
-                <Divider />
-
-                <FilterGroup title="Đánh giá">
-                  {([
-                    { value: 4.5, label: '4.5 sao trở lên' },
-                    { value: 4, label: '4 sao trở lên' },
-                  ] as const).map((option) => {
-                    const selected = minimumRating === option.value;
-                    return (
-                      <Button
-                        key={option.value}
-                        onClick={() => {
-                          setMinimumRating(selected ? null : option.value);
+            {/* Price Filter */}
+            <FilterGroup title="Giá">
+              {([
+                { value: 'free', label: 'Miễn phí' },
+                { value: 'paid', label: 'Trả phí' },
+              ] as const).map((option) => {
+                const selected = priceFilter === option.value;
+                return (
+                  <FormControlLabel
+                    key={option.value}
+                    control={
+                      <Checkbox
+                        checked={selected}
+                        onChange={() => {
+                          setPriceFilter((current) => current === option.value ? 'all' : option.value);
                           setPageIndex(1);
                         }}
-                        aria-pressed={selected}
+                        size="small"
                         sx={{
-                          justifyContent: 'flex-start',
-                          gap: 1,
-                          minHeight: 42,
-                          px: 1.25,
-                          borderRadius: 2.4,
-                          border: selected
-                            ? '1px solid rgba(139,19,19,0.20)'
-                            : '1px solid transparent',
-                          bgcolor: selected ? 'rgba(139,19,19,0.06)' : 'transparent',
-                          color: selected ? '#8B1313' : '#475569',
-                          textTransform: 'none',
-                          '&:hover': { bgcolor: 'rgba(139,19,19,0.05)' },
+                          color: '#D1D5DB',
+                          p: 0,
+                          mr: 1.2,
+                          '&.Mui-checked': { color: BRAND_COLORS.primary }
                         }}
-                      >
-                        <Rating
-                          value={option.value}
-                          precision={0.5}
-                          readOnly
-                          size="small"
-                          sx={{ '& .MuiRating-icon': { fontSize: 18 } }}
-                        />
-                        <Typography sx={{ ml: 'auto', fontSize: 12.5, fontWeight: selected ? 800 : 600 }}>
-                          {option.label}
-                        </Typography>
-                      </Button>
-                    );
-                  })}
-                </FilterGroup>
+                      />
+                    }
+                    label={option.label}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      width: '100%',
+                      m: 0,
+                      py: 0.5,
+                      px: 1,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'background-color 150ms ease',
+                      '&:hover': { bgcolor: '#F3F4F6' },
+                      '& .MuiFormControlLabel-label': {
+                        fontSize: 13.5,
+                        fontWeight: selected ? 700 : 500,
+                        color: selected ? BRAND_COLORS.primary : BRAND_COLORS.textBody,
+                        textAlign: 'left',
+                        lineHeight: 1.3,
+                        userSelect: 'none',
+                      }
+                    }}
+                  />
+                );
+              })}
+            </FilterGroup>
 
+            <Divider sx={{ borderColor: BRAND_COLORS.borderLight }} />
+
+            {/* Level Filter */}
+            <FilterGroup title="Cấp độ">
+              {['Tất cả cấp độ', 'Người mới bắt đầu', 'Trung cấp', 'Nâng cao'].map((level) => {
+                const selected = selectedLevel === level;
+                return (
+                  <FormControlLabel
+                    key={level}
+                    control={
+                      <Checkbox
+                        checked={selected}
+                        onChange={() => toggleLevel(level)}
+                        size="small"
+                        sx={{
+                          color: '#D1D5DB',
+                          p: 0,
+                          mr: 1.2,
+                          '&.Mui-checked': { color: BRAND_COLORS.primary }
+                        }}
+                      />
+                    }
+                    label={level}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      width: '100%',
+                      m: 0,
+                      py: 0.5,
+                      px: 1,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'background-color 150ms ease',
+                      '&:hover': { bgcolor: '#F3F4F6' },
+                      '& .MuiFormControlLabel-label': {
+                        fontSize: 13.5,
+                        fontWeight: selected ? 700 : 500,
+                        color: selected ? BRAND_COLORS.primary : BRAND_COLORS.textBody,
+                        textAlign: 'left',
+                        lineHeight: 1.3,
+                        userSelect: 'none',
+                      },
+                    }}
+                  />
+                );
+              })}
+            </FilterGroup>
+          </Stack>
+        </Paper>
+
+        {/* Right Course Grid Panel */}
+        <Box>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            sx={{
+              mb: 3,
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: 1.5,
+            }}
+          >
+            <Typography sx={{ fontSize: 16, fontWeight: 800, color: BRAND_COLORS.textTitle }}>
+              {loading ? 'Đang tải danh sách…' : `Tìm thấy ${totalCourses} khóa học`}
+            </Typography>
+            <Select<CourseSortOption>
+              size="small"
+              value={sortBy}
+              onChange={(event: SelectChangeEvent<CourseSortOption>) => {
+                setSortBy(event.target.value as CourseSortOption);
+                setPageIndex(1);
+              }}
+              sx={{
+                minWidth: 170,
+                height: 42,
+                borderRadius: '10px',
+                bgcolor: '#ffffff',
+                fontSize: 13.5,
+                fontWeight: 600,
+                color: BRAND_COLORS.textBody,
+                '& fieldset': { borderColor: BRAND_COLORS.borderLight },
+                '&:hover fieldset': { borderColor: BRAND_COLORS.primary },
+                '&.Mui-focused fieldset': { borderColor: BRAND_COLORS.primary, borderWidth: 1.5 },
+              }}
+            >
+              <MenuItem value="newest">Mới nhất</MenuItem>
+              <MenuItem value="price-low">Giá thấp trước</MenuItem>
+              <MenuItem value="price-high">Giá cao trước</MenuItem>
+            </Select>
+          </Stack>
+
+          {loading ? (
+            <Paper
+              elevation={0}
+              sx={{
+                minHeight: 280,
+                display: 'grid',
+                placeItems: 'center',
+                p: 4,
+                borderRadius: '16px',
+                border: `1px solid ${BRAND_COLORS.borderLight}`,
+                bgcolor: '#ffffff',
+              }}
+            >
+              <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
+                <CircularProgress size={40} sx={{ color: BRAND_COLORS.primary }} />
+                <Box>
+                  <Typography sx={{ fontSize: 16, fontWeight: 700, color: BRAND_COLORS.textTitle }}>
+                    Đang tìm khóa học phù hợp
+                  </Typography>
+                  <Typography sx={{ mt: 0.5, fontSize: 13.5, color: BRAND_COLORS.textMuted }}>
+                    Vui lòng chờ trong giây lát…
+                  </Typography>
+                </Box>
               </Stack>
             </Paper>
-
-            <Box>
-              <Stack
-                direction={{ xs: 'column', md: 'row' }}
+          ) : courses.length > 0 ? (
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
+                gap: 3,
+              }}
+            >
+              {courses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </Box>
+          ) : (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 6,
+                borderRadius: '16px',
+                border: `1px dashed ${BRAND_COLORS.primaryBorder}`,
+                textAlign: 'center',
+                bgcolor: '#ffffff',
+              }}
+            >
+              <QueryStatsRounded sx={{ fontSize: 44, color: '#9CA3AF', mb: 2 }} />
+              <Typography sx={{ fontSize: 18, fontWeight: 700, color: BRAND_COLORS.textTitle, mb: 1 }}>
+                Không tìm thấy khóa học phù hợp
+              </Typography>
+              <Typography sx={{ color: BRAND_COLORS.textMuted, fontSize: 14, mb: 3 }}>
+                Hãy thử đổi từ khóa khác hoặc xóa bộ lọc để xem thêm lựa chọn.
+              </Typography>
+              <Button
+                variant="outlined"
+                onClick={resetFilters}
                 sx={{
-                  mb: 2.2,
-                  justifyContent: 'space-between',
-                  alignItems: { xs: 'flex-start', md: 'center' },
-                  gap: 1.5,
+                  textTransform: 'none',
+                  borderColor: BRAND_COLORS.primary,
+                  color: BRAND_COLORS.primary,
+                  fontWeight: 600,
+                  fontSize: 14,
+                  borderRadius: '8px',
+                  px: 3,
+                  py: 0.8,
+                  '&:hover': {
+                    bgcolor: BRAND_COLORS.primarySoft,
+                    borderColor: BRAND_COLORS.primaryHover,
+                  },
                 }}
               >
-                <Box>
-                  <Typography sx={{ fontSize: 20, fontWeight: 900 }}>
-                    {loading
-                      ? 'Đang tìm khóa học…'
-                      : `${minimumRating === null ? totalCourses : visibleCourses.length} khóa học được tìm thấy`}
-                  </Typography>
-                  {appliedSearch ? (
-                    <Typography sx={{ mt: 0.45, fontSize: 13, color: 'rgba(24,24,27,0.52)' }}>
-                      Kết quả cho “{appliedSearch}”
-                    </Typography>
-                  ) : null}
-                </Box>
-                <Select<CourseSortOption>
-                  size="small"
-                  value={sortBy}
-                  onChange={(event: SelectChangeEvent<CourseSortOption>) =>
-                    {
-                      setSortBy(event.target.value as CourseSortOption);
-                      setPageIndex(1);
-                    }
-                  }
-                  sx={{ minWidth: 170, borderRadius: 2.8, bgcolor: '#fff' }}
-                >
-                  <MenuItem value="newest">Mới nhất</MenuItem>
-                  <MenuItem value="price-low">Giá thấp trước</MenuItem>
-                  <MenuItem value="price-high">Giá cao trước</MenuItem>
-                </Select>
-              </Stack>
-              {loading ? (
-                <Paper
-                  role="status"
-                  aria-live="polite"
-                  elevation={0}
-                  sx={{
-                    minHeight: 220,
-                    display: 'grid',
-                    placeItems: 'center',
-                    p: 4,
-                    borderRadius: 2.8,
-                    border: '1px solid rgba(139,19,19,0.10)',
-                    bgcolor: 'rgba(255,255,255,0.82)',
-                    boxShadow: '0 16px 36px rgba(60,20,20,0.05)',
-                  }}
-                >
-                  <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
-                    <Box sx={{ position: 'relative', width: 56, height: 56 }}>
-                      <CircularProgress
-                        variant="determinate"
-                        value={100}
-                        size={56}
-                        thickness={4}
-                        sx={{ color: 'rgba(139,19,19,0.12)' }}
-                      />
-                      <CircularProgress
-                        size={56}
-                        thickness={4}
-                        sx={{ position: 'absolute', inset: 0, color: '#8B1313' }}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: 19, fontWeight: 900, color: '#1f2937' }}>
-                        Đang tìm khóa học phù hợp
-                      </Typography>
-                      <Typography sx={{ mt: 0.6, fontSize: 14, color: 'rgba(24,24,27,0.56)' }}>
-                        Vui lòng chờ trong giây lát…
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Paper>
-              ) : visibleCourses.length > 0 ? (
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
-                    gap: 2,
-                  }}
-                >
-                  {visibleCourses.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      course={course}
-                      favorited={isFavorited(course.id)}
-                      favoriteLoading={favoriteLoading}
-                      onToggleFavorite={handleToggleFavorite}
-                    />
-                  ))}
-                </Box>
-              ) : (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 4,
-                    borderRadius: 2.8,
-                    border: '1px dashed rgba(17,17,17,0.14)',
-                    textAlign: 'center',
-                    bgcolor: 'rgba(255,255,255,0.7)',
-                  }}
-                >
-                  <QueryStatsRounded sx={{ fontSize: 34, color: '#8B1313' }} />
-                  <Typography sx={{ mt: 1.2, fontSize: 22, fontWeight: 900 }}>
-                    Không tìm thấy khóa học
-                  </Typography>
-                  <Typography sx={{ mt: 0.8, color: 'rgba(24,24,27,0.58)' }}>
-                    Hãy thử từ khóa khác hoặc xóa bộ lọc để xem thêm lựa chọn.
-                  </Typography>
-                </Paper>
-              )}
-            </Box>
-          </Box>
-    </>
+                Xóa bộ lọc
+              </Button>
+            </Paper>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 }
-
