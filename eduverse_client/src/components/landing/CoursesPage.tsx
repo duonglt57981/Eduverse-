@@ -3,15 +3,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import KhoaHocService from '@/src/services/KhoaHocService';
 import { danhMucService } from '@/src/services/danhmucService';
+import { useFavorite } from '@/src/features/favorite/hooks/useFavorite';
+import { useSelector } from '@/src/store/hook';
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
+  FavoriteRounded,
   QueryStatsRounded,
   SchoolRounded,
   SearchRounded,
   TimerRounded,
+  TuneRounded,
 } from '@mui/icons-material';
 import {
   Box,
@@ -21,6 +26,7 @@ import {
   Divider,
   FormControlLabel,
   InputAdornment,
+  IconButton,
   MenuItem,
   Paper,
   Rating,
@@ -30,6 +36,7 @@ import {
   TextField,
   Typography,
   Checkbox,
+  Tooltip,
 } from '@mui/material';
 import {
   type CourseCatalogItem,
@@ -42,6 +49,7 @@ const TextFieldAny = TextField as any;
 
 type CourseSortOption = 'newest' | 'price-low' | 'price-high';
 type PriceFilter = 'all' | 'free' | 'paid';
+type RatingFilter = 4 | 4.5 | null;
 
 function FilterGroup({
   title,
@@ -69,7 +77,19 @@ function FilterGroup({
   );
 }
 
-function CourseCard({ course }: { course: CourseCatalogItem }) {
+function CourseCard({
+  course,
+  favorited,
+  favoriteLoading,
+  onToggleFavorite,
+}: {
+  course: CourseCatalogItem;
+  favorited: boolean;
+  favoriteLoading: boolean;
+  onToggleFavorite: (course: CourseCatalogItem) => void;
+}) {
+  const detailHref = `/student/enroll-courses/${course.id}`;
+
   return (
     <Paper
       elevation={0}
@@ -87,22 +107,35 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
     >
       <Box sx={{ position: 'relative' }}>
         <CourseVisual palette={course.palette} badge={course.badge} />
-        <Button
-          sx={{
-            position: 'absolute',
-            top: 14,
-            right: 14,
-            width: 34,
-            minWidth: 34,
-            height: 34,
-            p: 0,
-            borderRadius: '50%',
-            bgcolor: 'rgba(255,255,255,0.9)',
-            color: '#8B1313',
-          }}
-        >
-          <FavoriteBorderRounded sx={{ fontSize: 18 }} />
-        </Button>
+        <Tooltip title={favorited ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}>
+          <IconButton
+            aria-label={favorited ? `Bỏ yêu thích ${course.title}` : `Yêu thích ${course.title}`}
+            disabled={favoriteLoading}
+            onClick={() => onToggleFavorite(course)}
+            sx={{
+              position: 'absolute',
+              top: 14,
+              right: 14,
+              width: 34,
+              height: 34,
+              p: 0,
+              borderRadius: '50%',
+              bgcolor: 'rgba(255,255,255,0.9)',
+              color: '#8B1313',
+              boxShadow: '0 8px 18px rgba(58,20,20,0.14)',
+              '&:hover': {
+                bgcolor: '#fff',
+                transform: 'scale(1.06)',
+              },
+            }}
+          >
+            {favorited ? (
+              <FavoriteRounded sx={{ fontSize: 19 }} />
+            ) : (
+              <FavoriteBorderRounded sx={{ fontSize: 19 }} />
+            )}
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <Stack direction="row" spacing={0.8} sx={{ mt: 1.5, flexWrap: 'wrap' }}>
@@ -169,7 +202,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} sx={{ mt: 1.75 }}>
         <Button
           component={Link}
-          href="/auth/login"
+          href={detailHref}
           variant="outlined"
           sx={{
             flex: 1,
@@ -182,7 +215,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
         </Button>
         <Button
           component={Link}
-          href="/auth/login"
+          href={detailHref}
           variant="contained"
           endIcon={<ArrowForwardRounded />}
           sx={{
@@ -202,7 +235,13 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
 const mapToCatalogItem = (kh: any): CourseCatalogItem => {
   // Stable hash based on course ID to generate a consistent rating between 4.0 and 5.0
   const charCodeSum = (kh.id || '').split('').reduce((sum: number, char: string) => sum + char.charCodeAt(0), 0);
-  const mockRating = 4.0 + (charCodeSum % 11) * 0.1; // yields: 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0
+  const fallbackRating = 4.0 + (charCodeSum % 11) * 0.1;
+  const rating = Number(
+    kh.diemDanhGiaTrungBinh ??
+    kh.danhGiaTrungBinh ??
+    kh.rating ??
+    fallbackRating,
+  );
   const isFree = kh.loaiKhoaHoc === 'Khóa học miễn phí';
   const durationSeconds = Number(kh.tongThoiLuong || 0);
   const durationHours = Math.floor(durationSeconds / 3600);
@@ -215,7 +254,7 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     id: kh.id,
     title: kh.tieuDe || 'Khóa học không tên',
     instructor: kh.tenGiangVien || kh.createdBy || 'Chưa cập nhật',
-    rating: mockRating,
+    rating: Number.isFinite(rating) ? Math.min(5, Math.max(0, rating)) : fallbackRating,
     students: kh.soLuongHocVien || 0,
     price: isFree ? 'Miễn phí' : kh.gia != null ? `${kh.gia.toLocaleString('vi-VN')}đ` : 'Chưa cập nhật',
     originalPrice: kh.giaGoc && kh.giaGoc > 0 ? `${kh.giaGoc?.toLocaleString('vi-VN')}đ` : '',
@@ -245,6 +284,7 @@ export default function CoursesPage({
   const [sortBy, setSortBy] = useState<CourseSortOption>('newest');
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  const [minimumRating, setMinimumRating] = useState<RatingFilter>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   const [courses, setCourses] = useState<CourseCatalogItem[]>([]);
@@ -254,6 +294,43 @@ export default function CoursesPage({
   const [loading, setLoading] = useState(false);
 
   const courseService = useMemo(() => new KhoaHocService(), []);
+  const router = useRouter();
+  const user = useSelector((state) => state.auth.user);
+  const {
+    fetchFavorites,
+    isFavorited,
+    loading: favoriteLoading,
+    toggleFavorite,
+  } = useFavorite();
+
+  useEffect(() => {
+    if (user) {
+      void fetchFavorites();
+    }
+  }, [fetchFavorites, user]);
+
+  const visibleCourses = useMemo(
+    () => minimumRating === null
+      ? courses
+      : courses.filter((course) => course.rating >= minimumRating),
+    [courses, minimumRating],
+  );
+
+  const activeFilterCount = [
+    activeCategory !== 'all',
+    priceFilter !== 'all',
+    selectedLevel !== null,
+    minimumRating !== null,
+    appliedSearch !== '',
+  ].filter(Boolean).length;
+
+  const handleToggleFavorite = (course: CourseCatalogItem) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    void toggleFavorite(course.id, course.title);
+  };
 
   // Danh mục thật từ phần quản lý danh mục của Admin (/danhmuc, công khai)
   const [categories, setCategories] = useState<CourseCategory[]>([]);
@@ -329,6 +406,13 @@ export default function CoursesPage({
     setPageIndex(1);
   };
 
+  const applyQuickSearch = (keyword: string) => {
+    setSearch(keyword);
+    setAppliedSearch(keyword);
+    setSearchRevision((current) => current + 1);
+    setPageIndex(1);
+  };
+
   const toggleLevel = (level: string) => {
     setSelectedLevel((current) => current === level ? null : level);
     setPageIndex(1);
@@ -338,6 +422,7 @@ export default function CoursesPage({
     setActiveCategory('all');
     setPriceFilter('all');
     setSelectedLevel(null);
+    setMinimumRating(null);
     setSearch('');
     setAppliedSearch('');
     setSearchRevision((current) => current + 1);
@@ -403,59 +488,80 @@ export default function CoursesPage({
                 tập được cá nhân hóa, công nghệ hiện đại và cộng đồng học viên dẫn đầu.
               </Typography>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} sx={{ mt: 3, alignItems: 'stretch', width: '100%' }}>
-                <Box sx={{ position: 'relative', width: '100%', maxWidth: 420 }}>
+              <Paper
+                component="form"
+                elevation={0}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitSearch();
+                }}
+                sx={{
+                  mt: 3,
+                  p: 0.75,
+                  pl: { xs: 1, sm: 1.5 },
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  maxWidth: 610,
+                  borderRadius: 4,
+                  border: '1px solid rgba(127,29,29,0.14)',
+                  bgcolor: 'rgba(255,255,255,0.96)',
+                  boxShadow: '0 18px 44px rgba(83,32,32,0.11)',
+                  transition: 'border-color 160ms ease, box-shadow 160ms ease',
+                  '&:focus-within': {
+                    borderColor: 'rgba(127,29,29,0.5)',
+                    boxShadow: '0 20px 48px rgba(127,29,29,0.16)',
+                  },
+                }}
+              >
+                <Box sx={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <TextFieldAny
                     fullWidth
-                    variant="outlined"
+                    variant="standard"
                     value={search}
                     onChange={handleSearchChange}
-                    onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        submitSearch();
-                      }
-                    }}
-                    placeholder="Tìm kiếm khóa học, kỹ năng..."
+                    placeholder="Bạn muốn học kỹ năng gì?"
+                    inputProps={{ 'aria-label': 'Tìm kiếm khóa học' }}
                     InputProps={{
+                      disableUnderline: true,
                       startAdornment: (
                         <InputAdornment position="start">
-                          <SearchRounded sx={{ color: 'rgba(24,24,27,0.38)' }} />
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              display: 'grid',
+                              placeItems: 'center',
+                              borderRadius: 2.4,
+                              bgcolor: 'rgba(139,19,19,0.08)',
+                              color: '#8B1313',
+                            }}
+                          >
+                            <SearchRounded sx={{ fontSize: 20 }} />
+                          </Box>
                         </InputAdornment>
                       ),
                     }}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        height: 48,
-                        bgcolor: '#fff',
-                        borderRadius: 2.8,
-                        transition: 'box-shadow 160ms ease, border-color 160ms ease',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(17,17,17,0.12)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(127,29,29,0.38)',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#7f1d1d',
-                        },
-                        '&.Mui-focused': {
-                          boxShadow: '0 0 0 4px rgba(127,29,29,0.12)',
-                        },
+                      '& .MuiInputBase-root': {
+                        minHeight: 50,
+                        px: 0.5,
+                        fontSize: 15.5,
                       },
                     }}
                   />
                 </Box>
                 <Button
+                  type="submit"
                   variant="contained"
-                  onClick={submitSearch}
                   startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
                   sx={{
-                    px: 3.2,
-                    height: 48,
-                    borderRadius: 2.8,
+                    px: { xs: 2, sm: 3.2 },
+                    height: 50,
+                    borderRadius: 3.2,
+                    whiteSpace: 'nowrap',
                     background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
-                    boxShadow: '0 8px 20px rgba(127,29,29,0.18)',
+                    boxShadow: '0 10px 24px rgba(127,29,29,0.22)',
                     transition: 'background 160ms ease, box-shadow 160ms ease',
                     '&:hover': {
                       background: 'linear-gradient(90deg, #7f1d1d 0%, #6b1414 100%)',
@@ -463,8 +569,36 @@ export default function CoursesPage({
                     },
                   }}
                 >
-                  Tìm kiếm ngay
+                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                    Tìm khóa học
+                  </Box>
+                  <SearchRounded sx={{ display: { xs: 'block', sm: 'none' } }} />
                 </Button>
+              </Paper>
+
+              <Stack
+                direction="row"
+                spacing={0.8}
+                sx={{ mt: 1.6, alignItems: 'center', flexWrap: 'wrap', rowGap: 0.8 }}
+              >
+                <Typography sx={{ fontSize: 12.5, color: 'rgba(24,24,27,0.48)', fontWeight: 700 }}>
+                  Tìm nhanh:
+                </Typography>
+                {['Lập trình', 'Thiết kế', 'Marketing'].map((keyword) => (
+                  <Chip
+                    key={keyword}
+                    label={keyword}
+                    size="small"
+                    clickable
+                    onClick={() => applyQuickSearch(keyword)}
+                    sx={{
+                      bgcolor: 'rgba(255,255,255,0.72)',
+                      border: '1px solid rgba(17,17,17,0.08)',
+                      fontWeight: 700,
+                      '&:hover': { bgcolor: '#fff', color: '#8B1313' },
+                    }}
+                  />
+                ))}
               </Stack>
             </Box>
 
@@ -543,21 +677,46 @@ export default function CoursesPage({
               elevation={0}
               sx={{
                 p: 3,
-                borderRadius: 2.8,
-                border: '1px solid rgba(17,17,17,0.08)',
-                bgcolor: '#fff',
+                borderRadius: 3.5,
+                border: '1px solid rgba(139,19,19,0.10)',
+                background: 'linear-gradient(180deg, #ffffff 0%, #fffdfc 100%)',
+                boxShadow: '0 18px 46px rgba(77,31,31,0.07)',
                 position: { lg: 'sticky' },
                 top: { lg: 100 },
               }}
             >
               <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography sx={{ fontSize: 22, fontWeight: 900 }}>Bộ lọc</Typography>
+                <Stack direction="row" spacing={1.1} sx={{ alignItems: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 38,
+                      height: 38,
+                      display: 'grid',
+                      placeItems: 'center',
+                      borderRadius: 2.5,
+                      bgcolor: 'rgba(139,19,19,0.08)',
+                      color: '#8B1313',
+                    }}
+                  >
+                    <TuneRounded sx={{ fontSize: 21 }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: 20, fontWeight: 900, lineHeight: 1.1 }}>
+                      Bộ lọc
+                    </Typography>
+                    <Typography sx={{ mt: 0.35, fontSize: 11.5, color: 'rgba(24,24,27,0.46)' }}>
+                      {activeFilterCount > 0 ? `${activeFilterCount} tiêu chí đang chọn` : 'Chọn khóa học phù hợp'}
+                    </Typography>
+                  </Box>
+                </Stack>
                 <Button
                   onClick={resetFilters}
-                  disabled={activeCategory === 'all' && priceFilter === 'all' && selectedLevel === null && search === '' && appliedSearch === '' && sortBy === 'newest'}
+                  disabled={activeFilterCount === 0 && search === '' && sortBy === 'newest'}
                   sx={{
                     color: '#8B1313',
                     fontWeight: 700,
+                    minWidth: 0,
+                    px: 1,
                     textTransform: 'none',
                     '&.Mui-disabled': {
                       color: 'rgba(24,24,27,0.3)',
@@ -692,7 +851,7 @@ export default function CoursesPage({
                 <Divider />
 
                 <FilterGroup title="Cấp độ">
-                  {['Tất cả cấp độ', 'Người mới bắt đầu', 'Trung cấp', 'Nâng cao'].map((level) => {
+                  {['Người mới bắt đầu', 'Trung cấp', 'Nâng cao'].map((level) => {
                     const selected = selectedLevel === level;
                     return (
                       <FormControlLabel
@@ -716,6 +875,52 @@ export default function CoursesPage({
                   })}
                 </FilterGroup>
 
+                <Divider />
+
+                <FilterGroup title="Đánh giá">
+                  {([
+                    { value: 4.5, label: '4.5 sao trở lên' },
+                    { value: 4, label: '4 sao trở lên' },
+                  ] as const).map((option) => {
+                    const selected = minimumRating === option.value;
+                    return (
+                      <Button
+                        key={option.value}
+                        onClick={() => {
+                          setMinimumRating(selected ? null : option.value);
+                          setPageIndex(1);
+                        }}
+                        aria-pressed={selected}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          gap: 1,
+                          minHeight: 42,
+                          px: 1.25,
+                          borderRadius: 2.4,
+                          border: selected
+                            ? '1px solid rgba(139,19,19,0.20)'
+                            : '1px solid transparent',
+                          bgcolor: selected ? 'rgba(139,19,19,0.06)' : 'transparent',
+                          color: selected ? '#8B1313' : '#475569',
+                          textTransform: 'none',
+                          '&:hover': { bgcolor: 'rgba(139,19,19,0.05)' },
+                        }}
+                      >
+                        <Rating
+                          value={option.value}
+                          precision={0.5}
+                          readOnly
+                          size="small"
+                          sx={{ '& .MuiRating-icon': { fontSize: 18 } }}
+                        />
+                        <Typography sx={{ ml: 'auto', fontSize: 12.5, fontWeight: selected ? 800 : 600 }}>
+                          {option.label}
+                        </Typography>
+                      </Button>
+                    );
+                  })}
+                </FilterGroup>
+
               </Stack>
             </Paper>
 
@@ -729,9 +934,18 @@ export default function CoursesPage({
                   gap: 1.5,
                 }}
               >
-                <Typography sx={{ fontSize: 20, fontWeight: 900 }}>
-                  {loading ? 'Đang tìm khóa học…' : `${totalCourses} khóa học được tìm thấy`}
-                </Typography>
+                <Box>
+                  <Typography sx={{ fontSize: 20, fontWeight: 900 }}>
+                    {loading
+                      ? 'Đang tìm khóa học…'
+                      : `${minimumRating === null ? totalCourses : visibleCourses.length} khóa học được tìm thấy`}
+                  </Typography>
+                  {appliedSearch ? (
+                    <Typography sx={{ mt: 0.45, fontSize: 13, color: 'rgba(24,24,27,0.52)' }}>
+                      Kết quả cho “{appliedSearch}”
+                    </Typography>
+                  ) : null}
+                </Box>
                 <Select<CourseSortOption>
                   size="small"
                   value={sortBy}
@@ -789,7 +1003,7 @@ export default function CoursesPage({
                     </Box>
                   </Stack>
                 </Paper>
-              ) : courses.length > 0 ? (
+              ) : visibleCourses.length > 0 ? (
                 <Box
                   sx={{
                     display: 'grid',
@@ -797,8 +1011,14 @@ export default function CoursesPage({
                     gap: 2,
                   }}
                 >
-                  {courses.map((course) => (
-                    <CourseCard key={course.id} course={course} />
+                  {visibleCourses.map((course) => (
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      favorited={isFavorited(course.id)}
+                      favoriteLoading={favoriteLoading}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
                   ))}
                 </Box>
               ) : (
