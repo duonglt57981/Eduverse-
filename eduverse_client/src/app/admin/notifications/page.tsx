@@ -1397,7 +1397,7 @@ export default function AdminThongBaoPage() {
                   fontWeight: 700,
                   borderRadius: "50px",
                   px: 3,
-                  "&:hover": { bgcolor: COLORS.primaryDark },
+                  "&:hover": { bgcolor: COLORS.primaryHover },
                 }}
               >
                 {dialogMode === "add" ? "Tạo mới" : "Lưu thay đổi"}
