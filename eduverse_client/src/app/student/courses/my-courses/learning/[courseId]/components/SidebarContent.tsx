@@ -31,7 +31,7 @@ import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = "#991B1B";
 
 // Interface khớp với response thực tế từ BE (camelCase)
 // Không sửa file type gốc, chỉ dùng nội bộ ở đây
@@ -128,13 +128,15 @@ export const SidebarContent = ({
   };
 
   return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      <Box sx={{ p: 2.5,
-        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        bgcolor: "background.paper", flexShrink: 0,
-        boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.02)}` }}>
-        <Stack direction="row" sx={{ mb: 1.5, justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#ffffff" }}>
+      <Box sx={{
+        p: 3,
+        borderBottom: "1px solid #E5E7EB",
+        bgcolor: "#ffffff",
+        flexShrink: 0,
+      }}>
+        <Stack direction="row" sx={{ mb: 2, justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 900, color: "#111827" }}>
             Nội dung khóa học
           </Typography>
           {isMobile && onCloseMobile && (
@@ -146,24 +148,41 @@ export const SidebarContent = ({
 
         <TextField
           {...textFieldProps}
-          sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.default" } }}
+          sx={{
+            mb: 2.25,
+            "& .MuiOutlinedInput-root": {
+              height: "42px",
+              borderRadius: "10px",
+              bgcolor: "#F8FAFC",
+              "& fieldset": { borderColor: "#E2E8F0" },
+              "&:hover fieldset": { borderColor: "#CBD5E1" },
+              "&.Mui-focused fieldset": { borderColor: PRIMARY_RED, borderWidth: "1.5px" },
+            },
+            "& .MuiInputBase-input": {
+              fontSize: "14px",
+              color: "#111827",
+            }
+          }}
         />
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
-          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary" }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.75 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, color: "#64748B" }}>
             Tiến độ học tập
           </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 600, color: PRIMARY_RED }}>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: PRIMARY_RED }}>
             {phanTramHoanThanh}%
           </Typography>
         </Box>
         <LinearProgress variant="determinate" value={phanTramHoanThanh}
-          sx={{ height: 6, borderRadius: 3, backgroundColor: alpha(PRIMARY_RED, 0.1),
+          sx={{
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: "#F1F5F9",
             "& .MuiLinearProgress-bar": { backgroundColor: PRIMARY_RED, borderRadius: 3 },
-            mb: 0.75 }} />
-        <Typography variant="caption" color="text.secondary"
-          sx={{ display: "block", textAlign: "right" }}>
-          {soBaiHoanThanh}/{tongBai} bài
+            mb: 1
+          }} />
+        <Typography variant="caption" sx={{ display: "block", textAlign: "right", fontWeight: 600, color: "#64748B" }}>
+          Đã hoàn thành {soBaiHoanThanh}/{tongBai} bài học
         </Typography>
       </Box>
 
@@ -184,22 +203,40 @@ export const SidebarContent = ({
               <ListItemButton
                 onClick={() => onTogglePhan(phan.id!, idPhanPlay)}
                 sx={{
-                  bgcolor: isPlaying ? alpha(PRIMARY_RED, 0.04) : "transparent",
+                  bgcolor: isOpen ? "#F8FAFC" : "#ffffff",
+                  borderBottom: "1px solid #F1F5F9",
                   borderLeft: `3px solid ${isPlaying ? PRIMARY_RED : "transparent"}`,
-                  py: 1.5, px: 2.5, transition: "background-color 0.2s",
-                  "&:hover": { bgcolor: alpha(PRIMARY_RED, 0.06) },
+                  py: 2,
+                  px: 3,
+                  transition: "background-color 0.2s",
+                  "&:hover": {
+                    bgcolor: "#F8FAFC",
+                  },
                 }}
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}
-                    color={isPlaying ? PRIMARY_RED : "text.primary"} noWrap>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 800,
+                      color: isPlaying ? PRIMARY_RED : "#111827",
+                    }}
+                    noWrap
+                  >
                     {phan.thuTuSapXep ?? idx + 1}. {phan.tenPhan}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {doneCnt}/{dsBaiGiang.length} bài · {totalMin}p
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: "#64748B", mt: 0.5, display: "block" }}
+                  >
+                    {doneCnt}/{dsBaiGiang.length} bài giảng · {totalMin} phút
                   </Typography>
                 </Box>
-                {isOpen ? <ExpandLessIcon sx={{ fontSize: 20 }} /> : <ExpandMoreIcon sx={{ fontSize: 20 }} />}
+                {isOpen ? (
+                  <ExpandLessIcon sx={{ fontSize: 20, color: "#64748B" }} />
+                ) : (
+                  <ExpandMoreIcon sx={{ fontSize: 20, color: "#64748B" }} />
+                )}
               </ListItemButton>
 
               <Collapse in={isOpen}>
@@ -213,30 +250,44 @@ export const SidebarContent = ({
                           selected={isSelected}
                           onClick={() => onSelectBaiGiang(bg)}
                           sx={{
-                            pl: 3.5, pr: 2.5, py: 1.25,
-                            borderLeft: `3px solid ${isSelected ? PRIMARY_RED : "transparent"}`,
-                            bgcolor: isSelected ? alpha(PRIMARY_RED, 0.08) : "transparent",
-                            transition: "all 0.2s",
-                            "&:hover": { bgcolor: alpha(PRIMARY_RED, 0.04) },
+                            pl: 4,
+                            pr: 3,
+                            py: 1.75,
+                            borderLeft: `4px solid ${isSelected ? PRIMARY_RED : "transparent"}`,
+                            bgcolor: isSelected ? "#FEF2F2 !important" : "transparent",
+                            transition: "all 0.15s ease",
+                            "&:hover": {
+                              bgcolor: "#F8FAFC",
+                            },
                           }}
                         >
-                          <ListItemIcon sx={{ minWidth: 30 }}>
+                          <ListItemIcon sx={{ minWidth: 28 }}>
                             {bgDone ? (
-                              <CheckCircleIcon sx={{ color: PRIMARY_RED, fontSize: 18 }} />
+                              <CheckCircleIcon sx={{ color: "#15803D", fontSize: 18 }} />
                             ) : (
-                              <PlayArrowIcon sx={{ color: isSelected ? PRIMARY_RED : "text.disabled", fontSize: 18 }} />
+                              <PlayArrowIcon sx={{ color: isSelected ? PRIMARY_RED : "#94A3B8", fontSize: 18 }} />
                             )}
                           </ListItemIcon>
                           <ListItemText
                             primary={
-                              <Typography variant="body2"
-                                sx={{ fontWeight: isSelected ? 600 : 400, lineHeight: 1.4 }}
-                                color={isSelected ? PRIMARY_RED : "text.primary"}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: isSelected ? 800 : 600,
+                                  lineHeight: 1.4,
+                                  fontSize: "13.5px",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                }}
+                                color={isSelected ? PRIMARY_RED : "#1F2937"}
+                              >
                                 {bg.tieuDe}
                               </Typography>
                             }
                             secondary={
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 500, mt: 0.5, display: "block" }}>
                                 {Math.floor((bg.thoiLuong ?? 0) / 60)}p{" "}
                                 {(bg.thoiLuong ?? 0) % 60}s
                               </Typography>
@@ -259,24 +310,36 @@ export const SidebarContent = ({
                         selected={isQuizSelected}
                         onClick={() => onSelectQuiz?.(quiz)}
                         sx={{
-                          pl: 3, py: 1,
-                          borderLeft: `3px solid ${isQuizSelected ? PRIMARY_RED : "transparent"}`,
-                          bgcolor: isQuizSelected ? alpha(PRIMARY_RED, 0.05) : "transparent",
+                          pl: 4, pr: 3, py: 1.75,
+                          borderLeft: `4px solid ${isQuizSelected ? PRIMARY_RED : "transparent"}`,
+                          bgcolor: isQuizSelected ? "#FEF2F2 !important" : "transparent",
+                          transition: "all 0.15s ease",
+                          "&:hover": {
+                            bgcolor: "#F8FAFC",
+                          },
                         }}
                       >
-                        <ListItemIcon sx={{ minWidth: 30 }}>
-                          <QuizIcon sx={{ color: isQuizSelected ? PRIMARY_RED : "text.disabled", fontSize: 18 }} />
+                        <ListItemIcon sx={{ minWidth: 28 }}>
+                          <QuizIcon sx={{ color: isQuizSelected ? PRIMARY_RED : "#94A3B8", fontSize: 18 }} />
                         </ListItemIcon>
                         <ListItemText
                           primary={
                             <Typography variant="body2"
-                              sx={{ fontWeight: isQuizSelected ? 600 : 400, lineHeight: 1.4 }}
-                              color={isQuizSelected ? PRIMARY_RED : "text.primary"}>
+                              sx={{
+                                fontWeight: isQuizSelected ? 800 : 600,
+                                lineHeight: 1.4,
+                                fontSize: "13.5px",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                              }}
+                              color={isQuizSelected ? PRIMARY_RED : "#1F2937"}>
                               {quiz.tenBaiKiemTra ?? "Bài kiểm tra"}
                             </Typography>
                           }
                           secondary={
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 500, mt: 0.5, display: "block" }}>
                               {quiz.soCauHoi ?? 0} câu hỏi
                               {quiz.gioiHanThoiGian ? ` · ${quiz.gioiHanThoiGian} phút` : ""}
                             </Typography>

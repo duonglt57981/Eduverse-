@@ -2316,7 +2316,6 @@ function LectureCreateForm({
           <TextField
             {...noPropagation}
             fullWidth
-            size="small"
             placeholder="Ví dụ: Giới thiệu tổng quan khóa học"
             value={data.title || ""}
             onChange={(e) => {
@@ -2334,6 +2333,7 @@ function LectureCreateForm({
                   borderRadius: "10px",
                   fontWeight: 600,
                   fontSize: 14.5,
+                  height: "50px",
                   transition: "background-color 0.15s ease",
                   "& fieldset": { borderColor: "#E5E7EB" },
                   "&:hover": { bgcolor: "#F3F4F6" },
@@ -3629,7 +3629,7 @@ export default function CurriculumContent() {
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
       <GlobalStyles styles={pulseKeyframes} />
-      <Box sx={{ maxWidth: 900, mx: "auto", pb: 12, bgcolor: "#FBFBFD" }}>
+      <Box sx={{ maxWidth: 900, mx: "auto", pb: 12 }}>
         <Box
           sx={{
             display: "flex",
@@ -3637,32 +3637,43 @@ export default function CurriculumContent() {
             alignItems: { xs: "flex-start", sm: "center" },
             justifyContent: "space-between",
             gap: 2,
-            mb: 4,
+            mb: 3,
           }}
         >
-          <Typography sx={{ fontWeight: 800, fontSize: 24, color: "#1F2937" }}>
+          <Typography sx={{ fontWeight: 900, fontSize: 26, color: "#1E293B" }}>
             Chương trình giảng dạy
           </Typography>
         </Box>
 
         <Typography
-          sx={{ fontSize: 13.5, color: "#8A93A3", mb: 1, lineHeight: 1.7 }}
+          sx={{ fontSize: 14, color: "#64748B", mb: 2.5, lineHeight: 1.7 }}
         >
-          Thiết kế khóa học của bạn theo từng phần, mỗi phần tập trung vào một
-          mục tiêu học tập duy nhất. Sau đó, thêm nội dung, hoạt động thực hành
-          và bài kiểm tra.
+          Thiết kế khóa học của bạn theo từng phần, mỗi phần tập trung vào một mục tiêu học tập duy nhất. Sau đó, thêm nội dung, hoạt động thực hành và bài kiểm tra.
         </Typography>
 
-        <Box sx={{ borderBottom: "1px solid #EDEFF3", mb: 3 }} />
-
-        <Typography sx={{ fontSize: 13, color: "#8A93A3", mb: 3 }}>
-          Tổng thời lượng: {tongPhut} phút
-        </Typography>
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1.2,
+            px: 2.5,
+            py: 1.2,
+            borderRadius: "10px",
+            bgcolor: "#FFF7ED",
+            border: "1px solid #FFEDD5",
+            mb: 4,
+          }}
+        >
+          <ScheduleOutlined sx={{ fontSize: 18, color: "#D97706" }} />
+          <Typography sx={{ fontSize: 13.5, color: "#D97706", fontWeight: 700 }}>
+            Tổng thời lượng khóa học: {tongPhut} phút
+          </Typography>
+        </Box>
 
         {!isEditable && (
           <Alert
             severity={trangThai === "DaDuyet" ? "success" : "info"}
-            sx={{ mb: 3 }}
+            sx={{ mb: 4, borderRadius: "12px" }}
           >
             {trangThai === "DaDuyet"
               ? "Khóa học đã được duyệt. Bạn không thể chỉnh sửa chương trình giảng dạy."
@@ -3679,21 +3690,76 @@ export default function CurriculumContent() {
         )}
 
         {/* DANH SÁCH PHẦN VỚI DRAG-DROP */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEndSections}
-        >
-          <SortableContext
-            items={phans.map((p) => p.id)}
-            strategy={verticalListSortingStrategy}
+        {phans.length === 0 ? (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              py: 8,
+              px: 3,
+              bgcolor: "#ffffff",
+              borderRadius: "20px",
+              border: "1px dashed #CBD5E1",
+              textAlign: "center",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.015)",
+              mb: 3,
+            }}
           >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-              {phans.map((phan, idx) => {
-                const phanId = phan.id as string;
-                const items = getItems(phan);
-                const isEditingPhan =
-                  phanForm?.mode === "edit" && phanForm?.phanId === phanId;
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                bgcolor: "rgba(153, 27, 27, 0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mb: 2.5,
+                color: "#991B1B",
+              }}
+            >
+              <DescriptionOutlined sx={{ fontSize: 40 }} />
+            </Box>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: 18,
+                color: "#1E293B",
+                mb: 1,
+              }}
+            >
+              Chưa có phần học nào
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 14,
+                color: "#64748B",
+                maxWidth: 400,
+                mb: 3,
+                lineHeight: 1.6,
+              }}
+            >
+              Hãy bắt đầu xây dựng chương trình giảng dạy bằng cách thêm phần học đầu tiên của bạn.
+            </Typography>
+          </Box>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEndSections}
+          >
+            <SortableContext
+              items={phans.map((p) => p.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                {phans.map((phan, idx) => {
+                  const phanId = phan.id as string;
+                  const items = getItems(phan);
+                  const isEditingPhan =
+                    phanForm?.mode === "edit" && phanForm?.phanId === phanId;
 
                 const hasAddForm =
                   quizCreateForm?.phanId === phanId ||
@@ -3800,7 +3866,6 @@ export default function CurriculumContent() {
                                         <TextField
                                           {...noPropagation}
                                           fullWidth
-                                          size="small"
                                           placeholder="Nhập tiêu đề bài giảng"
                                           value={editingLecture.title}
                                           onChange={(e) =>
@@ -3819,8 +3884,9 @@ export default function CurriculumContent() {
                                             input: {
                                               sx: {
                                                 bgcolor: "#fff",
-                                                borderRadius: "8px",
+                                                borderRadius: "10px",
                                                 fontWeight: 600,
+                                                height: "50px",
                                               },
                                             },
                                           }}
@@ -4795,56 +4861,75 @@ export default function CurriculumContent() {
             </Box>
           </SortableContext>
         </DndContext>
+        )}
 
         {/* Nút thêm phần mới */}
         {phanForm?.mode === "add" && isEditable ? (
           <Box
             sx={{
-              mt: 3,
-              p: 3,
-              border: "1px solid #E5E7EB",
+              mt: 3.5,
+              p: 3.5,
+              border: "1px solid #E2E8F0",
               borderRadius: "16px",
               bgcolor: "#ffffff",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.025)",
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#111827", mb: 2 }}>
+            <Typography sx={{ fontWeight: 850, fontSize: 17, color: "#1E293B", mb: 2.5 }}>
               Thêm phần mới
             </Typography>
             <TextField
               {...noPropagation}
-              label="Tiêu đề phần"
+              placeholder="Tiêu đề phần"
               value={phanForm.tenPhan}
               onChange={(e) =>
                 setPhanForm({ ...phanForm, tenPhan: e.target.value })
               }
               fullWidth
-              sx={{ mb: 2 }}
+              sx={{
+                mb: 2.5,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  "& fieldset": { borderColor: "#E2E8F0" },
+                  "&:hover fieldset": { borderColor: "#CBD5E1" },
+                  "&.Mui-focused fieldset": { borderColor: "#991B1B" },
+                },
+                "& .MuiInputBase-input": { color: "#1E293B", fontWeight: 500 }
+              }}
             />
             <TextField
               {...noPropagation}
-              label="Sau khi hoàn thành phần này, sinh viên sẽ có thể làm được những gì?"
+              placeholder="Sau khi hoàn thành phần này, sinh viên sẽ có thể làm được những gì?"
               value={phanForm.mieuTa}
               onChange={(e) =>
                 setPhanForm({ ...phanForm, mieuTa: e.target.value })
               }
               fullWidth
               multiline
-              rows={2}
-              sx={{ mb: 2 }}
+              rows={2.5}
+              sx={{
+                mb: 3,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  "& fieldset": { borderColor: "#E2E8F0" },
+                  "&:hover fieldset": { borderColor: "#CBD5E1" },
+                  "&.Mui-focused fieldset": { borderColor: "#991B1B" },
+                },
+                "& .MuiInputBase-input": { color: "#1E293B", fontWeight: 500 }
+              }}
             />
-            <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+            <Box sx={{ display: "flex", gap: 1.5, justifyContent: "flex-end" }}>
               <Button
                 {...noPropagation}
                 onClick={() => setPhanForm(null)}
                 sx={{
                   textTransform: "none",
-                  fontWeight: 600,
-                  color: "#4B5563",
-                  py: 1,
-                  px: 2.5,
-                  borderRadius: "8px",
-                  "&:hover": { bgcolor: "#F3F4F6", color: "#111827" },
+                  fontWeight: 700,
+                  color: "#64748B",
+                  py: 1.2,
+                  px: 3,
+                  borderRadius: "10px",
+                  "&:hover": { bgcolor: "#F1F5F9", color: "#1E293B" },
                 }}
               >
                 Hủy bỏ
@@ -4855,20 +4940,20 @@ export default function CurriculumContent() {
                 onClick={submitPhanForm}
                 disabled={loading}
                 sx={{
-                  bgcolor: MAU.chinh,
+                  bgcolor: "#991B1B",
                   textTransform: "none",
-                  fontWeight: 700,
-                  py: 1,
-                  px: 3,
-                  borderRadius: "8px",
-                  boxShadow: "0 2px 8px rgba(122,31,43,0.15)",
+                  fontWeight: 800,
+                  py: 1.2,
+                  px: 3.5,
+                  borderRadius: "10px",
+                  boxShadow: "none",
                   "&:hover": {
-                    bgcolor: MAU.chinhDam,
-                    boxShadow: "0 4px 12px rgba(122,31,43,0.25)",
+                    bgcolor: "#7F1D1D",
+                    boxShadow: "none",
                   },
                   "&.Mui-disabled": {
-                    bgcolor: "#E5E7EB",
-                    color: "#9CA3AF",
+                    bgcolor: "#E2E8F0",
+                    color: "#94A3B8",
                     boxShadow: "none",
                   },
                 }}
@@ -4884,26 +4969,30 @@ export default function CurriculumContent() {
             onClick={moThemPhan}
             disabled={loading || !isEditable}
             sx={{
-              mt: 3,
+              mt: 3.5,
               textTransform: "none",
-              fontWeight: 700,
-              fontSize: 14,
-              color: MAU.chinh,
-              border: `1px solid ${MAU.chinh}`,
-              borderRadius: "10px",
-              px: 3,
-              py: 1,
-              bgcolor: "#ffffff",
-              boxShadow: "0 2px 8px rgba(122,31,43,0.05)",
-              transition: "all 0.2s ease",
+              fontWeight: 800,
+              fontSize: 14.5,
+              color: "#ffffff",
+              bgcolor: "#991B1B",
+              borderRadius: "12px",
+              px: 3.5,
+              py: 1.25,
+              boxShadow: "0 4px 14px rgba(153,27,27,0.15)",
+              transition: "all 0.25s ease",
               "&:hover": {
-                bgcolor: MAU.chinhNhat,
-                boxShadow: "0 4px 12px rgba(122,31,43,0.12)",
+                bgcolor: "#7F1D1D",
+                boxShadow: "0 6px 20px rgba(153,27,27,0.25)",
                 transform: "translateY(-1px)",
+              },
+              "&.Mui-disabled": {
+                bgcolor: "#E2E8F0",
+                color: "#94A3B8",
+                boxShadow: "none",
               },
             }}
           >
-            Thêm phần
+            Thêm phần học mới
           </Button>
         )}
 

@@ -372,7 +372,7 @@ export default function AdminThongBaoPage() {
   return (
     <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
-        <Box sx={{ p: 4, bgcolor: COLORS.bgLight, minHeight: "100%" }}>
+        <Box sx={{ width: "100%" }}>
           {/* Header */}
           <Stack
             direction={{ xs: "column", sm: "row" }}

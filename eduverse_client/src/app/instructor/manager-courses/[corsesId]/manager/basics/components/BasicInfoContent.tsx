@@ -709,29 +709,32 @@ export default function BasicInfoContent() {
   };
 
   const cardSx = {
-    p: 3,
-    mb: 3,
+    p: 3.5,
+    mb: 4,
     bgcolor: "#FFFFFF",
-    border: `1px solid #EDEFF3`,
-    borderRadius: 3,
-    boxShadow: "0 1px 2px rgba(16,24,40,0.02)",
-    transition: "box-shadow .2s ease, border-color .2s ease",
+    border: `1px solid #E5E7EB`,
+    borderRadius: "16px",
+    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.015)",
+    transition: "box-shadow 0.25s ease, border-color 0.25s ease",
     "&:hover": {
-      borderColor: MAU.chinh + "40",
-      boxShadow: "0 4px 16px rgba(16,24,40,0.05)",
+      borderColor: "#991B1B",
+      boxShadow: "0 6px 24px rgba(0, 0, 0, 0.03)",
     },
   } as const;
 
   const selectSx = {
-    borderRadius: 2,
+    borderRadius: "12px",
     bgcolor: "#FFFFFF",
     "& .MuiSelect-select": {
-      color: "#1F2937 !important",
-      WebkitTextFillColor: "#1F2937 !important",
+      color: "#1E293B !important",
+      WebkitTextFillColor: "#1E293B !important",
     },
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E3E6EB" },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E2E8F0" },
     "&:hover .MuiOutlinedInput-notchedOutline": {
-      borderColor: MAU.chinh + "80",
+      borderColor: "#991B1B80",
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#991B1B",
     },
   } as const;
 
@@ -744,16 +747,15 @@ export default function BasicInfoContent() {
 
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
-      <Box sx={{ maxWidth: 900, mx: "auto", pb: 12, bgcolor: "#FBFBFD" }}>
-        <Box sx={{ mb: 3 }}>
+      <Box sx={{ maxWidth: 900, mx: "auto", pb: 12 }}>
+        <Box sx={{ mb: 4 }}>
           <Typography
-            sx={{ fontWeight: 800, fontSize: 24, color: "#1F2937", mb: 0.5 }}
+            sx={{ fontWeight: 900, fontSize: 26, color: "#1E293B", mb: 0.5 }}
           >
             Trang đích của khóa học
           </Typography>
-          <Typography sx={{ fontSize: 13.5, color: "#8A93A3" }}>
-            Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ
-            ràng và hấp dẫn.
+          <Typography sx={{ fontSize: 14, color: "#64748B" }}>
+            Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ ràng và hấp dẫn.
           </Typography>
         </Box>
 
@@ -805,16 +807,23 @@ export default function BasicInfoContent() {
                 helperText={loiTieuDe}
                 disabled={!isEditable}
                 sx={{
-                  "& .MuiOutlinedInput-root": { borderRadius: 2 },
-                  "& .MuiInputBase-input": { color: "#1F2937" },
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    height: "52px",
+                    "& fieldset": { borderColor: "#E2E8F0" },
+                    "&:hover fieldset": { borderColor: "#CBD5E1" },
+                    "&.Mui-focused fieldset": { borderColor: "#991B1B" },
+                  },
+                  "& .MuiInputBase-input": { color: "#1E293B", fontWeight: 500 },
                 }}
               />
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: loiTieuDe ? "#D32F2F" : "#8A93A3",
+                  color: loiTieuDe ? "#DC2626" : "#64748B",
                   mt: 0.75,
                   textAlign: "right",
+                  fontWeight: 500,
                 }}
               >
                 {loiTieuDe
@@ -832,18 +841,26 @@ export default function BasicInfoContent() {
               />
               <Box
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: "12px",
                   overflow: "hidden",
-                  border: loiMoTa ? "1px solid #D32F2F" : "1px solid #E3E6EB",
+                  border: loiMoTa ? "1px solid #DC2626" : "1px solid #E2E8F0",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    borderColor: loiMoTa ? "#DC2626" : "#CBD5E1",
+                  },
+                  "&:focus-within": {
+                    borderColor: "#991B1B",
+                    boxShadow: "0 0 0 1px #991B1B",
+                  }
                 }}
               >
                 {!isEditable ? (
                   <Box
                     sx={{
-                      p: 2,
+                      p: 2.5,
                       minHeight: 200,
-                      bgcolor: "#f9f9f9",
-                      borderRadius: 2,
+                      bgcolor: "#F8FAFC",
+                      borderRadius: "12px",
                       "& img": { maxWidth: "100%" },
                       "& *": { maxWidth: "100%" },
                     }}
@@ -1049,11 +1066,17 @@ export default function BasicInfoContent() {
                   },
                 }}
                 sx={{
-                  "& .MuiOutlinedInput-root": { borderRadius: 2 },
-                  "& .MuiInputBase-input": { color: "#1F2937" },
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    height: "52px",
+                    "& fieldset": { borderColor: "#E2E8F0" },
+                    "&:hover fieldset": { borderColor: "#CBD5E1" },
+                    "&.Mui-focused fieldset": { borderColor: "#991B1B" },
+                  },
+                  "& .MuiInputBase-input": { color: "#1E293B", fontWeight: 500 },
                 }}
               />
-              <Typography sx={{ fontSize: 12, color: "#8A93A3", mt: 0.75 }}>
+              <Typography sx={{ fontSize: 12, color: "#64748B", mt: 0.75, fontWeight: 500 }}>
                 Giá trị lưu là số nguyên (VNĐ), dấu chấm chỉ để hiển thị.
               </Typography>
             </Paper>
@@ -1077,7 +1100,7 @@ export default function BasicInfoContent() {
                     flexShrink: 0,
                     width: { xs: "100%", sm: 260 },
                     height: 170,
-                    borderRadius: 2,
+                    borderRadius: "12px",
                     border: isDragging
                       ? `2px dashed ${MAU.chinh}`
                       : loiHinhAnh
@@ -1203,17 +1226,17 @@ export default function BasicInfoContent() {
                         display: "flex",
                         alignItems: "center",
                         px: 1.5,
-                        borderRadius: 2,
-                        border: "1px solid #E3E6EB",
-                        bgcolor: "#FBFBFC",
-                        color: "#8A93A3",
+                        borderRadius: "10px",
+                        border: "1px solid #E2E8F0",
+                        bgcolor: "#F8FAFC",
+                        color: "#64748B",
                         fontSize: 13.5,
                         minWidth: 0,
                       }}
                     >
                       <Typography
                         noWrap
-                        sx={{ fontSize: 13.5, color: "#8A93A3" }}
+                        sx={{ fontSize: 13.5, color: "#64748B" }}
                       >
                         {imageFile
                           ? imageFile.name
@@ -1236,13 +1259,13 @@ export default function BasicInfoContent() {
                       sx={{
                         flexShrink: 0,
                         textTransform: "none",
-                        borderRadius: 2,
-                        borderColor: MAU.chinh,
-                        color: MAU.chinh,
-                        fontWeight: 600,
+                        borderRadius: "10px",
+                        borderColor: "#991B1B",
+                        color: "#991B1B",
+                        fontWeight: 700,
                         "&:hover": {
-                          borderColor: MAU.chinhDam,
-                          bgcolor: `${MAU.chinh}0A`,
+                          borderColor: "#7F1D1D",
+                          bgcolor: "rgba(153,27,27,0.04)",
                         },
                       }}
                     >
@@ -1261,13 +1284,14 @@ export default function BasicInfoContent() {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  mt: 2,
-                  py: 2,
-                  bgcolor: "rgba(255,255,255,0.9)",
-                  backdropFilter: "blur(6px)",
-                  borderTop: "1px solid #E3E6EB",
+                  mt: 3,
+                  py: 2.5,
+                  bgcolor: "rgba(247, 248, 250, 0.9)",
+                  backdropFilter: "blur(8px)",
+                  borderTop: "1px solid #E5E7EB",
                   display: "flex",
                   justifyContent: "flex-end",
+                  zIndex: 900,
                 }}
               >
                 <Button
@@ -1277,14 +1301,19 @@ export default function BasicInfoContent() {
                   sx={{
                     bgcolor: MAU.chinh,
                     textTransform: "none",
-                    fontWeight: 700,
-                    borderRadius: 2,
+                    fontWeight: 800,
+                    borderRadius: "10px",
                     px: 4,
-                    py: 1,
+                    py: 1.25,
                     boxShadow: "none",
                     "&:hover": {
                       bgcolor: MAU.chinhDam,
                       boxShadow: "none",
+                    },
+                    "&.Mui-disabled": {
+                      bgcolor: MAU.chinh,
+                      opacity: 0.5,
+                      color: "#fff",
                     },
                   }}
                 >

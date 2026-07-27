@@ -20,7 +20,7 @@ import {
 } from "@mui/icons-material";
 import { TaiLieuType } from "@/src/types/TaiLieu/Dto/TaiLieuDto";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = "#991B1B";
 
 interface TaiLieuDropdownProps {
   danhSachTaiLieu: TaiLieuType[];

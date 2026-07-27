@@ -1150,7 +1150,7 @@ export default function StudentHomeContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "courses" | "assigned" | "paths" | "certs" | "tests"
+    "courses" | "assigned" | "paths"
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
@@ -1253,7 +1253,7 @@ export default function StudentHomeContent() {
   );
 
   const openAssessments = useCallback(() => {
-    setActiveTab("tests");
+    setActiveTab("courses");
     tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
@@ -1365,10 +1365,6 @@ export default function StudentHomeContent() {
         return continueLearning?.courses ?? [];
       case "paths":
         return continueLearning?.paths ?? [];
-      case "certs":
-        return continueLearning?.certificates ?? [];
-      case "tests":
-        return continueLearning?.assessments ?? [];
       default:
         return [];
     }
@@ -1386,14 +1382,6 @@ export default function StudentHomeContent() {
     paths: {
       title: "Chưa có lộ trình học tập nào",
       desc: "Lộ trình học tập bạn tham gia sẽ xuất hiện tại đây.",
-    },
-    certs: {
-      title: "Chưa có chứng chỉ nào",
-      desc: "Hoàn thành khóa học để nhận chứng chỉ và theo dõi tại đây.",
-    },
-    tests: {
-      title: "Chưa có bài đánh giá nào",
-      desc: "Khi bạn tham gia bài đánh giá kỹ năng, kết quả sẽ hiển thị ở đây.",
     },
   };
 
@@ -1493,12 +1481,6 @@ export default function StudentHomeContent() {
               borderRadius: "16px",
               p: 2,
               minWidth: { xs: 90, sm: 110 },
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
-                borderColor: "rgba(139,19,19,0.15)",
-              },
             }}
           >
             <AutoStoriesRounded
@@ -1533,12 +1515,6 @@ export default function StudentHomeContent() {
               borderRadius: "16px",
               p: 2,
               minWidth: { xs: 90, sm: 110 },
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
-                borderColor: "rgba(139,19,19,0.15)",
-              },
             }}
           >
             <AccessTimeRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
@@ -1556,46 +1532,6 @@ export default function StudentHomeContent() {
               }}
             >
               Tiến độ
-            </Typography>
-          </Box>
-
-          {/* Certificates Count */}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "rgba(139,19,19,0.03)",
-              border: "1px solid rgba(139,19,19,0.06)",
-              borderRadius: "16px",
-              p: 2,
-              minWidth: { xs: 90, sm: 110 },
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
-                borderColor: "rgba(139,19,19,0.15)",
-              },
-            }}
-          >
-            <WorkspacePremiumRounded
-              sx={{ color: C.primary, fontSize: 24, mb: 1 }}
-            />
-            <Typography
-              sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
-            >
-              {welcomeStats?.certificatesCount || 0}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: C.textSecondary,
-                mt: 0.25,
-              }}
-            >
-              Chứng chỉ
             </Typography>
           </Box>
         </Stack>
@@ -1745,8 +1681,6 @@ export default function StudentHomeContent() {
       <Box ref={tabsRef}>
         <SectionHeader
           title="Tiếp tục học"
-          linkText="Học tập"
-          href="/student/courses"
         />
         <Tabs
           value={activeTab}
@@ -1777,8 +1711,6 @@ export default function StudentHomeContent() {
           <Tab value="courses" label="Khóa học" />
           <Tab value="assigned" label="Các khóa học được chỉ định" />
           <Tab value="paths" label="Lộ trình học tập" />
-          <Tab value="certs" label="Luyện thi chứng chỉ" />
-          <Tab value="tests" label="Bài đánh giá" />
         </Tabs>
 
         {activeTab === "assigned" || tabItems.length === 0 ? (
@@ -1820,8 +1752,6 @@ export default function StudentHomeContent() {
         <Box>
           <SectionHeader
             title="Dựa trên kỹ năng bạn quan tâm"
-            linkText="Chỉnh sửa"
-            href="/student/profile"
           />
           <Stack
             direction="row"

@@ -8,7 +8,7 @@ import {
 } from "@mui/icons-material";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = "#991B1B";
 
 interface StatsBarProps {
   khoaHoc: KhoaHocType;
@@ -19,19 +19,19 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
 
   const items = [
     {
-      icon: <ScheduleIcon sx={{ fontSize: 16 }} />,
+      icon: <ScheduleIcon sx={{ fontSize: 18 }} />,
       label: khoaHoc.tongThoiLuong
         ? `${Math.floor(khoaHoc.tongThoiLuong / 3600)}h ${Math.floor((khoaHoc.tongThoiLuong % 3600) / 60)}p`
         : "0h 0p",
       title: "Thời lượng",
     },
     {
-      icon: <MenuBookIcon sx={{ fontSize: 16 }} />,
-      label: `${khoaHoc.tongBaiGiang ?? 0} bài`,
-      title: "Bài giảng",
+      icon: <MenuBookIcon sx={{ fontSize: 18 }} />,
+      label: `${khoaHoc.tongBaiGiang ?? 0} bài giảng`,
+      title: "Bài học",
     },
     {
-      icon: <PeopleIcon sx={{ fontSize: 16 }} />,
+      icon: <PeopleIcon sx={{ fontSize: 18 }} />,
       label: (khoaHoc.soLuongHocVien ?? 0).toLocaleString("vi-VN"),
       title: "Học viên",
     },
@@ -42,7 +42,7 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
       sx={{
         display: "grid",
         gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-        gap: 2,
+        gap: 2.25,
       }}
     >
       {items.map((item, i) => (
@@ -52,15 +52,15 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
             display: "flex",
             alignItems: "center",
             gap: 2,
-            p: 2,
-            borderRadius: 3,
-            backgroundColor: "background.paper",
-            border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
-            boxShadow: `0px 2px 10px ${alpha(theme.palette.common.black, 0.03)}`,
-            transition: "transform 0.2s, box-shadow 0.2s",
+            p: 2.25,
+            borderRadius: "16px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #E5E7EB",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.015)",
+            transition: "all 0.2s ease-in-out",
             "&:hover": {
-              transform: "translateY(-2px)",
-              boxShadow: `0px 4px 16px ${alpha(theme.palette.common.black, 0.06)}`,
+              borderColor: "#CBD5E1",
+              boxShadow: "0 6px 16px rgba(0,0,0,0.03)",
             }
           }}
         >
@@ -69,9 +69,9 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 44,
-              height: 44,
-              borderRadius: 2,
+              width: 46,
+              height: 46,
+              borderRadius: "10px",
               backgroundColor: alpha(PRIMARY_RED, 0.08),
               color: PRIMARY_RED,
             }}
@@ -81,14 +81,13 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 0.25, fontWeight: 500 }}
+              sx={{ display: "block", mb: 0.5, fontWeight: 700, color: "#64748B" }}
             >
               {item.title}
             </Typography>
             <Typography
               variant="subtitle1"
-              sx={{ fontWeight: 700, lineHeight: 1.2 }}
+              sx={{ fontWeight: 800, lineHeight: 1.2, color: "#111827" }}
             >
               {item.label}
             </Typography>
