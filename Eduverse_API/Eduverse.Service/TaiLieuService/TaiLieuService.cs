@@ -190,7 +190,8 @@ namespace Eduverse.Service.TaiLieuService
             if (taiLieu == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            if (taiLieu.TrangThai == "ChoDuyet")
+
+            if (taiLieu.TrangThaiPheDuyet == "ChoDuyet" || taiLieu.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
 
             var coNguoiHoc = await (

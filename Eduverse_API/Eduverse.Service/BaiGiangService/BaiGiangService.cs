@@ -4,6 +4,7 @@ using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.BaiGiangService.Request;
+using Eduverse.Service.BunnyService;
 using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
@@ -27,6 +28,7 @@ namespace Eduverse.Service.BaiGiangService
         private readonly IDangKyKhoaHocRepository _dangkyKhoaHocRepository;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IBunnyService _bunnyService;
 
 
         public BaiGiangService(
@@ -36,7 +38,8 @@ namespace Eduverse.Service.BaiGiangService
             IMapper mapper,
             IDangKyKhoaHocRepository dangkyKhoaHocRepository,
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            IBunnyService bunnyService
             ) : base(baiGiangRepository)
         {
             _cloudinaryService = cloudinaryService;
@@ -45,6 +48,7 @@ namespace Eduverse.Service.BaiGiangService
             _dangkyKhoaHocRepository = dangkyKhoaHocRepository;
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
             _httpContextAccessor = httpContextAccessor;
+            _bunnyService = bunnyService;
         }
 
 
@@ -181,9 +185,9 @@ namespace Eduverse.Service.BaiGiangService
             if (phanHoc == null)
                 throw new Exception("Không tìm thấy phần học");
 
-            var uploadResult = await _cloudinaryService.UploadVideoBaiGiangAsync(request.Video);
+            var uploadResult = await _bunnyService.UploadVideoAsync(request.Video);
 
-            int thoiLuongBaiGiang = (int)uploadResult.ThoiLuong;
+            int thoiLuongBaiGiang = (int)uploadResult.Duration;
 
 
             //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
@@ -193,8 +197,8 @@ namespace Eduverse.Service.BaiGiangService
                 IdPhan = request.IdPhan.Value,
                 TieuDe = request.TieuDe.Trim(),
                 LoaiBaiGiang = request.Video == null ? "Bài giảng tài liệu" : "Bài giảng video",
-                IdVideoBaiGiang = uploadResult.IdVideoBaiGiang,
-                URLBaiGiang = uploadResult.URLBaiGiang.Trim(),
+                IdVideoBaiGiang = uploadResult.Id,
+                URLBaiGiang = uploadResult.Url.Trim(),
                 ThuTuSapXep = request.ThuTuSapXep,
                 ThoiLuong = thoiLuongBaiGiang,
                 LaBaiGiangFree = request.LaBaiGiangFree,
@@ -262,21 +266,24 @@ namespace Eduverse.Service.BaiGiangService
 
             if (request.Video != null && (banGoc.TrangThai == "DangSua" || banGoc.TrangThai == "TuChoi"))
             {
-                var upload = await _cloudinaryService.UpdateVideoBaiGiangAsync(idVideo,request.Video);
+                var upload = await _bunnyService.UpdateVideoAsync(idVideo,request.Video);
                 if (upload == null)
                     throw new Exception("Upload hình ảnh thất bại");
 
-                video = upload.URLBaiGiang;
-                idVideo = upload.IdVideoBaiGiang;
+                video = upload.Url;
+                idVideo = upload.Id;
+                thoiLuong = upload.Duration;
 
-            }else if (request.Video != null && banGoc.TrangThai == "DaDuyet")
+            }
+            else if (request.Video != null && banGoc.TrangThai == "DaDuyet")
             {
-                var upload = await _cloudinaryService.UploadVideoBaiGiangAsync(request.Video);
+                var upload = await _bunnyService.UploadVideoAsync(request.Video);
                 if (upload == null)
                     throw new Exception("Upload hình ảnh thất bại");
 
-                video = upload.URLBaiGiang;
-                idVideo = upload.IdVideoBaiGiang;
+                video = upload.Url;
+                idVideo = upload.Id;
+                thoiLuong = upload.Duration;
             }
 
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
@@ -379,7 +386,7 @@ namespace Eduverse.Service.BaiGiangService
             if (baiGiang == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
-            if (baiGiang.TrangThai == "ChoDuyet")
+            if (baiGiang.TrangThaiPheDuyet == "ChoDuyet" || baiGiang.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
 
             var coNguoiHoc = await (

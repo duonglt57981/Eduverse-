@@ -45,7 +45,7 @@ namespace Eduverse.Service.DanhMucService
             return trangThai.Trim() switch
             {
                 HoatDong or "HDH" or "Active" or "Hoạt động" => HoatDong,
-                TamAn or "KHD" or "Inactive" or "Tạm ẩn" => TamAn,
+                TamAn or "KHD" or "Inactive" or "Tạm ẩn" or "TamAn"=> TamAn,
                 _ => throw new Exception("Trạng thái không hợp lệ. Chỉ chấp nhận HoatDong hoặc TamAn")
             };
         }

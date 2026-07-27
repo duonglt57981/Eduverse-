@@ -1,4 +1,5 @@
 
+using BunnyCDN.Net.Storage;
 using CloudinaryDotNet;
 using CloudinaryDotNet;
 using CloudinaryDotNet;
@@ -8,6 +9,8 @@ using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
 using Eduverse.Repository.Common;
 using Eduverse.Service.AuthService;
+using Eduverse.Service.BunnyService;
+using Eduverse.Service.BunnyService.Dto;
 using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.Common;
@@ -18,6 +21,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -97,6 +101,40 @@ namespace Eduverse.Api
             builder.Services.AddSingleton(cloudinary);
             builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
+            // ================== BUNNY STREAM (video) ==================
+            builder.Services.Configure<BunnyStreamSettings>(
+                builder.Configuration.GetSection("BunnyStream"));
+
+            builder.Services.AddHttpClient("BunnyStream", (sp, client) =>
+            {
+                var settings = sp.GetRequiredService<IOptions<BunnyStreamSettings>>().Value;
+                client.BaseAddress = new Uri(settings.BaseUrl);      // https://video.bunnycdn.com
+                client.DefaultRequestHeaders.Add("AccessKey", settings.ApiKey);
+                client.Timeout = TimeSpan.FromMinutes(30);
+            });
+
+            builder.Services.AddScoped<IBunnyService, BunnyService>();
+
+            // ================== BUNNY STORAGE (file tĩnh: tài liệu, ảnh...) ==================
+            builder.Services.Configure<BunnyStorageSettings>(
+                builder.Configuration.GetSection("BunnyStorage"));
+
+            builder.Services.AddHttpClient("BunnyStorage", (sp, client) =>
+            {
+                var settings = sp.GetRequiredService<IOptions<BunnyStorageSettings>>().Value; // ✅ đổi type
+                client.BaseAddress = new Uri(settings.BaseUrl);      // https://{region}.storage.bunnycdn.com
+                client.DefaultRequestHeaders.Add("AccessKey", settings.ApiKey);
+                client.Timeout = TimeSpan.FromMinutes(30);
+            });
+
+            builder.Services.AddSingleton(sp =>
+            {
+                var settings = sp.GetRequiredService<IOptions<BunnyStorageSettings>>().Value;
+                return new BunnyCDNStorage(
+                    settings.StorageZoneName,
+                    settings.ApiKey,
+                    settings.Region);
+            });
 
             // PayOS chuyen khoan
             // Client payment

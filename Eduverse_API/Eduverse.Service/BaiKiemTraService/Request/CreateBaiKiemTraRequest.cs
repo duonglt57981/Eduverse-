@@ -13,7 +13,5 @@ namespace Eduverse.Service.BaiKiemTraService.Request
         public string? TenBaiKiemTra { get; set; }
         public string? MoTa { get; set; }
         public int? ThuTuSapXep { get; set; }
-
-        public List<CreateCauHoiRequest> DanhSachCauHoi { get; set; } = new();
     }
 }

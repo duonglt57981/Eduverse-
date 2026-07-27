@@ -128,7 +128,7 @@ namespace Eduverse.Service.BaiKiemTraService
                         var cauHoiDto = _mapper.Map<CauHoi, CauHoiDto>(c);
                         cauHoiDto.DanhSachDapAns = dapAns
                             .Where(d => d.IdCauHoi == c.Id)
-                            .Select(d => _mapper.Map<DapAn, CreateDapAnDto>(d))
+                            .Select(d => _mapper.Map<DapAn, DapAnDto>(d))
                             .ToList();
                         return cauHoiDto;
                     })
@@ -142,287 +142,6 @@ namespace Eduverse.Service.BaiKiemTraService
             return result;
         }
         #endregion
-
-        //public async Task<GetQuizToLearningDto> GetQuizToLearning(Guid idDangKy)
-        //{
-        //    // ─── 1. Lấy userId từ token ───
-        //    Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
-
-        //    // ─── 2. Lấy thông tin đăng ký khóa học ───
-        //    var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => x.Id == idDangKy && !x.IsDeleted)
-        //        .Select(x => new { x.Id, x.IdKhoaHoc, x.IdNguoiDangKi, x.CreatedDate })
-        //        .FirstOrDefaultAsync();
-
-        //    if (dangKy == null)
-        //        throw new Exception("Không tìm thấy đăng ký khóa học");
-
-        //    if (dangKy.IdNguoiDangKi != userId)
-        //        throw new Exception("Bạn chưa đăng ký khóa học này!");
-
-        //    var idKhoaHoc = dangKy.IdKhoaHoc;
-
-        //    // ─── 3. Lấy thông tin khóa học ───
-        //    var khoaHoc = await _khoaHocRepository.GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => x.Id == idKhoaHoc && !x.IsDeleted)
-        //        .Select(x => new { x.Id, x.TieuDe })
-        //        .FirstOrDefaultAsync();
-
-        //    if (khoaHoc == null)
-        //        throw new Exception("Không tìm thấy khóa học");
-
-        //    // ─── 4. Lấy danh sách phần học của khóa học ───
-        //    var phanHocs = await _phanRepository.GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => x.IdKhoaHoc == idKhoaHoc
-        //                 && !x.IsDeleted
-        //                 && x.TrangThai == "HoatDong"
-        //                 && x.TrangThaiPheDuyet == "DaDuyet")
-        //        .OrderBy(x => x.ThuTuSapXep)
-        //        .Select(x => new { x.Id, x.TenPhan, x.ThuTuSapXep })
-        //        .ToListAsync();
-
-        //    if (!phanHocs.Any())
-        //    {
-        //        // Không có phần học nào -> trả về sớm, tránh query thừa ở các bước sau
-        //        return new GetQuizToLearningDto
-        //        {
-        //            IdKhoaHoc = khoaHoc.Id,
-        //            TenKhoaHoc = khoaHoc.TieuDe,
-        //            DanhSachTheoPhan = new List<PhanHocDto>(),
-        //            DanhSachTatCa = new List<BaiKiemTraDto>(),
-        //            TongSoBaiKiemTra = 0
-        //        };
-        //    }
-
-        //    var phanIds = phanHocs.Select(x => x.Id).ToList();
-
-        //    // ─── 5. Lấy bài kiểm tra theo các phần (chỉ lấy bản GỐC, IsBanHienTai = true) ───
-        //    // FIX: dùng đúng _baiKiemTraRepository.GetQueryable() (tránh nhầm sang queryable khác).
-        //    // FIX: entity BaiKiemTra không có SoCauHoi/DiemToiDa -> bỏ khỏi Select, sẽ tính SoCauHoi riêng ở bước 6.
-        //    var baiKiemTras = await GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => x.IdPhan.HasValue
-        //                 && phanIds.Contains(x.IdPhan.Value)
-        //                 && !x.IsDeleted
-        //                 && x.TrangThai == "HoatDong"
-        //                 && x.TrangThaiPheDuyet == "DaDuyet"
-        //                 && x.IsBanHienTai)
-        //        .OrderBy(x => x.TenBaiKiemTra)
-        //        .Select(x => new BaiKiemTraDto
-        //        {
-        //            Id = x.Id,
-        //            IdGoc = x.Id,
-        //            TenBaiKiemTra = x.TenBaiKiemTra,
-        //            MoTa = x.MoTa,
-        //            DiemDat = x.DiemDat,
-        //            GioiHanThoiGian = x.GioiHanThoiGian,
-        //            ChoLamLai = x.ChoLamLai,
-        //            SoLanLamToiDa = x.SoLanLamToiDa,
-        //            IdPhan = x.IdPhan,
-        //            CreatedDate = x.CreatedDate,
-        //            IsBanHienTai = x.IsBanHienTai,
-        //            IdBanGhiTruoc = x.IdBanGhiTruoc,
-        //            TrangThai = x.TrangThai,
-        //            TrangThaiPheDuyet = x.TrangThaiPheDuyet,
-        //            IsSwap = false
-        //        })
-        //        .ToListAsync();
-
-        //    if (!baiKiemTras.Any())
-        //    {
-        //        var danhSachTheoPhanRong = phanHocs.Select(phan => new PhanHocDto
-        //        {
-        //            Id = phan.Id,
-        //            TenPhan = phan.TenPhan,
-        //            ThuTuSapXep = phan.ThuTuSapXep,
-        //            DanhSachBaiKiemTra = new List<BaiKiemTraDto>()
-        //        }).ToList();
-
-        //        return new GetQuizToLearningDto
-        //        {
-        //            IdKhoaHoc = khoaHoc.Id,
-        //            TenKhoaHoc = khoaHoc.TieuDe,
-        //            DanhSachTheoPhan = danhSachTheoPhanRong,
-        //            DanhSachTatCa = new List<BaiKiemTraDto>(),
-        //            TongSoBaiKiemTra = 0
-        //        };
-        //    }
-
-        //    // ─── 6. Đếm số câu hỏi cho từng bài kiểm tra gốc ───
-        //    // FIX: khai báo baiKiemTraIds (thiếu trong bản gốc gây lỗi compile).
-        //    // SoCauHoi chỉ là số đếm CauHoi hợp lệ (Count), không lấy từ entity vì BaiKiemTra không có field này.
-        //    var baiKiemTraIds = baiKiemTras.Select(x => x.Id).ToList();
-
-        //    if (baiKiemTraIds.Any())
-        //    {
-        //        var cauHoiCounts = await _cauHoiService.GetQueryable()
-        //            .AsNoTracking()
-        //            .Where(x => x.IdBaiKiemTra.HasValue
-        //                     && baiKiemTraIds.Contains(x.IdBaiKiemTra.Value)
-        //                     && !x.IsDeleted
-        //                     && x.TrangThai == "HoatDong"
-        //                     && x.TrangThaiPheDuyet == "DaDuyet"
-        //                     && x.IsBanHienTai)
-        //            .GroupBy(x => x.IdBaiKiemTra!.Value)
-        //            .Select(g => new { IdBaiKiemTra = g.Key, Count = g.Count() })
-        //            .ToDictionaryAsync(x => x.IdBaiKiemTra, x => x.Count);
-
-        //        foreach (var baiKiemTra in baiKiemTras)
-        //        {
-        //            baiKiemTra.SoCauHoi = cauHoiCounts.TryGetValue(baiKiemTra.Id, out var count) ? count : 0;
-        //        }
-        //    }
-
-        //    // ─── 7. Xử lý Swap cho từng bài kiểm tra (nếu có) ───
-        //    var baiKiemTraGocIds = baiKiemTras.Select(x => x.Id).ToList();
-        //    var swapBaiKiemTras = await GetQueryable()
-        //        .AsNoTracking()
-        //        .Where(x => x.IdBanGhiTruoc.HasValue
-        //                 && baiKiemTraGocIds.Contains(x.IdBanGhiTruoc.Value)
-        //                 && x.TrangThaiPheDuyet == "DaDuyet"
-        //                 && x.TrangThai == "HoatDong"
-        //                 && x.IsBanHienTai == false
-        //                 && !x.IsDeleted)
-        //        .Select(x => new
-        //        {
-        //            x.Id,
-        //            x.IdBanGhiTruoc,
-        //            x.TenBaiKiemTra,
-        //            x.MoTa,
-        //            x.DiemDat,
-        //            x.GioiHanThoiGian,
-        //            x.ChoLamLai,
-        //            x.SoLanLamToiDa,
-        //            x.CreatedDate,
-        //            x.IsBanHienTai,
-        //            x.TrangThai
-        //        })
-        //        .ToListAsync();
-
-        //    // Đếm số câu hỏi cho các bài swap (giống bước 6, nhưng cho swap)
-        //    var swapIds = swapBaiKiemTras.Select(x => x.Id).ToList();
-        //    var swapCauHoiCounts = new Dictionary<Guid, int>();
-        //    if (swapIds.Any())
-        //    {
-        //        swapCauHoiCounts = await _cauHoiService.GetQueryable()
-        //            .AsNoTracking()
-        //            .Where(x => x.IdBaiKiemTra.HasValue
-        //                     && swapIds.Contains(x.IdBaiKiemTra.Value)
-        //                     && !x.IsDeleted
-        //                     && x.TrangThai == "HoatDong"
-        //                     && x.TrangThaiPheDuyet == "DaDuyet"
-        //                     && x.IsBanHienTai)
-        //            .GroupBy(x => x.IdBaiKiemTra!.Value)
-        //            .Select(g => new { IdBaiKiemTra = g.Key, Count = g.Count() })
-        //            .ToDictionaryAsync(x => x.IdBaiKiemTra, x => x.Count);
-        //    }
-
-        //    // Map swap mới nhất theo bài kiểm tra gốc
-        //    var swapMoiNhatByGoc = swapBaiKiemTras
-        //        .GroupBy(x => x.IdBanGhiTruoc!.Value)
-        //        .Select(g => new
-        //        {
-        //            IdGoc = g.Key,
-        //            SwapMoiNhat = g.OrderByDescending(x => x.CreatedDate).First()
-        //        })
-        //        .ToDictionary(x => x.IdGoc, x => x.SwapMoiNhat);
-
-        //    // Ngày đăng ký dùng để quyết định dùng swap hay gốc:
-        //    // - swap được tạo TRƯỚC hoặc BẰNG ngày đăng ký => học viên đăng ký sau khi đã có swap => dùng swap
-        //    // - swap được tạo SAU ngày đăng ký => học viên đăng ký từ trước khi có swap => vẫn dùng bản gốc
-        //    var ngayDangKy = dangKy.CreatedDate;
-
-        //    // ─── 8. Build danh sách bài kiểm tra cuối cùng (có xử lý swap) ───
-        //    var baiKiemTraFinal = new List<BaiKiemTraDto>();
-        //    foreach (var baiKiemTra in baiKiemTras)
-        //    {
-        //        BaiKiemTraDto item;
-
-        //        if (swapMoiNhatByGoc.TryGetValue(baiKiemTra.Id, out var swap) && swap.CreatedDate <= ngayDangKy)
-        //        {
-        //            var soCauHoiSwap = swapCauHoiCounts.TryGetValue(swap.Id, out var c) ? c : 0;
-
-        //            item = new BaiKiemTraDto
-        //            {
-        //                Id = swap.Id,
-        //                IdGoc = baiKiemTra.Id,
-        //                TenBaiKiemTra = swap.TenBaiKiemTra,
-        //                MoTa = swap.MoTa,
-        //                DiemDat = swap.DiemDat,
-        //                GioiHanThoiGian = swap.GioiHanThoiGian,
-        //                ChoLamLai = swap.ChoLamLai,
-        //                SoLanLamToiDa = swap.SoLanLamToiDa,
-        //                IdPhan = baiKiemTra.IdPhan,
-        //                SoCauHoi = soCauHoiSwap,
-        //                CreatedDate = swap.CreatedDate,
-        //                IsBanHienTai = swap.IsBanHienTai,
-        //                IdBanGhiTruoc = baiKiemTra.Id,
-        //                TrangThai = swap.TrangThai,
-        //                TrangThaiPheDuyet = "DaDuyet",
-        //                IsSwap = true
-        //            };
-        //        }
-        //        else
-        //        {
-        //            item = baiKiemTra; // bản gốc, giữ nguyên (đã có SoCauHoi từ bước 6)
-        //        }
-
-        //        baiKiemTraFinal.Add(item);
-        //    }
-
-        //    // ─── 9. Group theo phần (sau khi đã xử lý swap) ───
-        //    var danhSachTheoPhanFinal = phanHocs.Select(phan => new PhanHocDto
-        //    {
-        //        Id = phan.Id,
-        //        TenPhan = phan.TenPhan,
-        //        ThuTuSapXep = phan.ThuTuSapXep,
-        //        DanhSachBaiKiemTra = baiKiemTraFinal
-        //            .Where(x => x.IdPhan == phan.Id)
-        //            .ToList()
-        //    }).ToList();
-
-        //    // ─── 10. Tạo response ───
-        //    return new GetQuizToLearningDto
-        //    {
-        //        IdKhoaHoc = khoaHoc.Id,
-        //        TenKhoaHoc = khoaHoc.TieuDe,
-        //        DanhSachTheoPhan = danhSachTheoPhanFinal,
-        //        DanhSachTatCa = baiKiemTraFinal,
-        //        TongSoBaiKiemTra = baiKiemTraFinal.Count
-        //    };
-        //}
-
-        #region CreateQuiz
-        private string GetQuizContent(CreateBaiKiemTraRequest request)
-        {
-            if (request == null) return "";
-
-            var sb = new StringBuilder();
-
-            // Thông tin bài kiểm tra
-            sb.Append($",{request.TenBaiKiemTra},{request.MoTa}");
-
-            // Câu hỏi và đáp án
-            if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
-            {
-                foreach (var c in request.DanhSachCauHoi)
-                {
-                    sb.Append($",{c.NoiDungCauHoi}");
-                    if (c.DanhSachDapAn != null && c.DanhSachDapAn.Any())
-                    {
-                        foreach (var d in c.DanhSachDapAn)
-                        {
-                            sb.Append($",{d.NoiDungDapAn}");
-                        }
-                    }
-                }
-            }
-
-            return sb.ToString();
-        }
 
         public async Task<CreateBaiKiemTraDto> CreateQuiz(CreateBaiKiemTraRequest request)
         {
@@ -449,741 +168,94 @@ namespace Eduverse.Service.BaiKiemTraService
             if (request.TenBaiKiemTra.Length > 99)
                 throw new Exception("Tên bài kiểm tra không được vượt quá 99 ký tự.");
 
-            if (request.MoTa != null && request.MoTa.Length > 999)
-                throw new Exception("Mô tả không được vượt quá 999 ký tự.");
-
-            //if (request.DiemDat < 50 || request.DiemDat > 100)
-            //    throw new Exception("Điểm đạt phải từ 50 đến 100.");
-
-            //if (request.GioiHanThoiGian < 0 || request.GioiHanThoiGian > 1000000000)
-            //    throw new Exception("Giới hạn thời gian làm bài không hợp lệ.");
-
-            //if (request.ChoLamLai == true && request.SoLanLamToiDa <= 0)
-            //    throw new Exception("Khi cho phép làm lại, số lần làm lại tối đa phải lớn hơn 0.");
-
-            //if (request.ChoLamLai == false && request.SoLanLamToiDa > 0)
-            //    throw new Exception("Khi không cho phép làm lại, không được nhập số lần làm lại tối đa.");
-
-            //if(request.SoLanLamToiDa <= 0 || request.SoLanLamToiDa > 1000000000)
-
-            // ===== 2. VALIDATE CÂU HỎI =====
-            if (request.DanhSachCauHoi.Count > 50)
-                throw new Exception("Bài kiểm tra không được vượt quá 50 câu hỏi.");
-
-            if (request.DanhSachCauHoi.Count < 2)
-                throw new Exception("Bài kiểm tra phải có ít nhất 2 câu hỏi.");
-
-            // ⭐ TỐI ƯU: Validate tất cả trong 1 lần duyệt
-            ValidateQuestions(request.DanhSachCauHoi);
-
-            //Duyệt AI
-
-            await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(GetQuizContent(request));
-
-            var strings = GetQuizContent(request);
-            Console.WriteLine(strings);
-
-            // ===== 3. TẠO TRONG TRANSACTION =====
-            await using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
+            if (request.MoTa != null && request.MoTa.Length > 299)
+                throw new Exception("Mô tả không được vượt quá 299 ký tự.");
             try
             {
-                // --- 3.1 Tạo bài kiểm tra ---
-                var baiKiemTra = CreateBaiKiemTraEntity(request);
-                await CreateAsync(baiKiemTra);
+                var newQuiz =  new BaiKiemTra
+                {
+                    Id = Guid.NewGuid(),
+                    IdPhan = request.IdPhan.Value,
+                    TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
+                    MoTa = request.MoTa?.Trim(),
+                    DiemDat = 100,
+                    GioiHanThoiGian = 0,
+                    ChoLamLai = true,
+                    SoLanLamToiDa = 0,
+                    TrangThai = "DangSua",
+                    TrangThaiPheDuyet = "DangSua",
+                    IsBanHienTai = true,
+                    ThuTuSapXep = request.ThuTuSapXep
+                };
+
+                await CreateAsync(newQuiz);
                 await SaveAsync();
-
-                // --- 3.2 Tạo câu hỏi và đáp án (BULK INSERT) ---
-                var (cauHois, dapAns) = await CreateQuestionsAndAnswersAsync(baiKiemTra.Id, request.DanhSachCauHoi);
-
-                await transaction.CommitAsync();
-
-                // ===== 4. LẤY DỮ LIỆU ĐÃ TẠO (TỐI ƯU) =====
-                var result = await GetQuizResultAsync(baiKiemTra.Id);
-
-
-                return result;
+                return new CreateBaiKiemTraDto
+                {
+                    Id = newQuiz.Id,
+                    IdPhan = newQuiz.IdPhan,
+                    TenBaiKiemTra = newQuiz.TenBaiKiemTra,
+                    MoTa = newQuiz.MoTa,
+                    DiemDat = newQuiz.DiemDat,
+                    GioiHanThoiGian = newQuiz.GioiHanThoiGian,
+                    ChoLamLai = newQuiz.ChoLamLai,
+                    SoLanLamToiDa = newQuiz.SoLanLamToiDa,
+                    TrangThai = newQuiz.TrangThai,
+                    TrangThaiPheDuyet = newQuiz.TrangThaiPheDuyet,
+                    IsBanHienTai = newQuiz.IsBanHienTai,
+                    ThuTuSapXep = newQuiz.ThuTuSapXep
+                };
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
                 throw new Exception($"Tạo bài kiểm tra thất bại: {ex.Message}");
             }
         }
 
-        // ===== TỐI ƯU: Validate Questions =====
-        private void ValidateQuestions(List<CreateCauHoiRequest> questions)
-        {
-            var validDoKho = new HashSet<string> { "De", "TrungBinh", "Kho" };
-            var cauHoiIndex = 1;
-
-            foreach (var cauHoi in questions)
-            {
-                if (string.IsNullOrWhiteSpace(cauHoi.NoiDungCauHoi))
-                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được để trống.");
-
-                if (cauHoi.NoiDungCauHoi.Length < 3)
-                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} phải > 3 kí tự");
-
-                if (cauHoi.NoiDungCauHoi.Length > 255)
-                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được vượt quá 255 ký tự.");
-
-                if (string.IsNullOrWhiteSpace(cauHoi.DoKho) || !validDoKho.Contains(cauHoi.DoKho))
-                    throw new Exception($"Độ khó '{cauHoi.DoKho}' không hợp lệ. Chỉ chấp nhận: De, TrungBinh, Kho.");
-
-                if (cauHoi.DanhSachDapAn == null || cauHoi.DanhSachDapAn.Count < 2)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
-
-                if (cauHoi.DanhSachDapAn.Count > 15)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được vượt quá 15 đáp án.");
-
-
-                // ⭐ KIỂM TRA ĐÁP ÁN TRÙNG VÀ RỖNG
-                ValidateAnswers(cauHoi);
-
-                var soDapAnDung = cauHoi.DanhSachDapAn.Count(d => d.LaDapAnDung.Value);
-                if (soDapAnDung == 0)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất một đáp án đúng.");
-
-                if (soDapAnDung >= cauHoi.DanhSachDapAn.Count)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' Số đáp án đúng phải nhỏ hơn số đáp án hiện có");
-
-                cauHoiIndex++;
-            }
-
-            
-
-            // ⭐ KIỂM TRA CÂU HỎI TRÙNG NHAU
-            var cauHoiTrung = questions
-                .Where(c => !string.IsNullOrWhiteSpace(c.NoiDungCauHoi))
-                .GroupBy(c => c.NoiDungCauHoi.Trim())
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
-
-            if (cauHoiTrung.Any())
-                throw new Exception($"Các câu hỏi bị trùng nội dung: {string.Join(", ", cauHoiTrung)}");
-        }
-
-        // =====Validate Answers =====
-        private void ValidateAnswers(CreateCauHoiRequest cauHoi)
-        {
-            var noiDungDapAns = new HashSet<string>();
-
-            foreach (var dapAn in cauHoi.DanhSachDapAn)
-            {
-                if (string.IsNullOrWhiteSpace(dapAn.NoiDungDapAn))
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' có đáp án bị để trống.");
-
-                if (cauHoi.NoiDungCauHoi.Length > 99)
-                    throw new Exception("Đáp án không được vượt quá 99 kí tự");
-
-                var trimmed = dapAn.NoiDungDapAn.Trim();
-                if (!noiDungDapAns.Add(trimmed))
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' có đáp án bị trùng: {trimmed}");
-            }
-        }
-
-        // ===== Tạo Entity =====
-        private BaiKiemTra CreateBaiKiemTraEntity(CreateBaiKiemTraRequest request)
-        {
-            return new BaiKiemTra
-            {
-                Id = Guid.NewGuid(),
-                IdPhan = request.IdPhan.Value,
-                TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
-                MoTa = request.MoTa?.Trim(),
-                DiemDat = 100,
-                GioiHanThoiGian = 0,
-                ChoLamLai = true,
-                SoLanLamToiDa = 0,
-                TrangThai = "DangSua",
-                TrangThaiPheDuyet = "DangSua",
-                IsBanHienTai = true,
-                ThuTuSapXep = request.ThuTuSapXep
-            };
-        }
-
-        // ===== Tạo Questions và Answers (BULK INSERT) =====
-        private async Task<(List<CauHoi> CauHois, List<DapAn> DapAns)> CreateQuestionsAndAnswersAsync(Guid baiKiemTraId,List<CreateCauHoiRequest> questionRequests)
-        {
-            var cauHois = new List<CauHoi>();
-            var dapAns = new List<DapAn>();
-
-            var thuTuCauHoi = 1;
-            foreach (var cauHoiReq in questionRequests)
-            {
-                var soDapAnDung = cauHoiReq.DanhSachDapAn?.Count(d => d.LaDapAnDung == true) ?? 0;
-                var cauHoi = new CauHoi
-                {
-                    Id = Guid.NewGuid(),
-                    IdBaiKiemTra = baiKiemTraId,
-                    TenCauHoi = cauHoiReq.TenCauHoi?.Trim(),
-                    NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
-                    LoaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI",
-                    DoKho = cauHoiReq.DoKho,
-                    ThuTuSapXep = cauHoiReq.ThuTuSapXep,
-                    TrangThai = "DangSua",
-                    TrangThaiPheDuyet = "DangSua",
-                    IsBanHienTai = true,
-                };
-
-                cauHois.Add(cauHoi);
-
-                var thuTuDapAn = 1;
-                foreach (var dapAnReq in cauHoiReq.DanhSachDapAn)
-                {
-                    dapAns.Add(new DapAn
-                    {
-                        Id = Guid.NewGuid(),
-                        IdCauHoi = cauHoi.Id,
-                        NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
-                        LaDapAnDung = dapAnReq.LaDapAnDung,
-                        ThuTuSapXep = dapAnReq.ThuTuSapXep ?? thuTuDapAn,
-                        TrangThai = "DangSua",
-                        TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = true,
-                    });
-                    thuTuDapAn++;
-                }
-                thuTuCauHoi++;
-            }
-
-            if (cauHois.Any())
-            {
-                await _cauHoiService.CreateRange(cauHois);
-                await _cauHoiService.SaveAsync();
-            }
-
-            if (dapAns.Any())
-            {
-                await _dapAnService.CreateRange(dapAns);
-                await _dapAnService.SaveAsync();
-            }
-
-            return (cauHois, dapAns);
-        }
-
-        private async Task<CreateBaiKiemTraDto> GetQuizResultAsync(Guid baiKiemTraId)
-        {
-            var query = from c in _cauHoiService.GetQueryable()
-                        join d in _dapAnService.GetQueryable() on c.Id equals d.IdCauHoi into dapAnGroup
-                        where c.IdBaiKiemTra == baiKiemTraId && !c.IsDeleted
-                        orderby c.ThuTuSapXep
-                        select new
-                        {
-                            CauHoi = c,
-                            DapAns = dapAnGroup.Where(d => !d.IsDeleted).OrderBy(d => d.ThuTuSapXep).ToList()
-                        };
-
-            var resultData = await query.ToListAsync();
-
-            // ⭐ Lấy thông tin bài kiểm tra
-            var baiKiemTra = await GetByIdAsync(baiKiemTraId);
-            if (baiKiemTra == null)
-                throw new Exception("Không tìm thấy bài kiểm tra.");
-
-            return new CreateBaiKiemTraDto
-            {
-                Id = baiKiemTra.Id,
-                TenBaiKiemTra = baiKiemTra.TenBaiKiemTra,
-                MoTa = baiKiemTra.MoTa,
-                DiemDat = baiKiemTra.DiemDat,
-                GioiHanThoiGian = baiKiemTra.GioiHanThoiGian,
-                ChoLamLai = baiKiemTra.ChoLamLai,
-                SoLanLamToiDa = baiKiemTra.SoLanLamToiDa,
-                SoCauHoi = resultData.Count,
-                TrangThai = baiKiemTra.TrangThai,
-                TrangThaiPheDuyet = baiKiemTra.TrangThaiPheDuyet,
-                DanhSachCauHoi = resultData.Select(x => new CauHoiDto
-                {
-                    Id = x.CauHoi.Id,
-                    NoiDungCauHoi = x.CauHoi.NoiDungCauHoi,
-                    TenCauHoi = x.CauHoi.TenCauHoi,
-                    LoaiCauHoi = x.CauHoi.LoaiCauHoi,
-                    DoKho = x.CauHoi.DoKho,
-                    ThuTuSapXep = x.CauHoi.ThuTuSapXep,
-                    TrangThai = x.CauHoi.TrangThai,
-                    TrangThaiPheDuyet= x.CauHoi.TrangThaiPheDuyet,
-                    DanhSachDapAns = x.DapAns.Select(d => new CreateDapAnDto
-                    {
-                        Id = d.Id,
-                        NoiDungDapAn = d.NoiDungDapAn,
-                        LaDapAnDung = d.LaDapAnDung,
-                        ThuTuSapXep = d.ThuTuSapXep,
-                        TrangThai = d.TrangThai,
-                        TrangThaiPheDuyet = d.TrangThaiPheDuyet
-                    }).ToList()
-                }).ToList()
-            };
-        }
-        #endregion
-
-        #region UpdateQuiz
-
         public async Task<UpdateBaiKiemTraDto> UpdateQuiz(UpdateBaiKiemTraRequest request)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+            var entity = await GetQueryable().FirstOrDefaultAsync(x => x.Id == request.IdBaiKiemTra);
+            
+            if (request == null)
+                throw new ArgumentNullException(nameof(request), "Yêu cầu không hợp lệ.");
 
+            if (entity.CreatedId != nguoiTao)
+                throw new Exception("Bạn không có quyền chỉnh sửa bài kiểm tra này");
 
-            var banGoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == request.IdBaiKiemTra && x.IsBanHienTai && !x.IsDeleted);
-
-            if (banGoc == null)
+            if (entity == null)
                 throw new Exception("Không tìm thấy bài kiểm tra");
 
-            if (banGoc.CreatedId != nguoiTao)
-                throw new Exception("Bạn không có quyền hạn để sửa bài kiểm tra này");
-
-            ValidateRequest(request);
-
-            // ===== 5. XỬ LÝ THEO TRẠNG THÁI =====
-
-            // ─── TRƯỜNG HỢP 1: Đang sửa (DangSua) ────────────────
-            //  Chỉ DangSua mới có thể sửa trên 1 bản ghi
-            if (banGoc.TrangThaiPheDuyet == "DangSua")
-            {
-                await UpdateDirectlyAsync(banGoc, request, nguoiTao);
-                return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banGoc);
-            }
-            else
-            {
-                throw new Exception($"Không thể xử lý bài kiểm tra ở trạng thái: {banGoc.TrangThaiPheDuyet}");
-            }
-
-            //// ─── TRƯỜNG HỢP 2: Chờ duyệt (ChoDuyet) ──────────────
-            ////  ChoDuyet => DangSua mới có thể sửa tiếp
-            //if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
-            //    throw new Exception("Chuyển sang DangSua để sửa tiếp");
-            
-            //// ─── TRƯỜNG HỢP 3: Đang duyệt (DangDuyet) ────────────
-            //// ❌ DangDuyet thì không làm được gì cả
-            //if (banGoc.TrangThaiPheDuyet == "DangDuyet")
-            //    throw new Exception(
-            //        $"❌ BÀI KIỂM TRA ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
-            //        $"Hệ thống đang kiểm duyệt bài kiểm tra này.\n" +
-            //        $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
-            //        $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
-            //    );
-
-            //// ─── TRƯỜNG HỢP 4: Đã duyệt (DaDuyet) ─────────────────
-            //// ✅ DaDuyet => xóa mềm (tạo bản nháp mới)
-            //if (banGoc.TrangThaiPheDuyet == "DaDuyet")
-            //{
-            //    // Kiểm tra đã có bản nháp chưa
-            //    var banNhap = await GetQueryable()
-            //        .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id && !x.IsDeleted);
-
-            //    //if (banNhap != null)
-            //    //{
-            //    //    // Nếu đã có bản nháp, cập nhật bản nháp
-            //    //    await UpdateDraftAsync(banNhap, banGoc, request, nguoiTao);
-            //    //    return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhap);
-            //    //}
-
-            //        // Tạo bản nháp mới từ bản gốc
-            //        var banNhapMoi = await CreateDraftFromOriginalAsync(banGoc, request, nguoiTao);
-            //        return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhapMoi);
-                
-            //}
-        }
-
-        // ===== VALIDATE REQUEST =====
-        private void ValidateRequest(UpdateBaiKiemTraRequest request)
-        {
-            // Validate tên bài kiểm tra
             if (string.IsNullOrWhiteSpace(request.TenBaiKiemTra))
-                throw new Exception("Tên bài kiểm tra không được để trống");
-
-            if (request.TenBaiKiemTra.Length > 255)
-                throw new Exception("Tên bài kiểm tra không được vượt quá 255 ký tự");
+                throw new Exception("Tên bài kiểm tra không được để trống.");
 
             if (request.TenBaiKiemTra.Length < 3)
-                throw new Exception("Tên bài kiểm tra phải có ít nhất 3 ký tự");
+                throw new Exception("Tên bài kiểm tra phải có ít nhất 3 ký tự.");
 
-            // Validate mô tả
-            if (request.MoTa != null && request.MoTa.Length > 1000)
-                throw new Exception("Mô tả không được vượt quá 1000 ký tự");
+            if (request.TenBaiKiemTra.Length > 99)
+                throw new Exception("Tên bài kiểm tra không được vượt quá 99 ký tự.");
 
-            //// Validate điểm đạt
-            //if (request.DiemDat < 50 || request.DiemDat > 100)
-            //    throw new Exception("Điểm đạt phải từ 50 đến 100");
-
-            //// Validate thời gian
-            //if (request.GioiHanThoiGian < 0 || request.GioiHanThoiGian > 1000000000)
-            //    throw new Exception("Thời gian làm bài không hợp lệ (0 - 1.000.000.000)");
-
-            //if (request.GioiHanThoiGian < 1)
-            //    throw new Exception("Thời gian làm bài phải lớn hơn 0 phút");
-
-            //// Validate số lần làm lại
-            //if (request.ChoLamLai == true && request.SoLanLamToiDa <= 0)
-            //    throw new Exception("Vui lòng nhập số lần làm lại tối đa khi cho phép làm lại.");
-
-            //if (request.ChoLamLai == true && request.SoLanLamToiDa > 10)
-            //    throw new Exception("Số lần làm lại tối đa không được vượt quá 10.");
-
-            //if (request.ChoLamLai == false && request.SoLanLamToiDa > 0)
-            //    throw new Exception("Không thể nhập số lần làm lại tối đa khi không cho phép làm lại.");
-
-            // Validate câu hỏi
-            if (request.DanhSachCauHoi == null || !request.DanhSachCauHoi.Any())
-                throw new Exception("Bài kiểm tra phải có ít nhất một câu hỏi.");
-
-            if (request.DanhSachCauHoi.Count > 50)
-                throw new Exception("Bài kiểm tra không được vượt quá 50 câu hỏi.");
-
-            if (request.DanhSachCauHoi.Count < 2)
-                throw new Exception("Bài kiểm tra phải có ít nhất 2 câu hỏi.");
-
-            // Validate từng câu hỏi
-            ValidateQuestions(request.DanhSachCauHoi);
-        }
-
-        // ===== VALIDATE CÂU HỎI =====
-        private void ValidateQuestions(List<UpdateCauHoiRequest> questions)
-        {
-            var validDoKho = new HashSet<string> { "De", "TrungBinh", "Kho" };
-            var cauHoiIndex = 1;
-
-            foreach (var cauHoi in questions)
+            if (request.MoTa != null && request.MoTa.Length > 299)
+                throw new Exception("Mô tả không được vượt quá 299 ký tự.");
+            try
             {
-                if (string.IsNullOrWhiteSpace(cauHoi.NoiDungCauHoi))
-                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được để trống.");
+                entity.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
+                entity.MoTa = request.MoTa?.Trim();
+                entity.TrangThai = "DangSua";
+                entity.TrangThaiPheDuyet = "DangSua";
+                entity.IsBanHienTai = true;
+                entity.ThuTuSapXep = request.ThuTuSapXep;
 
-                if (cauHoi.NoiDungCauHoi.Length > 1000)
-                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được vượt quá 1000 ký tự.");
+                await UpdateAsync(entity);
+                await SaveAsync();
 
-                if (cauHoi.NoiDungCauHoi.Length < 5)
-                    throw new Exception($"Nội dung câu hỏi {cauHoiIndex} phải có ít nhất 5 ký tự.");
-
-                if (!string.IsNullOrWhiteSpace(cauHoi.TenCauHoi) && cauHoi.TenCauHoi.Length > 255)
-                    throw new Exception($"Tên câu hỏi {cauHoiIndex} không được vượt quá 255 ký tự.");
-
-                if (string.IsNullOrWhiteSpace(cauHoi.DoKho))
-                    throw new Exception($"Độ khó câu hỏi {cauHoiIndex} không được để trống.");
-
-                if (!validDoKho.Contains(cauHoi.DoKho))
-                    throw new Exception($"Độ khó '{cauHoi.DoKho}' không hợp lệ. Chỉ chấp nhận: De, TrungBinh, Kho.");
-
-                if (cauHoi.ThuTuSapXep.HasValue && cauHoi.ThuTuSapXep < 1)
-                    throw new Exception($"Thứ tự sắp xếp câu hỏi {cauHoiIndex} không hợp lệ.");
-
-                if (cauHoi.DanhSachDapAns == null || !cauHoi.DanhSachDapAns.Any())
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
-
-                if (cauHoi.DanhSachDapAns.Count < 2)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
-
-                if (cauHoi.DanhSachDapAns.Count > 6)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được vượt quá 6 đáp án.");
-
-                ValidateAnswers(cauHoi, cauHoiIndex);
-
-                var soDapAnDung = cauHoi.DanhSachDapAns.Count(d => d.LaDapAnDung == true);
-                if (soDapAnDung == 0)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất một đáp án đúng.");
-
-                if (soDapAnDung == cauHoi.DanhSachDapAns.Count)
-                    throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được có tất cả đáp án đúng.");
-
-                cauHoiIndex++;
+                return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(entity);
             }
-
-            // Kiểm tra câu hỏi trùng nội dung
-            var cauHoiTrung = questions
-                .Where(c => !string.IsNullOrWhiteSpace(c.NoiDungCauHoi))
-                .GroupBy(c => c.NoiDungCauHoi.Trim())
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
-
-            if (cauHoiTrung.Any())
-                throw new Exception($"Các câu hỏi bị trùng nội dung: {string.Join(", ", cauHoiTrung)}");
-        }
-
-        // ===== VALIDATE ĐÁP ÁN =====
-        private void ValidateAnswers(UpdateCauHoiRequest cauHoi, int cauHoiIndex)
-        {
-            var noiDungDapAns = new HashSet<string>();
-
-            foreach (var dapAn in cauHoi.DanhSachDapAns)
+            catch (Exception ex)
             {
-                if (string.IsNullOrWhiteSpace(dapAn.NoiDungDapAn))
-                    throw new Exception($"Câu hỏi {cauHoiIndex} có đáp án bị để trống.");
-
-                if (dapAn.NoiDungDapAn.Length > 500)
-                    throw new Exception($"Câu hỏi {cauHoiIndex} có đáp án vượt quá 500 ký tự.");
-
-                var trimmed = dapAn.NoiDungDapAn.Trim();
-                if (!noiDungDapAns.Add(trimmed))
-                    throw new Exception($"Câu hỏi {cauHoiIndex} có đáp án bị trùng: {trimmed}");
+                throw new Exception($"Cập nhật bài kiểm tra thất bại: {ex.Message}");
             }
         }
-
-        // ===== CẬP NHẬT TRỰC TIẾP (DangSua) =====
-        private async Task UpdateDirectlyAsync(BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
-        {
-            banGoc.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
-            banGoc.MoTa = request.MoTa?.Trim();
-            banGoc.DiemDat = 100;
-            banGoc.GioiHanThoiGian = 0;
-            banGoc.ChoLamLai = true;
-            banGoc.SoLanLamToiDa = 0;
-            banGoc.TrangThaiPheDuyet = "DangSua";
-            banGoc.TrangThai = "DangSua";
-            banGoc.IsBanHienTai = true;
-            banGoc.UpdatedDate = DateTime.Now;
-            banGoc.UpdatedBy = nguoiTao.ToString();
-            banGoc.ThuTuSapXep = request.ThuTuSapXep;
-
-            await UpdateAsync(banGoc);
-            await SaveAsync();
-
-            if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
-            {
-                await UpdateQuestionsAndAnswersAsync(banGoc.Id, request.DanhSachCauHoi);
-            }
-        }
-
-        // ===== CẬP NHẬT BẢN NHÁP =====
-        //private async Task UpdateDraftAsync(BaiKiemTra banNhap, BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
-        //{
-        //    banNhap.IdBanGhiTruoc = banGoc.Id;
-        //    banNhap.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
-        //    banNhap.MoTa = request.MoTa?.Trim();
-        //    banNhap.DiemDat = 100;
-        //    banNhap.GioiHanThoiGian = 0;
-        //    banNhap.ChoLamLai = true;
-        //    banNhap.SoLanLamToiDa = 0;
-        //    banNhap.TrangThaiPheDuyet = "DangSua";
-        //    banNhap.TrangThai = "DangSua";
-        //    banNhap.IsBanHienTai = false;
-        //    banNhap.UpdatedDate = DateTime.Now;
-        //    banNhap.UpdatedBy = nguoiTao.ToString();
-        //    banNhap.ThuTuSapXep = request.ThuTuSapXep;
-
-        //    await UpdateAsync(banNhap);
-        //    await SaveAsync();
-
-        //    if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
-        //    {
-        //        await UpdateQuestionsAndAnswersAsync(banNhap.Id, request.DanhSachCauHoi);
-        //    }
-        //}
-
-        //// ===== TẠO BẢN NHÁP MỚI =====
-        //private async Task<BaiKiemTra> CreateDraftFromOriginalAsync(BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
-        //{
-        //    var banNhapMoi = new BaiKiemTra
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        IdBanGhiTruoc = banGoc.Id,
-        //        IdPhan = banGoc.IdPhan,
-        //        TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
-        //        MoTa = request.MoTa?.Trim(),
-        //        DiemDat = 100,
-        //        GioiHanThoiGian = 0,
-        //        ChoLamLai = true,
-        //        SoLanLamLai = 0,
-        //        SoLanLamToiDa = 0,
-        //        TrangThai = "DangSua",
-        //        TrangThaiPheDuyet = "DangSua",
-        //        IsBanHienTai = false,
-        //        ThuTuSapXep = request.ThuTuSapXep
-        //    };
-
-        //    await CreateAsync(banNhapMoi);
-        //    await SaveAsync();
-
-        //    if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
-        //    {
-        //        await CopyQuestionsAndAnswersAsync(banGoc.Id, banNhapMoi.Id, request.DanhSachCauHoi);
-        //    }
-
-        //    return banNhapMoi;
-        //}
-
-        // ===== CẬP NHẬT CÂU HỎI VÀ ĐÁP ÁN =====
-        private async Task UpdateQuestionsAndAnswersAsync(Guid idBaiKiemTra, List<UpdateCauHoiRequest> cauHoiRequests)
-        {
-            var cauHoisCu = await _cauHoiService.GetQueryable()
-                .Where(c => c.IdBaiKiemTra == idBaiKiemTra && !c.IsDeleted)
-                .ToListAsync();
-
-            var cauHoiIdsCu = cauHoisCu.Select(c => c.Id).ToHashSet();
-            var cauHoiIdsMoi = cauHoiRequests.Select(c => c.Id).ToHashSet();
-
-            // Xóa câu hỏi không còn trong danh sách mới
-            var canXoa = cauHoisCu.Where(c => !cauHoiIdsMoi.Contains(c.Id)).ToList();
-            if (canXoa.Any())
-            {
-                foreach (var c in canXoa)
-                {
-                    await _cauHoiService.DeleteAsync(c);
-                }
-                await _cauHoiService.SaveAsync();
-            }
-
-            // Thêm hoặc cập nhật câu hỏi
-            foreach (var cauHoiReq in cauHoiRequests)
-            {
-                var soDapAnDung = cauHoiReq.DanhSachDapAns?.Count(d => d.LaDapAnDung == true) ?? 0;
-                var loaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI";
-
-                if (cauHoiIdsCu.Contains(cauHoiReq.Id))
-                {
-                    var cauHoiCu = cauHoisCu.First(c => c.Id == cauHoiReq.Id);
-                    cauHoiCu.TenCauHoi = cauHoiReq.TenCauHoi?.Trim();
-                    cauHoiCu.NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim();
-                    cauHoiCu.LoaiCauHoi = loaiCauHoi;
-                    cauHoiCu.DoKho = cauHoiReq.DoKho;
-                    cauHoiCu.ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0;
-                    cauHoiCu.UpdatedDate = DateTime.Now;
-                    await _cauHoiService.UpdateAsync(cauHoiCu);
-
-                    await UpdateAnswersAsync(cauHoiCu.Id, cauHoiReq.DanhSachDapAns);
-                }
-                else
-                {
-                    var cauHoiMoi = new CauHoi
-                    {
-                        Id = Guid.NewGuid(),
-                        IdBaiKiemTra = idBaiKiemTra,
-                        TenCauHoi = cauHoiReq.TenCauHoi?.Trim(),
-                        NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
-                        LoaiCauHoi = loaiCauHoi,
-                        DoKho = cauHoiReq.DoKho,
-                        ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0,
-                        TrangThai = "DangSua",
-                        TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = true,
-                    };
-                    await _cauHoiService.CreateAsync(cauHoiMoi);
-                    await _cauHoiService.SaveAsync();
-
-                    foreach (var dapAnReq in cauHoiReq.DanhSachDapAns)
-                    {
-                        var dapAnMoi = new DapAn
-                        {
-                            Id = Guid.NewGuid(),
-                            IdCauHoi = cauHoiMoi.Id,
-                            NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
-                            LaDapAnDung = dapAnReq.LaDapAnDung,
-                            ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
-                            TrangThai = "DangSua",
-                            TrangThaiPheDuyet = "DangSua",
-                            IsBanHienTai = true,
-                        };
-                        await _dapAnService.CreateAsync(dapAnMoi);
-                    }
-                    await _dapAnService.SaveAsync();
-                }
-            }
-        }
-
-        // ===== CẬP NHẬT ĐÁP ÁN =====
-        private async Task UpdateAnswersAsync(Guid idCauHoi, List<UpdateDapAnRequest> dapAnRequests)
-        {
-            if (dapAnRequests == null || !dapAnRequests.Any())
-                return;
-
-            var dapAnsCu = await _dapAnService.GetQueryable()
-                .Where(d => d.IdCauHoi == idCauHoi && !d.IsDeleted)
-                .ToListAsync();
-
-            var dapAnIdsCu = dapAnsCu.Select(d => d.Id).ToHashSet();
-            var dapAnIdsMoi = dapAnRequests.Select(d => d.Id).ToHashSet();
-
-            var canXoa = dapAnsCu.Where(d => !dapAnIdsMoi.Contains(d.Id)).ToList();
-            if (canXoa.Any())
-            {
-                foreach (var d in canXoa)
-                {
-                    await _dapAnService.DeleteAsync(d);
-                }
-                await _dapAnService.SaveAsync();
-            }
-
-            foreach (var dapAnReq in dapAnRequests)
-            {
-                if (dapAnIdsCu.Contains(dapAnReq.Id.Value))
-                {
-                    var dapAnCu = dapAnsCu.First(d => d.Id == dapAnReq.Id);
-                    dapAnCu.NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim();
-                    dapAnCu.LaDapAnDung = dapAnReq.LaDapAnDung;
-                    dapAnCu.ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0;
-                    await _dapAnService.UpdateAsync(dapAnCu);
-                }
-                else
-                {
-                    var dapAnMoi = new DapAn
-                    {
-                        Id = Guid.NewGuid(),
-                        IdCauHoi = idCauHoi,
-                        NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
-                        LaDapAnDung = dapAnReq.LaDapAnDung,
-                        ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
-                        TrangThai = "DangSua",
-                        TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = true,
-                    };
-                    await _dapAnService.CreateAsync(dapAnMoi);
-                }
-            }
-            await _dapAnService.SaveAsync();
-        }
-
-        //// ===== COPY CÂU HỎI VÀ ĐÁP ÁN =====
-        //private async Task CopyQuestionsAndAnswersAsync(Guid idBaiKiemTraGoc, Guid idBaiKiemTraMoi, List<UpdateCauHoiRequest> cauHoiRequests)
-        //{
-        //    foreach (var cauHoiReq in cauHoiRequests)
-        //    {
-        //        var soDapAnDung = cauHoiReq.DanhSachDapAns?.Count(d => d.LaDapAnDung == true) ?? 0;
-        //        var loaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI";
-
-        //        var cauHoiMoi = new CauHoi
-        //        {
-        //            Id = Guid.NewGuid(),
-        //            IdBaiKiemTra = idBaiKiemTraMoi,
-        //            TenCauHoi = cauHoiReq.TenCauHoi?.Trim(),
-        //            NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
-        //            LoaiCauHoi = loaiCauHoi,
-        //            DoKho = cauHoiReq.DoKho,
-        //            ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0,
-        //            TrangThai = "DangSua",
-        //            TrangThaiPheDuyet = "DangSua",
-        //            IsBanHienTai = true,
-        //        };
-        //        await _cauHoiService.CreateAsync(cauHoiMoi);
-        //        await _cauHoiService.SaveAsync();
-
-        //        foreach (var dapAnReq in cauHoiReq.DanhSachDapAns)
-        //        {
-        //            var dapAnMoi = new DapAn
-        //            {
-        //                Id = Guid.NewGuid(),
-        //                IdCauHoi = cauHoiMoi.Id,
-        //                NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
-        //                LaDapAnDung = dapAnReq.LaDapAnDung,
-        //                ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
-        //                TrangThai = "DangSua",
-        //                TrangThaiPheDuyet = "DangSua",
-        //                IsBanHienTai = true,
-        //            };
-        //            await _dapAnService.CreateAsync(dapAnMoi);
-        //        }
-        //        await _dapAnService.SaveAsync();
-        //    }
-        //}
-
-        //// ===== HELPER: LẤY USER ID =====
-        //private Guid GetCurrentUserId()
-        //{
-        //    var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-        //    return Guid.TryParse(userId, out var result) ? result : Guid.Empty;
-        //}
-
-        #endregion
 
         public async Task<bool> DeleteQuiz(Guid id)
         {
@@ -1192,6 +264,9 @@ namespace Eduverse.Service.BaiKiemTraService
 
             if (quiz == null)
                 throw new Exception("Không tìm thấy bài kiểm tra.");
+
+            if (quiz.TrangThaiPheDuyet == "ChoDuyet" || quiz.TrangThaiPheDuyet == "DangDuyet")
+                throw new Exception("Đang gửi duyệt không thể xóa");
 
             // Kiểm tra đã có học viên đăng ký chưa
             var coNguoiHoc = await (
@@ -1202,49 +277,864 @@ namespace Eduverse.Service.BaiKiemTraService
                 select dk.Id
             ).AnyAsync();
 
-            var trangThaiMoi = coNguoiHoc
-                ? "NgungHoatDong"
-                : "DaXoa";
-
-            quiz.TrangThai = trangThaiMoi;
-
-            // Cập nhật câu hỏi
-            var cauHois = await _cauHoiService.GetQueryable()
-                .Where(x => x.IdBaiKiemTra == id)
-                .ToListAsync();
-
-            foreach (var cauHoi in cauHois)
-            {
-                cauHoi.TrangThai = trangThaiMoi;
-                cauHoi.IsDeleted = true;
-            }
-
-            var cauHoiIds = cauHois.Select(x => x.Id).ToList();
-
-            var dapAns = await _dapAnService.GetQueryable()
-                .Where(x => cauHoiIds.Contains(x.IdCauHoi.Value))
-                .ToListAsync();
-
-            foreach (var dapAn in dapAns)
-            {
-                dapAn.TrangThai = trangThaiMoi;
-                dapAn.IsDeleted = true;
-            }
-
-            await DeleteAsync(quiz);
-
-            foreach (var cauHoi in cauHois)
-            {
-                await _cauHoiService.DeleteAsync(cauHoi);
-            }
-
-            foreach (var dapAn in dapAns)
-            {
-                await _dapAnService.DeleteAsync(dapAn);
-            }
-
+            var trangThaiMoi = coNguoiHoc? "NgungHoatDong": "DaXoa";
             return true;
         }
+
+        //#region CreateQuiz
+        //private string GetQuizContent(CreateBaiKiemTraRequest request)
+        //{
+        //    if (request == null) return "";
+
+        //    var sb = new StringBuilder();
+
+        //    // Thông tin bài kiểm tra
+        //    sb.Append($",{request.TenBaiKiemTra},{request.MoTa}");
+
+        //    // Câu hỏi và đáp án
+        //    if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
+        //    {
+        //        foreach (var c in request.DanhSachCauHoi)
+        //        {
+        //            sb.Append($",{c.NoiDungCauHoi}");
+        //            if (c.DanhSachDapAn != null && c.DanhSachDapAn.Any())
+        //            {
+        //                foreach (var d in c.DanhSachDapAn)
+        //                {
+        //                    sb.Append($",{d.NoiDungDapAn}");
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    return sb.ToString();
+        //}
+
+        //public async Task<CreateBaiKiemTraDto> CreateQuiz(CreateBaiKiemTraRequest request)
+        //{
+        //    // ===== 1. VALIDATE ĐẦU VÀO =====
+        //    if (request == null)
+        //        throw new ArgumentNullException(nameof(request), "Yêu cầu không hợp lệ.");
+
+        //    if (request.IdPhan == null || request.IdPhan == Guid.Empty)
+        //        throw new ArgumentException("Phần học không hợp lệ.", nameof(request.IdPhan));
+
+        //    var phan = await _phanService.GetByIdAsync(request.IdPhan.Value);
+        //    if (phan == null)
+        //        throw new Exception("Không tìm thấy phần học.");
+
+        //    if (phan.TrangThai == "DaXoa" && phan.IsDeleted == true)
+        //        throw new Exception("Phần học đã bị xóa");
+
+        //    if (string.IsNullOrWhiteSpace(request.TenBaiKiemTra))
+        //        throw new Exception("Tên bài kiểm tra không được để trống.");
+
+        //    if (request.TenBaiKiemTra.Length < 3)
+        //        throw new Exception("Tên bài kiểm tra phải có ít nhất 3 ký tự.");
+
+        //    if (request.TenBaiKiemTra.Length > 99)
+        //        throw new Exception("Tên bài kiểm tra không được vượt quá 99 ký tự.");
+
+        //    if (request.MoTa != null && request.MoTa.Length > 999)
+        //        throw new Exception("Mô tả không được vượt quá 999 ký tự.");
+
+        //    //if (request.DiemDat < 50 || request.DiemDat > 100)
+        //    //    throw new Exception("Điểm đạt phải từ 50 đến 100.");
+
+        //    //if (request.GioiHanThoiGian < 0 || request.GioiHanThoiGian > 1000000000)
+        //    //    throw new Exception("Giới hạn thời gian làm bài không hợp lệ.");
+
+        //    //if (request.ChoLamLai == true && request.SoLanLamToiDa <= 0)
+        //    //    throw new Exception("Khi cho phép làm lại, số lần làm lại tối đa phải lớn hơn 0.");
+
+        //    //if (request.ChoLamLai == false && request.SoLanLamToiDa > 0)
+        //    //    throw new Exception("Khi không cho phép làm lại, không được nhập số lần làm lại tối đa.");
+
+        //    //if(request.SoLanLamToiDa <= 0 || request.SoLanLamToiDa > 1000000000)
+
+        //    // ===== 2. VALIDATE CÂU HỎI =====
+        //    if (request.DanhSachCauHoi.Count > 50)
+        //        throw new Exception("Bài kiểm tra không được vượt quá 50 câu hỏi.");
+
+        //    if (request.DanhSachCauHoi.Count < 2)
+        //        throw new Exception("Bài kiểm tra phải có ít nhất 2 câu hỏi.");
+
+        //    // ⭐ TỐI ƯU: Validate tất cả trong 1 lần duyệt
+        //    ValidateQuestions(request.DanhSachCauHoi);
+
+        //    //Duyệt AI
+
+        //    await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(GetQuizContent(request));
+
+        //    var strings = GetQuizContent(request);
+        //    Console.WriteLine(strings);
+
+        //    // ===== 3. TẠO TRONG TRANSACTION =====
+        //    await using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
+        //    try
+        //    {
+        //        // --- 3.1 Tạo bài kiểm tra ---
+        //        var baiKiemTra = CreateBaiKiemTraEntity(request);
+        //        await CreateAsync(baiKiemTra);
+        //        await SaveAsync();
+
+        //        // --- 3.2 Tạo câu hỏi và đáp án (BULK INSERT) ---
+        //        var (cauHois, dapAns) = await CreateQuestionsAndAnswersAsync(baiKiemTra.Id, request.DanhSachCauHoi);
+
+        //        await transaction.CommitAsync();
+
+        //        // ===== 4. LẤY DỮ LIỆU ĐÃ TẠO (TỐI ƯU) =====
+        //        var result = await GetQuizResultAsync(baiKiemTra.Id);
+
+
+        //        return result;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await transaction.RollbackAsync();
+        //        throw new Exception($"Tạo bài kiểm tra thất bại: {ex.Message}");
+        //    }
+        //}
+
+        //// ===== TỐI ƯU: Validate Questions =====
+        //private void ValidateQuestions(List<CreateCauHoiRequest> questions)
+        //{
+        //    var validDoKho = new HashSet<string> { "De", "TrungBinh", "Kho" };
+        //    var cauHoiIndex = 1;
+
+        //    foreach (var cauHoi in questions)
+        //    {
+        //        if (string.IsNullOrWhiteSpace(cauHoi.NoiDungCauHoi))
+        //            throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được để trống.");
+
+        //        if (cauHoi.NoiDungCauHoi.Length < 3)
+        //            throw new Exception($"Nội dung câu hỏi {cauHoiIndex} phải > 3 kí tự");
+
+        //        if (cauHoi.NoiDungCauHoi.Length > 255)
+        //            throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được vượt quá 255 ký tự.");
+
+        //        if (string.IsNullOrWhiteSpace(cauHoi.DoKho) || !validDoKho.Contains(cauHoi.DoKho))
+        //            throw new Exception($"Độ khó '{cauHoi.DoKho}' không hợp lệ. Chỉ chấp nhận: De, TrungBinh, Kho.");
+
+        //        if (cauHoi.DanhSachDapAn == null || cauHoi.DanhSachDapAn.Count < 2)
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
+
+        //        if (cauHoi.DanhSachDapAn.Count > 15)
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được vượt quá 15 đáp án.");
+
+
+        //        // ⭐ KIỂM TRA ĐÁP ÁN TRÙNG VÀ RỖNG
+        //        ValidateAnswers(cauHoi);
+
+        //        var soDapAnDung = cauHoi.DanhSachDapAn.Count(d => d.LaDapAnDung.Value);
+        //        if (soDapAnDung == 0)
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất một đáp án đúng.");
+
+        //        if (soDapAnDung >= cauHoi.DanhSachDapAn.Count)
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' Số đáp án đúng phải nhỏ hơn số đáp án hiện có");
+
+        //        cauHoiIndex++;
+        //    }
+
+
+
+        //    // ⭐ KIỂM TRA CÂU HỎI TRÙNG NHAU
+        //    var cauHoiTrung = questions
+        //        .Where(c => !string.IsNullOrWhiteSpace(c.NoiDungCauHoi))
+        //        .GroupBy(c => c.NoiDungCauHoi.Trim())
+        //        .Where(g => g.Count() > 1)
+        //        .Select(g => g.Key)
+        //        .ToList();
+
+        //    if (cauHoiTrung.Any())
+        //        throw new Exception($"Các câu hỏi bị trùng nội dung: {string.Join(", ", cauHoiTrung)}");
+        //}
+
+        //// =====Validate Answers =====
+        //private void ValidateAnswers(CreateCauHoiRequest cauHoi)
+        //{
+        //    var noiDungDapAns = new HashSet<string>();
+
+        //    foreach (var dapAn in cauHoi.DanhSachDapAn)
+        //    {
+        //        if (string.IsNullOrWhiteSpace(dapAn.NoiDungDapAn))
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' có đáp án bị để trống.");
+
+        //        if (cauHoi.NoiDungCauHoi.Length > 99)
+        //            throw new Exception("Đáp án không được vượt quá 99 kí tự");
+
+        //        var trimmed = dapAn.NoiDungDapAn.Trim();
+        //        if (!noiDungDapAns.Add(trimmed))
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' có đáp án bị trùng: {trimmed}");
+        //    }
+        //}
+
+        //// ===== Tạo Entity =====
+        //private BaiKiemTra CreateBaiKiemTraEntity(CreateBaiKiemTraRequest request)
+        //{
+        //    return new BaiKiemTra
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        IdPhan = request.IdPhan.Value,
+        //        TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
+        //        MoTa = request.MoTa?.Trim(),
+        //        DiemDat = 100,
+        //        GioiHanThoiGian = 0,
+        //        ChoLamLai = true,
+        //        SoLanLamToiDa = 0,
+        //        TrangThai = "DangSua",
+        //        TrangThaiPheDuyet = "DangSua",
+        //        IsBanHienTai = true,
+        //        ThuTuSapXep = request.ThuTuSapXep
+        //    };
+        //}
+
+        //// ===== Tạo Questions và Answers (BULK INSERT) =====
+        //private async Task<(List<CauHoi> CauHois, List<DapAn> DapAns)> CreateQuestionsAndAnswersAsync(Guid baiKiemTraId,List<CreateCauHoiRequest> questionRequests)
+        //{
+        //    var cauHois = new List<CauHoi>();
+        //    var dapAns = new List<DapAn>();
+
+        //    var thuTuCauHoi = 1;
+        //    foreach (var cauHoiReq in questionRequests)
+        //    {
+        //        var soDapAnDung = cauHoiReq.DanhSachDapAn?.Count(d => d.LaDapAnDung == true) ?? 0;
+        //        var cauHoi = new CauHoi
+        //        {
+        //            Id = Guid.NewGuid(),
+        //            IdBaiKiemTra = baiKiemTraId,
+        //            TenCauHoi = cauHoiReq.TenCauHoi?.Trim(),
+        //            NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
+        //            LoaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI",
+        //            DoKho = cauHoiReq.DoKho,
+        //            ThuTuSapXep = cauHoiReq.ThuTuSapXep,
+        //            TrangThai = "DangSua",
+        //            TrangThaiPheDuyet = "DangSua",
+        //            IsBanHienTai = true,
+        //        };
+
+        //        cauHois.Add(cauHoi);
+
+        //        var thuTuDapAn = 1;
+        //        foreach (var dapAnReq in cauHoiReq.DanhSachDapAn)
+        //        {
+        //            dapAns.Add(new DapAn
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                IdCauHoi = cauHoi.Id,
+        //                NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
+        //                LaDapAnDung = dapAnReq.LaDapAnDung,
+        //                ThuTuSapXep = dapAnReq.ThuTuSapXep ?? thuTuDapAn,
+        //                TrangThai = "DangSua",
+        //                TrangThaiPheDuyet = "DangSua",
+        //                IsBanHienTai = true,
+        //            });
+        //            thuTuDapAn++;
+        //        }
+        //        thuTuCauHoi++;
+        //    }
+
+        //    if (cauHois.Any())
+        //    {
+        //        await _cauHoiService.CreateRange(cauHois);
+        //        await _cauHoiService.SaveAsync();
+        //    }
+
+        //    if (dapAns.Any())
+        //    {
+        //        await _dapAnService.CreateRange(dapAns);
+        //        await _dapAnService.SaveAsync();
+        //    }
+
+        //    return (cauHois, dapAns);
+        //}
+
+        //private async Task<CreateBaiKiemTraDto> GetQuizResultAsync(Guid baiKiemTraId)
+        //{
+        //    var query = from c in _cauHoiService.GetQueryable()
+        //                join d in _dapAnService.GetQueryable() on c.Id equals d.IdCauHoi into dapAnGroup
+        //                where c.IdBaiKiemTra == baiKiemTraId && !c.IsDeleted
+        //                orderby c.ThuTuSapXep
+        //                select new
+        //                {
+        //                    CauHoi = c,
+        //                    DapAns = dapAnGroup.Where(d => !d.IsDeleted).OrderBy(d => d.ThuTuSapXep).ToList()
+        //                };
+
+        //    var resultData = await query.ToListAsync();
+
+        //    // ⭐ Lấy thông tin bài kiểm tra
+        //    var baiKiemTra = await GetByIdAsync(baiKiemTraId);
+        //    if (baiKiemTra == null)
+        //        throw new Exception("Không tìm thấy bài kiểm tra.");
+
+        //    return new CreateBaiKiemTraDto
+        //    {
+        //        Id = baiKiemTra.Id,
+        //        TenBaiKiemTra = baiKiemTra.TenBaiKiemTra,
+        //        MoTa = baiKiemTra.MoTa,
+        //        DiemDat = baiKiemTra.DiemDat,
+        //        GioiHanThoiGian = baiKiemTra.GioiHanThoiGian,
+        //        ChoLamLai = baiKiemTra.ChoLamLai,
+        //        SoLanLamToiDa = baiKiemTra.SoLanLamToiDa,
+        //        SoCauHoi = resultData.Count,
+        //        TrangThai = baiKiemTra.TrangThai,
+        //        TrangThaiPheDuyet = baiKiemTra.TrangThaiPheDuyet,
+        //        DanhSachCauHoi = resultData.Select(x => new CauHoiDto
+        //        {
+        //            Id = x.CauHoi.Id,
+        //            NoiDungCauHoi = x.CauHoi.NoiDungCauHoi,
+        //            TenCauHoi = x.CauHoi.TenCauHoi,
+        //            LoaiCauHoi = x.CauHoi.LoaiCauHoi,
+        //            DoKho = x.CauHoi.DoKho,
+        //            ThuTuSapXep = x.CauHoi.ThuTuSapXep,
+        //            TrangThai = x.CauHoi.TrangThai,
+        //            TrangThaiPheDuyet= x.CauHoi.TrangThaiPheDuyet,
+        //            DanhSachDapAns = x.DapAns.Select(d => new CreateDapAnDto
+        //            {
+        //                Id = d.Id,
+        //                NoiDungDapAn = d.NoiDungDapAn,
+        //                LaDapAnDung = d.LaDapAnDung,
+        //                ThuTuSapXep = d.ThuTuSapXep,
+        //                TrangThai = d.TrangThai,
+        //                TrangThaiPheDuyet = d.TrangThaiPheDuyet
+        //            }).ToList()
+        //        }).ToList()
+        //    };
+        //}
+        //#endregion
+
+        //#region UpdateQuiz
+
+        //public async Task<UpdateBaiKiemTraDto> UpdateQuiz(UpdateBaiKiemTraRequest request)
+        //{
+        //    Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+
+
+        //    var banGoc = await GetQueryable()
+        //        .FirstOrDefaultAsync(x => x.Id == request.IdBaiKiemTra && x.IsBanHienTai && !x.IsDeleted);
+
+        //    if (banGoc == null)
+        //        throw new Exception("Không tìm thấy bài kiểm tra");
+
+        //    if (banGoc.CreatedId != nguoiTao)
+        //        throw new Exception("Bạn không có quyền hạn để sửa bài kiểm tra này");
+
+        //    ValidateRequest(request);
+
+        //    // ===== 5. XỬ LÝ THEO TRẠNG THÁI =====
+
+        //    // ─── TRƯỜNG HỢP 1: Đang sửa (DangSua) ────────────────
+        //    //  Chỉ DangSua mới có thể sửa trên 1 bản ghi
+        //    if (banGoc.TrangThaiPheDuyet == "DangSua")
+        //    {
+        //        await UpdateDirectlyAsync(banGoc, request, nguoiTao);
+        //        return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banGoc);
+        //    }
+        //    else
+        //    {
+        //        throw new Exception($"Không thể xử lý bài kiểm tra ở trạng thái: {banGoc.TrangThaiPheDuyet}");
+        //    }
+
+        //    //// ─── TRƯỜNG HỢP 2: Chờ duyệt (ChoDuyet) ──────────────
+        //    ////  ChoDuyet => DangSua mới có thể sửa tiếp
+        //    //if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
+        //    //    throw new Exception("Chuyển sang DangSua để sửa tiếp");
+
+        //    //// ─── TRƯỜNG HỢP 3: Đang duyệt (DangDuyet) ────────────
+        //    //// ❌ DangDuyet thì không làm được gì cả
+        //    //if (banGoc.TrangThaiPheDuyet == "DangDuyet")
+        //    //    throw new Exception(
+        //    //        $"❌ BÀI KIỂM TRA ĐANG ĐƯỢC KIỂM DUYỆT!\n\n" +
+        //    //        $"Hệ thống đang kiểm duyệt bài kiểm tra này.\n" +
+        //    //        $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
+        //    //        $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
+        //    //    );
+
+        //    //// ─── TRƯỜNG HỢP 4: Đã duyệt (DaDuyet) ─────────────────
+        //    //// ✅ DaDuyet => xóa mềm (tạo bản nháp mới)
+        //    //if (banGoc.TrangThaiPheDuyet == "DaDuyet")
+        //    //{
+        //    //    // Kiểm tra đã có bản nháp chưa
+        //    //    var banNhap = await GetQueryable()
+        //    //        .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id && !x.IsDeleted);
+
+        //    //    //if (banNhap != null)
+        //    //    //{
+        //    //    //    // Nếu đã có bản nháp, cập nhật bản nháp
+        //    //    //    await UpdateDraftAsync(banNhap, banGoc, request, nguoiTao);
+        //    //    //    return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhap);
+        //    //    //}
+
+        //    //        // Tạo bản nháp mới từ bản gốc
+        //    //        var banNhapMoi = await CreateDraftFromOriginalAsync(banGoc, request, nguoiTao);
+        //    //        return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(banNhapMoi);
+
+        //    //}
+        //}
+
+        //// ===== VALIDATE REQUEST =====
+        //private void ValidateRequest(UpdateBaiKiemTraRequest request)
+        //{
+        //    // Validate tên bài kiểm tra
+        //    if (string.IsNullOrWhiteSpace(request.TenBaiKiemTra))
+        //        throw new Exception("Tên bài kiểm tra không được để trống");
+
+        //    if (request.TenBaiKiemTra.Length > 255)
+        //        throw new Exception("Tên bài kiểm tra không được vượt quá 255 ký tự");
+
+        //    if (request.TenBaiKiemTra.Length < 3)
+        //        throw new Exception("Tên bài kiểm tra phải có ít nhất 3 ký tự");
+
+        //    // Validate mô tả
+        //    if (request.MoTa != null && request.MoTa.Length > 1000)
+        //        throw new Exception("Mô tả không được vượt quá 1000 ký tự");
+
+        //    //// Validate điểm đạt
+        //    //if (request.DiemDat < 50 || request.DiemDat > 100)
+        //    //    throw new Exception("Điểm đạt phải từ 50 đến 100");
+
+        //    //// Validate thời gian
+        //    //if (request.GioiHanThoiGian < 0 || request.GioiHanThoiGian > 1000000000)
+        //    //    throw new Exception("Thời gian làm bài không hợp lệ (0 - 1.000.000.000)");
+
+        //    //if (request.GioiHanThoiGian < 1)
+        //    //    throw new Exception("Thời gian làm bài phải lớn hơn 0 phút");
+
+        //    //// Validate số lần làm lại
+        //    //if (request.ChoLamLai == true && request.SoLanLamToiDa <= 0)
+        //    //    throw new Exception("Vui lòng nhập số lần làm lại tối đa khi cho phép làm lại.");
+
+        //    //if (request.ChoLamLai == true && request.SoLanLamToiDa > 10)
+        //    //    throw new Exception("Số lần làm lại tối đa không được vượt quá 10.");
+
+        //    //if (request.ChoLamLai == false && request.SoLanLamToiDa > 0)
+        //    //    throw new Exception("Không thể nhập số lần làm lại tối đa khi không cho phép làm lại.");
+
+        //    // Validate câu hỏi
+        //    if (request.DanhSachCauHoi == null || !request.DanhSachCauHoi.Any())
+        //        throw new Exception("Bài kiểm tra phải có ít nhất một câu hỏi.");
+
+        //    if (request.DanhSachCauHoi.Count > 50)
+        //        throw new Exception("Bài kiểm tra không được vượt quá 50 câu hỏi.");
+
+        //    if (request.DanhSachCauHoi.Count < 2)
+        //        throw new Exception("Bài kiểm tra phải có ít nhất 2 câu hỏi.");
+
+        //    // Validate từng câu hỏi
+        //    ValidateQuestions(request.DanhSachCauHoi);
+        //}
+
+        //// ===== VALIDATE CÂU HỎI =====
+        //private void ValidateQuestions(List<UpdateCauHoiRequest> questions)
+        //{
+        //    var validDoKho = new HashSet<string> { "De", "TrungBinh", "Kho" };
+        //    var cauHoiIndex = 1;
+
+        //    foreach (var cauHoi in questions)
+        //    {
+        //        if (string.IsNullOrWhiteSpace(cauHoi.NoiDungCauHoi))
+        //            throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được để trống.");
+
+        //        if (cauHoi.NoiDungCauHoi.Length > 1000)
+        //            throw new Exception($"Nội dung câu hỏi {cauHoiIndex} không được vượt quá 1000 ký tự.");
+
+        //        if (cauHoi.NoiDungCauHoi.Length < 5)
+        //            throw new Exception($"Nội dung câu hỏi {cauHoiIndex} phải có ít nhất 5 ký tự.");
+
+        //        if (!string.IsNullOrWhiteSpace(cauHoi.TenCauHoi) && cauHoi.TenCauHoi.Length > 255)
+        //            throw new Exception($"Tên câu hỏi {cauHoiIndex} không được vượt quá 255 ký tự.");
+
+        //        if (string.IsNullOrWhiteSpace(cauHoi.DoKho))
+        //            throw new Exception($"Độ khó câu hỏi {cauHoiIndex} không được để trống.");
+
+        //        if (!validDoKho.Contains(cauHoi.DoKho))
+        //            throw new Exception($"Độ khó '{cauHoi.DoKho}' không hợp lệ. Chỉ chấp nhận: De, TrungBinh, Kho.");
+
+        //        if (cauHoi.ThuTuSapXep.HasValue && cauHoi.ThuTuSapXep < 1)
+        //            throw new Exception($"Thứ tự sắp xếp câu hỏi {cauHoiIndex} không hợp lệ.");
+
+        //        if (cauHoi.DanhSachDapAns == null || !cauHoi.DanhSachDapAns.Any())
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
+
+        //        if (cauHoi.DanhSachDapAns.Count < 2)
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất 2 đáp án.");
+
+        //        if (cauHoi.DanhSachDapAns.Count > 6)
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được vượt quá 6 đáp án.");
+
+        //        ValidateAnswers(cauHoi, cauHoiIndex);
+
+        //        var soDapAnDung = cauHoi.DanhSachDapAns.Count(d => d.LaDapAnDung == true);
+        //        if (soDapAnDung == 0)
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' phải có ít nhất một đáp án đúng.");
+
+        //        if (soDapAnDung == cauHoi.DanhSachDapAns.Count)
+        //            throw new Exception($"Câu hỏi '{cauHoi.NoiDungCauHoi}' không được có tất cả đáp án đúng.");
+
+        //        cauHoiIndex++;
+        //    }
+
+        //    // Kiểm tra câu hỏi trùng nội dung
+        //    var cauHoiTrung = questions
+        //        .Where(c => !string.IsNullOrWhiteSpace(c.NoiDungCauHoi))
+        //        .GroupBy(c => c.NoiDungCauHoi.Trim())
+        //        .Where(g => g.Count() > 1)
+        //        .Select(g => g.Key)
+        //        .ToList();
+
+        //    if (cauHoiTrung.Any())
+        //        throw new Exception($"Các câu hỏi bị trùng nội dung: {string.Join(", ", cauHoiTrung)}");
+        //}
+
+        //// ===== VALIDATE ĐÁP ÁN =====
+        //private void ValidateAnswers(UpdateCauHoiRequest cauHoi, int cauHoiIndex)
+        //{
+        //    var noiDungDapAns = new HashSet<string>();
+
+        //    foreach (var dapAn in cauHoi.DanhSachDapAns)
+        //    {
+        //        if (string.IsNullOrWhiteSpace(dapAn.NoiDungDapAn))
+        //            throw new Exception($"Câu hỏi {cauHoiIndex} có đáp án bị để trống.");
+
+        //        if (dapAn.NoiDungDapAn.Length > 500)
+        //            throw new Exception($"Câu hỏi {cauHoiIndex} có đáp án vượt quá 500 ký tự.");
+
+        //        var trimmed = dapAn.NoiDungDapAn.Trim();
+        //        if (!noiDungDapAns.Add(trimmed))
+        //            throw new Exception($"Câu hỏi {cauHoiIndex} có đáp án bị trùng: {trimmed}");
+        //    }
+        //}
+
+        //// ===== CẬP NHẬT TRỰC TIẾP (DangSua) =====
+        //private async Task UpdateDirectlyAsync(BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
+        //{
+        //    banGoc.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
+        //    banGoc.MoTa = request.MoTa?.Trim();
+        //    banGoc.DiemDat = 100;
+        //    banGoc.GioiHanThoiGian = 0;
+        //    banGoc.ChoLamLai = true;
+        //    banGoc.SoLanLamToiDa = 0;
+        //    banGoc.TrangThaiPheDuyet = "DangSua";
+        //    banGoc.TrangThai = "DangSua";
+        //    banGoc.IsBanHienTai = true;
+        //    banGoc.UpdatedDate = DateTime.Now;
+        //    banGoc.UpdatedBy = nguoiTao.ToString();
+        //    banGoc.ThuTuSapXep = request.ThuTuSapXep;
+
+        //    await UpdateAsync(banGoc);
+        //    await SaveAsync();
+
+        //    if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
+        //    {
+        //        await UpdateQuestionsAndAnswersAsync(banGoc.Id, request.DanhSachCauHoi);
+        //    }
+        //}
+
+        //// ===== CẬP NHẬT BẢN NHÁP =====
+        ////private async Task UpdateDraftAsync(BaiKiemTra banNhap, BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
+        ////{
+        ////    banNhap.IdBanGhiTruoc = banGoc.Id;
+        ////    banNhap.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
+        ////    banNhap.MoTa = request.MoTa?.Trim();
+        ////    banNhap.DiemDat = 100;
+        ////    banNhap.GioiHanThoiGian = 0;
+        ////    banNhap.ChoLamLai = true;
+        ////    banNhap.SoLanLamToiDa = 0;
+        ////    banNhap.TrangThaiPheDuyet = "DangSua";
+        ////    banNhap.TrangThai = "DangSua";
+        ////    banNhap.IsBanHienTai = false;
+        ////    banNhap.UpdatedDate = DateTime.Now;
+        ////    banNhap.UpdatedBy = nguoiTao.ToString();
+        ////    banNhap.ThuTuSapXep = request.ThuTuSapXep;
+
+        ////    await UpdateAsync(banNhap);
+        ////    await SaveAsync();
+
+        ////    if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
+        ////    {
+        ////        await UpdateQuestionsAndAnswersAsync(banNhap.Id, request.DanhSachCauHoi);
+        ////    }
+        ////}
+
+        ////// ===== TẠO BẢN NHÁP MỚI =====
+        ////private async Task<BaiKiemTra> CreateDraftFromOriginalAsync(BaiKiemTra banGoc, UpdateBaiKiemTraRequest request, Guid nguoiTao)
+        ////{
+        ////    var banNhapMoi = new BaiKiemTra
+        ////    {
+        ////        Id = Guid.NewGuid(),
+        ////        IdBanGhiTruoc = banGoc.Id,
+        ////        IdPhan = banGoc.IdPhan,
+        ////        TenBaiKiemTra = request.TenBaiKiemTra.Trim(),
+        ////        MoTa = request.MoTa?.Trim(),
+        ////        DiemDat = 100,
+        ////        GioiHanThoiGian = 0,
+        ////        ChoLamLai = true,
+        ////        SoLanLamLai = 0,
+        ////        SoLanLamToiDa = 0,
+        ////        TrangThai = "DangSua",
+        ////        TrangThaiPheDuyet = "DangSua",
+        ////        IsBanHienTai = false,
+        ////        ThuTuSapXep = request.ThuTuSapXep
+        ////    };
+
+        ////    await CreateAsync(banNhapMoi);
+        ////    await SaveAsync();
+
+        ////    if (request.DanhSachCauHoi != null && request.DanhSachCauHoi.Any())
+        ////    {
+        ////        await CopyQuestionsAndAnswersAsync(banGoc.Id, banNhapMoi.Id, request.DanhSachCauHoi);
+        ////    }
+
+        ////    return banNhapMoi;
+        ////}
+
+        //// ===== CẬP NHẬT CÂU HỎI VÀ ĐÁP ÁN =====
+        //private async Task UpdateQuestionsAndAnswersAsync(Guid idBaiKiemTra, List<UpdateCauHoiRequest> cauHoiRequests)
+        //{
+        //    var cauHoisCu = await _cauHoiService.GetQueryable()
+        //        .Where(c => c.IdBaiKiemTra == idBaiKiemTra && !c.IsDeleted)
+        //        .ToListAsync();
+
+        //    var cauHoiIdsCu = cauHoisCu.Select(c => c.Id).ToHashSet();
+        //    var cauHoiIdsMoi = cauHoiRequests.Select(c => c.Id).ToHashSet();
+
+        //    // Xóa câu hỏi không còn trong danh sách mới
+        //    var canXoa = cauHoisCu.Where(c => !cauHoiIdsMoi.Contains(c.Id)).ToList();
+        //    if (canXoa.Any())
+        //    {
+        //        foreach (var c in canXoa)
+        //        {
+        //            await _cauHoiService.DeleteAsync(c);
+        //        }
+        //        await _cauHoiService.SaveAsync();
+        //    }
+
+        //    // Thêm hoặc cập nhật câu hỏi
+        //    foreach (var cauHoiReq in cauHoiRequests)
+        //    {
+        //        var soDapAnDung = cauHoiReq.DanhSachDapAns?.Count(d => d.LaDapAnDung == true) ?? 0;
+        //        var loaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI";
+
+        //        if (cauHoiIdsCu.Contains(cauHoiReq.Id))
+        //        {
+        //            var cauHoiCu = cauHoisCu.First(c => c.Id == cauHoiReq.Id);
+        //            cauHoiCu.TenCauHoi = cauHoiReq.TenCauHoi?.Trim();
+        //            cauHoiCu.NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim();
+        //            cauHoiCu.LoaiCauHoi = loaiCauHoi;
+        //            cauHoiCu.DoKho = cauHoiReq.DoKho;
+        //            cauHoiCu.ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0;
+        //            cauHoiCu.UpdatedDate = DateTime.Now;
+        //            await _cauHoiService.UpdateAsync(cauHoiCu);
+
+        //            await UpdateAnswersAsync(cauHoiCu.Id, cauHoiReq.DanhSachDapAns);
+        //        }
+        //        else
+        //        {
+        //            var cauHoiMoi = new CauHoi
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                IdBaiKiemTra = idBaiKiemTra,
+        //                TenCauHoi = cauHoiReq.TenCauHoi?.Trim(),
+        //                NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
+        //                LoaiCauHoi = loaiCauHoi,
+        //                DoKho = cauHoiReq.DoKho,
+        //                ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0,
+        //                TrangThai = "DangSua",
+        //                TrangThaiPheDuyet = "DangSua",
+        //                IsBanHienTai = true,
+        //            };
+        //            await _cauHoiService.CreateAsync(cauHoiMoi);
+        //            await _cauHoiService.SaveAsync();
+
+        //            foreach (var dapAnReq in cauHoiReq.DanhSachDapAns)
+        //            {
+        //                var dapAnMoi = new DapAn
+        //                {
+        //                    Id = Guid.NewGuid(),
+        //                    IdCauHoi = cauHoiMoi.Id,
+        //                    NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
+        //                    LaDapAnDung = dapAnReq.LaDapAnDung,
+        //                    ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
+        //                    TrangThai = "DangSua",
+        //                    TrangThaiPheDuyet = "DangSua",
+        //                    IsBanHienTai = true,
+        //                };
+        //                await _dapAnService.CreateAsync(dapAnMoi);
+        //            }
+        //            await _dapAnService.SaveAsync();
+        //        }
+        //    }
+        //}
+
+        //// ===== CẬP NHẬT ĐÁP ÁN =====
+        //private async Task UpdateAnswersAsync(Guid idCauHoi, List<UpdateDapAnRequest> dapAnRequests)
+        //{
+        //    if (dapAnRequests == null || !dapAnRequests.Any())
+        //        return;
+
+        //    var dapAnsCu = await _dapAnService.GetQueryable()
+        //        .Where(d => d.IdCauHoi == idCauHoi && !d.IsDeleted)
+        //        .ToListAsync();
+
+        //    var dapAnIdsCu = dapAnsCu.Select(d => d.Id).ToHashSet();
+        //    var dapAnIdsMoi = dapAnRequests.Select(d => d.Id).ToHashSet();
+
+        //    var canXoa = dapAnsCu.Where(d => !dapAnIdsMoi.Contains(d.Id)).ToList();
+        //    if (canXoa.Any())
+        //    {
+        //        foreach (var d in canXoa)
+        //        {
+        //            await _dapAnService.DeleteAsync(d);
+        //        }
+        //        await _dapAnService.SaveAsync();
+        //    }
+
+        //    foreach (var dapAnReq in dapAnRequests)
+        //    {
+        //        if (dapAnIdsCu.Contains(dapAnReq.Id.Value))
+        //        {
+        //            var dapAnCu = dapAnsCu.First(d => d.Id == dapAnReq.Id);
+        //            dapAnCu.NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim();
+        //            dapAnCu.LaDapAnDung = dapAnReq.LaDapAnDung;
+        //            dapAnCu.ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0;
+        //            await _dapAnService.UpdateAsync(dapAnCu);
+        //        }
+        //        else
+        //        {
+        //            var dapAnMoi = new DapAn
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                IdCauHoi = idCauHoi,
+        //                NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
+        //                LaDapAnDung = dapAnReq.LaDapAnDung,
+        //                ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
+        //                TrangThai = "DangSua",
+        //                TrangThaiPheDuyet = "DangSua",
+        //                IsBanHienTai = true,
+        //            };
+        //            await _dapAnService.CreateAsync(dapAnMoi);
+        //        }
+        //    }
+        //    await _dapAnService.SaveAsync();
+        //}
+
+        ////// ===== COPY CÂU HỎI VÀ ĐÁP ÁN =====
+        ////private async Task CopyQuestionsAndAnswersAsync(Guid idBaiKiemTraGoc, Guid idBaiKiemTraMoi, List<UpdateCauHoiRequest> cauHoiRequests)
+        ////{
+        ////    foreach (var cauHoiReq in cauHoiRequests)
+        ////    {
+        ////        var soDapAnDung = cauHoiReq.DanhSachDapAns?.Count(d => d.LaDapAnDung == true) ?? 0;
+        ////        var loaiCauHoi = soDapAnDung == 1 ? "ONE" : "MULTI";
+
+        ////        var cauHoiMoi = new CauHoi
+        ////        {
+        ////            Id = Guid.NewGuid(),
+        ////            IdBaiKiemTra = idBaiKiemTraMoi,
+        ////            TenCauHoi = cauHoiReq.TenCauHoi?.Trim(),
+        ////            NoiDungCauHoi = cauHoiReq.NoiDungCauHoi.Trim(),
+        ////            LoaiCauHoi = loaiCauHoi,
+        ////            DoKho = cauHoiReq.DoKho,
+        ////            ThuTuSapXep = cauHoiReq.ThuTuSapXep ?? 0,
+        ////            TrangThai = "DangSua",
+        ////            TrangThaiPheDuyet = "DangSua",
+        ////            IsBanHienTai = true,
+        ////        };
+        ////        await _cauHoiService.CreateAsync(cauHoiMoi);
+        ////        await _cauHoiService.SaveAsync();
+
+        ////        foreach (var dapAnReq in cauHoiReq.DanhSachDapAns)
+        ////        {
+        ////            var dapAnMoi = new DapAn
+        ////            {
+        ////                Id = Guid.NewGuid(),
+        ////                IdCauHoi = cauHoiMoi.Id,
+        ////                NoiDungDapAn = dapAnReq.NoiDungDapAn.Trim(),
+        ////                LaDapAnDung = dapAnReq.LaDapAnDung,
+        ////                ThuTuSapXep = dapAnReq.ThuTuSapXep ?? 0,
+        ////                TrangThai = "DangSua",
+        ////                TrangThaiPheDuyet = "DangSua",
+        ////                IsBanHienTai = true,
+        ////            };
+        ////            await _dapAnService.CreateAsync(dapAnMoi);
+        ////        }
+        ////        await _dapAnService.SaveAsync();
+        ////    }
+        ////}
+
+        ////// ===== HELPER: LẤY USER ID =====
+        ////private Guid GetCurrentUserId()
+        ////{
+        ////    var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        ////    return Guid.TryParse(userId, out var result) ? result : Guid.Empty;
+        ////}
+
+        //#endregion
+
+        //public async Task<bool> DeleteQuiz(Guid id)
+        //{
+        //    var quiz = await GetQueryable()
+        //        .FirstOrDefaultAsync(x => x.Id == id);
+
+        //    if (quiz == null)
+        //        throw new Exception("Không tìm thấy bài kiểm tra.");
+
+        //    if (quiz.TrangThaiPheDuyet == "ChoDuyet" || quiz.TrangThaiPheDuyet == "DangDuyet")
+        //        throw new Exception("Đang gửi duyệt không thể xóa");
+
+
+        //    // Kiểm tra đã có học viên đăng ký chưa
+        //    var coNguoiHoc = await (
+        //        from ph in _phanRepository.GetQueryable()
+        //        join dk in _dangKyKhoaHocRepository.GetQueryable()
+        //            on ph.IdKhoaHoc equals dk.IdKhoaHoc
+        //        where ph.Id == quiz.IdPhan
+        //        select dk.Id
+        //    ).AnyAsync();
+
+        //    var trangThaiMoi = coNguoiHoc
+        //        ? "NgungHoatDong"
+        //        : "DaXoa";
+
+        //    quiz.TrangThai = trangThaiMoi;
+
+        //    // Cập nhật câu hỏi
+        //    var cauHois = await _cauHoiService.GetQueryable()
+        //        .Where(x => x.IdBaiKiemTra == id)
+        //        .ToListAsync();
+
+        //    foreach (var cauHoi in cauHois)
+        //    {
+        //        cauHoi.TrangThai = trangThaiMoi;
+        //        cauHoi.IsDeleted = true;
+        //    }
+
+        //    var cauHoiIds = cauHois.Select(x => x.Id).ToList();
+
+        //    var dapAns = await _dapAnService.GetQueryable()
+        //        .Where(x => cauHoiIds.Contains(x.IdCauHoi.Value))
+        //        .ToListAsync();
+
+        //    foreach (var dapAn in dapAns)
+        //    {
+        //        dapAn.TrangThai = trangThaiMoi;
+        //        dapAn.IsDeleted = true;
+        //    }
+
+        //    await DeleteAsync(quiz);
+
+        //    foreach (var cauHoi in cauHois)
+        //    {
+        //        await _cauHoiService.DeleteAsync(cauHoi);
+        //    }
+
+        //    foreach (var dapAn in dapAns)
+        //    {
+        //        await _dapAnService.DeleteAsync(dapAn);
+        //    }
+
+        //    return true;
+        //}
 
         #region StartQuiz
         public async Task<LanLamBaiKiemTraDto> StartQuiz(StartQuizRequest request)

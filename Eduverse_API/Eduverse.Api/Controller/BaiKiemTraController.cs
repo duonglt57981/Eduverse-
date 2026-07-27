@@ -94,20 +94,50 @@ namespace Eduverse.Api.Controller
         }
 
 
-        //[HttpPost("CauHoi/create-cauhoi")]
-        //[Authorize(Roles = "Admin,GiaoVien")]
-        //public async Task<DataResponse<CreateCauHoiDto>> CreateCauHoi([FromBody] CreateCauHoiRequest request)
-        //{
-        //    try
-        //    {
-        //        var result = await _cauHoiService.CreateQuestion(request);
-        //        return DataResponse<CreateCauHoiDto>.Success(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return DataResponse<CreateCauHoiDto>.False(ex.Message);
-        //    }
-        //}
+        [HttpPost("create-cauhoi")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<CauHoiDto>> CreateCauHoi( CreateCauHoiRequest request)
+        {
+            try
+            {
+                var result = await _cauHoiService.CreateCauHoiAsync(request);
+                return DataResponse<CauHoiDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<CauHoiDto>.False(ex.Message);
+            }
+        }
+
+        [HttpPut("update-cauhoi")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<CauHoiDto>> UpdateCauHoi(UpdateCauHoiRequest request)
+        {
+            try
+            {
+                var result = await _cauHoiService.UpdateCauHoiAsync(request);
+                return DataResponse<CauHoiDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<CauHoiDto>.False(ex.Message);
+            }
+        }
+
+        [HttpDelete("delete-cauhoi/{Id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<bool>> DeleteCauHoi(Guid Id)
+        {
+            try
+            {
+                var result = await _cauHoiService.DeleteCauHoiAsync(Id);
+                return DataResponse<bool>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<bool>.False(ex.Message);
+            }
+        }
 
 
         /// <summary>

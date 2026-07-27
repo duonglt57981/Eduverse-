@@ -6,6 +6,8 @@ namespace Eduverse.Service.CauHoiService
 {
     public interface ICauHoiService : IService<Model.Entities.CauHoi>
     {
-        //Task<CreateCauHoiDto> CreateQuestion(CreateCauHoiRequest request);
+        Task<CauHoiDto> CreateCauHoiAsync(CreateCauHoiRequest request);
+        Task<CauHoiDto> UpdateCauHoiAsync(UpdateCauHoiRequest request);
+        Task<bool> DeleteCauHoiAsync(Guid idCauHoi);
     }
 }

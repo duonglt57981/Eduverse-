@@ -1,4 +1,5 @@
-﻿using Eduverse.Service.DapAnService.Request;
+﻿using Eduverse.Model.Entities;
+using Eduverse.Service.DapAnService.Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +8,9 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.CauHoiService.Request
 {
-    public class CreateCauHoiRequest
+    public class CreateCauHoiRequest : CauHoi
     {
+        public Guid IdBaiKiemTra { get; set; }
         public string? TenCauHoi { get; set; }
         public string? NoiDungCauHoi { get; set; }
         public string? LoaiCauHoi { get; set; }      

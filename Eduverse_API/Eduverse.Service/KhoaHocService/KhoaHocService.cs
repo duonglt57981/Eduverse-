@@ -312,12 +312,6 @@ namespace Eduverse.Service.KhoaHocService
                     (x.LoaiKhoaHoc ?? "").Contains(keyword));
             }
 
-            // Lọc theo trạng thái phê duyệt
-            if (!string.IsNullOrWhiteSpace(search.TrangThai) && search.TrangThai != "TatCa")
-            {
-                query = query.Where(x => x.TrangThaiPheDuyet == search.TrangThai);
-            }
-
             #endregion
 
             #region Sort
@@ -1432,42 +1426,72 @@ namespace Eduverse.Service.KhoaHocService
                          && x.IsBanHienTai == true
                          && !x.IsDeleted);
 
-            // ── Áp dụng filter ──
+            var DangKiKhoaHocs = await _dangKyKhoaHocRepository.GetQueryable().ToListAsync();
 
-            // 1. Filter theo từ khóa
+            // ── Áp dụng bộ lọc ──
             if (!string.IsNullOrEmpty(search.Keyword))
             {
                 query = query.Where(x => x.TieuDe != null && x.TieuDe.Contains(search.Keyword));
             }
 
-            // ── Sắp xếp ──
-            if (!string.IsNullOrEmpty(search.SapXep))
+            if (!string.IsNullOrEmpty(search.TrangThai) && search.TrangThai != "TatCa")
             {
-                switch (search.SapXep)
-                {
-                    case "moi-nhat":
-                        query = query.OrderByDescending(x => x.CreatedDate);
-                        break;
-                    case "cu-nhat":
-                        query = query.OrderBy(x => x.CreatedDate);
-                        break;
-                    case "ten-a-z":
-                        query = query.OrderBy(x => x.TieuDe ?? "");
-                        break;
-                    case "ten-z-a":
-                        query = query.OrderByDescending(x => x.TieuDe ?? "");
-                        break;
-                    default:
-                        query = query.OrderByDescending(x => x.CreatedDate);
-                        break;
-                }
-            }
-            else
-            {
-                query = query.OrderByDescending(x => x.CreatedDate);
+                query = query.Where(x => x.TrangThaiPheDuyet == search.TrangThai);
             }
 
-            // ── Map sang DTO ──
+            // ── Sắp xếp đa cấp (kết hợp nhiều tiêu chí) ──
+            IOrderedQueryable<KhoaHoc> orderedQuery = null;
+            bool hasSort = false;
+
+            // 1. Ưu tiên chính: Ngày tạo
+            if (!string.IsNullOrEmpty(search.SapXepNgay))
+            {
+                orderedQuery = search.SapXepNgay == "Moi"
+                    ? query.OrderByDescending(x => x.CreatedDate)
+                    : query.OrderBy(x => x.CreatedDate);
+                hasSort = true;
+            }
+
+            // 2. Sau đó: Tên (nếu có yêu cầu)
+            if (!string.IsNullOrEmpty(search.SapXepTen))
+            {
+                if (hasSort)
+                {
+                    orderedQuery = search.SapXepTen == "AZ"
+                        ? orderedQuery.ThenBy(x => x.TieuDe ?? string.Empty)
+                        : orderedQuery.ThenByDescending(x => x.TieuDe ?? string.Empty);
+                }
+                else
+                {
+                    orderedQuery = search.SapXepTen == "AZ"
+                        ? query.OrderBy(x => x.TieuDe ?? string.Empty)
+                        : query.OrderByDescending(x => x.TieuDe ?? string.Empty);
+                    hasSort = true;
+                }
+            }
+
+            // 3. Cuối cùng: Số lượng học viên (nếu yêu cầu)
+            if (search.SapXepHocVienNhieuNhat == true)
+            {
+                var dangKyQuery = _dangKyKhoaHocRepository.GetQueryable();
+                if (hasSort)
+                {
+                    orderedQuery = orderedQuery.ThenByDescending(x => dangKyQuery.Count(d => d.IdKhoaHoc == x.Id));
+                }
+                else
+                {
+                    orderedQuery = query.OrderByDescending(x => dangKyQuery.Count(d => d.IdKhoaHoc == x.Id));
+                    hasSort = true;
+                }
+            }
+
+            if (!hasSort)
+            {
+                orderedQuery = query.OrderByDescending(x => x.CreatedDate);
+            }
+
+            query = orderedQuery; 
+
             var dtoQuery = query.Select(x => new KhoaHocDto
             {
                 Id = x.Id,
@@ -1485,7 +1509,6 @@ namespace Eduverse.Service.KhoaHocService
                 IdBanGhiTruoc = x.IdBanGhiTruoc,
             });
 
-            // ── Phân trang ──
             return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
         }
 
@@ -2270,7 +2293,7 @@ namespace Eduverse.Service.KhoaHocService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khoa học");
 
-            if (khoaHoc.TrangThai == "ChoDuyet")
+            if (khoaHoc.TrangThaiPheDuyet == "ChoDuyet" || khoaHoc.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
 
             var coNguoiHoc = await _dangKyKhoaHocRepository.GetQueryable()

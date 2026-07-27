@@ -5,12 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Eduverse.Model.Entities;
 using Eduverse.Service.DapAnService.Dto;
+using Microsoft.Identity.Client;
 
 namespace Eduverse.Service.CauHoiService.Dto
 {
     public class CauHoiDto
     {
         public Guid Id { get; set; }
+        public Guid IdBaiKiemTra { get; set; }
         public string TenCauHoi { get; set; }
         public string? NoiDungCauHoi { get; set; }
         public string? DoKho { get; set; }
@@ -19,6 +21,6 @@ namespace Eduverse.Service.CauHoiService.Dto
         public string? TrangThai { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
 
-        public List<CreateDapAnDto> DanhSachDapAns { get; set; }
+        public List<DapAnDto> DanhSachDapAns { get; set; }
     }
 }

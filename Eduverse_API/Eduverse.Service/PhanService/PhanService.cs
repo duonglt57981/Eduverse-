@@ -221,8 +221,13 @@ namespace Eduverse.Service.PhanService
             var phan = await GetAll().FirstOrDefaultAsync(x => x.Id == id);
             if (phan.CreatedId != nguoiTao)
                 throw new Exception("Bạn không có quyền hạn để xóa phần học này!");
+
             if (phan == null)
                 throw new Exception("Không tim thấy phần học");
+
+            if (phan.TrangThaiPheDuyet == "ChoDuyet" || phan.TrangThaiPheDuyet == "DangDuyet")
+                throw new Exception("Đang gửi duyệt không thể xóa");
+
 
             var coNguoiHoc = await _dangKyKhoaHocRepository.GetQueryable()
                 .AnyAsync(x => x.IdKhoaHoc == phan.IdKhoaHoc);
