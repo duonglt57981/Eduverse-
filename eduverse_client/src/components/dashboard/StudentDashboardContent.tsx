@@ -152,10 +152,14 @@ function fmtDuration(seconds?: number) {
 }
 
 function getGradient(course: KhoaHocDto) {
-  if (course.thumbnailGradient) return course.thumbnailGradient;
-  return (
-    LEVEL_GRADIENT[course.capDo ?? course.level ?? ""] ?? C.gradientCrimson
-  );
+  return "#F1F5F9";
+}
+
+function isValidImage(url?: string): boolean {
+  if (!url) return false;
+  const t = url.trim();
+  if (!t || t === "không có" || t === "aaaaaaaa" || t === "string" || t === "null" || t === "undefined") return false;
+  return t.startsWith("http") || t.startsWith("/") || t.startsWith(".");
 }
 
 // ─── Carousel Row ─────────────────────────────────────────────────────────────
@@ -651,27 +655,31 @@ function CourseCard({
         <Box
           sx={{
             height: 136,
-            background: course.hinhAnhKhoaHoc
+            background: isValidImage(course.hinhAnhKhoaHoc)
               ? `url(${course.hinhAnhKhoaHoc}) center/cover no-repeat`
-              : gradient,
+              : "#F1F5F9",
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {!course.hinhAnhKhoaHoc && (
-            <Typography
-              sx={{
-                color: "#fff",
-                fontSize: 20,
-                fontWeight: 900,
-                opacity: 0.12,
-                userSelect: "none",
-              }}
-            >
-              EduVerse
-            </Typography>
+          {!isValidImage(course.hinhAnhKhoaHoc) && (
+            <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
+              <SchoolRounded sx={{ color: "#94A3B8", fontSize: 32 }} />
+              <Typography
+                sx={{
+                  color: "#94A3B8",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  mt: 0.75,
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                }}
+              >
+                EDUVERSE
+              </Typography>
+            </Stack>
           )}
           {(course.capDo || course.level) && (
             <Chip
@@ -949,6 +957,8 @@ export default function StudentDashboardContent() {
     return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
   }, [user?.email]);
 
+  const [courseImages, setCourseImages] = useState<Record<string, string>>({});
+  const [titleImages, setTitleImages] = useState<Record<string, string>>({});
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -963,6 +973,29 @@ export default function StudentDashboardContent() {
     const load = async () => {
       try {
         setLoading(true);
+
+        // Fetch approved courses to retrieve real image urls (bypassing dashboard endpoint omissions)
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
+          const items = approvedRes.data || [];
+          const imgMap: Record<string, string> = {};
+          const tMap: Record<string, string> = {};
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          items.forEach((item: any) => {
+            if (item.id && item.hinhAnhKhoaHoc) {
+              imgMap[item.id] = item.hinhAnhKhoaHoc;
+            }
+            if (item.tieuDe && item.hinhAnhKhoaHoc) {
+              tMap[item.tieuDe] = item.hinhAnhKhoaHoc;
+            }
+          });
+          setCourseImages(imgMap);
+          setTitleImages(tMap);
+        } catch (err) {
+          console.error("Failed to load course image map:", err);
+        }
+
         const res = await apiService.get<DashboardData>("/dashboard?role=HocVien");
         if (res.status && res.data) {
           setData(res.data);

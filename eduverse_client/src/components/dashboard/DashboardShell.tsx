@@ -536,25 +536,33 @@ function SidebarContent({
             const Icon = item.icon;
             const itemRoute = getRouteByLabel(item.label);
             const isActive = pathname === itemRoute;
+            const isAdmin = pathname.startsWith("/admin");
             return (
               <ListItemButton
                 key={item.label}
                 onClick={() => router.push(itemRoute)}
                 sx={{
                   mb: 0.5,
-                  borderRadius: "16px",
+                  borderRadius: isAdmin ? "8px" : "16px",
                   px: 2,
-                  py: 1.25,
-                  color: isActive ? COLORS.primary : "rgba(31,41,55,0.72)",
-                  bgcolor: isActive ? "rgba(141,19,19,0.05)" : "transparent",
+                  py: isAdmin ? 1 : 1.25,
+                  color: isActive
+                    ? (isAdmin ? "#991B1B" : COLORS.primary)
+                    : (isAdmin ? "#475569" : "rgba(31,41,55,0.72)"),
+                  bgcolor: isActive
+                    ? (isAdmin ? "rgba(153, 27, 27, 0.04)" : "rgba(141,19,19,0.05)")
+                    : "transparent",
                   borderLeft: isActive
-                    ? `4px solid ${COLORS.primary}`
-                    : "4px solid transparent",
-                  transition: "all 200ms ease",
+                    ? (isAdmin ? "3px solid #991B1B" : `4px solid ${COLORS.primary}`)
+                    : (isAdmin ? "3px solid transparent" : "4px solid transparent"),
+                  transition: "all 150ms ease",
                   "&:hover": {
                     bgcolor: isActive
-                      ? "rgba(141,19,19,0.08)"
-                      : "rgba(141,19,19,0.03)",
+                      ? (isAdmin ? "rgba(153, 27, 27, 0.06)" : "rgba(141,19,19,0.08)")
+                      : (isAdmin ? "#FAFAFA" : "rgba(141,19,19,0.03)"),
+                    color: isActive
+                      ? (isAdmin ? "#991B1B" : COLORS.primary)
+                      : (isAdmin ? "#1F2937" : "rgba(31,41,55,0.85)"),
                   },
                 }}
               >
@@ -562,7 +570,7 @@ function SidebarContent({
                   <Icon fontSize="medium" />
                 </ListItemIcon>
                 <Typography
-                  sx={{ fontSize: 14.5, fontWeight: isActive ? 700 : 500 }}
+                  sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}
                 >
                   {item.label}
                 </Typography>
@@ -571,27 +579,32 @@ function SidebarContent({
           })}
         </List>
 
-        <Divider sx={{ my: 2, opacity: 0.6 }} />
+        <Divider sx={{ my: 2, opacity: 0.6, borderColor: pathname.startsWith("/admin") ? "#EEF0F3" : "divider" }} />
 
         <List disablePadding>
           {getSecondarySidebarItemsByRole(roles).map((item) => {
             const Icon = item.icon;
+            const isAdmin = pathname.startsWith("/admin");
             return (
               <ListItemButton
                 key={item.label}
                 sx={{
                   mb: 0.5,
-                  borderRadius: "16px",
+                  borderRadius: isAdmin ? "8px" : "16px",
                   px: 2,
-                  py: 1.25,
-                  color: "rgba(31,41,55,0.72)",
-                  "&:hover": { bgcolor: "rgba(141,19,19,0.03)" },
+                  py: isAdmin ? 1 : 1.25,
+                  color: isAdmin ? "#475569" : "rgba(31,41,55,0.72)",
+                  transition: "all 150ms ease",
+                  "&:hover": {
+                    bgcolor: isAdmin ? "#FAFAFA" : "rgba(141,19,19,0.03)",
+                    color: isAdmin ? "#1F2937" : "rgba(31,41,55,0.85)",
+                  },
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 36, color: "inherit" }}>
                   <Icon fontSize="medium" />
                 </ListItemIcon>
-                <Typography sx={{ fontSize: 14.5, fontWeight: 500 }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
                   {item.label}
                 </Typography>
               </ListItemButton>
@@ -1028,8 +1041,8 @@ export default function DashboardShell({
     [],
   );
 
-  const sidebarWidth = 280;
-  const headerHeight = "76px";
+  const sidebarWidth = pathname.startsWith("/admin") ? 250 : 280;
+  const headerHeight = pathname.startsWith("/admin") ? "72px" : "76px";
 
   const continueItems = useMemo(() => {
     if (!dashboardData?.continueLearning) return [];
@@ -1163,7 +1176,7 @@ export default function DashboardShell({
               height: headerHeight,
               zIndex: 1200,
               px: { xs: 2, md: 4 },
-              borderBottom: "1px solid rgba(0,0,0,0.06)",
+              borderBottom: "1px solid #EEF0F3",
               bgcolor: "#ffffff",
               display: "flex",
               alignItems: "center",
@@ -1179,7 +1192,7 @@ export default function DashboardShell({
                 onClick={() => setMobileOpen(true)}
                 sx={{
                   display: { xs: "inline-flex", lg: "none" },
-                  color: COLORS.primary,
+                  color: "#991B1B",
                 }}
               >
                 <MenuRounded />
@@ -1202,8 +1215,8 @@ export default function DashboardShell({
                 <Image
                   src="/auth/img/logo_nentrang.png"
                   alt="EduVerse"
-                  width={150}
-                  height={46}
+                  width={140}
+                  height={42}
                   priority
                   style={{ width: "100%", height: "auto", display: "block" }}
                 />
@@ -1215,33 +1228,28 @@ export default function DashboardShell({
               elevation={0}
               sx={{
                 flex: 1,
-                maxWidth: 720,
+                maxWidth: 480,
                 mx: { md: 3, lg: 5 },
                 display: { xs: "none", md: "flex" },
                 alignItems: "center",
                 gap: 1.5,
                 px: 2.5,
-                py: 0.85,
-                borderRadius: "50px",
-                bgcolor: COLORS.white,
-                border: "1px solid rgba(0,0,0,0.12)",
-                transition: "border-color 150ms ease, box-shadow 150ms ease",
+                py: 0.75,
+                borderRadius: "10px",
+                bgcolor: "#F8FAFC",
+                border: "1px solid #EEF0F3",
+                transition: "all 150ms ease",
                 "&:focus-within": {
-                  borderColor: "rgba(0,0,0,0.3)",
-                  boxShadow: "0 0 0 3px rgba(0,0,0,0.03)",
+                  borderColor: "#991B1B",
+                  boxShadow: "0 0 0 3px rgba(153, 27, 27, 0.05)",
+                  bgcolor: "#ffffff",
                 },
               }}
             >
               <SearchRounded sx={{ color: "rgba(0,0,0,0.35)", fontSize: 18 }} />
               <InputBase
-                placeholder={
-                  pathname.startsWith("/admin")
-                    ? "Tìm kiếm báo cáo..."
-                    : pathname.startsWith("/instructor")
-                      ? "Tìm kiếm học viên, khóa học hoặc dữ liệu..."
-                      : "Tìm kiếm nội dung bất kỳ"
-                }
-                sx={{ flex: 1, fontSize: 13.5, fontWeight: 400 }}
+                placeholder="Tìm kiếm trong hệ thống..."
+                sx={{ flex: 1, fontSize: 13.5, fontWeight: 500 }}
               />
             </Paper>
 
@@ -1271,26 +1279,29 @@ export default function DashboardShell({
                   }}
                 >
                   <Button
-                    variant="contained"
+                    variant="outlined"
                     onClick={handleExportReport}
                     startIcon={
                       <ArrowForwardRounded
-                        sx={{ transform: "rotate(90deg)" }}
+                        sx={{ transform: "rotate(90deg)", fontSize: "16px !important" }}
                       />
                     }
                     sx={{
                       borderRadius: "10px",
-                      bgcolor: "#8B1313",
-                      color: "#ffffff",
-                      px: 2,
-                      py: 0.8,
+                      borderColor: "#E5E7EB",
+                      color: "#475569",
+                      px: 2.2,
+                      py: 0.7,
                       fontSize: 13,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       textTransform: "none",
                       boxShadow: "none",
+                      height: 38,
+                      transition: "all 150ms ease",
                       "&:hover": {
-                        bgcolor: "#7F1D1D",
-                        boxShadow: "none",
+                        bgcolor: "#F8FAFC",
+                        borderColor: "#CBD5E1",
+                        color: "#1E2937",
                       },
                     }}
                   >
@@ -1427,8 +1438,8 @@ export default function DashboardShell({
                   <Typography
                     sx={{
                       fontSize: 13,
-                      fontWeight: 700,
-                      color: "#1F2937",
+                      fontWeight: 600,
+                      color: "#111827",
                       lineHeight: 1.3,
                     }}
                   >
@@ -1440,14 +1451,15 @@ export default function DashboardShell({
                   </Typography>
                   <Typography
                     sx={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: COLORS.primary,
-                      letterSpacing: "0.3px",
+                      fontSize: 10.5,
+                      fontWeight: 500,
+                      color: pathname.startsWith("/admin") ? "#991B1B" : COLORS.primary,
+                      letterSpacing: "0.2px",
+                      textTransform: "uppercase",
                     }}
                   >
                     {pathname.startsWith("/admin")
-                      ? "SUPER ADMINISTRATOR"
+                      ? "Super Administrator"
                       : pathname.startsWith("/instructor")
                         ? "Premium Instructor"
                         : "Học viên"}
@@ -1462,18 +1474,18 @@ export default function DashboardShell({
                   }
                   onClick={handleAvatarClick}
                   sx={{
-                    width: 38,
-                    height: 38,
+                    width: pathname.startsWith("/admin") ? 36 : 38,
+                    height: pathname.startsWith("/admin") ? 36 : 38,
                     fontSize: 14,
                     fontWeight: 700,
                     bgcolor: "#8B1313",
                     color: "#fff",
-                    border: "2px solid #fff",
-                    boxShadow: `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
+                    border: pathname.startsWith("/admin") ? "1px solid #E5E7EB" : "2px solid #fff",
+                    boxShadow: pathname.startsWith("/admin") ? "none" : `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
                     transition: "all 200ms ease",
                     cursor: "pointer",
                     "&:hover": {
-                      boxShadow: `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
+                      boxShadow: pathname.startsWith("/admin") ? "0 0 0 2px rgba(153,27,27,0.15)" : `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
                       transform: "scale(1.05)",
                     },
                   }}
@@ -1802,7 +1814,7 @@ export default function DashboardShell({
                 width: sidebarWidth,
                 flexShrink: 0,
                 display: { xs: "none", lg: "block" },
-                borderRight: "1px solid rgba(0,0,0,0.06)",
+                borderRight: pathname.startsWith("/admin") ? "1px solid #EEF0F3" : "1px solid rgba(0,0,0,0.06)",
                 height: "100%",
                 bgcolor: COLORS.white,
               }}

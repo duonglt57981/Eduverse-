@@ -59,7 +59,7 @@ export default function StudentDashboardShell({
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F8F7F4" }}>
       <StudentHomeHeader />
 
       <Box
@@ -74,9 +74,9 @@ export default function StudentDashboardShell({
           sx={{
             flex: 1,
             width: "100%",
-            maxWidth: 1400,
+            maxWidth: "100%",
             mx: "auto",
-            px: { xs: 2, md: 3 },
+            px: { xs: 2, md: 6 },
           }}
         >
           {children}

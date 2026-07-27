@@ -240,19 +240,6 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           {isInstructorMode && (
             <>
               <Button
-                onClick={() => router.push("/student/explore")}
-                sx={{
-                  color: "text.primary",
-                  fontWeight: 600,
-                  fontSize: 14,
-                  textTransform: "none",
-                  px: 1.5,
-                  "&:hover": { color: "primary.main", bgcolor: "transparent" },
-                }}
-              >
-                Khám phá
-              </Button>
-              <Button
                 onClick={() => router.push("/instructor/manager-courses")}
                 sx={{
                   color: pathname.startsWith("/instructor/manager-courses")

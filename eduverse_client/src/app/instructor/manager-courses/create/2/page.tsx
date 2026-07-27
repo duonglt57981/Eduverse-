@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Box, TextField, Typography, Paper } from "@mui/material";
+import { Box, TextField, Typography } from "@mui/material";
+import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { useCourseCreate } from "../context/CourseCreateContext";
 import StepWrapper from "../context/StepWrapper";
 import { useState } from "react";
@@ -22,7 +24,7 @@ export default function Step2Page() {
   };
 
   // ✅ Chỉ kiểm tra tiêu đề hợp lệ
-  const isValid = formData.tieuDe && formData.tieuDe.length > 0 && !tieuDeError;
+  const isValid = formData.tieuDe && formData.tieuDe.trim().length > 0 && !tieuDeError;
 
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
@@ -33,98 +35,167 @@ export default function Step2Page() {
       >
         <Box
           sx={{
-            maxWidth: 760,
-            mx: "auto",
-            py: 2,
-            px: 2,
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 4,
+            width: "100%",
+            alignItems: "stretch",
+            py: { xs: 1, sm: 3 },
           }}
         >
-          <Typography
-            variant="h5"
+          {/* Cột trái: Form đặt tên */}
+          <Box
             sx={{
-              fontWeight: 700,
-              textAlign: "center",
-              mb: 1,
-              fontSize: { xs: "1.15rem", sm: "1.4rem", md: "1.6rem" },
-              color: "#1A1A1A",
-            }}
-          >
-            Đặt tên cho khóa học của bạn
-          </Typography>
-
-          <Typography
-            sx={{
-              textAlign: "center",
-              color: "#7B8794",
-              fontSize: 14,
-              mb: 4,
-              maxWidth: 480,
-            }}
-          >
-            Hãy chọn một tiêu đề ngắn gọn, dễ hiểu và thu hút người học.
-          </Typography>
-
-          <Paper
-            elevation={0}
-            sx={{
-              width: "100%",
-              maxWidth: 600,
-              border: "1px solid #e0e0e0",
-              borderRadius: 3,
-              overflow: "hidden",
+              flex: { xs: "1 1 auto", md: "0 0 62%" },
               bgcolor: "#ffffff",
+              borderRadius: "20px",
+              border: "1px solid #E5E7EB",
+              boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+              p: { xs: 3, sm: 5 },
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            {/* Trường Tiêu đề */}
-            <Box
+            <Typography
+              variant="h5"
               sx={{
-                display: "flex",
-                alignItems: "center",
-                px: 2,
-                py: 1,
-                bgcolor: "#ffffff",
+                fontWeight: 700,
+                mb: 1.5,
+                fontSize: { xs: "1.25rem", sm: "1.6rem" },
+                color: "#111827",
               }}
             >
-              <Typography
+              Đặt tên cho khóa học
+            </Typography>
+
+            <Typography
+              sx={{
+                color: "#6B7280",
+                fontSize: 14,
+                mb: 4,
+                lineHeight: 1.6,
+              }}
+            >
+              Sử dụng một tiêu đề ngắn gọn, rõ ràng và giúp học viên hiểu được nội dung chính mà khóa học của bạn sẽ mang lại.
+            </Typography>
+
+            {/* Khối Input */}
+            <Box sx={{ width: "100%" }}>
+              <Box
                 sx={{
-                  fontWeight: 500,
-                  color: "#333",
-                  minWidth: 80,
-                  fontSize: 14,
+                  mb: 1.2,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
-                Tiêu đề
-              </Typography>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#374151" }}>
+                  Tên khóa học <Box component="span" sx={{ color: "#DC2626" }}>*</Box>
+                </Typography>
+                <Typography sx={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500 }}>
+                  {formData.tieuDe?.length || 0}/99 ký tự
+                </Typography>
+              </Box>
+
               <TextField
                 fullWidth
-                variant="standard"
-                placeholder="Nhập tiêu đề khóa học..."
+                variant="outlined"
+                placeholder="Ví dụ: Lập trình React từ cơ bản đến nâng cao"
                 value={formData.tieuDe || ""}
                 onChange={(e) => handleChange(e.target.value)}
                 error={!!tieuDeError}
-                helperText={tieuDeError}
                 sx={{
-                  "& .MuiInputBase-input": {
-                    color: "#1A1A1A !important",
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "10px",
+                    height: "48px",
                     fontSize: 14,
-                    padding: "8px 0",
-                  },
-                  "& .MuiInputBase-root": {
-                    backgroundColor: "transparent !important",
-                  },
-                  "& .MuiInput-underline:before": {
-                    display: "none",
-                  },
-                  "& .MuiInput-underline:after": {
-                    display: "none",
+                    bgcolor: "#ffffff",
+                    "& fieldset": {
+                      borderColor: "#D1D5DB",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#7A1F2B",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#7A1F2B",
+                      borderWidth: 2,
+                    },
                   },
                 }}
               />
+
+              {tieuDeError && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1.2 }}>
+                  <ErrorOutlineIcon sx={{ fontSize: 16, color: "#DC2626" }} />
+                  <Typography sx={{ fontSize: 13, color: "#DC2626", fontWeight: 500 }}>
+                    {tieuDeError}
+                  </Typography>
+                </Box>
+              )}
             </Box>
-          </Paper>
+          </Box>
+
+          {/* Cột phải: Mẹo đặt tên (Tips) */}
+          <Box
+            sx={{
+              flex: { xs: "1 1 auto", md: "0 0 38%" },
+              bgcolor: "#ffffff",
+              borderRadius: "20px",
+              border: "1px solid #E5E7EB",
+              boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+              p: { xs: 3, sm: 4 },
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <Box
+                sx={{
+                  bgcolor: "#FEF3C7",
+                  color: "#D97706",
+                  borderRadius: "8px",
+                  p: 0.8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <LightbulbOutlinedIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#111827" }}>
+                Mẹo đặt tên khóa học
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+              <Box>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#374151", mb: 0.5 }}>
+                  Nêu rõ kết quả học tập
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: "#6B7280", lineHeight: 1.5 }}>
+                  Hãy nêu bật kỹ năng hoặc mục tiêu cụ thể mà học viên sẽ có được (ví dụ: làm chủ, xây dựng dự án thực tế).
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#374151", mb: 0.5 }}>
+                  Tránh viết hoa toàn bộ
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: "#6B7280", lineHeight: 1.5 }}>
+                  Không nên viết hoa tất cả các chữ cái (như LẬP TRÌNH REACT). Điều này giúp tiêu đề chuyên nghiệp và dễ đọc hơn.
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#374151", mb: 0.5 }}>
+                  Ngắn gọn và trực diện
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: "#6B7280", lineHeight: 1.5 }}>
+                  Tiêu đề nên súc tích, tránh lan man, giúp người học dễ dàng nhận diện chủ đề khóa học khi lướt tìm kiếm.
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Box>
       </StepWrapper>
     </AuthGuard>

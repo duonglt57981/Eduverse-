@@ -49,6 +49,7 @@ export type CourseCatalogItem = {
   isFree: boolean;
   tags: string[];
   palette: [string, string, string];
+  hinhAnhKhoaHoc?: string;
 };
 
 export type InstructorCategory = {
