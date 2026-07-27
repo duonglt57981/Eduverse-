@@ -7,10 +7,11 @@ export default class DangKiService {
     idKhoaHoc: string,
   ): Promise<ApiResponse<DangKyKhoaHocMienPhiDto>> {
     try {
-      const response = await apiService.post<
-        ApiResponse<DangKyKhoaHocMienPhiDto>
-      >(`/DangKiKhoaHoc/dangki-khoahoc/${idKhoaHoc}`, {});
-      return response.data;
+      const response = await apiService.post<DangKyKhoaHocMienPhiDto>(
+        `/DangKiKhoaHoc/dangki-khoahoc/${idKhoaHoc}`,
+        {},
+      );
+      return response;
     } catch (error) {
       console.error("Error creating payment:", error);
       throw error;

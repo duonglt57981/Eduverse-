@@ -17,6 +17,13 @@ import {
   Paper,
   Stack,
   alpha,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  debounce,
+  SelectChangeEvent,
 } from "@mui/material";
 import { styled, keyframes } from "@mui/material/styles";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -30,10 +37,12 @@ import CloudOffIcon from "@mui/icons-material/CloudOff";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SignalWifiOffIcon from "@mui/icons-material/SignalWifiOff";
 import LoginIcon from "@mui/icons-material/Login";
+import SearchIcon from "@mui/icons-material/Search";
 import AuthGuard from "@/src/components/AuthGuard";
 import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
+
+import { KhoaHocDangKiSearch, KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -45,7 +54,6 @@ const RED_LIGHT = "#B22222";
 
 function getRawToken(): string | null {
   if (typeof window === "undefined") return null;
-
   const possibleKeys = [
     "AccessToken",
     "accessToken",
@@ -57,10 +65,8 @@ function getRawToken(): string | null {
     const value = localStorage.getItem(key);
     if (value) return value;
   }
-
   const match = document.cookie.match(/(?:^|;\s*)token=([^;]+)/);
   if (match) return decodeURIComponent(match[1]);
-
   return null;
 }
 
@@ -78,7 +84,6 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 function getUserIdFromToken(): string | null {
   const token = getRawToken();
   if (!token) return null;
-
   const payload = decodeJwtPayload(token);
   if (!payload) return null;
 
@@ -107,7 +112,6 @@ function getUserIdFromToken(): string | null {
       return String(val);
     }
   }
-
   return null;
 }
 
@@ -141,7 +145,7 @@ const AUTH_ERROR: ErrorDetail = {
   message: "Không tìm thấy thông tin đăng nhập. Vui lòng đăng nhập lại.",
 };
 
-// ─── API response types ──────────────────────────────────────────────────────
+// ─── API response type helpers ──────────────────────────────────────────────
 
 interface ApiResponse<T> {
   data?: T;
@@ -156,17 +160,6 @@ interface PagedList<T> {
   pageSize?: number;
 }
 
-/**
- * GetListDangKi() can resolve to several shapes depending on backend/serializer
- * behaviour:
- *   1. KhoaHocType[]                              — raw array
- *   2. PagedList<KhoaHocType>                      — { items: [...] }
- *   3. ApiResponse<PagedList<KhoaHocType>>         — { data: { items: [...] } }
- *   4. ApiResponse<KhoaHocType[]>                  — { data: [...] }
- * This helper narrows each shape with type guards (no `any`, no illegal
- * property access on a type that doesn't declare it) and always returns a
- * plain KhoaHocType[].
- */
 function isPagedList<T>(value: unknown): value is PagedList<T> {
   return (
     typeof value === "object" &&
@@ -184,11 +177,9 @@ function extractCourseItems(response: unknown): KhoaHocType[] {
   if (Array.isArray(response)) {
     return response as KhoaHocType[];
   }
-
   if (isPagedList<KhoaHocType>(response)) {
     return response.items;
   }
-
   if (isApiResponse<unknown>(response)) {
     const inner = response.data;
     if (Array.isArray(inner)) {
@@ -198,7 +189,6 @@ function extractCourseItems(response: unknown): KhoaHocType[] {
       return inner.items;
     }
   }
-
   return [];
 }
 
@@ -414,15 +404,24 @@ const ThumbPlaceholder = ({ title }: { title?: string }) => {
   );
 };
 
-// ─── inner page ───────────────────────────────────────────────────────────────
+// ─── Main component ──────────────────────────────────────────────────────────
 
 function MyCoursesContent() {
   const router = useRouter();
 
-  // ── userId: computed once at render time (pure sync read → no useEffect) ──
+  // ── userId ──────────────────────────────────────────────────────────────────
   const userId = useMemo(() => getUserIdFromToken(), []);
 
-  // ── async state ────────────────────────────────────────────────────────────
+  // ── filter state ────────────────────────────────────────────────────────────
+  const [searchParams, setSearchParams] = useState<KhoaHocDangKiSearch>({
+    keyword: "",
+    trangThai: "TatCa",
+    sapXepNgay: "Moi",
+    pageIndex: 1,
+    pageSize: 100,
+  });
+
+  // ── course data state ──────────────────────────────────────────────────────
   const [courses, setCourses] = useState<KhoaHocType[]>([]);
   const [loading, setLoading] = useState<boolean>(!!userId);
   const [errorDetail, setErrorDetail] = useState<ErrorDetail | null>(
@@ -432,7 +431,7 @@ function MyCoursesContent() {
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
-  // ── fetch ──────────────────────────────────────────────────────────────────
+  // ── fetch function ──────────────────────────────────────────────────────────
   const fetchCourses = useCallback(async () => {
     if (!userId) {
       setErrorDetail(AUTH_ERROR);
@@ -444,9 +443,26 @@ function MyCoursesContent() {
     setErrorDetail(null);
 
     try {
-      const response = await khoaHocService.GetListDangKi();
+      const search: KhoaHocDangKiSearch = {
+        keyword: searchParams.keyword?.trim() || undefined,
+        trangThai:
+          searchParams.trangThai === "TatCa"
+            ? undefined
+            : searchParams.trangThai,
+        pageIndex: searchParams.pageIndex,
+        pageSize: searchParams.pageSize,
+      };
 
-      setCourses(extractCourseItems(response));
+      if (searchParams.sapXepNgay) {
+        search.sapXepNgay = searchParams.sapXepNgay;
+      } else if (searchParams.sapXepTen) {
+        search.sapXepTen = searchParams.sapXepTen;
+      }
+
+      const response = await khoaHocService.GetListDangKi(search);
+      const items = extractCourseItems(response);
+      setCourses(items);
+      // Không xóa courses cũ khi bắt đầu tải
     } catch (err: unknown) {
       let type: ErrorDetail["type"] = "backend";
       let message = "Không thể tải danh sách khóa học. Vui lòng thử lại sau.";
@@ -486,13 +502,34 @@ function MyCoursesContent() {
       }
 
       setErrorDetail({ type, message });
+      // Xóa danh sách cũ khi có lỗi (trừ lỗi auth thì giữ nguyên? Ở đây ta xóa để hiển thị thông báo)
       setCourses([]);
     } finally {
       setLoading(false);
     }
-  }, [khoaHocService, userId]);
+  }, [khoaHocService, userId, searchParams]);
 
-  // ── initial fetch (using async IIFE to avoid setState-in-effect warning) ──
+  // ── debounced fetch ─────────────────────────────────────────────────────────
+  const debouncedFetch = useMemo(
+    () => debounce(() => fetchCourses(), 400),
+    [fetchCourses],
+  );
+
+  // ── effect: fetch on filter changes ────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+    debouncedFetch();
+    return () => debouncedFetch.clear();
+  }, [
+    searchParams.keyword,
+    searchParams.trangThai,
+    searchParams.sapXepNgay,
+    searchParams.sapXepTen,
+    userId,
+    debouncedFetch,
+  ]);
+
+  // ── effect: initial load ────────────────────────────────────────────────────
   useEffect(() => {
     if (!userId) return;
     let isMounted = true;
@@ -506,7 +543,7 @@ function MyCoursesContent() {
     };
   }, [userId, fetchCourses]);
 
-  // ── online / offline listeners ─────────────────────────────────────────────
+  // ── online/offline listeners ──────────────────────────────────────────────
   useEffect(() => {
     const handleOnline = () => {
       if (errorDetail?.type === "network" && userId) fetchCourses();
@@ -544,6 +581,7 @@ function MyCoursesContent() {
     return { total, inProgress, completed, avg };
   }, [courses]);
 
+  // ── handlers ────────────────────────────────────────────────────────────────
   const handleCourseClick = (registrationId?: string) => {
     if (registrationId) {
       router.push(`/student/courses/my-courses/learning/${registrationId}`);
@@ -558,169 +596,62 @@ function MyCoursesContent() {
     fetchCourses();
   };
 
-  // ── render states ──────────────────────────────────────────────────────────
+  const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchParams((prev: KhoaHocDangKiSearch) => ({
+      ...prev,
+      keyword: e.target.value,
+      pageIndex: 1,
+    }));
+  };
 
-  if (loading) {
+  const handleSortChange = (e: SelectChangeEvent<string>) => {
+    const value = e.target.value;
+    setSearchParams((prev: KhoaHocDangKiSearch) => {
+      const newParams: KhoaHocDangKiSearch = { ...prev, pageIndex: 1 };
+      delete newParams.sapXepNgay;
+      delete newParams.sapXepTen;
+      if (value === "Moi") newParams.sapXepNgay = "Moi";
+      else if (value === "Cu") newParams.sapXepNgay = "Cu";
+      else if (value === "AZ") newParams.sapXepTen = "AZ";
+      else if (value === "ZA") newParams.sapXepTen = "ZA";
+      return newParams;
+    });
+  };
+
+  // ── render helpers ──────────────────────────────────────────────────────────
+  const renderStats = () => {
+    const statItems = [
+      {
+        icon: <SchoolIcon />,
+        val: stats.total,
+        lbl: "Đã đăng ký",
+        bg: alpha(RED, 0.08),
+        color: RED,
+      },
+      {
+        icon: <TrendingUpIcon />,
+        val: stats.inProgress,
+        lbl: "Đang học",
+        bg: "#fff8e1",
+        color: "#f57f17",
+      },
+      {
+        icon: <CheckCircleIcon />,
+        val: stats.completed,
+        lbl: "Hoàn thành",
+        bg: "#e8f5e9",
+        color: "#2e7d32",
+      },
+      {
+        icon: <VideoLibraryIcon />,
+        val: `${stats.avg}%`,
+        lbl: "Tiến độ TB",
+        bg: "#fde8e8",
+        color: RED_LIGHT,
+      },
+    ];
+
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "40vh",
-        }}
-      >
-        <CircularProgress sx={{ color: RED }} />
-      </Box>
-    );
-  }
-
-  if (errorDetail) {
-    const isAuthError = errorDetail.type === "auth";
-    return (
-      <Box sx={{ maxWidth: 560, mx: "auto", py: 6, textAlign: "center" }}>
-        {!isAuthError && (
-          <ConnectionLostAnimation
-            type={errorDetail.type === "network" ? "network" : "backend"}
-          />
-        )}
-        <Alert
-          severity={
-            isAuthError
-              ? "warning"
-              : errorDetail.type === "network"
-                ? "warning"
-                : "error"
-          }
-          sx={{ mb: 3, mt: 2, "& .MuiAlert-icon": { fontSize: 28 } }}
-        >
-          <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
-            {isAuthError
-              ? "🔐 Phiên đăng nhập hết hạn"
-              : errorDetail.type === "network"
-                ? "⚠️ Lỗi kết nối mạng"
-                : "⚠️ Lỗi từ hệ thống"}
-          </Typography>
-          <Typography variant="body2">{errorDetail.message}</Typography>
-        </Alert>
-        <Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
-          {isAuthError ? (
-            <Button
-              variant="contained"
-              startIcon={<LoginIcon />}
-              onClick={() => router.push("/auth/login")}
-              sx={{
-                bgcolor: RED,
-                "&:hover": { bgcolor: RED_HOVER },
-                borderRadius: 2,
-                px: 4,
-                py: 1,
-              }}
-            >
-              Đăng nhập lại
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              startIcon={<RefreshIcon />}
-              onClick={handleRetry}
-              sx={{
-                bgcolor: RED,
-                "&:hover": { bgcolor: RED_HOVER },
-                borderRadius: 2,
-                px: 4,
-                py: 1,
-              }}
-            >
-              Thử lại
-            </Button>
-          )}
-          <Button
-            component={Link}
-            href="/"
-            color="inherit"
-            sx={{ textDecoration: "none" }}
-          >
-            Quay về trang chủ
-          </Button>
-        </Stack>
-      </Box>
-    );
-  }
-
-  if (courses.length === 0) {
-    return (
-      <Box sx={{ maxWidth: 480, mx: "auto", py: 8, textAlign: "center" }}>
-        <VideoLibraryIcon
-          sx={{ fontSize: 72, color: alpha(RED, 0.2), mb: 2 }}
-        />
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-          Bạn chưa đăng ký khóa học nào
-        </Typography>
-        <Typography color="text.secondary" sx={{ mb: 3 }}>
-          Hãy khám phá các khóa học và bắt đầu học ngay!
-        </Typography>
-        <Button
-          component={Link}
-          href="/KhoaHoc"
-          variant="contained"
-          size="large"
-          sx={{
-            bgcolor: RED,
-            "&:hover": { bgcolor: RED_HOVER },
-            borderRadius: 3,
-          }}
-        >
-          Khám phá khóa học
-        </Button>
-      </Box>
-    );
-  }
-
-  const statItems = [
-    {
-      icon: <SchoolIcon />,
-      val: stats.total,
-      lbl: "Đã đăng ký",
-      bg: alpha(RED, 0.08),
-      color: RED,
-    },
-    {
-      icon: <TrendingUpIcon />,
-      val: stats.inProgress,
-      lbl: "Đang học",
-      bg: "#fff8e1",
-      color: "#f57f17",
-    },
-    {
-      icon: <CheckCircleIcon />,
-      val: stats.completed,
-      lbl: "Hoàn thành",
-      bg: "#e8f5e9",
-      color: "#2e7d32",
-    },
-    {
-      icon: <VideoLibraryIcon />,
-      val: `${stats.avg}%`,
-      lbl: "Tiến độ TB",
-      bg: "#fde8e8",
-      color: RED_LIGHT,
-    },
-  ];
-
-  return (
-    <Box>
-      {/* header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 900, color: RED, mb: 0.5 }}>
-          Khóa học của tôi
-        </Typography>
-        <Typography color="text.secondary">
-          Tiếp tục học những khóa học bạn đã đăng ký
-        </Typography>
-      </Box>
-
-      {/* stats */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         {statItems.map((s, i) => (
           <Grid key={i} size={{ xs: 6, sm: 3 }}>
@@ -759,185 +690,439 @@ function MyCoursesContent() {
           </Grid>
         ))}
       </Grid>
+    );
+  };
 
-      {/* course grid */}
-      <Grid container spacing={3}>
-        {courses.map((course) => {
-          const registrationId = course.idDangKiKhoaHoc;
-          const hasImg =
-            isValidImage(course.hinhAnhKhoaHoc) &&
-            !imageErrors[registrationId!];
-          const progress = course.phanTramHoanThanh ?? 0;
-          const minutes = Math.floor((course.tongThoiLuong ?? 0) / 60);
+  const renderCourseGrid = () => {
+    // Hiển thị khi đang tải lần đầu (chưa có dữ liệu)
+    if (loading && courses.length === 0) {
+      return (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress sx={{ color: RED }} />
+        </Box>
+      );
+    }
 
-          return (
-            <Grid
-              key={registrationId || course.id}
-              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+    // Hiển thị lỗi
+    if (errorDetail) {
+      const isAuthError = errorDetail.type === "auth";
+      return (
+        <Box sx={{ maxWidth: 560, mx: "auto", py: 4, textAlign: "center" }}>
+          {!isAuthError && (
+            <ConnectionLostAnimation
+              type={errorDetail.type === "network" ? "network" : "backend"}
+            />
+          )}
+          <Alert
+            severity={
+              isAuthError
+                ? "warning"
+                : errorDetail.type === "network"
+                  ? "warning"
+                  : "error"
+            }
+            sx={{ mb: 3, mt: 2, "& .MuiAlert-icon": { fontSize: 28 } }}
+          >
+            <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
+              {isAuthError
+                ? "🔐 Phiên đăng nhập hết hạn"
+                : errorDetail.type === "network"
+                  ? "⚠️ Lỗi kết nối mạng"
+                  : "⚠️ Lỗi từ hệ thống"}
+            </Typography>
+            <Typography variant="body2">{errorDetail.message}</Typography>
+          </Alert>
+          <Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
+            {isAuthError ? (
+              <Button
+                variant="contained"
+                startIcon={<LoginIcon />}
+                onClick={() => router.push("/auth/login")}
+                sx={{
+                  bgcolor: RED,
+                  "&:hover": { bgcolor: RED_HOVER },
+                  borderRadius: 2,
+                  px: 4,
+                  py: 1,
+                }}
+              >
+                Đăng nhập lại
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                startIcon={<RefreshIcon />}
+                onClick={handleRetry}
+                sx={{
+                  bgcolor: RED,
+                  "&:hover": { bgcolor: RED_HOVER },
+                  borderRadius: 2,
+                  px: 4,
+                  py: 1,
+                }}
+              >
+                Thử lại
+              </Button>
+            )}
+            <Button
+              component={Link}
+              href="/"
+              color="inherit"
+              sx={{ textDecoration: "none" }}
             >
-              <CourseCard onClick={() => handleCourseClick(registrationId)}>
-                <ThumbBox>
-                  {hasImg ? (
-                    <ThumbImg
-                      src={course.hinhAnhKhoaHoc ?? ""}
-                      alt={course.tieuDe}
-                      onError={() =>
-                        setImageErrors((prev) => ({
-                          ...prev,
-                          [registrationId!]: true,
-                        }))
-                      }
-                    />
-                  ) : (
-                    <ThumbPlaceholder title={course.tieuDe} />
-                  )}
-                  {progress > 0 && progress < 100 && (
-                    <Chip
-                      label={`${progress}%`}
-                      size="small"
-                      sx={{
-                        position: "absolute",
-                        bottom: 8,
-                        left: 8,
-                        bgcolor: "rgba(0,0,0,0.65)",
-                        color: "#fff",
-                        fontSize: "0.7rem",
-                        backdropFilter: "blur(4px)",
-                        height: 22,
-                      }}
-                    />
-                  )}
-                  {progress >= 100 && (
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: 8,
-                        right: 8,
-                        bgcolor: "#2e7d32",
-                        borderRadius: "50%",
-                        width: 28,
-                        height: 28,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <CheckCircleIcon sx={{ color: "#fff", fontSize: 18 }} />
-                    </Box>
-                  )}
-                </ThumbBox>
+              Quay về trang chủ
+            </Button>
+          </Stack>
+        </Box>
+      );
+    }
 
-                <CourseProgress
-                  variant="determinate"
-                  value={Math.min(progress, 100)}
-                />
+    // Không có khóa học
+    if (courses.length === 0) {
+      return (
+        <Box sx={{ maxWidth: 480, mx: "auto", py: 8, textAlign: "center" }}>
+          <VideoLibraryIcon
+            sx={{ fontSize: 72, color: alpha(RED, 0.2), mb: 2 }}
+          />
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+            Bạn chưa đăng ký khóa học nào
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Hãy khám phá các khóa học và bắt đầu học ngay!
+          </Typography>
+          <Button
+            component={Link}
+            href="/KhoaHoc"
+            variant="contained"
+            size="large"
+            sx={{
+              bgcolor: RED,
+              "&:hover": { bgcolor: RED_HOVER },
+              borderRadius: 3,
+            }}
+          >
+            Khám phá khóa học
+          </Button>
+        </Box>
+      );
+    }
 
-                <CardContent
-                  sx={{ flexGrow: 1, p: 2, "&:last-child": { pb: 2 } }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: 14,
-                      mb: 1,
-                      lineHeight: 1.4,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {course.tieuDe}
-                  </Typography>
+    // Có dữ liệu: hiển thị grid với lớp phủ loading (nếu đang tải)
+    return (
+      <Box sx={{ position: "relative" }}>
+        {loading && courses.length > 0 && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(255,255,255,0.7)",
+              zIndex: 1,
+              borderRadius: 2,
+            }}
+          >
+            <CircularProgress sx={{ color: RED }} />
+          </Box>
+        )}
+        <Grid container spacing={3}>
+          {courses.map((course) => {
+            const registrationId = course.idDangKiKhoaHoc;
+            const hasImg =
+              isValidImage(course.hinhAnhKhoaHoc) &&
+              !imageErrors[registrationId ?? ""];
+            const progress = course.phanTramHoanThanh ?? 0;
+            const minutes = Math.floor((course.tongThoiLuong ?? 0) / 60);
 
-                  <Stack direction="row" spacing={2} sx={{ mb: 1.5 }}>
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                    >
-                      <MenuBookIcon
-                        sx={{ fontSize: 13, color: "text.disabled" }}
+            return (
+              <Grid
+                key={registrationId || course.id}
+                size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+              >
+                <CourseCard onClick={() => handleCourseClick(registrationId)}>
+                  <ThumbBox>
+                    {hasImg ? (
+                      <ThumbImg
+                        src={course.hinhAnhKhoaHoc ?? ""}
+                        alt={course.tieuDe}
+                        onError={() =>
+                          setImageErrors((prev: Record<string, boolean>) => ({
+                            ...prev,
+                            [registrationId ?? ""]: true,
+                          }))
+                        }
                       />
-                      <Typography variant="caption" color="text.secondary">
-                        {course.tongBaiGiang ?? 0} bài
-                      </Typography>
-                    </Box>
-                    {minutes > 0 && (
+                    ) : (
+                      <ThumbPlaceholder title={course.tieuDe} />
+                    )}
+                    {progress > 0 && progress < 100 && (
+                      <Chip
+                        label={`${progress}%`}
+                        size="small"
+                        sx={{
+                          position: "absolute",
+                          bottom: 8,
+                          left: 8,
+                          bgcolor: "rgba(0,0,0,0.65)",
+                          color: "#fff",
+                          fontSize: "0.7rem",
+                          backdropFilter: "blur(4px)",
+                          height: 22,
+                        }}
+                      />
+                    )}
+                    {progress >= 100 && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          bgcolor: "#2e7d32",
+                          borderRadius: "50%",
+                          width: 28,
+                          height: 28,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <CheckCircleIcon sx={{ color: "#fff", fontSize: 18 }} />
+                      </Box>
+                    )}
+                  </ThumbBox>
+
+                  <CourseProgress
+                    variant="determinate"
+                    value={Math.min(progress, 100)}
+                  />
+
+                  <CardContent
+                    sx={{ flexGrow: 1, p: 2, "&:last-child": { pb: 2 } }}
+                  >
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 14,
+                        mb: 1,
+                        lineHeight: 1.4,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {course.tieuDe}
+                    </Typography>
+
+                    <Stack direction="row" spacing={2} sx={{ mb: 1.5 }}>
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
-                        <AccessTimeIcon
+                        <MenuBookIcon
                           sx={{ fontSize: 13, color: "text.disabled" }}
                         />
                         <Typography variant="caption" color="text.secondary">
-                          {minutes} phút
+                          {course.tongBaiGiang ?? 0} bài
                         </Typography>
                       </Box>
-                    )}
-                  </Stack>
+                      {minutes > 0 && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <AccessTimeIcon
+                            sx={{ fontSize: 13, color: "text.disabled" }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {minutes} phút
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
 
-                  <Box sx={{ mb: 1.5 }}>
-                    <Box
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mb: 0.5,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          Tiến độ
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 700, color: RED }}
+                        >
+                          {course.soBaiGiangHoanThanh ?? 0}/
+                          {course.tongBaiGiang ?? 0} bài
+                        </Typography>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.min(progress, 100)}
+                        sx={{
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor: "#fde8e8",
+                          "& .MuiLinearProgress-bar": {
+                            borderRadius: 3,
+                            bgcolor: RED,
+                          },
+                        }}
+                      />
+                    </Box>
+
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="small"
+                      startIcon={<PlayArrowIcon />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCourseClick(registrationId);
+                      }}
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 0.5,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        bgcolor: RED,
+                        "&:hover": { bgcolor: RED_HOVER },
                       }}
                     >
-                      <Typography variant="caption" color="text.secondary">
-                        Tiến độ
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ fontWeight: 700, color: RED }}
-                      >
-                        {course.soBaiGiangHoanThanh ?? 0}/
-                        {course.tongBaiGiang ?? 0} bài
-                      </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={Math.min(progress, 100)}
-                      sx={{
-                        height: 6,
-                        borderRadius: 3,
-                        bgcolor: "#fde8e8",
-                        "& .MuiLinearProgress-bar": {
-                          borderRadius: 3,
-                          bgcolor: RED,
-                        },
-                      }}
-                    />
-                  </Box>
+                      {progress === 0
+                        ? "Bắt đầu học"
+                        : progress >= 100
+                          ? "Xem lại"
+                          : "Tiếp tục học"}
+                    </Button>
+                  </CardContent>
+                </CourseCard>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
+    );
+  };
 
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    size="small"
-                    startIcon={<PlayArrowIcon />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCourseClick(registrationId);
-                    }}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 600,
-                      borderRadius: 2,
-                      bgcolor: RED,
-                      "&:hover": { bgcolor: RED_HOVER },
-                    }}
-                  >
-                    {progress === 0
-                      ? "Bắt đầu học"
-                      : progress >= 100
-                        ? "Xem lại"
-                        : "Tiếp tục học"}
-                  </Button>
-                </CardContent>
-              </CourseCard>
-            </Grid>
-          );
-        })}
-      </Grid>
+  // ── main render ────────────────────────────────────────────────────────────
+
+  // Nếu không có userId (lỗi auth) thì hiển thị toàn màn hình lỗi
+  if (!userId) {
+    return (
+      <Box sx={{ maxWidth: 560, mx: "auto", py: 6, textAlign: "center" }}>
+        <ConnectionLostAnimation type="backend" />
+        <Alert severity="warning" sx={{ mb: 3, mt: 2 }}>
+          <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
+            🔐 Phiên đăng nhập hết hạn
+          </Typography>
+          <Typography variant="body2">{AUTH_ERROR.message}</Typography>
+        </Alert>
+        <Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            startIcon={<LoginIcon />}
+            onClick={() => router.push("/auth/login")}
+            sx={{
+              bgcolor: RED,
+              "&:hover": { bgcolor: RED_HOVER },
+              borderRadius: 2,
+              px: 4,
+              py: 1,
+            }}
+          >
+            Đăng nhập lại
+          </Button>
+          <Button
+            component={Link}
+            href="/"
+            color="inherit"
+            sx={{ textDecoration: "none" }}
+          >
+            Quay về trang chủ
+          </Button>
+        </Stack>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h5" sx={{ fontWeight: 900, color: RED, mb: 0.5 }}>
+          Khóa học của tôi
+        </Typography>
+        <Typography color="text.secondary">
+          Tiếp tục học những khóa học bạn đã đăng ký
+        </Typography>
+      </Box>
+
+      {/* Stats */}
+      {renderStats()}
+
+      {/* Filter Bar */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 4,
+          borderRadius: 3,
+          border: "1px solid #fde8e8",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 2,
+          alignItems: "center",
+          backgroundColor: "#fefafa",
+        }}
+      >
+        <TextField
+          placeholder="Tìm kiếm khóa học..."
+          value={searchParams.keyword}
+          onChange={handleKeywordChange}
+          size="small"
+          sx={{ flexGrow: 1, minWidth: 180 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
+              ),
+            },
+          }}
+        />
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Sắp xếp</InputLabel>
+          <Select
+            value={
+              searchParams.sapXepNgay === "Moi"
+                ? "Moi"
+                : searchParams.sapXepNgay === "Cu"
+                  ? "Cu"
+                  : searchParams.sapXepTen === "AZ"
+                    ? "AZ"
+                    : searchParams.sapXepTen === "ZA"
+                      ? "ZA"
+                      : "Moi"
+            }
+            onChange={handleSortChange}
+            label="Sắp xếp"
+          >
+            <MenuItem value="Moi">Mới nhất</MenuItem>
+            <MenuItem value="Cu">Cũ nhất</MenuItem>
+            <MenuItem value="AZ">Tên A → Z</MenuItem>
+            <MenuItem value="ZA">Tên Z → A</MenuItem>
+          </Select>
+        </FormControl>
+      </Paper>
+
+      {/* Course Grid Area */}
+      {renderCourseGrid()}
     </Box>
   );
 }

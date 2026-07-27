@@ -309,15 +309,15 @@ export const QualityMenu = ({
       <Box
         onClick={() => setOpen((v) => !v)}
         sx={{
-          px: 1.25,
-          py: 0.45,
-          borderRadius: 1,
+          px: 0.75,
+          py: 0.25,
+          borderRadius: 0.75,
           bgcolor: open ? PRIMARY_RED : "rgba(0,0,0,0.72)",
           border: `1px solid ${open ? PRIMARY_RED : "rgba(255,255,255,0.22)"}`,
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
-          gap: 0.6,
+          gap: 0.4,
           transition: "all 0.18s",
           "&:hover": {
             bgcolor: open ? PRIMARY_RED_DARK : "rgba(139,26,26,0.75)",
@@ -325,14 +325,14 @@ export const QualityMenu = ({
           userSelect: "none",
         }}
       >
-        <HdIcon sx={{ fontSize: 14, color: "#fff", flexShrink: 0 }} />
+        <HdIcon sx={{ fontSize: 11, color: "#fff", flexShrink: 0 }} />
         <Typography
           sx={{
             color: "#fff",
             fontWeight: 600,
-            fontSize: "0.68rem",
+            fontSize: "0.58rem",
             whiteSpace: "nowrap",
-            maxWidth: 130,
+            maxWidth: 90,
             overflow: "hidden",
             textOverflow: "ellipsis",
           }}

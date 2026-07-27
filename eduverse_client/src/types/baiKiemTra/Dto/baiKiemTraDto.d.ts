@@ -128,7 +128,6 @@ export interface UpdateBaiKiemTraDto {
   moTa?: string;
   idPhan?: string;
   thuTuSapXep?: number;
-  danhSachCauHoi: UpdateCauHoiRequest[];
 }
 
 export interface LanLamBaiKiemTraDto {
@@ -228,4 +227,5 @@ export interface CauHoiDto {
   trangThaiPheDuyet?: string;
   idBanGhiTruoc?: string;
   isBanHienTai?: boolean;
+  danhSachDapAns?: DapAnDto[];
 }

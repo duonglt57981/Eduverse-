@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -16,6 +17,8 @@ import {
   DialogContent,
   DialogActions,
   alpha,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
@@ -37,15 +40,14 @@ import {
   isTrangThaiCho,
 } from "../types/constants";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
-import KiemDuyetSidebar from "../[courseId]/components/KiemDuyetSidebar";
+import KiemDuyetSidebar from "./components/KiemDuyetSidebar";
+import { ApiResponse } from "@/src/types/types";
 
 const kiemDuyetService = new KiemDuyetService();
 
 type ConfirmAction = "duyet" | "tuChoi" | null;
 
 // Style thanh cuộn mảnh, đồng bộ theme - dùng chung cho cả 2 cột
-// minHeight: 0 là bắt buộc để phần tử flex-child có overflow:auto co đúng
-// theo chiều cao còn lại thay vì tràn ra ngoài container cha.
 const scrollbarSx = {
   overflowY: "auto" as const,
   overflowX: "hidden" as const,
@@ -74,12 +76,27 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   const [showTuChoi, setShowTuChoi] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
+  // Snackbar state
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   const fetchDetail = useCallback(async () => {
-    if (!idKhoaHoc) return;
+    if (!idKhoaHoc) {
+      setDetailLoading(false);
+      return;
+    }
     setDetailLoading(true);
     try {
       const res = await kiemDuyetService.GetDetailKiemDuyetKhoaHoc(idKhoaHoc);
-      setDetail(normalizeDetailResponse(res));
+      const normalizedData = normalizeDetailResponse(res);
+      setDetail(normalizedData);
     } catch (error) {
       console.error("Lỗi tải chi tiết:", error);
       setDetail(null);
@@ -88,9 +105,8 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     }
   }, [idKhoaHoc]);
 
+  // Fetch khi component mount hoặc id thay đổi
   useEffect(() => {
-    // Fetch có chủ đích khi mount / khi idKhoaHoc thay đổi.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDetail();
   }, [fetchDetail]);
 
@@ -101,47 +117,110 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     setSelectedContent({ loai, item });
   };
 
+  // ── Hàm quay về trang danh sách ──
+  const goBackToList = useCallback(() => {
+    router.push("/admin/approve-courses");
+  }, [router]);
+
+  // ── Hàm duyệt khóa học ──
   const handleDuyet = async () => {
     if (!detail) return;
     setActionLoading(true);
     try {
-      const res = await kiemDuyetService.KiemDuyetKhoaHoc({
+      const res: ApiResponse<any> = await kiemDuyetService.KiemDuyetKhoaHoc({
         idKhoaHoc: detail.idKhoaHoc,
         trangThaiPheDuyet: "DaDuyet",
       });
-      if (res?.status) await fetchDetail();
-    } catch (error) {
+
+      console.log("Kết quả duyệt khóa học:", res); // TODO: xoá sau khi debug xong
+
+      // Chuẩn: kiểm tra res.status === true (đúng theo ApiResponse<T>)
+      const isSuccess = res?.status === true;
+
+      if (isSuccess) {
+        setSnackbar({
+          open: true,
+          message: res?.message || "✅ Duyệt khóa học thành công!",
+          severity: "success",
+        });
+        setTimeout(() => {
+          goBackToList();
+        }, 1500);
+      } else {
+        setSnackbar({
+          open: true,
+          message: res?.message || "❌ Duyệt khóa học thất bại",
+          severity: "error",
+        });
+      }
+    } catch (error: any) {
       console.error("Lỗi duyệt:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "❌ Đã xảy ra lỗi khi duyệt khóa học",
+        severity: "error",
+      });
     } finally {
       setActionLoading(false);
       setConfirmAction(null);
     }
   };
 
+  // ── Hàm từ chối khóa học ──
   const handleTuChoi = async () => {
     if (!detail) return;
     setActionLoading(true);
     try {
-      const res = await kiemDuyetService.KiemDuyetKhoaHoc({
+      const res: ApiResponse<any> = await kiemDuyetService.KiemDuyetKhoaHoc({
         idKhoaHoc: detail.idKhoaHoc,
         trangThaiPheDuyet: "TuChoi",
         lyDo: ghiChu,
       });
-      if (res?.status) {
-        await fetchDetail();
-        setShowTuChoi(false);
-        setGhiChu("");
+
+      console.log("Kết quả từ chối khóa học:", res); // TODO: xoá sau khi debug xong
+
+      const isSuccess = res?.status === true;
+
+      if (isSuccess) {
+        setSnackbar({
+          open: true,
+          message: res?.message || "✅ Từ chối khóa học thành công!",
+          severity: "success",
+        });
+        setTimeout(() => {
+          goBackToList();
+        }, 1500);
+      } else {
+        setSnackbar({
+          open: true,
+          message: res?.message || "❌ Từ chối khóa học thất bại",
+          severity: "error",
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Lỗi từ chối:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "❌ Đã xảy ra lỗi khi từ chối khóa học",
+        severity: "error",
+      });
     } finally {
       setActionLoading(false);
       setConfirmAction(null);
+      setShowTuChoi(false);
+      setGhiChu("");
     }
   };
 
   const handleDuyetClick = () => setConfirmAction("duyet");
   const handleTuChoiConfirmClick = () => setConfirmAction("tuChoi");
+
   const handleConfirmDialogOk = () => {
     if (confirmAction === "duyet") handleDuyet();
     else if (confirmAction === "tuChoi") handleTuChoi();
@@ -152,20 +231,26 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     : null;
   const isChoDuyet = isTrangThaiCho(trangThaiKhoaHoc);
 
-  // Chỉ hiển thị mô tả nếu có nội dung
   const hasDescription = detail?.moTa && detail.moTa.trim().length > 0;
 
   return (
     <AuthGuard allowedRoles={["Admin"]}>
-      {/*
-        Toàn bộ trang chiếm đúng 100dvh và tự chia làm 2 phần:
-        - Phần header/form (chiều cao tự nhiên, co giãn theo nội dung)
-        - Phần nội dung 2 cột (flex: 1, chiếm hết phần còn lại, minHeight: 0
-          để không tràn ra ngoài bất kể header cao bao nhiêu)
-        Nhờ vậy không cần đoán số px cố định (vd "220px") -> hết bug
-        khoảng trắng che dữ liệu khi header đổi chiều cao (mở form Từ chối,
-        wrap dòng trên mobile, v.v.)
-      */}
+      {/* Snackbar thông báo */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
       <Box
         sx={{
           height: "100dvh",
@@ -182,7 +267,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           sx={{ alignItems: "center", mb: 3, flexShrink: 0 }}
         >
           <IconButton
-            onClick={() => router.push("/admin/approve-courses")}
+            onClick={goBackToList}
             sx={{
               border: `1px solid ${COLORS.line}`,
               borderRadius: 1.5,
@@ -341,10 +426,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           </DialogActions>
         </Dialog>
 
-        {/* Nội dung chính: hai cột, mỗi cột có thanh cuộn độc lập.
-            flex: 1 + minHeight: 0 => chiếm hết phần còn lại của viewport,
-            tự động co giãn theo chiều cao thật của header phía trên,
-            không còn phụ thuộc vào số px cố định. */}
+        {/* Nội dung chính */}
         <Box
           sx={{
             flex: 1,
@@ -441,12 +523,18 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 <Skeleton variant="rounded" height={56} />
                 <Skeleton variant="rounded" height={56} />
               </Stack>
-            ) : (
+            ) : detail ? (
               <KiemDuyetSidebar
                 detail={detail}
                 selected={selectedContent}
                 onSelectContent={handleSelectContent}
               />
+            ) : (
+              <Box sx={{ p: 2, textAlign: "center" }}>
+                <Typography sx={{ color: COLORS.inkSoft }}>
+                  Không có dữ liệu để hiển thị.
+                </Typography>
+              </Box>
             )}
           </Box>
         </Box>

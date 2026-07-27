@@ -22,6 +22,11 @@ import { DanhMucDto } from "@/src/types/khoaHoc";
 import AuthGuard from "@/src/components/AuthGuard";
 import { CreateKhoaHocRequest } from "@/src/types/khoaHoc/Request/request";
 
+// Trạng thái danh mục mặc định được phép hiển thị khi tạo khóa học
+const TRANG_THAI_DANH_MUC_MAC_DINH = "HoatDong";
+// Lấy toàn bộ danh mục (không phân trang) để hiển thị đầy đủ cho giảng viên chọn
+const SO_LUONG_DANH_MUC_TOI_DA = 1000;
+
 export default function Step5Page() {
   const router = useRouter();
   const { formData, setFormData } = useCourseCreate();
@@ -44,7 +49,8 @@ export default function Step5Page() {
         const response = await danhMucService.getList({
           keyword: searchKeyword || undefined,
           pageIndex: 1,
-          pageSize: 20,
+          pageSize: SO_LUONG_DANH_MUC_TOI_DA,
+          trangThai: TRANG_THAI_DANH_MUC_MAC_DINH,
         });
         if (response.status !== false && response.data) {
           setDanhMucList(response.data.items || []);
@@ -236,6 +242,9 @@ export default function Step5Page() {
                 flexWrap: "wrap",
                 justifyContent: "center",
                 gap: 2,
+                maxHeight: 420,
+                overflowY: "auto",
+                pr: 0.5,
               }}
             >
               {danhMucList.map((cat) => {

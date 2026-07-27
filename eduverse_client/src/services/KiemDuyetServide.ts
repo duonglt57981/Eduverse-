@@ -7,20 +7,20 @@ import {
   KiemDuyetSearchDto,
 } from "../types/KiemDuyet/Dto/dto";
 import { KiemDuyetKhoaHocRequest } from "../types/KiemDuyet/Request/request";
-import { ApiResponse } from "../types/types";
+import { ApiResponse, PagedList } from "../types/types";
 
 export default class KiemDuyetService {
   async GetListKiemDuyetKhoaHoc(
     search: KiemDuyetSearchDto,
-  ): Promise<ApiResponse<KhoaHocKiemDuyetListDto[]>> {
+  ): Promise<ApiResponse<PagedList<KhoaHocKiemDuyetListDto>>> {
     try {
       const response = await apiService.get<
-        ApiResponse<KhoaHocKiemDuyetListDto[]>
+        ApiResponse<PagedList<KhoaHocKiemDuyetListDto>>
       >("/KiemDuyetKhoaHoc/kiemduyet-khoahoc-getdanhsach", {
-        params: search,
+        params: search, // axios tự động chuyển object thành query string
       });
 
-      return response.data;
+      return response.data; // response.data là ApiResponse
     } catch (error) {
       console.error("Error fetching course approval list:", error);
       throw error;

@@ -46,6 +46,34 @@ export type KhoaHocSearch = SearchBase & {
   sortPrice?: string;
 };
 
+export type KhoaHocDangKiSearch = SearchBase & {
+  keyword?: string;
+  trangThai?:
+    | "TatCa"
+    | "DaDuyet"
+    | "ChoDuyet"
+    | "DangDuyet"
+    | "TuChoi"
+    | "DangSua";
+  sapXepNgay?: "Cu" | "Moi";
+  sapXepTen?: "AZ" | "ZA";
+};
+
+export type KhoaHocManagerSearch = SearchBase & {
+  keyword?: string;
+
+  // "TatCa" | "DaDuyet" | "ChoDuyet" | "DangDuyet" | "TuChoi" | "DangSua"
+  trangThai?: string;
+
+  // "Cu" | "Moi"
+  sapXepNgay?: string;
+
+  // "AZ" | "ZA"
+  sapXepTen?: string;
+
+  sapXepHocVienNhieuNhat?: boolean;
+};
+
 export interface GetToUpdateKhoaHoc {
   id?: string;
   tieuDe?: string;

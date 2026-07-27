@@ -1,6 +1,8 @@
 import {
   GetToUpdateKhoaHoc,
+  KhoaHocDangKiSearch,
   KhoaHocDraftResultType,
+  KhoaHocManagerSearch,
   KhoaHocSearch,
   KhoaHocType,
 } from "../types/khoaHoc/Dto/dto";
@@ -70,12 +72,30 @@ export default class KhoaHocService {
     }
   }
 
-  async GetListDangKi(): Promise<ApiResponse<PagedList<KhoaHocType>>> {
+  async GetListDangKi(
+    search: KhoaHocDangKiSearch,
+  ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
     try {
-      const response = await apiService.get<
-        ApiResponse<PagedList<KhoaHocType>>
-      >(`/KhoaHoc/khoahoc-dangki`);
-      return response.data;
+      let url = `/KhoaHoc/khoahoc-dangki`;
+
+      if (search) {
+        const params = new URLSearchParams();
+        if (search.keyword?.trim())
+          params.append("keyword", search.keyword.trim());
+        if (search.sapXepNgay) params.append("sapXepNgay", search.sapXepNgay);
+        else if (search.sapXepTen) params.append("sapXepTen", search.sapXepTen);
+        if (search.pageIndex !== undefined && search.pageIndex > 0)
+          params.append("pageIndex", String(search.pageIndex));
+        if (search.pageSize !== undefined && search.pageSize > 0)
+          params.append("pageSize", String(search.pageSize));
+
+        const qs = params.toString();
+        if (qs) url += "?" + qs;
+      }
+
+      const response = await apiService.get<PagedList<KhoaHocType>>(url);
+
+      return response;
     } catch (error) {
       console.error("Error fetching learning course:", error);
       throw error;
@@ -90,11 +110,11 @@ export default class KhoaHocService {
     }
 
     try {
-      const response = await apiService.get<ApiResponse<KhoaHocType>>(
+      const response = await apiService.get<KhoaHocType>(
         `/KhoaHoc/khoahoc-preview/${idKhoaHoc}`,
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching preview course:", error);
       throw error;
@@ -160,22 +180,62 @@ export default class KhoaHocService {
   }
 
   async GetListForManager(
-    searchParams?: KhoaHocSearch,
+    searchParams?: KhoaHocManagerSearch,
   ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
     try {
-      // Tạo query string từ searchParams
+      // Xây dựng query string thủ công để kiểm soát
       const params = new URLSearchParams();
 
       if (searchParams) {
-        Object.entries(searchParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
-            params.append(key, value.toString());
-          }
-        });
+        // Luôn thêm pageNumber và pageSize
+        if (
+          searchParams.pageNumber !== undefined &&
+          searchParams.pageNumber !== null
+        ) {
+          params.append("pageNumber", searchParams.pageNumber.toString());
+        }
+        if (
+          searchParams.pageSize !== undefined &&
+          searchParams.pageSize !== null
+        ) {
+          params.append("pageSize", searchParams.pageSize.toString());
+        }
+
+        // Keyword
+        if (searchParams.keyword) {
+          params.append("keyword", searchParams.keyword);
+        }
+
+        // Trạng thái: nếu là "TatCa" thì không gửi (hoặc gửi undefined)
+        if (searchParams.trangThai && searchParams.trangThai !== "TatCa") {
+          params.append("trangThai", searchParams.trangThai);
+        }
+
+        // Sắp xếp ngày
+        if (searchParams.sapXepNgay) {
+          params.append("sapXepNgay", searchParams.sapXepNgay);
+        }
+
+        // Sắp xếp tên
+        if (searchParams.sapXepTen) {
+          params.append("sapXepTen", searchParams.sapXepTen);
+        }
+
+        // Sắp xếp học viên
+        if (
+          searchParams.sapXepHocVienNhieuNhat !== undefined &&
+          searchParams.sapXepHocVienNhieuNhat !== null
+        ) {
+          params.append(
+            "sapXepHocVienNhieuNhat",
+            searchParams.sapXepHocVienNhieuNhat.toString(),
+          );
+        }
       }
 
       const queryString = params.toString();
       const url = `/KhoaHoc/khoahoc-getlistformanager${queryString ? `?${queryString}` : ""}`;
+      console.log("URL:", url); // Kiểm tra URL
 
       const response = await apiService.get<PagedList<KhoaHocType>>(url);
       return response;

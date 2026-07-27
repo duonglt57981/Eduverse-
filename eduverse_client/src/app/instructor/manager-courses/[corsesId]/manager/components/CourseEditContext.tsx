@@ -9,33 +9,38 @@ import {
   useState,
   ReactNode,
   useMemo,
+  useRef,
 } from "react";
 import { useParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
-import { TrangThaiKhoaHoc } from "./courseEditCore";
+import { TrangThaiKhoaHoc, ThongTinKhoaHocCoBan } from "./courseEditCore";
 import PhanService from "@/src/services/PhanService";
 import BaiGiangService from "@/src/services/BaiGiangService";
 import TaiLieuService from "@/src/services/TaiLieuService";
 import BaiKiemTraService from "@/src/services/BaiKiemTraService";
-import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
+import {
+  BaiKiemTraDto,
+  CauHoiDto,
+} from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { TaiLieuType } from "@/src/types/TaiLieu/Dto/TaiLieuDto";
 import { BaiGiangDto } from "@/src/types/khoaHoc";
+import {
+  CreateCauHoiRequest,
+  UpdateCauHoiRequest,
+} from "@/src/types/baiKiemTra/Request/QuizzRequest";
 
-// Helper unwrap
 function unwrapApiData<T = any>(res: any): T | undefined {
   return (res?.data?.data ?? res?.data ?? undefined) as T | undefined;
 }
 
-// Id tạm dùng cho Phan / BaiGiang / TaiLieu / BaiKiemTra
 function taoTempId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-// Kiểm tra GUID hợp lệ
 function isValidGuid(id: unknown): id is string {
   return (
     typeof id === "string" &&
@@ -51,13 +56,12 @@ function chuanHoaId(id: unknown): string {
   return isValidGuid(id) ? (id as string) : taoGuidMoi();
 }
 
-// Store để lưu state tạm (chỉ dùng cho dữ liệu không quan trọng)
 const courseEditStore = new Map<string, any>();
 
 interface CourseEditContextValue {
   idKhoaHoc: string;
-  thongTin: KhoaHocType;
-  setThongTin: (patch: Partial<KhoaHocType>) => void;
+  thongTin: ThongTinKhoaHocCoBan;
+  setThongTin: (patch: ThongTinKhoaHocCoBan) => void;
   phans: PhanHocType[];
   setPhans: (phans: PhanHocType[]) => void;
   trangThai: TrangThaiKhoaHoc;
@@ -69,8 +73,14 @@ interface CourseEditContextValue {
   saveState: () => void;
   restoreState: () => void;
   clearState: () => void;
+  isDirty: boolean;
+  markDirty: () => void;
+  markClean: () => void;
+  resetDirty: () => void;
+  saveAndNavigate: (destination: string) => void;
+  isNavigating: boolean;
+  setNavigating: (value: boolean) => void;
 
-  // CRUD Phan
   createPhan: (data: {
     tenPhan: string;
     mieuTa: string;
@@ -82,7 +92,6 @@ interface CourseEditContextValue {
   ) => Promise<void>;
   deletePhan: (phanId: string) => Promise<void>;
 
-  // CRUD BaiGiang
   createBaiGiang: (
     phanId: string,
     data: {
@@ -106,7 +115,6 @@ interface CourseEditContextValue {
     success: BaiGiangType[];
     errors: { tieuDe: string; error: string }[];
   }>;
-
   updateBaiGiang: (
     phanId: string,
     baiGiangId: string,
@@ -119,24 +127,56 @@ interface CourseEditContextValue {
   ) => Promise<void>;
   deleteBaiGiang: (phanId: string, baiGiangId: string) => Promise<void>;
 
-  // CRUD BaiKiemTra
   createBaiKiemTra: (
     phanId: string,
-    data: { tenBaiKiemTra: string; moTa: string; cauHois: any[] },
+    data: { tenBaiKiemTra: string; moTa: string; thuTuSapXep?: number },
   ) => Promise<BaiKiemTraDto>;
   updateBaiKiemTra: (
-    phanId: string,
     baiKiemTraId: string,
     data: {
       tenBaiKiemTra: string;
       moTa: string;
-      cauHois: any[];
       thuTuSapXep?: number;
     },
   ) => Promise<void>;
   deleteBaiKiemTra: (phanId: string, baiKiemTraId: string) => Promise<void>;
 
-  // CRUD TaiLieu
+  createCauHoi: (
+    phanId: string,
+    baiKiemTraId: string,
+    data: {
+      noiDungCauHoi: string;
+      loaiCauHoi: "ONE" | "MULTI";
+      doKho: string;
+      danhSachDapAn: {
+        noiDungDapAn: string;
+        laDapAnDung: boolean;
+        thuTuSapXep?: number;
+      }[];
+    },
+  ) => Promise<CauHoiDto>;
+  updateCauHoi: (
+    phanId: string,
+    baiKiemTraId: string,
+    cauHoiId: string,
+    data: {
+      noiDungCauHoi: string;
+      loaiCauHoi: "ONE" | "MULTI";
+      doKho: string;
+      danhSachDapAn: {
+        id?: string;
+        noiDungDapAn: string;
+        laDapAnDung: boolean;
+        thuTuSapXep?: number;
+      }[];
+    },
+  ) => Promise<CauHoiDto>;
+  deleteCauHoi: (
+    phanId: string,
+    baiKiemTraId: string,
+    cauHoiId: string,
+  ) => Promise<void>;
+
   createTaiLieu: (
     phanId: string,
     baiGiangId: string,
@@ -149,7 +189,6 @@ interface CourseEditContextValue {
     taiLieuId: string,
   ) => Promise<void>;
 
-  // Load quizzes for a section
   loadQuizzesForSection: (phanId: string) => Promise<void>;
 }
 
@@ -172,20 +211,87 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
   const idKhoaHoc = params?.corsesId || "";
   const stateKey = useMemo(() => `course_edit_${idKhoaHoc}`, [idKhoaHoc]);
 
-  const [thongTin, setThongTinState] = useState<KhoaHocType>({} as KhoaHocType);
+  const [thongTin, setThongTinState] = useState<ThongTinKhoaHocCoBan>({});
   const [phans, setPhans] = useState<PhanHocType[]>([]);
   const [trangThai, setTrangThai] = useState<TrangThaiKhoaHoc>("DangSua");
   const [lyDoTuChoi, setLyDoTuChoi] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Services
+  const [isDirty, setIsDirty] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const initialDataRef = useRef<{
+    thongTin: ThongTinKhoaHocCoBan;
+    phans: PhanHocType[];
+  } | null>(null);
+  const initialFetchDone = useRef(false);
+
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
   const phanService = useMemo(() => new PhanService(), []);
   const baiGiangService = useMemo(() => new BaiGiangService(), []);
   const taiLieuService = useMemo(() => new TaiLieuService(), []);
   const baiKiemTraService = useMemo(() => new BaiKiemTraService(), []);
 
-  // Lưu state tạm (chỉ dùng cho việc chuyển tab, không lưu trangThai)
+  const markDirty = useCallback(() => {
+    if (trangThai === "DangSua") {
+      setIsDirty(true);
+    }
+  }, [trangThai]);
+
+  const markClean = useCallback(() => {
+    setIsDirty(false);
+    initialDataRef.current = {
+      thongTin: { ...thongTin },
+      phans: JSON.parse(JSON.stringify(phans)),
+    };
+  }, [thongTin, phans]);
+
+  const resetDirty = useCallback(() => {
+    setIsDirty(false);
+  }, []);
+
+  const setThongTin = useCallback(
+    (patch: ThongTinKhoaHocCoBan) => {
+      setThongTinState((prev) => {
+        const newState = { ...prev, ...patch };
+        return newState;
+      });
+      if (trangThai === "DangSua") {
+        setIsDirty(true);
+      }
+    },
+    [trangThai],
+  );
+
+  const setPhansWrapper = useCallback(
+    (newPhans: PhanHocType[]) => {
+      setPhans(newPhans);
+      if (trangThai === "DangSua") {
+        setIsDirty(true);
+      }
+    },
+    [trangThai],
+  );
+
+  const saveAndNavigate = useCallback(
+    (destination: string) => {
+      if (idKhoaHoc) {
+        courseEditStore.set(stateKey, {
+          thongTin,
+          phans,
+          lyDoTuChoi,
+          timestamp: Date.now(),
+        });
+      }
+      setIsDirty(false);
+      window.location.href = destination;
+    },
+    [idKhoaHoc, stateKey, thongTin, phans, lyDoTuChoi],
+  );
+
+  const setNavigating = useCallback((value: boolean) => {
+    setIsNavigating(value);
+  }, []);
+
   const saveState = useCallback(() => {
     if (!idKhoaHoc) return;
     courseEditStore.set(stateKey, {
@@ -196,7 +302,6 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     });
   }, [idKhoaHoc, stateKey, thongTin, phans, lyDoTuChoi]);
 
-  // Khôi phục state tạm (chỉ dùng khi chuyển tab)
   const restoreState = useCallback(() => {
     if (!idKhoaHoc) return false;
     const saved = courseEditStore.get(stateKey);
@@ -204,6 +309,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
       setThongTinState(saved.thongTin || {});
       setPhans(saved.phans || []);
       setLyDoTuChoi(saved.lyDoTuChoi || null);
+      setIsDirty(false);
       return true;
     }
     return false;
@@ -212,13 +318,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
   const clearState = useCallback(() => {
     if (!idKhoaHoc) return;
     courseEditStore.delete(stateKey);
+    setIsDirty(false);
   }, [idKhoaHoc, stateKey]);
 
-  const setThongTin = useCallback((patch: Partial<KhoaHocType>) => {
-    setThongTinState((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  // ---- Load quizzes for a specific section ----
   const loadQuizzesForSection = useCallback(
     async (phanId: string) => {
       try {
@@ -259,13 +361,12 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     [baiKiemTraService],
   );
 
-  // ---- Fetch data ----
   const fetchCourseInfo = useCallback(async () => {
     if (!idKhoaHoc) return;
     try {
       const data = await khoaHocService.GetToUpdateKhoaHoc(idKhoaHoc);
       if (data) {
-        setThongTin({
+        setThongTinState({
           tieuDe: data.tieuDe || "",
           moTa: data.moTa || "",
           capDo: data.capDo || "",
@@ -284,7 +385,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Lỗi lấy thông tin khóa học:", error);
     }
-  }, [idKhoaHoc, khoaHocService, setThongTin, setTrangThai]);
+  }, [idKhoaHoc, khoaHocService]);
 
   const fetchSections = useCallback(async () => {
     if (!idKhoaHoc) return;
@@ -363,16 +464,31 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
   ]);
 
   const refreshData = useCallback(async () => {
+    if (isNavigating) {
+      return;
+    }
     setLoading(true);
     try {
       await Promise.all([fetchCourseInfo(), fetchSections()]);
+      setIsDirty(false);
+      initialDataRef.current = {
+        thongTin: { ...thongTin },
+        phans: JSON.parse(JSON.stringify(phans)),
+      };
       saveState();
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
     } finally {
       setLoading(false);
     }
-  }, [fetchCourseInfo, fetchSections, saveState]);
+  }, [
+    fetchCourseInfo,
+    fetchSections,
+    saveState,
+    thongTin,
+    phans,
+    isNavigating,
+  ]);
 
   // ---- CRUD Phan ----
   const createPhan = useCallback(
@@ -400,13 +516,12 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         thuTuSapXep: raw?.thuTuSapXep ?? thuTuSapXep,
         DanhSachBaiGiang: [],
         DanhDachBaiKiemTra: [],
-      };
+      } as PhanHocType;
       setPhans((prev) => [...prev, newPhan]);
       saveState();
-      await refreshData(); // ← Thêm
       return newPhan;
     },
-    [idKhoaHoc, phanService, saveState, phans.length, refreshData],
+    [idKhoaHoc, phanService, saveState, phans.length],
   );
 
   const updatePhan = useCallback(
@@ -435,9 +550,8 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         ),
       );
       saveState();
-      await refreshData(); // ← Thêm
     },
-    [phanService, saveState, refreshData],
+    [phanService, saveState],
   );
 
   const deletePhan = useCallback(
@@ -447,9 +561,8 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         throw new Error(res.message || "Xóa phần thất bại");
       setPhans((prev) => prev.filter((p) => p.id !== phanId));
       saveState();
-      await refreshData(); // ← Thêm
     },
-    [phanService, saveState, refreshData],
+    [phanService, saveState],
   );
 
   // ---- CRUD BaiGiang ----
@@ -497,7 +610,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         thoiLuong: raw?.thoiLuong || 0,
         danhSachTaiLieu: [],
         laBaiGiangFree: raw?.laBaiGiangFree ?? data.isFree,
-      };
+      } as BaiGiangType;
 
       setPhans((prev) =>
         prev.map((p) =>
@@ -513,10 +626,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         ),
       );
       saveState();
-      await refreshData(); // ← Thêm
       return newBg;
     },
-    [phans, baiGiangService, saveState, refreshData],
+    [phans, baiGiangService, saveState],
   );
 
   const createMultipleBaiGiang = useCallback(
@@ -581,7 +693,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
             thoiLuong: raw?.thoiLuong || 0,
             danhSachTaiLieu: [],
             laBaiGiangFree: raw?.laBaiGiangFree ?? isFree,
-          };
+          } as BaiGiangType;
 
           if (onProgress) {
             onProgress({
@@ -635,10 +747,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         );
         saveState();
       }
-      await refreshData(); // ← Thêm
       return { success, errors };
     },
-    [phans, baiGiangService, saveState, refreshData],
+    [phans, baiGiangService, saveState],
   );
 
   const updateBaiGiang = useCallback(
@@ -701,9 +812,8 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         ),
       );
       saveState();
-      await refreshData(); // ← Thêm
     },
-    [phans, baiGiangService, saveState, refreshData],
+    [phans, baiGiangService, saveState],
   );
 
   const deleteBaiGiang = useCallback(
@@ -724,21 +834,15 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         ),
       );
       saveState();
-      await refreshData(); // ← Thêm
     },
-    [baiGiangService, saveState, refreshData],
+    [baiGiangService, saveState],
   );
 
   // ---- CRUD BaiKiemTra ----
   const createBaiKiemTra = useCallback(
     async (
       phanId: string,
-      data: {
-        tenBaiKiemTra: string;
-        moTa: string;
-        cauHois: any[];
-        thuTuSapXep?: number;
-      },
+      data: { tenBaiKiemTra: string; moTa: string; thuTuSapXep?: number },
     ): Promise<BaiKiemTraDto> => {
       if (!data.tenBaiKiemTra || !data.tenBaiKiemTra.trim()) {
         throw new Error("Vui lòng nhập tiêu đề bài kiểm tra");
@@ -757,17 +861,6 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         tenBaiKiemTra: data.tenBaiKiemTra.trim(),
         moTa: data.moTa || "",
         thuTuSapXep,
-        danhSachCauHoi: data.cauHois.map((q, index) => ({
-          noiDungCauHoi: q.noiDungCauHoi,
-          loaiCauHoi: q.loaiCauHoi === "ONE" ? "ONE" : "MULTI",
-          doKho: q.doKho,
-          thuTuSapXep: index + 1,
-          danhSachDapAn: q.danhSachDapAn.map((d: any, dIdx: number) => ({
-            noiDungDapAn: d.noiDungDapAn,
-            laDapAnDung: d.laDapAnDung,
-            thuTuSapXep: dIdx + 1,
-          })),
-        })),
       };
       const res = await baiKiemTraService.CreateBaiKiemTra(payload as any);
       if (res?.status === false)
@@ -779,21 +872,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         tenBaiKiemTra: raw?.tenBaiKiemTra || payload.tenBaiKiemTra,
         moTa: raw?.moTa || payload.moTa,
         thuTuSapXep: raw?.thuTuSapXep ?? thuTuSapXep,
-        soCauHoi: raw?.soCauHoi || data.cauHois.length,
-        cauHois: (raw?.danhSachCauHoi || []).map((q: any) => ({
-          id: q.id ?? taoTempId("q"),
-          noiDungCauHoi: q.noiDungCauHoi || "",
-          loaiCauHoi: q.loaiCauHoi || "ONE",
-          doKho: q.doKho || "TrungBinh",
-          thuTuSapXep: q.thuTuSapXep ?? 0,
-          danhSachDapAn: (q.danhSachDapAns || []).map((d: any) => ({
-            id: d.id ?? taoTempId("da"),
-            noiDungDapAn: d.noiDungDapAn || "",
-            laDapAnDung: d.laDapAnDung || false,
-            thuTuSapXep: d.thuTuSapXep || 0,
-          })),
-        })),
-      };
+        soCauHoi: 0,
+        cauHois: [],
+      } as BaiKiemTraDto;
 
       setPhans((prev) =>
         prev.map((p) =>
@@ -806,62 +887,68 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         ),
       );
       saveState();
-      await refreshData(); // ← Thêm
       return newQuiz;
     },
-    [phans, baiKiemTraService, saveState, refreshData],
+    [phans, baiKiemTraService, saveState],
   );
 
   const updateBaiKiemTra = useCallback(
     async (
-      phanId: string,
       baiKiemTraId: string,
-      data: {
-        tenBaiKiemTra: string;
-        moTa: string;
-        cauHois: any[];
-        thuTuSapXep?: number;
-      },
+      data: { tenBaiKiemTra: string; moTa: string; thuTuSapXep?: number },
     ) => {
       if (!data.tenBaiKiemTra || !data.tenBaiKiemTra.trim()) {
         throw new Error("Vui lòng nhập tiêu đề bài kiểm tra");
       }
 
-      const phan = phans.find((p) => p.id === phanId);
-      if (!phan) throw new Error("Không tìm thấy phần");
-      const quiz = phan.DanhDachBaiKiemTra?.find(
-        (kt) => kt.id === baiKiemTraId,
-      );
-      if (!quiz) throw new Error("Không tìm thấy bài kiểm tra");
+      // Find the quiz in phans
+      let foundQuiz = null;
+      let foundPhanId = null;
+      for (const phan of phans) {
+        const quiz = phan.DanhDachBaiKiemTra?.find(
+          (kt) => kt.id === baiKiemTraId,
+        );
+        if (quiz) {
+          foundQuiz = quiz;
+          foundPhanId = phan.id;
+          break;
+        }
+      }
+      if (!foundQuiz) throw new Error("Không tìm thấy bài kiểm tra");
 
       const payload = {
         idBaiKiemTra: baiKiemTraId,
         tenBaiKiemTra: data.tenBaiKiemTra.trim(),
         moTa: data.moTa || "",
-        thuTuSapXep: data.thuTuSapXep ?? quiz.thuTuSapXep,
-        danhSachCauHoi: data.cauHois.map((q, index) => ({
-          id: q.id,
-          noiDungCauHoi: q.noiDungCauHoi,
-          loaiCauHoi: q.loaiCauHoi === "ONE" ? "ONE" : "MULTI",
-          doKho: q.doKho,
-          thuTuSapXep: q.thuTuSapXep ?? index + 1,
-          danhSachDapAns: q.danhSachDapAn.map((d: any, dIdx: number) => ({
-            id: d.id,
-            noiDungDapAn: d.noiDungDapAn,
-            laDapAnDung: d.laDapAnDung,
-            thuTuSapXep: d.thuTuSapXep ?? dIdx + 1,
-          })),
-        })),
+        thuTuSapXep: data.thuTuSapXep ?? foundQuiz.thuTuSapXep,
       };
       const res = await baiKiemTraService.UpdateBaiKiemTra(payload as any);
       if (res.status === false)
         throw new Error(res.message || "Cập nhật bài kiểm tra thất bại");
 
-      await loadQuizzesForSection(phanId);
+      // Cập nhật local state
+      setPhans((prev) =>
+        prev.map((p) =>
+          p.id === foundPhanId
+            ? {
+                ...p,
+                DanhDachBaiKiemTra: p.DanhDachBaiKiemTra?.map((kt) =>
+                  kt.id === baiKiemTraId
+                    ? {
+                        ...kt,
+                        tenBaiKiemTra: payload.tenBaiKiemTra,
+                        moTa: payload.moTa,
+                        thuTuSapXep: payload.thuTuSapXep,
+                      }
+                    : kt,
+                ),
+              }
+            : p,
+        ),
+      );
       saveState();
-      await refreshData(); // ← Thêm
     },
-    [baiKiemTraService, loadQuizzesForSection, saveState, refreshData, phans],
+    [baiKiemTraService, saveState, phans],
   );
 
   const deleteBaiKiemTra = useCallback(
@@ -871,9 +958,199 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         throw new Error(res.message || "Xóa bài kiểm tra thất bại");
       await loadQuizzesForSection(phanId);
       saveState();
-      await refreshData(); // ← Thêm
     },
-    [baiKiemTraService, loadQuizzesForSection, saveState, refreshData],
+    [baiKiemTraService, loadQuizzesForSection, saveState],
+  );
+
+  // ---- CRUD CauHoi + DapAn ----
+  const createCauHoi = useCallback(
+    async (
+      phanId: string,
+      baiKiemTraId: string,
+      data: {
+        noiDungCauHoi: string;
+        loaiCauHoi: "ONE" | "MULTI";
+        doKho: string;
+        danhSachDapAn: {
+          noiDungDapAn: string;
+          laDapAnDung: boolean;
+          thuTuSapXep?: number;
+        }[];
+      },
+    ): Promise<CauHoiDto> => {
+      const phan = phans.find((p) => p.id === phanId);
+      const quiz = phan?.DanhDachBaiKiemTra?.find(
+        (kt) => kt.id === baiKiemTraId,
+      );
+      const thuTuSapXep = (quiz?.cauHois?.length || 0) + 1;
+
+      const request: CreateCauHoiRequest = {
+        idBaiKiemTra: baiKiemTraId,
+        noiDungCauHoi: data.noiDungCauHoi.trim(),
+        doKho: data.doKho,
+        thuTuSapXep,
+        danhSachDapAn: data.danhSachDapAn.map((d, idx) => ({
+          noiDungDapAn: d.noiDungDapAn.trim(),
+          laDapAnDung: d.laDapAnDung,
+          thuTuSapXep: d.thuTuSapXep ?? idx + 1,
+        })),
+      };
+
+      const res = await baiKiemTraService.CreateCauHoi(request);
+      if (res?.status === false)
+        throw new Error(res.message || "Tạo câu hỏi thất bại");
+
+      const raw = unwrapApiData<any>(res) as CauHoiDto;
+      const newCauHoi = {
+        id: raw?.id ?? taoTempId("q"),
+        noiDungCauHoi: raw?.noiDungCauHoi || request.noiDungCauHoi,
+        loaiCauHoi: raw?.loaiCauHoi || data.loaiCauHoi,
+        doKho: raw?.doKho || data.doKho,
+        thuTuSapXep: raw?.thuTuSapXep ?? thuTuSapXep,
+        danhSachDapAn: (Array.isArray(raw?.danhSachDapAns)
+          ? raw.danhSachDapAns
+          : []
+        ).map((d: any) => ({
+          id: d.id ?? taoTempId("da"),
+          noiDungDapAn: d.noiDungDapAn || "",
+          laDapAnDung: d.laDapAnDung || false,
+          thuTuSapXep: d.thuTuSapXep || 0,
+        })),
+      };
+
+      setPhans((prev) =>
+        prev.map((p) =>
+          p.id === phanId
+            ? {
+                ...p,
+                DanhDachBaiKiemTra: p.DanhDachBaiKiemTra?.map((kt) =>
+                  kt.id === baiKiemTraId
+                    ? {
+                        ...kt,
+                        cauHois: [...(kt.cauHois || []), newCauHoi],
+                        soCauHoi: (kt.soCauHoi || 0) + 1,
+                      }
+                    : kt,
+                ),
+              }
+            : p,
+        ),
+      );
+      saveState();
+      return raw;
+    },
+    [phans, baiKiemTraService, saveState],
+  );
+
+  const updateCauHoi = useCallback(
+    async (
+      phanId: string,
+      baiKiemTraId: string,
+      cauHoiId: string,
+      data: {
+        noiDungCauHoi: string;
+        loaiCauHoi: "ONE" | "MULTI";
+        doKho: string;
+        danhSachDapAn: {
+          id?: string;
+          noiDungDapAn: string;
+          laDapAnDung: boolean;
+          thuTuSapXep?: number;
+        }[];
+      },
+    ): Promise<CauHoiDto> => {
+      const request: UpdateCauHoiRequest = {
+        id: cauHoiId,
+        noiDungCauHoi: data.noiDungCauHoi.trim(),
+        doKho: data.doKho,
+        danhSachDapAns: data.danhSachDapAn.map((d, idx) => ({
+          id: isValidGuid(d.id) ? d.id : undefined,
+          noiDungDapAn: d.noiDungDapAn.trim(),
+          laDapAnDung: d.laDapAnDung,
+          thuTuSapXep: d.thuTuSapXep ?? idx + 1,
+        })),
+      };
+
+      const res = await baiKiemTraService.UpdateCauHoi(request);
+      if (res?.status === false)
+        throw new Error(res.message || "Cập nhật câu hỏi thất bại");
+
+      const raw = unwrapApiData<any>(res) as CauHoiDto;
+
+      setPhans((prev) =>
+        prev.map((p) =>
+          p.id === phanId
+            ? {
+                ...p,
+                DanhDachBaiKiemTra: p.DanhDachBaiKiemTra?.map((kt) =>
+                  kt.id === baiKiemTraId
+                    ? {
+                        ...kt,
+                        cauHois: (kt.cauHois || []).map((q: any) =>
+                          q.id === cauHoiId
+                            ? {
+                                id: cauHoiId,
+                                noiDungCauHoi:
+                                  raw?.noiDungCauHoi || request.noiDungCauHoi,
+                                loaiCauHoi: raw?.loaiCauHoi || data.loaiCauHoi,
+                                doKho: raw?.doKho || data.doKho,
+                                thuTuSapXep: raw?.thuTuSapXep ?? q.thuTuSapXep,
+                                danhSachDapAn: (Array.isArray(
+                                  raw?.danhSachDapAns,
+                                )
+                                  ? raw.danhSachDapAns
+                                  : []
+                                ).map((d: any) => ({
+                                  id: d.id ?? taoTempId("da"),
+                                  noiDungDapAn: d.noiDungDapAn || "",
+                                  laDapAnDung: d.laDapAnDung || false,
+                                  thuTuSapXep: d.thuTuSapXep || 0,
+                                })),
+                              }
+                            : q,
+                        ),
+                      }
+                    : kt,
+                ),
+              }
+            : p,
+        ),
+      );
+      saveState();
+      return raw;
+    },
+    [baiKiemTraService, saveState],
+  );
+
+  const deleteCauHoi = useCallback(
+    async (phanId: string, baiKiemTraId: string, cauHoiId: string) => {
+      const res = await baiKiemTraService.DeleteCauHoi(cauHoiId);
+      if (res.status === false)
+        throw new Error(res.message || "Xóa câu hỏi thất bại");
+
+      setPhans((prev) =>
+        prev.map((p) =>
+          p.id === phanId
+            ? {
+                ...p,
+                DanhDachBaiKiemTra: p.DanhDachBaiKiemTra?.map((kt) =>
+                  kt.id === baiKiemTraId
+                    ? {
+                        ...kt,
+                        cauHois: (kt.cauHois || []).filter(
+                          (q: any) => q.id !== cauHoiId,
+                        ),
+                        soCauHoi: Math.max((kt.soCauHoi || 1) - 1, 0),
+                      }
+                    : kt,
+                ),
+              }
+            : p,
+        ),
+      );
+      saveState();
+    },
+    [baiKiemTraService, saveState],
   );
 
   // ---- CRUD TaiLieu ----
@@ -925,9 +1202,8 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         ),
       );
       saveState();
-      await refreshData(); // ← Thêm
     },
-    [taiLieuService, saveState, refreshData],
+    [taiLieuService, saveState],
   );
 
   const deleteTaiLieu = useCallback(
@@ -955,22 +1231,27 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         ),
       );
       saveState();
-      await refreshData(); // ← Thêm
     },
-    [taiLieuService, saveState, refreshData],
+    [taiLieuService, saveState],
   );
 
   // ---- Khởi tạo ----
   useEffect(() => {
     const initializeData = async () => {
       if (!idKhoaHoc) return;
-      setLoading(true);
-      try {
-        await refreshData();
-      } catch (error) {
-        console.error("Lỗi tải dữ liệu:", error);
-      } finally {
-        setLoading(false);
+      if (!initialFetchDone.current) {
+        initialFetchDone.current = true;
+        setLoading(true);
+        try {
+          await fetchCourseInfo();
+          await fetchSections();
+          setIsDirty(false);
+          saveState();
+        } catch (error) {
+          console.error("Lỗi tải dữ liệu:", error);
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
@@ -978,14 +1259,12 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idKhoaHoc]);
 
-  // ---- Lưu state tạm khi unmount ----
   useEffect(() => {
     return () => {
       saveState();
     };
   }, [saveState]);
 
-  // ---- isReadOnly ----
   const isReadOnly = trangThai !== "DangSua";
 
   const value: CourseEditContextValue = {
@@ -993,7 +1272,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     thongTin,
     setThongTin,
     phans,
-    setPhans,
+    setPhans: setPhansWrapper,
     trangThai,
     setTrangThai,
     lyDoTuChoi,
@@ -1003,6 +1282,13 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     saveState,
     restoreState,
     clearState,
+    isDirty,
+    markDirty,
+    markClean,
+    resetDirty,
+    saveAndNavigate,
+    isNavigating,
+    setNavigating,
     createPhan,
     updatePhan,
     deletePhan,
@@ -1013,6 +1299,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     createBaiKiemTra,
     updateBaiKiemTra,
     deleteBaiKiemTra,
+    createCauHoi,
+    updateCauHoi,
+    deleteCauHoi,
     createTaiLieu,
     deleteTaiLieu,
     loadQuizzesForSection,

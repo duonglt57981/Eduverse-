@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -21,7 +21,6 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 import {
   MAU,
@@ -29,11 +28,12 @@ import {
   kiemTraDieuKienGuiDuyet,
   MucThieu,
   kiemTraCoBanGhiDangSua,
+  ThongTinKhoaHocCoBan,
 } from "./courseEditCore";
 
 interface Props {
   trangThai: TrangThaiKhoaHoc;
-  thongTinKhoaHoc: KhoaHocType;
+  thongTinKhoaHoc: ThongTinKhoaHocCoBan;
   phans: PhanHocType[];
   lyDoTuChoi?: string | null;
   onGuiPheDuyet: () => Promise<void>;
@@ -87,7 +87,6 @@ export default function CourseStatusAction({
     onDiChuyenDen(diChuyenDen);
   };
 
-  // ===== TRẠNG THÁI ĐANG DUYỆT =====
   if (trangThai === "DangDuyet") {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -99,7 +98,6 @@ export default function CourseStatusAction({
     );
   }
 
-  // ===== TRẠNG THÁI CHỜ DUYỆT =====
   if (trangThai === "ChoDuyet") {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -111,7 +109,6 @@ export default function CourseStatusAction({
     );
   }
 
-  // ===== TRẠNG THÁI TỪ CHỐI =====
   if (trangThai === "TuChoi") {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -125,7 +122,6 @@ export default function CourseStatusAction({
     );
   }
 
-  // ===== TRẠNG THÁI ĐÃ DUYỆT =====
   if (trangThai === "DaDuyet") {
     return (
       <Typography sx={{ fontSize: 13, color: "#8be0a6" }}>
@@ -134,7 +130,6 @@ export default function CourseStatusAction({
     );
   }
 
-  // ===== TRẠNG THÁI ĐANG SỬA (Mặc định) =====
   const isDisabled = !coDangSua || trangThai !== "DangSua";
 
   return (
@@ -228,7 +223,6 @@ export default function CourseStatusAction({
         </span>
       </Tooltip>
 
-      {/* Popup thiếu điều kiện */}
       <Dialog
         open={moPopupThieu}
         onClose={() => setMoPopupThieu(false)}

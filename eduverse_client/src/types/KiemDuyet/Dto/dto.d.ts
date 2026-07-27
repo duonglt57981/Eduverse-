@@ -1,5 +1,8 @@
 export interface KiemDuyetSearchDto extends SearchBase {
   Keyword?: string;
+  TrangThaiPheDuyet?: string; // "ChoDuyet" | "DangDuyet"
+  SapXepNgay?: string; // "Moi" | "Cu"
+  SapXepTen?: string; // "AZ" | "ZA"
 }
 
 export interface KhoaHocKiemDuyetListDto {

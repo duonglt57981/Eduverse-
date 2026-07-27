@@ -6,9 +6,26 @@ import {
   CourseEditProvider,
 } from "./components/CourseEditContext";
 import CourseEditLayout from "./components/CourseEditLayout";
-import { tinhTongThoiLuongGiay, MucThieu } from "./components/courseEditCore";
+import {
+  tinhTongThoiLuongGiay,
+  MucThieu,
+  demSoKyTu,
+  demSoKyTuKeCaDauCach,
+  SO_KY_TU_TIEU_DE_TOI_THIEU,
+  SO_KY_TU_MO_TA_TOI_THIEU,
+  SO_KY_TU_MO_TA_TOI_DA,
+} from "./components/courseEditCore";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+} from "@mui/material";
+import { MAU } from "./components/courseEditCore";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,12 +41,19 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     idKhoaHoc,
     clearState,
     saveState,
+    isDirty,
+    resetDirty,
+    // Không dùng refreshData khi chuyển trang để tránh reload
   } = useCourseEdit();
 
   const [dangXuLy, setDangXuLy] = useState(false);
-  const khoaHocService = new KhoaHocService();
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+    null,
+  );
+  const [showDirtyDialog, setShowDirtyDialog] = useState(false);
 
-  // Lưu state khi rời trang
+  const khoaHocService = useMemo(() => new KhoaHocService(), []);
+
   useEffect(() => {
     return () => {
       saveState();
@@ -42,11 +66,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const tongPhut = Math.floor(tongGiay / 60);
   const thoiLuongHienThi = tongPhut > 0 ? `${tongPhut} phút` : "Chưa có video";
 
+  const soKyTuMoTaHienTai = demSoKyTuKeCaDauCach(thongTin.moTa || "");
+
   const basicsHoanThanh = Boolean(
     thongTin.tieuDe &&
-    thongTin.tieuDe.trim().length >= 10 &&
+    demSoKyTu(thongTin.tieuDe) >= SO_KY_TU_TIEU_DE_TOI_THIEU &&
     thongTin.moTa &&
-    thongTin.moTa.length > 200 &&
+    demSoKyTu(thongTin.moTa) >= SO_KY_TU_MO_TA_TOI_THIEU &&
+    soKyTuMoTaHienTai <= SO_KY_TU_MO_TA_TOI_DA &&
     thongTin.capDo &&
     thongTin.hinhAnhKhoaHoc,
   );
@@ -73,36 +100,26 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     },
   ];
 
-  const handleNavigateSidebar = (key: string) => {
-    saveState(); // Lưu trước khi chuyển tab
-    router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/${key}`);
-  };
+  // Hàm thực hiện chuyển trang - KHÔNG gọi refreshData
+  const performNavigation = useCallback(
+    (key: string) => {
+      // Lưu state trước khi chuyển
+      saveState();
+      // Chuyển trang bằng router.push (không reload)
+      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/${key}`);
+    },
+    [idKhoaHoc, router, saveState],
+  );
 
-  const handleBack = () => {
-    clearState(); // Xóa state khi quay lại danh sách
+  // Hàm thực hiện quay lại - KHÔNG gọi refreshData
+  const performBack = useCallback(() => {
+    clearState();
+    resetDirty();
     router.push("/instructor/manager-courses");
-  };
+  }, [clearState, resetDirty, router]);
 
-  const handleGuiPheDuyet = useCallback(async () => {
-    setDangXuLy(true);
-    try {
-      const res = await khoaHocService.ChuyenTTChoDuyetBatch(idKhoaHoc);
-      if (res.status !== false) {
-        setTrangThai("ChoDuyet");
-        await refreshData();
-        alert("Đã gửi phê duyệt thành công!");
-      } else {
-        alert(res.message || "Gửi phê duyệt thất bại");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Đã xảy ra lỗi khi gửi phê duyệt");
-    } finally {
-      setDangXuLy(false);
-    }
-  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData]);
-
-  const handleDiChuyenDenTuValidate = useCallback(
+  // Hàm thực hiện di chuyển từ validate - KHÔNG gọi refreshData
+  const performDiChuyenDen = useCallback(
     (diChuyenDen: MucThieu["diChuyenDen"]) => {
       saveState();
       if (diChuyenDen === "basics") {
@@ -116,25 +133,200 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     [idKhoaHoc, router, saveState],
   );
 
+  // Hàm xử lý khi click vào sidebar
+  const handleNavigateSidebar = useCallback(
+    (key: string) => {
+      if (isDirty && trangThai === "DangSua") {
+        setPendingNavigation(key);
+        setShowDirtyDialog(true);
+      } else {
+        performNavigation(key);
+      }
+    },
+    [isDirty, trangThai, performNavigation],
+  );
+
+  // Hàm xử lý khi click back
+  const handleBack = useCallback(() => {
+    if (isDirty && trangThai === "DangSua") {
+      setPendingNavigation("back");
+      setShowDirtyDialog(true);
+    } else {
+      performBack();
+    }
+  }, [isDirty, trangThai, performBack]);
+
+  // Hàm xử lý khi click từ validate
+  const handleDiChuyenDenTuValidate = useCallback(
+    (diChuyenDen: MucThieu["diChuyenDen"]) => {
+      if (isDirty && trangThai === "DangSua") {
+        setPendingNavigation(diChuyenDen);
+        setShowDirtyDialog(true);
+      } else {
+        performDiChuyenDen(diChuyenDen);
+      }
+    },
+    [isDirty, trangThai, performDiChuyenDen],
+  );
+
+  // Hàm xác nhận chuyển trang
+  const handleConfirmNavigation = useCallback(() => {
+    setShowDirtyDialog(false);
+    if (pendingNavigation) {
+      // Lưu state trước khi chuyển
+      saveState();
+      resetDirty();
+
+      if (pendingNavigation === "back") {
+        performBack();
+      } else if (
+        pendingNavigation === "basics" ||
+        pendingNavigation === "curriculum"
+      ) {
+        performDiChuyenDen(pendingNavigation as MucThieu["diChuyenDen"]);
+      } else {
+        performNavigation(pendingNavigation);
+      }
+    }
+    setPendingNavigation(null);
+  }, [
+    pendingNavigation,
+    saveState,
+    resetDirty,
+    performBack,
+    performDiChuyenDen,
+    performNavigation,
+  ]);
+
+  // Hàm hủy chuyển trang - chỉ đóng dialog, KHÔNG reload
+  const handleCancelNavigation = useCallback(() => {
+    setShowDirtyDialog(false);
+    setPendingNavigation(null);
+    // KHÔNG gọi refreshData để giữ nguyên dữ liệu đang sửa
+  }, []);
+
+  // Hàm gửi phê duyệt
+  const handleGuiPheDuyet = useCallback(async () => {
+    setDangXuLy(true);
+    try {
+      const res = await khoaHocService.ChuyenTTChoDuyetBatch(idKhoaHoc);
+      if (res.status === true) {
+        setTrangThai("ChoDuyet");
+        // Sau khi gửi thành công, cần refresh dữ liệu
+        await refreshData();
+        resetDirty();
+        alert("Đã gửi phê duyệt thành công!");
+      } else {
+        alert(res.message || "Gửi phê duyệt thất bại");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Đã xảy ra lỗi khi gửi phê duyệt");
+    } finally {
+      setDangXuLy(false);
+    }
+  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty]);
+
+  const dialogContent = useMemo(() => {
+    if (pendingNavigation === "back") {
+      return {
+        title: "Bạn có thay đổi chưa lưu",
+        message:
+          "Bạn có thay đổi chưa được lưu trên trang này. Bạn có muốn rời khỏi trang và mất những thay đổi này không?",
+        confirmText: "Rời khỏi",
+        cancelText: "Ở lại",
+      };
+    }
+    return {
+      title: "Bạn có thay đổi chưa lưu",
+      message:
+        "Bạn có thay đổi chưa được lưu trên trang này. Bạn có muốn chuyển sang trang khác và mất những thay đổi này không?",
+      confirmText: "Chuyển trang",
+      cancelText: "Ở lại",
+    };
+  }, [pendingNavigation]);
+
   return (
-    <CourseEditLayout
-      tenKhoaHoc={thongTin.tieuDe || "Chưa đặt tên"}
-      trangThai={trangThai}
-      thoiLuongDaTai={thoiLuongHienThi}
-      thongTinKhoaHoc={thongTin}
-      phans={phans}
-      lyDoTuChoi={lyDoTuChoi}
-      nhomSidebar={nhomSidebar}
-      activeKey={activeKey}
-      loading={loading || dangXuLy}
-      onBack={handleBack}
-      onNavigateSidebar={handleNavigateSidebar}
-      onGuiPheDuyet={handleGuiPheDuyet}
-      onDiChuyenDenTuValidate={handleDiChuyenDenTuValidate}
-      onRefreshData={refreshData}
-    >
-      {children}
-    </CourseEditLayout>
+    <>
+      <CourseEditLayout
+        tenKhoaHoc={thongTin.tieuDe || "Chưa đặt tên"}
+        trangThai={trangThai}
+        thoiLuongDaTai={thoiLuongHienThi}
+        thongTinKhoaHoc={thongTin}
+        phans={phans}
+        lyDoTuChoi={lyDoTuChoi}
+        nhomSidebar={nhomSidebar}
+        activeKey={activeKey}
+        loading={loading || dangXuLy}
+        onBack={handleBack}
+        onNavigateSidebar={handleNavigateSidebar}
+        onGuiPheDuyet={handleGuiPheDuyet}
+        onDiChuyenDenTuValidate={handleDiChuyenDenTuValidate}
+        onRefreshData={refreshData}
+      >
+        {children}
+      </CourseEditLayout>
+
+      <Dialog
+        open={showDirtyDialog}
+        onClose={handleCancelNavigation}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              p: 1,
+            },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 700,
+            color: MAU.chuDen,
+            fontSize: 18,
+          }}
+        >
+          {dialogContent.title}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: MAU.chuXam, fontSize: 14.5 }}>
+            {dialogContent.message}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button
+            onClick={handleCancelNavigation}
+            sx={{
+              textTransform: "none",
+              color: MAU.chuXam,
+              fontWeight: 600,
+              "&:hover": {
+                bgcolor: "#F5F6F8",
+              },
+            }}
+          >
+            {dialogContent.cancelText}
+          </Button>
+          <Button
+            onClick={handleConfirmNavigation}
+            variant="contained"
+            sx={{
+              bgcolor: MAU.chinh,
+              textTransform: "none",
+              fontWeight: 700,
+              px: 3,
+              "&:hover": {
+                bgcolor: MAU.chinhDam,
+              },
+            }}
+          >
+            {dialogContent.confirmText}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 

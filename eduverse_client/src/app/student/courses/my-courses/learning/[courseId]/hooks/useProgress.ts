@@ -75,20 +75,34 @@ export const useProgress = (): UseProgressReturn => {
   // --- Gửi tiến độ lên server ---
   const sendProgress = useCallback(
     async (baiGiangId: string, thoiGianXem: number, courseId: string) => {
-      if (!courseId || !baiGiangId || updatingRef.current[baiGiangId]) return;
+      if (!courseId || !baiGiangId) return;
+
+      // Lấy tiến độ hiện tại
+      const current = progressMap.get(baiGiangId);
+      const currentTime = current?.thoiGianXem ?? 0;
+
+      // ✅ Chỉ gửi nếu thời gian mới LỚN HƠN thời gian đã lưu
+      if (thoiGianXem <= currentTime) {
+        return;
+      }
+
+      // Chống gọi trùng
+      if (updatingRef.current[baiGiangId]) return;
       updatingRef.current[baiGiangId] = true;
 
-      // Lưu thời lượng để tính ngưỡng (phòng khi response không có trạng thái)
       const thoiLuong = baiGiangInfoMap.get(baiGiangId)?.thoiLuong ?? 0;
-      const nguongHoanThanh = thoiLuong * 0.9; // 90%
+      const nguongHoanThanh = thoiLuong * 0.9;
 
-      // Cập nhật optimistic (thời gian xem mới, giữ nguyên trạng thái cũ)
+      // Giữ trạng thái hoàn thành nếu đã có, ngược lại tính dựa trên ngưỡng
+      const optimisticCompleted =
+        current?.daHoanThanh || thoiGianXem >= nguongHoanThanh;
+
+      // Cập nhật optimistic
       setProgressMap((prev) => {
         const next = new Map(prev);
-        const current = prev.get(baiGiangId);
         next.set(baiGiangId, {
-          daHoanThanh: current?.daHoanThanh ?? false,
-          thoiGianXem,
+          daHoanThanh: optimisticCompleted,
+          thoiGianXem: thoiGianXem,
         });
         return next;
       });
@@ -101,50 +115,33 @@ export const useProgress = (): UseProgressReturn => {
           LanCuoiXem: new Date(),
         };
 
-        // Gọi API (BE sẽ trả về TienDoHocTapDto hoặc tương tự)
         const response = await TienDoSvc.updateTienDoBaiGiang(request);
 
-        // --- Xác định trạng thái hoàn thành từ response hoặc tự tính ---
-        let daHoanThanh = false;
-        let thoiGianXemMoi = thoiGianXem;
+        // Cập nhật từ server, đảm bảo không giảm thời gian
+        const serverTime = response?.thoiGianXem ?? thoiGianXem;
+        const serverCompleted =
+          response?.trangThai === "HoanThanh" ||
+          (response?.thoiGianXem ?? 0) >= nguongHoanThanh;
 
-        if (response) {
-          // Ưu tiên dữ liệu từ server nếu có
-          daHoanThanh = response.trangThai === "HoanThanh";
-          thoiGianXemMoi = response.thoiGianXem ?? thoiGianXem;
-        } else {
-          // Nếu không có response, tự tính dựa trên ngưỡng (chỉ khi đạt ngưỡng mới set HoanThanh)
-          daHoanThanh = thoiGianXem >= nguongHoanThanh;
-        }
-
-        // Cập nhật state cuối cùng
         setProgressMap((prev) => {
           const next = new Map(prev);
+          const prevData = next.get(baiGiangId);
+          const finalTime = Math.max(prevData?.thoiGianXem ?? 0, serverTime);
+          const finalCompleted = prevData?.daHoanThanh || serverCompleted;
           next.set(baiGiangId, {
-            daHoanThanh,
-            thoiGianXem: thoiGianXemMoi,
+            daHoanThanh: finalCompleted,
+            thoiGianXem: finalTime,
           });
           return next;
         });
       } catch (err) {
         console.error("Lỗi cập nhật tiến độ:", err);
-        // Rollback về trạng thái cũ nếu có lỗi
-        setProgressMap((prev) => {
-          const next = new Map(prev);
-          const current = prev.get(baiGiangId);
-          if (current) {
-            next.set(baiGiangId, {
-              daHoanThanh: current.daHoanThanh,
-              thoiGianXem: current.thoiGianXem,
-            });
-          }
-          return next;
-        });
+        // Không rollback vì đã cập nhật optimistic, lần gọi sau sẽ gửi thời gian lớn hơn
       } finally {
         delete updatingRef.current[baiGiangId];
       }
     },
-    [baiGiangInfoMap],
+    [progressMap, baiGiangInfoMap],
   );
 
   return {

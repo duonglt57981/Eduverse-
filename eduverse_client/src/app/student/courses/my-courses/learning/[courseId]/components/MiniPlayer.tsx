@@ -1,10 +1,8 @@
+// src/app/khoa-hoc/components/MiniPlayer.tsx
+
 "use client";
 
-import { Box, IconButton, Tooltip } from "@mui/material";
-import { OpenInFull as OpenInFullIcon } from "@mui/icons-material";
 import { VideoPlayer } from "./VideoPlayer";
-
-const PRIMARY_RED = "#8B1313";
 
 interface MiniPlayerProps {
   url: string;
@@ -13,8 +11,22 @@ interface MiniPlayerProps {
   onTimeUpdate: (t: number) => void;
   onEnded: () => void;
   onExpand: () => void;
+  playerId?: string;
+  autoPlay?: boolean;
+  onUnmount?: (time: number) => void;
 }
 
+/**
+ * MiniPlayer - Wrapper của VideoPlayer với mini=true
+ *
+ * QUAN TRỌNG: Component này chỉ là wrapper, KHÔNG tạo instance video.js mới.
+ * Nó sử dụng chính VideoPlayer với prop mini=true để hiển thị ở chế độ mini.
+ *
+ * Đảm bảo chỉ có DUY NHẤT một VideoPlayer được mount tại một thời điểm.
+ * Khi mini xuất hiện, VideoPlayer full sẽ bị unmount và MiniPlayer sẽ mount.
+ * Khi mở rộng, MiniPlayer unmount và VideoPlayer full mount lại với thời gian
+ * được đồng bộ qua savedTime.
+ */
 export const MiniPlayer = ({
   url,
   savedTime,
@@ -22,44 +34,22 @@ export const MiniPlayer = ({
   onTimeUpdate,
   onEnded,
   onExpand,
+  playerId = "mini",
+  autoPlay = true,
+  onUnmount,
 }: MiniPlayerProps) => {
   return (
-    <Box
-      sx={{
-        position: "fixed",
-        bottom: 24,
-        right: 24,
-        width: 300,
-        zIndex: 1300,
-        borderRadius: 2,
-        overflow: "hidden",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-        border: `2px solid ${PRIMARY_RED}`,
-      }}
-    >
-      <VideoPlayer
-        url={url}
-        savedTime={savedTime}
-        isCompleted={isCompleted}
-        onTimeUpdate={onTimeUpdate}
-        onEnded={onEnded}
-      />
-      <Tooltip title="Mở rộng">
-        <IconButton
-          size="small"
-          onClick={onExpand}
-          sx={{
-            position: "absolute",
-            top: 6,
-            right: 6,
-            bgcolor: "rgba(0,0,0,0.6)",
-            color: "#fff",
-            "&:hover": { bgcolor: PRIMARY_RED },
-          }}
-        >
-          <OpenInFullIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    </Box>
+    <VideoPlayer
+      url={url}
+      savedTime={savedTime}
+      isCompleted={isCompleted}
+      onTimeUpdate={onTimeUpdate}
+      onEnded={onEnded}
+      playerId={playerId}
+      autoPlay={autoPlay}
+      mini={true}
+      onExpandClick={onExpand}
+      onUnmount={onUnmount}
+    />
   );
 };

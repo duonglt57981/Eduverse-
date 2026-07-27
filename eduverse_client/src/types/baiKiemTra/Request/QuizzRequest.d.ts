@@ -23,7 +23,6 @@ export interface UpdateBaiKiemTraRequest {
   thuTuSapXep?: number;
   choLamLai?: boolean;
   soLanLamToiDa?: number;
-  danhSachCauHoi: UpdateCauHoiRequest[];
 }
 
 export interface UpdateCauHoiRequest {
@@ -47,10 +46,10 @@ export interface CreateBaiKiemTraRequest {
   tenBaiKiemTra?: string;
   moTa?: string;
   thuTuSapXep?: number;
-  danhSachCauHoi: CreateCauHoiRequest[];
 }
 
 export interface CreateCauHoiRequest {
+  idBaiKiemTra: string;
   tenCauHoi?: string;
   noiDungCauHoi?: string;
   loaiCauHoi?: string;

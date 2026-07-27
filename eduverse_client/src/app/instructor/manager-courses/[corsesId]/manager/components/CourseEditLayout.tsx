@@ -16,9 +16,13 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
-import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
-import { MAU, TrangThaiKhoaHoc, thongTinTrangThai } from "./courseEditCore";
+import {
+  MAU,
+  TrangThaiKhoaHoc,
+  thongTinTrangThai,
+  ThongTinKhoaHocCoBan,
+} from "./courseEditCore";
 import CourseStatusAction from "./CourseStatusAction";
 import type { MucThieu } from "./courseEditCore";
 
@@ -38,7 +42,7 @@ interface Props {
   tenKhoaHoc: string;
   trangThai: TrangThaiKhoaHoc;
   thoiLuongDaTai: string;
-  thongTinKhoaHoc: KhoaHocType;
+  thongTinKhoaHoc: ThongTinKhoaHocCoBan;
   phans: PhanHocType[];
   lyDoTuChoi?: string | null;
   nhomSidebar?: NhomSidebar[];
@@ -73,7 +77,6 @@ export default function CourseEditLayout({
   );
   const trangThaiHienThi = thongTinTrangThai(trangThai);
 
-  // Kiểm tra nếu đang ở trạng thái không cho phép chỉnh sửa
   const isReadOnly = trangThai !== "DangSua";
 
   if (loading) {
@@ -93,7 +96,6 @@ export default function CourseEditLayout({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-      {/* Header */}
       <Box sx={{ bgcolor: "#1c1d1f", color: "#fff" }}>
         <Box
           sx={{
@@ -224,7 +226,6 @@ export default function CourseEditLayout({
         </Box>
       </Box>
 
-      {/* Main content */}
       <Box sx={{ display: "flex", alignItems: "flex-start" }}>
         <Box
           sx={{
@@ -257,7 +258,6 @@ export default function CourseEditLayout({
                       <Box
                         key={m.key}
                         onClick={() => {
-                          // Cho phép chuyển tab ngay cả khi readOnly
                           onNavigateSidebar(m.key);
                         }}
                         sx={{
@@ -304,7 +304,6 @@ export default function CourseEditLayout({
         </Box>
 
         <Box sx={{ flex: 1, px: { xs: 2, md: 4 }, py: 4, minWidth: 0 }}>
-          {/* Thông báo read-only - KHÔNG khóa tương tác */}
           {isReadOnly && (
             <Box
               sx={{
@@ -331,7 +330,6 @@ export default function CourseEditLayout({
             </Box>
           )}
 
-          {/* Children không bị khóa tương tác */}
           {children}
         </Box>
       </Box>

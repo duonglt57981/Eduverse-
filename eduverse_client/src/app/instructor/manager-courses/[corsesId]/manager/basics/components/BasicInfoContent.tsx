@@ -19,6 +19,10 @@ import {
   OutlinedInput,
   Stack,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import TitleRoundedIcon from "@mui/icons-material/TitleRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
@@ -27,6 +31,8 @@ import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import AttachMoneyRoundedIcon from "@mui/icons-material/AttachMoneyRounded";
+import CropIcon from "@mui/icons-material/Crop";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { useState, useRef, useEffect, useMemo } from "react";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { DanhMucDto } from "@/src/types/khoaHoc";
@@ -35,13 +41,37 @@ import RichTextEditor from "../../../../create/context/Richtexteditor";
 import AuthGuard from "@/src/components/AuthGuard";
 import { MAU } from "../../components/courseEditCore";
 import { useCourseEdit } from "../../components/CourseEditContext";
+import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 
-// ===== Ràng buộc =====
-const DO_DAI_TIEU_DE_TOI_DA = 99;
+// ===== Ràng buộc (theo chuẩn Udemy) =====
+const DO_DAI_TIEU_DE_TOI_THIEU = 3; // Tối thiểu 3 ký tự (không tính dấu cách)
+const DO_DAI_TIEU_DE_TOI_DA = 99; // Tối đa 99 ký tự (không tính dấu cách)
 const DO_DAI_MO_TA_TOI_THIEU = 200;
 const DO_DAI_MO_TA_TOI_DA = 9999;
-const DUNG_LUONG_ANH_TOI_DA = 10 * 1024 * 1024;
+const DUNG_LUONG_ANH_TOI_DA = 10 * 1024 * 1024; // 10MB
 const DUOI_ANH_HOP_LE = [".jpg", ".jpeg", ".png"];
+const DO_PHAN_GIAI_TOI_THIEU_WIDTH = 1280; // 720p width
+const DO_PHAN_GIAI_TOI_THIEU_HEIGHT = 720; // 720p height
+const TY_LE_ANH = 16 / 9; // Udemy standard
+
+/**
+ * Đếm số ký tự thực tế trong văn bản, KHÔNG tính dấu cách/khoảng trắng.
+ * Dùng cho các điều kiện TỐI THIỂU và TỐI ĐA của tiêu đề.
+ */
+function demSoKyTuKhongTinhDauCach(text: string): number {
+  if (!text || typeof text !== "string") return 0;
+  // Loại bỏ toàn bộ khoảng trắng (đầu, cuối, giữa các từ)
+  return text.replace(/\s+/g, "").length;
+}
+
+/**
+ * Kiểm tra xem chuỗi có chỉ chứa khoảng trắng hay không
+ */
+function isOnlySpaces(text: string): boolean {
+  if (!text || typeof text !== "string") return true;
+  return text.trim().length === 0;
+}
 
 function boTheHtml(html: string): string {
   if (!html) return "";
@@ -54,6 +84,64 @@ function boTheHtml(html: string): string {
 function layDuoiFile(tenFile: string): string {
   const idx = tenFile.lastIndexOf(".");
   return idx === -1 ? "" : tenFile.slice(idx).toLowerCase();
+}
+
+// Hàm cắt ảnh - giữ nguyên độ phân giải gốc.
+function cropImage(
+  imageSrc: string,
+  crop: PixelCrop,
+  scaleX: number,
+  scaleY: number,
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.src = imageSrc;
+    image.onload = () => {
+      const cropWidth = Math.round(crop.width * scaleX);
+      const cropHeight = Math.round(crop.height * scaleY);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = cropWidth;
+      canvas.height = cropHeight;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Không thể tạo canvas context"));
+        return;
+      }
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      ctx.drawImage(
+        image,
+        crop.x * scaleX,
+        crop.y * scaleY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        cropWidth,
+        cropHeight,
+      );
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error("Không thể tạo blob từ canvas"));
+          }
+        },
+        "image/jpeg",
+        1.0,
+      );
+    };
+    image.onerror = () => {
+      reject(new Error("Không thể tải ảnh để cắt"));
+    };
+  });
 }
 
 function SectionHeader({
@@ -100,6 +188,238 @@ function SectionHeader({
   );
 }
 
+// Component crop ảnh theo chuẩn Udemy
+function ImageCropper({
+  imageSrc,
+  onCropComplete,
+  onCancel,
+}: {
+  imageSrc: string;
+  onCropComplete: (croppedBlob: Blob) => void;
+  onCancel: () => void;
+}) {
+  const [crop, setCrop] = useState<Crop>(() => {
+    return {
+      unit: "%",
+      width: 90,
+      height: (90 * 9) / 16,
+      x: 5,
+      y: 5,
+    };
+  });
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [displayScale, setDisplayScale] = useState<{
+    scaleX: number;
+    scaleY: number;
+  } | null>(null);
+
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  const handleImageLoad = () => {
+    const imgEl = imgRef.current;
+    if (!imgEl || !imgEl.naturalWidth || !imgEl.width) return;
+    setDisplayScale({
+      scaleX: imgEl.naturalWidth / imgEl.width,
+      scaleY: imgEl.naturalHeight / imgEl.height,
+    });
+  };
+
+  const handleCropComplete = (crop: PixelCrop) => {
+    setCompletedCrop(crop);
+  };
+
+  const handleSave = async () => {
+    if (!completedCrop) {
+      alert("Vui lòng chọn vùng cắt ảnh");
+      return;
+    }
+
+    const imgEl = imgRef.current;
+    const scaleX =
+      imgEl && imgEl.width
+        ? imgEl.naturalWidth / imgEl.width
+        : displayScale?.scaleX;
+    const scaleY =
+      imgEl && imgEl.height
+        ? imgEl.naturalHeight / imgEl.height
+        : displayScale?.scaleY;
+
+    if (!scaleX || !scaleY) {
+      alert("Không thể xác định kích thước ảnh, vui lòng thử lại");
+      return;
+    }
+
+    const cropWidth = Math.round(completedCrop.width * scaleX);
+    const cropHeight = Math.round(completedCrop.height * scaleY);
+
+    if (
+      cropWidth < DO_PHAN_GIAI_TOI_THIEU_WIDTH ||
+      cropHeight < DO_PHAN_GIAI_TOI_THIEU_HEIGHT
+    ) {
+      alert(
+        `Kích thước sau khi cắt tối thiểu phải là ${DO_PHAN_GIAI_TOI_THIEU_WIDTH}x${DO_PHAN_GIAI_TOI_THIEU_HEIGHT}. Hiện tại: ${cropWidth}x${cropHeight}`,
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const croppedBlob = await cropImage(
+        imageSrc,
+        completedCrop,
+        scaleX,
+        scaleY,
+      );
+
+      if (croppedBlob.size > DUNG_LUONG_ANH_TOI_DA) {
+        alert(
+          `Dung lượng ảnh sau khi cắt (${(croppedBlob.size / (1024 * 1024)).toFixed(2)}MB) vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
+        );
+        setLoading(false);
+        return;
+      }
+
+      onCropComplete(croppedBlob);
+    } catch (error: any) {
+      alert(error.message || "Lỗi khi cắt ảnh");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cropSizeText =
+    completedCrop && displayScale
+      ? `${Math.round(completedCrop.width * displayScale.scaleX)}×${Math.round(
+          completedCrop.height * displayScale.scaleY,
+        )}px`
+      : null;
+
+  return (
+    <Dialog
+      open={true}
+      onClose={onCancel}
+      maxWidth="md"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "16px",
+          },
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          fontWeight: 700,
+          color: MAU.chuDen,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "1px solid #EDEFF3",
+          py: 1.5,
+          px: 2.5,
+        }}
+      >
+        <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+          Cắt ảnh (tỷ lệ 16:9)
+        </Typography>
+        <IconButton onClick={onCancel} size="small">
+          <CloseRoundedIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers sx={{ p: 2.5 }}>
+        <Box
+          sx={{
+            maxWidth: "100%",
+            maxHeight: "60vh",
+            overflow: "auto",
+            borderRadius: "8px",
+            bgcolor: "#FAFAFA",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <ReactCrop
+            crop={crop}
+            onChange={(c) => setCrop(c)}
+            onComplete={handleCropComplete}
+            aspect={TY_LE_ANH}
+            minWidth={DO_PHAN_GIAI_TOI_THIEU_WIDTH}
+            minHeight={DO_PHAN_GIAI_TOI_THIEU_HEIGHT}
+            keepSelection
+            ruleOfThirds
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgRef}
+              src={imageSrc}
+              alt="Ảnh cần cắt"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "60vh",
+                display: "block",
+              }}
+              onLoad={handleImageLoad}
+            />
+          </ReactCrop>
+        </Box>
+
+        {cropSizeText && (
+          <Typography
+            sx={{
+              mt: 1.5,
+              textAlign: "center",
+              fontSize: 12.5,
+              color: "#8A93A3",
+            }}
+          >
+            Kích thước sau khi cắt:{" "}
+            <span style={{ color: MAU.chinh, fontWeight: 600 }}>
+              {cropSizeText}
+            </span>
+          </Typography>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 2, px: 3, gap: 1 }}>
+        <Button
+          onClick={onCancel}
+          sx={{
+            textTransform: "none",
+            color: "#8A93A3",
+            fontWeight: 600,
+            "&:hover": {
+              bgcolor: "#F5F6F8",
+            },
+          }}
+        >
+          Hủy bỏ
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={loading}
+          sx={{
+            bgcolor: MAU.chinh,
+            textTransform: "none",
+            fontWeight: 700,
+            px: 4,
+            "&:hover": {
+              bgcolor: MAU.chinhDam,
+            },
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={24} sx={{ color: "#fff" }} />
+          ) : (
+            "Lưu ảnh đã cắt"
+          )}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 export default function BasicInfoContent() {
   const { thongTin, setThongTin, refreshData, idKhoaHoc, loading, trangThai } =
     useCourseEdit();
@@ -111,6 +431,10 @@ export default function BasicInfoContent() {
   const [isDragging, setIsDragging] = useState(false);
   const [danhSachDanhMucId, setDanhSachDanhMucId] = useState<string[]>([]);
   const [isBanHienTai, setIsBanHienTai] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [tempImageFile, setTempImageFile] = useState<File | null>(null);
+  const [timKiemDanhMuc, setTimKiemDanhMuc] = useState("");
 
   const [loiTieuDe, setLoiTieuDe] = useState<string | null>(null);
   const [loiMoTa, setLoiMoTa] = useState<string | null>(null);
@@ -118,19 +442,30 @@ export default function BasicInfoContent() {
   const [loiGia, setLoiGia] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const oTimKiemDanhMucRef = useRef<HTMLInputElement>(null);
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
   // Kiểm tra có thể chỉnh sửa hay không (chỉ DangSua mới cho sửa)
   const isEditable = trangThai === "DangSua";
 
-  // Lấy danh sách danh mục để hiển thị trong dropdown
+  // Danh mục sau khi lọc theo từ khóa tìm kiếm
+  const danhMucDaLoc = useMemo(() => {
+    const tuKhoa = timKiemDanhMuc.trim().toLowerCase();
+    if (!tuKhoa) return danhMucList;
+    return danhMucList.filter((cat) =>
+      (cat.tenDanhMuc || "").toLowerCase().includes(tuKhoa),
+    );
+  }, [danhMucList, timKiemDanhMuc]);
+
+  // Lấy danh sách danh mục
   useEffect(() => {
     const fetchDanhMuc = async () => {
       try {
         const res = await danhMucService.getList({
           pageIndex: 1,
           pageSize: 100,
+          trangThai: "HoatDong",
         });
         if (res.status !== false && res.data) {
           setDanhMucList(res.data.items || []);
@@ -163,23 +498,33 @@ export default function BasicInfoContent() {
     fetchData();
   }, [idKhoaHoc, khoaHocService]);
 
-  // Validate
+  // Validate form
   const validateForm = (): boolean => {
     let hopLe = true;
 
+    // Validate tiêu đề
     const tieuDe = thongTin.tieuDe || "";
-    if (tieuDe.trim().length === 0) {
+    const soKyTuTieuDe = demSoKyTuKhongTinhDauCach(tieuDe);
+
+    // Kiểm tra trống hoặc chỉ có khoảng trắng
+    if (isOnlySpaces(tieuDe)) {
       setLoiTieuDe("Vui lòng nhập tiêu đề khóa học");
       hopLe = false;
-    } else if (tieuDe.length > DO_DAI_TIEU_DE_TOI_DA) {
+    } else if (soKyTuTieuDe < DO_DAI_TIEU_DE_TOI_THIEU) {
       setLoiTieuDe(
-        `Tiêu đề không được vượt quá ${DO_DAI_TIEU_DE_TOI_DA} ký tự`,
+        `Tiêu đề cần tối thiểu ${DO_DAI_TIEU_DE_TOI_THIEU} ký tự (không tính dấu cách). Hiện tại: ${soKyTuTieuDe} ký tự.`,
+      );
+      hopLe = false;
+    } else if (soKyTuTieuDe > DO_DAI_TIEU_DE_TOI_DA) {
+      setLoiTieuDe(
+        `Tiêu đề không được vượt quá ${DO_DAI_TIEU_DE_TOI_DA} ký tự (không tính dấu cách). Hiện tại: ${soKyTuTieuDe} ký tự.`,
       );
       hopLe = false;
     } else {
       setLoiTieuDe(null);
     }
 
+    // Validate giá
     if (thongTin.giaGoc !== undefined && thongTin.giaGoc < 0) {
       setLoiGia("Giá không được nhỏ hơn 0");
       hopLe = false;
@@ -190,6 +535,7 @@ export default function BasicInfoContent() {
       setLoiGia(null);
     }
 
+    // Validate mô tả
     const doDaiMoTa = boTheHtml(thongTin.moTa || "").length;
     if (doDaiMoTa < DO_DAI_MO_TA_TOI_THIEU) {
       setLoiMoTa(
@@ -205,6 +551,7 @@ export default function BasicInfoContent() {
       setLoiMoTa(null);
     }
 
+    // Validate hình ảnh
     if (imageFile) {
       const duoi = layDuoiFile(imageFile.name);
       if (!DUOI_ANH_HOP_LE.includes(duoi)) {
@@ -213,7 +560,9 @@ export default function BasicInfoContent() {
         );
         hopLe = false;
       } else if (imageFile.size > DUNG_LUONG_ANH_TOI_DA) {
-        setLoiHinhAnh("Dung lượng ảnh vượt quá 10MB");
+        setLoiHinhAnh(
+          `Dung lượng ảnh vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
+        );
         hopLe = false;
       } else {
         setLoiHinhAnh(null);
@@ -228,35 +577,93 @@ export default function BasicInfoContent() {
     return hopLe;
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isEditable) return;
     const file = e.target.files?.[0] || null;
-    validateAndSetImage(file);
+    if (file) {
+      const duoi = layDuoiFile(file.name);
+      if (!DUOI_ANH_HOP_LE.includes(duoi)) {
+        setLoiHinhAnh(
+          `Định dạng ảnh không hợp lệ. Chỉ chấp nhận: ${DUOI_ANH_HOP_LE.join(", ")}`,
+        );
+        e.target.value = "";
+        return;
+      }
+      if (file.size > DUNG_LUONG_ANH_TOI_DA) {
+        setLoiHinhAnh(
+          `Dung lượng ảnh vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
+        );
+        e.target.value = "";
+        return;
+      }
+
+      setTempImageFile(file);
+      const imageUrl = URL.createObjectURL(file);
+      setImageToCrop(imageUrl);
+      setShowCropper(true);
+      setLoiHinhAnh(null);
+      e.target.value = "";
+    }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
     if (!isEditable) return;
     const file = e.dataTransfer.files?.[0] || null;
-    validateAndSetImage(file);
+    if (file) {
+      const duoi = layDuoiFile(file.name);
+      if (!DUOI_ANH_HOP_LE.includes(duoi)) {
+        setLoiHinhAnh(
+          `Định dạng ảnh không hợp lệ. Chỉ chấp nhận: ${DUOI_ANH_HOP_LE.join(", ")}`,
+        );
+        return;
+      }
+      if (file.size > DUNG_LUONG_ANH_TOI_DA) {
+        setLoiHinhAnh(
+          `Dung lượng ảnh vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
+        );
+        return;
+      }
+
+      setTempImageFile(file);
+      const imageUrl = URL.createObjectURL(file);
+      setImageToCrop(imageUrl);
+      setShowCropper(true);
+      setLoiHinhAnh(null);
+    }
   };
 
-  const validateAndSetImage = (file: File | null) => {
-    if (!file) return;
-    const duoi = layDuoiFile(file.name);
-    if (!DUOI_ANH_HOP_LE.includes(duoi)) {
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const croppedFile = new File(
+      [croppedBlob],
+      tempImageFile?.name || "cropped_image.jpg",
+      { type: "image/jpeg" },
+    );
+
+    if (croppedFile.size > DUNG_LUONG_ANH_TOI_DA) {
       setLoiHinhAnh(
-        `Định dạng ảnh không hợp lệ. Chỉ chấp nhận: ${DUOI_ANH_HOP_LE.join(", ")}`,
+        `Dung lượng ảnh sau khi cắt vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
       );
+      setShowCropper(false);
+      setImageToCrop(null);
+      setTempImageFile(null);
       return;
     }
-    if (file.size > DUNG_LUONG_ANH_TOI_DA) {
-      setLoiHinhAnh("Dung lượng ảnh vượt quá 10MB");
-      return;
-    }
+
+    setImageFile(croppedFile);
     setLoiHinhAnh(null);
-    setImageFile(file);
+    setShowCropper(false);
+    setImageToCrop(null);
+    setTempImageFile(null);
+    setSuccess("Ảnh đã được cắt thành công!");
+    setTimeout(() => setSuccess(null), 3000);
+  };
+
+  const handleCancelCrop = () => {
+    setShowCropper(false);
+    setImageToCrop(null);
+    setTempImageFile(null);
   };
 
   const handleSave = async () => {
@@ -329,6 +736,7 @@ export default function BasicInfoContent() {
   } as const;
 
   const tenKhoaHoc = thongTin.tieuDe || "";
+  const soKyTuTieuDeHienTai = demSoKyTuKhongTinhDauCach(tenKhoaHoc);
   const doDaiMoTaHienTai = boTheHtml(thongTin.moTa || "").length;
   const anhDangHienThi = imageFile
     ? URL.createObjectURL(imageFile)
@@ -382,7 +790,7 @@ export default function BasicInfoContent() {
               <SectionHeader
                 icon={<TitleRoundedIcon fontSize="small" />}
                 title="Tên khóa học"
-                subtitle="Tiêu đề nên kết hợp sự thu hút, thông tin rõ ràng và từ khóa dễ tìm kiếm."
+                subtitle={`Tiêu đề cần tối thiểu ${DO_DAI_TIEU_DE_TOI_THIEU} ký tự (không tính dấu cách) và tối đa ${DO_DAI_TIEU_DE_TOI_DA} ký tự.`}
               />
               <TextField
                 fullWidth
@@ -396,9 +804,6 @@ export default function BasicInfoContent() {
                 error={!!loiTieuDe}
                 helperText={loiTieuDe}
                 disabled={!isEditable}
-                slotProps={{
-                  htmlInput: { maxLength: DO_DAI_TIEU_DE_TOI_DA },
-                }}
                 sx={{
                   "& .MuiOutlinedInput-root": { borderRadius: 2 },
                   "& .MuiInputBase-input": { color: "#1F2937" },
@@ -407,12 +812,14 @@ export default function BasicInfoContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: "#8A93A3",
+                  color: loiTieuDe ? "#D32F2F" : "#8A93A3",
                   mt: 0.75,
                   textAlign: "right",
                 }}
               >
-                {tenKhoaHoc.length}/{DO_DAI_TIEU_DE_TOI_DA}
+                {loiTieuDe
+                  ? loiTieuDe
+                  : `${soKyTuTieuDeHienTai}/${DO_DAI_TIEU_DE_TOI_DA} ký tự (không tính dấu cách)`}
               </Typography>
             </Paper>
 
@@ -516,6 +923,7 @@ export default function BasicInfoContent() {
                           typeof value === "string" ? value.split(",") : value,
                         );
                       }}
+                      onClose={() => setTimKiemDanhMuc("")}
                       input={<OutlinedInput label="Danh mục" />}
                       sx={selectSx}
                       renderValue={(selected) => (
@@ -540,12 +948,70 @@ export default function BasicInfoContent() {
                         </Box>
                       )}
                       label="Danh mục"
+                      MenuProps={{
+                        autoFocus: false,
+                        slotProps: {
+                          paper: {
+                            sx: {
+                              bgcolor: "#FFFFFF",
+                              maxHeight: 360,
+                              "& .MuiMenuItem-root": { color: "#1F2937" },
+                            },
+                          },
+                        },
+                      }}
                     >
-                      {danhMucList.map((cat) => (
-                        <MenuItem key={cat.id} value={cat.id}>
-                          {cat.tenDanhMuc}
-                        </MenuItem>
-                      ))}
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 1,
+                          position: "sticky",
+                          top: 0,
+                          bgcolor: "#FFFFFF",
+                          zIndex: 1,
+                          borderBottom: "1px solid #EDEFF3",
+                        }}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        <TextField
+                          inputRef={oTimKiemDanhMucRef}
+                          size="small"
+                          fullWidth
+                          autoFocus
+                          placeholder="Tìm danh mục..."
+                          value={timKiemDanhMuc}
+                          onChange={(e) => setTimKiemDanhMuc(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          slotProps={{
+                            input: {
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <SearchRoundedIcon
+                                    sx={{ fontSize: 18, color: "#8A93A3" }}
+                                  />
+                                </InputAdornment>
+                              ),
+                            },
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+                          }}
+                        />
+                      </Box>
+
+                      {danhMucDaLoc.length === 0 ? (
+                        <Box sx={{ px: 2, py: 1.5 }}>
+                          <Typography sx={{ fontSize: 13, color: "#8A93A3" }}>
+                            Không tìm thấy danh mục nào.
+                          </Typography>
+                        </Box>
+                      ) : (
+                        danhMucDaLoc.map((cat) => (
+                          <MenuItem key={cat.id} value={cat.id}>
+                            {cat.tenDanhMuc}
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                   </FormControl>
                 </Stack>
@@ -633,26 +1099,45 @@ export default function BasicInfoContent() {
                         variant="square"
                       />
                       {isEditable && (
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setImageFile(null);
-                            setLoiHinhAnh(null);
-                            setThongTin({ hinhAnhKhoaHoc: undefined });
-                          }}
-                          sx={{
-                            position: "absolute",
-                            top: 6,
-                            right: 6,
-                            bgcolor: "rgba(255,255,255,0.92)",
-                            boxShadow: 1,
-                            width: 26,
-                            height: 26,
-                            "&:hover": { bgcolor: "#fff" },
-                          }}
-                        >
-                          <CloseRoundedIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
+                        <>
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setImageFile(null);
+                              setLoiHinhAnh(null);
+                              setThongTin({ hinhAnhKhoaHoc: undefined });
+                            }}
+                            sx={{
+                              position: "absolute",
+                              top: 6,
+                              right: 6,
+                              bgcolor: "rgba(255,255,255,0.92)",
+                              boxShadow: 1,
+                              width: 26,
+                              height: 26,
+                              "&:hover": { bgcolor: "#fff" },
+                            }}
+                          >
+                            <CloseRoundedIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => fileInputRef.current?.click()}
+                            sx={{
+                              position: "absolute",
+                              bottom: 6,
+                              right: 6,
+                              bgcolor: "rgba(255,255,255,0.92)",
+                              boxShadow: 1,
+                              width: 26,
+                              height: 26,
+                              "&:hover": { bgcolor: "#fff" },
+                            }}
+                            title="Thay đổi ảnh"
+                          >
+                            <CropIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </>
                       )}
                     </>
                   ) : (
@@ -674,11 +1159,34 @@ export default function BasicInfoContent() {
                 </Box>
 
                 <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                  <Typography sx={{ fontSize: 13.5, color: "#8A93A3", mb: 2 }}>
-                    Tải ảnh khóa học của bạn lên đây. Định dạng chấp nhận:{" "}
-                    {DUOI_ANH_HOP_LE.join(", ")}. Dung lượng tối đa 10MB. Kích
-                    thước chuẩn 750x422px.
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 0.5,
+                      mb: 2,
+                      pl: 1,
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
+                      • <strong>Định dạng:</strong> {DUOI_ANH_HOP_LE.join(", ")}
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
+                      • <strong>Tỷ lệ:</strong> 16:9
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
+                      • <strong>Độ phân giải tối thiểu:</strong>{" "}
+                      {DO_PHAN_GIAI_TOI_THIEU_WIDTH}x
+                      {DO_PHAN_GIAI_TOI_THIEU_HEIGHT} (720p)
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
+                      • <strong>Khuyến nghị:</strong> 1920x1080px (Full HD)
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
+                      • <strong>Dung lượng tối đa:</strong>{" "}
+                      {DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB
+                    </Typography>
+                  </Box>
 
                   {loiHinhAnh && (
                     <Typography
@@ -745,7 +1253,7 @@ export default function BasicInfoContent() {
               </Stack>
             </Paper>
 
-            {/* Thanh lưu - chỉ hiển thị khi có thể chỉnh sửa */}
+            {/* Thanh lưu */}
             {isEditable && (
               <Box
                 sx={{
@@ -791,6 +1299,15 @@ export default function BasicInfoContent() {
           </>
         )}
       </Box>
+
+      {/* Image Cropper Dialog */}
+      {showCropper && imageToCrop && (
+        <ImageCropper
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCancelCrop}
+        />
+      )}
     </AuthGuard>
   );
 }

@@ -98,7 +98,7 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  id: string; 
+  id: string;
   accessToken: string;
   userName: string;
   hoTen: string;

@@ -2,6 +2,17 @@
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 
+// ===== Type cho thông tin khóa học cơ bản =====
+export type ThongTinKhoaHocCoBan = {
+  tieuDe?: string;
+  moTa?: string;
+  capDo?: string;
+  hinhAnhKhoaHoc?: string;
+  giaGoc?: number;
+  trangThai?: string;
+  trangThaiPheDuyet?: string;
+};
+
 export const MAU = {
   chinh: "#7A1F2B",
   chinhDam: "#611722",
@@ -46,8 +57,7 @@ export function thongTinTrangThai(trangThai: TrangThaiKhoaHoc): {
 
 export function laDangSua(entity: any): boolean {
   return (
-    entity?.trangThai === "DangSua" ||
-    entity?.trangThaiPheDuyet === "DangSua"
+    entity?.trangThai === "DangSua" || entity?.trangThaiPheDuyet === "DangSua"
   );
 }
 
@@ -64,12 +74,30 @@ export function tinhTongThoiLuongGiay(phans: PhanHocType[]): number {
 }
 
 export const THOI_LUONG_TOI_THIEU_GIAY = 30 * 60;
-export const SO_TU_MO_TA_TOI_THIEU = 200;
+export const SO_KY_TU_TIEU_DE_TOI_THIEU = 10;
+export const SO_KY_TU_MO_TA_TOI_THIEU = 200;
+export const SO_KY_TU_MO_TA_TOI_DA = 9999;
 
 export function demSoTu(vanBan: string): number {
-  const text = vanBan.replace(/<[^>]*>/g, " ").trim();
-  if (!text) return 0;
-  return text.split(/\s+/).filter(Boolean).length;
+  if (!vanBan || typeof vanBan !== "string") return 0;
+  const text = vanBan.replace(/<[^>]*>/g, " ");
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  const words = trimmed.split(/\s+/).filter((word) => word.length > 0);
+  return words.length;
+}
+
+export function demSoKyTu(vanBan: string): number {
+  if (!vanBan || typeof vanBan !== "string") return 0;
+  const text = vanBan.replace(/<[^>]*>/g, " ");
+  const khongCoKhoangTrang = text.replace(/\s+/g, "");
+  return khongCoKhoangTrang.length;
+}
+
+export function demSoKyTuKeCaDauCach(vanBan: string): number {
+  if (!vanBan || typeof vanBan !== "string") return 0;
+  const text = vanBan.replace(/<[^>]*>/g, " ");
+  return text.trim().length;
 }
 
 export interface MucThieu {
@@ -85,7 +113,7 @@ export interface KetQuaValidate {
 }
 
 export function kiemTraDieuKienGuiDuyet(
-  thongTin: KhoaHocType,
+  thongTin: ThongTinKhoaHocCoBan,
   phans: PhanHocType[],
 ): KetQuaValidate {
   const danhSachThieu: MucThieu[] = [];
@@ -104,11 +132,26 @@ export function kiemTraDieuKienGuiDuyet(
   const coBaiGiangCoVideo = phans.some((p) =>
     (p.DanhSachBaiGiang ?? []).some((bg) => !!bg.urlBaiGiang),
   );
-  if (phans.length === 0 || !coBaiGiangCoVideo) {
+  if (!coBaiGiangCoVideo) {
     danhSachThieu.push({
-      id: "noi-dung",
-      nhan: "Chưa có nội dung bài giảng",
-      moTa: "Thêm ít nhất 1 phần học với 1 bài giảng đã tải video.",
+      id: "noi-dung-video",
+      nhan: "Chưa có bài giảng nào có video",
+      moTa: "Cần ít nhất 1 bài giảng đã tải lên video.",
+      diChuyenDen: "curriculum",
+    });
+  }
+
+  const phanKhongCoBaiGiang = phans.filter(
+    (p) => !p.DanhSachBaiGiang || p.DanhSachBaiGiang.length === 0,
+  );
+  if (phanKhongCoBaiGiang.length > 0) {
+    const tenCacPhan = phanKhongCoBaiGiang
+      .map((p) => p.tenPhan || "Chưa đặt tên")
+      .join(", ");
+    danhSachThieu.push({
+      id: "phan-thieu-bai-giang",
+      nhan: "Có phần chưa có bài giảng",
+      moTa: `Các phần sau chưa có bài giảng nào: ${tenCacPhan}. Mỗi phần cần ít nhất 1 bài giảng.`,
       diChuyenDen: "curriculum",
     });
   }
@@ -125,21 +168,32 @@ export function kiemTraDieuKienGuiDuyet(
     });
   }
 
-  if (!thongTin.tieuDe || thongTin.tieuDe.trim().length < 10) {
+  const soKyTuTieuDe = demSoKyTu(thongTin.tieuDe || "");
+  if (!thongTin.tieuDe || soKyTuTieuDe < SO_KY_TU_TIEU_DE_TOI_THIEU) {
     danhSachThieu.push({
       id: "tieu-de",
       nhan: "Tên khóa học chưa đủ rõ ràng",
-      moTa: "Nhập tên khóa học tối thiểu 10 ký tự.",
+      moTa: `Nhập tên khóa học tối thiểu ${SO_KY_TU_TIEU_DE_TOI_THIEU} ký tự (không tính dấu cách). Hiện tại: ${soKyTuTieuDe} ký tự.`,
       diChuyenDen: "basics",
     });
   }
 
-  const soTuMoTa = demSoTu(thongTin.moTa || "");
-  if (soTuMoTa < SO_TU_MO_TA_TOI_THIEU) {
+  const soKyTuMoTa = demSoKyTu(thongTin.moTa || "");
+  if (soKyTuMoTa < SO_KY_TU_MO_TA_TOI_THIEU) {
     danhSachThieu.push({
       id: "mo-ta",
       nhan: "Mô tả khóa học chưa đủ dài",
-      moTa: `Mô tả cần tối thiểu ${SO_TU_MO_TA_TOI_THIEU} từ (hiện tại: ${soTuMoTa} từ).`,
+      moTa: `Mô tả cần tối thiểu ${SO_KY_TU_MO_TA_TOI_THIEU} ký tự (không tính dấu cách). Hiện tại: ${soKyTuMoTa} ký tự.`,
+      diChuyenDen: "basics",
+    });
+  }
+
+  const soKyTuMoTaKeCaDauCach = demSoKyTuKeCaDauCach(thongTin.moTa || "");
+  if (soKyTuMoTaKeCaDauCach > SO_KY_TU_MO_TA_TOI_DA) {
+    danhSachThieu.push({
+      id: "mo-ta-vuot-qua",
+      nhan: "Mô tả khóa học vượt quá độ dài cho phép",
+      moTa: `Mô tả tối đa ${SO_KY_TU_MO_TA_TOI_DA} ký tự (tính cả dấu cách). Hiện tại: ${soKyTuMoTaKeCaDauCach} ký tự.`,
       diChuyenDen: "basics",
     });
   }
@@ -166,7 +220,7 @@ export function kiemTraDieuKienGuiDuyet(
 }
 
 export function kiemTraCoBanGhiDangSua(
-  thongTin: KhoaHocType,
+  thongTin: ThongTinKhoaHocCoBan,
   phans: PhanHocType[],
 ): {
   coDangSua: boolean;
@@ -200,7 +254,7 @@ export function kiemTraCoBanGhiDangSua(
         chiTiet.baiGiang = true;
         coDangSua = true;
       }
-      for (const tl of ((bg as any).DanhSachTaiLieu ?? [])) {
+      for (const tl of (bg as any).DanhSachTaiLieu ?? []) {
         if (laDangSua(tl)) {
           chiTiet.taiLieu = true;
           coDangSua = true;

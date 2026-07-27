@@ -34,6 +34,7 @@ import {
   Select,
   InputLabel,
   Paper,
+  GlobalStyles,
 } from "@mui/material";
 import {
   ExpandLess,
@@ -52,12 +53,26 @@ import {
   Close as CloseIcon,
   InfoOutlined,
   ErrorOutlined,
+  FormatBoldOutlined,
+  FormatItalicOutlined,
+  FormatListBulletedOutlined,
+  InsertLinkOutlined,
+  FormatUnderlinedOutlined,
+  CloudUploadOutlined,
+  AutorenewOutlined,
+  ScheduleOutlined,
+  LockOpenOutlined,
+  LockOutlined,
+  DescriptionOutlined,
 } from "@mui/icons-material";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { MAU, tinhTongThoiLuongGiay } from "../../components/courseEditCore";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
-import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
+import {
+  BaiKiemTraDto,
+  CauHoiDto,
+} from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 import { TaiLieuType } from "@/src/types/TaiLieu/Dto/TaiLieuDto";
 import AuthGuard from "@/src/components/AuthGuard";
 import { useCourseEdit } from "../../components/CourseEditContext";
@@ -80,7 +95,444 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
-import DashboardShell from "@/src/components/dashboard/DashboardShell";
+
+// ===== CSS Animation =====
+const pulseKeyframes = `
+  @keyframes pulse {
+    0% { opacity: 0.4; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0.4; transform: scale(0.9); }
+  }
+`;
+
+// ===== Ràng buộc tài liệu =====
+const DUNG_LUONG_TAI_LIEU_TOI_DA = 50 * 1024 * 1024;
+const DUOI_TAI_LIEU_HOP_LE = [".docx"];
+
+function layDuoiFile(tenFile: string): string {
+  const idx = tenFile.lastIndexOf(".");
+  return idx === -1 ? "" : tenFile.slice(idx).toLowerCase();
+}
+
+function validateTaiLieu(file: File): { valid: boolean; error?: string } {
+  const duoi = layDuoiFile(file.name);
+  if (!DUOI_TAI_LIEU_HOP_LE.includes(duoi)) {
+    return {
+      valid: false,
+      error: `Định dạng tài liệu không hợp lệ. Chỉ chấp nhận: ${DUOI_TAI_LIEU_HOP_LE.join(", ")}`,
+    };
+  }
+  if (file.size > DUNG_LUONG_TAI_LIEU_TOI_DA) {
+    return {
+      valid: false,
+      error: `Dung lượng tài liệu vượt quá ${DUNG_LUONG_TAI_LIEU_TOI_DA / (1024 * 1024)}MB`,
+    };
+  }
+  return { valid: true };
+}
+
+// ===== RICH TEXT EDITOR COMPONENT =====
+function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  minHeight = 120,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  minHeight?: number;
+}) {
+  const [isFocused, setIsFocused] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value || "";
+    }
+  }, [value]);
+
+  const applyFormat = (command: string, val?: string) => {
+    document.execCommand(command, false, val || "");
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
+
+  const handleInput = () => {
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
+
+  const sanitizeHtml = (html: string): string => {
+    if (!html) return "";
+
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+
+    const allowedTags = [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "ul",
+      "ol",
+      "li",
+      "a",
+      "span",
+      "div",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "blockquote",
+      "pre",
+      "code",
+      "img",
+      "table",
+      "thead",
+      "tbody",
+      "tr",
+      "th",
+      "td",
+      "sub",
+      "sup",
+      "hr",
+    ];
+
+    const allElements = tempDiv.querySelectorAll("*");
+    allElements.forEach((el) => {
+      if (!allowedTags.includes(el.tagName.toLowerCase())) {
+        const text = el.textContent || "";
+        const textNode = document.createTextNode(text);
+        el.parentNode?.replaceChild(textNode, el);
+      }
+    });
+
+    const scripts = tempDiv.querySelectorAll("script");
+    scripts.forEach((script) => script.remove());
+
+    const allElements2 = tempDiv.querySelectorAll("*");
+    allElements2.forEach((el) => {
+      const attrs = el.attributes;
+      const toRemove: string[] = [];
+      for (let i = 0; i < attrs.length; i++) {
+        const attrName = attrs[i].name;
+        if (attrName.startsWith("on")) {
+          toRemove.push(attrName);
+        }
+        if (
+          attrName === "href" &&
+          attrs[i].value.toLowerCase().startsWith("javascript:")
+        ) {
+          toRemove.push(attrName);
+        }
+        if (
+          attrName === "src" &&
+          attrs[i].value.toLowerCase().startsWith("javascript:")
+        ) {
+          toRemove.push(attrName);
+        }
+        if (attrName === "style") {
+          const style = attrs[i].value.toLowerCase();
+          if (style.includes("expression") || style.includes("javascript:")) {
+            toRemove.push(attrName);
+          }
+        }
+      }
+      toRemove.forEach((attr) => el.removeAttribute(attr));
+    });
+
+    return tempDiv.innerHTML;
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+
+    const htmlData = e.clipboardData.getData("text/html");
+    const textData = e.clipboardData.getData("text/plain");
+
+    let contentToInsert = "";
+
+    if (htmlData) {
+      contentToInsert = sanitizeHtml(htmlData);
+    } else if (textData) {
+      contentToInsert = textData.replace(/\n/g, "<br>");
+    }
+
+    if (contentToInsert) {
+      document.execCommand("insertHTML", false, contentToInsert);
+    }
+
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      document.execCommand("insertParagraph", false);
+      e.preventDefault();
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        border: `1px solid ${isFocused ? MAU.chinh : "#E3E6EB"}`,
+        borderRadius: "10px",
+        overflow: "hidden",
+        bgcolor: "#fff",
+        transition: "border-color 0.15s ease",
+        "&:focus-within": {
+          borderColor: MAU.chinh,
+          borderWidth: 1.5,
+        },
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          px: 1.5,
+          py: 0.75,
+          borderBottom: "1px solid #EDEFF3",
+          bgcolor: "#FAFAFA",
+          flexWrap: "wrap",
+        }}
+      >
+        <IconButton
+          size="small"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("bold");
+          }}
+          disabled={disabled}
+          sx={{
+            color: "#9AA2B1",
+            "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}0F` },
+          }}
+        >
+          <FormatBoldOutlined fontSize="small" />
+        </IconButton>
+        <IconButton
+          size="small"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("italic");
+          }}
+          disabled={disabled}
+          sx={{
+            color: "#9AA2B1",
+            "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}0F` },
+          }}
+        >
+          <FormatItalicOutlined fontSize="small" />
+        </IconButton>
+        <IconButton
+          size="small"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("underline");
+          }}
+          disabled={disabled}
+          sx={{
+            color: "#9AA2B1",
+            "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}0F` },
+          }}
+        >
+          <FormatUnderlinedOutlined fontSize="small" />
+        </IconButton>
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+        <IconButton
+          size="small"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("insertUnorderedList");
+          }}
+          disabled={disabled}
+          sx={{
+            color: "#9AA2B1",
+            "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}0F` },
+          }}
+        >
+          <FormatListBulletedOutlined fontSize="small" />
+        </IconButton>
+        <IconButton
+          size="small"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("insertOrderedList");
+          }}
+          disabled={disabled}
+          sx={{
+            color: "#9AA2B1",
+            "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}0F` },
+          }}
+        >
+          <FormatListBulletedOutlined
+            fontSize="small"
+            sx={{ transform: "rotate(90deg)" }}
+          />
+        </IconButton>
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+        <IconButton
+          size="small"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            const url = prompt("Nhập URL link:");
+            if (url) applyFormat("createLink", url);
+          }}
+          disabled={disabled}
+          sx={{
+            color: "#9AA2B1",
+            "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}0F` },
+          }}
+        >
+          <InsertLinkOutlined fontSize="small" />
+        </IconButton>
+        <IconButton
+          size="small"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("removeFormat");
+          }}
+          disabled={disabled}
+          sx={{
+            color: "#9AA2B1",
+            "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}0F` },
+          }}
+        >
+          <FormatUnderlinedOutlined
+            fontSize="small"
+            sx={{ transform: "rotate(45deg)" }}
+          />
+        </IconButton>
+      </Box>
+      <div
+        ref={editorRef}
+        contentEditable={!disabled}
+        onInput={handleInput}
+        onPaste={handlePaste}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        data-placeholder={placeholder}
+        style={{
+          padding: "12px 16px",
+          fontSize: "14px",
+          lineHeight: 1.7,
+          color: "#1F2937",
+          minHeight: `${minHeight}px`,
+          outline: "none",
+          cursor: disabled ? "default" : "text",
+          backgroundColor: "#fff",
+          borderRadius: "0 0 10px 10px",
+        }}
+        className="rich-text-editor"
+      />
+      <style jsx>{`
+        .rich-text-editor:empty:before {
+          content: attr(data-placeholder);
+          color: #b0b6c0;
+          pointer-events: none;
+        }
+        .rich-text-editor p {
+          margin: 0 0 0.5em 0;
+        }
+        .rich-text-editor ul,
+        .rich-text-editor ol {
+          margin: 0 0 0.5em 0;
+          padding-left: 1.5em;
+        }
+        .rich-text-editor li {
+          margin-bottom: 0.25em;
+        }
+        .rich-text-editor a {
+          color: ${MAU.chinh};
+          text-decoration: underline;
+        }
+        .rich-text-editor strong {
+          font-weight: 700;
+        }
+        .rich-text-editor em {
+          font-style: italic;
+        }
+        .rich-text-editor u {
+          text-decoration: underline;
+        }
+        .rich-text-editor h1,
+        .rich-text-editor h2,
+        .rich-text-editor h3 {
+          margin: 0.5em 0;
+        }
+        .rich-text-editor blockquote {
+          border-left: 3px solid ${MAU.chinh};
+          padding-left: 1em;
+          margin: 0.5em 0;
+          color: #6b7280;
+        }
+        .rich-text-editor img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 4px;
+        }
+        .rich-text-editor table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 0.5em 0;
+        }
+        .rich-text-editor th,
+        .rich-text-editor td {
+          border: 1px solid #e3e6eb;
+          padding: 6px 12px;
+          text-align: left;
+        }
+        .rich-text-editor th {
+          background-color: #f5f6f8;
+          font-weight: 700;
+        }
+        .rich-text-editor pre {
+          background-color: #f5f6f8;
+          padding: 1em;
+          border-radius: 4px;
+          overflow-x: auto;
+          font-family: monospace;
+        }
+        .rich-text-editor code {
+          background-color: #f5f6f8;
+          padding: 0.2em 0.4em;
+          border-radius: 3px;
+          font-family: monospace;
+        }
+      `}</style>
+    </Box>
+  );
+}
+
+// Hàm stripHtml để lấy text thuần
+function stripHtml(html: string): string {
+  if (!html) return "";
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent || div.innerText || "";
+}
+
+const noPropagation = {
+  onKeyDown: (e: React.KeyboardEvent) => e.stopPropagation(),
+  onKeyUp: (e: React.KeyboardEvent) => e.stopPropagation(),
+  onMouseDown: (e: React.MouseEvent) => e.stopPropagation(),
+  onClick: (e: React.MouseEvent) => e.stopPropagation(),
+};
 
 type LoaiMucThem = "BaiGiang" | "BaiKiemTra";
 
@@ -98,20 +550,23 @@ interface NhomTuyChonThemMuc {
   options: TuyChonThemMuc[];
 }
 
-// ===== Định dạng thời lượng =====
 function dinhDangThoiLuong(giay: number) {
   const p = Math.floor(giay / 60);
   const g = giay % 60;
   return `${p}:${String(g).padStart(2, "0")}`;
 }
 
-// ===== Validation video =====
+function dinhDangDungLuong(bytes: number) {
+  if (!bytes) return "";
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(1)} MB`;
+}
+
 function validateVideoFile(
   file: File,
 ): Promise<{ valid: boolean; error?: string }> {
   return new Promise((resolve) => {
     const MAX_SIZE = 100 * 1024 * 1024;
-
     if (file.size > MAX_SIZE) {
       resolve({
         valid: false,
@@ -119,11 +574,9 @@ function validateVideoFile(
       });
       return;
     }
-
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
     video.preload = "metadata";
-
     video.onloadedmetadata = function () {
       const width = video.videoWidth;
       const height = video.videoHeight;
@@ -137,24 +590,31 @@ function validateVideoFile(
         resolve({ valid: true });
       }
     };
-
     video.onerror = function () {
       URL.revokeObjectURL(url);
       resolve({ valid: false, error: "Không thể đọc metadata của video" });
     };
-
     video.src = url;
   });
 }
 
-// ===== Component SortableItem =====
-function SortableItem({
-  id,
+// ===== SECTION ITEM - COMPONENT RIÊNG =====
+function SectionItem({
+  phan,
+  idx,
+  isEditable,
   children,
+  onEdit,
+  onDelete,
 }: {
-  id: string;
+  phan: PhanHocType;
+  idx: number;
+  isEditable: boolean;
   children: React.ReactNode;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
+  const { id } = phan;
   const {
     attributes,
     listeners,
@@ -168,606 +628,2013 @@ function SortableItem({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    touchAction: "none",
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <Box>
+        <Box
+          sx={{
+            bgcolor: "#F5F6F8",
+            border: "1px solid #E7E9EE",
+            borderRadius: "14px",
+            p: 2.5,
+          }}
+        >
+          {/* HEADER - VÙNG KÉO */}
+          <Box
+            {...(isEditable ? listeners : {})}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mb: 1.5,
+              cursor: isEditable ? "grab" : "default",
+              touchAction: "none",
+              userSelect: "none",
+            }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 800,
+                color: "#1F2937",
+                flexShrink: 0,
+              }}
+            >
+              Phần {idx + 1}:
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: 15,
+                color: "#1F2937",
+                flex: 1,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {phan.tenPhan || "Phần mới"}
+            </Typography>
+            {isEditable && (
+              <>
+                <IconButton
+                  {...noPropagation}
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(id);
+                  }}
+                >
+                  <EditOutlined fontSize="small" sx={{ color: "#9AA2B1" }} />
+                </IconButton>
+                <Tooltip title="Xóa phần">
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(id);
+                    }}
+                  >
+                    <DeleteOutlined
+                      fontSize="small"
+                      sx={{ color: "#9AA2B1" }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+            <DragIndicator
+              sx={{
+                fontSize: 20,
+                color: "#C7CCD6",
+              }}
+            />
+          </Box>
+          {children}
+        </Box>
+      </Box>
     </div>
   );
 }
 
-// ===== COMPONENT FORM BÀI KIỂM TRA (có drag-drop câu hỏi) =====
-function QuizForm({
-  isEditing,
-  readOnly = false,
+// ===== LECTURE ITEM - COMPONENT RIÊNG =====
+function LectureItem({
+  bg,
+  itemId,
+  phanId,
+  soThuTuMuc,
+  isComplete,
+  isExpanded,
+  isEditable,
+  children,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  bg: BaiGiangType;
+  itemId: string;
+  phanId: string;
+  soThuTuMuc: number;
+  isComplete: boolean;
+  isExpanded: boolean;
+  isEditable: boolean;
+  children: React.ReactNode;
+  onToggle: (id: string) => void;
+  onEdit: (phanId: string, id: string) => void;
+  onDelete: (phanId: string, id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: itemId });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <Paper
+        sx={{
+          mb: 1,
+          border: "1px solid #EDEFF3",
+          borderRadius: "8px",
+          overflow: "hidden",
+          bgcolor: "#fff",
+          transition: "all 0.2s ease",
+          "&:hover": { borderColor: "#D1D5DB" },
+        }}
+      >
+        {/* HEADER - VÙNG KÉO */}
+        <ListItem
+          {...(isEditable ? listeners : {})}
+          sx={{
+            px: 1.5,
+            py: 0.75,
+            pr: 14,
+            bgcolor: "transparent",
+            cursor: isEditable ? "grab" : "default",
+            touchAction: "none",
+            userSelect: "none",
+            "&:hover": {
+              bgcolor: "rgba(0,0,0,0.02)",
+            },
+          }}
+          secondaryAction={
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              {isEditable && (
+                <>
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(phanId, itemId);
+                    }}
+                  >
+                    <EditOutlined fontSize="small" sx={{ color: "#9AA2B1" }} />
+                  </IconButton>
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(phanId, itemId);
+                    }}
+                  >
+                    <DeleteOutlined
+                      fontSize="small"
+                      sx={{ color: "#9AA2B1" }}
+                    />
+                  </IconButton>
+                </>
+              )}
+              <IconButton
+                {...noPropagation}
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle(itemId);
+                }}
+              >
+                {isExpanded ? (
+                  <ExpandLess fontSize="small" />
+                ) : (
+                  <ExpandMore fontSize="small" />
+                )}
+              </IconButton>
+            </Box>
+          }
+        >
+          <ListItemIcon sx={{ minWidth: 28 }}>
+            {isComplete ? (
+              <CheckCircle sx={{ fontSize: 18, color: MAU.chinh }} />
+            ) : (
+              <RadioButtonUnchecked sx={{ fontSize: 18, color: "#C7CCD6" }} />
+            )}
+          </ListItemIcon>
+          <ListItemText
+            sx={{ minWidth: 0 }}
+            primary={
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  minWidth: 0,
+                }}
+              >
+                <Box
+                  component="span"
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    minWidth: 0,
+                  }}
+                >
+                  <Box component="span" sx={{ fontWeight: 800 }}>
+                    {`Bài giảng ${soThuTuMuc}: `}
+                  </Box>
+                  {bg.tieuDe || "Chưa đặt tên"}
+                </Box>
+                <Chip
+                  size="small"
+                  label={bg.urlBaiGiang ? "Có video" : "Chưa có video"}
+                  sx={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    bgcolor: bg.urlBaiGiang ? `${MAU.chinh}1A` : "#F1F2F5",
+                    color: bg.urlBaiGiang ? MAU.chinhDam : "#8A93A3",
+                    flexShrink: 0,
+                  }}
+                />
+              </Box>
+            }
+          />
+        </ListItem>
+
+        <Collapse in={isExpanded}>
+          <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+        </Collapse>
+      </Paper>
+    </div>
+  );
+}
+
+// ===== QUIZ ITEM - COMPONENT RIÊNG =====
+function QuizItem({
+  kt,
+  itemId,
+  phanId,
+  soThuTuMuc,
+  tenHienThi,
+  isComplete,
+  isExpanded,
+  isEditable,
+  children,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  kt: BaiKiemTraDto;
+  itemId: string;
+  phanId: string;
+  soThuTuMuc: number;
+  tenHienThi: string;
+  isComplete: boolean;
+  isExpanded: boolean;
+  isEditable: boolean;
+  children: React.ReactNode;
+  onToggle: (id: string) => void;
+  onEdit: (phanId: string, id: string) => void;
+  onDelete: (phanId: string, id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: itemId });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <Paper
+        sx={{
+          mb: 1,
+          border: "1px solid #EDEFF3",
+          borderRadius: "8px",
+          overflow: "hidden",
+          bgcolor: "#fff",
+          transition: "all 0.2s ease",
+          "&:hover": { borderColor: "#D1D5DB" },
+        }}
+      >
+        {/* HEADER - VÙNG KÉO */}
+        <ListItem
+          {...(isEditable ? listeners : {})}
+          sx={{
+            px: 1.5,
+            py: 0.75,
+            pr: 14,
+            bgcolor: isExpanded ? "#F5F6F8" : "transparent",
+            cursor: isEditable ? "grab" : "default",
+            touchAction: "none",
+            userSelect: "none",
+            "&:hover": {
+              bgcolor: "rgba(0,0,0,0.02)",
+            },
+          }}
+          secondaryAction={
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              {isEditable && (
+                <>
+                  <Tooltip title="Sửa bài kiểm tra">
+                    <IconButton
+                      {...noPropagation}
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(phanId, itemId);
+                      }}
+                    >
+                      <EditOutlined
+                        fontSize="small"
+                        sx={{ color: "#9AA2B1" }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Xóa bài kiểm tra">
+                    <IconButton
+                      {...noPropagation}
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(phanId, itemId);
+                      }}
+                    >
+                      <DeleteOutlined
+                        fontSize="small"
+                        sx={{ color: "#9AA2B1" }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+              <IconButton
+                {...noPropagation}
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle(itemId);
+                }}
+              >
+                {isExpanded ? (
+                  <ExpandLess fontSize="small" />
+                ) : (
+                  <ExpandMore fontSize="small" />
+                )}
+              </IconButton>
+            </Box>
+          }
+        >
+          <ListItemIcon sx={{ minWidth: 28 }}>
+            {isComplete ? (
+              <CheckCircle sx={{ fontSize: 18, color: MAU.chinh }} />
+            ) : (
+              <RadioButtonUnchecked sx={{ fontSize: 18, color: "#C7CCD6" }} />
+            )}
+          </ListItemIcon>
+          <ListItemText
+            sx={{ minWidth: 0 }}
+            primary={
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  minWidth: 0,
+                }}
+              >
+                <Box
+                  component="span"
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    minWidth: 0,
+                  }}
+                >
+                  <Box component="span" sx={{ fontWeight: 800 }}>
+                    {`Bài kiểm tra ${soThuTuMuc}: `}
+                  </Box>
+                  {tenHienThi}
+                </Box>
+                <Chip
+                  size="small"
+                  label={`${kt.soCauHoi ?? 0} câu hỏi`}
+                  sx={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    bgcolor: isComplete ? `${MAU.chinh}1A` : "#F1F2F5",
+                    color: isComplete ? MAU.chinhDam : "#8A93A3",
+                    flexShrink: 0,
+                  }}
+                />
+              </Box>
+            }
+          />
+        </ListItem>
+
+        <Collapse in={isExpanded}>
+          <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+        </Collapse>
+      </Paper>
+    </div>
+  );
+}
+
+// ===== INTERFACE =====
+interface CauHoiFormData {
+  id: string;
+  noiDungCauHoi: string;
+  loaiCauHoi: "ONE" | "MULTI";
+  doKho: "De" | "TrungBinh" | "Kho";
+  danhSachDapAn: {
+    id: string;
+    noiDungDapAn: string;
+    laDapAnDung: boolean;
+    thuTuSapXep: number;
+    giaiThich?: string;
+  }[];
+}
+
+// ===== ẢNH 1: FORM TẠO QUIZ =====
+function QuizCreateForm({
   data,
   onDataChange,
-  onAddQuestion,
-  onRemoveQuestion,
-  onUpdateQuestion,
+  onCancel,
+  onSubmit,
+  loading,
+}: {
+  data: { tenBaiKiemTra: string; moTa: string };
+  onDataChange: (field: string, value: any) => void;
+  onCancel: () => void;
+  onSubmit: () => void;
+  loading: boolean;
+}) {
+  const soKyTuConLai = 80 - (data.tenBaiKiemTra?.length || 0);
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        p: 2.5,
+        border: "1.5px dashed #C7CCD6",
+        borderRadius: "14px",
+        bgcolor: "#fff",
+      }}
+    >
+      <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#1F2937" }}>
+        Bài kiểm tra mới: Nhập tiêu đề
+      </Typography>
+
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+        <TextField
+          {...noPropagation}
+          fullWidth
+          placeholder="Nhập tiêu đề bài kiểm tra"
+          value={data.tenBaiKiemTra || ""}
+          onChange={(e) => {
+            if (e.target.value.length <= 80) {
+              onDataChange("tenBaiKiemTra", e.target.value);
+            }
+          }}
+          variant="outlined"
+          disabled={loading}
+          autoFocus
+          slotProps={{
+            input: {
+              sx: {
+                bgcolor: "#fff",
+                borderRadius: "10px",
+                fontSize: 14.5,
+                "& fieldset": { borderColor: "#E3E6EB" },
+                "&:hover fieldset": { borderColor: "#C7CCD6" },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: MAU.chinh,
+                  borderWidth: 1.5,
+                },
+              },
+            },
+          }}
+        />
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: soKyTuConLai <= 10 ? "#C62828" : "#9AA2B1",
+            textAlign: "right",
+          }}
+        >
+          {soKyTuConLai} ký tự còn lại
+        </Typography>
+      </Box>
+
+      <Box>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: 12.5,
+            color: "#6B7280",
+            mb: 0.5,
+          }}
+        >
+          Mô tả bài kiểm tra
+        </Typography>
+        <RichTextEditor
+          value={data.moTa || ""}
+          onChange={(value) => onDataChange("moTa", value)}
+          placeholder="Mô tả ngắn gọn về bài kiểm tra này..."
+          disabled={loading}
+          minHeight={120}
+        />
+      </Box>
+
+      <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+        <Button
+          {...noPropagation}
+          onClick={onCancel}
+          disabled={loading}
+          sx={{
+            textTransform: "none",
+            color: "#6B7280",
+            fontWeight: 600,
+            borderRadius: "8px",
+            px: 2,
+            "&:hover": { bgcolor: "#F5F6F8" },
+          }}
+        >
+          Hủy bỏ
+        </Button>
+        <Button
+          {...noPropagation}
+          variant="contained"
+          onClick={onSubmit}
+          disabled={loading || !data.tenBaiKiemTra?.trim()}
+          sx={{
+            bgcolor: "#E5E7EB",
+            color: "#9CA3AF",
+            textTransform: "none",
+            fontWeight: 700,
+            px: 3,
+            borderRadius: "8px",
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: data.tenBaiKiemTra?.trim() ? MAU.chinhDam : "#E5E7EB",
+              boxShadow: "none",
+            },
+            ...(data.tenBaiKiemTra?.trim() && {
+              bgcolor: MAU.chinh,
+              color: "#fff",
+            }),
+            "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#A1A6B0" },
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={20} sx={{ color: "#fff" }} />
+          ) : (
+            "Thêm bài kiểm tra"
+          )}
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+// ===== ẢNH 2: FORM CẬP NHẬT QUIZ =====
+function QuizUpdateForm({
+  data,
+  onDataChange,
+  onCancel,
+  onSubmit,
+  loading,
+}: {
+  data: { tenBaiKiemTra: string; moTa: string };
+  onDataChange: (field: string, value: any) => void;
+  onCancel: () => void;
+  onSubmit: () => void;
+  loading: boolean;
+}) {
+  const soKyTuConLai = 80 - (data.tenBaiKiemTra?.length || 0);
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#1F2937" }}>
+        Sửa bài kiểm tra
+      </Typography>
+
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+        <TextField
+          {...noPropagation}
+          fullWidth
+          placeholder="Nhập tiêu đề bài kiểm tra"
+          value={data.tenBaiKiemTra || ""}
+          onChange={(e) => {
+            if (e.target.value.length <= 80) {
+              onDataChange("tenBaiKiemTra", e.target.value);
+            }
+          }}
+          variant="outlined"
+          size="small"
+          disabled={loading}
+          autoFocus
+          slotProps={{
+            input: {
+              sx: {
+                bgcolor: "#fff",
+                fontWeight: 600,
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: MAU.chinh,
+                  borderWidth: 2,
+                },
+              },
+            },
+          }}
+        />
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: soKyTuConLai <= 10 ? "#C62828" : "#8A93A3",
+            textAlign: "right",
+          }}
+        >
+          {soKyTuConLai} ký tự còn lại
+        </Typography>
+      </Box>
+
+      <Box>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: 12.5,
+            color: "#6B7280",
+            mb: 0.5,
+          }}
+        >
+          Mô tả bài kiểm tra
+        </Typography>
+        <RichTextEditor
+          value={data.moTa || ""}
+          onChange={(value) => onDataChange("moTa", value)}
+          placeholder="Mô tả ngắn gọn về bài kiểm tra này..."
+          disabled={loading}
+          minHeight={120}
+        />
+      </Box>
+
+      <Box
+        sx={{ display: "flex", gap: 1, justifyContent: "flex-end", mt: 0.5 }}
+      >
+        <Button
+          {...noPropagation}
+          onClick={onCancel}
+          disabled={loading}
+          sx={{
+            textTransform: "none",
+            color: "#8A93A3",
+            fontWeight: 600,
+            borderRadius: "8px",
+            "&:hover": { bgcolor: "#F5F6F8" },
+          }}
+        >
+          Hủy bỏ
+        </Button>
+        <Button
+          {...noPropagation}
+          variant="contained"
+          onClick={onSubmit}
+          disabled={loading || !data.tenBaiKiemTra?.trim()}
+          sx={{
+            bgcolor: MAU.chinh,
+            textTransform: "none",
+            fontWeight: 700,
+            px: 3,
+            borderRadius: "8px",
+            boxShadow: "none",
+            "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
+            "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#A1A6B0" },
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={20} sx={{ color: "#fff" }} />
+          ) : (
+            "Lưu bài kiểm tra"
+          )}
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+// ===== ẢNH 3: FORM THÊM/SỬA CÂU HỎI VÀ ĐÁP ÁN =====
+const CHU_CAI = [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J",
+  "K",
+  "L",
+  "M",
+  "N",
+  "O",
+];
+
+function QuestionDetailForm({
+  question,
+  onQuestionChange,
   onAddDapAn,
   onRemoveDapAn,
   onUpdateDapAn,
   onToggleDapAnDung,
+  onSave,
   onCancel,
-  onSubmit,
   loading,
-  submitLabel,
-  expandedQuestions,
-  toggleQuestionExpand,
-  onReorderQuestions,
+  isEditing,
+  quizTitle,
 }: {
-  isEditing: boolean;
-  readOnly?: boolean;
-  data: any;
-  onDataChange: (field: string, value: any) => void;
-  onAddQuestion: () => void;
-  onRemoveQuestion: (qId: string) => void;
-  onUpdateQuestion: (qId: string, field: string, value: any) => void;
-  onAddDapAn: (qId: string) => void;
-  onRemoveDapAn: (qId: string, dId: string) => void;
-  onUpdateDapAn: (qId: string, dId: string, field: string, value: any) => void;
-  onToggleDapAnDung: (qId: string, dId: string, checked: boolean) => void;
+  question: CauHoiFormData;
+  onQuestionChange: (field: string, value: any) => void;
+  onAddDapAn: () => void;
+  onRemoveDapAn: (dId: string) => void;
+  onUpdateDapAn: (dId: string, field: string, value: any) => void;
+  onToggleDapAnDung: (dId: string, checked: boolean) => void;
+  onSave: () => void;
   onCancel: () => void;
-  onSubmit: () => void;
   loading: boolean;
-  submitLabel: string;
-  expandedQuestions: Record<string, boolean>;
-  toggleQuestionExpand: (qId: string) => void;
-  onReorderQuestions?: (newQuestions: any[]) => void;
+  isEditing: boolean;
+  quizTitle?: string;
 }) {
-  const isFormDisabled = readOnly || loading;
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-
-  const handleDragEndQuestions = (event: DragEndEvent) => {
-    if (!onReorderQuestions || readOnly) return;
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = data.cauHois.findIndex((q: any) => q.id === active.id);
-    const newIndex = data.cauHois.findIndex((q: any) => q.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const newQuestions = arrayMove(data.cauHois, oldIndex, newIndex).map(
-      (q: any, idx: number) => ({ ...q, thuTuSapXep: idx + 1 }),
-    );
-    onReorderQuestions(newQuestions);
-  };
+  const hasDapAnDung =
+    question.danhSachDapAn?.some((d) => d.laDapAnDung) || false;
+  const soDapAn = question.danhSachDapAn?.length || 0;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Typography
-        variant="subtitle1"
-        sx={{ fontWeight: 700, color: MAU.chuDen }}
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          pb: 1.5,
+          borderBottom: "1px solid #EDEFF3",
+        }}
       >
-        {readOnly
-          ? "Xem bài kiểm tra"
-          : isEditing
-            ? "Chỉnh sửa bài kiểm tra"
-            : "Tạo bài kiểm tra mới"}
-      </Typography>
-
-      {!readOnly && (
-        <>
-          <TextField
-            label="Tiêu đề bài kiểm tra *"
-            placeholder="Nhập tiêu đề bài kiểm tra"
-            value={data.tenBaiKiemTra || ""}
-            onChange={(e) => onDataChange("tenBaiKiemTra", e.target.value)}
-            variant="outlined"
-            size="small"
-            fullWidth
-            required
-            disabled={isFormDisabled}
-            slotProps={{
-              input: {
-                sx: {
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: MAU.chinh,
-                  },
-                },
-              },
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              bgcolor: `${MAU.chinh}1A`,
+              color: MAU.chinhDam,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+              fontSize: 13,
+              flexShrink: 0,
             }}
-          />
-          <TextField
-            label="Mô tả bài kiểm tra"
-            placeholder="Nhập mô tả bài kiểm tra"
-            value={data.moTa || ""}
-            onChange={(e) => onDataChange("moTa", e.target.value)}
-            variant="outlined"
-            size="small"
-            fullWidth
-            multiline
-            rows={2}
-            disabled={isFormDisabled}
-            slotProps={{
-              input: {
-                sx: {
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: MAU.chinh,
-                  },
-                },
-              },
-            }}
-          />
-        </>
-      )}
-
-      {readOnly && data.tenBaiKiemTra && (
-        <Box sx={{ mb: 1 }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 600, color: "#6B7280" }}
           >
-            Tiêu đề:
+            {isEditing ? (
+              <EditOutlined sx={{ fontSize: 15 }} />
+            ) : (
+              <Add sx={{ fontSize: 18 }} />
+            )}
+          </Box>
+          <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#1F2937" }}>
+            {isEditing ? "Sửa câu hỏi" : "Thêm câu hỏi trắc nghiệm"}
           </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-            {data.tenBaiKiemTra}
-          </Typography>
-          {data.moTa && (
-            <>
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 600, color: "#6B7280" }}
-              >
-                Mô tả:
-              </Typography>
-              <Typography variant="body2" sx={{ color: "#4B5563", mb: 1 }}>
-                {data.moTa}
-              </Typography>
-            </>
-          )}
-          <Divider sx={{ my: 1 }} />
         </Box>
-      )}
+        {quizTitle && (
+          <Chip
+            size="small"
+            label={quizTitle}
+            sx={{
+              fontSize: 11,
+              fontWeight: 600,
+              bgcolor: "#F5F6F8",
+              color: "#6B7280",
+              maxWidth: 220,
+            }}
+          />
+        )}
+      </Box>
 
-      {data.cauHois && data.cauHois.length > 0 && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEndQuestions}
-        >
-          <SortableContext
-            items={data.cauHois.map((q: any) => q.id)}
-            strategy={verticalListSortingStrategy}
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Loại câu hỏi</InputLabel>
+          <Select
+            {...noPropagation}
+            label="Loại câu hỏi"
+            value={question.loaiCauHoi}
+            onChange={(e) => onQuestionChange("loaiCauHoi", e.target.value)}
+            disabled={loading}
+            sx={{
+              bgcolor: "#fff",
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: MAU.chinh,
+              },
+            }}
           >
-            {data.cauHois.map((q: any, qIndex: number) => {
-              const isExpanded = expandedQuestions[q.id] || false;
-              return (
-                <SortableItem key={q.id} id={q.id}>
-                  <Box sx={{ mb: 1.5 }}>
-                    <Paper
-                      sx={{
-                        bgcolor: "#FAFAFA",
-                        border: "1px solid #EDEFF3",
-                        borderRadius: "8px",
-                        overflow: "hidden",
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          borderColor: isExpanded ? MAU.chinh : "#D1D5DB",
-                        },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          p: 1.5,
-                          cursor: "pointer",
-                          bgcolor: isExpanded ? "#F5F6F8" : "transparent",
-                          transition: "background-color 0.2s ease",
-                          "&:hover": {
-                            bgcolor: "#F0F1F3",
-                          },
-                        }}
-                        onClick={() => toggleQuestionExpand(q.id)}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            flex: 1,
-                            minWidth: 0,
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: 14,
-                              flexShrink: 0,
-                            }}
-                          >
-                            Câu hỏi {qIndex + 1}
-                          </Typography>
-                          <Chip
-                            size="small"
-                            label={
-                              q.loaiCauHoi === "ONE"
-                                ? "Trắc nghiệm"
-                                : "Lựa chọn nhiều"
-                            }
-                            sx={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              bgcolor: MAU.chinh + "1A",
-                              color: MAU.chinhDam,
-                              flexShrink: 0,
-                              height: 22,
-                            }}
-                          />
-                          {!isExpanded && q.noiDungCauHoi && (
-                            <Typography
-                              sx={{
-                                fontSize: 13,
-                                color: "#6B7280",
-                                ml: 1,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                flex: 1,
-                              }}
-                            >
-                              {q.noiDungCauHoi}
-                            </Typography>
-                          )}
-                        </Box>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            flexShrink: 0,
-                            gap: 0.5,
-                          }}
-                        >
-                          {!readOnly && (
-                            <>
-                              <Tooltip title="Xóa câu hỏi">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onRemoveQuestion(q.id);
-                                  }}
-                                  sx={{
-                                    color: "#9AA2B1",
-                                    "&:hover": { color: "#C62828" },
-                                  }}
-                                >
-                                  <DeleteOutlined fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <DragIndicator
-                                sx={{
-                                  fontSize: 18,
-                                  color: "#C7CCD6",
-                                  cursor: "grab",
-                                }}
-                              />
-                            </>
-                          )}
-                          <Tooltip title={isExpanded ? "Thu gọn" : "Mở rộng"}>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleQuestionExpand(q.id);
-                              }}
-                            >
-                              {isExpanded ? <ExpandLess /> : <ExpandMore />}
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Box>
-                      <Collapse in={isExpanded} timeout="auto">
-                        <Box sx={{ p: 2, pt: 1 }}>
-                          <TextField
-                            fullWidth
-                            multiline
-                            rows={2}
-                            size="small"
-                            label="Nội dung câu hỏi *"
-                            placeholder="Nhập nội dung câu hỏi"
-                            value={q.noiDungCauHoi || ""}
-                            onChange={(e) =>
-                              onUpdateQuestion(
-                                q.id,
-                                "noiDungCauHoi",
-                                e.target.value,
-                              )
-                            }
-                            sx={{ mb: 1.5 }}
-                            disabled={readOnly}
-                            required
-                            slotProps={{
-                              input: {
-                                sx: {
-                                  "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                    {
-                                      borderColor: MAU.chinh,
-                                    },
-                                },
-                              },
-                            }}
-                          />
-                          <Box
-                            sx={{
-                              display: "flex",
-                              gap: 2,
-                              flexWrap: "wrap",
-                              mb: 1.5,
-                            }}
-                          >
-                            <FormControl
-                              size="small"
-                              sx={{ minWidth: 200 }}
-                              disabled={readOnly}
-                            >
-                              <InputLabel>Loại câu hỏi</InputLabel>
-                              <Select
-                                value={q.loaiCauHoi || "ONE"}
-                                label="Loại câu hỏi"
-                                onChange={(e) =>
-                                  onUpdateQuestion(
-                                    q.id,
-                                    "loaiCauHoi",
-                                    e.target.value,
-                                  )
-                                }
-                                sx={{
-                                  "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                    {
-                                      borderColor: MAU.chinh,
-                                    },
-                                }}
-                              >
-                                <MenuItem value="ONE">
-                                  Trắc nghiệm (1 đáp án)
-                                </MenuItem>
-                                <MenuItem value="MULTI">
-                                  Lựa chọn nhiều
-                                </MenuItem>
-                              </Select>
-                            </FormControl>
-                          </Box>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ fontWeight: 600, mb: 1.5, color: "#1F2937" }}
-                          >
-                            Đáp án{" "}
-                            {!readOnly && (
-                              <span style={{ color: "#C62828" }}>*</span>
-                            )}
-                            {readOnly && (
-                              <span
-                                style={{
-                                  fontSize: 12,
-                                  fontWeight: 400,
-                                  color: "#6B7280",
-                                  marginLeft: 8,
-                                }}
-                              >
-                                ({q.danhSachDapAn?.length || 0} đáp án)
-                              </span>
-                            )}
-                          </Typography>
-                          {q.danhSachDapAn?.map((d: any, dIdx: number) => {
-                            const isDapAnDung = d.laDapAnDung || false;
-                            return (
-                              <Box
-                                key={d.id}
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                  mb: 1,
-                                  bgcolor:
-                                    isDapAnDung && readOnly
-                                      ? "#E8F5E9"
-                                      : "#fff",
-                                  p: 1,
-                                  borderRadius: "6px",
-                                  border: `1px solid ${
-                                    isDapAnDung && readOnly
-                                      ? "#4CAF50"
-                                      : "#EDEFF3"
-                                  }`,
-                                  transition: "all 0.2s ease",
-                                  "&:hover": {
-                                    borderColor:
-                                      isDapAnDung && readOnly
-                                        ? "#4CAF50"
-                                        : MAU.chinh,
-                                  },
-                                }}
-                              >
-                                {q.loaiCauHoi === "ONE" ? (
-                                  <Radio
-                                    checked={isDapAnDung}
-                                    onChange={(e) =>
-                                      onToggleDapAnDung(
-                                        q.id,
-                                        d.id,
-                                        e.target.checked,
-                                      )
-                                    }
-                                    size="small"
-                                    sx={{
-                                      color: MAU.chinh,
-                                      "&.Mui-checked": { color: MAU.chinh },
-                                    }}
-                                    disabled={readOnly}
-                                  />
-                                ) : (
-                                  <Checkbox
-                                    checked={isDapAnDung}
-                                    onChange={(e) =>
-                                      onToggleDapAnDung(
-                                        q.id,
-                                        d.id,
-                                        e.target.checked,
-                                      )
-                                    }
-                                    size="small"
-                                    sx={{
-                                      color: MAU.chinh,
-                                      "&.Mui-checked": { color: MAU.chinh },
-                                    }}
-                                    disabled={readOnly}
-                                  />
-                                )}
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  placeholder={`Đáp án ${dIdx + 1}`}
-                                  value={d.noiDungDapAn || ""}
-                                  onChange={(e) =>
-                                    onUpdateDapAn(
-                                      q.id,
-                                      d.id,
-                                      "noiDungDapAn",
-                                      e.target.value,
-                                    )
-                                  }
-                                  disabled={readOnly}
-                                  slotProps={{
-                                    input: {
-                                      sx: {
-                                        "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                          {
-                                            borderColor: MAU.chinh,
-                                          },
-                                      },
-                                    },
-                                  }}
-                                />
-                                {!readOnly && (
-                                  <Tooltip title="Xóa đáp án">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => onRemoveDapAn(q.id, d.id)}
-                                      sx={{
-                                        color: "#9AA2B1",
-                                        "&:hover": { color: "#C62828" },
-                                      }}
-                                    >
-                                      <DeleteOutlined fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                              </Box>
-                            );
-                          })}
-                          {!readOnly && (
-                            <Button
-                              startIcon={<Add />}
-                              onClick={() => onAddDapAn(q.id)}
-                              size="small"
-                              sx={{
-                                textTransform: "none",
-                                fontWeight: 600,
-                                color: MAU.chinh,
-                                border: `1px dashed ${MAU.chinh}`,
-                                borderRadius: "6px",
-                                width: "100%",
-                                py: 0.75,
-                                mt: 0.5,
-                                "&:hover": {
-                                  bgcolor: `${MAU.chinh}0F`,
-                                  borderColor: MAU.chinhDam,
-                                },
-                              }}
-                            >
-                              Thêm đáp án
-                            </Button>
-                          )}
-                        </Box>
-                      </Collapse>
-                    </Paper>
-                  </Box>
-                </SortableItem>
-              );
-            })}
-          </SortableContext>
-        </DndContext>
-      )}
+            <MenuItem value="ONE">Chọn một đáp án</MenuItem>
+            <MenuItem value="MULTI">Chọn nhiều đáp án</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
-      {!readOnly && (
-        <Button
-          startIcon={<Add />}
-          onClick={onAddQuestion}
+      <Box>
+        <Typography
+          sx={{ fontWeight: 700, fontSize: 14, color: "#1F2937", mb: 1 }}
+        >
+          Câu hỏi
+        </Typography>
+        <RichTextEditor
+          value={question.noiDungCauHoi || ""}
+          onChange={(value) => onQuestionChange("noiDungCauHoi", value)}
+          placeholder="Nhập nội dung câu hỏi..."
+          disabled={loading}
+          minHeight={130}
+        />
+      </Box>
+
+      <Box>
+        <Box
           sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1,
+          }}
+        >
+          <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#1F2937" }}>
+            Đáp án
+          </Typography>
+          <Typography sx={{ fontSize: 12, color: "#8A93A3" }}>
+            {soDapAn}/15 đáp án
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+          {(question.danhSachDapAn || []).map((d, index) => (
+            <Box
+              key={d.id}
+              sx={{
+                position: "relative",
+                border: `1.5px solid ${d.laDapAnDung ? MAU.chinh : "#E3E6EB"}`,
+                borderRadius: "10px",
+                bgcolor: d.laDapAnDung ? `${MAU.chinh}0A` : "#fff",
+                transition: "all 0.15s ease",
+                p: 1.5,
+                "&:hover": {
+                  borderColor: d.laDapAnDung ? MAU.chinh : "#C7CCD6",
+                },
+              }}
+            >
+              <Box
+                sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 0.5,
+                    pt: 0.25,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: "50%",
+                      bgcolor: d.laDapAnDung ? MAU.chinh : "#F1F2F5",
+                      color: d.laDapAnDung ? "#fff" : "#6B7280",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      flexShrink: 0,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {CHU_CAI[index] || index + 1}
+                  </Box>
+                  {question.loaiCauHoi === "ONE" ? (
+                    <Radio
+                      {...noPropagation}
+                      checked={d.laDapAnDung}
+                      onChange={(e) =>
+                        onToggleDapAnDung(d.id, e.target.checked)
+                      }
+                      size="small"
+                      sx={{
+                        p: 0,
+                        color: "#C7CCD6",
+                        "&.Mui-checked": { color: MAU.chinh },
+                      }}
+                      disabled={loading}
+                    />
+                  ) : (
+                    <Checkbox
+                      {...noPropagation}
+                      checked={d.laDapAnDung}
+                      onChange={(e) =>
+                        onToggleDapAnDung(d.id, e.target.checked)
+                      }
+                      size="small"
+                      sx={{
+                        p: 0,
+                        color: "#C7CCD6",
+                        "&.Mui-checked": { color: MAU.chinh },
+                      }}
+                      disabled={loading}
+                    />
+                  )}
+                </Box>
+
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <TextField
+                    {...noPropagation}
+                    fullWidth
+                    size="small"
+                    placeholder={`Nhập đáp án ${CHU_CAI[index] || index + 1}`}
+                    value={d.noiDungDapAn || ""}
+                    onChange={(e) =>
+                      onUpdateDapAn(d.id, "noiDungDapAn", e.target.value)
+                    }
+                    disabled={loading}
+                    variant="standard"
+                    slotProps={{
+                      input: {
+                        disableUnderline: true,
+                        sx: { fontSize: 14, fontWeight: 500 },
+                      },
+                    }}
+                  />
+                </Box>
+
+                {question.danhSachDapAn.length > 2 && (
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    onClick={() => onRemoveDapAn(d.id)}
+                    sx={{
+                      color: "#C7CCD6",
+                      "&:hover": { color: "#C62828", bgcolor: "#FDECEC" },
+                    }}
+                  >
+                    <DeleteOutlined fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+
+        <Button
+          {...noPropagation}
+          startIcon={<Add />}
+          onClick={onAddDapAn}
+          disabled={loading || soDapAn >= 15}
+          fullWidth
+          sx={{
+            mt: 1.25,
             textTransform: "none",
             fontWeight: 600,
+            fontSize: 13.5,
             color: MAU.chinh,
-            border: `1px dashed ${MAU.chinh}`,
-            borderRadius: "8px",
-            width: "100%",
-            py: 1.5,
+            border: `1.5px dashed ${MAU.chinh}66`,
+            borderRadius: "10px",
+            py: 1.1,
             "&:hover": {
               bgcolor: `${MAU.chinh}0F`,
-              borderColor: MAU.chinhDam,
+              borderColor: MAU.chinh,
             },
           }}
         >
-          Thêm câu hỏi
+          Thêm đáp án
         </Button>
-      )}
 
-      {!readOnly && (
+        {!hasDapAnDung && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              mt: 1,
+              px: 1.5,
+              py: 0.75,
+              bgcolor: "#FDECEC",
+              borderRadius: "8px",
+            }}
+          >
+            <ErrorOutlined sx={{ fontSize: 16, color: "#C62828" }} />
+            <Typography
+              sx={{ fontSize: 12.5, color: "#C62828", fontWeight: 500 }}
+            >
+              Vui lòng chọn ít nhất một đáp án đúng
+            </Typography>
+          </Box>
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1,
+          justifyContent: "flex-end",
+          pt: 1.5,
+          borderTop: "1px solid #EDEFF3",
+        }}
+      >
+        <Button
+          {...noPropagation}
+          onClick={onCancel}
+          disabled={loading}
+          sx={{
+            textTransform: "none",
+            color: "#8A93A3",
+            fontWeight: 600,
+            borderRadius: "8px",
+            "&:hover": { bgcolor: "#F5F6F8" },
+          }}
+        >
+          Hủy bỏ
+        </Button>
+        <Button
+          {...noPropagation}
+          variant="contained"
+          onClick={onSave}
+          disabled={
+            loading ||
+            !question.noiDungCauHoi?.trim() ||
+            !question.danhSachDapAn?.some((d) => d.laDapAnDung)
+          }
+          sx={{
+            bgcolor: MAU.chinh,
+            textTransform: "none",
+            fontWeight: 700,
+            px: 3,
+            borderRadius: "8px",
+            boxShadow: "none",
+            "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
+            "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#A1A6B0" },
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={20} sx={{ color: "#fff" }} />
+          ) : (
+            "Lưu câu hỏi"
+          )}
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+// ===== ẢNH 4: DANH SÁCH CÂU HỎI =====
+function QuestionListView({
+  questions,
+  onEdit,
+  onDelete,
+  onAddNew,
+  isEditable,
+  showAddButton = true,
+}: {
+  questions: any[];
+  onEdit: (question: any) => void;
+  onDelete: (questionId: string) => void;
+  onAddNew: () => void;
+  isEditable: boolean;
+  showAddButton?: boolean;
+}) {
+  return (
+    <Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1.5,
+        }}
+      >
+        <Typography sx={{ fontWeight: 700, fontSize: 14.5, color: "#1F2937" }}>
+          Câu hỏi{" "}
+          <Box
+            component="span"
+            sx={{ fontWeight: 600, fontSize: 12.5, color: "#8A93A3", ml: 0.5 }}
+          >
+            ({questions.length})
+          </Box>
+        </Typography>
+        {isEditable && showAddButton && (
+          <Button
+            {...noPropagation}
+            size="small"
+            startIcon={<Add sx={{ fontSize: 16 }} />}
+            onClick={onAddNew}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              fontSize: 13,
+              color: MAU.chinh,
+              borderRadius: "8px",
+              "&:hover": { bgcolor: `${MAU.chinh}0F` },
+            }}
+          >
+            Câu hỏi mới
+          </Button>
+        )}
+      </Box>
+
+      {questions.length === 0 ? (
         <Box
-          sx={{ display: "flex", gap: 1, justifyContent: "flex-end", mt: 1 }}
+          sx={{
+            border: "1.5px dashed #E3E6EB",
+            borderRadius: "10px",
+            py: 3,
+            textAlign: "center",
+          }}
+        >
+          <QuizOutlined sx={{ fontSize: 28, color: "#C7CCD6", mb: 0.5 }} />
+          <Typography sx={{ fontSize: 13, color: "#8A93A3" }}>
+            Chưa có câu hỏi nào trong bài kiểm tra này.
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+          {questions.map((q, index) => {
+            const loaiHienThi =
+              q.loaiCauHoi === "ONE" ? "Trắc nghiệm" : "Lựa chọn nhiều";
+            const doKhoMau: Record<string, string> = {
+              De: "#2E7D32",
+              TrungBinh: "#D97706",
+              Kho: "#C62828",
+            };
+            const doKhoNhan: Record<string, string> = {
+              De: "Dễ",
+              TrungBinh: "Trung bình",
+              Kho: "Khó",
+            };
+
+            const plainText = stripHtml(
+              q.noiDungCauHoi || "Câu hỏi chưa có nội dung",
+            );
+
+            return (
+              <Paper
+                key={q.id}
+                elevation={0}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.25,
+                  px: 1.5,
+                  py: 1,
+                  border: "1px solid #EDEFF3",
+                  borderRadius: "10px",
+                  bgcolor: "#fff",
+                  transition: "all 0.15s ease",
+                  "&:hover": {
+                    borderColor: MAU.chinh,
+                    boxShadow: "0 1px 6px rgba(17,24,39,0.06)",
+                  },
+                  "&:hover .question-actions": { opacity: 1 },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    bgcolor: `${MAU.chinh}14`,
+                    color: MAU.chinhDam,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    flexShrink: 0,
+                  }}
+                >
+                  {index + 1}
+                </Box>
+
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "#1F2937",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {plainText}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      mt: 0.25,
+                    }}
+                  >
+                    <Chip
+                      size="small"
+                      label={loaiHienThi}
+                      sx={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        bgcolor: `${MAU.chinh}14`,
+                        color: MAU.chinhDam,
+                        height: 18,
+                      }}
+                    />
+                    {q.doKho && (
+                      <Chip
+                        size="small"
+                        label={doKhoNhan[q.doKho] || q.doKho}
+                        sx={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          bgcolor: `${doKhoMau[q.doKho] || "#8A93A3"}14`,
+                          color: doKhoMau[q.doKho] || "#8A93A3",
+                          height: 18,
+                        }}
+                      />
+                    )}
+                    <Typography sx={{ fontSize: 11, color: "#8A93A3" }}>
+                      {q.danhSachDapAn?.length ?? 0} đáp án
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {isEditable && showAddButton && (
+                  <Box
+                    className="question-actions"
+                    sx={{
+                      display: "flex",
+                      gap: 0.25,
+                      flexShrink: 0,
+                      opacity: { xs: 1, sm: 0.6 },
+                      transition: "opacity 0.15s ease",
+                    }}
+                  >
+                    <Tooltip title="Sửa câu hỏi">
+                      <IconButton
+                        {...noPropagation}
+                        size="small"
+                        onClick={() => onEdit(q)}
+                        sx={{
+                          color: "#9AA2B1",
+                          "&:hover": { color: MAU.chinh },
+                        }}
+                      >
+                        <EditOutlined fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Xóa câu hỏi">
+                      <IconButton
+                        {...noPropagation}
+                        size="small"
+                        onClick={() => onDelete(q.id)}
+                        sx={{
+                          color: "#9AA2B1",
+                          "&:hover": { color: "#C62828" },
+                        }}
+                      >
+                        <DeleteOutlined fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                )}
+              </Paper>
+            );
+          })}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ===== BÀI GIẢNG: CHẾ ĐỘ XEM (READ-ONLY) =====
+function LectureInfoView({
+  bg,
+  onPlayVideo,
+  onOpenDoc,
+  onDeleteDoc,
+  isEditable,
+}: {
+  bg: BaiGiangType;
+  onPlayVideo: (url: string) => void;
+  onOpenDoc: (url: string, name: string) => void;
+  onDeleteDoc: (taiLieuId: string) => void;
+  isEditable: boolean;
+}) {
+  const taiLieus = (bg.danhSachTaiLieu ?? []) as TaiLieuType[];
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.75,
+          p: 1.5,
+          border: "1px solid #EDEFF3",
+          borderRadius: "12px",
+          bgcolor: "#FAFBFC",
+        }}
+      >
+        <Box
+          onClick={() => bg.urlBaiGiang && onPlayVideo(bg.urlBaiGiang)}
+          sx={{
+            position: "relative",
+            width: 108,
+            height: 68,
+            borderRadius: "10px",
+            flexShrink: 0,
+            bgcolor: bg.urlBaiGiang ? "#1F2937" : "#EEF0F3",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: bg.urlBaiGiang ? "pointer" : "default",
+            overflow: "hidden",
+            "&:hover .play-overlay": { transform: "scale(1.08)" },
+          }}
+        >
+          {bg.urlBaiGiang ? (
+            <PlayCircleOutlined
+              className="play-overlay"
+              sx={{
+                fontSize: 34,
+                color: "#fff",
+                transition: "transform 0.15s ease",
+              }}
+            />
+          ) : (
+            <OndemandVideoOutlined sx={{ fontSize: 26, color: "#C7CCD6" }} />
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.6,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 13.5,
+              fontWeight: 700,
+              color: "#1F2937",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {bg.tieuDe || "Chưa đặt tên"}
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.75,
+              flexWrap: "wrap",
+            }}
+          >
+            <Chip
+              size="small"
+              icon={<ScheduleOutlined sx={{ fontSize: 14 }} />}
+              label={
+                bg.urlBaiGiang
+                  ? dinhDangThoiLuong(bg.thoiLuong ?? 0)
+                  : "Chưa có thời lượng"
+              }
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                height: 22,
+                bgcolor: "#F1F2F5",
+                color: "#4B5563",
+                "& .MuiChip-icon": { color: "#8A93A3", ml: "6px" },
+              }}
+            />
+            <Chip
+              size="small"
+              icon={
+                bg.laBaiGiangFree ? (
+                  <LockOpenOutlined sx={{ fontSize: 14 }} />
+                ) : (
+                  <LockOutlined sx={{ fontSize: 14 }} />
+                )
+              }
+              label={bg.laBaiGiangFree ? "Xem thử miễn phí" : "Yêu cầu đăng ký"}
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                height: 22,
+                bgcolor: bg.laBaiGiangFree ? `${MAU.chinh}14` : "#F1F2F5",
+                color: bg.laBaiGiangFree ? MAU.chinhDam : "#6B7280",
+                "& .MuiChip-icon": {
+                  color: bg.laBaiGiangFree ? MAU.chinhDam : "#8A93A3",
+                  ml: "6px",
+                },
+              }}
+            />
+            {!bg.urlBaiGiang && (
+              <Chip
+                size="small"
+                label="Chưa có video"
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  height: 22,
+                  bgcolor: "#FDECEC",
+                  color: "#C62828",
+                }}
+              />
+            )}
+          </Box>
+        </Box>
+      </Box>
+
+      <Box>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: 12.5,
+            color: "#8A93A3",
+            mb: 0.75,
+            textTransform: "uppercase",
+            letterSpacing: 0.3,
+          }}
+        >
+          Tài nguyên ({taiLieus.length})
+        </Typography>
+
+        {taiLieus.length === 0 ? (
+          <Typography
+            sx={{ fontSize: 12.5, color: "#B0B6C0", fontStyle: "italic" }}
+          >
+            Chưa có tài liệu đính kèm.
+          </Typography>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.6 }}>
+            {taiLieus.map((tl) => (
+              <Box
+                key={tl.id}
+                onClick={() => {
+                  const docUrl = (tl as any).url || (tl as any).duongDan || "";
+                  if (docUrl) {
+                    onOpenDoc(docUrl, tl.tenTaiLieu || "Tài liệu");
+                  }
+                }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1.25,
+                  py: 0.85,
+                  border: "1px solid #EDEFF3",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  bgcolor: "#fff",
+                  "&:hover": {
+                    borderColor: MAU.chinh,
+                    bgcolor: `${MAU.chinh}08`,
+                  },
+                }}
+              >
+                <DescriptionOutlined sx={{ fontSize: 17, color: MAU.chinh }} />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: "#1F2937",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {tl.tenTaiLieu}
+                  </Typography>
+                  {tl.loaiTaiLieu && (
+                    <Typography sx={{ fontSize: 10.5, color: "#9AA2B1" }}>
+                      {tl.loaiTaiLieu}
+                    </Typography>
+                  )}
+                </Box>
+                {isEditable && (
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteDoc(tl.id as string);
+                    }}
+                    sx={{ color: "#C7CCD6", "&:hover": { color: "#C62828" } }}
+                  >
+                    <DeleteOutlined fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+// ===== FORM TẠO BÀI GIẢNG MỚI =====
+function LectureCreateForm({
+  data,
+  onDataChange,
+  onSelectFile,
+  onCancel,
+  onSubmit,
+  loading,
+}: {
+  data: { title: string; file: File | null; isFree: boolean };
+  onDataChange: (field: "title" | "isFree", value: any) => void;
+  onSelectFile: (file: File) => void;
+  onCancel: () => void;
+  onSubmit: () => void;
+  loading: boolean;
+}) {
+  const soKyTuConLai = 100 - (data.title?.length || 0);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const result = await validateVideoFile(file);
+    if (result.valid) {
+      onSelectFile(file);
+    } else {
+      alert(`File không hợp lệ: ${result.error}`);
+    }
+    e.target.value = "";
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (loading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    const result = await validateVideoFile(file);
+    if (result.valid) {
+      onSelectFile(file);
+    } else {
+      alert(`File không hợp lệ: ${result.error}`);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 2.5,
+        p: 0,
+        borderRadius: "18px",
+        overflow: "hidden",
+        border: "1px solid #E7E9F0",
+        bgcolor: "#fff",
+        boxShadow: "0 4px 24px rgba(17,24,39,0.06)",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          px: 2.5,
+          py: 2,
+          background: `linear-gradient(135deg, ${MAU.chinh} 0%, ${MAU.chinhDam} 100%)`,
+        }}
+      >
+        <Box
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: "10px",
+            bgcolor: "rgba(255,255,255,0.2)",
+            backdropFilter: "blur(4px)",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <OndemandVideoOutlined sx={{ fontSize: 19 }} />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 16, color: "#fff" }}>
+            Bài giảng mới
+          </Typography>
+          <Typography sx={{ fontSize: 12, color: "rgba(255,255,255,0.85)" }}>
+            Thêm video và thông tin cho bài giảng
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2.5,
+          px: 2.5,
+          pb: 2.5,
+        }}
+      >
+        <Box>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: 12.5,
+              color: "#6B7280",
+              mb: 0.75,
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+            }}
+          >
+            Tên bài giảng
+            <Box component="span" sx={{ color: MAU.chinh }}>
+              *
+            </Box>
+          </Typography>
+          <TextField
+            {...noPropagation}
+            fullWidth
+            size="small"
+            placeholder="Ví dụ: Giới thiệu tổng quan khóa học"
+            value={data.title || ""}
+            onChange={(e) => {
+              if (e.target.value.length <= 100) {
+                onDataChange("title", e.target.value);
+              }
+            }}
+            autoFocus
+            required
+            disabled={loading}
+            slotProps={{
+              input: {
+                sx: {
+                  bgcolor: "#F9FAFB",
+                  borderRadius: "10px",
+                  fontWeight: 600,
+                  fontSize: 14.5,
+                  transition: "background-color 0.15s ease",
+                  "& fieldset": { borderColor: "#E5E7EB" },
+                  "&:hover": { bgcolor: "#F3F4F6" },
+                  "&.Mui-focused": { bgcolor: "#fff" },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: MAU.chinh,
+                    borderWidth: 2,
+                  },
+                },
+              },
+            }}
+          />
+          <Typography
+            sx={{
+              fontSize: 11,
+              color: soKyTuConLai <= 10 ? "#C62828" : "#B0B6C0",
+              textAlign: "right",
+              mt: 0.4,
+            }}
+          >
+            {soKyTuConLai} ký tự còn lại
+          </Typography>
+        </Box>
+
+        <Box>
+          <Typography
+            sx={{ fontWeight: 700, fontSize: 12.5, color: "#6B7280", mb: 0.75 }}
+          >
+            Video bài giảng
+          </Typography>
+
+          {!data.file ? (
+            <Box
+              component="label"
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={handleDrop}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                py: 4.5,
+                borderRadius: "14px",
+                bgcolor: isDragOver ? `${MAU.chinh}0D` : "#FAFBFC",
+                border: `2px dashed ${isDragOver ? MAU.chinh : "#D7DBE3"}`,
+                cursor: "pointer",
+                textAlign: "center",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  borderColor: MAU.chinh,
+                  bgcolor: `${MAU.chinh}08`,
+                  "& .upload-icon": { transform: "translateY(-2px)" },
+                },
+              }}
+            >
+              <Box
+                className="upload-icon"
+                sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: "50%",
+                  bgcolor: `${MAU.chinh}14`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "transform 0.2s ease",
+                }}
+              >
+                <CloudUploadOutlined sx={{ fontSize: 26, color: MAU.chinh }} />
+              </Box>
+              <Typography
+                sx={{ fontSize: 14, fontWeight: 700, color: "#1F2937" }}
+              >
+                Kéo thả hoặc bấm để chọn video
+              </Typography>
+              <Typography sx={{ fontSize: 11.5, color: "#9AA2B1" }}>
+                Dung lượng tối đa 100MB · Độ phân giải tối thiểu 854×480
+              </Typography>
+              <input
+                type="file"
+                accept="video/*"
+                hidden
+                disabled={loading}
+                onChange={handleFileInput}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                p: 1.5,
+                border: `1.5px solid ${MAU.chinh}33`,
+                borderRadius: "14px",
+                bgcolor: `${MAU.chinh}06`,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 88,
+                  height: 56,
+                  borderRadius: "10px",
+                  bgcolor: MAU.chinh,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <PlayCircleOutlined sx={{ fontSize: 28, color: "#fff" }} />
+              </Box>
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 0.3,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "#1F2937",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {data.file.name}
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+                  <CheckCircle sx={{ fontSize: 13, color: MAU.chinh }} />
+                  <Typography
+                    sx={{
+                      fontSize: 11.5,
+                      color: MAU.chinhDam,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Video đã sẵn sàng
+                    {data.file.size
+                      ? ` · ${dinhDangDungLuong(data.file.size)}`
+                      : ""}
+                  </Typography>
+                </Box>
+              </Box>
+              <Button
+                {...noPropagation}
+                component="label"
+                size="small"
+                startIcon={<AutorenewOutlined fontSize="small" />}
+                disabled={loading}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: 12.5,
+                  color: MAU.chinh,
+                  bgcolor: "#fff",
+                  border: `1px solid ${MAU.chinh}44`,
+                  borderRadius: "9px",
+                  px: 1.5,
+                  flexShrink: 0,
+                  "&:hover": {
+                    bgcolor: `${MAU.chinh}0F`,
+                    borderColor: MAU.chinh,
+                  },
+                }}
+              >
+                Thay thế
+                <input
+                  type="file"
+                  accept="video/*"
+                  hidden
+                  disabled={loading}
+                  onChange={handleFileInput}
+                />
+              </Button>
+            </Box>
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 1.75,
+            py: 1.25,
+            borderRadius: "12px",
+            bgcolor: data.isFree ? `${MAU.chinh}0A` : "#F9FAFB",
+            border: `1px solid ${data.isFree ? `${MAU.chinh}33` : "#E5E7EB"}`,
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: "9px",
+                bgcolor: data.isFree ? MAU.chinh : "#EEF0F3",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background-color 0.15s ease",
+              }}
+            >
+              {data.isFree ? (
+                <LockOpenOutlined sx={{ fontSize: 17, color: "#fff" }} />
+              ) : (
+                <LockOutlined sx={{ fontSize: 17, color: "#9AA2B1" }} />
+              )}
+            </Box>
+            <Box>
+              <Typography
+                sx={{ fontSize: 13, fontWeight: 700, color: "#1F2937" }}
+              >
+                Xem thử miễn phí
+              </Typography>
+              <Typography sx={{ fontSize: 11, color: "#8A93A3" }}>
+                Cho phép học viên xem trước khi đăng ký
+              </Typography>
+            </Box>
+          </Box>
+          <Switch
+            {...noPropagation}
+            checked={data.isFree || false}
+            disabled={loading}
+            onChange={(e) => onDataChange("isFree", e.target.checked)}
+            sx={{
+              "& .MuiSwitch-switchBase.Mui-checked": { color: MAU.chinh },
+              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                bgcolor: MAU.chinh,
+              },
+            }}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            justifyContent: "flex-end",
+            pt: 1.5,
+            borderTop: "1px solid #F1F2F5",
+          }}
         >
           <Button
-            size="small"
+            {...noPropagation}
             onClick={onCancel}
             disabled={loading}
             sx={{
               textTransform: "none",
-              color: "#8A93A3",
-              fontWeight: 600,
-              "&:hover": {
-                bgcolor: "#F5F6F8",
-              },
+              color: "#6B7280",
+              fontWeight: 700,
+              borderRadius: "10px",
+              px: 2,
+              "&:hover": { bgcolor: "#F5F6F8" },
             }}
           >
             Hủy bỏ
           </Button>
           <Button
-            size="small"
+            {...noPropagation}
             variant="contained"
             onClick={onSubmit}
-            disabled={loading}
+            disabled={loading || !data.title?.trim()}
             sx={{
               bgcolor: MAU.chinh,
               textTransform: "none",
               fontWeight: 700,
               px: 3,
-              "&:hover": { bgcolor: MAU.chinhDam },
+              borderRadius: "10px",
+              boxShadow: `0 4px 12px ${MAU.chinh}40`,
+              "&:hover": {
+                bgcolor: MAU.chinhDam,
+                boxShadow: `0 4px 14px ${MAU.chinh}55`,
+              },
               "&.Mui-disabled": {
-                bgcolor: "#E0E0E0",
+                bgcolor: "#E5E7EB",
+                color: "#A1A6B0",
+                boxShadow: "none",
               },
             }}
           >
             {loading ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
+              <CircularProgress size={20} sx={{ color: "#fff" }} />
             ) : (
-              submitLabel
+              "Thêm bài giảng"
             )}
           </Button>
         </Box>
-      )}
+      </Box>
     </Box>
   );
 }
@@ -786,6 +2653,9 @@ export default function CurriculumContent() {
     createBaiKiemTra,
     updateBaiKiemTra,
     deleteBaiKiemTra,
+    createCauHoi,
+    updateCauHoi,
+    deleteCauHoi,
     createTaiLieu,
     deleteTaiLieu,
     loading: contextLoading,
@@ -800,27 +2670,34 @@ export default function CurriculumContent() {
   const [expandedQuizzes, setExpandedQuizzes] = useState<
     Record<string, boolean>
   >({});
+
+  const [quizCreateForm, setQuizCreateForm] = useState<{
+    phanId: string;
+    tenBaiKiemTra: string;
+    moTa: string;
+  } | null>(null);
+
+  const [quizUpdateForm, setQuizUpdateForm] = useState<{
+    phanId: string;
+    quizId: string;
+    tenBaiKiemTra: string;
+    moTa: string;
+  } | null>(null);
+
+  const [questionEditor, setQuestionEditor] = useState<{
+    phanId: string;
+    quizId: string;
+    question: CauHoiFormData;
+    isEditing: boolean;
+    quizTitle?: string;
+  } | null>(null);
+
   const [addForm, setAddForm] = useState<{
     phanId: string;
     type: "BaiGiang" | "BaiKiemTra";
     title?: string;
     file?: File | null;
     isFree?: boolean;
-    tenBaiKiemTra?: string;
-    moTa?: string;
-    cauHois?: {
-      id: string;
-      noiDungCauHoi: string;
-      loaiCauHoi: "ONE" | "MULTI";
-      diem: number;
-      doKho: "De" | "TrungBinh" | "Kho";
-      danhSachDapAn: {
-        id: string;
-        noiDungDapAn: string;
-        laDapAnDung: boolean;
-        thuTuSapXep: number;
-      }[];
-    }[];
   } | null>(null);
 
   const [editingLecture, setEditingLecture] = useState<{
@@ -831,33 +2708,11 @@ export default function CurriculumContent() {
     file: File | null;
   } | null>(null);
 
-  const [editingQuiz, setEditingQuiz] = useState<{
-    phanId: string;
-    quizId: string;
-    tenBaiKiemTra: string;
-    moTa: string;
-    cauHois: {
-      id: string;
-      noiDungCauHoi: string;
-      loaiCauHoi: "ONE" | "MULTI";
-      diem: number;
-      doKho: "De" | "TrungBinh" | "Kho";
-      danhSachDapAn: {
-        id: string;
-        noiDungDapAn: string;
-        laDapAnDung: boolean;
-        thuTuSapXep: number;
-      }[];
-    }[];
-  } | null>(null);
-
-  const [expandedQuestions, setExpandedQuestions] = useState<
-    Record<string, boolean>
-  >({});
   const [menuAnchor, setMenuAnchor] = useState<{
     position: { top: number; left: number };
     phanId: string;
   } | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{
     open: boolean;
@@ -872,9 +2727,11 @@ export default function CurriculumContent() {
       open: boolean;
     };
   }>({});
+
   const [tempVideoFiles, setTempVideoFiles] = useState<{
     [baiGiangId: string]: File;
   }>({});
+
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     onConfirm: () => void;
@@ -894,6 +2751,7 @@ export default function CurriculumContent() {
     open: false,
     url: "",
   });
+
   const [docPopup, setDocPopup] = useState<{
     open: boolean;
     url: string;
@@ -904,7 +2762,6 @@ export default function CurriculumContent() {
     name: "",
   });
 
-  // Kiểm tra có thể chỉnh sửa hay không (chỉ DangSua mới cho sửa)
   const isEditable = trangThai === "DangSua";
 
   // ===== Sensors cho DnD =====
@@ -938,8 +2795,8 @@ export default function CurriculumContent() {
           type: "BaiKiemTra",
           icon: <QuizOutlined sx={{ fontSize: 22, color: "#D97706" }} />,
           iconBg: "#FEF3E2",
-          title: "Trắc nghiệm",
-          description: "Kiểm tra nhanh mức độ hiểu bài sau mỗi bài học.",
+          title: "Bài kiểm tra",
+          description: "Tạo bài kiểm tra với nhiều câu hỏi trắc nghiệm.",
         },
       ],
     },
@@ -968,8 +2825,6 @@ export default function CurriculumContent() {
   };
 
   // ===== DRAG-DROP HANDLERS =====
-
-  // 1. Sắp xếp phần
   const handleDragEndSections = async (event: DragEndEvent) => {
     if (!isEditable) return;
     const { active, over } = event;
@@ -1014,7 +2869,6 @@ export default function CurriculumContent() {
     }
   };
 
-  // 2. Sắp xếp các mục trong phần
   const handleDragEndItems = async (event: DragEndEvent, phanId: string) => {
     if (!isEditable) return;
     const { active, over } = event;
@@ -1056,15 +2910,13 @@ export default function CurriculumContent() {
       });
       updatedPhan.DanhDachBaiKiemTra.forEach((kt) => {
         updatePromises.push(
-          updateBaiKiemTra(phanId, kt.id, {
+          updateBaiKiemTra(kt.id, {
             tenBaiKiemTra: kt.tenBaiKiemTra,
             moTa: kt.moTa || "",
-            cauHois: kt.cauHois || [],
             thuTuSapXep: kt.thuTuSapXep,
           }),
         );
       });
-
       await Promise.all(updatePromises);
       setToast({
         open: true,
@@ -1080,62 +2932,6 @@ export default function CurriculumContent() {
       await refreshData();
     } finally {
       setLoading(false);
-    }
-  };
-
-  // 3. Sắp xếp câu hỏi
-  const handleReorderQuestions = async (
-    phanId: string,
-    quizId: string,
-    newCauHois: any[],
-  ) => {
-    if (!isEditable) return;
-
-    // Cập nhật state
-    setPhans(
-      phans.map((p) =>
-        p.id === phanId
-          ? {
-              ...p,
-              DanhDachBaiKiemTra: p.DanhDachBaiKiemTra?.map((kt) =>
-                kt.id === quizId
-                  ? {
-                      ...kt,
-                      cauHois: newCauHois.map((q, idx) => ({
-                        ...q,
-                        thuTuSapXep: idx + 1,
-                      })),
-                    }
-                  : kt,
-              ),
-            }
-          : p,
-      ),
-    );
-
-    try {
-      const phan = phans.find((p) => p.id === phanId);
-      const quiz = phan?.DanhDachBaiKiemTra?.find((kt) => kt.id === quizId);
-      if (!quiz) return;
-
-      await updateBaiKiemTra(phanId, quizId, {
-        tenBaiKiemTra: quiz.tenBaiKiemTra,
-        moTa: quiz.moTa || "",
-        cauHois: newCauHois.map((q, idx) => ({ ...q, thuTuSapXep: idx + 1 })),
-        thuTuSapXep: quiz.thuTuSapXep,
-      });
-      setToast({
-        open: true,
-        message: "Đã cập nhật thứ tự câu hỏi",
-        severity: "success",
-      });
-    } catch (error: any) {
-      setToast({
-        open: true,
-        message: error.message || "Lỗi cập nhật thứ tự câu hỏi",
-        severity: "error",
-      });
-      await refreshData();
     }
   };
 
@@ -1223,6 +3019,305 @@ export default function CurriculumContent() {
     });
   };
 
+  // ===== XỬ LÝ QUIZ =====
+
+  const handleCreateQuiz = async () => {
+    if (!quizCreateForm) return;
+    const { phanId, tenBaiKiemTra, moTa } = quizCreateForm;
+
+    if (!tenBaiKiemTra || tenBaiKiemTra.trim() === "") {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập tiêu đề bài kiểm tra",
+        severity: "error",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await createBaiKiemTra(phanId, {
+        tenBaiKiemTra: tenBaiKiemTra.trim(),
+        moTa: moTa || "",
+      });
+
+      setToast({
+        open: true,
+        message: "Đã tạo bài kiểm tra",
+        severity: "success",
+      });
+
+      setQuizCreateForm(null);
+      if (result.id) {
+        setExpandedQuizzes((prev) => ({ ...prev, [result.id!]: true }));
+      }
+      await refreshData();
+    } catch (error: any) {
+      setToast({
+        open: true,
+        message: error.message || "Lỗi tạo bài kiểm tra",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenQuizUpdate = (phanId: string, quizId: string) => {
+    if (!isEditable) return;
+    const phan = phans.find((p) => p.id === phanId);
+    if (!phan) return;
+    const quiz = phan.DanhDachBaiKiemTra?.find((kt) => kt.id === quizId);
+    if (!quiz) return;
+
+    setQuizUpdateForm({
+      phanId,
+      quizId,
+      tenBaiKiemTra: quiz.tenBaiKiemTra || "",
+      moTa: quiz.moTa || "",
+    });
+    setExpandedQuizzes((prev) => ({ ...prev, [quizId]: true }));
+  };
+
+  const handleSaveQuizUpdate = async () => {
+    if (!quizUpdateForm) return;
+    const { quizId, tenBaiKiemTra, moTa } = quizUpdateForm;
+
+    if (!tenBaiKiemTra?.trim()) {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập tiêu đề",
+        severity: "error",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await updateBaiKiemTra(quizId, {
+        tenBaiKiemTra: tenBaiKiemTra.trim(),
+        moTa: moTa || "",
+      });
+
+      setToast({
+        open: true,
+        message: "Đã cập nhật bài kiểm tra",
+        severity: "success",
+      });
+      setQuizUpdateForm(null);
+      await refreshData();
+    } catch (error: any) {
+      setToast({
+        open: true,
+        message: error.message || "Lỗi cập nhật",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseQuizUpdate = () => {
+    setQuizUpdateForm(null);
+  };
+
+  const handleAddQuestion = (
+    phanId: string,
+    quizId: string,
+    quizTitle?: string,
+  ) => {
+    if (!isEditable) return;
+    const newQuestion: CauHoiFormData = {
+      id: uuidv4(),
+      noiDungCauHoi: "",
+      loaiCauHoi: "ONE",
+      doKho: "TrungBinh",
+      danhSachDapAn: [
+        { id: uuidv4(), noiDungDapAn: "", laDapAnDung: false, thuTuSapXep: 0 },
+        { id: uuidv4(), noiDungDapAn: "", laDapAnDung: false, thuTuSapXep: 1 },
+        { id: uuidv4(), noiDungDapAn: "", laDapAnDung: false, thuTuSapXep: 2 },
+      ],
+    };
+    setQuestionEditor({
+      phanId,
+      quizId,
+      question: newQuestion,
+      isEditing: false,
+      quizTitle,
+    });
+  };
+
+  const handleEditQuestion = (
+    phanId: string,
+    quizId: string,
+    question: any,
+    quizTitle?: string,
+  ) => {
+    if (!isEditable) return;
+    const editQuestion: CauHoiFormData = {
+      id: question.id,
+      noiDungCauHoi: question.noiDungCauHoi || "",
+      loaiCauHoi: question.loaiCauHoi || "ONE",
+      doKho: question.doKho || "TrungBinh",
+      danhSachDapAn: (question.danhSachDapAn || []).map((d: any) => ({
+        id: d.id || uuidv4(),
+        noiDungDapAn: d.noiDungDapAn || "",
+        laDapAnDung: d.laDapAnDung || false,
+        thuTuSapXep: d.thuTuSapXep || 0,
+        giaiThich: d.giaiThich || "",
+      })),
+    };
+    setQuestionEditor({
+      phanId,
+      quizId,
+      question: editQuestion,
+      isEditing: true,
+      quizTitle,
+    });
+  };
+
+  const handleSaveQuestion = async () => {
+    if (!questionEditor) return;
+    const { phanId, quizId, question, isEditing } = questionEditor;
+
+    if (!question.noiDungCauHoi?.trim()) {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập nội dung câu hỏi",
+        severity: "error",
+      });
+      return;
+    }
+    if (!question.danhSachDapAn.some((d) => d.laDapAnDung)) {
+      setToast({
+        open: true,
+        message: "Cần có ít nhất một đáp án đúng",
+        severity: "error",
+      });
+      return;
+    }
+    if (question.danhSachDapAn.some((d) => !d.noiDungDapAn.trim())) {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập nội dung cho tất cả đáp án",
+        severity: "error",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (isEditing) {
+        await updateCauHoi(phanId, quizId, question.id, {
+          noiDungCauHoi: question.noiDungCauHoi,
+          loaiCauHoi: question.loaiCauHoi,
+          doKho: question.doKho,
+          danhSachDapAn: question.danhSachDapAn.map((d, idx) => ({
+            id: d.id,
+            noiDungDapAn: d.noiDungDapAn,
+            laDapAnDung: d.laDapAnDung,
+            thuTuSapXep: idx + 1,
+          })),
+        });
+        setToast({
+          open: true,
+          message: "Đã cập nhật câu hỏi",
+          severity: "success",
+        });
+      } else {
+        await createCauHoi(phanId, quizId, {
+          noiDungCauHoi: question.noiDungCauHoi,
+          loaiCauHoi: question.loaiCauHoi,
+          doKho: question.doKho,
+          danhSachDapAn: question.danhSachDapAn.map((d, idx) => ({
+            noiDungDapAn: d.noiDungDapAn,
+            laDapAnDung: d.laDapAnDung,
+            thuTuSapXep: idx + 1,
+          })),
+        });
+        setToast({
+          open: true,
+          message: "Đã thêm câu hỏi mới",
+          severity: "success",
+        });
+      }
+
+      setQuestionEditor(null);
+      await refreshData();
+    } catch (error: any) {
+      setToast({
+        open: true,
+        message: error.message || "Lỗi lưu câu hỏi",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteQuestion = (
+    phanId: string,
+    quizId: string,
+    questionId: string,
+  ) => {
+    if (!isEditable) return;
+    setDeleteDialog({
+      open: true,
+      onConfirm: async () => {
+        setDeleteDialog({ open: false, onConfirm: () => {} });
+        setLoading(true);
+        try {
+          await deleteCauHoi(phanId, quizId, questionId);
+          setToast({
+            open: true,
+            message: "Đã xóa câu hỏi",
+            severity: "success",
+          });
+          await refreshData();
+        } catch (error: any) {
+          setToast({
+            open: true,
+            message: error.message || "Lỗi xóa câu hỏi",
+            severity: "error",
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleDeleteQuiz = async (phanId: string, quizId: string) => {
+    if (!isEditable) return;
+    setDeleteDialog({
+      open: true,
+      onConfirm: async () => {
+        setDeleteDialog({ open: false, onConfirm: () => {} });
+        setLoading(true);
+        try {
+          await deleteBaiKiemTra(phanId, quizId);
+          setToast({
+            open: true,
+            message: "Đã xóa bài kiểm tra",
+            severity: "success",
+          });
+          if (quizUpdateForm?.quizId === quizId) {
+            setQuizUpdateForm(null);
+          }
+        } catch (error: any) {
+          setToast({
+            open: true,
+            message: error.message || "Lỗi xóa bài kiểm tra",
+            severity: "error",
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
+  // ===== XỬ LÝ BÀI GIẢNG =====
   const xoaBaiGiang = async (phanId: string, baiGiangId: string) => {
     if (!isEditable) return;
     setDeleteDialog({
@@ -1351,361 +3446,6 @@ export default function CurriculumContent() {
     setEditingLecture(null);
   };
 
-  const xoaBaiKiemTra = async (phanId: string, baiKiemTraId: string) => {
-    if (!isEditable) return;
-    setDeleteDialog({
-      open: true,
-      onConfirm: async () => {
-        setDeleteDialog({ open: false, onConfirm: () => {} });
-        setLoading(true);
-        try {
-          await deleteBaiKiemTra(phanId, baiKiemTraId);
-          setToast({
-            open: true,
-            message: "Đã xóa bài kiểm tra",
-            severity: "success",
-          });
-        } catch (error: any) {
-          setToast({
-            open: true,
-            message: error.message || "Lỗi xóa bài kiểm tra",
-            severity: "error",
-          });
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-  };
-
-  // === Handlers cho bài kiểm tra ===
-  const handleAddQuestion = () => {
-    if (!addForm || addForm.type !== "BaiKiemTra") return;
-    const newQuestion = {
-      id: uuidv4(),
-      noiDungCauHoi: "",
-      loaiCauHoi: "ONE" as const,
-      diem: 1,
-      doKho: "TrungBinh" as const,
-      danhSachDapAn: [
-        { id: uuidv4(), noiDungDapAn: "", laDapAnDung: false, thuTuSapXep: 0 },
-        { id: uuidv4(), noiDungDapAn: "", laDapAnDung: false, thuTuSapXep: 1 },
-      ],
-    };
-    setAddForm((prev) => ({
-      ...prev!,
-      cauHois: [...(prev!.cauHois || []), newQuestion],
-    }));
-    setExpandedQuestions((prev) => ({ ...prev, [newQuestion.id]: true }));
-  };
-
-  const handleRemoveQuestion = (qId: string) => {
-    if (!addForm) return;
-    setAddForm((prev) => ({
-      ...prev!,
-      cauHois: (prev!.cauHois || []).filter((q) => q.id !== qId),
-    }));
-    setExpandedQuestions((prev) => {
-      const newState = { ...prev };
-      delete newState[qId];
-      return newState;
-    });
-  };
-
-  const toggleQuestionExpand = (qId: string) => {
-    setExpandedQuestions((prev) => ({ ...prev, [qId]: !prev[qId] }));
-  };
-
-  const handleQuizGeneralChange = (field: string, value: any) => {
-    if (!addForm) return;
-    setAddForm((prev) => ({ ...prev!, [field]: value }));
-  };
-
-  const handleUpdateQuestion = (qId: string, field: string, value: any) => {
-    if (!addForm) return;
-    setAddForm((prev) => ({
-      ...prev!,
-      cauHois: (prev!.cauHois || []).map((q) =>
-        q.id === qId ? { ...q, [field]: value } : q,
-      ),
-    }));
-  };
-
-  const handleAddDapAn = (qId: string) => {
-    if (!addForm) return;
-    setAddForm((prev) => ({
-      ...prev!,
-      cauHois: (prev!.cauHois || []).map((q) => {
-        if (q.id !== qId) return q;
-        const newDapAn = {
-          id: uuidv4(),
-          noiDungDapAn: "",
-          laDapAnDung: false,
-          thuTuSapXep: q.danhSachDapAn.length,
-        };
-        return { ...q, danhSachDapAn: [...q.danhSachDapAn, newDapAn] };
-      }),
-    }));
-  };
-
-  const handleRemoveDapAn = (qId: string, dId: string) => {
-    if (!addForm) return;
-    setAddForm((prev) => ({
-      ...prev!,
-      cauHois: (prev!.cauHois || []).map((q) => {
-        if (q.id !== qId) return q;
-        if (q.danhSachDapAn.length <= 2) {
-          setToast({
-            open: true,
-            message: "Cần ít nhất 2 đáp án",
-            severity: "error",
-          });
-          return q;
-        }
-        return {
-          ...q,
-          danhSachDapAn: q.danhSachDapAn.filter((d) => d.id !== dId),
-        };
-      }),
-    }));
-  };
-
-  const handleUpdateDapAn = (
-    qId: string,
-    dId: string,
-    field: string,
-    value: any,
-  ) => {
-    if (!addForm) return;
-    setAddForm((prev) => ({
-      ...prev!,
-      cauHois: (prev!.cauHois || []).map((q) => {
-        if (q.id !== qId) return q;
-        return {
-          ...q,
-          danhSachDapAn: q.danhSachDapAn.map((d) =>
-            d.id === dId ? { ...d, [field]: value } : d,
-          ),
-        };
-      }),
-    }));
-  };
-
-  const handleToggleDapAnDung = (
-    qId: string,
-    dId: string,
-    checked: boolean,
-  ) => {
-    if (!addForm) return;
-    setAddForm((prev) => ({
-      ...prev!,
-      cauHois: (prev!.cauHois || []).map((q) => {
-        if (q.id !== qId) return q;
-        let newDapAn = q.danhSachDapAn.map((d) =>
-          d.id === dId ? { ...d, laDapAnDung: checked } : d,
-        );
-        if (q.loaiCauHoi === "ONE" && checked) {
-          newDapAn = newDapAn.map((d) =>
-            d.id === dId
-              ? { ...d, laDapAnDung: true }
-              : { ...d, laDapAnDung: false },
-          );
-        }
-        return { ...q, danhSachDapAn: newDapAn };
-      }),
-    }));
-  };
-
-  const handleCreateQuiz = async () => {
-    if (!addForm || addForm.type !== "BaiKiemTra") return;
-    const { phanId, tenBaiKiemTra, moTa, cauHois } = addForm;
-
-    if (!tenBaiKiemTra || tenBaiKiemTra.trim() === "") {
-      setToast({
-        open: true,
-        message: "Vui lòng nhập tiêu đề bài kiểm tra",
-        severity: "error",
-      });
-      return;
-    }
-    if (!cauHois || cauHois.length === 0) {
-      setToast({
-        open: true,
-        message: "Vui lòng thêm ít nhất một câu hỏi",
-        severity: "error",
-      });
-      return;
-    }
-    for (const q of cauHois) {
-      if (!q.noiDungCauHoi.trim()) {
-        setToast({
-          open: true,
-          message: "Vui lòng nhập nội dung câu hỏi",
-          severity: "error",
-        });
-        return;
-      }
-      if (q.danhSachDapAn.some((d) => !d.noiDungDapAn.trim())) {
-        setToast({
-          open: true,
-          message: "Vui lòng nhập nội dung cho tất cả đáp án",
-          severity: "error",
-        });
-        return;
-      }
-      if (!q.danhSachDapAn.some((d) => d.laDapAnDung)) {
-        setToast({
-          open: true,
-          message: "Mỗi câu hỏi cần có ít nhất một đáp án đúng",
-          severity: "error",
-        });
-        return;
-      }
-    }
-
-    setLoading(true);
-    try {
-      await createBaiKiemTra(phanId, {
-        tenBaiKiemTra: tenBaiKiemTra.trim(),
-        moTa: moTa || "",
-        cauHois,
-      });
-      setToast({
-        open: true,
-        message: "Đã tạo bài kiểm tra",
-        severity: "success",
-      });
-      setAddForm(null);
-      setExpandedQuestions({});
-    } catch (error: any) {
-      setToast({
-        open: true,
-        message: error.message || "Lỗi tạo bài kiểm tra",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEditQuiz = (phanId: string, quizId: string) => {
-    if (!isEditable) return;
-    const phan = phans.find((p) => p.id === phanId);
-    if (!phan) return;
-    const quiz = phan.DanhDachBaiKiemTra?.find((kt) => kt.id === quizId);
-    if (!quiz) return;
-
-    const initialExpanded: Record<string, boolean> = {};
-    if (quiz.cauHois) {
-      quiz.cauHois.forEach((q: any) => {
-        const id = q.id || uuidv4();
-        initialExpanded[id] = true;
-      });
-    }
-    setExpandedQuestions(initialExpanded);
-
-    setEditingQuiz({
-      phanId,
-      quizId,
-      tenBaiKiemTra: quiz.tenBaiKiemTra || "",
-      moTa: quiz.moTa || "",
-      cauHois: quiz.cauHois
-        ? quiz.cauHois.map((q: any) => ({
-            id: q.id || uuidv4(),
-            noiDungCauHoi: q.noiDungCauHoi || q.tenCauHoi || "",
-            loaiCauHoi: q.loaiCauHoi || "ONE",
-            diem: q.diem || 1,
-            doKho: q.doKho || "TrungBinh",
-            danhSachDapAn: (q.danhSachDapAn || []).map((d: any) => ({
-              id:
-                d.id ||
-                "da_" + Date.now() + Math.random().toString(36).substr(2, 3),
-              noiDungDapAn: d.noiDungDapAn || "",
-              laDapAnDung: d.laDapAnDung || false,
-              thuTuSapXep: d.thuTuSapXep || 0,
-            })),
-          }))
-        : [],
-    });
-  };
-
-  const cancelEditQuiz = () => {
-    setEditingQuiz(null);
-    setExpandedQuestions({});
-  };
-
-  const saveEditQuiz = async () => {
-    if (!editingQuiz) return;
-    const { phanId, quizId, tenBaiKiemTra, moTa, cauHois } = editingQuiz;
-
-    if (!tenBaiKiemTra || tenBaiKiemTra.trim() === "") {
-      setToast({
-        open: true,
-        message: "Vui lòng nhập tiêu đề bài kiểm tra",
-        severity: "error",
-      });
-      return;
-    }
-    if (!cauHois || cauHois.length === 0) {
-      setToast({
-        open: true,
-        message: "Vui lòng thêm ít nhất một câu hỏi",
-        severity: "error",
-      });
-      return;
-    }
-    for (const q of cauHois) {
-      if (!q.noiDungCauHoi.trim()) {
-        setToast({
-          open: true,
-          message: "Vui lòng nhập nội dung câu hỏi",
-          severity: "error",
-        });
-        return;
-      }
-      if (q.danhSachDapAn.some((d) => !d.noiDungDapAn.trim())) {
-        setToast({
-          open: true,
-          message: "Vui lòng nhập nội dung cho tất cả đáp án",
-          severity: "error",
-        });
-        return;
-      }
-      if (!q.danhSachDapAn.some((d) => d.laDapAnDung)) {
-        setToast({
-          open: true,
-          message: "Mỗi câu hỏi cần có ít nhất một đáp án đúng",
-          severity: "error",
-        });
-        return;
-      }
-    }
-
-    setLoading(true);
-    try {
-      await updateBaiKiemTra(phanId, quizId, {
-        tenBaiKiemTra: tenBaiKiemTra.trim(),
-        moTa,
-        cauHois,
-      });
-      setToast({
-        open: true,
-        message: "Đã cập nhật bài kiểm tra",
-        severity: "success",
-      });
-      setEditingQuiz(null);
-      setExpandedQuestions({});
-    } catch (error: any) {
-      setToast({
-        open: true,
-        message: error.message || "Lỗi cập nhật bài kiểm tra",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // === Tài liệu ===
   const uploadTaiLieu = async (
     phanId: string,
@@ -1714,6 +3454,17 @@ export default function CurriculumContent() {
     tenTaiLieu?: string,
   ) => {
     if (!isEditable) return;
+
+    const validation = validateTaiLieu(file);
+    if (!validation.valid) {
+      setToast({
+        open: true,
+        message: validation.error || "Tài liệu không hợp lệ",
+        severity: "error",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       await createTaiLieu(phanId, baiGiangId, file, tenTaiLieu);
@@ -1790,6 +3541,9 @@ export default function CurriculumContent() {
 
   const toggleQuizItem = (quizId: string) => {
     setExpandedQuizzes((prev) => ({ ...prev, [quizId]: !prev[quizId] }));
+    if (!expandedQuizzes[quizId] && quizUpdateForm?.quizId === quizId) {
+      setQuizUpdateForm(null);
+    }
   };
 
   const tongThoiLuong = tinhTongThoiLuongGiay(phans);
@@ -1815,6 +3569,10 @@ export default function CurriculumContent() {
     const phanId = menuAnchor.phanId;
     if (!phanId) return;
 
+    setMenuAnchor(null);
+    setAddForm(null);
+    setQuizCreateForm(null);
+
     if (tuyChon.type === "BaiGiang") {
       setAddForm({
         phanId,
@@ -1824,43 +3582,53 @@ export default function CurriculumContent() {
         isFree: false,
       });
     } else if (tuyChon.type === "BaiKiemTra") {
-      setAddForm({
+      setQuizCreateForm({
         phanId,
-        type: "BaiKiemTra",
         tenBaiKiemTra: "",
         moTa: "",
-        cauHois: [
-          {
-            id: uuidv4(),
-            noiDungCauHoi: "",
-            loaiCauHoi: "ONE",
-            diem: 1,
-            doKho: "TrungBinh",
-            danhSachDapAn: [
-              {
-                id: uuidv4(),
-                noiDungDapAn: "",
-                laDapAnDung: false,
-                thuTuSapXep: 0,
-              },
-              {
-                id: uuidv4(),
-                noiDungDapAn: "",
-                laDapAnDung: false,
-                thuTuSapXep: 1,
-              },
-            ],
-          },
-        ],
       });
-      setExpandedQuestions({ q1: true });
     }
-    setMenuAnchor(null);
+  };
+
+  const handleCreateBaiGiang = () => {
+    if (!addForm) return;
+    const { phanId, title, file, isFree } = addForm;
+    if (!title || !title.trim()) {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập tiêu đề bài giảng",
+        severity: "error",
+      });
+      return;
+    }
+    setLoading(true);
+    createBaiGiang(phanId, {
+      tieuDe: title.trim(),
+      file,
+      isFree: isFree || false,
+    })
+      .then(() => {
+        setToast({
+          open: true,
+          message: "Đã thêm bài giảng",
+          severity: "success",
+        });
+        setAddForm(null);
+      })
+      .catch((err) => {
+        setToast({
+          open: true,
+          message: err.message || "Lỗi tạo bài giảng",
+          severity: "error",
+        });
+      })
+      .finally(() => setLoading(false));
   };
 
   // ===== RENDER =====
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
+      <GlobalStyles styles={pulseKeyframes} />
       <Box sx={{ maxWidth: 900, mx: "auto", pb: 12, bgcolor: "#FBFBFD" }}>
         <Box
           sx={{
@@ -1876,20 +3644,20 @@ export default function CurriculumContent() {
           </Typography>
         </Box>
 
-        <Box sx={{ borderBottom: "1px solid #EDEFF3", mb: 3 }} />
-
         <Typography
           sx={{ fontSize: 13.5, color: "#8A93A3", mb: 1, lineHeight: 1.7 }}
         >
-          Hãy thiết kế khóa học của bạn theo từng phần, mỗi phần tập trung vào
-          một mục tiêu học tập duy nhất. Sau đó, thêm nội dung, hoạt động thực
-          hành và bài kiểm tra.
+          Thiết kế khóa học của bạn theo từng phần, mỗi phần tập trung vào một
+          mục tiêu học tập duy nhất. Sau đó, thêm nội dung, hoạt động thực hành
+          và bài kiểm tra.
         </Typography>
+
+        <Box sx={{ borderBottom: "1px solid #EDEFF3", mb: 3 }} />
+
         <Typography sx={{ fontSize: 13, color: "#8A93A3", mb: 3 }}>
           Tổng thời lượng: {tongPhut} phút
         </Typography>
 
-        {/* Thông báo khi không thể chỉnh sửa */}
         {!isEditable && (
           <Alert
             severity={trangThai === "DaDuyet" ? "success" : "info"}
@@ -1926,1847 +3694,1101 @@ export default function CurriculumContent() {
                 const isEditingPhan =
                   phanForm?.mode === "edit" && phanForm?.phanId === phanId;
 
+                const hasAddForm =
+                  quizCreateForm?.phanId === phanId ||
+                  addForm?.phanId === phanId;
+
                 return (
-                  <SortableItem key={phanId} id={phanId}>
-                    <Box>
-                      <Box
-                        sx={{
-                          bgcolor: "#F5F6F8",
-                          border: "1px solid #E7E9EE",
-                          borderRadius: "14px",
-                          p: 2.5,
-                        }}
+                  <SectionItem
+                    key={phanId}
+                    phan={phan}
+                    idx={idx}
+                    isEditable={isEditable}
+                    onEdit={moSuaPhan}
+                    onDelete={xoaPhan}
+                  >
+                    {/* DANH SÁCH MỤC TRONG PHẦN */}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={(event) => handleDragEndItems(event, phanId)}
+                    >
+                      <SortableContext
+                        items={items.map((item) => item.data.id)}
+                        strategy={verticalListSortingStrategy}
                       >
                         <Box
                           sx={{
                             display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            mb: 1.5,
+                            flexDirection: "column",
+                            gap: 0.5,
                           }}
                         >
-                          <Typography
-                            sx={{
-                              fontWeight: 800,
-                              color: "#1F2937",
-                              flexShrink: 0,
-                            }}
-                          >
-                            Phần {idx + 1}:
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontWeight: 700,
-                              fontSize: 15,
-                              color: "#1F2937",
-                              flex: 1,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {phan.tenPhan || "Phần mới"}
-                          </Typography>
-                          {isEditable && (
-                            <>
-                              <IconButton
-                                size="small"
-                                onClick={() => moSuaPhan(phanId)}
-                              >
-                                <EditOutlined
-                                  fontSize="small"
-                                  sx={{ color: "#9AA2B1" }}
-                                />
-                              </IconButton>
-                              <Tooltip title="Xóa phần">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => xoaPhan(phanId)}
+                          {items.map((item, itemIdx) => {
+                            const isComplete = isItemComplete(item);
+                            const itemId = item.data.id as string;
+                            const soThuTuMuc = itemIdx + 1;
+
+                            if (item.kind === "BaiGiang") {
+                              const bg = item.data as BaiGiangType;
+                              const isExpanded = !!expandedLectures[itemId];
+                              const isEditing =
+                                editingLecture?.lectureId === itemId;
+
+                              return (
+                                <LectureItem
+                                  key={itemId}
+                                  bg={bg}
+                                  itemId={itemId}
+                                  phanId={phanId}
+                                  soThuTuMuc={soThuTuMuc}
+                                  isComplete={isComplete}
+                                  isExpanded={isExpanded}
+                                  isEditable={isEditable}
+                                  onToggle={toggleLecture}
+                                  onEdit={handleEditLecture}
+                                  onDelete={xoaBaiGiang}
                                 >
-                                  <DeleteOutlined
-                                    fontSize="small"
-                                    sx={{ color: "#9AA2B1" }}
-                                  />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-                          <DragIndicator
-                            sx={{
-                              fontSize: 20,
-                              color: "#C7CCD6",
-                              cursor: isEditable ? "grab" : "default",
-                            }}
-                          />
-                        </Box>
-
-                        {/* DANH SÁCH MỤC TRONG PHẦN (BÀI GIẢNG + BÀI KIỂM TRA) VỚI DRAG-DROP */}
-                        <DndContext
-                          sensors={sensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={(event) =>
-                            handleDragEndItems(event, phanId)
-                          }
-                        >
-                          <SortableContext
-                            items={items.map((item) => item.data.id)}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 0.5,
-                              }}
-                            >
-                              {items.map((item, itemIdx) => {
-                                const isComplete = isItemComplete(item);
-                                const itemId = item.data.id as string;
-                                const soThuTuMuc = itemIdx + 1;
-
-                                if (item.kind === "BaiGiang") {
-                                  const bg = item.data as BaiGiangType;
-                                  const isExpanded = !!expandedLectures[itemId];
-                                  const hasNewVideo = !!tempVideoFiles[itemId];
-                                  const isEditing =
-                                    editingLecture?.lectureId === itemId;
-
-                                  return (
-                                    <SortableItem key={itemId} id={itemId}>
-                                      <Paper
+                                  {isEditing ? (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 2,
+                                        p: 2,
+                                        border: `1px dashed ${MAU.chinh}`,
+                                        borderRadius: "12px",
+                                        bgcolor: `${MAU.chinh}05`,
+                                      }}
+                                    >
+                                      <Box
                                         sx={{
-                                          mb: 1,
-                                          border: "1px solid #EDEFF3",
-                                          borderRadius: "8px",
-                                          overflow: "hidden",
-                                          bgcolor: "#fff",
-                                          transition: "all 0.2s ease",
-                                          "&:hover": {
-                                            borderColor: "#D1D5DB",
-                                          },
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: 1,
                                         }}
                                       >
-                                        <ListItem
+                                        <EditOutlined
                                           sx={{
-                                            px: 1.5,
-                                            py: 0.75,
-                                            pr: 14,
-                                            bgcolor: "transparent",
-                                            "&:hover": {
-                                              bgcolor: "rgba(0,0,0,0.02)",
+                                            fontSize: 18,
+                                            color: MAU.chinh,
+                                          }}
+                                        />
+                                        <Typography
+                                          sx={{
+                                            fontWeight: 700,
+                                            fontSize: 14.5,
+                                            color: "#1F2937",
+                                          }}
+                                        >
+                                          Chỉnh sửa bài giảng
+                                        </Typography>
+                                      </Box>
+
+                                      <Box>
+                                        <Typography
+                                          sx={{
+                                            fontWeight: 700,
+                                            fontSize: 12.5,
+                                            color: "#6B7280",
+                                            mb: 0.5,
+                                          }}
+                                        >
+                                          Tên bài giảng
+                                        </Typography>
+                                        <TextField
+                                          {...noPropagation}
+                                          fullWidth
+                                          size="small"
+                                          placeholder="Nhập tiêu đề bài giảng"
+                                          value={editingLecture.title}
+                                          onChange={(e) =>
+                                            setEditingLecture((prev) =>
+                                              prev
+                                                ? {
+                                                    ...prev,
+                                                    title: e.target.value,
+                                                  }
+                                                : null,
+                                            )
+                                          }
+                                          autoFocus
+                                          required
+                                          slotProps={{
+                                            input: {
+                                              sx: {
+                                                bgcolor: "#fff",
+                                                borderRadius: "8px",
+                                                fontWeight: 600,
+                                              },
                                             },
                                           }}
-                                          secondaryAction={
-                                            <Box
-                                              sx={{
-                                                display: "flex",
-                                                gap: 0.5,
-                                              }}
-                                            >
-                                              {isEditable && (
-                                                <>
-                                                  <IconButton
-                                                    size="small"
-                                                    onClick={() =>
-                                                      handleEditLecture(
-                                                        phanId,
-                                                        itemId,
-                                                      )
-                                                    }
-                                                  >
-                                                    <EditOutlined
-                                                      fontSize="small"
-                                                      sx={{
-                                                        color: "#9AA2B1",
-                                                      }}
-                                                    />
-                                                  </IconButton>
-                                                  <IconButton
-                                                    size="small"
-                                                    onClick={() =>
-                                                      xoaBaiGiang(
-                                                        phanId,
-                                                        itemId,
-                                                      )
-                                                    }
-                                                  >
-                                                    <DeleteOutlined
-                                                      fontSize="small"
-                                                      sx={{
-                                                        color: "#9AA2B1",
-                                                      }}
-                                                    />
-                                                  </IconButton>
-                                                </>
-                                              )}
-                                              <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                  toggleLecture(itemId)
-                                                }
-                                              >
-                                                {isExpanded ? (
-                                                  <ExpandLess fontSize="small" />
-                                                ) : (
-                                                  <ExpandMore fontSize="small" />
-                                                )}
-                                              </IconButton>
-                                            </Box>
-                                          }
+                                        />
+                                      </Box>
+
+                                      {!bg.urlBaiGiang &&
+                                      !editingLecture.file ? (
+                                        <Box
+                                          component="label"
+                                          sx={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: 0.75,
+                                            py: 3.5,
+                                            border: `1.5px dashed ${MAU.chinh}66`,
+                                            borderRadius: "12px",
+                                            bgcolor: "#fff",
+                                            cursor: "pointer",
+                                            textAlign: "center",
+                                            transition: "all 0.15s ease",
+                                            "&:hover": {
+                                              borderColor: MAU.chinh,
+                                              bgcolor: `${MAU.chinh}0A`,
+                                            },
+                                          }}
                                         >
-                                          <ListItemIcon sx={{ minWidth: 28 }}>
-                                            {isComplete ? (
-                                              <CheckCircle
+                                          <CloudUploadOutlined
+                                            sx={{
+                                              fontSize: 30,
+                                              color: MAU.chinh,
+                                            }}
+                                          />
+                                          <Typography
+                                            sx={{
+                                              fontSize: 13.5,
+                                              fontWeight: 700,
+                                              color: "#1F2937",
+                                            }}
+                                          >
+                                            Chọn video bài giảng
+                                          </Typography>
+                                          <Typography
+                                            sx={{
+                                              fontSize: 11.5,
+                                              color: "#8A93A3",
+                                            }}
+                                          >
+                                            Dung lượng tối đa 100MB, độ phân
+                                            giải ≥ 854x480
+                                          </Typography>
+                                          <input
+                                            type="file"
+                                            accept="video/*"
+                                            hidden
+                                            onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (file) {
+                                                const result =
+                                                  await validateVideoFile(file);
+                                                if (result.valid) {
+                                                  setEditingLecture((prev) =>
+                                                    prev
+                                                      ? { ...prev, file }
+                                                      : null,
+                                                  );
+                                                } else {
+                                                  alert(
+                                                    `File không hợp lệ: ${result.error}`,
+                                                  );
+                                                  e.target.value = "";
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </Box>
+                                      ) : (
+                                        <Box
+                                          sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1.5,
+                                            p: 1.5,
+                                            border: "1px solid #E3E6EB",
+                                            borderRadius: "12px",
+                                            bgcolor: "#fff",
+                                          }}
+                                        >
+                                          <Box
+                                            sx={{
+                                              width: 96,
+                                              height: 60,
+                                              borderRadius: "8px",
+                                              bgcolor: editingLecture.file
+                                                ? `${MAU.chinh}14`
+                                                : "#1F2937",
+                                              display: "flex",
+                                              alignItems: "center",
+                                              justifyContent: "center",
+                                              flexShrink: 0,
+                                            }}
+                                          >
+                                            {editingLecture.file ? (
+                                              <CloudUploadOutlined
                                                 sx={{
-                                                  fontSize: 18,
+                                                  fontSize: 26,
                                                   color: MAU.chinh,
                                                 }}
                                               />
                                             ) : (
-                                              <RadioButtonUnchecked
+                                              <PlayCircleOutlined
                                                 sx={{
-                                                  fontSize: 18,
-                                                  color: "#C7CCD6",
+                                                  fontSize: 30,
+                                                  color: "#fff",
                                                 }}
                                               />
                                             )}
-                                          </ListItemIcon>
-                                          <ListItemText
-                                            sx={{ minWidth: 0 }}
-                                            primary={
-                                              <Box
-                                                sx={{
-                                                  display: "flex",
-                                                  alignItems: "center",
-                                                  gap: 1,
-                                                  fontSize: 14,
-                                                  fontWeight: 500,
-                                                  minWidth: 0,
-                                                }}
-                                              >
-                                                <Box
-                                                  component="span"
+                                          </Box>
+                                          <Box
+                                            sx={{
+                                              flex: 1,
+                                              minWidth: 0,
+                                              display: "flex",
+                                              flexDirection: "column",
+                                              gap: 0.4,
+                                            }}
+                                          >
+                                            {editingLecture.file ? (
+                                              <>
+                                                <Typography
                                                   sx={{
+                                                    fontSize: 13,
+                                                    fontWeight: 700,
+                                                    color: MAU.chinh,
                                                     overflow: "hidden",
                                                     textOverflow: "ellipsis",
                                                     whiteSpace: "nowrap",
-                                                    minWidth: 0,
                                                   }}
                                                 >
-                                                  <Box
-                                                    component="span"
-                                                    sx={{ fontWeight: 800 }}
-                                                  >
-                                                    {`Bài giảng ${soThuTuMuc}: `}
-                                                  </Box>
-                                                  {bg.tieuDe || "Chưa đặt tên"}
-                                                </Box>
-                                                <Chip
-                                                  size="small"
-                                                  label={
-                                                    bg.urlBaiGiang
-                                                      ? "Có video"
-                                                      : "Chưa có video"
-                                                  }
-                                                  sx={{
-                                                    fontSize: 10,
-                                                    fontWeight: 700,
-                                                    bgcolor: bg.urlBaiGiang
-                                                      ? `${MAU.chinh}1A`
-                                                      : "#F1F2F5",
-                                                    color: bg.urlBaiGiang
-                                                      ? MAU.chinhDam
-                                                      : "#8A93A3",
-                                                    flexShrink: 0,
-                                                  }}
-                                                />
-                                              </Box>
-                                            }
-                                          />
-                                        </ListItem>
-
-                                        <Collapse in={isExpanded}>
-                                          <Box sx={{ px: 2, pb: 2 }}>
-                                            {isEditing ? (
-                                              <Box
-                                                sx={{
-                                                  display: "flex",
-                                                  flexDirection: "column",
-                                                  gap: 1,
-                                                }}
-                                              >
-                                                <TextField
-                                                  variant="standard"
-                                                  placeholder="Nhập tiêu đề bài giảng"
-                                                  value={editingLecture.title}
-                                                  onChange={(e) =>
-                                                    setEditingLecture((prev) =>
-                                                      prev
-                                                        ? {
-                                                            ...prev,
-                                                            title:
-                                                              e.target.value,
-                                                          }
-                                                        : null,
-                                                    )
-                                                  }
-                                                  autoFocus
-                                                  required
-                                                />
-                                                <FormControlLabel
-                                                  control={
-                                                    <Checkbox
-                                                      checked={
-                                                        editingLecture.isFree ||
-                                                        false
-                                                      }
-                                                      onChange={(e) =>
-                                                        setEditingLecture(
-                                                          (prev) =>
-                                                            prev
-                                                              ? {
-                                                                  ...prev,
-                                                                  isFree:
-                                                                    e.target
-                                                                      .checked,
-                                                                }
-                                                              : null,
-                                                        )
-                                                      }
-                                                      sx={{
-                                                        color: MAU.chinh,
-                                                        "&.Mui-checked": {
-                                                          color: MAU.chinh,
-                                                        },
-                                                      }}
-                                                    />
-                                                  }
-                                                  label="Miễn phí"
-                                                />
-                                                <Box>
-                                                  <Button
-                                                    component="label"
-                                                    variant="outlined"
-                                                    startIcon={<AttachFile />}
-                                                    sx={{
-                                                      textTransform: "none",
-                                                      borderColor: MAU.chinh,
-                                                      color: MAU.chinh,
-                                                      fontWeight: 600,
-                                                      "&:hover": {
-                                                        bgcolor: `${MAU.chinh}0F`,
-                                                      },
-                                                    }}
-                                                  >
-                                                    {editingLecture.file
-                                                      ? "Thay đổi video"
-                                                      : bg.urlBaiGiang
-                                                        ? "Thay video"
-                                                        : "Chọn video"}
-                                                    <input
-                                                      type="file"
-                                                      accept="video/*"
-                                                      hidden
-                                                      onChange={async (e) => {
-                                                        const file =
-                                                          e.target.files?.[0];
-                                                        if (file) {
-                                                          const result =
-                                                            await validateVideoFile(
-                                                              file,
-                                                            );
-                                                          if (result.valid) {
-                                                            setEditingLecture(
-                                                              (prev) =>
-                                                                prev
-                                                                  ? {
-                                                                      ...prev,
-                                                                      file,
-                                                                    }
-                                                                  : null,
-                                                            );
-                                                          } else {
-                                                            alert(
-                                                              `File không hợp lệ: ${result.error}`,
-                                                            );
-                                                            e.target.value = "";
-                                                          }
-                                                        }
-                                                      }}
-                                                    />
-                                                  </Button>
-                                                  {editingLecture.file ? (
-                                                    <Typography
-                                                      variant="body2"
-                                                      sx={{
-                                                        mt: 0.5,
-                                                        color: "#6B7280",
-                                                      }}
-                                                    >
-                                                      Đã chọn:{" "}
-                                                      {editingLecture.file.name}
-                                                    </Typography>
-                                                  ) : bg.urlBaiGiang ? (
-                                                    <Typography
-                                                      variant="body2"
-                                                      sx={{
-                                                        mt: 0.5,
-                                                        color: "#6B7280",
-                                                      }}
-                                                    >
-                                                      Video hiện tại:{" "}
-                                                      {dinhDangThoiLuong(
-                                                        bg.thoiLuong ?? 0,
-                                                      )}
-                                                    </Typography>
-                                                  ) : (
-                                                    <Typography
-                                                      variant="body2"
-                                                      sx={{
-                                                        mt: 0.5,
-                                                        color: "#8A93A3",
-                                                      }}
-                                                    >
-                                                      Chưa có video
-                                                    </Typography>
-                                                  )}
-                                                </Box>
-                                                <Box
-                                                  sx={{
-                                                    display: "flex",
-                                                    gap: 1,
-                                                    justifyContent: "flex-end",
-                                                    mt: 1,
-                                                  }}
-                                                >
-                                                  <Button
-                                                    size="small"
-                                                    onClick={cancelEditLecture}
-                                                    sx={{
-                                                      textTransform: "none",
-                                                      color: "#8A93A3",
-                                                    }}
-                                                  >
-                                                    Hủy bỏ
-                                                  </Button>
-                                                  <Button
-                                                    size="small"
-                                                    variant="contained"
-                                                    onClick={saveEditedLecture}
-                                                    sx={{
-                                                      bgcolor: MAU.chinh,
-                                                      textTransform: "none",
-                                                      fontWeight: 700,
-                                                      "&:hover": {
-                                                        bgcolor: MAU.chinhDam,
-                                                      },
-                                                    }}
-                                                  >
-                                                    Lưu
-                                                  </Button>
-                                                </Box>
-                                              </Box>
-                                            ) : (
-                                              <Box
-                                                sx={{
-                                                  display: "flex",
-                                                  flexDirection: "column",
-                                                  gap: 0.5,
-                                                }}
-                                              >
+                                                  {editingLecture.file.name}
+                                                </Typography>
                                                 <Typography
                                                   sx={{
-                                                    fontWeight: 600,
+                                                    fontSize: 11.5,
+                                                    color: "#8A93A3",
+                                                  }}
+                                                >
+                                                  Video mới đã chọn
+                                                  {editingLecture.file.size
+                                                    ? ` · ${dinhDangDungLuong(
+                                                        editingLecture.file
+                                                          .size,
+                                                      )}`
+                                                    : ""}
+                                                </Typography>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Typography
+                                                  sx={{
                                                     fontSize: 13,
+                                                    fontWeight: 700,
                                                     color: "#1F2937",
                                                   }}
                                                 >
-                                                  Video:
-                                                </Typography>
-                                                {bg.urlBaiGiang ? (
-                                                  <Box
-                                                    sx={{
-                                                      display: "flex",
-                                                      alignItems: "center",
-                                                      gap: 2,
-                                                      flexWrap: "wrap",
-                                                    }}
-                                                  >
-                                                    <Box
-                                                      sx={{
-                                                        width: 88,
-                                                        height: 56,
-                                                        borderRadius: "8px",
-                                                        bgcolor: `${MAU.chinh}0F`,
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent:
-                                                          "center",
-                                                        cursor: "pointer",
-                                                      }}
-                                                      onClick={() => {
-                                                        if (bg.urlBaiGiang) {
-                                                          setVideoPopup({
-                                                            open: true,
-                                                            url: bg.urlBaiGiang,
-                                                          });
-                                                        }
-                                                      }}
-                                                    >
-                                                      <PlayCircleOutlined
-                                                        sx={{
-                                                          color: MAU.chinh,
-                                                        }}
-                                                      />
-                                                    </Box>
-                                                    <Typography
-                                                      sx={{
-                                                        fontSize: 13.5,
-                                                        fontWeight: 600,
-                                                      }}
-                                                    >
-                                                      {dinhDangThoiLuong(
-                                                        bg.thoiLuong ?? 0,
-                                                      )}
-                                                    </Typography>
-                                                    {isEditable && (
-                                                      <>
-                                                        <Button
-                                                          component="label"
-                                                          size="small"
-                                                          startIcon={
-                                                            <EditOutlined fontSize="small" />
-                                                          }
-                                                          sx={{
-                                                            textTransform:
-                                                              "none",
-                                                            color: MAU.chinh,
-                                                            fontWeight: 600,
-                                                          }}
-                                                        >
-                                                          Thay video
-                                                          <input
-                                                            type="file"
-                                                            accept="video/*"
-                                                            hidden
-                                                            onChange={async (
-                                                              e,
-                                                            ) => {
-                                                              const file =
-                                                                e.target
-                                                                  .files?.[0];
-                                                              if (file) {
-                                                                await handleVideoFileSelect(
-                                                                  itemId,
-                                                                  file,
-                                                                );
-                                                                e.target.value =
-                                                                  "";
-                                                              }
-                                                            }}
-                                                          />
-                                                        </Button>
-                                                        <Box
-                                                          sx={{
-                                                            display: "flex",
-                                                            alignItems:
-                                                              "center",
-                                                            gap: 1,
-                                                          }}
-                                                        >
-                                                          <Typography
-                                                            sx={{
-                                                              fontSize: 12.5,
-                                                              color: "#8A93A3",
-                                                            }}
-                                                          >
-                                                            Miễn phí xem thử:
-                                                          </Typography>
-                                                          <Switch
-                                                            size="small"
-                                                            checked={
-                                                              !!bg.laBaiGiangFree
-                                                            }
-                                                            onChange={(e) => {
-                                                              const phan =
-                                                                phans.find(
-                                                                  (p) =>
-                                                                    p.id ===
-                                                                    phanId,
-                                                                );
-                                                              if (phan) {
-                                                                const updatedBg =
-                                                                  phan.DanhSachBaiGiang?.map(
-                                                                    (b) =>
-                                                                      b.id ===
-                                                                      itemId
-                                                                        ? {
-                                                                            ...b,
-                                                                            laBaiGiangFree:
-                                                                              e
-                                                                                .target
-                                                                                .checked,
-                                                                          }
-                                                                        : b,
-                                                                  );
-                                                                const updatedPhans =
-                                                                  phans.map(
-                                                                    (p) =>
-                                                                      p.id ===
-                                                                      phanId
-                                                                        ? {
-                                                                            ...p,
-                                                                            DanhSachBaiGiang:
-                                                                              updatedBg,
-                                                                          }
-                                                                        : p,
-                                                                  );
-                                                                setPhans(
-                                                                  updatedPhans,
-                                                                );
-                                                              }
-                                                              saveBaiGiang(
-                                                                phanId,
-                                                                itemId,
-                                                              );
-                                                            }}
-                                                          />
-                                                        </Box>
-                                                      </>
-                                                    )}
-                                                  </Box>
-                                                ) : (
-                                                  <Box
-                                                    component="label"
-                                                    sx={{
-                                                      display: "flex",
-                                                      flexDirection: "column",
-                                                      alignItems: "center",
-                                                      justifyContent: "center",
-                                                      gap: 1,
-                                                      py: 2,
-                                                      border:
-                                                        "1px dashed #E3E6EB",
-                                                      borderRadius: "10px",
-                                                      cursor: isEditable
-                                                        ? "pointer"
-                                                        : "default",
-                                                      "&:hover": {
-                                                        borderColor: isEditable
-                                                          ? MAU.chinh
-                                                          : "#E3E6EB",
-                                                        bgcolor: isEditable
-                                                          ? `${MAU.chinh}0F`
-                                                          : "transparent",
-                                                      },
-                                                    }}
-                                                  >
-                                                    {hasNewVideo ? (
-                                                      <>
-                                                        <Typography
-                                                          sx={{
-                                                            fontSize: 13,
-                                                            fontWeight: 600,
-                                                            color: MAU.chinh,
-                                                          }}
-                                                        >
-                                                          Đã chọn:{" "}
-                                                          {
-                                                            tempVideoFiles[
-                                                              itemId
-                                                            ]?.name
-                                                          }
-                                                        </Typography>
-                                                        {isEditable && (
-                                                          <Button
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                              e.stopPropagation();
-                                                              setTempVideoFiles(
-                                                                (prev) => {
-                                                                  const newState =
-                                                                    {
-                                                                      ...prev,
-                                                                    };
-                                                                  delete newState[
-                                                                    itemId
-                                                                  ];
-                                                                  return newState;
-                                                                },
-                                                              );
-                                                              setToast({
-                                                                open: true,
-                                                                message:
-                                                                  "Đã hủy chọn video",
-                                                                severity:
-                                                                  "info",
-                                                              });
-                                                            }}
-                                                            sx={{
-                                                              textTransform:
-                                                                "none",
-                                                              color:
-                                                                "error.main",
-                                                              fontWeight: 600,
-                                                            }}
-                                                          >
-                                                            Hủy bỏ
-                                                          </Button>
-                                                        )}
-                                                      </>
-                                                    ) : (
-                                                      <>
-                                                        <PlayCircleOutlined
-                                                          sx={{
-                                                            color: MAU.chinh,
-                                                            opacity: 0.6,
-                                                          }}
-                                                        />
-                                                        <Typography
-                                                          sx={{
-                                                            fontSize: 13,
-                                                            fontWeight: 600,
-                                                          }}
-                                                        >
-                                                          {isEditable
-                                                            ? "Tải lên video"
-                                                            : "Chưa có video"}
-                                                        </Typography>
-                                                      </>
-                                                    )}
-                                                    {isEditable && (
-                                                      <input
-                                                        type="file"
-                                                        accept="video/*"
-                                                        hidden
-                                                        onChange={async (e) => {
-                                                          const file =
-                                                            e.target.files?.[0];
-                                                          if (file) {
-                                                            await handleVideoFileSelect(
-                                                              itemId,
-                                                              file,
-                                                            );
-                                                            e.target.value = "";
-                                                          }
-                                                        }}
-                                                      />
-                                                    )}
-                                                  </Box>
-                                                )}
-
-                                                <Box sx={{ mt: 1 }}>
-                                                  <Typography
-                                                    sx={{
-                                                      fontWeight: 600,
-                                                      fontSize: 13,
-                                                      color: "#8A93A3",
-                                                      mb: 0.5,
-                                                    }}
-                                                  >
-                                                    Tài nguyên
-                                                  </Typography>
-                                                  <List dense disablePadding>
-                                                    {(
-                                                      bg.danhSachTaiLieu ?? []
-                                                    ).map((tl: TaiLieuType) => (
-                                                      <ListItem
-                                                        key={tl.id}
-                                                        secondaryAction={
-                                                          isEditable && (
-                                                            <IconButton
-                                                              edge="end"
-                                                              size="small"
-                                                              onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                xoaTaiLieu(
-                                                                  phanId,
-                                                                  itemId,
-                                                                  tl.id as string,
-                                                                );
-                                                              }}
-                                                            >
-                                                              <DeleteOutlined fontSize="small" />
-                                                            </IconButton>
-                                                          )
-                                                        }
-                                                        sx={{
-                                                          cursor: "pointer",
-                                                          py: 0,
-                                                        }}
-                                                        onClick={() => {
-                                                          const docUrl =
-                                                            (tl as any).url ||
-                                                            (tl as any)
-                                                              .duongDan ||
-                                                            "";
-                                                          if (docUrl) {
-                                                            setDocPopup({
-                                                              open: true,
-                                                              url: docUrl,
-                                                              name:
-                                                                tl.tenTaiLieu ||
-                                                                "Tài liệu",
-                                                            });
-                                                          } else {
-                                                            setToast({
-                                                              open: true,
-                                                              message:
-                                                                "Không có URL tài liệu",
-                                                              severity: "error",
-                                                            });
-                                                          }
-                                                        }}
-                                                      >
-                                                        <ListItemIcon>
-                                                          <AttachFile fontSize="small" />
-                                                        </ListItemIcon>
-                                                        <ListItemText
-                                                          primary={
-                                                            tl.tenTaiLieu
-                                                          }
-                                                          secondary={
-                                                            tl.loaiTaiLieu
-                                                          }
-                                                        />
-                                                      </ListItem>
-                                                    ))}
-                                                  </List>
-                                                  {isEditable && (
-                                                    <>
-                                                      {addResourceForm[itemId]
-                                                        ?.open ? (
-                                                        <Box
-                                                          sx={{
-                                                            display: "flex",
-                                                            flexDirection:
-                                                              "column",
-                                                            gap: 1,
-                                                            mt: 1,
-                                                            p: 1.5,
-                                                            bgcolor: "#F5F6F8",
-                                                            borderRadius: "8px",
-                                                          }}
-                                                        >
-                                                          <TextField
-                                                            variant="standard"
-                                                            placeholder="Nhập tên tài liệu"
-                                                            value={
-                                                              addResourceForm[
-                                                                itemId
-                                                              ]?.tenTaiLieu ||
-                                                              ""
-                                                            }
-                                                            onChange={(e) =>
-                                                              setAddResourceForm(
-                                                                (prev) => ({
-                                                                  ...prev,
-                                                                  [itemId]: {
-                                                                    ...prev[
-                                                                      itemId
-                                                                    ],
-                                                                    tenTaiLieu:
-                                                                      e.target
-                                                                        .value,
-                                                                  },
-                                                                }),
-                                                              )
-                                                            }
-                                                            required
-                                                          />
-                                                          <Box
-                                                            sx={{
-                                                              display: "flex",
-                                                              gap: 1,
-                                                              alignItems:
-                                                                "center",
-                                                            }}
-                                                          >
-                                                            <Button
-                                                              component="label"
-                                                              variant="outlined"
-                                                              startIcon={
-                                                                <AttachFile />
-                                                              }
-                                                              sx={{
-                                                                textTransform:
-                                                                  "none",
-                                                                borderColor:
-                                                                  MAU.chinh,
-                                                                color:
-                                                                  MAU.chinh,
-                                                                fontWeight: 600,
-                                                              }}
-                                                            >
-                                                              {addResourceForm[
-                                                                itemId
-                                                              ]?.file
-                                                                ? "Thay đổi file"
-                                                                : "Chọn file"}
-                                                              <input
-                                                                type="file"
-                                                                hidden
-                                                                onChange={(
-                                                                  e,
-                                                                ) => {
-                                                                  const file =
-                                                                    e.target
-                                                                      .files?.[0];
-                                                                  if (file) {
-                                                                    setAddResourceForm(
-                                                                      (
-                                                                        prev,
-                                                                      ) => ({
-                                                                        ...prev,
-                                                                        [itemId]:
-                                                                          {
-                                                                            ...prev[
-                                                                              itemId
-                                                                            ],
-                                                                            file,
-                                                                          },
-                                                                      }),
-                                                                    );
-                                                                  }
-                                                                }}
-                                                              />
-                                                            </Button>
-                                                            {addResourceForm[
-                                                              itemId
-                                                            ]?.file && (
-                                                              <Typography
-                                                                variant="body2"
-                                                                sx={{
-                                                                  color:
-                                                                    "#6B7280",
-                                                                }}
-                                                              >
-                                                                {
-                                                                  addResourceForm[
-                                                                    itemId
-                                                                  ]?.file?.name
-                                                                }
-                                                              </Typography>
-                                                            )}
-                                                          </Box>
-                                                          <Box
-                                                            sx={{
-                                                              display: "flex",
-                                                              gap: 1,
-                                                              justifyContent:
-                                                                "flex-end",
-                                                            }}
-                                                          >
-                                                            <Button
-                                                              size="small"
-                                                              onClick={() =>
-                                                                setAddResourceForm(
-                                                                  (prev) => ({
-                                                                    ...prev,
-                                                                    [itemId]: {
-                                                                      tenTaiLieu:
-                                                                        "",
-                                                                      file: null,
-                                                                      open: false,
-                                                                    },
-                                                                  }),
-                                                                )
-                                                              }
-                                                              sx={{
-                                                                textTransform:
-                                                                  "none",
-                                                                color:
-                                                                  "#8A93A3",
-                                                              }}
-                                                            >
-                                                              Hủy bỏ
-                                                            </Button>
-                                                            <Button
-                                                              size="small"
-                                                              variant="contained"
-                                                              onClick={() => {
-                                                                const form =
-                                                                  addResourceForm[
-                                                                    itemId
-                                                                  ];
-                                                                if (
-                                                                  !form?.tenTaiLieu ||
-                                                                  !form.tenTaiLieu.trim()
-                                                                ) {
-                                                                  setToast({
-                                                                    open: true,
-                                                                    message:
-                                                                      "Vui lòng nhập tên tài liệu",
-                                                                    severity:
-                                                                      "error",
-                                                                  });
-                                                                  return;
-                                                                }
-                                                                if (
-                                                                  form?.file
-                                                                ) {
-                                                                  uploadTaiLieu(
-                                                                    phanId,
-                                                                    itemId,
-                                                                    form.file,
-                                                                    form.tenTaiLieu.trim(),
-                                                                  );
-                                                                } else {
-                                                                  setToast({
-                                                                    open: true,
-                                                                    message:
-                                                                      "Vui lòng chọn file",
-                                                                    severity:
-                                                                      "error",
-                                                                  });
-                                                                }
-                                                              }}
-                                                              sx={{
-                                                                bgcolor:
-                                                                  MAU.chinh,
-                                                                textTransform:
-                                                                  "none",
-                                                                fontWeight: 700,
-                                                                "&:hover": {
-                                                                  bgcolor:
-                                                                    MAU.chinhDam,
-                                                                },
-                                                              }}
-                                                            >
-                                                              Thêm
-                                                            </Button>
-                                                          </Box>
-                                                        </Box>
-                                                      ) : (
-                                                        <Button
-                                                          size="small"
-                                                          startIcon={<Add />}
-                                                          onClick={() =>
-                                                            setAddResourceForm(
-                                                              (prev) => ({
-                                                                ...prev,
-                                                                [itemId]: {
-                                                                  tenTaiLieu:
-                                                                    "",
-                                                                  file: null,
-                                                                  open: true,
-                                                                },
-                                                              }),
-                                                            )
-                                                          }
-                                                          sx={{
-                                                            textTransform:
-                                                              "none",
-                                                            color: MAU.chinh,
-                                                            fontWeight: 600,
-                                                          }}
-                                                        >
-                                                          Thêm tài liệu
-                                                        </Button>
-                                                      )}
-                                                    </>
+                                                  {dinhDangThoiLuong(
+                                                    bg.thoiLuong ?? 0,
                                                   )}
-                                                </Box>
-                                              </Box>
+                                                </Typography>
+                                                <Typography
+                                                  sx={{
+                                                    fontSize: 11.5,
+                                                    color: "#8A93A3",
+                                                  }}
+                                                >
+                                                  Video hiện tại
+                                                </Typography>
+                                              </>
                                             )}
                                           </Box>
-                                        </Collapse>
-                                      </Paper>
-                                    </SortableItem>
-                                  );
-                                } else {
-                                  // Bài kiểm tra
-                                  const kt = item.data as BaiKiemTraDto;
-                                  const isEditingQuiz =
-                                    editingQuiz?.quizId === itemId;
-                                  const isQuizExpanded =
-                                    !!expandedQuizzes[itemId];
-                                  const tenHienThi =
-                                    kt.tenBaiKiemTra ||
-                                    `Bài kiểm tra ${kt.soCauHoi || 0} câu hỏi`;
-
-                                  if (isEditingQuiz) {
-                                    return (
-                                      <SortableItem key={itemId} id={itemId}>
-                                        <Box sx={{ mb: 1 }}>
-                                          <Paper
+                                          <Button
+                                            {...noPropagation}
+                                            component="label"
+                                            size="small"
+                                            startIcon={
+                                              <AutorenewOutlined fontSize="small" />
+                                            }
                                             sx={{
-                                              border: "1px solid #EDEFF3",
+                                              textTransform: "none",
+                                              fontWeight: 700,
+                                              fontSize: 12.5,
+                                              color: MAU.chinh,
+                                              border: `1px solid ${MAU.chinh}66`,
                                               borderRadius: "8px",
-                                              overflow: "hidden",
-                                              bgcolor: "#fff",
+                                              px: 1.5,
+                                              flexShrink: 0,
+                                              "&:hover": {
+                                                bgcolor: `${MAU.chinh}0F`,
+                                                borderColor: MAU.chinh,
+                                              },
                                             }}
                                           >
-                                            <Box sx={{ p: 2 }}>
-                                              <QuizForm
-                                                isEditing={true}
-                                                readOnly={false}
-                                                data={editingQuiz}
-                                                onDataChange={(field, value) =>
-                                                  setEditingQuiz((prev) => ({
-                                                    ...prev!,
-                                                    [field]: value,
-                                                  }))
+                                            Thay thế
+                                            <input
+                                              type="file"
+                                              accept="video/*"
+                                              hidden
+                                              onChange={async (e) => {
+                                                const file =
+                                                  e.target.files?.[0];
+                                                if (file) {
+                                                  const result =
+                                                    await validateVideoFile(
+                                                      file,
+                                                    );
+                                                  if (result.valid) {
+                                                    setEditingLecture((prev) =>
+                                                      prev
+                                                        ? { ...prev, file }
+                                                        : null,
+                                                    );
+                                                  } else {
+                                                    alert(
+                                                      `File không hợp lệ: ${result.error}`,
+                                                    );
+                                                    e.target.value = "";
+                                                  }
                                                 }
-                                                onAddQuestion={() => {
-                                                  if (!editingQuiz) return;
-                                                  const newQ = {
-                                                    id: uuidv4(),
-                                                    noiDungCauHoi: "",
-                                                    loaiCauHoi: "ONE" as const,
-                                                    diem: 1,
-                                                    doKho: "TrungBinh" as const,
-                                                    danhSachDapAn: [
-                                                      {
-                                                        id: uuidv4(),
-                                                        noiDungDapAn: "",
-                                                        laDapAnDung: false,
-                                                        thuTuSapXep: 0,
-                                                      },
-                                                      {
-                                                        id: uuidv4(),
-                                                        noiDungDapAn: "",
-                                                        laDapAnDung: false,
-                                                        thuTuSapXep: 1,
-                                                      },
-                                                    ],
-                                                  };
-                                                  setEditingQuiz((prev) => ({
-                                                    ...prev!,
-                                                    cauHois: [
-                                                      ...(prev!.cauHois || []),
-                                                      newQ,
-                                                    ],
-                                                  }));
-                                                  setExpandedQuestions(
-                                                    (prev) => ({
-                                                      ...prev,
-                                                      [newQ.id]: true,
-                                                    }),
-                                                  );
-                                                }}
-                                                onRemoveQuestion={(qId) => {
-                                                  if (!editingQuiz) return;
-                                                  setEditingQuiz((prev) => ({
-                                                    ...prev!,
-                                                    cauHois:
-                                                      prev!.cauHois.filter(
-                                                        (q) => q.id !== qId,
-                                                      ),
-                                                  }));
-                                                  setExpandedQuestions(
-                                                    (prev) => {
-                                                      const newState = {
-                                                        ...prev,
-                                                      };
-                                                      delete newState[qId];
-                                                      return newState;
-                                                    },
-                                                  );
-                                                }}
-                                                onUpdateQuestion={(
-                                                  qId,
-                                                  field,
-                                                  value,
-                                                ) => {
-                                                  if (!editingQuiz) return;
-                                                  setEditingQuiz((prev) => ({
-                                                    ...prev!,
-                                                    cauHois: prev!.cauHois.map(
-                                                      (q) =>
-                                                        q.id === qId
-                                                          ? {
-                                                              ...q,
-                                                              [field]: value,
-                                                            }
-                                                          : q,
-                                                    ),
-                                                  }));
-                                                }}
-                                                onAddDapAn={(qId) => {
-                                                  if (!editingQuiz) return;
-                                                  setEditingQuiz((prev) => ({
-                                                    ...prev!,
-                                                    cauHois: prev!.cauHois.map(
-                                                      (q) => {
-                                                        if (q.id !== qId)
-                                                          return q;
-                                                        const newDapAn = {
-                                                          id: uuidv4(),
-                                                          noiDungDapAn: "",
-                                                          laDapAnDung: false,
-                                                          thuTuSapXep:
-                                                            q.danhSachDapAn
-                                                              .length,
-                                                        };
-                                                        return {
-                                                          ...q,
-                                                          danhSachDapAn: [
-                                                            ...q.danhSachDapAn,
-                                                            newDapAn,
-                                                          ],
-                                                        };
-                                                      },
-                                                    ),
-                                                  }));
-                                                }}
-                                                onRemoveDapAn={(qId, dId) => {
-                                                  if (!editingQuiz) return;
-                                                  setEditingQuiz((prev) => ({
-                                                    ...prev!,
-                                                    cauHois: prev!.cauHois.map(
-                                                      (q) => {
-                                                        if (q.id !== qId)
-                                                          return q;
-                                                        if (
-                                                          q.danhSachDapAn
-                                                            .length <= 2
-                                                        ) {
-                                                          setToast({
-                                                            open: true,
-                                                            message:
-                                                              "Cần ít nhất 2 đáp án",
-                                                            severity: "error",
-                                                          });
-                                                          return q;
-                                                        }
-                                                        return {
-                                                          ...q,
-                                                          danhSachDapAn:
-                                                            q.danhSachDapAn.filter(
-                                                              (d) =>
-                                                                d.id !== dId,
-                                                            ),
-                                                        };
-                                                      },
-                                                    ),
-                                                  }));
-                                                }}
-                                                onUpdateDapAn={(
-                                                  qId,
-                                                  dId,
-                                                  field,
-                                                  value,
-                                                ) => {
-                                                  if (!editingQuiz) return;
-                                                  setEditingQuiz((prev) => ({
-                                                    ...prev!,
-                                                    cauHois: prev!.cauHois.map(
-                                                      (q) => {
-                                                        if (q.id !== qId)
-                                                          return q;
-                                                        return {
-                                                          ...q,
-                                                          danhSachDapAn:
-                                                            q.danhSachDapAn.map(
-                                                              (d) =>
-                                                                d.id === dId
-                                                                  ? {
-                                                                      ...d,
-                                                                      [field]:
-                                                                        value,
-                                                                    }
-                                                                  : d,
-                                                            ),
-                                                        };
-                                                      },
-                                                    ),
-                                                  }));
-                                                }}
-                                                onToggleDapAnDung={(
-                                                  qId,
-                                                  dId,
-                                                  checked,
-                                                ) => {
-                                                  if (!editingQuiz) return;
-                                                  setEditingQuiz((prev) => ({
-                                                    ...prev!,
-                                                    cauHois: prev!.cauHois.map(
-                                                      (q) => {
-                                                        if (q.id !== qId)
-                                                          return q;
-                                                        let newDapAn =
-                                                          q.danhSachDapAn.map(
-                                                            (d) =>
-                                                              d.id === dId
-                                                                ? {
-                                                                    ...d,
-                                                                    laDapAnDung:
-                                                                      checked,
-                                                                  }
-                                                                : d,
-                                                          );
-                                                        if (
-                                                          q.loaiCauHoi ===
-                                                            "ONE" &&
-                                                          checked
-                                                        ) {
-                                                          newDapAn =
-                                                            newDapAn.map((d) =>
-                                                              d.id === dId
-                                                                ? {
-                                                                    ...d,
-                                                                    laDapAnDung: true,
-                                                                  }
-                                                                : {
-                                                                    ...d,
-                                                                    laDapAnDung: false,
-                                                                  },
-                                                            );
-                                                        }
-                                                        return {
-                                                          ...q,
-                                                          danhSachDapAn:
-                                                            newDapAn,
-                                                        };
-                                                      },
-                                                    ),
-                                                  }));
-                                                }}
-                                                onCancel={cancelEditQuiz}
-                                                onSubmit={saveEditQuiz}
-                                                loading={loading}
-                                                submitLabel="Cập nhật"
-                                                expandedQuestions={
-                                                  expandedQuestions
-                                                }
-                                                toggleQuestionExpand={
-                                                  toggleQuestionExpand
-                                                }
-                                                onReorderQuestions={(
-                                                  newQuestions,
-                                                ) =>
-                                                  handleReorderQuestions(
-                                                    phanId,
-                                                    itemId,
-                                                    newQuestions,
-                                                  )
-                                                }
-                                              />
-                                            </Box>
-                                          </Paper>
+                                              }}
+                                            />
+                                          </Button>
                                         </Box>
-                                      </SortableItem>
-                                    );
-                                  }
+                                      )}
 
-                                  return (
-                                    <SortableItem key={itemId} id={itemId}>
-                                      <Paper
+                                      <Box
                                         sx={{
-                                          mb: 1,
-                                          border: "1px solid #EDEFF3",
-                                          borderRadius: "8px",
-                                          overflow: "hidden",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "space-between",
+                                          px: 1.5,
+                                          py: 1,
+                                          border: "1px solid #E3E6EB",
+                                          borderRadius: "10px",
                                           bgcolor: "#fff",
-                                          transition: "all 0.2s ease",
-                                          "&:hover": {
-                                            borderColor: "#D1D5DB",
-                                          },
                                         }}
                                       >
-                                        <ListItem
+                                        <Box
                                           sx={{
-                                            px: 1.5,
-                                            py: 0.75,
-                                            pr: 14,
-                                            bgcolor: "transparent",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
+                                          }}
+                                        >
+                                          {editingLecture.isFree ? (
+                                            <LockOpenOutlined
+                                              sx={{
+                                                fontSize: 18,
+                                                color: MAU.chinh,
+                                              }}
+                                            />
+                                          ) : (
+                                            <LockOutlined
+                                              sx={{
+                                                fontSize: 18,
+                                                color: "#9AA2B1",
+                                              }}
+                                            />
+                                          )}
+                                          <Box>
+                                            <Typography
+                                              sx={{
+                                                fontSize: 13,
+                                                fontWeight: 700,
+                                                color: "#1F2937",
+                                              }}
+                                            >
+                                              Xem thử miễn phí
+                                            </Typography>
+                                            <Typography
+                                              sx={{
+                                                fontSize: 11,
+                                                color: "#8A93A3",
+                                              }}
+                                            >
+                                              Cho phép học viên xem trước khi
+                                              đăng ký
+                                            </Typography>
+                                          </Box>
+                                        </Box>
+                                        <Switch
+                                          {...noPropagation}
+                                          checked={
+                                            editingLecture.isFree || false
+                                          }
+                                          onChange={(e) =>
+                                            setEditingLecture((prev) =>
+                                              prev
+                                                ? {
+                                                    ...prev,
+                                                    isFree: e.target.checked,
+                                                  }
+                                                : null,
+                                            )
+                                          }
+                                          sx={{
+                                            "& .MuiSwitch-switchBase.Mui-checked":
+                                              { color: MAU.chinh },
+                                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                              { bgcolor: MAU.chinh },
+                                          }}
+                                        />
+                                      </Box>
+
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          gap: 1,
+                                          justifyContent: "flex-end",
+                                        }}
+                                      >
+                                        <Button
+                                          {...noPropagation}
+                                          size="small"
+                                          onClick={cancelEditLecture}
+                                          sx={{
+                                            textTransform: "none",
+                                            color: "#8A93A3",
+                                            fontWeight: 600,
+                                            borderRadius: "8px",
+                                          }}
+                                        >
+                                          Hủy bỏ
+                                        </Button>
+                                        <Button
+                                          {...noPropagation}
+                                          size="small"
+                                          variant="contained"
+                                          onClick={saveEditedLecture}
+                                          sx={{
+                                            bgcolor: MAU.chinh,
+                                            textTransform: "none",
+                                            fontWeight: 700,
+                                            borderRadius: "8px",
+                                            boxShadow: "none",
                                             "&:hover": {
-                                              bgcolor: "rgba(0,0,0,0.02)",
+                                              bgcolor: MAU.chinhDam,
+                                              boxShadow: "none",
                                             },
                                           }}
-                                          secondaryAction={
+                                        >
+                                          Lưu thay đổi
+                                        </Button>
+                                      </Box>
+                                    </Box>
+                                  ) : (
+                                    <LectureInfoView
+                                      bg={bg}
+                                      isEditable={isEditable}
+                                      onPlayVideo={(url) =>
+                                        setVideoPopup({
+                                          open: true,
+                                          url,
+                                        })
+                                      }
+                                      onOpenDoc={(url, name) =>
+                                        setDocPopup({
+                                          open: true,
+                                          url,
+                                          name,
+                                        })
+                                      }
+                                      onDeleteDoc={(taiLieuId) =>
+                                        xoaTaiLieu(phanId, itemId, taiLieuId)
+                                      }
+                                    />
+                                  )}
+
+                                  {!isEditing && (
+                                    <Box sx={{ mt: 1.5 }}>
+                                      {isEditable && (
+                                        <>
+                                          {addResourceForm[itemId]?.open ? (
                                             <Box
                                               sx={{
                                                 display: "flex",
-                                                gap: 0.5,
+                                                flexDirection: "column",
+                                                gap: 1,
+                                                p: 1.5,
+                                                bgcolor: "#F5F6F8",
+                                                borderRadius: "10px",
                                               }}
                                             >
-                                              {isEditable && (
-                                                <>
-                                                  <IconButton
-                                                    size="small"
-                                                    onClick={() =>
-                                                      handleEditQuiz(
-                                                        phanId,
-                                                        itemId,
-                                                      )
-                                                    }
-                                                  >
-                                                    <EditOutlined
-                                                      fontSize="small"
-                                                      sx={{
-                                                        color: "#9AA2B1",
-                                                      }}
-                                                    />
-                                                  </IconButton>
-                                                  <IconButton
-                                                    size="small"
-                                                    onClick={() =>
-                                                      xoaBaiKiemTra(
-                                                        phanId,
-                                                        itemId,
-                                                      )
-                                                    }
-                                                  >
-                                                    <DeleteOutlined
-                                                      fontSize="small"
-                                                      sx={{
-                                                        color: "#9AA2B1",
-                                                      }}
-                                                    />
-                                                  </IconButton>
-                                                </>
-                                              )}
-                                              <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                  toggleQuizItem(itemId)
+                                              <TextField
+                                                {...noPropagation}
+                                                variant="standard"
+                                                placeholder="Nhập tên tài liệu"
+                                                value={
+                                                  addResourceForm[itemId]
+                                                    ?.tenTaiLieu || ""
                                                 }
-                                              >
-                                                {isQuizExpanded ? (
-                                                  <ExpandLess fontSize="small" />
-                                                ) : (
-                                                  <ExpandMore fontSize="small" />
-                                                )}
-                                              </IconButton>
-                                            </Box>
-                                          }
-                                        >
-                                          <ListItemIcon sx={{ minWidth: 28 }}>
-                                            {isComplete ? (
-                                              <CheckCircle
-                                                sx={{
-                                                  fontSize: 18,
-                                                  color: MAU.chinh,
-                                                }}
+                                                onChange={(e) =>
+                                                  setAddResourceForm(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [itemId]: {
+                                                        ...prev[itemId],
+                                                        tenTaiLieu:
+                                                          e.target.value,
+                                                      },
+                                                    }),
+                                                  )
+                                                }
+                                                required
                                               />
-                                            ) : (
-                                              <RadioButtonUnchecked
-                                                sx={{
-                                                  fontSize: 18,
-                                                  color: "#C7CCD6",
-                                                }}
-                                              />
-                                            )}
-                                          </ListItemIcon>
-                                          <ListItemText
-                                            sx={{ minWidth: 0 }}
-                                            primary={
                                               <Box
                                                 sx={{
                                                   display: "flex",
-                                                  alignItems: "center",
                                                   gap: 1,
-                                                  fontSize: 14,
-                                                  fontWeight: 500,
-                                                  minWidth: 0,
+                                                  alignItems: "center",
                                                 }}
                                               >
-                                                <Box
-                                                  component="span"
+                                                <Button
+                                                  {...noPropagation}
+                                                  component="label"
+                                                  variant="outlined"
+                                                  size="small"
+                                                  startIcon={
+                                                    <AttachFile fontSize="small" />
+                                                  }
                                                   sx={{
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                    whiteSpace: "nowrap",
-                                                    minWidth: 0,
+                                                    textTransform: "none",
+                                                    borderColor: MAU.chinh,
+                                                    color: MAU.chinh,
+                                                    fontWeight: 600,
                                                   }}
                                                 >
-                                                  <Box
-                                                    component="span"
-                                                    sx={{ fontWeight: 800 }}
+                                                  {addResourceForm[itemId]?.file
+                                                    ? "Thay đổi file"
+                                                    : "Chọn file"}
+                                                  <input
+                                                    type="file"
+                                                    accept=".docx"
+                                                    hidden
+                                                    onChange={(e) => {
+                                                      const file =
+                                                        e.target.files?.[0];
+                                                      if (file) {
+                                                        const validation =
+                                                          validateTaiLieu(file);
+                                                        if (!validation.valid) {
+                                                          setToast({
+                                                            open: true,
+                                                            message:
+                                                              validation.error ||
+                                                              "File không hợp lệ",
+                                                            severity: "error",
+                                                          });
+                                                          e.target.value = "";
+                                                          return;
+                                                        }
+                                                        setAddResourceForm(
+                                                          (prev) => ({
+                                                            ...prev,
+                                                            [itemId]: {
+                                                              ...prev[itemId],
+                                                              file,
+                                                            },
+                                                          }),
+                                                        );
+                                                      }
+                                                    }}
+                                                  />
+                                                </Button>
+                                                {addResourceForm[itemId]
+                                                  ?.file && (
+                                                  <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                      color: "#6B7280",
+                                                      fontSize: 12.5,
+                                                    }}
                                                   >
-                                                    {`Bài kiểm tra ${soThuTuMuc}: `}
-                                                  </Box>
-                                                  {tenHienThi}
-                                                </Box>
-                                                <Chip
-                                                  size="small"
-                                                  label={`${kt.soCauHoi ?? 0} câu hỏi`}
-                                                  sx={{
-                                                    fontSize: 10,
-                                                    fontWeight: 700,
-                                                    bgcolor: isComplete
-                                                      ? `${MAU.chinh}1A`
-                                                      : "#F1F2F5",
-                                                    color: isComplete
-                                                      ? MAU.chinhDam
-                                                      : "#8A93A3",
-                                                    flexShrink: 0,
-                                                  }}
-                                                />
+                                                    {
+                                                      addResourceForm[itemId]
+                                                        ?.file?.name
+                                                    }
+                                                  </Typography>
+                                                )}
                                               </Box>
-                                            }
-                                          />
-                                        </ListItem>
-
-                                        <Collapse in={isQuizExpanded}>
-                                          <Box sx={{ px: 2, pb: 2 }}>
-                                            <QuizForm
-                                              isEditing={false}
-                                              readOnly={true}
-                                              data={{
-                                                tenBaiKiemTra: tenHienThi,
-                                                moTa: kt.moTa || "",
-                                                cauHois: kt.cauHois || [],
+                                              <Typography
+                                                variant="caption"
+                                                sx={{
+                                                  color: "#8A93A3",
+                                                  display: "block",
+                                                }}
+                                              >
+                                                Hỗ trợ file .docx, dung lượng
+                                                tối đa 50MB
+                                              </Typography>
+                                              <Box
+                                                sx={{
+                                                  display: "flex",
+                                                  gap: 1,
+                                                  justifyContent: "flex-end",
+                                                }}
+                                              >
+                                                <Button
+                                                  {...noPropagation}
+                                                  size="small"
+                                                  onClick={() =>
+                                                    setAddResourceForm(
+                                                      (prev) => ({
+                                                        ...prev,
+                                                        [itemId]: {
+                                                          tenTaiLieu: "",
+                                                          file: null,
+                                                          open: false,
+                                                        },
+                                                      }),
+                                                    )
+                                                  }
+                                                  sx={{
+                                                    textTransform: "none",
+                                                    color: "#8A93A3",
+                                                  }}
+                                                >
+                                                  Hủy bỏ
+                                                </Button>
+                                                <Button
+                                                  {...noPropagation}
+                                                  size="small"
+                                                  variant="contained"
+                                                  onClick={() => {
+                                                    const form =
+                                                      addResourceForm[itemId];
+                                                    if (
+                                                      !form?.tenTaiLieu ||
+                                                      !form.tenTaiLieu.trim()
+                                                    ) {
+                                                      setToast({
+                                                        open: true,
+                                                        message:
+                                                          "Vui lòng nhập tên tài liệu",
+                                                        severity: "error",
+                                                      });
+                                                      return;
+                                                    }
+                                                    if (form?.file) {
+                                                      uploadTaiLieu(
+                                                        phanId,
+                                                        itemId,
+                                                        form.file,
+                                                        form.tenTaiLieu.trim(),
+                                                      );
+                                                    } else {
+                                                      setToast({
+                                                        open: true,
+                                                        message:
+                                                          "Vui lòng chọn file",
+                                                        severity: "error",
+                                                      });
+                                                    }
+                                                  }}
+                                                  sx={{
+                                                    bgcolor: MAU.chinh,
+                                                    textTransform: "none",
+                                                    fontWeight: 700,
+                                                    "&:hover": {
+                                                      bgcolor: MAU.chinhDam,
+                                                    },
+                                                  }}
+                                                >
+                                                  Thêm
+                                                </Button>
+                                              </Box>
+                                            </Box>
+                                          ) : (
+                                            <Button
+                                              {...noPropagation}
+                                              size="small"
+                                              startIcon={<Add />}
+                                              onClick={() =>
+                                                setAddResourceForm((prev) => ({
+                                                  ...prev,
+                                                  [itemId]: {
+                                                    tenTaiLieu: "",
+                                                    file: null,
+                                                    open: true,
+                                                  },
+                                                }))
+                                              }
+                                              sx={{
+                                                textTransform: "none",
+                                                color: MAU.chinh,
+                                                fontWeight: 700,
+                                                border: `1px dashed ${MAU.chinh}66`,
+                                                borderRadius: "8px",
+                                                px: 1.5,
+                                                "&:hover": {
+                                                  bgcolor: `${MAU.chinh}0F`,
+                                                  borderColor: MAU.chinh,
+                                                },
                                               }}
-                                              onDataChange={() => {}}
-                                              onAddQuestion={() => {}}
-                                              onRemoveQuestion={() => {}}
-                                              onUpdateQuestion={() => {}}
-                                              onAddDapAn={() => {}}
-                                              onRemoveDapAn={() => {}}
-                                              onUpdateDapAn={() => {}}
-                                              onToggleDapAnDung={() => {}}
-                                              onCancel={() => {}}
-                                              onSubmit={() => {}}
-                                              loading={false}
-                                              submitLabel=""
-                                              expandedQuestions={
-                                                expandedQuestions
-                                              }
-                                              toggleQuestionExpand={
-                                                toggleQuestionExpand
-                                              }
-                                            />
-                                          </Box>
-                                        </Collapse>
-                                      </Paper>
-                                    </SortableItem>
-                                  );
-                                }
-                              })}
-                            </Box>
-                          </SortableContext>
-                        </DndContext>
-
-                        {/* FORM THÊM MỚI BÀI GIẢNG / BÀI KIỂM TRA */}
-                        {addForm?.phanId === phanId && isEditable && (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 1.5,
-                              bgcolor: "#fff",
-                              border: `1px dashed ${MAU.chinh}`,
-                              borderRadius: "10px",
-                              py: 2,
-                              px: 2,
-                              mt: 1,
-                            }}
-                          >
-                            {addForm.type === "BaiGiang" && (
-                              <>
-                                <TextField
-                                  variant="standard"
-                                  placeholder="Nhập tiêu đề bài giảng"
-                                  value={addForm.title || ""}
-                                  onChange={(e) =>
-                                    setAddForm((prev) => ({
-                                      ...prev!,
-                                      title: e.target.value,
-                                    }))
-                                  }
-                                  sx={{
-                                    flex: 1,
-                                    "& .MuiInput-underline:before": {
-                                      display: "none",
-                                    },
-                                  }}
-                                  autoFocus
-                                  required
-                                />
-                                <FormControlLabel
-                                  control={
-                                    <Checkbox
-                                      checked={addForm.isFree || false}
-                                      onChange={(e) =>
-                                        setAddForm((prev) => ({
-                                          ...prev!,
-                                          isFree: e.target.checked,
-                                        }))
-                                      }
-                                      sx={{
-                                        color: MAU.chinh,
-                                        "&.Mui-checked": { color: MAU.chinh },
-                                      }}
-                                    />
-                                  }
-                                  label="Miễn phí"
-                                  sx={{ color: "#1F2937", fontWeight: 500 }}
-                                />
-                                <Box>
-                                  <Button
-                                    component="label"
-                                    variant="outlined"
-                                    startIcon={<AttachFile />}
-                                    sx={{
-                                      textTransform: "none",
-                                      borderColor: MAU.chinh,
-                                      color: MAU.chinh,
-                                      fontWeight: 600,
-                                      "&:hover": {
-                                        bgcolor: `${MAU.chinh}0F`,
-                                      },
-                                    }}
-                                  >
-                                    {addForm.file
-                                      ? "Thay đổi video"
-                                      : "Chọn video"}
-                                    <input
-                                      type="file"
-                                      accept="video/*"
-                                      hidden
-                                      onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                          const result =
-                                            await validateVideoFile(file);
-                                          if (result.valid) {
-                                            setAddForm((prev) => ({
-                                              ...prev!,
-                                              file,
-                                            }));
-                                          } else {
-                                            alert(
-                                              `File không hợp lệ: ${result.error}`,
-                                            );
-                                            e.target.value = "";
-                                          }
-                                        }
-                                      }}
-                                    />
-                                  </Button>
-                                  {addForm.file && (
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ mt: 0.5, color: "#6B7280" }}
-                                    >
-                                      Đã chọn: {addForm.file.name}
-                                    </Typography>
+                                            >
+                                              Thêm tài liệu
+                                            </Button>
+                                          )}
+                                        </>
+                                      )}
+                                    </Box>
                                   )}
-                                  <Box sx={{ mt: 1 }}>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 0.5,
-                                        color: "#8A93A3",
-                                        fontSize: 12,
-                                      }}
-                                    >
-                                      <InfoOutlined sx={{ fontSize: 16 }} />
-                                      Lưu ý: Dung lượng ≤ 100MB, độ phân giải ≥
-                                      854x480.
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    gap: 1,
-                                    justifyContent: "flex-end",
-                                    mt: 1,
-                                  }}
-                                >
-                                  <Button
-                                    size="small"
-                                    onClick={() => setAddForm(null)}
-                                    sx={{
-                                      textTransform: "none",
-                                      color: "#8A93A3",
-                                    }}
-                                  >
-                                    Hủy bỏ
-                                  </Button>
-                                  <Button
-                                    size="small"
-                                    variant="contained"
-                                    onClick={() => {
-                                      if (addForm.type === "BaiGiang") {
-                                        const { title, file, isFree, phanId } =
-                                          addForm;
+                                </LectureItem>
+                              );
+                            } else {
+                              // Quiz
+                              const kt = item.data as BaiKiemTraDto;
+                              const isQuizExpanded = !!expandedQuizzes[itemId];
+                              const isQuizUpdating =
+                                quizUpdateForm?.quizId === itemId &&
+                                quizUpdateForm?.phanId === phanId;
+                              const isQuestionEditing =
+                                questionEditor?.quizId === itemId &&
+                                questionEditor?.phanId === phanId;
+                              const tenHienThi =
+                                kt.tenBaiKiemTra ||
+                                `Bài kiểm tra ${soThuTuMuc}`;
 
-                                        if (!title || !title.trim()) {
+                              return (
+                                <QuizItem
+                                  key={itemId}
+                                  kt={kt}
+                                  itemId={itemId}
+                                  phanId={phanId}
+                                  soThuTuMuc={soThuTuMuc}
+                                  tenHienThi={tenHienThi}
+                                  isComplete={isComplete}
+                                  isExpanded={isQuizExpanded}
+                                  isEditable={isEditable}
+                                  onToggle={toggleQuizItem}
+                                  onEdit={handleOpenQuizUpdate}
+                                  onDelete={handleDeleteQuiz}
+                                >
+                                  {isQuizUpdating ? (
+                                    <QuizUpdateForm
+                                      data={{
+                                        tenBaiKiemTra:
+                                          quizUpdateForm.tenBaiKiemTra,
+                                        moTa: quizUpdateForm.moTa,
+                                      }}
+                                      onDataChange={(field, value) =>
+                                        setQuizUpdateForm((prev) =>
+                                          prev
+                                            ? { ...prev, [field]: value }
+                                            : null,
+                                        )
+                                      }
+                                      onCancel={handleCloseQuizUpdate}
+                                      onSubmit={handleSaveQuizUpdate}
+                                      loading={loading}
+                                    />
+                                  ) : isQuestionEditing ? (
+                                    <QuestionDetailForm
+                                      question={questionEditor.question}
+                                      onQuestionChange={(field, value) =>
+                                        setQuestionEditor((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                question: {
+                                                  ...prev.question,
+                                                  [field]: value,
+                                                },
+                                              }
+                                            : null,
+                                        )
+                                      }
+                                      onAddDapAn={() => {
+                                        if (!questionEditor) return;
+                                        if (
+                                          questionEditor.question.danhSachDapAn
+                                            .length >= 15
+                                        ) {
                                           setToast({
                                             open: true,
-                                            message:
-                                              "Vui lòng nhập tiêu đề bài giảng",
+                                            message: "Tối đa 15 đáp án",
                                             severity: "error",
                                           });
                                           return;
                                         }
-
-                                        setLoading(true);
-                                        createBaiGiang(phanId, {
-                                          tieuDe: title.trim(),
-                                          file,
-                                          isFree: isFree || false,
-                                        })
-                                          .then(() => {
-                                            setToast({
-                                              open: true,
-                                              message: "Đã thêm bài giảng",
-                                              severity: "success",
-                                            });
-                                            setAddForm(null);
-                                          })
-                                          .catch((err) => {
-                                            setToast({
-                                              open: true,
-                                              message:
-                                                err.message ||
-                                                "Lỗi tạo bài giảng",
-                                              severity: "error",
-                                            });
-                                          })
-                                          .finally(() => setLoading(false));
+                                        const newDapAn = {
+                                          id: uuidv4(),
+                                          noiDungDapAn: "",
+                                          laDapAnDung: false,
+                                          thuTuSapXep:
+                                            questionEditor.question
+                                              .danhSachDapAn.length,
+                                          giaiThich: "",
+                                        };
+                                        setQuestionEditor((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                question: {
+                                                  ...prev.question,
+                                                  danhSachDapAn: [
+                                                    ...prev.question
+                                                      .danhSachDapAn,
+                                                    newDapAn,
+                                                  ],
+                                                },
+                                              }
+                                            : null,
+                                        );
+                                      }}
+                                      onRemoveDapAn={(dId) => {
+                                        if (!questionEditor) return;
+                                        if (
+                                          questionEditor.question.danhSachDapAn
+                                            .length <= 2
+                                        ) {
+                                          setToast({
+                                            open: true,
+                                            message: "Cần ít nhất 2 đáp án",
+                                            severity: "error",
+                                          });
+                                          return;
+                                        }
+                                        setQuestionEditor((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                question: {
+                                                  ...prev.question,
+                                                  danhSachDapAn:
+                                                    prev.question.danhSachDapAn.filter(
+                                                      (d) => d.id !== dId,
+                                                    ),
+                                                },
+                                              }
+                                            : null,
+                                        );
+                                      }}
+                                      onUpdateDapAn={(dId, field, value) => {
+                                        if (!questionEditor) return;
+                                        setQuestionEditor((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                question: {
+                                                  ...prev.question,
+                                                  danhSachDapAn:
+                                                    prev.question.danhSachDapAn.map(
+                                                      (d) =>
+                                                        d.id === dId
+                                                          ? {
+                                                              ...d,
+                                                              [field]: value,
+                                                            }
+                                                          : d,
+                                                    ),
+                                                },
+                                              }
+                                            : null,
+                                        );
+                                      }}
+                                      onToggleDapAnDung={(dId, checked) => {
+                                        if (!questionEditor) return;
+                                        setQuestionEditor((prev) => {
+                                          if (!prev) return null;
+                                          let newDapAn =
+                                            prev.question.danhSachDapAn.map(
+                                              (d) =>
+                                                d.id === dId
+                                                  ? {
+                                                      ...d,
+                                                      laDapAnDung: checked,
+                                                    }
+                                                  : d,
+                                            );
+                                          if (
+                                            prev.question.loaiCauHoi ===
+                                              "ONE" &&
+                                            checked
+                                          ) {
+                                            newDapAn = newDapAn.map((d) =>
+                                              d.id === dId
+                                                ? { ...d, laDapAnDung: true }
+                                                : { ...d, laDapAnDung: false },
+                                            );
+                                          }
+                                          return {
+                                            ...prev,
+                                            question: {
+                                              ...prev.question,
+                                              danhSachDapAn: newDapAn,
+                                            },
+                                          };
+                                        });
+                                      }}
+                                      onSave={handleSaveQuestion}
+                                      onCancel={() => {
+                                        setQuestionEditor(null);
+                                      }}
+                                      loading={loading}
+                                      isEditing={questionEditor.isEditing}
+                                      quizTitle={tenHienThi}
+                                    />
+                                  ) : (
+                                    <QuestionListView
+                                      questions={kt.cauHois || []}
+                                      onEdit={(q) =>
+                                        handleEditQuestion(
+                                          phanId,
+                                          itemId,
+                                          q,
+                                          tenHienThi,
+                                        )
                                       }
-                                    }}
-                                    sx={{
-                                      bgcolor: MAU.chinh,
-                                      textTransform: "none",
-                                      fontWeight: 700,
-                                      "&:hover": { bgcolor: MAU.chinhDam },
-                                    }}
-                                  >
-                                    Thêm bài giảng
-                                  </Button>
-                                </Box>
-                              </>
-                            )}
+                                      onDelete={(qId) =>
+                                        handleDeleteQuestion(
+                                          phanId,
+                                          itemId,
+                                          qId,
+                                        )
+                                      }
+                                      onAddNew={() =>
+                                        handleAddQuestion(
+                                          phanId,
+                                          itemId,
+                                          tenHienThi,
+                                        )
+                                      }
+                                      isEditable={isEditable}
+                                      showAddButton={true}
+                                    />
+                                  )}
+                                </QuizItem>
+                              );
+                            }
+                          })}
+                        </Box>
+                      </SortableContext>
+                    </DndContext>
 
-                            {addForm.type === "BaiKiemTra" && (
-                              <QuizForm
-                                isEditing={false}
-                                readOnly={false}
-                                data={addForm}
-                                onDataChange={handleQuizGeneralChange}
-                                onAddQuestion={handleAddQuestion}
-                                onRemoveQuestion={handleRemoveQuestion}
-                                onUpdateQuestion={handleUpdateQuestion}
-                                onAddDapAn={handleAddDapAn}
-                                onRemoveDapAn={handleRemoveDapAn}
-                                onUpdateDapAn={handleUpdateDapAn}
-                                onToggleDapAnDung={handleToggleDapAnDung}
-                                onCancel={() => {
-                                  setAddForm(null);
-                                  setExpandedQuestions({});
-                                }}
-                                onSubmit={handleCreateQuiz}
-                                loading={loading}
-                                submitLabel="Tạo bài kiểm tra"
-                                expandedQuestions={expandedQuestions}
-                                toggleQuestionExpand={toggleQuestionExpand}
-                              />
-                            )}
-                          </Box>
-                        )}
-
-                        {isEditable && (
-                          <Button
-                            startIcon={<Add />}
-                            onClick={(e) => {
-                              const rect =
-                                e.currentTarget.getBoundingClientRect();
-                              setMenuAnchor({
-                                position: {
-                                  top: rect.bottom + 6,
-                                  left: rect.left,
-                                },
-                                phanId,
-                              });
-                            }}
-                            sx={{
-                              alignSelf: "flex-start",
-                              textTransform: "none",
-                              fontWeight: 700,
-                              color: MAU.chinh,
-                              border: `1px solid ${MAU.chinh}`,
-                              borderRadius: "10px",
-                              px: 2,
-                              mt: 1,
-                              bgcolor: "#fff",
-                              "&:hover": { bgcolor: `${MAU.chinh}0F` },
-                            }}
-                          >
-                            Mục trong chương trình giảng dạy
-                          </Button>
-                        )}
-                      </Box>
-
-                      {/* Form chỉnh sửa phần */}
-                      {isEditingPhan && isEditable && (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            p: 2,
-                            border: "1px solid #EDEFF3",
-                            borderRadius: "10px",
-                            bgcolor: "#fff",
+                    {/* FORM TẠO QUIZ */}
+                    {quizCreateForm?.phanId === phanId && isEditable && (
+                      <Box sx={{ mt: 1 }}>
+                        <QuizCreateForm
+                          data={{
+                            tenBaiKiemTra: quizCreateForm.tenBaiKiemTra || "",
+                            moTa: quizCreateForm.moTa || "",
                           }}
-                        >
-                          <Typography sx={{ fontWeight: 700, mb: 1 }}>
-                            Chỉnh sửa phần
-                          </Typography>
-                          <TextField
-                            label="Nhập tiêu đề"
-                            value={phanForm.tenPhan}
-                            onChange={(e) =>
-                              setPhanForm({
-                                ...phanForm,
-                                tenPhan: e.target.value,
-                              })
-                            }
-                            fullWidth
-                            sx={{ mb: 2 }}
-                          />
-                          <TextField
-                            label="Sau khi hoàn thành phần này, sinh viên sẽ có thể làm được những gì?"
-                            value={phanForm.mieuTa}
-                            onChange={(e) =>
-                              setPhanForm({
-                                ...phanForm,
-                                mieuTa: e.target.value,
-                              })
-                            }
-                            fullWidth
-                            multiline
-                            rows={2}
-                            sx={{ mb: 2 }}
-                          />
-                          <Box
-                            sx={{
-                              display: "flex",
-                              gap: 1,
-                              justifyContent: "flex-end",
+                          onDataChange={(field, value) =>
+                            setQuizCreateForm((prev) =>
+                              prev ? { ...prev, [field]: value } : null,
+                            )
+                          }
+                          onCancel={() => {
+                            setQuizCreateForm(null);
+                          }}
+                          onSubmit={handleCreateQuiz}
+                          loading={loading}
+                        />
+                      </Box>
+                    )}
+
+                    {/* FORM THÊM BÀI GIẢNG */}
+                    {addForm?.phanId === phanId &&
+                      addForm.type === "BaiGiang" &&
+                      isEditable && (
+                        <Box sx={{ mt: 1 }}>
+                          <LectureCreateForm
+                            data={{
+                              title: addForm.title || "",
+                              file: addForm.file || null,
+                              isFree: addForm.isFree || false,
                             }}
-                          >
-                            <Button
-                              onClick={() => setPhanForm(null)}
-                              sx={{ textTransform: "none", color: "#8A93A3" }}
-                            >
-                              Hủy bỏ
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={submitPhanForm}
-                              disabled={loading}
-                              sx={{
-                                bgcolor: MAU.chinh,
-                                textTransform: "none",
-                                fontWeight: 700,
-                                "&:hover": { bgcolor: MAU.chinhDam },
-                              }}
-                            >
-                              Cập nhật
-                            </Button>
-                          </Box>
+                            onDataChange={(field, value) =>
+                              setAddForm((prev) =>
+                                prev ? { ...prev, [field]: value } : null,
+                              )
+                            }
+                            onSelectFile={(file) =>
+                              setAddForm((prev) =>
+                                prev ? { ...prev, file } : null,
+                              )
+                            }
+                            onCancel={() => {
+                              setAddForm(null);
+                            }}
+                            loading={loading}
+                            onSubmit={handleCreateBaiGiang}
+                          />
                         </Box>
                       )}
-                    </Box>
-                  </SortableItem>
+
+                    {/* Nút thêm mục */}
+                    {isEditable && !hasAddForm && (
+                      <Button
+                        {...noPropagation}
+                        startIcon={<Add />}
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setMenuAnchor({
+                            position: {
+                              top: rect.bottom + 6,
+                              left: rect.left,
+                            },
+                            phanId,
+                          });
+                        }}
+                        sx={{
+                          alignSelf: "flex-start",
+                          textTransform: "none",
+                          fontWeight: 700,
+                          color: MAU.chinh,
+                          border: `1px solid ${MAU.chinh}`,
+                          borderRadius: "10px",
+                          px: 2,
+                          mt: 1,
+                          bgcolor: "#fff",
+                          "&:hover": { bgcolor: `${MAU.chinh}0F` },
+                        }}
+                      >
+                        Thêm mục
+                      </Button>
+                    )}
+
+                    {/* Indicator khi đang thêm */}
+                    {isEditable && hasAddForm && (
+                      <Box
+                        sx={{
+                          mt: 1.5,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          px: 2,
+                          py: 1,
+                          bgcolor: `${MAU.chinh}0A`,
+                          borderRadius: "10px",
+                          border: `1px solid ${MAU.chinh}33`,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            bgcolor: MAU.chinh,
+                            animation: "pulse 1.5s ease-in-out infinite",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: 13,
+                            color: "#4B5563",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {quizCreateForm?.phanId === phanId
+                            ? "Đang thêm bài kiểm tra mới vào phần này..."
+                            : "Đang thêm bài giảng mới vào phần này..."}
+                        </Typography>
+                      </Box>
+                    )}
+                  </SectionItem>
                 );
               })}
             </Box>
@@ -3788,7 +4810,8 @@ export default function CurriculumContent() {
               Thêm phần mới
             </Typography>
             <TextField
-              label="Nhập tiêu đề"
+              {...noPropagation}
+              label="Tiêu đề phần"
               value={phanForm.tenPhan}
               onChange={(e) =>
                 setPhanForm({ ...phanForm, tenPhan: e.target.value })
@@ -3797,6 +4820,7 @@ export default function CurriculumContent() {
               sx={{ mb: 2 }}
             />
             <TextField
+              {...noPropagation}
               label="Sau khi hoàn thành phần này, sinh viên sẽ có thể làm được những gì?"
               value={phanForm.mieuTa}
               onChange={(e) =>
@@ -3809,12 +4833,14 @@ export default function CurriculumContent() {
             />
             <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
               <Button
+                {...noPropagation}
                 onClick={() => setPhanForm(null)}
                 sx={{ textTransform: "none", color: "#8A93A3" }}
               >
                 Hủy bỏ
               </Button>
               <Button
+                {...noPropagation}
                 variant="contained"
                 onClick={submitPhanForm}
                 disabled={loading}
@@ -3831,6 +4857,7 @@ export default function CurriculumContent() {
           </Box>
         ) : (
           <Button
+            {...noPropagation}
             startIcon={<Add />}
             onClick={moThemPhan}
             disabled={loading || !isEditable}
@@ -3846,7 +4873,7 @@ export default function CurriculumContent() {
               "&:hover": { bgcolor: `${MAU.chinh}0F` },
             }}
           >
-            Phần
+            Thêm phần
           </Button>
         )}
 
@@ -3890,6 +4917,7 @@ export default function CurriculumContent() {
               {nhom.options.map((tuyChon) => (
                 <MenuItem
                   key={tuyChon.title}
+                  {...noPropagation}
                   onClick={() => chonTuyChonThemMuc(tuyChon)}
                   disabled={tuyChon.disabled || !isEditable}
                   sx={{
@@ -4022,6 +5050,7 @@ export default function CurriculumContent() {
           </DialogContent>
           <DialogActions>
             <Button
+              {...noPropagation}
               onClick={() => {
                 if (docPopup.url) {
                   const link = document.createElement("a");
@@ -4039,6 +5068,7 @@ export default function CurriculumContent() {
               Tải xuống
             </Button>
             <Button
+              {...noPropagation}
               onClick={() => setDocPopup({ ...docPopup, open: false })}
               sx={{ textTransform: "none", fontWeight: 600 }}
             >
@@ -4051,38 +5081,28 @@ export default function CurriculumContent() {
         <Dialog
           open={deleteDialog.open}
           onClose={() => setDeleteDialog({ open: false, onConfirm: () => {} })}
-          aria-labelledby="delete-dialog-title"
-          aria-describedby="delete-dialog-description"
         >
-          <DialogTitle
-            id="delete-dialog-title"
-            sx={{ fontWeight: 700, color: MAU.chuDen }}
-          >
-            Vui lòng xác nhận
+          <DialogTitle sx={{ fontWeight: 700, color: MAU.chuDen }}>
+            Xác nhận xóa
           </DialogTitle>
           <DialogContent>
-            <DialogContentText
-              id="delete-dialog-description"
-              sx={{ color: MAU.chuXam }}
-            >
-              Bạn sắp xóa một mục trong chương trình giảng dạy. Bạn có chắc chắn
-              muốn xóa?
+            <DialogContentText sx={{ color: MAU.chuXam }}>
+              Bạn có chắc chắn muốn xóa mục này? Hành động này không thể hoàn
+              tác.
             </DialogContentText>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button
+              {...noPropagation}
               onClick={() =>
                 setDeleteDialog({ open: false, onConfirm: () => {} })
               }
-              sx={{
-                textTransform: "none",
-                fontWeight: 700,
-                color: MAU.chuXam,
-              }}
+              sx={{ textTransform: "none", fontWeight: 700, color: MAU.chuXam }}
             >
               Hủy bỏ
             </Button>
             <Button
+              {...noPropagation}
               onClick={() => deleteDialog.onConfirm()}
               variant="contained"
               sx={{
@@ -4093,7 +5113,7 @@ export default function CurriculumContent() {
                 "&:hover": { bgcolor: MAU.chinhDam },
               }}
             >
-              Xóa bỏ
+              Xóa
             </Button>
           </DialogActions>
         </Dialog>

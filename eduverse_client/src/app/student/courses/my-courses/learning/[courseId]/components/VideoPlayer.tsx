@@ -1,18 +1,25 @@
-// src/app/student/courses/my-courses/learning/[courseId]/components/VideoPlayer.tsx
-// (hoặc src/app/khoa-hoc/components/VideoPlayer.tsx)
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// src/app/khoa-hoc/components/VideoPlayer.tsx
 
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Box, Typography, Button, alpha } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Tooltip,
+  alpha,
+} from "@mui/material";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
+import { OpenInFull as OpenInFullIcon } from "@mui/icons-material";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 import "@videojs/http-streaming";
 import { QualityMenu } from "./QualityMenu";
 import { QualityLevel } from "../types";
 import { getOptimalHlsUrl, buildCloudinaryHlsUrl } from "../utils/cloudinary";
-import { VIDEO_JS_STYLES } from "../utils/videoHelpers";
 import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
 
 const PRIMARY_RED = "#8B1313";
@@ -25,9 +32,14 @@ interface VideoPlayerProps {
   isCompleted?: boolean;
   onTimeUpdate: (t: number) => void;
   onEnded: () => void;
+  playerId?: string;
+  autoPlay?: boolean;
+  mini?: boolean;
+  onExpandClick?: () => void;
+  /** Gọi khi component bị unmount để lưu thời gian cuối */
+  onUnmount?: (time: number) => void;
 }
 
-// Interface để truy cập vhs từ tech
 interface TechWithVhs {
   vhs?: {
     stats?: {
@@ -42,13 +54,20 @@ export const VideoPlayer = ({
   isCompleted,
   onTimeUpdate,
   onEnded,
+  playerId = "main",
+  autoPlay = true,
+  mini = false,
+  onExpandClick,
+  onUnmount,
 }: VideoPlayerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const initialTimeSetRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isMountedRef = useRef(true);
+  const currentTimeRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(false);
 
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,27 +89,16 @@ export const VideoPlayer = ({
 
   const activeUrlRef = useRef<string>(url);
 
-  // Xác định loại video dựa trên extension
   const getVideoType = useMemo(() => {
     if (url.includes(".m3u8")) return "application/x-mpegURL";
     if (url.includes(".ts")) return "video/MP2T";
     if (url.includes(".mp4")) return "video/mp4";
-    return "video/mp4"; // fallback
+    return "video/mp4";
   }, [url]);
 
   const isHls = useMemo(() => {
     return url.includes(".m3u8");
   }, [url]);
-
-  // Inject styles
-  useEffect(() => {
-    if (!document.getElementById("vjs-custom-styles")) {
-      const s = document.createElement("style");
-      s.id = "vjs-custom-styles";
-      s.textContent = VIDEO_JS_STYLES(PRIMARY_RED, PRIMARY_RED_DARK);
-      document.head.appendChild(s);
-    }
-  }, []);
 
   const clearAllTimers = useCallback(() => {
     if (timeoutRef.current) {
@@ -106,19 +114,24 @@ export const VideoPlayer = ({
   const startLoadTimeout = useCallback(() => {
     clearAllTimers();
     setLoadElapsed(0);
-    intervalRef.current = setInterval(() => setLoadElapsed((e) => e + 1), 1000);
+    intervalRef.current = setInterval(() => {
+      if (isMountedRef.current) {
+        setLoadElapsed((e) => e + 1);
+      }
+    }, 1000);
     timeoutRef.current = setTimeout(() => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      setLoadTimedOut(true);
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setLoadTimedOut(true);
+        setIsLoading(false);
+      }
     }, LOAD_TIMEOUT_MS);
   }, [clearAllTimers]);
 
   const applyVhsQuality = useCallback((q: number | "auto") => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ql = (playerRef.current as any)?.qualityLevels?.();
     if (!ql) return;
     if (q === "auto") {
@@ -145,18 +158,21 @@ export const VideoPlayer = ({
         p.load();
         p.one("loadedmetadata", () => {
           if (currentTime > 5) p.currentTime(currentTime);
-          p.play()?.catch(() => {});
+          if (autoPlay) {
+            p.play()?.catch(() => {});
+          }
         });
       }
     },
-    [cloudinaryInfo],
+    [cloudinaryInfo, autoPlay],
   );
 
   // Main video setup
   useEffect(() => {
+    isMountedRef.current = true;
+
     if (!containerRef.current) return;
 
-    // Xác định URL HLS tối ưu (nếu là Cloudinary) hoặc giữ nguyên
     const { masterUrl, cloudinaryInfo: info } = getOptimalHlsUrl(url);
     const finalUrl = masterUrl || url;
     const isHlsUrl = finalUrl.includes(".m3u8");
@@ -173,18 +189,22 @@ export const VideoPlayer = ({
     setCurrentBandwidthKbps(null);
     startLoadTimeout();
 
+    // Tạo video element
     const videoEl = document.createElement("video");
-    videoEl.className = "video-js vjs-big-play-centered";
+    videoEl.className = "video-js vjs-big-play-centered vjs-16-9";
+    videoEl.setAttribute("playsinline", "true");
     containerRef.current.appendChild(videoEl);
 
-    // Xác định type source
     const sourceType = isHlsUrl ? "application/x-mpegURL" : getVideoType;
 
+    // Cấu hình player
     const player = videojs(videoEl, {
       controls: true,
-      autoplay: true,
+      autoplay: autoPlay,
       preload: "auto",
       fluid: true,
+      aspectRatio: "16:9",
+      liveui: false,
       playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
       html5: {
         vhs: isHlsUrl
@@ -198,7 +218,7 @@ export const VideoPlayer = ({
               handlePartialData: true,
               bandwidth: 4_000_000,
             }
-          : undefined, // Không dùng VHS cho video thường
+          : undefined,
         nativeVideoTracks: false,
         nativeAudioTracks: false,
         nativeTextTracks: false,
@@ -214,6 +234,8 @@ export const VideoPlayer = ({
         captionsButton: false,
         audioTrackButton: false,
         descriptionsButton: false,
+        liveDisplay: false,
+        seekToLive: false,
       },
       sources: [{ src: finalUrl, type: sourceType }],
     });
@@ -223,14 +245,18 @@ export const VideoPlayer = ({
 
     const markReady = () => {
       clearAllTimers();
-      setIsLoading(false);
-      setLoadTimedOut(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setLoadTimedOut(false);
+      }
     };
 
     player.on("canplay", markReady);
 
     player.on("loadedmetadata", () => {
       markReady();
+
+      // Set saved time
       if (
         !initialTimeSetRef.current &&
         !isCompleted &&
@@ -240,11 +266,12 @@ export const VideoPlayer = ({
         player.currentTime(savedTime);
         initialTimeSetRef.current = true;
       }
-      player.play()?.catch(() => {});
 
-      // Chỉ lấy quality levels nếu là HLS
+      if (autoPlay) {
+        player.play()?.catch(() => {});
+      }
+
       if (isHlsUrl) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const ql = (player as any).qualityLevels?.();
         if (ql) {
           const buildLevels = () => {
@@ -272,7 +299,9 @@ export const VideoPlayer = ({
               seen.add(l.label);
               return true;
             });
-            if (unique.length > 0) setQualityLevels(unique);
+            if (unique.length > 0 && isMountedRef.current) {
+              setQualityLevels(unique);
+            }
           };
           buildLevels();
           ql.on("addqualitylevel", buildLevels);
@@ -282,20 +311,27 @@ export const VideoPlayer = ({
     });
 
     player.on("playing", () => {
+      isPlayingRef.current = true;
       clearAllTimers();
-      setIsLoading(false);
-      setLoadTimedOut(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setLoadTimedOut(false);
+      }
+    });
+
+    player.on("pause", () => {
+      isPlayingRef.current = false;
     });
 
     let lastSent = 0;
     player.on("timeupdate", () => {
       const ct = player.currentTime() ?? 0;
-      // Lấy bandwidth nếu là HLS
+      currentTimeRef.current = ct;
+
       if (isHlsUrl) {
         const tech = player.tech(true);
-        // Sử dụng interface đã định nghĩa để tránh any
         const vhs = (tech as unknown as TechWithVhs)?.vhs;
-        if (vhs?.stats?.bandwidth) {
+        if (vhs?.stats?.bandwidth && isMountedRef.current) {
           setCurrentBandwidthKbps(Math.round(vhs.stats.bandwidth / 1000));
         }
       }
@@ -305,44 +341,90 @@ export const VideoPlayer = ({
       }
     });
 
-    player.on("ended", () => onEnded());
+    player.on("ended", () => {
+      onEnded();
+    });
 
     player.on("error", () => {
-      // Fallback: nếu đang dùng HLS, thử phát file gốc (nếu khác)
       const currentSrc = player.currentSrc?.() ?? "";
       if (isHlsUrl && currentSrc.includes(".m3u8") && info) {
-        console.warn("[VideoPlayer] HLS failed, falling back to direct file");
-        const fallbackUrl = url; // URL gốc
+        console.warn(
+          `[VideoPlayer:${playerId}] HLS failed, falling back to direct file`,
+        );
+        const fallbackUrl = url;
         const fallbackType = url.includes(".ts") ? "video/MP2T" : "video/mp4";
         player.src({ src: fallbackUrl, type: fallbackType });
         player.load();
         player.one("error", () => {
           clearAllTimers();
-          setIsLoading(false);
-          setHasError(true);
+          if (isMountedRef.current) {
+            setIsLoading(false);
+            setHasError(true);
+          }
         });
       } else {
         clearAllTimers();
-        setIsLoading(false);
-        setHasError(true);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          setHasError(true);
+        }
       }
     });
 
+    // Xử lý resize khi mini thay đổi
+    const handleResize = () => {
+      if (player && !player.isDisposed?.()) {
+        player.trigger("resize");
+      }
+    };
+
+    // Cleanup
     return () => {
+      isMountedRef.current = false;
       clearAllTimers();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+      // Lưu thời gian cuối trước khi unmount
+      if (onUnmount) {
+        onUnmount(currentTimeRef.current);
+      }
+
       const p: any = playerRef.current;
       playerRef.current = null;
       try {
-        if (p && typeof p.isDisposed === "function" && !p.isDisposed())
+        if (p && typeof p.isDisposed === "function" && !p.isDisposed()) {
           p.dispose();
+        }
       } catch (_) {}
       const container = containerRef.current;
-      if (container && videoEl.parentNode === container)
+      if (container && videoEl.parentNode === container) {
         container.removeChild(videoEl);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url]);
+  }, [url, playerId, autoPlay]);
+
+  // Xử lý khi mini thay đổi - chỉ trigger resize, không dispose
+  useEffect(() => {
+    const player = playerRef.current;
+    if (player && !player.isDisposed?.()) {
+      // Trigger resize để video.js cập nhật layout
+      setTimeout(() => {
+        player.trigger("resize");
+      }, 50);
+    }
+  }, [mini]);
+
+  // Xử lý autoPlay khi mini thay đổi
+  useEffect(() => {
+    const player = playerRef.current;
+    if (player && !player.isDisposed?.() && autoPlay) {
+      // Nếu đang ở mini và video đang play, giữ nguyên
+      // Nếu chuyển từ mini sang full và đang pause, có thể resume
+      if (!mini && !isPlayingRef.current) {
+        player.play()?.catch(() => {});
+      }
+    }
+  }, [mini, autoPlay]);
 
   const handleRetry = useCallback(() => {
     setHasError(false);
@@ -384,27 +466,32 @@ export const VideoPlayer = ({
             justifyContent: "center",
             bgcolor: "rgba(8,8,8,0.93)",
             gap: 1.5,
+            p: mini ? 1 : 0,
           }}
         >
           <VideoLibraryIcon
-            sx={{ fontSize: 56, color: PRIMARY_RED, mb: 0.5 }}
+            sx={{ fontSize: mini ? 28 : 56, color: PRIMARY_RED, mb: 0.5 }}
           />
-          <Typography variant="h6" sx={{ fontWeight: 700, color: "#fff" }}>
-            {loadTimedOut ? "Tải video quá lâu" : "Không thể phát video"}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              textAlign: "center",
-              px: 4,
-              maxWidth: 380,
-              color: "rgba(255,255,255,0.65)",
-            }}
-          >
-            {loadTimedOut
-              ? "Kết nối chậm hoặc nguồn video không phản hồi. Vui lòng kiểm tra đường truyền và thử lại."
-              : "Có lỗi xảy ra khi phát video. Vui lòng thử lại."}
-          </Typography>
+          {!mini && (
+            <>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: "#fff" }}>
+                {loadTimedOut ? "Tải video quá lâu" : "Không thể phát video"}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  textAlign: "center",
+                  px: 4,
+                  maxWidth: 380,
+                  color: "rgba(255,255,255,0.65)",
+                }}
+              >
+                {loadTimedOut
+                  ? "Kết nối chậm hoặc nguồn video không phản hồi. Vui lòng kiểm tra đường truyền và thử lại."
+                  : "Có lỗi xảy ra khi phát video. Vui lòng thử lại."}
+              </Typography>
+            </>
+          )}
           <Button
             variant="contained"
             size="small"
@@ -433,44 +520,51 @@ export const VideoPlayer = ({
             alignItems: "center",
             justifyContent: "center",
             bgcolor: "rgba(8,8,8,0.80)",
-            gap: 2,
+            gap: mini ? 1 : 2,
             pointerEvents: "none",
           }}
         >
           <Box
             sx={{
-              width: 52,
-              height: 52,
+              width: mini ? 28 : 52,
+              height: mini ? 28 : 52,
               borderRadius: "50%",
-              border: `4px solid ${alpha(PRIMARY_RED, 0.25)}`,
+              border: `${mini ? 3 : 4}px solid ${alpha(PRIMARY_RED, 0.25)}`,
               borderTopColor: PRIMARY_RED,
               animation: "vjs-spin 0.85s linear infinite",
               "@keyframes vjs-spin": { to: { transform: "rotate(360deg)" } },
             }}
           />
-          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.85)" }}>
-            Đang tải bài giảng…
-          </Typography>
-          <Box
-            sx={{
-              width: 180,
-              height: 3,
-              borderRadius: 2,
-              bgcolor: "rgba(255,255,255,0.15)",
-              overflow: "hidden",
-            }}
-          >
+          {!mini && (
+            <Typography
+              variant="body2"
+              sx={{ color: "rgba(255,255,255,0.85)" }}
+            >
+              Đang tải bài giảng…
+            </Typography>
+          )}
+          {!mini && (
             <Box
               sx={{
-                height: "100%",
+                width: 180,
+                height: 3,
                 borderRadius: 2,
-                bgcolor: PRIMARY_RED,
-                width: `${pct}%`,
-                transition: "width 1s linear",
+                bgcolor: "rgba(255,255,255,0.15)",
+                overflow: "hidden",
               }}
-            />
-          </Box>
-          {loadElapsed >= 5 && (
+            >
+              <Box
+                sx={{
+                  height: "100%",
+                  borderRadius: 2,
+                  bgcolor: PRIMARY_RED,
+                  width: `${pct}%`,
+                  transition: "width 1s linear",
+                }}
+              />
+            </Box>
+          )}
+          {!mini && loadElapsed >= 5 && (
             <Typography
               variant="caption"
               sx={{ color: "rgba(255,255,255,0.45)" }}
@@ -485,26 +579,73 @@ export const VideoPlayer = ({
   };
 
   return (
-    <Box sx={{ width: "100%", bgcolor: "#000", position: "relative" }}>
-      {renderOverlay()}
-      <Box
-        ref={containerRef}
-        sx={{
-          width: "100%",
-          visibility:
-            isLoading || hasError || loadTimedOut ? "hidden" : "visible",
-        }}
-      />
-      {!isLoading && !hasError && !loadTimedOut && isHls && (
-        <QualityMenu
-          qualityLevels={qualityLevels}
-          selectedQuality={selectedQuality}
-          currentBandwidthKbps={currentBandwidthKbps}
-          onSelectQuality={applyVhsQuality}
-          cloudinaryInfo={cloudinaryInfo}
-          onSelectCloudinaryProfile={applyCloudinaryProfile}
-          selectedProfile={selectedProfile}
+    <Box
+      sx={
+        mini
+          ? {
+              position: "fixed",
+              bottom: 24,
+              right: 24,
+              width: 360,
+              zIndex: 1300,
+              borderRadius: 2,
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+              border: `2px solid ${PRIMARY_RED}`,
+              bgcolor: "#000",
+              "@media (max-width: 600px)": {
+                width: 280,
+                bottom: 16,
+                right: 16,
+              },
+            }
+          : {
+              width: "100%",
+              bgcolor: "#000",
+              position: "relative",
+            }
+      }
+    >
+      <Box sx={{ position: "relative" }}>
+        {renderOverlay()}
+        <Box
+          ref={containerRef}
+          sx={{
+            width: "100%",
+            visibility:
+              isLoading || hasError || loadTimedOut ? "hidden" : "visible",
+          }}
         />
+        {!isLoading && !hasError && !loadTimedOut && isHls && !mini && (
+          <QualityMenu
+            qualityLevels={qualityLevels}
+            selectedQuality={selectedQuality}
+            currentBandwidthKbps={currentBandwidthKbps}
+            onSelectQuality={applyVhsQuality}
+            cloudinaryInfo={cloudinaryInfo}
+            onSelectCloudinaryProfile={applyCloudinaryProfile}
+            selectedProfile={selectedProfile}
+          />
+        )}
+      </Box>
+      {mini && onExpandClick && (
+        <Tooltip title="Mở rộng">
+          <IconButton
+            size="small"
+            onClick={onExpandClick}
+            sx={{
+              position: "absolute",
+              top: 6,
+              right: 6,
+              zIndex: 21,
+              bgcolor: "rgba(0,0,0,0.6)",
+              color: "#fff",
+              "&:hover": { bgcolor: PRIMARY_RED },
+            }}
+          >
+            <OpenInFullIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       )}
     </Box>
   );
