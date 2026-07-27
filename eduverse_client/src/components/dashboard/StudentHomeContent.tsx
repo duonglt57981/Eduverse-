@@ -130,6 +130,7 @@ interface DashboardData {
   skillsCourses?: KhoaHocDto[];
   premiumSelection?: {
     title?: string;
+    hinhAnhKhoaHoc?: string;
     description?: string;
     instructor?: string;
     rating?: number;
