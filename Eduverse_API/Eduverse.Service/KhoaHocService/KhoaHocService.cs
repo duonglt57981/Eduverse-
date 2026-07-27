@@ -120,15 +120,7 @@ namespace Eduverse.Service.KhoaHocService
         public async Task<PagedList<KhoaHocDto>> GetList(KhoaHocSearch search)
         {
             search ??= new KhoaHocSearch();
-            try
-            {
-                return await _elasticsearchService.SearchCoursesAsync(search);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Elasticsearch failed: {ex.Message}. Falling back to database.");
-                return await GetListFromDatabaseAsync(search);
-            }
+            return await GetListFromDatabaseAsync(search);
         }
         #endregion
 
@@ -164,8 +156,9 @@ namespace Eduverse.Service.KhoaHocService
 
         private async Task<PagedList<KhoaHocDto>> GetListFromDatabaseAsync(KhoaHocSearch search)
         {
-            var query = GetAll()
-                .Where(x => x.TrangThaiPheDuyet == "DaDuyet" && x.TrangThai == "HoatDong" && x.IsBanHienTai);
+            // The public catalog intentionally shows every course row stored in the database,
+            // including drafts, inactive courses, old versions, and soft-deleted records.
+            var query = GetAll();
 
             // Keyword Search
             if (!string.IsNullOrWhiteSpace(search.Keyword))
@@ -186,6 +179,15 @@ namespace Eduverse.Service.KhoaHocService
             if (!string.IsNullOrWhiteSpace(search.LoaiKhoaHoc))
             {
                 query = query.Where(x => x.LoaiKhoaHoc == search.LoaiKhoaHoc);
+            }
+
+            if (search.DanhMucId.HasValue)
+            {
+                var danhMucId = search.DanhMucId.Value;
+                var courseIds = _eduverseContext.danhMuc_KhoaHocs
+                    .Where(x => x.IdDanhMuc == danhMucId && !x.IsDeleted)
+                    .Select(x => x.IdKhoaHoc);
+                query = query.Where(x => courseIds.Contains(x.Id));
             }
 
             // Level filter
@@ -280,8 +282,8 @@ namespace Eduverse.Service.KhoaHocService
 
             var query =
                 from dk in _dangKyKhoaHocRepository.GetQueryable().AsNoTracking()
-                join kh in GetAll().AsNoTracking()
-                    on dk.IdKhoaHoc equals kh.Id
+                join kh in GetQueryable()
+                   on dk.IdKhoaHoc equals kh.Id
                 where dk.IdNguoiDangKi == userId
                 && (kh.IsDeleted == false)
                 && (kh.TrangThai == "HoatDong" || kh.TrangThai == "NgungHoatDong")

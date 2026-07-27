@@ -11,5 +11,7 @@ namespace Eduverse.Service.DangKyKhoaHocService
     public interface IDangKyKhoaHocService : IService<Model.Entities.DangKyKhoaHoc>
     {
         Task<DangKyKhoaHocMienPhiDto> DangKyKhoaHocMienPhi(Guid idKhoaHoc);
+        Task<Model.Entities.DangKyKhoaHoc?> GetByKhoaHocAndUser(Guid idKhoaHoc, Guid userId); 
     }
 }
+

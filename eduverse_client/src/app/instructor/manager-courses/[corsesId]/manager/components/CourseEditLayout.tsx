@@ -70,7 +70,6 @@ export default function CourseEditLayout({
   onNavigateSidebar,
   onGuiPheDuyet,
   onDiChuyenDenTuValidate,
-  onRefreshData,
 }: Props) {
   const [anchorXemTruoc, setAnchorXemTruoc] = useState<null | HTMLElement>(
     null,
@@ -78,6 +77,24 @@ export default function CourseEditLayout({
   const trangThaiHienThi = thongTinTrangThai(trangThai);
 
   const isReadOnly = trangThai !== "DangSua";
+
+  // Xác định màu sắc nhãn trạng thái tinh tế hơn
+  const getStatusChipStyles = (status: TrangThaiKhoaHoc) => {
+    switch (status) {
+      case "DaDuyet":
+        return { bgcolor: "#DCFCE7", color: "#16A34A" }; // Green
+      case "TuChoi":
+        return { bgcolor: "#FEE2E2", color: "#DC2626" }; // Red
+      case "ChoDuyet":
+        return { bgcolor: "#FEF3C7", color: "#D97706" }; // Amber
+      case "DangDuyet":
+        return { bgcolor: "#EFF6FF", color: "#2563EB" }; // Blue
+      default:
+        return { bgcolor: "#F3F4F6", color: "#4B5563" }; // Gray for DangSua
+    }
+  };
+
+  const statusStyles = getStatusChipStyles(trangThai);
 
   if (loading) {
     return (
@@ -87,6 +104,7 @@ export default function CourseEditLayout({
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
+          bgcolor: "#F8F9FB",
         }}
       >
         <CircularProgress sx={{ color: MAU.chinh }} />
@@ -102,79 +120,104 @@ export default function CourseEditLayout({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            px: 3,
+            px: { xs: 2, sm: 4 },
             py: 1.5,
             gap: 2,
             flexWrap: "wrap",
           }}
         >
+          {/* Left section: Back button & Title & Status */}
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 2,
+              gap: { xs: 1.5, sm: 2 },
               minWidth: 0,
               flex: "1 1 auto",
             }}
           >
+            {/* Back Button */}
             <Box
               onClick={onBack}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") onBack();
+              }}
               sx={{
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
                 cursor: "pointer",
-                color: "#ddd",
-                "&:hover": { color: "#fff" },
+                color: "#4B5563",
+                py: 0.8,
+                px: 1.2,
+                borderRadius: "8px",
+                transition: "all 0.2s ease",
                 flexShrink: 0,
+                "&:hover": {
+                  bgcolor: "#F3F4F6",
+                  color: "#111827",
+                },
+                "&:focus-visible": {
+                  outline: `2px solid ${MAU.chinh}`,
+                },
               }}
             >
-              <ArrowBackIcon sx={{ fontSize: 14 }} />
-              <Typography sx={{ fontSize: 14, whiteSpace: "nowrap" }}>
+              <ArrowBackIcon sx={{ fontSize: 13 }} />
+              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
                 Quay lại
               </Typography>
             </Box>
 
+            <Box sx={{ width: "1px", height: 20, bgcolor: "#E5E7EB", flexShrink: 0 }} />
+
+            {/* Course Title */}
             <Typography
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: 14, sm: 15, md: 17 },
+                fontSize: { xs: 15, sm: 16, md: 17 },
+                color: "#111827",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                color: "#fff",
-                flex: "1 1 auto",
                 minWidth: 80,
+                maxWidth: { xs: 180, sm: 260, md: 380, lg: 500 },
               }}
               title={tenKhoaHoc}
             >
               {tenKhoaHoc || "Chưa đặt tên"}
             </Typography>
 
+            {/* Status Chip */}
             <Chip
               label={trangThaiHienThi.nhan}
               size="small"
               sx={{
                 fontWeight: 700,
                 fontSize: 11,
-                bgcolor: "rgba(255,255,255,0.14)",
-                color: "#fff",
+                bgcolor: statusStyles.bgcolor,
+                color: statusStyles.color,
+                borderRadius: "6px",
+                px: 0.5,
                 flexShrink: 0,
               }}
             />
 
+            {/* Duration text */}
             <Typography
               sx={{
                 fontSize: 13,
-                color: "#aaa",
+                color: "#6B7280",
                 display: { xs: "none", md: "block" },
                 flexShrink: 0,
               }}
             >
-              {thoiLuongDaTai}
+              | {thoiLuongDaTai}
             </Typography>
           </Box>
 
+          {/* Right section: Action Buttons */}
           <Box
             sx={{
               display: "flex",
@@ -183,16 +226,28 @@ export default function CourseEditLayout({
               flexShrink: 0,
             }}
           >
+            {/* Preview Button */}
             <Button
               onClick={(e) => setAnchorXemTruoc(e.currentTarget)}
+              variant="outlined"
               endIcon={<KeyboardArrowDownIcon />}
               sx={{
-                color: "#fff",
+                color: "#4B5563",
+                borderColor: "#D1D5DB",
                 textTransform: "none",
-                fontWeight: 700,
-                border: "1px solid rgba(255,255,255,0.4)",
+                fontWeight: 600,
                 borderRadius: "8px",
                 px: 2,
+                py: 0.8,
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: "#F3F4F6",
+                  borderColor: "#9CA3AF",
+                  color: "#111827",
+                },
+                "&:focus-visible": {
+                  outline: `2px solid ${MAU.chinh}`,
+                },
               }}
             >
               Xem trước
@@ -201,15 +256,32 @@ export default function CourseEditLayout({
               anchorEl={anchorXemTruoc}
               open={Boolean(anchorXemTruoc)}
               onClose={() => setAnchorXemTruoc(null)}
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                    border: "1px solid #E5E7EB",
+                    mt: 0.5,
+                  },
+                },
+              }}
             >
-              <MenuItem onClick={() => setAnchorXemTruoc(null)}>
+              <MenuItem
+                onClick={() => setAnchorXemTruoc(null)}
+                sx={{ fontSize: 14, color: "#374151", py: 1 }}
+              >
                 Xem trang đích
               </MenuItem>
-              <MenuItem onClick={() => setAnchorXemTruoc(null)}>
+              <MenuItem
+                onClick={() => setAnchorXemTruoc(null)}
+                sx={{ fontSize: 14, color: "#374151", py: 1 }}
+              >
                 Xem chương trình giảng dạy
               </MenuItem>
             </Menu>
 
+            {/* Approval Action Component */}
             <CourseStatusAction
               trangThai={trangThai}
               thongTinKhoaHoc={thongTinKhoaHoc}
@@ -219,7 +291,21 @@ export default function CourseEditLayout({
               onDiChuyenDen={onDiChuyenDenTuValidate}
             />
 
-            <IconButton size="small" sx={{ color: "#ddd" }}>
+            {/* Settings button */}
+            <IconButton
+              size="small"
+              sx={{
+                color: "#4B5563",
+                p: 1,
+                borderRadius: "8px",
+                border: "1px solid #E5E7EB",
+                "&:hover": {
+                  bgcolor: "#F3F4F6",
+                  color: "#111827",
+                },
+              }}
+              aria-label="Cài đặt khóa học"
+            >
               <SettingsOutlinedIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -228,11 +314,14 @@ export default function CourseEditLayout({
 
       <Box sx={{ display: "flex", alignItems: "flex-start" }}>
         <Box
+          component="nav"
           sx={{
             width: 280,
             flexShrink: 0,
             px: 3,
             py: 4,
+            bgcolor: "#ffffff",
+            borderRight: "1px solid #E5E7EB",
             display: { xs: "none", md: "block" },
           }}
         >
@@ -242,15 +331,17 @@ export default function CourseEditLayout({
                 <Typography
                   sx={{
                     fontWeight: 700,
-                    fontSize: 14.5,
-                    mb: 1.5,
-                    color: MAU.chuDen,
+                    fontSize: 13,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    mb: 2,
+                    color: "#9CA3AF",
                   }}
                 >
                   {nhom.tieuDe}
                 </Typography>
                 <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}
+                  sx={{ display: "flex", flexDirection: "column", gap: 1 }}
                 >
                   {nhom.muc.map((m) => {
                     const dangChon = m.key === activeKey;
@@ -260,20 +351,29 @@ export default function CourseEditLayout({
                         onClick={() => {
                           onNavigateSidebar(m.key);
                         }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") onNavigateSidebar(m.key);
+                        }}
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 1,
-                          py: 0.75,
-                          pl: dangChon ? 1.25 : 1.5,
+                          gap: 1.5,
+                          py: 1.2,
+                          pl: dangChon ? 1.5 : 2,
                           borderLeft: dangChon
                             ? `3px solid ${MAU.chinh}`
                             : "3px solid transparent",
                           cursor: "pointer",
-                          borderRadius: "4px",
-                          bgcolor: dangChon ? MAU.chinhNhat : "transparent",
+                          borderRadius: dangChon ? "0 8px 8px 0" : "8px",
+                          bgcolor: dangChon ? "#FFF1F2" : "transparent",
+                          transition: "all 0.2s ease",
                           "&:hover": {
-                            bgcolor: MAU.chinhNhat,
+                            bgcolor: dangChon ? "#FFF1F2" : "#F3F4F6",
+                          },
+                          "&:focus-visible": {
+                            outline: `2px solid ${MAU.chinh}`,
                           },
                         }}
                       >
@@ -283,14 +383,15 @@ export default function CourseEditLayout({
                           />
                         ) : (
                           <RadioButtonUncheckedIcon
-                            sx={{ fontSize: 18, color: "#ccc" }}
+                            sx={{ fontSize: 18, color: "#9CA3AF" }}
                           />
                         )}
                         <Typography
                           sx={{
-                            fontSize: 13.5,
+                            fontSize: 14,
                             fontWeight: dangChon ? 700 : 500,
-                            color: dangChon ? MAU.chuDen : "#444",
+                            color: dangChon ? MAU.chinh : "#374151",
+                            transition: "color 0.2s ease",
                           }}
                         >
                           {m.nhan}
@@ -308,18 +409,19 @@ export default function CourseEditLayout({
             <Box
               sx={{
                 mb: 3,
-                px: 2,
-                py: 1.25,
-                borderRadius: "10px",
-                bgcolor: "#FFF8E1",
-                border: "1px solid #FFE082",
+                px: 2.5,
+                py: 1.5,
+                borderRadius: "12px",
+                bgcolor: "#FFFBEB",
+                border: "1px solid #FDE68A",
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 1.2,
+                boxShadow: "0 2px 8px rgba(251,191,36,0.03)",
               }}
             >
               <Typography
-                sx={{ fontSize: 13.5, color: "#F57C00", fontWeight: 600 }}
+                sx={{ fontSize: 13.5, color: "#D97706", fontWeight: 600 }}
               >
                 {trangThai === "DaDuyet"
                   ? "✅ Khóa học đã được duyệt — bạn chỉ có thể xem nội dung."

@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   SearchRounded,
   FavoriteBorderOutlined,
@@ -42,17 +42,18 @@ import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 
-const RED = "#8B1313";
-const RED_DARK = "#6D0F0F";
-const RED_TINT = "#FBEFEF";
-const BORDER = "#ECE7E4";
-const INK = "#1F2937";
-const INK2 = "#6B7280";
+const RED = "#991B1B"; // Đỏ đô
+const RED_TINT = "#FEF2F2"; // Primary soft
+const BORDER = "#E5E7EB"; // Border light
+const INK = "#111827"; // Text title
+const INK2 = "#374151"; // Text body
 const HEADER_H = 74;
 
 export default function StudentHomeHeader() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const user = useSelector((state: any) => state.auth.user);
   const roles = useSelector((state: any) => state.auth.roles) || [];
@@ -193,6 +194,18 @@ export default function StudentHomeHeader() {
     router.push(path);
   };
 
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const keyword = searchQuery.trim();
+    const queryString = keyword
+      ? `?keyword=${encodeURIComponent(keyword)}`
+      : "";
+    router.push(`/student/explore${queryString}`);
+  };
+
+  const isExploreActive = pathname === "/student/explore";
+  const isMyCoursesActive = pathname === "/student/courses/my-courses";
+
   return (
     <Box
       component="header"
@@ -205,209 +218,239 @@ export default function StudentHomeHeader() {
         zIndex: 1200,
         bgcolor: "rgba(255,255,255,0.92)",
         backdropFilter: "saturate(180%) blur(12px)",
-        borderBottom: `1px solid rgba(0, 0, 0, 0.06)`,
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.015)",
+        borderBottom: `1px solid rgba(0, 0, 0, 0.08)`,
+        boxShadow: "0 2px 12px rgba(0, 0, 0, 0.01)",
       }}
     >
-      <Stack
-        direction="row"
+      <Box
         sx={{
           height: "100%",
           width: "100%",
-          px: { xs: 2, md: 4 },
-          alignItems: "center",
-          gap: { xs: 1.5, md: 2.5 },
+          maxWidth: "100%",
+          mx: "auto",
+          px: { xs: 2, md: 6 },
         }}
       >
-        {/* Logo */}
-        <Box
-          onClick={() => router.push("/student/dashboard")}
-          sx={{
-            width: { xs: 120, sm: 140, lg: 150 },
-            display: "flex",
-            alignItems: "center",
-            cursor: "pointer",
-            flexShrink: 0,
-            transition: "opacity 150ms ease",
-            "&:hover": { opacity: 0.85 },
-          }}
-        >
-          <Image
-            src="/auth/img/logo_nentrang.png"
-            alt="EduVerse"
-            width={150}
-            height={46}
-            style={{ width: "100%", height: "auto", display: "block" }}
-            priority
-          />
-        </Box>
-
-        {/* Khám phá */}
-        <Button
-          onClick={() => router.push("/student/explore")}
-          sx={{
-            display: { xs: "none", md: "inline-flex" },
-            textTransform: "none",
-            fontWeight: 600,
-            fontSize: 14.5,
-            color: "#374151",
-            borderRadius: "20px",
-            px: 2,
-            py: 0.6,
-            flexShrink: 0,
-            transition: "all 200ms ease",
-            "&:hover": { color: RED, bgcolor: "rgba(139,19,19,0.05)" },
-          }}
-        >
-          Khám phá
-        </Button>
-
-        {/* Search */}
-        <Box
-          sx={{
-            flex: 1,
-            maxWidth: 520,
-            display: "flex",
-            alignItems: "center",
-            gap: 1.25,
-            bgcolor: "#F8FAFC",
-            border: `1px solid rgba(0, 0, 0, 0.08)`,
-            borderRadius: "999px",
-            px: 2,
-            height: 44,
-            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-            "&:focus-within": {
-              bgcolor: "#fff",
-              borderColor: RED,
-              boxShadow: "0 4px 20px rgba(139,19,19,0.08), 0 0 0 3px rgba(139,19,19,0.08)",
-            },
-          }}
-        >
-          <SearchRounded sx={{ fontSize: 20, color: "#94A3B8" }} />
-          <InputBase
-            placeholder="Tìm kiếm nội dung bất kỳ..."
-            sx={{ flex: 1, fontSize: 14, color: INK }}
-          />
-        </Box>
-
-        {/* Spacer to push right actions to the far right */}
-        <Box sx={{ flexGrow: 1 }} />
-
-        {/* Right actions */}
         <Stack
           direction="row"
-          sx={{ alignItems: "center", gap: 0.75, flexShrink: 0 }}
+          sx={{
+            height: "100%",
+            width: "100%",
+            alignItems: "center",
+            gap: { xs: 1.5, md: 2.5 },
+          }}
         >
-          <Button
-            onClick={() =>
-              router.push(
-                isInstructor
-                  ? "/instructor/dashboard"
-                  : "/student/become-instructor",
-              )
-            }
+          {/* Logo */}
+          <Box
+            onClick={() => router.push("/student/dashboard")}
             sx={{
-              display: { xs: "none", lg: "inline-flex" },
-              textTransform: "none",
-              fontWeight: 700,
-              fontSize: 13.5,
-              color: RED,
-              bgcolor: "rgba(139,19,19,0.06)",
-              border: "1px solid rgba(139,19,19,0.12)",
-              borderRadius: "20px",
-              px: 2.2,
-              py: 0.6,
-              whiteSpace: "nowrap",
-              transition: "all 200ms ease",
-              "&:hover": {
-                bgcolor: RED_TINT,
-                borderColor: RED,
-                boxShadow: "0 4px 12px rgba(139,19,19,0.08)",
-              },
+              width: { xs: 120, sm: 140, lg: 150 },
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              flexShrink: 0,
+              transition: "opacity 150ms ease",
+              "&:hover": { opacity: 0.85 },
             }}
           >
-            {isInstructor ? "Trang giảng viên" : "Trở thành Giảng viên"}
-          </Button>
+            <Image
+              src="/auth/img/logo_nentrang.png"
+              alt="EduVerse"
+              width={150}
+              height={46}
+              style={{ width: "100%", height: "auto", display: "block" }}
+              priority
+            />
+          </Box>
+
+          {/* Khám phá */}
           <Button
-            onClick={() => router.push("/student/courses/my-courses")}
+            onClick={() => {
+              window.dispatchEvent(new Event("eduverse:reset-explore"));
+              router.push("/student/explore");
+            }}
             sx={{
-              display: { xs: "none", lg: "inline-flex" },
+              display: { xs: "none", md: "inline-flex" },
               textTransform: "none",
-              fontWeight: 600,
+              fontWeight: isExploreActive ? 700 : 600,
               fontSize: 14.5,
-              color: "#374151",
+              color: isExploreActive ? RED : "#374151",
+              bgcolor: isExploreActive ? "rgba(153, 27, 27, 0.05)" : "transparent",
               borderRadius: "20px",
               px: 2,
               py: 0.6,
-              whiteSpace: "nowrap",
+              flexShrink: 0,
               transition: "all 200ms ease",
-              "&:hover": { color: RED, bgcolor: "rgba(139,19,19,0.05)" },
+              "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.08)" },
             }}
           >
-            Khóa học của tôi
+            Khám phá
           </Button>
 
-          <IconButton
-            onClick={() => router.push("/student/favorites")}
+          {/* Search */}
+          <Box
+            component="form"
+            onSubmit={handleSearchSubmit}
             sx={{
-              color: "#4B5563",
-              p: 1.1,
-              transition: "all 200ms ease",
-              "&:hover": { color: RED, bgcolor: "rgba(139,19,19,0.05)", transform: "scale(1.08)" },
+              flex: 1,
+              maxWidth: 520,
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+              bgcolor: "#F3F4F6",
+              border: `1px solid rgba(0, 0, 0, 0.05)`,
+              borderRadius: "999px",
+              px: 2,
+              height: 44,
+              transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+              "&:focus-within": {
+                bgcolor: "#fff",
+                borderColor: RED,
+                boxShadow: "0 0 0 3px rgba(153, 27, 27, 0.1)",
+              },
             }}
           >
-            <FavoriteBorderOutlined sx={{ fontSize: 21 }} />
-          </IconButton>
-          <IconButton
-            onClick={() => router.push("/student/cart")}
-            sx={{
-              color: "#4B5563",
-              p: 1.1,
-              transition: "all 200ms ease",
-              "&:hover": { color: RED, bgcolor: "rgba(139,19,19,0.05)", transform: "scale(1.08)" },
-            }}
-          >
-            <ShoppingCartOutlined sx={{ fontSize: 21 }} />
-          </IconButton>
-          <IconButton
-            aria-label="Mở thông báo"
-            onClick={(event) => setNotiAnchorEl(event.currentTarget)}
-            sx={{
-              color: "#4B5563",
-              p: 1.1,
-              transition: "all 200ms ease",
-              "&:hover": { color: RED, bgcolor: "rgba(139,19,19,0.05)", transform: "scale(1.08)" },
-            }}
-          >
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsNoneRounded sx={{ fontSize: 21 }} />
-            </Badge>
-          </IconButton>
+            <IconButton
+              type="submit"
+              aria-label="Tìm kiếm khóa học"
+              size="small"
+              sx={{ p: 0.25, color: "#9CA3AF" }}
+            >
+              <SearchRounded sx={{ fontSize: 20 }} />
+            </IconButton>
+            <InputBase
+              placeholder="Tìm kiếm nội dung bất kỳ..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              inputProps={{ "aria-label": "Từ khóa tìm kiếm" }}
+              sx={{ flex: 1, fontSize: 14, color: INK }}
+            />
+          </Box>
 
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 0.5, p: 0.25 }}>
-            <Avatar
-              src={userAvatar || user?.anhDaiDien || undefined}
+          {/* Spacer to push right actions to the far right */}
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Right actions */}
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", gap: 0.75, flexShrink: 0 }}
+          >
+            <Button
+              onClick={() =>
+                router.push(
+                  isInstructor
+                    ? "/instructor/dashboard"
+                    : "/student/become-instructor",
+                )
+              }
               sx={{
-                width: 38,
-                height: 38,
-                bgcolor: RED,
-                color: "#fff",
-                fontSize: 14,
+                display: { xs: "none", lg: "inline-flex" },
+                textTransform: "none",
                 fontWeight: 700,
-                border: "2px solid #fff",
-                boxShadow: `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
+                fontSize: 13.5,
+                color: RED,
+                bgcolor: "transparent",
+                border: `1.5px solid ${RED}`,
+                borderRadius: "20px",
+                px: 2.2,
+                py: 0.5,
+                whiteSpace: "nowrap",
                 transition: "all 200ms ease",
-                cursor: "pointer",
                 "&:hover": {
-                  boxShadow: `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
-                  transform: "scale(1.05)",
+                  bgcolor: RED_TINT,
+                  borderColor: RED,
+                  boxShadow: "0 4px 12px rgba(153, 27, 27, 0.08)",
                 },
               }}
             >
-              {userInitials}
-            </Avatar>
-          </IconButton>
+              {isInstructor ? "Trang giảng viên" : "Trở thành Giảng viên"}
+            </Button>
+            <Button
+              onClick={() => router.push("/student/courses/my-courses")}
+              sx={{
+                display: { xs: "none", lg: "inline-flex" },
+                textTransform: "none",
+                fontWeight: isMyCoursesActive ? 700 : 600,
+                fontSize: 14.5,
+                color: isMyCoursesActive ? RED : "#374151",
+                bgcolor: isMyCoursesActive ? "rgba(153, 27, 27, 0.05)" : "transparent",
+                borderRadius: "20px",
+                px: 2,
+                py: 0.6,
+                whiteSpace: "nowrap",
+                transition: "all 200ms ease",
+                "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.08)" },
+              }}
+            >
+              Khóa học của tôi
+            </Button>
+
+            <IconButton
+              onClick={() => router.push("/student/favorites")}
+              sx={{
+                color: pathname === "/student/favorites" ? RED : "#4B5563",
+                p: 1.1,
+                borderRadius: "50%",
+                transition: "all 200ms ease",
+                "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.05)", transform: "scale(1.05)" },
+              }}
+            >
+              <FavoriteBorderOutlined sx={{ fontSize: 21 }} />
+            </IconButton>
+            <IconButton
+              onClick={() => router.push("/student/cart")}
+              sx={{
+                color: pathname === "/student/cart" ? RED : "#4B5563",
+                p: 1.1,
+                borderRadius: "50%",
+                transition: "all 200ms ease",
+                "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.05)", transform: "scale(1.05)" },
+              }}
+            >
+              <ShoppingCartOutlined sx={{ fontSize: 21 }} />
+            </IconButton>
+            <IconButton
+              aria-label="Mở thông báo"
+              onClick={(event) => setNotiAnchorEl(event.currentTarget)}
+              sx={{
+                color: "#4B5563",
+                p: 1.1,
+                borderRadius: "50%",
+                transition: "all 200ms ease",
+                "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.05)", transform: "scale(1.05)" },
+              }}
+            >
+              <Badge badgeContent={unreadCount} color="error" sx={{ "& .MuiBadge-badge": { bgcolor: RED } }}>
+                <NotificationsNoneRounded sx={{ fontSize: 21 }} />
+              </Badge>
+            </IconButton>
+
+            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 0.5, p: 0.25 }}>
+              <Avatar
+                src={userAvatar || user?.anhDaiDien || undefined}
+                sx={{
+                  width: 38,
+                  height: 38,
+                  bgcolor: RED,
+                  color: "#fff",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  border: "2px solid #fff",
+                  boxShadow: `0 0 0 2px rgba(153, 27, 27, 0.15), 0 4px 8px rgba(0,0,0,0.06)`,
+                  transition: "all 200ms ease",
+                  cursor: "pointer",
+                  "&:hover": {
+                    boxShadow: `0 0 0 2px rgba(153, 27, 27, 0.4), 0 6px 14px rgba(153, 27, 27, 0.15)`,
+                    transform: "scale(1.05)",
+                  },
+                }}
+              >
+                {userInitials}
+              </Avatar>
+            </IconButton>
+          </Stack>
         </Stack>
+      </Box>
 
         <Menu
           anchorEl={anchorEl}
@@ -647,7 +690,6 @@ export default function StudentHomeHeader() {
             </Button>
           </DialogActions>
         </Dialog>
-      </Stack>
     </Box>
   );
 }

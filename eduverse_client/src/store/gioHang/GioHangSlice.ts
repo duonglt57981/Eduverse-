@@ -32,17 +32,9 @@ export const themVaoGioHang = createAsyncThunk<
     const res = await apiService.post<GioHangDto>(`/GioHang/${khoaHocId}`);
     return res.data;
   } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const message =
-        err.response?.data?.message ||
-        err.response?.data?.errors ||
-        err.message ||
-        "Lỗi thêm vào giỏ hàng";
-
-      return rejectWithValue(message);
-    }
-
-    return rejectWithValue("Lỗi thêm vào giỏ hàng");
+     return rejectWithValue(
+      typeof err === "string" ? err : "Lỗi thêm vào giỏ hàng",
+    );
   }
 });
 

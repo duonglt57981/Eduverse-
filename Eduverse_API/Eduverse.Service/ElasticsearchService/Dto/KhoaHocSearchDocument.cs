@@ -19,6 +19,7 @@ namespace Eduverse.Service.ElasticsearchService.Dto
         public DateTime? NgayTao { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
         public string? TrangThai { get; set; }
+        public bool IsBanHienTai { get; set; }
         public bool IsFree { get; set; }
         public string? TenGiangVien { get; set; }
         public List<Guid> DanhMucIds { get; set; } = new();

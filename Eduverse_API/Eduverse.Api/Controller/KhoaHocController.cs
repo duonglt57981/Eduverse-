@@ -61,7 +61,7 @@ namespace Eduverse.Api.Controller
             try
             {
                 var result = await _khoaHocService.GetListDangKi(search);
-                return DataResponse<PagedList<GetDangKiKhoaHocDto>>.Success(result);
+                return DataResponse<PagedList<GetDangKiKhoaHocDto>>.Success(result); 
             }
             catch (Exception ex)
             {
@@ -260,7 +260,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost("sync-elasticsearch")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         public async Task<DataResponse<string>> SyncElasticsearch()
         {
             try

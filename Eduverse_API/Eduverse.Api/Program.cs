@@ -16,6 +16,7 @@ using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.EmailService;
+using Eduverse.Service.ElasticsearchService;
 using Eduverse.Service.GeminiService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
@@ -318,6 +319,25 @@ namespace Eduverse.Api
                 {
                     if (!await roleManager.RoleExistsAsync(role))
                         await roleManager.CreateAsync(new AppRole { Name = role });
+                }
+
+                if (builder.Configuration.GetValue("Elasticsearch:SyncOnStartup", true))
+                {
+                    try
+                    {
+                        var elasticsearchService = scope.ServiceProvider
+                            .GetRequiredService<IElasticsearchService>();
+                        await elasticsearchService.BulkIndexAllCoursesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        var logger = scope.ServiceProvider
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("ElasticsearchStartup");
+                        logger.LogWarning(
+                            ex,
+                            "Elasticsearch is unavailable. Course search will use the database fallback.");
+                    }
                 }
             }
 

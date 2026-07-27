@@ -3633,10 +3633,11 @@ export default function CurriculumContent() {
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "flex-start", sm: "center" },
             justifyContent: "space-between",
-            mb: 1,
             gap: 2,
+            mb: 4,
           }}
         >
           <Typography sx={{ fontWeight: 800, fontSize: 24, color: "#1F2937" }}>
@@ -4799,14 +4800,15 @@ export default function CurriculumContent() {
         {phanForm?.mode === "add" && isEditable ? (
           <Box
             sx={{
-              mt: 2.5,
-              p: 2,
-              border: "1px solid #EDEFF3",
-              borderRadius: "10px",
-              bgcolor: "#fff",
+              mt: 3,
+              p: 3,
+              border: "1px solid #E5E7EB",
+              borderRadius: "16px",
+              bgcolor: "#ffffff",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
             }}
           >
-            <Typography sx={{ fontWeight: 700, mb: 1 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#111827", mb: 2 }}>
               Thêm phần mới
             </Typography>
             <TextField
@@ -4835,7 +4837,15 @@ export default function CurriculumContent() {
               <Button
                 {...noPropagation}
                 onClick={() => setPhanForm(null)}
-                sx={{ textTransform: "none", color: "#8A93A3" }}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 600,
+                  color: "#4B5563",
+                  py: 1,
+                  px: 2.5,
+                  borderRadius: "8px",
+                  "&:hover": { bgcolor: "#F3F4F6", color: "#111827" },
+                }}
               >
                 Hủy bỏ
               </Button>
@@ -4848,7 +4858,19 @@ export default function CurriculumContent() {
                   bgcolor: MAU.chinh,
                   textTransform: "none",
                   fontWeight: 700,
-                  "&:hover": { bgcolor: MAU.chinhDam },
+                  py: 1,
+                  px: 3,
+                  borderRadius: "8px",
+                  boxShadow: "0 2px 8px rgba(122,31,43,0.15)",
+                  "&:hover": {
+                    bgcolor: MAU.chinhDam,
+                    boxShadow: "0 4px 12px rgba(122,31,43,0.25)",
+                  },
+                  "&.Mui-disabled": {
+                    bgcolor: "#E5E7EB",
+                    color: "#9CA3AF",
+                    boxShadow: "none",
+                  },
                 }}
               >
                 Thêm phần
@@ -4862,15 +4884,23 @@ export default function CurriculumContent() {
             onClick={moThemPhan}
             disabled={loading || !isEditable}
             sx={{
-              mt: 2.5,
+              mt: 3,
               textTransform: "none",
               fontWeight: 700,
+              fontSize: 14,
               color: MAU.chinh,
               border: `1px solid ${MAU.chinh}`,
               borderRadius: "10px",
-              px: 2,
-              bgcolor: "#fff",
-              "&:hover": { bgcolor: `${MAU.chinh}0F` },
+              px: 3,
+              py: 1,
+              bgcolor: "#ffffff",
+              boxShadow: "0 2px 8px rgba(122,31,43,0.05)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: MAU.chinhNhat,
+                boxShadow: "0 4px 12px rgba(122,31,43,0.12)",
+                transform: "translateY(-1px)",
+              },
             }}
           >
             Thêm phần

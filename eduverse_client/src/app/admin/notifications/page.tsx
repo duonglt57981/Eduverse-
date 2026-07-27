@@ -51,34 +51,45 @@ import {
 } from "@mui/icons-material";
 
 const COLORS = {
-  primary: "#8B1313", // Crimson Red
-  primaryLight: "#B91C1C", // Light Crimson
-  primaryDark: "#7F1D1D", // Dark Crimson
-  primaryBgLight: "#FFF5F5", // Extra light pink/red background
-  bgLight: "#F7F5F2", // Premium cream-rose background
+  primary: "#991B1B",
+  primaryHover: "#7F1D1D",
+  primaryActive: "#6B1515",
+  primarySoft: "#FEF2F2",
+  primaryBorder: "#FECACA",
+  bgLight: "#F7F8FA",
   white: "#FFFFFF",
-  textDark: "#1E293B", // Slate 800
-  textSecondary: "#64748B", // Slate 500
-  green: "#10B981", // Active state emerald
+  textDark: "#111827",
+  textTitle: "#1F2937",
+  textSecondary: "#64748B",
+  textMuted: "#94A3B8",
+  borderMain: "#E5E7EB",
+  borderLight: "#EEF0F3",
+  divider: "#F1F5F9",
+  green: "#15803D",
   greenBg: "#ECFDF5",
-  orange: "#F59E0B", // Warning/key gold
-  orangeBg: "#FFFBEB",
-  red: "#EF4444", // Error red
+  orange: "#D97706",
+  orangeBg: "#FFF7ED",
+  red: "#DC2626",
   redBg: "#FEF2F2",
-  blue: "#3B82F6",
+  blue: "#2563EB",
   blueBg: "#EFF6FF",
 };
 
-const loaiColor: Record<
-  string,
-  "default" | "success" | "error" | "warning" | "info"
-> = {
-  YeuCauRutTien: "warning",
-  DoanhThu: "success",
-  RutTienThanhCong: "success",
-  RutTienTuChoi: "error",
-  HeThong: "info",
-  Khac: "default",
+const getTypeBadgeStyles = (type: string) => {
+  switch (type) {
+    case "YeuCauRutTien":
+      return { bgcolor: "#FFF7ED", color: "#D97706", label: "Rút tiền" };
+    case "DoanhThu":
+      return { bgcolor: "#ECFDF5", color: "#15803D", label: "Doanh thu" };
+    case "RutTienThanhCong":
+      return { bgcolor: "#ECFDF5", color: "#15803D", label: "Thành công" };
+    case "RutTienTuChoi":
+      return { bgcolor: "#FEF2F2", color: "#DC2626", label: "Từ chối" };
+    case "HeThong":
+      return { bgcolor: "#EFF6FF", color: "#2563EB", label: "Hệ thống" };
+    default:
+      return { bgcolor: "#F1F5F9", color: "#475569", label: "Khác" };
+  }
 };
 
 const loaiLabel: Record<string, string> = {
@@ -367,50 +378,69 @@ export default function AdminThongBaoPage() {
             direction={{ xs: "column", sm: "row" }}
             sx={{
               justifyContent: "space-between",
-              alignItems: { xs: "flex-start", sm: "center" },
-              mb: 4,
-              gap: 2,
+              alignItems: { xs: "stretch", sm: "center" },
+              mb: 4.5,
+              gap: 2.5,
             }}
           >
-            <Box>
-              <Typography
-                variant="h4"
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Box
                 sx={{
-                  fontWeight: 850,
-                  color: COLORS.primary,
-                  mb: 1,
-                  letterSpacing: "-0.75px",
+                  p: 1.5,
+                  borderRadius: "12px",
+                  bgcolor: COLORS.primarySoft,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: `1px solid ${COLORS.primaryBorder}`,
                 }}
               >
-                Quản lý thông báo
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: COLORS.textSecondary, fontWeight: 500 }}
-              >
-                Tạo, chỉnh sửa, gửi và quản lý hệ thống thông báo người dùng
-                trong EduVerse.
-              </Typography>
-            </Box>
+                <NotificationsRounded sx={{ color: COLORS.primary, fontSize: 24 }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 800,
+                    color: COLORS.textTitle,
+                    mb: 0.5,
+                    fontSize: { xs: 24, md: 28 },
+                    letterSpacing: "-0.5px",
+                  }}
+                >
+                  Quản lý thông báo
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: COLORS.textSecondary, fontWeight: 500, fontSize: 13.5 }}
+                >
+                  Tạo, chỉnh sửa, gửi và quản lý hệ thống thông báo người dùng trong EduVerse.
+                </Typography>
+              </Box>
+            </Stack>
             <Button
               variant="contained"
               startIcon={<AddRounded />}
               onClick={openAddDialog}
               sx={{
                 bgcolor: COLORS.primary,
-                borderRadius: "50px",
+                borderRadius: "10px",
                 px: 3,
-                py: 1.25,
+                height: 44,
                 fontWeight: 700,
                 textTransform: "none",
                 fontSize: 14,
-                boxShadow: "0 8px 24px rgba(141,19,19,0.25)",
+                boxShadow: "0 4px 12px rgba(153, 27, 27, 0.12)",
                 transition: "all 200ms ease",
                 "&:hover": {
-                  bgcolor: COLORS.primaryDark,
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 12px 32px rgba(141,19,19,0.35)",
+                  bgcolor: COLORS.primaryHover,
+                  transform: "translateY(-1.5px)",
+                  boxShadow: "0 6px 16px rgba(153, 27, 27, 0.2)",
                 },
+                "&:active": {
+                  bgcolor: COLORS.primaryActive,
+                },
+                width: { xs: "100%", sm: "auto" },
               }}
             >
               Tạo thông báo mới
@@ -418,77 +448,85 @@ export default function AdminThongBaoPage() {
           </Stack>
 
           {/* Quick Stats Grid */}
-          <Grid container spacing={3} sx={{ width: "100%", m: 0, mb: 4 }}>
+          <Grid container spacing={3} sx={{ width: "100%", m: 0, mb: 4.5 }}>
             {[
               {
                 title: "Tổng thông báo",
                 val: totalItems,
-                icon: <NotificationsRounded sx={{ color: COLORS.primary }} />,
-                bg: COLORS.primaryBgLight,
+                icon: <NotificationsRounded sx={{ color: COLORS.primary, fontSize: 24 }} />,
+                bg: COLORS.primarySoft,
+                border: COLORS.primaryBorder,
               },
               {
                 title: "Mục hiển thị",
                 val: notifications.filter((n) => n.isDisplay).length,
-                icon: <CheckCircleRounded sx={{ color: COLORS.green }} />,
+                icon: <CheckCircleRounded sx={{ color: COLORS.green, fontSize: 24 }} />,
                 bg: COLORS.greenBg,
+                border: "rgba(21, 128, 61, 0.15)",
               },
             ].map((st, i) => (
-              <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid key={i} size={{ xs: 12, sm: 6 }}>
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 3,
-                    borderRadius: "24px",
-                    border: "1px solid rgba(141,19,19,0.06)",
+                    p: 2.5,
+                    borderRadius: "14px",
+                    border: `1px solid ${COLORS.borderMain}`,
                     bgcolor: COLORS.white,
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                    transition: "all 200ms ease",
+                    "&:hover": {
+                      borderColor: COLORS.primaryBorder,
+                      boxShadow: "0 4px 12px rgba(153, 27, 27, 0.03)",
+                    },
                   }}
                 >
                   <Stack
                     direction="row"
+                    spacing={2.5}
                     sx={{
-                      justifyContent: "space-between",
                       alignItems: "center",
-                      mb: 2,
                     }}
                   >
                     <Box
                       sx={{
                         p: 1.5,
-                        borderRadius: "16px",
+                        borderRadius: "12px",
                         bgcolor: st.bg,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        border: `1px solid ${st.border}`,
                       }}
                     >
                       {st.icon}
                     </Box>
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: COLORS.textSecondary,
+                          fontWeight: 600,
+                          fontSize: 13,
+                          display: "block",
+                          mb: 0.25,
+                        }}
+                      >
+                        {st.title}
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          fontWeight: 800,
+                          color: COLORS.textDark,
+                          lineHeight: 1.1,
+                          fontSize: "1.75rem",
+                        }}
+                      >
+                        {st.val}
+                      </Typography>
+                    </Box>
                   </Stack>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: COLORS.textSecondary,
-                      fontWeight: 800,
-                      letterSpacing: "0.5px",
-                      textTransform: "uppercase",
-                      display: "block",
-                      mb: 0.5,
-                    }}
-                  >
-                    {st.title}
-                  </Typography>
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      fontWeight: 900,
-                      color: COLORS.textDark,
-                      lineHeight: 1.1,
-                      fontSize: "2rem",
-                    }}
-                  >
-                    {st.val}
-                  </Typography>
                 </Paper>
               </Grid>
             ))}
@@ -498,14 +536,15 @@ export default function AdminThongBaoPage() {
           <Card
             elevation={0}
             sx={{
-              borderRadius: "24px",
-              border: "1px solid rgba(141,19,19,0.06)",
+              borderRadius: "16px",
+              border: `1px solid ${COLORS.borderMain}`,
               overflow: "hidden",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.02)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              bgcolor: COLORS.white,
             }}
           >
             {/* Filter controls */}
-            <Box sx={{ p: 3, borderBottom: "1px solid #F1F5F9" }}>
+            <Box sx={{ p: 3, borderBottom: `1px solid ${COLORS.borderLight}` }}>
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={2}
@@ -514,35 +553,43 @@ export default function AdminThongBaoPage() {
                   justifyContent: "space-between",
                 }}
               >
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 800, color: COLORS.textDark, fontSize: 17 }}
-                >
-                  Danh sách thông báo
-                </Typography>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, color: COLORS.textTitle, fontSize: 16 }}
+                  >
+                    Danh sách thông báo
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: COLORS.textSecondary, fontSize: 13, fontWeight: 500 }}
+                  >
+                    ({totalItems} kết quả)
+                  </Typography>
+                </Stack>
 
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1.5}
-                  sx={{ alignItems: "center" }}
+                  sx={{ alignItems: "stretch", width: { xs: "100%", sm: "auto" } }}
                 >
                   {/* Search bar */}
                   <form
                     onSubmit={handleSearchSubmit}
-                    style={{ display: "flex" }}
+                    style={{ display: "flex", width: "100%" }}
                   >
                     <TextField
-                      placeholder="Tìm kiếm thông báo..."
+                      placeholder="Tìm theo tiêu đề hoặc nội dung..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       size="small"
                       sx={{
-                        width: 200,
+                        width: { xs: "100%", sm: 240 },
                         "& .MuiOutlinedInput-root": {
-                          borderRadius: "14px",
+                          borderRadius: "10px",
                           bgcolor: "#F8FAFC",
                           height: 42,
-                          "& fieldset": { borderColor: "#E2E8F0" },
+                          "& fieldset": { borderColor: COLORS.borderMain },
                           "&:hover fieldset": { borderColor: COLORS.primary },
                           "&.Mui-focused fieldset": {
                             borderColor: COLORS.primary,
@@ -572,21 +619,21 @@ export default function AdminThongBaoPage() {
                   </form>
 
                   {/* Filter category */}
-                  <FormControl size="small" sx={{ minWidth: 140 }}>
-                    <InputLabel id="filter-type-label">Loại</InputLabel>
+                  <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 140 } }}>
+                    <InputLabel id="filter-type-label" sx={{ fontSize: 13.5, fontWeight: 500 }}>Loại</InputLabel>
                     <Select
                       labelId="filter-type-label"
                       value={filterLoai}
                       label="Loại"
                       onChange={(e) => setFilterLoai(e.target.value)}
                       sx={{
-                        borderRadius: "14px",
+                        borderRadius: "10px",
                         bgcolor: "#F8FAFC",
                         height: 42,
                         fontSize: 13.5,
                         fontWeight: 500,
                         "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#E2E8F0",
+                          borderColor: COLORS.borderMain,
                         },
                         "&:hover .MuiOutlinedInput-notchedOutline": {
                           borderColor: COLORS.primary,
@@ -603,21 +650,21 @@ export default function AdminThongBaoPage() {
                   </FormControl>
 
                   {/* Filter status */}
-                  <FormControl size="small" sx={{ minWidth: 130 }}>
-                    <InputLabel id="filter-read-label">Trạng thái</InputLabel>
+                  <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 130 } }}>
+                    <InputLabel id="filter-read-label" sx={{ fontSize: 13.5, fontWeight: 500 }}>Trạng thái</InputLabel>
                     <Select
                       labelId="filter-read-label"
                       value={filterRead}
                       label="Trạng thái"
                       onChange={(e) => setFilterRead(e.target.value)}
                       sx={{
-                        borderRadius: "14px",
+                        borderRadius: "10px",
                         bgcolor: "#F8FAFC",
                         height: 42,
                         fontSize: 13.5,
                         fontWeight: 500,
                         "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#E2E8F0",
+                          borderColor: COLORS.borderMain,
                         },
                         "&:hover .MuiOutlinedInput-notchedOutline": {
                           borderColor: COLORS.primary,
@@ -641,16 +688,21 @@ export default function AdminThongBaoPage() {
                         setTrigger((prev) => prev + 1);
                       }}
                       sx={{
-                        border: "1px solid #E2E8F0",
-                        borderRadius: "14px",
+                        border: `1px solid ${COLORS.borderMain}`,
+                        borderRadius: "10px",
                         width: 42,
                         height: 42,
-                        "&:hover": { bgcolor: COLORS.primaryBgLight },
+                        bgcolor: "#F8FAFC",
+                        color: COLORS.textSecondary,
+                        transition: "all 150ms ease",
+                        "&:hover": {
+                          bgcolor: COLORS.primarySoft,
+                          borderColor: COLORS.primaryBorder,
+                          color: COLORS.primary,
+                        },
                       }}
                     >
-                      <RefreshRounded
-                        sx={{ color: COLORS.textSecondary, fontSize: 20 }}
-                      />
+                      <RefreshRounded sx={{ fontSize: 20 }} />
                     </IconButton>
                   </Tooltip>
                 </Stack>
@@ -661,64 +713,69 @@ export default function AdminThongBaoPage() {
             <TableContainer>
               <Table>
                 <TableHead sx={{ bgcolor: "#F8FAFC" }}>
-                  <TableRow>
+                  <TableRow sx={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                     <TableCell
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 600,
                         color: COLORS.textSecondary,
                         fontSize: 12,
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         py: 2,
                         pl: 3,
+                        borderBottom: `1px solid ${COLORS.borderLight}`,
                       }}
                     >
                       Tiêu đề / Nội dung
                     </TableCell>
                     <TableCell
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 600,
                         color: COLORS.textSecondary,
                         fontSize: 12,
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         py: 2,
+                        borderBottom: `1px solid ${COLORS.borderLight}`,
                       }}
                     >
                       Loại thông báo
                     </TableCell>
                     <TableCell
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 600,
                         color: COLORS.textSecondary,
                         fontSize: 12,
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         py: 2,
+                        borderBottom: `1px solid ${COLORS.borderLight}`,
                       }}
                     >
                       Người nhận
                     </TableCell>
                     <TableCell
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 600,
                         color: COLORS.textSecondary,
                         fontSize: 12,
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         py: 2,
+                        borderBottom: `1px solid ${COLORS.borderLight}`,
                       }}
                     >
                       Thời gian
                     </TableCell>
                     <TableCell
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 600,
                         color: COLORS.textSecondary,
                         fontSize: 12,
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         py: 2,
+                        borderBottom: `1px solid ${COLORS.borderLight}`,
                       }}
                     >
                       Trạng thái
@@ -726,13 +783,14 @@ export default function AdminThongBaoPage() {
                     <TableCell
                       align="center"
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 600,
                         color: COLORS.textSecondary,
                         fontSize: 12,
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         py: 2,
                         pr: 3,
+                        borderBottom: `1px solid ${COLORS.borderLight}`,
                       }}
                     >
                       Thao tác
@@ -752,6 +810,7 @@ export default function AdminThongBaoPage() {
                             mt: 2,
                             color: COLORS.textSecondary,
                             fontSize: 14,
+                            fontWeight: 500,
                           }}
                         >
                           Đang tải dữ liệu...
@@ -762,7 +821,7 @@ export default function AdminThongBaoPage() {
                     <TableRow>
                       <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                         <FolderOpenRounded
-                          sx={{ fontSize: 48, color: "#CBD5E1", mb: 1 }}
+                          sx={{ fontSize: 48, color: COLORS.textMuted, mb: 1 }}
                         />
                         <Typography
                           sx={{
@@ -777,78 +836,139 @@ export default function AdminThongBaoPage() {
                     </TableRow>
                   ) : (
                     notifications.map((noti) => {
-                      const label =
-                        loaiLabel[noti.loaiThongBao ?? ""] ??
-                        noti.loaiThongBao ??
-                        "Hệ thống";
-                      const color =
-                        loaiColor[noti.loaiThongBao ?? ""] ?? "default";
+                      const isUnread = !noti.daDoc;
+                      const badge = getTypeBadgeStyles(noti.loaiThongBao ?? "");
+                      const recipient = noti.idNguoiDung || noti.email || "Tất cả";
+                      const isAll = recipient === "Tất cả" || recipient === "all";
+                      const displayRecipient = isAll
+                        ? "Tất cả"
+                        : recipient.length > 15
+                          ? `${recipient.substring(0, 8)}...${recipient.substring(recipient.length - 4)}`
+                          : recipient;
+
+                      const formatTimeDate = (dateStr?: string) => {
+                        if (!dateStr) return { time: "—", date: "—" };
+                        const d = new Date(dateStr);
+                        const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+                        const date = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+                        return { time, date };
+                      };
+                      const { time, date } = formatTimeDate(noti.thoiGianTao);
+
                       return (
                         <TableRow
                           key={noti.id}
                           sx={{
                             transition: "all 150ms ease",
-                            "&:hover": { bgcolor: COLORS.primaryBgLight },
+                            bgcolor: isUnread ? "rgba(153, 27, 27, 0.015)" : "transparent",
+                            "&:hover": {
+                              bgcolor: isUnread ? "rgba(153, 27, 27, 0.03)" : "#FAFAFA",
+                            },
+                            "& td": {
+                              borderBottom: `1px solid ${COLORS.borderLight}`,
+                            },
                             "&:last-child td": { borderBottom: "none" },
                           }}
                         >
                           <TableCell sx={{ py: 2, pl: 3 }}>
-                            <Box sx={{ maxWidth: 280 }}>
-                              <Typography
-                                sx={{
-                                  fontWeight: 700,
-                                  color: COLORS.textDark,
-                                  fontSize: 14,
-                                }}
-                              >
-                                {noti.tieuDe || "Không tiêu đề"}
-                              </Typography>
-                              <Typography
-                                noWrap
-                                sx={{
-                                  color: COLORS.textSecondary,
-                                  fontSize: 12,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  mt: 0.5,
-                                }}
-                              >
-                                {noti.noiDung || noti.message || "—"}
-                              </Typography>
+                            <Box sx={{ maxWidth: 360 }}>
+                              <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", mb: 0.5 }}>
+                                {isUnread && (
+                                  <Box
+                                    sx={{
+                                      width: 6,
+                                      height: 6,
+                                      borderRadius: "50%",
+                                      bgcolor: COLORS.red,
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                )}
+                                <Typography
+                                  sx={{
+                                    fontWeight: isUnread ? 700 : 600,
+                                    color: COLORS.textDark,
+                                    fontSize: 14,
+                                  }}
+                                >
+                                  {noti.tieuDe || "Không tiêu đề"}
+                                </Typography>
+                              </Stack>
+                              <Tooltip title={noti.noiDung || noti.message || ""} arrow placement="top-start">
+                                <Typography
+                                  sx={{
+                                    color: COLORS.textSecondary,
+                                    fontSize: 12.5,
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    lineHeight: 1.4,
+                                  }}
+                                >
+                                  {noti.noiDung || noti.message || "—"}
+                                </Typography>
+                              </Tooltip>
                             </Box>
                           </TableCell>
                           <TableCell sx={{ py: 2 }}>
                             <Chip
-                              label={label}
-                              color={color}
+                              label={badge.label}
                               size="small"
-                              sx={{ fontWeight: 700, fontSize: 11 }}
+                              sx={{
+                                bgcolor: badge.bgcolor,
+                                color: badge.color,
+                                fontWeight: 600,
+                                fontSize: 11.5,
+                                borderRadius: "6px",
+                                border: "1px solid rgba(0,0,0,0.03)",
+                              }}
                             />
                           </TableCell>
                           <TableCell sx={{ py: 2 }}>
-                            <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
-                              {noti.idNguoiDung || noti.email || "Tất cả"}
-                            </Typography>
+                            {isAll ? (
+                              <Chip
+                                label="Tất cả"
+                                size="small"
+                                sx={{
+                                  bgcolor: "#F1F5F9",
+                                  color: "#475569",
+                                  fontWeight: 600,
+                                  fontSize: 11.5,
+                                  borderRadius: "6px",
+                                }}
+                              />
+                            ) : (
+                              <Tooltip title={recipient} arrow>
+                                <Typography sx={{ fontSize: 13, fontWeight: 500, color: COLORS.textDark }}>
+                                  {displayRecipient}
+                                </Typography>
+                              </Tooltip>
+                            )}
                           </TableCell>
                           <TableCell sx={{ py: 2 }}>
-                            <Typography
-                              sx={{
-                                color: COLORS.textSecondary,
-                                fontSize: 13,
-                                fontWeight: 500,
-                              }}
-                            >
-                              {formatDate(noti.thoiGianTao)}
-                            </Typography>
+                            <Stack spacing={0.25}>
+                              <Typography sx={{ fontSize: 13, fontWeight: 600, color: COLORS.textDark }}>
+                                {time}
+                              </Typography>
+                              <Typography sx={{ fontSize: 11.5, color: COLORS.textSecondary, fontWeight: 400 }}>
+                                {date}
+                              </Typography>
+                            </Stack>
                           </TableCell>
                           <TableCell sx={{ py: 2 }}>
                             <Chip
                               label={noti.daDoc ? "Đã đọc" : "Chưa đọc"}
-                              color={noti.daDoc ? "success" : "warning"}
                               size="small"
-                              variant={noti.daDoc ? "outlined" : "filled"}
-                              sx={{ fontWeight: 700, fontSize: 11 }}
+                              sx={{
+                                bgcolor: noti.daDoc ? COLORS.greenBg : COLORS.orangeBg,
+                                color: noti.daDoc ? COLORS.green : COLORS.orange,
+                                fontWeight: 600,
+                                fontSize: 11.5,
+                                borderRadius: "6px",
+                                border: `1px solid ${noti.daDoc ? "rgba(21, 128, 61, 0.1)" : "rgba(217, 119, 6, 0.1)"}`,
+                              }}
                             />
                           </TableCell>
                           <TableCell align="center" sx={{ py: 2, pr: 3 }}>
@@ -858,69 +978,89 @@ export default function AdminThongBaoPage() {
                               sx={{ justifyContent: "center" }}
                             >
                               {!noti.daDoc && (
-                                <Tooltip title="Đánh dấu đã đọc">
+                                <Tooltip title="Đánh dấu đã đọc" arrow>
                                   <IconButton
                                     size="small"
                                     onClick={() => handleMarkAsRead(noti)}
+                                    aria-label="Đánh dấu đã đọc"
                                     sx={{
                                       color: COLORS.green,
-                                      bgcolor: COLORS.greenBg,
-                                      borderRadius: "10px",
-                                      width: 32,
-                                      height: 32,
-                                      "&:hover": { bgcolor: "#D1FAE5" },
+                                      bgcolor: "transparent",
+                                      borderRadius: "8px",
+                                      width: 34,
+                                      height: 34,
+                                      transition: "all 150ms ease",
+                                      "&:hover": {
+                                        bgcolor: "#DCFCE7",
+                                        color: "#15803D",
+                                      },
                                     }}
                                   >
-                                    <CheckCircleRounded sx={{ fontSize: 16 }} />
+                                    <CheckCircleRounded sx={{ fontSize: 17 }} />
                                   </IconButton>
                                 </Tooltip>
                               )}
-                              <Tooltip title="Xem chi tiết">
+                              <Tooltip title="Xem chi tiết" arrow>
                                 <IconButton
                                   size="small"
                                   onClick={() => openDetailDialog(noti)}
+                                  aria-label="Xem chi tiết"
                                   sx={{
                                     color: COLORS.blue,
-                                    bgcolor: COLORS.blueBg,
-                                    borderRadius: "10px",
-                                    width: 32,
-                                    height: 32,
-                                    "&:hover": { bgcolor: "#DBEAFE" },
+                                    bgcolor: "transparent",
+                                    borderRadius: "8px",
+                                    width: 34,
+                                    height: 34,
+                                    transition: "all 150ms ease",
+                                    "&:hover": {
+                                      bgcolor: "#EFF6FF",
+                                      color: "#2563EB",
+                                    },
                                   }}
                                 >
-                                  <VisibilityRounded sx={{ fontSize: 16 }} />
+                                  <VisibilityRounded sx={{ fontSize: 17 }} />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Chỉnh sửa">
+                              <Tooltip title="Chỉnh sửa" arrow>
                                 <IconButton
                                   size="small"
                                   onClick={() => openEditDialog(noti)}
+                                  aria-label="Chỉnh sửa"
                                   sx={{
-                                    color: COLORS.primary,
-                                    bgcolor: COLORS.primaryBgLight,
-                                    borderRadius: "10px",
-                                    width: 32,
-                                    height: 32,
-                                    "&:hover": { bgcolor: "#FFE4E6" },
+                                    color: COLORS.orange,
+                                    bgcolor: "transparent",
+                                    borderRadius: "8px",
+                                    width: 34,
+                                    height: 34,
+                                    transition: "all 150ms ease",
+                                    "&:hover": {
+                                      bgcolor: "#FEF3C7",
+                                      color: "#D97706",
+                                    },
                                   }}
                                 >
-                                  <EditRounded sx={{ fontSize: 16 }} />
+                                  <EditRounded sx={{ fontSize: 17 }} />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Xóa">
+                              <Tooltip title="Xóa" arrow>
                                 <IconButton
                                   size="small"
                                   onClick={() => handleDelete(noti)}
+                                  aria-label="Xóa"
                                   sx={{
                                     color: COLORS.red,
-                                    bgcolor: COLORS.redBg,
-                                    borderRadius: "10px",
-                                    width: 32,
-                                    height: 32,
-                                    "&:hover": { bgcolor: "#FECACA" },
+                                    bgcolor: "transparent",
+                                    borderRadius: "8px",
+                                    width: 34,
+                                    height: 34,
+                                    transition: "all 150ms ease",
+                                    "&:hover": {
+                                      bgcolor: "#FEE2E2",
+                                      color: "#DC2626",
+                                    },
                                   }}
                                 >
-                                  <DeleteRounded sx={{ fontSize: 16 }} />
+                                  <DeleteRounded sx={{ fontSize: 17 }} />
                                 </IconButton>
                               </Tooltip>
                             </Stack>
@@ -941,7 +1081,7 @@ export default function AdminThongBaoPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   p: 3,
-                  borderTop: "1px solid #F1F5F9",
+                  borderTop: `1px solid ${COLORS.borderLight}`,
                 }}
               >
                 <Typography
@@ -962,11 +1102,15 @@ export default function AdminThongBaoPage() {
                   sx={{
                     "& .MuiPaginationItem-root": {
                       fontWeight: 600,
-                      borderRadius: "12px",
+                      borderRadius: "8px",
+                      transition: "all 150ms ease",
                       "&.Mui-selected": {
                         bgcolor: COLORS.primary,
                         color: COLORS.white,
-                        "&:hover": { bgcolor: COLORS.primaryDark },
+                        "&:hover": { bgcolor: COLORS.primaryHover },
+                      },
+                      "&:hover": {
+                        bgcolor: "#F1F5F9",
                       },
                     },
                   }}
@@ -1253,7 +1397,7 @@ export default function AdminThongBaoPage() {
                   fontWeight: 700,
                   borderRadius: "50px",
                   px: 3,
-                  "&:hover": { bgcolor: COLORS.primaryDark },
+                  "&:hover": { bgcolor: COLORS.primaryHover },
                 }}
               >
                 {dialogMode === "add" ? "Tạo mới" : "Lưu thay đổi"}

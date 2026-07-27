@@ -1,31 +1,43 @@
 'use client';
 
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Box, CircularProgress } from '@mui/material';
 import AuthGuard from '@/src/components/AuthGuard';
-import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
-import { Box, Typography, Paper } from '@mui/material';
+import StudentDashboardShell from '@/src/components/dashboard/StudentDashboardShell';
+import CoursesPage from '@/src/components/landing/CoursesPage';
+
+function ExploreContent() {
+  const searchParams = useSearchParams();
+  const keyword = searchParams.get('keyword')?.trim() ?? '';
+
+  return (
+    <StudentDashboardShell>
+      <CoursesPage key={keyword} initialSearch={keyword} />
+    </StudentDashboardShell>
+  );
+}
+
+function ExploreLoading() {
+  return (
+    <Box
+      sx={{
+        minHeight: '60vh',
+        display: 'grid',
+        placeItems: 'center',
+      }}
+    >
+      <CircularProgress sx={{ color: '#8B1313' }} />
+    </Box>
+  );
+}
 
 export default function StudentExplorePage() {
   return (
     <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
-      <StudentDashboardShell>
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 4.5, 
-            borderRadius: '24px', 
-            border: '1px solid rgba(141,19,19,0.06)',
-            bgcolor: '#ffffff',
-            boxShadow: '0 10px 30px rgba(141,19,19,0.015)'
-          }}
-        >
-          <Typography variant="h5" sx={{ fontWeight: 900, color: '#8B1313', mb: 2 }}>
-            Khám phá khóa học
-          </Typography>
-          <Typography sx={{ color: 'rgba(31,41,55,0.6)', lineHeight: 1.6 }}>
-            Tính năng này đang được EduVerse phát triển và sẽ sớm ra mắt trong phiên bản tiếp theo.
-          </Typography>
-        </Paper>
-      </StudentDashboardShell>
+      <Suspense fallback={<ExploreLoading />}>
+        <ExploreContent />
+      </Suspense>
     </AuthGuard>
   );
 }

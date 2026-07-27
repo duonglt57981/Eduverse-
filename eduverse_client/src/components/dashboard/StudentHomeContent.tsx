@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import DOMPurify from "dompurify";
 import { apiService } from "@/src/services/index";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
 import { useSelector } from "@/src/store/hook";
@@ -42,6 +43,8 @@ import {
   WorkspacePremiumRounded,
   AutoStoriesRounded,
   InboxRounded,
+  PlayCircleFilledRounded,
+  SchoolRounded,
 } from "@mui/icons-material";
 
 // ─── Palette (brand maroon, toned neutrals) ──────────────────────────────────
@@ -127,6 +130,7 @@ interface DashboardData {
   skillsCourses?: KhoaHocDto[];
   premiumSelection?: {
     title?: string;
+    hinhAnhKhoaHoc?: string;
     description?: string;
     instructor?: string;
     rating?: number;
@@ -154,10 +158,14 @@ function fmtDuration(seconds?: number) {
 }
 
 function getGradient(course: KhoaHocDto) {
-  if (course.thumbnailGradient) return course.thumbnailGradient;
-  return (
-    LEVEL_GRADIENT[course.capDo ?? course.level ?? ""] ?? C.gradientCrimson
-  );
+  return "#F1F5F9";
+}
+
+function isValidImage(url?: string): boolean {
+  if (!url) return false;
+  const t = url.trim();
+  if (!t || t === "không có" || t === "aaaaaaaa" || t === "string" || t === "null" || t === "undefined") return false;
+  return t.startsWith("http") || t.startsWith("/") || t.startsWith(".");
 }
 
 function initialsOf(name?: string) {
@@ -391,6 +399,7 @@ function HoverPanel({
   const { isFavorited, toggleFavorite } = useFavorite();
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const update = () => {
@@ -569,23 +578,29 @@ function HoverPanel({
             <Button
               fullWidth
               variant="contained"
-              startIcon={<CheckCircleRounded />}
-              disabled
-              onClick={(e) => e.stopPropagation()}
+              startIcon={<PlayCircleFilledRounded />}
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(
+                  `/student/courses/my-courses/learning/${course.id}`,
+                );
+              }}
               sx={{
                 borderRadius: "12px",
                 py: 1.1,
                 fontWeight: 800,
                 fontSize: 13.5,
                 bgcolor: C.ok,
-                "&.Mui-disabled": {
+                color: "#fff",
+                boxShadow: "none",
+                "&:hover": {
                   bgcolor: C.ok,
-                  color: "#fff",
-                  opacity: 0.85,
+                  opacity: 0.9,
+                  boxShadow: "none",
                 },
               }}
             >
-              Đã đăng ký
+              Vào học ngay
             </Button>
           ) : (
             <Button
@@ -657,7 +672,12 @@ interface CourseCardProps {
   width?: number;
 }
 
-function CourseCard({ course, onAddCart, onClick, width = 240 }: CourseCardProps) {
+function CourseCard({
+  course,
+  onAddCart,
+  onClick,
+  width = 240,
+}: CourseCardProps) {
   const { isFavorited, toggleFavorite } = useFavorite();
   const favorited = isFavorited(course.id);
   const [hovered, setHovered] = useState(false);
@@ -722,27 +742,31 @@ function CourseCard({ course, onAddCart, onClick, width = 240 }: CourseCardProps
         <Box
           sx={{
             height: 136,
-            background: course.hinhAnhKhoaHoc
+            background: isValidImage(course.hinhAnhKhoaHoc)
               ? `url(${course.hinhAnhKhoaHoc}) center/cover no-repeat`
-              : gradient,
+              : "#F1F5F9",
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {!course.hinhAnhKhoaHoc && (
-            <Typography
-              sx={{
-                color: "#fff",
-                fontSize: 20,
-                fontWeight: 900,
-                opacity: 0.12,
-                userSelect: "none",
-              }}
-            >
-              EduVerse
-            </Typography>
+          {!isValidImage(course.hinhAnhKhoaHoc) && (
+            <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
+              <SchoolRounded sx={{ color: "#94A3B8", fontSize: 32 }} />
+              <Typography
+                sx={{
+                  color: "#94A3B8",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  mt: 0.75,
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                }}
+              >
+                EDUVERSE
+              </Typography>
+            </Stack>
           )}
           {(course.capDo || course.level) && (
             <Chip
@@ -1008,7 +1032,8 @@ function ContinueLearningCard({
         border: `1px solid ${C.border}`,
         bgcolor: C.white,
         cursor: "pointer",
-        transition: "transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease",
+        transition:
+          "transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease",
         "&:hover": {
           transform: "translateY(-2px)",
           boxShadow: "0 12px 32px rgba(139,19,19,0.10)",
@@ -1045,7 +1070,9 @@ function ContinueLearningCard({
           <PlayArrowRounded />
         </Box>
       </Box>
-      <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <Box
+        sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}
+      >
         <Typography
           sx={{
             fontSize: 14,
@@ -1065,7 +1092,15 @@ function ContinueLearningCard({
             {done}/{total} bài giảng
           </Typography>
         )}
-        <Box sx={{ mt: "auto", pt: 1, display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            mt: "auto",
+            pt: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
           <LinearProgress
             variant="determinate"
             value={pct}
@@ -1105,9 +1140,12 @@ export default function StudentHomeContent() {
     };
     window.addEventListener("avatar_updated", handleAvatarUpdate);
     handleAvatarUpdate();
-    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
+    return () =>
+      window.removeEventListener("avatar_updated", handleAvatarUpdate);
   }, [user?.email]);
 
+  const [courseImages, setCourseImages] = useState<Record<string, string>>({});
+  const [titleImages, setTitleImages] = useState<Record<string, string>>({});
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1116,15 +1154,54 @@ export default function StudentHomeContent() {
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [showFullPremiumDescription, setShowFullPremiumDescription] =
+    useState(false);
+  const [premiumDescriptionHtml, setPremiumDescriptionHtml] = useState("");
   const tabsRef = useRef<HTMLDivElement>(null);
+  const skillScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollSkills = (direction: -1 | 1) => {
+    skillScrollRef.current?.scrollBy({
+      left:
+        direction * Math.min(skillScrollRef.current.clientWidth * 0.75, 640),
+      behavior: "smooth",
+    });
+  };
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await apiService.get<DashboardData>("/dashboard?role=HocVien");
+
+      // Fetch approved courses to retrieve real image urls (bypassing dashboard endpoint omissions)
+      try {
+        const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
+        const items = approvedRes.data || [];
+        const imgMap: Record<string, string> = {};
+        const tMap: Record<string, string> = {};
+        items.forEach((item: any) => {
+          if (item.id && item.hinhAnhKhoaHoc) {
+            imgMap[item.id] = item.hinhAnhKhoaHoc;
+          }
+          if (item.tieuDe && item.hinhAnhKhoaHoc) {
+            tMap[item.tieuDe] = item.hinhAnhKhoaHoc;
+          }
+        });
+        setCourseImages(imgMap);
+        setTitleImages(tMap);
+      } catch (err) {
+        console.error("Failed to load course image map:", err);
+      }
+
+      const res = await apiService.get<DashboardData>(
+        "/dashboard?role=HocVien",
+      );
       if (res.status && res.data) {
         setData(res.data);
+        setPremiumDescriptionHtml(
+          DOMPurify.sanitize(res.data.premiumSelection?.description || ""),
+        );
+        setShowFullPremiumDescription(false);
         if (res.data.interestedSkills?.length) {
           setSelectedSkill(res.data.interestedSkills[0]);
         }
@@ -1170,7 +1247,10 @@ export default function StudentHomeContent() {
     }, 2500);
   }, []);
 
-  const goExplore = useCallback(() => router.push("/student/explore"), [router]);
+  const goExplore = useCallback(
+    () => router.push("/student/explore"),
+    [router],
+  );
 
   const openAssessments = useCallback(() => {
     setActiveTab("tests");
@@ -1327,7 +1407,8 @@ export default function StudentHomeContent() {
           borderRadius: "24px",
           bgcolor: C.white,
           border: `1px solid rgba(139,19,19,0.08)`,
-          background: "linear-gradient(135deg, rgba(139,19,19,0.02) 0%, rgba(255,255,255,1) 100%)",
+          background:
+            "linear-gradient(135deg, rgba(139,19,19,0.02) 0%, rgba(255,255,255,1) 100%)",
           boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)",
           display: "flex",
           alignItems: "center",
@@ -1337,9 +1418,17 @@ export default function StudentHomeContent() {
           mb: 4,
         }}
       >
-        <Stack direction="row" sx={{ alignItems: "center", gap: 3, flex: 1, minWidth: 280 }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "center", gap: 3, flex: 1, minWidth: 280 }}
+        >
           <Avatar
-            src={userAvatar || user?.anhDaiDien || welcomeStats?.avatarUrl || undefined}
+            src={
+              userAvatar ||
+              user?.anhDaiDien ||
+              welcomeStats?.avatarUrl ||
+              undefined
+            }
             sx={{
               width: 72,
               height: 72,
@@ -1363,7 +1452,8 @@ export default function StudentHomeContent() {
                 mb: 0.5,
               }}
             >
-              Chào mừng {user?.hoTen || welcomeStats?.userName || "học viên"} trở lại! 👋
+              Chào mừng {user?.hoTen || welcomeStats?.userName || "học viên"}{" "}
+              trở lại! 👋
             </Typography>
             <Typography
               sx={{
@@ -1374,7 +1464,8 @@ export default function StudentHomeContent() {
                 maxWidth: 480,
               }}
             >
-              {welcomeStats?.subtitle || "Khám phá các khóa học mới và tiếp tục hành trình nâng cao tri thức của bạn ngay hôm nay."}
+              {welcomeStats?.subtitle ||
+                "Khám phá các khóa học mới và tiếp tục hành trình nâng cao tri thức của bạn ngay hôm nay."}
             </Typography>
           </Box>
         </Stack>
@@ -1407,14 +1498,25 @@ export default function StudentHomeContent() {
                 transform: "translateY(-4px)",
                 boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
                 borderColor: "rgba(139,19,19,0.15)",
-              }
+              },
             }}
           >
-            <AutoStoriesRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
-            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
+            <AutoStoriesRounded
+              sx={{ color: C.primary, fontSize: 24, mb: 1 }}
+            />
+            <Typography
+              sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
+            >
               {welcomeStats?.totalCourses || 0}
             </Typography>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: C.textSecondary,
+                mt: 0.25,
+              }}
+            >
               Khóa học
             </Typography>
           </Box>
@@ -1436,14 +1538,23 @@ export default function StudentHomeContent() {
                 transform: "translateY(-4px)",
                 boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
                 borderColor: "rgba(139,19,19,0.15)",
-              }
+              },
             }}
           >
             <AccessTimeRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
-            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
+            <Typography
+              sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
+            >
               {welcomeStats?.progressPercent || 0}%
             </Typography>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: C.textSecondary,
+                mt: 0.25,
+              }}
+            >
               Tiến độ
             </Typography>
           </Box>
@@ -1465,14 +1576,25 @@ export default function StudentHomeContent() {
                 transform: "translateY(-4px)",
                 boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
                 borderColor: "rgba(139,19,19,0.15)",
-              }
+              },
             }}
           >
-            <WorkspacePremiumRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
-            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
+            <WorkspacePremiumRounded
+              sx={{ color: C.primary, fontSize: 24, mb: 1 }}
+            />
+            <Typography
+              sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
+            >
               {welcomeStats?.certificatesCount || 0}
             </Typography>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: C.textSecondary,
+                mt: 0.25,
+              }}
+            >
               Chứng chỉ
             </Typography>
           </Box>
@@ -1519,11 +1641,14 @@ export default function StudentHomeContent() {
             >
               <PsychologyRounded />
             </Box>
-            <Typography sx={{ fontSize: 17, fontWeight: 800, color: C.textDark }}>
+            <Typography
+              sx={{ fontSize: 17, fontWeight: 800, color: C.textDark }}
+            >
               Kỹ năng AI phù hợp với bạn
             </Typography>
             <Typography sx={{ fontSize: 13.5, color: C.textSecondary }}>
-              Đi trước xu hướng với các khóa học AI giúp nâng cao sự nghiệp của bạn.
+              Đi trước xu hướng với các khóa học AI giúp nâng cao sự nghiệp của
+              bạn.
             </Typography>
             <Button
               onClick={goExplore}
@@ -1584,11 +1709,14 @@ export default function StudentHomeContent() {
             >
               <QuizRounded />
             </Box>
-            <Typography sx={{ fontSize: 17, fontWeight: 800, color: C.textDark }}>
+            <Typography
+              sx={{ fontSize: 17, fontWeight: 800, color: C.textDark }}
+            >
               Kiểm tra kỹ năng của bạn
             </Typography>
             <Typography sx={{ fontSize: 13.5, color: C.textSecondary }}>
-              Khám phá điểm mạnh và nhận định hướng nên học tiếp theo qua các bài đánh giá.
+              Khám phá điểm mạnh và nhận định hướng nên học tiếp theo qua các
+              bài đánh giá.
             </Typography>
             <Button
               onClick={openAssessments}
@@ -1639,7 +1767,11 @@ export default function StudentHomeContent() {
               px: 1.75,
             },
             "& .Mui-selected": { color: `${C.primary} !important` },
-            "& .MuiTabs-indicator": { backgroundColor: C.primary, height: 3, borderRadius: 3 },
+            "& .MuiTabs-indicator": {
+              backgroundColor: C.primary,
+              height: 3,
+              borderRadius: 3,
+            },
           }}
         >
           <Tab value="courses" label="Khóa học" />
@@ -1660,7 +1792,10 @@ export default function StudentHomeContent() {
         ) : activeTab === "courses" ? (
           <Grid container spacing={2}>
             {tabItems.map((item, i) => (
-              <Grid key={item.id || item.idDangKiKhoaHoc || i} size={{ xs: 12, md: 6 }}>
+              <Grid
+                key={item.id || item.idDangKiKhoaHoc || i}
+                size={{ xs: 12, md: 6 }}
+              >
                 <ContinueLearningCard item={item} onOpen={handleOpenCourse} />
               </Grid>
             ))}
@@ -1688,32 +1823,90 @@ export default function StudentHomeContent() {
             linkText="Chỉnh sửa"
             href="/student/profile"
           />
-          <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mb: 1 }}>
-            {interestedSkills.map((skill) => (
-              <Chip
-                key={skill}
-                label={skill}
-                onClick={() => setSelectedSkill(skill)}
-                sx={{
-                  fontWeight: 700,
-                  fontSize: 12.5,
-                  cursor: "pointer",
-                  bgcolor: selectedSkill === skill ? C.primary : "#fff",
-                  color: selectedSkill === skill ? "#fff" : C.textSecondary,
-                  border: `1px solid ${selectedSkill === skill ? C.primary : C.border2}`,
-                  "&:hover": {
-                    bgcolor: selectedSkill === skill ? C.primaryDark : C.primaryTint,
-                  },
-                }}
-              />
-            ))}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: "center", mb: 1.5, minWidth: 0 }}
+          >
+            <IconButton
+              aria-label="Xem kỹ năng phía trước"
+              onClick={() => scrollSkills(-1)}
+              size="small"
+              sx={{
+                flexShrink: 0,
+                border: `1px solid ${C.border2}`,
+                bgcolor: C.white,
+                color: C.primary,
+                boxShadow: "0 4px 12px rgba(31, 41, 55, 0.06)",
+                "&:hover": { bgcolor: C.primaryTint },
+              }}
+            >
+              <ChevronLeftRounded />
+            </IconButton>
+
+            <Stack
+              ref={skillScrollRef}
+              direction="row"
+              spacing={1}
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                overflowX: "auto",
+                scrollBehavior: "smooth",
+                scrollSnapType: "x proximity",
+                py: 0.5,
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
+              }}
+            >
+              {interestedSkills.map((skill) => (
+                <Chip
+                  key={skill}
+                  label={skill}
+                  onClick={() => setSelectedSkill(skill)}
+                  sx={{
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    bgcolor: selectedSkill === skill ? C.primary : "#fff",
+                    color: selectedSkill === skill ? "#fff" : C.textSecondary,
+                    border: `1px solid ${selectedSkill === skill ? C.primary : C.border2}`,
+                    "&:hover": {
+                      bgcolor:
+                        selectedSkill === skill ? C.primaryDark : C.primaryTint,
+                    },
+                  }}
+                />
+              ))}
+            </Stack>
+
+            <IconButton
+              aria-label="Xem thêm kỹ năng"
+              onClick={() => scrollSkills(1)}
+              size="small"
+              sx={{
+                flexShrink: 0,
+                border: `1px solid ${C.border2}`,
+                bgcolor: C.white,
+                color: C.primary,
+                boxShadow: "0 4px 12px rgba(31, 41, 55, 0.06)",
+                "&:hover": { bgcolor: C.primaryTint },
+              }}
+            >
+              <ChevronRightRounded />
+            </IconButton>
           </Stack>
           {filteredSkillCourses.length > 0 ? (
             <CarouselRow>
               {filteredSkillCourses.map((c, i) => (
                 <CourseCard
                   key={c.id || i}
-                  course={c}
+                  course={{
+                    ...c,
+                    hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.tieuDe || ""],
+                  }}
                   onAddCart={handleAddCart}
                   onClick={handleOpenCourse}
                 />
@@ -1740,34 +1933,61 @@ export default function StudentHomeContent() {
                 elevation={0}
                 sx={{
                   height: "100%",
-                  minHeight: 200,
+                  minHeight: 250,
                   borderRadius: "16px",
                   overflow: "hidden",
                   position: "relative",
                   p: { xs: 3, md: 3.5 },
-                  color: "#fff",
-                  background:
-                    premiumSelection.thumbnailGradient || C.gradientCrimson,
+                  color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff" : C.textDark,
+                  background: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""])
+                    ? `url(${premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]}) center/cover no-repeat`
+                    : "#F1F5F9",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "flex-end",
                 }}
               >
+                {!isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) && (
+                  <Stack sx={{ alignItems: "center", justifyContent: "center", position: "absolute", inset: 0, bottom: 60 }}>
+                    <SchoolRounded sx={{ color: "#94A3B8", fontSize: 48 }} />
+                    <Typography
+                      sx={{
+                        color: "#94A3B8",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        mt: 1,
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      EDUVERSE
+                    </Typography>
+                  </Stack>
+                )}
                 <Chip
-                  icon={<WorkspacePremiumRounded sx={{ color: "#fff !important", fontSize: "15px !important" }} />}
+                  icon={
+                    <WorkspacePremiumRounded
+                      sx={{
+                        color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff !important" : "#991B1B !important",
+                        fontSize: "15px !important",
+                      }}
+                    />
+                  }
                   label="LỰA CHỌN HÀNG ĐẦU"
                   size="small"
                   sx={{
                     position: "absolute",
                     top: 16,
                     left: 16,
-                    bgcolor: "rgba(255,255,255,0.18)",
-                    color: "#fff",
+                    bgcolor: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "rgba(255,255,255,0.18)" : "rgba(153, 27, 27, 0.08)",
+                    color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff" : "#991B1B",
                     fontWeight: 800,
                     fontSize: 10.5,
                   }}
                 />
-                <Typography sx={{ fontSize: 20, fontWeight: 900, lineHeight: 1.3 }}>
+                <Typography
+                  sx={{ fontSize: 20, fontWeight: 900, lineHeight: 1.3 }}
+                >
                   {premiumSelection.title}
                 </Typography>
                 {premiumSelection.instructor && (
@@ -1776,32 +1996,109 @@ export default function StudentHomeContent() {
                   </Typography>
                 )}
                 <Stack direction="row" spacing={2} sx={{ mt: 1.25 }}>
-                  {premiumSelection.rating != null && premiumSelection.rating > 0 && (
-                    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                      <StarRounded sx={{ fontSize: 16, color: "#FBBF24" }} />
-                      <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
-                        {premiumSelection.rating}
-                      </Typography>
-                    </Stack>
-                  )}
-                  {premiumSelection.studentsCount != null && premiumSelection.studentsCount > 0 && (
-                    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                      <PeopleAltRounded sx={{ fontSize: 16 }} />
-                      <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
-                        {premiumSelection.studentsCount.toLocaleString()}
-                      </Typography>
-                    </Stack>
-                  )}
+                  {premiumSelection.rating != null &&
+                    premiumSelection.rating > 0 && (
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: "center" }}
+                      >
+                        <StarRounded sx={{ fontSize: 16, color: "#FBBF24" }} />
+                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+                          {premiumSelection.rating}
+                        </Typography>
+                      </Stack>
+                    )}
+                  {premiumSelection.studentsCount != null &&
+                    premiumSelection.studentsCount > 0 && (
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: "center" }}
+                      >
+                        <PeopleAltRounded sx={{ fontSize: 16 }} />
+                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+                          {premiumSelection.studentsCount.toLocaleString()}
+                        </Typography>
+                      </Stack>
+                    )}
                 </Stack>
               </Paper>
             </Grid>
             <Grid size={{ xs: 12, md: 7 }}>
               {premiumSelection.description && (
-                <Typography
-                  sx={{ fontSize: 14, color: C.textSecondary, mb: 1.5, lineHeight: 1.6 }}
-                >
-                  {premiumSelection.description}
-                </Typography>
+                <Box sx={{ mb: 2 }}>
+                  <Box
+                    sx={{
+                      position: "relative",
+                      maxHeight: showFullPremiumDescription ? "none" : 190,
+                      overflow: "hidden",
+                      fontSize: 14,
+                      color: C.textSecondary,
+                      lineHeight: 1.7,
+                      "& h1, & h2, & h3": {
+                        color: C.textDark,
+                        fontSize: 16,
+                        lineHeight: 1.4,
+                        mt: 1.25,
+                        mb: 0.75,
+                      },
+                      "& p": { my: 0.75 },
+                      "& ul, & ol": { my: 0.75, pl: 2.5 },
+                      "& li": { mb: 0.35 },
+                      "& hr": {
+                        border: 0,
+                        borderTop: `1px solid ${C.border}`,
+                        my: 1.25,
+                      },
+                      ...(!showFullPremiumDescription && {
+                        "&::after": {
+                          content: '""',
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: 64,
+                          pointerEvents: "none",
+                          background:
+                            "linear-gradient(180deg, rgba(247,245,242,0) 0%, #F7F5F2 88%)",
+                        },
+                      }),
+                    }}
+                    dangerouslySetInnerHTML={{ __html: premiumDescriptionHtml }}
+                  />
+                  <Button
+                    size="small"
+                    onClick={() =>
+                      setShowFullPremiumDescription((current) => !current)
+                    }
+                    endIcon={
+                      showFullPremiumDescription ? (
+                        <ChevronLeftRounded
+                          sx={{ transform: "rotate(90deg)" }}
+                        />
+                      ) : (
+                        <ChevronRightRounded
+                          sx={{ transform: "rotate(90deg)" }}
+                        />
+                      )
+                    }
+                    sx={{
+                      mt: 0.75,
+                      px: 0,
+                      minWidth: 0,
+                      color: C.primary,
+                      fontWeight: 800,
+                      textTransform: "none",
+                      "&:hover": {
+                        bgcolor: "transparent",
+                        color: C.primaryDark,
+                      },
+                    }}
+                  >
+                    {showFullPremiumDescription ? "Thu gọn" : "Xem tất cả"}
+                  </Button>
+                </Box>
               )}
               {premiumSelection.relatedCourses &&
               premiumSelection.relatedCourses.length > 0 ? (
@@ -1809,7 +2106,10 @@ export default function StudentHomeContent() {
                   {premiumSelection.relatedCourses.map((c, i) => (
                     <CourseCard
                       key={c.id || i}
-                      course={c}
+                      course={{
+                        ...c,
+                        hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.title || c.tieuDe || ""],
+                      }}
                       onAddCart={handleAddCart}
                       onClick={handleOpenCourse}
                       width={220}
@@ -1826,7 +2126,10 @@ export default function StudentHomeContent() {
                     fontWeight: 800,
                     color: C.primary,
                     borderColor: C.primaryBorder,
-                    "&:hover": { borderColor: C.primary, bgcolor: C.primaryTint },
+                    "&:hover": {
+                      borderColor: C.primary,
+                      bgcolor: C.primaryTint,
+                    },
                   }}
                 >
                   Khám phá thêm khóa học
@@ -1853,7 +2156,10 @@ export default function StudentHomeContent() {
               {historyRecommendation.courses.map((c, i) => (
                 <CourseCard
                   key={c.id || i}
-                  course={c}
+                  course={{
+                    ...c,
+                    hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.title || c.tieuDe || ""],
+                  }}
                   onAddCart={handleAddCart}
                   onClick={handleOpenCourse}
                 />
@@ -1896,4 +2202,3 @@ export default function StudentHomeContent() {
     </Stack>
   );
 }
-

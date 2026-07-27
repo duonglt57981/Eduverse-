@@ -259,8 +259,14 @@ export default function KhoaHocLearningPage() {
   const quizTheoPhan = useMemo(() => {
     const map = new Map<string, BaiKiemTraDto[]>();
     getPhanHocApi().forEach((phan: PhanHocApi) => {
-      if (phan.id && (phan.danhSachBaiKiemTra?.length ?? 0) > 0) {
-        map.set(phan.id, phan.danhSachBaiKiemTra!);
+      const validQuizzes = (phan.danhSachBaiKiemTra ?? []).filter(
+        (q) =>
+          q.isBanHienTai === true && // chỉ lấy bản hiện tại
+          q.trangThai !== "NgungHoatDong" && // không lấy đã ngừng
+          q.trangThai !== "DaXoa", // không lấy đã xóa
+      );
+      if (phan.id && validQuizzes.length > 0) {
+        map.set(phan.id, validQuizzes);
       }
     });
     return map;

@@ -38,6 +38,7 @@ export type KhoaHocSearch = SearchBase & {
   tieuDe?: string;
   capDo?: string;
   loaiKhoaHoc?: string;
+  danhMucId?: string;
   giaFrom?: number | null;
   giaTo?: number | null;
   tongBaiGiangFrom?: number | null;
