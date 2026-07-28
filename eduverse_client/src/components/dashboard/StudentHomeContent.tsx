@@ -38,7 +38,6 @@ import {
   AccessTimeRounded,
   MenuBookRounded,
   ArrowForwardRounded,
-  EditRounded,
   RefreshRounded,
   WorkspacePremiumRounded,
   AutoStoriesRounded,
@@ -51,28 +50,21 @@ import {
 const C = {
   primary: "#8B1313",
   primaryDark: "#6D0F0F",
-  primaryTint: "#FBEFEF",
-  primaryBorder: "#F0DEDE",
+  primaryTint: "var(--dashboard-primary-tint)",
+  primaryBorder: "var(--dashboard-primary-border)",
   info: "#0284C7",
-  infoTint: "#E4F1F8",
-  white: "#FFFFFF",
-  card: "#FFFFFF",
-  border: "#ECE7E4",
-  border2: "#E5E0DC",
-  textDark: "#1F2937",
-  textSecondary: "#6B7280",
-  textMuted: "#9AA0A6",
+  infoTint: "var(--dashboard-info-tint)",
+  white: "var(--dashboard-surface)",
+  card: "var(--dashboard-surface)",
+  border: "var(--dashboard-border)",
+  border2: "var(--dashboard-border-strong)",
+  textDark: "var(--dashboard-text-primary)",
+  textSecondary: "var(--dashboard-text-secondary)",
+  textMuted: "var(--dashboard-text-muted)",
   ok: "#10B981",
-  okTint: "#E9F9F1",
+  okTint: "var(--dashboard-success-tint)",
   warn: "#F59E0B",
   gradientCrimson: "linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)",
-};
-
-const LEVEL_GRADIENT: Record<string, string> = {
-  "Cơ bản": "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-  "Trung cấp": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)",
-  "Nâng cao": "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
-  "Cao cấp": "linear-gradient(135deg, #7F1D1D 0%, #B91C1C 100%)",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -157,8 +149,9 @@ function fmtDuration(seconds?: number) {
   return h > 0 ? `${h} giờ ${m > 0 ? m + " phút" : ""}` : `${m} phút`;
 }
 
-function getGradient(course: KhoaHocDto) {
-  return "#F1F5F9";
+function getGradient(_course: KhoaHocDto) {
+  void _course;
+  return "var(--dashboard-surface-muted)";
 }
 
 function isValidImage(url?: string): boolean {
@@ -175,12 +168,6 @@ function initialsOf(name?: string) {
   if (parts.length === 0) return "HV";
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
   return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
-}
-
-function roleLabel(roles: string[]) {
-  if (roles.includes("Admin")) return "Quản trị viên";
-  if (roles.includes("GiaoVien")) return "Giảng viên";
-  return "Học viên";
 }
 
 // ─── Carousel Row ─────────────────────────────────────────────────────────────
@@ -229,12 +216,12 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "#fff",
+            bgcolor: C.white,
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
-            border: "1px solid rgba(0,0,0,0.06)",
+            border: `1px solid ${C.border}`,
             width: 38,
             height: 38,
-            "&:hover": { bgcolor: "#F3F4F6" },
+            "&:hover": { bgcolor: "var(--dashboard-surface-raised)" },
           }}
         >
           <ChevronLeftRounded />
@@ -249,12 +236,12 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "#fff",
+            bgcolor: C.white,
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
-            border: "1px solid rgba(0,0,0,0.06)",
+            border: `1px solid ${C.border}`,
             width: 38,
             height: 38,
-            "&:hover": { bgcolor: "#F3F4F6" },
+            "&:hover": { bgcolor: "var(--dashboard-surface-raised)" },
           }}
         >
           <ChevronRightRounded />
@@ -301,7 +288,7 @@ function EmptyState({
         p: { xs: 3.5, md: 4.5 },
         borderRadius: "16px",
         border: `1px dashed ${C.border2}`,
-        bgcolor: "#FCFBFA",
+        bgcolor: C.card,
         textAlign: "center",
         display: "flex",
         flexDirection: "column",
@@ -685,7 +672,6 @@ function CourseCard({
   const [hoverPanel, setHoverPanel] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gradient = getGradient(course);
   const isFree = (course.gia ?? 0) === 0;
   const title = course.tieuDe || course.title || "";
   // Chỉ hiển thị đánh giá khi có dữ liệu thật (không dùng giá trị bịa)
@@ -744,7 +730,7 @@ function CourseCard({
             height: 136,
             background: isValidImage(course.hinhAnhKhoaHoc)
               ? `url(${course.hinhAnhKhoaHoc}) center/cover no-repeat`
-              : "#F1F5F9",
+              : "var(--dashboard-surface-muted)",
             position: "relative",
             display: "flex",
             alignItems: "center",
@@ -753,10 +739,10 @@ function CourseCard({
         >
           {!isValidImage(course.hinhAnhKhoaHoc) && (
             <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
-              <SchoolRounded sx={{ color: "#94A3B8", fontSize: 32 }} />
+              <SchoolRounded sx={{ color: C.textMuted, fontSize: 32 }} />
               <Typography
                 sx={{
-                  color: "#94A3B8",
+                  color: C.textMuted,
                   fontSize: 11,
                   fontWeight: 700,
                   mt: 0.75,
@@ -1108,7 +1094,7 @@ function ContinueLearningCard({
               flex: 1,
               height: 6,
               borderRadius: 99,
-              bgcolor: "#EEE9E5",
+              bgcolor: "var(--dashboard-surface-muted)",
               "& .MuiLinearProgress-bar": { bgcolor: C.ok, borderRadius: 99 },
             }}
           />
@@ -1126,7 +1112,6 @@ export default function StudentHomeContent() {
   const router = useRouter();
   const { fetchFavorites } = useFavorite();
   const user = useSelector((state: any) => state.auth.user);
-  const roles = useSelector((state: any) => state.auth.roles) || [];
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -1316,7 +1301,7 @@ export default function StudentHomeContent() {
           textAlign: "center",
           borderRadius: "20px",
           border: `1px solid ${C.primaryBorder}`,
-          bgcolor: "#FFF7F7",
+          bgcolor: C.card,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -1395,9 +1380,8 @@ export default function StudentHomeContent() {
           borderRadius: "24px",
           bgcolor: C.white,
           border: `1px solid rgba(139,19,19,0.08)`,
-          background:
-            "linear-gradient(135deg, rgba(139,19,19,0.02) 0%, rgba(255,255,255,1) 100%)",
-          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)",
+          background: `linear-gradient(135deg, var(--dashboard-primary-tint) 0%, ${C.white} 72%)`,
+          boxShadow: "0 14px 38px rgba(0, 0, 0, 0.16)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -1424,7 +1408,7 @@ export default function StudentHomeContent() {
               color: "#fff",
               fontWeight: 800,
               fontSize: 22,
-              border: "3px solid #fff",
+              border: `3px solid ${C.white}`,
               boxShadow: `0 0 0 3px rgba(139,19,19,0.12), 0 8px 24px rgba(139,19,19,0.12)`,
             }}
           >
@@ -1476,8 +1460,8 @@ export default function StudentHomeContent() {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: "rgba(139,19,19,0.03)",
-              border: "1px solid rgba(139,19,19,0.06)",
+              bgcolor: C.primaryTint,
+              border: `1px solid ${C.primaryBorder}`,
               borderRadius: "16px",
               p: 2,
               minWidth: { xs: 90, sm: 110 },
@@ -1510,8 +1494,8 @@ export default function StudentHomeContent() {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: "rgba(139,19,19,0.03)",
-              border: "1px solid rgba(139,19,19,0.06)",
+              bgcolor: C.primaryTint,
+              border: `1px solid ${C.primaryBorder}`,
               borderRadius: "16px",
               p: 2,
               minWidth: { xs: 90, sm: 110 },
@@ -1661,7 +1645,7 @@ export default function StudentHomeContent() {
                     fontWeight: 700,
                     fontSize: 12.5,
                     cursor: "pointer",
-                    bgcolor: selectedSkill === skill ? C.primary : "#fff",
+                    bgcolor: selectedSkill === skill ? C.primary : C.white,
                     color: selectedSkill === skill ? "#fff" : C.textSecondary,
                     border: `1px solid ${selectedSkill === skill ? C.primary : C.border2}`,
                     "&:hover": {
@@ -1732,7 +1716,7 @@ export default function StudentHomeContent() {
                   color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff" : C.textDark,
                   background: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""])
                     ? `url(${premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]}) center/cover no-repeat`
-                    : "#F1F5F9",
+                    : "var(--dashboard-surface-muted)",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "flex-end",
@@ -1740,10 +1724,10 @@ export default function StudentHomeContent() {
               >
                 {!isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) && (
                   <Stack sx={{ alignItems: "center", justifyContent: "center", position: "absolute", inset: 0, bottom: 60 }}>
-                    <SchoolRounded sx={{ color: "#94A3B8", fontSize: 48 }} />
+                    <SchoolRounded sx={{ color: C.textMuted, fontSize: 48 }} />
                     <Typography
                       sx={{
-                        color: "#94A3B8",
+                        color: C.textMuted,
                         fontSize: 12,
                         fontWeight: 700,
                         mt: 1,
@@ -1852,7 +1836,7 @@ export default function StudentHomeContent() {
                           height: 64,
                           pointerEvents: "none",
                           background:
-                            "linear-gradient(180deg, rgba(247,245,242,0) 0%, #F7F5F2 88%)",
+                            `linear-gradient(180deg, transparent 0%, ${C.white} 88%)`,
                         },
                       }),
                     }}
