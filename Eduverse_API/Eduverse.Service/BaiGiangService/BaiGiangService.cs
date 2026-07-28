@@ -264,19 +264,16 @@ namespace Eduverse.Service.BaiGiangService
             string idVideo = banGoc.IdVideoBaiGiang;
             int? thoiLuong = banGoc.ThoiLuong;
 
-            if (request.Video != null && (banGoc.TrangThai == "DangSua" || banGoc.TrangThai == "TuChoi"))
+            if (request.Video != null)
             {
-                var upload = await _bunnyService.UpdateVideoAsync(idVideo,request.Video);
-                if (upload == null)
-                    throw new Exception("Upload hình ảnh thất bại");
+                //var upload = await _bunnyService.UpdateVideoAsync(idVideo,request.Video);
+                //if (upload == null)
+                //    throw new Exception("Upload hình ảnh thất bại");
 
-                video = upload.Url;
-                idVideo = upload.Id;
-                thoiLuong = upload.Duration;
+                //video = upload.Url;
+                //idVideo = upload.Id;
+                //thoiLuong = upload.Duration;
 
-            }
-            else if (request.Video != null && banGoc.TrangThai == "DaDuyet")
-            {
                 var upload = await _bunnyService.UploadVideoAsync(request.Video);
                 if (upload == null)
                     throw new Exception("Upload hình ảnh thất bại");
@@ -284,7 +281,18 @@ namespace Eduverse.Service.BaiGiangService
                 video = upload.Url;
                 idVideo = upload.Id;
                 thoiLuong = upload.Duration;
+
             }
+            //else if (request.Video != null )
+            //{
+            //    var upload = await _bunnyService.UploadVideoAsync(request.Video);
+            //    if (upload == null)
+            //        throw new Exception("Upload hình ảnh thất bại");
+
+            //    video = upload.Url;
+            //    idVideo = upload.Id;
+            //    thoiLuong = upload.Duration;
+            //}
 
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
 

@@ -436,23 +436,253 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         #endregion
 
 
-        #region GetLichSuKiemDuyet
-        public async Task<List<LichSuKiemDuyetDto>> GetLichSuKiemDuyet(Guid idKhoaHoc)
+        #region GetListLichSuKiemDuyet
+        public async Task<PagedList<KhoaHocKiemDuyetListDto>> GetListLichSuKiemDuyet(KhoaHocKiemDuyetSearchDto search)
         {
-            return await GetQueryable()
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
+
+            var khoaHocQuery = _khoaHocRepository.GetQueryable()
                 .AsNoTracking()
-                .Where(x => x.IdDoiTuong == idKhoaHoc && !x.IsDeleted)
+                .Where(x => !x.IsDeleted
+                    && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi")
+                    && GetQueryable()
+                        .Any(h => h.CreatedId == userId && h.IdDoiTuong == x.Id));
+
+            // Lọc thêm theo trạng thái nếu có chỉ định
+            if (!string.IsNullOrWhiteSpace(search.TrangThaiPheDuyet))
+            {
+                if (search.TrangThaiPheDuyet == "DaDuyet")
+                {
+                    khoaHocQuery = khoaHocQuery.Where(x => x.TrangThaiPheDuyet == "DaDuyet");
+                }
+                else if (search.TrangThaiPheDuyet == "TuChoi")
+                {
+                    khoaHocQuery = khoaHocQuery.Where(x => x.TrangThaiPheDuyet == "TuChoi");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.Keyword))
+                khoaHocQuery = khoaHocQuery.Where(x => x.TieuDe.Contains(search.Keyword));
+
+            // Sắp xếp
+            if (!string.IsNullOrEmpty(search.SapXepTen))
+            {
+                khoaHocQuery = search.SapXepTen == "AZ"
+                    ? khoaHocQuery.OrderBy(x => x.TieuDe ?? string.Empty)
+                    : khoaHocQuery.OrderByDescending(x => x.TieuDe ?? string.Empty);
+            }
+            else if (!string.IsNullOrEmpty(search.SapXepNgay))
+            {
+                khoaHocQuery = search.SapXepNgay == "Moi"
+                    ? khoaHocQuery.OrderByDescending(x => x.CreatedDate)
+                    : khoaHocQuery.OrderBy(x => x.CreatedDate);
+            }
+            else
+            {
+                khoaHocQuery = khoaHocQuery.OrderByDescending(x => x.CreatedDate);
+            }
+
+            var query = khoaHocQuery.Select(x => new KhoaHocKiemDuyetListDto
+            {
+                IdKhoaHoc = x.Id,
+                TieuDe = x.TieuDe,
+                TrangThai = x.TrangThai,
+                HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+                TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                CreateBy = x.CreatedBy,
+                CreateDate = x.CreatedDate
+            });
+
+            return await PagedList<KhoaHocKiemDuyetListDto>.CreateAsync(query, search);
+        }
+        #endregion
+
+
+        #region GetDetailLichSuKiemDuyet
+        public async Task<KiemDuyetDetailDto> GetDetailLichSuKiemDuyet(Guid idKhoaHoc)
+        {
+            // 1. Lấy thông tin khóa học theo Id
+            var targetVersion = await _khoaHocRepository.GetAll()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == idKhoaHoc && !x.IsDeleted);
+
+            if (targetVersion == null)
+                return null;
+
+            // 2. Lấy toàn bộ cây dữ liệu với trạng thái DaDuyet hoặc TuChoi (KHÔNG UPDATE)
+            var phans = await _phanRepository.GetAll()
+                .AsNoTracking()
+                .Where(x => x.IdKhoaHoc == targetVersion.Id
+                            && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"))
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            var phanIds = phans.Select(p => p.Id).ToList();
+
+            var baiGiangs = await _baiGiangRepository.GetAll()
+                .AsNoTracking()
+                .Where(x => phanIds.Contains(x.IdPhan)
+                            && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"))
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            var baiGiangIds = baiGiangs.Select(b => b.Id).ToList();
+
+            var taiLieus = await _taiLieuRepository.GetAll()
+                .AsNoTracking()
+                .Where(x => baiGiangIds.Contains(x.IdBaiGiang)
+                            && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"))
+                .ToListAsync();
+
+            var baiKiemTras = await _baiKiemTraRepository.GetAll()
+                .AsNoTracking()
+                .Where(x => x.IdPhan.HasValue
+                            && phanIds.Contains(x.IdPhan.Value)
+                            && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"))
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            var baiKiemTraIds = baiKiemTras.Select(b => b.Id).ToList();
+
+            var cauHois = await _cauHoiRepository.GetAll()
+                .AsNoTracking()
+                .Where(x => baiKiemTraIds.Contains(x.IdBaiKiemTra.Value)
+                            && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"))
+                .OrderBy(x => x.ThuTuSapXep)
+                .ToListAsync();
+
+            var cauHoiIds = cauHois.Select(c => c.Id).ToList();
+
+            var dapAns = await _dapAnRepository.GetAll()
+                .AsNoTracking()
+                .Where(x => x.IdCauHoi.HasValue
+                            && cauHoiIds.Contains(x.IdCauHoi.Value)
+                            && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"))
+                .ToListAsync();
+
+            // 3. Lấy thông tin lịch sử kiểm duyệt
+            var lichSuKiemDuyet = await GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdDoiTuong == idKhoaHoc
+                            && !x.IsDeleted
+                            && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"))
                 .OrderByDescending(x => x.NgayDuyet)
                 .Select(x => new LichSuKiemDuyetDto
                 {
                     Id = x.Id,
-                    IdKhoaHoc = x.IdDoiTuong,
-                    IdNguoiDuyet = x.IdNguoiDuyet,
                     TrangThaiPheDuyet = x.TrangThaiPheDuyet,
                     LyDo = x.LyDo,
-                    NgayDuyet = x.NgayDuyet
+                    NgayDuyet = x.NgayDuyet,
+                    NgayTao = x.CreatedDate
                 })
-                .ToListAsync();
+                .FirstOrDefaultAsync();
+
+            // 4. Dựng cây lồng nhau: Phan -> BaiGiang -> TaiLieu, Phan -> BaiKiemTra -> CauHoi -> DapAn
+            var taiLieuLookup = taiLieus.ToLookup(t => t.IdBaiGiang);
+            var baiGiangLookup = baiGiangs.ToLookup(b => b.IdPhan);
+            var dapAnLookup = dapAns.Where(d => d.IdCauHoi.HasValue).ToLookup(d => d.IdCauHoi.Value);
+            var cauHoiLookup = cauHois.ToLookup(c => c.IdBaiKiemTra);
+            var baiKiemTraLookup = baiKiemTras
+                .Where(b => b.IdPhan.HasValue)
+                .ToLookup(b => b.IdPhan.Value);
+
+            var phanDtos = phans.Select(p => new PhanChoDuyetDto
+            {
+                Id = p.Id,
+                TenPhan = p.TenPhan,
+                MieuTa = p.MieuTa,
+                ThuTuSapXep = p.ThuTuSapXep,
+                TrangThai = p.TrangThai,
+                TrangThaiPheDuyet = p.TrangThaiPheDuyet,
+                NgayTao = p.CreatedDate,
+                IdKhoaHoc = p.IdKhoaHoc,
+                IdBanGhiTruoc = p.IdBanGhiTruoc,
+                IsBanHienTai = p.IsBanHienTai,
+
+                BaiGiangs = baiGiangLookup[p.Id].Select(b => new BaiGiangChoDuyetDto
+                {
+                    IdBaiGiang = b.Id,
+                    TieuDe = b.TieuDe,
+                    LoaiBaiGiang = b.LoaiBaiGiang,
+                    URLBaiGiang = b.URLBaiGiang,
+                    ThoiLuong = b.ThoiLuong,
+                    LaBaiGiangFree = b.LaBaiGiangFree,
+                    TrangThai = b.TrangThai,
+                    TrangThaiPheDuyet = b.TrangThaiPheDuyet,
+                    IdPhan = b.IdPhan,
+                    IsBanHienTai = b.IsBanHienTai,
+                    IdBanGhiTruoc = b.IdBanGhiTruoc,
+
+                    TaiLieus = taiLieuLookup[b.Id].Select(t => new TaiLieuChoDuyetDto
+                    {
+                        IdTaiLieu = t.Id,
+                        LoaiTaiLieu = t.LoaiTaiLieu,
+                        TenTaiLieu = t.TenTaiLieu,
+                        URL = t.URL,
+                        IdDocument = t.IdDocument,
+                        TrangThai = t.TrangThai,
+                        TrangThaiPheDuyet = t.TrangThaiPheDuyet,
+                        IdBaiGiang = t.IdBaiGiang
+                    }).ToList()
+                }).ToList(),
+
+                BaiKiemTras = baiKiemTraLookup[p.Id].Select(bkt => new BaiKiemTraChoDuyetDto
+                {
+                    Id = bkt.Id,
+                    TenBaiKiemTra = bkt.TenBaiKiemTra,
+                    MoTa = bkt.MoTa,
+                    DiemDat = bkt.DiemDat,
+                    GioiHanThoiGian = bkt.GioiHanThoiGian,
+                    ChoLamLai = bkt.ChoLamLai,
+                    SoLanLamToiDa = bkt.SoLanLamToiDa,
+                    IdPhan = bkt.IdPhan,
+                    IsBanHienTai = bkt.IsBanHienTai,
+                    IdBanGhiTruoc = bkt.IdBanGhiTruoc,
+                    TrangThai = bkt.TrangThai,
+                    TrangThaiPheDuyet = bkt.TrangThaiPheDuyet,
+                    CauHois = cauHoiLookup[bkt.Id].Select(c => new CauHoiChoDuyetDto
+                    {
+                        Id = c.Id,
+                        IdBaiKiemTra = c.IdBaiKiemTra.Value,
+                        TenCauHoi = c.TenCauHoi,
+                        NoiDungCauHoi = c.NoiDungCauHoi,
+                        DoKho = c.DoKho,
+                        LoaiCauHoi = c.LoaiCauHoi,
+                        ThuTuSapXep = c.ThuTuSapXep,
+
+                        DapAns = dapAnLookup[c.Id].Select(d => new DapAnChoDuyetDto
+                        {
+                            Id = d.Id,
+                            NoiDungDapAn = d.NoiDungDapAn,
+                            LaDapAnDung = d.LaDapAnDung,
+                            ThuTuSapXep = d.ThuTuSapXep,
+                            IdCauHoi = d.IdCauHoi,
+                            TrangThai = d.TrangThai,
+                            TrangThaiPheDuyet = d.TrangThaiPheDuyet,
+                            IdBanGhiTruoc = d.IdBanGhiTruoc,
+                            IsBanHienTai = d.IsBanHienTai
+                        }).ToList()
+                    }).ToList()
+                }).ToList()
+            }).ToList();
+
+            // 5. Map thông tin Khóa học + gán cây Phần + thông tin lịch sử kiểm duyệt
+            var result = new KiemDuyetDetailDto
+            {
+                IdKhoaHoc = targetVersion.Id,
+                TieuDe = targetVersion.TieuDe,
+                MoTa = targetVersion.MoTa,
+                GiaGoc = targetVersion.GiaGoc,
+                LoaiKhoaHoc = targetVersion.LoaiKhoaHoc,
+                HinhAnhKhoaHoc = targetVersion.HinhAnhKhoaHoc,
+                CapDo = targetVersion.CapDo,
+                TrangThaiPheDuyet = targetVersion.TrangThaiPheDuyet,
+                CreateBy = targetVersion.CreatedBy,
+                Phans = phanDtos,
+                LichSuKiemDuyetDto = lichSuKiemDuyet
+            };
+
+            return result;
         }
         #endregion
 

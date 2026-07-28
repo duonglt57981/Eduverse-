@@ -805,7 +805,7 @@ namespace Eduverse.Service.CloudinaryService
             var extension = Path.GetExtension(file.FileName).ToLower();
 
             string[] allowedExtensions =
-            {".docx"};
+            {". "};
 
             if (!allowedExtensions.Contains(extension))
                 throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");

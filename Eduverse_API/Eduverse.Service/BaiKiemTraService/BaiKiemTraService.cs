@@ -277,7 +277,9 @@ namespace Eduverse.Service.BaiKiemTraService
                 select dk.Id
             ).AnyAsync();
 
-            var trangThaiMoi = coNguoiHoc? "NgungHoatDong": "DaXoa";
+             quiz.TrangThai = coNguoiHoc? "NgungHoatDong": "DaXoa";
+            await DeleteAsync(quiz);
+            await SaveAsync();
             return true;
         }
 

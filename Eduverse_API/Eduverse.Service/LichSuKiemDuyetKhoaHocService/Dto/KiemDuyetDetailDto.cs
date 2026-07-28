@@ -25,7 +25,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public Guid? IdBanGhiTruoc { get; set; }
         public bool IsBanHienTai { get; set; } = true;
         public string? CreateBy { get; set; }
+        public LichSuKiemDuyetDto LichSuKiemDuyetDto { get; set; }
         public List<PhanChoDuyetDto> Phans { get; set; } = new();
+
 
     }
 

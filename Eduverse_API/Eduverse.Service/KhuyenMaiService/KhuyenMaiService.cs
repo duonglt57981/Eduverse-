@@ -67,7 +67,7 @@ namespace Eduverse.Service.KhuyenMaiService
                 .ToList();
 
             var khoaHocs = await _khoaHocRepository.GetQueryable()
-                .Where(x => khoaHocIds.Contains(x.Id))
+                .Where(x => khoaHocIds.Contains(x.Id) && x.TrangThai == "HoatDong")
                 .Select(x => new KhoaHocMiniDto
                 {
                     Id = x.Id,
