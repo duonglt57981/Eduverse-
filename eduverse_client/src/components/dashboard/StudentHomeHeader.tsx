@@ -34,6 +34,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
@@ -43,10 +44,6 @@ import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 
 const RED = "#991B1B"; // Đỏ đô
-const RED_TINT = "#FEF2F2"; // Primary soft
-const BORDER = "#E5E7EB"; // Border light
-const INK = "#111827"; // Text title
-const INK2 = "#374151"; // Text body
 const HEADER_H = 74;
 
 export default function StudentHomeHeader() {
@@ -216,9 +213,10 @@ export default function StudentHomeHeader() {
         right: 0,
         height: HEADER_H,
         zIndex: 1200,
-        bgcolor: "rgba(255,255,255,0.92)",
+        bgcolor: (theme) => alpha(theme.palette.background.paper, 0.92),
         backdropFilter: "saturate(180%) blur(12px)",
-        borderBottom: `1px solid rgba(0, 0, 0, 0.08)`,
+        borderBottom: "1px solid",
+        borderColor: "divider",
         boxShadow: "0 2px 12px rgba(0, 0, 0, 0.01)",
       }}
     >
@@ -249,6 +247,13 @@ export default function StudentHomeHeader() {
               alignItems: "center",
               cursor: "pointer",
               flexShrink: 0,
+              px: 0.75,
+              py: 0.35,
+              borderRadius: "10px",
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.92)"
+                  : "transparent",
               transition: "opacity 150ms ease",
               "&:hover": { opacity: 0.85 },
             }}
@@ -274,14 +279,19 @@ export default function StudentHomeHeader() {
               textTransform: "none",
               fontWeight: isExploreActive ? 700 : 600,
               fontSize: 14.5,
-              color: isExploreActive ? RED : "#374151",
-              bgcolor: isExploreActive ? "rgba(153, 27, 27, 0.05)" : "transparent",
+              color: isExploreActive ? "primary.main" : "text.primary",
+              bgcolor: isExploreActive
+                ? (theme) => alpha(theme.palette.primary.main, 0.08)
+                : "transparent",
               borderRadius: "20px",
               px: 2,
               py: 0.6,
               flexShrink: 0,
               transition: "all 200ms ease",
-              "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.08)" },
+              "&:hover": {
+                color: "primary.main",
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+              },
             }}
           >
             Khám phá
@@ -297,16 +307,18 @@ export default function StudentHomeHeader() {
               display: "flex",
               alignItems: "center",
               gap: 1.25,
-              bgcolor: "#F3F4F6",
-              border: `1px solid rgba(0, 0, 0, 0.05)`,
+              bgcolor: "action.hover",
+              border: "1px solid",
+              borderColor: "divider",
               borderRadius: "999px",
               px: 2,
               height: 44,
               transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
               "&:focus-within": {
-                bgcolor: "#fff",
-                borderColor: RED,
-                boxShadow: "0 0 0 3px rgba(153, 27, 27, 0.1)",
+                bgcolor: "background.paper",
+                borderColor: "primary.main",
+                boxShadow: (theme) =>
+                  `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
               },
             }}
           >
@@ -314,7 +326,7 @@ export default function StudentHomeHeader() {
               type="submit"
               aria-label="Tìm kiếm khóa học"
               size="small"
-              sx={{ p: 0.25, color: "#9CA3AF" }}
+              sx={{ p: 0.25, color: "text.secondary" }}
             >
               <SearchRounded sx={{ fontSize: 20 }} />
             </IconButton>
@@ -323,7 +335,7 @@ export default function StudentHomeHeader() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               inputProps={{ "aria-label": "Từ khóa tìm kiếm" }}
-              sx={{ flex: 1, fontSize: 14, color: INK }}
+              sx={{ flex: 1, fontSize: 14, color: "text.primary" }}
             />
           </Box>
 
@@ -348,17 +360,18 @@ export default function StudentHomeHeader() {
                 textTransform: "none",
                 fontWeight: 700,
                 fontSize: 13.5,
-                color: RED,
+                color: "primary.main",
                 bgcolor: "transparent",
-                border: `1.5px solid ${RED}`,
+                border: "1.5px solid",
+                borderColor: "primary.main",
                 borderRadius: "20px",
                 px: 2.2,
                 py: 0.5,
                 whiteSpace: "nowrap",
                 transition: "all 200ms ease",
                 "&:hover": {
-                  bgcolor: RED_TINT,
-                  borderColor: RED,
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                  borderColor: "primary.main",
                   boxShadow: "0 4px 12px rgba(153, 27, 27, 0.08)",
                 },
               }}
@@ -372,14 +385,19 @@ export default function StudentHomeHeader() {
                 textTransform: "none",
                 fontWeight: isMyCoursesActive ? 700 : 600,
                 fontSize: 14.5,
-                color: isMyCoursesActive ? RED : "#374151",
-                bgcolor: isMyCoursesActive ? "rgba(153, 27, 27, 0.05)" : "transparent",
+                color: isMyCoursesActive ? "primary.main" : "text.primary",
+                bgcolor: isMyCoursesActive
+                  ? (theme) => alpha(theme.palette.primary.main, 0.08)
+                  : "transparent",
                 borderRadius: "20px",
                 px: 2,
                 py: 0.6,
                 whiteSpace: "nowrap",
                 transition: "all 200ms ease",
-                "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.08)" },
+                "&:hover": {
+                  color: "primary.main",
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                },
               }}
             >
               Khóa học của tôi
@@ -388,11 +406,18 @@ export default function StudentHomeHeader() {
             <IconButton
               onClick={() => router.push("/student/favorites")}
               sx={{
-                color: pathname === "/student/favorites" ? RED : "#4B5563",
+                color:
+                  pathname === "/student/favorites"
+                    ? "primary.main"
+                    : "text.secondary",
                 p: 1.1,
                 borderRadius: "50%",
                 transition: "all 200ms ease",
-                "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.05)", transform: "scale(1.05)" },
+                "&:hover": {
+                  color: "primary.main",
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  transform: "scale(1.05)",
+                },
               }}
             >
               <FavoriteBorderOutlined sx={{ fontSize: 21 }} />
@@ -400,11 +425,18 @@ export default function StudentHomeHeader() {
             <IconButton
               onClick={() => router.push("/student/cart")}
               sx={{
-                color: pathname === "/student/cart" ? RED : "#4B5563",
+                color:
+                  pathname === "/student/cart"
+                    ? "primary.main"
+                    : "text.secondary",
                 p: 1.1,
                 borderRadius: "50%",
                 transition: "all 200ms ease",
-                "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.05)", transform: "scale(1.05)" },
+                "&:hover": {
+                  color: "primary.main",
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  transform: "scale(1.05)",
+                },
               }}
             >
               <ShoppingCartOutlined sx={{ fontSize: 21 }} />
@@ -413,11 +445,15 @@ export default function StudentHomeHeader() {
               aria-label="Mở thông báo"
               onClick={(event) => setNotiAnchorEl(event.currentTarget)}
               sx={{
-                color: "#4B5563",
+                color: "text.secondary",
                 p: 1.1,
                 borderRadius: "50%",
                 transition: "all 200ms ease",
-                "&:hover": { color: RED, bgcolor: "rgba(153, 27, 27, 0.05)", transform: "scale(1.05)" },
+                "&:hover": {
+                  color: "primary.main",
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  transform: "scale(1.05)",
+                },
               }}
             >
               <Badge badgeContent={unreadCount} color="error" sx={{ "& .MuiBadge-badge": { bgcolor: RED } }}>
@@ -435,7 +471,8 @@ export default function StudentHomeHeader() {
                   color: "#fff",
                   fontSize: 14,
                   fontWeight: 700,
-                  border: "2px solid #fff",
+                  border: "2px solid",
+                  borderColor: "background.paper",
                   boxShadow: `0 0 0 2px rgba(153, 27, 27, 0.15), 0 4px 8px rgba(0,0,0,0.06)`,
                   transition: "all 200ms ease",
                   cursor: "pointer",
@@ -465,7 +502,8 @@ export default function StudentHomeHeader() {
                 mt: 1,
                 minWidth: 236,
                 borderRadius: "14px",
-                border: `1px solid ${BORDER}`,
+                border: "1px solid",
+                borderColor: "divider",
                 boxShadow: "0 12px 32px rgba(24,24,27,0.12)",
                 overflow: "hidden",
               },
@@ -473,23 +511,23 @@ export default function StudentHomeHeader() {
           }}
         >
           <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography sx={{ fontSize: 14, fontWeight: 800, color: INK }}>
+            <Typography sx={{ fontSize: 14, fontWeight: 800, color: "text.primary" }}>
               {hoTen}
             </Typography>
             {email && (
-              <Typography sx={{ fontSize: 12.5, color: INK2 }}>{email}</Typography>
+              <Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>{email}</Typography>
             )}
           </Box>
           <Divider />
           <MenuItem onClick={() => go("/student/dashboard")} sx={{ py: 1.1 }}>
             <ListItemIcon>
-              <SchoolRounded sx={{ fontSize: 20, color: INK2 }} />
+              <SchoolRounded sx={{ fontSize: 20, color: "text.secondary" }} />
             </ListItemIcon>
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Học tập</Typography>
           </MenuItem>
           <MenuItem onClick={() => go("/student/courses/my-courses")} sx={{ py: 1.1 }}>
             <ListItemIcon>
-              <MenuBookRounded sx={{ fontSize: 20, color: INK2 }} />
+              <MenuBookRounded sx={{ fontSize: 20, color: "text.secondary" }} />
             </ListItemIcon>
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
               Khóa học của tôi
@@ -497,13 +535,13 @@ export default function StudentHomeHeader() {
           </MenuItem>
           <MenuItem onClick={() => go("/student/cart")} sx={{ py: 1.1 }}>
             <ListItemIcon>
-              <ShoppingCartOutlined sx={{ fontSize: 20, color: INK2 }} />
+              <ShoppingCartOutlined sx={{ fontSize: 20, color: "text.secondary" }} />
             </ListItemIcon>
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Giỏ hàng</Typography>
           </MenuItem>
           <MenuItem onClick={() => go("/student/favorites")} sx={{ py: 1.1 }}>
             <ListItemIcon>
-              <FavoriteBorderOutlined sx={{ fontSize: 20, color: INK2 }} />
+              <FavoriteBorderOutlined sx={{ fontSize: 20, color: "text.secondary" }} />
             </ListItemIcon>
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
               Danh sách mong ước
@@ -512,7 +550,7 @@ export default function StudentHomeHeader() {
           {isInstructor && (
             <MenuItem onClick={() => go("/instructor/dashboard")} sx={{ py: 1.1 }}>
               <ListItemIcon>
-                <WorkspacePremiumRounded sx={{ fontSize: 20, color: INK2 }} />
+                <WorkspacePremiumRounded sx={{ fontSize: 20, color: "text.secondary" }} />
               </ListItemIcon>
               <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
                 Trang giảng viên
@@ -522,7 +560,7 @@ export default function StudentHomeHeader() {
           <Divider />
           <MenuItem onClick={() => go("/settings")} sx={{ py: 1.1 }}>
             <ListItemIcon>
-              <SettingsRounded sx={{ fontSize: 20, color: INK2 }} />
+              <SettingsRounded sx={{ fontSize: 20, color: "text.secondary" }} />
             </ListItemIcon>
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Cài đặt</Typography>
           </MenuItem>
@@ -549,7 +587,8 @@ export default function StudentHomeHeader() {
                 width: { xs: "calc(100vw - 24px)", sm: 360 },
                 maxHeight: 480,
                 borderRadius: "16px",
-                border: `1px solid ${BORDER}`,
+                border: "1px solid",
+                borderColor: "divider",
                 boxShadow: "0 12px 32px rgba(24,24,27,0.12)",
               },
             },
@@ -561,10 +600,11 @@ export default function StudentHomeHeader() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              borderBottom: `1px solid ${BORDER}`,
+              borderBottom: "1px solid",
+              borderColor: "divider",
             }}
           >
-            <Typography sx={{ fontWeight: 800, fontSize: 16, color: INK }}>
+            <Typography sx={{ fontWeight: 800, fontSize: 16, color: "text.primary" }}>
               Thông báo
             </Typography>
             {unreadCount > 0 && (
@@ -587,9 +627,9 @@ export default function StudentHomeHeader() {
             {notifications.length === 0 ? (
               <Box sx={{ px: 2, py: 5, textAlign: "center" }}>
                 <NotificationsNoneRounded
-                  sx={{ fontSize: 36, color: "#CBD5E1", mb: 1 }}
+                  sx={{ fontSize: 36, color: "text.disabled", mb: 1 }}
                 />
-                <Typography sx={{ color: INK2, fontSize: 14 }}>
+                <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
                   Chưa có thông báo
                 </Typography>
               </Box>
@@ -605,9 +645,12 @@ export default function StudentHomeHeader() {
                       p: 2,
                       pl: 2.5,
                       cursor: "pointer",
-                      bgcolor: isRead ? "#fff" : "rgba(139,19,19,0.04)",
-                      borderBottom: `1px solid ${BORDER}`,
-                      "&:hover": { bgcolor: "#F8FAFC" },
+                      bgcolor: isRead
+                        ? "background.paper"
+                        : (theme) => alpha(theme.palette.primary.main, 0.08),
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                      "&:hover": { bgcolor: "action.hover" },
                     }}
                   >
                     {!isRead && (
@@ -627,7 +670,7 @@ export default function StudentHomeHeader() {
                       sx={{
                         fontSize: 13.5,
                         fontWeight: isRead ? 600 : 800,
-                        color: INK,
+                        color: "text.primary",
                       }}
                     >
                       {notification.tieuDe ||
@@ -638,7 +681,7 @@ export default function StudentHomeHeader() {
                       sx={{
                         mt: 0.5,
                         fontSize: 12.5,
-                        color: INK2,
+                        color: "text.secondary",
                         display: "-webkit-box",
                         WebkitBoxOrient: "vertical",
                         WebkitLineClamp: 2,
@@ -648,7 +691,7 @@ export default function StudentHomeHeader() {
                       {notification.noiDung || notification.message}
                     </Typography>
                     {notification.thoiGianTao && (
-                      <Typography sx={{ mt: 0.75, fontSize: 11, color: "#94A3B8" }}>
+                      <Typography sx={{ mt: 0.75, fontSize: 11, color: "text.disabled" }}>
                         {new Date(notification.thoiGianTao).toLocaleString(
                           "vi-VN",
                         )}
@@ -668,15 +711,15 @@ export default function StudentHomeHeader() {
             paper: { sx: { width: "100%", maxWidth: 480, borderRadius: "16px" } },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800, color: INK }}>
+          <DialogTitle sx={{ fontWeight: 800, color: "text.primary" }}>
             {selectedNoti?.tieuDe || selectedNoti?.type || "Chi tiết thông báo"}
           </DialogTitle>
           <DialogContent>
-            <Typography sx={{ color: "#374151", whiteSpace: "pre-wrap" }}>
+            <Typography sx={{ color: "text.primary", whiteSpace: "pre-wrap" }}>
               {selectedNoti?.noiDung || selectedNoti?.message}
             </Typography>
             {selectedNoti?.thoiGianTao && (
-              <Typography sx={{ mt: 2, fontSize: 12, color: INK2 }}>
+              <Typography sx={{ mt: 2, fontSize: 12, color: "text.secondary" }}>
                 {new Date(selectedNoti.thoiGianTao).toLocaleString("vi-VN")}
               </Typography>
             )}

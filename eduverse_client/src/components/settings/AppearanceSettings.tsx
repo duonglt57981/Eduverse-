@@ -11,7 +11,6 @@ import {
   Stack,
   Button,
   Chip,
-  Tooltip,
 } from '@mui/material';
 import {
   WbSunnyRounded,
@@ -22,16 +21,14 @@ import {
   PaletteRounded,
   OndemandVideoRounded,
 } from '@mui/icons-material';
-import { useThemeSettings, accentColors } from '@/src/contexts/ThemeSettingsContext';
+import { useThemeSettings } from '@/src/contexts/ThemeSettingsContext';
 import { alpha, useTheme } from '@mui/material/styles';
 
 export default function AppearanceSettings() {
   const {
     themeMode,
-    accentColor,
     currentAccent,
     setThemeMode,
-    setAccentColor,
     saveSettings,
     resetSettings,
   } = useThemeSettings();
@@ -126,57 +123,6 @@ export default function AppearanceSettings() {
                     );
                   })}
                 </Grid>
-              </CardContent>
-            </Card>
-
-            {/* Màu sắc nhấn (Accent Color) */}
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 2.8,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-              }}
-            >
-              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                <Typography variant="h6" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-0.3px' }}>
-                  Màu sắc nhấn (Accent Color)
-                </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 13.5, mb: 3 }}>
-                  Thay đổi màu nhấn đại diện cho các nút hoạt động, thẻ hoạt động, và liên kết.
-                </Typography>
-
-                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
-                  {accentColors.map((color) => {
-                    const isActive = accentColor === color.id;
-                    return (
-                      <Tooltip key={color.id} title={color.name} arrow>
-                        <Box
-                          onClick={() => setAccentColor(color.id)}
-                          sx={{
-                            width: 46,
-                            height: 46,
-                            borderRadius: '55%',
-                            bgcolor: color.value,
-                            cursor: 'pointer',
-                            display: 'grid',
-                            placeItems: 'center',
-                            color: '#fff',
-                            boxShadow: isActive ? `0 0 0 4px ${color.value}44` : 'none',
-                            transition: 'all 160ms ease',
-                            border: isActive ? '3px solid #fff' : '1px solid rgba(255,255,255,0.1)',
-                            '&:hover': {
-                              transform: 'scale(1.08)',
-                            },
-                          }}
-                        >
-                          {isActive && <CheckRounded fontSize="small" sx={{ stroke: 'white', strokeWidth: 1.5 }} />}
-                        </Box>
-                      </Tooltip>
-                    );
-                  })}
-                </Stack>
               </CardContent>
             </Card>
 
