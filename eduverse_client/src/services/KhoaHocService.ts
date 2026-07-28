@@ -73,6 +73,23 @@ export default class KhoaHocService {
     }
   }
 
+  async SearchWithElasticsearch(
+    searchParams: KhoaHocSearch,
+    signal?: AbortSignal,
+  ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
+    const params = new URLSearchParams();
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value.toString());
+      }
+    });
+
+    return await apiService.get<PagedList<KhoaHocType>>(
+      `/KhoaHoc/search-elasticsearch?${params.toString()}`,
+      { signal },
+    );
+  }
+
   async GetListDangKi(
     search: KhoaHocDangKiSearch,
   ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
