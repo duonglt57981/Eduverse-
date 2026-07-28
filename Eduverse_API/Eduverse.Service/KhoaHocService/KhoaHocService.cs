@@ -124,6 +124,22 @@ namespace Eduverse.Service.KhoaHocService
         }
         #endregion
 
+        #region SearchKhoaHocWithElasticsearch
+        public async Task<PagedList<KhoaHocDto>> SearchWithElasticsearch(KhoaHocSearch search)
+        {
+            search ??= new KhoaHocSearch();
+            try
+            {
+                return await _elasticsearchService.SearchCoursesAsync(search);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Elasticsearch failed: {ex.Message}. Falling back to database.");
+                return await GetListFromDatabaseAsync(search);
+            }
+        }
+        #endregion
+
 
         #region GetListKhoaHocByUser
         public async Task<PagedList<KhoaHocDto>> GetListByUser(KhoaHocSearch search)
