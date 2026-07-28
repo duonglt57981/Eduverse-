@@ -43,7 +43,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     saveState,
     isDirty,
     resetDirty,
-    // Không dùng refreshData khi chuyển trang để tránh reload
   } = useCourseEdit();
 
   const [dangXuLy, setDangXuLy] = useState(false);
@@ -79,7 +78,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   );
 
   const curriculumHoanThanh = phans.some((p) =>
-    (p.DanhSachBaiGiang ?? []).some((bg) => bg.uRLBaiGiang),
+    (p.DanhSachBaiGiang ?? []).some((bg) => bg.urlBaiGiang),
   );
 
   const nhomSidebar = [
@@ -100,25 +99,20 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     },
   ];
 
-  // Hàm thực hiện chuyển trang - KHÔNG gọi refreshData
   const performNavigation = useCallback(
     (key: string) => {
-      // Lưu state trước khi chuyển
       saveState();
-      // Chuyển trang bằng router.push (không reload)
       router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/${key}`);
     },
     [idKhoaHoc, router, saveState],
   );
 
-  // Hàm thực hiện quay lại - KHÔNG gọi refreshData
   const performBack = useCallback(() => {
     clearState();
     resetDirty();
     router.push("/instructor/manager-courses");
   }, [clearState, resetDirty, router]);
 
-  // Hàm thực hiện di chuyển từ validate - KHÔNG gọi refreshData
   const performDiChuyenDen = useCallback(
     (diChuyenDen: MucThieu["diChuyenDen"]) => {
       saveState();
@@ -133,7 +127,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     [idKhoaHoc, router, saveState],
   );
 
-  // Hàm xử lý khi click vào sidebar
   const handleNavigateSidebar = useCallback(
     (key: string) => {
       if (isDirty && trangThai === "DangSua") {
@@ -146,7 +139,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     [isDirty, trangThai, performNavigation],
   );
 
-  // Hàm xử lý khi click back
   const handleBack = useCallback(() => {
     if (isDirty && trangThai === "DangSua") {
       setPendingNavigation("back");
@@ -156,7 +148,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [isDirty, trangThai, performBack]);
 
-  // Hàm xử lý khi click từ validate
   const handleDiChuyenDenTuValidate = useCallback(
     (diChuyenDen: MucThieu["diChuyenDen"]) => {
       if (isDirty && trangThai === "DangSua") {
@@ -169,11 +160,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     [isDirty, trangThai, performDiChuyenDen],
   );
 
-  // Hàm xác nhận chuyển trang
   const handleConfirmNavigation = useCallback(() => {
     setShowDirtyDialog(false);
     if (pendingNavigation) {
-      // Lưu state trước khi chuyển
       saveState();
       resetDirty();
 
@@ -198,21 +187,17 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     performNavigation,
   ]);
 
-  // Hàm hủy chuyển trang - chỉ đóng dialog, KHÔNG reload
   const handleCancelNavigation = useCallback(() => {
     setShowDirtyDialog(false);
     setPendingNavigation(null);
-    // KHÔNG gọi refreshData để giữ nguyên dữ liệu đang sửa
   }, []);
 
-  // Hàm gửi phê duyệt
   const handleGuiPheDuyet = useCallback(async () => {
     setDangXuLy(true);
     try {
       const res = await khoaHocService.ChuyenTTChoDuyetBatch(idKhoaHoc);
       if (res.status === true) {
         setTrangThai("ChoDuyet");
-        // Sau khi gửi thành công, cần refresh dữ liệu
         await refreshData();
         resetDirty();
         alert("Đã gửi phê duyệt thành công!");
@@ -258,6 +243,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         nhomSidebar={nhomSidebar}
         activeKey={activeKey}
         loading={loading || dangXuLy}
+        idKhoaHoc={idKhoaHoc} // <-- ĐÃ THÊM DÒNG NÀY
         onBack={handleBack}
         onNavigateSidebar={handleNavigateSidebar}
         onGuiPheDuyet={handleGuiPheDuyet}

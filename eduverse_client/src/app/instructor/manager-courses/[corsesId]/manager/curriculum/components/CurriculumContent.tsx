@@ -66,7 +66,19 @@ import {
   DescriptionOutlined,
 } from "@mui/icons-material";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { MAU, tinhTongThoiLuongGiay } from "../../components/courseEditCore";
+import {
+  MAU,
+  tinhTongThoiLuongGiay,
+  validateTieuDeBaiGiang,
+  validateTenTaiLieu,
+  validateTenBaiKiemTra,
+  validateMoTaBaiKiemTra,
+  validateNoiDungCauHoi,
+  validateNoiDungDapAn,
+  trimString,
+  SO_DAP_AN_TOI_THIEU,
+  SO_DAP_AN_TOI_DA,
+} from "../../components/courseEditCore";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import {
@@ -566,6 +578,16 @@ function validateVideoFile(
   file: File,
 ): Promise<{ valid: boolean; error?: string }> {
   return new Promise((resolve) => {
+    const duoi = layDuoiFile(file.name);
+    const DUOI_VIDEO_HOP_LE = [".mp4", ".mov"];
+    if (!DUOI_VIDEO_HOP_LE.includes(duoi)) {
+      resolve({
+        valid: false,
+        error: `Định dạng video không hợp lệ. Chỉ chấp nhận: ${DUOI_VIDEO_HOP_LE.join(", ")}`,
+      });
+      return;
+    }
+
     const MAX_SIZE = 100 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       resolve({
@@ -584,7 +606,7 @@ function validateVideoFile(
       if (width < 854 || height < 480) {
         resolve({
           valid: false,
-          error: `Độ phân giải tối thiểu 854x480 (hiện tại: ${width}x${height})`,
+          error: `Độ phân giải tối thiểu 854x480 (480p). Hiện tại: ${width}x${height}`,
         });
       } else {
         resolve({ valid: true });
@@ -641,7 +663,6 @@ function SectionItem({
             p: 2.5,
           }}
         >
-          {/* HEADER - VÙNG KÉO */}
           <Box
             {...(isEditable ? listeners : {})}
             sx={{
@@ -773,7 +794,6 @@ function LectureItem({
           "&:hover": { borderColor: "#D1D5DB" },
         }}
       >
-        {/* HEADER - VÙNG KÉO */}
         <ListItem
           {...(isEditable ? listeners : {})}
           sx={{
@@ -948,7 +968,6 @@ function QuizItem({
           "&:hover": { borderColor: "#D1D5DB" },
         }}
       >
-        {/* HEADER - VÙNG KÉO */}
         <ListItem
           {...(isEditable ? listeners : {})}
           sx={{
@@ -1612,18 +1631,77 @@ function QuestionDetailForm({
                   />
                 </Box>
 
-                {question.danhSachDapAn.length > 2 && (
-                  <IconButton
-                    {...noPropagation}
-                    size="small"
-                    onClick={() => onRemoveDapAn(d.id)}
+                <Tooltip
+                  title={
+                    soDapAn <= SO_DAP_AN_TOI_THIEU
+                      ? `Cần giữ tối thiểu ${SO_DAP_AN_TOI_THIEU} đáp án`
+                      : "Xóa đáp án"
+                  }
+                >
+                  <span>
+                    <IconButton
+                      {...noPropagation}
+                      size="small"
+                      onClick={() => onRemoveDapAn(d.id)}
+                      disabled={loading || soDapAn <= SO_DAP_AN_TOI_THIEU}
+                      sx={{
+                        flexShrink: 0,
+                        color: "#9CA3AF",
+                        "&:hover": {
+                          color: "#DC2626",
+                          bgcolor: "#FEE2E2",
+                        },
+                      }}
+                    >
+                      <DeleteOutlined fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+
+                {question.danhSachDapAn.length < SO_DAP_AN_TOI_THIEU && (
+                  <Box
                     sx={{
-                      color: "#C7CCD6",
-                      "&:hover": { color: "#C62828", bgcolor: "#FDECEC" },
+                      mt: 1,
+                      px: 1.5,
+                      py: 0.75,
+                      bgcolor: "#FDECEC",
+                      borderRadius: "8px",
                     }}
                   >
-                    <DeleteOutlined fontSize="small" />
-                  </IconButton>
+                    <Typography sx={{ fontSize: 12.5, color: "#C62828" }}>
+                      Cần ít nhất {SO_DAP_AN_TOI_THIEU} đáp án
+                    </Typography>
+                  </Box>
+                )}
+                {!hasDapAnDung && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      px: 1.5,
+                      py: 0.75,
+                      bgcolor: "#FDECEC",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 12.5, color: "#C62828" }}>
+                      Vui lòng chọn ít nhất một đáp án đúng
+                    </Typography>
+                  </Box>
+                )}
+                {soDapAn >= SO_DAP_AN_TOI_DA && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      px: 1.5,
+                      py: 0.75,
+                      bgcolor: "#FFF4E5",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 12.5, color: "#B26A00" }}>
+                      Đã đạt tối đa {SO_DAP_AN_TOI_DA} đáp án
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             </Box>
@@ -2744,7 +2822,6 @@ export default function CurriculumContent() {
     mode: "add" | "edit";
     phanId?: string;
     tenPhan: string;
-    mieuTa: string;
   } | null>(null);
 
   const [videoPopup, setVideoPopup] = useState<{ open: boolean; url: string }>({
@@ -2939,25 +3016,33 @@ export default function CurriculumContent() {
 
   const moThemPhan = () => {
     if (!isEditable) return;
-    setPhanForm({ mode: "add", tenPhan: "", mieuTa: "" });
+    setAddForm(null);
+    setQuizCreateForm(null);
+    setEditingLecture(null);
+    setPhanForm({ mode: "add", tenPhan: "" });
   };
 
   const moSuaPhan = (phanId: string) => {
     if (!isEditable) return;
+    setAddForm(null);
+    setQuizCreateForm(null);
+    setEditingLecture(null);
     const phan = phans.find((p) => p.id === phanId);
     if (!phan) return;
     setPhanForm({
       mode: "edit",
       phanId,
       tenPhan: phan.tenPhan || "",
-      mieuTa: phan.mieuTa || "",
     });
   };
 
   const submitPhanForm = async () => {
     if (!phanForm) return;
-    const { mode, phanId, tenPhan, mieuTa } = phanForm;
-    if (!tenPhan.trim()) {
+    const { mode, phanId, tenPhan } = phanForm;
+
+    const tenPhanTrimmed = trimString(tenPhan);
+
+    if (!tenPhanTrimmed) {
       setToast({
         open: true,
         message: "Vui lòng nhập tiêu đề phần",
@@ -2965,17 +3050,22 @@ export default function CurriculumContent() {
       });
       return;
     }
+
     setLoading(true);
     try {
       if (mode === "add") {
-        await createPhan({ tenPhan, mieuTa });
+        await createPhan({ tenPhan: tenPhanTrimmed, mieuTa: "" });
         setToast({
           open: true,
           message: "Đã thêm phần mới",
           severity: "success",
         });
       } else if (mode === "edit" && phanId) {
-        await updatePhan(phanId, { tenPhan, mieuTa });
+        const phanHienTai = phans.find((p) => p.id === phanId);
+        await updatePhan(phanId, {
+          tenPhan: tenPhanTrimmed,
+          mieuTa: phanHienTai?.mieuTa || "",
+        });
         setToast({
           open: true,
           message: "Đã cập nhật phần",
@@ -2983,6 +3073,7 @@ export default function CurriculumContent() {
         });
       }
       setPhanForm(null);
+      await refreshData();
     } catch (error: any) {
       setToast({
         open: true,
@@ -3020,15 +3111,43 @@ export default function CurriculumContent() {
   };
 
   // ===== XỬ LÝ QUIZ =====
-
   const handleCreateQuiz = async () => {
     if (!quizCreateForm) return;
     const { phanId, tenBaiKiemTra, moTa } = quizCreateForm;
 
-    if (!tenBaiKiemTra || tenBaiKiemTra.trim() === "") {
+    const tenTrimmed = trimString(tenBaiKiemTra);
+    if (!tenTrimmed) {
       setToast({
         open: true,
         message: "Vui lòng nhập tiêu đề bài kiểm tra",
+        severity: "error",
+      });
+      return;
+    }
+    const tenValid = validateTenBaiKiemTra(tenTrimmed);
+    if (!tenValid.valid) {
+      setToast({
+        open: true,
+        message: tenValid.error || "Lỗi validate",
+        severity: "error",
+      });
+      return;
+    }
+
+    const moTaTrimmed = trimString(moTa);
+    if (!moTaTrimmed) {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập mô tả bài kiểm tra",
+        severity: "error",
+      });
+      return;
+    }
+    const moTaValid = validateMoTaBaiKiemTra(moTaTrimmed);
+    if (!moTaValid.valid) {
+      setToast({
+        open: true,
+        message: moTaValid.error || "Lỗi validate",
         severity: "error",
       });
       return;
@@ -3037,8 +3156,8 @@ export default function CurriculumContent() {
     setLoading(true);
     try {
       const result = await createBaiKiemTra(phanId, {
-        tenBaiKiemTra: tenBaiKiemTra.trim(),
-        moTa: moTa || "",
+        tenBaiKiemTra: tenTrimmed,
+        moTa: moTaTrimmed,
       });
 
       setToast({
@@ -3046,7 +3165,6 @@ export default function CurriculumContent() {
         message: "Đã tạo bài kiểm tra",
         severity: "success",
       });
-
       setQuizCreateForm(null);
       if (result.id) {
         setExpandedQuizzes((prev) => ({ ...prev, [result.id!]: true }));
@@ -3083,10 +3201,39 @@ export default function CurriculumContent() {
     if (!quizUpdateForm) return;
     const { quizId, tenBaiKiemTra, moTa } = quizUpdateForm;
 
-    if (!tenBaiKiemTra?.trim()) {
+    const tenTrimmed = trimString(tenBaiKiemTra);
+    if (!tenTrimmed) {
       setToast({
         open: true,
-        message: "Vui lòng nhập tiêu đề",
+        message: "Vui lòng nhập tiêu đề bài kiểm tra",
+        severity: "error",
+      });
+      return;
+    }
+    const tenValid = validateTenBaiKiemTra(tenTrimmed);
+    if (!tenValid.valid) {
+      setToast({
+        open: true,
+        message: tenValid.error || "Lỗi validate",
+        severity: "error",
+      });
+      return;
+    }
+
+    const moTaTrimmed = trimString(moTa);
+    if (!moTaTrimmed) {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập mô tả bài kiểm tra",
+        severity: "error",
+      });
+      return;
+    }
+    const moTaValid = validateMoTaBaiKiemTra(moTaTrimmed);
+    if (!moTaValid.valid) {
+      setToast({
+        open: true,
+        message: moTaValid.error || "Lỗi validate",
         severity: "error",
       });
       return;
@@ -3095,8 +3242,8 @@ export default function CurriculumContent() {
     setLoading(true);
     try {
       await updateBaiKiemTra(quizId, {
-        tenBaiKiemTra: tenBaiKiemTra.trim(),
-        moTa: moTa || "",
+        tenBaiKiemTra: tenTrimmed,
+        moTa: moTaTrimmed,
       });
 
       setToast({
@@ -3180,7 +3327,8 @@ export default function CurriculumContent() {
     if (!questionEditor) return;
     const { phanId, quizId, question, isEditing } = questionEditor;
 
-    if (!question.noiDungCauHoi?.trim()) {
+    const noiDungTrimmed = trimString(question.noiDungCauHoi);
+    if (!noiDungTrimmed) {
       setToast({
         open: true,
         message: "Vui lòng nhập nội dung câu hỏi",
@@ -3188,18 +3336,81 @@ export default function CurriculumContent() {
       });
       return;
     }
-    if (!question.danhSachDapAn.some((d) => d.laDapAnDung)) {
+    const noiDungValid = validateNoiDungCauHoi(noiDungTrimmed);
+    if (!noiDungValid.valid) {
       setToast({
         open: true,
-        message: "Cần có ít nhất một đáp án đúng",
+        message: noiDungValid.error || "Lỗi validate",
         severity: "error",
       });
       return;
     }
-    if (question.danhSachDapAn.some((d) => !d.noiDungDapAn.trim())) {
+
+    if (question.danhSachDapAn.length < SO_DAP_AN_TOI_THIEU) {
       setToast({
         open: true,
-        message: "Vui lòng nhập nội dung cho tất cả đáp án",
+        message: `Cần ít nhất ${SO_DAP_AN_TOI_THIEU} đáp án`,
+        severity: "error",
+      });
+      return;
+    }
+    if (question.danhSachDapAn.length > SO_DAP_AN_TOI_DA) {
+      setToast({
+        open: true,
+        message: `Tối đa ${SO_DAP_AN_TOI_DA} đáp án`,
+        severity: "error",
+      });
+      return;
+    }
+
+    const soDapAnDung = question.danhSachDapAn.filter(
+      (d) => d.laDapAnDung,
+    ).length;
+    if (soDapAnDung === 0) {
+      setToast({
+        open: true,
+        message: "Cần có ít nhất 1 đáp án đúng",
+        severity: "error",
+      });
+      return;
+    }
+    if (soDapAnDung >= question.danhSachDapAn.length) {
+      setToast({
+        open: true,
+        message: "Số đáp án đúng phải nhỏ hơn tổng số đáp án",
+        severity: "error",
+      });
+      return;
+    }
+
+    const noiDungDapAns: string[] = [];
+    for (const dapAn of question.danhSachDapAn) {
+      const dapAnTrimmed = trimString(dapAn.noiDungDapAn);
+      if (!dapAnTrimmed) {
+        setToast({
+          open: true,
+          message: "Vui lòng nhập nội dung cho tất cả đáp án",
+          severity: "error",
+        });
+        return;
+      }
+      const dapAnValid = validateNoiDungDapAn(dapAnTrimmed);
+      if (!dapAnValid.valid) {
+        setToast({
+          open: true,
+          message: dapAnValid.error || "Lỗi validate",
+          severity: "error",
+        });
+        return;
+      }
+      noiDungDapAns.push(dapAnTrimmed.toLowerCase());
+    }
+
+    const uniqueDapAns = new Set(noiDungDapAns);
+    if (uniqueDapAns.size !== noiDungDapAns.length) {
+      setToast({
+        open: true,
+        message: "Các đáp án không được trùng nhau",
         severity: "error",
       });
       return;
@@ -3209,12 +3420,12 @@ export default function CurriculumContent() {
     try {
       if (isEditing) {
         await updateCauHoi(phanId, quizId, question.id, {
-          noiDungCauHoi: question.noiDungCauHoi,
+          noiDungCauHoi: noiDungTrimmed,
           loaiCauHoi: question.loaiCauHoi,
           doKho: question.doKho,
           danhSachDapAn: question.danhSachDapAn.map((d, idx) => ({
             id: d.id,
-            noiDungDapAn: d.noiDungDapAn,
+            noiDungDapAn: trimString(d.noiDungDapAn),
             laDapAnDung: d.laDapAnDung,
             thuTuSapXep: idx + 1,
           })),
@@ -3226,11 +3437,11 @@ export default function CurriculumContent() {
         });
       } else {
         await createCauHoi(phanId, quizId, {
-          noiDungCauHoi: question.noiDungCauHoi,
+          noiDungCauHoi: noiDungTrimmed,
           loaiCauHoi: question.loaiCauHoi,
           doKho: question.doKho,
           danhSachDapAn: question.danhSachDapAn.map((d, idx) => ({
-            noiDungDapAn: d.noiDungDapAn,
+            noiDungDapAn: trimString(d.noiDungDapAn),
             laDapAnDung: d.laDapAnDung,
             thuTuSapXep: idx + 1,
           })),
@@ -3324,76 +3535,34 @@ export default function CurriculumContent() {
       open: true,
       onConfirm: async () => {
         setDeleteDialog({ open: false, onConfirm: () => {} });
+        setLoading(true);
         try {
           await deleteBaiGiang(phanId, baiGiangId);
-          const updatedPhans = phans.map((p) =>
-            p.id === phanId
-              ? {
-                  ...p,
-                  DanhSachBaiGiang: p.DanhSachBaiGiang?.filter(
-                    (b) => b.id !== baiGiangId,
-                  ),
-                }
-              : p,
-          );
-          setPhans(updatedPhans);
           setToast({
             open: true,
             message: "Đã xóa bài giảng",
             severity: "success",
           });
+          await refreshData();
         } catch (error: any) {
           setToast({
             open: true,
             message: error.message || "Lỗi xóa bài giảng",
             severity: "error",
           });
+        } finally {
+          setLoading(false);
         }
       },
     });
   };
 
-  const saveBaiGiang = async (
-    phanId: string,
-    baiGiangId: string,
-    tieuDe?: string,
-    isFree?: boolean,
-  ) => {
-    setLoading(true);
-    try {
-      const phan = phans.find((p) => p.id === phanId);
-      if (!phan) return;
-      const bg = (phan.DanhSachBaiGiang ?? []).find((b) => b.id === baiGiangId);
-      if (!bg) return;
-
-      await updateBaiGiang(phanId, baiGiangId, {
-        tieuDe: tieuDe !== undefined ? tieuDe : bg.tieuDe,
-        isFree: isFree !== undefined ? isFree : bg.laBaiGiangFree,
-        file: tempVideoFiles[baiGiangId] || null,
-      });
-      setTempVideoFiles((prev) => {
-        const newState = { ...prev };
-        delete newState[baiGiangId];
-        return newState;
-      });
-      setToast({
-        open: true,
-        message: "Bài giảng đã được lưu",
-        severity: "success",
-      });
-    } catch (error: any) {
-      setToast({
-        open: true,
-        message: error.message || "Lỗi lưu bài giảng",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleEditLecture = (phanId: string, lectureId: string) => {
     if (!isEditable) return;
+    setPhanForm(null);
+    setAddForm(null);
+    setQuizCreateForm(null);
+
     const phan = phans.find((p) => p.id === phanId);
     if (!phan) return;
     const bg = phan.DanhSachBaiGiang?.find((b) => b.id === lectureId);
@@ -3425,25 +3594,36 @@ export default function CurriculumContent() {
       return;
     }
 
-    const phan = phans.find((p) => p.id === phanId);
-    if (phan) {
-      const updatedBg = phan.DanhSachBaiGiang?.map((bg) =>
-        bg.id === lectureId
-          ? { ...bg, tieuDe: title.trim(), laBaiGiangFree: isFree }
-          : bg,
-      );
-      const updatedPhans = phans.map((p) =>
-        p.id === phanId ? { ...p, DanhSachBaiGiang: updatedBg } : p,
-      );
-      setPhans(updatedPhans);
-    }
+    setLoading(true);
+    try {
+      await updateBaiGiang(phanId, lectureId, {
+        tieuDe: title.trim(),
+        isFree: isFree,
+        file: file || null,
+      });
 
-    if (file) {
-      setTempVideoFiles((prev) => ({ ...prev, [lectureId]: file }));
-    }
+      await refreshData();
 
-    await saveBaiGiang(phanId, lectureId, title.trim(), isFree);
-    setEditingLecture(null);
+      setToast({
+        open: true,
+        message: "Bài giảng đã được cập nhật",
+        severity: "success",
+      });
+      setEditingLecture(null);
+      setTempVideoFiles((prev) => {
+        const newState = { ...prev };
+        delete newState[lectureId];
+        return newState;
+      });
+    } catch (error: any) {
+      setToast({
+        open: true,
+        message: error.message || "Lỗi lưu bài giảng",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // === Tài liệu ===
@@ -3454,6 +3634,34 @@ export default function CurriculumContent() {
     tenTaiLieu?: string,
   ) => {
     if (!isEditable) return;
+
+    if (!file) {
+      setToast({
+        open: true,
+        message: "Vui lòng chọn file tài liệu",
+        severity: "error",
+      });
+      return;
+    }
+
+    const tenTrimmed = trimString(tenTaiLieu || "");
+    if (!tenTrimmed) {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập tên tài liệu",
+        severity: "error",
+      });
+      return;
+    }
+    const tenValid = validateTenTaiLieu(tenTrimmed);
+    if (!tenValid.valid) {
+      setToast({
+        open: true,
+        message: tenValid.error || "Lỗi validate",
+        severity: "error",
+      });
+      return;
+    }
 
     const validation = validateTaiLieu(file);
     if (!validation.valid) {
@@ -3467,7 +3675,7 @@ export default function CurriculumContent() {
 
     setLoading(true);
     try {
-      await createTaiLieu(phanId, baiGiangId, file, tenTaiLieu);
+      await createTaiLieu(phanId, baiGiangId, file, tenTrimmed);
       setToast({
         open: true,
         message: "Tài liệu đã được thêm",
@@ -3477,6 +3685,7 @@ export default function CurriculumContent() {
         ...prev,
         [baiGiangId]: { tenTaiLieu: "", file: null, open: false },
       }));
+      await refreshData();
     } catch (error: any) {
       setToast({
         open: true,
@@ -3498,37 +3707,23 @@ export default function CurriculumContent() {
       open: true,
       onConfirm: async () => {
         setDeleteDialog({ open: false, onConfirm: () => {} });
+        setLoading(true);
         try {
           await deleteTaiLieu(phanId, baiGiangId, taiLieuId);
-          const updatedPhans = phans.map((p) =>
-            p.id === phanId
-              ? {
-                  ...p,
-                  DanhSachBaiGiang: p.DanhSachBaiGiang?.map((bg) =>
-                    bg.id === baiGiangId
-                      ? {
-                          ...bg,
-                          danhSachTaiLieu: bg.danhSachTaiLieu?.filter(
-                            (tl: TaiLieuType) => tl.id !== taiLieuId,
-                          ),
-                        }
-                      : bg,
-                  ),
-                }
-              : p,
-          );
-          setPhans(updatedPhans);
           setToast({
             open: true,
             message: "Đã xóa tài liệu",
             severity: "success",
           });
+          await refreshData();
         } catch (error: any) {
           setToast({
             open: true,
             message: error.message || "Lỗi xóa tài liệu",
             severity: "error",
           });
+        } finally {
+          setLoading(false);
         }
       },
     });
@@ -3548,21 +3743,6 @@ export default function CurriculumContent() {
 
   const tongThoiLuong = tinhTongThoiLuongGiay(phans);
   const tongPhut = Math.floor(tongThoiLuong / 60);
-
-  const handleVideoFileSelect = async (baiGiangId: string, file: File) => {
-    if (!isEditable) return;
-    const result = await validateVideoFile(file);
-    if (!result.valid) {
-      alert(`File không hợp lệ: ${result.error}`);
-      return;
-    }
-    setTempVideoFiles((prev) => ({ ...prev, [baiGiangId]: file }));
-    setToast({
-      open: true,
-      message: "Đã chọn video mới, bấm Lưu để cập nhật",
-      severity: "info",
-    });
-  };
 
   const chonTuyChonThemMuc = (tuyChon: TuyChonThemMuc) => {
     if (!menuAnchor || tuyChon.disabled || !isEditable) return;
@@ -3590,10 +3770,12 @@ export default function CurriculumContent() {
     }
   };
 
-  const handleCreateBaiGiang = () => {
+  const handleCreateBaiGiang = async () => {
     if (!addForm) return;
     const { phanId, title, file, isFree } = addForm;
-    if (!title || !title.trim()) {
+
+    const titleTrimmed = trimString(title || "");
+    if (!titleTrimmed) {
       setToast({
         open: true,
         message: "Vui lòng nhập tiêu đề bài giảng",
@@ -3601,28 +3783,48 @@ export default function CurriculumContent() {
       });
       return;
     }
+    const titleValid = validateTieuDeBaiGiang(titleTrimmed);
+    if (!titleValid.valid) {
+      setToast({
+        open: true,
+        message: titleValid.error || "Lỗi validate",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (!file) {
+      setToast({
+        open: true,
+        message: "Vui lòng chọn video cho bài giảng",
+        severity: "error",
+      });
+      return;
+    }
+
     setLoading(true);
-    createBaiGiang(phanId, {
-      tieuDe: title.trim(),
-      file,
-      isFree: isFree || false,
-    })
-      .then(() => {
-        setToast({
-          open: true,
-          message: "Đã thêm bài giảng",
-          severity: "success",
-        });
-        setAddForm(null);
-      })
-      .catch((err) => {
-        setToast({
-          open: true,
-          message: err.message || "Lỗi tạo bài giảng",
-          severity: "error",
-        });
-      })
-      .finally(() => setLoading(false));
+    try {
+      await createBaiGiang(phanId, {
+        tieuDe: titleTrimmed,
+        file,
+        isFree: isFree || false,
+      });
+      setToast({
+        open: true,
+        message: "Đã thêm bài giảng",
+        severity: "success",
+      });
+      setAddForm(null);
+      await refreshData();
+    } catch (error: any) {
+      setToast({
+        open: true,
+        message: error.message || "Lỗi tạo bài giảng",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ===== RENDER =====
@@ -3694,6 +3896,7 @@ export default function CurriculumContent() {
                 const items = getItems(phan);
                 const isEditingPhan =
                   phanForm?.mode === "edit" && phanForm?.phanId === phanId;
+                const isAddingPhan = phanForm?.mode === "add";
 
                 const hasAddForm =
                   quizCreateForm?.phanId === phanId ||
@@ -3708,6 +3911,124 @@ export default function CurriculumContent() {
                     onEdit={moSuaPhan}
                     onDelete={xoaPhan}
                   >
+                    {/* FORM SỬA PHẦN */}
+                    {isEditingPhan && isEditable && (
+                      <Box
+                        sx={{
+                          mt: 2,
+                          p: 2,
+                          border: `1px solid ${MAU.chinh}44`,
+                          borderRadius: "12px",
+                          bgcolor: `${MAU.chinh}06`,
+                          position: "relative",
+                        }}
+                      >
+                        {loading && (
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              inset: 0,
+                              bgcolor: "rgba(255,255,255,0.7)",
+                              borderRadius: "12px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              zIndex: 10,
+                              backdropFilter: "blur(2px)",
+                            }}
+                          >
+                            <CircularProgress
+                              size={28}
+                              sx={{ color: MAU.chinh }}
+                            />
+                          </Box>
+                        )}
+
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: 15,
+                            color: "#1F2937",
+                            mb: 1.5,
+                            opacity: loading ? 0.5 : 1,
+                            pointerEvents: loading ? "none" : "auto",
+                          }}
+                        >
+                          Sửa phần
+                        </Typography>
+                        <TextField
+                          {...noPropagation}
+                          label="Tiêu đề phần"
+                          value={phanForm.tenPhan}
+                          onChange={(e) =>
+                            setPhanForm({
+                              ...phanForm,
+                              tenPhan: e.target.value,
+                            })
+                          }
+                          fullWidth
+                          disabled={loading}
+                          sx={{
+                            mb: 2,
+                            opacity: loading ? 0.5 : 1,
+                            pointerEvents: loading ? "none" : "auto",
+                          }}
+                        />
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            justifyContent: "flex-end",
+                            opacity: loading ? 0.5 : 1,
+                            pointerEvents: loading ? "none" : "auto",
+                          }}
+                        >
+                          <Button
+                            {...noPropagation}
+                            onClick={() => setPhanForm(null)}
+                            disabled={loading}
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                              color: "#4B5563",
+                              py: 0.75,
+                              px: 2.5,
+                              borderRadius: "8px",
+                              "&:hover": { bgcolor: "#F3F4F6" },
+                            }}
+                          >
+                            Hủy bỏ
+                          </Button>
+                          <Button
+                            {...noPropagation}
+                            variant="contained"
+                            onClick={submitPhanForm}
+                            disabled={loading || !phanForm.tenPhan?.trim()}
+                            sx={{
+                              bgcolor: MAU.chinh,
+                              textTransform: "none",
+                              fontWeight: 700,
+                              py: 0.75,
+                              px: 3,
+                              borderRadius: "8px",
+                              boxShadow: "0 2px 8px rgba(122,31,43,0.15)",
+                              "&:hover": {
+                                bgcolor: MAU.chinhDam,
+                                boxShadow: "0 4px 12px rgba(122,31,43,0.25)",
+                              },
+                              "&.Mui-disabled": {
+                                bgcolor: "#E5E7EB",
+                                color: "#9CA3AF",
+                                boxShadow: "none",
+                              },
+                            }}
+                          >
+                            Lưu phần
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
+
                     {/* DANH SÁCH MỤC TRONG PHẦN */}
                     <DndContext
                       sensors={sensors}
@@ -3760,13 +4081,39 @@ export default function CurriculumContent() {
                                         border: `1px dashed ${MAU.chinh}`,
                                         borderRadius: "12px",
                                         bgcolor: `${MAU.chinh}05`,
+                                        position: "relative",
                                       }}
                                     >
+                                      {loading && (
+                                        <Box
+                                          sx={{
+                                            position: "absolute",
+                                            inset: 0,
+                                            bgcolor: "rgba(255,255,255,0.7)",
+                                            borderRadius: "12px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            zIndex: 10,
+                                            backdropFilter: "blur(2px)",
+                                          }}
+                                        >
+                                          <CircularProgress
+                                            size={32}
+                                            sx={{ color: MAU.chinh }}
+                                          />
+                                        </Box>
+                                      )}
+
                                       <Box
                                         sx={{
                                           display: "flex",
                                           alignItems: "center",
                                           gap: 1,
+                                          opacity: loading ? 0.5 : 1,
+                                          pointerEvents: loading
+                                            ? "none"
+                                            : "auto",
                                         }}
                                       >
                                         <EditOutlined
@@ -3786,7 +4133,14 @@ export default function CurriculumContent() {
                                         </Typography>
                                       </Box>
 
-                                      <Box>
+                                      <Box
+                                        sx={{
+                                          opacity: loading ? 0.5 : 1,
+                                          pointerEvents: loading
+                                            ? "none"
+                                            : "auto",
+                                        }}
+                                      >
                                         <Typography
                                           sx={{
                                             fontWeight: 700,
@@ -3815,6 +4169,7 @@ export default function CurriculumContent() {
                                           }
                                           autoFocus
                                           required
+                                          disabled={loading}
                                           slotProps={{
                                             input: {
                                               sx: {
@@ -3841,12 +4196,22 @@ export default function CurriculumContent() {
                                             border: `1.5px dashed ${MAU.chinh}66`,
                                             borderRadius: "12px",
                                             bgcolor: "#fff",
-                                            cursor: "pointer",
+                                            cursor: loading
+                                              ? "default"
+                                              : "pointer",
                                             textAlign: "center",
                                             transition: "all 0.15s ease",
+                                            opacity: loading ? 0.5 : 1,
+                                            pointerEvents: loading
+                                              ? "none"
+                                              : "auto",
                                             "&:hover": {
-                                              borderColor: MAU.chinh,
-                                              bgcolor: `${MAU.chinh}0A`,
+                                              borderColor: loading
+                                                ? MAU.chinh + "66"
+                                                : MAU.chinh,
+                                              bgcolor: loading
+                                                ? "#fff"
+                                                : `${MAU.chinh}0A`,
                                             },
                                           }}
                                         >
@@ -3878,6 +4243,7 @@ export default function CurriculumContent() {
                                             type="file"
                                             accept="video/*"
                                             hidden
+                                            disabled={loading}
                                             onChange={async (e) => {
                                               const file = e.target.files?.[0];
                                               if (file) {
@@ -3909,6 +4275,10 @@ export default function CurriculumContent() {
                                             border: "1px solid #E3E6EB",
                                             borderRadius: "12px",
                                             bgcolor: "#fff",
+                                            opacity: loading ? 0.5 : 1,
+                                            pointerEvents: loading
+                                              ? "none"
+                                              : "auto",
                                           }}
                                         >
                                           <Box
@@ -4010,6 +4380,7 @@ export default function CurriculumContent() {
                                             startIcon={
                                               <AutorenewOutlined fontSize="small" />
                                             }
+                                            disabled={loading}
                                             sx={{
                                               textTransform: "none",
                                               fontWeight: 700,
@@ -4030,6 +4401,7 @@ export default function CurriculumContent() {
                                               type="file"
                                               accept="video/*"
                                               hidden
+                                              disabled={loading}
                                               onChange={async (e) => {
                                                 const file =
                                                   e.target.files?.[0];
@@ -4067,6 +4439,10 @@ export default function CurriculumContent() {
                                           border: "1px solid #E3E6EB",
                                           borderRadius: "10px",
                                           bgcolor: "#fff",
+                                          opacity: loading ? 0.5 : 1,
+                                          pointerEvents: loading
+                                            ? "none"
+                                            : "auto",
                                         }}
                                       >
                                         <Box
@@ -4117,6 +4493,7 @@ export default function CurriculumContent() {
                                           checked={
                                             editingLecture.isFree || false
                                           }
+                                          disabled={loading}
                                           onChange={(e) =>
                                             setEditingLecture((prev) =>
                                               prev
@@ -4136,46 +4513,48 @@ export default function CurriculumContent() {
                                         />
                                       </Box>
 
-                                      <Box
-                                        sx={{
-                                          display: "flex",
-                                          gap: 1,
-                                          justifyContent: "flex-end",
-                                        }}
-                                      >
-                                        <Button
-                                          {...noPropagation}
-                                          size="small"
-                                          onClick={cancelEditLecture}
+                                      {!loading && (
+                                        <Box
                                           sx={{
-                                            textTransform: "none",
-                                            color: "#8A93A3",
-                                            fontWeight: 600,
-                                            borderRadius: "8px",
+                                            display: "flex",
+                                            gap: 1,
+                                            justifyContent: "flex-end",
                                           }}
                                         >
-                                          Hủy bỏ
-                                        </Button>
-                                        <Button
-                                          {...noPropagation}
-                                          size="small"
-                                          variant="contained"
-                                          onClick={saveEditedLecture}
-                                          sx={{
-                                            bgcolor: MAU.chinh,
-                                            textTransform: "none",
-                                            fontWeight: 700,
-                                            borderRadius: "8px",
-                                            boxShadow: "none",
-                                            "&:hover": {
-                                              bgcolor: MAU.chinhDam,
+                                          <Button
+                                            {...noPropagation}
+                                            size="small"
+                                            onClick={cancelEditLecture}
+                                            sx={{
+                                              textTransform: "none",
+                                              color: "#8A93A3",
+                                              fontWeight: 600,
+                                              borderRadius: "8px",
+                                            }}
+                                          >
+                                            Hủy bỏ
+                                          </Button>
+                                          <Button
+                                            {...noPropagation}
+                                            size="small"
+                                            variant="contained"
+                                            onClick={saveEditedLecture}
+                                            sx={{
+                                              bgcolor: MAU.chinh,
+                                              textTransform: "none",
+                                              fontWeight: 700,
+                                              borderRadius: "8px",
                                               boxShadow: "none",
-                                            },
-                                          }}
-                                        >
-                                          Lưu thay đổi
-                                        </Button>
-                                      </Box>
+                                              "&:hover": {
+                                                bgcolor: MAU.chinhDam,
+                                                boxShadow: "none",
+                                              },
+                                            }}
+                                          >
+                                            Lưu thay đổi
+                                          </Button>
+                                        </Box>
+                                      )}
                                     </Box>
                                   ) : (
                                     <LectureInfoView
@@ -4283,12 +4662,21 @@ export default function CurriculumContent() {
                                                           e.target.value = "";
                                                           return;
                                                         }
+                                                        const fileName =
+                                                          file.name.replace(
+                                                            /\.[^/.]+$/,
+                                                            "",
+                                                          );
                                                         setAddResourceForm(
                                                           (prev) => ({
                                                             ...prev,
                                                             [itemId]: {
                                                               ...prev[itemId],
                                                               file,
+                                                              tenTaiLieu:
+                                                                prev[itemId]
+                                                                  ?.tenTaiLieu ||
+                                                                fileName,
                                                             },
                                                           }),
                                                         );
@@ -4797,7 +5185,38 @@ export default function CurriculumContent() {
         </DndContext>
 
         {/* Nút thêm phần mới */}
-        {phanForm?.mode === "add" && isEditable ? (
+        {isEditable && phanForm?.mode !== "add" && (
+          <Button
+            {...noPropagation}
+            startIcon={<Add />}
+            onClick={moThemPhan}
+            disabled={loading}
+            sx={{
+              mt: 3,
+              textTransform: "none",
+              fontWeight: 700,
+              fontSize: 14,
+              color: MAU.chinh,
+              border: `1px solid ${MAU.chinh}`,
+              borderRadius: "10px",
+              px: 3,
+              py: 1,
+              bgcolor: "#ffffff",
+              boxShadow: "0 2px 8px rgba(122,31,43,0.05)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: MAU.chinhNhat,
+                boxShadow: "0 4px 12px rgba(122,31,43,0.12)",
+                transform: "translateY(-1px)",
+              },
+            }}
+          >
+            Thêm phần
+          </Button>
+        )}
+
+        {/* Form thêm phần mới */}
+        {phanForm?.mode === "add" && isEditable && (
           <Box
             sx={{
               mt: 3,
@@ -4806,9 +5225,37 @@ export default function CurriculumContent() {
               borderRadius: "16px",
               bgcolor: "#ffffff",
               boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+              position: "relative",
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#111827", mb: 2 }}>
+            {loading && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  bgcolor: "rgba(255,255,255,0.7)",
+                  borderRadius: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 10,
+                  backdropFilter: "blur(2px)",
+                }}
+              >
+                <CircularProgress size={28} sx={{ color: MAU.chinh }} />
+              </Box>
+            )}
+
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: 16,
+                color: "#111827",
+                mb: 2,
+                opacity: loading ? 0.5 : 1,
+                pointerEvents: loading ? "none" : "auto",
+              }}
+            >
               Thêm phần mới
             </Typography>
             <TextField
@@ -4819,24 +5266,26 @@ export default function CurriculumContent() {
                 setPhanForm({ ...phanForm, tenPhan: e.target.value })
               }
               fullWidth
-              sx={{ mb: 2 }}
+              disabled={loading}
+              sx={{
+                mb: 2,
+                opacity: loading ? 0.5 : 1,
+                pointerEvents: loading ? "none" : "auto",
+              }}
             />
-            <TextField
-              {...noPropagation}
-              label="Sau khi hoàn thành phần này, sinh viên sẽ có thể làm được những gì?"
-              value={phanForm.mieuTa}
-              onChange={(e) =>
-                setPhanForm({ ...phanForm, mieuTa: e.target.value })
-              }
-              fullWidth
-              multiline
-              rows={2}
-              sx={{ mb: 2 }}
-            />
-            <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                justifyContent: "flex-end",
+                opacity: loading ? 0.5 : 1,
+                pointerEvents: loading ? "none" : "auto",
+              }}
+            >
               <Button
                 {...noPropagation}
                 onClick={() => setPhanForm(null)}
+                disabled={loading}
                 sx={{
                   textTransform: "none",
                   fontWeight: 600,
@@ -4853,7 +5302,7 @@ export default function CurriculumContent() {
                 {...noPropagation}
                 variant="contained"
                 onClick={submitPhanForm}
-                disabled={loading}
+                disabled={loading || !phanForm.tenPhan?.trim()}
                 sx={{
                   bgcolor: MAU.chinh,
                   textTransform: "none",
@@ -4877,34 +5326,6 @@ export default function CurriculumContent() {
               </Button>
             </Box>
           </Box>
-        ) : (
-          <Button
-            {...noPropagation}
-            startIcon={<Add />}
-            onClick={moThemPhan}
-            disabled={loading || !isEditable}
-            sx={{
-              mt: 3,
-              textTransform: "none",
-              fontWeight: 700,
-              fontSize: 14,
-              color: MAU.chinh,
-              border: `1px solid ${MAU.chinh}`,
-              borderRadius: "10px",
-              px: 3,
-              py: 1,
-              bgcolor: "#ffffff",
-              boxShadow: "0 2px 8px rgba(122,31,43,0.05)",
-              transition: "all 0.2s ease",
-              "&:hover": {
-                bgcolor: MAU.chinhNhat,
-                boxShadow: "0 4px 12px rgba(122,31,43,0.12)",
-                transform: "translateY(-1px)",
-              },
-            }}
-          >
-            Thêm phần
-          </Button>
         )}
 
         {/* MENU thêm mục */}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Box,
+  Stack,
   Typography,
   Tabs,
   Tab,
@@ -43,6 +44,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import AuthGuard from "@/src/components/AuthGuard";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType, KhoaHocManagerSearch } from "@/src/types/khoaHoc/Dto/dto";
@@ -538,6 +540,10 @@ function KhoaHocContent() {
     layDanhSachKhoaHoc();
   };
 
+  const handleGoBack = () => {
+    router.back();
+  };
+
   const handleChonTrangThai = (giaTri: string) => {
     setTrangHienTai(1);
     setTrangThaiLoc(giaTri);
@@ -593,15 +599,37 @@ function KhoaHocContent() {
           mb: 3,
         }}
       >
-        <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: 28, color: MAU.chuDen }}>
-            Các khóa học
-          </Typography>
-          <Typography sx={{ fontSize: 14, color: MAU.chuXam, mt: 0.5 }}>
-            Quản lý và theo dõi toàn bộ khóa học bạn đang giảng dạy
-            {totalCount > 0 && ` (${totalCount} khóa học)`}
-          </Typography>
-        </Box>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Tooltip title="Quay lại">
+            <IconButton
+              onClick={handleGoBack}
+              sx={{
+                border: `1px solid ${MAU.vien}`,
+                borderRadius: "12px",
+                color: MAU.chuDen,
+                bgcolor: "#fff",
+                "&:hover": {
+                  borderColor: MAU.chinh,
+                  color: MAU.chinh,
+                  bgcolor: MAU.chinhNhat,
+                },
+              }}
+            >
+              <ArrowBackRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Box>
+            <Typography
+              sx={{ fontWeight: 800, fontSize: 28, color: MAU.chuDen }}
+            >
+              Các khóa học
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: MAU.chuXam, mt: 0.5 }}>
+              Quản lý và theo dõi toàn bộ khóa học bạn đang giảng dạy
+              {totalCount > 0 && ` (${totalCount} khóa học)`}
+            </Typography>
+          </Box>
+        </Stack>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

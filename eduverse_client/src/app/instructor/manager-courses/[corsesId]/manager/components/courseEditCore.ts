@@ -78,6 +78,232 @@ export const SO_KY_TU_TIEU_DE_TOI_THIEU = 10;
 export const SO_KY_TU_MO_TA_TOI_THIEU = 200;
 export const SO_KY_TU_MO_TA_TOI_DA = 9999;
 
+// ===== VALIDATION CONSTANTS =====
+// Phần
+export const SO_KY_TU_TEN_PHAN_TOI_THIEU = 3;
+export const SO_KY_TU_TEN_PHAN_TOI_DA = 99;
+
+// Bài giảng
+export const SO_KY_TU_TIEU_DE_BG_TOI_THIEU = 3;
+export const SO_KY_TU_TIEU_DE_BG_TOI_DA = 99;
+
+// Tài liệu
+export const SO_KY_TU_TEN_TAI_LIEU_TOI_THIEU = 3;
+export const SO_KY_TU_TEN_TAI_LIEU_TOI_DA = 99;
+
+// Bài kiểm tra
+export const SO_KY_TU_TEN_BAI_KIEM_TRA_TOI_THIEU = 3;
+export const SO_KY_TU_TEN_BAI_KIEM_TRA_TOI_DA = 99;
+export const SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_THIEU = 3;
+export const SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_DA = 200;
+
+// Câu hỏi
+export const SO_KY_TU_NOI_DUNG_CAU_HOI_TOI_THIEU = 3;
+export const SO_KY_TU_NOI_DUNG_CAU_HOI_TOI_DA = 200;
+export const SO_DAP_AN_TOI_THIEU = 2;
+export const SO_DAP_AN_TOI_DA = 15;
+
+// Đáp án
+export const SO_KY_TU_NOI_DUNG_DAP_AN_TOI_THIEU = 3;
+export const SO_KY_TU_NOI_DUNG_DAP_AN_TOI_DA = 99;
+
+// ===== UTILITY FUNCTIONS =====
+export function demSoKyTuKhongTinhKhoangTrang(text: string): number {
+  if (!text || typeof text !== "string") return 0;
+  return text.replace(/\s+/g, "").length;
+}
+
+export function demSoKyTuKhongTinhKhoangTrangDauCuoi(text: string): number {
+  if (!text || typeof text !== "string") return 0;
+  return text.trim().length;
+}
+
+export function trimString(text: string): string {
+  if (!text || typeof text !== "string") return "";
+  return text.trim();
+}
+
+export function isOnlySpaces(text: string): boolean {
+  if (!text || typeof text !== "string") return true;
+  return text.trim().length === 0;
+}
+
+// ===== VALIDATION FUNCTIONS =====
+
+// Phần - chỉ validate tiêu đề
+export function validateTenPhan(tenPhan: string): {
+  valid: boolean;
+  error?: string;
+} {
+  const trimmed = trimString(tenPhan);
+  if (isOnlySpaces(tenPhan)) {
+    return { valid: false, error: "Vui lòng nhập tiêu đề phần" };
+  }
+  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(tenPhan);
+  if (soKyTu < SO_KY_TU_TEN_PHAN_TOI_THIEU) {
+    return {
+      valid: false,
+      error: `Tiêu đề phần cần tối thiểu ${SO_KY_TU_TEN_PHAN_TOI_THIEU} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  if (soKyTu > SO_KY_TU_TEN_PHAN_TOI_DA) {
+    return {
+      valid: false,
+      error: `Tiêu đề phần không được vượt quá ${SO_KY_TU_TEN_PHAN_TOI_DA} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  return { valid: true };
+}
+
+// Bài giảng
+export function validateTieuDeBaiGiang(tieuDe: string): {
+  valid: boolean;
+  error?: string;
+} {
+  const trimmed = trimString(tieuDe);
+  if (isOnlySpaces(tieuDe)) {
+    return { valid: false, error: "Vui lòng nhập tiêu đề bài giảng" };
+  }
+  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(tieuDe);
+  if (soKyTu < SO_KY_TU_TIEU_DE_BG_TOI_THIEU) {
+    return {
+      valid: false,
+      error: `Tiêu đề bài giảng cần tối thiểu ${SO_KY_TU_TIEU_DE_BG_TOI_THIEU} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  if (soKyTu > SO_KY_TU_TIEU_DE_BG_TOI_DA) {
+    return {
+      valid: false,
+      error: `Tiêu đề bài giảng không được vượt quá ${SO_KY_TU_TIEU_DE_BG_TOI_DA} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  return { valid: true };
+}
+
+// Tài liệu
+export function validateTenTaiLieu(tenTaiLieu: string): {
+  valid: boolean;
+  error?: string;
+} {
+  const trimmed = trimString(tenTaiLieu);
+  if (isOnlySpaces(tenTaiLieu)) {
+    return { valid: false, error: "Vui lòng nhập tên tài liệu" };
+  }
+  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(tenTaiLieu);
+  if (soKyTu < SO_KY_TU_TEN_TAI_LIEU_TOI_THIEU) {
+    return {
+      valid: false,
+      error: `Tên tài liệu cần tối thiểu ${SO_KY_TU_TEN_TAI_LIEU_TOI_THIEU} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  if (soKyTu > SO_KY_TU_TEN_TAI_LIEU_TOI_DA) {
+    return {
+      valid: false,
+      error: `Tên tài liệu không được vượt quá ${SO_KY_TU_TEN_TAI_LIEU_TOI_DA} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  return { valid: true };
+}
+
+// Bài kiểm tra
+export function validateTenBaiKiemTra(tenBaiKiemTra: string): {
+  valid: boolean;
+  error?: string;
+} {
+  const trimmed = trimString(tenBaiKiemTra);
+  if (isOnlySpaces(tenBaiKiemTra)) {
+    return { valid: false, error: "Vui lòng nhập tiêu đề bài kiểm tra" };
+  }
+  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(tenBaiKiemTra);
+  if (soKyTu < SO_KY_TU_TEN_BAI_KIEM_TRA_TOI_THIEU) {
+    return {
+      valid: false,
+      error: `Tiêu đề bài kiểm tra cần tối thiểu ${SO_KY_TU_TEN_BAI_KIEM_TRA_TOI_THIEU} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  if (soKyTu > SO_KY_TU_TEN_BAI_KIEM_TRA_TOI_DA) {
+    return {
+      valid: false,
+      error: `Tiêu đề bài kiểm tra không được vượt quá ${SO_KY_TU_TEN_BAI_KIEM_TRA_TOI_DA} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  return { valid: true };
+}
+
+export function validateMoTaBaiKiemTra(moTa: string): {
+  valid: boolean;
+  error?: string;
+} {
+  const trimmed = trimString(moTa);
+  if (isOnlySpaces(moTa)) {
+    return { valid: false, error: "Vui lòng nhập mô tả bài kiểm tra" };
+  }
+  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(moTa);
+  if (soKyTu < SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_THIEU) {
+    return {
+      valid: false,
+      error: `Mô tả bài kiểm tra cần tối thiểu ${SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_THIEU} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  if (soKyTu > SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_DA) {
+    return {
+      valid: false,
+      error: `Mô tả bài kiểm tra không được vượt quá ${SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_DA} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  return { valid: true };
+}
+
+// Câu hỏi
+export function validateNoiDungCauHoi(noiDung: string): {
+  valid: boolean;
+  error?: string;
+} {
+  const trimmed = trimString(noiDung);
+  if (isOnlySpaces(noiDung)) {
+    return { valid: false, error: "Vui lòng nhập nội dung câu hỏi" };
+  }
+  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(noiDung);
+  if (soKyTu < SO_KY_TU_NOI_DUNG_CAU_HOI_TOI_THIEU) {
+    return {
+      valid: false,
+      error: `Nội dung câu hỏi cần tối thiểu ${SO_KY_TU_NOI_DUNG_CAU_HOI_TOI_THIEU} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  if (soKyTu > SO_KY_TU_NOI_DUNG_CAU_HOI_TOI_DA) {
+    return {
+      valid: false,
+      error: `Nội dung câu hỏi không được vượt quá ${SO_KY_TU_NOI_DUNG_CAU_HOI_TOI_DA} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  return { valid: true };
+}
+
+// Đáp án
+export function validateNoiDungDapAn(noiDung: string): {
+  valid: boolean;
+  error?: string;
+} {
+  const trimmed = trimString(noiDung);
+  if (isOnlySpaces(noiDung)) {
+    return { valid: false, error: "Vui lòng nhập nội dung đáp án" };
+  }
+  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(noiDung);
+  if (soKyTu < SO_KY_TU_NOI_DUNG_DAP_AN_TOI_THIEU) {
+    return {
+      valid: false,
+      error: `Nội dung đáp án cần tối thiểu ${SO_KY_TU_NOI_DUNG_DAP_AN_TOI_THIEU} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  if (soKyTu > SO_KY_TU_NOI_DUNG_DAP_AN_TOI_DA) {
+    return {
+      valid: false,
+      error: `Nội dung đáp án không được vượt quá ${SO_KY_TU_NOI_DUNG_DAP_AN_TOI_DA} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+    };
+  }
+  return { valid: true };
+}
+
 export function demSoTu(vanBan: string): number {
   if (!vanBan || typeof vanBan !== "string") return 0;
   const text = vanBan.replace(/<[^>]*>/g, " ");

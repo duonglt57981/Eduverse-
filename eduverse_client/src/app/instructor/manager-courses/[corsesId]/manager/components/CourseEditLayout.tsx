@@ -7,13 +7,10 @@ import {
   Chip,
   IconButton,
   Button,
-  Menu,
-  MenuItem,
   CircularProgress,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBackIosNew";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
@@ -48,6 +45,7 @@ interface Props {
   nhomSidebar?: NhomSidebar[];
   activeKey: string;
   loading?: boolean;
+  idKhoaHoc?: string;
   onBack: () => void;
   onNavigateSidebar: (key: string) => void;
   onGuiPheDuyet: () => Promise<void>;
@@ -66,14 +64,12 @@ export default function CourseEditLayout({
   nhomSidebar = [],
   activeKey,
   loading = false,
+  idKhoaHoc,
   onBack,
   onNavigateSidebar,
   onGuiPheDuyet,
   onDiChuyenDenTuValidate,
 }: Props) {
-  const [anchorXemTruoc, setAnchorXemTruoc] = useState<null | HTMLElement>(
-    null,
-  );
   const trangThaiHienThi = thongTinTrangThai(trangThai);
 
   const isReadOnly = trangThai !== "DangSua";
@@ -82,19 +78,34 @@ export default function CourseEditLayout({
   const getStatusChipStyles = (status: TrangThaiKhoaHoc) => {
     switch (status) {
       case "DaDuyet":
-        return { bgcolor: "#DCFCE7", color: "#16A34A" }; // Green
+        return { bgcolor: "#DCFCE7", color: "#16A34A" };
       case "TuChoi":
-        return { bgcolor: "#FEE2E2", color: "#DC2626" }; // Red
+        return { bgcolor: "#FEE2E2", color: "#DC2626" };
       case "ChoDuyet":
-        return { bgcolor: "#FEF3C7", color: "#D97706" }; // Amber
+        return { bgcolor: "#FEF3C7", color: "#D97706" };
       case "DangDuyet":
-        return { bgcolor: "#EFF6FF", color: "#2563EB" }; // Blue
+        return { bgcolor: "#EFF6FF", color: "#2563EB" };
       default:
-        return { bgcolor: "#F3F4F6", color: "#4B5563" }; // Gray for DangSua
+        return { bgcolor: "#F3F4F6", color: "#4B5563" };
     }
   };
 
   const statusStyles = getStatusChipStyles(trangThai);
+
+  // Hàm xử lý xem trước - mở trang xem trước khóa học
+  const handleXemTruoc = () => {
+    // Lấy id từ props hoặc từ URL
+    const courseId = idKhoaHoc || window.location.pathname.split("/")[4];
+    if (!courseId) {
+      console.warn("Không có ID khóa học để xem trước");
+      return;
+    }
+    // Mở trang xem trước trong tab mới
+    window.open(
+      `/instructor/manager-courses/draft/${courseId}/learn`,
+      "_blank",
+    );
+  };
 
   if (loading) {
     return (
@@ -149,15 +160,15 @@ export default function CourseEditLayout({
                 alignItems: "center",
                 gap: 1,
                 cursor: "pointer",
-                color: "#4B5563",
+                color: "#D1D5DB",
                 py: 0.8,
                 px: 1.2,
                 borderRadius: "8px",
                 transition: "all 0.2s ease",
                 flexShrink: 0,
                 "&:hover": {
-                  bgcolor: "#F3F4F6",
-                  color: "#111827",
+                  bgcolor: "rgba(255,255,255,0.08)",
+                  color: "#ffffff",
                 },
                 "&:focus-visible": {
                   outline: `2px solid ${MAU.chinh}`,
@@ -170,14 +181,21 @@ export default function CourseEditLayout({
               </Typography>
             </Box>
 
-            <Box sx={{ width: "1px", height: 20, bgcolor: "#E5E7EB", flexShrink: 0 }} />
+            <Box
+              sx={{
+                width: "1px",
+                height: 20,
+                bgcolor: "rgba(255,255,255,0.15)",
+                flexShrink: 0,
+              }}
+            />
 
             {/* Course Title */}
             <Typography
               sx={{
                 fontWeight: 700,
                 fontSize: { xs: 15, sm: 16, md: 17 },
-                color: "#111827",
+                color: "#ffffff",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -208,7 +226,7 @@ export default function CourseEditLayout({
             <Typography
               sx={{
                 fontSize: 13,
-                color: "#6B7280",
+                color: "#9CA3AF",
                 display: { xs: "none", md: "block" },
                 flexShrink: 0,
               }}
@@ -226,14 +244,13 @@ export default function CourseEditLayout({
               flexShrink: 0,
             }}
           >
-            {/* Preview Button */}
+            {/* Preview Button - Luôn hoạt động */}
             <Button
-              onClick={(e) => setAnchorXemTruoc(e.currentTarget)}
+              onClick={handleXemTruoc}
               variant="outlined"
-              endIcon={<KeyboardArrowDownIcon />}
               sx={{
-                color: "#4B5563",
-                borderColor: "#D1D5DB",
+                color: "#D1D5DB",
+                borderColor: "rgba(255,255,255,0.3)",
                 textTransform: "none",
                 fontWeight: 600,
                 borderRadius: "8px",
@@ -241,9 +258,9 @@ export default function CourseEditLayout({
                 py: 0.8,
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  bgcolor: "#F3F4F6",
-                  borderColor: "#9CA3AF",
-                  color: "#111827",
+                  bgcolor: "rgba(255,255,255,0.08)",
+                  borderColor: "rgba(255,255,255,0.5)",
+                  color: "#ffffff",
                 },
                 "&:focus-visible": {
                   outline: `2px solid ${MAU.chinh}`,
@@ -252,34 +269,6 @@ export default function CourseEditLayout({
             >
               Xem trước
             </Button>
-            <Menu
-              anchorEl={anchorXemTruoc}
-              open={Boolean(anchorXemTruoc)}
-              onClose={() => setAnchorXemTruoc(null)}
-              slotProps={{
-                paper: {
-                  sx: {
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-                    border: "1px solid #E5E7EB",
-                    mt: 0.5,
-                  },
-                },
-              }}
-            >
-              <MenuItem
-                onClick={() => setAnchorXemTruoc(null)}
-                sx={{ fontSize: 14, color: "#374151", py: 1 }}
-              >
-                Xem trang đích
-              </MenuItem>
-              <MenuItem
-                onClick={() => setAnchorXemTruoc(null)}
-                sx={{ fontSize: 14, color: "#374151", py: 1 }}
-              >
-                Xem chương trình giảng dạy
-              </MenuItem>
-            </Menu>
 
             {/* Approval Action Component */}
             <CourseStatusAction
@@ -295,13 +284,13 @@ export default function CourseEditLayout({
             <IconButton
               size="small"
               sx={{
-                color: "#4B5563",
+                color: "#D1D5DB",
                 p: 1,
                 borderRadius: "8px",
-                border: "1px solid #E5E7EB",
+                border: "1px solid rgba(255,255,255,0.2)",
                 "&:hover": {
-                  bgcolor: "#F3F4F6",
-                  color: "#111827",
+                  bgcolor: "rgba(255,255,255,0.08)",
+                  color: "#ffffff",
                 },
               }}
               aria-label="Cài đặt khóa học"
@@ -340,9 +329,7 @@ export default function CourseEditLayout({
                 >
                   {nhom.tieuDe}
                 </Typography>
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                >
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {nhom.muc.map((m) => {
                     const dangChon = m.key === activeKey;
                     return (
@@ -354,7 +341,8 @@ export default function CourseEditLayout({
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") onNavigateSidebar(m.key);
+                          if (e.key === "Enter" || e.key === " ")
+                            onNavigateSidebar(m.key);
                         }}
                         sx={{
                           display: "flex",

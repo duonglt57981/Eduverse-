@@ -23,13 +23,14 @@ import {
   CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
@@ -197,11 +198,6 @@ export default function DuyetKhoaHocPage() {
     fetchStats();
   }, [fetchStats]);
 
-  const handleRefresh = () => {
-    fetchList();
-    fetchStats();
-  };
-
   const handleTabChange = (_: any, newTab: string) => {
     setTab(newTab as any);
     setPage(1);
@@ -231,46 +227,84 @@ export default function DuyetKhoaHocPage() {
     router.push(`/admin/approve-courses/${id}`);
   };
 
+  const handleOpenHistory = () => {
+    router.push(`/admin/approve-courses/history`);
+  };
+
+  const handleGoBack = () => {
+    router.back();
+  };
+
   return (
     <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           {/* Header */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{ alignItems: "center", mb: 0.5 }}
           >
-            <Typography
-              sx={{
-                fontSize: 28,
-                fontWeight: 700,
-                fontFamily: FONTS.display,
-                color: COLORS.ink,
-              }}
-            >
-              Kiểm duyệt khóa học
-            </Typography>
-            <Tooltip title="Tải lại dữ liệu">
+            <Tooltip title="Quay lại">
               <IconButton
-                onClick={handleRefresh}
-                sx={{ bgcolor: alpha(COLORS.primary, 0.08), borderRadius: 2 }}
+                onClick={handleGoBack}
+                sx={{
+                  border: `1px solid ${COLORS.line}`,
+                  borderRadius: 2,
+                  color: COLORS.ink,
+                  bgcolor: "#fff",
+                  "&:hover": {
+                    borderColor: COLORS.primary,
+                    color: COLORS.primary,
+                    bgcolor: alpha(COLORS.primary, 0.06),
+                  },
+                }}
               >
-                <RefreshIcon sx={{ color: COLORS.primary }} />
+                <ArrowBackRoundedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          </Box>
+
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: 20, sm: 24 },
+                  fontWeight: 700,
+                  fontFamily: FONTS.display,
+                  color: COLORS.ink,
+                  lineHeight: 1.25,
+                }}
+              >
+                Kiểm duyệt khóa học
+              </Typography>
+              <Typography
+                sx={{ fontSize: 13, color: COLORS.inkSoft, mt: 0.25 }}
+              >
+                Xem và xử lý các khóa học đang chờ phê duyệt.
+              </Typography>
+            </Box>
+
+            <Tooltip title="Lịch sử duyệt">
+              <IconButton
+                onClick={handleOpenHistory}
+                sx={{
+                  bgcolor: alpha(COLORS.primary, 0.08),
+                  borderRadius: 2,
+                  flexShrink: 0,
+                }}
+              >
+                <HistoryRoundedIcon sx={{ color: COLORS.primary }} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
 
           {/* Thống kê nhanh */}
           <Box
             sx={{
               display: "flex",
               flexWrap: "wrap",
-              gap: 2,
-              mb: 3,
+              gap: 1.5,
+              mt: 2.5,
+              mb: 2.5,
             }}
           >
             {[
@@ -296,27 +330,29 @@ export default function DuyetKhoaHocPage() {
                   flex: 1,
                   minWidth: {
                     xs: "100%",
-                    sm: "calc(50% - 8px)",
-                    md: "calc(33.33% - 12px)",
+                    sm: "calc(50% - 6px)",
+                    md: "calc(33.33% - 8px)",
                   },
                 }}
               >
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 2,
-                    borderRadius: 3,
+                    p: 1.75,
+                    borderRadius: 2.5,
                     border: `1px solid ${COLORS.line}`,
                     textAlign: "center",
                   }}
                 >
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: stat.color }}
+                    variant="h6"
+                    sx={{ fontWeight: 700, color: stat.color, lineHeight: 1.3 }}
                   >
-                    {loadingStats ? <CircularProgress size={24} /> : stat.value}
+                    {loadingStats ? <CircularProgress size={20} /> : stat.value}
                   </Typography>
-                  <Typography variant="body2" color={COLORS.inkSoft}>
+                  <Typography
+                    sx={{ fontSize: 12.5, color: COLORS.inkSoft, mt: 0.25 }}
+                  >
                     {stat.label}
                   </Typography>
                 </Paper>
@@ -337,14 +373,14 @@ export default function DuyetKhoaHocPage() {
               <Stack
                 direction="row"
                 spacing={1}
-                sx={{ alignItems: "center", mb: 1.5 }}
+                sx={{ alignItems: "center", mb: 1.25 }}
               >
                 <FilterListRoundedIcon
-                  sx={{ fontSize: 18, color: COLORS.primary }}
+                  sx={{ fontSize: 17, color: COLORS.primary }}
                 />
                 <Typography
                   sx={{
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: 700,
                     color: COLORS.ink,
                     textTransform: "uppercase",
@@ -503,16 +539,16 @@ export default function DuyetKhoaHocPage() {
                   ))}
                 </Stack>
               ) : items.length === 0 ? (
-                <Box sx={{ py: 7, textAlign: "center" }}>
+                <Box sx={{ py: 6, textAlign: "center" }}>
                   <SchoolRoundedIcon
-                    sx={{ fontSize: 36, color: COLORS.line, mb: 1 }}
+                    sx={{ fontSize: 34, color: COLORS.line, mb: 1 }}
                   />
-                  <Typography sx={{ color: COLORS.inkSoft }}>
+                  <Typography sx={{ color: COLORS.inkSoft, fontSize: 14 }}>
                     Không có khóa học nào.
                   </Typography>
                 </Box>
               ) : (
-                <Stack spacing={1.5}>
+                <Stack spacing={1.25}>
                   {items.map((item) => {
                     const id = item.idKhoaHoc || item.id;
                     const trangThaiPheDuyet =
@@ -526,7 +562,7 @@ export default function DuyetKhoaHocPage() {
                           display: "flex",
                           alignItems: "center",
                           gap: 2,
-                          p: 1.5,
+                          p: 1.25,
                           border: `1px solid ${COLORS.line}`,
                           borderRadius: 2.5,
                           cursor: "pointer",
@@ -550,12 +586,12 @@ export default function DuyetKhoaHocPage() {
                           <Typography
                             sx={{
                               fontWeight: 700,
-                              fontSize: 15,
+                              fontSize: 14.5,
                               color: COLORS.ink,
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
-                              mb: 0.75,
+                              mb: 0.5,
                             }}
                           >
                             {item.tieuDe}

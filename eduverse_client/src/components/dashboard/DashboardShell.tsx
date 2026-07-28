@@ -405,7 +405,7 @@ function SidebarContent({
         case "Danh mục":
           return "/admin/categories";
         case "Khóa học":
-          return "/admin/approve-courses";
+          return "/admin/courses";
         case "Bài giảng":
           return "/admin/lectures";
         case "Bài kiểm tra":
@@ -547,22 +547,40 @@ function SidebarContent({
                   px: 2,
                   py: isAdmin ? 1 : 1.25,
                   color: isActive
-                    ? (isAdmin ? "#991B1B" : COLORS.primary)
-                    : (isAdmin ? "#475569" : "rgba(31,41,55,0.72)"),
+                    ? isAdmin
+                      ? "#991B1B"
+                      : COLORS.primary
+                    : isAdmin
+                      ? "#475569"
+                      : "rgba(31,41,55,0.72)",
                   bgcolor: isActive
-                    ? (isAdmin ? "rgba(153, 27, 27, 0.04)" : "rgba(141,19,19,0.05)")
+                    ? isAdmin
+                      ? "rgba(153, 27, 27, 0.04)"
+                      : "rgba(141,19,19,0.05)"
                     : "transparent",
                   borderLeft: isActive
-                    ? (isAdmin ? "3px solid #991B1B" : `4px solid ${COLORS.primary}`)
-                    : (isAdmin ? "3px solid transparent" : "4px solid transparent"),
+                    ? isAdmin
+                      ? "3px solid #991B1B"
+                      : `4px solid ${COLORS.primary}`
+                    : isAdmin
+                      ? "3px solid transparent"
+                      : "4px solid transparent",
                   transition: "all 150ms ease",
                   "&:hover": {
                     bgcolor: isActive
-                      ? (isAdmin ? "rgba(153, 27, 27, 0.06)" : "rgba(141,19,19,0.08)")
-                      : (isAdmin ? "#FAFAFA" : "rgba(141,19,19,0.03)"),
+                      ? isAdmin
+                        ? "rgba(153, 27, 27, 0.06)"
+                        : "rgba(141,19,19,0.08)"
+                      : isAdmin
+                        ? "#FAFAFA"
+                        : "rgba(141,19,19,0.03)",
                     color: isActive
-                      ? (isAdmin ? "#991B1B" : COLORS.primary)
-                      : (isAdmin ? "#1F2937" : "rgba(31,41,55,0.85)"),
+                      ? isAdmin
+                        ? "#991B1B"
+                        : COLORS.primary
+                      : isAdmin
+                        ? "#1F2937"
+                        : "rgba(31,41,55,0.85)",
                   },
                 }}
               >
@@ -579,7 +597,13 @@ function SidebarContent({
           })}
         </List>
 
-        <Divider sx={{ my: 2, opacity: 0.6, borderColor: pathname.startsWith("/admin") ? "#EEF0F3" : "divider" }} />
+        <Divider
+          sx={{
+            my: 2,
+            opacity: 0.6,
+            borderColor: pathname.startsWith("/admin") ? "#EEF0F3" : "divider",
+          }}
+        />
 
         <List disablePadding>
           {getSecondarySidebarItemsByRole(roles).map((item) => {
@@ -986,7 +1010,11 @@ export default function DashboardShell({
       const NL = String.fromCharCode(10);
       const BOM = String.fromCharCode(0xfeff);
       const esc = (v: unknown) =>
-        '"' + String(v ?? "").split('"').join('""') + '"';
+        '"' +
+        String(v ?? "")
+          .split('"')
+          .join('""') +
+        '"';
       const rows: string[][] = [];
       rows.push(["BÁO CÁO TỔNG QUAN — EDUVERSE"]);
       rows.push(["Thời điểm xuất", now.toLocaleString("vi-VN")]);
@@ -1283,7 +1311,10 @@ export default function DashboardShell({
                     onClick={handleExportReport}
                     startIcon={
                       <ArrowForwardRounded
-                        sx={{ transform: "rotate(90deg)", fontSize: "16px !important" }}
+                        sx={{
+                          transform: "rotate(90deg)",
+                          fontSize: "16px !important",
+                        }}
                       />
                     }
                     sx={{
@@ -1453,7 +1484,9 @@ export default function DashboardShell({
                     sx={{
                       fontSize: 10.5,
                       fontWeight: 500,
-                      color: pathname.startsWith("/admin") ? "#991B1B" : COLORS.primary,
+                      color: pathname.startsWith("/admin")
+                        ? "#991B1B"
+                        : COLORS.primary,
                       letterSpacing: "0.2px",
                       textTransform: "uppercase",
                     }}
@@ -1465,7 +1498,7 @@ export default function DashboardShell({
                         : "Học viên"}
                   </Typography>
                 </Stack>
-                 <Avatar
+                <Avatar
                   src={
                     userAvatar ||
                     user?.anhDaiDien ||
@@ -1480,12 +1513,18 @@ export default function DashboardShell({
                     fontWeight: 700,
                     bgcolor: "#8B1313",
                     color: "#fff",
-                    border: pathname.startsWith("/admin") ? "1px solid #E5E7EB" : "2px solid #fff",
-                    boxShadow: pathname.startsWith("/admin") ? "none" : `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
+                    border: pathname.startsWith("/admin")
+                      ? "1px solid #E5E7EB"
+                      : "2px solid #fff",
+                    boxShadow: pathname.startsWith("/admin")
+                      ? "none"
+                      : `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
                     transition: "all 200ms ease",
                     cursor: "pointer",
                     "&:hover": {
-                      boxShadow: pathname.startsWith("/admin") ? "0 0 0 2px rgba(153,27,27,0.15)" : `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
+                      boxShadow: pathname.startsWith("/admin")
+                        ? "0 0 0 2px rgba(153,27,27,0.15)"
+                        : `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
                       transform: "scale(1.05)",
                     },
                   }}
@@ -1609,7 +1648,9 @@ export default function DashboardShell({
                   {!pathname.startsWith("/admin") ? (
                     <>
                       {/* Section 1 */}
-                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/dashboard")}
+                      >
                         Học tập
                       </MenuItem>
                       <MenuItem
@@ -1642,7 +1683,9 @@ export default function DashboardShell({
                           1
                         </Box>
                       </MenuItem>
-                      <MenuItem onClick={() => router.push("/student/favorites")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/favorites")}
+                      >
                         Danh sách mong ước
                       </MenuItem>
                       {roles.includes("GiaoVien") && (
@@ -1653,36 +1696,54 @@ export default function DashboardShell({
                         </MenuItem>
                       )}
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider
+                        sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }}
+                      />
 
                       {/* Section 2 */}
-                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/dashboard")}
+                      >
                         Thông báo.
                       </MenuItem>
-                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/dashboard")}
+                      >
                         Tin nhắn
                       </MenuItem>
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider
+                        sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }}
+                      />
 
                       {/* Section 3 */}
                       <MenuItem onClick={() => router.push("/settings")}>
                         Cài đặt tài khoản
                       </MenuItem>
-                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/dashboard")}
+                      >
                         Phương thức thanh toán
                       </MenuItem>
-                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/dashboard")}
+                      >
                         Thuê bao
                       </MenuItem>
-                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/dashboard")}
+                      >
                         Ưu đãi Udemy
                       </MenuItem>
-                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/dashboard")}
+                      >
                         Lịch sử mua
                       </MenuItem>
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider
+                        sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }}
+                      />
 
                       {/* Section 4 */}
                       <MenuItem
@@ -1710,7 +1771,9 @@ export default function DashboardShell({
                         </Stack>
                       </MenuItem>
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider
+                        sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }}
+                      />
 
                       {/* Section 5 */}
                       <MenuItem onClick={() => router.push("/student/profile")}>
@@ -1720,10 +1783,14 @@ export default function DashboardShell({
                         Chỉnh sửa hồ sơ
                       </MenuItem>
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider
+                        sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }}
+                      />
 
                       {/* Section 6 */}
-                      <MenuItem onClick={() => router.push("/student/dashboard")}>
+                      <MenuItem
+                        onClick={() => router.push("/student/dashboard")}
+                      >
                         Trợ giúp và Hỗ trợ
                       </MenuItem>
                     </>
@@ -1814,7 +1881,9 @@ export default function DashboardShell({
                 width: sidebarWidth,
                 flexShrink: 0,
                 display: { xs: "none", lg: "block" },
-                borderRight: pathname.startsWith("/admin") ? "1px solid #EEF0F3" : "1px solid rgba(0,0,0,0.06)",
+                borderRight: pathname.startsWith("/admin")
+                  ? "1px solid #EEF0F3"
+                  : "1px solid rgba(0,0,0,0.06)",
                 height: "100%",
                 bgcolor: COLORS.white,
               }}

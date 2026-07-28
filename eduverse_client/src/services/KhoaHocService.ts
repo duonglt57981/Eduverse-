@@ -39,8 +39,9 @@ export default class KhoaHocService {
       const queryString = params.toString();
       const url = `/KhoaHoc/khoahoc-list${queryString ? `?${queryString}` : ""}`;
 
-      const response =
-        await apiService.get<PagedList<KhoaHocType>>(url, { signal });
+      const response = await apiService.get<PagedList<KhoaHocType>>(url, {
+        signal,
+      });
       return response;
     } catch (error) {
       console.error("Error fetching course list:", error);
@@ -64,8 +65,7 @@ export default class KhoaHocService {
       }
       const queryString = params.toString();
       const url = `/KhoaHoc/khoahoc-by/${userId}${queryString ? `?${queryString}` : ""}`;
-      const response =
-        await apiService.get<PagedList<KhoaHocType>>(url);
+      const response = await apiService.get<PagedList<KhoaHocType>>(url);
       return response;
     } catch (error) {
       console.error("Error fetching learning course by user:", error);
