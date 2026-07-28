@@ -139,11 +139,17 @@ function RutTienContent() {
           sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}
         >
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 900, color: "#111827", display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <AccountBalanceWalletRoundedIcon sx={{ fontSize: 36, color: PRIMARY }} />
+            <Typography
+              sx={{
+                fontSize: 28,
+                fontWeight: 900,
+                color: "#1F2937",
+                mb: 0.5,
+              }}
+            >
               Quản lý rút tiền
             </Typography>
-            <Typography variant="body2" sx={{ color: "#64748B", mt: 0.5 }}>
+            <Typography variant="body2" sx={{ color: "#64748B" }}>
               Kiểm tra, phê duyệt và theo dõi các yêu cầu rút tiền của giảng viên.
             </Typography>
           </Box>

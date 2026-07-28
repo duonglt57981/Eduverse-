@@ -11,6 +11,8 @@ import {
   LandingFooter,
   LandingThemeProvider,
 } from "../components/landing/landing-shared";
+import { useSelector } from "@/src/store/hook";
+import AuthenticatedFooter from "../components/footer/AuthenticatedFooter";
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -20,6 +22,8 @@ const beVietnamPro = Be_Vietnam_Pro({
 
 function RouteLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
+  const user = useSelector((state) => state.auth.user);
+  const roles = useSelector((state) => state.auth.roles) || [];
 
   const isPublicRoute = !(
     pathname.startsWith("/admin") ||
@@ -31,6 +35,8 @@ function RouteLayoutWrapper({ children }: { children: React.ReactNode }) {
     pathname === "/settings"
   );
 
+  const role = roles.includes("GiaoVien") ? "GiaoVien" : roles.includes("Admin") ? "Admin" : "HocVien";
+
   if (isPublicRoute) {
     return (
       <LandingThemeProvider>
@@ -40,7 +46,7 @@ function RouteLayoutWrapper({ children }: { children: React.ReactNode }) {
             <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
               {children}
             </Box>
-            <LandingFooter />
+            {user ? <AuthenticatedFooter role={role} /> : <LandingFooter />}
           </Box>
         </Box>
       </LandingThemeProvider>

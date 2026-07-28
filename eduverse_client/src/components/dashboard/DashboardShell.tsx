@@ -74,6 +74,7 @@ import {
   footerColumnsData,
   type CourseCardItem,
 } from "./dashboard-data";
+import AuthenticatedFooter from "../footer/AuthenticatedFooter";
 import { apiService } from "@/src/services/index";
 import {
   Badge,
@@ -1826,7 +1827,8 @@ export default function DashboardShell({
               px: { xs: 2, md: 5 },
               py: 3,
               display: "flex",
-              justifyContent: "center",
+              flexDirection: "column",
+              alignItems: "center",
               height: "100%",
               overflowY: "auto",
             }}
@@ -1838,11 +1840,14 @@ export default function DashboardShell({
                 display: "flex",
                 flexDirection: "column",
                 gap: 4.5,
+                flexGrow: 1,
+                flexShrink: 0,
               }}
             >
-              {children ? (
-                children
-              ) : (
+              <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 4.5 }}>
+                {children ? (
+                  children
+                ) : (
                 <>
                   {/* ========================================================= */}
                   {/* 2. WELCOME SECTION                                        */}
@@ -3100,159 +3105,27 @@ export default function DashboardShell({
                       ))}
                     </CarouselRow>
                   </Box>
-
-                  {/* ========================================================= */}
-                  {/* 12. FOOTER (Tại chân trang)                               */}
-                  {/* ========================================================= */}
-                  <Box
-                    component="footer"
-                    sx={{
-                      mt: 8,
-                      pt: 5,
-                      borderTop: "1px solid rgba(141, 19, 19, 0.08)",
-                      color: "rgba(31,41,55,0.56)",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: {
-                          xs: "1fr 1fr",
-                          md: "1.2fr 1fr 1fr 1fr 0.8fr",
-                        },
-                        gap: 4,
-                      }}
-                    >
-                      {/* Brand description column */}
-                      <Box sx={{ gridColumn: { xs: "span 2", md: "span 1" } }}>
-                        <Typography
-                          sx={{
-                            fontSize: 18,
-                            fontWeight: 900,
-                            color: COLORS.primary,
-                          }}
-                        >
-                          EduVerse
-                        </Typography>
-                        <Typography
-                          sx={{
-                            mt: 1.5,
-                            fontSize: 13,
-                            lineHeight: 1.7,
-                            maxWidth: 220,
-                          }}
-                        >
-                          Nền tảng đào tạo cao cấp cá nhân hóa bằng Trí tuệ nhân
-                          tạo (AI). Đồng hành cùng bạn thăng tiến sự nghiệp.
-                        </Typography>
-                      </Box>
-
-                      {/* Footer Dynamic columns */}
-                      {footerColumnsData.map((col) => (
-                        <Box key={col.title}>
-                          <Typography
-                            sx={{
-                              fontSize: 14.5,
-                              fontWeight: 900,
-                              color: "#1F2937",
-                              mb: 2,
-                            }}
-                          >
-                            {col.title}
-                          </Typography>
-                          <Stack spacing={1}>
-                            {col.links.map((link) => (
-                              <Typography
-                                key={link.label}
-                                sx={{
-                                  fontSize: 13,
-                                  fontWeight: 500,
-                                  cursor: "pointer",
-                                  "&:hover": { color: COLORS.primary },
-                                }}
-                              >
-                                {link.label}
-                              </Typography>
-                            ))}
-                          </Stack>
-                        </Box>
-                      ))}
-
-                      {/* Social Connect Column */}
-                      <Box>
-                        <Typography
-                          sx={{
-                            fontSize: 14.5,
-                            fontWeight: 900,
-                            color: "#1F2937",
-                            mb: 2,
-                          }}
-                        >
-                          Kết nối
-                        </Typography>
-                        <Stack spacing={1}>
-                          {["Facebook", "LinkedIn", "Youtube"].map((soc) => (
-                            <Typography
-                              key={soc}
-                              sx={{
-                                fontSize: 13,
-                                fontWeight: 500,
-                                cursor: "pointer",
-                                "&:hover": { color: COLORS.primary },
-                              }}
-                            >
-                              {soc}
-                            </Typography>
-                          ))}
-                        </Stack>
-                      </Box>
-                    </Box>
-
-                    {/* Copyright row */}
-                    <Box
-                      sx={{
-                        mt: 5,
-                        py: 3,
-                        borderTop: "1px solid rgba(0,0,0,0.04)",
-                        textAlign: "center",
-                        display: "flex",
-                        flexDirection: { xs: "column", sm: "row" },
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 2,
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 12.5, fontWeight: 500 }}>
-                        © 2026 EduVerse Learning Platform. Tất cả các quyền được
-                        bảo lưu.
-                      </Typography>
-                      <Stack direction="row" spacing={3}>
-                        <Typography
-                          sx={{
-                            fontSize: 12.5,
-                            fontWeight: 500,
-                            cursor: "pointer",
-                            "&:hover": { color: COLORS.primary },
-                          }}
-                        >
-                          Chính sách bảo mật
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: 12.5,
-                            fontWeight: 500,
-                            cursor: "pointer",
-                            "&:hover": { color: COLORS.primary },
-                          }}
-                        >
-                          Điều khoản sử dụng
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  </Box>
                 </>
               )}
             </Box>
+            </Box>
+            {!pathname.startsWith("/admin") && (
+              <Box
+                sx={{
+                  width: "calc(100% + 32px)",
+                  mx: -2,
+                  mt: 6,
+                  mb: -3,
+                  flexShrink: 0,
+                  "@media (min-width: 900px)": {
+                    width: "calc(100% + 80px)",
+                    mx: -5,
+                  }
+                }}
+              >
+                <AuthenticatedFooter role={activeRoles.includes("GiaoVien") ? "GiaoVien" : activeRoles.includes("Admin") ? "Admin" : "HocVien"} />
+              </Box>
+            )}
           </Box>
         </Box>
         <Popover

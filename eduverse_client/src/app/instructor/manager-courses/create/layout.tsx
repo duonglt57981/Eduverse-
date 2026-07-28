@@ -232,7 +232,7 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
               {STEPS.map((label) => (
                 <Step key={label}>
                   <StepLabel
-                    {...({ StepIconComponent: QontoStepIcon } as any)}
+                    slots={{ stepIcon: QontoStepIcon }}
                     sx={{
                       "& .MuiStepLabel-label": {
                         fontSize: { xs: 11, sm: 13 },

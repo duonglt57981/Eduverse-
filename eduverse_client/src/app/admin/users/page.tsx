@@ -408,11 +408,17 @@ export default function AdminUsersPage() {
             sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: 4, gap: 2 }}
           >
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS.textDark, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <PeopleAltRounded sx={{ fontSize: 40, color: COLORS.primary }} />
+              <Typography
+                sx={{
+                  fontSize: 28,
+                  fontWeight: 900,
+                  color: "#1F2937",
+                  mb: 0.5,
+                }}
+              >
                 Quản lý người dùng
               </Typography>
-              <Typography variant="body2" sx={{ color: COLORS.textSecondary, mt: 0.5 }}>
+              <Typography variant="body2" sx={{ color: COLORS.textSecondary }}>
                 Quản lý thông tin tài khoản, phân quyền vai trò và khóa/mở khóa học viên, giảng viên.
               </Typography>
             </Box>

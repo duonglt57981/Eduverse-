@@ -507,18 +507,17 @@ export default function AdminRolesPage() {
           >
             <Box>
               <Typography
-                variant="h4"
                 sx={{
-                  fontWeight: 850,
-                  color: COLORS.primary,
-                  mb: 1,
-                  letterSpacing: "-0.75px",
+                  fontSize: 28,
+                  fontWeight: 900,
+                  color: "#1F2937",
+                  mb: 0.5,
                 }}
               >
                 Quản lý vai trò & Phân quyền
               </Typography>
               <Typography
-                variant="body1"
+                variant="body2"
                 sx={{ color: COLORS.textSecondary, fontWeight: 500 }}
               >
                 Định nghĩa và kiểm soát quyền hạn của các nhóm người dùng trong

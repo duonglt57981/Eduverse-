@@ -179,7 +179,16 @@ function NganHangContent() {
                     </Box>
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
-                    <Chip label="Hoạt động" color="success" size="small" sx={{ fontWeight: 700 }} />
+                    <Chip
+                      label="Hoạt động"
+                      size="small"
+                      sx={{
+                        bgcolor: "#ECFDF5",
+                        color: "#15803D",
+                        fontWeight: 700,
+                        borderRadius: "6px"
+                      }}
+                    />
                     <IconButton size="small" onClick={() => handleXoa(n.id)}
                       sx={{ color: "#bbb", "&:hover": { color: PRIMARY, bgcolor: "rgba(141,19,19,0.06)" } }}>
                       <DeleteOutlineIcon fontSize="small" />
@@ -218,13 +227,17 @@ function NganHangContent() {
             ))}
           </Box>
 
-          <TextField fullWidth label="Số tài khoản *" size="small" value={soTaiKhoan}
+          <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.75 }}>Số tài khoản *</Typography>
+          <TextField fullWidth size="small" value={soTaiKhoan}
+            placeholder="Nhập số tài khoản"
             onChange={(e) => { setSoTaiKhoan(e.target.value); setError(""); }}
             sx={{ mb: 2, "& .MuiOutlinedInput-root": { borderRadius: "10px" },
               "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: PRIMARY } }}
           />
 
-          <TextField fullWidth label="Tên chủ tài khoản *" size="small" value={tenTaiKhoan}
+          <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.75 }}>Tên chủ tài khoản *</Typography>
+          <TextField fullWidth size="small" value={tenTaiKhoan}
+            placeholder="Ví dụ: NGUYEN VAN A"
             onChange={(e) => { setTenTaiKhoan(e.target.value.toUpperCase()); setError(""); }}
             helperText="Nhập đúng tên in hoa như trên tài khoản ngân hàng"
             sx={{ mb: 2.5, "& .MuiOutlinedInput-root": { borderRadius: "10px" },

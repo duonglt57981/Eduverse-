@@ -1047,7 +1047,7 @@ export default function BasicInfoContent() {
                 type="text"
                 inputMode="numeric"
                 placeholder="VD: 500.000"
-                value={thongTin.giaGoc !== undefined ? thongTin.giaGoc : ""}
+                value={thongTin.giaGoc !== undefined && thongTin.giaGoc !== null ? thongTin.giaGoc : ""}
                 onChange={(e) => {
                   if (!isEditable) return;
                   const raw = e.target.value.replace(/\D/g, "");

@@ -368,12 +368,11 @@ export default function AdminCategoriesPage() {
           >
             <Box>
               <Typography
-                variant="h4"
                 sx={{
-                  fontWeight: 850,
-                  color: COLORS.primary,
-                  mb: 1,
-                  letterSpacing: "-0.75px",
+                  fontSize: 28,
+                  fontWeight: 900,
+                  color: "#1F2937",
+                  mb: 0.5,
                 }}
               >
                 Quản lý danh mục

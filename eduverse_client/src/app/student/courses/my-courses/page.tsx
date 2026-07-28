@@ -46,9 +46,11 @@ import KhoaHocService from "@/src/services/KhoaHocService";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const RED = "#8B1313";
-const RED_HOVER = "#6B1010";
-const RED_LIGHT = "#B22222";
+const RED = "#991B1B";
+const RED_HOVER = "#7F1D1D";
+const RED_LIGHT = "#D97706";
+const TEXT_MAIN = "#1E293B";
+const TEXT_MUTED = "#64748B";
 
 // ─── token helpers ────────────────────────────────────────────────────────────
 
@@ -223,28 +225,31 @@ const waveLine = keyframes`
 
 const CourseCard = styled(Card)(() => ({
   cursor: "pointer",
-  borderRadius: 16,
-  border: "1px solid #fde8e8",
+  borderRadius: 20,
+  border: "1px solid #E2E8F0",
   height: "100%",
   display: "flex",
   flexDirection: "column",
-  transition:
-    "transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease",
-  boxShadow: "0 2px 12px rgba(141,19,19,0.07)",
+  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+  boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
   overflow: "hidden",
   backgroundColor: "#fff",
+  position: "relative",
   "&:hover": {
     transform: "translateY(-6px)",
-    boxShadow: "0 12px 32px rgba(141,19,19,0.18)",
-    borderColor: alpha(RED, 0.35),
+    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
+    borderColor: "#CBD5E1",
   },
+  "&:hover img": {
+    transform: "scale(1.04)",
+  }
 }));
 
 const ThumbBox = styled(Box)({
   position: "relative",
   paddingTop: "56.25%",
   overflow: "hidden",
-  backgroundColor: "#fde8e8",
+  backgroundColor: "#F1F5F9",
 });
 
 const ThumbImg = styled("img")({
@@ -254,26 +259,30 @@ const ThumbImg = styled("img")({
   width: "100%",
   height: "100%",
   objectFit: "cover",
-  transition: "transform 0.3s ease",
+  transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
 });
 
 const StatCard = styled(Paper)(() => ({
-  padding: "1.25rem",
-  borderRadius: 14,
-  border: "1px solid #fde8e8",
-  boxShadow: "0 2px 12px rgba(141,19,19,0.06)",
+  padding: "1.5rem 1.25rem",
+  borderRadius: 16,
+  border: "1px solid #E2E8F0",
+  boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
   display: "flex",
   alignItems: "center",
   gap: 16,
   backgroundColor: "#fff",
+  transition: "all 0.2s ease-in-out",
+  "&:hover": {
+    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+    transform: "translateY(-2px)",
+    borderColor: "#CBD5E1",
+  }
 }));
 
 const CourseProgress = styled(LinearProgress)(() => ({
-  height: 4,
-  borderRadius: 0,
-  backgroundColor: "#fde8e8",
+  height: 3,
+  backgroundColor: "#E2E8F0",
   "& .MuiLinearProgress-bar": {
-    borderRadius: 0,
     backgroundColor: RED,
   },
 }));
@@ -294,7 +303,7 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
             height: 120,
             transform: "translate(-50%,-50%)",
             borderRadius: "50%",
-            backgroundColor: alpha(RED, 0.15),
+            backgroundColor: alpha(RED, 0.08),
             animation: `${pulseRing} 2s ease-in-out infinite`,
           }}
         />
@@ -318,7 +327,7 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
               sx={{
                 width: 4,
                 height: 30,
-                backgroundColor: alpha(RED, 0.6),
+                backgroundColor: alpha(RED, 0.4),
                 borderRadius: 2,
                 animation: `${waveLine} 1.5s ease-in-out infinite`,
                 animationDelay: `${i * 0.2}s`,
@@ -331,37 +340,35 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
           sx={{
             animation: `${shakeIcon} 0.8s ease-in-out infinite`,
             display: "inline-block",
-            p: 2,
+            p: 2.5,
             borderRadius: "50%",
-            backgroundColor: alpha(RED, 0.1),
+            backgroundColor: alpha(RED, 0.05),
           }}
         >
           {isNetwork ? (
-            <SignalWifiOffIcon sx={{ fontSize: 80, color: RED }} />
+            <SignalWifiOffIcon sx={{ fontSize: 64, color: RED }} />
           ) : (
-            <CloudOffIcon sx={{ fontSize: 80, color: RED }} />
+            <CloudOffIcon sx={{ fontSize: 64, color: RED }} />
           )}
         </Box>
       </Box>
       <Typography
         variant="h5"
         sx={{
-          fontWeight: 700,
-          color: RED,
-          mb: 1,
-          animation: `${blinkText} 1.5s ease-in-out infinite`,
+          fontWeight: 800,
+          color: "#1E293B",
+          mb: 1.5,
         }}
       >
-        {isNetwork ? "MẤT KẾT NỐI INTERNET" : "BACKEND KHÔNG HOẠT ĐỘNG"}
+        {isNetwork ? "Mất kết nối Internet" : "Hệ thống đang bảo trì"}
       </Typography>
       <Typography
         variant="body2"
-        color="text.secondary"
-        sx={{ maxWidth: 300, mx: "auto" }}
+        sx={{ color: "#64748B", maxWidth: 320, mx: "auto", fontSize: 14.5, lineHeight: 1.6 }}
       >
         {isNetwork
-          ? "Vui lòng kiểm tra kết nối mạng của bạn"
-          : "Hệ thống đang gặp vấn đề, vui lòng thử lại sau"}
+          ? "Vui lòng kiểm tra lại kết nối mạng Wifi/3G/4G của bạn."
+          : "Máy chủ đang quá tải hoặc gặp lỗi kết nối. Chúng tôi sẽ sớm hoạt động trở lại."}
       </Typography>
     </Box>
   );
@@ -369,11 +376,9 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
 
 const ThumbPlaceholder = ({ title }: { title?: string }) => {
   const palettes: [string, string][] = [
-    ["#fff5f5", RED],
-    ["#fde8e8", RED_LIGHT],
-    ["#fff0f0", "#922b21"],
-    ["#fdf2f2", "#c0392b"],
-    ["#fef9f9", "#e74c3c"],
+    ["#F8FAFC", "#64748B"],
+    ["#F1F5F9", "#475569"],
+    ["#EEF2F6", "#334155"],
   ];
   const idx = (title?.charCodeAt(0) ?? 0) % palettes.length;
   const [bg, fg] = palettes[idx];
@@ -389,14 +394,14 @@ const ThumbPlaceholder = ({ title }: { title?: string }) => {
       sx={{
         position: "absolute",
         inset: 0,
-        background: `linear-gradient(135deg, ${bg}, ${alpha(fg, 0.12)})`,
+        background: `linear-gradient(135deg, ${bg}, ${alpha(fg, 0.08)})`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
       }}
     >
       <Typography
-        sx={{ fontSize: 40, fontWeight: 700, color: fg, opacity: 0.45 }}
+        sx={{ fontSize: 36, fontWeight: 800, color: fg, opacity: 0.4, letterSpacing: "1px" }}
       >
         {initials}
       </Typography>
@@ -622,45 +627,45 @@ function MyCoursesContent() {
   const renderStats = () => {
     const statItems = [
       {
-        icon: <SchoolIcon />,
+        icon: <SchoolIcon sx={{ fontSize: 22 }} />,
         val: stats.total,
         lbl: "Đã đăng ký",
-        bg: alpha(RED, 0.08),
+        bg: "rgba(153, 27, 27, 0.06)",
         color: RED,
       },
       {
-        icon: <TrendingUpIcon />,
+        icon: <TrendingUpIcon sx={{ fontSize: 22 }} />,
         val: stats.inProgress,
         lbl: "Đang học",
-        bg: "#fff8e1",
-        color: "#f57f17",
+        bg: "rgba(217, 119, 6, 0.06)",
+        color: "#D97706",
       },
       {
-        icon: <CheckCircleIcon />,
+        icon: <CheckCircleIcon sx={{ fontSize: 22 }} />,
         val: stats.completed,
         lbl: "Hoàn thành",
-        bg: "#e8f5e9",
-        color: "#2e7d32",
+        bg: "rgba(22, 163, 74, 0.06)",
+        color: "#16A34A",
       },
       {
-        icon: <VideoLibraryIcon />,
+        icon: <VideoLibraryIcon sx={{ fontSize: 22 }} />,
         val: `${stats.avg}%`,
         lbl: "Tiến độ TB",
-        bg: "#fde8e8",
-        color: RED_LIGHT,
+        bg: "rgba(37, 99, 235, 0.06)",
+        color: "#2563EB",
       },
     ];
 
     return (
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid container spacing={2.5} sx={{ mb: 4 }}>
         {statItems.map((s, i) => (
           <Grid key={i} size={{ xs: 6, sm: 3 }}>
             <StatCard>
               <Box
                 sx={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 3,
+                  width: 48,
+                  height: 48,
+                  borderRadius: "12px",
                   bgcolor: s.bg,
                   display: "flex",
                   alignItems: "center",
@@ -674,15 +679,15 @@ function MyCoursesContent() {
               <Box>
                 <Typography
                   sx={{
-                    fontSize: 24,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    color: s.color,
+                    fontSize: 22,
+                    fontWeight: 800,
+                    lineHeight: 1.1,
+                    color: "#0F172A",
                   }}
                 >
                   {s.val}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography sx={{ fontSize: 13, color: "#64748B", fontWeight: 500, mt: 0.5 }}>
                   {s.lbl}
                 </Typography>
               </Box>
@@ -714,6 +719,7 @@ function MyCoursesContent() {
             />
           )}
           <Alert
+            author-alert="true"
             severity={
               isAuthError
                 ? "warning"
@@ -721,16 +727,16 @@ function MyCoursesContent() {
                   ? "warning"
                   : "error"
             }
-            sx={{ mb: 3, mt: 2, "& .MuiAlert-icon": { fontSize: 28 } }}
+            sx={{ mb: 4, mt: 3, borderRadius: "14px", "& .MuiAlert-icon": { fontSize: 24 } }}
           >
-            <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, textAlign: "left" }}>
               {isAuthError
-                ? "🔐 Phiên đăng nhập hết hạn"
+                ? "Phiên đăng nhập hết hạn"
                 : errorDetail.type === "network"
-                  ? "⚠️ Lỗi kết nối mạng"
-                  : "⚠️ Lỗi từ hệ thống"}
+                  ? "Lỗi kết nối mạng"
+                  : "Lỗi hệ thống"}
             </Typography>
-            <Typography variant="body2">{errorDetail.message}</Typography>
+            <Typography variant="body2" sx={{ textAlign: "left" }}>{errorDetail.message}</Typography>
           </Alert>
           <Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
             {isAuthError ? (
@@ -740,10 +746,16 @@ function MyCoursesContent() {
                 onClick={() => router.push("/auth/login")}
                 sx={{
                   bgcolor: RED,
-                  "&:hover": { bgcolor: RED_HOVER },
-                  borderRadius: 2,
+                  borderRadius: "12px",
                   px: 4,
-                  py: 1,
+                  py: 1.25,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  boxShadow: "none",
+                  "&:hover": {
+                    bgcolor: RED_HOVER,
+                    boxShadow: "none",
+                  }
                 }}
               >
                 Đăng nhập lại
@@ -755,10 +767,16 @@ function MyCoursesContent() {
                 onClick={handleRetry}
                 sx={{
                   bgcolor: RED,
-                  "&:hover": { bgcolor: RED_HOVER },
-                  borderRadius: 2,
+                  borderRadius: "12px",
                   px: 4,
-                  py: 1,
+                  py: 1.25,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  boxShadow: "none",
+                  "&:hover": {
+                    bgcolor: RED_HOVER,
+                    boxShadow: "none",
+                  }
                 }}
               >
                 Thử lại
@@ -768,7 +786,7 @@ function MyCoursesContent() {
               component={Link}
               href="/"
               color="inherit"
-              sx={{ textDecoration: "none" }}
+              sx={{ textDecoration: "none", textTransform: "none", fontWeight: 700 }}
             >
               Quay về trang chủ
             </Button>
@@ -780,15 +798,28 @@ function MyCoursesContent() {
     // Không có khóa học
     if (courses.length === 0) {
       return (
-        <Box sx={{ maxWidth: 480, mx: "auto", py: 8, textAlign: "center" }}>
-          <VideoLibraryIcon
-            sx={{ fontSize: 72, color: alpha(RED, 0.2), mb: 2 }}
-          />
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-            Bạn chưa đăng ký khóa học nào
+        <Box sx={{ maxWidth: 480, mx: "auto", py: 10, textAlign: "center" }}>
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              bgcolor: "rgba(153, 27, 27, 0.05)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: "auto",
+              mb: 3,
+              color: RED,
+            }}
+          >
+            <VideoLibraryIcon sx={{ fontSize: 36 }} />
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5, color: "#1E293B" }}>
+            Chưa có khóa học nào
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Hãy khám phá các khóa học và bắt đầu học ngay!
+          <Typography sx={{ color: "#64748B", mb: 4, fontSize: 15 }}>
+            Hành trình học tập của bạn đang chờ đợi. Hãy khám phá kho khóa học đa dạng của chúng tôi để bắt đầu ngay!
           </Typography>
           <Button
             component={Link}
@@ -797,8 +828,16 @@ function MyCoursesContent() {
             size="large"
             sx={{
               bgcolor: RED,
-              "&:hover": { bgcolor: RED_HOVER },
-              borderRadius: 3,
+              borderRadius: "12px",
+              fontWeight: 700,
+              textTransform: "none",
+              px: 4,
+              py: 1.5,
+              boxShadow: "none",
+              "&:hover": {
+                bgcolor: RED_HOVER,
+                boxShadow: "none",
+              }
             }}
           >
             Khám phá khóa học
@@ -835,10 +874,14 @@ function MyCoursesContent() {
             const progress = course.phanTramHoanThanh ?? 0;
             const minutes = Math.floor((course.tongThoiLuong ?? 0) / 60);
 
+            const isCompleted = progress >= 100;
+            const progressColor = isCompleted ? "#16A34A" : RED;
+            const progressBg = isCompleted ? "rgba(22, 163, 74, 0.1)" : "#F1F5F9";
+
             return (
               <Grid
                 key={registrationId || course.id}
-                size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+                size={{ xs: 12, sm: 6, md: 4 }}
               >
                 <CourseCard onClick={() => handleCourseClick(registrationId)}>
                   <ThumbBox>
@@ -864,9 +907,10 @@ function MyCoursesContent() {
                           position: "absolute",
                           bottom: 8,
                           left: 8,
-                          bgcolor: "rgba(0,0,0,0.65)",
+                          bgcolor: "rgba(15, 23, 42, 0.8)",
                           color: "#fff",
-                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          fontSize: "0.75rem",
                           backdropFilter: "blur(4px)",
                           height: 22,
                         }}
@@ -878,13 +922,14 @@ function MyCoursesContent() {
                           position: "absolute",
                           top: 8,
                           right: 8,
-                          bgcolor: "#2e7d32",
+                          bgcolor: "#16A34A",
                           borderRadius: "50%",
                           width: 28,
                           height: 28,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
                         }}
                       >
                         <CheckCircleIcon sx={{ color: "#fff", fontSize: 18 }} />
@@ -895,35 +940,42 @@ function MyCoursesContent() {
                   <CourseProgress
                     variant="determinate"
                     value={Math.min(progress, 100)}
+                    sx={{
+                      "& .MuiLinearProgress-bar": {
+                        bgcolor: progressColor,
+                      }
+                    }}
                   />
 
                   <CardContent
-                    sx={{ flexGrow: 1, p: 2, "&:last-child": { pb: 2 } }}
+                    sx={{ flexGrow: 1, p: 2.5, "&:last-child": { pb: 2.5 } }}
                   >
                     <Typography
                       sx={{
-                        fontWeight: 700,
-                        fontSize: 14,
-                        mb: 1,
+                        fontWeight: 800,
+                        fontSize: 15,
+                        mb: 1.25,
                         lineHeight: 1.4,
+                        color: "#1E293B",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                         overflow: "hidden",
+                        height: 42,
                       }}
                     >
                       {course.tieuDe}
                     </Typography>
 
-                    <Stack direction="row" spacing={2} sx={{ mb: 1.5 }}>
+                    <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                        sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
                       >
                         <MenuBookIcon
-                          sx={{ fontSize: 13, color: "text.disabled" }}
+                          sx={{ fontSize: 15, color: "#94A3B8" }}
                         />
-                        <Typography variant="caption" color="text.secondary">
-                          {course.tongBaiGiang ?? 0} bài
+                        <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+                          {course.tongBaiGiang ?? 0} bài học
                         </Typography>
                       </Box>
                       {minutes > 0 && (
@@ -931,33 +983,33 @@ function MyCoursesContent() {
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 0.5,
+                            gap: 0.75,
                           }}
                         >
                           <AccessTimeIcon
-                            sx={{ fontSize: 13, color: "text.disabled" }}
+                            sx={{ fontSize: 15, color: "#94A3B8" }}
                           />
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
                             {minutes} phút
                           </Typography>
                         </Box>
                       )}
                     </Stack>
 
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 2.5 }}>
                       <Box
                         sx={{
                           display: "flex",
                           justifyContent: "space-between",
-                          mb: 0.5,
+                          mb: 0.75,
                         }}
                       >
-                        <Typography variant="caption" color="text.secondary">
-                          Tiến độ
+                        <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+                          Tiến độ học tập
                         </Typography>
                         <Typography
                           variant="caption"
-                          sx={{ fontWeight: 700, color: RED }}
+                          sx={{ fontWeight: 800, color: progressColor }}
                         >
                           {course.soBaiGiangHoanThanh ?? 0}/
                           {course.tongBaiGiang ?? 0} bài
@@ -969,10 +1021,10 @@ function MyCoursesContent() {
                         sx={{
                           height: 6,
                           borderRadius: 3,
-                          bgcolor: "#fde8e8",
+                          bgcolor: progressBg,
                           "& .MuiLinearProgress-bar": {
                             borderRadius: 3,
-                            bgcolor: RED,
+                            bgcolor: progressColor,
                           },
                         }}
                       />
@@ -989,10 +1041,17 @@ function MyCoursesContent() {
                       }}
                       sx={{
                         textTransform: "none",
-                        fontWeight: 600,
-                        borderRadius: 2,
-                        bgcolor: RED,
-                        "&:hover": { bgcolor: RED_HOVER },
+                        fontWeight: 700,
+                        borderRadius: "10px",
+                        py: 1,
+                        bgcolor: isCompleted ? "rgba(22, 163, 74, 0.08)" : RED,
+                        color: isCompleted ? "#16A34A" : "#fff",
+                        boxShadow: "none",
+                        border: isCompleted ? "1px solid rgba(22, 163, 74, 0.2)" : "none",
+                        "&:hover": {
+                          bgcolor: isCompleted ? "rgba(22, 163, 74, 0.15)" : RED_HOVER,
+                          boxShadow: "none",
+                        },
                       }}
                     >
                       {progress === 0
@@ -1016,13 +1075,13 @@ function MyCoursesContent() {
   // Nếu không có userId (lỗi auth) thì hiển thị toàn màn hình lỗi
   if (!userId) {
     return (
-      <Box sx={{ maxWidth: 560, mx: "auto", py: 6, textAlign: "center" }}>
+      <Box sx={{ maxWidth: 560, mx: "auto", py: 8, textAlign: "center" }}>
         <ConnectionLostAnimation type="backend" />
-        <Alert severity="warning" sx={{ mb: 3, mt: 2 }}>
-          <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
+        <Alert severity="warning" sx={{ mb: 4, mt: 3, borderRadius: "14px" }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, textAlign: "left" }}>
             🔐 Phiên đăng nhập hết hạn
           </Typography>
-          <Typography variant="body2">{AUTH_ERROR.message}</Typography>
+          <Typography variant="body2" sx={{ textAlign: "left" }}>{AUTH_ERROR.message}</Typography>
         </Alert>
         <Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
           <Button
@@ -1031,10 +1090,16 @@ function MyCoursesContent() {
             onClick={() => router.push("/auth/login")}
             sx={{
               bgcolor: RED,
-              "&:hover": { bgcolor: RED_HOVER },
-              borderRadius: 2,
+              borderRadius: "12px",
               px: 4,
-              py: 1,
+              py: 1.25,
+              textTransform: "none",
+              fontWeight: 700,
+              boxShadow: "none",
+              "&:hover": {
+                bgcolor: RED_HOVER,
+                boxShadow: "none",
+              }
             }}
           >
             Đăng nhập lại
@@ -1043,7 +1108,7 @@ function MyCoursesContent() {
             component={Link}
             href="/"
             color="inherit"
-            sx={{ textDecoration: "none" }}
+            sx={{ textDecoration: "none", textTransform: "none", fontWeight: 700 }}
           >
             Quay về trang chủ
           </Button>
@@ -1055,12 +1120,12 @@ function MyCoursesContent() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 900, color: RED, mb: 0.5 }}>
+      <Box sx={{ mb: 4, display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800, color: TEXT_MAIN, letterSpacing: "-0.5px" }}>
           Khóa học của tôi
         </Typography>
-        <Typography color="text.secondary">
-          Tiếp tục học những khóa học bạn đã đăng ký
+        <Typography sx={{ color: TEXT_MUTED, fontSize: 15 }}>
+          Tiếp tục hành trình chinh phục tri thức và hoàn thành các khóa học của bạn
         </Typography>
       </Box>
 
@@ -1068,18 +1133,14 @@ function MyCoursesContent() {
       {renderStats()}
 
       {/* Filter Bar */}
-      <Paper
-        elevation={0}
+      <Box
         sx={{
-          p: 2,
-          mb: 4,
-          borderRadius: 3,
-          border: "1px solid #fde8e8",
           display: "flex",
-          flexWrap: "wrap",
+          flexDirection: { xs: "column", sm: "row" },
           gap: 2,
           alignItems: "center",
-          backgroundColor: "#fefafa",
+          mb: 4,
+          width: "100%",
         }}
       >
         <TextField
@@ -1087,18 +1148,30 @@ function MyCoursesContent() {
           value={searchParams.keyword}
           onChange={handleKeywordChange}
           size="small"
-          sx={{ flexGrow: 1, minWidth: 180 }}
+          sx={{
+            flexGrow: 1,
+            width: "100%",
+            "& .MuiOutlinedInput-root": {
+              height: 40,
+              borderRadius: "12px",
+              bgcolor: "#fff",
+              "& fieldset": { borderColor: "#E2E8F0" },
+              "&:hover fieldset": { borderColor: "#CBD5E1" },
+              "&.Mui-focused fieldset": { borderColor: RED },
+            },
+          }}
           slotProps={{
             input: {
               startAdornment: (
-                <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
+                <SearchIcon sx={{ color: "#94A3B8", mr: 1, fontSize: 20 }} />
               ),
             },
           }}
         />
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Sắp xếp</InputLabel>
+        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 160 } }}>
+          <InputLabel id="sort-select-label" sx={{ fontSize: 14, "&.Mui-focused": { color: RED } }}>Sắp xếp</InputLabel>
           <Select
+            labelId="sort-select-label"
             value={
               searchParams.sapXepNgay === "Moi"
                 ? "Moi"
@@ -1112,6 +1185,16 @@ function MyCoursesContent() {
             }
             onChange={handleSortChange}
             label="Sắp xếp"
+            sx={{
+              height: 40,
+              borderRadius: "12px",
+              bgcolor: "#fff",
+              "&.MuiOutlinedInput-root": {
+                "& fieldset": { borderColor: "#E2E8F0" },
+                "&:hover fieldset": { borderColor: "#CBD5E1" },
+                "&.Mui-focused fieldset": { borderColor: RED },
+              }
+            }}
           >
             <MenuItem value="Moi">Mới nhất</MenuItem>
             <MenuItem value="Cu">Cũ nhất</MenuItem>
@@ -1119,7 +1202,7 @@ function MyCoursesContent() {
             <MenuItem value="ZA">Tên Z → A</MenuItem>
           </Select>
         </FormControl>
-      </Paper>
+      </Box>
 
       {/* Course Grid Area */}
       {renderCourseGrid()}
@@ -1136,11 +1219,11 @@ export default function StudentCoursesPage() {
         <Paper
           elevation={0}
           sx={{
-            p: 4.5,
+            p: { xs: 2.5, md: 4.5 },
             borderRadius: "24px",
-            border: "1px solid rgba(141,19,19,0.06)",
+            border: "1px solid #E2E8F0",
             bgcolor: "#ffffff",
-            boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+            boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.01)",
           }}
         >
           <MyCoursesContent />

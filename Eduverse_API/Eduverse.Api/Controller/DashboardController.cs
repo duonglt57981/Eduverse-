@@ -236,6 +236,7 @@ namespace Eduverse.Api.Controller
                     {
                         id = course.Id.ToString(),
                         title = course.TieuDe,
+                        hinhAnhKhoaHoc = course.HinhAnhKhoaHoc,
                         subtitle = "Video bài giảng",
                         contentType = "Video bài giảng",
                         duration = "Còn " + (course.TongThoiLuong.HasValue ? Math.Max(1, course.TongThoiLuong.Value / 60) : 2) + " giờ học",
@@ -334,6 +335,7 @@ namespace Eduverse.Api.Controller
             {
                 id = c.Id.ToString(),
                 title = c.TieuDe,
+                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
                 instructor = c.CreatedBy,
                 studentsCount = c.SoLuongHocVien ?? 0,
                 level = c.CapDo ?? "Trung cấp",
@@ -352,6 +354,7 @@ namespace Eduverse.Api.Controller
             var premiumSelection = new
             {
                 title = premiumCourse?.TieuDe ?? "Thiết kế hệ thống chuyên sâu",
+                hinhAnhKhoaHoc = premiumCourse?.HinhAnhKhoaHoc,
                 description = premiumCourse?.MoTa ?? "Học cách thiết kế hệ thống có tính sẵn sàng cao, chịu tải hàng triệu người dùng từ các chuyên gia đầu ngành.",
                 instructor = premiumCourse?.CreatedBy?? "An Danh",
                 rating = 0, // KhoaHoc chưa có hệ thống đánh giá
@@ -365,6 +368,7 @@ namespace Eduverse.Api.Controller
                 {
                     id = c.Id.ToString(),
                     title = c.TieuDe,
+                    hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
                     instructor = premiumCourse?.CreatedBy ?? "An Danh",
                     rating = 0, // KhoaHoc chưa có hệ thống đánh giá
                     studentsCount = c.SoLuongHocVien ?? 0,
@@ -384,6 +388,7 @@ namespace Eduverse.Api.Controller
                 {
                     id = c.Id.ToString(),
                     title = c.TieuDe,
+                    hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
                     instructor = premiumCourse?.CreatedBy ?? "An Danh",
                     rating = 0, // KhoaHoc chưa có hệ thống đánh giá
                     studentsCount = c.SoLuongHocVien ?? 0,

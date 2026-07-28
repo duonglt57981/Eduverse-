@@ -20,22 +20,22 @@ import {
   Select,
   MenuItem,
   Paper,
-  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
-import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
+import PendingActionsRoundedIcon from "@mui/icons-material/PendingActionsRounded";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
+import AssignmentTurnedInRoundedIcon from "@mui/icons-material/AssignmentTurnedInRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import Button from "@mui/material/Button";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
-  COLORS,
-  FONTS,
-  boxSx,
   PAGE_SIZE,
   normalizeListResponse,
 } from "./types/constants";
@@ -69,18 +69,18 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
     return (
       <Box
         sx={{
-          width: 96,
-          height: 64,
-          borderRadius: 1.5,
+          width: 120,
+          height: 80,
+          borderRadius: 2.5,
           flexShrink: 0,
-          bgcolor: COLORS.paper,
-          border: `1px dashed ${COLORS.line}`,
+          bgcolor: "#F9FAFB",
+          border: "1px dashed #E5E7EB",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <ImageRoundedIcon sx={{ color: alpha(COLORS.primary, 0.25) }} />
+        <ImageRoundedIcon sx={{ color: alpha("#991B1B", 0.2), fontSize: 28 }} />
       </Box>
     );
   }
@@ -92,12 +92,12 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
       alt={alt}
       onError={() => setErrored(true)}
       sx={{
-        width: 96,
-        height: 64,
-        borderRadius: 1.5,
+        width: 120,
+        height: 80,
+        borderRadius: 2.5,
         objectFit: "cover",
         flexShrink: 0,
-        bgcolor: COLORS.line,
+        bgcolor: "#F3F4F6",
       }}
     />
   );
@@ -231,44 +231,84 @@ export default function DuyetKhoaHocPage() {
     router.push(`/admin/approve-courses/${id}`);
   };
 
+  // --- Contextual empty message ---
+  const emptyTitle = keyword.trim()
+    ? "Không tìm thấy khóa học phù hợp"
+    : tab === "ChoDuyet"
+      ? "Không có khóa học đang chờ duyệt"
+      : tab === "DangDuyet"
+        ? "Không có khóa học đang được kiểm duyệt"
+        : "Không có khóa học nào cần kiểm duyệt";
+
   return (
     <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
-        <Box sx={{ p: 3 }}>
-          {/* Header */}
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
+          {/* ═══════ HEADER ═══════ */}
           <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: "flex-start",
               mb: 3,
             }}
           >
-            <Typography
-              sx={{
-                fontSize: 28,
-                fontWeight: 700,
-                fontFamily: FONTS.display,
-                color: COLORS.ink,
-              }}
-            >
-              Kiểm duyệt khóa học
-            </Typography>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 28,
+                  fontWeight: 900,
+                  color: "#1F2937",
+                  lineHeight: 1.2,
+                  mb: 0.5,
+                }}
+              >
+                Kiểm duyệt khóa học
+              </Typography>
+              <Typography sx={{ color: "#64748B", fontSize: 14 }}>
+                Xem xét và xử lý các khóa học được Giảng viên gửi phê duyệt.
+              </Typography>
+            </Box>
             <Tooltip title="Tải lại dữ liệu">
               <IconButton
                 onClick={handleRefresh}
-                sx={{ bgcolor: alpha(COLORS.primary, 0.08), borderRadius: 2 }}
+                sx={{
+                  bgcolor: alpha("#991B1B", 0.08),
+                  borderRadius: 2.5,
+                  width: 42,
+                  height: 42,
+                  transition: "all .2s ease",
+                  "&:hover": {
+                    bgcolor: alpha("#991B1B", 0.15),
+                    transform: "rotate(45deg)",
+                  },
+                }}
               >
-                <RefreshIcon sx={{ color: COLORS.primary }} />
+                <RefreshIcon
+                  sx={{
+                    color: "#991B1B",
+                    animation:
+                      loading || loadingStats
+                        ? "spin 1s linear infinite"
+                        : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                />
               </IconButton>
             </Tooltip>
           </Box>
 
-          {/* Thống kê nhanh */}
+          {/* ═══════ STATS CARDS ═══════ */}
           <Box
             sx={{
-              display: "flex",
-              flexWrap: "wrap",
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(3, 1fr)",
+              },
               gap: 2,
               mb: 3,
             }}
@@ -277,209 +317,200 @@ export default function DuyetKhoaHocPage() {
               {
                 label: "Tổng cần duyệt",
                 value: stats.choDuyet + stats.dangDuyet,
-                color: COLORS.primary,
+                color: "#991B1B",
+                bgColor: "#FEF2F2",
+                icon: (
+                  <AssignmentTurnedInRoundedIcon
+                    sx={{ fontSize: 22, color: "#991B1B" }}
+                  />
+                ),
               },
               {
                 label: "Chờ duyệt",
                 value: stats.choDuyet,
-                color: "warning.main",
+                color: "#D97706",
+                bgColor: "#FFFBEB",
+                icon: (
+                  <HourglassTopRoundedIcon
+                    sx={{ fontSize: 22, color: "#D97706" }}
+                  />
+                ),
               },
               {
                 label: "Đang duyệt",
                 value: stats.dangDuyet,
-                color: "info.main",
+                color: "#2563EB",
+                bgColor: "#EFF6FF",
+                icon: (
+                  <PendingActionsRoundedIcon
+                    sx={{ fontSize: 22, color: "#2563EB" }}
+                  />
+                ),
               },
-            ].map((stat, index) => (
-              <Box
-                key={index}
+            ].map((stat, i) => (
+              <Paper
+                key={i}
+                elevation={0}
                 sx={{
-                  flex: 1,
-                  minWidth: {
-                    xs: "100%",
-                    sm: "calc(50% - 8px)",
-                    md: "calc(33.33% - 12px)",
+                  p: 2.5,
+                  borderRadius: 4,
+                  border: "1px solid #E5E7EB",
+                  bgcolor: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  transition: "all .2s ease",
+                  "&:hover": {
+                    borderColor: stat.color,
+                    boxShadow: `0 4px 16px ${alpha(stat.color, 0.1)}`,
                   },
                 }}
               >
-                <Paper
-                  elevation={0}
+                <Box
                   sx={{
-                    p: 2,
+                    width: 44,
+                    height: 44,
                     borderRadius: 3,
-                    border: `1px solid ${COLORS.line}`,
-                    textAlign: "center",
+                    bgcolor: stat.bgColor,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 >
+                  {stat.icon}
+                </Box>
+                <Box>
+                  {loadingStats ? (
+                    <Skeleton
+                      variant="rounded"
+                      width={48}
+                      height={32}
+                      sx={{ borderRadius: 1.5, mb: 0.25 }}
+                    />
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontSize: 28,
+                        fontWeight: 800,
+                        color: stat.color,
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {stat.value}
+                    </Typography>
+                  )}
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: stat.color }}
+                    sx={{
+                      fontSize: 13,
+                      color: "#6B7280",
+                      fontWeight: 500,
+                      mt: 0.25,
+                    }}
                   >
-                    {loadingStats ? <CircularProgress size={24} /> : stat.value}
-                  </Typography>
-                  <Typography variant="body2" color={COLORS.inkSoft}>
                     {stat.label}
                   </Typography>
-                </Paper>
-              </Box>
+                </Box>
+              </Paper>
             ))}
           </Box>
 
-          {/* Bộ lọc */}
-          <Box sx={{ ...boxSx, p: 0, overflow: "hidden" }}>
-            {/* Thanh công cụ lọc */}
+          {/* ═══════ TOOLBAR ═══════ */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3.5,
+              border: "1px solid #E5E7EB",
+              bgcolor: "#fff",
+              overflow: "hidden",
+              mb: 0,
+            }}
+          >
+            {/* Search + Tabs + Sort row */}
             <Box
               sx={{
                 p: 2,
-                bgcolor: alpha(COLORS.primary, 0.04),
-                borderBottom: `1px solid ${COLORS.line}`,
+                borderBottom: "1px solid #F3F4F6",
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: { md: "center" },
+                gap: 1.5,
               }}
             >
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{ alignItems: "center", mb: 1.5 }}
+              {/* Search */}
+              <Box
+                component="form"
+                onSubmit={handleSearchSubmit}
+                sx={{ flex: 1 }}
               >
-                <FilterListRoundedIcon
-                  sx={{ fontSize: 18, color: COLORS.primary }}
-                />
-                <Typography
+                <TextField
+                  size="small"
+                  fullWidth
+                  placeholder="Tìm theo tên khóa học..."
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
                   sx={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: COLORS.ink,
-                    textTransform: "uppercase",
-                    letterSpacing: 0.3,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 3,
+                      bgcolor: "#F9FAFB",
+                      height: 42,
+                      "& fieldset": { borderColor: "#E5E7EB" },
+                      "&:hover fieldset": { borderColor: "#991B1B" },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#991B1B",
+                        borderWidth: 1.5,
+                      },
+                    },
                   }}
-                >
-                  Tìm kiếm & lọc
-                </Typography>
-              </Stack>
-
-              <Box component="form" onSubmit={handleSearchSubmit}>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1.25}
-                  sx={{ alignItems: { sm: "center" } }}
-                >
-                  <TextField
-                    size="small"
-                    fullWidth
-                    placeholder="Tìm theo tên khóa học..."
-                    value={keywordInput}
-                    onChange={(e) => setKeywordInput(e.target.value)}
-                    sx={{
-                      bgcolor: "#fff",
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                        "& fieldset": { borderColor: COLORS.line },
-                        "&:hover fieldset": { borderColor: COLORS.primary },
-                        "&.Mui-focused fieldset": {
-                          borderColor: COLORS.primary,
-                        },
-                      },
-                    }}
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon
-                              sx={{ color: COLORS.inkSoft, fontSize: 19 }}
-                            />
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-
-                  <Select
-                    size="small"
-                    value={sortBy}
-                    onChange={handleSortChange}
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <SwapVertRoundedIcon
-                          sx={{ fontSize: 18, color: COLORS.inkSoft }}
-                        />
-                      </InputAdornment>
-                    }
-                    sx={{
-                      minWidth: { xs: "100%", sm: 170 },
-                      bgcolor: "#fff",
-                      borderRadius: 2,
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: COLORS.line,
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: COLORS.primary,
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: COLORS.primary,
-                      },
-                    }}
-                  >
-                    <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
-                    <MenuItem value="moi-nhat">Mới nhất</MenuItem>
-                    <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
-                    <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
-                  </Select>
-
-                  <Tooltip title="Đặt lại bộ lọc">
-                    <span>
-                      <IconButton
-                        onClick={handleResetFilters}
-                        disabled={!isFilterDirty}
-                        sx={{
-                          bgcolor: "#fff",
-                          border: `1px solid ${COLORS.line}`,
-                          borderRadius: 2,
-                          width: 40,
-                          height: 40,
-                          flexShrink: 0,
-                          color: isFilterDirty
-                            ? COLORS.primary
-                            : alpha(COLORS.inkSoft, 0.4),
-                          "&:hover": {
-                            borderColor: COLORS.primary,
-                            bgcolor: alpha(COLORS.primary, 0.06),
-                          },
-                        }}
-                      >
-                        <RestartAltRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                </Stack>
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon
+                            sx={{ color: "#9CA3AF", fontSize: 20 }}
+                          />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
               </Box>
 
+              {/* Segmented Tabs */}
               <Tabs
                 value={tab}
                 onChange={handleTabChange}
                 variant="scrollable"
                 scrollButtons={false}
                 sx={{
-                  mt: 1.5,
-                  minHeight: 34,
-                  bgcolor: "#fff",
-                  border: `1px solid ${COLORS.line}`,
-                  borderRadius: 2,
+                  minHeight: 38,
+                  bgcolor: "#F3F4F6",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 2.5,
                   px: 0.5,
                   width: "fit-content",
+                  flexShrink: 0,
                   "& .MuiTabs-indicator": { display: "none" },
                   "& .MuiTab-root": {
                     textTransform: "none",
                     fontWeight: 600,
-                    color: COLORS.inkSoft,
+                    color: "#6B7280",
                     minHeight: 34,
-                    fontSize: 12.5,
-                    px: 1.5,
-                    my: 0.5,
+                    fontSize: 13,
+                    px: 2,
+                    my: 0.3,
                     minWidth: "auto",
-                    borderRadius: 1.5,
-                    transition: "all .15s ease",
+                    borderRadius: 2,
+                    transition: "all .18s ease",
+                    "&:hover": {
+                      color: "#374151",
+                      bgcolor: alpha("#991B1B", 0.04),
+                    },
                   },
                   "& .Mui-selected": {
                     color: "#fff !important",
-                    bgcolor: COLORS.primary,
+                    bgcolor: "#991B1B",
+                    boxShadow: "0 1px 3px rgba(153,27,27,0.3)",
                   },
                 }}
               >
@@ -487,9 +518,71 @@ export default function DuyetKhoaHocPage() {
                 <Tab label="Chờ duyệt" value="ChoDuyet" />
                 <Tab label="Đang duyệt" value="DangDuyet" />
               </Tabs>
+
+              {/* Sort */}
+              <Select
+                size="small"
+                value={sortBy}
+                onChange={handleSortChange}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <SwapVertRoundedIcon
+                      sx={{ fontSize: 18, color: "#9CA3AF" }}
+                    />
+                  </InputAdornment>
+                }
+                sx={{
+                  minWidth: { xs: "100%", sm: 165 },
+                  borderRadius: 2.5,
+                  height: 42,
+                  bgcolor: "#F9FAFB",
+                  flexShrink: 0,
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#E5E7EB",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#991B1B",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#991B1B",
+                    borderWidth: 1.5,
+                  },
+                }}
+              >
+                <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
+                <MenuItem value="moi-nhat">Mới nhất</MenuItem>
+                <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
+                <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
+              </Select>
+
+              {/* Reset filter */}
+              {isFilterDirty && (
+                <Tooltip title="Đặt lại bộ lọc">
+                  <IconButton
+                    onClick={handleResetFilters}
+                    sx={{
+                      bgcolor: alpha("#991B1B", 0.06),
+                      border: "1px solid",
+                      borderColor: alpha("#991B1B", 0.15),
+                      borderRadius: 2.5,
+                      width: 42,
+                      height: 42,
+                      flexShrink: 0,
+                      color: "#991B1B",
+                      transition: "all .18s ease",
+                      "&:hover": {
+                        bgcolor: alpha("#991B1B", 0.12),
+                        borderColor: "#991B1B",
+                      },
+                    }}
+                  >
+                    <RestartAltRoundedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
 
-            {/* Danh sách */}
+            {/* ═══════ COURSE LIST ═══════ */}
             <Box sx={{ p: 2 }}>
               {loading ? (
                 <Stack spacing={1.5}>
@@ -497,21 +590,87 @@ export default function DuyetKhoaHocPage() {
                     <Skeleton
                       key={i}
                       variant="rounded"
-                      height={92}
-                      sx={{ borderRadius: 2 }}
+                      height={96}
+                      sx={{ borderRadius: 3.5 }}
                     />
                   ))}
                 </Stack>
               ) : items.length === 0 ? (
-                <Box sx={{ py: 7, textAlign: "center" }}>
-                  <SchoolRoundedIcon
-                    sx={{ fontSize: 36, color: COLORS.line, mb: 1 }}
-                  />
-                  <Typography sx={{ color: COLORS.inkSoft }}>
-                    Không có khóa học nào.
+                /* ═══════ EMPTY STATE ═══════ */
+                <Box
+                  sx={{
+                    py: 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: "50%",
+                      bgcolor: "#FEF2F2",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mb: 2.5,
+                    }}
+                  >
+                    <SchoolRoundedIcon
+                      sx={{ fontSize: 30, color: alpha("#991B1B", 0.45) }}
+                    />
+                  </Box>
+                  <Typography
+                    sx={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "#374151",
+                      mb: 0.75,
+                    }}
+                  >
+                    {emptyTitle}
                   </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13.5,
+                      color: "#9CA3AF",
+                      mb: isFilterDirty ? 2.5 : 0,
+                      textAlign: "center",
+                      maxWidth: 360,
+                    }}
+                  >
+                    Các khóa học được Giảng viên gửi phê duyệt sẽ xuất hiện tại
+                    đây.
+                  </Typography>
+                  {isFilterDirty && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<RestartAltRoundedIcon />}
+                      onClick={handleResetFilters}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        borderColor: "#E5E7EB",
+                        color: "#6B7280",
+                        borderRadius: 2.5,
+                        px: 2.5,
+                        "&:hover": {
+                          borderColor: "#991B1B",
+                          color: "#991B1B",
+                          bgcolor: alpha("#991B1B", 0.04),
+                        },
+                      }}
+                    >
+                      Xóa bộ lọc
+                    </Button>
+                  )}
                 </Box>
               ) : (
+                /* ═══════ ITEMS ═══════ */
                 <Stack spacing={1.5}>
                   {items.map((item) => {
                     const id = item.idKhoaHoc || item.id;
@@ -525,37 +684,45 @@ export default function DuyetKhoaHocPage() {
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 2,
-                          p: 1.5,
-                          border: `1px solid ${COLORS.line}`,
-                          borderRadius: 2.5,
+                          gap: 2.5,
+                          p: 2,
+                          border: "1px solid #E5E7EB",
+                          borderRadius: 3.5,
                           cursor: "pointer",
-                          transition: "all .15s ease",
+                          transition: "all .2s ease",
                           bgcolor: "#fff",
                           "&:hover": {
-                            boxShadow: `0 2px 10px ${alpha(
-                              COLORS.primary,
-                              0.12,
-                            )}`,
-                            borderColor: COLORS.primary,
+                            borderColor: "#991B1B",
+                            boxShadow: `0 4px 18px ${alpha("#991B1B", 0.1)}`,
+                            transform: "translateY(-1px)",
+                            "& .view-btn": {
+                              color: "#991B1B",
+                              borderColor: "#991B1B",
+                              bgcolor: alpha("#991B1B", 0.04),
+                            },
                           },
                         }}
                       >
+                        {/* Thumbnail */}
                         <CourseThumbnail
                           src={item.hinhAnhKhoaHoc}
                           alt={item.tieuDe}
                         />
 
+                        {/* Info */}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             sx={{
                               fontWeight: 700,
                               fontSize: 15,
-                              color: COLORS.ink,
+                              color: "#1F2937",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              mb: 0.75,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              lineHeight: 1.4,
+                              mb: 1,
                             }}
                           >
                             {item.tieuDe}
@@ -564,7 +731,10 @@ export default function DuyetKhoaHocPage() {
                             direction="row"
                             spacing={1}
                             useFlexGap
-                            sx={{ alignItems: "center", flexWrap: "wrap" }}
+                            sx={{
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                            }}
                           >
                             <StatusChip
                               trangThai={trangThaiPheDuyet}
@@ -572,36 +742,58 @@ export default function DuyetKhoaHocPage() {
                             />
                             {item.createDate && (
                               <Typography
-                                variant="caption"
-                                color={COLORS.inkSoft}
+                                sx={{
+                                  fontSize: 12,
+                                  color: "#9CA3AF",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.3,
+                                }}
                               >
                                 Tạo:{" "}
-                                {new Date(item.createDate).toLocaleDateString()}
+                                {new Date(
+                                  item.createDate,
+                                ).toLocaleDateString("vi-VN")}
                               </Typography>
                             )}
                           </Stack>
                         </Box>
 
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenCourse(id);
-                          }}
-                          sx={{ color: alpha(COLORS.ink, 0.5) }}
-                        >
-                          <VisibilityRoundedIcon fontSize="small" />
-                        </IconButton>
+                        {/* Action */}
+                        <Tooltip title="Xem chi tiết">
+                          <IconButton
+                            className="view-btn"
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenCourse(id);
+                            }}
+                            sx={{
+                              border: "1px solid #E5E7EB",
+                              borderRadius: 2.5,
+                              color: "#9CA3AF",
+                              width: 36,
+                              height: 36,
+                              flexShrink: 0,
+                              transition: "all .18s ease",
+                            }}
+                          >
+                            <ArrowForwardRoundedIcon
+                              sx={{ fontSize: 18 }}
+                            />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     );
                   })}
                 </Stack>
               )}
 
+              {/* ═══════ PAGINATION ═══════ */}
               {!loading && items.length > 0 && totalPage > 1 && (
                 <Stack
                   direction="row"
-                  sx={{ justifyContent: "center", pt: 2.5 }}
+                  sx={{ justifyContent: "center", pt: 3 }}
                 >
                   <Pagination
                     count={totalPage}
@@ -610,18 +802,26 @@ export default function DuyetKhoaHocPage() {
                     shape="rounded"
                     size="small"
                     sx={{
+                      "& .MuiPaginationItem-root": {
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        transition: "all .15s ease",
+                      },
                       "& .Mui-selected": {
-                        bgcolor: `${COLORS.primary} !important`,
+                        bgcolor: "#991B1B !important",
                         color: "#fff",
+                        boxShadow: "0 2px 6px rgba(153,27,27,0.25)",
                       },
                     }}
                   />
                 </Stack>
               )}
             </Box>
-          </Box>
+          </Paper>
         </Box>
       </DashboardShell>
     </AuthGuard>
   );
 }
+

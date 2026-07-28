@@ -735,6 +735,37 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </>
             )}
 
+            {isInstructorMode && (
+              <>
+                <MenuItem onClick={() => router.push("/instructor/dashboard")}>
+                  Bảng điều khiển giảng viên
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/instructor/manager-courses")}>
+                  Quản lý khóa học
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/instructor/money")}>
+                  Doanh thu
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/instructor/bank")}>
+                  Tài khoản ngân hàng
+                </MenuItem>
+              </>
+            )}
+
+            {isAdminMode && (
+              <>
+                <MenuItem onClick={() => router.push("/admin/dashboard")}>
+                  Bảng điều khiển admin
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/admin/approve-courses")}>
+                  Duyệt khóa học
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/admin/users")}>
+                  Quản lý người dùng
+                </MenuItem>
+              </>
+            )}
+
             {roles.includes("GiaoVien") && !isInstructorMode && (
               <MenuItem onClick={() => router.push("/instructor/dashboard")}>
                 Bảng điều khiển giảng viên

@@ -383,41 +383,24 @@ export default function AdminThongBaoPage() {
               gap: 2.5,
             }}
           >
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <Box
+            <Box>
+              <Typography
                 sx={{
-                  p: 1.5,
-                  borderRadius: "12px",
-                  bgcolor: COLORS.primarySoft,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: `1px solid ${COLORS.primaryBorder}`,
+                  fontSize: 28,
+                  fontWeight: 900,
+                  color: "#1F2937",
+                  mb: 0.5,
                 }}
               >
-                <NotificationsRounded sx={{ color: COLORS.primary, fontSize: 24 }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 800,
-                    color: COLORS.textTitle,
-                    mb: 0.5,
-                    fontSize: { xs: 24, md: 28 },
-                    letterSpacing: "-0.5px",
-                  }}
-                >
-                  Quản lý thông báo
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: COLORS.textSecondary, fontWeight: 500, fontSize: 13.5 }}
-                >
-                  Tạo, chỉnh sửa, gửi và quản lý hệ thống thông báo người dùng trong EduVerse.
-                </Typography>
-              </Box>
-            </Stack>
+                Quản lý thông báo
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: COLORS.textSecondary, fontWeight: 500 }}
+              >
+                Tạo, chỉnh sửa, gửi và quản lý hệ thống thông báo người dùng trong EduVerse.
+              </Typography>
+            </Box>
             <Button
               variant="contained"
               startIcon={<AddRounded />}
