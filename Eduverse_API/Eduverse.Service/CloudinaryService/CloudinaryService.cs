@@ -641,8 +641,8 @@ namespace Eduverse.Service.CloudinaryService
 
 
         #region Logic upload image, delete image
-        private const int MIN_IMG_WIDTH = 1280;
-        private const int MIN_IMG_HEIGHT = 720;
+        private const int MIN_IMG_WIDTH = 200;
+        private const int MIN_IMG_HEIGHT = 200;
 
         private static async Task DamBaoFFmpegSanSangAsync()
         {
