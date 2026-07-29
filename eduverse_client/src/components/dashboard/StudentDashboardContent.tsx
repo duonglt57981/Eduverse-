@@ -280,43 +280,46 @@ function HoverPanel({
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const update = () => {
-      const el = anchorEl.current;
-      if (!el) return;
+  const update = () => {
+    const el = anchorEl.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const PANEL_WIDTH = 310;
+    const GAP = 12;
 
-      const rect = el.getBoundingClientRect();
+    // Thử hiện bên phải trước
+    let left = rect.right + GAP;
 
-      const PANEL_WIDTH = 310;
-      const GAP = 12;
+    // Nếu tràn phải → hiện bên trái
+    if (left + PANEL_WIDTH > window.innerWidth - 8) {
+      left = rect.left - PANEL_WIDTH - GAP;
+    }
 
-      let left = rect.right + GAP;
+    // Nếu vẫn tràn trái → căn giữa màn hình
+    if (left < 8) {
+      left = Math.max(8, (window.innerWidth - PANEL_WIDTH) / 2);
+    }
 
-      if (left + PANEL_WIDTH > window.innerWidth - 8) {
-        left = rect.left - PANEL_WIDTH - GAP;
-      }
+    // Tính top
+    let top = rect.top + window.scrollY; // ← thêm scrollY
+    const PANEL_HEIGHT = 420;
+    if (rect.top + PANEL_HEIGHT > window.innerHeight) {
+      top = window.scrollY + window.innerHeight - PANEL_HEIGHT - 8;
+    }
+    if (top < window.scrollY + 8) {
+      top = window.scrollY + 8;
+    }
 
-      let top = rect.top;
-
-      if (top + 520 > window.innerHeight) {
-        top = Math.max(8, window.innerHeight - 520);
-      }
-
-      setPos({
-        top,
-        left,
-      });
-    };
-
-    update();
-
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-
-    return () => {
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
-    };
-  }, [anchorEl]);
+    setPos({ top, left });
+  };
+  update();
+  window.addEventListener("scroll", update, true);
+  window.addEventListener("resize", update);
+  return () => {
+    window.removeEventListener("scroll", update, true);
+    window.removeEventListener("resize", update);
+  };
+}, [anchorEl]);
 
   if (!pos) return null;
 
