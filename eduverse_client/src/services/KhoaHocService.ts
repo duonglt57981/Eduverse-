@@ -188,12 +188,11 @@ export default class KhoaHocService {
       const params = new URLSearchParams();
 
       if (searchParams) {
-        // Luôn thêm pageNumber và pageSize
         if (
-          searchParams.pageNumber !== undefined &&
-          searchParams.pageNumber !== null
+          searchParams.pageIndex !== undefined &&
+          searchParams.pageIndex !== null
         ) {
-          params.append("pageNumber", searchParams.pageNumber.toString());
+          params.append("pageIndex", searchParams.pageIndex.toString());
         }
         if (
           searchParams.pageSize !== undefined &&

@@ -129,7 +129,7 @@ export default function DuyetKhoaHocPage() {
 
   const searchParams = useMemo(() => {
     const params: any = {
-      pageNumber: page,
+      pageIndex: page,
       pageSize: PAGE_SIZE,
     };
     if (keyword.trim()) params.Keyword = keyword.trim();
@@ -172,7 +172,7 @@ export default function DuyetKhoaHocPage() {
   const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try {
-      const params: any = { pageNumber: 1, pageSize: 1000 };
+      const params: any = { pageIndex: 1, pageSize: 20 };
       const res = await kiemDuyetService.GetListKiemDuyetKhoaHoc(params);
       const { list } = normalizeListResponse(res, 1000);
       setStats({

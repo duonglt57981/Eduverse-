@@ -345,7 +345,7 @@ function KhoaHocContent() {
       setDangTaiThongKe(true);
       try {
         const response = await khoaHocService.GetListForManager({
-          pageNumber: 1,
+          pageIndex: 1,
           pageSize: SO_LUONG_MOI_TRANG_STATS,
         });
         if (response.status && response.data) {
@@ -382,7 +382,7 @@ function KhoaHocContent() {
       setLoi(null);
       try {
         const searchParams: KhoaHocManagerSearch = {
-          pageNumber: trangHienTai,
+          pageIndex: trangHienTai,
           pageSize: SO_LUONG_MOI_TRANG,
           keyword: tuKhoaTimKiem || undefined,
           trangThai: trangThaiLoc === "TatCa" ? undefined : trangThaiLoc,

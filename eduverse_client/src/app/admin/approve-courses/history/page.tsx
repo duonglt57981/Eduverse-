@@ -127,7 +127,7 @@ export default function LichSuKiemDuyetPage() {
 
   const searchParams = useMemo(() => {
     const params: any = {
-      pageNumber: page,
+      pageIndex: page,
       pageSize: PAGE_SIZE,
     };
     if (keyword.trim()) params.Keyword = keyword.trim();
@@ -176,8 +176,8 @@ export default function LichSuKiemDuyetPage() {
     setLoadingStats(true);
     try {
       const params: any = {
-        pageNumber: 1,
-        pageSize: 1000,
+        pageIndex: 1,
+        pageSize: 20,
       };
       const res = await kiemDuyetService.GetListLichSuKiemDuyet(params);
 
