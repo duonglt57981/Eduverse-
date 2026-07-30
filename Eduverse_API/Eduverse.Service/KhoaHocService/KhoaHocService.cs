@@ -1794,12 +1794,11 @@ namespace Eduverse.Service.KhoaHocService
                     $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
                     $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
                 );
-
+            
             using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
             try
             {
                 KhoaHoc khoaHocDraftEntity;
-
                 if (KhoaHocRoot.TrangThaiPheDuyet == "DaDuyet")
                 {
                     khoaHocDraftEntity = new KhoaHoc
@@ -1838,7 +1837,7 @@ namespace Eduverse.Service.KhoaHocService
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
-                        IdBanGhiTruoc = KhoaHocRoot.IdBanGhiTruoc.Value
+                        IdBanGhiTruoc = KhoaHocRoot.IdBanGhiTruoc ?? null
                     };
 
                     await CreateAsync(khoaHocDraftEntity);

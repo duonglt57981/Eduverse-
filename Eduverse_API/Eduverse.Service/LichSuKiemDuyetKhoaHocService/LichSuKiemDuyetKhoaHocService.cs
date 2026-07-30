@@ -441,10 +441,10 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
 
-            var khoaHocQuery = _khoaHocRepository.GetQueryable()
+            var khoaHocQuery = _khoaHocRepository.GetAll()
                 .AsNoTracking()
-                .Where(x => !x.IsDeleted
-                    && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi")
+                .Where(x =>
+                    (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi")
                     && GetQueryable()
                         .Any(h => h.CreatedId == userId && h.IdDoiTuong == x.Id));
 
