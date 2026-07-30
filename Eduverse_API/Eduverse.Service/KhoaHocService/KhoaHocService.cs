@@ -281,7 +281,14 @@ namespace Eduverse.Service.KhoaHocService
                 CapDo = x.CapDo,
                 TongThoiLuong = x.TongThoiLuong,
                 TongBaiGiang = x.TongBaiGiang,
-                SoLuongHocVien = x.SoLuongHocVien,
+                SoLuongHocVien = _eduverseContext.dangKyKhoaHocs
+                    .Where(dk => dk.IdKhoaHoc == x.Id
+                        && !dk.IsDeleted
+                        && dk.IsDangKy != false
+                        && dk.IdNguoiDangKi.HasValue)
+                    .Select(dk => dk.IdNguoiDangKi)
+                    .Distinct()
+                    .Count(),
                 NgayTao = x.NgayTao,
                 NgayCapNhat = x.NgayCapNhat,
                 TrangThaiPheDuyet = x.TrangThaiPheDuyet,
@@ -504,7 +511,13 @@ namespace Eduverse.Service.KhoaHocService
 
             var soHocVien = await _dangKyKhoaHocRepository.GetQueryable()
                 .AsNoTracking()
-                .CountAsync(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted);
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                    && !x.IsDeleted
+                    && x.IsDangKy != false
+                    && x.IdNguoiDangKi.HasValue)
+                .Select(x => x.IdNguoiDangKi)
+                .Distinct()
+                .CountAsync();
             khoaHoc.SoLuongHocVien = soHocVien;
 
             

@@ -291,6 +291,32 @@ namespace Eduverse.Service.ElasticsearchService
                 ? int.MaxValue
                 : (int)response.Total;
 
+            var courseIds = response.Documents
+                .Select(document => document.Id)
+                .Distinct()
+                .ToList();
+
+            var studentCounts = courseIds.Count == 0
+                ? new Dictionary<Guid, int>()
+                : await _dbContext.dangKyKhoaHocs
+                    .AsNoTracking()
+                    .Where(registration =>
+                        registration.IdKhoaHoc.HasValue &&
+                        courseIds.Contains(registration.IdKhoaHoc.Value) &&
+                        !registration.IsDeleted &&
+                        registration.IsDangKy != false &&
+                        registration.IdNguoiDangKi.HasValue)
+                    .GroupBy(registration => registration.IdKhoaHoc!.Value)
+                    .Select(group => new
+                    {
+                        CourseId = group.Key,
+                        Count = group
+                            .Select(registration => registration.IdNguoiDangKi)
+                            .Distinct()
+                            .Count()
+                    })
+                    .ToDictionaryAsync(item => item.CourseId, item => item.Count);
+
             var items = response.Documents.Select(document => new KhoaHocDto
             {
                 Id = document.Id,
@@ -303,7 +329,7 @@ namespace Eduverse.Service.ElasticsearchService
                 CapDo = document.CapDo,
                 TongThoiLuong = document.TongThoiLuong,
                 TongBaiGiang = document.TongBaiGiang,
-                SoLuongHocVien = document.SoLuongHocVien,
+                SoLuongHocVien = studentCounts.GetValueOrDefault(document.Id),
                 NgayTao = document.NgayTao,
                 TrangThai = document.TrangThai,
                 TrangThaiPheDuyet = document.TrangThaiPheDuyet,
@@ -429,6 +455,17 @@ namespace Eduverse.Service.ElasticsearchService
                 })
                 .ToListAsync();
 
+            var studentCount = await _dbContext.dangKyKhoaHocs
+                .AsNoTracking()
+                .Where(registration =>
+                    registration.IdKhoaHoc == course.Id &&
+                    !registration.IsDeleted &&
+                    registration.IsDangKy != false &&
+                    registration.IdNguoiDangKi.HasValue)
+                .Select(registration => registration.IdNguoiDangKi)
+                .Distinct()
+                .CountAsync();
+
             return new KhoaHocSearchDocument
             {
                 Id = course.Id,
@@ -441,7 +478,7 @@ namespace Eduverse.Service.ElasticsearchService
                 CapDo = course.CapDo,
                 TongThoiLuong = course.TongThoiLuong,
                 TongBaiGiang = course.TongBaiGiang,
-                SoLuongHocVien = course.SoLuongHocVien,
+                SoLuongHocVien = studentCount,
                 NgayTao = course.NgayTao,
                 TrangThaiPheDuyet = course.TrangThaiPheDuyet,
                 TrangThai = course.TrangThai,
