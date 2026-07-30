@@ -56,6 +56,7 @@ namespace Eduverse.Service.YeuCauRutTienService
 
         public async Task GuiOtpAsync(Guid userId, GuiOtpRutTienRequest request)
         {
+
             var user = await _userRepo.GetByIdAsync(userId)
                 ?? throw new Exception("Không tìm thấy người dùng");
 
@@ -79,7 +80,7 @@ namespace Eduverse.Service.YeuCauRutTienService
 
             // Tạo OTP 6 số
             var otp = new Random().Next(100000, 999999).ToString();
-
+            Console.WriteLine($"[OTP SET] Key={OtpCacheKey(userId)}, OTP={otp}");
             // Lưu vào cache 5 phút
             var otpData = new OtpData(otp, request.SoTienRut, request.IdNganHang, DateTime.Now.AddMinutes(5));
             _cache.Set(OtpCacheKey(userId), otpData, TimeSpan.FromMinutes(5));
@@ -167,9 +168,17 @@ namespace Eduverse.Service.YeuCauRutTienService
 
         public async Task TaoYeuCauAsync(Guid userId, TaoYeuCauRutTienDto dto)
         {
+
             // ── VERIFY OTP ──
             var cacheKey = OtpCacheKey(userId);
-            if (!_cache.TryGetValue(cacheKey, out OtpData? otpData))
+
+            Console.WriteLine($"[OTP GET] Key={cacheKey}");
+
+            var exists = _cache.TryGetValue(cacheKey, out OtpData? otpData);
+
+            Console.WriteLine($"[OTP FOUND] = {exists}");
+
+            if (!exists)
                 throw new Exception("Mã OTP đã hết hạn hoặc chưa được gửi. Vui lòng yêu cầu mã mới.");
 
             if (otpData!.Code != dto.Otp.Trim())
