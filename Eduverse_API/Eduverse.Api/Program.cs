@@ -20,6 +20,7 @@ using Eduverse.Service.EmailService;
 using Eduverse.Service.GeminiService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -71,6 +72,12 @@ namespace Eduverse.Api
             builder.Services.AddAutoMapper(cfg =>
             {
                 cfg.AddMaps(typeof(KhoaHoc).Assembly);
+            });
+
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownProxies.Clear(); // hoặc thêm IP cụ thể của Nginx nếu muốn chặt chẽ
             });
 
 
@@ -220,7 +227,7 @@ namespace Eduverse.Api
                         var user = await userManager.FindByIdAsync(userId!);
                         if (user is null || user.CurrentSessionId != sidInToken)
                         {
-                            context.Fail("SESSION_REVOKED"); 
+                            context.Fail("SESSION_REVOKED");
                         }
                     }
                 };
@@ -372,6 +379,11 @@ namespace Eduverse.Api
 
             // Cấu hình Xabe.FFmpeg sử dụng thư mục vừa tải
             FFmpeg.SetExecutablesPath(ffmpegPath);
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
 
             app.Run();
         }

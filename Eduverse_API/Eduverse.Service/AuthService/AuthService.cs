@@ -781,21 +781,47 @@ namespace Eduverse.Service.AuthService
             });
         }
 
+        private const string DeviceFingerprintHeader = "X-Device-Fingerprint";
+
+        /// <summary>
+        /// Lấy device key từ fingerprint FE gửi lên (qua header X-Device-Fingerprint).
+        /// Fingerprint tính từ đặc điểm phần cứng/OS (canvas, webgl, screen, timezone...)
+        /// nên KHÔNG đổi giữa các trình duyệt khác nhau trên CÙNG 1 máy.
+        /// Nếu client không gửi (client cũ/gọi API trực tiếp) → fallback về User-Agent,
+        /// độ chính xác thấp hơn nhưng không chặn luồng đăng nhập.
+        /// </summary>
+        private string GetDeviceKey(HttpContext? httpContext)
+        {
+            var fingerprint = httpContext?.Request.Headers[DeviceFingerprintHeader].ToString();
+            if (!string.IsNullOrWhiteSpace(fingerprint))
+                return HashValue(fingerprint.Trim());
+
+            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+            return HashValue(string.IsNullOrWhiteSpace(userAgent) ? "unknown-device" : userAgent);
+        }
+
+        private static string GetDeviceInfo(HttpContext? httpContext)
+        {
+            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+            return string.IsNullOrWhiteSpace(userAgent) ? "Unknown device" : userAgent;
+        }
+
+        /// <summary>
+        /// Cấp session mới cho user (dùng chung cho login thường + Google/Facebook).
+        /// deviceKey dựa trên fingerprint → cùng máy khác trình duyệt không bị đá,
+        /// khác máy thì đá session cũ ra.
+        /// </summary>
         private async Task AssignNewSessionAsync(AppUser user, HttpResponse httpResponse)
         {
-            user.CurrentSessionId = Guid.NewGuid().ToString();
-            user.CurrentDeviceInfo = GetDeviceInfo(httpResponse);
+            var deviceKey = GetDeviceKey(httpResponse.HttpContext);
+
+            user.CurrentSessionId = deviceKey;
+            user.CurrentDeviceInfo = GetDeviceInfo(httpResponse.HttpContext);
             user.CurrentSessionAt = DateTime.UtcNow;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
                 throw new Exception("Không thể khởi tạo phiên đăng nhập. Vui lòng thử lại.");
-        }
-
-        private static string? GetDeviceInfo(HttpResponse httpResponse)
-        {
-            var userAgent = httpResponse.HttpContext?.Request.Headers["User-Agent"].ToString();
-            return string.IsNullOrWhiteSpace(userAgent) ? "Unknown device" : userAgent;
         }
     }
 }
