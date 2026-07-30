@@ -229,6 +229,28 @@ namespace Eduverse.Api
                         {
                             context.Fail("SESSION_REVOKED");
                         }
+                    },
+
+                    OnChallenge = async context =>
+                    {
+                        // Chặn hành vi mặc định (redirect/empty 401) để tự kiểm soát response
+                        context.HandleResponse();
+
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+
+                        var reason = context.HttpContext.Items["AuthFailReason"] as string;
+                        var isSessionRevoked = reason == "SESSION_REVOKED";
+
+                        var payload = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            code = isSessionRevoked ? "SESSION_REVOKED" : "UNAUTHORIZED",
+                            message = isSessionRevoked
+                                ? "Tài khoản của bạn đã được đăng nhập ở một thiết bị khác."
+                                : "Phiên đăng nhập không hợp lệ hoặc đã hết hạn."
+                        });
+
+                        await context.Response.WriteAsync(payload);
                     }
                 };
             });
