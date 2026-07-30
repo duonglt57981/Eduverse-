@@ -52,7 +52,7 @@ const trangThaiLabel: Record<string, string> = {
 export default function DoanhThuPage() {
   const dispatch = useDispatch();
   const { soDu, lichSu, nganHangs, loading } = useSelector((s) => s.rutTien);
-
+  const [otp, setOtp] = useState("");
   const [openRut, setOpenRut] = useState(false);
   const [soTienRut, setSoTienRut] = useState("");
   const [idNganHang, setIdNganHang] = useState("");
@@ -80,11 +80,12 @@ export default function DoanhThuPage() {
     setSubmitting(true);
     setError("");
     try {
-      await dispatch(taoYeuCauRutTien({ soTienRut: so, idNganHang })).unwrap();
+      await dispatch(taoYeuCauRutTien({ soTienRut: so, idNganHang ,otp})).unwrap();
       setSuccess(true);
       setOpenRut(false);
       setSoTienRut("");
       setIdNganHang("");
+      setOtp("");
       dispatch(getSoDu());
       dispatch(getLichSuRutTien());
     } catch (e: unknown) {
@@ -246,6 +247,7 @@ export default function DoanhThuPage() {
         onClose={() => {
           setOpenRut(false);
           setError("");
+          setOtp("");
         }}
         maxWidth="xs"
         fullWidth
