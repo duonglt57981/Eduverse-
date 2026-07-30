@@ -25,7 +25,6 @@ import {
   Paper,
   Rating,
   Select,
-  type SelectChangeEvent,
   Stack,
   TextField,
   Typography,
@@ -40,8 +39,15 @@ import { themVaoGioHang } from "@/src/store/gioHang/GioHangSlice";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
 
-type CourseSortOption = "newest" | "price-low" | "price-high";
+type CourseSortOption =
+  | "relevance"
+  | "newest"
+  | "best-selling"
+  | "price-low"
+  | "price-high";
 type PriceFilter = "all" | "free" | "paid";
+
+const RATING_MARKS = [0, 1, 2, 3, 4, 4.5, 5] as const;
 
 const BRAND_COLORS = {
   primary: "#991B1B", // Đỏ đô
@@ -427,7 +433,15 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     .split("")
     .reduce((sum: number, char: string) => sum + char.charCodeAt(0), 0);
   const mockRating = 4.0 + (charCodeSum % 11) * 0.1; // yields: 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0
+  const apiRating = Number(kh.diemDanhGia ?? kh.rating);
+  const rating =
+    Number.isFinite(apiRating) && apiRating >= 0 && apiRating <= 5
+      ? apiRating
+      : mockRating;
   const isFree = kh.loaiKhoaHoc === "Khóa học miễn phí";
+  const priceValue = Number(kh.gia || 0);
+  const studentCount = Number(kh.soLuongHocVien || 0);
+  const createdAt = kh.ngayTao ? new Date(kh.ngayTao).getTime() : 0;
   const durationSeconds = Number(kh.tongThoiLuong || 0);
   const durationHours = Math.floor(durationSeconds / 3600);
   const durationMinutes = Math.floor((durationSeconds % 3600) / 60);
@@ -440,17 +454,20 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     id: kh.id,
     title: kh.tieuDe || "Khóa học không tên",
     instructor: kh.tenGiangVien || kh.createdBy || "Chưa cập nhật",
-    rating: mockRating,
-    students: kh.soLuongHocVien || 0,
+    rating,
+    students: studentCount,
+    studentCount,
     price: isFree
       ? "Miễn phí"
       : kh.gia != null
         ? `${kh.gia.toLocaleString("vi-VN")}đ`
         : "Chưa cập nhật",
+    priceValue,
     originalPrice:
       kh.giaGoc && kh.giaGoc > 0
         ? `${kh.giaGoc?.toLocaleString("vi-VN")}đ`
         : "",
+    createdAt,
     level: kh.capDo || "Mọi cấp độ",
     duration,
     category: kh.loaiKhoaHoc || "Khác",
@@ -476,6 +493,8 @@ export default function CoursesPage({
   const [sortBy, setSortBy] = useState<CourseSortOption>("newest");
   const [priceFilter, setPriceFilter] = useState<PriceFilter>("all");
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  const [ratingFrom, setRatingFrom] = useState(0);
+  const [ratingTo, setRatingTo] = useState(5);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   const [courses, setCourses] = useState<CourseCatalogItem[]>([]);
@@ -547,8 +566,26 @@ export default function CoursesPage({
           : await courseService.GetList(searchParams, controller.signal);
         if (response?.status && response.data) {
           const mapped = (response.data.items || []).map(mapToCatalogItem);
-          setCourses(mapped);
-          setTotalCourses(response.data.totalCount || 0);
+          const filtered = mapped.filter(
+            (course) =>
+              course.rating >= ratingFrom && course.rating <= ratingTo,
+          );
+
+          const sorted = [...filtered];
+          if (sortBy === "newest") {
+            sorted.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          } else if (sortBy === "best-selling") {
+            sorted.sort(
+              (a, b) => (b.studentCount || 0) - (a.studentCount || 0),
+            );
+          } else if (sortBy === "price-low") {
+            sorted.sort((a, b) => (a.priceValue || 0) - (b.priceValue || 0));
+          } else if (sortBy === "price-high") {
+            sorted.sort((a, b) => (b.priceValue || 0) - (a.priceValue || 0));
+          }
+
+          setCourses(sorted);
+          setTotalCourses(sorted.length);
         }
       } catch (err) {
         if (!controller.signal.aborted) {
@@ -569,6 +606,8 @@ export default function CoursesPage({
     sortBy,
     priceFilter,
     selectedLevel,
+    ratingFrom,
+    ratingTo,
     pageIndex,
     pageSize,
     courseService,
@@ -594,6 +633,8 @@ export default function CoursesPage({
     setActiveCategory("all");
     setPriceFilter("all");
     setSelectedLevel(null);
+    setRatingFrom(0);
+    setRatingTo(5);
     setSearch("");
     setAppliedSearch("");
     setSearchRevision((current) => current + 1);
@@ -611,6 +652,8 @@ export default function CoursesPage({
     activeCategory !== "all" ||
     priceFilter !== "all" ||
     selectedLevel !== null ||
+    ratingFrom !== 0 ||
+    ratingTo !== 5 ||
     search !== "" ||
     appliedSearch !== "" ||
     sortBy !== "newest";
@@ -1111,6 +1154,83 @@ export default function CoursesPage({
                 );
               })}
             </FilterGroup>
+
+            <Divider sx={{ borderColor: BRAND_COLORS.borderLight }} />
+
+            {/* Rating range filter */}
+            <FilterGroup title="Đánh giá">
+              <Stack direction="row" spacing={1}>
+                <Select<number>
+                  size="small"
+                  value={ratingFrom}
+                  onChange={(event) => {
+                    const nextFrom = Number(event.target.value);
+                    setRatingFrom(nextFrom);
+                    if (nextFrom > ratingTo) setRatingTo(nextFrom);
+                    setPageIndex(1);
+                  }}
+                  renderValue={(value) => `Từ ${value} sao`}
+                  sx={{
+                    flex: 1,
+                    height: 40,
+                    borderRadius: "9px",
+                    fontSize: 13,
+                    bgcolor: "#ffffff",
+                    "& fieldset": { borderColor: BRAND_COLORS.borderLight },
+                  }}
+                >
+                  {RATING_MARKS.filter((mark) => mark <= ratingTo).map(
+                    (mark) => (
+                      <MenuItem key={mark} value={mark}>
+                        {mark} sao
+                      </MenuItem>
+                    ),
+                  )}
+                </Select>
+                <Select<number>
+                  size="small"
+                  value={ratingTo}
+                  onChange={(event) => {
+                    const nextTo = Number(event.target.value);
+                    setRatingTo(nextTo);
+                    if (nextTo < ratingFrom) setRatingFrom(nextTo);
+                    setPageIndex(1);
+                  }}
+                  renderValue={(value) => `Đến ${value} sao`}
+                  sx={{
+                    flex: 1,
+                    height: 40,
+                    borderRadius: "9px",
+                    fontSize: 13,
+                    bgcolor: "#ffffff",
+                    "& fieldset": { borderColor: BRAND_COLORS.borderLight },
+                  }}
+                >
+                  {RATING_MARKS.filter((mark) => mark >= ratingFrom).map(
+                    (mark) => (
+                      <MenuItem key={mark} value={mark}>
+                        {mark} sao
+                      </MenuItem>
+                    ),
+                  )}
+                </Select>
+              </Stack>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <Rating
+                  readOnly
+                  precision={0.5}
+                  value={ratingFrom || ratingTo}
+                  sx={{
+                    fontSize: 21,
+                    color: "#F59E0B",
+                    "& .MuiRating-iconEmpty": { color: "#E5E7EB" },
+                  }}
+                />
+                <Typography sx={{ fontSize: 12.5, color: BRAND_COLORS.textMuted }}>
+                  {ratingFrom}–{ratingTo} sao
+                </Typography>
+              </Stack>
+            </FilterGroup>
           </Stack>
         </Paper>
 
@@ -1136,33 +1256,101 @@ export default function CoursesPage({
                 ? "Đang tải danh sách…"
                 : `Tìm thấy ${totalCourses} khóa học`}
             </Typography>
-            <Select<CourseSortOption>
-              size="small"
-              value={sortBy}
-              onChange={(event: SelectChangeEvent<CourseSortOption>) => {
-                setSortBy(event.target.value as CourseSortOption);
-                setPageIndex(1);
-              }}
+            <Paper
+              elevation={0}
               sx={{
-                minWidth: 170,
-                height: 42,
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 1,
+                p: 1,
                 borderRadius: "10px",
-                bgcolor: "#ffffff",
-                fontSize: 13.5,
-                fontWeight: 600,
-                color: BRAND_COLORS.textBody,
-                "& fieldset": { borderColor: BRAND_COLORS.borderLight },
-                "&:hover fieldset": { borderColor: BRAND_COLORS.primary },
-                "&.Mui-focused fieldset": {
-                  borderColor: BRAND_COLORS.primary,
-                  borderWidth: 1.5,
-                },
+                bgcolor: "#F3F4F6",
+                border: `1px solid ${BRAND_COLORS.borderLight}`,
               }}
             >
-              <MenuItem value="newest">Mới nhất</MenuItem>
-              <MenuItem value="price-low">Giá thấp trước</MenuItem>
-              <MenuItem value="price-high">Giá cao trước</MenuItem>
-            </Select>
+              <Typography
+                sx={{
+                  px: 1,
+                  fontSize: 13.5,
+                  color: BRAND_COLORS.textMuted,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Sắp xếp theo
+              </Typography>
+              {(
+                [
+                  { value: "relevance", label: "Liên quan" },
+                  { value: "newest", label: "Mới nhất" },
+                  { value: "best-selling", label: "Bán chạy" },
+                ] as const
+              ).map((option) => {
+                const active = sortBy === option.value;
+                return (
+                  <Button
+                    key={option.value}
+                    onClick={() => {
+                      setSortBy(option.value);
+                      setPageIndex(1);
+                    }}
+                    sx={{
+                      minWidth: 100,
+                      height: 38,
+                      px: 2,
+                      borderRadius: "4px",
+                      bgcolor: active ? "#F04438" : "#ffffff",
+                      color: active ? "#ffffff" : BRAND_COLORS.textBody,
+                      fontSize: 13.5,
+                      fontWeight: active ? 700 : 500,
+                      textTransform: "none",
+                      boxShadow: "none",
+                      "&:hover": {
+                        bgcolor: active ? "#D92D20" : "#FEF2F2",
+                      },
+                    }}
+                  >
+                    {option.label}
+                  </Button>
+                );
+              })}
+              <Select<string>
+                size="small"
+                displayEmpty
+                value={
+                  sortBy === "price-low" || sortBy === "price-high"
+                    ? sortBy
+                    : ""
+                }
+                onChange={(event) => {
+                  setSortBy(event.target.value as CourseSortOption);
+                  setPageIndex(1);
+                }}
+                renderValue={(value) =>
+                  value === "price-low"
+                    ? "Giá thấp đến cao"
+                    : value === "price-high"
+                      ? "Giá cao đến thấp"
+                      : "Giá"
+                }
+                sx={{
+                  minWidth: 180,
+                  height: 38,
+                  borderRadius: "4px",
+                  bgcolor: "#ffffff",
+                  fontSize: 13.5,
+                  color: BRAND_COLORS.textBody,
+                  "& fieldset": { borderColor: "transparent" },
+                  "&:hover fieldset": { borderColor: BRAND_COLORS.primaryBorder },
+                  "&.Mui-focused fieldset": {
+                    borderColor: BRAND_COLORS.primary,
+                  },
+                }}
+              >
+                <MenuItem value="price-low">Giá thấp đến cao</MenuItem>
+                <MenuItem value="price-high">Giá cao đến thấp</MenuItem>
+              </Select>
+            </Paper>
           </Stack>
 
           {loading ? (
