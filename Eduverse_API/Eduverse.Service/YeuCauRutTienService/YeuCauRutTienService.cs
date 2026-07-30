@@ -4,9 +4,12 @@ using Eduverse.Repository.Common;
 using Eduverse.Repository.KetQuaBaiThiRepository;
 using Eduverse.Repository.YeuCauRutTienRepository;
 using Eduverse.Service.Common;
+using Eduverse.Service.EmailService;
 using Eduverse.Service.KetQuaBaiThiService;
 using Eduverse.Service.YeuCauRutTienService.Dto;
+using Eduverse.Service.YeuCauRutTienService.Request;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using PayOS;
 using System;
@@ -19,6 +22,8 @@ namespace Eduverse.Service.YeuCauRutTienService
 {
     public class YeuCauRutTienService : Service<YeuCauRutTien>, IYeuCauRutTienService
     {
+        private readonly IMemoryCache _cache;
+        private readonly IEmailService _emailService;
         private readonly IRepository<YeuCauRutTien> _repo;
         private readonly IRepository<NganHang> _nganHangRepo;
         private readonly IAppUserRepository _userRepo;
@@ -30,18 +35,80 @@ namespace Eduverse.Service.YeuCauRutTienService
             IRepository<YeuCauRutTien> repo,
             IRepository<NganHang> nganHangRepo,
             IAppUserRepository userRepo,
+            IMemoryCache cache,
+            IEmailService emailService,
             IRepository<ThongBao> thongBaoRepo,
             PayOSClient payOS,
             [FromKeyedServices("payout")] PayOSClient payOSPayout
             ) : base(repo)
         {
             _repo = repo;
+            _emailService = emailService;
+            _cache = cache;
             _nganHangRepo = nganHangRepo;
             _userRepo = userRepo;
             _thongBaoRepo = thongBaoRepo;
             _payOS = payOS;
             _payOSPayout = payOSPayout;
         }
+        private static string OtpCacheKey(Guid userId) => $"OTP_RUT_TIEN_{userId}";
+        private record OtpData(string Code, decimal SoTienRut, Guid IdNganHang, DateTime Expiry);
+
+        public async Task GuiOtpAsync(Guid userId, GuiOtpRutTienRequest request)
+        {
+            var user = await _userRepo.GetByIdAsync(userId)
+                ?? throw new Exception("Không tìm thấy người dùng");
+
+            if (string.IsNullOrEmpty(user.Email))
+                throw new Exception("Tài khoản chưa có email. Vui lòng cập nhật email.");
+
+            if (request.SoTienRut <= 0)
+                throw new Exception("Số tiền rút phải lớn hơn 0");
+
+            if (request.SoTienRut < 10000)
+                throw new Exception("Số tiền rút tối thiểu là 10.000đ");
+
+            if (request.SoTienRut > (user.SoDuTaiKhoan ?? 0))
+                throw new Exception($"Số dư không đủ. Hiện có: {user.SoDuTaiKhoan:N0}đ");
+
+            var nganHang = await _nganHangRepo.GetByIdAsync(request.IdNganHang)
+                ?? throw new Exception("Không tìm thấy tài khoản ngân hàng");
+
+            if (nganHang.IdNguoiDung != userId)
+                throw new Exception("Tài khoản ngân hàng không thuộc về bạn");
+
+            // Tạo OTP 6 số
+            var otp = new Random().Next(100000, 999999).ToString();
+
+            // Lưu vào cache 5 phút
+            var otpData = new OtpData(otp, request.SoTienRut, request.IdNganHang, DateTime.Now.AddMinutes(5));
+            _cache.Set(OtpCacheKey(userId), otpData, TimeSpan.FromMinutes(5));
+
+            // Gửi email
+            var subject = $"[EduVerse] Mã xác nhận rút tiền - {otp}";
+            var body = $@"
+        <div style='font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;'>
+            <h2 style='color: #8D1313;'>🔐 Xác nhận rút tiền</h2>
+            <p>Xin chào <strong>{user.HoTen}</strong>,</p>
+            <p>Bạn vừa yêu cầu rút tiền từ EduVerse:</p>
+            <div style='background: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;'>
+                <p>💰 <strong>Số tiền:</strong> {request.SoTienRut:N0}đ</p>
+                <p>🏦 <strong>Tài khoản nhận:</strong> {nganHang.SoTaiKhoan} - {nganHang.TenTaiKhoan}</p>
+            </div>
+            <div style='background: #fff3cd; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0;'>
+                <p style='margin: 0; font-size: 14px;'>Mã OTP của bạn:</p>
+                <h1 style='color: #8D1313; font-size: 42px; letter-spacing: 10px; margin: 10px 0;'>{otp}</h1>
+                <p style='margin: 0; font-size: 13px; color: #666;'>⏰ Hiệu lực trong <strong>5 phút</strong></p>
+            </div>
+            <p style='color: #dc3545;'>⚠️ Nếu không phải bạn thực hiện, hãy bỏ qua email này và đổi mật khẩu ngay.</p>
+            <hr/>
+            <p style='color: #999; font-size: 12px;'>EduVerse - Nền tảng học trực tuyến</p>
+        </div>
+    ";
+
+            await _emailService.SendAsync(user.Email, subject, body);
+        }
+
         public async Task<decimal> GetSoDuAsync(Guid userId)
         {
             var user = await _userRepo.GetByIdAsync(userId);
@@ -100,25 +167,37 @@ namespace Eduverse.Service.YeuCauRutTienService
 
         public async Task TaoYeuCauAsync(Guid userId, TaoYeuCauRutTienDto dto)
         {
+            // ── VERIFY OTP ──
+            var cacheKey = OtpCacheKey(userId);
+            if (!_cache.TryGetValue(cacheKey, out OtpData? otpData))
+                throw new Exception("Mã OTP đã hết hạn hoặc chưa được gửi. Vui lòng yêu cầu mã mới.");
+
+            if (otpData!.Code != dto.Otp.Trim())
+                throw new Exception("Mã OTP không đúng. Vui lòng kiểm tra lại.");
+
+            if (DateTime.Now > otpData.Expiry)
+            {
+                _cache.Remove(cacheKey);
+                throw new Exception("Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
+            }
+
+            // Kiểm tra số tiền khớp
+            if (dto.SoTienRut != otpData.SoTienRut || dto.IdNganHang != otpData.IdNganHang)
+                throw new Exception("Thông tin rút tiền không khớp với OTP đã gửi.");
+
+            // Xóa OTP sau khi dùng
+            _cache.Remove(cacheKey);
+
+            // ... code TaoYeuCau cũ bên dưới (trừ số dư và nganHang đã validate rồi)
             var user = await _userRepo.GetByIdAsync(userId)
                 ?? throw new Exception("Không tìm thấy người dùng");
 
-            if (dto.SoTienRut <= 0)
-                throw new Exception("Số tiền rút phải lớn hơn 0");
+            var dangCho = await AnyAsync(x =>
+                x.IdNguoiDung == userId && x.TrangThai == "ChoDuyet" && !x.IsDeleted);
+            if (dangCho)
+                throw new Exception("Bạn đang có yêu cầu chờ duyệt, vui lòng đợi xử lý xong");
 
-            if (dto.SoTienRut > user.SoDuTaiKhoan)
-                throw new Exception($"Số dư không đủ. Hiện tại: {user.SoDuTaiKhoan:N0}đ");
-
-            if (dto.SoTienRut < 50000)
-                throw new Exception("Số tiền rút tối thiểu là 50.000đ");
-
-            var nganHang = await _nganHangRepo.GetByIdAsync(dto.IdNganHang)
-                ?? throw new Exception("Không tìm thấy tài khoản ngân hàng");
-
-            if (nganHang.IdNguoiDung != userId)
-                throw new Exception("Tài khoản ngân hàng không thuộc về bạn");
-
-            // Trừ số dư tạm thời
+            // Trừ số dư
             user.SoDuTaiKhoan -= dto.SoTienRut;
             user.UpdatedDate = DateTime.Now;
             _userRepo.Update(user);
@@ -137,7 +216,7 @@ namespace Eduverse.Service.YeuCauRutTienService
             };
             await CreateAsync(entity);
 
-            // Thông báo cho Admin
+            // Thông báo admin
             _thongBaoRepo.Add(new ThongBao
             {
                 TieuDe = "Yêu cầu rút tiền mới",
@@ -146,7 +225,7 @@ namespace Eduverse.Service.YeuCauRutTienService
                 ThoiGianTao = DateTime.Now,
                 TrangThai = "MoiNhan",
                 LoaiThongBao = "YeuCauRutTien",
-                IdNguoiDung = null, // null = gửi cho Admin
+                IdNguoiDung = null,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now
             });
