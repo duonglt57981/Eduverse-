@@ -13,7 +13,11 @@ function ExploreContent() {
 
   return (
     <StudentDashboardShell>
-      <CoursesPage key={keyword} initialSearch={keyword} />
+      <CoursesPage
+        key={keyword}
+        initialSearch={keyword}
+        excludeEnrolled
+      />
     </StudentDashboardShell>
   );
 }

@@ -464,8 +464,10 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
 
 export default function CoursesPage({
   initialSearch = "",
+  excludeEnrolled = false,
 }: {
   initialSearch?: string;
+  excludeEnrolled?: boolean;
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [appliedSearch, setAppliedSearch] = useState(initialSearch.trim());
@@ -537,10 +539,12 @@ export default function CoursesPage({
                 ? "desc"
                 : undefined,
         };
-        const response = await courseService.GetList(
-          searchParams,
-          controller.signal,
-        );
+        const response = excludeEnrolled
+          ? await courseService.SearchWithElasticsearch(
+              searchParams,
+              controller.signal,
+            )
+          : await courseService.GetList(searchParams, controller.signal);
         if (response?.status && response.data) {
           const mapped = (response.data.items || []).map(mapToCatalogItem);
           setCourses(mapped);
@@ -568,6 +572,7 @@ export default function CoursesPage({
     pageIndex,
     pageSize,
     courseService,
+    excludeEnrolled,
   ]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {

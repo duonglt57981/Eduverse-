@@ -128,6 +128,8 @@ namespace Eduverse.Service.KhoaHocService
         public async Task<PagedList<KhoaHocDto>> SearchWithElasticsearch(KhoaHocSearch search)
         {
             search ??= new KhoaHocSearch();
+            await AddRegisteredCourseExclusionsAsync(search);
+
             try
             {
                 return await _elasticsearchService.SearchCoursesAsync(search);
@@ -169,6 +171,29 @@ namespace Eduverse.Service.KhoaHocService
             }
         }
         #endregion
+
+        private async Task AddRegisteredCourseExclusionsAsync(KhoaHocSearch search)
+        {
+            Guid.TryParse(
+                _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId);
+
+            if (userId == Guid.Empty)
+                return;
+
+            var registeredCourseIds = await _dangKyKhoaHocRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(dk => dk.IdNguoiDangKi == userId
+                    && !dk.IsDeleted
+                    && dk.IdKhoaHoc.HasValue)
+                .Select(dk => dk.IdKhoaHoc!.Value)
+                .ToListAsync();
+
+            search.ExcludeCourseIds = (search.ExcludeCourseIds ?? new List<Guid>())
+                .Concat(registeredCourseIds)
+                .Distinct()
+                .ToList();
+        }
 
         private async Task<PagedList<KhoaHocDto>> GetListFromDatabaseAsync(KhoaHocSearch search)
         {

@@ -37,7 +37,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpGet("search-elasticsearch")]
-        [Authorize(Roles = "Admin,GiaoVien")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
         public async Task<DataResponse<PagedList<KhoaHocDto>>> SearchWithElasticsearch(
             [FromQuery] KhoaHocSearch search)
         {

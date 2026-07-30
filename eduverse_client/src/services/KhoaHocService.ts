@@ -51,6 +51,7 @@ export default class KhoaHocService {
   // lấy danh sách khi có user khóa học nào đã dăng kí kh hiện lại
   async GetListByUser(
     searchParams?: KhoaHocSearch,
+    signal?: AbortSignal,
   ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
     try {
       const userId = this.getUserIdFromToken();
@@ -65,7 +66,7 @@ export default class KhoaHocService {
       const queryString = params.toString();
       const url = `/KhoaHoc/khoahoc-by/${userId}${queryString ? `?${queryString}` : ""}`;
       const response =
-        await apiService.get<PagedList<KhoaHocType>>(url);
+        await apiService.get<PagedList<KhoaHocType>>(url, { signal });
       return response;
     } catch (error) {
       console.error("Error fetching learning course by user:", error);
