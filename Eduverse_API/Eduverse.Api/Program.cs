@@ -15,8 +15,8 @@ using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
-using Eduverse.Service.EmailService;
 using Eduverse.Service.ElasticsearchService;
+using Eduverse.Service.EmailService;
 using Eduverse.Service.GeminiService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
@@ -25,6 +25,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 using System.Text;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
@@ -116,7 +117,7 @@ namespace Eduverse.Api
 
             builder.Services.AddScoped<IBunnyService, BunnyService>();
 
-            // ================== BUNNY STORAGE (file tĩnh: tài liệu, ảnh...) ==================
+            // ================== BUNNY STORAGE ==================
             builder.Services.Configure<BunnyStorageSettings>(
                 builder.Configuration.GetSection("BunnyStorage"));
 
@@ -206,6 +207,21 @@ namespace Eduverse.Api
                         }
 
                         return Task.CompletedTask;
+                    },
+
+                    OnTokenValidated = async context =>
+                    {
+                        var userManager = context.HttpContext.RequestServices
+                            .GetRequiredService<UserManager<AppUser>>();
+
+                        var userId = context.Principal!.FindFirstValue(ClaimTypes.NameIdentifier);
+                        var sidInToken = context.Principal!.FindFirstValue("sid");
+
+                        var user = await userManager.FindByIdAsync(userId!);
+                        if (user is null || user.CurrentSessionId != sidInToken)
+                        {
+                            context.Fail("SESSION_REVOKED"); 
+                        }
                     }
                 };
             });
@@ -263,7 +279,7 @@ namespace Eduverse.Api
 
             builder.Services.AddControllers()
             .AddJsonOptions(options =>
-            {
+            {   
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

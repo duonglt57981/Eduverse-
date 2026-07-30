@@ -39,6 +39,12 @@ namespace Eduverse.Model.Entities
         // chi dc role giang vien moi co the dung thuoc tinh SoDuTaiKhoan de rut tien
         public decimal? SoDuTaiKhoan { get; set; } = 0;
 
+        // chức năng 1 user chỉ đc đăng nhập  trên 1 thiết bị 
+        public string? CurrentSessionId { get; set; }
+        public string? CurrentDeviceInfo { get; set; }
+        public DateTime? CurrentSessionAt { get; set; }
+
+
         public DateTime CreatedDate { get; set; }
         public string? CreatedBy { get; set; }
         public Guid? CreatedId { get; set; }
