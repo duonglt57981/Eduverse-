@@ -175,7 +175,6 @@ export const sidebarGiaoVienItems: DashboardNavItem[] = [
   { label: 'Cài đặt', icon: SettingsRounded },
 ] as const;
 
-// Sidebar items dành riêng cho Admin
 export const sidebarAdminItems: DashboardNavItem[] = [
   { label: 'Dashboard', icon: DashboardRounded },
   { label: 'Người dùng', icon: PeopleAltRounded },
@@ -183,7 +182,6 @@ export const sidebarAdminItems: DashboardNavItem[] = [
   { label: 'Danh mục', icon: CategoryRounded },
   { label: 'Khóa học', icon: SchoolRounded },
   { label: 'Khuyến mãi', icon: LocalOfferRounded },
-  { label: 'Thanh toán', icon: CreditCardRounded },
   { label: "Rút tiền", icon: AccountBalanceWalletRounded },
   { label: 'Thông báo', icon: NotificationsRounded },
   { label: 'Cài đặt', icon: SettingsRounded },

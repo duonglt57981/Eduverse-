@@ -40,10 +40,13 @@ export type CourseCatalogItem = {
   title: string;
   instructor: string;
   rating: number;
-  students: string;
+  students: string | number;
+  studentCount?: number;
   duration: string;
   price: string;
+  priceValue?: number;
   originalPrice: string;
+  createdAt?: number;
   category: string;
   level: string;
   isFree: boolean;

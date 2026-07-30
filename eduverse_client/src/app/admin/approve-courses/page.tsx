@@ -20,23 +20,18 @@ import {
   Select,
   MenuItem,
   Paper,
-  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
-import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
-  COLORS,
-  FONTS,
-  boxSx,
   PAGE_SIZE,
   normalizeListResponse,
 } from "./types/constants";
@@ -70,18 +65,18 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
     return (
       <Box
         sx={{
-          width: 96,
-          height: 64,
-          borderRadius: 1.5,
+          width: 120,
+          height: 80,
+          borderRadius: 2.5,
           flexShrink: 0,
-          bgcolor: COLORS.paper,
-          border: `1px dashed ${COLORS.line}`,
+          bgcolor: "#F9FAFB",
+          border: "1px dashed #E5E7EB",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <ImageRoundedIcon sx={{ color: alpha(COLORS.primary, 0.25) }} />
+        <ImageRoundedIcon sx={{ color: alpha("#991B1B", 0.2), fontSize: 28 }} />
       </Box>
     );
   }
@@ -93,12 +88,12 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
       alt={alt}
       onError={() => setErrored(true)}
       sx={{
-        width: 96,
-        height: 64,
-        borderRadius: 1.5,
+        width: 120,
+        height: 80,
+        borderRadius: 2.5,
         objectFit: "cover",
         flexShrink: 0,
-        bgcolor: COLORS.line,
+        bgcolor: "#F3F4F6",
       }}
     />
   );
@@ -297,7 +292,7 @@ export default function DuyetKhoaHocPage() {
             </Tooltip>
           </Stack>
 
-          {/* Thống kê nhanh */}
+          {/* ═══════ STATS CARDS ═══════ */}
           <Box
             sx={{
               display: "flex",
@@ -311,21 +306,40 @@ export default function DuyetKhoaHocPage() {
               {
                 label: "Tổng cần duyệt",
                 value: stats.choDuyet + stats.dangDuyet,
-                color: COLORS.primary,
+                color: "#991B1B",
+                bgColor: "#FEF2F2",
+                icon: (
+                  <AssignmentTurnedInRoundedIcon
+                    sx={{ fontSize: 22, color: "#991B1B" }}
+                  />
+                ),
               },
               {
                 label: "Chờ duyệt",
                 value: stats.choDuyet,
-                color: "warning.main",
+                color: "#D97706",
+                bgColor: "#FFFBEB",
+                icon: (
+                  <HourglassTopRoundedIcon
+                    sx={{ fontSize: 22, color: "#D97706" }}
+                  />
+                ),
               },
               {
                 label: "Đang duyệt",
                 value: stats.dangDuyet,
-                color: "info.main",
+                color: "#2563EB",
+                bgColor: "#EFF6FF",
+                icon: (
+                  <PendingActionsRoundedIcon
+                    sx={{ fontSize: 22, color: "#2563EB" }}
+                  />
+                ),
               },
-            ].map((stat, index) => (
-              <Box
-                key={index}
+            ].map((stat, i) => (
+              <Paper
+                key={i}
+                elevation={0}
                 sx={{
                   flex: 1,
                   minWidth: {
@@ -335,8 +349,7 @@ export default function DuyetKhoaHocPage() {
                   },
                 }}
               >
-                <Paper
-                  elevation={0}
+                <Box
                   sx={{
                     p: 1.75,
                     borderRadius: 2.5,
@@ -355,8 +368,8 @@ export default function DuyetKhoaHocPage() {
                   >
                     {stat.label}
                   </Typography>
-                </Paper>
-              </Box>
+                </Box>
+              </Paper>
             ))}
           </Box>
 
@@ -427,105 +440,70 @@ export default function DuyetKhoaHocPage() {
                     }}
                   />
 
-                  <Select
-                    size="small"
-                    value={sortBy}
-                    onChange={handleSortChange}
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <SwapVertRoundedIcon
-                          sx={{ fontSize: 18, color: COLORS.inkSoft }}
-                        />
-                      </InputAdornment>
-                    }
-                    sx={{
-                      minWidth: { xs: "100%", sm: 170 },
-                      bgcolor: "#fff",
-                      borderRadius: 2,
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: COLORS.line,
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: COLORS.primary,
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: COLORS.primary,
-                      },
-                    }}
-                  >
-                    <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
-                    <MenuItem value="moi-nhat">Mới nhất</MenuItem>
-                    <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
-                    <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
-                  </Select>
-
-                  <Tooltip title="Đặt lại bộ lọc">
-                    <span>
-                      <IconButton
-                        onClick={handleResetFilters}
-                        disabled={!isFilterDirty}
-                        sx={{
-                          bgcolor: "#fff",
-                          border: `1px solid ${COLORS.line}`,
-                          borderRadius: 2,
-                          width: 40,
-                          height: 40,
-                          flexShrink: 0,
-                          color: isFilterDirty
-                            ? COLORS.primary
-                            : alpha(COLORS.inkSoft, 0.4),
-                          "&:hover": {
-                            borderColor: COLORS.primary,
-                            bgcolor: alpha(COLORS.primary, 0.06),
-                          },
-                        }}
-                      >
-                        <RestartAltRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                </Stack>
-              </Box>
-
-              <Tabs
-                value={tab}
-                onChange={handleTabChange}
-                variant="scrollable"
-                scrollButtons={false}
+              {/* Sort */}
+              <Select
+                size="small"
+                value={sortBy}
+                onChange={handleSortChange}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <SwapVertRoundedIcon
+                      sx={{ fontSize: 18, color: "#9CA3AF" }}
+                    />
+                  </InputAdornment>
+                }
                 sx={{
-                  mt: 1.5,
-                  minHeight: 34,
-                  bgcolor: "#fff",
-                  border: `1px solid ${COLORS.line}`,
-                  borderRadius: 2,
-                  px: 0.5,
-                  width: "fit-content",
-                  "& .MuiTabs-indicator": { display: "none" },
-                  "& .MuiTab-root": {
-                    textTransform: "none",
-                    fontWeight: 600,
-                    color: COLORS.inkSoft,
-                    minHeight: 34,
-                    fontSize: 12.5,
-                    px: 1.5,
-                    my: 0.5,
-                    minWidth: "auto",
-                    borderRadius: 1.5,
-                    transition: "all .15s ease",
+                  minWidth: { xs: "100%", sm: 165 },
+                  borderRadius: 2.5,
+                  height: 42,
+                  bgcolor: "#F9FAFB",
+                  flexShrink: 0,
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#E5E7EB",
                   },
-                  "& .Mui-selected": {
-                    color: "#fff !important",
-                    bgcolor: COLORS.primary,
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#991B1B",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#991B1B",
+                    borderWidth: 1.5,
                   },
                 }}
               >
-                <Tab label="Tất cả" value="TatCa" />
-                <Tab label="Chờ duyệt" value="ChoDuyet" />
-                <Tab label="Đang duyệt" value="DangDuyet" />
-              </Tabs>
+                <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
+                <MenuItem value="moi-nhat">Mới nhất</MenuItem>
+                <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
+                <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
+              </Select>
+
+              {/* Reset filter */}
+              {isFilterDirty && (
+                <Tooltip title="Đặt lại bộ lọc">
+                  <IconButton
+                    onClick={handleResetFilters}
+                    sx={{
+                      bgcolor: alpha("#991B1B", 0.06),
+                      border: "1px solid",
+                      borderColor: alpha("#991B1B", 0.15),
+                      borderRadius: 2.5,
+                      width: 42,
+                      height: 42,
+                      flexShrink: 0,
+                      color: "#991B1B",
+                      transition: "all .18s ease",
+                      "&:hover": {
+                        bgcolor: alpha("#991B1B", 0.12),
+                        borderColor: "#991B1B",
+                      },
+                    }}
+                  >
+                    <RestartAltRoundedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
 
-            {/* Danh sách */}
+            {/* ═══════ COURSE LIST ═══════ */}
             <Box sx={{ p: 2 }}>
               {loading ? (
                 <Stack spacing={1.5}>
@@ -533,8 +511,8 @@ export default function DuyetKhoaHocPage() {
                     <Skeleton
                       key={i}
                       variant="rounded"
-                      height={92}
-                      sx={{ borderRadius: 2 }}
+                      height={96}
+                      sx={{ borderRadius: 3.5 }}
                     />
                   ))}
                 </Stack>
@@ -546,6 +524,30 @@ export default function DuyetKhoaHocPage() {
                   <Typography sx={{ color: COLORS.inkSoft, fontSize: 14 }}>
                     Không có khóa học nào.
                   </Typography>
+                  {isFilterDirty && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<RestartAltRoundedIcon />}
+                      onClick={handleResetFilters}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        borderColor: "#E5E7EB",
+                        color: "#6B7280",
+                        borderRadius: 2.5,
+                        px: 2.5,
+                        "&:hover": {
+                          borderColor: "#991B1B",
+                          color: "#991B1B",
+                          bgcolor: alpha("#991B1B", 0.04),
+                        },
+                      }}
+                    >
+                      Xóa bộ lọc
+                    </Button>
+                  )}
                 </Box>
               ) : (
                 <Stack spacing={1.25}>
@@ -566,22 +568,27 @@ export default function DuyetKhoaHocPage() {
                           border: `1px solid ${COLORS.line}`,
                           borderRadius: 2.5,
                           cursor: "pointer",
-                          transition: "all .15s ease",
+                          transition: "all .2s ease",
                           bgcolor: "#fff",
                           "&:hover": {
-                            boxShadow: `0 2px 10px ${alpha(
-                              COLORS.primary,
-                              0.12,
-                            )}`,
-                            borderColor: COLORS.primary,
+                            borderColor: "#991B1B",
+                            boxShadow: `0 4px 18px ${alpha("#991B1B", 0.1)}`,
+                            transform: "translateY(-1px)",
+                            "& .view-btn": {
+                              color: "#991B1B",
+                              borderColor: "#991B1B",
+                              bgcolor: alpha("#991B1B", 0.04),
+                            },
                           },
                         }}
                       >
+                        {/* Thumbnail */}
                         <CourseThumbnail
                           src={item.hinhAnhKhoaHoc}
                           alt={item.tieuDe}
                         />
 
+                        {/* Info */}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             sx={{
@@ -600,7 +607,10 @@ export default function DuyetKhoaHocPage() {
                             direction="row"
                             spacing={1}
                             useFlexGap
-                            sx={{ alignItems: "center", flexWrap: "wrap" }}
+                            sx={{
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                            }}
                           >
                             <StatusChip
                               trangThai={trangThaiPheDuyet}
@@ -608,36 +618,58 @@ export default function DuyetKhoaHocPage() {
                             />
                             {item.createDate && (
                               <Typography
-                                variant="caption"
-                                color={COLORS.inkSoft}
+                                sx={{
+                                  fontSize: 12,
+                                  color: "#9CA3AF",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.3,
+                                }}
                               >
                                 Tạo:{" "}
-                                {new Date(item.createDate).toLocaleDateString()}
+                                {new Date(
+                                  item.createDate,
+                                ).toLocaleDateString("vi-VN")}
                               </Typography>
                             )}
                           </Stack>
                         </Box>
 
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenCourse(id);
-                          }}
-                          sx={{ color: alpha(COLORS.ink, 0.5) }}
-                        >
-                          <VisibilityRoundedIcon fontSize="small" />
-                        </IconButton>
+                        {/* Action */}
+                        <Tooltip title="Xem chi tiết">
+                          <IconButton
+                            className="view-btn"
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenCourse(id);
+                            }}
+                            sx={{
+                              border: "1px solid #E5E7EB",
+                              borderRadius: 2.5,
+                              color: "#9CA3AF",
+                              width: 36,
+                              height: 36,
+                              flexShrink: 0,
+                              transition: "all .18s ease",
+                            }}
+                          >
+                            <ArrowForwardRoundedIcon
+                              sx={{ fontSize: 18 }}
+                            />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     );
                   })}
                 </Stack>
               )}
 
+              {/* ═══════ PAGINATION ═══════ */}
               {!loading && items.length > 0 && totalPage > 1 && (
                 <Stack
                   direction="row"
-                  sx={{ justifyContent: "center", pt: 2.5 }}
+                  sx={{ justifyContent: "center", pt: 3 }}
                 >
                   <Pagination
                     count={totalPage}
@@ -646,18 +678,26 @@ export default function DuyetKhoaHocPage() {
                     shape="rounded"
                     size="small"
                     sx={{
+                      "& .MuiPaginationItem-root": {
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        transition: "all .15s ease",
+                      },
                       "& .Mui-selected": {
-                        bgcolor: `${COLORS.primary} !important`,
+                        bgcolor: "#991B1B !important",
                         color: "#fff",
+                        boxShadow: "0 2px 6px rgba(153,27,27,0.25)",
                       },
                     }}
                   />
                 </Stack>
               )}
             </Box>
-          </Box>
+          </Paper>
         </Box>
       </DashboardShell>
     </AuthGuard>
   );
 }
+

@@ -18,7 +18,14 @@ export default function AdminPromotionsPage() {
             boxShadow: '0 10px 30px rgba(141,19,19,0.015)'
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 900, color: '#8B1313', mb: 2 }}>
+          <Typography
+            sx={{
+              fontSize: 28,
+              fontWeight: 900,
+              color: "#1F2937",
+              mb: 1.5,
+            }}
+          >
             Quản lý khuyến mãi
           </Typography>
           <Typography sx={{ color: 'rgba(31,41,55,0.6)', lineHeight: 1.6 }}>

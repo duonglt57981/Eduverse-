@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -59,7 +58,47 @@ export default function StudentDashboardShell({
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F8F7F4" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        color: "text.primary",
+        transition: "background-color 200ms ease, color 200ms ease",
+        "--dashboard-surface": (theme) => theme.palette.background.paper,
+        "--dashboard-surface-raised": (theme) =>
+          theme.palette.mode === "dark" ? "#20252D" : "#F7F8FA",
+        "--dashboard-surface-muted": (theme) =>
+          theme.palette.mode === "dark" ? "#252B34" : "#F1F5F9",
+        "--dashboard-border": (theme) =>
+          theme.palette.mode === "dark"
+            ? "rgba(255,255,255,0.10)"
+            : "#ECE7E4",
+        "--dashboard-border-strong": (theme) =>
+          theme.palette.mode === "dark"
+            ? "rgba(255,255,255,0.16)"
+            : "#E5E0DC",
+        "--dashboard-text-primary": (theme) => theme.palette.text.primary,
+        "--dashboard-text-secondary": (theme) => theme.palette.text.secondary,
+        "--dashboard-text-muted": (theme) =>
+          theme.palette.mode === "dark" ? "#7F8998" : "#9AA0A6",
+        "--dashboard-primary-tint": (theme) =>
+          theme.palette.mode === "dark"
+            ? "rgba(203,62,62,0.16)"
+            : "#FBEFEF",
+        "--dashboard-primary-border": (theme) =>
+          theme.palette.mode === "dark"
+            ? "rgba(203,62,62,0.34)"
+            : "#F0DEDE",
+        "--dashboard-info-tint": (theme) =>
+          theme.palette.mode === "dark"
+            ? "rgba(2,132,199,0.18)"
+            : "#E4F1F8",
+        "--dashboard-success-tint": (theme) =>
+          theme.palette.mode === "dark"
+            ? "rgba(16,185,129,0.16)"
+            : "#E9F9F1",
+      }}
+    >
       <StudentHomeHeader />
 
       <Box

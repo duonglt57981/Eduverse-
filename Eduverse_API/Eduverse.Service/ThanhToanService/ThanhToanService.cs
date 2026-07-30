@@ -264,6 +264,7 @@ namespace Eduverse.Service.ThanhToanService
                                 IdKhoaHoc = ct.IdKhoaHoc,
                                 GiaDangKy = ct.GiaLucDat,
                                 TrangThai = "Hoạt động",
+                                IsDangKy = true,
                                 ThoiGianDK = DateTime.Now,
                                 CreatedDate = DateTime.Now,
                                 UpdatedDate = DateTime.Now
@@ -271,6 +272,45 @@ namespace Eduverse.Service.ThanhToanService
                         }
                     }
                     await _dangKyRepo.SaveAsync();
+
+                    var enrolledCourseIds = chiTiets
+                        .Where(detail => detail.IdKhoaHoc.HasValue)
+                        .Select(detail => detail.IdKhoaHoc!.Value)
+                        .Distinct()
+                        .ToList();
+
+                    var enrollmentCounts = await _dangKyRepo.GetQueryable()
+                        .AsNoTracking()
+                        .Where(registration =>
+                            registration.IdKhoaHoc.HasValue &&
+                            enrolledCourseIds.Contains(registration.IdKhoaHoc.Value) &&
+                            !registration.IsDeleted &&
+                            registration.IsDangKy != false &&
+                            registration.IdNguoiDangKi.HasValue)
+                        .GroupBy(registration => registration.IdKhoaHoc!.Value)
+                        .Select(group => new
+                        {
+                            CourseId = group.Key,
+                            Count = group
+                                .Select(registration => registration.IdNguoiDangKi)
+                                .Distinct()
+                                .Count()
+                        })
+                        .ToDictionaryAsync(item => item.CourseId, item => item.Count);
+
+                    var enrolledCourses = await _khoaHocRepo.GetQueryable()
+                        .Where(course => enrolledCourseIds.Contains(course.Id))
+                        .ToListAsync();
+
+                    foreach (var enrolledCourse in enrolledCourses)
+                    {
+                        enrolledCourse.SoLuongHocVien =
+                            enrollmentCounts.GetValueOrDefault(enrolledCourse.Id);
+                        _khoaHocRepo.Update(enrolledCourse);
+                    }
+
+                    await _khoaHocRepo.SaveAsync();
+
                     foreach (var ct in chiTiets)
                     {
                         var khoaHoc = await _khoaHocRepo.GetQueryable()

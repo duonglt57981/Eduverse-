@@ -12,13 +12,13 @@ import {
   SettingsRounded,
   LogoutRounded,
   MenuRounded,
-  ChevronLeftRounded,
-  ChevronRightRounded,
   CalendarMonthRounded,
   ArrowForwardRounded,
 } from "@mui/icons-material";
 import {
   Box,
+  CircularProgress,
+  ClickAwayListener,
   IconButton,
   InputBase,
   Paper,
@@ -30,28 +30,36 @@ import {
   ListItemIcon,
   Divider,
   Avatar,
-  useTheme,
 } from "@mui/material";
 import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
+import KhoaHocService from "@/src/services/KhoaHocService";
+import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
 }
 
+const EMPTY_ROLES: string[] = [];
+
 export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname() || "/";
-  const theme = useTheme();
 
   const user = useSelector((state: any) => state.auth.user);
-  const roles = useSelector((state: any) => state.auth.roles) || [];
+  const roles = useSelector((state: any) => state.auth.roles) || EMPTY_ROLES;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
+  const [khoaHocService] = useState(() => new KhoaHocService());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<KhoaHocType[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   useEffect(() => {
     const handleAvatarUpdate = () => {
@@ -142,6 +150,63 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const isInstructorMode = activeRole === "GiaoVien";
   const isAdminMode = activeRole === "Admin";
   const isStudentMode = activeRole === "HocVien";
+
+  useEffect(() => {
+    const keyword = searchQuery.trim();
+    if (!isInstructorMode || keyword.length < 2) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setIsSearching(true);
+      setSearchError("");
+
+      try {
+        const response = await khoaHocService.SearchWithElasticsearch(
+          {
+            keyword,
+            pageIndex: 1,
+            pageSize: 6,
+          },
+          controller.signal,
+        );
+
+        if (!controller.signal.aborted) {
+          setSearchResults(response.data?.items || []);
+          setIsSearchOpen(true);
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setSearchResults([]);
+          setSearchError("Không thể tìm kiếm lúc này.");
+          setIsSearchOpen(true);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSearching(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [isInstructorMode, khoaHocService, searchQuery]);
+
+  const submitSearch = () => {
+    const keyword = searchQuery.trim();
+    if (!keyword) return;
+
+    setIsSearchOpen(false);
+    router.push(`/student/explore?keyword=${encodeURIComponent(keyword)}`);
+  };
+
+  const openCourse = (courseId?: string) => {
+    if (!courseId) return;
+
+    setIsSearchOpen(false);
+    router.push(`/student/enroll-courses/${courseId}`);
+  };
 
   // Search placeholder based on mode
   const getSearchPlaceholder = () => {
@@ -357,43 +422,169 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </Stack>
 
         {/* Center Search Pill */}
-        <Box
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <Paper
-            elevation={0}
+        <ClickAwayListener onClickAway={() => setIsSearchOpen(false)}>
+          <Box
             sx={{
+              position: "relative",
+              flex: 1,
+              minWidth: 0,
               width: "100%",
               maxWidth: 600,
               display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              px: 2.5,
-              py: 1.15,
-              borderRadius: 50,
-              bgcolor: "background.default",
-              border: "1px solid",
-              borderColor: "divider",
-              transition: "border-color 150ms ease, box-shadow 150ms ease",
-              "&:focus-within": {
-                borderColor: "rgba(0,0,0,0.3)",
-              },
+              justifyContent: "center",
             }}
           >
-            <SearchRounded
-              sx={{ color: "rgba(24,24,27,0.42)", fontSize: 18 }}
-            />
-            <InputBase
-              placeholder={getSearchPlaceholder()}
-              sx={{ flex: 1, fontSize: 13.5 }}
-            />
-          </Paper>
-        </Box>
+            <Paper
+              component="form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitSearch();
+              }}
+              elevation={0}
+              sx={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                px: 2.5,
+                py: 1.15,
+                borderRadius: 50,
+                bgcolor: "background.default",
+                border: "1px solid",
+                borderColor: "divider",
+                transition: "border-color 150ms ease, box-shadow 150ms ease",
+                "&:focus-within": {
+                  borderColor: "rgba(0,0,0,0.3)",
+                },
+              }}
+            >
+              <SearchRounded
+                onClick={submitSearch}
+                sx={{
+                  color: "rgba(24,24,27,0.42)",
+                  fontSize: 18,
+                  cursor: searchQuery.trim() ? "pointer" : "default",
+                }}
+              />
+              <InputBase
+                value={searchQuery}
+                onChange={(event) => {
+                  const nextQuery = event.target.value;
+                  setSearchQuery(nextQuery);
+                  if (nextQuery.trim().length < 2) {
+                    setSearchResults([]);
+                    setIsSearching(false);
+                    setSearchError("");
+                  }
+                  if (isInstructorMode) setIsSearchOpen(true);
+                }}
+                onFocus={() => {
+                  if (isInstructorMode && searchQuery.trim().length >= 2) {
+                    setIsSearchOpen(true);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setIsSearchOpen(false);
+                }}
+                placeholder={getSearchPlaceholder()}
+                inputProps={{ "aria-label": getSearchPlaceholder() }}
+                sx={{ flex: 1, fontSize: 13.5 }}
+              />
+              {isInstructorMode && isSearching && (
+                <CircularProgress size={17} thickness={5} />
+              )}
+            </Paper>
+
+            {isInstructorMode &&
+              isSearchOpen &&
+              searchQuery.trim().length >= 2 && (
+                <Paper
+                  elevation={8}
+                  sx={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    left: 0,
+                    right: 0,
+                    zIndex: 1300,
+                    overflow: "hidden",
+                    borderRadius: 2.5,
+                    border: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  {!isSearching && searchError && (
+                    <Typography sx={{ px: 2, py: 2, fontSize: 13.5, color: "error.main" }}>
+                      {searchError}
+                    </Typography>
+                  )}
+
+                  {!isSearching && !searchError && searchResults.length === 0 && (
+                    <Typography sx={{ px: 2, py: 2, fontSize: 13.5, color: "text.secondary" }}>
+                      Không tìm thấy khóa học phù hợp.
+                    </Typography>
+                  )}
+
+                  {searchResults.map((course) => (
+                    <Box
+                      key={String(course.id)}
+                      component="button"
+                      type="button"
+                      onClick={() => openCourse(course.id ? String(course.id) : undefined)}
+                      sx={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                        px: 2,
+                        py: 1.25,
+                        border: 0,
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={course.hinhAnhKhoaHoc || "/khoahoc/1-removebg-preview.png"}
+                        alt=""
+                        sx={{
+                          width: 52,
+                          height: 38,
+                          flexShrink: 0,
+                          borderRadius: 1,
+                          objectFit: "cover",
+                          bgcolor: "action.hover",
+                        }}
+                      />
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 700 }}>
+                          {course.tieuDe || "Khóa học chưa có tên"}
+                        </Typography>
+                        <Typography noWrap sx={{ fontSize: 12, color: "text.secondary" }}>
+                          {[course.loaiKhoaHoc, course.capDo].filter(Boolean).join(" • ") ||
+                            "Khóa học"}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+
+                  {!searchError && searchResults.length > 0 && (
+                    <Button
+                      fullWidth
+                      onClick={submitSearch}
+                      sx={{ py: 1.25, textTransform: "none", fontWeight: 700 }}
+                    >
+                      Xem tất cả kết quả
+                    </Button>
+                  )}
+                </Paper>
+              )}
+          </Box>
+        </ClickAwayListener>
 
         {/* Right Actions & Buttons */}
         <Stack
@@ -731,6 +922,37 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 </MenuItem>
                 <MenuItem onClick={() => router.push("/student/favorites")}>
                   Danh sách mong ước
+                </MenuItem>
+              </>
+            )}
+
+            {isInstructorMode && (
+              <>
+                <MenuItem onClick={() => router.push("/instructor/dashboard")}>
+                  Bảng điều khiển giảng viên
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/instructor/manager-courses")}>
+                  Quản lý khóa học
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/instructor/money")}>
+                  Doanh thu
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/instructor/bank")}>
+                  Tài khoản ngân hàng
+                </MenuItem>
+              </>
+            )}
+
+            {isAdminMode && (
+              <>
+                <MenuItem onClick={() => router.push("/admin/dashboard")}>
+                  Bảng điều khiển admin
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/admin/approve-courses")}>
+                  Duyệt khóa học
+                </MenuItem>
+                <MenuItem onClick={() => router.push("/admin/users")}>
+                  Quản lý người dùng
                 </MenuItem>
               </>
             )}

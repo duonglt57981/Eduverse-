@@ -36,6 +36,22 @@ namespace Eduverse.Api.Controller
             }
         }
 
+        [HttpGet("search-elasticsearch")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> SearchWithElasticsearch(
+            [FromQuery] KhoaHocSearch search)
+        {
+            try
+            {
+                var result = await _khoaHocService.SearchWithElasticsearch(search);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
+            }
+        }
+
 
         [HttpGet("khoahoc-by/{userId}")]
         [Authorize(Roles = "Admin,GiaoVien,HocVien")]

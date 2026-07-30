@@ -29,6 +29,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Stack,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -51,12 +52,13 @@ import { KhoaHocType, KhoaHocManagerSearch } from "@/src/types/khoaHoc/Dto/dto";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
 const MAU = {
-  chinh: "#8B1313",
-  chinhDam: "#5C0D0D",
-  chinhNhat: "#FBEFEF",
-  vien: "#F0DEDE",
-  chuDen: "#231313",
-  chuXam: "#8A7676",
+  chinh: "#991B1B", // đỏ đô chủ đạo thương hiệu
+  chinhDam: "#7F1D1D", // đỏ đô đậm hover
+  chinhNhat: "#FEF2F2", // đỏ rất nhạt active
+  vien: "#E5E7EB", // viền xám nhẹ
+  chuDen: "#111827", // chữ chính màu đậm (slate-900)
+  chuXam: "#6B7280", // chữ phụ (gray-500)
+  nenTrang: "#FAFAF9", // nền xám kem nhẹ
 };
 
 const duongDanChiTietKhoaHoc = (id: string) =>
@@ -146,48 +148,48 @@ const CAU_HINH_TRANG_THAI: CauHinhTrangThai[] = [
     khoaThongKe: "tong",
     nhan: "Tất cả",
     icon: <SchoolOutlinedIcon fontSize="small" />,
-    mau: MAU.chinh,
-    nen: MAU.chinhNhat,
+    mau: "#991B1B",
+    nen: "#FEF2F2",
   },
   {
     giaTri: "DaDuyet",
     khoaThongKe: "daDuyet",
     nhan: "Đã duyệt",
     icon: <CheckCircleIcon fontSize="small" />,
-    mau: "#2e7d32",
-    nen: "#e8f5e9",
+    mau: "#10B981",
+    nen: "#E6F4EA",
   },
   {
     giaTri: "ChoDuyet",
     khoaThongKe: "choDuyet",
     nhan: "Chờ duyệt",
     icon: <PendingIcon fontSize="small" />,
-    mau: "#e65100",
-    nen: "#fff3e0",
+    mau: "#F59E0B",
+    nen: "#FEF3C7",
   },
   {
     giaTri: "DangDuyet",
     khoaThongKe: "dangDuyet",
     nhan: "Đang duyệt",
     icon: <HourglassEmptyIcon fontSize="small" />,
-    mau: "#0277bd",
-    nen: "#e3f2fd",
+    mau: "#3B82F6",
+    nen: "#DBEAFE",
   },
   {
     giaTri: "TuChoi",
     khoaThongKe: "tuChoi",
     nhan: "Từ chối",
     icon: <CancelIcon fontSize="small" />,
-    mau: "#c62828",
-    nen: "#ffebee",
+    mau: "#EF4444",
+    nen: "#FEE2E2",
   },
   {
     giaTri: "DangSua",
     khoaThongKe: "dangSua",
     nhan: "Đang sửa",
     icon: <EditNoteIcon fontSize="small" />,
-    mau: "#9c27b0",
-    nen: "#f3e5f5",
+    mau: "#8B5CF6",
+    nen: "#F5F3FF",
   },
 ];
 
@@ -235,32 +237,32 @@ function TheTrangThai({
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 1.75,
-        borderRadius: "16px",
-        bgcolor: dangChon ? cauHinh.nen : "#fff",
+        p: 1.5,
+        borderRadius: "12px",
+        bgcolor: dangChon ? MAU.chinhNhat : "#ffffff",
         textAlign: "left",
-        border: dangChon ? `1.5px solid ${cauHinh.mau}` : "1px solid #EFE7E7",
+        border: dangChon ? `2px solid ${MAU.chinh}` : `1px solid ${MAU.vien}`,
         cursor: "pointer",
         userSelect: "none",
-        transition: "all .18s ease",
+        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
         display: "flex",
         alignItems: "center",
         gap: 1.25,
         height: "100%",
-        boxShadow: dangChon ? `0 6px 16px ${alpha(cauHinh.mau, 0.18)}` : "none",
+        boxShadow: dangChon ? `0 4px 12px ${alpha(MAU.chinh, 0.08)}` : "none",
         "&:hover": {
-          borderColor: cauHinh.mau,
-          boxShadow: `0 6px 16px ${alpha(cauHinh.mau, 0.16)}`,
+          borderColor: dangChon ? MAU.chinh : "#D1D5DB",
+          boxShadow: `0 4px 12px rgba(0, 0, 0, 0.04)`,
           transform: "translateY(-2px)",
         },
       }}
     >
       <Box
         sx={{
-          width: 36,
-          height: 36,
+          width: 32,
+          height: 32,
           flexShrink: 0,
-          borderRadius: "10px",
+          borderRadius: "8px",
           bgcolor: cauHinh.nen,
           color: cauHinh.mau,
           display: "flex",
@@ -270,20 +272,20 @@ function TheTrangThai({
       >
         {cauHinh.icon}
       </Box>
-      <Box sx={{ minWidth: 0 }}>
+      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
         <Typography
           sx={{
             fontWeight: 800,
-            fontSize: 20,
-            color: cauHinh.mau,
-            lineHeight: 1.1,
+            fontSize: 16,
+            color: MAU.chuDen,
+            lineHeight: 1.2,
           }}
         >
           <GiaTriThongKe dangTai={dangTai} giaTri={giaTri} mau={cauHinh.mau} />
         </Typography>
         <Typography
           sx={{
-            fontSize: 12.5,
+            fontSize: 12,
             color: MAU.chuXam,
             fontWeight: 600,
             whiteSpace: "nowrap",
@@ -700,11 +702,11 @@ function KhoaHocContent() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: 1.5,
-          p: 1.25,
+          p: 1.5,
           mb: 3,
-          borderRadius: "16px",
+          borderRadius: "12px",
           border: `1px solid ${MAU.vien}`,
-          bgcolor: "#fff",
+          bgcolor: "#ffffff",
         }}
       >
         <TextField
@@ -719,18 +721,28 @@ function KhoaHocContent() {
             flex: 1,
             minWidth: 220,
             "& .MuiOutlinedInput-root": {
-              borderRadius: "12px",
-              bgcolor: MAU.chinhNhat,
-              "& fieldset": { borderColor: "transparent" },
-              "&:hover fieldset": { borderColor: MAU.vien },
+              height: "42px",
+              borderRadius: "10px",
+              bgcolor: "#F9FAFB",
+              "& fieldset": { borderColor: MAU.vien },
+              "&:hover fieldset": { borderColor: "#D1D5DB" },
               "&.Mui-focused fieldset": { borderColor: MAU.chinh },
+              "&.Mui-focused": {
+                bgcolor: "#ffffff",
+                boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
+              },
+            },
+            "& .MuiOutlinedInput-input": {
+              color: MAU.chuDen,
+              fontSize: 14,
+              fontWeight: 500,
             },
           }}
           slotProps={{
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: MAU.chinh, fontSize: 20 }} />
+                  <SearchIcon sx={{ color: MAU.chuXam, fontSize: 20 }} />
                 </InputAdornment>
               ),
             },
@@ -746,16 +758,24 @@ function KhoaHocContent() {
           }}
           startAdornment={
             <InputAdornment position="start" sx={{ ml: 0.5 }}>
-              <SwapVertIcon sx={{ color: MAU.chinh, fontSize: 20 }} />
+              <SwapVertIcon sx={{ color: MAU.chuXam, fontSize: 20 }} />
             </InputAdornment>
           }
           sx={{
-            minWidth: 190,
-            borderRadius: "12px",
-            color: MAU.chinh,
+            minWidth: 195,
+            height: "42px",
+            borderRadius: "10px",
+            color: MAU.chuDen,
+            fontSize: 14,
             fontWeight: 600,
-            bgcolor: MAU.chinhNhat,
-            "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+            bgcolor: "#F9FAFB",
+            "& .MuiOutlinedInput-notchedOutline": { borderColor: MAU.vien },
+            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#D1D5DB" },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: MAU.chinh },
+            "&.Mui-focused": {
+              bgcolor: "#ffffff",
+              boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
+            },
           }}
         >
           <MenuItem value="moi-nhat">Mới nhất</MenuItem>
@@ -769,13 +789,18 @@ function KhoaHocContent() {
             onClick={handleRefresh}
             sx={{
               color: MAU.chinh,
-              bgcolor: MAU.chinhNhat,
-              borderRadius: "12px",
-              p: 1,
-              "&:hover": { bgcolor: MAU.vien },
+              bgcolor: "#F9FAFB",
+              border: `1px solid ${MAU.vien}`,
+              borderRadius: "10px",
+              width: "42px",
+              height: "42px",
+              "&:hover": {
+                bgcolor: MAU.chinhNhat,
+                borderColor: MAU.chinh,
+              },
             }}
           >
-            <RefreshIcon />
+            <RefreshIcon sx={{ fontSize: 20 }} />
           </IconButton>
         </Tooltip>
       </Paper>
@@ -807,61 +832,82 @@ function KhoaHocContent() {
         </Box>
       )}
       {!dangTai && loi && (
-        <Box
+        <Paper
+          elevation={0}
           sx={{
             textAlign: "center",
             py: 6,
-            borderRadius: "16px",
-            bgcolor: "#FDECEC",
+            px: 4,
+            borderRadius: "12px",
+            border: `1px solid ${MAU.vien}`,
+            bgcolor: "#ffffff",
           }}
         >
-          <Typography sx={{ color: "#c62828", fontWeight: 600 }}>
+          <Typography sx={{ color: "#c62828", fontWeight: 700, fontSize: 16, mb: 2 }}>
             {loi}
           </Typography>
           <Button
             variant="outlined"
             onClick={handleRefresh}
-            sx={{ mt: 2, textTransform: "none" }}
+            sx={{
+              borderColor: MAU.chinh,
+              color: MAU.chinh,
+              textTransform: "none",
+              fontWeight: 600,
+              borderRadius: "10px",
+              "&:hover": {
+                borderColor: MAU.chinhDam,
+                bgcolor: MAU.chinhNhat,
+              },
+            }}
           >
             Thử lại
           </Button>
-        </Box>
+        </Paper>
       )}
       {!dangTai && !loi && danhSachKhoaHoc.length === 0 && (
-        <Box
+        <Paper
+          elevation={0}
           sx={{
             textAlign: "center",
             py: 8,
-            borderRadius: "16px",
+            px: 4,
+            borderRadius: "12px",
             border: `1px dashed ${MAU.vien}`,
+            bgcolor: "#ffffff",
           }}
         >
           <SchoolOutlinedIcon
-            sx={{ fontSize: 40, color: MAU.chinh, opacity: 0.5, mb: 1 }}
+            sx={{ fontSize: 48, color: MAU.chinh, opacity: 0.6, mb: 2 }}
           />
-          <Typography sx={{ color: MAU.chuXam, fontWeight: 500 }}>
-            Bạn chưa có khóa học nào.
+          <Typography sx={{ color: MAU.chuDen, fontWeight: 700, fontSize: 18, mb: 1 }}>
+            Chưa có khóa học nào
+          </Typography>
+          <Typography sx={{ color: MAU.chuXam, fontWeight: 500, fontSize: 14, mb: 3 }}>
+            Bắt đầu chia sẻ kiến thức của bạn bằng cách tạo khóa học đầu tiên ngay hôm nay!
           </Typography>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => router.push(duongDanTaoKhoaHocMoi)}
             sx={{
-              mt: 2,
               bgcolor: MAU.chinh,
               textTransform: "none",
               fontWeight: 700,
+              px: 3,
+              py: 1,
+              borderRadius: "10px",
               "&:hover": { bgcolor: MAU.chinhDam },
             }}
           >
             Tạo khóa học mới
           </Button>
-        </Box>
+        </Paper>
       )}
 
-      {/* Danh sách khóa học */}
+      {/* Danh sách khóa học dạng Grid */}
       {!dangTai && !loi && danhSachKhoaHoc.length > 0 && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Grid container spacing={3.5}>
           {danhSachKhoaHoc.map((khoaHoc) => {
             const pheDuyet = thongTinTrangThaiPheDuyet(
               khoaHoc.trangThaiPheDuyet,
@@ -871,44 +917,39 @@ function KhoaHocContent() {
             const dangXuLyItemNay = dangXuLyId === khoaHoc.id;
 
             return (
-              <Box
-                key={khoaHoc.id}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2.5,
-                  border: `1px solid ${isDraft ? MAU.chinh : MAU.vien}`,
-                  borderRadius: "16px",
-                  p: 1.5,
-                  transition: "all .18s ease",
-                  bgcolor: isDraft ? MAU.chinhNhat : "transparent",
-                  "&:hover": {
-                    boxShadow: "0 8px 22px rgba(139,19,19,0.10)",
-                    borderColor: MAU.chinh,
-                    transform: "translateY(-2px)",
-                  },
-                }}
-              >
-                <Box
-                  onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
+              <Grid key={khoaHoc.id} size={{ xs: 12 }}>
+                <Paper
+                  elevation={0}
                   sx={{
                     display: "flex",
-                    alignItems: "center",
-                    gap: 2.5,
-                    flex: 1,
-                    cursor: "pointer",
-                    minWidth: 0,
+                    flexDirection: { xs: "column", sm: "row" },
+                    borderRadius: "16px",
+                    border: `1px solid ${isDraft ? "#FECACA" : MAU.vien}`,
+                    bgcolor: "#ffffff",
+                    overflow: "hidden",
+                    position: "relative",
+                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "&:hover": {
+                      boxShadow: "0 12px 24px rgba(0, 0, 0, 0.04)",
+                      borderColor: MAU.chinh,
+                      transform: "translateY(-3px)",
+                    },
                   }}
                 >
+                  {/* Thumbnail / Image Area */}
                   <Box
+                    onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
                     sx={{
                       position: "relative",
-                      width: 128,
-                      height: 84,
+                      width: { xs: "100%", sm: "220px", md: "260px" },
+                      height: { xs: "160px", sm: "auto" },
+                      minHeight: { sm: "146px" },
                       flexShrink: 0,
-                      borderRadius: "12px",
+                      cursor: "pointer",
+                      bgcolor: "#F3F4F6",
                       overflow: "hidden",
-                      bgcolor: MAU.chinhNhat,
+                      borderRight: { sm: `1px solid ${MAU.vien}` },
+                      borderBottom: { xs: `1px solid ${MAU.vien}`, sm: "none" },
                     }}
                   >
                     {khoaHoc.hinhAnhKhoaHoc ? (
@@ -916,196 +957,253 @@ function KhoaHocContent() {
                         src={khoaHoc.hinhAnhKhoaHoc}
                         alt={khoaHoc.tieuDe ?? "Khóa học"}
                         fill
-                        sizes="128px"
+                        sizes="(max-width: 600px) 100vw, 260px"
                         style={{ objectFit: "cover" }}
                         unoptimized
                       />
                     ) : (
                       <Box
                         sx={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
                           width: "100%",
                           height: "100%",
+                          background: `linear-gradient(135deg, ${MAU.chinhNhat} 0%, #FEE2E2 100%)`,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                         }}
                       >
                         <ArticleOutlinedIcon
-                          sx={{ color: MAU.chinh, opacity: 0.4 }}
+                          sx={{ color: MAU.chinh, fontSize: 40, opacity: 0.6 }}
                         />
                       </Box>
                     )}
+
                     {isDraft && (
-                      <Box
+                      <Chip
+                        label="Bản nháp"
+                        size="small"
                         sx={{
                           position: "absolute",
-                          top: 4,
-                          right: 4,
+                          top: 12,
+                          left: 12,
                           bgcolor: MAU.chinh,
-                          color: "#fff",
-                          fontSize: 9,
+                          color: "#ffffff",
                           fontWeight: 700,
-                          px: 0.75,
-                          py: 0.25,
-                          borderRadius: "4px",
+                          fontSize: 10,
+                          height: 20,
                           textTransform: "uppercase",
+                          boxShadow: `0 2px 8px ${alpha(MAU.chinh, 0.3)}`,
                         }}
-                      >
-                        Nháp
-                      </Box>
+                      />
                     )}
                   </Box>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: 15.5,
-                        color: MAU.chuDen,
-                        mb: 0.75,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {khoaHoc.tieuDe ?? "Chưa đặt tên"}
-                      {isDraft && (
+
+                  {/* Body Content Area */}
+                  <Box
+                    sx={{
+                      p: { xs: 2, sm: 2.5 },
+                      display: "flex",
+                      flexDirection: { xs: "column", md: "row" },
+                      flexGrow: 1,
+                      justifyContent: "space-between",
+                      alignItems: { xs: "stretch", md: "center" },
+                      gap: 2.5,
+                    }}
+                  >
+                    {/* Metadata & Title & Stats block */}
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1, flexWrap: "wrap", gap: 1 }}>
                         <Typography
-                          component="span"
                           sx={{
                             fontSize: 11,
-                            color: MAU.chinh,
-                            fontWeight: 600,
-                            ml: 1,
+                            color: MAU.chuXam,
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
                           }}
                         >
-                          (Bản nháp)
+                          {khoaHoc.capDo || "Tất cả cấp độ"}
                         </Typography>
-                      )}
-                    </Typography>
+                        
+                        <Chip
+                          label={pheDuyet.nhan}
+                          color={pheDuyet.mau}
+                          size="small"
+                          sx={{
+                            fontWeight: 750,
+                            fontSize: 10.5,
+                            borderRadius: "6px",
+                            height: "20px",
+                          }}
+                        />
+                      </Stack>
+
+                      <Typography
+                        onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 16.5,
+                          color: MAU.chuDen,
+                          mb: 1.5,
+                          cursor: "pointer",
+                          lineHeight: 1.4,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 1,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          transition: "color 0.2s ease",
+                          "&:hover": {
+                            color: MAU.chinh,
+                          },
+                        }}
+                      >
+                        {khoaHoc.tieuDe ?? "Chưa đặt tên"}
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 3,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <SchoolOutlinedIcon sx={{ color: MAU.chuXam, fontSize: 16 }} />
+                          <Typography sx={{ fontSize: 13, color: MAU.chuXam, fontWeight: 600 }}>
+                            {khoaHoc.tongBaiGiang || 0} bài giảng
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <ArticleOutlinedIcon sx={{ color: MAU.chuXam, fontSize: 16 }} />
+                          <Typography sx={{ fontSize: 13, color: MAU.chuXam, fontWeight: 600 }}>
+                            {khoaHoc.tongTaiLieu || 0} tài liệu
+                          </Typography>
+                        </Box>
+                        
+                        {/* Price for Desktop inside stats row */}
+                        <Typography
+                          sx={{
+                            fontWeight: 900,
+                            fontSize: 15.5,
+                            color: MAU.chuDen,
+                            display: { xs: "none", sm: "block" },
+                            ml: 1
+                          }}
+                        >
+                          {khoaHoc.giaGoc === 0
+                            ? "Miễn phí"
+                            : `${(khoaHoc.giaGoc ?? 0).toLocaleString()}đ`}
+                        </Typography>
+                      </Box>
+                      
+                      {/* Price for Mobile below stats */}
+                      <Typography
+                        sx={{
+                          fontWeight: 900,
+                          fontSize: 15.5,
+                          color: MAU.chuDen,
+                          display: { xs: "block", sm: "none" },
+                          mt: 1
+                        }}
+                      >
+                        {khoaHoc.giaGoc === 0
+                          ? "Miễn phí"
+                          : `${(khoaHoc.giaGoc ?? 0).toLocaleString()}đ`}
+                      </Typography>
+                    </Box>
+
+                    {/* Actions Group on the right */}
                     <Box
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 1,
-                        flexWrap: "wrap",
+                        justifyContent: { xs: "flex-end", md: "center" },
+                        gap: 1.2,
+                        borderTop: { xs: `1px solid ${MAU.vien}`, md: "none" },
+                        pt: { xs: 1.5, md: 0 },
                       }}
                     >
-                      <Chip
-                        label={pheDuyet.nhan}
-                        color={pheDuyet.mau}
-                        size="small"
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: 11,
-                          borderRadius: "8px",
-                        }}
-                      />
-                      {khoaHoc.capDo && (
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            color: MAU.chuXam,
-                            fontWeight: 500,
-                          }}
-                        >
-                          • {khoaHoc.capDo}
-                        </Typography>
-                      )}
-                      {khoaHoc.giaGoc !== undefined &&
-                        khoaHoc.giaGoc !== null && (
-                          <Typography
+                      {actions.showView && (
+                        <Tooltip title="Chi tiết">
+                          <IconButton
+                            size="medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDetail(khoaHoc);
+                            }}
                             sx={{
-                              fontSize: 12,
-                              color: MAU.chuXam,
-                              fontWeight: 500,
+                              color: MAU.chinh,
+                              bgcolor: MAU.chinhNhat,
+                              borderRadius: "10px",
+                              "&:hover": { bgcolor: MAU.chinhDam, color: "#fff" },
+                              transition: "all 0.2s",
                             }}
                           >
-                            •{" "}
-                            {khoaHoc.giaGoc === 0
-                              ? "Miễn phí"
-                              : `${khoaHoc.giaGoc.toLocaleString()}đ`}
-                          </Typography>
-                        )}
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {actions.showEdit && (
+                        <Tooltip title="Chỉnh sửa">
+                          <span>
+                            <IconButton
+                              size="medium"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(khoaHoc);
+                              }}
+                              disabled={dangXuLyItemNay}
+                              sx={{
+                                color: MAU.chinh,
+                                bgcolor: MAU.chinhNhat,
+                                borderRadius: "10px",
+                                "&:hover": { bgcolor: MAU.chinhDam, color: "#fff" },
+                                transition: "all 0.2s",
+                              }}
+                            >
+                              {dangXuLyItemNay ? (
+                                <CircularProgress size={18} sx={{ color: MAU.chinh }} />
+                              ) : (
+                                <EditIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
+                      {actions.showDelete && (
+                        <Tooltip title="Xóa khóa học">
+                          <span>
+                            <IconButton
+                              size="medium"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moXacNhanXoa(khoaHoc);
+                              }}
+                              disabled={dangXuLyItemNay}
+                              sx={{
+                                color: "#DC2626",
+                                bgcolor: "#FEF2F2",
+                                borderRadius: "10px",
+                                "&:hover": { bgcolor: "#DC2626", color: "#fff" },
+                                transition: "all 0.2s",
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
                     </Box>
                   </Box>
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    opacity: 0,
-                    transition: "opacity 0.2s ease",
-                    ".MuiBox-root:hover > &": { opacity: 1 },
-                    "@media (max-width: 600px)": { opacity: 1 },
-                  }}
-                >
-                  {actions.showView && (
-                    <Tooltip title="Chi tiết">
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewDetail(khoaHoc);
-                        }}
-                        sx={{
-                          color: MAU.chinh,
-                          "&:hover": { bgcolor: MAU.chinhNhat },
-                        }}
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  {actions.showEdit && (
-                    <Tooltip title="Chỉnh sửa">
-                      <span>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(khoaHoc);
-                          }}
-                          sx={{
-                            color: MAU.chinh,
-                            "&:hover": { bgcolor: MAU.chinhNhat },
-                          }}
-                          disabled={dangXuLyItemNay}
-                        >
-                          {dangXuLyItemNay ? (
-                            <CircularProgress
-                              size={20}
-                              sx={{ color: MAU.chinh }}
-                            />
-                          ) : (
-                            <EditIcon />
-                          )}
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  )}
-                  {actions.showDelete && (
-                    <Tooltip title="Xóa khóa học">
-                      <span>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moXacNhanXoa(khoaHoc);
-                          }}
-                          sx={{
-                            color: "#c62828",
-                            "&:hover": { bgcolor: "#FDECEC" },
-                          }}
-                          disabled={dangXuLyItemNay}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  )}
-                </Box>
-              </Box>
+                </Paper>
+              </Grid>
             );
           })}
-        </Box>
+        </Grid>
       )}
 
       {/* Phân trang */}
@@ -1137,6 +1235,11 @@ function KhoaHocContent() {
         onClose={dongXacNhanXoa}
         maxWidth="xs"
         fullWidth
+        sx={{
+          "& .MuiDialog-paper": {
+            borderRadius: "16px",
+          },
+        }}
       >
         <DialogTitle sx={{ fontWeight: 800, color: "#c62828" }}>
           Xóa khóa học
@@ -1226,10 +1329,8 @@ export default function InstructorCoursesPage() {
         <Box
           sx={{
             p: { xs: 2, md: 4 },
-            borderRadius: "24px",
-            border: "1px solid rgba(139,19,19,0.06)",
-            bgcolor: "#ffffff",
-            boxShadow: "0 10px 30px rgba(139,19,19,0.05)",
+            minHeight: "100vh",
+            bgcolor: "#FAFAF9", // Nền xám kem nhẹ cho trang
           }}
         >
           <KhoaHocContent />

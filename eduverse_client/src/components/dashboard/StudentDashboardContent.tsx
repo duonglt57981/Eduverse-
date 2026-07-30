@@ -280,43 +280,46 @@ function HoverPanel({
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const update = () => {
-      const el = anchorEl.current;
-      if (!el) return;
+  const update = () => {
+    const el = anchorEl.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const PANEL_WIDTH = 310;
+    const GAP = 12;
 
-      const rect = el.getBoundingClientRect();
+    // Thử hiện bên phải trước
+    let left = rect.right + GAP;
 
-      const PANEL_WIDTH = 310;
-      const GAP = 12;
+    // Nếu tràn phải → hiện bên trái
+    if (left + PANEL_WIDTH > window.innerWidth - 8) {
+      left = rect.left - PANEL_WIDTH - GAP;
+    }
 
-      let left = rect.right + GAP;
+    // Nếu vẫn tràn trái → căn giữa màn hình
+    if (left < 8) {
+      left = Math.max(8, (window.innerWidth - PANEL_WIDTH) / 2);
+    }
 
-      if (left + PANEL_WIDTH > window.innerWidth - 8) {
-        left = rect.left - PANEL_WIDTH - GAP;
-      }
+    // Tính top
+    let top = rect.top + window.scrollY; // ← thêm scrollY
+    const PANEL_HEIGHT = 420;
+    if (rect.top + PANEL_HEIGHT > window.innerHeight) {
+      top = window.scrollY + window.innerHeight - PANEL_HEIGHT - 8;
+    }
+    if (top < window.scrollY + 8) {
+      top = window.scrollY + 8;
+    }
 
-      let top = rect.top;
-
-      if (top + 520 > window.innerHeight) {
-        top = Math.max(8, window.innerHeight - 520);
-      }
-
-      setPos({
-        top,
-        left,
-      });
-    };
-
-    update();
-
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-
-    return () => {
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
-    };
-  }, [anchorEl]);
+    setPos({ top, left });
+  };
+  update();
+  window.addEventListener("scroll", update, true);
+  window.addEventListener("resize", update);
+  return () => {
+    window.removeEventListener("scroll", update, true);
+    window.removeEventListener("resize", update);
+  };
+}, [anchorEl]);
 
   if (!pos) return null;
 
@@ -963,7 +966,7 @@ export default function StudentDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "courses" | "assigned" | "paths" | "certs" | "tests"
+    "courses" | "assigned" | "paths"
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
@@ -1125,10 +1128,6 @@ export default function StudentDashboardContent() {
         return continueLearning?.courses ?? [];
       case "paths":
         return continueLearning?.paths ?? [];
-      case "certs":
-        return continueLearning?.certificates ?? [];
-      case "tests":
-        return continueLearning?.assessments ?? [];
       default:
         return [];
     }
@@ -1227,12 +1226,6 @@ export default function StudentDashboardContent() {
               borderRadius: "16px",
               p: 2,
               minWidth: { xs: 90, sm: 110 },
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
-                borderColor: "rgba(139,19,19,0.15)",
-              }
             }}
           >
             <SchoolRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
@@ -1256,12 +1249,6 @@ export default function StudentDashboardContent() {
               borderRadius: "16px",
               p: 2,
               minWidth: { xs: 90, sm: 110 },
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
-                borderColor: "rgba(139,19,19,0.15)",
-              }
             }}
           >
             <TrendingUpRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
@@ -1270,35 +1257,6 @@ export default function StudentDashboardContent() {
             </Typography>
             <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
               Tiến độ
-            </Typography>
-          </Box>
-
-          {/* Certificates Count */}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "rgba(139,19,19,0.03)",
-              border: "1px solid rgba(139,19,19,0.06)",
-              borderRadius: "16px",
-              p: 2,
-              minWidth: { xs: 90, sm: 110 },
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow: "0 6px 20px rgba(139,19,19,0.06)",
-                borderColor: "rgba(139,19,19,0.15)",
-              }
-            }}
-          >
-            <WorkspacePremiumRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
-            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
-              {welcomeStats?.certificatesCount || 0}
-            </Typography>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
-              Chứng chỉ
             </Typography>
           </Box>
         </Stack>
@@ -1631,8 +1589,6 @@ export default function StudentDashboardContent() {
       <Box>
         <SectionHeader
           title="Hoàn thành nốt phần bạn đang làm dở"
-          linkText="Học tập"
-          href="/student/courses"
         />
 
         <Tabs
@@ -1663,8 +1619,6 @@ export default function StudentDashboardContent() {
           <Tab value="courses" label="Khóa học" />
           <Tab value="assigned" label="Các khóa học được chỉ định" />
           <Tab value="paths" label="Lộ trình học tập" />
-          <Tab value="certs" label="Luyện thi chứng chỉ" />
-          <Tab value="tests" label="Bài đánh giá" />
         </Tabs>
 
         {/* Courses tab */}
@@ -1978,198 +1932,7 @@ export default function StudentDashboardContent() {
             </Paper>
           ))}
 
-        {/* Certs tab */}
-        {activeTab === "certs" &&
-          (tabCourses.length > 0 ? (
-            <CarouselRow>
-              {tabCourses.map((item) => (
-                <Paper
-                  key={item.id}
-                  elevation={0}
-                  onClick={() => handleOpenCourse(item)}
-                  sx={{
-                    width: 380,
-                    flexShrink: 0,
-                    p: 2.5,
-                    borderRadius: "20px",
-                    border: "1px solid rgba(0,0,0,0.07)",
-                    bgcolor: C.white,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 2,
-                    cursor: "pointer",
-                    transition: "transform 200ms, box-shadow 200ms",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: "0 10px 24px rgba(0,0,0,0.04)",
-                    },
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    sx={{ alignItems: "center" }}
-                  >
-                    <Box
-                      sx={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: "50%",
-                        flexShrink: 0,
-                        background: getGradient(item),
-                        display: "grid",
-                        placeItems: "center",
-                      }}
-                    >
-                      <SchoolRounded sx={{ fontSize: 28, color: "#fff" }} />
-                    </Box>
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: 14,
-                          fontWeight: 800,
-                          color: C.textDark,
-                          lineHeight: 1.4,
-                          maxWidth: 260,
-                        }}
-                      >
-                        {item.tieuDe || item.title}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          mt: 0.5,
-                          fontSize: 12,
-                          color: "rgba(31,41,55,0.4)",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {item.subtitle ?? item.loaiKhoaHoc ?? "EduVerse"}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <IconButton size="small" onClick={(e) => e.stopPropagation()}>
-                    <MoreVertRounded />
-                  </IconButton>
-                </Paper>
-              ))}
-            </CarouselRow>
-          ) : (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: "20px",
-                border: "1px solid rgba(141,19,19,0.06)",
-                bgcolor: C.white,
-                textAlign: "center",
-              }}
-            >
-              <Typography sx={{ fontSize: 15, color: "rgba(31,41,55,0.5)" }}>
-                Chưa có chứng chỉ nào.
-              </Typography>
-            </Paper>
-          ))}
 
-        {/* Tests tab */}
-        {activeTab === "tests" &&
-          (tabCourses.length > 0 ? (
-            <Stack spacing={2}>
-              {tabCourses.map((item) => (
-                <Paper
-                  key={item.id}
-                  elevation={0}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: "18px",
-                    border: "1px solid rgba(0,0,0,0.07)",
-                    bgcolor: C.white,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    transition: "transform 200ms, box-shadow 200ms",
-                    "&:hover": {
-                      transform: "translateY(-3px)",
-                      boxShadow: "0 8px 20px rgba(0,0,0,0.03)",
-                    },
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    sx={{ alignItems: "center" }}
-                  >
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: "12px",
-                        background: getGradient(item),
-                        display: "grid",
-                        placeItems: "center",
-                      }}
-                    >
-                      <QuizRounded sx={{ fontSize: 22, color: "#fff" }} />
-                    </Box>
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: 14.5,
-                          fontWeight: 800,
-                          color: C.textDark,
-                        }}
-                      >
-                        {item.tieuDe || item.title}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          mt: 0.3,
-                          fontSize: 12,
-                          color: "rgba(31,41,55,0.4)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {item.contentType ?? "Bài kiểm tra"} •{" "}
-                        {item.duration ?? ""}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Button
-                    variant="outlined"
-                    sx={{
-                      borderRadius: "10px",
-                      borderColor: C.primary,
-                      color: C.primary,
-                      fontWeight: 800,
-                      px: 2,
-                      fontSize: 12.5,
-                      "&:hover": {
-                        borderColor: C.primaryDark,
-                        bgcolor: "rgba(141,19,19,0.04)",
-                      },
-                    }}
-                  >
-                    Làm bài thi
-                  </Button>
-                </Paper>
-              ))}
-            </Stack>
-          ) : (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: "20px",
-                border: "1px solid rgba(141,19,19,0.06)",
-                bgcolor: C.white,
-                textAlign: "center",
-              }}
-            >
-              <Typography sx={{ fontSize: 15, color: "rgba(31,41,55,0.5)" }}>
-                Chưa có bài đánh giá nào.
-              </Typography>
-            </Paper>
-          ))}
       </Box>
 
       {/* ── 5. Next Sectors ────────────────────────────────────────── */}
@@ -2292,8 +2055,6 @@ export default function StudentDashboardContent() {
         <Box>
           <SectionHeader
             title="Dựa trên kỹ năng bạn quan tâm, chúng tôi khuyến nghị bạn"
-            linkText="Chỉnh sửa danh sách kỹ năng quan tâm"
-            href="/student/profile"
           />
           {interestedSkills && interestedSkills.length > 0 && (
             <Stack

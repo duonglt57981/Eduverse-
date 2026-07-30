@@ -74,6 +74,7 @@ import {
   footerColumnsData,
   type CourseCardItem,
 } from "./dashboard-data";
+import AuthenticatedFooter from "../footer/AuthenticatedFooter";
 import { apiService } from "@/src/services/index";
 import {
   Badge,
@@ -939,7 +940,7 @@ export default function DashboardShell({
 
   // Custom states
   const [activeContinueTab, setActiveContinueTab] = useState<
-    "courses" | "assigned" | "paths" | "certs" | "tests"
+    "courses" | "assigned" | "paths"
   >("courses");
   const [selectedSkill, setSelectedSkill] = useState<string>("AI");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1079,10 +1080,6 @@ export default function DashboardShell({
         return dashboardData.continueLearning.courses || [];
       case "paths":
         return dashboardData.continueLearning.paths || [];
-      case "certs":
-        return dashboardData.continueLearning.certificates || [];
-      case "tests":
-        return dashboardData.continueLearning.assessments || [];
       default:
         return [];
     }
@@ -1899,7 +1896,8 @@ export default function DashboardShell({
               px: { xs: 2, md: 5 },
               py: 3,
               display: "flex",
-              justifyContent: "center",
+              flexDirection: "column",
+              alignItems: "center",
               height: "100%",
               overflowY: "auto",
             }}
@@ -1911,11 +1909,14 @@ export default function DashboardShell({
                 display: "flex",
                 flexDirection: "column",
                 gap: 4.5,
+                flexGrow: 1,
+                flexShrink: 0,
               }}
             >
-              {children ? (
-                children
-              ) : (
+              <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 4.5 }}>
+                {children ? (
+                  children
+                ) : (
                 <>
                   {/* ========================================================= */}
                   {/* 2. WELCOME SECTION                                        */}
@@ -2062,25 +2063,7 @@ export default function DashboardShell({
                                 },
                               }}
                             />
-                            <Chip
-                              icon={
-                                <EmojiEventsRounded sx={{ fontSize: "18px" }} />
-                              }
-                              label={`${dashboardData?.welcomeStats?.certificatesCount || 0} Chứng chỉ`}
-                              sx={{
-                                bgcolor: "rgba(141, 19, 19, 0.05)",
-                                color: COLORS.primary,
-                                fontWeight: 700,
-                                fontSize: 13,
-                                height: 32,
-                                border: "1px solid rgba(141,19,19,0.08)",
-                                borderRadius: "50px",
-                                "& .MuiChip-icon": {
-                                  color: COLORS.primary,
-                                  ml: 1.5,
-                                },
-                              }}
-                            />
+
                           </Stack>
                         </Box>
                       </Stack>
@@ -2283,8 +2266,6 @@ export default function DashboardShell({
                         label="Các khóa học được chỉ định"
                       />
                       <Tab value="paths" label="Lộ trình học tập" />
-                      <Tab value="certs" label="Luyện thi chứng chỉ" />
-                      <Tab value="tests" label="Bài đánh giá" />
                     </Tabs>
 
                     {/* Tab Content rendering logic */}
@@ -2740,429 +2721,9 @@ export default function DashboardShell({
                       </CarouselRow>
                     )}
 
-                    {activeContinueTab === "certs" && (
-                      <CarouselRow>
-                        {/* Mock certificate from user's screen */}
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            width: 440,
-                            flexShrink: 0,
-                            p: 2.5,
-                            borderRadius: "20px",
-                            border: "1px solid rgba(0,0,0,0.07)",
-                            bgcolor: COLORS.white,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 2.5,
-                            transition:
-                              "transform 200ms ease, box-shadow 200ms ease",
-                            "&:hover": {
-                              transform: "translateY(-4px)",
-                              boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
-                            },
-                          }}
-                        >
-                          <Stack
-                            direction="row"
-                            spacing={2.5}
-                            sx={{ alignItems: "center" }}
-                          >
-                            {/* Custom CSS Styled ISTQB logo badge */}
-                            <Box
-                              sx={{
-                                width: 68,
-                                height: 68,
-                                borderRadius: "50%",
-                                background:
-                                  "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                border: "2px solid rgba(141,19,19,0.1)",
-                                position: "relative",
-                                overflow: "hidden",
-                              }}
-                            >
-                              <Typography
-                                sx={{
-                                  color: "#fff",
-                                  fontSize: 10,
-                                  fontWeight: 900,
-                                  letterSpacing: "0.5px",
-                                }}
-                              >
-                                ISTQB
-                              </Typography>
-                              <Box
-                                sx={{
-                                  position: "absolute",
-                                  bottom: 12,
-                                  width: "70%",
-                                  height: 3,
-                                  borderRadius: "2px",
-                                  background: "#EF4444",
-                                }}
-                              />
-                            </Box>
-                            <Box>
-                              <Typography
-                                sx={{
-                                  fontSize: 15,
-                                  fontWeight: 800,
-                                  color: "#1F2937",
-                                  lineHeight: 1.4,
-                                  maxWidth: 280,
-                                }}
-                              >
-                                ISTQB® Certified Tester Foundation Level (CTFL)
-                              </Typography>
-                              <Typography
-                                sx={{
-                                  mt: 0.5,
-                                  fontSize: 13,
-                                  color: "rgba(31,41,55,0.4)",
-                                  fontWeight: 700,
-                                }}
-                              >
-                                Brightest
-                              </Typography>
-                            </Box>
-                          </Stack>
-                          <IconButton size="small">
-                            <MoreVertRounded />
-                          </IconButton>
-                        </Paper>
 
-                        {/* Backend API certificates */}
-                        {dashboardData?.continueLearning?.certificates?.map(
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (item: any) => (
-                            <Paper
-                              key={item.id}
-                              elevation={0}
-                              sx={{
-                                width: 440,
-                                flexShrink: 0,
-                                p: 2.5,
-                                borderRadius: "20px",
-                                border: "1px solid rgba(0,0,0,0.07)",
-                                bgcolor: COLORS.white,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                gap: 2.5,
-                                transition:
-                                  "transform 200ms ease, box-shadow 200ms ease",
-                                "&:hover": {
-                                  transform: "translateY(-4px)",
-                                  boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
-                                },
-                              }}
-                            >
-                              <Stack
-                                direction="row"
-                                spacing={2.5}
-                                sx={{ alignItems: "center" }}
-                              >
-                                <Box
-                                  sx={{
-                                    width: 68,
-                                    height: 68,
-                                    borderRadius: "50%",
-                                    background:
-                                      item.thumbnailGradient ||
-                                      COLORS.gradientCrimson,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    color: "#fff",
-                                  }}
-                                >
-                                  <SchoolRounded sx={{ fontSize: 28 }} />
-                                </Box>
-                                <Box>
-                                  <Typography
-                                    sx={{
-                                      fontSize: 15,
-                                      fontWeight: 800,
-                                      color: "#1F2937",
-                                      lineHeight: 1.4,
-                                      maxWidth: 280,
-                                    }}
-                                  >
-                                    {item.title}
-                                  </Typography>
-                                  <Typography
-                                    sx={{
-                                      mt: 0.5,
-                                      fontSize: 13,
-                                      color: "rgba(31,41,55,0.4)",
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    {item.duration || "EduVerse"}
-                                  </Typography>
-                                </Box>
-                              </Stack>
-                              <IconButton size="small">
-                                <MoreVertRounded />
-                              </IconButton>
-                            </Paper>
-                          ),
-                        )}
-                      </CarouselRow>
-                    )}
 
-                    {activeContinueTab === "tests" && (
-                      <Stack spacing={3}>
-                        {/* Mock promotional assessment banner from user's screen */}
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            p: { xs: 3, md: 4 },
-                            borderRadius: "24px",
-                            border: "1px solid rgba(141,19,19,0.06)",
-                            bgcolor: COLORS.white,
-                            display: "flex",
-                            flexDirection: { xs: "column", md: "row" },
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 3,
-                            boxShadow: "0 8px 24px rgba(141,19,19,0.015)",
-                            position: "relative",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              flex: 1,
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "flex-start",
-                              gap: 2,
-                            }}
-                          >
-                            <Typography
-                              sx={{
-                                fontSize: 20,
-                                fontWeight: 900,
-                                color: "#1F2937",
-                              }}
-                            >
-                              Đánh giá các kỹ năng của bạn
-                            </Typography>
-                            <Typography
-                              sx={{
-                                fontSize: 14.5,
-                                color: "rgba(31,41,55,0.6)",
-                                maxWidth: 580,
-                                lineHeight: 1.6,
-                              }}
-                            >
-                              Làm bài đánh giá và nhận các đề xuất nội dung đáp
-                              ứng nhu cầu học tập của bạn.
-                            </Typography>
-                            <Button
-                              variant="contained"
-                              sx={{
-                                background: COLORS.gradientCrimson,
-                                color: "#fff",
-                                borderRadius: "12px",
-                                px: 3.5,
-                                py: 1.25,
-                                fontWeight: 800,
-                                "&:hover": {
-                                  background: COLORS.gradientCrimsonHover,
-                                },
-                              }}
-                            >
-                              Khám phá bài đánh giá
-                            </Button>
-                          </Box>
 
-                          {/* Right illustration mock checklist vector */}
-                          <Box
-                            sx={{
-                              width: 140,
-                              height: 100,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: COLORS.primary,
-                              opacity: 0.85,
-                            }}
-                          >
-                            <svg
-                              width="100"
-                              height="80"
-                              viewBox="0 0 100 80"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <rect
-                                x="5"
-                                y="5"
-                                width="60"
-                                height="45"
-                                rx="5"
-                                stroke={COLORS.primary}
-                                strokeWidth="3"
-                                fill="#fff"
-                              />
-                              <line
-                                x1="15"
-                                y1="18"
-                                x2="35"
-                                y2="18"
-                                stroke={COLORS.primary}
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                              />
-                              <line
-                                x1="15"
-                                y1="28"
-                                x2="45"
-                                y2="28"
-                                stroke={COLORS.primary}
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                              />
-                              <line
-                                x1="15"
-                                y1="38"
-                                x2="50"
-                                y2="38"
-                                stroke={COLORS.primary}
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                              />
-                              {/* Hand index finger cursor */}
-                              <path
-                                d="M55 42 L62 30 C63 28, 66 28, 67 30 L69 34 L78 20 C79 18, 82 18, 83 20 L88 35 L88 55 C88 62, 80 68, 72 68 L60 68 C55 68, 50 63, 50 58 L50 48 Z"
-                                fill={COLORS.primary}
-                                opacity="0.9"
-                              />
-                              {/* Radiating click clicks */}
-                              <line
-                                x1="82"
-                                y1="12"
-                                x2="86"
-                                y2="6"
-                                stroke={COLORS.primary}
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              />
-                              <line
-                                x1="91"
-                                y1="18"
-                                x2="98"
-                                y2="18"
-                                stroke={COLORS.primary}
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              />
-                              <line
-                                x1="86"
-                                y1="26"
-                                x2="92"
-                                y2="30"
-                                stroke={COLORS.primary}
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          </Box>
-                        </Paper>
-
-                        {/* Backend API tests list */}
-                        {dashboardData?.continueLearning?.assessments?.map(
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (item: any) => (
-                            <Paper
-                              key={item.id}
-                              elevation={0}
-                              sx={{
-                                p: 3,
-                                borderRadius: "20px",
-                                border: "1px solid rgba(0,0,0,0.07)",
-                                bgcolor: COLORS.white,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                transition:
-                                  "transform 200ms ease, box-shadow 200ms ease",
-                                "&:hover": {
-                                  transform: "translateY(-4px)",
-                                  boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
-                                },
-                              }}
-                            >
-                              <Stack
-                                direction="row"
-                                spacing={2.5}
-                                sx={{ alignItems: "center" }}
-                              >
-                                <Box
-                                  sx={{
-                                    width: 54,
-                                    height: 54,
-                                    borderRadius: "12px",
-                                    background:
-                                      item.thumbnailGradient ||
-                                      COLORS.gradientCrimson,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    color: "#fff",
-                                  }}
-                                >
-                                  <QuizRounded sx={{ fontSize: 24 }} />
-                                </Box>
-                                <Box>
-                                  <Typography
-                                    sx={{
-                                      fontSize: 16,
-                                      fontWeight: 800,
-                                      color: "#1F2937",
-                                    }}
-                                  >
-                                    {item.title}
-                                  </Typography>
-                                  <Typography
-                                    sx={{
-                                      mt: 0.5,
-                                      fontSize: 13,
-                                      color: "rgba(31,41,55,0.4)",
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    {item.contentType} • {item.duration}
-                                  </Typography>
-                                </Box>
-                              </Stack>
-                              <Button
-                                variant="outlined"
-                                sx={{
-                                  borderRadius: "10px",
-                                  borderColor: COLORS.primary,
-                                  color: COLORS.primary,
-                                  fontWeight: 800,
-                                  "&:hover": {
-                                    borderColor: COLORS.primaryDark,
-                                    bgcolor: "rgba(141,19,19,0.04)",
-                                  },
-                                }}
-                              >
-                                Làm bài thi
-                              </Button>
-                            </Paper>
-                          ),
-                        )}
-                      </Stack>
-                    )}
                   </Box>
 
                   {/* ========================================================= */}
@@ -3613,159 +3174,27 @@ export default function DashboardShell({
                       ))}
                     </CarouselRow>
                   </Box>
-
-                  {/* ========================================================= */}
-                  {/* 12. FOOTER (Tại chân trang)                               */}
-                  {/* ========================================================= */}
-                  <Box
-                    component="footer"
-                    sx={{
-                      mt: 8,
-                      pt: 5,
-                      borderTop: "1px solid rgba(141, 19, 19, 0.08)",
-                      color: "rgba(31,41,55,0.56)",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: {
-                          xs: "1fr 1fr",
-                          md: "1.2fr 1fr 1fr 1fr 0.8fr",
-                        },
-                        gap: 4,
-                      }}
-                    >
-                      {/* Brand description column */}
-                      <Box sx={{ gridColumn: { xs: "span 2", md: "span 1" } }}>
-                        <Typography
-                          sx={{
-                            fontSize: 18,
-                            fontWeight: 900,
-                            color: COLORS.primary,
-                          }}
-                        >
-                          EduVerse
-                        </Typography>
-                        <Typography
-                          sx={{
-                            mt: 1.5,
-                            fontSize: 13,
-                            lineHeight: 1.7,
-                            maxWidth: 220,
-                          }}
-                        >
-                          Nền tảng đào tạo cao cấp cá nhân hóa bằng Trí tuệ nhân
-                          tạo (AI). Đồng hành cùng bạn thăng tiến sự nghiệp.
-                        </Typography>
-                      </Box>
-
-                      {/* Footer Dynamic columns */}
-                      {footerColumnsData.map((col) => (
-                        <Box key={col.title}>
-                          <Typography
-                            sx={{
-                              fontSize: 14.5,
-                              fontWeight: 900,
-                              color: "#1F2937",
-                              mb: 2,
-                            }}
-                          >
-                            {col.title}
-                          </Typography>
-                          <Stack spacing={1}>
-                            {col.links.map((link) => (
-                              <Typography
-                                key={link.label}
-                                sx={{
-                                  fontSize: 13,
-                                  fontWeight: 500,
-                                  cursor: "pointer",
-                                  "&:hover": { color: COLORS.primary },
-                                }}
-                              >
-                                {link.label}
-                              </Typography>
-                            ))}
-                          </Stack>
-                        </Box>
-                      ))}
-
-                      {/* Social Connect Column */}
-                      <Box>
-                        <Typography
-                          sx={{
-                            fontSize: 14.5,
-                            fontWeight: 900,
-                            color: "#1F2937",
-                            mb: 2,
-                          }}
-                        >
-                          Kết nối
-                        </Typography>
-                        <Stack spacing={1}>
-                          {["Facebook", "LinkedIn", "Youtube"].map((soc) => (
-                            <Typography
-                              key={soc}
-                              sx={{
-                                fontSize: 13,
-                                fontWeight: 500,
-                                cursor: "pointer",
-                                "&:hover": { color: COLORS.primary },
-                              }}
-                            >
-                              {soc}
-                            </Typography>
-                          ))}
-                        </Stack>
-                      </Box>
-                    </Box>
-
-                    {/* Copyright row */}
-                    <Box
-                      sx={{
-                        mt: 5,
-                        py: 3,
-                        borderTop: "1px solid rgba(0,0,0,0.04)",
-                        textAlign: "center",
-                        display: "flex",
-                        flexDirection: { xs: "column", sm: "row" },
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 2,
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 12.5, fontWeight: 500 }}>
-                        © 2026 EduVerse Learning Platform. Tất cả các quyền được
-                        bảo lưu.
-                      </Typography>
-                      <Stack direction="row" spacing={3}>
-                        <Typography
-                          sx={{
-                            fontSize: 12.5,
-                            fontWeight: 500,
-                            cursor: "pointer",
-                            "&:hover": { color: COLORS.primary },
-                          }}
-                        >
-                          Chính sách bảo mật
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: 12.5,
-                            fontWeight: 500,
-                            cursor: "pointer",
-                            "&:hover": { color: COLORS.primary },
-                          }}
-                        >
-                          Điều khoản sử dụng
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  </Box>
                 </>
               )}
             </Box>
+            </Box>
+            {!pathname.startsWith("/admin") && (
+              <Box
+                sx={{
+                  width: "calc(100% + 32px)",
+                  mx: -2,
+                  mt: 6,
+                  mb: -3,
+                  flexShrink: 0,
+                  "@media (min-width: 900px)": {
+                    width: "calc(100% + 80px)",
+                    mx: -5,
+                  }
+                }}
+              >
+                <AuthenticatedFooter role={activeRoles.includes("GiaoVien") ? "GiaoVien" : activeRoles.includes("Admin") ? "Admin" : "HocVien"} />
+              </Box>
+            )}
           </Box>
         </Box>
         <Popover

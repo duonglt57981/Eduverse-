@@ -29,14 +29,14 @@ export function createAppTheme(
       error: { main: STATUS.error },
       info: { main: STATUS.info },
       background: {
-        default: isDark ? "#121212" : NEUTRAL.bg,
-        paper: isDark ? "#1e1e1e" : NEUTRAL.paper,
+        default: isDark ? "#0B0E12" : NEUTRAL.bg,
+        paper: isDark ? "#15191F" : NEUTRAL.paper,
       },
       text: {
-        primary: isDark ? "#ffffff" : NEUTRAL.textPrimary,
-        secondary: isDark ? "#a09ba5" : NEUTRAL.textSecondary,
+        primary: isDark ? "#F4F7FB" : NEUTRAL.textPrimary,
+        secondary: isDark ? "#A8B0BD" : NEUTRAL.textSecondary,
       },
-      divider: isDark ? "rgba(255,255,255,0.12)" : NEUTRAL.divider,
+      divider: isDark ? "rgba(255,255,255,0.10)" : NEUTRAL.divider,
     },
     shape: { borderRadius: RADIUS.base },
     typography: {
@@ -104,7 +104,10 @@ export function createAppTheme(
       },
       MuiTableCell: {
         styleOverrides: {
-          head: { fontWeight: 800, color: NEUTRAL.textPrimary },
+          head: {
+            fontWeight: 800,
+            color: isDark ? "#F4F7FB" : NEUTRAL.textPrimary,
+          },
         },
       },
       MuiTooltip: {

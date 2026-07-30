@@ -202,25 +202,23 @@ export default function AdminUsersPage() {
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (dialogMode === 'add') {
-      if (!userName || !password) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Thiếu thông tin',
-          text: 'Vui lòng điền tên tài khoản và mật khẩu.',
-          confirmButtonColor: COLORS.primary,
-        });
-        return;
-      }
+    if (!email) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Thiếu thông tin',
+        text: 'Vui lòng điền địa chỉ email để đăng nhập bằng Google.',
+        confirmButtonColor: COLORS.primary,
+      });
+      return;
     }
 
     setLoading(true);
     try {
       if (dialogMode === 'add') {
         const response = await apiService.post<any>('/users', {
-          userName,
-          password,
-          email: email || null,
+          userName: email, // Sử dụng email làm tên tài khoản
+          password: 'GoogleAccountAutoPass_123!', // Mật khẩu tự sinh tự động
+          email: email,
           hoTen: hoTen || null,
           phoneNumber: phoneNumber || null,
           diaChi: diaChi || null,
@@ -250,8 +248,8 @@ export default function AdminUsersPage() {
       } else {
         // Edit Mode
         const response = await apiService.put<any>(`/users/${editingUserId}`, {
-          email: email || null,
-          password: password || null, // resets password if not blank
+          email: email,
+          password: null, // Đăng nhập Google không cần quản lý mật khẩu mật định
           hoTen: hoTen || null,
           phoneNumber: phoneNumber || null,
           diaChi: diaChi || null,
@@ -410,11 +408,17 @@ export default function AdminUsersPage() {
             sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: 4, gap: 2 }}
           >
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS.textDark, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <PeopleAltRounded sx={{ fontSize: 40, color: COLORS.primary }} />
+              <Typography
+                sx={{
+                  fontSize: 28,
+                  fontWeight: 900,
+                  color: "#1F2937",
+                  mb: 0.5,
+                }}
+              >
                 Quản lý người dùng
               </Typography>
-              <Typography variant="body2" sx={{ color: COLORS.textSecondary, mt: 0.5 }}>
+              <Typography variant="body2" sx={{ color: COLORS.textSecondary }}>
                 Quản lý thông tin tài khoản, phân quyền vai trò và khóa/mở khóa học viên, giảng viên.
               </Typography>
             </Box>
@@ -977,40 +981,20 @@ export default function AdminUsersPage() {
                   {/* Account detail section */}
                   <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: COLORS.primary, mb: 1, textTransform: 'uppercase', fontSize: 12 }}>
-                      Thông tin tài khoản đăng nhập
+                      Tài khoản đăng nhập Google
                     </Typography>
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Stack spacing={0.75}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Tên tài khoản (Username) {dialogMode === 'add' && <span style={{ color: COLORS.primary }}>*</span>}</Typography>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Địa chỉ Email đăng nhập <span style={{ color: COLORS.primary }}>*</span></Typography>
                       <TextField
                         fullWidth
-                        disabled={dialogMode === 'edit'}
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
-                        required={dialogMode === 'add'}
-                        placeholder="Nhập tên tài khoản..."
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: '12px',
-                            height: '50px',
-                          },
-                        }}
-                      />
-                    </Stack>
-                  </Grid>
-                  
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={0.75}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Mật khẩu {dialogMode === 'add' && <span style={{ color: COLORS.primary }}>*</span>}</Typography>
-                      <TextField
-                        fullWidth
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required={dialogMode === 'add'}
-                        placeholder={dialogMode === 'add' ? 'Nhập mật khẩu...' : 'Để trống nếu giữ nguyên'}
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Nhập địa chỉ email Google..."
+                        required
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: '12px',
@@ -1080,25 +1064,6 @@ export default function AdminUsersPage() {
                         value={hoTen}
                         onChange={(e) => setHoTen(e.target.value)}
                         placeholder="Nhập họ và tên..."
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: '12px',
-                            height: '50px',
-                          },
-                        }}
-                      />
-                    </Stack>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={0.75}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Địa chỉ Email</Typography>
-                      <TextField
-                        fullWidth
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Nhập địa chỉ email..."
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: '12px',

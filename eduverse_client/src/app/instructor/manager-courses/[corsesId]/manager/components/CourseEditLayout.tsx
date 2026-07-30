@@ -124,15 +124,16 @@ export default function CourseEditLayout({
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-      <Box sx={{ bgcolor: "#1c1d1f", color: "#fff" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F7F8FA" }}>
+      {/* Header Panel */}
+      <Box sx={{ bgcolor: "#ffffff", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 1000 }}>
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             px: { xs: 2, sm: 4 },
-            py: 1.5,
+            py: 1.8,
             gap: 2,
             flexWrap: "wrap",
           }}
@@ -176,7 +177,7 @@ export default function CourseEditLayout({
               }}
             >
               <ArrowBackIcon sx={{ fontSize: 13 }} />
-              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
                 Quay lại
               </Typography>
             </Box>
@@ -193,7 +194,7 @@ export default function CourseEditLayout({
             {/* Course Title */}
             <Typography
               sx={{
-                fontWeight: 700,
+                fontWeight: 800,
                 fontSize: { xs: 15, sm: 16, md: 17 },
                 color: "#ffffff",
                 overflow: "hidden",
@@ -212,8 +213,8 @@ export default function CourseEditLayout({
               label={trangThaiHienThi.nhan}
               size="small"
               sx={{
-                fontWeight: 700,
-                fontSize: 11,
+                fontWeight: 750,
+                fontSize: 10.5,
                 bgcolor: statusStyles.bgcolor,
                 color: statusStyles.color,
                 borderRadius: "6px",
@@ -229,6 +230,7 @@ export default function CourseEditLayout({
                 color: "#9CA3AF",
                 display: { xs: "none", md: "block" },
                 flexShrink: 0,
+                fontWeight: 500,
               }}
             >
               | {thoiLuongDaTai}
@@ -252,7 +254,7 @@ export default function CourseEditLayout({
                 color: "#D1D5DB",
                 borderColor: "rgba(255,255,255,0.3)",
                 textTransform: "none",
-                fontWeight: 600,
+                fontWeight: 700,
                 borderRadius: "8px",
                 px: 2,
                 py: 0.8,
@@ -301,16 +303,19 @@ export default function CourseEditLayout({
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "flex-start" }}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", bgcolor: "#F7F8FA", minHeight: "calc(100vh - 72px)" }}>
         <Box
           component="nav"
           sx={{
-            width: 280,
+            width: 260,
             flexShrink: 0,
-            px: 3,
+            px: 2.5,
             py: 4,
             bgcolor: "#ffffff",
             borderRight: "1px solid #E5E7EB",
+            minHeight: "calc(100vh - 72px)",
+            position: "sticky",
+            top: 72,
             display: { xs: "none", md: "block" },
           }}
         >
@@ -319,12 +324,12 @@ export default function CourseEditLayout({
               <Box key={nhom.tieuDe} sx={{ mb: 3.5 }}>
                 <Typography
                   sx={{
-                    fontWeight: 700,
-                    fontSize: 13,
+                    fontWeight: 800,
+                    fontSize: 12,
                     textTransform: "uppercase",
-                    letterSpacing: "0.05em",
+                    letterSpacing: "0.08em",
                     mb: 2,
-                    color: "#9CA3AF",
+                    color: "#94A3B8",
                   }}
                 >
                   {nhom.tieuDe}
@@ -351,14 +356,14 @@ export default function CourseEditLayout({
                           py: 1.2,
                           pl: dangChon ? 1.5 : 2,
                           borderLeft: dangChon
-                            ? `3px solid ${MAU.chinh}`
-                            : "3px solid transparent",
+                            ? `3.5px solid #991B1B`
+                            : "3.5px solid transparent",
                           cursor: "pointer",
                           borderRadius: dangChon ? "0 8px 8px 0" : "8px",
-                          bgcolor: dangChon ? "#FFF1F2" : "transparent",
+                          bgcolor: dangChon ? "#FEF2F2" : "transparent",
                           transition: "all 0.2s ease",
                           "&:hover": {
-                            bgcolor: dangChon ? "#FFF1F2" : "#F3F4F6",
+                            bgcolor: dangChon ? "#FEF2F2" : "#F1F5F9",
                           },
                           "&:focus-visible": {
                             outline: `2px solid ${MAU.chinh}`,
@@ -367,18 +372,18 @@ export default function CourseEditLayout({
                       >
                         {m.hoanThanh ? (
                           <CheckCircleIcon
-                            sx={{ fontSize: 18, color: MAU.chinh }}
+                            sx={{ fontSize: 18, color: "#16A34A" }}
                           />
                         ) : (
                           <RadioButtonUncheckedIcon
-                            sx={{ fontSize: 18, color: "#9CA3AF" }}
+                            sx={{ fontSize: 18, color: "#94A3B8" }}
                           />
                         )}
                         <Typography
                           sx={{
                             fontSize: 14,
-                            fontWeight: dangChon ? 700 : 500,
-                            color: dangChon ? MAU.chinh : "#374151",
+                            fontWeight: dangChon ? 800 : 500,
+                            color: dangChon ? "#991B1B" : "#475569",
                             transition: "color 0.2s ease",
                           }}
                         >
@@ -392,24 +397,24 @@ export default function CourseEditLayout({
             ))}
         </Box>
 
-        <Box sx={{ flex: 1, px: { xs: 2, md: 4 }, py: 4, minWidth: 0 }}>
+        <Box sx={{ flex: 1, px: { xs: 2.5, md: 4.5 }, py: 4, minWidth: 0 }}>
           {isReadOnly && (
             <Box
               sx={{
-                mb: 3,
+                mb: 3.5,
                 px: 2.5,
                 py: 1.5,
                 borderRadius: "12px",
-                bgcolor: "#FFFBEB",
-                border: "1px solid #FDE68A",
+                bgcolor: "#FFF7ED",
+                border: "1px solid #FFEDD5",
                 display: "flex",
                 alignItems: "center",
                 gap: 1.2,
-                boxShadow: "0 2px 8px rgba(251,191,36,0.03)",
+                boxShadow: "0 2px 8px rgba(217,119,6,0.02)",
               }}
             >
               <Typography
-                sx={{ fontSize: 13.5, color: "#D97706", fontWeight: 600 }}
+                sx={{ fontSize: 13.5, color: "#D97706", fontWeight: 700 }}
               >
                 {trangThai === "DaDuyet"
                   ? "✅ Khóa học đã được duyệt — bạn chỉ có thể xem nội dung."

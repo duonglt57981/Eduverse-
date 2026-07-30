@@ -67,7 +67,7 @@ namespace Eduverse.Service.DangKyKhoaHocService
                 .AnyAsync(x => x.IdNguoiDangKi == idNguoiDangKi
                             && x.IdKhoaHoc == idKhoaHoc
                             && !x.IsDeleted
-                            && x.IsDangKy == true);
+                            && x.IsDangKy != false);
 
             if (daDangKy)
                 throw new Exception("Bạn đã đăng ký khóa học này");
@@ -84,6 +84,18 @@ namespace Eduverse.Service.DangKyKhoaHocService
 
             await CreateAsync(dangKy);
             await SaveAsync();
+
+            khoaHoc.SoLuongHocVien = await GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                    && !x.IsDeleted
+                    && x.IsDangKy != false
+                    && x.IdNguoiDangKi.HasValue)
+                .Select(x => x.IdNguoiDangKi)
+                .Distinct()
+                .CountAsync();
+            _khoaHocRepository.Update(khoaHoc);
+            await _khoaHocRepository.SaveAsync();
 
             return _mapper.Map<DangKyKhoaHoc,DangKyKhoaHocMienPhiDto>(dangKy);
         }

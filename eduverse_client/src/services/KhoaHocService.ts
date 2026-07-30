@@ -52,6 +52,7 @@ export default class KhoaHocService {
   // lấy danh sách khi có user khóa học nào đã dăng kí kh hiện lại
   async GetListByUser(
     searchParams?: KhoaHocSearch,
+    signal?: AbortSignal,
   ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
     try {
       const userId = this.getUserIdFromToken();
@@ -71,6 +72,23 @@ export default class KhoaHocService {
       console.error("Error fetching learning course by user:", error);
       throw error;
     }
+  }
+
+  async SearchWithElasticsearch(
+    searchParams: KhoaHocSearch,
+    signal?: AbortSignal,
+  ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
+    const params = new URLSearchParams();
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value.toString());
+      }
+    });
+
+    return await apiService.get<PagedList<KhoaHocType>>(
+      `/KhoaHoc/search-elasticsearch?${params.toString()}`,
+      { signal },
+    );
   }
 
   async GetListDangKi(

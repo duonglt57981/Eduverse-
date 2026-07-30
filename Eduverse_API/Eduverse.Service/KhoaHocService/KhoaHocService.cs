@@ -124,6 +124,24 @@ namespace Eduverse.Service.KhoaHocService
         }
         #endregion
 
+        #region SearchKhoaHocWithElasticsearch
+        public async Task<PagedList<KhoaHocDto>> SearchWithElasticsearch(KhoaHocSearch search)
+        {
+            search ??= new KhoaHocSearch();
+            await AddRegisteredCourseExclusionsAsync(search);
+
+            try
+            {
+                return await _elasticsearchService.SearchCoursesAsync(search);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Elasticsearch failed: {ex.Message}. Falling back to database.");
+                return await GetListFromDatabaseAsync(search);
+            }
+        }
+        #endregion
+
 
         #region GetListKhoaHocByUser
         public async Task<PagedList<KhoaHocDto>> GetListByUser(KhoaHocSearch search)
@@ -154,20 +172,55 @@ namespace Eduverse.Service.KhoaHocService
         }
         #endregion
 
+        private async Task AddRegisteredCourseExclusionsAsync(KhoaHocSearch search)
+        {
+            Guid.TryParse(
+                _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId);
+
+            if (userId == Guid.Empty)
+                return;
+
+            var registeredCourseIds = await _dangKyKhoaHocRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(dk => dk.IdNguoiDangKi == userId
+                    && !dk.IsDeleted
+                    && dk.IdKhoaHoc.HasValue)
+                .Select(dk => dk.IdKhoaHoc!.Value)
+                .ToListAsync();
+
+            search.ExcludeCourseIds = (search.ExcludeCourseIds ?? new List<Guid>())
+                .Concat(registeredCourseIds)
+                .Distinct()
+                .ToList();
+        }
+
         private async Task<PagedList<KhoaHocDto>> GetListFromDatabaseAsync(KhoaHocSearch search)
         {
-            // The public catalog intentionally shows every course row stored in the database,
-            // including drafts, inactive courses, old versions, and soft-deleted records.
-            var query = GetAll();
+            Guid.TryParse(
+            _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
+            out var currentUserId);
+            // ← Thêm filter cơ bản để loại khóa học rác
+            var query = GetAll()
+                .Where(x => !x.IsDeleted
+                         && x.TrangThai == "HoatDong"
+                         && x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.IsBanHienTai == true
+                         && x.TieuDe != null
+                         && x.HinhAnhKhoaHoc != null);
 
             // Keyword Search
             if (!string.IsNullOrWhiteSpace(search.Keyword))
             {
                 var kw = search.Keyword.Trim().ToLower();
-                query = query.Where(x => (x.TieuDe != null && x.TieuDe.ToLower().Contains(kw)) ||
-                                         (x.MoTa != null && x.MoTa.ToLower().Contains(kw)) ||
-                                         (x.LoaiKhoaHoc != null && x.LoaiKhoaHoc.ToLower().Contains(kw)));
+                query = query.Where(x =>
+                    (x.TieuDe != null && x.TieuDe.ToLower().Contains(kw)) ||
+                    (x.MoTa != null && x.MoTa.ToLower().Contains(kw)) ||
+                    (x.LoaiKhoaHoc != null && x.LoaiKhoaHoc.ToLower().Contains(kw)));
             }
+
+            if (currentUserId != Guid.Empty)
+                query = query.Where(x => x.CreatedId != currentUserId);
 
             if (!string.IsNullOrWhiteSpace(search.TieuDe))
             {
@@ -175,11 +228,8 @@ namespace Eduverse.Service.KhoaHocService
                 query = query.Where(x => x.TieuDe != null && x.TieuDe.ToLower().Contains(td));
             }
 
-            // Category filter
             if (!string.IsNullOrWhiteSpace(search.LoaiKhoaHoc))
-            {
                 query = query.Where(x => x.LoaiKhoaHoc == search.LoaiKhoaHoc);
-            }
 
             if (search.DanhMucId.HasValue)
             {
@@ -190,58 +240,34 @@ namespace Eduverse.Service.KhoaHocService
                 query = query.Where(x => courseIds.Contains(x.Id));
             }
 
-            // Level filter
             if (!string.IsNullOrWhiteSpace(search.CapDo))
-            {
                 query = query.Where(x => x.CapDo == search.CapDo);
-            }
 
-            // Price filter
             if (search.IsFree == true)
-            {
                 query = query.Where(x => x.Gia == 0 || x.Gia == null);
-            }
             else
             {
                 if (search.GiaFrom.HasValue)
-                {
                     query = query.Where(x => x.Gia >= search.GiaFrom.Value);
-                }
                 if (search.GiaTo.HasValue)
-                {
                     query = query.Where(x => x.Gia <= search.GiaTo.Value);
-                }
             }
 
-            // Lecture count range filter
             if (search.TongBaiGiangFrom.HasValue)
-            {
                 query = query.Where(x => x.TongBaiGiang >= search.TongBaiGiangFrom.Value);
-            }
             if (search.TongBaiGiangTo.HasValue)
-            {
                 query = query.Where(x => x.TongBaiGiang <= search.TongBaiGiangTo.Value);
-            }
 
-            // Exclude course IDs (for registered courses)
             if (search.ExcludeCourseIds != null && search.ExcludeCourseIds.Any())
-            {
                 query = query.Where(x => !search.ExcludeCourseIds.Contains(x.Id));
-            }
 
             // Sorting
             if (search.SortPrice?.ToLower() == "asc")
-            {
                 query = query.OrderBy(x => x.Gia);
-            }
             else if (search.SortPrice?.ToLower() == "desc")
-            {
                 query = query.OrderByDescending(x => x.Gia);
-            }
             else
-            {
                 query = query.OrderByDescending(x => x.NgayTao);
-            }
 
             var itemsQuery = query.Select(x => new KhoaHocDto
             {
@@ -255,7 +281,14 @@ namespace Eduverse.Service.KhoaHocService
                 CapDo = x.CapDo,
                 TongThoiLuong = x.TongThoiLuong,
                 TongBaiGiang = x.TongBaiGiang,
-                SoLuongHocVien = x.SoLuongHocVien,
+                SoLuongHocVien = _eduverseContext.dangKyKhoaHocs
+                    .Where(dk => dk.IdKhoaHoc == x.Id
+                        && !dk.IsDeleted
+                        && dk.IsDangKy != false
+                        && dk.IdNguoiDangKi.HasValue)
+                    .Select(dk => dk.IdNguoiDangKi)
+                    .Distinct()
+                    .Count(),
                 NgayTao = x.NgayTao,
                 NgayCapNhat = x.NgayCapNhat,
                 TrangThaiPheDuyet = x.TrangThaiPheDuyet,
@@ -478,7 +511,13 @@ namespace Eduverse.Service.KhoaHocService
 
             var soHocVien = await _dangKyKhoaHocRepository.GetQueryable()
                 .AsNoTracking()
-                .CountAsync(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted);
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                    && !x.IsDeleted
+                    && x.IsDangKy != false
+                    && x.IdNguoiDangKi.HasValue)
+                .Select(x => x.IdNguoiDangKi)
+                .Distinct()
+                .CountAsync();
             khoaHoc.SoLuongHocVien = soHocVien;
 
             
