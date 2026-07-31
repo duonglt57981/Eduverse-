@@ -15,9 +15,11 @@ using Eduverse.Service.CloudinaryService;
 using Eduverse.Service.CloudinaryService.Dto;
 using Eduverse.Service.Common;
 using Eduverse.Service.Core.Mapper;
+using Eduverse.Service.DangKyKhoaHocService;
 using Eduverse.Service.ElasticsearchService;
 using Eduverse.Service.EmailService;
 using Eduverse.Service.GeminiService;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -144,6 +146,10 @@ namespace Eduverse.Api
                     settings.ApiKey,
                     settings.Region);
             });
+
+            // ================== Hangfire ==================
+            builder.Services.AddHangfire(config =>config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddHangfireServer();
 
             // PayOS chuyen khoan
             // Client payment
@@ -320,7 +326,14 @@ namespace Eduverse.Api
             // Configure the HTTP request pipeline.
             app.UseSwagger();
             app.UseSwaggerUI();
-            
+
+            // Hangfire
+            app.UseHangfireDashboard();
+            RecurringJob.AddOrUpdate<IDangKyKhoaHocService>(
+                "expire-course",
+                x => x.ExpireDangKyKhoaHocAsync(),
+                Cron.Minutely);
+
             app.UseExceptionHandler(errApp =>
             {
                 errApp.Run(async ctx =>

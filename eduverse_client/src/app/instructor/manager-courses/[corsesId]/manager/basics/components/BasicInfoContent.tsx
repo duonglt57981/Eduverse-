@@ -496,7 +496,7 @@ export default function BasicInfoContent() {
       try {
         const res = await danhMucService.getList({
           pageIndex: 1,
-          pageSize: 100,
+          pageSize: 10,
           trangThai: "HoatDong",
         });
         if (res.status !== false && res.data) {
@@ -787,7 +787,8 @@ export default function BasicInfoContent() {
             Trang đích của khóa học
           </Typography>
           <Typography sx={{ fontSize: 14, color: "#64748B" }}>
-            Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ ràng và hấp dẫn.
+            Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ
+            ràng và hấp dẫn.
           </Typography>
         </Box>
 
@@ -845,7 +846,10 @@ export default function BasicInfoContent() {
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
                     "&.Mui-focused fieldset": { borderColor: "#991B1B" },
                   },
-                  "& .MuiInputBase-input": { color: "#1E293B", fontWeight: 500 },
+                  "& .MuiInputBase-input": {
+                    color: "#1E293B",
+                    fontWeight: 500,
+                  },
                 }}
               />
               <Typography
@@ -881,7 +885,7 @@ export default function BasicInfoContent() {
                   "&:focus-within": {
                     borderColor: "#991B1B",
                     boxShadow: "0 0 0 1px #991B1B",
-                  }
+                  },
                 }}
               >
                 {!isEditable ? (
@@ -1072,7 +1076,11 @@ export default function BasicInfoContent() {
                 type="text"
                 inputMode="numeric"
                 placeholder="VD: 500.000"
-                value={thongTin.giaGoc !== undefined && thongTin.giaGoc !== null ? thongTin.giaGoc : ""}
+                value={
+                  thongTin.giaGoc !== undefined && thongTin.giaGoc !== null
+                    ? thongTin.giaGoc
+                    : ""
+                }
                 onChange={(e) => {
                   if (!isEditable) return;
                   const raw = e.target.value.replace(/\D/g, "");
@@ -1098,10 +1106,20 @@ export default function BasicInfoContent() {
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
                     "&.Mui-focused fieldset": { borderColor: "#991B1B" },
                   },
-                  "& .MuiInputBase-input": { color: "#1E293B", fontWeight: 500 },
+                  "& .MuiInputBase-input": {
+                    color: "#1E293B",
+                    fontWeight: 500,
+                  },
                 }}
               />
-              <Typography sx={{ fontSize: 12, color: "#64748B", mt: 0.75, fontWeight: 500 }}>
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: "#64748B",
+                  mt: 0.75,
+                  fontWeight: 500,
+                }}
+              >
                 Giá trị lưu là số nguyên (VNĐ), dấu chấm chỉ để hiển thị.
               </Typography>
             </Paper>

@@ -126,7 +126,15 @@ export default function CourseEditLayout({
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F7F8FA" }}>
       {/* Header Panel */}
-      <Box sx={{ bgcolor: "#ffffff", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 1000 }}>
+      <Box
+        sx={{
+          bgcolor: "#111827",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          position: "sticky",
+          top: 0,
+          zIndex: 1000,
+        }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -303,7 +311,14 @@ export default function CourseEditLayout({
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "flex-start", bgcolor: "#F7F8FA", minHeight: "calc(100vh - 72px)" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          bgcolor: "#F7F8FA",
+          minHeight: "calc(100vh - 72px)",
+        }}
+      >
         <Box
           component="nav"
           sx={{

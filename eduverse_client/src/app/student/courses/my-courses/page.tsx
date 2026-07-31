@@ -24,6 +24,7 @@ import {
   InputLabel,
   debounce,
   SelectChangeEvent,
+  Pagination,
 } from "@mui/material";
 import { styled, keyframes } from "@mui/material/styles";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -48,9 +49,9 @@ import KhoaHocService from "@/src/services/KhoaHocService";
 
 const RED = "#991B1B";
 const RED_HOVER = "#7F1D1D";
-const RED_LIGHT = "#D97706";
 const TEXT_MAIN = "#1E293B";
 const TEXT_MUTED = "#64748B";
+const PAGE_SIZE = 9;
 
 // ─── token helpers ────────────────────────────────────────────────────────────
 
@@ -158,6 +159,7 @@ interface ApiResponse<T> {
 interface PagedList<T> {
   items: T[];
   totalCount?: number;
+  totalPage?: number;
   pageIndex?: number;
   pageSize?: number;
 }
@@ -194,6 +196,47 @@ function extractCourseItems(response: unknown): KhoaHocType[] {
   return [];
 }
 
+function extractPaginationInfo(response: unknown): {
+  totalCount: number;
+  totalPage: number;
+  pageIndex: number;
+  pageSize: number;
+} {
+  const defaultResult = {
+    totalCount: 0,
+    totalPage: 1,
+    pageIndex: 1,
+    pageSize: PAGE_SIZE,
+  };
+
+  if (!response) return defaultResult;
+
+  // Nếu response là PagedList trực tiếp
+  if (isPagedList<KhoaHocType>(response)) {
+    return {
+      totalCount: response.totalCount ?? 0,
+      totalPage: response.totalPage ?? 1,
+      pageIndex: response.pageIndex ?? 1,
+      pageSize: response.pageSize ?? PAGE_SIZE,
+    };
+  }
+
+  // Nếu response là ApiResponse chứa PagedList
+  if (isApiResponse<unknown>(response)) {
+    const inner = response.data;
+    if (isPagedList<KhoaHocType>(inner)) {
+      return {
+        totalCount: inner.totalCount ?? 0,
+        totalPage: inner.totalPage ?? 1,
+        pageIndex: inner.pageIndex ?? 1,
+        pageSize: inner.pageSize ?? PAGE_SIZE,
+      };
+    }
+  }
+
+  return defaultResult;
+}
+
 // ─── animations ───────────────────────────────────────────────────────────────
 
 const pulseRing = keyframes`
@@ -208,11 +251,6 @@ const shakeIcon = keyframes`
   40% { transform: translate(2px,-2px) rotate(5deg); }
   60% { transform: translate(-1px,1px) rotate(-3deg); }
   80% { transform: translate(1px,-1px) rotate(3deg); }
-`;
-
-const blinkText = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
 `;
 
 const waveLine = keyframes`
@@ -237,12 +275,13 @@ const CourseCard = styled(Card)(() => ({
   position: "relative",
   "&:hover": {
     transform: "translateY(-6px)",
-    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
+    boxShadow:
+      "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
     borderColor: "#CBD5E1",
   },
   "&:hover img": {
     transform: "scale(1.04)",
-  }
+  },
 }));
 
 const ThumbBox = styled(Box)({
@@ -273,10 +312,11 @@ const StatCard = styled(Paper)(() => ({
   backgroundColor: "#fff",
   transition: "all 0.2s ease-in-out",
   "&:hover": {
-    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+    boxShadow:
+      "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
     transform: "translateY(-2px)",
     borderColor: "#CBD5E1",
-  }
+  },
 }));
 
 const CourseProgress = styled(LinearProgress)(() => ({
@@ -364,7 +404,13 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
       </Typography>
       <Typography
         variant="body2"
-        sx={{ color: "#64748B", maxWidth: 320, mx: "auto", fontSize: 14.5, lineHeight: 1.6 }}
+        sx={{
+          color: "#64748B",
+          maxWidth: 320,
+          mx: "auto",
+          fontSize: 14.5,
+          lineHeight: 1.6,
+        }}
       >
         {isNetwork
           ? "Vui lòng kiểm tra lại kết nối mạng Wifi/3G/4G của bạn."
@@ -401,7 +447,13 @@ const ThumbPlaceholder = ({ title }: { title?: string }) => {
       }}
     >
       <Typography
-        sx={{ fontSize: 36, fontWeight: 800, color: fg, opacity: 0.4, letterSpacing: "1px" }}
+        sx={{
+          fontSize: 36,
+          fontWeight: 800,
+          color: fg,
+          opacity: 0.4,
+          letterSpacing: "1px",
+        }}
       >
         {initials}
       </Typography>
@@ -423,11 +475,13 @@ function MyCoursesContent() {
     trangThai: "TatCa",
     sapXepNgay: "Moi",
     pageIndex: 1,
-    pageSize: 100,
+    pageSize: PAGE_SIZE,
   });
 
   // ── course data state ──────────────────────────────────────────────────────
   const [courses, setCourses] = useState<KhoaHocType[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPage, setTotalPage] = useState(1);
   const [loading, setLoading] = useState<boolean>(!!userId);
   const [errorDetail, setErrorDetail] = useState<ErrorDetail | null>(
     userId ? null : AUTH_ERROR,
@@ -455,7 +509,7 @@ function MyCoursesContent() {
             ? undefined
             : searchParams.trangThai,
         pageIndex: searchParams.pageIndex,
-        pageSize: searchParams.pageSize,
+        pageSize: PAGE_SIZE, // Luôn cố định pageSize = 10
       };
 
       if (searchParams.sapXepNgay) {
@@ -466,8 +520,13 @@ function MyCoursesContent() {
 
       const response = await khoaHocService.GetListDangKi(search);
       const items = extractCourseItems(response);
+
+      // Lấy thông tin phân trang
+      const pagination = extractPaginationInfo(response);
+
       setCourses(items);
-      // Không xóa courses cũ khi bắt đầu tải
+      setTotalCount(pagination.totalCount);
+      setTotalPage(pagination.totalPage);
     } catch (err: unknown) {
       let type: ErrorDetail["type"] = "backend";
       let message = "Không thể tải danh sách khóa học. Vui lòng thử lại sau.";
@@ -507,8 +566,9 @@ function MyCoursesContent() {
       }
 
       setErrorDetail({ type, message });
-      // Xóa danh sách cũ khi có lỗi (trừ lỗi auth thì giữ nguyên? Ở đây ta xóa để hiển thị thông báo)
       setCourses([]);
+      setTotalCount(0);
+      setTotalPage(1);
     } finally {
       setLoading(false);
     }
@@ -530,6 +590,7 @@ function MyCoursesContent() {
     searchParams.trangThai,
     searchParams.sapXepNgay,
     searchParams.sapXepTen,
+    searchParams.pageIndex,
     userId,
     debouncedFetch,
   ]);
@@ -623,6 +684,17 @@ function MyCoursesContent() {
     });
   };
 
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    page: number,
+  ) => {
+    setSearchParams((prev: KhoaHocDangKiSearch) => ({
+      ...prev,
+      pageIndex: page,
+    }));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // ── render helpers ──────────────────────────────────────────────────────────
   const renderStats = () => {
     const statItems = [
@@ -687,7 +759,14 @@ function MyCoursesContent() {
                 >
                   {s.val}
                 </Typography>
-                <Typography sx={{ fontSize: 13, color: "#64748B", fontWeight: 500, mt: 0.5 }}>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: "#64748B",
+                    fontWeight: 500,
+                    mt: 0.5,
+                  }}
+                >
                   {s.lbl}
                 </Typography>
               </Box>
@@ -727,16 +806,26 @@ function MyCoursesContent() {
                   ? "warning"
                   : "error"
             }
-            sx={{ mb: 4, mt: 3, borderRadius: "14px", "& .MuiAlert-icon": { fontSize: 24 } }}
+            sx={{
+              mb: 4,
+              mt: 3,
+              borderRadius: "14px",
+              "& .MuiAlert-icon": { fontSize: 24 },
+            }}
           >
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, textAlign: "left" }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, mb: 0.5, textAlign: "left" }}
+            >
               {isAuthError
                 ? "Phiên đăng nhập hết hạn"
                 : errorDetail.type === "network"
                   ? "Lỗi kết nối mạng"
                   : "Lỗi hệ thống"}
             </Typography>
-            <Typography variant="body2" sx={{ textAlign: "left" }}>{errorDetail.message}</Typography>
+            <Typography variant="body2" sx={{ textAlign: "left" }}>
+              {errorDetail.message}
+            </Typography>
           </Alert>
           <Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
             {isAuthError ? (
@@ -755,7 +844,7 @@ function MyCoursesContent() {
                   "&:hover": {
                     bgcolor: RED_HOVER,
                     boxShadow: "none",
-                  }
+                  },
                 }}
               >
                 Đăng nhập lại
@@ -776,7 +865,7 @@ function MyCoursesContent() {
                   "&:hover": {
                     bgcolor: RED_HOVER,
                     boxShadow: "none",
-                  }
+                  },
                 }}
               >
                 Thử lại
@@ -786,7 +875,11 @@ function MyCoursesContent() {
               component={Link}
               href="/"
               color="inherit"
-              sx={{ textDecoration: "none", textTransform: "none", fontWeight: 700 }}
+              sx={{
+                textDecoration: "none",
+                textTransform: "none",
+                fontWeight: 700,
+              }}
             >
               Quay về trang chủ
             </Button>
@@ -815,11 +908,15 @@ function MyCoursesContent() {
           >
             <VideoLibraryIcon sx={{ fontSize: 36 }} />
           </Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5, color: "#1E293B" }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 800, mb: 1.5, color: "#1E293B" }}
+          >
             Chưa có khóa học nào
           </Typography>
           <Typography sx={{ color: "#64748B", mb: 4, fontSize: 15 }}>
-            Hành trình học tập của bạn đang chờ đợi. Hãy khám phá kho khóa học đa dạng của chúng tôi để bắt đầu ngay!
+            Hành trình học tập của bạn đang chờ đợi. Hãy khám phá kho khóa học
+            đa dạng của chúng tôi để bắt đầu ngay!
           </Typography>
           <Button
             component={Link}
@@ -837,7 +934,7 @@ function MyCoursesContent() {
               "&:hover": {
                 bgcolor: RED_HOVER,
                 boxShadow: "none",
-              }
+              },
             }}
           >
             Khám phá khóa học
@@ -848,137 +945,131 @@ function MyCoursesContent() {
 
     // Có dữ liệu: hiển thị grid với lớp phủ loading (nếu đang tải)
     return (
-      <Box sx={{ position: "relative" }}>
-        {loading && courses.length > 0 && (
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "rgba(255,255,255,0.7)",
-              zIndex: 1,
-              borderRadius: 2,
-            }}
-          >
-            <CircularProgress sx={{ color: RED }} />
-          </Box>
-        )}
-        <Grid container spacing={3}>
-          {courses.map((course) => {
-            const registrationId = course.idDangKiKhoaHoc;
-            const hasImg =
-              isValidImage(course.hinhAnhKhoaHoc) &&
-              !imageErrors[registrationId ?? ""];
-            const progress = course.phanTramHoanThanh ?? 0;
-            const minutes = Math.floor((course.tongThoiLuong ?? 0) / 60);
+      <Box>
+        <Box sx={{ position: "relative" }}>
+          {loading && courses.length > 0 && (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "rgba(255,255,255,0.7)",
+                zIndex: 1,
+                borderRadius: 2,
+              }}
+            >
+              <CircularProgress sx={{ color: RED }} />
+            </Box>
+          )}
+          <Grid container spacing={3}>
+            {courses.map((course) => {
+              const registrationId = course.idDangKiKhoaHoc;
+              const hasImg =
+                isValidImage(course.hinhAnhKhoaHoc) &&
+                !imageErrors[registrationId ?? ""];
+              const progress = course.phanTramHoanThanh ?? 0;
+              const minutes = Math.floor((course.tongThoiLuong ?? 0) / 60);
 
-            const isCompleted = progress >= 100;
-            const progressColor = isCompleted ? "#16A34A" : RED;
-            const progressBg = isCompleted ? "rgba(22, 163, 74, 0.1)" : "#F1F5F9";
+              const isCompleted = progress >= 100;
+              const progressColor = isCompleted ? "#16A34A" : RED;
+              const progressBg = isCompleted
+                ? "rgba(22, 163, 74, 0.1)"
+                : "#F1F5F9";
 
-            return (
-              <Grid
-                key={registrationId || course.id}
-                size={{ xs: 12, sm: 6, md: 4 }}
-              >
-                <CourseCard onClick={() => handleCourseClick(registrationId)}>
-                  <ThumbBox>
-                    {hasImg ? (
-                      <ThumbImg
-                        src={course.hinhAnhKhoaHoc ?? ""}
-                        alt={course.tieuDe}
-                        onError={() =>
-                          setImageErrors((prev: Record<string, boolean>) => ({
-                            ...prev,
-                            [registrationId ?? ""]: true,
-                          }))
-                        }
-                      />
-                    ) : (
-                      <ThumbPlaceholder title={course.tieuDe} />
-                    )}
-                    {progress > 0 && progress < 100 && (
-                      <Chip
-                        label={`${progress}%`}
-                        size="small"
-                        sx={{
-                          position: "absolute",
-                          bottom: 8,
-                          left: 8,
-                          bgcolor: "rgba(15, 23, 42, 0.8)",
-                          color: "#fff",
-                          fontWeight: 700,
-                          fontSize: "0.75rem",
-                          backdropFilter: "blur(4px)",
-                          height: 22,
-                        }}
-                      />
-                    )}
-                    {progress >= 100 && (
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          top: 8,
-                          right: 8,
-                          bgcolor: "#16A34A",
-                          borderRadius: "50%",
-                          width: 28,
-                          height: 28,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
-                        }}
-                      >
-                        <CheckCircleIcon sx={{ color: "#fff", fontSize: 18 }} />
-                      </Box>
-                    )}
-                  </ThumbBox>
-
-                  <CourseProgress
-                    variant="determinate"
-                    value={Math.min(progress, 100)}
-                    sx={{
-                      "& .MuiLinearProgress-bar": {
-                        bgcolor: progressColor,
-                      }
-                    }}
-                  />
-
-                  <CardContent
-                    sx={{ flexGrow: 1, p: 2.5, "&:last-child": { pb: 2.5 } }}
-                  >
-                    <Typography
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: 15,
-                        mb: 1.25,
-                        lineHeight: 1.4,
-                        color: "#1E293B",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        height: 42,
-                      }}
-                    >
-                      {course.tieuDe}
-                    </Typography>
-
-                    <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
-                      >
-                        <MenuBookIcon
-                          sx={{ fontSize: 15, color: "#94A3B8" }}
+              return (
+                <Grid
+                  key={registrationId || course.id}
+                  size={{ xs: 12, sm: 6, md: 4 }}
+                >
+                  <CourseCard onClick={() => handleCourseClick(registrationId)}>
+                    <ThumbBox>
+                      {hasImg ? (
+                        <ThumbImg
+                          src={course.hinhAnhKhoaHoc ?? ""}
+                          alt={course.tieuDe}
+                          onError={() =>
+                            setImageErrors((prev: Record<string, boolean>) => ({
+                              ...prev,
+                              [registrationId ?? ""]: true,
+                            }))
+                          }
                         />
-                        <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                          {course.tongBaiGiang ?? 0} bài học
-                        </Typography>
-                      </Box>
-                      {minutes > 0 && (
+                      ) : (
+                        <ThumbPlaceholder title={course.tieuDe} />
+                      )}
+                      {progress > 0 && progress < 100 && (
+                        <Chip
+                          label={`${progress}%`}
+                          size="small"
+                          sx={{
+                            position: "absolute",
+                            bottom: 8,
+                            left: 8,
+                            bgcolor: "rgba(15, 23, 42, 0.8)",
+                            color: "#fff",
+                            fontWeight: 700,
+                            fontSize: "0.75rem",
+                            backdropFilter: "blur(4px)",
+                            height: 22,
+                          }}
+                        />
+                      )}
+                      {progress >= 100 && (
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 8,
+                            right: 8,
+                            bgcolor: "#16A34A",
+                            borderRadius: "50%",
+                            width: 28,
+                            height: 28,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                          }}
+                        >
+                          <CheckCircleIcon
+                            sx={{ color: "#fff", fontSize: 18 }}
+                          />
+                        </Box>
+                      )}
+                    </ThumbBox>
+
+                    <CourseProgress
+                      variant="determinate"
+                      value={Math.min(progress, 100)}
+                      sx={{
+                        "& .MuiLinearProgress-bar": {
+                          bgcolor: progressColor,
+                        },
+                      }}
+                    />
+
+                    <CardContent
+                      sx={{ flexGrow: 1, p: 2.5, "&:last-child": { pb: 2.5 } }}
+                    >
+                      <Typography
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 15,
+                          mb: 1.25,
+                          lineHeight: 1.4,
+                          color: "#1E293B",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          height: 42,
+                        }}
+                      >
+                        {course.tieuDe}
+                      </Typography>
+
+                      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
                         <Box
                           sx={{
                             display: "flex",
@@ -986,86 +1077,154 @@ function MyCoursesContent() {
                             gap: 0.75,
                           }}
                         >
-                          <AccessTimeIcon
+                          <MenuBookIcon
                             sx={{ fontSize: 15, color: "#94A3B8" }}
                           />
-                          <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                            {minutes} phút
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "#64748B", fontWeight: 600 }}
+                          >
+                            {course.tongBaiGiang ?? 0} bài học
                           </Typography>
                         </Box>
-                      )}
-                    </Stack>
+                        {minutes > 0 && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.75,
+                            }}
+                          >
+                            <AccessTimeIcon
+                              sx={{ fontSize: 15, color: "#94A3B8" }}
+                            />
+                            <Typography
+                              variant="caption"
+                              sx={{ color: "#64748B", fontWeight: 600 }}
+                            >
+                              {minutes} phút
+                            </Typography>
+                          </Box>
+                        )}
+                      </Stack>
 
-                    <Box sx={{ mb: 2.5 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          mb: 0.75,
-                        }}
-                      >
-                        <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                          Tiến độ học tập
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ fontWeight: 800, color: progressColor }}
+                      <Box sx={{ mb: 2.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            mb: 0.75,
+                          }}
                         >
-                          {course.soBaiGiangHoanThanh ?? 0}/
-                          {course.tongBaiGiang ?? 0} bài
-                        </Typography>
-                      </Box>
-                      <LinearProgress
-                        variant="determinate"
-                        value={Math.min(progress, 100)}
-                        sx={{
-                          height: 6,
-                          borderRadius: 3,
-                          bgcolor: progressBg,
-                          "& .MuiLinearProgress-bar": {
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "#64748B", fontWeight: 600 }}
+                          >
+                            Tiến độ học tập
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: 800, color: progressColor }}
+                          >
+                            {course.soBaiGiangHoanThanh ?? 0}/
+                            {course.tongBaiGiang ?? 0} bài
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(progress, 100)}
+                          sx={{
+                            height: 6,
                             borderRadius: 3,
-                            bgcolor: progressColor,
+                            bgcolor: progressBg,
+                            "& .MuiLinearProgress-bar": {
+                              borderRadius: 3,
+                              bgcolor: progressColor,
+                            },
+                          }}
+                        />
+                      </Box>
+
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        size="small"
+                        startIcon={<PlayArrowIcon />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCourseClick(registrationId);
+                        }}
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 700,
+                          borderRadius: "10px",
+                          py: 1,
+                          bgcolor: isCompleted
+                            ? "rgba(22, 163, 74, 0.08)"
+                            : RED,
+                          color: isCompleted ? "#16A34A" : "#fff",
+                          boxShadow: "none",
+                          border: isCompleted
+                            ? "1px solid rgba(22, 163, 74, 0.2)"
+                            : "none",
+                          "&:hover": {
+                            bgcolor: isCompleted
+                              ? "rgba(22, 163, 74, 0.15)"
+                              : RED_HOVER,
+                            boxShadow: "none",
                           },
                         }}
-                      />
-                    </Box>
+                      >
+                        {progress === 0
+                          ? "Bắt đầu học"
+                          : progress >= 100
+                            ? "Xem lại"
+                            : "Tiếp tục học"}
+                      </Button>
+                    </CardContent>
+                  </CourseCard>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Box>
 
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      size="small"
-                      startIcon={<PlayArrowIcon />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCourseClick(registrationId);
-                      }}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 700,
-                        borderRadius: "10px",
-                        py: 1,
-                        bgcolor: isCompleted ? "rgba(22, 163, 74, 0.08)" : RED,
-                        color: isCompleted ? "#16A34A" : "#fff",
-                        boxShadow: "none",
-                        border: isCompleted ? "1px solid rgba(22, 163, 74, 0.2)" : "none",
-                        "&:hover": {
-                          bgcolor: isCompleted ? "rgba(22, 163, 74, 0.15)" : RED_HOVER,
-                          boxShadow: "none",
-                        },
-                      }}
-                    >
-                      {progress === 0
-                        ? "Bắt đầu học"
-                        : progress >= 100
-                          ? "Xem lại"
-                          : "Tiếp tục học"}
-                    </Button>
-                  </CardContent>
-                </CourseCard>
-              </Grid>
-            );
-          })}
-        </Grid>
+        {/* Phân trang */}
+        {totalPage > 1 && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              mt: 4,
+              pt: 2,
+              borderTop: "1px solid #E2E8F0",
+            }}
+          >
+            <Pagination
+              count={totalPage}
+              page={searchParams.pageIndex}
+              onChange={handlePageChange}
+              shape="rounded"
+              color="primary"
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  fontWeight: 600,
+                  borderRadius: "10px",
+                },
+                "& .Mui-selected": {
+                  bgcolor: `${RED} !important`,
+                  color: "#fff",
+                  "&:hover": {
+                    bgcolor: `${RED_HOVER} !important`,
+                  },
+                },
+                "& .MuiPaginationItem-root:hover": {
+                  bgcolor: alpha(RED, 0.08),
+                },
+              }}
+            />
+          </Box>
+        )}
       </Box>
     );
   };
@@ -1078,10 +1237,15 @@ function MyCoursesContent() {
       <Box sx={{ maxWidth: 560, mx: "auto", py: 8, textAlign: "center" }}>
         <ConnectionLostAnimation type="backend" />
         <Alert severity="warning" sx={{ mb: 4, mt: 3, borderRadius: "14px" }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, textAlign: "left" }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 700, mb: 0.5, textAlign: "left" }}
+          >
             🔐 Phiên đăng nhập hết hạn
           </Typography>
-          <Typography variant="body2" sx={{ textAlign: "left" }}>{AUTH_ERROR.message}</Typography>
+          <Typography variant="body2" sx={{ textAlign: "left" }}>
+            {AUTH_ERROR.message}
+          </Typography>
         </Alert>
         <Stack direction="row" spacing={2} sx={{ justifyContent: "center" }}>
           <Button
@@ -1099,7 +1263,7 @@ function MyCoursesContent() {
               "&:hover": {
                 bgcolor: RED_HOVER,
                 boxShadow: "none",
-              }
+              },
             }}
           >
             Đăng nhập lại
@@ -1108,7 +1272,11 @@ function MyCoursesContent() {
             component={Link}
             href="/"
             color="inherit"
-            sx={{ textDecoration: "none", textTransform: "none", fontWeight: 700 }}
+            sx={{
+              textDecoration: "none",
+              textTransform: "none",
+              fontWeight: 700,
+            }}
           >
             Quay về trang chủ
           </Button>
@@ -1121,11 +1289,15 @@ function MyCoursesContent() {
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4, display: "flex", flexDirection: "column", gap: 1 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: TEXT_MAIN, letterSpacing: "-0.5px" }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 800, color: TEXT_MAIN, letterSpacing: "-0.5px" }}
+        >
           Khóa học của tôi
         </Typography>
         <Typography sx={{ color: TEXT_MUTED, fontSize: 15 }}>
-          Tiếp tục hành trình chinh phục tri thức và hoàn thành các khóa học của bạn
+          Tiếp tục hành trình chinh phục tri thức và hoàn thành các khóa học của
+          bạn
         </Typography>
       </Box>
 
@@ -1169,7 +1341,12 @@ function MyCoursesContent() {
           }}
         />
         <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 160 } }}>
-          <InputLabel id="sort-select-label" sx={{ fontSize: 14, "&.Mui-focused": { color: RED } }}>Sắp xếp</InputLabel>
+          <InputLabel
+            id="sort-select-label"
+            sx={{ fontSize: 14, "&.Mui-focused": { color: RED } }}
+          >
+            Sắp xếp
+          </InputLabel>
           <Select
             labelId="sort-select-label"
             value={
@@ -1193,7 +1370,7 @@ function MyCoursesContent() {
                 "& fieldset": { borderColor: "#E2E8F0" },
                 "&:hover fieldset": { borderColor: "#CBD5E1" },
                 "&.Mui-focused fieldset": { borderColor: RED },
-              }
+              },
             }}
           >
             <MenuItem value="Moi">Mới nhất</MenuItem>
@@ -1223,7 +1400,8 @@ export default function StudentCoursesPage() {
             borderRadius: "24px",
             border: "1px solid #E2E8F0",
             bgcolor: "#ffffff",
-            boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.01)",
+            boxShadow:
+              "0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.01)",
           }}
         >
           <MyCoursesContent />

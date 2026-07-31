@@ -29,6 +29,8 @@ import {
   NavigateNext as NavigateNextIcon,
   CheckCircle as CheckCircleIcon,
   VideoLibrary as VideoLibraryIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
 } from "@mui/icons-material";
 
 import { VideoPlayer } from "./components/VideoPlayer";
@@ -50,6 +52,7 @@ const PRIMARY_RED = "#991B1B";
 const PRIMARY_RED_DARK = "#7F1D1D";
 const SIDEBAR_W = 380;
 const HEADER_H = 68;
+const MO_TA_COLLAPSED_H = 180; // chiều cao mô tả khi thu gọn (px)
 
 // Interface khớp với response thực tế từ BE (camelCase)
 interface PhanHocApi {
@@ -100,7 +103,8 @@ function VideoArea({
     return (
       <Box
         sx={{
-          height: 280,
+          width: "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -122,7 +126,8 @@ function VideoArea({
     return (
       <Box
         sx={{
-          height: 280,
+          width: "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -142,7 +147,8 @@ function VideoArea({
     return (
       <Box
         sx={{
-          height: 280,
+          width: "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -163,17 +169,7 @@ function VideoArea({
   // Chỉ render VideoPlayer full khi isVideoFullMounted = true và không ở chế độ mini
   if (isVideoFullMounted && !showMini) {
     return (
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "1150px",
-          mx: "auto",
-          borderRadius: "12px",
-          overflow: "hidden",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-          border: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
+      <Box sx={{ width: "100%", height: "100%", bgcolor: "#000" }}>
         <VideoPlayer
           key={baiGiang.id}
           url={baiGiang.urlBaiGiang}
@@ -194,7 +190,7 @@ function VideoArea({
 
   // Khi ở chế độ mini, hiển thị placeholder để giữ layout
   return (
-    <Box sx={{ width: "100%", aspectRatio: "16/9", bgcolor: "#000" }}>
+    <Box sx={{ width: "100%", height: "100%", bgcolor: "#000" }}>
       <Box
         sx={{
           display: "flex",
@@ -250,9 +246,12 @@ export default function KhoaHocLearningPage() {
   const [currentSavedTime, setCurrentSavedTime] = useState<number | undefined>(
     undefined,
   );
+  const [moTaExpanded, setMoTaExpanded] = useState(false);
+  const [moTaOverflowing, setMoTaOverflowing] = useState(false);
 
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const videoSectionRef = useRef<HTMLDivElement>(null);
+  const moTaContentRef = useRef<HTMLDivElement>(null);
 
   // ── Stats ──
   const tongBai = danhSachTatCa.length;
@@ -497,6 +496,24 @@ export default function KhoaHocLearningPage() {
     ? progressMap.get(baiGiang.id)?.daHoanThanh
     : baiGiang?.daHoanThanh;
 
+  // ── Reset trạng thái thu gọn mô tả mỗi khi đổi khóa học ──
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset UI khi đổi khoahoc.id, không tính được lúc render
+    setMoTaExpanded(false);
+  }, [khoaHoc?.id]);
+
+  // ── Kiểm tra mô tả có bị tràn (cao hơn khung thu gọn) hay không ──
+  // để quyết định có cần hiện nút "Xem thêm" hay không.
+  useEffect(() => {
+    const el = moTaContentRef.current;
+    if (!el) {
+      setMoTaOverflowing(false);
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- cần đo scrollHeight thực tế sau khi DOM render nội dung HTML
+    setMoTaOverflowing(el.scrollHeight > MO_TA_COLLAPSED_H + 1);
+  }, [khoaHoc?.moTa]);
+
   // ── Loading & Error ──
   if (loading) {
     return <CourseSkeleton />;
@@ -605,8 +622,22 @@ export default function KhoaHocLearningPage() {
           flexShrink: 0,
         }}
       >
-        <Toolbar sx={{ minHeight: HEADER_H, height: HEADER_H, gap: 3, px: { xs: 2, md: 3 } }}>
-          <Box sx={{ width: { xs: 110, sm: 130, lg: 150 }, cursor: "pointer", display: "flex", alignItems: "center" }}>
+        <Toolbar
+          sx={{
+            minHeight: HEADER_H,
+            height: HEADER_H,
+            gap: 3,
+            px: { xs: 2, md: 3 },
+          }}
+        >
+          <Box
+            sx={{
+              width: { xs: 110, sm: 130, lg: 150 },
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
             <Link
               href={dashboardPath}
               style={{ display: "block", width: "100%" }}
@@ -762,7 +793,18 @@ export default function KhoaHocLearningPage() {
             </Box>
           ) : (
             <>
-              <Box ref={videoSectionRef} sx={{ flexShrink: 0, bgcolor: "#111827", p: { xs: 0, md: 3 }, display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <Box
+                ref={videoSectionRef}
+                sx={{
+                  flexShrink: 0,
+                  bgcolor: "#000",
+                  width: "100%",
+                  height: {
+                    xs: "56.25vw", // tỉ lệ 16:9 trên mobile (không đủ chỗ để full màn hình)
+                    md: `calc(100vh - ${HEADER_H}px)`, // full màn hình trừ header, trừ sidebar (sidebar nằm ngoài cột này)
+                  },
+                }}
+              >
                 <VideoArea
                   loading={loading}
                   hasLessons={danhSachTatCa.length > 0}
@@ -801,9 +843,7 @@ export default function KhoaHocLearningPage() {
                         khoaHoc.danhSachPhanHoc as unknown as PhanHocApi[]
                       )?.find((p) => p.id === idPhanPlay)?.tenPhan ?? ""}
                     </Typography>
-                    <ChevronRightIcon
-                      sx={{ fontSize: 16, color: "#94A3B8" }}
-                    />
+                    <ChevronRightIcon sx={{ fontSize: 16, color: "#94A3B8" }} />
                     <Typography
                       variant="body2"
                       sx={{ fontWeight: 600, color: PRIMARY_RED }}
@@ -825,7 +865,12 @@ export default function KhoaHocLearningPage() {
                   <Box sx={{ minWidth: 0 }}>
                     <Typography
                       variant="h4"
-                      sx={{ fontWeight: 900, mb: 1.5, color: "#111827", fontSize: { xs: "20px", sm: "24px" } }}
+                      sx={{
+                        fontWeight: 900,
+                        mb: 1.5,
+                        color: "#111827",
+                        fontSize: { xs: "20px", sm: "24px" },
+                      }}
                     >
                       {baiGiang?.tieuDe ?? khoaHoc.tieuDe}
                     </Typography>
@@ -835,7 +880,10 @@ export default function KhoaHocLearningPage() {
                       sx={{ alignItems: "center", flexWrap: "wrap" }}
                     >
                       {baiGiang && (
-                        <Typography variant="caption" sx={{ fontWeight: 600, color: "#64748B" }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 600, color: "#64748B" }}
+                        >
                           Bài {currentIdx + 1}/{danhSachTatCa.length} ·{" "}
                           {Math.floor((baiGiang.thoiLuong ?? 0) / 60)}p{" "}
                           {(baiGiang.thoiLuong ?? 0) % 60}s
@@ -853,7 +901,7 @@ export default function KhoaHocLearningPage() {
                             height: 24,
                             px: 0.5,
                             border: "none",
-                            "& .MuiChip-icon": { color: "#15803D" }
+                            "& .MuiChip-icon": { color: "#15803D" },
                           }}
                           icon={
                             <CheckCircleIcon
@@ -912,46 +960,106 @@ export default function KhoaHocLearningPage() {
                     >
                       Mô tả khóa học
                     </Typography>
-                    <Box
-                      sx={{
-                        fontSize: "0.875rem",
-                        fontWeight: 400,
-                        lineHeight: 1.7,
-                        color: "text.secondary",
-                        "& p": { margin: "0 0 0.75em 0" },
-                        "& ul, & ol": {
-                          paddingLeft: "1.5em",
-                          margin: "0.5em 0 0.75em 0",
-                        },
-                        "& li": { marginBottom: "0.25em" },
-                        "& h1, & h2, & h3, & h4, & h5, & h6": {
-                          margin: "0.75em 0 0.25em 0",
-                          fontWeight: 700,
-                          color: "text.primary",
-                        },
-                        "& img": {
-                          maxWidth: "100%",
-                          height: "auto",
-                          borderRadius: 1,
-                          margin: "0.5em 0",
-                        },
-                        "& a": {
-                          color: PRIMARY_RED,
-                          textDecoration: "underline",
-                          "&:hover": { color: PRIMARY_RED_DARK },
-                        },
-                        "& blockquote": {
-                          borderLeft: `4px solid ${PRIMARY_RED}`,
-                          paddingLeft: "1.5em",
-                          margin: "0.75em 0",
-                          color: "text.secondary",
-                          fontStyle: "italic",
-                        },
-                      }}
-                      dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(khoaHoc.moTa),
-                      }}
-                    />
+
+                    <Box sx={{ position: "relative" }}>
+                      <Box
+                        sx={{
+                          maxHeight:
+                            moTaExpanded || !moTaOverflowing
+                              ? "none"
+                              : `${MO_TA_COLLAPSED_H}px`,
+                          overflow: "hidden",
+                          position: "relative",
+                          transition: "max-height 0.3s ease",
+                        }}
+                      >
+                        <Box
+                          ref={moTaContentRef}
+                          sx={{
+                            fontSize: "0.875rem",
+                            fontWeight: 400,
+                            lineHeight: 1.7,
+                            color: "text.secondary",
+                            "& p": { margin: "0 0 0.75em 0" },
+                            "& ul, & ol": {
+                              paddingLeft: "1.5em",
+                              margin: "0.5em 0 0.75em 0",
+                            },
+                            "& li": { marginBottom: "0.25em" },
+                            "& h1, & h2, & h3, & h4, & h5, & h6": {
+                              margin: "0.75em 0 0.25em 0",
+                              fontWeight: 700,
+                              color: "text.primary",
+                            },
+                            "& img": {
+                              maxWidth: "100%",
+                              height: "auto",
+                              borderRadius: 1,
+                              margin: "0.5em 0",
+                            },
+                            "& a": {
+                              color: PRIMARY_RED,
+                              textDecoration: "underline",
+                              "&:hover": { color: PRIMARY_RED_DARK },
+                            },
+                            "& blockquote": {
+                              borderLeft: `4px solid ${PRIMARY_RED}`,
+                              paddingLeft: "1.5em",
+                              margin: "0.75em 0",
+                              color: "text.secondary",
+                              fontStyle: "italic",
+                            },
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(khoaHoc.moTa),
+                          }}
+                        />
+
+                        {/* Lớp phủ mờ dần phía dưới khi đang thu gọn */}
+                        {!moTaExpanded && moTaOverflowing && (
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              height: 56,
+                              background:
+                                "linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1))",
+                              pointerEvents: "none",
+                            }}
+                          />
+                        )}
+                      </Box>
+
+                      {moTaOverflowing && (
+                        <Button
+                          onClick={() => setMoTaExpanded((v) => !v)}
+                          endIcon={
+                            moTaExpanded ? (
+                              <KeyboardArrowUpIcon />
+                            ) : (
+                              <KeyboardArrowDownIcon />
+                            )
+                          }
+                          sx={{
+                            mt: 1,
+                            px: 0,
+                            minWidth: 0,
+                            fontWeight: 800,
+                            fontSize: "13px",
+                            textTransform: "none",
+                            color: PRIMARY_RED,
+                            "&:hover": {
+                              bgcolor: "transparent",
+                              color: PRIMARY_RED_DARK,
+                            },
+                          }}
+                        >
+                          {moTaExpanded ? "Thu gọn" : "Xem thêm"}
+                        </Button>
+                      )}
+                    </Box>
                   </Paper>
                 )}
               </Box>

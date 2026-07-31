@@ -97,20 +97,29 @@ export default class KhoaHocService {
     try {
       let url = `/KhoaHoc/khoahoc-dangki`;
 
-      if (search) {
-        const params = new URLSearchParams();
-        if (search.keyword?.trim())
-          params.append("keyword", search.keyword.trim());
-        if (search.sapXepNgay) params.append("sapXepNgay", search.sapXepNgay);
-        else if (search.sapXepTen) params.append("sapXepTen", search.sapXepTen);
-        if (search.pageIndex !== undefined && search.pageIndex > 0)
-          params.append("pageIndex", String(search.pageIndex));
-        if (search.pageSize !== undefined && search.pageSize > 0)
-          params.append("pageSize", String(search.pageSize));
+      const params = new URLSearchParams();
 
-        const qs = params.toString();
-        if (qs) url += "?" + qs;
-      }
+      if (search?.keyword?.trim())
+        params.append("keyword", search.keyword.trim());
+      if (search?.sapXepNgay) params.append("sapXepNgay", search.sapXepNgay);
+      else if (search?.sapXepTen) params.append("sapXepTen", search.sapXepTen);
+
+      // pageIndex: mặc định trang 1 nếu không truyền hoặc không hợp lệ
+      const pageIndex =
+        search?.pageIndex !== undefined && search.pageIndex > 0
+          ? search.pageIndex
+          : 1;
+      params.append("pageIndex", String(pageIndex));
+
+      // pageSize: luôn mặc định = 10 nếu không truyền hoặc không hợp lệ
+      const pageSize =
+        search?.pageSize !== undefined && search.pageSize > 0
+          ? search.pageSize
+          : 10;
+      params.append("pageSize", String(pageSize));
+
+      const qs = params.toString();
+      if (qs) url += "?" + qs;
 
       const response = await apiService.get<PagedList<KhoaHocType>>(url);
 
@@ -158,10 +167,10 @@ export default class KhoaHocService {
     idKhoaHoc: string,
   ): Promise<ApiResponse<KhoaHocType[]>> {
     try {
-      const response = await apiService.post<ApiResponse<KhoaHocType[]>>(
+      const response = await apiService.post<KhoaHocType[]>(
         `/KhoaHoc/khoahoc-chuyentrangthai-choduyet-batch/${idKhoaHoc}`,
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error batch changing status to 'Chờ duyệt':", error);
       throw error;
@@ -172,13 +181,13 @@ export default class KhoaHocService {
     ids: string[],
   ): Promise<ApiResponse<KhoaHocType[]>> {
     try {
-      const response = await apiService.post<ApiResponse<KhoaHocType[]>>(
+      const response = await apiService.post<KhoaHocType[]>(
         `/KhoaHoc/khoahoc-chuyentrangthai-dangsua-batch`,
         {
           ids,
         },
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error batch changing status to 'Đang sửa':", error);
       throw error;

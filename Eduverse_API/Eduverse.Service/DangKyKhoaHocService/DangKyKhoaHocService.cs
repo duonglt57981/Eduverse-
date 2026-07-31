@@ -74,12 +74,15 @@ namespace Eduverse.Service.DangKyKhoaHocService
 
             var dangKy = new DangKyKhoaHoc
             {
+                Id = Guid.NewGuid(),
                 IdNguoiDangKi = idNguoiDangKi,
                 IdKhoaHoc = idKhoaHoc,
                 GiaDangKy = giaKhoaHoc,
                 TrangThai = "DaDangKi",
                 IsDangKy = true,    
-                ThoiGianDK = DateTime.UtcNow
+                ThoiGianDK = DateTime.Now,
+                NgayHetHan = DateTime.Now.AddMonths(6)
+                
             };
 
             await CreateAsync(dangKy);
@@ -99,12 +102,37 @@ namespace Eduverse.Service.DangKyKhoaHocService
 
             return _mapper.Map<DangKyKhoaHoc,DangKyKhoaHocMienPhiDto>(dangKy);
         }
+
         public async Task<Model.Entities.DangKyKhoaHoc?> GetByKhoaHocAndUser(Guid idKhoaHoc, Guid userId)
         {
             return await GetQueryable()
                 .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
                                    && x.IdNguoiDangKi == userId
                                    && !x.IsDeleted);
+        }
+
+        //Kiểm tra và isdelete khi hết hạn
+        public async Task ExpireDangKyKhoaHocAsync()
+        {
+            var now = DateTime.Now;
+
+            var danhSachHetHan = await GetQueryable()
+                .Where(x => !x.IsDeleted
+                         && x.NgayHetHan.HasValue
+                         && x.NgayHetHan.Value <= now)
+                .ToListAsync();
+
+            if (!danhSachHetHan.Any())
+                return;
+
+            foreach (var item in danhSachHetHan)
+            {
+                item.TrangThai = "HetHan";
+                await DeleteAsync(item);
+                await SaveAsync();
+            }
+
+            
         }
     }
 }

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Box,
-  Stack,
   Typography,
   Tabs,
   Tab,
@@ -34,6 +33,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -52,39 +52,43 @@ import { KhoaHocType, KhoaHocManagerSearch } from "@/src/types/khoaHoc/Dto/dto";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
 const MAU = {
-  chinh: "#991B1B", // đỏ đô chủ đạo thương hiệu
-  chinhDam: "#7F1D1D", // đỏ đô đậm hover
-  chinhNhat: "#FEF2F2", // đỏ rất nhạt active
-  vien: "#E5E7EB", // viền xám nhẹ
-  chuDen: "#111827", // chữ chính màu đậm (slate-900)
-  chuXam: "#6B7280", // chữ phụ (gray-500)
-  nenTrang: "#FAFAF9", // nền xám kem nhẹ
+  chinh: "#991B1B",
+  chinhDam: "#7F1D1D",
+  chinhNhat: "#FEF2F2",
+  vien: "#E5E7EB",
+  chuDen: "#111827",
+  chuXam: "#6B7280",
+  nenTrang: "#FAFAF9",
 };
 
 const duongDanChiTietKhoaHoc = (id: string) =>
   `/instructor/manager-courses/${id}/manager/curriculum`;
 const duongDanTaoKhoaHocMoi = "/instructor/manager-courses/create/1";
-const SO_LUONG_MOI_TRANG = 20;
+const SO_LUONG_MOI_TRANG = 10;
 const SO_LUONG_MOI_TRANG_STATS = 1000;
 
 // Các trạng thái được phép xóa khóa học
 const TRANG_THAI_CHO_PHEP_XOA = ["DangSua", "DaDuyet", "TuChoi"];
 
+// Thông tin hiển thị (nhãn + màu chữ + màu nền) cho từng trạng thái phê duyệt.
 function thongTinTrangThaiPheDuyet(trangThai?: string): {
   nhan: string;
-  mau: "default" | "warning" | "success" | "error";
+  mau: string;
+  nen: string;
 } {
   switch (trangThai) {
     case "ChoDuyet":
-      return { nhan: "Chờ duyệt", mau: "warning" };
+      return { nhan: "Chờ duyệt", mau: "#F59E0B", nen: "#FEF3C7" };
     case "DaDuyet":
-      return { nhan: "Đã duyệt", mau: "success" };
+      return { nhan: "Đã duyệt", mau: "#10B981", nen: "#E6F4EA" };
+    case "DangDuyet":
+      return { nhan: "Đang duyệt", mau: "#3B82F6", nen: "#DBEAFE" };
     case "TuChoi":
-      return { nhan: "Từ chối", mau: "error" };
+      return { nhan: "Từ chối", mau: "#EF4444", nen: "#FEE2E2" };
     case "DangSua":
-      return { nhan: "Đang sửa", mau: "default" };
+      return { nhan: "Đang sửa", mau: "#8B5CF6", nen: "#F5F3FF" };
     default:
-      return { nhan: trangThai ?? "Không rõ", mau: "default" };
+      return { nhan: trangThai ?? "Không rõ", mau: MAU.chuXam, nen: "#F3F4F6" };
   }
 }
 
@@ -123,6 +127,33 @@ function laThanhCong(response: any): boolean {
   return true;
 }
 
+function trichXuatTongSoBanGhi(data: any): number | undefined {
+  if (!data) return undefined;
+  const tong =
+    data?.totalCount ??
+    data?.total ??
+    data?.tongSo ??
+    data?.tongSoBanGhi ??
+    data?.totalItems ??
+    data?.totalRecords ??
+    data?.rowCount ??
+    data?.count;
+  return typeof tong === "number" ? tong : undefined;
+}
+
+function trichXuatTongSoTrang(
+  data: any,
+  tongSoBanGhi: number,
+  soLuongMoiTrang: number,
+): number {
+  const tongSoTrangBackend =
+    data?.totalPages ?? data?.tongSoTrang ?? data?.pageCount;
+  if (typeof tongSoTrangBackend === "number" && tongSoTrangBackend > 0) {
+    return tongSoTrangBackend;
+  }
+  return Math.max(1, Math.ceil(tongSoBanGhi / soLuongMoiTrang));
+}
+
 // ─── Thống kê / bộ lọc theo trạng thái ──────────────────────────────────────
 
 type KhoaThongKe =
@@ -134,7 +165,7 @@ type KhoaThongKe =
   | "dangSua";
 
 interface CauHinhTrangThai {
-  giaTri: string; // giá trị dùng cho trangThaiLoc / API
+  giaTri: string;
   khoaThongKe: KhoaThongKe;
   nhan: string;
   icon: React.ReactNode;
@@ -202,8 +233,6 @@ interface ThongKeState {
   dangSua: number;
 }
 
-// Tách riêng phần hiển thị số liệu để tránh children kiểu union (number | Element)
-// làm TypeScript suy luận sai overload của Typography.
 function GiaTriThongKe({
   dangTai,
   giaTri,
@@ -340,6 +369,14 @@ function KhoaHocContent() {
   const [dangXoa, setDangXoa] = useState(false);
   const [loiXoa, setLoiXoa] = useState<string | null>(null);
 
+  // Hàm reset tất cả bộ lọc về trạng thái ban đầu
+  const resetAllFilters = useCallback(() => {
+    setTuKhoaTimKiem("");
+    setTrangThaiLoc("TatCa");
+    setSapXep("moi-nhat");
+    setTrangHienTai(1);
+  }, []);
+
   // Hàm lấy thống kê
   const fetchThongKe = useCallback(
     async (buocQuaCache = false) => {
@@ -418,25 +455,31 @@ function KhoaHocContent() {
           return;
         }
 
-        const data = response.data;
+        const data: any = response.data;
         let items = data.items || [];
+
+        let tongSoBanGhiTuBackend = trichXuatTongSoBanGhi(data);
 
         if (searchParams.trangThai && searchParams.trangThai !== "TatCa") {
           const filtered = items.filter(
-            (item) => item.trangThaiPheDuyet === searchParams.trangThai,
+            (item: KhoaHocType) =>
+              item.trangThaiPheDuyet === searchParams.trangThai,
           );
           if (filtered.length !== items.length) {
             console.warn(
               "⚠️ Backend chưa lọc theo trangThaiPheDuyet, lọc bổ sung ở client.",
             );
             items = filtered;
+            tongSoBanGhiTuBackend = undefined;
           }
         }
 
+        const tongSoBanGhi: number = tongSoBanGhiTuBackend ?? items.length;
+
         setDanhSachKhoaHoc(items);
-        setTotalCount(items.length);
+        setTotalCount(tongSoBanGhi);
         setTongSoTrang(
-          Math.max(1, Math.ceil(items.length / SO_LUONG_MOI_TRANG)),
+          trichXuatTongSoTrang(data, tongSoBanGhi, SO_LUONG_MOI_TRANG),
         );
       } catch (err) {
         if (signal?.aborted) return;
@@ -454,9 +497,8 @@ function KhoaHocContent() {
 
   useEffect(() => {
     const abortController = new AbortController();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data khi mount/filter đổi, pattern hợp lệ
     layDanhSachKhoaHoc(abortController.signal);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchThongKe();
     return () => abortController.abort();
   }, [layDanhSachKhoaHoc, fetchThongKe]);
@@ -538,8 +580,15 @@ function KhoaHocContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Hàm tải lại dữ liệu với bộ lọc hiện tại (không reset)
+  const handleReload = () => {
+    fetchThongKe(true);
+  };
+
+  // Hàm làm mới danh sách: reset tất cả bộ lọc về mặc định và tải lại dữ liệu
   const handleRefresh = () => {
-    layDanhSachKhoaHoc();
+    resetAllFilters();
+    fetchThongKe(true);
   };
 
   const handleGoBack = () => {
@@ -578,7 +627,14 @@ function KhoaHocContent() {
         `Đã xóa khóa học "${xacNhanXoa.tieuDe ?? ""}" thành công.`,
       );
       setXacNhanXoa(null);
-      await Promise.all([layDanhSachKhoaHoc(), fetchThongKe(true)]);
+
+      const seLaTrangTrong = danhSachKhoaHoc.length === 1 && trangHienTai > 1;
+      if (seLaTrangTrong) {
+        setTrangHienTai((trang) => trang - 1);
+      } else {
+        await layDanhSachKhoaHoc();
+      }
+      await fetchThongKe(true);
     } catch (error) {
       console.error("Lỗi xóa khóa học:", error);
       setLoiXoa(trichXuatThongBaoLoi(error, "Có lỗi xảy ra khi xóa khóa học."));
@@ -679,7 +735,7 @@ function KhoaHocContent() {
         <Tab label="Các khóa học" value="khoa-hoc" />
       </Tabs>
 
-      {/* Thống kê / bộ lọc nhanh theo trạng thái — click để lọc luôn */}
+      {/* Thống kê / bộ lọc nhanh theo trạng thái */}
       <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
         {CAU_HINH_TRANG_THAI.map((cauHinh) => (
           <Grid key={cauHinh.giaTri} size={{ xs: 6, sm: 4, md: 2 }}>
@@ -770,8 +826,12 @@ function KhoaHocContent() {
             fontWeight: 600,
             bgcolor: "#F9FAFB",
             "& .MuiOutlinedInput-notchedOutline": { borderColor: MAU.vien },
-            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#D1D5DB" },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: MAU.chinh },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#D1D5DB",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: MAU.chinh,
+            },
             "&.Mui-focused": {
               bgcolor: "#ffffff",
               boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
@@ -784,7 +844,37 @@ function KhoaHocContent() {
           <MenuItem value="hoc-vien-nhieu-nhat">Nhiều học viên nhất</MenuItem>
         </Select>
 
-        <Tooltip title="Làm mới danh sách">
+        {/* Nút tải lại dữ liệu với bộ lọc hiện tại */}
+        <Tooltip title="Tải lại dữ liệu với bộ lọc hiện tại">
+          <IconButton
+            onClick={handleReload}
+            disabled={dangTai}
+            sx={{
+              color: MAU.chinh,
+              bgcolor: "#F9FAFB",
+              border: `1px solid ${MAU.vien}`,
+              borderRadius: "10px",
+              width: "42px",
+              height: "42px",
+              "&:hover": {
+                bgcolor: MAU.chinhNhat,
+                borderColor: MAU.chinh,
+              },
+              "&.Mui-disabled": {
+                opacity: 0.5,
+              },
+            }}
+          >
+            {dangTai ? (
+              <CircularProgress size={20} sx={{ color: MAU.chinh }} />
+            ) : (
+              <RefreshIcon sx={{ fontSize: 20 }} />
+            )}
+          </IconButton>
+        </Tooltip>
+
+        {/* Nút reset bộ lọc và tải lại */}
+        <Tooltip title="Đặt lại bộ lọc & làm mới">
           <IconButton
             onClick={handleRefresh}
             sx={{
@@ -800,12 +890,12 @@ function KhoaHocContent() {
               },
             }}
           >
-            <RefreshIcon sx={{ fontSize: 20 }} />
+            <RestartAltRoundedIcon sx={{ fontSize: 20 }} />
           </IconButton>
         </Tooltip>
       </Paper>
 
-      {/* Chip hiển thị bộ lọc trạng thái đang áp dụng (nếu khác "Tất cả") */}
+      {/* Chip hiển thị bộ lọc trạng thái đang áp dụng */}
       {trangThaiLoc !== "TatCa" && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <Typography sx={{ fontSize: 13, color: MAU.chuXam }}>
@@ -816,8 +906,8 @@ function KhoaHocContent() {
             size="small"
             onDelete={() => handleChonTrangThai("TatCa")}
             sx={{
-              bgcolor: MAU.chinhNhat,
-              color: MAU.chinh,
+              bgcolor: thongTinTrangThaiPheDuyet(trangThaiLoc).nen,
+              color: thongTinTrangThaiPheDuyet(trangThaiLoc).mau,
               fontWeight: 700,
               fontSize: 12,
             }}
@@ -843,12 +933,14 @@ function KhoaHocContent() {
             bgcolor: "#ffffff",
           }}
         >
-          <Typography sx={{ color: "#c62828", fontWeight: 700, fontSize: 16, mb: 2 }}>
+          <Typography
+            sx={{ color: "#c62828", fontWeight: 700, fontSize: 16, mb: 2 }}
+          >
             {loi}
           </Typography>
           <Button
             variant="outlined"
-            onClick={handleRefresh}
+            onClick={handleReload}
             sx={{
               borderColor: MAU.chinh,
               color: MAU.chinh,
@@ -880,11 +972,16 @@ function KhoaHocContent() {
           <SchoolOutlinedIcon
             sx={{ fontSize: 48, color: MAU.chinh, opacity: 0.6, mb: 2 }}
           />
-          <Typography sx={{ color: MAU.chuDen, fontWeight: 700, fontSize: 18, mb: 1 }}>
+          <Typography
+            sx={{ color: MAU.chuDen, fontWeight: 700, fontSize: 18, mb: 1 }}
+          >
             Chưa có khóa học nào
           </Typography>
-          <Typography sx={{ color: MAU.chuXam, fontWeight: 500, fontSize: 14, mb: 3 }}>
-            Bắt đầu chia sẻ kiến thức của bạn bằng cách tạo khóa học đầu tiên ngay hôm nay!
+          <Typography
+            sx={{ color: MAU.chuXam, fontWeight: 500, fontSize: 14, mb: 3 }}
+          >
+            Bắt đầu chia sẻ kiến thức của bạn bằng cách tạo khóa học đầu tiên
+            ngay hôm nay!
           </Typography>
           <Button
             variant="contained"
@@ -1015,7 +1112,16 @@ function KhoaHocContent() {
                   >
                     {/* Metadata & Title & Stats block */}
                     <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1, flexWrap: "wrap", gap: 1 }}>
+                      <Stack
+                        direction="row"
+                        spacing={1.5}
+                        sx={{
+                          alignItems: "center",
+                          mb: 1,
+                          flexWrap: "wrap",
+                          gap: 1,
+                        }}
+                      >
                         <Typography
                           sx={{
                             fontSize: 11,
@@ -1027,16 +1133,17 @@ function KhoaHocContent() {
                         >
                           {khoaHoc.capDo || "Tất cả cấp độ"}
                         </Typography>
-                        
+
                         <Chip
                           label={pheDuyet.nhan}
-                          color={pheDuyet.mau}
                           size="small"
                           sx={{
                             fontWeight: 750,
                             fontSize: 10.5,
                             borderRadius: "6px",
                             height: "20px",
+                            color: pheDuyet.mau,
+                            bgcolor: pheDuyet.nen,
                           }}
                         />
                       </Stack>
@@ -1063,51 +1170,12 @@ function KhoaHocContent() {
                         {khoaHoc.tieuDe ?? "Chưa đặt tên"}
                       </Typography>
 
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 3,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                          <SchoolOutlinedIcon sx={{ color: MAU.chuXam, fontSize: 16 }} />
-                          <Typography sx={{ fontSize: 13, color: MAU.chuXam, fontWeight: 600 }}>
-                            {khoaHoc.tongBaiGiang || 0} bài giảng
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                          <ArticleOutlinedIcon sx={{ color: MAU.chuXam, fontSize: 16 }} />
-                          <Typography sx={{ fontSize: 13, color: MAU.chuXam, fontWeight: 600 }}>
-                            {khoaHoc.tongTaiLieu || 0} tài liệu
-                          </Typography>
-                        </Box>
-                        
-                        {/* Price for Desktop inside stats row */}
-                        <Typography
-                          sx={{
-                            fontWeight: 900,
-                            fontSize: 15.5,
-                            color: MAU.chuDen,
-                            display: { xs: "none", sm: "block" },
-                            ml: 1
-                          }}
-                        >
-                          {khoaHoc.giaGoc === 0
-                            ? "Miễn phí"
-                            : `${(khoaHoc.giaGoc ?? 0).toLocaleString()}đ`}
-                        </Typography>
-                      </Box>
-                      
-                      {/* Price for Mobile below stats */}
+                      {/* Giá khóa học */}
                       <Typography
                         sx={{
                           fontWeight: 900,
                           fontSize: 15.5,
                           color: MAU.chuDen,
-                          display: { xs: "block", sm: "none" },
-                          mt: 1
                         }}
                       >
                         {khoaHoc.giaGoc === 0
@@ -1139,7 +1207,10 @@ function KhoaHocContent() {
                               color: MAU.chinh,
                               bgcolor: MAU.chinhNhat,
                               borderRadius: "10px",
-                              "&:hover": { bgcolor: MAU.chinhDam, color: "#fff" },
+                              "&:hover": {
+                                bgcolor: MAU.chinhDam,
+                                color: "#fff",
+                              },
                               transition: "all 0.2s",
                             }}
                           >
@@ -1161,12 +1232,18 @@ function KhoaHocContent() {
                                 color: MAU.chinh,
                                 bgcolor: MAU.chinhNhat,
                                 borderRadius: "10px",
-                                "&:hover": { bgcolor: MAU.chinhDam, color: "#fff" },
+                                "&:hover": {
+                                  bgcolor: MAU.chinhDam,
+                                  color: "#fff",
+                                },
                                 transition: "all 0.2s",
                               }}
                             >
                               {dangXuLyItemNay ? (
-                                <CircularProgress size={18} sx={{ color: MAU.chinh }} />
+                                <CircularProgress
+                                  size={18}
+                                  sx={{ color: MAU.chinh }}
+                                />
                               ) : (
                                 <EditIcon fontSize="small" />
                               )}
@@ -1188,7 +1265,10 @@ function KhoaHocContent() {
                                 color: "#DC2626",
                                 bgcolor: "#FEF2F2",
                                 borderRadius: "10px",
-                                "&:hover": { bgcolor: "#DC2626", color: "#fff" },
+                                "&:hover": {
+                                  bgcolor: "#DC2626",
+                                  color: "#fff",
+                                },
                                 transition: "all 0.2s",
                               }}
                             >
@@ -1207,25 +1287,42 @@ function KhoaHocContent() {
       )}
 
       {/* Phân trang */}
-      {!dangTai && !loi && danhSachKhoaHoc.length > 0 && tongSoTrang > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-          <Pagination
-            count={tongSoTrang}
-            page={trangHienTai}
-            onChange={handlePageChange}
-            shape="rounded"
-            sx={{
-              "& .MuiPaginationItem-root": {
-                color: MAU.chuDen,
-                fontWeight: 600,
-                borderRadius: "10px",
-              },
-              "& .Mui-selected": {
-                bgcolor: `${MAU.chinh} !important`,
-                color: "#fff",
-              },
-            }}
-          />
+      {!dangTai && !loi && danhSachKhoaHoc.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1.5,
+            mt: 4,
+          }}
+        >
+          <Typography sx={{ fontSize: 13, color: MAU.chuXam, fontWeight: 500 }}>
+            Trang {trangHienTai}/{tongSoTrang}
+            {totalCount > 0 && ` · ${totalCount} khóa học`}
+          </Typography>
+          {tongSoTrang > 1 && (
+            <Pagination
+              count={tongSoTrang}
+              page={trangHienTai}
+              onChange={handlePageChange}
+              shape="rounded"
+              showFirstButton
+              showLastButton
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  color: MAU.chuDen,
+                  fontWeight: 600,
+                  borderRadius: "10px",
+                },
+                "& .Mui-selected": {
+                  bgcolor: `${MAU.chinh} !important`,
+                  color: "#fff",
+                },
+              }}
+            />
+          )}
         </Box>
       )}
 
@@ -1302,7 +1399,7 @@ function KhoaHocContent() {
         </Alert>
       </Snackbar>
 
-      {/* Snackbar thành công (ví dụ xóa thành công) */}
+      {/* Snackbar thành công */}
       <Snackbar
         open={!!thongBaoThanhCong}
         autoHideDuration={5000}
@@ -1330,7 +1427,7 @@ export default function InstructorCoursesPage() {
           sx={{
             p: { xs: 2, md: 4 },
             minHeight: "100vh",
-            bgcolor: "#FAFAF9", // Nền xám kem nhẹ cho trang
+            bgcolor: "#FAFAF9",
           }}
         >
           <KhoaHocContent />

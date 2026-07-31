@@ -190,8 +190,13 @@ export const VideoPlayer = ({
     startLoadTimeout();
 
     // Tạo video element
+    // mini: giữ khoá tỉ lệ 16:9 (fluid) vì mini-player có kích thước cố định nhỏ
+    // full: dùng chế độ "fill" để video lấp đầy 100% chiều rộng/chiều cao của
+    // container cha (container cha đã được page.tsx set height = 100vh - header)
     const videoEl = document.createElement("video");
-    videoEl.className = "video-js vjs-big-play-centered vjs-16-9";
+    videoEl.className = mini
+      ? "video-js vjs-big-play-centered vjs-16-9"
+      : "video-js vjs-big-play-centered vjs-fill";
     videoEl.setAttribute("playsinline", "true");
     containerRef.current.appendChild(videoEl);
 
@@ -202,8 +207,9 @@ export const VideoPlayer = ({
       controls: true,
       autoplay: autoPlay,
       preload: "auto",
-      fluid: true,
-      aspectRatio: "16:9",
+      fluid: mini,
+      fill: !mini,
+      aspectRatio: mini ? "16:9" : undefined,
       liveui: false,
       playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
       html5: {
@@ -601,17 +607,25 @@ export const VideoPlayer = ({
             }
           : {
               width: "100%",
+              height: "100%",
               bgcolor: "#000",
               position: "relative",
             }
       }
     >
-      <Box sx={{ position: "relative" }}>
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: mini ? "auto" : "100%",
+        }}
+      >
         {renderOverlay()}
         <Box
           ref={containerRef}
           sx={{
             width: "100%",
+            height: mini ? "auto" : "100%",
             visibility:
               isLoading || hasError || loadTimedOut ? "hidden" : "visible",
           }}

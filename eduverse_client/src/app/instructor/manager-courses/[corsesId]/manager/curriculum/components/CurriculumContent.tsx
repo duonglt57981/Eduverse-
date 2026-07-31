@@ -3850,7 +3850,9 @@ export default function CurriculumContent() {
         <Typography
           sx={{ fontSize: 14, color: "#64748B", mb: 2.5, lineHeight: 1.7 }}
         >
-          Thiết kế khóa học của bạn theo từng phần, mỗi phần tập trung vào một mục tiêu học tập duy nhất. Sau đó, thêm nội dung, hoạt động thực hành và bài kiểm tra.
+          Thiết kế khóa học của bạn theo từng phần, mỗi phần tập trung vào một
+          mục tiêu học tập duy nhất. Sau đó, thêm nội dung, hoạt động thực hành
+          và bài kiểm tra.
         </Typography>
 
         <Box
@@ -3867,7 +3869,9 @@ export default function CurriculumContent() {
           }}
         >
           <ScheduleOutlined sx={{ fontSize: 18, color: "#D97706" }} />
-          <Typography sx={{ fontSize: 13.5, color: "#D97706", fontWeight: 700 }}>
+          <Typography
+            sx={{ fontSize: 13.5, color: "#D97706", fontWeight: 700 }}
+          >
             Tổng thời lượng khóa học: {tongPhut} phút
           </Typography>
         </Box>
@@ -5194,7 +5198,6 @@ export default function CurriculumContent() {
             </Box>
           </SortableContext>
         </DndContext>
-        )}
 
         {/* Nút thêm phần mới */}
         {isEditable && phanForm?.mode !== "add" && (

@@ -20,18 +20,25 @@ import {
   Select,
   MenuItem,
   Paper,
+  Button,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
-
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import AssignmentTurnedInRoundedIcon from "@mui/icons-material/AssignmentTurnedInRounded";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
+import PendingActionsRoundedIcon from "@mui/icons-material/PendingActionsRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
+  COLORS,
+  FONTS,
   PAGE_SIZE,
   normalizeListResponse,
 } from "./types/constants";
@@ -226,10 +233,6 @@ export default function DuyetKhoaHocPage() {
     router.push(`/admin/approve-courses/history`);
   };
 
-  const handleGoBack = () => {
-    router.back();
-  };
-
   return (
     <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
@@ -240,25 +243,6 @@ export default function DuyetKhoaHocPage() {
             spacing={1.5}
             sx={{ alignItems: "center", mb: 0.5 }}
           >
-            <Tooltip title="Quay lại">
-              <IconButton
-                onClick={handleGoBack}
-                sx={{
-                  border: `1px solid ${COLORS.line}`,
-                  borderRadius: 2,
-                  color: COLORS.ink,
-                  bgcolor: "#fff",
-                  "&:hover": {
-                    borderColor: COLORS.primary,
-                    color: COLORS.primary,
-                    bgcolor: alpha(COLORS.primary, 0.06),
-                  },
-                }}
-              >
-                <ArrowBackRoundedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 sx={{
@@ -373,8 +357,15 @@ export default function DuyetKhoaHocPage() {
             ))}
           </Box>
 
-          {/* Bộ lọc */}
-          <Box sx={{ ...boxSx, p: 0, overflow: "hidden" }}>
+          {/* ═══════ BỘ LỌC + DANH SÁCH ═══════ */}
+          <Box
+            sx={{
+              border: `1px solid ${COLORS.line}`,
+              borderRadius: 3,
+              bgcolor: "#fff",
+              overflow: "hidden",
+            }}
+          >
             {/* Thanh công cụ lọc */}
             <Box
               sx={{
@@ -440,67 +431,69 @@ export default function DuyetKhoaHocPage() {
                     }}
                   />
 
-              {/* Sort */}
-              <Select
-                size="small"
-                value={sortBy}
-                onChange={handleSortChange}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <SwapVertRoundedIcon
-                      sx={{ fontSize: 18, color: "#9CA3AF" }}
-                    />
-                  </InputAdornment>
-                }
-                sx={{
-                  minWidth: { xs: "100%", sm: 165 },
-                  borderRadius: 2.5,
-                  height: 42,
-                  bgcolor: "#F9FAFB",
-                  flexShrink: 0,
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#E5E7EB",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#991B1B",
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#991B1B",
-                    borderWidth: 1.5,
-                  },
-                }}
-              >
-                <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
-                <MenuItem value="moi-nhat">Mới nhất</MenuItem>
-                <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
-                <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
-              </Select>
-
-              {/* Reset filter */}
-              {isFilterDirty && (
-                <Tooltip title="Đặt lại bộ lọc">
-                  <IconButton
-                    onClick={handleResetFilters}
+                  {/* Sort */}
+                  <Select
+                    size="small"
+                    value={sortBy}
+                    onChange={handleSortChange}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <SwapVertRoundedIcon
+                          sx={{ fontSize: 18, color: "#9CA3AF" }}
+                        />
+                      </InputAdornment>
+                    }
                     sx={{
-                      bgcolor: alpha("#991B1B", 0.06),
-                      border: "1px solid",
-                      borderColor: alpha("#991B1B", 0.15),
+                      minWidth: { xs: "100%", sm: 165 },
                       borderRadius: 2.5,
-                      width: 42,
                       height: 42,
+                      bgcolor: "#F9FAFB",
                       flexShrink: 0,
-                      color: "#991B1B",
-                      transition: "all .18s ease",
-                      "&:hover": {
-                        bgcolor: alpha("#991B1B", 0.12),
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#E5E7EB",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
                         borderColor: "#991B1B",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#991B1B",
+                        borderWidth: 1.5,
                       },
                     }}
                   >
-                    <RestartAltRoundedIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
+                    <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
+                    <MenuItem value="moi-nhat">Mới nhất</MenuItem>
+                    <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
+                    <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
+                  </Select>
+
+                  {/* Reset filter */}
+                  {isFilterDirty && (
+                    <Tooltip title="Đặt lại bộ lọc">
+                      <IconButton
+                        onClick={handleResetFilters}
+                        sx={{
+                          bgcolor: alpha("#991B1B", 0.06),
+                          border: "1px solid",
+                          borderColor: alpha("#991B1B", 0.15),
+                          borderRadius: 2.5,
+                          width: 42,
+                          height: 42,
+                          flexShrink: 0,
+                          color: "#991B1B",
+                          transition: "all .18s ease",
+                          "&:hover": {
+                            bgcolor: alpha("#991B1B", 0.12),
+                            borderColor: "#991B1B",
+                          },
+                        }}
+                      >
+                        <RestartAltRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Stack>
+              </Box>
             </Box>
 
             {/* ═══════ COURSE LIST ═══════ */}
@@ -531,6 +524,7 @@ export default function DuyetKhoaHocPage() {
                       startIcon={<RestartAltRoundedIcon />}
                       onClick={handleResetFilters}
                       sx={{
+                        mt: 1.5,
                         textTransform: "none",
                         fontWeight: 600,
                         fontSize: 13,
@@ -627,9 +621,9 @@ export default function DuyetKhoaHocPage() {
                                 }}
                               >
                                 Tạo:{" "}
-                                {new Date(
-                                  item.createDate,
-                                ).toLocaleDateString("vi-VN")}
+                                {new Date(item.createDate).toLocaleDateString(
+                                  "vi-VN",
+                                )}
                               </Typography>
                             )}
                           </Stack>
@@ -654,9 +648,7 @@ export default function DuyetKhoaHocPage() {
                               transition: "all .18s ease",
                             }}
                           >
-                            <ArrowForwardRoundedIcon
-                              sx={{ fontSize: 18 }}
-                            />
+                            <ArrowForwardRoundedIcon sx={{ fontSize: 18 }} />
                           </IconButton>
                         </Tooltip>
                       </Box>
@@ -667,10 +659,7 @@ export default function DuyetKhoaHocPage() {
 
               {/* ═══════ PAGINATION ═══════ */}
               {!loading && items.length > 0 && totalPage > 1 && (
-                <Stack
-                  direction="row"
-                  sx={{ justifyContent: "center", pt: 3 }}
-                >
+                <Stack direction="row" sx={{ justifyContent: "center", pt: 3 }}>
                   <Pagination
                     count={totalPage}
                     page={page}
@@ -694,10 +683,9 @@ export default function DuyetKhoaHocPage() {
                 </Stack>
               )}
             </Box>
-          </Paper>
+          </Box>
         </Box>
       </DashboardShell>
     </AuthGuard>
   );
 }
-

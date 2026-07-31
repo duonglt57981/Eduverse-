@@ -238,8 +238,9 @@ export default function LichSuKiemDuyetPage() {
     router.push(`/admin/approve-courses/history/${id}/course`);
   };
 
+  // Sửa: Điều hướng về trang admin/approve-courses
   const handleGoBack = () => {
-    router.back();
+    router.push("/admin/approve-courses");
   };
 
   return (
@@ -252,7 +253,7 @@ export default function LichSuKiemDuyetPage() {
             spacing={1.5}
             sx={{ alignItems: "center", mb: 0.5 }}
           >
-            <Tooltip title="Quay lại">
+            <Tooltip title="Quay lại danh sách phê duyệt">
               <IconButton
                 onClick={handleGoBack}
                 sx={{

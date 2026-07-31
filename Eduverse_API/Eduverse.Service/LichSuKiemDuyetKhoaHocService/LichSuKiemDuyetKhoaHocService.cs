@@ -945,6 +945,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         GiaDangKy = dkCu.GiaDangKy,
                         ThoiGianDK = dkCu.ThoiGianDK,
                         IsDangKy = dkCu.IsDangKy,
+                        NgayHetHan = dkCu.NgayHetHan,
                     };
 
                     danhSachDangKyMoi.Add(dkMoi);

@@ -267,7 +267,8 @@ namespace Eduverse.Service.ThanhToanService
                                 IsDangKy = true,
                                 ThoiGianDK = DateTime.Now,
                                 CreatedDate = DateTime.Now,
-                                UpdatedDate = DateTime.Now
+                                UpdatedDate = DateTime.Now,
+                                NgayHetHan = DateTime.Now.AddMonths(6)
                             });
                         }
                     }

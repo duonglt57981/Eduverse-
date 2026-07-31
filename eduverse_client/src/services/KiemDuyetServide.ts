@@ -79,12 +79,12 @@ export default class KiemDuyetService {
     request: KiemDuyetKhoaHocRequest,
   ): Promise<ApiResponse<KiemDuyetKhoaHocDto>> {
     try {
-      const response = await apiService.post<ApiResponse<KiemDuyetKhoaHocDto>>(
+      const response = await apiService.post<KiemDuyetKhoaHocDto>(
         `KiemDuyetKhoaHoc/kiemduyet-khoahoc`,
         request,
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching course approval list:", error);
       throw error;

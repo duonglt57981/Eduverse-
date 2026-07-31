@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   Box,
@@ -51,6 +51,7 @@ import { apiService } from "@/src/services/index";
 const RED = "#8B1313";
 const RED_HOVER = "#6B1010";
 const RED_SOFT = "#fdf2f2";
+const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
 
 // ─── styled components ────────────────────────────────────────────────────────
 
@@ -193,6 +194,10 @@ function findFirstFreeVideo(
   return null;
 }
 
+function isValidGuid(id?: string | null): id is string {
+  return !!id && id !== EMPTY_GUID;
+}
+
 // ─── inner content ──────────────────────────────────────────────────────────────
 
 function CourseRegistrationContent() {
@@ -204,7 +209,8 @@ function CourseRegistrationContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
-  const [idDangKi, setIdDangKi] = useState<string | null>(null); // ✅ thêm state
+  const [idDangKi, setIdDangKi] = useState<string | null>(null);
+  const [navigatingToLearn, setNavigatingToLearn] = useState(false);
 
   const [khoaHoc, setKhoaHoc] = useState<KhoaHocType | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -221,26 +227,26 @@ function CourseRegistrationContent() {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: "success" | "error";
+    severity: "success" | "error" | "info";
   }>({ open: false, message: "", severity: "success" });
 
   const dangKiService = new DangKiService();
   const khoaHocService = new KhoaHocService();
 
-  // ── Fetch dữ liệu khóa học ──────────────────────────────────────────────
-  useEffect(() => {
-    if (!courseId) return;
+  // ── Tải (hoặc đồng bộ lại) dữ liệu khóa học từ server ───────────────────
+  // silent = true: không bật spinner toàn trang, dùng để đồng bộ ngầm sau khi
+  // đăng ký thành công (tránh phải reload cả trang / bấm nút 2 lần).
+  const loadKhoaHoc = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!courseId) return null;
 
-    let active = true;
+      if (!opts?.silent) {
+        setPageLoading(true);
+        setPageError(null);
+      }
 
-    (async () => {
-      setPageLoading(true);
-      setPageError(null);
       try {
         const res = await khoaHocService.GetKhoaHocPreview(courseId);
-        if (!active) return;
-
-        // Lấy khóa học từ response (có thể ở nhiều cấp)
         const course = extractKhoaHoc(res);
 
         if (course) {
@@ -248,11 +254,26 @@ function CourseRegistrationContent() {
           const isEnrolled = !!course.daDangKy;
           setEnrolled(isEnrolled);
 
-          // Lấy idDangKi từ nhiều nguồn: res.data.idDangKiKhoaHoc, course.idDangKi, res.idDangKi
-          const idDangKiFromRes =
-            res.data?.idDangKiKhoaHoc || course.idDangKi || null;
-          setIdDangKi(idDangKiFromRes);
-        } else {
+          // Lấy idDangKi từ nhiều nguồn khả dĩ trong response
+          let idDangKiFromRes: string | null = null;
+          if (res?.data?.idDangKiKhoaHoc) {
+            idDangKiFromRes = res.data.idDangKiKhoaHoc;
+          } else if (course.idDangKi) {
+            idDangKiFromRes = course.idDangKi;
+          }
+
+          if (isEnrolled && idDangKiFromRes) {
+            setIdDangKi(idDangKiFromRes);
+            localStorage.setItem(`enrolled_${courseId}`, idDangKiFromRes);
+          } else if (isEnrolled && !idDangKiFromRes) {
+            const savedId = localStorage.getItem(`enrolled_${courseId}`);
+            if (savedId) setIdDangKi(savedId);
+          }
+
+          return { course, idDangKi: idDangKiFromRes, isEnrolled };
+        }
+
+        if (!opts?.silent) {
           const errMsg =
             res?.message ||
             (Array.isArray(res?.errors)
@@ -261,28 +282,43 @@ function CourseRegistrationContent() {
             "Không tìm thấy khóa học.";
           setPageError(String(errMsg));
         }
+        return null;
       } catch (err) {
-        if (active) {
+        if (!opts?.silent) {
           setPageError("Không tải được thông tin khóa học. Vui lòng thử lại.");
         }
+        return null;
       } finally {
-        if (active) setPageLoading(false);
+        if (!opts?.silent) setPageLoading(false);
       }
-    })();
-
-    return () => {
-      active = false;
-    };
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
+    [courseId],
+  );
+
+  // ── Fetch dữ liệu khóa học lần đầu ──────────────────────────────────────
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount is the intended sync point
+    loadKhoaHoc();
+  }, [loadKhoaHoc]);
 
   const handleRegister = async () => {
     setRegistering(true);
     try {
       const res = await dangKiService.DangKiKhoaHocMienPhi(courseId);
-      // Lấy idDangKi từ response (thường nằm trong res.data.idDangKi)
-      const id = res.data?.idDangKi || null;
-      if (id) setIdDangKi(id);
+
+      let id: string | null = res?.data?.idDangKi ?? null;
+
+      // Luôn đồng bộ lại dữ liệu mới nhất từ server ngay sau khi đăng ký,
+      // để lấy idDangKi chuẩn — tránh tình trạng phải bấm "Vào học ngay" 2 lần.
+      const synced = await loadKhoaHoc({ silent: true });
+      if (!id) id = synced?.idDangKi ?? null;
+
+      if (id) {
+        setIdDangKi(id);
+        localStorage.setItem(`enrolled_${courseId}`, id);
+      }
+
       setModalOpen(false);
       setEnrolled(true);
       setSnackbar({
@@ -292,12 +328,24 @@ function CourseRegistrationContent() {
       });
     } catch (error: any) {
       setModalOpen(false);
-      // Nếu lỗi là "đã đăng ký", coi như thành công
       const msg = error?.response?.data?.message || error?.message || "";
       if (msg.includes("đã đăng ký") || msg.includes("already registered")) {
         setEnrolled(true);
-        const idFromError = error?.response?.data?.idDangKi || null;
-        if (idFromError) setIdDangKi(idFromError);
+
+        let idFromError: string | null =
+          error?.response?.data?.idDangKi || error?.response?.data?.id || null;
+
+        // Nếu response lỗi không kèm id, đồng bộ ngầm từ server thay vì reload.
+        if (!idFromError) {
+          const synced = await loadKhoaHoc({ silent: true });
+          idFromError = synced?.idDangKi ?? null;
+        }
+
+        if (idFromError) {
+          setIdDangKi(idFromError);
+          localStorage.setItem(`enrolled_${courseId}`, idFromError);
+        }
+
         setSnackbar({
           open: true,
           message: "Bạn đã đăng ký khóa học này rồi.",
@@ -312,6 +360,34 @@ function CourseRegistrationContent() {
       }
     } finally {
       setRegistering(false);
+    }
+  };
+
+  // ── Vào học ngay: nếu chưa có id hợp lệ, tự đồng bộ rồi điều hướng luôn
+  // trong cùng một lần bấm, không cần reload cả trang.
+  const handleGoToLearning = async () => {
+    if (isValidGuid(idDangKi)) {
+      router.push(`/student/courses/my-courses/learning/${idDangKi}`);
+      return;
+    }
+
+    setNavigatingToLearn(true);
+    try {
+      const synced = await loadKhoaHoc({ silent: true });
+      const freshId = synced?.idDangKi;
+
+      if (isValidGuid(freshId)) {
+        router.push(`/student/courses/my-courses/learning/${freshId}`);
+      } else {
+        setSnackbar({
+          open: true,
+          message:
+            "Không tìm thấy dữ liệu đăng ký. Vui lòng thử lại sau ít phút.",
+          severity: "error",
+        });
+      }
+    } finally {
+      setNavigatingToLearn(false);
     }
   };
 
@@ -425,7 +501,6 @@ function CourseRegistrationContent() {
               dangerouslySetInnerHTML={{ __html: khoaHoc.moTa || "" }}
             />
 
-            {/* Hiển thị tên giảng viên */}
             <Typography
               sx={{
                 color: "#ddd",
@@ -869,7 +944,7 @@ function CourseRegistrationContent() {
                     fullWidth
                     variant="contained"
                     startIcon={<SchoolIcon />}
-                    onClick={handleRegister}
+                    onClick={() => setModalOpen(true)}
                     sx={{
                       bgcolor: "#2d7a35",
                       "&:hover": { bgcolor: "#245f2a" },
@@ -979,22 +1054,15 @@ function CourseRegistrationContent() {
                   <Button
                     fullWidth
                     variant="contained"
-                    startIcon={<SchoolIcon />}
-                    onClick={() => {
-                      if (idDangKi) {
-                        router.push(
-                          `/student/courses/my-courses/learning/${idDangKi}`,
-                        );
-                      } else {
-                        // Fallback: nếu không có idDangKi, có thể dùng courseId hoặc hiển thị thông báo
-                        setSnackbar({
-                          open: true,
-                          message:
-                            "Không tìm thấy ID đăng ký. Vui lòng vào trang 'Khóa học của tôi'.",
-                          severity: "error",
-                        });
-                      }
-                    }}
+                    disabled={navigatingToLearn}
+                    startIcon={
+                      navigatingToLearn ? (
+                        <CircularProgress size={16} sx={{ color: "#fff" }} />
+                      ) : (
+                        <SchoolIcon />
+                      )
+                    }
+                    onClick={handleGoToLearning}
                     sx={{
                       bgcolor: "#22c55e",
                       "&:hover": { bgcolor: "#16a34a" },
@@ -1006,7 +1074,7 @@ function CourseRegistrationContent() {
                       boxShadow: "0 8px 20px rgba(34,197,94,0.3)",
                     }}
                   >
-                    Vào học ngay
+                    {navigatingToLearn ? "Đang mở khóa học..." : "Vào học ngay"}
                   </Button>
                 </Box>
               )}

@@ -73,7 +73,15 @@ export function tinhTongThoiLuongGiay(phans: PhanHocType[]): number {
   );
 }
 
+export function demTongSoBaiGiang(phans: PhanHocType[]): number {
+  return phans.reduce(
+    (tong, phan) => tong + (phan.DanhSachBaiGiang ?? []).length,
+    0,
+  );
+}
+
 export const THOI_LUONG_TOI_THIEU_GIAY = 30 * 60;
+export const SO_BAI_GIANG_TOI_THIEU = 5;
 export const SO_KY_TU_TIEU_DE_TOI_THIEU = 10;
 export const SO_KY_TU_MO_TA_TOI_THIEU = 200;
 export const SO_KY_TU_MO_TA_TOI_DA = 9999;
@@ -351,6 +359,16 @@ export function kiemTraDieuKienGuiDuyet(
       id: "thoi-luong",
       nhan: "Thời lượng bài giảng chưa đủ",
       moTa: `Khóa học cần tối thiểu 30 phút nội dung video. Bạn cần thêm khoảng ${conThieuPhut} phút nữa.`,
+      diChuyenDen: "curriculum",
+    });
+  }
+
+  const tongSoBaiGiang = demTongSoBaiGiang(phans);
+  if (tongSoBaiGiang < SO_BAI_GIANG_TOI_THIEU) {
+    danhSachThieu.push({
+      id: "so-luong-bai-giang",
+      nhan: "Chưa đủ số lượng bài giảng",
+      moTa: `Khóa học cần tối thiểu ${SO_BAI_GIANG_TOI_THIEU} bài giảng. Hiện tại: ${tongSoBaiGiang} bài giảng.`,
       diChuyenDen: "curriculum",
     });
   }
