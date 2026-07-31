@@ -120,15 +120,24 @@ namespace Eduverse.Api.Controller
                 "Thành công"
             ));
         }
+
         [AllowAnonymous]
-[HttpPost("confirm-webhook")]
-public async Task<IActionResult> ConfirmWebhook()
-{
-    var backendUrl = _config["BackendUrl"] ?? "https://eduverseapi-production-5a5e.up.railway.app";
-    var result = await _payOS.Webhooks.ConfirmAsync(
-        $"{backendUrl}/api/thanhtoan/webhook"
-    );
-    return Ok(result);
-}
+        [HttpPost("confirm-webhook")]
+        public async Task<IActionResult> ConfirmWebhook()
+        {
+            var backendUrl = _config["BackendUrl"] ?? "https://eduverseapi-production-5a5e.up.railway.app";
+            var result = await _payOS.Webhooks.ConfirmAsync(
+                $"{backendUrl}/api/thanhtoan/webhook"
+            );
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/tong-doanh-thu")]
+        public async Task<IActionResult> GetTongDoanhThuNenTang()
+        {
+            var result = await _service.GetTongDoanhThuNenTangAsync();
+            return Ok(DataResponse.Success(result, "Thành công"));
+        }
     }
 }
