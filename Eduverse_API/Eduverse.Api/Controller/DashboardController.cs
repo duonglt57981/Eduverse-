@@ -520,6 +520,25 @@ namespace Eduverse.Api.Controller
                 monthlyEnrollments.Add(new { label = "Tháng " + mStart.Month, value = cnt });
             }
 
+            var monthlyRevenue = new List<object>();
+            for (int i = 6; i >= 0; i--)
+            {
+                var mStart = curMonthStart.AddMonths(-i);
+                var mEnd = mStart.AddMonths(1);
+
+                double totalAmount = myRegs
+                    .Where(r => r.ThoiGianDK.HasValue
+                             && r.ThoiGianDK.Value >= mStart
+                             && r.ThoiGianDK.Value < mEnd)
+                    .Sum(r => r.GiaDangKy ?? 0);
+
+                monthlyRevenue.Add(new
+                {
+                    label = "Th" + mStart.Month,
+                    totalAmount = totalAmount
+                });
+            }
+
             // Tỷ lệ hoàn thành theo khóa (từ TienDoHocTap)
             var completionByCourse = new List<object>();
             try
@@ -584,6 +603,7 @@ namespace Eduverse.Api.Controller
                     newStudentsThisMonth = newThisMonth,
                     studentGrowthPercent = studentGrowthPercent,
                     monthlyEnrollments = monthlyEnrollments,
+                    monthlyRevenue = monthlyRevenue, 
                     completionByCourse = completionByCourse,
                     recentStudents = recentStudents
                 }
