@@ -39,6 +39,7 @@ import {
 // SVG-based monthly revenue line chart
 function RevenueLineChart({ data }: { data: number[] }) {
   const [activeTab, setActiveTab] = useState("month");
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   const width = 1000;
   const height = 300;
@@ -51,7 +52,6 @@ function RevenueLineChart({ data }: { data: number[] }) {
   const chartHeight = height - paddingTop - paddingBottom;
   const chartWidth = width - paddingLeft - paddingRight;
 
-  // Calculate coordinates
   const points = useMemo(() => {
     return data.map((val, idx) => {
       const x = paddingLeft + (idx * chartWidth) / (data.length - 1);
@@ -60,7 +60,6 @@ function RevenueLineChart({ data }: { data: number[] }) {
     });
   }, [data, chartWidth, chartHeight, maxVal]);
 
-  // Construct curved SVG line path using bezier curves
   const linePath = useMemo(() => {
     if (points.length === 0) return "";
     let path = `M ${points[0].x} ${points[0].y}`;
@@ -76,7 +75,6 @@ function RevenueLineChart({ data }: { data: number[] }) {
     return path;
   }, [points, chartWidth, data.length]);
 
-  // Closed path for fill area under the line
   const fillPath = useMemo(() => {
     if (points.length === 0) return "";
     return `${linePath} L ${points[points.length - 1].x} ${height - paddingBottom} L ${points[0].x} ${height - paddingBottom} Z`;
@@ -88,6 +86,14 @@ function RevenueLineChart({ data }: { data: number[] }) {
     if (val >= 1000000000) return (val / 1000000000).toFixed(1) + " tỷ";
     if (val >= 1000000) return (val / 1000000).toFixed(0) + " tr";
     return val.toLocaleString();
+  };
+
+  // Format giá trị hiển thị trong tooltip
+  const formatTooltipVal = (val: number) => {
+    if (val === 0) return "0đ";
+    if (val >= 1000000000) return (val / 1000000000).toFixed(2) + " tỷ đ";
+    if (val >= 1000000) return (val / 1000000).toFixed(1) + " tr đ";
+    return val.toLocaleString("vi-VN") + "đ";
   };
 
   return (
@@ -105,14 +111,11 @@ function RevenueLineChart({ data }: { data: number[] }) {
         sx={{ justifyContent: "space-between", alignItems: "center", mb: 3 }}
       >
         <Box>
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 800, color: COLORS.textDark }}
-          >
+          <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark }}>
             Phân tích doanh thu
           </Typography>
           <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.48)" }}>
-            Lợi nhuận gộp hàng tháng và doanh số bán hàng hàng ngày.
+            Doanh thu nền tảng (30%) theo từng tháng trong năm.
           </Typography>
         </Box>
         <Tabs
@@ -140,9 +143,7 @@ function RevenueLineChart({ data }: { data: number[] }) {
               zIndex: 1,
               color: "rgba(31,41,55,0.5)",
               transition: "color 200ms",
-              "&.Mui-selected": {
-                color: "#ffffff",
-              },
+              "&.Mui-selected": { color: "#ffffff" },
             },
           }}
         >
@@ -152,7 +153,6 @@ function RevenueLineChart({ data }: { data: number[] }) {
         </Tabs>
       </Stack>
 
-      {/* SVG Chart */}
       <Box sx={{ width: "100%", overflowX: "auto", mt: 1 }}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
@@ -163,11 +163,7 @@ function RevenueLineChart({ data }: { data: number[] }) {
           <defs>
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={COLORS.primary} stopOpacity="0.25" />
-              <stop
-                offset="100%"
-                stopColor={COLORS.primary}
-                stopOpacity="0.0"
-              />
+              <stop offset="100%" stopColor={COLORS.primary} stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
@@ -177,23 +173,15 @@ function RevenueLineChart({ data }: { data: number[] }) {
             return (
               <g key={idx}>
                 <line
-                  x1={paddingLeft}
-                  y1={y}
-                  x2={width - paddingRight}
-                  y2={y}
-                  stroke="rgba(0,0,0,0.04)"
-                  strokeWidth={1}
+                  x1={paddingLeft} y1={y}
+                  x2={width - paddingRight} y2={y}
+                  stroke="rgba(0,0,0,0.04)" strokeWidth={1}
                 />
                 <text
-                  x={paddingLeft - 10}
-                  y={y + 4}
+                  x={paddingLeft - 10} y={y + 4}
                   textAnchor="end"
                   fill="rgba(31,41,55,0.4)"
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    fontFamily: '"Be Vietnam Pro"',
-                  }}
+                  style={{ fontSize: 11, fontWeight: 600, fontFamily: '"Be Vietnam Pro"' }}
                 >
                   {formatYLabel(tick * maxVal)}
                 </text>
@@ -201,10 +189,21 @@ function RevenueLineChart({ data }: { data: number[] }) {
             );
           })}
 
-          {/* Fill under the curve */}
+          {/* Vertical guide line when hovered */}
+          {hoveredIdx !== null && points[hoveredIdx] && (
+            <line
+              x1={points[hoveredIdx].x} y1={paddingTop}
+              x2={points[hoveredIdx].x} y2={height - paddingBottom}
+              stroke="rgba(141,19,19,0.2)"
+              strokeWidth={1.5}
+              strokeDasharray="5 4"
+            />
+          )}
+
+          {/* Fill */}
           <path d={fillPath} fill="url(#chartGradient)" />
 
-          {/* Curved Stroke Line */}
+          {/* Line */}
           <path
             d={linePath}
             fill="none"
@@ -213,43 +212,131 @@ function RevenueLineChart({ data }: { data: number[] }) {
             strokeLinecap="round"
           />
 
-          {/* Data Points and tooltips */}
-          {points.map((p, idx) => (
-            <g key={idx}>
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={4}
-                fill={COLORS.primary}
-                stroke={COLORS.white}
-                strokeWidth={1.5}
-                style={{ cursor: "pointer", transition: "r 150ms" }}
-              />
-              <text
-                x={p.x}
-                y={height - paddingBottom + 20}
-                textAnchor="middle"
-                fill="rgba(31,41,55,0.5)"
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  fontFamily: '"Be Vietnam Pro"',
-                }}
+          {/* Data Points */}
+          {points.map((p, idx) => {
+            const isHovered = hoveredIdx === idx;
+
+            // Tính vị trí tooltip: tránh bị cắt ở 2 cạnh trái/phải
+            const tooltipW = 140;
+            const tooltipH = 52;
+            let tx = p.x - tooltipW / 2;
+            if (tx < paddingLeft) tx = paddingLeft;
+            if (tx + tooltipW > width - paddingRight) tx = width - paddingRight - tooltipW;
+            // Tránh bị cắt trên cùng
+            const ty = p.y < paddingTop + tooltipH + 16 ? p.y + 16 : p.y - tooltipH - 12;
+            const arrowUp = ty > p.y; // mũi tên hướng lên khi tooltip ở dưới điểm
+
+            return (
+              <g
+                key={idx}
+                onMouseEnter={() => setHoveredIdx(idx)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                style={{ cursor: "pointer" }}
               >
-                Th{idx + 1}
-              </text>
-            </g>
-          ))}
+                {/* Vùng hit vô hình rộng hơn để dễ hover */}
+                <rect
+                  x={p.x - 20}
+                  y={paddingTop}
+                  width={40}
+                  height={chartHeight + paddingBottom}
+                  fill="transparent"
+                />
+
+                {/* Tooltip */}
+                {isHovered && (
+                  <g>
+                    {/* Box nền */}
+                    <rect
+                      x={tx} y={ty}
+                      width={tooltipW} height={tooltipH}
+                      rx={10} ry={10}
+                      fill="#1F2937"
+                      style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))" }}
+                    />
+                    {/* Mũi tên */}
+                    {arrowUp ? (
+                      // Tooltip ở dưới điểm → mũi tên chỉ lên
+                      <polygon
+                        points={`${p.x - 7},${ty} ${p.x + 7},${ty} ${p.x},${ty - 8}`}
+                        fill="#1F2937"
+                      />
+                    ) : (
+                      // Tooltip ở trên điểm → mũi tên chỉ xuống
+                      <polygon
+                        points={`${p.x - 7},${ty + tooltipH} ${p.x + 7},${ty + tooltipH} ${p.x},${ty + tooltipH + 8}`}
+                        fill="#1F2937"
+                      />
+                    )}
+                    {/* Label tháng */}
+                    <text
+                      x={tx + tooltipW / 2} y={ty + 20}
+                      textAnchor="middle"
+                      fill="rgba(255,255,255,0.55)"
+                      style={{ fontSize: 11, fontWeight: 600, fontFamily: '"Be Vietnam Pro"' }}
+                    >
+                      Tháng {idx + 1}
+                    </text>
+                    {/* Giá trị */}
+                    <text
+                      x={tx + tooltipW / 2} y={ty + 38}
+                      textAnchor="middle"
+                      fill="#ffffff"
+                      style={{ fontSize: 14, fontWeight: 800, fontFamily: '"Be Vietnam Pro"' }}
+                    >
+                      {formatTooltipVal(p.val)}
+                    </text>
+                  </g>
+                )}
+
+                {/* Circle data point */}
+                <circle
+                  cx={p.x} cy={p.y}
+                  r={isHovered ? 7 : 4}
+                  fill={isHovered ? COLORS.primaryLight : COLORS.primary}
+                  stroke={COLORS.white}
+                  strokeWidth={isHovered ? 2.5 : 1.5}
+                  style={{ transition: "r 120ms, fill 120ms" }}
+                />
+
+                {/* Month label */}
+                <text
+                  x={p.x}
+                  y={height - paddingBottom + 20}
+                  textAnchor="middle"
+                  fill={isHovered ? COLORS.primary : "rgba(31,41,55,0.5)"}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: isHovered ? 800 : 600,
+                    fontFamily: '"Be Vietnam Pro"',
+                    transition: "fill 120ms",
+                  }}
+                >
+                  Th{idx + 1}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </Box>
     </Paper>
   );
 }
 
+
 // SVG bar chart for student growth
 function StudentGrowthChart({ data }: { data: number[] }) {
-  const maxVal = Math.max(...data, 100);
+  const maxVal = Math.max(...data, 1);
   const labels = ["Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11"];
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  // Tính nhãn 7 tháng gần nhất từ hiện tại
+  const monthLabels = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (6 - i), 1);
+      return `Th${d.getMonth() + 1}`;
+    });
+  }, []);
 
   return (
     <Paper
@@ -262,11 +349,11 @@ function StudentGrowthChart({ data }: { data: number[] }) {
         height: "100%",
       }}
     >
-      <Typography
-        variant="h6"
-        sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}
-      >
+      <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark, mb: 0.5 }}>
         Tăng trưởng học viên
+      </Typography>
+      <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.48)", mb: 3 }}>
+        Số học viên unique đăng ký khóa học theo từng tháng.
       </Typography>
 
       <Stack
@@ -281,36 +368,96 @@ function StudentGrowthChart({ data }: { data: number[] }) {
       >
         {data.map((val, idx) => {
           const isLatest = idx === data.length - 1;
-          const pct = (val / maxVal) * 100;
+          const isHovered = hoveredIdx === idx;
+          const pct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+
           return (
             <Stack
               key={idx}
-              spacing={1.5}
-              sx={{ alignItems: "center", flex: 1 }}
+              spacing={0}
+              sx={{
+                alignItems: "center",
+                flex: 1,
+                position: "relative",
+                height: "100%",
+                justifyContent: "flex-end",
+                cursor: "pointer",
+              }}
+              onMouseEnter={() => setHoveredIdx(idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
             >
+              {/* Tooltip phía trên cột */}
+              {isHovered && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: `calc(${pct}% + 36px)`,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    bgcolor: "#1F2937",
+                    color: "#fff",
+                    borderRadius: "10px",
+                    px: 1.5,
+                    py: 0.8,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    whiteSpace: "nowrap",
+                    zIndex: 20,
+                    pointerEvents: "none",
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+                    // Mũi tên chỉ xuống
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      top: "100%",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      borderWidth: "6px 6px 0",
+                      borderStyle: "solid",
+                      borderColor: "#1F2937 transparent transparent",
+                    },
+                  }}
+                >
+                  {val.toLocaleString("vi-VN")} HV
+                </Box>
+              )}
+
+              {/* Cột bar */}
               <Box
                 sx={{
-                  width: { xs: 20, sm: 28 },
-                  height: `${pct}%`,
-                  minHeight: 8,
-                  borderRadius: "6px",
-                  background: isLatest
-                    ? `linear-gradient(180deg, ${COLORS.primaryLight} 0%, ${COLORS.primary} 100%)`
-                    : "rgba(141,19,19,0.08)",
-                  transition: "height 400ms cubic-bezier(0.4, 0, 0.2, 1)",
-                  "&:hover": {
-                    opacity: 0.85,
-                  },
+                  width: { xs: 22, sm: 30 },
+                  height: `${Math.max(pct, 2)}%`,
+                  borderRadius: "8px 8px 4px 4px",
+                  background:
+                    isHovered
+                      ? `linear-gradient(180deg, #EF4444 0%, ${COLORS.primary} 100%)`
+                      : isLatest
+                      ? `linear-gradient(180deg, ${COLORS.primaryLight} 0%, ${COLORS.primary} 100%)`
+                      : "rgba(141,19,19,0.10)",
+                  transition: "height 400ms cubic-bezier(0.4,0,0.2,1), background 150ms",
+                  boxShadow: isHovered
+                    ? "0 6px 20px rgba(141,19,19,0.25)"
+                    : "none",
+                  mb: 1.5,
                 }}
               />
+
+              {/* Label tháng */}
               <Typography
                 sx={{
                   fontSize: 12,
-                  fontWeight: 700,
-                  color: isLatest ? COLORS.primary : "rgba(31,41,55,0.4)",
+                  fontWeight: isHovered || isLatest ? 800 : 600,
+                  color:
+                    isHovered
+                      ? COLORS.primary
+                      : isLatest
+                      ? COLORS.primary
+                      : "rgba(31,41,55,0.4)",
+                  transition: "color 150ms",
+                  lineHeight: 1,
                 }}
               >
-                {labels[idx] || `Th${idx + 5}`}
+                {monthLabels[idx] ?? labels[idx]}
               </Typography>
             </Stack>
           );
@@ -490,6 +637,7 @@ export default function AdminDashboardContent() {
   const [adminActiveTab, setAdminActiveTab] = useState(0);
   const [requests, setRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [invoiceTotal, setInvoiceTotal] = useState<number>(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [rejectNotes, setRejectNotes] = useState("");
@@ -544,6 +692,26 @@ export default function AdminDashboardContent() {
       alert(err.message || "Lỗi hệ thống khi từ chối");
     }
   };
+  useEffect(() => {
+    const fetchInvoiceTotal = async () => {
+      try {
+        const res = await apiService.get<any>("/ThanhToan/admin/tong-doanh-thu");
+        if (res.status && res.data != null) {
+          const raw =
+            typeof res.data === "number"
+              ? res.data
+              : (res.data.tongTien ??
+                res.data.total ??
+                res.data.totalAmount ??
+                0);
+          setInvoiceTotal(raw);
+        }
+      } catch {
+        /* silent */
+      }
+    };
+    void fetchInvoiceTotal();
+  }, []);
 
   useEffect(() => {
     if (adminActiveTab === 1) {
@@ -611,12 +779,14 @@ export default function AdminDashboardContent() {
 
   // % xu hướng THẬT từ API (không fix cứng)
   const fmtTrend = (p: number) => `${(p ?? 0) > 0 ? "+" : ""}${p ?? 0}%`;
-  const trendUp = (p: number) => ((p ?? 0) > 0 ? true : (p ?? 0) < 0 ? false : null);
+  const trendUp = (p: number) =>
+    (p ?? 0) > 0 ? true : (p ?? 0) < 0 ? false : null;
 
   const cardStats = [
     {
-      title: "TỔNG DOANH THU",
-      value: (welcomeStats.totalRevenue || 0).toLocaleString("vi-VN") + "đ",
+      title: "DOANH THU NỀN TẢNG (30%)",
+      value: invoiceTotal.toLocaleString("vi-VN") + "đ",
+      // thêm tooltip để thấy số gốc
       trend: fmtTrend(welcomeStats.revenueTrendPct),
       isUp: trendUp(welcomeStats.revenueTrendPct),
       icon: (

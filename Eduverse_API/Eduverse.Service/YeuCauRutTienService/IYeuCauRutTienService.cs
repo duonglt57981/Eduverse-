@@ -1,6 +1,7 @@
 ﻿using Eduverse.Model.Entities;
 using Eduverse.Service.Common;
 using Eduverse.Service.YeuCauRutTienService.Dto;
+using Eduverse.Service.YeuCauRutTienService.Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace Eduverse.Service.YeuCauRutTienService
         Task<decimal> GetSoDuAsync(Guid userId);
         Task TaoYeuCauAsync(Guid userId, TaoYeuCauRutTienDto dto);
         Task XuLyYeuCauAsync(Guid id, XuLyYeuCauDto dto); // Admin
+        Task GuiOtpAsync(Guid userId, GuiOtpRutTienRequest request);
 
     }
 }

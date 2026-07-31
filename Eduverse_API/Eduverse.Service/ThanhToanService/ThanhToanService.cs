@@ -534,6 +534,16 @@ namespace Eduverse.Service.ThanhToanService
                 SoTienSauGiam = soTienGoc - tongGiam
             };
         }
+        public async Task<double> GetTongDoanhThuNenTangAsync()
+        {
+            // Tổng tất cả đơn hàng đã thanh toán thành công (TrangThai == 1)
+            var tongHoaDon = await _donHangRepo.GetQueryable()
+                .Where(x => !x.IsDeleted && x.TrangThai == 1)
+                .SumAsync(x => (double?)x.SoTienThanhToan ?? 0);
+
+            // Nền tảng giữ 30%
+            return Math.Round(tongHoaDon * 0.3, 0);
+        }
 
     }
 }

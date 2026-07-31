@@ -87,7 +87,7 @@ export const getLichSuRutTien = createAsyncThunk(
 export const taoYeuCauRutTien = createAsyncThunk(
   "rutTien/taoYeuCau",
   async (
-    dto: { soTienRut: number; idNganHang: string },
+    dto: { soTienRut: number; idNganHang: string ;otp: string},
     { rejectWithValue },
   ) => {
     try {

@@ -22,5 +22,6 @@ namespace Eduverse.Service.ThanhToanService
 
         Task<DonHangDto?> GetDonHangByIdAsync(Guid id);
         Task<ApDungNhieuMaGiamGiaResponseDto> KiemTraMaGiamGiaAsync(ApDungMaGiamGiaDto dto);
+        Task<double> GetTongDoanhThuNenTangAsync();
     }
 }

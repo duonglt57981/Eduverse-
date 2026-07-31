@@ -1,5 +1,6 @@
 ﻿using Eduverse.Service.YeuCauRutTienService;
 using Eduverse.Service.YeuCauRutTienService.Dto;
+using Eduverse.Service.YeuCauRutTienService.Request;
 using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -34,8 +35,15 @@ namespace Eduverse.Api.Controller
         [HttpPost]
         public async Task<IActionResult> TaoYeuCau([FromBody] TaoYeuCauRutTienDto dto)
         {
-            await _service.TaoYeuCauAsync(GetUserId(), dto);
-            return Ok(DataResponse.Success(null, "Đã gửi yêu cầu rút tiền"));
+            try
+            {
+                await _service.TaoYeuCauAsync(GetUserId(), dto);
+                return Ok(DataResponse.Success(null, "Đã gửi yêu cầu rút tiền"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(DataResponse.False(ex.Message));
+            }
         }
 
         // Admin only
@@ -52,6 +60,22 @@ namespace Eduverse.Api.Controller
             await _service.XuLyYeuCauAsync(id, dto);
             return Ok(DataResponse.Success(null, "Đã xử lý yêu cầu"));
         }
+
+        [HttpPost("gui-otp")]
+        public async Task<IActionResult> GuiOtp([FromBody] GuiOtpRutTienRequest request)
+        {
+            try
+            {
+                await _service.GuiOtpAsync(GetUserId(), request);
+                return Ok(DataResponse.Success(null, "Đã gửi mã OTP đến email của bạn"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(DataResponse.False(ex.Message));
+            }
+        }
+
+
     }
 
 }

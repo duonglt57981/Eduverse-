@@ -25,7 +25,9 @@ namespace Eduverse.Service.YeuCauRutTienService.Dto
     {
         public decimal SoTienRut { get; set; }
         public Guid IdNganHang { get; set; }
-        
+        public string Otp { get; set; } = "";
+
+
     }
 
     public class XuLyYeuCauDto

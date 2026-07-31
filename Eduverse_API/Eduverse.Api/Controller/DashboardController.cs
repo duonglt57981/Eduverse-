@@ -27,12 +27,14 @@ namespace Eduverse.Api.Controller
         private readonly IService<BaiKiemTra> _baiKiemTraService;
         private readonly IService<DanhMuc_KhoaHoc> _danhMucKhoaHocService;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IService<DonHang> _donHangService;
 
         public DashboardController(
             IService<KhoaHoc> khoaHocService,
             IService<DanhMuc> danhMucService,
             IService<DangKyKhoaHoc> dangKyKhoaHocService,
             IService<TienDoHocTap> tienDoHocTapService,
+            IService<DonHang> donHangService,
             IService<ChungChi> chungChiService,
             IService<BaiKiemTra> baiKiemTraService,
             IService<DanhMuc_KhoaHoc> danhMucKhoaHocService,
@@ -43,6 +45,7 @@ namespace Eduverse.Api.Controller
             _dangKyKhoaHocService = dangKyKhoaHocService;
             _tienDoHocTapService = tienDoHocTapService;
             _chungChiService = chungChiService;
+            _donHangService = donHangService;
             _baiKiemTraService = baiKiemTraService;
             _danhMucKhoaHocService = danhMucKhoaHocService;
             _userManager = userManager;
@@ -517,6 +520,25 @@ namespace Eduverse.Api.Controller
                 monthlyEnrollments.Add(new { label = "Tháng " + mStart.Month, value = cnt });
             }
 
+            var monthlyRevenue = new List<object>();
+            for (int i = 6; i >= 0; i--)
+            {
+                var mStart = curMonthStart.AddMonths(-i);
+                var mEnd = mStart.AddMonths(1);
+
+                double totalAmount = myRegs
+                    .Where(r => r.ThoiGianDK.HasValue
+                             && r.ThoiGianDK.Value >= mStart
+                             && r.ThoiGianDK.Value < mEnd)
+                    .Sum(r => r.GiaDangKy ?? 0);
+
+                monthlyRevenue.Add(new
+                {
+                    label = "Th" + mStart.Month,
+                    totalAmount = totalAmount
+                });
+            }
+
             // Tỷ lệ hoàn thành theo khóa (từ TienDoHocTap)
             var completionByCourse = new List<object>();
             try
@@ -581,6 +603,7 @@ namespace Eduverse.Api.Controller
                     newStudentsThisMonth = newThisMonth,
                     studentGrowthPercent = studentGrowthPercent,
                     monthlyEnrollments = monthlyEnrollments,
+                    monthlyRevenue = monthlyRevenue, 
                     completionByCourse = completionByCourse,
                     recentStudents = recentStudents
                 }
@@ -662,11 +685,28 @@ namespace Eduverse.Api.Controller
             // 5. Revenue Trend (12 Months of the current year)
             var currentYear = DateTime.Now.Year;
             var revenueTrend = new double[12];
-            for (int m = 1; m <= 12; m++)
+            try
             {
-                revenueTrend[m - 1] = allRegistrations
-                    .Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value.Year == currentYear && r.ThoiGianDK.Value.Month == m)
-                    .Sum(r => r.GiaDangKy ?? 0);
+                var donHangsDaThanhToan = await _donHangService.GetQueryable()
+                    .Where(d => !d.IsDeleted
+                             && d.TrangThai == 1
+                             && d.NgayTao.HasValue
+                             && d.NgayTao.Value.Year == currentYear)
+                    .ToListAsync();
+
+                for (int m = 1; m <= 12; m++)
+                {
+                    var tongThang = donHangsDaThanhToan
+                        .Where(d => d.NgayTao!.Value.Month == m)
+                        .Sum(d => d.SoTienThanhToan ?? 0);
+
+                    // Nền tảng giữ 30%
+                    revenueTrend[m - 1] = Math.Round(tongThang * 0.3, 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error calculating revenue trend: " + ex.Message);
             }
 
 
@@ -674,11 +714,19 @@ namespace Eduverse.Api.Controller
             var studentGrowth = new int[7];
             try
             {
-                var allUsers = await _userManager.Users.Where(u => !u.IsDeleted).ToListAsync();
                 for (int i = 0; i < 7; i++)
                 {
                     var targetMonth = DateTime.Now.AddMonths(-(6 - i));
-                    studentGrowth[i] = allUsers.Count(u => u.CreatedDate.Year == targetMonth.Year && u.CreatedDate.Month == targetMonth.Month);
+
+                    // Đếm số học viên UNIQUE đăng ký khóa học trong tháng đó
+                    studentGrowth[i] = allRegistrations
+                        .Where(r => r.ThoiGianDK.HasValue
+                                 && r.ThoiGianDK.Value.Year == targetMonth.Year
+                                 && r.ThoiGianDK.Value.Month == targetMonth.Month
+                                 && r.IdNguoiDangKi.HasValue)
+                        .Select(r => r.IdNguoiDangKi!.Value)
+                        .Distinct()
+                        .Count();
                 }
             }
             catch (Exception ex)

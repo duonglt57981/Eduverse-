@@ -19,6 +19,7 @@ using Eduverse.Service.DangKyKhoaHocService;
 using Eduverse.Service.ElasticsearchService;
 using Eduverse.Service.EmailService;
 using Eduverse.Service.GeminiService;
+using Eduverse.Service.YeuCauRutTienService;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
@@ -65,6 +66,7 @@ namespace Eduverse.Api
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IYeuCauRutTienService, YeuCauRutTienService>();
             builder.Services.AddScoped<Eduverse.IService.DanhSachYeuThichService.IDanhSachYeuThichService, Eduverse.Service.DanhSachYeuThichService.DanhSachYeuThichService>();
             builder.Services.AddScoped<Eduverse.IService.ChungChiService.IChungChiService, Eduverse.IService.ChungChiService.ChungChiService>();
             builder.Services.AddDependencyInjection();
