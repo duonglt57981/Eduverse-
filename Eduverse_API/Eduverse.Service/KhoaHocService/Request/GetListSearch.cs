@@ -21,5 +21,6 @@ namespace Eduverse.Service.KhoaHocService.Request
         public string? SapXepTen { get; set; }
 
         public bool? SapXepHocVienNhieuNhat { get; set; }
+
     }
 }

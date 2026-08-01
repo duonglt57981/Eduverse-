@@ -1,5 +1,6 @@
 import {
   GetToUpdateKhoaHoc,
+  GiangVienKhoaHocDto,
   KhoaHocDangKiSearch,
   KhoaHocDraftResultType,
   KhoaHocManagerSearch,
@@ -268,6 +269,49 @@ export default class KhoaHocService {
       return response;
     } catch (error) {
       console.error("Error fetching course list for manager:", error);
+      throw error;
+    }
+  }
+
+  // API 1
+  async GetListByGiangVien(
+    userId: string,
+    search: KhoaHocManagerSearch = { pageIndex: 1, pageSize: 10 },
+  ): Promise<ApiResponse<GiangVienKhoaHocDto>> {
+    try {
+      return await apiService.get<GiangVienKhoaHocDto>(
+        `/KhoaHoc/khoahoc-list-bygiangvien/${userId}`,
+        {
+          params: {
+            pageIndex: search.pageIndex ?? 1,
+            pageSize: search.pageSize ?? 20,
+          },
+        },
+      );
+    } catch (error) {
+      console.error("Error getting course list by giang vien:", error);
+      throw error;
+    }
+  }
+
+  // API 2
+  async GetListByDanhMuc(
+    idKhoaHoc: string,
+    search: KhoaHocManagerSearch = { pageIndex: 1, pageSize: 10 },
+  ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
+    try {
+      return await apiService.get<PagedList<KhoaHocType>>(
+        "/KhoaHoc/khoahoc-getlistformanager",
+        {
+          params: {
+            idKhoaHoc: idKhoaHoc,
+            pageIndex: search.pageIndex ?? 1,
+            pageSize: search.pageSize ?? 10,
+          },
+        },
+      );
+    } catch (error) {
+      console.error("Error getting course list by danh muc:", error);
       throw error;
     }
   }

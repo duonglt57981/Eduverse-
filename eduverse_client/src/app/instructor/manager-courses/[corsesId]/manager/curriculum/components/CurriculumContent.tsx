@@ -76,6 +76,7 @@ import {
   validateNoiDungCauHoi,
   validateNoiDungDapAn,
   trimString,
+  isNoiDungHtmlRong,
   SO_DAP_AN_TOI_THIEU,
   SO_DAP_AN_TOI_DA,
 } from "../../components/courseEditCore";
@@ -159,24 +160,36 @@ function RichTextEditor({
 }) {
   const [isFocused, setIsFocused] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
+  // Đánh dấu thay đổi vừa rồi đến từ chính người dùng gõ/dán trong editor
+  // (không phải từ bên ngoài đổi prop `value`) để tránh useEffect bên dưới
+  // ghi đè lại innerHTML và làm nhảy con trỏ giữa lúc đang gõ/dán -
+  // đây chính là nguyên nhân gây mất ký tự khi gõ và nhân đôi nội dung khi dán.
+  const dangTuThayDoi = useRef(false);
 
   useEffect(() => {
+    if (dangTuThayDoi.current) {
+      dangTuThayDoi.current = false;
+      return;
+    }
     if (editorRef.current && editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value || "";
     }
   }, [value]);
 
-  const applyFormat = (command: string, val?: string) => {
-    document.execCommand(command, false, val || "");
+  const emitChange = () => {
     if (editorRef.current) {
+      dangTuThayDoi.current = true;
       onChange(editorRef.current.innerHTML);
     }
   };
 
+  const applyFormat = (command: string, val?: string) => {
+    document.execCommand(command, false, val || "");
+    emitChange();
+  };
+
   const handleInput = () => {
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-    }
+    emitChange();
   };
 
   const sanitizeHtml = (html: string): string => {
@@ -280,13 +293,28 @@ function RichTextEditor({
       contentToInsert = textData.replace(/\n/g, "<br>");
     }
 
-    if (contentToInsert) {
+    if (contentToInsert && editorRef.current) {
+      // Đảm bảo focus và vùng chọn nằm đúng trong editor trước khi chèn,
+      // tránh trường hợp selection bị "lạc" (ví dụ sau khi vừa xóa hết nội
+      // dung) khiến execCommand chèn sai vị trí và nội dung cũ bị nhân đôi.
+      editorRef.current.focus();
+      const selection = window.getSelection();
+      if (
+        selection &&
+        (selection.rangeCount === 0 ||
+          !editorRef.current.contains(selection.anchorNode))
+      ) {
+        const range = document.createRange();
+        range.selectNodeContents(editorRef.current);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+
       document.execCommand("insertHTML", false, contentToInsert);
     }
 
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-    }
+    emitChange();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -3135,14 +3163,6 @@ export default function CurriculumContent() {
     }
 
     const moTaTrimmed = trimString(moTa);
-    if (!moTaTrimmed) {
-      setToast({
-        open: true,
-        message: "Vui lòng nhập mô tả bài kiểm tra",
-        severity: "error",
-      });
-      return;
-    }
     const moTaValid = validateMoTaBaiKiemTra(moTaTrimmed);
     if (!moTaValid.valid) {
       setToast({
@@ -3221,14 +3241,6 @@ export default function CurriculumContent() {
     }
 
     const moTaTrimmed = trimString(moTa);
-    if (!moTaTrimmed) {
-      setToast({
-        open: true,
-        message: "Vui lòng nhập mô tả bài kiểm tra",
-        severity: "error",
-      });
-      return;
-    }
     const moTaValid = validateMoTaBaiKiemTra(moTaTrimmed);
     if (!moTaValid.valid) {
       setToast({
@@ -3328,7 +3340,7 @@ export default function CurriculumContent() {
     const { phanId, quizId, question, isEditing } = questionEditor;
 
     const noiDungTrimmed = trimString(question.noiDungCauHoi);
-    if (!noiDungTrimmed) {
+    if (isNoiDungHtmlRong(question.noiDungCauHoi)) {
       setToast({
         open: true,
         message: "Vui lòng nhập nội dung câu hỏi",

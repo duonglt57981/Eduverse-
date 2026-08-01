@@ -36,6 +36,9 @@ namespace Eduverse.Model.Entities
 
         [DisplayName("Ảnh bìa")]
         public string? AnhBia { get; set; }
+
+        [DisplayName("Giới thiệu")]
+        public string? GioiThieu { get; set; }
         // chi dc role giang vien moi co the dung thuoc tinh SoDuTaiKhoan de rut tien
         public decimal? SoDuTaiKhoan { get; set; } = 0;
 

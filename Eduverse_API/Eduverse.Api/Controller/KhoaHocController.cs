@@ -1,4 +1,5 @@
 using Eduverse.Service.Common;
+using Eduverse.Service.Dto;
 using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
@@ -171,6 +172,38 @@ namespace Eduverse.Api.Controller
             try
             {
                 var result = await _khoaHocService.GetListForManager(search);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("khoahoc-list-bygiangvien/{UserId}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<GiangVienKhoaHocDto>> GetListByGiangVien([FromQuery] GetListSearch search, Guid UserId)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetListByGiangVien(search, UserId);
+                return DataResponse<GiangVienKhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<GiangVienKhoaHocDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("khoahoc-list-bydanhmuc/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetListByDanhMuc(Guid idKhoaHoc, [FromQuery] SearchBase search)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetListByDanhMuc(idKhoaHoc,search);
                 return DataResponse<PagedList<KhoaHocDto>>.Success(result);
             }
             catch (Exception ex)

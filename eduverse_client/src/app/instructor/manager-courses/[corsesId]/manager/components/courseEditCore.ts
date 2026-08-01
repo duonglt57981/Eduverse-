@@ -102,7 +102,7 @@ export const SO_KY_TU_TEN_TAI_LIEU_TOI_DA = 99;
 // Bài kiểm tra
 export const SO_KY_TU_TEN_BAI_KIEM_TRA_TOI_THIEU = 3;
 export const SO_KY_TU_TEN_BAI_KIEM_TRA_TOI_DA = 99;
-export const SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_THIEU = 3;
+export const SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_THIEU = 10;
 export const SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_DA = 200;
 
 // Câu hỏi
@@ -112,7 +112,7 @@ export const SO_DAP_AN_TOI_THIEU = 2;
 export const SO_DAP_AN_TOI_DA = 15;
 
 // Đáp án
-export const SO_KY_TU_NOI_DUNG_DAP_AN_TOI_THIEU = 3;
+export const SO_KY_TU_NOI_DUNG_DAP_AN_TOI_THIEU = 1;
 export const SO_KY_TU_NOI_DUNG_DAP_AN_TOI_DA = 99;
 
 // ===== UTILITY FUNCTIONS =====
@@ -134,6 +134,34 @@ export function trimString(text: string): string {
 export function isOnlySpaces(text: string): boolean {
   if (!text || typeof text !== "string") return true;
   return text.trim().length === 0;
+}
+
+// Chuyển nội dung HTML (từ RichTextEditor) sang văn bản thuần để đếm/kiểm tra
+// chính xác - loại bỏ thẻ HTML, giải mã entity phổ biến, và thay các thẻ
+// xuống dòng/khối bằng khoảng trắng để tránh dính chữ giữa các đoạn.
+export function layNoiDungThuanTuyTuHtml(html: string): string {
+  if (!html || typeof html !== "string") return "";
+  return html
+    .replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr|\/blockquote)\s*\/?>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;|&apos;/gi, "'")
+    .replace(/[ \t\f\v]+/g, " ");
+}
+
+export function isNoiDungHtmlRong(html: string): boolean {
+  return layNoiDungThuanTuyTuHtml(html).trim().length === 0;
+}
+
+// Đếm số ký tự của nội dung HTML, không tính khoảng trắng đầu/cuối
+// (khoảng trắng ở giữa vẫn được tính) - dùng cho nội dung câu hỏi/đáp án
+// lấy từ RichTextEditor.
+export function demSoKyTuHtmlKhongTinhKhoangTrangDauCuoi(html: string): number {
+  return layNoiDungThuanTuyTuHtml(html).trim().length;
 }
 
 // ===== VALIDATION FUNCTIONS =====
@@ -238,25 +266,27 @@ export function validateTenBaiKiemTra(tenBaiKiemTra: string): {
   return { valid: true };
 }
 
+// Bài kiểm tra - Mô tả (không bắt buộc, nếu nhập thì tối thiểu 10 - tối đa 200 ký tự)
 export function validateMoTaBaiKiemTra(moTa: string): {
   valid: boolean;
   error?: string;
 } {
-  const trimmed = trimString(moTa);
-  if (isOnlySpaces(moTa)) {
-    return { valid: false, error: "Vui lòng nhập mô tả bài kiểm tra" };
+  // Không bắt buộc nhập: bỏ qua validate nếu để trống hoặc chỉ toàn khoảng trắng
+  if (!moTa || isOnlySpaces(moTa)) {
+    return { valid: true };
   }
-  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(moTa);
-  if (soKyTu < SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_THIEU) {
+
+  const soKyTu = demSoKyTu(moTa);
+  if (soKyTu < 10) {
     return {
       valid: false,
-      error: `Mô tả bài kiểm tra cần tối thiểu ${SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_THIEU} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+      error: `Mô tả bài kiểm tra cần tối thiểu 10 ký tự (không tính khoảng trắng). Hiện tại: ${soKyTu} ký tự.`,
     };
   }
-  if (soKyTu > SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_DA) {
+  if (soKyTu > 200) {
     return {
       valid: false,
-      error: `Mô tả bài kiểm tra không được vượt quá ${SO_KY_TU_MO_TA_BAI_KIEM_TRA_TOI_DA} ký tự (không tính khoảng trắng đầu cuối). Hiện tại: ${soKyTu} ký tự.`,
+      error: `Mô tả bài kiểm tra không được vượt quá 200 ký tự (không tính khoảng trắng). Hiện tại: ${soKyTu} ký tự.`,
     };
   }
   return { valid: true };
@@ -267,11 +297,10 @@ export function validateNoiDungCauHoi(noiDung: string): {
   valid: boolean;
   error?: string;
 } {
-  const trimmed = trimString(noiDung);
-  if (isOnlySpaces(noiDung)) {
+  if (isNoiDungHtmlRong(noiDung)) {
     return { valid: false, error: "Vui lòng nhập nội dung câu hỏi" };
   }
-  const soKyTu = demSoKyTuKhongTinhKhoangTrangDauCuoi(noiDung);
+  const soKyTu = demSoKyTuHtmlKhongTinhKhoangTrangDauCuoi(noiDung);
   if (soKyTu < SO_KY_TU_NOI_DUNG_CAU_HOI_TOI_THIEU) {
     return {
       valid: false,

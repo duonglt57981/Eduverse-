@@ -9,6 +9,7 @@ using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Repository.TaiLieuRepository;
 using Eduverse.Repository.TienDoHocTapRepository;
+using Eduverse.Service.AppUserService;
 using Eduverse.Service.BaiGiangService;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.BaiKiemTraService.Dto;
@@ -21,6 +22,8 @@ using Eduverse.Service.DangKyKhoaHocService;
 using Eduverse.Service.DanhMuc_KhoaHocService;
 using Eduverse.Service.DanhMuc_KhoaHocService.Dto;
 using Eduverse.Service.DapAnService;
+using Eduverse.Service.Dto;
+using Eduverse.Service.ElasticsearchService;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Eduverse.Service.LanLamBaiKiemTraService;
@@ -28,11 +31,12 @@ using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.TaiLieuService.Dto;
+using Elastic.Clients.Elasticsearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System.ComponentModel.Design;
 using System.Security.Claims;
-using Eduverse.Service.ElasticsearchService;
 
 
 
@@ -62,6 +66,7 @@ namespace Eduverse.Service.KhoaHocService
         private readonly IElasticsearchService _elasticsearchService;
         private readonly IDapAnService _dapAnService;
         private readonly IMemoryCache _cache;
+        private readonly IAppUserService _appUserService;
         public KhoaHocService(
             IMemoryCache memoryCache,
             IKhoaHocRepository khoaHocRepository,
@@ -86,7 +91,8 @@ namespace Eduverse.Service.KhoaHocService
             EduverseContext eduverseContext,
             IElasticsearchService elasticsearchService,
             IDapAnService dapAnService,
-            IMemoryCache cache
+            IMemoryCache cache,
+            IAppUserService appUserService
 
         ) : base(khoaHocRepository)
         {
@@ -112,6 +118,7 @@ namespace Eduverse.Service.KhoaHocService
             _elasticsearchService = elasticsearchService;
             _dapAnService = dapAnService;
             _cache = cache;
+            _appUserService = appUserService;
         }
         
 
@@ -500,6 +507,7 @@ namespace Eduverse.Service.KhoaHocService
                     Gia = x.Gia,
                     GiaGoc = x.GiaGoc,
                     CreatedBy = x.CreatedBy,
+                    CreatedId = x.CreatedId,
                     DanhSachPhanHoc = new List<PhanHocDto>()
                 })
                 .FirstOrDefaultAsync();
@@ -538,6 +546,7 @@ namespace Eduverse.Service.KhoaHocService
 
             khoaHoc.DaDangKy = daDangKy;
             khoaHoc.idDangKiKhoaHoc = idDangKiKhoaHoc.Value; 
+            
 
             // 4. Lấy danh sách phần học
             var phanHocs = await _phanRepository.GetAll()
@@ -768,7 +777,7 @@ namespace Eduverse.Service.KhoaHocService
         }
         #endregion
 
-        #region GetLearning (KHÔNG SWAP)
+        #region GetLearning
             public async Task<KhoaHocDto> GetLearning(Guid idDangKy)
             {
                 Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiDangKi);
@@ -817,6 +826,8 @@ namespace Eduverse.Service.KhoaHocService
                             HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
                             LoaiKhoaHoc = x.LoaiKhoaHoc,
                             SoLuongHocVien = soHocVien,
+                            CreatedId = x.CreatedId,
+                            ThongTinGiangVien = new AppUser(),
                             DanhSachPhanHoc = new List<PhanHocDto>()
                         })
                         .FirstOrDefaultAsync();
@@ -827,6 +838,22 @@ namespace Eduverse.Service.KhoaHocService
                 .Where(x => x.Id == idKhoaHoc)
                 .Select(x => new { x.Id, x.TieuDe, x.TrangThai, x.TrangThaiPheDuyet, x.IsBanHienTai, x.IsDeleted })
                 .FirstOrDefaultAsync();
+
+
+            var giangVien = await _appUserService.GetQueryable().FirstOrDefaultAsync(x => x.Id == result.CreatedId);
+
+            if(giangVien != null)
+            {
+                result.ThongTinGiangVien = new AppUser
+                {
+                    Id = giangVien.Id,
+                    AnhDaiDien = giangVien.AnhDaiDien,
+                    HoTen = giangVien.HoTen,
+                    TieuSu = giangVien.TieuSu
+
+                };
+            }
+
             return result;
                 },
                 TimeSpan.FromMinutes(30));
@@ -1545,6 +1572,132 @@ namespace Eduverse.Service.KhoaHocService
             });
 
             return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
+        }
+
+        public async Task<GiangVienKhoaHocDto> GetListByGiangVien(GetListSearch search, Guid UserId)
+        {
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var hocvien);
+
+            var khoaHocIds = GetQueryable()
+                .Where(x => x.CreatedId == UserId)
+                .Select(x => x.Id);
+            var tongHocVienDangHoc = 0;
+            var tongHocVienDangKy = 0;
+
+            if (khoaHocIds.Any())
+            {
+                tongHocVienDangHoc = await _dangKyKhoaHocRepository
+                .GetQueryable()
+                .Where(x => khoaHocIds.Contains(x.IdKhoaHoc.Value))
+                .Select(x => x.IdNguoiDangKi)
+                .Distinct()
+                .CountAsync();
+
+                tongHocVienDangKy = await _dangKyKhoaHocRepository
+                    .GetQueryable()
+                    .Where(x => khoaHocIds.Contains(x.IdKhoaHoc.Value))
+                    .Select(x => x.IdNguoiDangKi)
+                    .Distinct()
+                    .CountAsync();
+            }
+
+            var listDangKi = await _dangKyKhoaHocRepository
+                .GetQueryable()
+                .Where(x => x.IdNguoiDangKi == hocvien)
+                .Select(x => x.IdKhoaHoc)
+                .ToListAsync();
+
+            var giangVien = await _appUserService.GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.Id == UserId)
+                .Select(x => new AppUser
+                {
+                    Id = x.Id,
+                    HoTen = x.HoTen,
+                    AnhDaiDien = x.AnhDaiDien,
+                    TieuSu = x.TieuSu
+                })
+                .FirstOrDefaultAsync();
+
+            if (giangVien == null)
+                throw new Exception("Không tìm thấy giảng viên.");
+
+            var query = GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.CreatedId == UserId
+                        && !listDangKi.Contains(x.Id)
+                        && x.TrangThai == "HoatDong"
+                        && x.TrangThaiPheDuyet == "DaDuyet")
+                .Select(x => new KhoaHocDto
+                {
+                    Id = x.Id,
+                    TieuDe = x.TieuDe,
+                    MoTa = x.MoTa,
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+                    Gia = x.Gia,
+                    GiaGoc = x.GiaGoc,
+                    LoaiKhoaHoc = x.LoaiKhoaHoc,
+                    CapDo = x.CapDo,
+                    TrangThai = x.TrangThai,
+                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                    NgayTao = x.CreatedDate
+                });
+
+            return new GiangVienKhoaHocDto
+            {
+                ThongTinGiangVien = giangVien,
+                KhoaHocs = await PagedList<KhoaHocDto>.CreateAsync(query, search),
+                TongHocVienDangHoc = tongHocVienDangHoc,
+                TongHocVienDangKy = tongHocVienDangKy
+            };
+        }
+
+        public async Task<PagedList<KhoaHocDto>> GetListByDanhMuc(Guid idKhoaHoc, SearchBase search)
+        {
+            var danhMucIds = await _danhMuc_KhoaHocRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .Select(x => x.IdDanhMuc)
+                .Distinct()
+                .ToListAsync();
+
+            var query = GetAll()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted
+                         && x.TrangThai == "HoatDong"
+                         && x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.IsBanHienTai == true
+                         && x.Id != idKhoaHoc);
+
+            // Chỉ lấy các khóa học có chung ít nhất 1 danh mục
+            if (danhMucIds.Any())
+            {
+                query = query.Where(x =>
+                    _danhMuc_KhoaHocRepository.GetQueryable()
+                        .Any(dm =>
+                            dm.IdKhoaHoc == x.Id &&
+                            !dm.IsDeleted &&
+                            danhMucIds.Contains(dm.IdDanhMuc)));
+            }
+
+            var result = query
+                .OrderByDescending(x => x.CreatedDate)
+                .Select(x => new KhoaHocDto
+                {
+                    Id = x.Id,
+                    TieuDe = x.TieuDe,
+                    MoTa = x.MoTa,
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+                    Gia = x.Gia,
+                    GiaGoc = x.GiaGoc,
+                    LoaiKhoaHoc = x.LoaiKhoaHoc,
+                    CapDo = x.CapDo,
+                    TrangThai = x.TrangThai,
+                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                    NgayTao = x.CreatedDate
+                });
+
+            return await PagedList<KhoaHocDto>.CreateAsync(result, search);
         }
 
 
