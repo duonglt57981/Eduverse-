@@ -356,6 +356,7 @@ namespace Eduverse.Api.Controller
             var premiumCourse = courses.Where(c => !registeredCourseIds.Contains(c.Id)).FirstOrDefault(c => c.CapDo == "Nâng cao") ?? courses.FirstOrDefault();
             var premiumSelection = new
             {
+                id = premiumCourse?.Id.ToString(),
                 title = premiumCourse?.TieuDe ?? "Thiết kế hệ thống chuyên sâu",
                 hinhAnhKhoaHoc = premiumCourse?.HinhAnhKhoaHoc,
                 description = premiumCourse?.MoTa ?? "Học cách thiết kế hệ thống có tính sẵn sàng cao, chịu tải hàng triệu người dùng từ các chuyên gia đầu ngành.",
