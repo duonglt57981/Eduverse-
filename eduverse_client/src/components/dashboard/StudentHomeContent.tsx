@@ -136,6 +136,7 @@ interface DashboardData {
     giagoc?: number;
     level?: string;
     daDangKy?: boolean;
+    loaiKhoaHoc?: string;
   };
   historyRecommendation?: {
     basedOnCourse?: string;
@@ -427,7 +428,7 @@ function HoverPanel({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice = course.gia ?? course.giaGoc ?? (course as Record<string, unknown>).giagoc as number ?? 0;
+  const displayPrice = course.gia ?? course.giaGoc ?? (course as unknown as Record<string, unknown>).giagoc as number ?? 0;
 
   return (
     <Box
@@ -685,7 +686,7 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice = course.gia ?? course.giaGoc ?? (course as Record<string, unknown>).giagoc as number ?? 0;
+  const displayPrice = course.gia ?? course.giaGoc ?? (course as unknown as Record<string, unknown>).giagoc as number ?? 0;
   const title = course.tieuDe || course.title || "";
   // Chỉ hiển thị đánh giá khi có dữ liệu thật (không dùng giá trị bịa)
   const rating = course.rating ?? null;

@@ -594,7 +594,7 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice = course.gia ?? course.giaGoc ?? (course as Record<string, unknown>).giagoc as number ?? 0;
+  const displayPrice = course.gia ?? course.giaGoc ?? (course as unknown as Record<string, unknown>).giagoc as number ?? 0;
   const title = course.tieuDe || course.title || "";
   const rating = course.rating ?? 4.8;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
