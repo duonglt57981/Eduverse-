@@ -27,7 +27,6 @@ import AccountSettings from '@/src/components/settings/AccountSettings';
 import SecuritySettings from '@/src/components/settings/SecuritySettings';
 import NotificationSettings from '@/src/components/settings/NotificationSettings';
 import PrivacySettings from '@/src/components/settings/PrivacySettings';
-import LinkedAccountSettings from '@/src/components/settings/LinkedAccountSettings';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(0);
