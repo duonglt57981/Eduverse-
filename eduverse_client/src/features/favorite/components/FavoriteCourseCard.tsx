@@ -19,6 +19,7 @@ import {
   StarRounded,
   MenuBookRounded,
 } from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 import { FavoriteCourse } from '../types/favorite.type';
 import { CourseVisual } from '@/src/components/landing/landing-shared';
 import { courseCatalog } from '@/src/components/landing/landing-data';
@@ -29,6 +30,7 @@ interface FavoriteCourseCardProps {
 }
 
 export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseCardProps) {
+  const router = useRouter();
   // Look up additional data from courseCatalog
   const catalogItem = courseCatalog.find((c) => c.id === course.khoaHocId);
 
@@ -77,6 +79,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
   return (
     <Card
       elevation={0}
+      onClick={() => router.push(`/student/enroll-courses/${course.khoaHocId}`)}
       sx={{
         borderRadius: '18px',
         border: '1px solid rgba(0,0,0,0.07)',
@@ -333,6 +336,10 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
 
           <Button
             variant="contained"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/student/enroll-courses/${course.khoaHocId}`);
+            }}
             endIcon={<ArrowForwardRounded />}
             fullWidth
             sx={{

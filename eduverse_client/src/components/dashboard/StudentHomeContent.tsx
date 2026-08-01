@@ -129,6 +129,7 @@ interface DashboardData {
   }[];
   skillsCourses?: KhoaHocDto[];
   premiumSelection?: {
+    id?: string;
     title?: string;
     hinhAnhKhoaHoc?: string;
     description?: string;
@@ -137,6 +138,11 @@ interface DashboardData {
     studentsCount?: number;
     thumbnailGradient?: string;
     relatedCourses?: KhoaHocDto[];
+    gia?: number;
+    giaGoc?: number;
+    giagoc?: number;
+    level?: string;
+    daDangKy?: boolean;
   };
   historyRecommendation?: {
     basedOnCourse?: string;
@@ -686,7 +692,10 @@ function CourseCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gradient = getGradient(course);
-  const isFree = (course.gia ?? 0) === 0;
+  const isFree =
+    course.loaiKhoaHoc !== "Khóa học trả phí" &&
+    (!course.gia || course.gia <= 0);
+  const displayPrice = course.gia ?? course.giaGoc ?? (course as any).giagoc ?? 0;
   const title = course.tieuDe || course.title || "";
   // Chỉ hiển thị đánh giá khi có dữ liệu thật (không dùng giá trị bịa)
   const rating = course.rating ?? null;
@@ -904,9 +913,9 @@ function CourseCard({
                   color: isFree ? C.ok : C.primary,
                 }}
               >
-                {fmtPrice(course.gia ?? 0)}
+                {isFree ? "Miễn phí" : fmtPrice(displayPrice)}
               </Typography>
-              {course.giaGoc && course.giaGoc > (course.gia ?? 0) && (
+              {course.giaGoc && course.giaGoc > displayPrice && (
                 <Typography
                   sx={{
                     fontSize: 10.5,
@@ -1152,21 +1161,8 @@ export default function StudentHomeContent() {
   const [activeTab, setActiveTab] = useState<
     "courses" | "assigned" | "paths"
   >("courses");
-  const [selectedSkill, setSelectedSkill] = useState<string>("");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
-  const [showFullPremiumDescription, setShowFullPremiumDescription] =
-    useState(false);
-  const [premiumDescriptionHtml, setPremiumDescriptionHtml] = useState("");
   const tabsRef = useRef<HTMLDivElement>(null);
-  const skillScrollRef = useRef<HTMLDivElement>(null);
-
-  const scrollSkills = (direction: -1 | 1) => {
-    skillScrollRef.current?.scrollBy({
-      left:
-        direction * Math.min(skillScrollRef.current.clientWidth * 0.75, 640),
-      behavior: "smooth",
-    });
-  };
 
   const load = useCallback(async () => {
     try {
@@ -1198,17 +1194,11 @@ export default function StudentHomeContent() {
       );
       if (res.status && res.data) {
         setData(res.data);
-        setPremiumDescriptionHtml(
-          DOMPurify.sanitize(res.data.premiumSelection?.description || ""),
-        );
-        setShowFullPremiumDescription(false);
-        if (res.data.interestedSkills?.length) {
-          setSelectedSkill(res.data.interestedSkills[0]);
-        }
       } else {
         setError(res.message ?? "Không thể tải dữ liệu.");
       }
     } catch (e) {
+
       setError(e instanceof Error ? e.message : "Đã xảy ra lỗi.");
     } finally {
       setLoading(false);
@@ -1257,13 +1247,6 @@ export default function StudentHomeContent() {
     tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const filteredSkillCourses = useMemo(() => {
-    if (!data?.skillsCourses) return [];
-    if (!selectedSkill) return data.skillsCourses;
-    return data.skillsCourses.filter((course) =>
-      course.categoryNames?.includes(selectedSkill),
-    );
-  }, [selectedSkill, data]);
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading) {
@@ -1391,13 +1374,11 @@ export default function StudentHomeContent() {
       <Paper
         elevation={0}
         sx={{
-          p: { xs: 3, md: 4 },
-          borderRadius: "24px",
-          bgcolor: C.white,
-          border: `1px solid rgba(139,19,19,0.08)`,
-          background:
-            "linear-gradient(135deg, rgba(139,19,19,0.02) 0%, rgba(255,255,255,1) 100%)",
-          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)",
+          p: { xs: 3, md: 3.5 },
+          borderRadius: "16px",
+          bgcolor: "#ffffff",
+          border: `1px solid ${C.border}`,
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.02)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -1425,7 +1406,7 @@ export default function StudentHomeContent() {
               fontWeight: 800,
               fontSize: 22,
               border: "3px solid #fff",
-              boxShadow: `0 0 0 3px rgba(139,19,19,0.12), 0 8px 24px rgba(139,19,19,0.12)`,
+              boxShadow: `0 4px 12px rgba(139,19,19,0.1)`,
             }}
           >
             {initialsOf(user?.hoTen || welcomeStats?.userName)}
@@ -1478,9 +1459,16 @@ export default function StudentHomeContent() {
               justifyContent: "center",
               bgcolor: "rgba(139,19,19,0.03)",
               border: "1px solid rgba(139,19,19,0.06)",
-              borderRadius: "16px",
+              borderRadius: "12px",
               p: 2,
               minWidth: { xs: 90, sm: 110 },
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                bgcolor: "#ffffff",
+                borderColor: "rgba(139,19,19,0.12)",
+                boxShadow: "0 6px 16px rgba(139,19,19,0.04)",
+              }
             }}
           >
             <AutoStoriesRounded
@@ -1512,12 +1500,19 @@ export default function StudentHomeContent() {
               justifyContent: "center",
               bgcolor: "rgba(139,19,19,0.03)",
               border: "1px solid rgba(139,19,19,0.06)",
-              borderRadius: "16px",
+              borderRadius: "12px",
               p: 2,
               minWidth: { xs: 90, sm: 110 },
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                bgcolor: "#ffffff",
+                borderColor: "rgba(139,19,19,0.12)",
+                boxShadow: "0 6px 16px rgba(139,19,19,0.04)",
+              }
             }}
           >
-            <AccessTimeRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
+            <AccessTimeRounded sx={{ color: "#0284C7", fontSize: 24, mb: 1 }} />
             <Typography
               sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
             >
@@ -1538,53 +1533,20 @@ export default function StudentHomeContent() {
       </Paper>
 
 
-      {/* ── 3. Tiếp tục học + tabs ──────────────────────────────────── */}
+      {/* ── 3. Tiếp tục học ─────────────────────────────────────────── */}
       <Box ref={tabsRef}>
-        <SectionHeader
-          title="Tiếp tục học"
-        />
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-          sx={{
-            minHeight: 44,
-            mb: 2.5,
-            borderBottom: `1px solid ${C.border}`,
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 700,
-              fontSize: 14,
-              color: C.textSecondary,
-              minHeight: 44,
-              px: 1.75,
-            },
-            "& .Mui-selected": { color: `${C.primary} !important` },
-            "& .MuiTabs-indicator": {
-              backgroundColor: C.primary,
-              height: 3,
-              borderRadius: 3,
-            },
-          }}
-        >
-          <Tab value="courses" label="Khóa học" />
-          <Tab value="assigned" label="Các khóa học được chỉ định" />
-          <Tab value="paths" label="Lộ trình học tập" />
-        </Tabs>
-
-        {activeTab === "assigned" || tabItems.length === 0 ? (
+        <SectionHeader title="Tiếp tục học" />
+        {(!continueLearning?.courses || continueLearning.courses.length === 0) ? (
           <EmptyState
             icon={<InboxRounded />}
-            title={emptyForTab[activeTab].title}
-            desc={emptyForTab[activeTab].desc}
+            title="Chưa có khóa học đang học"
+            desc="Khi bạn đăng ký và bắt đầu học, khóa học sẽ xuất hiện ở đây để tiếp tục."
             actionLabel="Khám phá khóa học"
             onAction={goExplore}
           />
-        ) : activeTab === "courses" ? (
+        ) : (
           <Grid container spacing={2}>
-            {tabItems.map((item, i) => (
+            {continueLearning.courses.map((item, i) => (
               <Grid
                 key={item.id || item.idDangKiKhoaHoc || i}
                 size={{ xs: 12, md: 6 }}
@@ -1593,343 +1555,51 @@ export default function StudentHomeContent() {
               </Grid>
             ))}
           </Grid>
-        ) : (
-          <CarouselRow>
-            {tabItems.map((item, i) => (
-              <CourseCard
-                key={item.id || i}
-                course={item}
-                onAddCart={handleAddCart}
-                onClick={handleOpenCourse}
-              />
-            ))}
-          </CarouselRow>
         )}
       </Box>
 
-      {/* ── 4. Lĩnh vực sẽ học tiếp theo (data-gated) ───────────────── */}
-      {/* ── 5. Khóa học theo kỹ năng (data-gated) ───────────────────── */}
-      {interestedSkills && interestedSkills.length > 0 && (
-        <Box>
-          <SectionHeader
-            title="Dựa trên kỹ năng bạn quan tâm"
-          />
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ alignItems: "center", mb: 1.5, minWidth: 0 }}
-          >
-            <IconButton
-              aria-label="Xem kỹ năng phía trước"
-              onClick={() => scrollSkills(-1)}
-              size="small"
-              sx={{
-                flexShrink: 0,
-                border: `1px solid ${C.border2}`,
-                bgcolor: C.white,
-                color: C.primary,
-                boxShadow: "0 4px 12px rgba(31, 41, 55, 0.06)",
-                "&:hover": { bgcolor: C.primaryTint },
-              }}
-            >
-              <ChevronLeftRounded />
-            </IconButton>
-
-            <Stack
-              ref={skillScrollRef}
-              direction="row"
-              spacing={1}
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                overflowX: "auto",
-                scrollBehavior: "smooth",
-                scrollSnapType: "x proximity",
-                py: 0.5,
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": { display: "none" },
-              }}
-            >
-              {interestedSkills.map((skill) => (
-                <Chip
-                  key={skill}
-                  label={skill}
-                  onClick={() => setSelectedSkill(skill)}
-                  sx={{
-                    flexShrink: 0,
-                    scrollSnapAlign: "start",
-                    fontWeight: 700,
-                    fontSize: 12.5,
-                    cursor: "pointer",
-                    bgcolor: selectedSkill === skill ? C.primary : "#fff",
-                    color: selectedSkill === skill ? "#fff" : C.textSecondary,
-                    border: `1px solid ${selectedSkill === skill ? C.primary : C.border2}`,
-                    "&:hover": {
-                      bgcolor:
-                        selectedSkill === skill ? C.primaryDark : C.primaryTint,
-                    },
-                  }}
-                />
-              ))}
-            </Stack>
-
-            <IconButton
-              aria-label="Xem thêm kỹ năng"
-              onClick={() => scrollSkills(1)}
-              size="small"
-              sx={{
-                flexShrink: 0,
-                border: `1px solid ${C.border2}`,
-                bgcolor: C.white,
-                color: C.primary,
-                boxShadow: "0 4px 12px rgba(31, 41, 55, 0.06)",
-                "&:hover": { bgcolor: C.primaryTint },
-              }}
-            >
-              <ChevronRightRounded />
-            </IconButton>
-          </Stack>
-          {filteredSkillCourses.length > 0 ? (
-            <CarouselRow>
-              {filteredSkillCourses.map((c, i) => (
-                <CourseCard
-                  key={c.id || i}
-                  course={{
-                    ...c,
-                    hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.tieuDe || ""],
-                  }}
-                  onAddCart={handleAddCart}
-                  onClick={handleOpenCourse}
-                />
-              ))}
-            </CarouselRow>
-          ) : (
-            <EmptyState
-              title="Không có khóa học phù hợp với kỹ năng này"
-              desc="Thử chọn một kỹ năng khác hoặc khám phá thêm khóa học."
-              actionLabel="Khám phá khóa học"
-              onAction={goExplore}
-            />
-          )}
-        </Box>
-      )}
 
       {/* ── 6. Lựa chọn hàng đầu (data-gated) ───────────────────────── */}
       {premiumSelection && (
         <Box>
           <SectionHeader title="Lựa chọn hàng đầu cho bạn" />
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  height: "100%",
-                  minHeight: 250,
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  position: "relative",
-                  p: { xs: 3, md: 3.5 },
-                  color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff" : C.textDark,
-                  background: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""])
-                    ? `url(${premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]}) center/cover no-repeat`
-                    : "#F1F5F9",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "flex-end",
-                }}
-              >
-                {!isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) && (
-                  <Stack sx={{ alignItems: "center", justifyContent: "center", position: "absolute", inset: 0, bottom: 60 }}>
-                    <SchoolRounded sx={{ color: "#94A3B8", fontSize: 48 }} />
-                    <Typography
-                      sx={{
-                        color: "#94A3B8",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        mt: 1,
-                        letterSpacing: "1px",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      EDUVERSE
-                    </Typography>
-                  </Stack>
-                )}
-                <Chip
-                  icon={
-                    <WorkspacePremiumRounded
-                      sx={{
-                        color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff !important" : "#991B1B !important",
-                        fontSize: "15px !important",
-                      }}
-                    />
-                  }
-                  label="LỰA CHỌN HÀNG ĐẦU"
-                  size="small"
-                  sx={{
-                    position: "absolute",
-                    top: 16,
-                    left: 16,
-                    bgcolor: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "rgba(255,255,255,0.18)" : "rgba(153, 27, 27, 0.08)",
-                    color: isValidImage(premiumSelection.hinhAnhKhoaHoc || titleImages[premiumSelection.title || ""]) ? "#fff" : "#991B1B",
-                    fontWeight: 800,
-                    fontSize: 10.5,
+          <CarouselRow>
+            {/* Khóa học chính */}
+            <CourseCard
+              course={{
+                id: premiumSelection.id || "",
+                tieuDe: premiumSelection.title || "",
+                moTa: premiumSelection.description,
+                gia: premiumSelection.gia ?? 0,
+                giaGoc: premiumSelection.giaGoc || premiumSelection.giagoc,
+                capDo: premiumSelection.level || "Nâng cao",
+                hinhAnhKhoaHoc: premiumSelection.hinhAnhKhoaHoc || courseImages[premiumSelection.id || ""] || titleImages[premiumSelection.title || ""],
+                soLuongHocVien: premiumSelection.studentsCount,
+                daDangKy: premiumSelection.daDangKy,
+                rating: premiumSelection.rating,
+                instructor: premiumSelection.instructor,
+              } as any}
+              onAddCart={handleAddCart}
+              onClick={handleOpenCourse}
+            />
+
+            {/* Các khóa học liên quan */}
+            {premiumSelection.relatedCourses &&
+              premiumSelection.relatedCourses.map((c: any, i: number) => (
+                <CourseCard
+                  key={c.id || i}
+                  course={{
+                    ...c,
+                    hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.title || c.tieuDe || ""],
                   }}
+                  onAddCart={handleAddCart}
+                  onClick={handleOpenCourse}
                 />
-                <Typography
-                  sx={{ fontSize: 20, fontWeight: 900, lineHeight: 1.3 }}
-                >
-                  {premiumSelection.title}
-                </Typography>
-                {premiumSelection.instructor && (
-                  <Typography sx={{ fontSize: 13, opacity: 0.9, mt: 0.5 }}>
-                    {premiumSelection.instructor}
-                  </Typography>
-                )}
-                <Stack direction="row" spacing={2} sx={{ mt: 1.25 }}>
-                  {premiumSelection.rating != null &&
-                    premiumSelection.rating > 0 && (
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{ alignItems: "center" }}
-                      >
-                        <StarRounded sx={{ fontSize: 16, color: "#FBBF24" }} />
-                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
-                          {premiumSelection.rating}
-                        </Typography>
-                      </Stack>
-                    )}
-                  {premiumSelection.studentsCount != null &&
-                    premiumSelection.studentsCount > 0 && (
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{ alignItems: "center" }}
-                      >
-                        <PeopleAltRounded sx={{ fontSize: 16 }} />
-                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
-                          {premiumSelection.studentsCount.toLocaleString()}
-                        </Typography>
-                      </Stack>
-                    )}
-                </Stack>
-              </Paper>
-            </Grid>
-            <Grid size={{ xs: 12, md: 7 }}>
-              {premiumSelection.description && (
-                <Box sx={{ mb: 2 }}>
-                  <Box
-                    sx={{
-                      position: "relative",
-                      maxHeight: showFullPremiumDescription ? "none" : 190,
-                      overflow: "hidden",
-                      fontSize: 14,
-                      color: C.textSecondary,
-                      lineHeight: 1.7,
-                      "& h1, & h2, & h3": {
-                        color: C.textDark,
-                        fontSize: 16,
-                        lineHeight: 1.4,
-                        mt: 1.25,
-                        mb: 0.75,
-                      },
-                      "& p": { my: 0.75 },
-                      "& ul, & ol": { my: 0.75, pl: 2.5 },
-                      "& li": { mb: 0.35 },
-                      "& hr": {
-                        border: 0,
-                        borderTop: `1px solid ${C.border}`,
-                        my: 1.25,
-                      },
-                      ...(!showFullPremiumDescription && {
-                        "&::after": {
-                          content: '""',
-                          position: "absolute",
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          height: 64,
-                          pointerEvents: "none",
-                          background:
-                            "linear-gradient(180deg, rgba(247,245,242,0) 0%, #F7F5F2 88%)",
-                        },
-                      }),
-                    }}
-                    dangerouslySetInnerHTML={{ __html: premiumDescriptionHtml }}
-                  />
-                  <Button
-                    size="small"
-                    onClick={() =>
-                      setShowFullPremiumDescription((current) => !current)
-                    }
-                    endIcon={
-                      showFullPremiumDescription ? (
-                        <ChevronLeftRounded
-                          sx={{ transform: "rotate(90deg)" }}
-                        />
-                      ) : (
-                        <ChevronRightRounded
-                          sx={{ transform: "rotate(90deg)" }}
-                        />
-                      )
-                    }
-                    sx={{
-                      mt: 0.75,
-                      px: 0,
-                      minWidth: 0,
-                      color: C.primary,
-                      fontWeight: 800,
-                      textTransform: "none",
-                      "&:hover": {
-                        bgcolor: "transparent",
-                        color: C.primaryDark,
-                      },
-                    }}
-                  >
-                    {showFullPremiumDescription ? "Thu gọn" : "Xem tất cả"}
-                  </Button>
-                </Box>
-              )}
-              {premiumSelection.relatedCourses &&
-              premiumSelection.relatedCourses.length > 0 ? (
-                <CarouselRow>
-                  {premiumSelection.relatedCourses.map((c, i) => (
-                    <CourseCard
-                      key={c.id || i}
-                      course={{
-                        ...c,
-                        hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.title || c.tieuDe || ""],
-                      }}
-                      onAddCart={handleAddCart}
-                      onClick={handleOpenCourse}
-                      width={220}
-                    />
-                  ))}
-                </CarouselRow>
-              ) : (
-                <Button
-                  onClick={goExplore}
-                  variant="outlined"
-                  endIcon={<ArrowForwardRounded />}
-                  sx={{
-                    borderRadius: "11px",
-                    fontWeight: 800,
-                    color: C.primary,
-                    borderColor: C.primaryBorder,
-                    "&:hover": {
-                      borderColor: C.primary,
-                      bgcolor: C.primaryTint,
-                    },
-                  }}
-                >
-                  Khám phá thêm khóa học
-                </Button>
-              )}
-            </Grid>
-          </Grid>
+              ))}
+          </CarouselRow>
         </Box>
       )}
+
 
       {/* ── 7. Gợi ý theo lịch sử (data-gated) ──────────────────────── */}
       {historyRecommendation &&
