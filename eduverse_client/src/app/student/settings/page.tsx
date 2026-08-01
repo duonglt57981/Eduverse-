@@ -8,37 +8,23 @@ import { Box, Typography, Paper, Tab, Tabs } from "@mui/material";
 import {
   PersonRounded,
   LockRounded,
+  PaletteRounded,
   NotificationsRounded,
   ShieldRounded,
 } from "@mui/icons-material";
 
-import AccountSettings from "@/src/components/settings/AccountSettings";
-import SecuritySettings from "@/src/components/settings/SecuritySettings";
-import NotificationSettings from "@/src/components/settings/NotificationSettings";
-import PrivacySettings from "@/src/components/settings/PrivacySettings";
-import AppearanceSettings from "@/src/components/settings/AppearanceSettings";
+import AccountSettings from '@/src/components/settings/AccountSettings';
+import SecuritySettings from '@/src/components/settings/SecuritySettings';
+import AppearanceSettings from '@/src/components/settings/AppearanceSettings';
+import NotificationSettings from '@/src/components/settings/NotificationSettings';
+import PrivacySettings from '@/src/components/settings/PrivacySettings';
 
 const settingsTabs = [
-  {
-    label: "Tài khoản",
-    icon: PersonRounded,
-    description: "Thông tin cá nhân, ảnh đại diện",
-  },
-  {
-    label: "Bảo mật",
-    icon: LockRounded,
-    description: "Mật khẩu, xác thực 2 lớp",
-  },
-  {
-    label: "Thông báo",
-    icon: NotificationsRounded,
-    description: "Email, push, SMS",
-  },
-  {
-    label: "Quyền riêng tư",
-    icon: ShieldRounded,
-    description: "Hiển thị hồ sơ, dữ liệu",
-  },
+  { label: 'Tài khoản', icon: PersonRounded, description: 'Thông tin cá nhân, ảnh đại diện' },
+  { label: 'Bảo mật', icon: LockRounded, description: 'Mật khẩu, xác thực 2 lớp' },
+  { label: 'Giao diện', icon: PaletteRounded, description: 'Chế độ sáng/tối, màu nhấn' },
+  { label: 'Thông báo', icon: NotificationsRounded, description: 'Email, push, SMS' },
+  { label: 'Quyền riêng tư', icon: ShieldRounded, description: 'Hiển thị hồ sơ, dữ liệu' },
 ];
 
 function TabPanel({
@@ -85,10 +71,8 @@ export default function StudentSettingsPage() {
           >
             Cài đặt
           </Typography>
-          <Typography
-            sx={{ color: "text.secondary", fontSize: 15, lineHeight: 1.6 }}
-          >
-            Quản lý tài khoản, bảo mật và các tùy chỉnh cá nhân trên EduVerse.
+          <Typography sx={{ color: 'text.secondary', fontSize: 15, lineHeight: 1.6 }}>
+            Quản lý tài khoản, bảo mật, giao diện và các tùy chỉnh cá nhân trên EduVerse.
           </Typography>
         </Box>
 
