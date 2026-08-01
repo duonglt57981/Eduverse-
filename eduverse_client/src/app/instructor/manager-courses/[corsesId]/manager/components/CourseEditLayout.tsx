@@ -88,9 +88,9 @@ export default function CourseEditLayout({
       case "ChoDuyet":
         return { bgcolor: "#FEF3C7", color: "#D97706" }; // Amber
       case "DangDuyet":
-        return { bgcolor: "#EFF6FF", color: "#2563EB" }; // Blue
+        return { bgcolor: "var(--ev-paper-alt, #EFF6FF)", color: "#2563EB" }; // Blue
       default:
-        return { bgcolor: "#F3F4F6", color: "#4B5563" }; // Gray for DangSua
+        return { bgcolor: "var(--ev-paper-alt, #F3F4F6)", color: "var(--ev-text-secondary, #4B5563)" }; // Gray for DangSua
     }
   };
 
@@ -115,7 +115,7 @@ export default function CourseEditLayout({
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F7F8FA" }}>
       {/* Header Panel */}
-      <Box sx={{ bgcolor: "#ffffff", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 1000 }}>
+      <Box sx={{ bgcolor: "var(--ev-paper, #ffffff)", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 1000 }}>
         <Box
           sx={{
             display: "flex",
@@ -150,15 +150,15 @@ export default function CourseEditLayout({
                 alignItems: "center",
                 gap: 1,
                 cursor: "pointer",
-                color: "#475569",
+                color: "var(--ev-text-secondary, #475569)",
                 py: 0.8,
                 px: 1.2,
                 borderRadius: "8px",
                 transition: "all 0.2s ease",
                 flexShrink: 0,
                 "&:hover": {
-                  bgcolor: "#F1F5F9",
-                  color: "#1E293B",
+                  bgcolor: "var(--ev-paper-alt, #F1F5F9)",
+                  color: "var(--ev-text-primary, #1E293B)",
                 },
                 "&:focus-visible": {
                   outline: `2px solid ${MAU.chinh}`,
@@ -171,14 +171,14 @@ export default function CourseEditLayout({
               </Typography>
             </Box>
 
-            <Box sx={{ width: "1px", height: 20, bgcolor: "#E2E8F0", flexShrink: 0 }} />
+            <Box sx={{ width: "1px", height: 20, bgcolor: "var(--ev-divider, #E2E8F0)", flexShrink: 0 }} />
 
             {/* Course Title */}
             <Typography
               sx={{
                 fontWeight: 800,
                 fontSize: { xs: 15, sm: 16, md: 17 },
-                color: "#1E293B",
+                color: "var(--ev-text-primary, #1E293B)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -209,7 +209,7 @@ export default function CourseEditLayout({
             <Typography
               sx={{
                 fontSize: 13,
-                color: "#64748B",
+                color: "var(--ev-text-secondary, #64748B)",
                 display: { xs: "none", md: "block" },
                 flexShrink: 0,
                 fontWeight: 500,
@@ -234,7 +234,7 @@ export default function CourseEditLayout({
               variant="outlined"
               endIcon={<KeyboardArrowDownIcon />}
               sx={{
-                color: "#475569",
+                color: "var(--ev-text-secondary, #475569)",
                 borderColor: "#CBD5E1",
                 textTransform: "none",
                 fontWeight: 700,
@@ -243,9 +243,9 @@ export default function CourseEditLayout({
                 py: 0.8,
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  bgcolor: "#F8FAFC",
+                  bgcolor: "var(--ev-paper-alt, #F8FAFC)",
                   borderColor: "#94A3B8",
-                  color: "#1E293B",
+                  color: "var(--ev-text-primary, #1E293B)",
                 },
                 "&:focus-visible": {
                   outline: `2px solid ${MAU.chinh}`,
@@ -271,13 +271,13 @@ export default function CourseEditLayout({
             >
               <MenuItem
                 onClick={() => setAnchorXemTruoc(null)}
-                sx={{ fontSize: 14, color: "#374151", py: 1 }}
+                sx={{ fontSize: 14, color: "var(--ev-text-secondary, #374151)", py: 1 }}
               >
                 Xem trang đích
               </MenuItem>
               <MenuItem
                 onClick={() => setAnchorXemTruoc(null)}
-                sx={{ fontSize: 14, color: "#374151", py: 1 }}
+                sx={{ fontSize: 14, color: "var(--ev-text-secondary, #374151)", py: 1 }}
               >
                 Xem chương trình giảng dạy
               </MenuItem>
@@ -297,13 +297,13 @@ export default function CourseEditLayout({
             <IconButton
               size="small"
               sx={{
-                color: "#475569",
+                color: "var(--ev-text-secondary, #475569)",
                 p: 1,
                 borderRadius: "8px",
                 border: "1px solid #E2E8F0",
                 "&:hover": {
-                  bgcolor: "#F8FAFC",
-                  color: "#1E293B",
+                  bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+                  color: "var(--ev-text-primary, #1E293B)",
                 },
               }}
               aria-label="Cài đặt khóa học"
@@ -322,7 +322,7 @@ export default function CourseEditLayout({
             flexShrink: 0,
             px: 2.5,
             py: 4,
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             borderRight: "1px solid #E5E7EB",
             minHeight: "calc(100vh - 72px)",
             position: "sticky",
@@ -340,7 +340,7 @@ export default function CourseEditLayout({
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     mb: 2,
-                    color: "#94A3B8",
+                    color: "var(--ev-text-muted, #94A3B8)",
                   }}
                 >
                   {nhom.tieuDe}
@@ -388,7 +388,7 @@ export default function CourseEditLayout({
                           />
                         ) : (
                           <RadioButtonUncheckedIcon
-                            sx={{ fontSize: 18, color: "#94A3B8" }}
+                            sx={{ fontSize: 18, color: "var(--ev-text-muted, #94A3B8)" }}
                           />
                         )}
                         <Typography

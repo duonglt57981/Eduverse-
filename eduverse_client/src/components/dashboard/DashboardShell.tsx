@@ -75,6 +75,7 @@ import {
   type CourseCardItem,
 } from "./dashboard-data";
 import AuthenticatedFooter from "../footer/AuthenticatedFooter";
+import StudentFooter from "../footer/StudentFooter";
 import { apiService } from "@/src/services/index";
 import {
   Badge,
@@ -142,14 +143,14 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
             border: "1px solid rgba(0,0,0,0.06)",
             width: { xs: 36, md: 42 },
             height: { xs: 36, md: 42 },
-            color: "#1F2937",
+            color: "var(--ev-text-primary, #1F2937)",
             "&:hover": {
-              bgcolor: "#F3F4F6",
+              bgcolor: "var(--ev-paper-alt, #F3F4F6)",
               boxShadow: "0 6px 20px rgba(0,0,0,0.16)",
             },
             display: "inline-flex",
@@ -169,14 +170,14 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
             border: "1px solid rgba(0,0,0,0.06)",
             width: { xs: 36, md: 42 },
             height: { xs: 36, md: 42 },
-            color: "#1F2937",
+            color: "var(--ev-text-primary, #1F2937)",
             "&:hover": {
-              bgcolor: "#F3F4F6",
+              bgcolor: "var(--ev-paper-alt, #F3F4F6)",
               boxShadow: "0 6px 20px rgba(0,0,0,0.16)",
             },
             display: "inline-flex",
@@ -271,7 +272,7 @@ function AIGraphic() {
           },
         }}
       >
-        <PsychologyRounded sx={{ fontSize: 42, color: "#fff" }} />
+        <PsychologyRounded sx={{ fontSize: 42, color: "#FFFFFF" }} />
       </Box>
       <Box
         sx={{
@@ -488,7 +489,7 @@ function SidebarContent({
                 sx={{
                   borderRadius: "14px",
                   bgcolor: COLORS.primary,
-                  color: "#fff",
+                  color: "#FFFFFF",
                   py: 1.3,
                   fontSize: 13.5,
                   fontWeight: 700,
@@ -510,7 +511,7 @@ function SidebarContent({
                   borderRadius: "16px",
                   background:
                     "linear-gradient(135deg, #4A0E0E 0%, #8B1313 100%)",
-                  color: "#fff",
+                  color: "#FFFFFF",
                   cursor: "pointer",
                   transition: "transform 200ms ease, box-shadow 200ms ease",
                   "&:hover": {
@@ -549,7 +550,7 @@ function SidebarContent({
                   py: isAdmin ? 1 : 1.25,
                   color: isActive
                     ? (isAdmin ? "#991B1B" : COLORS.primary)
-                    : (isAdmin ? "#475569" : "rgba(31,41,55,0.72)"),
+                    : (isAdmin ? "var(--ev-text-secondary, #475569)" : "rgba(31,41,55,0.72)"),
                   bgcolor: isActive
                     ? (isAdmin ? "rgba(153, 27, 27, 0.04)" : "rgba(141,19,19,0.05)")
                     : "transparent",
@@ -560,10 +561,10 @@ function SidebarContent({
                   "&:hover": {
                     bgcolor: isActive
                       ? (isAdmin ? "rgba(153, 27, 27, 0.06)" : "rgba(141,19,19,0.08)")
-                      : (isAdmin ? "#FAFAFA" : "rgba(141,19,19,0.03)"),
+                      : (isAdmin ? "var(--ev-paper-alt, #FAFAFA)" : "rgba(141,19,19,0.03)"),
                     color: isActive
                       ? (isAdmin ? "#991B1B" : COLORS.primary)
-                      : (isAdmin ? "#1F2937" : "rgba(31,41,55,0.85)"),
+                      : (isAdmin ? "var(--ev-text-primary, #1F2937)" : "rgba(31,41,55,0.85)"),
                   },
                 }}
               >
@@ -580,7 +581,7 @@ function SidebarContent({
           })}
         </List>
 
-        <Divider sx={{ my: 2, opacity: 0.6, borderColor: pathname.startsWith("/admin") ? "#EEF0F3" : "divider" }} />
+        <Divider sx={{ my: 2, opacity: 0.6, borderColor: pathname.startsWith("/admin") ? "var(--ev-divider, #EEF0F3)" : "divider" }} />
 
         <List disablePadding>
           {getSecondarySidebarItemsByRole(roles).map((item) => {
@@ -594,11 +595,11 @@ function SidebarContent({
                   borderRadius: isAdmin ? "8px" : "16px",
                   px: 2,
                   py: isAdmin ? 1 : 1.25,
-                  color: isAdmin ? "#475569" : "rgba(31,41,55,0.72)",
+                  color: isAdmin ? "var(--ev-text-secondary, #475569)" : "rgba(31,41,55,0.72)",
                   transition: "all 150ms ease",
                   "&:hover": {
-                    bgcolor: isAdmin ? "#FAFAFA" : "rgba(141,19,19,0.03)",
-                    color: isAdmin ? "#1F2937" : "rgba(31,41,55,0.85)",
+                    bgcolor: isAdmin ? "var(--ev-paper-alt, #FAFAFA)" : "rgba(141,19,19,0.03)",
+                    color: isAdmin ? "var(--ev-text-primary, #1F2937)" : "rgba(31,41,55,0.85)",
                   },
                 }}
               >
@@ -662,7 +663,7 @@ function CourseCard({ course }: { course: CourseCardItem }) {
         />
         <Typography
           sx={{
-            color: "#fff",
+            color: "#FFFFFF",
             fontSize: 32,
             fontWeight: 900,
             opacity: 0.15,
@@ -735,12 +736,12 @@ function CourseCard({ course }: { course: CourseCardItem }) {
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
-            color: "#1F2937",
+            color: "var(--ev-text-primary, #1F2937)",
           }}
         >
           {course.title}
         </Typography>
-        <Typography sx={{ mt: 0.8, fontSize: 13, color: "rgba(31,41,55,0.6)" }}>
+        <Typography sx={{ mt: 0.8, fontSize: 13, color: "var(--ev-text-secondary, rgba(31,41,55,0.6))" }}>
           {course.instructor}
         </Typography>
 
@@ -757,7 +758,7 @@ function CourseCard({ course }: { course: CourseCardItem }) {
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <StarRounded sx={{ color: "#F59E0B", fontSize: 18 }} />
             <Typography
-              sx={{ fontSize: 13, fontWeight: 700, color: "#1F2937" }}
+              sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-primary, #1F2937)" }}
             >
               {course.rating}
             </Typography>
@@ -765,7 +766,7 @@ function CourseCard({ course }: { course: CourseCardItem }) {
           <Stack
             direction="row"
             spacing={0.5}
-            sx={{ alignItems: "center", color: "rgba(31,41,55,0.5)" }}
+            sx={{ alignItems: "center", color: "var(--ev-text-muted, rgba(31,41,55,0.5))" }}
           >
             <PeopleAltRounded sx={{ fontSize: 16 }} />
             <Typography sx={{ fontSize: 12, fontWeight: 500 }}>
@@ -968,74 +969,7 @@ export default function DashboardShell({
     fetchDashboardData();
   }, [pathname]);
 
-  // Xuất báo cáo tổng quan ra file CSV (mở được bằng Excel) từ dữ liệu thật
-  const handleExportReport = async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let data: any = dashboardData;
-      if (!data?.welcomeStats) {
-        let role = "HocVien";
-        if (pathname.startsWith("/instructor")) role = "GiaoVien";
-        else if (pathname.startsWith("/admin")) role = "Admin";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await apiService.get<any>(`/dashboard?role=${role}`);
-        if (res?.status && res.data) data = res.data;
-      }
-      const ws = data?.welcomeStats || {};
-      const fmtVnd = (n: number) => (n || 0).toLocaleString("vi-VN") + " đ";
-      const now = new Date();
-      const NL = String.fromCharCode(10);
-      const BOM = String.fromCharCode(0xfeff);
-      const esc = (v: unknown) =>
-        '"' + String(v ?? "").split('"').join('""') + '"';
-      const rows: string[][] = [];
-      rows.push(["BÁO CÁO TỔNG QUAN — EDUVERSE"]);
-      rows.push(["Thời điểm xuất", now.toLocaleString("vi-VN")]);
-      rows.push([]);
-      rows.push(["Chỉ số", "Giá trị"]);
-      rows.push(["Tổng khóa học", String(ws.totalCourses ?? 0)]);
-      rows.push(["Tổng học viên", String(ws.totalStudents ?? 0)]);
-      rows.push(["Tổng doanh thu", fmtVnd(ws.totalRevenue)]);
-      if (ws.completionRate != null)
-        rows.push(["Tỷ lệ hoàn thành", String(ws.completionRate) + "%"]);
-      if (Array.isArray(data?.revenueTrend) && data.revenueTrend.length) {
-        rows.push([]);
-        rows.push(["Doanh thu theo tháng", ""]);
-        data.revenueTrend.forEach((v: number, i: number) =>
-          rows.push(["Tháng " + (i + 1), fmtVnd(v)]),
-        );
-      }
-      if (
-        Array.isArray(data?.bestSellingCourses) &&
-        data.bestSellingCourses.length
-      ) {
-        rows.push([]);
-        rows.push(["Khóa học bán chạy", "Tỷ lệ"]);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data.bestSellingCourses.forEach((c: any) =>
-          rows.push([String(c?.title ?? ""), String(c?.percentage ?? 0) + "%"]),
-        );
-      }
-      const csv = rows.map((r) => r.map(esc).join(",")).join(NL);
-      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const pad = (x: number) => String(x).padStart(2, "0");
-      a.download =
-        "bao-cao-eduverse-" +
-        now.getFullYear() +
-        pad(now.getMonth() + 1) +
-        pad(now.getDate()) +
-        ".csv";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Export report error:", err);
-    }
-  };
+
 
   const theme = useMemo(
     () => createAppTheme("light", COLORS.primary, COLORS.primaryDark),
@@ -1174,7 +1108,7 @@ export default function DashboardShell({
               zIndex: 1200,
               px: { xs: 2, md: 4 },
               borderBottom: "1px solid #EEF0F3",
-              bgcolor: "#ffffff",
+              bgcolor: "var(--ev-paper, #FFFFFF)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -1233,13 +1167,13 @@ export default function DashboardShell({
                 px: 2.5,
                 py: 0.75,
                 borderRadius: "10px",
-                bgcolor: "#F8FAFC",
+                bgcolor: "var(--ev-paper-alt, #F8FAFC)",
                 border: "1px solid #EEF0F3",
                 transition: "all 150ms ease",
                 "&:focus-within": {
                   borderColor: "#991B1B",
                   boxShadow: "0 0 0 3px rgba(153, 27, 27, 0.05)",
-                  bgcolor: "#ffffff",
+                  bgcolor: "var(--ev-paper, #FFFFFF)",
                 },
               }}
             >
@@ -1260,52 +1194,13 @@ export default function DashboardShell({
               <IconButton
                 sx={{
                   display: { xs: "flex", md: "none" },
-                  color: "rgba(31,41,55,0.65)",
+                  color: "var(--ev-text-secondary, rgba(31,41,55,0.65))",
                 }}
               >
                 <SearchRounded />
               </IconButton>
 
-              {roles.includes("Admin") && (
-                <Stack
-                  direction="row"
-                  spacing={1.5}
-                  sx={{
-                    display: { xs: "none", md: "flex" },
-                    alignItems: "center",
-                  }}
-                >
-                  <Button
-                    variant="outlined"
-                    onClick={handleExportReport}
-                    startIcon={
-                      <ArrowForwardRounded
-                        sx={{ transform: "rotate(90deg)", fontSize: "16px !important" }}
-                      />
-                    }
-                    sx={{
-                      borderRadius: "10px",
-                      borderColor: "#E5E7EB",
-                      color: "#475569",
-                      px: 2.2,
-                      py: 0.7,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      textTransform: "none",
-                      boxShadow: "none",
-                      height: 38,
-                      transition: "all 150ms ease",
-                      "&:hover": {
-                        bgcolor: "#F8FAFC",
-                        borderColor: "#CBD5E1",
-                        color: "#1E2937",
-                      },
-                    }}
-                  >
-                    Xuất báo cáo
-                  </Button>
-                </Stack>
-              )}
+
 
               {/* User Avatar + Role Badge */}
               <Stack
@@ -1323,7 +1218,7 @@ export default function DashboardShell({
                       sx={{
                         borderRadius: "10px",
                         borderColor: "rgba(0,0,0,0.12)",
-                        color: "#1F2937",
+                        color: "var(--ev-text-primary, #1F2937)",
                         px: 1.5,
                         py: 0.6,
                         fontSize: 12.5,
@@ -1350,7 +1245,7 @@ export default function DashboardShell({
                     sx={{
                       borderRadius: "10px",
                       borderColor: "rgba(0,0,0,0.12)",
-                      color: "#1F2937",
+                      color: "var(--ev-text-primary, #1F2937)",
                       px: 1.5,
                       py: 0.6,
                       fontSize: 12.5,
@@ -1372,7 +1267,7 @@ export default function DashboardShell({
                     <IconButton
                       onClick={() => router.push("/student/favorites")}
                       sx={{
-                        color: "rgba(31,41,55,0.55)",
+                        color: "var(--ev-text-secondary, rgba(31,41,55,0.55))",
                         display: { xs: "none", sm: "flex" },
                       }}
                     >
@@ -1381,7 +1276,7 @@ export default function DashboardShell({
                     <IconButton
                       onClick={() => router.push("/student/cart")}
                       sx={{
-                        color: "rgba(31,41,55,0.55)",
+                        color: "var(--ev-text-secondary, rgba(31,41,55,0.55))",
                         display: { xs: "none", sm: "flex" },
                       }}
                     >
@@ -1392,7 +1287,7 @@ export default function DashboardShell({
                 <IconButton
                   onClick={(e) => setNotiAnchorEl(e.currentTarget)}
                   sx={{
-                    color: "rgba(31,41,55,0.55)",
+                    color: "var(--ev-text-secondary, rgba(31,41,55,0.55))",
                     display: { xs: "none", sm: "flex" },
                   }}
                 >
@@ -1403,7 +1298,7 @@ export default function DashboardShell({
                 {pathname.startsWith("/instructor") && (
                   <IconButton
                     sx={{
-                      color: "rgba(31,41,55,0.55)",
+                      color: "var(--ev-text-secondary, rgba(31,41,55,0.55))",
                       display: { xs: "none", sm: "flex" },
                     }}
                   >
@@ -1436,7 +1331,7 @@ export default function DashboardShell({
                     sx={{
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "#111827",
+                      color: "var(--ev-text-primary, #111827)",
                       lineHeight: 1.3,
                     }}
                   >
@@ -1476,7 +1371,7 @@ export default function DashboardShell({
                     fontSize: 14,
                     fontWeight: 700,
                     bgcolor: "#8B1313",
-                    color: "#fff",
+                    color: "#FFFFFF",
                     border: pathname.startsWith("/admin") ? "1px solid #E5E7EB" : "2px solid #fff",
                     boxShadow: pathname.startsWith("/admin") ? "none" : `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
                     transition: "all 200ms ease",
@@ -1522,7 +1417,7 @@ export default function DashboardShell({
                           py: 1.1,
                           fontSize: 14,
                           fontWeight: 500,
-                          color: "#1F2937",
+                          color: "var(--ev-text-primary, #1F2937)",
                           fontFamily: '"Be Vietnam Pro", sans-serif',
                           "&:hover": {
                             bgcolor: "rgba(141,19,19,0.04)",
@@ -1578,7 +1473,7 @@ export default function DashboardShell({
                         sx={{
                           fontWeight: 800,
                           fontSize: 14.5,
-                          color: "#1F2937",
+                          color: "var(--ev-text-primary, #1F2937)",
                           textOverflow: "ellipsis",
                           overflow: "hidden",
                         }}
@@ -1601,7 +1496,7 @@ export default function DashboardShell({
                     </Box>
                   </Box>
 
-                  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                  <Divider sx={{ my: 0.5, borderColor: "var(--ev-divider, rgba(0,0,0,0.06))" }} />
 
                   {!pathname.startsWith("/admin") ? (
                     <>
@@ -1626,7 +1521,7 @@ export default function DashboardShell({
                         <Box
                           sx={{
                             bgcolor: "#7C3AED",
-                            color: "#fff",
+                            color: "#FFFFFF",
                             borderRadius: "50%",
                             width: 20,
                             height: 20,
@@ -1650,7 +1545,7 @@ export default function DashboardShell({
                         </MenuItem>
                       )}
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider sx={{ my: 0.5, borderColor: "var(--ev-divider, rgba(0,0,0,0.06))" }} />
 
                       {/* Section 2 */}
                       <MenuItem onClick={() => router.push("/student/dashboard")}>
@@ -1660,7 +1555,7 @@ export default function DashboardShell({
                         Tin nhắn
                       </MenuItem>
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider sx={{ my: 0.5, borderColor: "var(--ev-divider, rgba(0,0,0,0.06))" }} />
 
                       {/* Section 3 */}
                       <MenuItem onClick={() => router.push("/settings")}>
@@ -1679,7 +1574,7 @@ export default function DashboardShell({
                         Lịch sử mua
                       </MenuItem>
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider sx={{ my: 0.5, borderColor: "var(--ev-divider, rgba(0,0,0,0.06))" }} />
 
                       {/* Section 4 */}
                       <MenuItem
@@ -1707,7 +1602,7 @@ export default function DashboardShell({
                         </Stack>
                       </MenuItem>
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider sx={{ my: 0.5, borderColor: "var(--ev-divider, rgba(0,0,0,0.06))" }} />
 
                       {/* Section 5 */}
                       <MenuItem onClick={() => router.push("/student/profile")}>
@@ -1717,7 +1612,7 @@ export default function DashboardShell({
                         Chỉnh sửa hồ sơ
                       </MenuItem>
 
-                      <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
+                      <Divider sx={{ my: 0.5, borderColor: "var(--ev-divider, rgba(0,0,0,0.06))" }} />
 
                       {/* Section 6 */}
                       <MenuItem onClick={() => router.push("/student/dashboard")}>
@@ -1927,7 +1822,7 @@ export default function DashboardShell({
                             sx={{
                               fontSize: { xs: 24, md: 28 },
                               fontWeight: 900,
-                              color: "#1F2937",
+                              color: "var(--ev-text-primary, #1F2937)",
                             }}
                           >
                             Chào mừng trở lại,{" "}
@@ -1937,7 +1832,7 @@ export default function DashboardShell({
                             sx={{
                               mt: 0.5,
                               fontSize: 14.5,
-                              color: "rgba(31,41,55,0.6)",
+                              color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
                               maxWidth: 550,
                             }}
                           >
@@ -2025,7 +1920,7 @@ export default function DashboardShell({
                           p: 3.5,
                           borderRadius: "24px",
                           background: banner.bgGradient,
-                          color: "#fff",
+                          color: "#FFFFFF",
                           minHeight: 210,
                           display: "flex",
                           flexDirection: "column",
@@ -2068,13 +1963,13 @@ export default function DashboardShell({
                               size="small"
                               sx={{
                                 bgcolor: "rgba(255,255,255,0.15)",
-                                color: "#fff",
+                                color: "#FFFFFF",
                                 fontWeight: 800,
                                 fontSize: 11,
                                 mb: 2,
                                 borderRadius: "50px",
                                 "& .MuiChip-icon": {
-                                  color: "#fff",
+                                  color: "#FFFFFF",
                                   ml: 1,
                                 },
                               }}
@@ -2086,13 +1981,13 @@ export default function DashboardShell({
                               size="small"
                               sx={{
                                 bgcolor: "rgba(255,255,255,0.15)",
-                                color: "#fff",
+                                color: "#FFFFFF",
                                 fontWeight: 800,
                                 fontSize: 11,
                                 mb: 2,
                                 borderRadius: "50px",
                                 "& .MuiChip-icon": {
-                                  color: "#fff",
+                                  color: "#FFFFFF",
                                   ml: 1,
                                 },
                               }}
@@ -2158,7 +2053,7 @@ export default function DashboardShell({
                         fontSize: 21,
                         fontWeight: 900,
                         mb: 2,
-                        color: "#1F2937",
+                        color: "var(--ev-text-primary, #1F2937)",
                       }}
                     >
                       Hoàn thành nốt phần bạn đang làm dở
@@ -2182,7 +2077,7 @@ export default function DashboardShell({
                           textTransform: "none",
                           fontSize: 14.5,
                           fontWeight: 700,
-                          color: "rgba(31,41,55,0.5)",
+                          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                           minWidth: 100,
                           px: 1.5,
                           "&.Mui-selected": {
@@ -2239,7 +2134,7 @@ export default function DashboardShell({
                               >
                                 <Typography
                                   sx={{
-                                    color: "#fff",
+                                    color: "#FFFFFF",
                                     fontSize: 28,
                                     fontWeight: 900,
                                     opacity: 0.15,
@@ -2255,7 +2150,7 @@ export default function DashboardShell({
                                     bottom: 8,
                                     left: 8,
                                     bgcolor: "rgba(0, 0, 0, 0.65)",
-                                    color: "#fff",
+                                    color: "#FFFFFF",
                                     fontWeight: 700,
                                     fontSize: 10,
                                     height: 20,
@@ -2273,7 +2168,7 @@ export default function DashboardShell({
                                   display: "-webkit-box",
                                   WebkitLineClamp: 2,
                                   WebkitBoxOrient: "vertical",
-                                  color: "#1F2937",
+                                  color: "var(--ev-text-primary, #1F2937)",
                                 }}
                               >
                                 {item.title}
@@ -2283,7 +2178,7 @@ export default function DashboardShell({
                                 sx={{
                                   mt: 1,
                                   fontSize: 12.5,
-                                  color: "rgba(31,41,55,0.5)",
+                                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                                   fontWeight: 600,
                                 }}
                               >
@@ -2304,7 +2199,7 @@ export default function DashboardShell({
                                   sx={{
                                     fontSize: 12,
                                     fontWeight: 700,
-                                    color: "rgba(31,41,55,0.4)",
+                                    color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                                   }}
                                 >
                                   Tiến độ
@@ -2381,7 +2276,7 @@ export default function DashboardShell({
                           sx={{
                             fontSize: 20,
                             fontWeight: 900,
-                            color: "#1F2937",
+                            color: "var(--ev-text-primary, #1F2937)",
                           }}
                         >
                           Chưa có khóa học nào được chỉ định
@@ -2389,7 +2284,7 @@ export default function DashboardShell({
                         <Typography
                           sx={{
                             fontSize: 14.5,
-                            color: "rgba(31,41,55,0.6)",
+                            color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
                             maxWidth: 650,
                             lineHeight: 1.6,
                           }}
@@ -2403,7 +2298,7 @@ export default function DashboardShell({
                           onClick={() => router.push("/courses")}
                           sx={{
                             background: COLORS.gradientCrimson,
-                            color: "#fff",
+                            color: "#FFFFFF",
                             borderRadius: "12px",
                             px: 3.5,
                             py: 1.25,
@@ -2449,7 +2344,7 @@ export default function DashboardShell({
                               sx={{
                                 fontSize: 12,
                                 fontWeight: 700,
-                                color: "rgba(31,41,55,0.4)",
+                                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                                 textTransform: "uppercase",
                                 letterSpacing: "0.5px",
                               }}
@@ -2461,7 +2356,7 @@ export default function DashboardShell({
                                 mt: 1.5,
                                 fontSize: 16,
                                 fontWeight: 800,
-                                color: "#1F2937",
+                                color: "var(--ev-text-primary, #1F2937)",
                                 lineHeight: 1.4,
                               }}
                             >
@@ -2471,7 +2366,7 @@ export default function DashboardShell({
                           <Typography
                             sx={{
                               fontSize: 12.5,
-                              color: "rgba(31,41,55,0.5)",
+                              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                               fontWeight: 600,
                             }}
                           >
@@ -2517,7 +2412,7 @@ export default function DashboardShell({
                               sx={{
                                 fontSize: 12,
                                 fontWeight: 700,
-                                color: "rgba(31,41,55,0.4)",
+                                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                                 textTransform: "uppercase",
                                 letterSpacing: "0.5px",
                               }}
@@ -2529,7 +2424,7 @@ export default function DashboardShell({
                                 mt: 1.5,
                                 fontSize: 16,
                                 fontWeight: 800,
-                                color: "#1F2937",
+                                color: "var(--ev-text-primary, #1F2937)",
                                 lineHeight: 1.4,
                               }}
                             >
@@ -2540,7 +2435,7 @@ export default function DashboardShell({
                           <Typography
                             sx={{
                               fontSize: 12.5,
-                              color: "rgba(31,41,55,0.5)",
+                              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                               fontWeight: 600,
                             }}
                           >
@@ -2591,7 +2486,7 @@ export default function DashboardShell({
                                   sx={{
                                     fontSize: 12,
                                     fontWeight: 700,
-                                    color: "rgba(31,41,55,0.4)",
+                                    color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                                     textTransform: "uppercase",
                                     letterSpacing: "0.5px",
                                   }}
@@ -2603,7 +2498,7 @@ export default function DashboardShell({
                                     mt: 1.5,
                                     fontSize: 16,
                                     fontWeight: 800,
-                                    color: "#1F2937",
+                                    color: "var(--ev-text-primary, #1F2937)",
                                     lineHeight: 1.4,
                                   }}
                                 >
@@ -2620,7 +2515,7 @@ export default function DashboardShell({
                                 <Typography
                                   sx={{
                                     fontSize: 12.5,
-                                    color: "rgba(31,41,55,0.5)",
+                                    color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                                     fontWeight: 600,
                                   }}
                                 >
@@ -2662,14 +2557,14 @@ export default function DashboardShell({
                   {/* ========================================================= */}
                   <Box>
                     <Typography
-                      sx={{ fontSize: 21, fontWeight: 900, color: "#1F2937" }}
+                      sx={{ fontSize: 21, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)" }}
                     >
                       Lĩnh vực nên học tiếp theo
                     </Typography>
                     <Typography
                       sx={{
                         fontSize: 13.5,
-                        color: "rgba(31,41,55,0.5)",
+                        color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                         mb: 2.5,
                         mt: 0.5,
                       }}
@@ -2732,7 +2627,7 @@ export default function DashboardShell({
                                 fontSize: 16,
                                 fontWeight: 900,
                                 mb: 1.5,
-                                color: "#1F2937",
+                                color: "var(--ev-text-primary, #1F2937)",
                               }}
                             >
                               {sec.title}
@@ -2745,7 +2640,7 @@ export default function DashboardShell({
                                     key={i}
                                     sx={{
                                       fontSize: 13,
-                                      color: "rgba(31,41,55,0.6)",
+                                      color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
                                       fontWeight: 500,
                                       display: "flex",
                                       alignItems: "center",
@@ -2780,7 +2675,7 @@ export default function DashboardShell({
                         fontSize: 21,
                         fontWeight: 900,
                         mb: 2,
-                        color: "#1F2937",
+                        color: "var(--ev-text-primary, #1F2937)",
                       }}
                     >
                       Dựa trên kỹ năng bạn quan tâm
@@ -2805,7 +2700,7 @@ export default function DashboardShell({
                                   ? COLORS.primary
                                   : "rgba(0,0,0,0.03)",
                                 color: isActive
-                                  ? "#fff"
+                                  ? "var(--ev-paper, #FFFFFF)"
                                   : "rgba(31,41,55,0.65)",
                                 fontWeight: 700,
                                 fontSize: 13.5,
@@ -2820,7 +2715,7 @@ export default function DashboardShell({
                                   bgcolor: isActive
                                     ? COLORS.primary
                                     : "rgba(141, 19, 19, 0.05)",
-                                  color: isActive ? "#fff" : COLORS.primary,
+                                  color: isActive ? "var(--ev-paper, #FFFFFF)" : COLORS.primary,
                                 },
                                 transition: "all 150ms ease",
                               }}
@@ -2847,7 +2742,7 @@ export default function DashboardShell({
                         fontSize: 21,
                         fontWeight: 900,
                         mb: 2.5,
-                        color: "#1F2937",
+                        color: "var(--ev-text-primary, #1F2937)",
                       }}
                     >
                       Các khóa học hàng đầu chúng tôi chọn cho bạn
@@ -2895,7 +2790,7 @@ export default function DashboardShell({
                           />
                           <Typography
                             sx={{
-                              color: "#fff",
+                              color: "#FFFFFF",
                               fontSize: 48,
                               fontWeight: 900,
                               opacity: 0.08,
@@ -2950,7 +2845,7 @@ export default function DashboardShell({
                               fontWeight: 900,
                               lineHeight: 1.35,
                               mb: 1.5,
-                              color: "#1F2937",
+                              color: "var(--ev-text-primary, #1F2937)",
                             }}
                           >
                             {dashboardData?.premiumSelection?.title}
@@ -2959,7 +2854,7 @@ export default function DashboardShell({
                             sx={{
                               fontSize: 13.5,
                               lineHeight: 1.6,
-                              color: "rgba(31,41,55,0.6)",
+                              color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
                               mb: 3,
                             }}
                           >
@@ -2971,14 +2866,14 @@ export default function DashboardShell({
                               sx={{
                                 fontSize: 13.5,
                                 fontWeight: 700,
-                                color: "#1F2937",
+                                color: "var(--ev-text-primary, #1F2937)",
                               }}
                             >
                               Giảng viên:{" "}
                               <span
                                 style={{
                                   fontWeight: 500,
-                                  color: "rgba(31,41,55,0.7)",
+                                  color: "var(--ev-text-secondary, rgba(31,41,55,0.7))",
                                 }}
                               >
                                 {dashboardData?.premiumSelection?.instructor}
@@ -3001,7 +2896,7 @@ export default function DashboardShell({
                                   sx={{
                                     fontSize: 13,
                                     fontWeight: 700,
-                                    color: "#1F2937",
+                                    color: "var(--ev-text-primary, #1F2937)",
                                   }}
                                 >
                                   {dashboardData?.premiumSelection?.rating}
@@ -3010,7 +2905,7 @@ export default function DashboardShell({
                               <Typography
                                 sx={{
                                   fontSize: 13,
-                                  color: "rgba(31,41,55,0.5)",
+                                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                                   fontWeight: 500,
                                 }}
                               >
@@ -3026,7 +2921,7 @@ export default function DashboardShell({
                               variant="contained"
                               sx={{
                                 background: COLORS.gradientCrimson,
-                                color: "#fff",
+                                color: "#FFFFFF",
                                 fontWeight: 800,
                                 borderRadius: "12px",
                                 px: 3,
@@ -3079,7 +2974,7 @@ export default function DashboardShell({
                         fontSize: 21,
                         fontWeight: 900,
                         mb: 0.5,
-                        color: "#1F2937",
+                        color: "var(--ev-text-primary, #1F2937)",
                       }}
                     >
                       Vì bạn đã học &quot;
@@ -3089,7 +2984,7 @@ export default function DashboardShell({
                     <Typography
                       sx={{
                         fontSize: 13.5,
-                        color: "rgba(31,41,55,0.5)",
+                        color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                         mb: 2.5,
                       }}
                     >
@@ -3123,7 +3018,11 @@ export default function DashboardShell({
                   }
                 }}
               >
-                <AuthenticatedFooter role={activeRoles.includes("GiaoVien") ? "GiaoVien" : activeRoles.includes("Admin") ? "Admin" : "HocVien"} />
+                {!activeRoles.includes("GiaoVien") && !activeRoles.includes("Admin") ? (
+                  <StudentFooter />
+                ) : (
+                  <AuthenticatedFooter role={activeRoles.includes("GiaoVien") ? "GiaoVien" : "Admin"} />
+                )}
               </Box>
             )}
           </Box>
@@ -3165,7 +3064,7 @@ export default function DashboardShell({
             }}
           >
             <Typography
-              sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937" }}
+              sx={{ fontWeight: 800, fontSize: 16, color: "var(--ev-text-primary, #1F2937)" }}
             >
               Thông báo
             </Typography>
@@ -3236,7 +3135,7 @@ export default function DashboardShell({
                       sx={{
                         fontWeight: noti.daDoc ? 600 : 800,
                         fontSize: 13.5,
-                        color: "#1F2937",
+                        color: "var(--ev-text-primary, #1F2937)",
                       }}
                     >
                       {noti.tieuDe || noti.type || "Thông báo"}
@@ -3280,14 +3179,14 @@ export default function DashboardShell({
             },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800, fontSize: 18, color: "#1F2937" }}>
+          <DialogTitle sx={{ fontWeight: 800, fontSize: 18, color: "var(--ev-text-primary, #1F2937)" }}>
             {selectedNoti?.tieuDe || selectedNoti?.type || "Thông báo chi tiết"}
           </DialogTitle>
           <DialogContent>
             <Typography
               sx={{
                 fontSize: 14.5,
-                color: "#374151",
+                color: "var(--ev-text-secondary, #374151)",
                 mb: 2,
                 whiteSpace: "pre-wrap",
               }}

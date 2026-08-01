@@ -45,7 +45,7 @@ function ContactField({
           bgcolor: '#faf8f7',
           transition: 'box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease',
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'rgba(17,17,17,0.08)',
+            borderColor: 'var(--ev-divider, rgba(17,17,17,0.08))',
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
             borderColor: 'rgba(139,19,19,0.3)',
@@ -54,7 +54,7 @@ function ContactField({
             borderColor: '#8B1313',
           },
           '&.Mui-focused': {
-            bgcolor: '#fff',
+            bgcolor: 'var(--ev-paper, #fff)',
             boxShadow: '0 0 0 4px rgba(139,19,19,0.12)',
           },
         },
@@ -115,7 +115,7 @@ export default function ContactPage() {
                   mt: 1.6,
                   fontSize: 15.5,
                   lineHeight: 1.9,
-                  color: 'rgba(24,24,27,0.62)',
+                  color: 'var(--ev-text-muted, rgba(24,24,27,0.62))',
                 }}
               >
                 Đội ngũ EduVerse luôn sẵn sàng hỗ trợ bạn. Hãy để lại lời nhắn, chúng tôi sẽ
@@ -139,7 +139,7 @@ export default function ContactPage() {
                 p: { xs: 2.5, md: 3 },
                 borderRadius: 2.8,
                 border: '1px solid rgba(17,17,17,0.08)',
-                bgcolor: '#fff',
+                bgcolor: 'var(--ev-paper, #fff)',
                 boxShadow: '0 18px 34px rgba(24,18,20,0.08)',
               }}
             >
@@ -196,7 +196,7 @@ export default function ContactPage() {
                       p: 2.1,
                       borderRadius: 2.8,
                       border: '1px solid rgba(17,17,17,0.08)',
-                      bgcolor: '#fff',
+                      bgcolor: 'var(--ev-paper, #fff)',
                     }}
                   >
                     <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
@@ -235,7 +235,7 @@ export default function ContactPage() {
                     fontWeight: 900,
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',
-                    color: 'rgba(24,24,27,0.58)',
+                    color: 'var(--ev-text-muted, rgba(24,24,27,0.58))',
                   }}
                 >
                   Kết nối với chúng tôi
@@ -281,7 +281,7 @@ export default function ContactPage() {
                 p: 3,
                 borderRadius: 2.8,
                 border: '1px solid rgba(17,17,17,0.08)',
-                bgcolor: '#fff',
+                bgcolor: 'var(--ev-paper, #fff)',
               }}
             >
               <SectionHeading
@@ -305,7 +305,7 @@ export default function ContactPage() {
                     <Typography sx={{ fontSize: 15, fontWeight: 900 }}>
                       {item.question}
                     </Typography>
-                    <Typography sx={{ mt: 0.7, fontSize: 13.5, lineHeight: 1.8, color: 'rgba(24,24,27,0.58)' }}>
+                    <Typography sx={{ mt: 0.7, fontSize: 13.5, lineHeight: 1.8, color: 'var(--ev-text-muted, rgba(24,24,27,0.58))' }}>
                       {item.answer}
                     </Typography>
                   </Paper>
@@ -372,7 +372,7 @@ export default function ContactPage() {
                     px: 1.6,
                     py: 1,
                     borderRadius: 2.8,
-                    bgcolor: '#fff',
+                    bgcolor: 'var(--ev-paper, #fff)',
                     border: '1px solid rgba(17,17,17,0.08)',
                   }}
                 >

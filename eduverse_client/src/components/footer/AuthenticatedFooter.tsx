@@ -11,53 +11,15 @@ interface AuthenticatedFooterProps {
 
 export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) {
   const currentYear = new Date().getFullYear();
-  const isInstructor = role === "GiaoVien" || role === "Admin";
+  const isAdmin = role === "Admin";
 
-  const COLORS = isInstructor
-    ? {
-        bg: "#8B1313", // Đỏ đô thương hiệu cho giảng viên / admin
-        textMain: "#FFFFFF",
-        textMuted: "rgba(255, 255, 255, 0.72)",
-        border: "rgba(255, 255, 255, 0.12)",
-        hoverColor: "#FFFFFF",
-      }
-    : {
-        bg: "#1E293B", // Slate-800 xám xanh đen sang trọng cho học viên
-        textMain: "#FFFFFF",
-        textMuted: "#94A3B8", // Slate-400
-        border: "rgba(148, 163, 184, 0.12)",
-        hoverColor: "#38BDF8", // Sky blue hover
-      };
-
-  // Định nghĩa links cho Học viên
-  const studentLinks = [
-    {
-      title: "Học tập",
-      links: [
-        { label: "Khám phá khóa học", href: "/student/explore" },
-        { label: "Khóa học của tôi", href: "/student/courses/my-courses" },
-        { label: "Danh sách yêu thích", href: "/student/favorites" },
-        { label: "Giỏ hàng", href: "/student/cart" },
-      ]
-    },
-    {
-      title: "Tài khoản",
-      links: [
-        { label: "Hồ sơ cá nhân", href: "/settings" },
-        { label: "Thông báo", href: "/student/dashboard" },
-        { label: "Cài đặt tài khoản", href: "/settings" },
-      ]
-    },
-    {
-      title: "Hỗ trợ",
-      links: [
-        { label: "Trung tâm trợ giúp", href: "/contact" },
-        { label: "Liên hệ hỗ trợ", href: "/contact" },
-        { label: "Điều khoản sử dụng", href: "/auth/terms" },
-        { label: "Chính sách bảo mật", href: "/auth/privacy" },
-      ]
-    }
-  ];
+  const COLORS = {
+    bg: "#8B1313", // Đỏ đô thương hiệu cho giảng viên / admin
+    textMain: "var(--ev-paper, #FFFFFF)",
+    textMuted: "rgba(255, 255, 255, 0.72)",
+    border: "rgba(255, 255, 255, 0.12)",
+    hoverColor: "var(--ev-paper, #FFFFFF)",
+  };
 
   // Định nghĩa links cho Giảng viên
   const instructorLinks = [
@@ -112,26 +74,16 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
       title: "Hỗ trợ kỹ thuật",
       links: [
         { label: "Hồ sơ cá nhân", href: "/settings" },
-        { label: "Cài đặt hệ thống", href: "/admin/settings" },
         { label: "Trung tâm trợ giúp", href: "/contact" },
       ]
     }
   ];
 
-  const isAdmin = role === "Admin";
-  const isGiaoVien = role === "GiaoVien";
-
-  const linkGroups = isAdmin
-    ? adminLinks
-    : isGiaoVien
-    ? instructorLinks
-    : studentLinks;
+  const linkGroups = isAdmin ? adminLinks : instructorLinks;
 
   const description = isAdmin
     ? "Hệ thống quản trị và kiểm duyệt nội dung dành cho Quản trị viên EduVerse."
-    : isGiaoVien
-    ? "Công cụ hỗ trợ bạn xây dựng khóa học và phát triển hoạt động giảng dạy."
-    : "Học tập, phát triển kỹ năng và chinh phục mục tiêu của bạn.";
+    : "Công cụ hỗ trợ bạn xây dựng khóa học và phát triển hoạt động giảng dạy.";
 
   const linkSx = {
     fontSize: 13.5,

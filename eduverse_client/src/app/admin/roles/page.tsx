@@ -59,10 +59,10 @@ const COLORS = {
   primary: "#8B1313", // Deep Crimson
   primaryLight: "#B91C1C", // Light Crimson
   primaryBgLight: "#FFF5F5", // Extra light pink/red background
-  bgLight: "#F7F5F2", // Premium cream-rose background
-  white: "#FFFFFF",
-  textDark: "#1E293B", // Slate 800
-  textSecondary: "#64748B", // Slate 500
+  bgLight: "var(--ev-bg, #F7F5F2)", // Premium cream-rose background
+  white: "var(--ev-paper, #FFFFFF)",
+  textDark: "var(--ev-text-primary, #1E293B)", // Slate 800
+  textSecondary: "var(--ev-text-secondary, #64748B)", // Slate 500
   green: "#10B981", // Active state emerald
   greenBg: "#ECFDF5",
   orange: "#F59E0B", // Warning/key gold
@@ -510,7 +510,7 @@ export default function AdminRolesPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "#1F2937",
+                  color: "var(--ev-text-primary, #1F2937)",
                   mb: 0.5,
                 }}
               >
@@ -843,7 +843,7 @@ export default function AdminRolesPage() {
             ) : (
               <TableContainer>
                 <Table>
-                  <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+                  <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F8FAFC)" }}>
                     <TableRow>
                       <TableCell
                         sx={{

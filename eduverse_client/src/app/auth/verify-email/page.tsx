@@ -39,7 +39,7 @@ function VerifyEmailForm() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#F7F5F2",
+        background: "var(--ev-bg, #F7F5F2)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -51,7 +51,7 @@ function VerifyEmailForm() {
       <div
         style={{
           textAlign: "center",
-          background: "#ffffff",
+          background: "var(--ev-paper, #ffffff)",
           border: "1px solid #ECE7E4",
           borderRadius: 16,
           boxShadow: "0 8px 24px rgba(24,18,20,0.06)",
@@ -61,11 +61,11 @@ function VerifyEmailForm() {
         }}
       >
         <div style={{ fontSize: 56, marginBottom: 16 }}>{ok ? "✅" : "⏳"}</div>
-        <h2 style={{ margin: "0 0 8px", color: "#1F2937", fontWeight: 800, fontSize: 22 }}>{msg}</h2>
+        <h2 style={{ margin: "0 0 8px", color: "var(--ev-text-primary, #1F2937)", fontWeight: 800, fontSize: 22 }}>{msg}</h2>
         {ok && (
-          <p style={{ color: "#4B5563", margin: 0 }}>Đang chuyển về trang đăng nhập...</p>
+          <p style={{ color: "var(--ev-text-secondary, #4B5563)", margin: 0 }}>Đang chuyển về trang đăng nhập...</p>
         )}
-        {!ok && <p style={{ color: "#4B5563", margin: 0 }}>Vui lòng chờ...</p>}
+        {!ok && <p style={{ color: "var(--ev-text-secondary, #4B5563)", margin: 0 }}>Vui lòng chờ...</p>}
       </div>
     </div>
   );
@@ -74,7 +74,7 @@ function VerifyEmailForm() {
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: "100vh", background: "#F7F5F2", display: "flex", alignItems: "center", justifyContent: "center", color: "#1F2937", fontFamily: '"Be Vietnam Pro","Roboto",system-ui,-apple-system,"Segoe UI",Arial,sans-serif' }}>
+      <div style={{ minHeight: "100vh", background: "var(--ev-bg, #F7F5F2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ev-text-primary, #1F2937)", fontFamily: '"Be Vietnam Pro","Roboto",system-ui,-apple-system,"Segoe UI",Arial,sans-serif' }}>
         <h2>Đang tải...</h2>
       </div>
     }>

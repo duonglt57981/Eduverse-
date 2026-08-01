@@ -83,7 +83,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
       sx={{
         borderRadius: '18px',
         border: '1px solid rgba(0,0,0,0.07)',
-        bgcolor: '#fff',
+        bgcolor: 'var(--ev-paper, #fff)',
         transition: 'transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease',
         display: 'flex',
         flexDirection: 'column',
@@ -174,7 +174,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
           sx={{
             alignItems: 'center',
             mb: 1,
-            color: 'rgba(31,41,55,0.45)',
+            color: 'var(--ev-text-muted, rgba(31,41,55,0.45))',
             gap: 0.5,
           }}
         >
@@ -194,7 +194,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
             fontSize: 14.5,
             fontWeight: 800,
             lineHeight: 1.4,
-            color: '#1F2937',
+            color: 'var(--ev-text-primary, #1F2937)',
             mb: 1,
             height: 40,
             overflow: 'hidden',
@@ -210,7 +210,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
         <Typography
           variant="body2"
           sx={{
-            color: 'rgba(31,41,55,0.6)',
+            color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))',
             fontSize: 12.5,
             lineHeight: 1.5,
             mb: 2,
@@ -233,7 +233,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
           <Typography
             sx={{
               fontSize: 11,
-              color: 'rgba(31,41,55,0.45)',
+              color: 'var(--ev-text-muted, rgba(31,41,55,0.45))',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
@@ -246,7 +246,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
           <Typography
             sx={{
               fontSize: 11,
-              color: 'rgba(31,41,55,0.45)',
+              color: 'var(--ev-text-muted, rgba(31,41,55,0.45))',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
@@ -259,7 +259,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
           <Typography
             sx={{
               fontSize: 11,
-              color: 'rgba(31,41,55,0.45)',
+              color: 'var(--ev-text-muted, rgba(31,41,55,0.45))',
               fontWeight: 600,
             }}
           >
@@ -292,7 +292,7 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
               <Typography
                 sx={{
                   fontSize: 11,
-                  color: 'rgba(31,41,55,0.35)',
+                  color: 'var(--ev-text-muted, rgba(31,41,55,0.35))',
                   textDecoration: 'line-through',
                   fontWeight: 600,
                 }}

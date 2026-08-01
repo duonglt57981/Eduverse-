@@ -264,7 +264,7 @@ export default function AppearanceSettings() {
                           Bảng điều khiển
                         </Typography>
                         {themeMode === 'system' && (
-                          <Chip label="Đồng bộ OS" size="small" sx={{ height: 16, fontSize: 8, fontWeight: 800, bgcolor: 'rgba(17,17,17,0.06)', color: previewTextSecondary }} />
+                          <Chip label="Đồng bộ OS" size="small" sx={{ height: 16, fontSize: 8, fontWeight: 800, bgcolor: 'var(--ev-divider, rgba(17,17,17,0.06))', color: previewTextSecondary }} />
                         )}
                       </Stack>
 
@@ -293,7 +293,7 @@ export default function AppearanceSettings() {
                           <Box sx={{ position: 'absolute', inset: 0, opacity: 0.15, bgcolor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <OndemandVideoRounded sx={{ color: '#fff', fontSize: 28 }} />
                           </Box>
-                          <Chip label="PRO" size="small" sx={{ position: 'absolute', top: 6, left: 6, height: 14, fontSize: 8, fontWeight: 900, bgcolor: '#fff', color: currentAccent.value }} />
+                          <Chip label="PRO" size="small" sx={{ position: 'absolute', top: 6, left: 6, height: 14, fontSize: 8, fontWeight: 900, bgcolor: 'var(--ev-paper, #fff)', color: currentAccent.value }} />
                         </Box>
 
                         <Typography sx={{ fontSize: 11, fontWeight: 900, color: previewTextPrimary, lineHeight: 1.2, mb: 0.5 }}>

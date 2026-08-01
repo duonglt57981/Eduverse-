@@ -14,14 +14,14 @@ export default function AdminCoursesPage() {
             p: 4.5, 
             borderRadius: '24px', 
             border: '1px solid rgba(141,19,19,0.06)',
-            bgcolor: '#ffffff',
+            bgcolor: 'var(--ev-paper, #ffffff)',
             boxShadow: '0 10px 30px rgba(141,19,19,0.015)'
           }}
         >
           <Typography variant="h5" sx={{ fontWeight: 900, color: '#8B1313', mb: 2 }}>
             Quản lý khóa học
           </Typography>
-          <Typography sx={{ color: 'rgba(31,41,55,0.6)', lineHeight: 1.6 }}>
+          <Typography sx={{ color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))', lineHeight: 1.6 }}>
             Tính năng này đang được EduVerse phát triển và sẽ sớm ra mắt trong phiên bản tiếp theo.
           </Typography>
         </Paper>

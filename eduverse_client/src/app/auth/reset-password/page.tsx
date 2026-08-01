@@ -25,7 +25,7 @@ export default function ResetPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: '#F7F5F2',
+        bgcolor: 'var(--ev-bg, #F7F5F2)',
         px: 2,
       }}
     >
@@ -37,7 +37,7 @@ export default function ResetPasswordPage() {
           borderRadius: 4,
           border: '1px solid rgba(17,17,17,0.10)',
           p: { xs: 3, sm: 4 },
-          bgcolor: '#fff',
+          bgcolor: 'var(--ev-paper, #fff)',
           textAlign: 'center',
         }}
       >

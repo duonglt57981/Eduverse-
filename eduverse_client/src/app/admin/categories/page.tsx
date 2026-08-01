@@ -56,10 +56,10 @@ const COLORS = {
   primaryLight: "#B91C1C", // Light Crimson
   primaryDark: "#7F1D1D", // Dark Crimson
   primaryBgLight: "#FFF5F5", // Extra light pink/red background
-  bgLight: "#F7F5F2", // Premium cream-rose background
-  white: "#FFFFFF",
-  textDark: "#1E293B", // Slate 800
-  textSecondary: "#64748B", // Slate 500
+  bgLight: "var(--ev-bg, #F7F5F2)", // Premium cream-rose background
+  white: "var(--ev-paper, #FFFFFF)",
+  textDark: "var(--ev-text-primary, #1E293B)", // Slate 800
+  textSecondary: "var(--ev-text-secondary, #64748B)", // Slate 500
   green: "#10B981", // Active state emerald
   greenBg: "#ECFDF5",
   orange: "#F59E0B", // Warning/key gold
@@ -371,7 +371,7 @@ export default function AdminCategoriesPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "#1F2937",
+                  color: "var(--ev-text-primary, #1F2937)",
                   mb: 0.5,
                 }}
               >
@@ -681,9 +681,9 @@ export default function AdminCategoriesPage() {
                         width: 240,
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "14px",
-                          bgcolor: "#F8FAFC",
+                          bgcolor: "var(--ev-paper-alt, #F8FAFC)",
                           height: 42,
-                          "& fieldset": { borderColor: "#E2E8F0" },
+                          "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
                           "&:hover fieldset": { borderColor: COLORS.primary },
                           "&.Mui-focused fieldset": {
                             borderColor: COLORS.primary,
@@ -738,12 +738,12 @@ export default function AdminCategoriesPage() {
                       displayEmpty
                       sx={{
                         borderRadius: "14px",
-                        bgcolor: "#F8FAFC",
+                        bgcolor: "var(--ev-paper-alt, #F8FAFC)",
                         height: 42,
                         fontSize: 13.5,
                         fontWeight: 600,
                         "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#E2E8F0",
+                          borderColor: "var(--ev-divider, #E2E8F0)",
                         },
                         "&:hover .MuiOutlinedInput-notchedOutline": {
                           borderColor: COLORS.primary,
@@ -797,7 +797,7 @@ export default function AdminCategoriesPage() {
             {/* Table */}
             <TableContainer>
               <Table>
-                <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+                <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F8FAFC)" }}>
                   <TableRow>
                     <TableCell
                       sx={{
@@ -911,7 +911,7 @@ export default function AdminCategoriesPage() {
                           Chưa có danh mục nào
                         </Typography>
                         <Typography
-                          sx={{ color: "#94A3B8", fontSize: 13, mt: 0.5 }}
+                          sx={{ color: "var(--ev-text-muted, #94A3B8)", fontSize: 13, mt: 0.5 }}
                         >
                           Nhấn &quot;Thêm danh mục&quot; để tạo danh mục đầu
                           tiên.
@@ -1238,7 +1238,7 @@ export default function AdminCategoriesPage() {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "14px",
                     height: 48,
-                    "& fieldset": { borderColor: "#E2E8F0" },
+                    "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
                     "&:hover fieldset": { borderColor: COLORS.primary },
                     "&.Mui-focused fieldset": {
                       borderColor: COLORS.primary,
@@ -1276,7 +1276,7 @@ export default function AdminCategoriesPage() {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "14px",
                     height: 48,
-                    "& fieldset": { borderColor: "#E2E8F0" },
+                    "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
                     "&:hover fieldset": { borderColor: COLORS.primary },
                     "&.Mui-focused fieldset": {
                       borderColor: COLORS.primary,
@@ -1308,7 +1308,7 @@ export default function AdminCategoriesPage() {
                     fontSize: 14,
                     fontWeight: 500,
                     "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#E2E8F0",
+                      borderColor: "var(--ev-divider, #E2E8F0)",
                     },
                     "&:hover .MuiOutlinedInput-notchedOutline": {
                       borderColor: COLORS.primary,
@@ -1338,7 +1338,7 @@ export default function AdminCategoriesPage() {
                   color: COLORS.textSecondary,
                   fontWeight: 700,
                   textTransform: "none",
-                  "&:hover": { bgcolor: "#F1F5F9" },
+                  "&:hover": { bgcolor: "var(--ev-paper-alt, #F1F5F9)" },
                 }}
               >
                 Hủy bỏ
@@ -1579,7 +1579,7 @@ export default function AdminCategoriesPage() {
                   color: COLORS.textSecondary,
                   fontWeight: 700,
                   textTransform: "none",
-                  "&:hover": { bgcolor: "#F1F5F9" },
+                  "&:hover": { bgcolor: "var(--ev-paper-alt, #F1F5F9)" },
                 }}
               >
                 Đóng

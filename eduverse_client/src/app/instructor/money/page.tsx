@@ -194,7 +194,7 @@ function DoanhThuContent() {
         >
           Doanh thu & Rút tiền
         </Typography>
-        <Typography sx={{ color: "rgba(31,41,55,0.55)", fontSize: 14 }}>
+        <Typography sx={{ color: "var(--ev-text-secondary, rgba(31,41,55,0.55))", fontSize: 14 }}>
           Quản lý số dư và yêu cầu rút tiền của bạn
         </Typography>
       </Box>
@@ -254,7 +254,7 @@ function DoanhThuContent() {
               onClick={() => setOpenRut(true)}
               disabled={soDu < 50000 || nganHangs.length === 0}
               sx={{
-                bgcolor: "#fff",
+                bgcolor: "var(--ev-paper, #fff)",
                 color: PRIMARY,
                 fontWeight: 800,
                 borderRadius: "10px",
@@ -614,7 +614,7 @@ export default function InstructorRevenuePage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

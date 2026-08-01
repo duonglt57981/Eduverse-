@@ -114,7 +114,7 @@ function FeaturedMentorCard({ mentor }: { mentor: InstructorItem }) {
         p: 2,
         borderRadius: 2.8,
         border: '1px solid rgba(17,17,17,0.08)',
-        bgcolor: '#fff',
+        bgcolor: 'var(--ev-paper, #fff)',
         transition: 'transform 180ms ease, box-shadow 180ms ease',
         '&:hover': {
           transform: 'translateY(-4px)',
@@ -134,7 +134,7 @@ function FeaturedMentorCard({ mentor }: { mentor: InstructorItem }) {
           <Typography sx={{ mt: 0.6, fontSize: 13.5, color: '#8B1313', fontWeight: 800 }}>
             {mentor.specialization}
           </Typography>
-          <Typography sx={{ mt: 1, fontSize: 13, lineHeight: 1.8, color: 'rgba(24,24,27,0.58)' }}>
+          <Typography sx={{ mt: 1, fontSize: 13, lineHeight: 1.8, color: 'var(--ev-text-muted, rgba(24,24,27,0.58))' }}>
             {mentor.shortBio}
           </Typography>
           <Stack direction="row" spacing={2} sx={{ mt: 1.25, flexWrap: 'wrap' }}>
@@ -180,7 +180,7 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
         p: 2,
         borderRadius: 2.8,
         border: '1px solid rgba(17,17,17,0.08)',
-        bgcolor: '#fff',
+        bgcolor: 'var(--ev-paper, #fff)',
         transition: 'transform 180ms ease, box-shadow 180ms ease',
         '&:hover': {
           transform: 'translateY(-5px)',
@@ -209,7 +209,7 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
       <Typography sx={{ mt: 0.5, textAlign: 'center', fontSize: 13, color: '#8B1313', fontWeight: 800 }}>
         {mentor.specialization}
       </Typography>
-      <Typography sx={{ mt: 0.9, textAlign: 'center', fontSize: 13, lineHeight: 1.8, color: 'rgba(24,24,27,0.58)' }}>
+      <Typography sx={{ mt: 0.9, textAlign: 'center', fontSize: 13, lineHeight: 1.8, color: 'var(--ev-text-muted, rgba(24,24,27,0.58))' }}>
         {mentor.shortBio}
       </Typography>
 
@@ -326,7 +326,7 @@ export default function InstructorsPage() {
                   maxWidth: 620,
                   fontSize: 15.5,
                   lineHeight: 1.9,
-                  color: 'rgba(24,24,27,0.62)',
+                  color: 'var(--ev-text-muted, rgba(24,24,27,0.62))',
                 }}
               >
                 Kết nối với giảng viên giàu kinh nghiệm trong nhiều lĩnh vực. Chương trình
@@ -458,7 +458,7 @@ export default function InstructorsPage() {
                 sx={{
                   maxWidth: { xs: '100%', lg: 300 },
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: '#fff',
+                    bgcolor: 'var(--ev-paper, #fff)',
                     borderRadius: 2.8,
                   },
                 }}
@@ -521,10 +521,10 @@ export default function InstructorsPage() {
                 Hơn 90.000 học viên tin tưởng học tập nhờ sự dẫn dắt của đội ngũ giảng viên trên EduVerse.
               </Typography>
               <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
-                <IconButton sx={{ bgcolor: '#fff', border: '1px solid rgba(17,17,17,0.08)' }}>
+                <IconButton sx={{ bgcolor: 'var(--ev-paper, #fff)', border: '1px solid rgba(17,17,17,0.08)' }}>
                   <ArrowForwardRounded sx={{ transform: 'rotate(180deg)', fontSize: 18 }} />
                 </IconButton>
-                <IconButton sx={{ bgcolor: '#fff', border: '1px solid rgba(17,17,17,0.08)' }}>
+                <IconButton sx={{ bgcolor: 'var(--ev-paper, #fff)', border: '1px solid rgba(17,17,17,0.08)' }}>
                   <ArrowForwardRounded sx={{ fontSize: 18 }} />
                 </IconButton>
               </Stack>
@@ -538,7 +538,7 @@ export default function InstructorsPage() {
                   p: 3,
                   borderRadius: 2.8,
                   border: '1px solid rgba(17,17,17,0.08)',
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--ev-paper, #fff)',
                 }}
               >
                 <Stack direction="row" spacing={0.35} sx={{ color: '#efb21a' }}>
@@ -546,7 +546,7 @@ export default function InstructorsPage() {
                     <StarRounded key={star} sx={{ fontSize: 18 }} />
                   ))}
                 </Stack>
-                <Typography sx={{ mt: 1.35, fontSize: 14, lineHeight: 1.95, color: 'rgba(24,24,27,0.72)' }}>
+                <Typography sx={{ mt: 1.35, fontSize: 14, lineHeight: 1.95, color: 'var(--ev-text-muted, rgba(24,24,27,0.72))' }}>
                   {`"` + item.quote + `"`}
                 </Typography>
                 <Stack direction="row" spacing={1.2} sx={{ mt: 2.2, alignItems: 'center' }}>
@@ -555,7 +555,7 @@ export default function InstructorsPage() {
                   </Avatar>
                   <Box>
                     <Typography sx={{ fontSize: 14.5, fontWeight: 900 }}>{item.name}</Typography>
-                    <Typography sx={{ fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
+                    <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>
                       {item.role}
                     </Typography>
                   </Box>
@@ -615,7 +615,7 @@ export default function InstructorsPage() {
                   px: 3.2,
                   py: 1.25,
                   borderRadius: 2.8,
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--ev-paper, #fff)',
                   color: '#7f1212',
                 }}
               >

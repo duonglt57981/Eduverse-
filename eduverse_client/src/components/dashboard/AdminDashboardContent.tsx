@@ -37,8 +37,15 @@ import {
 // Crimson palette matches the design theme
 
 // SVG-based monthly revenue line chart
-function RevenueLineChart({ data }: { data: number[] }) {
-  const [activeTab, setActiveTab] = useState("month");
+function RevenueLineChart({
+  data,
+  period,
+  onPeriodChange,
+}: {
+  data: number[];
+  period: string;
+  onPeriodChange: (p: string) => void;
+}) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   const width = 1000;
@@ -114,13 +121,17 @@ function RevenueLineChart({ data }: { data: number[] }) {
           <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark }}>
             Phân tích doanh thu
           </Typography>
-          <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.48)" }}>
-            Doanh thu nền tảng (30%) theo từng tháng trong năm.
+          <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.48))" }}>
+            {period === "month"
+              ? "Doanh thu nền tảng (30%) theo từng ngày trong tháng này."
+              : period === "quarter"
+                ? "Doanh thu nền tảng (30%) theo từng tháng trong quý này."
+                : "Doanh thu nền tảng (30%) theo từng tháng trong năm nay."}
           </Typography>
         </Box>
         <Tabs
-          value={activeTab}
-          onChange={(_, val) => setActiveTab(val)}
+          value={period}
+          onChange={(_, val) => onPeriodChange(val)}
           sx={{
             minHeight: 32,
             bgcolor: "rgba(141,19,19,0.04)",
@@ -141,9 +152,9 @@ function RevenueLineChart({ data }: { data: number[] }) {
               py: 0.5,
               px: 1.5,
               zIndex: 1,
-              color: "rgba(31,41,55,0.5)",
+              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
               transition: "color 200ms",
-              "&.Mui-selected": { color: "#ffffff" },
+              "&.Mui-selected": { color: "#FFFFFF" },
             },
           }}
         >
@@ -180,7 +191,7 @@ function RevenueLineChart({ data }: { data: number[] }) {
                 <text
                   x={paddingLeft - 10} y={y + 4}
                   textAnchor="end"
-                  fill="rgba(31,41,55,0.4)"
+                  fill="var(--ev-text-muted, rgba(31,41,55,0.4))"
                   style={{ fontSize: 11, fontWeight: 600, fontFamily: '"Be Vietnam Pro"' }}
                 >
                   {formatYLabel(tick * maxVal)}
@@ -250,7 +261,7 @@ function RevenueLineChart({ data }: { data: number[] }) {
                       x={tx} y={ty}
                       width={tooltipW} height={tooltipH}
                       rx={10} ry={10}
-                      fill="#1F2937"
+                      fill="var(--ev-text-primary, #1F2937)"
                       style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))" }}
                     />
                     {/* Mũi tên */}
@@ -258,13 +269,13 @@ function RevenueLineChart({ data }: { data: number[] }) {
                       // Tooltip ở dưới điểm → mũi tên chỉ lên
                       <polygon
                         points={`${p.x - 7},${ty} ${p.x + 7},${ty} ${p.x},${ty - 8}`}
-                        fill="#1F2937"
+                        fill="var(--ev-text-primary, #1F2937)"
                       />
                     ) : (
                       // Tooltip ở trên điểm → mũi tên chỉ xuống
                       <polygon
                         points={`${p.x - 7},${ty + tooltipH} ${p.x + 7},${ty + tooltipH} ${p.x},${ty + tooltipH + 8}`}
-                        fill="#1F2937"
+                        fill="var(--ev-text-primary, #1F2937)"
                       />
                     )}
                     {/* Label tháng */}
@@ -280,7 +291,7 @@ function RevenueLineChart({ data }: { data: number[] }) {
                     <text
                       x={tx + tooltipW / 2} y={ty + 38}
                       textAnchor="middle"
-                      fill="#ffffff"
+                      fill="var(--ev-paper, #FFFFFF)"
                       style={{ fontSize: 14, fontWeight: 800, fontFamily: '"Be Vietnam Pro"' }}
                     >
                       {formatTooltipVal(p.val)}
@@ -303,7 +314,7 @@ function RevenueLineChart({ data }: { data: number[] }) {
                   x={p.x}
                   y={height - paddingBottom + 20}
                   textAnchor="middle"
-                  fill={isHovered ? COLORS.primary : "rgba(31,41,55,0.5)"}
+                  fill={isHovered ? COLORS.primary : "var(--ev-text-muted, rgba(31,41,55,0.5))"}
                   style={{
                     fontSize: 11,
                     fontWeight: isHovered ? 800 : 600,
@@ -352,7 +363,7 @@ function StudentGrowthChart({ data }: { data: number[] }) {
       <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark, mb: 0.5 }}>
         Tăng trưởng học viên
       </Typography>
-      <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.48)", mb: 3 }}>
+      <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.48))", mb: 3 }}>
         Số học viên unique đăng ký khóa học theo từng tháng.
       </Typography>
 
@@ -394,8 +405,8 @@ function StudentGrowthChart({ data }: { data: number[] }) {
                     bottom: `calc(${pct}% + 36px)`,
                     left: "50%",
                     transform: "translateX(-50%)",
-                    bgcolor: "#1F2937",
-                    color: "#fff",
+                    bgcolor: "var(--ev-text-primary, #1F2937)",
+                    color: "#FFFFFF",
                     borderRadius: "10px",
                     px: 1.5,
                     py: 0.8,
@@ -452,7 +463,7 @@ function StudentGrowthChart({ data }: { data: number[] }) {
                       ? COLORS.primary
                       : isLatest
                       ? COLORS.primary
-                      : "rgba(31,41,55,0.4)",
+                      : "var(--ev-text-muted, rgba(31,41,55,0.4))",
                   transition: "color 150ms",
                   lineHeight: 1,
                 }}
@@ -514,7 +525,7 @@ function LearningActivityHeatmap({ data }: { data: number[] }) {
       >
         Hoạt động học tập (Heatmap)
       </Typography>
-      <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.5)", mb: 3 }}>
+      <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.5))", mb: 3 }}>
         Tần suất hoạt động học tập và tương tác của hệ thống.
       </Typography>
 
@@ -530,7 +541,7 @@ function LearningActivityHeatmap({ data }: { data: number[] }) {
               sx={{
                 fontSize: 11,
                 fontWeight: 700,
-                color: "rgba(31,41,55,0.4)",
+                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                 height: 14,
               }}
             >
@@ -556,7 +567,7 @@ function LearningActivityHeatmap({ data }: { data: number[] }) {
                     "&:hover": {
                       transform: "scale(1.18)",
                       boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                      borderColor: "rgba(0,0,0,0.1)",
+                      borderColor: "var(--ev-divider, rgba(0,0,0,0.1))",
                     },
                   }}
                   title={`Hoạt động: ${val}`}
@@ -577,7 +588,7 @@ function LearningActivityHeatmap({ data }: { data: number[] }) {
           justifyContent: "flex-end",
           fontSize: 11,
           fontWeight: 700,
-          color: "rgba(31,41,55,0.4)",
+          color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
         }}
       >
         <Typography variant="caption">Ít</Typography>
@@ -641,6 +652,13 @@ export default function AdminDashboardContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [rejectNotes, setRejectNotes] = useState("");
+  // Hộp thoại xem chi tiết yêu cầu nâng cấp giảng viên
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailRequest, setDetailRequest] = useState<any>(null);
+  // Bộ lọc yêu cầu theo trạng thái: "all" | 0 (chờ duyệt) | 1 (đã duyệt) | 2 (đã từ chối)
+  const [statusFilter, setStatusFilter] = useState<"all" | 0 | 1 | 2>("all");
+  // Khoảng thời gian của biểu đồ doanh thu: month | quarter | year
+  const [revenuePeriod, setRevenuePeriod] = useState("year");
 
   const fetchRequests = async () => {
     try {
@@ -724,7 +742,9 @@ export default function AdminDashboardContent() {
     const fetchAdminData = async () => {
       try {
         setLoading(true);
-        const res = await apiService.get<any>("/dashboard?role=Admin");
+        const res = await apiService.get<any>(
+          `/dashboard?role=Admin&period=${revenuePeriod}`,
+        );
         if (res.status && res.data) {
           setDashboardData(res.data);
         } else {
@@ -739,7 +759,19 @@ export default function AdminDashboardContent() {
       }
     };
     fetchAdminData();
-  }, []);
+  }, [revenuePeriod]);
+
+  // Danh sách sau khi lọc + số lượng từng trạng thái (tính tại chỗ, không gọi thêm API)
+  const requestCounts = {
+    all: requests.length,
+    pending: requests.filter((r) => r.status === 0).length,
+    approved: requests.filter((r) => r.status === 1).length,
+    rejected: requests.filter((r) => r.status === 2).length,
+  };
+  const filteredRequests =
+    statusFilter === "all"
+      ? requests
+      : requests.filter((r) => r.status === statusFilter);
 
   if (loading) {
     return (
@@ -854,7 +886,7 @@ export default function AdminDashboardContent() {
             textTransform: "none",
             fontSize: 14.5,
             fontWeight: 800,
-            color: "rgba(31,41,55,0.5)",
+            color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
             px: 2,
             pb: 1.5,
             "&.Mui-selected": { color: COLORS.primary },
@@ -903,7 +935,7 @@ export default function AdminDashboardContent() {
                     sx={{
                       fontSize: 11.5,
                       fontWeight: 800,
-                      color: "rgba(31,41,55,0.4)",
+                      color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                       letterSpacing: "0.4px",
                     }}
                   >
@@ -950,7 +982,11 @@ export default function AdminDashboardContent() {
           </Box>
 
           {/* 3. Revenue Trend Chart */}
-          <RevenueLineChart data={revenueTrend} />
+          <RevenueLineChart
+            data={revenueTrend}
+            period={revenuePeriod}
+            onPeriodChange={setRevenuePeriod}
+          />
 
           {/* 4. Split Row: Student growth & Best Selling */}
           <Grid container spacing={3.5} sx={{ width: "100%", m: 0 }}>
@@ -1107,7 +1143,7 @@ export default function AdminDashboardContent() {
                           <Typography
                             sx={{
                               fontSize: 11.5,
-                              color: "rgba(31,41,55,0.4)",
+                              color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                               mt: 0.5,
                               fontWeight: 600,
                             }}
@@ -1141,25 +1177,70 @@ export default function AdminDashboardContent() {
           >
             Danh sách yêu cầu nâng cấp Giảng viên
           </Typography>
-          <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.5)", mb: 3 }}>
+          <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.5))", mb: 3 }}>
             Xem xét và phê duyệt hoặc từ chối các yêu cầu nâng cấp vai trò từ
             Học viên.
           </Typography>
+
+          {/* Bộ lọc theo trạng thái */}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ flexWrap: "wrap", rowGap: 1, mb: 2.5 }}
+          >
+            {(
+              [
+                { key: "all", label: "Tất cả", count: requestCounts.all },
+                { key: 0, label: "Chờ duyệt", count: requestCounts.pending },
+                { key: 1, label: "Đã duyệt", count: requestCounts.approved },
+                { key: 2, label: "Đã từ chối", count: requestCounts.rejected },
+              ] as const
+            ).map((opt) => {
+              const active = statusFilter === opt.key;
+              return (
+                <Chip
+                  key={String(opt.key)}
+                  label={`${opt.label} (${opt.count})`}
+                  onClick={() => setStatusFilter(opt.key)}
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: 12.5,
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    color: active ? "#FFFFFF" : COLORS.textSecondary,
+                    bgcolor: active
+                      ? COLORS.primary
+                      : "var(--ev-paper-alt, rgba(0,0,0,0.035))",
+                    border: active
+                      ? "1px solid transparent"
+                      : "1px solid var(--ev-divider, rgba(0,0,0,0.10))",
+                    "&:hover": {
+                      bgcolor: active
+                        ? COLORS.primaryDark
+                        : "var(--ev-hover, rgba(141,19,19,0.06))",
+                    },
+                  }}
+                />
+              );
+            })}
+          </Stack>
 
           {loadingRequests ? (
             <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
               <CircularProgress sx={{ color: COLORS.primary }} />
             </Box>
-          ) : requests.length === 0 ? (
+          ) : filteredRequests.length === 0 ? (
             <Typography
               sx={{
                 py: 6,
-                color: "rgba(31,41,55,0.4)",
+                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                 fontWeight: 600,
                 textAlign: "center",
               }}
             >
-              Không có yêu cầu nâng cấp nào.
+              {requests.length === 0
+                ? "Không có yêu cầu nâng cấp nào."
+                : "Không có yêu cầu nào ở trạng thái này."}
             </Typography>
           ) : (
             <Box sx={{ overflowX: "auto" }}>
@@ -1175,24 +1256,20 @@ export default function AdminDashboardContent() {
                   <tr
                     style={{
                       borderBottom: "2px solid rgba(0,0,0,0.06)",
-                      color: "rgba(31,41,55,0.5)",
+                      color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                       fontWeight: 800,
                     }}
                   >
                     <th style={{ padding: "12px 8px" }}>Học viên</th>
                     <th style={{ padding: "12px 8px" }}>Chuyên môn</th>
-                    <th style={{ padding: "12px 8px" }}>Kinh nghiệm</th>
-                    <th style={{ padding: "12px 8px" }}>Bằng cấp</th>
-                    <th style={{ padding: "12px 8px" }}>CV</th>
-                    <th style={{ padding: "12px 8px" }}>Lý do</th>
                     <th style={{ padding: "12px 8px" }}>Trạng thái</th>
-                    <th style={{ padding: "12px 8px", textAlign: "right" }}>
+                    <th style={{ padding: "12px 8px", textAlign: "center" }}>
                       Thao tác
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {requests.map((req) => (
+                  {filteredRequests.map((req) => (
                     <tr
                       key={req.id}
                       style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}
@@ -1210,72 +1287,25 @@ export default function AdminDashboardContent() {
                         <Typography
                           sx={{
                             fontSize: "11px",
-                            color: "rgba(31,41,55,0.4)",
+                            color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                             fontWeight: 600,
                           }}
                         >
                           {req.email} • {req.phoneNumber || "Không có sđt"}
                         </Typography>
                       </td>
-                      <td style={{ padding: "16px 8px", fontWeight: 600 }}>
+                      <td
+                        style={{
+                          padding: "16px 8px",
+                          fontWeight: 600,
+                          maxWidth: 320,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                        title={req.chuyenMon}
+                      >
                         {req.chuyenMon}
-                      </td>
-                      <td
-                        style={{
-                          padding: "16px 8px",
-                          color: "rgba(31,41,55,0.7)",
-                          maxWidth: 150,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                        title={req.kinhNghiem}
-                      >
-                        {req.kinhNghiem}
-                      </td>
-                      <td
-                        style={{
-                          padding: "16px 8px",
-                          color: "rgba(31,41,55,0.7)",
-                          maxWidth: 150,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                        title={req.bangCap}
-                      >
-                        {req.bangCap || "Chưa cập nhật"}
-                      </td>
-                      <td style={{ padding: "16px 8px" }}>
-                        {req.cvUrl ? (
-                          <a
-                            href={req.cvUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              color: COLORS.primary,
-                              fontWeight: 700,
-                              textDecoration: "underline",
-                            }}
-                          >
-                            Xem CV
-                          </a>
-                        ) : (
-                          "Không có"
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: "16px 8px",
-                          color: "rgba(31,41,55,0.7)",
-                          maxWidth: 150,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                        title={req.lyDo}
-                      >
-                        {req.lyDo}
                       </td>
                       <td style={{ padding: "16px 8px" }}>
                         {req.status === 0 ? (
@@ -1310,62 +1340,75 @@ export default function AdminDashboardContent() {
                           />
                         )}
                       </td>
-                      <td style={{ padding: "16px 8px", textAlign: "right" }}>
-                        {req.status === 0 && (
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            sx={{ justifyContent: "flex-end" }}
-                          >
-                            <Button
-                              variant="contained"
-                              size="small"
-                              onClick={() => handleApprove(req.id)}
-                              sx={{
-                                bgcolor: COLORS.green,
-                                color: "#fff",
-                                textTransform: "none",
-                                fontWeight: 800,
-                                borderRadius: "8px",
-                                "&:hover": { bgcolor: "#059669" },
-                              }}
-                            >
-                              Duyệt
-                            </Button>
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              onClick={() => {
-                                setSelectedRequest(req);
-                                setDialogOpen(true);
-                              }}
-                              sx={{
+                      <td style={{ padding: "16px 8px", textAlign: "center" }}>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{
+                            justifyContent: "center",
+                            alignItems: "center",
+                            flexWrap: "nowrap",
+                          }}
+                        >
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                              setDetailRequest(req);
+                              setDetailOpen(true);
+                            }}
+                            sx={{
+                              ...ACTION_BTN,
+                              color: COLORS.textSecondary,
+                              borderColor: "var(--ev-divider, rgba(0,0,0,0.14))",
+                              "&:hover": {
                                 color: COLORS.primary,
                                 borderColor: COLORS.primary,
-                                textTransform: "none",
-                                fontWeight: 800,
-                                borderRadius: "8px",
-                                "&:hover": {
-                                  borderColor: COLORS.primaryDark,
-                                  bgcolor: "rgba(141,19,19,0.04)",
-                                },
-                              }}
-                            >
-                              Từ chối
-                            </Button>
-                          </Stack>
-                        )}
-                        {req.status !== 0 && (
-                          <Typography
-                            sx={{
-                              fontSize: "12px",
-                              color: "rgba(31,41,55,0.4)",
-                              fontWeight: 700,
+                                bgcolor: "var(--ev-hover, rgba(141,19,19,0.04))",
+                              },
                             }}
                           >
-                            {req.status === 1 ? "Đã duyệt" : "Đã từ chối"}
-                          </Typography>
-                        )}
+                            Chi tiết
+                          </Button>
+
+                          {req.status === 0 && (
+                            <>
+                              <Button
+                                variant="contained"
+                                size="small"
+                                disableElevation
+                                onClick={() => handleApprove(req.id)}
+                                sx={{
+                                  ...ACTION_BTN,
+                                  bgcolor: COLORS.green,
+                                  color: "#FFFFFF",
+                                  "&:hover": { bgcolor: "#059669" },
+                                }}
+                              >
+                                Duyệt
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={() => {
+                                  setSelectedRequest(req);
+                                  setDialogOpen(true);
+                                }}
+                                sx={{
+                                  ...ACTION_BTN,
+                                  color: COLORS.primary,
+                                  borderColor: "var(--ev-brand-border, rgba(141,19,19,0.32))",
+                                  "&:hover": {
+                                    borderColor: COLORS.primary,
+                                    bgcolor: "var(--ev-brand-tint, rgba(141,19,19,0.05))",
+                                  },
+                                }}
+                              >
+                                Từ chối
+                              </Button>
+                            </>
+                          )}
+                        </Stack>
                       </td>
                     </tr>
                   ))}
@@ -1394,7 +1437,7 @@ export default function AdminDashboardContent() {
           <Typography
             sx={{
               fontSize: 13,
-              color: "rgba(31,41,55,0.6)",
+              color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
               mb: 2,
               lineHeight: 1.5,
             }}
@@ -1414,7 +1457,7 @@ export default function AdminDashboardContent() {
         <DialogActions sx={{ p: 2.5 }}>
           <Button
             onClick={() => setDialogOpen(false)}
-            sx={{ color: "rgba(31,41,55,0.5)", fontWeight: 800 }}
+            sx={{ color: "var(--ev-text-muted, rgba(31,41,55,0.5))", fontWeight: 800 }}
           >
             Hủy
           </Button>
@@ -1423,7 +1466,7 @@ export default function AdminDashboardContent() {
             onClick={handleReject}
             sx={{
               bgcolor: COLORS.primary,
-              color: "#fff",
+              color: "#FFFFFF",
               fontWeight: 800,
               borderRadius: "10px",
               px: 3,
@@ -1435,6 +1478,285 @@ export default function AdminDashboardContent() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Hộp thoại xem chi tiết yêu cầu nâng cấp giảng viên */}
+      <Dialog
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        maxWidth="md"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: "20px" } } }}
+      >
+        <DialogTitle sx={{ pb: 1.5 }}>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
+            <Stack spacing={0.3}>
+              <Typography
+                sx={{ fontSize: 17, fontWeight: 900, color: COLORS.textDark }}
+              >
+                Chi tiết yêu cầu nâng cấp giảng viên
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 12.5,
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                  fontWeight: 600,
+                }}
+              >
+                {detailRequest?.createdDate
+                  ? `Gửi ngày ${new Date(detailRequest.createdDate).toLocaleString("vi-VN")}`
+                  : "Hồ sơ đăng ký trở thành giảng viên"}
+              </Typography>
+            </Stack>
+            <Chip
+              size="small"
+              label={
+                detailRequest?.status === 1
+                  ? "Đã duyệt"
+                  : detailRequest?.status === 2
+                    ? "Đã từ chối"
+                    : "Chờ duyệt"
+              }
+              sx={{
+                fontWeight: 800,
+                fontSize: 11.5,
+                color:
+                  detailRequest?.status === 1
+                    ? COLORS.green
+                    : detailRequest?.status === 2
+                      ? COLORS.primary
+                      : "#EA580C",
+                bgcolor:
+                  detailRequest?.status === 1
+                    ? "rgba(22,163,74,0.12)"
+                    : detailRequest?.status === 2
+                      ? "rgba(141,19,19,0.12)"
+                      : "rgba(234,88,12,0.12)",
+              }}
+            />
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ borderColor: "var(--ev-divider, rgba(0,0,0,0.08))" }}>
+          {detailRequest && (
+            <Stack spacing={2.2} sx={{ py: 0.5 }}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2.2}
+                sx={{ flexWrap: "wrap" }}
+              >
+                <DetailField
+                  label="Học viên"
+                  value={detailRequest.hoTen || detailRequest.userName}
+                  flex
+                />
+                <DetailField label="Email" value={detailRequest.email} flex />
+                <DetailField
+                  label="Số điện thoại"
+                  value={detailRequest.phoneNumber}
+                  flex
+                />
+              </Stack>
+
+              <DetailField label="Chuyên môn" value={detailRequest.chuyenMon} />
+              <DetailField
+                label="Kinh nghiệm giảng dạy"
+                value={detailRequest.kinhNghiem}
+              />
+              <DetailField label="Bằng cấp / Chứng chỉ" value={detailRequest.bangCap} />
+              <DetailField
+                label="Lý do muốn trở thành giảng viên"
+                value={detailRequest.lyDo}
+              />
+
+              <Stack spacing={0.6}>
+                <Typography
+                  sx={{
+                    fontSize: 11.5,
+                    fontWeight: 900,
+                    letterSpacing: 0.4,
+                    textTransform: "uppercase",
+                    color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
+                  }}
+                >
+                  Hồ sơ CV
+                </Typography>
+                {detailRequest.cvUrl ? (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() =>
+                      window.open(detailRequest.cvUrl, "_blank", "noopener,noreferrer")
+                    }
+                    sx={{
+                      alignSelf: "flex-start",
+                      textTransform: "none",
+                      fontWeight: 800,
+                      borderRadius: "10px",
+                      color: COLORS.primary,
+                      borderColor: "var(--ev-brand-border, rgba(141,19,19,0.25))",
+                    }}
+                  >
+                    Mở CV trong tab mới
+                  </Button>
+                ) : (
+                  <Typography
+                    sx={{
+                      fontSize: 13.5,
+                      fontStyle: "italic",
+                      color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
+                    }}
+                  >
+                    Học viên chưa đính kèm CV
+                  </Typography>
+                )}
+              </Stack>
+
+              {detailRequest.adminNotes && (
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: "14px",
+                    bgcolor: "var(--ev-brand-tint, rgba(141,19,19,0.05))",
+                    border: "1px solid var(--ev-brand-border, rgba(141,19,19,0.14))",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 11.5,
+                      fontWeight: 900,
+                      letterSpacing: 0.4,
+                      textTransform: "uppercase",
+                      color: COLORS.primary,
+                      mb: 0.6,
+                    }}
+                  >
+                    Phản hồi của quản trị viên
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13.5,
+                      lineHeight: 1.65,
+                      color: COLORS.textDark,
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {detailRequest.adminNotes}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button
+            onClick={() => setDetailOpen(false)}
+            sx={{
+              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+              fontWeight: 800,
+              textTransform: "none",
+            }}
+          >
+            Đóng
+          </Button>
+          {detailRequest?.status === 0 && (
+            <>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setSelectedRequest(detailRequest);
+                  setDetailOpen(false);
+                  setDialogOpen(true);
+                }}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 800,
+                  borderRadius: "10px",
+                  color: COLORS.primary,
+                  borderColor: "var(--ev-brand-border, rgba(141,19,19,0.28))",
+                }}
+              >
+                Từ chối
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  handleApprove(detailRequest.id);
+                  setDetailOpen(false);
+                }}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 800,
+                  borderRadius: "10px",
+                  bgcolor: COLORS.green,
+                  color: "#fff",
+                  boxShadow: "none",
+                  "&:hover": { bgcolor: COLORS.green, opacity: 0.9 },
+                }}
+              >
+                Duyệt yêu cầu
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
+    </Stack>
+  );
+}
+
+// Kiểu dùng chung cho các nút ở cột "Thao tác" — giữ chiều cao và bề rộng đồng nhất
+const ACTION_BTN = {
+  textTransform: "none" as const,
+  whiteSpace: "nowrap" as const,
+  fontWeight: 800,
+  fontSize: 12.5,
+  borderRadius: "8px",
+  minWidth: 82,
+  height: 32,
+  px: 1.5,
+  boxShadow: "none",
+};
+
+// Ô hiển thị một trường thông tin trong hộp thoại chi tiết
+function DetailField({
+  label,
+  value,
+  flex,
+}: {
+  label: string;
+  value?: string | null;
+  flex?: boolean;
+}) {
+  return (
+    <Stack spacing={0.6} sx={flex ? { flex: 1, minWidth: 180 } : undefined}>
+      <Typography
+        sx={{
+          fontSize: 11.5,
+          fontWeight: 900,
+          letterSpacing: 0.4,
+          textTransform: "uppercase",
+          color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: 13.5,
+          lineHeight: 1.65,
+          fontWeight: 600,
+          color: value ? COLORS.textDark : "var(--ev-text-muted, rgba(31,41,55,0.45))",
+          fontStyle: value ? "normal" : "italic",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
+        {value || "Không có thông tin"}
+      </Typography>
     </Stack>
   );
 }

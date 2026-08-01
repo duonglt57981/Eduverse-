@@ -585,7 +585,7 @@ export default function SecuritySettings() {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--ev-paper, #fff)',
                   border: '1px solid rgba(17,17,17,0.1)',
                   borderRadius: 2.8,
                   boxShadow: '0 8px 20px rgba(0,0,0,0.04)',

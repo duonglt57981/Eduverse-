@@ -127,7 +127,7 @@ function VideoArea({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: "#fafafa",
+          bgcolor: "var(--ev-paper-alt, #fafafa)",
         }}
       >
         <MenuBookIcon sx={{ fontSize: 72, color: alpha(PRIMARY_RED, 0.2) }} />
@@ -147,7 +147,7 @@ function VideoArea({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: "#fafafa",
+          bgcolor: "var(--ev-paper-alt, #fafafa)",
         }}
       >
         <Typography variant="h6" color="text.secondary">
@@ -600,7 +600,7 @@ export default function KhoaHocLearningPage() {
         elevation={0}
         sx={{
           borderBottom: "1px solid #E5E7EB",
-          bgcolor: "#ffffff",
+          bgcolor: "var(--ev-paper, #ffffff)",
           boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
           flexShrink: 0,
         }}
@@ -646,7 +646,7 @@ export default function KhoaHocLearningPage() {
               sx={{
                 fontWeight: 800,
                 fontSize: { xs: "14px", sm: "16px" },
-                color: "#111827",
+                color: "var(--ev-text-primary, #111827)",
               }}
             >
               {khoaHoc.tieuDe}
@@ -659,7 +659,7 @@ export default function KhoaHocLearningPage() {
               sx={{
                 alignItems: "center",
                 display: { xs: "none", sm: "flex" },
-                bgcolor: "#F8FAFC",
+                bgcolor: "var(--ev-paper-alt, #F8FAFC)",
                 border: "1px solid #E2E8F0",
                 px: 2,
                 py: 0.75,
@@ -679,7 +679,7 @@ export default function KhoaHocLearningPage() {
                   sx={{
                     height: 5,
                     borderRadius: 3,
-                    backgroundColor: "#E2E8F0",
+                    backgroundColor: "var(--ev-divider, #E2E8F0)",
                     "& .MuiLinearProgress-bar": {
                       backgroundColor: PRIMARY_RED,
                       borderRadius: 3,
@@ -689,7 +689,7 @@ export default function KhoaHocLearningPage() {
               </Box>
               <Typography
                 variant="caption"
-                sx={{ fontWeight: 600, color: "#64748B", fontSize: "12px" }}
+                sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)", fontSize: "12px" }}
               >
                 {soBaiHoanThanh}/{tongBai} bài
               </Typography>
@@ -795,14 +795,14 @@ export default function KhoaHocLearningPage() {
                   >
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 600, color: "#64748B" }}
+                      sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)" }}
                     >
                       {(
                         khoaHoc.danhSachPhanHoc as unknown as PhanHocApi[]
                       )?.find((p) => p.id === idPhanPlay)?.tenPhan ?? ""}
                     </Typography>
                     <ChevronRightIcon
-                      sx={{ fontSize: 16, color: "#94A3B8" }}
+                      sx={{ fontSize: 16, color: "var(--ev-text-muted, #94A3B8)" }}
                     />
                     <Typography
                       variant="body2"
@@ -825,7 +825,7 @@ export default function KhoaHocLearningPage() {
                   <Box sx={{ minWidth: 0 }}>
                     <Typography
                       variant="h4"
-                      sx={{ fontWeight: 900, mb: 1.5, color: "#111827", fontSize: { xs: "20px", sm: "24px" } }}
+                      sx={{ fontWeight: 900, mb: 1.5, color: "var(--ev-text-primary, #111827)", fontSize: { xs: "20px", sm: "24px" } }}
                     >
                       {baiGiang?.tieuDe ?? khoaHoc.tieuDe}
                     </Typography>
@@ -835,7 +835,7 @@ export default function KhoaHocLearningPage() {
                       sx={{ alignItems: "center", flexWrap: "wrap" }}
                     >
                       {baiGiang && (
-                        <Typography variant="caption" sx={{ fontWeight: 600, color: "#64748B" }}>
+                        <Typography variant="caption" sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)" }}>
                           Bài {currentIdx + 1}/{danhSachTatCa.length} ·{" "}
                           {Math.floor((baiGiang.thoiLuong ?? 0) / 60)}p{" "}
                           {(baiGiang.thoiLuong ?? 0) % 60}s

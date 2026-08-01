@@ -116,7 +116,7 @@ export default function Step5Page() {
       >
         <Box
           sx={{
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             borderRadius: "20px",
             border: "1px solid #E5E7EB",
             boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
@@ -137,7 +137,7 @@ export default function Step5Page() {
               fontWeight: 700,
               textAlign: "center",
               mb: 1.5,
-              color: "#111827",
+              color: "var(--ev-text-primary, #111827)",
               fontSize: { xs: "1.25rem", sm: "1.6rem" },
             }}
           >
@@ -148,7 +148,7 @@ export default function Step5Page() {
           <Typography
             sx={{
               textAlign: "center",
-              color: "#6B7280",
+              color: "var(--ev-text-muted, #6B7280)",
               fontSize: 14,
               mb: 4,
               maxWidth: 480,
@@ -179,10 +179,10 @@ export default function Step5Page() {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "10px",
                   height: "44px",
-                  bgcolor: "#ffffff",
+                  bgcolor: "var(--ev-paper, #ffffff)",
                   fontSize: 14,
                   "& fieldset": {
-                    borderColor: "#D1D5DB",
+                    borderColor: "var(--ev-divider, #D1D5DB)",
                   },
                   "&:hover fieldset": {
                     borderColor: "#7A1F2B",
@@ -197,7 +197,7 @@ export default function Step5Page() {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon fontSize="small" sx={{ color: "#9CA3AF" }} />
+                      <SearchIcon fontSize="small" sx={{ color: "var(--ev-grey, #9CA3AF)" }} />
                     </InputAdornment>
                   ),
                   endAdornment: searchKeyword ? (
@@ -206,7 +206,7 @@ export default function Step5Page() {
                         size="small"
                         onClick={() => setSearchKeyword("")}
                         aria-label="Xóa từ khóa tìm kiếm"
-                        sx={{ color: "#9CA3AF" }}
+                        sx={{ color: "var(--ev-grey, #9CA3AF)" }}
                       >
                         <CloseIcon fontSize="small" />
                       </IconButton>
@@ -231,7 +231,7 @@ export default function Step5Page() {
                 pb: 2.5,
               }}
             >
-              <Typography variant="body2" sx={{ color: "#4B5563", fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}>
                 Đã chọn:
               </Typography>
               {selected.map((id) => {
@@ -283,7 +283,7 @@ export default function Step5Page() {
                   sx={{
                     height: 72,
                     borderRadius: "12px",
-                    bgcolor: "#F3F4F6",
+                    bgcolor: "var(--ev-paper-alt, #F3F4F6)",
                     animation: "pulse 1.5s infinite ease-in-out",
                     "@keyframes pulse": {
                       "0%": { opacity: 0.6 },
@@ -301,7 +301,7 @@ export default function Step5Page() {
                 <Typography
                   sx={{
                     textAlign: "center",
-                    color: "#9CA3AF",
+                    color: "var(--ev-grey, #9CA3AF)",
                     py: 6,
                     fontSize: 15,
                     fontWeight: 500,

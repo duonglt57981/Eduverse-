@@ -38,7 +38,7 @@ export default function CertificateStats({ stats, loading = false }: Certificate
           p: 3,
           borderRadius: 2.8,
           border: '1px solid rgba(17,17,17,0.08)',
-          bgcolor: '#fff',
+          bgcolor: 'var(--ev-paper, #fff)',
         }}
       >
         <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'text.secondary' }}>
@@ -57,10 +57,10 @@ export default function CertificateStats({ stats, loading = false }: Certificate
           p: 2.75,
           borderRadius: 2.8,
           border: '1px solid rgba(17,17,17,0.08)',
-          bgcolor: '#fff',
+          bgcolor: 'var(--ev-paper, #fff)',
         }}
       >
-        <Typography sx={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.3px', mb: 2, color: '#19171c' }}>
+        <Typography sx={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.3px', mb: 2, color: 'var(--ev-text-primary, #19171c)' }}>
           Thống kê học tập
         </Typography>
 
@@ -81,11 +81,11 @@ export default function CertificateStats({ stats, loading = false }: Certificate
               <EmojiEventsRounded fontSize="medium" />
             </Box>
             <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: '12.5px', fontWeight: 800, color: 'rgba(24,24,27,0.54)' }}>
+              <Typography sx={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>
                 TỔNG SỐ CHỨNG CHỈ
               </Typography>
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 0.25 }}>
-                <Typography sx={{ fontSize: 24, fontWeight: 900, color: '#19171c', lineHeight: 1 }}>
+                <Typography sx={{ fontSize: 24, fontWeight: 900, color: 'var(--ev-text-primary, #19171c)', lineHeight: 1 }}>
                   {stats.tongSoChungChi.toString().padStart(2, '0')}
                 </Typography>
                 <Chip
@@ -118,11 +118,11 @@ export default function CertificateStats({ stats, loading = false }: Certificate
               <MenuBookRounded fontSize="medium" />
             </Box>
             <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: '12.5px', fontWeight: 800, color: 'rgba(24,24,27,0.54)' }}>
+              <Typography sx={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>
                 KHÓA HỌC ĐÃ HOÀN THÀNH
               </Typography>
-              <Typography sx={{ mt: 0.25, fontSize: 20, fontWeight: 900, color: '#19171c' }}>
-                {stats.khoaHocDaHoanThanh} <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(24,24,27,0.54)' }}>khóa học</span>
+              <Typography sx={{ mt: 0.25, fontSize: 20, fontWeight: 900, color: 'var(--ev-text-primary, #19171c)' }}>
+                {stats.khoaHocDaHoanThanh} <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>khóa học</span>
               </Typography>
             </Box>
           </Stack>
@@ -133,8 +133,8 @@ export default function CertificateStats({ stats, loading = false }: Certificate
           <Box>
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <TimelineRounded sx={{ color: 'rgba(24,24,27,0.54)', fontSize: 18 }} />
-                <Typography sx={{ fontSize: 13, fontWeight: 800, color: 'rgba(24,24,27,0.72)' }}>
+                <TimelineRounded sx={{ color: 'var(--ev-text-muted, rgba(24,24,27,0.54))', fontSize: 18 }} />
+                <Typography sx={{ fontSize: 13, fontWeight: 800, color: 'var(--ev-text-muted, rgba(24,24,27,0.72))' }}>
                   Tỷ lệ hoàn thành học tập
                 </Typography>
               </Stack>
@@ -171,11 +171,11 @@ export default function CertificateStats({ stats, loading = false }: Certificate
             p: 2.75,
             borderRadius: 2.8,
             border: '1px solid rgba(17,17,17,0.08)',
-            bgcolor: '#fff',
+            bgcolor: 'var(--ev-paper, #fff)',
             overflow: 'hidden',
           }}
         >
-          <Typography sx={{ fontSize: 16, fontWeight: 900, letterSpacing: '-0.2px', mb: 2, color: '#19171c' }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 900, letterSpacing: '-0.2px', mb: 2, color: 'var(--ev-text-primary, #19171c)' }}>
             Chứng chỉ mới nhất
           </Typography>
 
@@ -230,7 +230,7 @@ export default function CertificateStats({ stats, loading = false }: Certificate
                   sx={{
                     mt: 0.25,
                     fontSize: 12,
-                    color: 'rgba(24,24,27,0.54)',
+                    color: 'var(--ev-text-muted, rgba(24,24,27,0.54))',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',

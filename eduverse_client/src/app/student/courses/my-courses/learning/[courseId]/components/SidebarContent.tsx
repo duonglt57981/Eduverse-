@@ -128,15 +128,15 @@ export const SidebarContent = ({
   };
 
   return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#ffffff" }}>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "var(--ev-paper, #ffffff)" }}>
       <Box sx={{
         p: 3,
         borderBottom: "1px solid #E5E7EB",
-        bgcolor: "#ffffff",
+        bgcolor: "var(--ev-paper, #ffffff)",
         flexShrink: 0,
       }}>
         <Stack direction="row" sx={{ mb: 2, justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 900, color: "#111827" }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 900, color: "var(--ev-text-primary, #111827)" }}>
             Nội dung khóa học
           </Typography>
           {isMobile && onCloseMobile && (
@@ -153,20 +153,20 @@ export const SidebarContent = ({
             "& .MuiOutlinedInput-root": {
               height: "42px",
               borderRadius: "10px",
-              bgcolor: "#F8FAFC",
-              "& fieldset": { borderColor: "#E2E8F0" },
+              bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+              "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
               "&:hover fieldset": { borderColor: "#CBD5E1" },
               "&.Mui-focused fieldset": { borderColor: PRIMARY_RED, borderWidth: "1.5px" },
             },
             "& .MuiInputBase-input": {
               fontSize: "14px",
-              color: "#111827",
+              color: "var(--ev-text-primary, #111827)",
             }
           }}
         />
 
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.75 }}>
-          <Typography variant="caption" sx={{ fontWeight: 700, color: "#64748B" }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, color: "var(--ev-text-secondary, #64748B)" }}>
             Tiến độ học tập
           </Typography>
           <Typography variant="caption" sx={{ fontWeight: 800, color: PRIMARY_RED }}>
@@ -177,11 +177,11 @@ export const SidebarContent = ({
           sx={{
             height: 6,
             borderRadius: 3,
-            backgroundColor: "#F1F5F9",
+            backgroundColor: "var(--ev-paper-alt, #F1F5F9)",
             "& .MuiLinearProgress-bar": { backgroundColor: PRIMARY_RED, borderRadius: 3 },
             mb: 1
           }} />
-        <Typography variant="caption" sx={{ display: "block", textAlign: "right", fontWeight: 600, color: "#64748B" }}>
+        <Typography variant="caption" sx={{ display: "block", textAlign: "right", fontWeight: 600, color: "var(--ev-text-secondary, #64748B)" }}>
           Đã hoàn thành {soBaiHoanThanh}/{tongBai} bài học
         </Typography>
       </Box>
@@ -210,7 +210,7 @@ export const SidebarContent = ({
                   px: 3,
                   transition: "background-color 0.2s",
                   "&:hover": {
-                    bgcolor: "#F8FAFC",
+                    bgcolor: "var(--ev-paper-alt, #F8FAFC)",
                   },
                 }}
               >
@@ -227,15 +227,15 @@ export const SidebarContent = ({
                   </Typography>
                   <Typography
                     variant="caption"
-                    sx={{ fontWeight: 600, color: "#64748B", mt: 0.5, display: "block" }}
+                    sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)", mt: 0.5, display: "block" }}
                   >
                     {doneCnt}/{dsBaiGiang.length} bài giảng · {totalMin} phút
                   </Typography>
                 </Box>
                 {isOpen ? (
-                  <ExpandLessIcon sx={{ fontSize: 20, color: "#64748B" }} />
+                  <ExpandLessIcon sx={{ fontSize: 20, color: "var(--ev-text-secondary, #64748B)" }} />
                 ) : (
-                  <ExpandMoreIcon sx={{ fontSize: 20, color: "#64748B" }} />
+                  <ExpandMoreIcon sx={{ fontSize: 20, color: "var(--ev-text-secondary, #64748B)" }} />
                 )}
               </ListItemButton>
 
@@ -257,7 +257,7 @@ export const SidebarContent = ({
                             bgcolor: isSelected ? "#FEF2F2 !important" : "transparent",
                             transition: "all 0.15s ease",
                             "&:hover": {
-                              bgcolor: "#F8FAFC",
+                              bgcolor: "var(--ev-paper-alt, #F8FAFC)",
                             },
                           }}
                         >
@@ -287,7 +287,7 @@ export const SidebarContent = ({
                               </Typography>
                             }
                             secondary={
-                              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 500, mt: 0.5, display: "block" }}>
+                              <Typography variant="caption" sx={{ color: "var(--ev-text-secondary, #64748B)", fontWeight: 500, mt: 0.5, display: "block" }}>
                                 {Math.floor((bg.thoiLuong ?? 0) / 60)}p{" "}
                                 {(bg.thoiLuong ?? 0) % 60}s
                               </Typography>
@@ -315,7 +315,7 @@ export const SidebarContent = ({
                           bgcolor: isQuizSelected ? "#FEF2F2 !important" : "transparent",
                           transition: "all 0.15s ease",
                           "&:hover": {
-                            bgcolor: "#F8FAFC",
+                            bgcolor: "var(--ev-paper-alt, #F8FAFC)",
                           },
                         }}
                       >
@@ -339,7 +339,7 @@ export const SidebarContent = ({
                             </Typography>
                           }
                           secondary={
-                            <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 500, mt: 0.5, display: "block" }}>
+                            <Typography variant="caption" sx={{ color: "var(--ev-text-secondary, #64748B)", fontWeight: 500, mt: 0.5, display: "block" }}>
                               {quiz.soCauHoi ?? 0} câu hỏi
                               {quiz.gioiHanThoiGian ? ` · ${quiz.gioiHanThoiGian} phút` : ""}
                             </Typography>

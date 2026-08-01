@@ -303,7 +303,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               color: MAU.chuXam,
               fontWeight: 600,
               "&:hover": {
-                bgcolor: "#F5F6F8",
+                bgcolor: "var(--ev-paper-alt, #F5F6F8)",
               },
             }}
           >

@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Eduverse.Service.CloudinaryService.Dto;
 using Microsoft.AspNetCore.Http;
@@ -805,7 +805,7 @@ namespace Eduverse.Service.CloudinaryService
             var extension = Path.GetExtension(file.FileName).ToLower();
 
             string[] allowedExtensions =
-            {".docx"};
+            { ".docx", ".pdf" };
 
             if (!allowedExtensions.Contains(extension))
                 throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");

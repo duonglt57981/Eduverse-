@@ -416,7 +416,7 @@ export default function LearningPathsPage() {
             zIndex: 1200,
             px: { xs: 2, md: 4 },
             borderBottom: "1px solid rgba(0,0,0,0.06)",
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -498,7 +498,7 @@ export default function LearningPathsPage() {
             <IconButton
               sx={{
                 display: { xs: "flex", md: "none" },
-                color: "rgba(31,41,55,0.65)",
+                color: "var(--ev-text-secondary, rgba(31,41,55,0.65))",
               }}
             >
               <SearchRounded />
@@ -644,7 +644,7 @@ export default function LearningPathsPage() {
                       sx={{
                         mt: 1.5,
                         fontSize: 14.5,
-                        color: "rgba(31,41,55,0.65)",
+                        color: "var(--ev-text-secondary, rgba(31,41,55,0.65))",
                         lineHeight: 1.7,
                         maxWidth: 650,
                       }}
@@ -709,7 +709,7 @@ export default function LearningPathsPage() {
                     sx={{
                       fontSize: 13,
                       fontWeight: 800,
-                      color: "rgba(31,41,55,0.4)",
+                      color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                       px: 1.5,
                       mb: 1,
                       letterSpacing: "0.5px",
@@ -731,7 +731,7 @@ export default function LearningPathsPage() {
                               sx={{
                                 fontSize: 13,
                                 fontWeight: 800,
-                                color: "rgba(31,41,55,0.4)",
+                                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                                 px: 1.5,
                                 mt: 2,
                                 mb: 1,
@@ -791,14 +791,14 @@ export default function LearningPathsPage() {
                   >
                     <Box>
                       <Typography
-                        sx={{ fontSize: 22, fontWeight: 900, color: "#1F2937" }}
+                        sx={{ fontSize: 22, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)" }}
                       >
                         {selectedCategory}
                       </Typography>
                       <Typography
                         sx={{
                           fontSize: 13.5,
-                          color: "rgba(31,41,55,0.5)",
+                          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                           mt: 0.5,
                         }}
                       >
@@ -855,7 +855,7 @@ export default function LearningPathsPage() {
                         border: "1px solid rgba(0,0,0,0.12)",
                         borderRadius: "10px",
                         width: { xs: "100%", sm: 260 },
-                        bgcolor: "#FFF",
+                        bgcolor: "var(--ev-paper, #FFF)",
                       }}
                     >
                       <InputBase
@@ -967,7 +967,7 @@ export default function LearningPathsPage() {
                                 sx={{
                                   fontSize: 15.5,
                                   fontWeight: 800,
-                                  color: "#1F2937",
+                                  color: "var(--ev-text-primary, #1F2937)",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                 }}
@@ -977,13 +977,13 @@ export default function LearningPathsPage() {
                               <Typography
                                 sx={{
                                   fontSize: 13,
-                                  color: "rgba(31,41,55,0.5)",
+                                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                                   mt: 0.5,
                                 }}
                               >
                                 Tác giả:{" "}
                                 <span
-                                  style={{ fontWeight: 600, color: "#4B5563" }}
+                                  style={{ fontWeight: 600, color: "var(--ev-text-secondary, #4B5563)" }}
                                 >
                                   {path.author}
                                 </span>
@@ -1024,7 +1024,7 @@ export default function LearningPathsPage() {
                                   spacing={0.5}
                                   sx={{
                                     alignItems: "center",
-                                    color: "rgba(31,41,55,0.45)",
+                                    color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
                                   }}
                                 >
                                   <TimerRounded sx={{ fontSize: 15 }} />
@@ -1039,7 +1039,7 @@ export default function LearningPathsPage() {
                                   spacing={0.5}
                                   sx={{
                                     alignItems: "center",
-                                    color: "rgba(31,41,55,0.45)",
+                                    color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
                                   }}
                                 >
                                   <PeopleAltRounded sx={{ fontSize: 15 }} />
@@ -1077,7 +1077,7 @@ export default function LearningPathsPage() {
                           sx={{
                             fontSize: 14.5,
                             fontWeight: 600,
-                            color: "rgba(31,41,55,0.4)",
+                            color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                           }}
                         >
                           Không tìm thấy lộ trình học tập nào.

@@ -69,7 +69,7 @@ export default function CertificateViewerModal({
             height: '100%',
             margin: 0,
             padding: 0,
-            bgcolor: '#fff',
+            bgcolor: 'var(--ev-paper, #fff)',
           },
         },
       }}
@@ -119,7 +119,7 @@ export default function CertificateViewerModal({
               position: 'relative',
               width: '100%',
               aspectRatio: '1.414/1', // A4 Landscape ratio
-              bgcolor: '#fff',
+              bgcolor: 'var(--ev-paper, #fff)',
               boxShadow: '0 25px 60px rgba(0,0,0,0.08)',
               borderRadius: '2px',
               border: '24px solid #fff', // Thick white margin
@@ -208,7 +208,7 @@ export default function CertificateViewerModal({
                   sx={{
                     fontSize: { xs: 12, sm: 14 },
                     fontWeight: 700,
-                    color: 'rgba(24,24,27,0.54)',
+                    color: 'var(--ev-text-muted, rgba(24,24,27,0.54))',
                     letterSpacing: '3px',
                     textTransform: 'uppercase',
                   }}
@@ -234,7 +234,7 @@ export default function CertificateViewerModal({
                   align="center"
                   sx={{
                     fontSize: { xs: 12, sm: 14.5 },
-                    color: 'rgba(24,24,27,0.72)',
+                    color: 'var(--ev-text-muted, rgba(24,24,27,0.72))',
                     maxWidth: 580,
                     lineHeight: 1.6,
                     px: 2,

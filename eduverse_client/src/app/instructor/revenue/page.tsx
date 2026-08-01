@@ -159,7 +159,7 @@ export default function DoanhThuPage() {
               onClick={() => setOpenRut(true)}
               disabled={soDu < 50000 || nganHangs.length === 0}
               sx={{
-                bgcolor: "#fff",
+                bgcolor: "var(--ev-paper, #fff)",
                 color: PRIMARY,
                 fontWeight: 700,
                 borderRadius: 2,
@@ -212,7 +212,7 @@ export default function DoanhThuPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   p: 1.5,
-                  bgcolor: "#F7F5F2",
+                  bgcolor: "var(--ev-bg, #F7F5F2)",
                   borderRadius: 2,
                 }}
               >

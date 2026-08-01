@@ -105,7 +105,7 @@ export default function CertificateCard({ certificate }: CertificateCardProps) {
           flexDirection: "column",
           borderRadius: 2.8,
           border: "1px solid rgba(17,17,17,0.08)",
-          bgcolor: "#fff",
+          bgcolor: "var(--ev-paper, #fff)",
           overflow: "hidden",
           transition:
             "transform 240ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 240ms cubic-bezier(0.4, 0, 0.2, 1)",
@@ -318,7 +318,7 @@ export default function CertificateCard({ certificate }: CertificateCardProps) {
               color: "rgba(24,24,27,0.64)",
               "&:hover": {
                 bgcolor: "rgba(17,17,17,0.04)",
-                color: "#19171c",
+                color: "var(--ev-text-primary, #19171c)",
               },
             }}
           >
