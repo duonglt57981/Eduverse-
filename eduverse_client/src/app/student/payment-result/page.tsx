@@ -44,7 +44,9 @@ function PaymentResultContent() {
 
   // idDangKi trả về trong chiTiets của đơn hàng - dùng để điều hướng thẳng
   // vào đúng khóa học vừa mua trên trang học
-  const idDangKiVuaMua = donHang?.chiTiets?.[0]?.idDangKi;
+  const idDangKiVuaMua = (
+    donHang?.chiTiets?.[0] as { idDangKi?: string | number } | undefined
+  )?.idDangKi;
 
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
