@@ -591,7 +591,10 @@ function CourseCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gradient = getGradient(course);
-  const isFree = (course.gia ?? 0) === 0;
+  const isFree =
+    course.loaiKhoaHoc !== "Khóa học trả phí" &&
+    (!course.gia || course.gia <= 0);
+  const displayPrice = course.gia ?? course.giaGoc ?? (course as any).giagoc ?? 0;
   const title = course.tieuDe || course.title || "";
   const rating = course.rating ?? 4.8;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
@@ -835,9 +838,9 @@ function CourseCard({
                   color: isFree ? "#10B981" : C.primary,
                 }}
               >
-                {fmtPrice(course.gia ?? 0)}
+                {isFree ? "Miễn phí" : fmtPrice(displayPrice)}
               </Typography>
-              {course.giaGoc && course.giaGoc > (course.gia ?? 0) && (
+              {course.giaGoc && course.giaGoc > displayPrice && (
                 <Typography
                   sx={{
                     fontSize: 10.5,
