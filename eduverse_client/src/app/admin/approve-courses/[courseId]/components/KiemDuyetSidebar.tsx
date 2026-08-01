@@ -487,7 +487,7 @@ export default function KiemDuyetSidebar({
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
             mb: 1.5,
-            bgcolor: "#fff",
+            bgcolor: "var(--ev-paper, #fff)",
             "& .MuiOutlinedInput-root": {
               borderRadius: 1.5,
               "& fieldset": { borderColor: COLORS.line },

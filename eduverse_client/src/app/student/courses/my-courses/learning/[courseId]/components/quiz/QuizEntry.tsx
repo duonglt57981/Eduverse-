@@ -43,11 +43,11 @@ export function QuizEntry({
           mx: "auto", mb: 2, boxShadow: `0 8px 24px rgba(141,19,19,0.22)` }}>
           <QuizRounded sx={{ fontSize: 34, color: "#fff" }} />
         </Box>
-        <Typography sx={{ fontSize: 20, fontWeight: 900, color: "#1F2937", mb: 0.5 }}>
+        <Typography sx={{ fontSize: 20, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}>
           {info.tenBaiKiemTra}
         </Typography>
         {info.moTa && (
-          <Typography sx={{ fontSize: 13.5, color: "rgba(31,41,55,0.55)", lineHeight: 1.65 }}>
+          <Typography sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, rgba(31,41,55,0.55))", lineHeight: 1.65 }}>
             {info.moTa}
           </Typography>
         )}
@@ -63,8 +63,8 @@ export function QuizEntry({
           <Box key={i} sx={{ p: 2, borderRadius: "12px", textAlign: "center",
             border: "1px solid rgba(141,19,19,0.1)", bgcolor: "rgba(141,19,19,0.015)" }}>
             <Box sx={{ color: RED, mb: 0.5 }}>{s.icon}</Box>
-            <Typography sx={{ fontSize: 14, fontWeight: 800, color: "#1F2937" }}>{s.value}</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.45)", fontWeight: 600 }}>{s.label}</Typography>
+            <Typography sx={{ fontSize: 14, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)" }}>{s.value}</Typography>
+            <Typography sx={{ fontSize: 11, color: "var(--ev-text-muted, rgba(31,41,55,0.45))", fontWeight: 600 }}>{s.label}</Typography>
           </Box>
         ))}
       </Box>
@@ -97,13 +97,13 @@ export function QuizEntry({
           </Stack>
           <Stack direction="row" spacing={3} sx={{ mb: diemCaoNhat != null ? 1.5 : 0 }}>
             <Box>
-              <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.45)", fontWeight: 600 }}>Số lần đã làm</Typography>
-              <Typography sx={{ fontSize: 17, fontWeight: 900, color: "#1F2937" }}>{soLanDaLam} lần</Typography>
+              <Typography sx={{ fontSize: 11, color: "var(--ev-text-muted, rgba(31,41,55,0.45))", fontWeight: 600 }}>Số lần đã làm</Typography>
+              <Typography sx={{ fontSize: 17, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)" }}>{soLanDaLam} lần</Typography>
             </Box>
             {diemCaoNhat != null && (
               <Box>
-                <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.45)", fontWeight: 600 }}>Điểm cao nhất</Typography>
-                <Typography sx={{ fontSize: 17, fontWeight: 900, color: "#1F2937" }}>{diemCaoNhat.toFixed(1)}</Typography>
+                <Typography sx={{ fontSize: 11, color: "var(--ev-text-muted, rgba(31,41,55,0.45))", fontWeight: 600 }}>Điểm cao nhất</Typography>
+                <Typography sx={{ fontSize: 17, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)" }}>{diemCaoNhat.toFixed(1)}</Typography>
               </Box>
             )}
           </Stack>
@@ -134,7 +134,7 @@ export function QuizEntry({
           ].map((note, i) => (
             <Stack key={i} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
               <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: "#3B82F6", mt: 0.85, flexShrink: 0 }} />
-              <Typography sx={{ fontSize: 12.5, color: "rgba(31,41,55,0.65)" }}>{note}</Typography>
+              <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, rgba(31,41,55,0.65))" }}>{note}</Typography>
             </Stack>
           ))}
         </Stack>
@@ -172,7 +172,7 @@ export function QuizEntry({
         {lichSu.filter((l) => l.thoiGianNop).length > 0 && (
           <>
             <Divider sx={{ opacity: 0.4 }} />
-            <Typography sx={{ fontSize: 12, fontWeight: 700, color: "rgba(31,41,55,0.4)", textAlign: "center" }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, color: "var(--ev-text-muted, rgba(31,41,55,0.4))", textAlign: "center" }}>
               Lịch sử làm bài
             </Typography>
             <Stack spacing={1}>
@@ -181,13 +181,13 @@ export function QuizEntry({
                   onClick={() => onXemLai(l.idLanLamBaiKiemTra)}
                   sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
                     p: 1.5, borderRadius: "10px", cursor: "pointer",
-                    border: "1px solid rgba(0,0,0,0.07)", bgcolor: "#fff",
+                    border: "1px solid rgba(0,0,0,0.07)", bgcolor: "var(--ev-paper, #fff)",
                     "&:hover": { borderColor: RED, bgcolor: "rgba(141,19,19,0.02)" } }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <HistoryRounded sx={{ fontSize: 16, color: "rgba(31,41,55,0.4)" }} />
+                    <HistoryRounded sx={{ fontSize: 16, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }} />
                     <Box>
                       <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>Lần {l.lamLanThu}</Typography>
-                      <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.45)" }}>
+                      <Typography sx={{ fontSize: 11, color: "var(--ev-text-muted, rgba(31,41,55,0.45))" }}>
                         {l.thoiGianNop ? new Date(l.thoiGianNop).toLocaleDateString("vi-VN") : ""}
                       </Typography>
                     </Box>

@@ -54,7 +54,7 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
             gap: 2,
             p: 2.25,
             borderRadius: "16px",
-            backgroundColor: "#ffffff",
+            backgroundColor: "var(--ev-paper, #ffffff)",
             border: "1px solid #E5E7EB",
             boxShadow: "0 4px 12px rgba(0,0,0,0.015)",
             transition: "all 0.2s ease-in-out",
@@ -81,13 +81,13 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="caption"
-              sx={{ display: "block", mb: 0.5, fontWeight: 700, color: "#64748B" }}
+              sx={{ display: "block", mb: 0.5, fontWeight: 700, color: "var(--ev-text-secondary, #64748B)" }}
             >
               {item.title}
             </Typography>
             <Typography
               variant="subtitle1"
-              sx={{ fontWeight: 800, lineHeight: 1.2, color: "#111827" }}
+              sx={{ fontWeight: 800, lineHeight: 1.2, color: "var(--ev-text-primary, #111827)" }}
             >
               {item.label}
             </Typography>

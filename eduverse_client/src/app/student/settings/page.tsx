@@ -29,7 +29,6 @@ const settingsTabs = [
   { label: 'Bảo mật', icon: LockRounded, description: 'Mật khẩu, xác thực 2 lớp' },
   { label: 'Thông báo', icon: NotificationsRounded, description: 'Email, push, SMS' },
   { label: 'Quyền riêng tư', icon: ShieldRounded, description: 'Hiển thị hồ sơ, dữ liệu' },
-  { label: 'Liên kết tài khoản', icon: LinkRounded, description: 'Google, Facebook, GitHub' },
 ];
 
 function TabPanel({ children, value, index }: { children: React.ReactNode; value: number; index: number }) {
@@ -128,13 +127,12 @@ export default function StudentSettingsPage() {
             </Tabs>
           </Paper>
 
-          {/* Tab Content */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <TabPanel value={activeTab} index={0}><AccountSettings /></TabPanel>
             <TabPanel value={activeTab} index={1}><SecuritySettings /></TabPanel>
-            <TabPanel value={activeTab} index={2}><NotificationSettings /></TabPanel>
-            <TabPanel value={activeTab} index={3}><PrivacySettings /></TabPanel>
-            <TabPanel value={activeTab} index={4}><LinkedAccountSettings /></TabPanel>
+            <TabPanel value={activeTab} index={2}><AppearanceSettings /></TabPanel>
+            <TabPanel value={activeTab} index={3}><NotificationSettings /></TabPanel>
+            <TabPanel value={activeTab} index={4}><PrivacySettings /></TabPanel>
           </Box>
         </Box>
       </StudentDashboardShell>

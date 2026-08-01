@@ -21,6 +21,7 @@ import {
   Tabs,
   Typography,
   Avatar,
+  Portal,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import {
@@ -423,7 +424,10 @@ function HoverPanel({
   if (!pos) return null;
 
   const gradient = getGradient(course);
-  const isFree = (course.gia ?? 0) === 0;
+  const isFree =
+    course.loaiKhoaHoc !== "Khóa học trả phí" &&
+    (!course.gia || course.gia <= 0);
+  const displayPrice = course.gia ?? course.giaGoc ?? (course as Record<string, unknown>).giagoc as number ?? 0;
 
   return (
     <Box
@@ -437,8 +441,7 @@ function HoverPanel({
         left: pos.left,
         width: 310,
         zIndex: 1500,
-        bgcolor: "#ffffff",          
-        backdropFilter: "none",
+        bgcolor: "background.paper",
         borderRadius: "16px",
         boxShadow: "0 16px 48px rgba(0,0,0,0.18)",
         border: "1px solid rgba(0,0,0,0.07)",
@@ -551,9 +554,9 @@ function HoverPanel({
               color: isFree ? C.ok : C.primary,
             }}
           >
-            {fmtPrice(course.gia ?? 0)}
+            {isFree ? "Miễn phí" : fmtPrice(displayPrice)}
           </Typography>
-          {course.giaGoc && course.giaGoc > (course.gia ?? 0) && (
+          {course.giaGoc && course.giaGoc > displayPrice && (
             <Typography
               sx={{
                 fontSize: 13,
@@ -682,7 +685,7 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice = course.gia ?? course.giaGoc ?? (course as any).giagoc ?? 0;
+  const displayPrice = course.gia ?? course.giaGoc ?? (course as Record<string, unknown>).giagoc as number ?? 0;
   const title = course.tieuDe || course.title || "";
   // Chỉ hiển thị đánh giá khi có dữ liệu thật (không dùng giá trị bịa)
   const rating = course.rating ?? null;
@@ -947,13 +950,15 @@ function CourseCard({
       </Paper>
 
       {hovered && (
-        <HoverPanel
-          course={course}
-          anchorEl={cardRef}
-          onAddCart={onAddCart}
-          onMouseEnter={handlePanelEnter}
-          onMouseLeave={handlePanelLeave}
-        />
+        <Portal>
+          <HoverPanel
+            course={course}
+            anchorEl={cardRef}
+            onAddCart={onAddCart}
+            onMouseEnter={handlePanelEnter}
+            onMouseLeave={handlePanelLeave}
+          />
+        </Portal>
       )}
     </>
   );
@@ -1564,6 +1569,7 @@ export default function StudentHomeContent() {
                 daDangKy: premiumSelection.daDangKy,
                 rating: premiumSelection.rating,
                 instructor: premiumSelection.instructor,
+                loaiKhoaHoc: premiumSelection.loaiKhoaHoc,
               } as any}
               onAddCart={handleAddCart}
               onClick={handleOpenCourse}

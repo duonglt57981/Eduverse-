@@ -437,7 +437,7 @@ export default function AccountSettings() {
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: 'rgba(17,17,17,0.08)',
+                        borderColor: 'var(--ev-divider, rgba(17,17,17,0.08))',
                       },
                     },
                   }}
@@ -469,7 +469,7 @@ export default function AccountSettings() {
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: 'rgba(17,17,17,0.08)',
+                        borderColor: 'var(--ev-divider, rgba(17,17,17,0.08))',
                       },
                     },
                   }}
@@ -501,7 +501,7 @@ export default function AccountSettings() {
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: 'rgba(17,17,17,0.08)',
+                        borderColor: 'var(--ev-divider, rgba(17,17,17,0.08))',
                       },
                     },
                   }}
@@ -534,7 +534,7 @@ export default function AccountSettings() {
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: 'rgba(17,17,17,0.08)',
+                        borderColor: 'var(--ev-divider, rgba(17,17,17,0.08))',
                       },
                     },
                   }}
@@ -568,7 +568,7 @@ export default function AccountSettings() {
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: 'rgba(17,17,17,0.08)',
+                        borderColor: 'var(--ev-divider, rgba(17,17,17,0.08))',
                       },
                     },
                   }}

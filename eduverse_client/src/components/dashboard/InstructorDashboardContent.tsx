@@ -63,8 +63,8 @@ function EnrollmentBarChart({
 
       {allZero && (
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 3, bgcolor: "rgba(255,255,255,0.6)", backdropFilter: "blur(1px)", borderRadius: "12px" }}>
-          <PeopleAltRounded sx={{ fontSize: 32, color: "#94A3B8", mb: 1 }} />
-          <Typography sx={{ fontSize: 13.5, color: "#64748B", fontWeight: 600 }}>
+          <PeopleAltRounded sx={{ fontSize: 32, color: "var(--ev-text-muted, #94A3B8)", mb: 1 }} />
+          <Typography sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #64748B)", fontWeight: 600 }}>
             Chưa có học viên đăng ký trong 7 tháng qua
           </Typography>
         </Box>
@@ -122,8 +122,8 @@ function RevenueBarChart({
 
       {allZero && (
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 3, bgcolor: "rgba(255,255,255,0.6)", backdropFilter: "blur(1px)", borderRadius: "12px" }}>
-          <AttachMoneyRounded sx={{ fontSize: 32, color: "#94A3B8", mb: 1 }} />
-          <Typography sx={{ fontSize: 13.5, color: "#64748B", fontWeight: 600 }}>
+          <AttachMoneyRounded sx={{ fontSize: 32, color: "var(--ev-text-muted, #94A3B8)", mb: 1 }} />
+          <Typography sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #64748B)", fontWeight: 600 }}>
             Chưa có doanh thu trong 7 tháng qua
           </Typography>
         </Box>
@@ -142,7 +142,7 @@ function RevenueBarChart({
               onMouseLeave={() => setHoveredIndex(null)}>
               {/* Tooltip khi hover */}
               {isHovered && !allZero && month.raw > 0 && (
-                <Box sx={{ position: "absolute", bottom: barHeight + 30, bgcolor: "#1F2937", color: "#fff", fontSize: 11, fontWeight: 800, px: 1, py: 0.5, borderRadius: "6px", whiteSpace: "nowrap", zIndex: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                <Box sx={{ position: "absolute", bottom: barHeight + 30, bgcolor: "var(--ev-text-primary, #1F2937)", color: "#FFFFFF", fontSize: 11, fontWeight: 800, px: 1, py: 0.5, borderRadius: "6px", whiteSpace: "nowrap", zIndex: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
                   {month.raw.toLocaleString("vi-VN")}đ
                   <Box sx={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "4px solid transparent", borderRight: "4px solid transparent", borderTop: "4px solid #1F2937" }} />
                 </Box>
@@ -179,11 +179,26 @@ export default function InstructorDashboardContent() {
   const user = useSelector((s) => s.auth.user);
   const { soDu, thongBaos, nganHangs } = useSelector((s) => s.rutTien);
   const fullName = user?.hoTen || user?.userName || "Giảng viên";
+  const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     dispatch(getSoDu());
     dispatch(getNganHangs());
   }, [dispatch]);
+
+  useEffect(() => {
+    const handleAvatarUpdate = () => {
+      if (typeof window !== "undefined" && user?.email) {
+        const stored = localStorage.getItem(`user_avatar_${user.email}`);
+        if (stored) {
+          setUserAvatar(stored);
+        }
+      }
+    };
+    window.addEventListener("avatar_updated", handleAvatarUpdate);
+    handleAvatarUpdate();
+    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
+  }, [user?.email]);
 
   const [dash, setDash] = useState<any>(null);
   useEffect(() => {
@@ -230,14 +245,14 @@ export default function InstructorDashboardContent() {
   if (!dash) {
     return (
       <Stack spacing={3.5}>
-        <Paper elevation={0} sx={{ borderRadius: "24px", p: { xs: 3.5, md: 4.5 }, border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white" }}>
+        <Paper elevation={0} sx={{ borderRadius: "24px", p: { xs: 3.5, md: 4.5 }, border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)" }}>
           <Skeleton variant="text" width="40%" height={20} sx={{ mb: 1 }} />
           <Skeleton variant="text" width="60%" height={40} sx={{ mb: 2 }} />
           <Skeleton variant="rectangular" width={280} height={46} sx={{ borderRadius: "12px" }} />
         </Paper>
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2,1fr)", md: "repeat(4,1fr)" }, gap: 2.5 }}>
           {[1, 2, 3, 4].map((i) => (
-            <Paper key={i} elevation={0} sx={{ p: 2.5, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white", display: "flex", alignItems: "center", gap: 2 }}>
+            <Paper key={i} elevation={0} sx={{ p: 2.5, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)", display: "flex", alignItems: "center", gap: 2 }}>
               <Skeleton variant="rectangular" width={48} height={48} sx={{ borderRadius: "14px" }} />
               <Box sx={{ flex: 1 }}><Skeleton variant="text" width="60%" /><Skeleton variant="text" width="40%" /></Box>
             </Paper>
@@ -259,21 +274,21 @@ export default function InstructorDashboardContent() {
   return (
     <Stack spacing={3.5}>
       {/* ── 1. WELCOME CARD ── */}
-      <Paper elevation={0} sx={{ borderRadius: "24px", p: { xs: 3.5, md: 4.5 }, border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white", boxShadow: "0 10px 30px rgba(141,19,19,0.015)", position: "relative", overflow: "hidden" }}>
+      <Paper elevation={0} sx={{ borderRadius: "24px", p: { xs: 3.5, md: 4.5 }, border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)", boxShadow: "0 10px 30px rgba(141,19,19,0.015)", position: "relative", overflow: "hidden" }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={4} sx={{ alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 2 }}>
           <Box sx={{ flex: 1, width: "100%" }}>
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.primary, textTransform: "uppercase", letterSpacing: "1px", mb: 1 }}>
               Bảng điều khiển Giảng viên
             </Typography>
-            <Typography sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 900, color: "#111827", mb: 1.5, lineHeight: 1.2 }}>
+            <Typography sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 900, color: "var(--ev-text-primary, #111827)", mb: 1.5, lineHeight: 1.2 }}>
               Chào mừng trở lại, GS. {fullName}
             </Typography>
-            <Typography sx={{ fontSize: 14.5, color: "#64748B", maxWidth: 480, lineHeight: 1.6, mb: 3 }}>
+            <Typography sx={{ fontSize: 14.5, color: "var(--ev-text-secondary, #64748B)", maxWidth: 480, lineHeight: 1.6, mb: 3 }}>
               Theo dõi hiệu quả giảng dạy và quản lý hoạt động khóa học của bạn.
             </Typography>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
               <Button variant="contained" startIcon={<AddRounded />} onClick={() => router.push("/instructor/manager-courses/create/1")}
-                sx={{ borderRadius: "12px", bgcolor: COLORS.primary, color: "#fff", px: 3, py: 1.25, fontSize: 13.5, fontWeight: 800, textTransform: "none", boxShadow: "none", "&:hover": { bgcolor: "#7F1D1D", boxShadow: "none" } }}>
+                sx={{ borderRadius: "12px", bgcolor: COLORS.primary, color: "#FFFFFF", px: 3, py: 1.25, fontSize: 13.5, fontWeight: 800, textTransform: "none", boxShadow: "none", "&:hover": { bgcolor: "#7F1D1D", boxShadow: "none" } }}>
                 Tạo khóa học
               </Button>
               <Button variant="outlined" startIcon={<AccountBalanceWalletRounded />} onClick={() => router.push("/instructor/money")}
@@ -283,7 +298,7 @@ export default function InstructorDashboardContent() {
             </Stack>
           </Box>
           <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", justifyContent: "center", flexShrink: 0, width: 160, height: 160, borderRadius: "50%", bgcolor: "#FEF2F2", border: "2px solid rgba(141,19,19,0.08)", mr: 2, p: 0.5 }}>
-            <Avatar src={user?.anhDaiDien} alt={fullName} sx={{ width: 146, height: 146, border: "1px solid rgba(141,19,19,0.04)", boxShadow: "0 8px 24px rgba(141,19,19,0.06)", bgcolor: "#FEF2F2" }}>
+            <Avatar src={userAvatar || user?.anhDaiDien || undefined} alt={fullName} sx={{ width: 146, height: 146, border: "1px solid rgba(141,19,19,0.04)", boxShadow: "0 8px 24px rgba(141,19,19,0.06)", bgcolor: "#FEF2F2" }}>
               {fullName.split(" ").pop()?.charAt(0)}
             </Avatar>
           </Box>
@@ -297,13 +312,13 @@ export default function InstructorDashboardContent() {
           const Icon = stat.icon;
           return (
             <Paper key={stat.label} elevation={0} onClick={stat.onClick}
-              sx={{ p: 2.5, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white", display: "flex", alignItems: "center", gap: 2, cursor: stat.onClick ? "pointer" : "default", transition: "transform 200ms ease, box-shadow 200ms ease", "&:hover": { transform: "translateY(-3px)", boxShadow: "0 10px 24px rgba(141,19,19,0.06)" } }}>
+              sx={{ p: 2.5, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)", display: "flex", alignItems: "center", gap: 2, cursor: stat.onClick ? "pointer" : "default", transition: "transform 200ms ease, box-shadow 200ms ease", "&:hover": { transform: "translateY(-3px)", boxShadow: "0 10px 24px rgba(141,19,19,0.06)" } }}>
               <Box sx={{ width: 48, height: 48, borderRadius: "14px", bgcolor: stat.iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <Icon sx={{ fontSize: 24, color: stat.iconColor }} />
               </Box>
               <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#64748B", mb: 0.5, textTransform: "uppercase", letterSpacing: "0.5px" }}>{stat.label}</Typography>
-                <Typography noWrap sx={{ fontSize: 20, fontWeight: 900, color: "#111827", lineHeight: 1.2 }}>{stat.value}</Typography>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: "var(--ev-text-secondary, #64748B)", mb: 0.5, textTransform: "uppercase", letterSpacing: "0.5px" }}>{stat.label}</Typography>
+                <Typography noWrap sx={{ fontSize: 20, fontWeight: 900, color: "var(--ev-text-primary, #111827)", lineHeight: 1.2 }}>{stat.value}</Typography>
               </Box>
             </Paper>
           );
@@ -317,35 +332,35 @@ export default function InstructorDashboardContent() {
         <Stack spacing={2.5}>
 
           {/* Biểu đồ học viên mới theo tháng */}
-          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white", height: 320, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)", height: 320, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
               <Box>
-                <Typography sx={{ fontSize: 16.5, fontWeight: 800, color: "#1F2937" }}>
+                <Typography sx={{ fontSize: 16.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)" }}>
                   Học viên đăng ký theo tháng
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: "#64748B", mt: 0.3 }}>
+                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #64748B)", mt: 0.3 }}>
                   Số lượt đăng ký khóa học 7 tháng gần nhất
                 </Typography>
               </Box>
               <Chip label={`Năm ${new Date().getFullYear()}`} size="small"
-                sx={{ fontWeight: 700, fontSize: 12, color: "rgba(31,41,55,0.6)", bgcolor: "rgba(31,41,55,0.04)", border: "1px solid rgba(31,41,55,0.08)", borderRadius: "10px" }} />
+                sx={{ fontWeight: 700, fontSize: 12, color: "var(--ev-text-secondary, rgba(31,41,55,0.6))", bgcolor: "rgba(31,41,55,0.04)", border: "1px solid rgba(31,41,55,0.08)", borderRadius: "10px" }} />
             </Stack>
             <EnrollmentBarChart data={chartMonths} highlightIndex={chartMonths.length ? chartMonths.length - 1 : 0} />
           </Paper>
 
           {/* Biểu đồ doanh thu theo tháng (70%) */}
-          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white", height: 320, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)", height: 320, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
               <Box>
-                <Typography sx={{ fontSize: 16.5, fontWeight: 800, color: "#1F2937" }}>
+                <Typography sx={{ fontSize: 16.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)" }}>
                   Doanh thu theo tháng
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: "#64748B", mt: 0.3 }}>
+                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #64748B)", mt: 0.3 }}>
                   70% từ doanh số khóa học · 7 tháng gần nhất
                 </Typography>
               </Box>
               <Box sx={{ textAlign: "right" }}>
-                <Typography sx={{ fontSize: 11, color: "#64748B", fontWeight: 600 }}>Tháng này</Typography>
+                <Typography sx={{ fontSize: 11, color: "var(--ev-text-secondary, #64748B)", fontWeight: 600 }}>Tháng này</Typography>
                 <Typography sx={{ fontSize: 18, fontWeight: 900, color: "#15803D" }}>
                   {doanhThuThangNay.toLocaleString("vi-VN")}đ
                 </Typography>
@@ -359,41 +374,41 @@ export default function InstructorDashboardContent() {
         <Stack spacing={2.5}>
 
           {/* Tăng trưởng học viên */}
-          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white" }}>
-            <Typography sx={{ fontSize: 14.5, fontWeight: 800, color: "#1F2937", mb: 2 }}>Tăng trưởng học viên</Typography>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)" }}>
+            <Typography sx={{ fontSize: 14.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)", mb: 2 }}>Tăng trưởng học viên</Typography>
             <Stack direction="row" sx={{ alignItems: "center", gap: 2.5 }}>
               <Box sx={{ width: 64, height: 64, borderRadius: "50%", background: `conic-gradient(#10B981 0% ${growthPct > 0 ? growthPct : 0}%, #F1F5F9 ${growthPct > 0 ? growthPct : 0}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 6px #fff" }}>
-                <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "white", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "var(--ev-paper, #FFFFFF)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                   <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: growthPct >= 0 ? "#10B981" : "#EF4444" }}>
                     {growthPct >= 0 ? "+" : ""}{growthPct}%
                   </Typography>
                 </Box>
               </Box>
               <Box>
-                <Typography sx={{ fontSize: 30, fontWeight: 900, color: "#1F2937", lineHeight: 1, mb: 0.5 }}>
+                <Typography sx={{ fontSize: 30, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", lineHeight: 1, mb: 0.5 }}>
                   {growthCount.toLocaleString("vi-VN")}
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: "#64748B", fontWeight: 600 }}>Đăng ký mới tháng này</Typography>
+                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #64748B)", fontWeight: 600 }}>Đăng ký mới tháng này</Typography>
               </Box>
             </Stack>
           </Paper>
 
           {/* Tỷ lệ hoàn thành */}
-          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white" }}>
-            <Typography sx={{ fontSize: 14.5, fontWeight: 800, color: "#1F2937", mb: 2 }}>Tỷ lệ hoàn thành</Typography>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)" }}>
+            <Typography sx={{ fontSize: 14.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)", mb: 2 }}>Tỷ lệ hoàn thành</Typography>
             {completionData.length === 0 ? (
               <Box sx={{ py: 2.5, textAlign: "center" }}>
-                <Typography sx={{ fontSize: 12.5, color: "#64748B", fontWeight: 500 }}>Chưa có số liệu hoàn thành</Typography>
+                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #64748B)", fontWeight: 500 }}>Chưa có số liệu hoàn thành</Typography>
               </Box>
             ) : (
               <Stack spacing={2}>
                 {completionData.map((item) => (
                   <Box key={item.title}>
                     <Stack direction="row" sx={{ justifyContent: "space-between", mb: 0.8 }}>
-                      <Typography noWrap sx={{ fontSize: 12.5, fontWeight: 700, color: "#475569", maxWidth: "80%" }}>{item.title}</Typography>
+                      <Typography noWrap sx={{ fontSize: 12.5, fontWeight: 700, color: "var(--ev-text-secondary, #475569)", maxWidth: "80%" }}>{item.title}</Typography>
                       <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: COLORS.primary }}>{item.rate}%</Typography>
                     </Stack>
-                    <LinearProgress variant="determinate" value={item.rate} sx={{ height: 8, borderRadius: 4, bgcolor: "#F1F5F9", "& .MuiLinearProgress-bar": { borderRadius: 4, bgcolor: COLORS.primary } }} />
+                    <LinearProgress variant="determinate" value={item.rate} sx={{ height: 8, borderRadius: 4, bgcolor: "var(--ev-paper-alt, #F1F5F9)", "& .MuiLinearProgress-bar": { borderRadius: 4, bgcolor: COLORS.primary } }} />
                   </Box>
                 ))}
               </Stack>
@@ -401,8 +416,8 @@ export default function InstructorDashboardContent() {
           </Paper>
 
           {/* Công việc cần xử lý */}
-          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white" }}>
-            <Typography sx={{ fontSize: 15, fontWeight: 800, color: "#1F2937", mb: 2 }}>Công việc cần xử lý</Typography>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)" }}>
+            <Typography sx={{ fontSize: 15, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)", mb: 2 }}>Công việc cần xử lý</Typography>
             <Stack spacing={1.5}>
               {nganHangs.length === 0 ? (
                 <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: "12px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
@@ -432,22 +447,22 @@ export default function InstructorDashboardContent() {
                   <Typography sx={{ fontSize: 13, fontWeight: 750, color: "#065F46" }}>Đã tạo khóa học trên hệ thống</Typography>
                 </Stack>
               )}
-              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: "12px", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: "12px", bgcolor: "var(--ev-paper-alt, #F8FAFC)", border: "1px solid #E2E8F0" }}>
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#64748B" }} />
-                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#475569" }}>Cập nhật hồ sơ giảng viên</Typography>
+                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-secondary, #475569)" }}>Cập nhật hồ sơ giảng viên</Typography>
                 </Stack>
-                <Button size="small" onClick={() => router.push("/settings")} sx={{ textTransform: "none", fontSize: 12, fontWeight: 850, color: "#475569", p: 0, minWidth: 0 }}>Cập nhật</Button>
+                <Button size="small" onClick={() => router.push("/settings")} sx={{ textTransform: "none", fontSize: 12, fontWeight: 850, color: "var(--ev-text-secondary, #475569)", p: 0, minWidth: 0 }}>Cập nhật</Button>
               </Stack>
             </Stack>
           </Paper>
 
           {/* Thông báo & Hoạt động */}
-          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "white", display: "flex", flexDirection: "column" }}>
-            <Typography sx={{ fontSize: 15, fontWeight: 800, color: "#1F2937", mb: 2.5 }}>Thông báo & Hoạt động</Typography>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)", display: "flex", flexDirection: "column" }}>
+            <Typography sx={{ fontSize: 15, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)", mb: 2.5 }}>Thông báo & Hoạt động</Typography>
             <Stack spacing={0} sx={{ flex: 1 }}>
               {thongBaos.length === 0 ? (
-                <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.5)", textAlign: "center", py: 4 }}>Chưa có thông báo nào</Typography>
+                <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.5))", textAlign: "center", py: 4 }}>Chưa có thông báo nào</Typography>
               ) : (
                 thongBaos.slice(0, 4).map((notif, index) => {
                   const config = loaiIconMap[notif.loaiThongBao ?? ""] ?? { icon: PersonAddRounded, iconBg: "rgba(141,19,19,0.08)", iconColor: COLORS.primary };
@@ -459,13 +474,13 @@ export default function InstructorDashboardContent() {
                       </Box>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Stack direction="row" sx={{ alignItems: "center", gap: 0.8 }}>
-                          <Typography sx={{ fontSize: 13, fontWeight: !notif.daDoc ? 800 : 700, color: "#1F2937", mb: 0.3 }}>{notif.tieuDe}</Typography>
+                          <Typography sx={{ fontSize: 13, fontWeight: !notif.daDoc ? 800 : 700, color: "var(--ev-text-primary, #1F2937)", mb: 0.3 }}>{notif.tieuDe}</Typography>
                           {!notif.daDoc && <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: COLORS.primary, flexShrink: 0 }} />}
                         </Stack>
-                        <Typography sx={{ fontSize: 12, color: "rgba(31,41,55,0.6)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        <Typography sx={{ fontSize: 12, color: "var(--ev-text-secondary, rgba(31,41,55,0.6))", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                           {notif.noiDung}
                         </Typography>
-                        <Typography sx={{ fontSize: 11, color: "rgba(31,41,55,0.4)", mt: 0.5 }}>{thoiGianRelative(notif.thoiGianTao)}</Typography>
+                        <Typography sx={{ fontSize: 11, color: "var(--ev-text-muted, rgba(31,41,55,0.4))", mt: 0.5 }}>{thoiGianRelative(notif.thoiGianTao)}</Typography>
                       </Box>
                     </Box>
                   );
@@ -473,7 +488,7 @@ export default function InstructorDashboardContent() {
               )}
             </Stack>
             <Button variant="outlined" fullWidth onClick={() => router.push("/instructor/thong-bao")}
-              sx={{ mt: 2.5, borderRadius: "12px", borderColor: "rgba(141,19,19,0.15)", color: "#1F2937", fontWeight: 700, fontSize: 13, textTransform: "none", py: 1.2, "&:hover": { borderColor: COLORS.primary, bgcolor: "rgba(141,19,19,0.03)" } }}>
+              sx={{ mt: 2.5, borderRadius: "12px", borderColor: "rgba(141,19,19,0.15)", color: "var(--ev-text-primary, #1F2937)", fontWeight: 700, fontSize: 13, textTransform: "none", py: 1.2, "&:hover": { borderColor: COLORS.primary, bgcolor: "rgba(141,19,19,0.03)" } }}>
               Xem tất cả thông báo
             </Button>
           </Paper>

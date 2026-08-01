@@ -39,7 +39,6 @@ export default function SettingsPage() {
     { label: 'Bảo mật', icon: <SecurityRounded fontSize="small" />, component: <SecuritySettings /> },
     { label: 'Thông báo', icon: <NotificationsActiveRounded fontSize="small" />, component: <NotificationSettings /> },
     { label: 'Quyền riêng tư', icon: <ShieldRounded fontSize="small" />, component: <PrivacySettings /> },
-    { label: 'Liên kết', icon: <LinkRounded fontSize="small" />, component: <LinkedAccountSettings /> },
   ];
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -124,7 +123,7 @@ export default function SettingsPage() {
                 },
               }}
             >
-              {tabList[activeTab].component}
+              {tabList[activeTab]?.component || tabList[0]?.component}
             </Box>
           </Stack>
         ) : (
@@ -202,7 +201,7 @@ export default function SettingsPage() {
                   },
                 }}
               >
-                {tabList[activeTab].component}
+                {tabList[activeTab]?.component || tabList[0]?.component}
               </Box>
             </Grid>
           </Grid>

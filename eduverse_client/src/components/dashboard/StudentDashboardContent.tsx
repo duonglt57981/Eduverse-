@@ -53,9 +53,9 @@ const C = {
   primary: "#8B1313",
   primaryLight: "#B91C1C",
   primaryDark: "#7F1D1D",
-  white: "#FFFFFF",
-  textDark: "#1F2937",
-  textSecondary: "#4B5563",
+  white: "var(--ev-paper, #FFFFFF)",
+  textDark: "var(--ev-text-primary, #1F2937)",
+  textSecondary: "var(--ev-text-secondary, #4B5563)",
   gradientAI: "linear-gradient(135deg, #8B1313 0%, #7C3AED 100%)",
   gradientTeal: "linear-gradient(135deg, #0D9488 0%, #005F55 100%)",
   gradientCrimson: "linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)",
@@ -217,12 +217,12 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "#fff",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
             border: "1px solid rgba(0,0,0,0.06)",
             width: 38,
             height: 38,
-            "&:hover": { bgcolor: "#F3F4F6" },
+            "&:hover": { bgcolor: "var(--ev-paper-alt, #F3F4F6)" },
           }}
         >
           <ChevronLeftRounded />
@@ -237,12 +237,12 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "#fff",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
             border: "1px solid rgba(0,0,0,0.06)",
             width: 38,
             height: 38,
-            "&:hover": { bgcolor: "#F3F4F6" },
+            "&:hover": { bgcolor: "var(--ev-paper-alt, #F3F4F6)" },
           }}
         >
           <ChevronRightRounded />
@@ -385,7 +385,7 @@ function HoverPanel({
             <Typography
               sx={{
                 fontSize: 11,
-                color: "rgba(31,41,55,0.45)",
+                color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
                 fontWeight: 600,
                 lineHeight: "20px",
               }}
@@ -413,12 +413,12 @@ function HoverPanel({
           {course.tongThoiLuong != null && (
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               <AccessTimeRounded
-                sx={{ fontSize: 13, color: "rgba(31,41,55,0.4)" }}
+                sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
               />
               <Typography
                 sx={{
                   fontSize: 11.5,
-                  color: "rgba(31,41,55,0.5)",
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                   fontWeight: 600,
                 }}
               >
@@ -429,12 +429,12 @@ function HoverPanel({
           {course.tongBaiGiang != null && (
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               <MenuBookRounded
-                sx={{ fontSize: 13, color: "rgba(31,41,55,0.4)" }}
+                sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
               />
               <Typography
                 sx={{
                   fontSize: 11.5,
-                  color: "rgba(31,41,55,0.5)",
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                   fontWeight: 600,
                 }}
               >
@@ -449,7 +449,7 @@ function HoverPanel({
           <Typography
             sx={{
               fontSize: 12.5,
-              color: "rgba(31,41,55,0.6)",
+              color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
               lineHeight: 1.55,
               mb: 2,
               display: "-webkit-box",
@@ -483,7 +483,7 @@ function HoverPanel({
             <Typography
               sx={{
                 fontSize: 13,
-                color: "rgba(31,41,55,0.35)",
+                color: "var(--ev-text-muted, rgba(31,41,55,0.35))",
                 textDecoration: "line-through",
                 fontWeight: 600,
               }}
@@ -510,7 +510,7 @@ function HoverPanel({
                 bgcolor: "#10B981",
                 "&.Mui-disabled": {
                   bgcolor: "#10B981",
-                  color: "#fff",
+                  color: "#FFFFFF",
                   opacity: 0.85,
                 },
               }}
@@ -532,7 +532,7 @@ function HoverPanel({
                 fontWeight: 800,
                 fontSize: 13.5,
                 background: C.gradientCrimson,
-                color: "#fff",
+                color: "#FFFFFF",
                 boxShadow: "none",
                 "&:hover": {
                   background:
@@ -604,7 +604,7 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice = course.gia ?? course.giaGoc ?? (course as any).giagoc ?? 0;
+  const displayPrice = course.gia ?? course.giaGoc ?? (course as Record<string, unknown>).giagoc as number ?? 0;
   const title = course.tieuDe || course.title || "";
   const rating = course.rating ?? 4.8;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
@@ -682,10 +682,10 @@ function CourseCard({
         >
           {!isValidImage(course.hinhAnhKhoaHoc) && (
             <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
-              <SchoolRounded sx={{ color: "#94A3B8", fontSize: 32 }} />
+              <SchoolRounded sx={{ color: "var(--ev-text-muted, #94A3B8)", fontSize: 32 }} />
               <Typography
                 sx={{
-                  color: "#94A3B8",
+                  color: "var(--ev-text-muted, #94A3B8)",
                   fontSize: 11,
                   fontWeight: 700,
                   mt: 0.75,
@@ -754,7 +754,7 @@ function CourseCard({
                 top: 8,
                 left: 8,
                 bgcolor: "#10B981",
-                color: "#fff",
+                color: "#FFFFFF",
                 fontWeight: 800,
                 fontSize: 10,
                 height: 20,
@@ -775,7 +775,7 @@ function CourseCard({
                 bottom: 8,
                 left: 8,
                 bgcolor: (course.gia ?? 0) === 0 ? "#10B981" : "#8B1313",
-                color: "#fff",
+                color: "#FFFFFF",
                 fontWeight: 900,
                 fontSize: 9.5,
                 height: 18,
@@ -813,7 +813,7 @@ function CourseCard({
               <Typography
                 sx={{
                   fontSize: 11,
-                  color: "rgba(31,41,55,0.45)",
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
                   fontWeight: 600,
                 }}
               >
@@ -824,7 +824,7 @@ function CourseCard({
               <Typography
                 sx={{
                   fontSize: 11,
-                  color: "rgba(31,41,55,0.45)",
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
                   fontWeight: 600,
                 }}
               >
@@ -854,7 +854,7 @@ function CourseCard({
                 <Typography
                   sx={{
                     fontSize: 10.5,
-                    color: "rgba(31,41,55,0.35)",
+                    color: "var(--ev-text-muted, rgba(31,41,55,0.35))",
                     textDecoration: "line-through",
                     fontWeight: 600,
                   }}
@@ -870,12 +870,12 @@ function CourseCard({
                 sx={{ alignItems: "center" }}
               >
                 <PeopleAltRounded
-                  sx={{ fontSize: 13, color: "rgba(31,41,55,0.4)" }}
+                  sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
                 />
                 <Typography
                   sx={{
                     fontSize: 11,
-                    color: "rgba(31,41,55,0.45)",
+                    color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
                     fontWeight: 600,
                   }}
                 >
@@ -1187,7 +1187,7 @@ export default function StudentDashboardContent() {
               width: 72,
               height: 72,
               bgcolor: C.primary,
-              color: "#fff",
+              color: "#FFFFFF",
               fontWeight: 800,
               fontSize: 22,
               border: "3px solid #fff",
@@ -1325,7 +1325,7 @@ export default function StudentDashboardContent() {
               p: 3.5,
               borderRadius: "24px",
               background: C.gradientAI,
-              color: "#fff",
+              color: "#FFFFFF",
               minHeight: 210,
               display: "flex",
               flexDirection: "column",
@@ -1383,7 +1383,7 @@ export default function StudentDashboardContent() {
                 variant="contained"
                 onClick={() => router.push("/student/explore")}
                 sx={{
-                  bgcolor: "#fff",
+                  bgcolor: "var(--ev-paper, #FFFFFF)",
                   color: C.primary,
                   fontWeight: 800,
                   borderRadius: "50px",
@@ -1406,7 +1406,7 @@ export default function StudentDashboardContent() {
               p: 3.5,
               borderRadius: "24px",
               background: C.gradientTeal,
-              color: "#fff",
+              color: "#FFFFFF",
               minHeight: 210,
               display: "flex",
               flexDirection: "column",
@@ -1463,7 +1463,7 @@ export default function StudentDashboardContent() {
               <Button
                 variant="contained"
                 sx={{
-                  bgcolor: "#fff",
+                  bgcolor: "var(--ev-paper, #FFFFFF)",
                   color: "#005F55",
                   fontWeight: 800,
                   borderRadius: "50px",
@@ -1502,7 +1502,7 @@ export default function StudentDashboardContent() {
               sx={{
                 mt: 0.5,
                 fontSize: 13,
-                color: "rgba(31,41,55,0.5)",
+                color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                 fontWeight: 500,
               }}
             >
@@ -1534,7 +1534,7 @@ export default function StudentDashboardContent() {
                 <Typography
                   sx={{
                     fontSize: 11.5,
-                    color: "rgba(31,41,55,0.4)",
+                    color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                     fontWeight: 600,
                   }}
                 >
@@ -1605,13 +1605,13 @@ export default function StudentDashboardContent() {
                     0/30 phút khóa học
                   </Typography>
                   <InfoOutlined
-                    sx={{ fontSize: 13, color: "rgba(31,41,55,0.4)" }}
+                    sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
                   />
                 </Stack>
                 <Typography
                   sx={{
                     fontSize: 11,
-                    color: "rgba(31,41,55,0.4)",
+                    color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                     fontWeight: 600,
                     mt: 0.2,
                   }}
@@ -1660,7 +1660,7 @@ export default function StudentDashboardContent() {
               textTransform: "none",
               fontSize: 14,
               fontWeight: 700,
-              color: "rgba(31,41,55,0.5)",
+              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
               minWidth: 100,
               px: 1.5,
               pb: 1.5,
@@ -1713,10 +1713,10 @@ export default function StudentDashboardContent() {
                     }}
                   >
                     {item.contentType === "Bài viết" ? (
-                      <ArticleOutlined sx={{ fontSize: 26, color: "#fff" }} />
+                      <ArticleOutlined sx={{ fontSize: 26, color: "#FFFFFF" }} />
                     ) : (
                       <PlayCircleOutlineRounded
-                        sx={{ fontSize: 28, color: "#fff" }}
+                        sx={{ fontSize: 28, color: "#FFFFFF" }}
                       />
                     )}
                   </Box>
@@ -1737,7 +1737,7 @@ export default function StudentDashboardContent() {
                       sx={{
                         fontSize: 12,
                         fontWeight: 600,
-                        color: "rgba(31,41,55,0.5)",
+                        color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                         mt: 0.2,
                       }}
                     >
@@ -1746,7 +1746,7 @@ export default function StudentDashboardContent() {
                     <Typography
                       sx={{
                         fontSize: 11,
-                        color: "rgba(31,41,55,0.4)",
+                        color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                         fontWeight: 600,
                         mt: 0.5,
                       }}
@@ -1766,7 +1766,7 @@ export default function StudentDashboardContent() {
                     sx={{ alignSelf: "flex-start", mt: -0.5, mr: -0.5 }}
                   >
                     <MoreVertRounded
-                      sx={{ fontSize: 18, color: "rgba(31,41,55,0.4)" }}
+                      sx={{ fontSize: 18, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
                     />
                   </IconButton>
                   {/* Progress bar */}
@@ -1815,7 +1815,7 @@ export default function StudentDashboardContent() {
                 onClick={() => router.push("/student/explore")}
                 sx={{
                   background: C.gradientCrimson,
-                  color: "#fff",
+                  color: "#FFFFFF",
                   borderRadius: "12px",
                   px: 3,
                   py: 1,
@@ -1856,7 +1856,7 @@ export default function StudentDashboardContent() {
             <Typography
               sx={{
                 fontSize: 13.5,
-                color: "rgba(31,41,55,0.5)",
+                color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                 maxWidth: 620,
                 lineHeight: 1.6,
               }}
@@ -1868,7 +1868,7 @@ export default function StudentDashboardContent() {
               onClick={() => router.push("/student/explore")}
               sx={{
                 background: C.gradientCrimson,
-                color: "#fff",
+                color: "#FFFFFF",
                 borderRadius: "12px",
                 px: 3,
                 py: 1,
@@ -1921,7 +1921,7 @@ export default function StudentDashboardContent() {
                       sx={{
                         fontSize: 10.5,
                         fontWeight: 800,
-                        color: "rgba(31,41,55,0.4)",
+                        color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                       }}
@@ -1947,7 +1947,7 @@ export default function StudentDashboardContent() {
                   <Typography
                     sx={{
                       fontSize: 12,
-                      color: "rgba(31,41,55,0.5)",
+                      color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                       fontWeight: 700,
                     }}
                   >
@@ -1978,7 +1978,7 @@ export default function StudentDashboardContent() {
                 textAlign: "center",
               }}
             >
-              <Typography sx={{ fontSize: 15, color: "rgba(31,41,55,0.5)" }}>
+              <Typography sx={{ fontSize: 15, color: "var(--ev-text-muted, rgba(31,41,55,0.5))" }}>
                 Chưa có lộ trình học tập nào.
               </Typography>
             </Paper>
@@ -1992,7 +1992,7 @@ export default function StudentDashboardContent() {
           <Typography
             sx={{
               fontSize: 13.5,
-              color: "rgba(31,41,55,0.5)",
+              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
               mb: 3,
               mt: -1.5,
             }}
@@ -2074,7 +2074,7 @@ export default function StudentDashboardContent() {
                       key={i}
                       sx={{
                         fontSize: 12.5,
-                        color: "rgba(31,41,55,0.6)",
+                        color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
                         fontWeight: 500,
                         display: "flex",
                         alignItems: "center",
@@ -2119,7 +2119,7 @@ export default function StudentDashboardContent() {
                     onClick={() => setSelectedSkill(badge)}
                     sx={{
                       bgcolor: isActive ? C.primary : "rgba(0,0,0,0.03)",
-                      color: isActive ? "#fff" : "rgba(31,41,55,0.65)",
+                      color: isActive ? "var(--ev-paper, #FFFFFF)" : "rgba(31,41,55,0.65)",
                       fontWeight: 800,
                       fontSize: 13,
                       px: 1,
@@ -2131,7 +2131,7 @@ export default function StudentDashboardContent() {
                       cursor: "pointer",
                       "&:hover": {
                         bgcolor: isActive ? C.primary : "rgba(141,19,19,0.05)",
-                        color: isActive ? "#fff" : C.primary,
+                        color: isActive ? "var(--ev-paper, #FFFFFF)" : C.primary,
                       },
                       transition: "all 150ms ease",
                     }}
@@ -2163,7 +2163,7 @@ export default function StudentDashboardContent() {
                 textAlign: "center",
               }}
             >
-              <Typography sx={{ fontSize: 14, color: "rgba(31,41,55,0.5)" }}>
+              <Typography sx={{ fontSize: 14, color: "var(--ev-text-muted, rgba(31,41,55,0.5))" }}>
                 Không có khóa học phù hợp với kỹ năng này.
               </Typography>
             </Paper>
@@ -2203,7 +2203,7 @@ export default function StudentDashboardContent() {
               >
                 <Typography
                   sx={{
-                    color: "#fff",
+                    color: "#FFFFFF",
                     fontSize: 36,
                     fontWeight: 900,
                     opacity: 0.1,
@@ -2261,7 +2261,7 @@ export default function StudentDashboardContent() {
                 <Typography
                   sx={{
                     fontSize: 13.5,
-                    color: "rgba(31,41,55,0.6)",
+                    color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
                     mb: 3,
                     lineHeight: 1.6,
                   }}
@@ -2279,7 +2279,7 @@ export default function StudentDashboardContent() {
                     >
                       Giảng viên:{" "}
                       <span
-                        style={{ fontWeight: 500, color: "rgba(31,41,55,0.7)" }}
+                        style={{ fontWeight: 500, color: "var(--ev-text-secondary, rgba(31,41,55,0.7))" }}
                       >
                         {premiumSelection.instructor}
                       </span>
@@ -2312,7 +2312,7 @@ export default function StudentDashboardContent() {
                       <Typography
                         sx={{
                           fontSize: 13,
-                          color: "rgba(31,41,55,0.5)",
+                          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                           fontWeight: 600,
                         }}
                       >
@@ -2327,7 +2327,7 @@ export default function StudentDashboardContent() {
                     variant="contained"
                     sx={{
                       background: C.gradientCrimson,
-                      color: "#fff",
+                      color: "#FFFFFF",
                       fontWeight: 800,
                       borderRadius: "12px",
                       px: 3,
@@ -2394,7 +2394,7 @@ export default function StudentDashboardContent() {
             <Typography
               sx={{
                 fontSize: 13.5,
-                color: "rgba(31,41,55,0.5)",
+                color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
                 mb: 3,
                 mt: 0.5,
               }}
@@ -2425,7 +2425,7 @@ export default function StudentDashboardContent() {
               py: 1.5,
               borderRadius: "14px",
               bgcolor: C.textDark,
-              color: "#fff",
+              color: "#FFFFFF",
               display: "flex",
               alignItems: "center",
               gap: 1.5,

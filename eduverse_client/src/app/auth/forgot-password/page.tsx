@@ -41,7 +41,7 @@ const inputSx = {
   py: 0.5,
   transition: 'box-shadow 160ms ease, background 160ms ease',
   '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'rgba(17,17,17,0.06)',
+    borderColor: 'var(--ev-divider, rgba(17,17,17,0.06))',
   },
   '&:hover .MuiOutlinedInput-notchedOutline': {
     borderColor: 'rgba(17,17,17,0.12)',
@@ -70,7 +70,7 @@ const primaryButtonSx = {
   },
   '&.Mui-disabled': {
     background: 'rgba(17,17,17,0.08)',
-    color: 'rgba(17,17,17,0.35)',
+    color: 'var(--ev-text-muted, rgba(17,17,17,0.35))',
   },
 } as const;
 
@@ -254,7 +254,7 @@ export default function ForgotPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: '#F7F5F2',
+        bgcolor: 'var(--ev-bg, #F7F5F2)',
         px: 2,
         py: 4,
         background: 'radial-gradient(circle at 50% 50%, #fefefe 0%, #f5f3f0 100%)',
@@ -389,7 +389,7 @@ export default function ForgotPasswordPage() {
                     inputProps={{ 'aria-label': 'Địa chỉ email' }}
                     endAdornment={
                       <InputAdornment position="end">
-                        <EmailRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                        <EmailRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                       </InputAdornment>
                     }
                     sx={inputSx}
@@ -437,7 +437,7 @@ export default function ForgotPasswordPage() {
                     }}
                     endAdornment={
                       <InputAdornment position="end">
-                        <KeyRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                        <KeyRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                       </InputAdornment>
                     }
                     sx={inputSx}
@@ -446,7 +446,7 @@ export default function ForgotPasswordPage() {
 
                 {/* Gửi lại OTP + đồng hồ đếm ngược */}
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" sx={{ color: 'rgba(17,17,17,0.55)' }}>
+                  <Typography variant="caption" sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.55))' }}>
                     Không nhận được mã?
                   </Typography>
                   <Button
@@ -460,7 +460,7 @@ export default function ForgotPasswordPage() {
                       fontSize: 13,
                       minWidth: 0,
                       '&:hover': { bgcolor: 'rgba(139,19,19,0.04)' },
-                      '&.Mui-disabled': { color: 'rgba(17,17,17,0.35)' },
+                      '&.Mui-disabled': { color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' },
                     }}
                   >
                     {resendCountdown > 0 ? `Gửi lại sau ${resendCountdown}s` : 'Gửi lại mã OTP'}

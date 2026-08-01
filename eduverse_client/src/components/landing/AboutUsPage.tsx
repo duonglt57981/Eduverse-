@@ -67,7 +67,7 @@ export default function AboutUsPage() {
                   maxWidth: 620,
                   fontSize: 15.5,
                   lineHeight: 1.95,
-                  color: 'rgba(24,24,27,0.62)',
+                  color: 'var(--ev-text-muted, rgba(24,24,27,0.62))',
                 }}
               >
                 EduVerse mang đến trải nghiệm học tập trực tuyến cao cấp, kết hợp
@@ -152,13 +152,13 @@ export default function AboutUsPage() {
                   borderRadius: 2.8,
                   border: '1px solid rgba(17,17,17,0.08)',
                   boxShadow: '0 18px 32px rgba(30,24,26,0.10)',
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--ev-paper, #fff)',
                 }}
               >
                 <Typography sx={{ fontSize: 22, fontWeight: 900, color: '#7f1d1d' }}>
                   95%
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
+                <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>
                   Tỷ lệ hài lòng từ học viên
                 </Typography>
               </Paper>
@@ -226,7 +226,7 @@ export default function AboutUsPage() {
                       p: 2.5,
                       borderRadius: 2.8,
                       border: '1px solid rgba(127,18,18,0.22)',
-                      bgcolor: '#fff',
+                      bgcolor: 'var(--ev-paper, #fff)',
                     }}
                   >
                     <Box
@@ -244,7 +244,7 @@ export default function AboutUsPage() {
                       <Icon />
                     </Box>
                     <Typography sx={{ fontSize: 22, fontWeight: 900 }}>{item.title}</Typography>
-                    <Typography sx={{ mt: 1, fontSize: 14.5, lineHeight: 1.9, color: 'rgba(24,24,27,0.62)' }}>
+                    <Typography sx={{ mt: 1, fontSize: 14.5, lineHeight: 1.9, color: 'var(--ev-text-muted, rgba(24,24,27,0.62))' }}>
                       {item.description}
                     </Typography>
                   </Paper>
@@ -297,7 +297,7 @@ export default function AboutUsPage() {
                           p: 2.25,
                           borderRadius: 2.8,
                           border: '1px solid rgba(17,17,17,0.08)',
-                          bgcolor: '#fff',
+                          bgcolor: 'var(--ev-paper, #fff)',
                         }}
                       >
                         <Typography sx={{ fontSize: 14, fontWeight: 900, color: '#8B1313' }}>
@@ -306,7 +306,7 @@ export default function AboutUsPage() {
                         <Typography sx={{ mt: 0.7, fontSize: 20, fontWeight: 900 }}>
                           {item.title}
                         </Typography>
-                        <Typography sx={{ mt: 0.9, fontSize: 14, lineHeight: 1.85, color: 'rgba(24,24,27,0.58)' }}>
+                        <Typography sx={{ mt: 0.9, fontSize: 14, lineHeight: 1.85, color: 'var(--ev-text-muted, rgba(24,24,27,0.58))' }}>
                           {item.description}
                         </Typography>
                       </Paper>
@@ -359,7 +359,7 @@ export default function AboutUsPage() {
                     p: 2.5,
                     borderRadius: 2.8,
                     border: '1px solid rgba(17,17,17,0.08)',
-                    bgcolor: '#fff',
+                    bgcolor: 'var(--ev-paper, #fff)',
                     textAlign: 'center',
                   }}
                 >
@@ -425,7 +425,7 @@ export default function AboutUsPage() {
                 ].map((item) => (
                   <Stack key={item} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
                     <CheckCircleRounded sx={{ mt: 0.2, color: '#8B1313', fontSize: 18 }} />
-                    <Typography sx={{ fontSize: 14, lineHeight: 1.8, color: 'rgba(24,24,27,0.68)' }}>
+                    <Typography sx={{ fontSize: 14, lineHeight: 1.8, color: 'var(--ev-text-muted, rgba(24,24,27,0.68))' }}>
                       {item}
                     </Typography>
                   </Stack>
@@ -448,7 +448,7 @@ export default function AboutUsPage() {
                     p: 2.5,
                     borderRadius: 2.8,
                     border: '1px solid rgba(17,17,17,0.08)',
-                    bgcolor: '#fff',
+                    bgcolor: 'var(--ev-paper, #fff)',
                     display: 'flex',
                     flexDirection: 'column',
                     height: '100%',
@@ -459,14 +459,14 @@ export default function AboutUsPage() {
                       <StarRounded key={star} sx={{ fontSize: 18 }} />
                     ))}
                   </Stack>
-                  <Typography sx={{ mt: 1.4, fontSize: 14, lineHeight: 1.9, color: 'rgba(24,24,27,0.68)', flexGrow: 1 }}>
+                  <Typography sx={{ mt: 1.4, fontSize: 14, lineHeight: 1.9, color: 'var(--ev-text-muted, rgba(24,24,27,0.68))', flexGrow: 1 }}>
                     {item.quote}
                   </Typography>
                   <Box sx={{ mt: 1.8, flexShrink: 0 }}>
                     <Typography sx={{ fontSize: 14.5, fontWeight: 900 }}>
                       {item.name}
                     </Typography>
-                    <Typography sx={{ mt: 0.45, fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
+                    <Typography sx={{ mt: 0.45, fontSize: 12.5, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>
                       {item.role}
                     </Typography>
                   </Box>
@@ -512,7 +512,7 @@ export default function AboutUsPage() {
                   component={Link}
                   href="/auth/login"
                   variant="contained"
-                  sx={{ px: 2.8, py: 1.25, borderRadius: 2.8, bgcolor: '#fff', color: '#7f1d1d' }}
+                  sx={{ px: 2.8, py: 1.25, borderRadius: 2.8, bgcolor: 'var(--ev-paper, #fff)', color: '#7f1d1d' }}
                 >
                   Bắt đầu ngay
                 </Button>

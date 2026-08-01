@@ -66,17 +66,17 @@ export default function StepWrapper({
               sx={{
                 textTransform: "none",
                 fontWeight: 600,
-                color: "#4B5563",
-                borderColor: "#D1D5DB",
+                color: "var(--ev-text-secondary, #4B5563)",
+                borderColor: "var(--ev-divider, #D1D5DB)",
                 px: { xs: 2.5, sm: 3 },
                 py: 1.2,
                 borderRadius: "10px",
                 fontSize: 14,
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  bgcolor: "#F3F4F6",
+                  bgcolor: "var(--ev-paper-alt, #F3F4F6)",
                   borderColor: "#9CA3AF",
-                  color: "#111827",
+                  color: "var(--ev-text-primary, #111827)",
                 },
                 "&:focus-visible": {
                   outline: "2px solid #7A1F2B",
@@ -111,7 +111,7 @@ export default function StepWrapper({
               },
               "&.Mui-disabled": {
                 bgcolor: "#E5E7EB",
-                color: "#9CA3AF",
+                color: "var(--ev-grey, #9CA3AF)",
                 boxShadow: "none",
               },
               "&:focus-visible": {

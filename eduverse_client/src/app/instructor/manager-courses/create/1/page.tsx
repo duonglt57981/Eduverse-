@@ -38,7 +38,7 @@ export default function Step1Page() {
           {/* Main Card Container */}
           <Box
             sx={{
-              bgcolor: "#ffffff",
+              bgcolor: "var(--ev-paper, #ffffff)",
               borderRadius: "20px",
               border: "1px solid #E5E7EB",
               boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
@@ -59,7 +59,7 @@ export default function Step1Page() {
                 fontWeight: 700,
                 fontSize: { xs: "1.25rem", sm: "1.6rem" },
                 mb: 1.5,
-                color: "#111827",
+                color: "var(--ev-text-primary, #111827)",
               }}
             >
               Bạn muốn tạo nội dung học tập nào?
@@ -68,7 +68,7 @@ export default function Step1Page() {
             <Typography
               sx={{
                 fontSize: { xs: 13, sm: 15 },
-                color: "#6B7280",
+                color: "var(--ev-text-muted, #6B7280)",
                 mb: 4,
                 maxWidth: 480,
                 lineHeight: 1.5,
@@ -166,7 +166,7 @@ export default function Step1Page() {
                 <Typography
                   sx={{
                     fontSize: 14,
-                    color: "#4B5563",
+                    color: "var(--ev-text-secondary, #4B5563)",
                     lineHeight: 1.6,
                     textAlign: "center",
                   }}
@@ -182,7 +182,7 @@ export default function Step1Page() {
               sx={{
                 mt: 4,
                 fontSize: 13,
-                color: "#9CA3AF",
+                color: "var(--ev-grey, #9CA3AF)",
               }}
             >
               Bạn vẫn có thể cập nhật nội dung chi tiết sau khi khóa học được khởi tạo.

@@ -242,7 +242,7 @@ export default function GoogleAuthButton({
           px: 2,
           borderRadius: 999,
           border: '1px solid rgba(17,17,17,0.14)',
-          color: 'rgba(17,17,17,0.45)',
+          color: 'var(--ev-text-muted, rgba(17,17,17,0.45))',
           bgcolor: 'rgba(17,17,17,0.03)',
           cursor: 'not-allowed',
           userSelect: 'none',

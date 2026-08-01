@@ -178,7 +178,7 @@ export default function RegisterPage() {
     borderRadius: 3,
     bgcolor: 'rgba(17,17,17,0.035)',
     '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'rgba(17,17,17,0.08)',
+      borderColor: 'var(--ev-divider, rgba(17,17,17,0.08))',
     },
     '&:hover .MuiOutlinedInput-notchedOutline': {
       borderColor: 'rgba(17,17,17,0.16)',
@@ -217,7 +217,7 @@ export default function RegisterPage() {
             overflow: 'hidden',
             boxShadow: '0 28px 80px rgba(52,32,32,0.16)',
             border: '1px solid rgba(17,17,17,0.06)',
-            backgroundColor: '#fff',
+            backgroundColor: 'var(--ev-paper, #fff)',
           }}
         >
           <Box
@@ -536,7 +536,7 @@ export default function RegisterPage() {
                         onChange={(e) => { setForm({ ...form, hoTen: e.target.value }); setFieldErrors((p) => ({ ...p, hoTen: '' })); }}
                         startAdornment={
                           <InputAdornment position="start">
-                            <PersonRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                            <PersonRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                           </InputAdornment>
                         }
                         sx={inputSx}
@@ -554,7 +554,7 @@ export default function RegisterPage() {
                         type="text"
                         startAdornment={
                           <InputAdornment position="start">
-                            <BadgeRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                            <BadgeRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                           </InputAdornment>
                         }
                         sx={inputSx}
@@ -572,7 +572,7 @@ export default function RegisterPage() {
                         type="email"
                         startAdornment={
                           <InputAdornment position="start">
-                            <EmailRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                            <EmailRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                           </InputAdornment>
                         }
                         sx={inputSx}
@@ -590,7 +590,7 @@ export default function RegisterPage() {
                         type="tel"
                         startAdornment={
                           <InputAdornment position="start">
-                            <PhoneIphoneRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                            <PhoneIphoneRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                           </InputAdornment>
                         }
                         sx={inputSx}
@@ -608,7 +608,7 @@ export default function RegisterPage() {
                         type={showPass ? 'text' : 'password'}
                         startAdornment={
                           <InputAdornment position="start">
-                            <LockRounded sx={{ color: 'rgba(17,17,17,0.35)' }} />
+                            <LockRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                           </InputAdornment>
                         }
                         endAdornment={
@@ -618,7 +618,7 @@ export default function RegisterPage() {
                               edge="end"
                               onClick={() => setShowPass((v) => !v)}
                               size="small"
-                              sx={{ color: 'rgba(17,17,17,0.55)' }}
+                              sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.55))' }}
                             >
                               {showPass ? <VisibilityOffRounded /> : <VisibilityRounded />}
                             </IconButton>
@@ -644,7 +644,7 @@ export default function RegisterPage() {
                               edge="end"
                               onClick={() => setShowConfirmPass((v) => !v)}
                               size="small"
-                              sx={{ color: 'rgba(17,17,17,0.55)' }}
+                              sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.55))' }}
                             >
                               {showConfirmPass ? <VisibilityOffRounded /> : <VisibilityRounded />}
                             </IconButton>
@@ -662,7 +662,7 @@ export default function RegisterPage() {
                     <Grid size={{ xs: 12 }}>
                       <Box sx={{ px: 0.5 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: 'rgba(17,17,17,0.55)' }}>
+                          <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: 'var(--ev-text-muted, rgba(17,17,17,0.55))' }}>
                             ĐỘ BẢO MẬT
                           </Typography>
                           <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: strengthTone }}>
@@ -693,7 +693,7 @@ export default function RegisterPage() {
                               {r.ok ? (
                                 <CheckCircleRounded sx={{ fontSize: 13, color: '#0a5a3a' }} />
                               ) : (
-                                <CircleOutlined sx={{ fontSize: 13, color: 'rgba(17,17,17,0.35)' }} />
+                                <CircleOutlined sx={{ fontSize: 13, color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                               )}
                               <Typography sx={{ fontSize: 11, color: r.ok ? 'rgba(17,17,17,0.78)' : 'rgba(17,17,17,0.52)' }}>
                                 {r.label}
@@ -715,7 +715,7 @@ export default function RegisterPage() {
                             sx={{
                               py: 0.25,
                               pl: 0.5,
-                              color: 'rgba(17,17,17,0.35)',
+                              color: 'var(--ev-text-muted, rgba(17,17,17,0.35))',
                               '&.Mui-checked': { color: '#8B1313' },
                             }}
                           />
@@ -744,7 +744,7 @@ export default function RegisterPage() {
                             sx={{
                               py: 0.25,
                               pl: 0.5,
-                              color: 'rgba(17,17,17,0.35)',
+                              color: 'var(--ev-text-muted, rgba(17,17,17,0.35))',
                               '&.Mui-checked': { color: '#8B1313' },
                             }}
                           />
@@ -788,7 +788,7 @@ export default function RegisterPage() {
               </Box>
 
               <Divider sx={{ my: 2.5, opacity: 0.35 }}>
-                <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: 'rgba(17,17,17,0.45)' }}>
+                <Typography sx={{ fontSize: 10.5, fontWeight: 900, color: 'var(--ev-text-muted, rgba(17,17,17,0.45))' }}>
                   HOẶC TIẾP TỤC VỚI
                 </Typography>
               </Divider>
@@ -816,7 +816,7 @@ export default function RegisterPage() {
                   justifyContent: 'center',
                   gap: 2,
                   flexWrap: 'wrap',
-                  color: 'rgba(17,17,17,0.45)',
+                  color: 'var(--ev-text-muted, rgba(17,17,17,0.45))',
                 }}
               >
 

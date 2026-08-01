@@ -80,12 +80,12 @@ export function QuizView({
           px: 2.5,
           py: 1.5,
           borderBottom: "1px solid rgba(0,0,0,0.06)",
-          bgcolor: "#fff",
+          bgcolor: "var(--ev-paper, #fff)",
           flexShrink: 0,
         }}
       >
         <Typography
-          sx={{ fontSize: 13, fontWeight: 700, color: "rgba(31,41,55,0.5)" }}
+          sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-muted, rgba(31,41,55,0.5))" }}
         >
           {cauHoiHienTai + 1} / {tongCau}
         </Typography>
@@ -157,7 +157,7 @@ export function QuizView({
                 fontWeight: 700,
                 fontSize: 11,
                 bgcolor: "rgba(0,0,0,0.05)",
-                color: "rgba(31,41,55,0.6)",
+                color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
               }}
             />
           )}
@@ -173,7 +173,7 @@ export function QuizView({
             sx={{
               fontSize: 16,
               fontWeight: 800,
-              color: "#1F2937",
+              color: "var(--ev-text-primary, #1F2937)",
               lineHeight: 1.6,
               mb: 0.5,
             }}
@@ -185,7 +185,7 @@ export function QuizView({
               <Typography
                 sx={{
                   fontSize: 14,
-                  color: "rgba(31,41,55,0.65)",
+                  color: "var(--ev-text-secondary, rgba(31,41,55,0.65))",
                   lineHeight: 1.7,
                 }}
               >
@@ -269,7 +269,7 @@ export function QuizView({
                     lineHeight: 1.6,
                     flex: 1,
                     fontWeight: isSelected ? 600 : 400,
-                    color: "#1F2937",
+                    color: "var(--ev-text-primary, #1F2937)",
                   }}
                 >
                   {da.noiDungDapAn}
@@ -286,7 +286,7 @@ export function QuizView({
           px: 2.5,
           py: 2,
           borderTop: "1px solid rgba(0,0,0,0.06)",
-          bgcolor: "#fff",
+          bgcolor: "var(--ev-paper, #fff)",
           flexShrink: 0,
         }}
       >
@@ -300,7 +300,7 @@ export function QuizView({
               borderRadius: "10px",
               fontWeight: 700,
               borderColor: "rgba(0,0,0,0.12)",
-              color: "#374151",
+              color: "var(--ev-text-secondary, #374151)",
               "&:hover": { borderColor: RED, color: RED },
             }}
           >
@@ -310,7 +310,7 @@ export function QuizView({
             <Typography
               sx={{
                 fontSize: 12,
-                color: "rgba(31,41,55,0.45)",
+                color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
                 fontWeight: 600,
               }}
             >
@@ -326,7 +326,7 @@ export function QuizView({
                 borderRadius: "10px",
                 fontWeight: 700,
                 borderColor: "rgba(0,0,0,0.12)",
-                color: "#374151",
+                color: "var(--ev-text-secondary, #374151)",
                 "&:hover": { borderColor: RED, color: RED },
               }}
             >

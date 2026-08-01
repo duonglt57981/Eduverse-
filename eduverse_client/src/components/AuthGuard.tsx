@@ -65,7 +65,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
           minHeight: '100vh',
           display: 'grid',
           placeItems: 'center',
-          bgcolor: '#F7F5F2',
+          bgcolor: 'var(--ev-bg, #F7F5F2)',
         }}
       >
         <Paper
@@ -96,7 +96,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
               mt: 2,
               fontSize: 20,
               fontWeight: 800,
-              color: '#1F2937',
+              color: 'var(--ev-text-primary, #1F2937)',
             }}
           >
             Không có quyền truy cập
@@ -105,7 +105,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
             sx={{
               mt: 1,
               fontSize: 14,
-              color: '#6B7280',
+              color: 'var(--ev-text-muted, #6B7280)',
               lineHeight: 1.6,
             }}
           >

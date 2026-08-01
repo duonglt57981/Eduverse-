@@ -73,7 +73,7 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
           height: 80,
           borderRadius: 2.5,
           flexShrink: 0,
-          bgcolor: "#F9FAFB",
+          bgcolor: "var(--ev-paper-alt, #F9FAFB)",
           border: "1px dashed #E5E7EB",
           display: "flex",
           alignItems: "center",
@@ -97,7 +97,7 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
         borderRadius: 2.5,
         objectFit: "cover",
         flexShrink: 0,
-        bgcolor: "#F3F4F6",
+        bgcolor: "var(--ev-paper-alt, #F3F4F6)",
       }}
     />
   );
@@ -258,14 +258,14 @@ export default function DuyetKhoaHocPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "#1F2937",
+                  color: "var(--ev-text-primary, #1F2937)",
                   lineHeight: 1.2,
                   mb: 0.5,
                 }}
               >
                 Kiểm duyệt khóa học
               </Typography>
-              <Typography sx={{ color: "#64748B", fontSize: 14 }}>
+              <Typography sx={{ color: "var(--ev-text-secondary, #64748B)", fontSize: 14 }}>
                 Xem xét và xử lý các khóa học được Giảng viên gửi phê duyệt.
               </Typography>
             </Box>
@@ -355,7 +355,7 @@ export default function DuyetKhoaHocPage() {
                   p: 2.5,
                   borderRadius: 4,
                   border: "1px solid #E5E7EB",
-                  bgcolor: "#fff",
+                  bgcolor: "var(--ev-paper, #fff)",
                   display: "flex",
                   alignItems: "center",
                   gap: 2,
@@ -403,7 +403,7 @@ export default function DuyetKhoaHocPage() {
                   <Typography
                     sx={{
                       fontSize: 13,
-                      color: "#6B7280",
+                      color: "var(--ev-text-muted, #6B7280)",
                       fontWeight: 500,
                       mt: 0.25,
                     }}
@@ -421,7 +421,7 @@ export default function DuyetKhoaHocPage() {
             sx={{
               borderRadius: 3.5,
               border: "1px solid #E5E7EB",
-              bgcolor: "#fff",
+              bgcolor: "var(--ev-paper, #fff)",
               overflow: "hidden",
               mb: 0,
             }}
@@ -452,9 +452,9 @@ export default function DuyetKhoaHocPage() {
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       borderRadius: 3,
-                      bgcolor: "#F9FAFB",
+                      bgcolor: "var(--ev-paper-alt, #F9FAFB)",
                       height: 42,
-                      "& fieldset": { borderColor: "#E5E7EB" },
+                      "& fieldset": { borderColor: "var(--ev-divider, #E5E7EB)" },
                       "&:hover fieldset": { borderColor: "#991B1B" },
                       "&.Mui-focused fieldset": {
                         borderColor: "#991B1B",
@@ -467,7 +467,7 @@ export default function DuyetKhoaHocPage() {
                       startAdornment: (
                         <InputAdornment position="start">
                           <SearchIcon
-                            sx={{ color: "#9CA3AF", fontSize: 20 }}
+                            sx={{ color: "var(--ev-grey, #9CA3AF)", fontSize: 20 }}
                           />
                         </InputAdornment>
                       ),
@@ -484,7 +484,7 @@ export default function DuyetKhoaHocPage() {
                 scrollButtons={false}
                 sx={{
                   minHeight: 38,
-                  bgcolor: "#F3F4F6",
+                  bgcolor: "var(--ev-paper-alt, #F3F4F6)",
                   border: "1px solid #E5E7EB",
                   borderRadius: 2.5,
                   px: 0.5,
@@ -494,7 +494,7 @@ export default function DuyetKhoaHocPage() {
                   "& .MuiTab-root": {
                     textTransform: "none",
                     fontWeight: 600,
-                    color: "#6B7280",
+                    color: "var(--ev-text-muted, #6B7280)",
                     minHeight: 34,
                     fontSize: 13,
                     px: 2,
@@ -503,7 +503,7 @@ export default function DuyetKhoaHocPage() {
                     borderRadius: 2,
                     transition: "all .18s ease",
                     "&:hover": {
-                      color: "#374151",
+                      color: "var(--ev-text-secondary, #374151)",
                       bgcolor: alpha("#991B1B", 0.04),
                     },
                   },
@@ -527,7 +527,7 @@ export default function DuyetKhoaHocPage() {
                 startAdornment={
                   <InputAdornment position="start">
                     <SwapVertRoundedIcon
-                      sx={{ fontSize: 18, color: "#9CA3AF" }}
+                      sx={{ fontSize: 18, color: "var(--ev-grey, #9CA3AF)" }}
                     />
                   </InputAdornment>
                 }
@@ -535,10 +535,10 @@ export default function DuyetKhoaHocPage() {
                   minWidth: { xs: "100%", sm: 165 },
                   borderRadius: 2.5,
                   height: 42,
-                  bgcolor: "#F9FAFB",
+                  bgcolor: "var(--ev-paper-alt, #F9FAFB)",
                   flexShrink: 0,
                   "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#E5E7EB",
+                    borderColor: "var(--ev-divider, #E5E7EB)",
                   },
                   "&:hover .MuiOutlinedInput-notchedOutline": {
                     borderColor: "#991B1B",
@@ -626,7 +626,7 @@ export default function DuyetKhoaHocPage() {
                     sx={{
                       fontSize: 16,
                       fontWeight: 700,
-                      color: "#374151",
+                      color: "var(--ev-text-secondary, #374151)",
                       mb: 0.75,
                     }}
                   >
@@ -635,7 +635,7 @@ export default function DuyetKhoaHocPage() {
                   <Typography
                     sx={{
                       fontSize: 13.5,
-                      color: "#9CA3AF",
+                      color: "var(--ev-grey, #9CA3AF)",
                       mb: isFilterDirty ? 2.5 : 0,
                       textAlign: "center",
                       maxWidth: 360,
@@ -654,8 +654,8 @@ export default function DuyetKhoaHocPage() {
                         textTransform: "none",
                         fontWeight: 600,
                         fontSize: 13,
-                        borderColor: "#E5E7EB",
-                        color: "#6B7280",
+                        borderColor: "var(--ev-divider, #E5E7EB)",
+                        color: "var(--ev-text-muted, #6B7280)",
                         borderRadius: 2.5,
                         px: 2.5,
                         "&:hover": {
@@ -690,7 +690,7 @@ export default function DuyetKhoaHocPage() {
                           borderRadius: 3.5,
                           cursor: "pointer",
                           transition: "all .2s ease",
-                          bgcolor: "#fff",
+                          bgcolor: "var(--ev-paper, #fff)",
                           "&:hover": {
                             borderColor: "#991B1B",
                             boxShadow: `0 4px 18px ${alpha("#991B1B", 0.1)}`,
@@ -715,7 +715,7 @@ export default function DuyetKhoaHocPage() {
                             sx={{
                               fontWeight: 700,
                               fontSize: 15,
-                              color: "#1F2937",
+                              color: "var(--ev-text-primary, #1F2937)",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               display: "-webkit-box",
@@ -744,7 +744,7 @@ export default function DuyetKhoaHocPage() {
                               <Typography
                                 sx={{
                                   fontSize: 12,
-                                  color: "#9CA3AF",
+                                  color: "var(--ev-grey, #9CA3AF)",
                                   display: "flex",
                                   alignItems: "center",
                                   gap: 0.3,
@@ -771,7 +771,7 @@ export default function DuyetKhoaHocPage() {
                             sx={{
                               border: "1px solid #E5E7EB",
                               borderRadius: 2.5,
-                              color: "#9CA3AF",
+                              color: "var(--ev-grey, #9CA3AF)",
                               width: 36,
                               height: 36,
                               flexShrink: 0,
