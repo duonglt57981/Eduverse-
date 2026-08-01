@@ -111,7 +111,10 @@ function RevenueLineChart({ data }: { data: number[] }) {
         sx={{ justifyContent: "space-between", alignItems: "center", mb: 3 }}
       >
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, color: COLORS.textDark }}
+          >
             Phân tích doanh thu
           </Typography>
           <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.48)" }}>
@@ -163,7 +166,11 @@ function RevenueLineChart({ data }: { data: number[] }) {
           <defs>
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={COLORS.primary} stopOpacity="0.25" />
-              <stop offset="100%" stopColor={COLORS.primary} stopOpacity="0.0" />
+              <stop
+                offset="100%"
+                stopColor={COLORS.primary}
+                stopOpacity="0.0"
+              />
             </linearGradient>
           </defs>
 
@@ -173,15 +180,23 @@ function RevenueLineChart({ data }: { data: number[] }) {
             return (
               <g key={idx}>
                 <line
-                  x1={paddingLeft} y1={y}
-                  x2={width - paddingRight} y2={y}
-                  stroke="rgba(0,0,0,0.04)" strokeWidth={1}
+                  x1={paddingLeft}
+                  y1={y}
+                  x2={width - paddingRight}
+                  y2={y}
+                  stroke="rgba(0,0,0,0.04)"
+                  strokeWidth={1}
                 />
                 <text
-                  x={paddingLeft - 10} y={y + 4}
+                  x={paddingLeft - 10}
+                  y={y + 4}
                   textAnchor="end"
                   fill="rgba(31,41,55,0.4)"
-                  style={{ fontSize: 11, fontWeight: 600, fontFamily: '"Be Vietnam Pro"' }}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: '"Be Vietnam Pro"',
+                  }}
                 >
                   {formatYLabel(tick * maxVal)}
                 </text>
@@ -192,8 +207,10 @@ function RevenueLineChart({ data }: { data: number[] }) {
           {/* Vertical guide line when hovered */}
           {hoveredIdx !== null && points[hoveredIdx] && (
             <line
-              x1={points[hoveredIdx].x} y1={paddingTop}
-              x2={points[hoveredIdx].x} y2={height - paddingBottom}
+              x1={points[hoveredIdx].x}
+              y1={paddingTop}
+              x2={points[hoveredIdx].x}
+              y2={height - paddingBottom}
               stroke="rgba(141,19,19,0.2)"
               strokeWidth={1.5}
               strokeDasharray="5 4"
@@ -221,9 +238,11 @@ function RevenueLineChart({ data }: { data: number[] }) {
             const tooltipH = 52;
             let tx = p.x - tooltipW / 2;
             if (tx < paddingLeft) tx = paddingLeft;
-            if (tx + tooltipW > width - paddingRight) tx = width - paddingRight - tooltipW;
+            if (tx + tooltipW > width - paddingRight)
+              tx = width - paddingRight - tooltipW;
             // Tránh bị cắt trên cùng
-            const ty = p.y < paddingTop + tooltipH + 16 ? p.y + 16 : p.y - tooltipH - 12;
+            const ty =
+              p.y < paddingTop + tooltipH + 16 ? p.y + 16 : p.y - tooltipH - 12;
             const arrowUp = ty > p.y; // mũi tên hướng lên khi tooltip ở dưới điểm
 
             return (
@@ -247,11 +266,16 @@ function RevenueLineChart({ data }: { data: number[] }) {
                   <g>
                     {/* Box nền */}
                     <rect
-                      x={tx} y={ty}
-                      width={tooltipW} height={tooltipH}
-                      rx={10} ry={10}
+                      x={tx}
+                      y={ty}
+                      width={tooltipW}
+                      height={tooltipH}
+                      rx={10}
+                      ry={10}
                       fill="#1F2937"
-                      style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))" }}
+                      style={{
+                        filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))",
+                      }}
                     />
                     {/* Mũi tên */}
                     {arrowUp ? (
@@ -269,19 +293,29 @@ function RevenueLineChart({ data }: { data: number[] }) {
                     )}
                     {/* Label tháng */}
                     <text
-                      x={tx + tooltipW / 2} y={ty + 20}
+                      x={tx + tooltipW / 2}
+                      y={ty + 20}
                       textAnchor="middle"
                       fill="rgba(255,255,255,0.55)"
-                      style={{ fontSize: 11, fontWeight: 600, fontFamily: '"Be Vietnam Pro"' }}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        fontFamily: '"Be Vietnam Pro"',
+                      }}
                     >
                       Tháng {idx + 1}
                     </text>
                     {/* Giá trị */}
                     <text
-                      x={tx + tooltipW / 2} y={ty + 38}
+                      x={tx + tooltipW / 2}
+                      y={ty + 38}
                       textAnchor="middle"
                       fill="#ffffff"
-                      style={{ fontSize: 14, fontWeight: 800, fontFamily: '"Be Vietnam Pro"' }}
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 800,
+                        fontFamily: '"Be Vietnam Pro"',
+                      }}
                     >
                       {formatTooltipVal(p.val)}
                     </text>
@@ -290,7 +324,8 @@ function RevenueLineChart({ data }: { data: number[] }) {
 
                 {/* Circle data point */}
                 <circle
-                  cx={p.x} cy={p.y}
+                  cx={p.x}
+                  cy={p.y}
                   r={isHovered ? 7 : 4}
                   fill={isHovered ? COLORS.primaryLight : COLORS.primary}
                   stroke={COLORS.white}
@@ -322,7 +357,6 @@ function RevenueLineChart({ data }: { data: number[] }) {
   );
 }
 
-
 // SVG bar chart for student growth
 function StudentGrowthChart({ data }: { data: number[] }) {
   const maxVal = Math.max(...data, 1);
@@ -349,7 +383,10 @@ function StudentGrowthChart({ data }: { data: number[] }) {
         height: "100%",
       }}
     >
-      <Typography variant="h6" sx={{ fontWeight: 800, color: COLORS.textDark, mb: 0.5 }}>
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 800, color: COLORS.textDark, mb: 0.5 }}
+      >
         Tăng trưởng học viên
       </Typography>
       <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.48)", mb: 3 }}>
@@ -428,13 +465,13 @@ function StudentGrowthChart({ data }: { data: number[] }) {
                   width: { xs: 22, sm: 30 },
                   height: `${Math.max(pct, 2)}%`,
                   borderRadius: "8px 8px 4px 4px",
-                  background:
-                    isHovered
-                      ? `linear-gradient(180deg, #EF4444 0%, ${COLORS.primary} 100%)`
-                      : isLatest
+                  background: isHovered
+                    ? `linear-gradient(180deg, #EF4444 0%, ${COLORS.primary} 100%)`
+                    : isLatest
                       ? `linear-gradient(180deg, ${COLORS.primaryLight} 0%, ${COLORS.primary} 100%)`
                       : "rgba(141,19,19,0.10)",
-                  transition: "height 400ms cubic-bezier(0.4,0,0.2,1), background 150ms",
+                  transition:
+                    "height 400ms cubic-bezier(0.4,0,0.2,1), background 150ms",
                   boxShadow: isHovered
                     ? "0 6px 20px rgba(141,19,19,0.25)"
                     : "none",
@@ -447,10 +484,9 @@ function StudentGrowthChart({ data }: { data: number[] }) {
                 sx={{
                   fontSize: 12,
                   fontWeight: isHovered || isLatest ? 800 : 600,
-                  color:
-                    isHovered
-                      ? COLORS.primary
-                      : isLatest
+                  color: isHovered
+                    ? COLORS.primary
+                    : isLatest
                       ? COLORS.primary
                       : "rgba(31,41,55,0.4)",
                   transition: "color 150ms",
@@ -695,7 +731,9 @@ export default function AdminDashboardContent() {
   useEffect(() => {
     const fetchInvoiceTotal = async () => {
       try {
-        const res = await apiService.get<any>("/ThanhToan/admin/tong-doanh-thu");
+        const res = await apiService.get<any>(
+          "/ThanhToan/admin/tong-doanh-thu",
+        );
         if (res.status && res.data != null) {
           const raw =
             typeof res.data === "number"
