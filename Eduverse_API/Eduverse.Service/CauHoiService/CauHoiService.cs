@@ -311,8 +311,8 @@ namespace Eduverse.Service.CauHoiService
             if (noiDungCauHoi.Trim().Length < 3)
                 throw new Exception("Nội dung câu hỏi phải có ít nhất 3 ký tự.");
 
-            if (noiDungCauHoi.Trim().Length > 200)
-                throw new Exception("Nội dung câu hỏi không được vượt quá 200 ký tự.");
+            if (noiDungCauHoi.Trim().Length > 1000)
+                throw new Exception("Nội dung câu hỏi không được vượt quá 1000 ký tự.");
 
             if (!string.IsNullOrWhiteSpace(tenCauHoi) && tenCauHoi.Trim().Length > 200)
                 throw new Exception("Tên câu hỏi không được vượt quá 200 ký tự.");

@@ -1454,7 +1454,7 @@ function CourseRegistrationContent() {
                 <Grid key={kh.id ?? i} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper
                     onClick={() =>
-                      kh.id && router.push(`/student/courses/register/${kh.id}`)
+                      kh.id && router.push(`/student/enroll-courses/${kh.id}`)
                     }
                     sx={{
                       borderRadius: 3,

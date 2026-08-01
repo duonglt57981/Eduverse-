@@ -1876,6 +1876,7 @@ namespace Eduverse.Service.KhoaHocService
                 banGoc.TieuDe = request.TieuDe.Trim();
                 banGoc.MoTa = request.MoTa?.Trim();
                 banGoc.GiaGoc = request.GiaGoc;
+                banGoc.Gia = request.GiaGoc;
                 banGoc.CapDo = request.CapDo;
                 banGoc.LoaiKhoaHoc = isFree ? "Khóa học miễn phí" : "Khóa học trả phí";
                 banGoc.HinhAnhKhoaHoc = hinhAnh;

@@ -14,6 +14,7 @@ using Eduverse.Repository.ThongBao;
 using Eduverse.Service.Common;
 using Eduverse.Service.EmailService;
 using Eduverse.Service.ThanhToanService.Dto;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ using PayOS.Models.Webhooks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,6 +49,7 @@ namespace Eduverse.Service.ThanhToanService
         private readonly IAppUserRepository _userRepository;
         private readonly PayOSClient _payOS;
         private readonly IConfiguration _config;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ThanhToanService(
             IThanhToanRepository thanhToanRepo,
@@ -62,7 +65,8 @@ namespace Eduverse.Service.ThanhToanService
             IThongBaoRepository thongBaoRepository,
             IAppUserRepository userRepository,
             PayOSClient payOS,
-            IConfiguration config
+            IConfiguration config,
+            IHttpContextAccessor httpContextAccessor
         ) : base(thanhToanRepo)
         {
             _thanhToanRepo = thanhToanRepo;
@@ -79,6 +83,7 @@ namespace Eduverse.Service.ThanhToanService
             _userRepository = userRepository;
             _payOS = payOS;
             _config = config;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<TaoThanhToanResponseDto> TaoThanhToanAsync(Guid userId, TaoThanhToanDto dto)
@@ -384,7 +389,7 @@ namespace Eduverse.Service.ThanhToanService
         {
             var query = await (
                 from dh in _donHangRepo.GetQueryable().AsNoTracking()
-                where dh.IdNguoiDung == userId && dh.IsDeleted == false
+                where dh.IdNguoiDung == userId && !dh.IsDeleted
                 select new DonHangDto
                 {
                     Id = dh.Id,
@@ -393,19 +398,37 @@ namespace Eduverse.Service.ThanhToanService
                     SoTienGiamGia = dh.SoTienGiamGia,
                     TrangThai = dh.TrangThai,
                     NgayTao = dh.NgayTao,
-                    ChiTiets = _donHangChiTietRepo.GetQueryable()
-                        .Where(ct => ct.IdDonHang == dh.Id && ct.IsDeleted == false)
-                        .Join(
-                            _khoaHocRepo.GetQueryable(),
-                            ct => ct.IdKhoaHoc,
-                            k => k.Id,
-                            (ct, k) => new DonHangChiTietDto
+                    ChiTiets =
+                    (
+                        from ct in _donHangChiTietRepo.GetQueryable()
+                        join kh in _khoaHocRepo.GetQueryable()
+                            on ct.IdKhoaHoc equals kh.Id
+
+                        join dk in _dangKyRepo.GetQueryable()
+                            on new
                             {
                                 IdKhoaHoc = ct.IdKhoaHoc,
-                                TenKhoaHoc = k.TieuDe,
-                                GiaLucDat = ct.GiaLucDat
+                                IdNguoiDangKi = dh.IdNguoiDung
                             }
-                        ).ToList()
+                            equals new
+                            {
+                                dk.IdKhoaHoc,
+                                dk.IdNguoiDangKi
+                            }
+                            into dangKyGroup
+
+                        from dk in dangKyGroup.DefaultIfEmpty()
+
+                        where ct.IdDonHang == dh.Id && !ct.IsDeleted
+
+                        select new DonHangChiTietDto
+                        {
+                            IdKhoaHoc = ct.IdKhoaHoc,
+                            TenKhoaHoc = kh.TieuDe,
+                            GiaLucDat = ct.GiaLucDat,
+                            IdDangKi = dk != null ? dk.Id : Guid.Empty
+                        }
+                    ).ToList()
                 }
             ).ToListAsync();
 
