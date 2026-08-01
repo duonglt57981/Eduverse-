@@ -45,8 +45,9 @@ namespace Eduverse.Api.Controller
         [HttpGet]
         public async Task<IActionResult> GetCuaToi()
         {
+            var userId = GetUserId();
             var result = await _repo.GetQueryable()
-                .Where(t => t.IdNguoiDung == GetUserId())
+                .Where(t => t.IdNguoiDung == userId || t.ToUser == userId)
                 .OrderByDescending(t => t.ThoiGianTao)
                 .Take(50)
                 .ToListAsync();
@@ -91,8 +92,10 @@ namespace Eduverse.Api.Controller
         [HttpGet("chua-doc")]
         public async Task<IActionResult> GetSoChuaDoc()
         {
+            var userId = GetUserId();
             var count = await _repo.GetQueryable()
-                .CountAsync(t => t.IdNguoiDung == GetUserId() && t.DaDoc == false);
+                .CountAsync(t => (t.IdNguoiDung == userId || t.ToUser == userId) &&
+                                 t.DaDoc != true && t.IsRead == false);
             return Ok(DataResponse.Success(count, "Thành công"));
         }
 
@@ -101,7 +104,8 @@ namespace Eduverse.Api.Controller
         {
             var userId = GetUserId();
             var result = await _repo.GetQueryable()
-                .Where(t => t.IdNguoiDung == userId && t.DaDoc == false)
+                .Where(t => (t.IdNguoiDung == userId || t.ToUser == userId) &&
+                            t.DaDoc != true && t.IsRead == false)
                 .OrderByDescending(t => t.ThoiGianTao)
                 .ToListAsync();
             return DataResponse<List<ThongBao>>.Success(result, "Thành công");
@@ -193,7 +197,8 @@ namespace Eduverse.Api.Controller
         {
             var userId = GetUserId();
             var list = await _repo.GetQueryableWithTracking()
-                .Where(t => t.IdNguoiDung == userId && t.DaDoc == false)
+                .Where(t => (t.IdNguoiDung == userId || t.ToUser == userId) &&
+                            t.DaDoc != true && t.IsRead == false)
                 .ToListAsync();
             foreach (var tb in list)
             {

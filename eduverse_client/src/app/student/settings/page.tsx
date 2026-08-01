@@ -13,7 +13,6 @@ import {
 import {
   PersonRounded,
   LockRounded,
-  PaletteRounded,
   NotificationsRounded,
   ShieldRounded,
   LinkRounded,
@@ -21,7 +20,6 @@ import {
 
 import AccountSettings from '@/src/components/settings/AccountSettings';
 import SecuritySettings from '@/src/components/settings/SecuritySettings';
-import AppearanceSettings from '@/src/components/settings/AppearanceSettings';
 import NotificationSettings from '@/src/components/settings/NotificationSettings';
 import PrivacySettings from '@/src/components/settings/PrivacySettings';
 import LinkedAccountSettings from '@/src/components/settings/LinkedAccountSettings';
@@ -29,7 +27,6 @@ import LinkedAccountSettings from '@/src/components/settings/LinkedAccountSettin
 const settingsTabs = [
   { label: 'Tài khoản', icon: PersonRounded, description: 'Thông tin cá nhân, ảnh đại diện' },
   { label: 'Bảo mật', icon: LockRounded, description: 'Mật khẩu, xác thực 2 lớp' },
-  { label: 'Giao diện', icon: PaletteRounded, description: 'Chế độ sáng/tối, màu nhấn' },
   { label: 'Thông báo', icon: NotificationsRounded, description: 'Email, push, SMS' },
   { label: 'Quyền riêng tư', icon: ShieldRounded, description: 'Hiển thị hồ sơ, dữ liệu' },
   { label: 'Liên kết tài khoản', icon: LinkRounded, description: 'Google, Facebook, GitHub' },
@@ -72,7 +69,7 @@ export default function StudentSettingsPage() {
             Cài đặt
           </Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: 15, lineHeight: 1.6 }}>
-            Quản lý tài khoản, bảo mật, giao diện và các tùy chỉnh cá nhân trên EduVerse.
+            Quản lý tài khoản, bảo mật và các tùy chỉnh cá nhân trên EduVerse.
           </Typography>
         </Box>
 
@@ -135,10 +132,9 @@ export default function StudentSettingsPage() {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <TabPanel value={activeTab} index={0}><AccountSettings /></TabPanel>
             <TabPanel value={activeTab} index={1}><SecuritySettings /></TabPanel>
-            <TabPanel value={activeTab} index={2}><AppearanceSettings /></TabPanel>
-            <TabPanel value={activeTab} index={3}><NotificationSettings /></TabPanel>
-            <TabPanel value={activeTab} index={4}><PrivacySettings /></TabPanel>
-            <TabPanel value={activeTab} index={5}><LinkedAccountSettings /></TabPanel>
+            <TabPanel value={activeTab} index={2}><NotificationSettings /></TabPanel>
+            <TabPanel value={activeTab} index={3}><PrivacySettings /></TabPanel>
+            <TabPanel value={activeTab} index={4}><LinkedAccountSettings /></TabPanel>
           </Box>
         </Box>
       </StudentDashboardShell>

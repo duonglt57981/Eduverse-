@@ -866,7 +866,10 @@ export default function DashboardShell({
 
   const handleNotiClick = async (noti: ThongBao) => {
     setNotiAnchorEl(null);
-    if (!noti.daDoc) {
+    // Open the detail first so every notification remains clickable, including
+    // notifications whose optional link is missing or no longer valid.
+    setSelectedNoti(noti);
+    if (!noti.daDoc && !noti.isRead) {
       try {
         await thongBaoService.markAsRead(noti.id);
         setNotifications((prev) =>
@@ -878,11 +881,6 @@ export default function DashboardShell({
       }
     }
 
-    if (noti.link) {
-      router.push(noti.link);
-    } else {
-      setSelectedNoti(noti);
-    }
   };
 
   const handleMarkAllAsRead = async () => {
@@ -3369,6 +3367,23 @@ export default function DashboardShell({
                 ? new Date(selectedNoti.thoiGianTao).toLocaleString("vi-VN")
                 : ""}
             </Typography>
+            {selectedNoti?.link && (
+              <Button
+                onClick={() => {
+                  const link = selectedNoti.link!;
+                  setSelectedNoti(null);
+                  if (/^https?:\/\//i.test(link)) {
+                    window.location.assign(link);
+                  } else {
+                    router.push(link.startsWith("/") ? link : `/${link}`);
+                  }
+                }}
+                variant="outlined"
+                sx={{ mt: 2, textTransform: "none", fontWeight: 700 }}
+              >
+                Xem nội dung liên quan
+              </Button>
+            )}
           </DialogContent>
           <DialogActions>
             <Button

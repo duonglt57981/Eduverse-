@@ -10,7 +10,6 @@ import {
   Tab,
   Tabs,
   Paper,
-  Divider,
   useMediaQuery,
   useTheme as useMuiTheme,
   alpha,
@@ -18,7 +17,6 @@ import {
 import {
   PersonRounded,
   SecurityRounded,
-  PaletteRounded,
   NotificationsActiveRounded,
   ShieldRounded,
   LinkRounded,
@@ -27,7 +25,6 @@ import {
 // Import Settings Components
 import AccountSettings from '@/src/components/settings/AccountSettings';
 import SecuritySettings from '@/src/components/settings/SecuritySettings';
-import AppearanceSettings from '@/src/components/settings/AppearanceSettings';
 import NotificationSettings from '@/src/components/settings/NotificationSettings';
 import PrivacySettings from '@/src/components/settings/PrivacySettings';
 import LinkedAccountSettings from '@/src/components/settings/LinkedAccountSettings';
@@ -40,7 +37,6 @@ export default function SettingsPage() {
   const tabList = [
     { label: 'Tài khoản', icon: <PersonRounded fontSize="small" />, component: <AccountSettings /> },
     { label: 'Bảo mật', icon: <SecurityRounded fontSize="small" />, component: <SecuritySettings /> },
-    { label: 'Giao diện', icon: <PaletteRounded fontSize="small" />, component: <AppearanceSettings /> },
     { label: 'Thông báo', icon: <NotificationsActiveRounded fontSize="small" />, component: <NotificationSettings /> },
     { label: 'Quyền riêng tư', icon: <ShieldRounded fontSize="small" />, component: <PrivacySettings /> },
     { label: 'Liên kết', icon: <LinkRounded fontSize="small" />, component: <LinkedAccountSettings /> },
@@ -67,7 +63,7 @@ export default function SettingsPage() {
             Cài đặt hệ thống
           </Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: 14.5 }}>
-            Quản lý hồ sơ cá nhân, bảo mật tài khoản, quyền riêng tư và tùy chỉnh giao diện học tập của bạn.
+            Quản lý hồ sơ cá nhân, bảo mật tài khoản, thông báo và quyền riêng tư của bạn.
           </Typography>
         </Box>
 

@@ -676,10 +676,6 @@ function CourseRegistrationContent() {
                   icon: <MenuBookIcon sx={{ fontSize: 14 }} />,
                   label: `${khoaHoc.tongBaiGiang ?? 0} bài học`,
                 },
-                {
-                  icon: <WorkspacePremiumIcon sx={{ fontSize: 14 }} />,
-                  label: "Chứng chỉ hoàn thành",
-                },
               ].map((item, i) => (
                 <Stack
                   key={i}
@@ -1245,10 +1241,6 @@ function CourseRegistrationContent() {
                   {
                     icon: <AllInclusiveIcon sx={{ fontSize: 17 }} />,
                     label: "Truy cập trọn đời",
-                  },
-                  {
-                    icon: <WorkspacePremiumIcon sx={{ fontSize: 17 }} />,
-                    label: "Chứng chỉ hoàn thành",
                   },
                 ].map((item, i) => (
                   <Stack
