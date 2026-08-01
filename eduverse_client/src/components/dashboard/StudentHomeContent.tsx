@@ -1147,6 +1147,8 @@ export default function StudentHomeContent() {
 
   const [courseImages, setCourseImages] = useState<Record<string, string>>({});
   const [titleImages, setTitleImages] = useState<Record<string, string>>({});
+  // Toàn bộ khóa học đã duyệt, máy chủ trả về sẵn theo thứ tự mới nhất trước
+  const [latestCourses, setLatestCourses] = useState<any[]>([]);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1179,6 +1181,31 @@ export default function StudentHomeContent() {
         setTitleImages(tMap);
       } catch (err) {
         console.error("Failed to load course image map:", err);
+      }
+
+      // Toàn bộ khóa học đã duyệt cho mục "Khóa học mới nhất".
+      // Endpoint khoahoc-list cho phép truy cập ẩn danh, đã lọc sẵn
+      // TrangThaiPheDuyet = DaDuyet và sắp xếp giảm dần theo NgayTao.
+      try {
+        const listRes = await apiService.get<any>(
+          "/KhoaHoc/khoahoc-list?pageIndex=1&pageSize=100",
+        );
+        const list = listRes.data?.items || listRes.data?.data || [];
+        if (Array.isArray(list)) {
+          setLatestCourses(list);
+          // Tận dụng luôn ảnh từ danh sách này để bổ sung cho bản đồ ảnh
+          setCourseImages((prev) => {
+            const next = { ...prev };
+            list.forEach((it: any) => {
+              if (it?.id && it?.hinhAnhKhoaHoc && !next[it.id]) {
+                next[it.id] = it.hinhAnhKhoaHoc;
+              }
+            });
+            return next;
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load latest courses:", err);
       }
 
       const res = await apiService.get<DashboardData>(
@@ -1330,7 +1357,6 @@ export default function StudentHomeContent() {
     welcomeStats,
     continueLearning,
     interestedSkills,
-    premiumSelection,
     historyRecommendation,
   } = data;
 
@@ -1551,44 +1577,25 @@ export default function StudentHomeContent() {
       </Box>
 
 
-      {/* ── 6. Lựa chọn hàng đầu (data-gated) ───────────────────────── */}
-      {premiumSelection && (
+      {/* ── 6. Khóa học mới nhất (toàn bộ khóa học đã duyệt) ────────── */}
+      {latestCourses.length > 0 && (
         <Box>
-          <SectionHeader title="Lựa chọn hàng đầu cho bạn" />
+          <SectionHeader title="Khóa học mới nhất" />
           <CarouselRow>
-            {/* Khóa học chính */}
-            <CourseCard
-              course={{
-                id: premiumSelection.id || "",
-                tieuDe: premiumSelection.title || "",
-                moTa: premiumSelection.description,
-                gia: premiumSelection.gia ?? 0,
-                giaGoc: premiumSelection.giaGoc || premiumSelection.giagoc,
-                capDo: premiumSelection.level || "Nâng cao",
-                hinhAnhKhoaHoc: premiumSelection.hinhAnhKhoaHoc || courseImages[premiumSelection.id || ""] || titleImages[premiumSelection.title || ""],
-                soLuongHocVien: premiumSelection.studentsCount,
-                daDangKy: premiumSelection.daDangKy,
-                rating: premiumSelection.rating,
-                instructor: premiumSelection.instructor,
-                loaiKhoaHoc: premiumSelection.loaiKhoaHoc,
-              } as any}
-              onAddCart={handleAddCart}
-              onClick={handleOpenCourse}
-            />
-
-            {/* Các khóa học liên quan */}
-            {premiumSelection.relatedCourses &&
-              premiumSelection.relatedCourses.map((c: any, i: number) => (
-                <CourseCard
-                  key={c.id || i}
-                  course={{
-                    ...c,
-                    hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.title || c.tieuDe || ""],
-                  }}
-                  onAddCart={handleAddCart}
-                  onClick={handleOpenCourse}
-                />
-              ))}
+            {latestCourses.map((c: any, i: number) => (
+              <CourseCard
+                key={c.id || i}
+                course={{
+                  ...c,
+                  hinhAnhKhoaHoc:
+                    c.hinhAnhKhoaHoc ||
+                    courseImages[c.id || ""] ||
+                    titleImages[c.tieuDe || ""],
+                }}
+                onAddCart={handleAddCart}
+                onClick={handleOpenCourse}
+              />
+            ))}
           </CarouselRow>
         </Box>
       )}
