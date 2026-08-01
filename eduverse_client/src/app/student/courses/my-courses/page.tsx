@@ -271,7 +271,7 @@ const CourseCard = styled(Card)(() => ({
   transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
   boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
   overflow: "hidden",
-  backgroundColor: "#fff",
+  backgroundColor: "var(--ev-paper, #fff)",
   position: "relative",
   "&:hover": {
     transform: "translateY(-6px)",
@@ -288,7 +288,7 @@ const ThumbBox = styled(Box)({
   position: "relative",
   paddingTop: "56.25%",
   overflow: "hidden",
-  backgroundColor: "#F1F5F9",
+  backgroundColor: "var(--ev-paper-alt, #F1F5F9)",
 });
 
 const ThumbImg = styled("img")({
@@ -309,7 +309,7 @@ const StatCard = styled(Paper)(() => ({
   display: "flex",
   alignItems: "center",
   gap: 16,
-  backgroundColor: "#fff",
+  backgroundColor: "var(--ev-paper, #fff)",
   transition: "all 0.2s ease-in-out",
   "&:hover": {
     boxShadow:
@@ -321,7 +321,7 @@ const StatCard = styled(Paper)(() => ({
 
 const CourseProgress = styled(LinearProgress)(() => ({
   height: 3,
-  backgroundColor: "#E2E8F0",
+  backgroundColor: "var(--ev-divider, #E2E8F0)",
   "& .MuiLinearProgress-bar": {
     backgroundColor: RED,
   },
@@ -396,7 +396,7 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
         variant="h5"
         sx={{
           fontWeight: 800,
-          color: "#1E293B",
+          color: "var(--ev-text-primary, #1E293B)",
           mb: 1.5,
         }}
       >
@@ -754,7 +754,7 @@ function MyCoursesContent() {
                     fontSize: 22,
                     fontWeight: 800,
                     lineHeight: 1.1,
-                    color: "#0F172A",
+                    color: "var(--ev-text-primary, #0F172A)",
                   }}
                 >
                   {s.val}
@@ -1326,8 +1326,8 @@ function MyCoursesContent() {
             "& .MuiOutlinedInput-root": {
               height: 40,
               borderRadius: "12px",
-              bgcolor: "#fff",
-              "& fieldset": { borderColor: "#E2E8F0" },
+              bgcolor: "var(--ev-paper, #fff)",
+              "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
               "&:hover fieldset": { borderColor: "#CBD5E1" },
               "&.Mui-focused fieldset": { borderColor: RED },
             },
@@ -1335,7 +1335,7 @@ function MyCoursesContent() {
           slotProps={{
             input: {
               startAdornment: (
-                <SearchIcon sx={{ color: "#94A3B8", mr: 1, fontSize: 20 }} />
+                <SearchIcon sx={{ color: "var(--ev-text-muted, #94A3B8)", mr: 1, fontSize: 20 }} />
               ),
             },
           }}
@@ -1365,9 +1365,9 @@ function MyCoursesContent() {
             sx={{
               height: 40,
               borderRadius: "12px",
-              bgcolor: "#fff",
+              bgcolor: "var(--ev-paper, #fff)",
               "&.MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#E2E8F0" },
+                "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
                 "&:hover fieldset": { borderColor: "#CBD5E1" },
                 "&.Mui-focused fieldset": { borderColor: RED },
               },

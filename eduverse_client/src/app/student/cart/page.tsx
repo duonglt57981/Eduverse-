@@ -233,7 +233,7 @@ function GioHangContent() {
         >
           Giỏ hàng của tôi
         </Typography>
-        <Typography sx={{ color: "rgba(31,41,55,0.55)", fontSize: 14 }}>
+        <Typography sx={{ color: "var(--ev-text-secondary, rgba(31,41,55,0.55))", fontSize: 14 }}>
           {items.length} khóa học trong giỏ hàng
           {mienphi.length > 0 && (
             <Box
@@ -685,7 +685,7 @@ function GioHangContent() {
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "8px",
                         fontSize: 13,
-                        bgcolor: "#fff",
+                        bgcolor: "var(--ev-paper, #fff)",
                         "&.Mui-focused fieldset": { borderColor: PRIMARY },
                       },
                     }}
@@ -1105,7 +1105,7 @@ export default function StudentCartPage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

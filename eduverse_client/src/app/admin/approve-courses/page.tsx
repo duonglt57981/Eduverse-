@@ -76,7 +76,7 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
           height: 80,
           borderRadius: 2.5,
           flexShrink: 0,
-          bgcolor: "#F9FAFB",
+          bgcolor: "var(--ev-paper-alt, #F9FAFB)",
           border: "1px dashed #E5E7EB",
           display: "flex",
           alignItems: "center",
@@ -100,7 +100,7 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
         borderRadius: 2.5,
         objectFit: "cover",
         flexShrink: 0,
-        bgcolor: "#F3F4F6",
+        bgcolor: "var(--ev-paper-alt, #F3F4F6)",
       }}
     />
   );
@@ -528,8 +528,8 @@ export default function DuyetKhoaHocPage() {
                         textTransform: "none",
                         fontWeight: 600,
                         fontSize: 13,
-                        borderColor: "#E5E7EB",
-                        color: "#6B7280",
+                        borderColor: "var(--ev-divider, #E5E7EB)",
+                        color: "var(--ev-text-muted, #6B7280)",
                         borderRadius: 2.5,
                         px: 2.5,
                         "&:hover": {
@@ -563,7 +563,7 @@ export default function DuyetKhoaHocPage() {
                           borderRadius: 2.5,
                           cursor: "pointer",
                           transition: "all .2s ease",
-                          bgcolor: "#fff",
+                          bgcolor: "var(--ev-paper, #fff)",
                           "&:hover": {
                             borderColor: "#991B1B",
                             boxShadow: `0 4px 18px ${alpha("#991B1B", 0.1)}`,
@@ -614,7 +614,7 @@ export default function DuyetKhoaHocPage() {
                               <Typography
                                 sx={{
                                   fontSize: 12,
-                                  color: "#9CA3AF",
+                                  color: "var(--ev-grey, #9CA3AF)",
                                   display: "flex",
                                   alignItems: "center",
                                   gap: 0.3,
@@ -641,7 +641,7 @@ export default function DuyetKhoaHocPage() {
                             sx={{
                               border: "1px solid #E5E7EB",
                               borderRadius: 2.5,
-                              color: "#9CA3AF",
+                              color: "var(--ev-grey, #9CA3AF)",
                               width: 36,
                               height: 36,
                               flexShrink: 0,

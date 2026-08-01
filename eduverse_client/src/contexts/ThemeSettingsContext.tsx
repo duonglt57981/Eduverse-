@@ -37,31 +37,29 @@ interface ThemeSettingsContextProps {
 const ThemeSettingsContext = createContext<ThemeSettingsContextProps | undefined>(undefined);
 
 export function ThemeSettingsProvider({ children }: { children: React.ReactNode }) {
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
-  const [accentColor, setAccentColorState] = useState<AccentColor>('red');
-  const [mounted, setMounted] = useState(false);
-
-  // Load from localStorage on client-side mount
-  useEffect(() => {
-    const savedTheme = window.localStorage.getItem('eduverse_theme_mode') as ThemeMode;
-    const savedAccent = window.localStorage.getItem('eduverse_accent_color') as AccentColor;
-
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (savedTheme) setThemeModeState(savedTheme);
-    if (savedAccent) setAccentColorState(savedAccent);
-    setMounted(true);
-  }, []);
+  // Đọc ngay lúc khởi tạo (phía trình duyệt) để không hiển thị nhầm một nhịp sáng
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
+    if (typeof window === 'undefined') return 'light';
+    return (window.localStorage.getItem('eduverse_theme_mode') as ThemeMode) || 'light';
+  });
+  const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
+    if (typeof window === 'undefined') return 'red';
+    return (window.localStorage.getItem('eduverse_accent_color') as AccentColor) || 'red';
+  });
 
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
-  const activeMode = !mounted
-    ? 'light'
-    : themeMode === 'system'
-      ? (prefersDarkMode ? 'dark' : 'light')
-      : themeMode;
+  const activeMode: 'light' | 'dark' =
+    themeMode === 'system' ? (prefersDarkMode ? 'dark' : 'light') : themeMode;
 
   const currentAccent = accentColors.find((c) => c.id === accentColor) || accentColors[0];
+
+  // Đồng bộ thuộc tính trên <html> để CSS thuần và thanh cuộn bám đúng chế độ
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.setAttribute('data-ev-mode', activeMode);
+    document.documentElement.style.colorScheme = activeMode;
+  }, [activeMode]);
 
   const setThemeMode = (mode: ThemeMode) => {
     setThemeModeState(mode);
@@ -96,6 +94,11 @@ export function ThemeSettingsProvider({ children }: { children: React.ReactNode 
   const resetSettings = () => {
     setThemeModeState('light');
     setAccentColorState('red');
+    // Ghi lại luôn để tải lại trang vẫn giữ đúng mặc định
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('eduverse_theme_mode', 'light');
+      window.localStorage.setItem('eduverse_accent_color', 'red');
+    }
   };
 
   // Theme dùng chung từ factory (đồng bộ toàn hệ thống)

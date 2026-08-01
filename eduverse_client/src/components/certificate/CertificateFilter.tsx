@@ -51,13 +51,13 @@ export default function CertificateFilter({ filters, onChange }: CertificateFilt
         p: 2.5,
         borderRadius: 2.8,
         border: '1px solid rgba(17,17,17,0.08)',
-        bgcolor: '#fff',
+        bgcolor: 'var(--ev-paper, #fff)',
         mb: 3,
       }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
         <FilterListRounded sx={{ color: '#7f1d1d' }} fontSize="small" />
-        <Typography sx={{ fontSize: 16, fontWeight: 900, color: '#19171c', letterSpacing: '-0.2px' }}>
+        <Typography sx={{ fontSize: 16, fontWeight: 900, color: 'var(--ev-text-primary, #19171c)', letterSpacing: '-0.2px' }}>
           Bộ lọc & Tìm kiếm
         </Typography>
       </Stack>

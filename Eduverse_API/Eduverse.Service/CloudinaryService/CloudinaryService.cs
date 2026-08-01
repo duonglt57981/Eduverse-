@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Eduverse.Service.CloudinaryService.Dto;
 using Microsoft.AspNetCore.Http;

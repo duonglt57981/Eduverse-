@@ -105,7 +105,7 @@ export default function ClaimCertificateDemo() {
           Kéo thanh trượt tiến độ khóa học bên dưới lên <strong>100%</strong> để mở khóa và thử nghiệm tính năng nhận chứng chỉ tự động.
         </Typography>
 
-        <Box sx={{ p: 2, bgcolor: '#fff', borderRadius: 2, border: '1px solid rgba(17,17,17,0.06)' }}>
+        <Box sx={{ p: 2, bgcolor: 'var(--ev-paper, #fff)', borderRadius: 2, border: '1px solid rgba(17,17,17,0.06)' }}>
           <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#1a181e', mb: 0.5 }}>
             Khóa học đang học: Khoa học Dữ liệu & AI cho Quản lý Executive
           </Typography>
@@ -221,7 +221,7 @@ export default function ClaimCertificateDemo() {
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={() => setDialogOpen(false)}
-            sx={{ color: 'rgba(24,24,27,0.54)', fontWeight: 800 }}
+            sx={{ color: 'var(--ev-text-muted, rgba(24,24,27,0.54))', fontWeight: 800 }}
           >
             Hủy bỏ
           </Button>

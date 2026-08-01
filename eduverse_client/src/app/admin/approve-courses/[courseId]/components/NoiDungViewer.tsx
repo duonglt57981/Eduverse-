@@ -569,7 +569,7 @@ function ViewerBody({
                 sx={{
                   p: 2,
                   border: `1px solid ${COLORS.line}`,
-                  backgroundColor: "#ffffff",
+                  backgroundColor: "var(--ev-paper, #ffffff)",
                   transition: "box-shadow 0.2s",
                   "&:hover": {
                     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",

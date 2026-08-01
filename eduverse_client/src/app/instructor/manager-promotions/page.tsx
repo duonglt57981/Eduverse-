@@ -228,7 +228,7 @@ function QuanLyKhuyenMaiContent() {
   const cardSx = {
     p: 3,
     mb: 2,
-    bgcolor: "#FFFFFF",
+    bgcolor: "var(--ev-paper, #FFFFFF)",
     border: `1px solid #EDEFF3`,
     borderRadius: 3,
     boxShadow: "0 1px 2px rgba(16,24,40,0.02)",
@@ -252,7 +252,7 @@ function QuanLyKhuyenMaiContent() {
         }}
       >
         <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: 24, color: "#1F2937" }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 24, color: "var(--ev-text-primary, #1F2937)" }}>
             Quản lý khuyến mãi
           </Typography>
           <Typography sx={{ fontSize: 13.5, color: MAU.chuXam, mt: 0.5 }}>
@@ -328,7 +328,7 @@ function QuanLyKhuyenMaiContent() {
                       sx={{ fontSize: 18, color: MAU.chinh }}
                     />
                     <Typography
-                      sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937" }}
+                      sx={{ fontWeight: 800, fontSize: 16, color: "var(--ev-text-primary, #1F2937)" }}
                     >
                       {km.maGiamGia}
                     </Typography>
@@ -431,9 +431,9 @@ function QuanLyKhuyenMaiContent() {
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
                 minHeight: "44px",
-                bgcolor: "#ffffff",
+                bgcolor: "var(--ev-paper, #ffffff)",
                 "& fieldset": {
-                  borderColor: "#E5E7EB",
+                  borderColor: "var(--ev-divider, #E5E7EB)",
                 },
                 "&:hover fieldset": {
                   borderColor: "#9CA3AF",
@@ -450,7 +450,7 @@ function QuanLyKhuyenMaiContent() {
             }}
           >
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
                 Mã giảm giá *
               </Typography>
               <TextField
@@ -465,7 +465,7 @@ function QuanLyKhuyenMaiContent() {
             </Box>
 
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
                 Phần trăm giảm (%) *
               </Typography>
               <TextField
@@ -485,7 +485,7 @@ function QuanLyKhuyenMaiContent() {
 
             <Stack direction="row" spacing={1.5}>
               <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
                   Ngày bắt đầu
                 </Typography>
                 <TextField
@@ -500,7 +500,7 @@ function QuanLyKhuyenMaiContent() {
               </Box>
 
               <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
                   Ngày kết thúc
                 </Typography>
                 <TextField
@@ -516,7 +516,7 @@ function QuanLyKhuyenMaiContent() {
             </Stack>
 
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "#1F2937" }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
                 Số lượng hiệu lực (để trống = không giới hạn)
               </Typography>
               <TextField
@@ -532,7 +532,7 @@ function QuanLyKhuyenMaiContent() {
             </Box>
 
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 1, color: "#1F2937" }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 1, color: "var(--ev-text-primary, #1F2937)" }}>
                 Áp dụng cho khóa học đã duyệt *
               </Typography>
               {dangTaiKhoaHoc ? (
@@ -627,7 +627,7 @@ export default function ManagerPromotionsPage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

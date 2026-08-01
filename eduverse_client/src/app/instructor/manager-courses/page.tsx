@@ -762,7 +762,7 @@ function KhoaHocContent() {
           mb: 3,
           borderRadius: "12px",
           border: `1px solid ${MAU.vien}`,
-          bgcolor: "#ffffff",
+          bgcolor: "var(--ev-paper, #ffffff)",
         }}
       >
         <TextField
@@ -779,12 +779,12 @@ function KhoaHocContent() {
             "& .MuiOutlinedInput-root": {
               height: "42px",
               borderRadius: "10px",
-              bgcolor: "#F9FAFB",
+              bgcolor: "var(--ev-paper-alt, #F9FAFB)",
               "& fieldset": { borderColor: MAU.vien },
-              "&:hover fieldset": { borderColor: "#D1D5DB" },
+              "&:hover fieldset": { borderColor: "var(--ev-divider, #D1D5DB)" },
               "&.Mui-focused fieldset": { borderColor: MAU.chinh },
               "&.Mui-focused": {
-                bgcolor: "#ffffff",
+                bgcolor: "var(--ev-paper, #ffffff)",
                 boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
               },
             },
@@ -824,7 +824,7 @@ function KhoaHocContent() {
             color: MAU.chuDen,
             fontSize: 14,
             fontWeight: 600,
-            bgcolor: "#F9FAFB",
+            bgcolor: "var(--ev-paper-alt, #F9FAFB)",
             "& .MuiOutlinedInput-notchedOutline": { borderColor: MAU.vien },
             "&:hover .MuiOutlinedInput-notchedOutline": {
               borderColor: "#D1D5DB",
@@ -833,7 +833,7 @@ function KhoaHocContent() {
               borderColor: MAU.chinh,
             },
             "&.Mui-focused": {
-              bgcolor: "#ffffff",
+              bgcolor: "var(--ev-paper, #ffffff)",
               boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
             },
           }}
@@ -879,7 +879,7 @@ function KhoaHocContent() {
             onClick={handleRefresh}
             sx={{
               color: MAU.chinh,
-              bgcolor: "#F9FAFB",
+              bgcolor: "var(--ev-paper-alt, #F9FAFB)",
               border: `1px solid ${MAU.vien}`,
               borderRadius: "10px",
               width: "42px",
@@ -930,7 +930,7 @@ function KhoaHocContent() {
             px: 4,
             borderRadius: "12px",
             border: `1px solid ${MAU.vien}`,
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
           }}
         >
           <Typography
@@ -966,7 +966,7 @@ function KhoaHocContent() {
             px: 4,
             borderRadius: "12px",
             border: `1px dashed ${MAU.vien}`,
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
           }}
         >
           <SchoolOutlinedIcon
@@ -1022,7 +1022,7 @@ function KhoaHocContent() {
                     flexDirection: { xs: "column", sm: "row" },
                     borderRadius: "16px",
                     border: `1px solid ${isDraft ? "#FECACA" : MAU.vien}`,
-                    bgcolor: "#ffffff",
+                    bgcolor: "var(--ev-paper, #ffffff)",
                     overflow: "hidden",
                     position: "relative",
                     transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -1043,7 +1043,7 @@ function KhoaHocContent() {
                       minHeight: { sm: "146px" },
                       flexShrink: 0,
                       cursor: "pointer",
-                      bgcolor: "#F3F4F6",
+                      bgcolor: "var(--ev-paper-alt, #F3F4F6)",
                       overflow: "hidden",
                       borderRight: { sm: `1px solid ${MAU.vien}` },
                       borderBottom: { xs: `1px solid ${MAU.vien}`, sm: "none" },

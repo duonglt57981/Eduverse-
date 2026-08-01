@@ -4,25 +4,80 @@
 // Mọi trang/component nên import từ đây thay vì tự khai báo màu.
 // ============================================================
 
+// ============================================================
+// DARK MODE — Bảng màu bề mặt theo chế độ
+// Giá trị LITERAL dùng cho palette của MUI (cần màu thật để tính
+// contrast/alpha). Component KHÔNG dùng trực tiếp bộ này.
+// ============================================================
+export const SURFACE_LIGHT = {
+  bg: "#F7F5F2",
+  paper: "#FFFFFF",
+  paperAlt: "#FBFAF9",
+  textPrimary: "#1F2937",
+  textSecondary: "#4B5563",
+  textMuted: "#8A7676",
+  grey: "#9CA3AF",
+  divider: "#ECE7E4",
+  brandTint: "#FBEFEF",
+  brandBorder: "#F0DEDE",
+  hover: "rgba(24,18,20,0.04)",
+  selected: "rgba(139,19,19,0.08)",
+  overlay: "rgba(24,18,20,0.45)",
+} as const;
+
+// Nền đen than pha xanh — KHÔNG dùng đen tuyệt đối
+export const SURFACE_DARK = {
+  bg: "#0F1216",
+  paper: "#171B21",
+  paperAlt: "#1E232B",
+  textPrimary: "#F2F5F9",
+  textSecondary: "#B4BCC8",
+  textMuted: "#8B95A3",
+  grey: "#6B7583",
+  divider: "rgba(255,255,255,0.10)",
+  brandTint: "rgba(139,19,19,0.18)",
+  brandBorder: "rgba(196,74,74,0.32)",
+  hover: "rgba(255,255,255,0.06)",
+  selected: "rgba(196,74,74,0.16)",
+  overlay: "rgba(0,0,0,0.62)",
+} as const;
+
+/** Tên biến CSS được ThemeProvider bơm vào :root theo chế độ sáng/tối. */
+export const CSSVAR = {
+  bg: "var(--ev-bg, #F7F5F2)",
+  paper: "var(--ev-paper, #FFFFFF)",
+  paperAlt: "var(--ev-paper-alt, #FBFAF9)",
+  textPrimary: "var(--ev-text-primary, #1F2937)",
+  textSecondary: "var(--ev-text-secondary, #4B5563)",
+  textMuted: "var(--ev-text-muted, #8A7676)",
+  grey: "var(--ev-grey, #9CA3AF)",
+  divider: "var(--ev-divider, #ECE7E4)",
+  brandTint: "var(--ev-brand-tint, #FBEFEF)",
+  brandBorder: "var(--ev-brand-border, #F0DEDE)",
+  hover: "var(--ev-hover, rgba(24,18,20,0.04))",
+  selected: "var(--ev-selected, rgba(139,19,19,0.08))",
+} as const;
+
 // -------- Thương hiệu: đỏ đô (maroon) --------
 export const BRAND = {
   main: "#8B1313", // Đỏ đô chủ đạo (primary)
   dark: "#6D0F0F", // Hover / nhấn
   darker: "#5C0D0D", // Đậm nhất
-  light: "#FBEFEF", // Nền tint nhạt
-  border: "#F0DEDE", // Viền nhạt theo thương hiệu
+  light: CSSVAR.brandTint, // Nền tint nhạt — đổi theo chế độ
+  border: CSSVAR.brandBorder, // Viền nhạt — đổi theo chế độ
   contrast: "#FFFFFF", // Chữ trên nền đỏ đô
 } as const;
 
+
 // -------- Trung tính --------
 export const NEUTRAL = {
-  bg: "#F7F5F2", // Nền trang
-  paper: "#FFFFFF", // Nền thẻ/khối
-  textPrimary: "#1F2937", // Chữ chính
-  textSecondary: "#4B5563", // Chữ phụ
-  textMuted: "#8A7676", // Chữ mờ (tông đỏ đô)
-  grey: "#9CA3AF",
-  divider: "#ECE7E4", // Đường kẻ
+  bg: CSSVAR.bg, // Nền trang — tự đổi theo sáng/tối
+  paper: CSSVAR.paper, // Nền thẻ/khối
+  textPrimary: CSSVAR.textPrimary, // Chữ chính
+  textSecondary: CSSVAR.textSecondary, // Chữ phụ
+  textMuted: CSSVAR.textMuted, // Chữ mờ
+  grey: CSSVAR.grey,
+  divider: CSSVAR.divider, // Đường kẻ
 } as const;
 
 // -------- Trạng thái --------
@@ -67,7 +122,7 @@ export const MAU = {
   chinhDam: BRAND.darker, // #5C0D0D
   chinhNhat: BRAND.light, // #FBEFEF
   vien: BRAND.border, // #F0DEDE
-  chuDen: "#231313",
+  chuDen: CSSVAR.textPrimary,
   chuXam: NEUTRAL.textMuted,
 } as const;
 
@@ -76,12 +131,16 @@ export const COLORS = {
   primary: BRAND.main, // #8B1313 (trước đây #8D1313)
   primaryLight: "#B91C1C",
   primaryDark: BRAND.dark, // #6D0F0F (trước đây #7F1D1D)
-  bgLight: NEUTRAL.bg, // nền trang thống nhất
+  bgLight: NEUTRAL.bg, // nền trang — đổi theo chế độ
   white: NEUTRAL.paper,
   textDark: NEUTRAL.textPrimary,
   textSecondary: NEUTRAL.textSecondary,
   green: STATUS.success,
   grey: NEUTRAL.grey,
+  divider: NEUTRAL.divider,
+  paperAlt: CSSVAR.paperAlt,
+  hover: CSSVAR.hover,
+  selected: CSSVAR.selected,
   red: STATUS.error,
   purpleAI: "#7C3AED",
   gradientAI: GRADIENTS.ai,

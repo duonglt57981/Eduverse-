@@ -52,7 +52,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpGet]
-        public async Task<DataResponse<object>> GetDashboardData([FromQuery] string? role)
+        public async Task<DataResponse<object>> GetDashboardData([FromQuery] string? role, [FromQuery] string? period)
         {
             var loggedInUserId = UserId;
             if (loggedInUserId == null)
@@ -88,7 +88,7 @@ namespace Eduverse.Api.Controller
                     {
                         if (role == "Admin" && roles.Contains("Admin"))
                         {
-                            return await GetAdminDashboardDataAsync();
+                            return await GetAdminDashboardDataAsync(period);
                         }
                         if (role == "GiaoVien" && roles.Contains("GiaoVien"))
                         {
@@ -100,7 +100,7 @@ namespace Eduverse.Api.Controller
                     {
                         if (roles.Contains("Admin"))
                         {
-                            return await GetAdminDashboardDataAsync();
+                            return await GetAdminDashboardDataAsync(period);
                         }
                         if (roles.Contains("GiaoVien"))
                         {
@@ -138,13 +138,17 @@ namespace Eduverse.Api.Controller
             {
                 courses = await _khoaHocService.GetQueryable().Where(c =>
                             c.TrangThaiPheDuyet == "DaDuyet" &&
-                            c.TrangThai == "HoatDong")
+                            c.TrangThai == "HoatDong" &&
+                            c.IsBanHienTai == true &&
+                            c.IsDeleted == false)
                         .ToListAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error fetching courses: " + ex.Message);
             }
+
+
 
             var registeredCourses = courses.Where(c => registeredCourseIds.Contains(c.Id)).ToList();
 
@@ -345,6 +349,7 @@ namespace Eduverse.Api.Controller
 
                 gia = c.Gia,
                 giaGoc = c.GiaGoc,
+                loaiKhoaHoc = c.LoaiKhoaHoc,
                 categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
 
                 daDangKy = registeredCourseIds.Contains(c.Id),
@@ -364,8 +369,9 @@ namespace Eduverse.Api.Controller
                 rating = 0, // KhoaHoc chưa có hệ thống đánh giá
                 studentsCount = premiumCourse?.SoLuongHocVien ?? 0,
                 level = premiumCourse?.CapDo ?? "Nâng cao",
-                gia = premiumCourse.Gia,
-                giagoc = premiumCourse.GiaGoc,
+                gia = premiumCourse?.Gia ?? 0,
+                giagoc = premiumCourse?.GiaGoc,
+                loaiKhoaHoc = premiumCourse?.LoaiKhoaHoc,
                 daDangKy = premiumCourse != null && registeredCourseIds.Contains(premiumCourse.Id),
                 thumbnailGradient = "linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)",
                 relatedCourses = courses.Where(c => !registeredCourseIds.Contains(c.Id)).Take(3).Select((c, i) => new
@@ -379,6 +385,7 @@ namespace Eduverse.Api.Controller
                     level = c.CapDo ?? "Cơ bản",
                     gia = c.Gia,
                     giagoc = c.GiaGoc,
+                    loaiKhoaHoc = c.LoaiKhoaHoc,
                     daDangKy = registeredCourseIds.Contains(c.Id),
                     thumbnailGradient = GetGradient(i + 1)
                 }).ToList()
@@ -399,6 +406,7 @@ namespace Eduverse.Api.Controller
                     level = c.CapDo ?? "Trung cấp",
                     gia = c.Gia,
                     giagoc = c.GiaGoc,
+                    loaiKhoaHoc = c.LoaiKhoaHoc,
                     daDangKy = registeredCourseIds.Contains(c.Id),
                     thumbnailGradient = GetGradient(i + 3)
                 }).ToList()
@@ -611,7 +619,7 @@ namespace Eduverse.Api.Controller
             };
         }
 
-        private async Task<DataResponse<object>> GetAdminDashboardDataAsync()
+        private async Task<DataResponse<object>> GetAdminDashboardDataAsync(string? period = null)
         {
             var loggedInUserId = UserId;
             AppUser user = null;
@@ -683,32 +691,86 @@ namespace Eduverse.Api.Controller
                 : 0;
             if (completionRate > 100) completionRate = 100;
 
-            // 5. Revenue Trend (12 Months of the current year)
-            var currentYear = DateTime.Now.Year;
-            var revenueTrend = new double[12];
+            // 5. Revenue Trend theo khoảng thời gian: month | quarter | year (mặc định year)
+            var nowDt = DateTime.Now;
+            var periodKey = (period ?? "year").Trim().ToLowerInvariant();
+            if (periodKey != "month" && periodKey != "quarter") periodKey = "year";
+
+            var revenueTrendList = new List<double>();
+            var revenueLabels = new List<string>();
             try
             {
+                DateTime tuNgay, denNgay;
+                if (periodKey == "month")
+                {
+                    tuNgay = new DateTime(nowDt.Year, nowDt.Month, 1);
+                    denNgay = tuNgay.AddMonths(1);
+                }
+                else if (periodKey == "quarter")
+                {
+                    int thangDauQuy = ((nowDt.Month - 1) / 3) * 3 + 1;
+                    tuNgay = new DateTime(nowDt.Year, thangDauQuy, 1);
+                    denNgay = tuNgay.AddMonths(3);
+                }
+                else
+                {
+                    tuNgay = new DateTime(nowDt.Year, 1, 1);
+                    denNgay = tuNgay.AddYears(1);
+                }
+
                 var donHangsDaThanhToan = await _donHangService.GetQueryable()
                     .Where(d => !d.IsDeleted
                              && d.TrangThai == 1
                              && d.NgayTao.HasValue
-                             && d.NgayTao.Value.Year == currentYear)
+                             && d.NgayTao.Value >= tuNgay
+                             && d.NgayTao.Value < denNgay)
                     .ToListAsync();
 
-                for (int m = 1; m <= 12; m++)
+                if (periodKey == "month")
                 {
-                    var tongThang = donHangsDaThanhToan
-                        .Where(d => d.NgayTao!.Value.Month == m)
-                        .Sum(d => d.SoTienThanhToan ?? 0);
-
-                    // Nền tảng giữ 30%
-                    revenueTrend[m - 1] = Math.Round(tongThang * 0.3, 0);
+                    int soNgay = DateTime.DaysInMonth(nowDt.Year, nowDt.Month);
+                    for (int ngay = 1; ngay <= soNgay; ngay++)
+                    {
+                        var tong = donHangsDaThanhToan
+                            .Where(d => d.NgayTao!.Value.Day == ngay)
+                            .Sum(d => d.SoTienThanhToan ?? 0);
+                        revenueTrendList.Add(Math.Round(tong * 0.3, 0));
+                        revenueLabels.Add(ngay.ToString());
+                    }
+                }
+                else if (periodKey == "quarter")
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var thang = tuNgay.AddMonths(i);
+                        var tong = donHangsDaThanhToan
+                            .Where(d => d.NgayTao!.Value.Year == thang.Year
+                                     && d.NgayTao!.Value.Month == thang.Month)
+                            .Sum(d => d.SoTienThanhToan ?? 0);
+                        revenueTrendList.Add(Math.Round(tong * 0.3, 0));
+                        revenueLabels.Add("Th" + thang.Month);
+                    }
+                }
+                else
+                {
+                    for (int m = 1; m <= 12; m++)
+                    {
+                        var tong = donHangsDaThanhToan
+                            .Where(d => d.NgayTao!.Value.Month == m)
+                            .Sum(d => d.SoTienThanhToan ?? 0);
+                        revenueTrendList.Add(Math.Round(tong * 0.3, 0));
+                        revenueLabels.Add("Th" + m);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error calculating revenue trend: " + ex.Message);
             }
+
+            // Bảo đảm biểu đồ luôn có tối thiểu 2 điểm để vẽ được đường
+            while (revenueTrendList.Count < 2) { revenueTrendList.Add(0); revenueLabels.Add(""); }
+            var revenueTrend = revenueTrendList.ToArray();
 
 
             // 6. Student Growth (last 7 months)
@@ -880,6 +942,8 @@ namespace Eduverse.Api.Controller
                         completionTrendPct = completionTrendPct
                     },
                     revenueTrend = revenueTrend,
+                    revenueLabels = revenueLabels,
+                    revenuePeriod = periodKey,
                     studentGrowth = studentGrowth,
                     bestSellingCourses = bestSellingCourses,
                     heatmap = heatmap,

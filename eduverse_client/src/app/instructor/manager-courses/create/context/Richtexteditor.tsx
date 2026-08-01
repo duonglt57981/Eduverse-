@@ -522,7 +522,7 @@ export default function RichTextEditor({
           py: 2.5,
           fontSize: 15,
           lineHeight: 1.7,
-          color: "#231313",
+          color: "var(--ev-text-primary, #231313)",
           outline: "none",
           overflowY: "auto",
           "&:empty:before": {

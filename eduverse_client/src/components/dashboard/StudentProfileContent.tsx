@@ -597,7 +597,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
           position: 'relative',
           height: { xs: 140, md: 180 },
           borderRadius: '24px',
-          bgcolor: '#E2E8F0',
+          bgcolor: 'var(--ev-divider, #E2E8F0)',
           backgroundImage: profile.anhBia ? `url(${profile.anhBia})` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -627,7 +627,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             py: 0.8,
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             textTransform: 'none',
-            '&:hover': { bgcolor: '#F9FAFB' },
+            '&:hover': { bgcolor: 'var(--ev-paper-alt, #F9FAFB)' },
           }}
         >
           Đổi ảnh bìa
@@ -706,11 +706,11 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 0.5 }}>
                   <CheckCircleRounded sx={{ color: COLORS.primary, fontSize: 16 }} />
-                  <Typography sx={{ fontSize: 13, color: 'rgba(31,41,55,0.6)', fontWeight: 700 }}>
+                  <Typography sx={{ fontSize: 13, color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))', fontWeight: 700 }}>
                     {profile.chucVu}
                   </Typography>
                   <Typography sx={{ fontSize: 13, color: 'rgba(31,41,55,0.3)' }}>•</Typography>
-                  <Typography sx={{ fontSize: 13, color: 'rgba(31,41,55,0.4)', fontWeight: 650 }}>
+                  <Typography sx={{ fontSize: 13, color: 'var(--ev-text-muted, rgba(31,41,55,0.4))', fontWeight: 650 }}>
                     ID: {profile.id.substring(0, 8).toUpperCase()}
                   </Typography>
                 </Stack>
@@ -748,7 +748,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                   <Typography sx={{ fontSize: 20, fontWeight: 900, color: COLORS.primary }}>
                     {stat.value}
                   </Typography>
-                  <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(31,41,55,0.5)', mt: 0.2 }}>
+                  <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ev-text-muted, rgba(31,41,55,0.5))', mt: 0.2 }}>
                     {stat.label}
                   </Typography>
                 </Box>
@@ -775,7 +775,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             textTransform: 'none',
             fontSize: 14,
             fontWeight: 800,
-            color: 'rgba(31,41,55,0.5)',
+            color: 'var(--ev-text-muted, rgba(31,41,55,0.5))',
             px: 2,
             pb: 1.5,
             '&.Mui-selected': { color: COLORS.primary },
@@ -881,7 +881,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                       sx={{
                         fontSize: 11.5,
                         textAlign: 'right',
-                        color: 'rgba(31,41,55,0.4)',
+                        color: 'var(--ev-text-muted, rgba(31,41,55,0.4))',
                         fontWeight: 700,
                         mt: 0.5,
                       }}
@@ -1026,10 +1026,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                         <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: COLORS.textDark }}>
                           {act.title}
                         </Typography>
-                        <Typography sx={{ fontSize: 12.5, color: 'rgba(31,41,55,0.6)', mt: 0.2 }}>
+                        <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))', mt: 0.2 }}>
                           {act.desc}
                         </Typography>
-                        <Typography sx={{ fontSize: 11, color: 'rgba(31,41,55,0.4)', fontWeight: 700, mt: 0.5 }}>
+                        <Typography sx={{ fontSize: 11, color: 'var(--ev-text-muted, rgba(31,41,55,0.4))', fontWeight: 700, mt: 0.5 }}>
                           {act.time}
                         </Typography>
                       </Box>
@@ -1133,7 +1133,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                         <Typography sx={{ fontSize: 14.5, fontWeight: 900, color: COLORS.textDark }}>
                           {badge.name}
                         </Typography>
-                        <Typography sx={{ fontSize: 12, color: 'rgba(31,41,55,0.45)', fontWeight: 700, mt: 0.5 }}>
+                        <Typography sx={{ fontSize: 12, color: 'var(--ev-text-muted, rgba(31,41,55,0.45))', fontWeight: 700, mt: 0.5 }}>
                           {badge.detail}
                         </Typography>
                       </Paper>
@@ -1224,7 +1224,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               />
                             ))}
                           </Stack>
-                          <Typography sx={{ fontSize: 11, fontWeight: 800, color: 'rgba(31,41,55,0.45)' }}>
+                          <Typography sx={{ fontSize: 11, fontWeight: 800, color: 'var(--ev-text-muted, rgba(31,41,55,0.45))' }}>
                             Độ mạnh: {passwordStrength === 4 ? 'Mạnh' : passwordStrength >= 2 ? 'Trung bình' : 'Yếu'}
                           </Typography>
                         </Box>
@@ -1287,7 +1287,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                     <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: COLORS.textDark, mb: 2 }}>
                       Xác thực 2 lớp (2FA)
                     </Typography>
-                    <Typography sx={{ fontSize: 13.5, color: 'rgba(31,41,55,0.5)', mb: 2.5, lineHeight: 1.6 }}>
+                    <Typography sx={{ fontSize: 13.5, color: 'var(--ev-text-muted, rgba(31,41,55,0.5))', mb: 2.5, lineHeight: 1.6 }}>
                       Tăng cường bảo mật cho tài khoản của bạn bằng cách yêu cầu mã xác minh OTP mỗi lần đăng nhập. Bạn có thể sử dụng ứng dụng Google Authenticator hoặc Microsoft Authenticator để nhận mã.
                     </Typography>
 
@@ -1297,7 +1297,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           <Typography sx={{ fontSize: 14.5, fontWeight: 800, color: COLORS.textDark }}>
                             Google Authenticator
                           </Typography>
-                          <Typography sx={{ fontSize: 12.5, color: 'rgba(31,41,55,0.45)', mt: 0.2, fontWeight: 650 }}>
+                          <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-muted, rgba(31,41,55,0.45))', mt: 0.2, fontWeight: 650 }}>
                             Trạng thái: {enable2FA ? 'Đang kích hoạt' : 'Chưa bật'}
                           </Typography>
                         </Box>
@@ -1310,7 +1310,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                     </Box>
                   </Box>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'rgba(31,41,55,0.4)', borderTop: '1px solid rgba(0,0,0,0.05)', pt: 3.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'var(--ev-text-muted, rgba(31,41,55,0.4))', borderTop: '1px solid rgba(0,0,0,0.05)', pt: 3.5 }}>
                     <InfoOutlined sx={{ fontSize: 18 }} />
                     <Typography sx={{ fontSize: 11.5, fontWeight: 650 }}>
                       Sau khi kích hoạt, bạn sẽ cần nhập mã OTP 6 chữ số từ ứng dụng xác minh mỗi lần đăng nhập.
@@ -1348,7 +1348,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                   <Typography variant="h6" sx={{ fontSize: 18, fontWeight: 900, color: COLORS.textDark }}>
                     Huy hiệu và Điểm thưởng
                   </Typography>
-                  <Typography sx={{ fontSize: 13.5, color: 'rgba(31,41,55,0.5)', mt: 0.2 }}>
+                  <Typography sx={{ fontSize: 13.5, color: 'var(--ev-text-muted, rgba(31,41,55,0.5))', mt: 0.2 }}>
                     Danh sách các huy hiệu và thành tích bạn đạt được trong học tập.
                   </Typography>
                 </Box>
@@ -1459,7 +1459,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                         <Typography
                           sx={{
                             fontSize: 12.5,
-                            color: 'rgba(31,41,55,0.5)',
+                            color: 'var(--ev-text-muted, rgba(31,41,55,0.5))',
                             mt: 0.2,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -1507,7 +1507,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
               <Typography variant="h6" sx={{ fontSize: 18, fontWeight: 900, color: COLORS.textDark, mb: 0.5 }}>
                 Danh sách chứng chỉ
               </Typography>
-              <Typography sx={{ fontSize: 13.5, color: 'rgba(31,41,55,0.5)', mb: 4 }}>
+              <Typography sx={{ fontSize: 13.5, color: 'var(--ev-text-muted, rgba(31,41,55,0.5))', mb: 4 }}>
                 Các chứng chỉ bạn đã xuất sắc nhận được sau khi hoàn thành khóa học.
               </Typography>
 
@@ -1563,10 +1563,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           >
                             {cert.tenChungChi}
                           </Typography>
-                          <Typography sx={{ fontSize: 12.5, color: 'rgba(31,41,55,0.6)', mt: 0.2 }}>
+                          <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))', mt: 0.2 }}>
                             {cert.khoaHoc}
                           </Typography>
-                          <Typography sx={{ fontSize: 11, color: 'rgba(31,41,55,0.4)', fontWeight: 700, mt: 0.8 }}>
+                          <Typography sx={{ fontSize: 11, color: 'var(--ev-text-muted, rgba(31,41,55,0.4))', fontWeight: 700, mt: 0.8 }}>
                             Cấp ngày: {cert.ngayCap} • Mã số: {cert.maSoChungChi.substring(0, 10).toUpperCase()}
                           </Typography>
                         </Box>
@@ -2185,7 +2185,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           }}
                         >
                           <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Typography component="span" sx={{ fontWeight: 900, color: '#1E293B', fontSize: { xs: 18, sm: 22 } }}>
+                            <Typography component="span" sx={{ fontWeight: 900, color: 'var(--ev-text-primary, #1E293B)', fontSize: { xs: 18, sm: 22 } }}>
                               Điều khoản & Quy định Hợp tác Giảng viên
                             </Typography>
                             <IconButton onClick={() => setOpenTermsDialog(false)}>
@@ -2194,12 +2194,12 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           </DialogTitle>
                           <Divider />
                           <DialogContent sx={{ py: 3 }}>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, color: '#334155' }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, color: 'var(--ev-text-secondary, #334155)' }}>
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
                                   1. Quyền Sở hữu Trí tuệ & Bản quyền Nội dung
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
                                   - Giảng viên luôn giữ trọn vẹn quyền sở hữu trí tuệ đối với tài liệu, bài giảng và nội dung khóa học do mình tự biên soạn.<br />
                                   - Bằng việc cấp phép phân phối khóa học trên EduVerse, Giảng viên đồng ý cấp cho EduVerse quyền không độc quyền (non-exclusive) để tiếp thị, quảng bá và phân phối khóa học tới học viên trên toàn cầu.<br />
                                   - Giảng viên cam kết nội dung tải lên là chính chủ, không sao chép trái phép hoặc vi phạm bản quyền của bất kỳ cá nhân hay tổ chức nào khác.
@@ -2207,10 +2207,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
                                   2. Phân chia Doanh thu & Quy trình Thanh toán
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
                                   - <strong>Tỷ lệ phân chia:</strong> Giảng viên nhận tỷ lệ doanh thu theo thỏa thuận trong từng chương trình khuyến mại hoặc bán hàng trực tiếp trên EduVerse.<br />
                                   - <strong>Rút tiền:</strong> Yêu cầu rút tiền được xử lý định kỳ thông qua tài khoản ngân hàng chính chủ đã được liên kết và xác minh trên hệ thống.<br />
                                   - <strong>Nghĩa vụ thuế:</strong> Giảng viên có trách nhiệm thực hiện khai báo và nộp thuế thu nhập cá nhân theo đúng quy định của pháp luật Việt Nam đối với nguồn thu nhập từ nền tảng.
@@ -2218,10 +2218,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
                                   3. Quy chuẩn Chất lượng & Tương tác Học viên
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
                                   - Video bài giảng cần đảm bảo hình ảnh rõ nét, âm thanh trong trẻo, không chứa nội dung phản cảm, kích động hoặc vi phạm pháp luật.<br />
                                   - Giảng viên có trách nhiệm phản hồi và giải đáp các thắc mắc (Q&A) của học viên liên quan đến bài giảng trong vòng 48 giờ làm việc.<br />
                                   - Nghiêm cấm chèn liên kết lừa đảo, quảng cáo dịch vụ bên ngoài trái phép hoặc chủ động lôi kéo học viên thanh toán ngoài hệ thống EduVerse.
@@ -2229,20 +2229,20 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
                                   4. Quy trình Duyệt & Quản lý Khóa học
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
                                   - Tất cả khóa học mới tạo hoặc chỉnh sửa nội dung lớn sẽ trải qua quy trình duyệt bởi Ban Quản trị EduVerse trước khi phát hành.<br />
                                   - EduVerse bảo lưu quyền tạm ẩn hoặc hạ khóa học nếu nhận được các khiếu nại xác đáng về vi phạm bản quyền, nội dung sai lệch hoặc giả mạo bằng cấp.
                                 </Typography>
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1E293B', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
                                   5. Bảo mật Thông tin & Hỗ trợ
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: '#475569' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
                                   - Thông tin cá nhân, CV và hồ sơ năng lực của Giảng viên được EduVerse bảo mật nghiêm ngặt theo chính sách quyền riêng tư.<br />
                                   - Nếu cần hỗ trợ thêm thông tin về thủ tục nâng cấp tài khoản Giảng viên, bạn có thể liên hệ trực tiếp với bộ phận Hỗ trợ Giảng viên qua email: <a href="mailto:instructor@eduverse.website" style={{ color: COLORS.primary, fontWeight: 700 }}>instructor@eduverse.website</a>.
                                 </Typography>
@@ -2285,9 +2285,9 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             <CloseRounded />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ display: 'grid', placeItems: 'center', bgcolor: '#F9FAFB', py: 4 }}>
+        <DialogContent dividers sx={{ display: 'grid', placeItems: 'center', bgcolor: 'var(--ev-paper-alt, #F9FAFB)', py: 4 }}>
           {/* Canvas crop box */}
-          <Box sx={{ border: '2px dashed rgba(0,0,0,0.1)', borderRadius: cropType === 'avatar' ? '20px' : '8px', overflow: 'hidden', bgcolor: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <Box sx={{ border: '2px dashed rgba(0,0,0,0.1)', borderRadius: cropType === 'avatar' ? '20px' : '8px', overflow: 'hidden', bgcolor: 'var(--ev-paper, #fff)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <canvas ref={canvasRef} style={{ display: 'block', maxWidth: '100%' }} />
           </Box>
 
@@ -2308,7 +2308,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setShowCropDialog(false)} sx={{ color: 'rgba(31,41,55,0.6)', fontWeight: 800 }}>
+          <Button onClick={() => setShowCropDialog(false)} sx={{ color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))', fontWeight: 800 }}>
             Hủy
           </Button>
           <Button
@@ -2338,7 +2338,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
           </Typography>
         </DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontSize: 13, color: 'rgba(31,41,55,0.6)', mb: 3, lineHeight: 1.5 }}>
+          <Typography sx={{ fontSize: 13, color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))', mb: 3, lineHeight: 1.5 }}>
             Quét mã QR dưới đây bằng ứng dụng Google Authenticator và nhập mã OTP 6 chữ số để kích hoạt.
           </Typography>
 
@@ -2354,10 +2354,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                   border: '1px solid rgba(0,0,0,0.08)',
                   p: 1.5,
                   borderRadius: '12px',
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--ev-paper, #fff)',
                 }}
               />
-              <Typography sx={{ fontSize: 12, fontWeight: 800, color: 'rgba(31,41,55,0.45)' }}>
+              <Typography sx={{ fontSize: 12, fontWeight: 800, color: 'var(--ev-text-muted, rgba(31,41,55,0.45))' }}>
                 Secret Key: <span style={{ color: COLORS.primary }}>{twoFAData.secret}</span>
               </Typography>
 
@@ -2375,7 +2375,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setShow2FADialog(false)} sx={{ color: 'rgba(31,41,55,0.5)', fontWeight: 800 }}>
+          <Button onClick={() => setShow2FADialog(false)} sx={{ color: 'var(--ev-text-muted, rgba(31,41,55,0.5))', fontWeight: 800 }}>
             Hủy
           </Button>
           <Button
@@ -2434,7 +2434,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             <Typography variant="h6" sx={{ fontSize: 17, fontWeight: 950, color: COLORS.textDark }}>
               {selectedBadge.name}
             </Typography>
-            <Typography sx={{ fontSize: 13, color: 'rgba(31,41,55,0.6)', mt: 1, px: 2, lineHeight: 1.5 }}>
+            <Typography sx={{ fontSize: 13, color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))', mt: 1, px: 2, lineHeight: 1.5 }}>
               {selectedBadge.condition}
             </Typography>
             {selectedBadge.isAchieved ? (
@@ -2442,16 +2442,16 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                 <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: COLORS.green }}>
                   🎉 Bạn đã đạt được thành tích này!
                 </Typography>
-                <Typography sx={{ fontSize: 11.5, color: 'rgba(31,41,55,0.45)', mt: 0.5, fontWeight: 700 }}>
+                <Typography sx={{ fontSize: 11.5, color: 'var(--ev-text-muted, rgba(31,41,55,0.45))', mt: 0.5, fontWeight: 700 }}>
                   Ngày nhận: {selectedBadge.date}
                 </Typography>
               </Box>
             ) : (
               <Box sx={{ mt: 3, p: 2, borderRadius: '12px', bgcolor: 'rgba(0,0,0,0.03)' }}>
-                <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: 'rgba(31,41,55,0.45)' }}>
+                <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: 'var(--ev-text-muted, rgba(31,41,55,0.45))' }}>
                   🔒 Chưa đạt được
                 </Typography>
-                <Typography sx={{ fontSize: 11.5, color: 'rgba(31,41,55,0.4)', mt: 0.5, fontWeight: 650 }}>
+                <Typography sx={{ fontSize: 11.5, color: 'var(--ev-text-muted, rgba(31,41,55,0.4))', mt: 0.5, fontWeight: 650 }}>
                   Hãy tiếp tục học tập và tham gia thảo luận để mở khóa thành tích này.
                 </Typography>
               </Box>

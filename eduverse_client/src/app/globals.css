@@ -1,15 +1,55 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Giá trị mặc định (chế độ sáng). ThemeProvider và script chống nháy
+     sẽ ghi đè các biến --ev-* này khi người dùng chọn chế độ tối.
+     KHÔNG dùng @media prefers-color-scheme ở đây để không đè lên
+     lựa chọn thủ công của người dùng. */
+  --ev-bg: #F7F5F2;
+  --ev-paper: #FFFFFF;
+  --ev-paper-alt: #FBFAF9;
+  --ev-text-primary: #1F2937;
+  --ev-text-secondary: #4B5563;
+  --ev-text-muted: #8A7676;
+  --ev-grey: #9CA3AF;
+  --ev-divider: #ECE7E4;
+  --ev-brand-tint: #FBEFEF;
+  --ev-brand-border: #F0DEDE;
+  --ev-hover: rgba(24, 18, 20, 0.04);
+  --ev-selected: rgba(139, 19, 19, 0.08);
+  --ev-overlay: rgba(24, 18, 20, 0.45);
+
+
+  /* Bí danh cho hệ biến --dashboard-* đang được dùng nhưng chưa từng định nghĩa */
+  --dashboard-surface: var(--ev-paper);
+  --dashboard-surface-raised: var(--ev-paper-alt);
+  --dashboard-surface-muted: var(--ev-paper-alt);
+  --dashboard-border: var(--ev-divider);
+  --dashboard-border-strong: var(--ev-divider);
+  --dashboard-text-primary: var(--ev-text-primary);
+  --dashboard-text-secondary: var(--ev-text-secondary);
+  --dashboard-text-muted: var(--ev-text-muted);
+  --dashboard-primary-tint: var(--ev-brand-tint);
+  --dashboard-primary-border: var(--ev-brand-border);
+  --dashboard-info-tint: var(--ev-paper-alt);
+  --dashboard-success-tint: var(--ev-paper-alt);
+
+  --background: var(--ev-paper);
+  --foreground: var(--ev-text-primary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Nền trang bám theo chế độ, tránh viền trắng khi cuộn quá đà */
+html,
+body {
+  background-color: var(--ev-bg);
+  color: var(--ev-text-primary);
+}
+
+/* Ảnh, logo và media KHÔNG bị đảo màu ở chế độ tối */
+img,
+video,
+canvas {
+  filter: none;
 }
 
 html,

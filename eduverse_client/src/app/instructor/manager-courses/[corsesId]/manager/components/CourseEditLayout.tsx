@@ -326,7 +326,7 @@ export default function CourseEditLayout({
             flexShrink: 0,
             px: 2.5,
             py: 4,
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             borderRight: "1px solid #E5E7EB",
             minHeight: "calc(100vh - 72px)",
             position: "sticky",
@@ -344,7 +344,7 @@ export default function CourseEditLayout({
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     mb: 2,
-                    color: "#94A3B8",
+                    color: "var(--ev-text-muted, #94A3B8)",
                   }}
                 >
                   {nhom.tieuDe}
@@ -391,7 +391,7 @@ export default function CourseEditLayout({
                           />
                         ) : (
                           <RadioButtonUncheckedIcon
-                            sx={{ fontSize: 18, color: "#94A3B8" }}
+                            sx={{ fontSize: 18, color: "var(--ev-text-muted, #94A3B8)" }}
                           />
                         )}
                         <Typography

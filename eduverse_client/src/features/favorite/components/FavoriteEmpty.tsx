@@ -51,7 +51,7 @@ export default function FavoriteEmpty() {
           fontSize: 24,
           fontWeight: 900,
           mb: 1.5,
-          color: '#19171c',
+          color: 'var(--ev-text-primary, #19171c)',
         }}
       >
         Bạn chưa có khóa học yêu thích nào
@@ -59,7 +59,7 @@ export default function FavoriteEmpty() {
 
       <Typography
         sx={{
-          color: 'rgba(24,24,27,0.58)',
+          color: 'var(--ev-text-muted, rgba(24,24,27,0.58))',
           fontSize: 15,
           mb: 4,
           maxWidth: 400,

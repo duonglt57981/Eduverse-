@@ -140,7 +140,7 @@ export default function LandingPage() {
                   maxWidth: 620,
                   fontSize: 15.5,
                   lineHeight: 1.95,
-                  color: 'rgba(24,24,27,0.62)',
+                  color: 'var(--ev-text-muted, rgba(24,24,27,0.62))',
                 }}
               >
                 Tham gia môi trường học tập hiện đại với hàng trăm khóa học thực tiễn,
@@ -200,7 +200,7 @@ export default function LandingPage() {
                     </Box>
                   ))}
                 </Stack>
-                <Typography sx={{ fontSize: 13.5, color: 'rgba(24,24,27,0.58)' }}>
+                <Typography sx={{ fontSize: 13.5, color: 'var(--ev-text-muted, rgba(24,24,27,0.58))' }}>
                   1.200+ học viên mới bắt đầu học mỗi tuần
                 </Typography>
               </Stack>
@@ -249,13 +249,13 @@ export default function LandingPage() {
                   borderRadius: 2.8,
                   border: '1px solid rgba(17,17,17,0.08)',
                   boxShadow: '0 18px 32px rgba(30,24,26,0.10)',
-                  bgcolor: '#fff',
+                  bgcolor: 'var(--ev-paper, #fff)',
                 }}
               >
                 <Typography sx={{ fontSize: 24, fontWeight: 900, color: '#7f1d1d' }}>
                   4.9/5
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
+                <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>
                   Đánh giá từ học viên premium
                 </Typography>
               </Paper>
@@ -316,7 +316,7 @@ export default function LandingPage() {
                     p: 2,
                     borderRadius: 2.8,
                     border: '1px solid rgba(17,17,17,0.08)',
-                    bgcolor: '#fff',
+                    bgcolor: 'var(--ev-paper, #fff)',
                     transition: 'transform 180ms ease, box-shadow 180ms ease',
                     '&:hover': {
                       transform: 'translateY(-4px)',
@@ -328,7 +328,7 @@ export default function LandingPage() {
                   <Typography sx={{ mt: 1.75, fontSize: 21, fontWeight: 900, letterSpacing: '-0.4px' }}>
                     {course.title}
                   </Typography>
-                  <Typography sx={{ mt: 0.75, fontSize: 13, color: 'rgba(24,24,27,0.58)' }}>
+                  <Typography sx={{ mt: 0.75, fontSize: 13, color: 'var(--ev-text-muted, rgba(24,24,27,0.58))' }}>
                     {course.subtitle}
                   </Typography>
                   <Stack
@@ -392,7 +392,7 @@ export default function LandingPage() {
                       p: 2.5,
                       borderRadius: 2.8,
                       border: '1px solid rgba(17,17,17,0.07)',
-                      bgcolor: '#fff',
+                      bgcolor: 'var(--ev-paper, #fff)',
                       transition: 'transform 180ms ease, box-shadow 180ms ease',
                       '&:hover': {
                         transform: 'translateY(-3px)',
@@ -417,7 +417,7 @@ export default function LandingPage() {
                     <Typography sx={{ fontSize: 18, fontWeight: 900 }}>
                       {item.title}
                     </Typography>
-                    <Typography sx={{ mt: 1, fontSize: 14, lineHeight: 1.8, color: 'rgba(24,24,27,0.58)' }}>
+                    <Typography sx={{ mt: 1, fontSize: 14, lineHeight: 1.8, color: 'var(--ev-text-muted, rgba(24,24,27,0.58))' }}>
                       {item.description}
                     </Typography>
                   </Paper>
@@ -448,7 +448,7 @@ export default function LandingPage() {
                     p: 2.5,
                     borderRadius: 2.8,
                     border: '1px solid rgba(17,17,17,0.07)',
-                    bgcolor: '#fff',
+                    bgcolor: 'var(--ev-paper, #fff)',
                     textAlign: 'center',
                   }}
                 >
@@ -505,7 +505,7 @@ export default function LandingPage() {
                     p: 2.5,
                     borderRadius: 2.8,
                     border: '1px solid rgba(17,17,17,0.07)',
-                    bgcolor: '#fff',
+                    bgcolor: 'var(--ev-paper, #fff)',
                   }}
                 >
                   <Stack direction="row" spacing={0.35} sx={{ color: '#efb21a' }}>
@@ -518,7 +518,7 @@ export default function LandingPage() {
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <Typography sx={{ fontSize: 15, fontWeight: 900 }}>{item.name}</Typography>
-                  <Typography sx={{ mt: 0.5, fontSize: 12.5, color: 'rgba(24,24,27,0.54)' }}>
+                  <Typography sx={{ mt: 0.5, fontSize: 12.5, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>
                     {item.role}
                   </Typography>
                 </Paper>

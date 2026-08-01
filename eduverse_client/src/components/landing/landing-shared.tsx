@@ -54,7 +54,7 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
           zIndex: 1100,
           px: { xs: 2, sm: 3, md: 4 },
           py: { xs: 1.5, md: 1.75 },
-          bgcolor: '#ffffff',
+          bgcolor: 'var(--ev-paper, #ffffff)',
           borderBottom: '1px solid rgba(17,17,17,0.06)',
           boxShadow: '0 8px 24px rgba(24,18,20,0.04)',
         }}
@@ -85,7 +85,7 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
             sx={{
               display: { xs: 'none', md: 'flex' },
               alignItems: 'center',
-              color: 'rgba(24,24,27,0.68)',
+              color: 'var(--ev-text-muted, rgba(24,24,27,0.68))',
             }}
           >
             {filteredNavItems.map((item) => {
@@ -279,7 +279,7 @@ export function SectionHeading({
             mt: 1.5,
             fontSize: 15,
             lineHeight: 1.9,
-            color: 'rgba(24,24,27,0.62)',
+            color: 'var(--ev-text-muted, rgba(24,24,27,0.62))',
           }}
         >
           {description}

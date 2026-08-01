@@ -29,7 +29,7 @@ export default function FavoriteGrid({ favorites, loading, onRemove }: FavoriteG
               p: 2,
               borderRadius: 2.8,
               border: '1px solid rgba(17,17,17,0.08)',
-              bgcolor: '#fff',
+              bgcolor: 'var(--ev-paper, #fff)',
               height: 440,
               display: 'flex',
               flexDirection: 'column',

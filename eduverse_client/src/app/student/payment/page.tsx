@@ -218,7 +218,7 @@ function ThanhToanContent() {
         >
           Thanh toán
         </Typography>
-        <Typography sx={{ color: "rgba(31,41,55,0.55)", fontSize: 14 }}>
+        <Typography sx={{ color: "var(--ev-text-secondary, rgba(31,41,55,0.55))", fontSize: 14 }}>
           Xác nhận đơn hàng và hoàn tất thanh toán
         </Typography>
       </Box>
@@ -569,7 +569,7 @@ function ThanhToanContent() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: "#fff",
+                bgcolor: "var(--ev-paper, #fff)",
               }}
             >
               {paymentResponse?.qrCode ? (
@@ -784,7 +784,7 @@ export default function StudentCheckoutPage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

@@ -57,10 +57,10 @@ const BRAND_COLORS = {
   primaryHover: "#7F1D1D",
   primarySoft: "#FEF2F2",
   primaryBorder: "#FECACA",
-  textTitle: "#111827",
-  textBody: "#374151",
-  textMuted: "#6B7280",
-  borderLight: "#E5E7EB",
+  textTitle: "var(--ev-text-primary, #111827)",
+  textBody: "var(--ev-text-secondary, #374151)",
+  textMuted: "var(--ev-text-muted, #6B7280)",
+  borderLight: "var(--ev-divider, #E5E7EB)",
 };
 
 function FilterGroup({
@@ -118,7 +118,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
         p: 2,
         borderRadius: "18px",
         border: `1px solid ${BRAND_COLORS.borderLight}`,
-        bgcolor: "#ffffff",
+        bgcolor: "var(--ev-paper, #ffffff)",
         display: "flex",
         flexDirection: "column",
         height: "100%",
@@ -138,7 +138,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
           pt: "56.25%", // 16:9 Aspect Ratio
           overflow: "hidden",
           borderRadius: "12px",
-          bgcolor: "#F3F4F6",
+          bgcolor: "var(--ev-paper-alt, #F3F4F6)",
         }}
       >
         {imageUrl ? (
@@ -171,7 +171,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              color: "#9CA3AF",
+              color: "var(--ev-grey, #9CA3AF)",
               gap: 1,
             }}
           >
@@ -229,11 +229,11 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             height: 32,
             bgcolor: "rgba(255,255,255,0.75)",
             backdropFilter: "blur(8px)",
-            color: favorited ? BRAND_COLORS.primary : "#4B5563",
+            color: favorited ? BRAND_COLORS.primary : "var(--ev-text-secondary, #4B5563)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             transition: "all 0.2s ease",
             "&:hover": {
-              bgcolor: "#ffffff",
+              bgcolor: "var(--ev-paper, #ffffff)",
               color: BRAND_COLORS.primary,
               transform: "scale(1.08)",
             },
@@ -263,7 +263,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
                 height: 22,
                 fontSize: 11,
                 fontWeight: 600,
-                bgcolor: "#F3F4F6",
+                bgcolor: "var(--ev-paper-alt, #F3F4F6)",
                 color: BRAND_COLORS.textBody,
                 borderRadius: "4px",
               }}
@@ -277,7 +277,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
                 height: 22,
                 fontSize: 11,
                 fontWeight: 600,
-                bgcolor: "#EFF6FF",
+                bgcolor: "var(--ev-paper-alt, #EFF6FF)",
                 color: "#2563EB",
                 borderRadius: "4px",
               }}
@@ -353,7 +353,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
               <Typography
                 sx={{
                   fontSize: 13,
-                  color: "#9CA3AF",
+                  color: "var(--ev-grey, #9CA3AF)",
                   textDecoration: "line-through",
                 }}
               >
@@ -382,7 +382,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
                 gap: 0.5,
               }}
             >
-              <TimerRounded sx={{ fontSize: 15, color: "#9CA3AF" }} />
+              <TimerRounded sx={{ fontSize: 15, color: "var(--ev-grey, #9CA3AF)" }} />
               {course.duration}
             </Typography>
           )}
@@ -401,10 +401,10 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
               fontWeight: 600,
               borderRadius: "10px",
               textTransform: "none",
-              borderColor: "#D1D5DB",
+              borderColor: "var(--ev-divider, #D1D5DB)",
               color: BRAND_COLORS.textBody,
               "&:hover": {
-                bgcolor: "#F9FAFB",
+                bgcolor: "var(--ev-paper-alt, #F9FAFB)",
                 borderColor: BRAND_COLORS.textMuted,
                 color: BRAND_COLORS.textTitle,
               },
@@ -763,14 +763,14 @@ export default function CoursesPage({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchRounded sx={{ color: "#9CA3AF" }} />
+                    <SearchRounded sx={{ color: "var(--ev-grey, #9CA3AF)" }} />
                   </InputAdornment>
                 ),
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   height: 52,
-                  bgcolor: "#F9FAFB",
+                  bgcolor: "var(--ev-paper-alt, #F9FAFB)",
                   borderRadius: "12px",
                   fontSize: 14.5,
                   transition: "all 200ms ease",
@@ -780,7 +780,7 @@ export default function CoursesPage({
                     borderColor: BRAND_COLORS.primary,
                     borderWidth: 1.5,
                   },
-                  "&.Mui-focused": { bgcolor: "#ffffff" },
+                  "&.Mui-focused": { bgcolor: "var(--ev-paper, #ffffff)" },
                 },
               }}
             />
@@ -898,7 +898,7 @@ export default function CoursesPage({
             p: 3,
             borderRadius: "16px",
             border: `1px solid ${BRAND_COLORS.borderLight}`,
-            bgcolor: "#ffffff",
+            bgcolor: "var(--ev-paper, #ffffff)",
             position: { lg: "sticky" },
             top: { lg: 100 },
             maxHeight: { lg: "calc(100vh - 140px)" },
@@ -946,7 +946,7 @@ export default function CoursesPage({
                 minWidth: 0,
                 p: 0,
                 "&.Mui-disabled": {
-                  color: "#9CA3AF",
+                  color: "var(--ev-grey, #9CA3AF)",
                 },
                 "&:hover": {
                   bgcolor: "transparent",
@@ -1019,7 +1019,7 @@ export default function CoursesPage({
                         cursor: "pointer",
                         transition: "background-color 150ms ease",
                         "&:hover": {
-                          bgcolor: "#F3F4F6",
+                          bgcolor: "var(--ev-paper-alt, #F3F4F6)",
                         },
                         "& .MuiFormControlLabel-label": {
                           fontSize: 13.5,
@@ -1108,7 +1108,7 @@ export default function CoursesPage({
                       borderRadius: "8px",
                       cursor: "pointer",
                       transition: "background-color 150ms ease",
-                      "&:hover": { bgcolor: "#F3F4F6" },
+                      "&:hover": { bgcolor: "var(--ev-paper-alt, #F3F4F6)" },
                       "& .MuiFormControlLabel-label": {
                         fontSize: 13.5,
                         fontWeight: selected ? 700 : 500,
@@ -1163,7 +1163,7 @@ export default function CoursesPage({
                       borderRadius: "8px",
                       cursor: "pointer",
                       transition: "background-color 150ms ease",
-                      "&:hover": { bgcolor: "#F3F4F6" },
+                      "&:hover": { bgcolor: "var(--ev-paper-alt, #F3F4F6)" },
                       "& .MuiFormControlLabel-label": {
                         fontSize: 13.5,
                         fontWeight: selected ? 700 : 500,
@@ -1200,7 +1200,7 @@ export default function CoursesPage({
                     height: 40,
                     borderRadius: "9px",
                     fontSize: 13,
-                    bgcolor: "#ffffff",
+                    bgcolor: "var(--ev-paper, #ffffff)",
                     "& fieldset": { borderColor: BRAND_COLORS.borderLight },
                   }}
                 >
@@ -1227,7 +1227,7 @@ export default function CoursesPage({
                     height: 40,
                     borderRadius: "9px",
                     fontSize: 13,
-                    bgcolor: "#ffffff",
+                    bgcolor: "var(--ev-paper, #ffffff)",
                     "& fieldset": { borderColor: BRAND_COLORS.borderLight },
                   }}
                 >
@@ -1290,7 +1290,7 @@ export default function CoursesPage({
                 gap: 1,
                 p: 1,
                 borderRadius: "10px",
-                bgcolor: "#F3F4F6",
+                bgcolor: "var(--ev-paper-alt, #F3F4F6)",
                 border: `1px solid ${BRAND_COLORS.borderLight}`,
               }}
             >
@@ -1362,7 +1362,7 @@ export default function CoursesPage({
                   minWidth: 180,
                   height: 38,
                   borderRadius: "4px",
-                  bgcolor: "#ffffff",
+                  bgcolor: "var(--ev-paper, #ffffff)",
                   fontSize: 13.5,
                   color: BRAND_COLORS.textBody,
                   "& fieldset": { borderColor: "transparent" },
@@ -1388,7 +1388,7 @@ export default function CoursesPage({
                 p: 4,
                 borderRadius: "16px",
                 border: `1px solid ${BRAND_COLORS.borderLight}`,
-                bgcolor: "#ffffff",
+                bgcolor: "var(--ev-paper, #ffffff)",
               }}
             >
               <Stack
@@ -1445,11 +1445,11 @@ export default function CoursesPage({
                 borderRadius: "16px",
                 border: `1px dashed ${BRAND_COLORS.primaryBorder}`,
                 textAlign: "center",
-                bgcolor: "#ffffff",
+                bgcolor: "var(--ev-paper, #ffffff)",
               }}
             >
               <QueryStatsRounded
-                sx={{ fontSize: 44, color: "#9CA3AF", mb: 2 }}
+                sx={{ fontSize: 44, color: "var(--ev-grey, #9CA3AF)", mb: 2 }}
               />
               <Typography
                 sx={{

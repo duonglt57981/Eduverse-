@@ -1822,7 +1822,7 @@ export default function CourseRegistrationPage() {
               p: { xs: 2.5, md: 4.5 },
               borderRadius: "28px",
               border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: "#ffffff",
+              bgcolor: "var(--ev-paper, #ffffff)",
               boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
             }}
           >

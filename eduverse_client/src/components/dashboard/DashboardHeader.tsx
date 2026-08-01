@@ -685,55 +685,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           {/* Admin Mode Role switch */}
           {isAdminMode && (
             <>
-              {/* Extra Admin Export Controls */}
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{
-                  display: { xs: "none", md: "flex" },
-                  alignItems: "center",
-                }}
-              >
-                <Button
-                  variant="outlined"
-                  startIcon={
-                    <CalendarMonthRounded sx={{ color: "text.secondary" }} />
-                  }
-                  sx={{
-                    borderRadius: "10px",
-                    borderColor: "divider",
-                    color: "text.primary",
-                    px: 2,
-                    py: 0.6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    textTransform: "none",
-                    bgcolor: "background.paper",
-                  }}
-                >
-                  01 Th11 - 30 Th11
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={
-                    <ArrowForwardRounded sx={{ transform: "rotate(90deg)" }} />
-                  }
-                  sx={{
-                    borderRadius: "10px",
-                    bgcolor: "primary.main",
-                    color: "#fff",
-                    px: 2,
-                    py: 0.6,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    textTransform: "none",
-                    boxShadow: "none",
-                    "&:hover": { bgcolor: "primary.dark" },
-                  }}
-                >
-                  Xuất báo cáo
-                </Button>
-              </Stack>
+
 
               <Button
                 size="small"
@@ -853,7 +805,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     py: 1.1,
                     fontSize: 14,
                     fontWeight: 500,
-                    color: "#1F2937",
+                    color: "var(--ev-text-primary, #1F2937)",
                     "&:hover": {
                       bgcolor: "rgba(141,19,19,0.04)",
                       color: "#8B1313",
@@ -893,7 +845,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                   sx={{
                     fontWeight: 800,
                     fontSize: 14.5,
-                    color: "#1F2937",
+                    color: "var(--ev-text-primary, #1F2937)",
                   }}
                 >
                   {hoTen}

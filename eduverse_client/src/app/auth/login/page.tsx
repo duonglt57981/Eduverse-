@@ -28,7 +28,7 @@ export default function LoginPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: '#F8FAFC',
+          bgcolor: 'var(--ev-paper-alt, #F8FAFC)',
           px: 2.5,
           py: 4,
           position: 'relative',
@@ -49,7 +49,7 @@ export default function LoginPage() {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              color: '#64748B',
+              color: 'var(--ev-text-secondary, #64748B)',
               textDecoration: 'none',
               fontWeight: 600,
               fontSize: 14.5,
@@ -84,7 +84,7 @@ export default function LoginPage() {
             borderRadius: '28px',
             border: '1px solid rgba(0, 0, 0, 0.08)',
             boxShadow: '0 16px 40px rgba(30, 41, 59, 0.06)',
-            backgroundColor: '#ffffff',
+            backgroundColor: 'var(--ev-paper, #ffffff)',
             p: { xs: 5, sm: 6.5 },
             display: 'flex',
             flexDirection: 'column',
@@ -109,13 +109,13 @@ export default function LoginPage() {
             <Box sx={{ textAlign: 'center' }}>
               <Typography
                 variant="h5"
-                sx={{ fontWeight: 800, color: '#1E293B', fontSize: 26, letterSpacing: '-0.5px', mb: 1.5 }}
+                sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', fontSize: 26, letterSpacing: '-0.5px', mb: 1.5 }}
               >
                 Chào mừng trở lại!
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ color: '#64748B', fontSize: 15.5, lineHeight: 1.6 }}
+                sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 15.5, lineHeight: 1.6 }}
               >
                 Đăng nhập bằng tài khoản Google để tiếp tục hành trình học tập tại EduVerse
               </Typography>

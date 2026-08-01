@@ -412,7 +412,7 @@ export default function AdminUsersPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "#1F2937",
+                  color: "var(--ev-text-primary, #1F2937)",
                   mb: 0.5,
                 }}
               >
