@@ -302,8 +302,9 @@ export default function StudentHomeHeader() {
             component="form"
             onSubmit={handleSearchSubmit}
             sx={{
-              flex: 1,
-              maxWidth: 520,
+              flex: { xs: "1 1 auto", md: "1 1 360px", lg: "1 1 520px" },
+              minWidth: { md: 280, lg: 420 },
+              maxWidth: 640,
               display: "flex",
               alignItems: "center",
               gap: 1.25,
