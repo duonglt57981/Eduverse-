@@ -16,7 +16,6 @@ import {
   PaletteRounded,
   NotificationsRounded,
   ShieldRounded,
-  LinkRounded,
 } from '@mui/icons-material';
 
 import AccountSettings from '@/src/components/settings/AccountSettings';
@@ -24,7 +23,6 @@ import SecuritySettings from '@/src/components/settings/SecuritySettings';
 import AppearanceSettings from '@/src/components/settings/AppearanceSettings';
 import NotificationSettings from '@/src/components/settings/NotificationSettings';
 import PrivacySettings from '@/src/components/settings/PrivacySettings';
-import LinkedAccountSettings from '@/src/components/settings/LinkedAccountSettings';
 
 const settingsTabs = [
   { label: 'Tài khoản', icon: PersonRounded, description: 'Thông tin cá nhân, ảnh đại diện' },
