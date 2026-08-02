@@ -50,6 +50,7 @@ using Eduverse.Repository.DangKyKhoaHocRepository;
 using Elastic.Clients.Elasticsearch;
 using Eduverse.Service.TienDoHocTapService;
 using Eduverse.Repository.TienDoHocTapRepository;
+using Eduverse.Service.ThongBaoService;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
@@ -78,6 +79,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IBaiKiemTraRepository _baiKiemTraRepository;
         private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
         private readonly ITienDoHocTapRepository _tienDoHocTapRepository;
+        private readonly INotificationPublisher _notificationPublisher;
 
         public LichSuKiemDuyetKhoaHocService(
             ILichSuKiemDuyetKhoaHocRepository repository,
@@ -100,6 +102,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             IElasticsearchService elasticsearchService,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             ITienDoHocTapRepository tienDoHocTapRepository,
+            INotificationPublisher notificationPublisher,
 
 
         IHttpContextAccessor? httpContextAccessor = null) : base(repository)
@@ -123,6 +126,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             _elasticsearchService = elasticsearchService;
             _dangKyKhoaHocRepository = dangKyKhoaHocRepository;
             _tienDoHocTapRepository = tienDoHocTapRepository;
+            _notificationPublisher = notificationPublisher;
         }
 
         #region GetDanhSachKiemDuyet
@@ -902,6 +906,23 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     await CapNhatDangKyKhoaHoc(khoaHoc.Id, khoaHoc.IdBanGhiTruoc.Value);
                 }
                 
+            }
+
+            if (khoaHoc.CreatedId.HasValue)
+            {
+                var approved = request.TrangThaiPheDuyet == "DaDuyet";
+                await _notificationPublisher.NotifyUserAsync(khoaHoc.CreatedId.Value, new NotificationPayload
+                {
+                    TieuDe = approved ? "Khóa học đã được phê duyệt" : "Khóa học bị từ chối",
+                    NoiDung = approved
+                        ? $"Khóa học '{khoaHoc.TieuDe}' đã được phê duyệt và xuất bản."
+                        : $"Khóa học '{khoaHoc.TieuDe}' bị từ chối. Lý do: {request.LyDo}",
+                    LoaiThongBao = approved ? "KhoaHocDaDuyet" : "KhoaHocTuChoi",
+                    Link = $"/instructor/manager-courses/{khoaHoc.Id}/manager",
+                    FromUser = userId,
+                    ItemId = khoaHoc.Id,
+                    ItemName = khoaHoc.TieuDe
+                });
             }
 
             return new KiemDuyetKhoaHocDto

@@ -46,8 +46,11 @@ namespace Eduverse.Api.Controller
         public async Task<IActionResult> GetCuaToi()
         {
             var userId = GetUserId();
+            var isAdmin = IsAdmin();
             var result = await _repo.GetQueryable()
-                .Where(t => t.IdNguoiDung == userId || t.ToUser == userId)
+                .Where(t => t.IdNguoiDung == userId ||
+                            t.ToUser == userId ||
+                            (isAdmin && t.IdNguoiDung == null && t.ToUser == null))
                 .OrderByDescending(t => t.ThoiGianTao)
                 .Take(50)
                 .ToListAsync();
@@ -93,8 +96,11 @@ namespace Eduverse.Api.Controller
         public async Task<IActionResult> GetSoChuaDoc()
         {
             var userId = GetUserId();
+            var isAdmin = IsAdmin();
             var count = await _repo.GetQueryable()
-                .CountAsync(t => (t.IdNguoiDung == userId || t.ToUser == userId) &&
+                .CountAsync(t => (t.IdNguoiDung == userId ||
+                                  t.ToUser == userId ||
+                                  (isAdmin && t.IdNguoiDung == null && t.ToUser == null)) &&
                                  t.DaDoc != true && t.IsRead == false);
             return Ok(DataResponse.Success(count, "Thành công"));
         }
@@ -103,8 +109,11 @@ namespace Eduverse.Api.Controller
         public async Task<DataResponse<List<ThongBao>>> GetDanhSachChuaDoc()
         {
             var userId = GetUserId();
+            var isAdmin = IsAdmin();
             var result = await _repo.GetQueryable()
-                .Where(t => (t.IdNguoiDung == userId || t.ToUser == userId) &&
+                .Where(t => (t.IdNguoiDung == userId ||
+                             t.ToUser == userId ||
+                             (isAdmin && t.IdNguoiDung == null && t.ToUser == null)) &&
                             t.DaDoc != true && t.IsRead == false)
                 .OrderByDescending(t => t.ThoiGianTao)
                 .ToListAsync();
@@ -196,8 +205,11 @@ namespace Eduverse.Api.Controller
         public async Task<IActionResult> DocTatCa()
         {
             var userId = GetUserId();
+            var isAdmin = IsAdmin();
             var list = await _repo.GetQueryableWithTracking()
-                .Where(t => (t.IdNguoiDung == userId || t.ToUser == userId) &&
+                .Where(t => (t.IdNguoiDung == userId ||
+                             t.ToUser == userId ||
+                             (isAdmin && t.IdNguoiDung == null && t.ToUser == null)) &&
                             t.DaDoc != true && t.IsRead == false)
                 .ToListAsync();
             foreach (var tb in list)

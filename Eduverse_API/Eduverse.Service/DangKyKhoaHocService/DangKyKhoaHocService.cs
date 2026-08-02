@@ -7,6 +7,7 @@ using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.DangKyKhoaHocService.Dto;
 using Eduverse.Service.DanhGiaService;
 using Eduverse.Service.KhoaHocService;
+using Eduverse.Service.ThongBaoService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -24,16 +25,19 @@ namespace Eduverse.Service.DangKyKhoaHocService
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor? _httpContextAccessor;
+        private readonly INotificationPublisher _notificationPublisher;
         public DangKyKhoaHocService(
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             //IKhoaHocService khoaHocService,
             IKhoaHocRepository khoaHocRepository,
             IMapper mapper,
+            INotificationPublisher notificationPublisher,
             IHttpContextAccessor? httpContextAccessor = null) : base(dangKyKhoaHocRepository)
         {
             //_khoaHocService = khoaHocService;
             _mapper = mapper;
             _khoaHocRepository = khoaHocRepository;
+            _notificationPublisher = notificationPublisher;
             this._httpContextAccessor = httpContextAccessor;
         }
 
@@ -99,6 +103,45 @@ namespace Eduverse.Service.DangKyKhoaHocService
                 .CountAsync();
             _khoaHocRepository.Update(khoaHoc);
             await _khoaHocRepository.SaveAsync();
+
+            var learnerName = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name)
+                              ?? "Học viên";
+
+            await _notificationPublisher.NotifyUserAsync(idNguoiDangKi, new NotificationPayload
+            {
+                TieuDe = "Đăng ký khóa học thành công",
+                NoiDung = $"Bạn đã đăng ký khóa học '{khoaHoc.TieuDe}' thành công.",
+                LoaiThongBao = "DangKyKhoaHocThanhCong",
+                Link = "/student/courses/my-courses",
+                FromUser = khoaHoc.CreatedId,
+                ItemId = khoaHoc.Id,
+                ItemName = khoaHoc.TieuDe
+            });
+
+            if (khoaHoc.CreatedId.HasValue && khoaHoc.CreatedId.Value != idNguoiDangKi)
+            {
+                await _notificationPublisher.NotifyUserAsync(khoaHoc.CreatedId.Value, new NotificationPayload
+                {
+                    TieuDe = "Khóa học có học viên mới",
+                    NoiDung = $"{learnerName} vừa đăng ký khóa học '{khoaHoc.TieuDe}'.",
+                    LoaiThongBao = "HocVienDangKyKhoaHoc",
+                    Link = "/instructor/students",
+                    FromUser = idNguoiDangKi,
+                    ItemId = khoaHoc.Id,
+                    ItemName = khoaHoc.TieuDe
+                });
+            }
+
+            await _notificationPublisher.NotifyRoleAsync("Admin", new NotificationPayload
+            {
+                TieuDe = "Đăng ký khóa học mới",
+                NoiDung = $"{learnerName} vừa đăng ký khóa học '{khoaHoc.TieuDe}'.",
+                LoaiThongBao = "DangKyKhoaHoc",
+                Link = "/admin/courses",
+                FromUser = idNguoiDangKi,
+                ItemId = khoaHoc.Id,
+                ItemName = khoaHoc.TieuDe
+            }, new[] { idNguoiDangKi });
 
             return _mapper.Map<DangKyKhoaHoc,DangKyKhoaHocMienPhiDto>(dangKy);
         }
