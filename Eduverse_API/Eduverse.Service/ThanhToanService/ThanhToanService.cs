@@ -11,10 +11,10 @@ using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.KhuyenMai_KhoaHocRepository;
 using Eduverse.Repository.KhuyenMaiRepository;
 using Eduverse.Repository.ThanhToanRepository;
-using Eduverse.Repository.ThongBao;
 using Eduverse.Service.Common;
 using Eduverse.Service.EmailService;
 using Eduverse.Service.ThanhToanService.Dto;
+using Eduverse.Service.ThongBaoService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -47,7 +47,6 @@ namespace Eduverse.Service.ThanhToanService
         private readonly IKhuyenMai_KhoaHocRepository _khuyenMai_KhoaHocRepository;
         private readonly IEmailService _emailService;
         private readonly IKhuyenMaiRepository _khuyenMaiRepository;
-        private readonly IThongBaoRepository _thongBaoRepository;
         private readonly IAppUserRepository _userRepository;
         private readonly IDonHang_KhuyenMaiRepository _donHangKhuyenMaiRepo;
         private readonly IKhuyenMaiRepository _khuyenMaiRepo;
@@ -55,6 +54,7 @@ namespace Eduverse.Service.ThanhToanService
         private readonly PayOSClient _payOS;
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly INotificationPublisher _notificationPublisher;
 
         public ThanhToanService(
             IThanhToanRepository thanhToanRepo,
@@ -67,14 +67,14 @@ namespace Eduverse.Service.ThanhToanService
             IKhuyenMai_KhoaHocRepository khuyenMai_KhoaHocRepository,
             IEmailService emailService,
             IKhuyenMaiRepository khuyenMaiRepository,
-            IThongBaoRepository thongBaoRepository,
             IAppUserRepository userRepository,
             IDonHang_KhuyenMaiRepository donHangKhuyenMaiRepo,
             IKhuyenMaiRepository khuyenMaiRepo,
             UserManager<AppUser> userManager,
             PayOSClient payOS,
             IConfiguration config,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            INotificationPublisher notificationPublisher
         ) : base(thanhToanRepo)
         {
             _thanhToanRepo = thanhToanRepo;
@@ -87,7 +87,6 @@ namespace Eduverse.Service.ThanhToanService
             _emailService = emailService;
             _khuyenMaiRepository = khuyenMaiRepository;
             _khuyenMai_KhoaHocRepository = khuyenMai_KhoaHocRepository;
-            _thongBaoRepository = thongBaoRepository;
             _userRepository = userRepository;
             _donHangKhuyenMaiRepo = donHangKhuyenMaiRepo;
             _khuyenMaiRepo = khuyenMaiRepo;
@@ -95,6 +94,7 @@ namespace Eduverse.Service.ThanhToanService
             _payOS = payOS;
             _config = config;
             _httpContextAccessor = httpContextAccessor;
+            _notificationPublisher = notificationPublisher;
         }
 
         public async Task<TaoThanhToanResponseDto> TaoThanhToanAsync(Guid userId, TaoThanhToanDto dto)
@@ -443,21 +443,42 @@ namespace Eduverse.Service.ThanhToanService
                         giangVien.UpdatedDate = DateTime.Now;
                         _userRepository.Update(giangVien);
 
-                        _thongBaoRepository.Add(new ThongBao
+                        await _notificationPublisher.NotifyUserAsync(giangVien.Id, new NotificationPayload
                         {
                             TieuDe = "Bạn vừa nhận được doanh thu mới",
                             NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. " +
                                            $"Bạn nhận được {instructorRevenue:N0}đ.",
-                            DaDoc = false,
-                            ThoiGianTao = DateTime.Now,
-                            TrangThai = "MoiNhan",
                             LoaiThongBao = "DoanhThu",
-                            IdNguoiDung = giangVien.Id,
-                            CreatedDate = DateTime.Now,
-                            UpdatedDate = DateTime.Now
+                            Link = "/instructor/revenue",
+                            ItemId = khoaHoc.Id,
+                            ItemName = khoaHoc.TieuDe
                         });
                     }
                     await _userRepository.SaveAsync();
+
+                    var courseNames = enrolledCourses.Select(course => course.TieuDe).ToList();
+                    var courseSummary = string.Join(", ", courseNames.Select(name => $"'{name}'"));
+                    await _notificationPublisher.NotifyUserAsync(donHang.IdNguoiDung!.Value, new NotificationPayload
+                    {
+                        TieuDe = "Mua khóa học thành công",
+                        NoiDung = $"Thanh toán thành công {donHang.SoTienThanhToan:N0}đ cho {courseSummary}.",
+                        LoaiThongBao = "MuaKhoaHocThanhCong",
+                        Link = "/student/courses/my-courses",
+                        ItemId = donHang.Id,
+                        ItemName = courseSummary
+                    });
+
+                    var buyer = await _userRepository.GetByIdAsync(donHang.IdNguoiDung);
+                    await _notificationPublisher.NotifyRoleAsync("Admin", new NotificationPayload
+                    {
+                        TieuDe = "Đơn mua khóa học mới",
+                        NoiDung = $"{buyer?.HoTen ?? buyer?.UserName ?? "Học viên"} đã thanh toán {donHang.SoTienThanhToan:N0}đ cho {courseSummary}.",
+                        LoaiThongBao = "MuaKhoaHoc",
+                        Link = "/admin/payments",
+                        FromUser = donHang.IdNguoiDung,
+                        ItemId = donHang.Id,
+                        ItemName = courseSummary
+                    }, new[] { donHang.IdNguoiDung!.Value });
 
                     var gioHang = await _gioHangRepo.GetQueryable()
                         .FirstOrDefaultAsync(x => x.IdNguoiDung == donHang.IdNguoiDung
