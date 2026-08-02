@@ -110,12 +110,25 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
           </Stack>
 
           <Stack direction="row" spacing={1.25}>
-
             <Chip
               component={Link}
               href="/auth/login"
               clickable
               label="Đăng nhập"
+              sx={{
+                bgcolor: 'transparent',
+                border: '1px solid',
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                fontWeight: 900,
+                '&:hover': { bgcolor: 'rgba(139,19,19,0.08)' },
+              }}
+            />
+            <Chip
+              component={Link}
+              href="/auth/register"
+              clickable
+              label="Đăng ký"
               sx={{
                 bgcolor: 'primary.main',
                 color: '#fff',

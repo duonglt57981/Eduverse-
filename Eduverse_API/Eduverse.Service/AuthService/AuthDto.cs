@@ -56,22 +56,55 @@ namespace Eduverse.Service.AuthService
         [Required][MinLength(6)] public string NewPassword { get; set; }
     }
 
+    /// <summary>
+    /// Kênh nhận mã OTP khi khôi phục mật khẩu.
+    /// </summary>
+    public static class OtpChannel
+    {
+        public const string Email = "Email";
+        public const string Sms = "Sms";
+    }
+
     public class ForgotPasswordRequest
     {
-        [Required][EmailAddress] public string Email { get; set; }
+        /// <summary>Email hoặc số điện thoại của tài khoản, tuỳ theo Channel.</summary>
+        [Required] public string Identifier { get; set; }
+
+        /// <summary>"Email" (mặc định) hoặc "Sms".</summary>
+        public string Channel { get; set; } = OtpChannel.Email;
+
+        /// <summary>Giữ lại để tương thích với phiên bản cũ chỉ gửi trường Email.</summary>
+        public string? Email { get; set; }
     }
 
     public class VerifyOtpRequest
     {
-        [Required][EmailAddress] public string Email { get; set; }
+        [Required] public string Identifier { get; set; }
+        public string Channel { get; set; } = OtpChannel.Email;
+        public string? Email { get; set; }
         [Required] public string Otp { get; set; }
     }
 
     public class ResetPasswordRequest
     {
-        [Required][EmailAddress] public string Email { get; set; }
+        [Required] public string Identifier { get; set; }
+        public string Channel { get; set; } = OtpChannel.Email;
+        public string? Email { get; set; }
         [Required] public string ResetToken { get; set; }
         [Required][MinLength(8, ErrorMessage = "Mật khẩu mới phải có ít nhất 8 ký tự")] public string NewPassword { get; set; }
+    }
+
+    /// <summary>Gửi mã OTP để xác minh số điện thoại (người dùng đã đăng nhập).</summary>
+    public class SendPhoneOtpRequest
+    {
+        [Required] public string PhoneNumber { get; set; }
+    }
+
+    /// <summary>Xác nhận mã OTP để đánh dấu số điện thoại đã xác minh.</summary>
+    public class ConfirmPhoneOtpRequest
+    {
+        [Required] public string PhoneNumber { get; set; }
+        [Required] public string Otp { get; set; }
     }
 
     public class VerifyEmailRequest

@@ -2,9 +2,11 @@
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
 using Eduverse.Service.EmailService;
+using Eduverse.Service.SmsService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -23,17 +25,20 @@ namespace Eduverse.Service.AuthService
         private readonly IAuthRepository _authRepo;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
+        private readonly ISmsService _smsService;
 
         public AuthService(
             UserManager<AppUser> userManager,
             IAuthRepository authRepo,
             IConfiguration config,
-            IEmailService emailService)
+            IEmailService emailService,
+            ISmsService smsService)
         {
             _userManager = userManager;
             _authRepo = authRepo;
             _config = config;
             _emailService = emailService;
+            _smsService = smsService;
         }
 
         // ══════════════════════════════════════════════
@@ -278,6 +283,49 @@ namespace Eduverse.Service.AuthService
         private const int ResendCooldownSeconds = 60;
         private const string GenericForgotMessage =
             "Nếu email tồn tại trong hệ thống, mã xác minh sẽ được gửi đến địa chỉ email đó.";
+        private const string GenericForgotMessageSms =
+            "Nếu số điện thoại đã được xác minh trong hệ thống, mã xác minh sẽ được gửi qua tin nhắn.";
+
+        // Nhà cung cấp token riêng cho luồng xác minh số điện thoại,
+        // tách khỏi luồng đặt lại mật khẩu để hai luồng không ghi đè lẫn nhau.
+        private const string PhoneProvider = "PhoneVerify";
+
+        private static bool IsSmsChannel(string? channel) =>
+            string.Equals(channel, OtpChannel.Sms, StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Lấy giá trị định danh người dùng gửi lên. Ưu tiên trường Identifier,
+        /// nếu rỗng thì lùi về trường Email để tương thích với phiên bản cũ.
+        /// </summary>
+        private static string ResolveIdentifier(string? identifier, string? legacyEmail)
+        {
+            var value = !string.IsNullOrWhiteSpace(identifier) ? identifier : legacyEmail;
+            return (value ?? string.Empty).Trim();
+        }
+
+        /// <summary>
+        /// Tìm tài khoản theo email hoặc theo số điện thoại tuỳ kênh.
+        /// Với kênh SMS, chỉ chấp nhận số điện thoại ĐÃ XÁC MINH — tránh trường hợp
+        /// người dùng gõ nhầm số của người khác rồi chiếm được tài khoản.
+        /// </summary>
+        private async Task<AppUser?> FindUserByChannelAsync(string identifier, string? channel)
+        {
+            if (string.IsNullOrWhiteSpace(identifier)) return null;
+
+            if (IsSmsChannel(channel))
+            {
+                var phone = Eduverse.Service.SmsService.SmsService.NormalizePhone(identifier);
+                if (string.IsNullOrEmpty(phone)) return null;
+
+                return await _userManager.Users.FirstOrDefaultAsync(u =>
+                    u.PhoneNumber != null
+                    && u.PhoneNumber == phone
+                    && u.PhoneNumberConfirmed
+                    && !u.IsDeleted);
+            }
+
+            return await _userManager.FindByEmailAsync(identifier);
+        }
 
         private static string HashValue(string value)
         {
@@ -309,23 +357,29 @@ namespace Eduverse.Service.AuthService
         }
 
         // BƯỚC 1: yêu cầu gửi OTP — LUÔN trả về thông báo chung (chống dò tìm tài khoản)
-        public async Task<string> ForgotPasswordAsync(string email)
+        public async Task<string> ForgotPasswordAsync(ForgotPasswordRequest request)
         {
-            if (string.IsNullOrWhiteSpace(email))
-                throw new Exception("Vui lòng nhập email.");
+            if (request is null)
+                throw new Exception("Dữ liệu không hợp lệ.");
 
-            var normalized = email.Trim();
-            var user = await _userManager.FindByEmailAsync(normalized);
+            var isSms = IsSmsChannel(request.Channel);
+            var genericMessage = isSms ? GenericForgotMessageSms : GenericForgotMessage;
+
+            var normalized = ResolveIdentifier(request.Identifier, request.Email);
+            if (string.IsNullOrWhiteSpace(normalized))
+                throw new Exception(isSms ? "Vui lòng nhập số điện thoại." : "Vui lòng nhập email.");
+
+            var user = await FindUserByChannelAsync(normalized, request.Channel);
 
             // Không tồn tại / đã vô hiệu hoá / đang bị khoá → không tạo OTP, không gửi email
             if (user is null || user.IsDeleted || await _userManager.IsLockedOutAsync(user))
-                return GenericForgotMessage;
+                return genericMessage;
 
             // Cooldown gửi lại: nếu vừa gửi trong 60s → bỏ qua (vẫn trả thông báo chung)
             var lastSentStr = await _userManager.GetAuthenticationTokenAsync(user, ResetProvider, "LastSent");
             if (TryGetUtc(lastSentStr, out var lastSent)
                 && (DateTime.UtcNow - lastSent).TotalSeconds < ResendCooldownSeconds)
-                return GenericForgotMessage;
+                return genericMessage;
 
             // OTP 6 chữ số bằng bộ sinh số ngẫu nhiên mật mã an toàn
             var otpCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
@@ -341,21 +395,34 @@ namespace Eduverse.Service.AuthService
 
             try
             {
-                await _emailService.SendAsync(
-                    to: normalized,
-                    subject: "Mã xác minh đặt lại mật khẩu EduVerse",
-                    body: BuildOtpEmail(otpCode));
+                if (isSms)
+                {
+                    // Nội dung viết không dấu để không bị tính thành nhiều tin nhắn.
+                    await _smsService.SendAsync(
+                        phoneNumber: user.PhoneNumber!,
+                        message: $"EduVerse: Ma xac minh dat lai mat khau cua ban la {otpCode}. " +
+                                 $"Ma het han sau {OtpExpiryMinutes} phut. Khong chia se ma nay voi bat ky ai.");
+                }
+                else
+                {
+                    await _emailService.SendAsync(
+                        to: normalized,
+                        subject: "Mã xác minh đặt lại mật khẩu EduVerse",
+                        body: BuildOtpEmail(otpCode));
+                }
             }
             catch (Exception ex)
             {
-                // Không lộ mã OTP hay lỗi SMTP ra API (chống dò email) — NHƯNG ghi log ra console
-                // để biết vì sao email không gửi được (thường do sai/thiếu Gmail App Password).
-                Console.WriteLine($"[EduVerse][ForgotPassword] Gửi email OTP THẤT BẠI tới {normalized}: {ex.GetType().Name}: {ex.Message}");
+                // Không lộ mã OTP hay lỗi gửi ra API (chống dò tài khoản) — NHƯNG ghi log ra console
+                // để biết vì sao không gửi được (email thường do sai Gmail App Password,
+                // SMS thường do sai khoá nhà cung cấp hoặc hết số dư).
+                var kenh = isSms ? "SMS" : "email";
+                Console.WriteLine($"[EduVerse][ForgotPassword] Gửi {kenh} OTP THẤT BẠI tới {normalized}: {ex.GetType().Name}: {ex.Message}");
                 if (ex.InnerException != null)
                     Console.WriteLine($"[EduVerse][ForgotPassword]   Chi tiết: {ex.InnerException.Message}");
             }
 
-            return GenericForgotMessage;
+            return genericMessage;
         }
 
         private static string BuildOtpEmail(string otpCode) => $@"
@@ -382,10 +449,14 @@ namespace Eduverse.Service.AuthService
         public async Task<string> VerifyOtpAsync(VerifyOtpRequest request)
         {
             const string invalidMsg = "Mã OTP không đúng hoặc đã hết hạn.";
-            if (request is null || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Otp))
+            if (request is null || string.IsNullOrWhiteSpace(request.Otp))
                 throw new Exception(invalidMsg);
 
-            var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+            var identifier = ResolveIdentifier(request.Identifier, request.Email);
+            if (string.IsNullOrWhiteSpace(identifier))
+                throw new Exception(invalidMsg);
+
+            var user = await FindUserByChannelAsync(identifier, request.Channel);
             if (user is null || user.IsDeleted)
                 throw new Exception(invalidMsg);
 
@@ -432,10 +503,14 @@ namespace Eduverse.Service.AuthService
         public async Task<string> ResetPasswordAsync(ResetPasswordRequest request)
         {
             const string invalidSession = "Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng thực hiện lại.";
-            if (request is null || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.ResetToken))
+            if (request is null || string.IsNullOrWhiteSpace(request.ResetToken))
                 throw new Exception(invalidSession);
 
-            var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+            var identifier = ResolveIdentifier(request.Identifier, request.Email);
+            if (string.IsNullOrWhiteSpace(identifier))
+                throw new Exception(invalidSession);
+
+            var user = await FindUserByChannelAsync(identifier, request.Channel);
             if (user is null || user.IsDeleted)
                 throw new Exception(invalidSession);
 
@@ -476,6 +551,122 @@ namespace Eduverse.Service.AuthService
             await _userManager.UpdateSecurityStampAsync(user);
 
             return "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.";
+        }
+
+        // ══════════════════════════════════════════════
+        // XÁC MINH SỐ ĐIỆN THOẠI (người dùng đã đăng nhập)
+        // Bắt buộc phải xác minh trước khi được dùng SĐT để khôi phục mật khẩu.
+        // ══════════════════════════════════════════════
+
+        /// <summary>
+        /// Gửi mã OTP tới số điện thoại để người dùng xác minh quyền sở hữu số đó.
+        /// </summary>
+        public async Task<string> SendPhoneOtpAsync(Guid userId, SendPhoneOtpRequest request)
+        {
+            if (request is null || string.IsNullOrWhiteSpace(request.PhoneNumber))
+                throw new Exception("Vui lòng nhập số điện thoại.");
+
+            var phone = Eduverse.Service.SmsService.SmsService.NormalizePhone(request.PhoneNumber);
+            if (phone.Length < 9 || phone.Length > 11 || !phone.StartsWith("0"))
+                throw new Exception("Số điện thoại không hợp lệ.");
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user is null || user.IsDeleted)
+                throw new Exception("Không tìm thấy tài khoản.");
+
+            // Một số điện thoại chỉ được gắn với một tài khoản đã xác minh
+            var taken = await _userManager.Users.AnyAsync(u =>
+                u.Id != userId && u.PhoneNumber == phone && u.PhoneNumberConfirmed && !u.IsDeleted);
+            if (taken)
+                throw new Exception("Số điện thoại này đã được sử dụng cho tài khoản khác.");
+
+            // Chống gửi lại liên tục
+            var lastSentStr = await _userManager.GetAuthenticationTokenAsync(user, PhoneProvider, "LastSent");
+            if (TryGetUtc(lastSentStr, out var lastSent)
+                && (DateTime.UtcNow - lastSent).TotalSeconds < ResendCooldownSeconds)
+                throw new Exception($"Vui lòng đợi {ResendCooldownSeconds} giây trước khi gửi lại mã.");
+
+            var otpCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+
+            // Lưu hash của OTP + số điện thoại đang chờ xác minh
+            await _userManager.SetAuthenticationTokenAsync(user, PhoneProvider, "OtpHash", HashValue(otpCode));
+            await _userManager.SetAuthenticationTokenAsync(user, PhoneProvider, "OtpExp", DateTime.UtcNow.AddMinutes(OtpExpiryMinutes).ToString("o"));
+            await _userManager.SetAuthenticationTokenAsync(user, PhoneProvider, "Att", "0");
+            await _userManager.SetAuthenticationTokenAsync(user, PhoneProvider, "Pending", phone);
+            await _userManager.SetAuthenticationTokenAsync(user, PhoneProvider, "LastSent", DateTime.UtcNow.ToString("o"));
+
+            await _smsService.SendAsync(
+                phoneNumber: phone,
+                message: $"EduVerse: Ma xac minh so dien thoai cua ban la {otpCode}. " +
+                         $"Ma het han sau {OtpExpiryMinutes} phut.");
+
+            return _smsService.IsLiveMode
+                ? $"Đã gửi mã xác minh tới số {phone}."
+                : $"Đã tạo mã xác minh cho số {phone}. Hệ thống đang chạy ở chế độ ghi log, xem mã trong console của máy chủ.";
+        }
+
+        /// <summary>
+        /// Xác nhận mã OTP và đánh dấu số điện thoại đã xác minh.
+        /// </summary>
+        public async Task<string> ConfirmPhoneOtpAsync(Guid userId, ConfirmPhoneOtpRequest request)
+        {
+            const string invalidMsg = "Mã xác minh không đúng hoặc đã hết hạn.";
+            if (request is null || string.IsNullOrWhiteSpace(request.Otp) || string.IsNullOrWhiteSpace(request.PhoneNumber))
+                throw new Exception(invalidMsg);
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user is null || user.IsDeleted)
+                throw new Exception("Không tìm thấy tài khoản.");
+
+            var phone = Eduverse.Service.SmsService.SmsService.NormalizePhone(request.PhoneNumber);
+            var pending = await _userManager.GetAuthenticationTokenAsync(user, PhoneProvider, "Pending");
+            var otpHash = await _userManager.GetAuthenticationTokenAsync(user, PhoneProvider, "OtpHash");
+            var expStr = await _userManager.GetAuthenticationTokenAsync(user, PhoneProvider, "OtpExp");
+            var attStr = await _userManager.GetAuthenticationTokenAsync(user, PhoneProvider, "Att");
+
+            if (string.IsNullOrEmpty(otpHash) || !string.Equals(pending, phone, StringComparison.Ordinal)
+                || !TryGetUtc(expStr, out var exp) || exp < DateTime.UtcNow)
+            {
+                await ClearPhoneTokensAsync(user);
+                throw new Exception(invalidMsg);
+            }
+
+            int.TryParse(attStr, out var attempts);
+            if (attempts >= MaxOtpAttempts)
+            {
+                await ClearPhoneTokensAsync(user);
+                throw new Exception("Bạn đã nhập sai quá số lần cho phép. Vui lòng yêu cầu mã mới.");
+            }
+
+            if (!string.Equals(HashValue(request.Otp.Trim()), otpHash, StringComparison.Ordinal))
+            {
+                attempts++;
+                if (attempts >= MaxOtpAttempts)
+                {
+                    await ClearPhoneTokensAsync(user);
+                    throw new Exception("Bạn đã nhập sai quá số lần cho phép. Vui lòng yêu cầu mã mới.");
+                }
+                await _userManager.SetAuthenticationTokenAsync(user, PhoneProvider, "Att", attempts.ToString());
+                throw new Exception($"Mã xác minh không đúng. Bạn còn {MaxOtpAttempts - attempts} lần thử.");
+            }
+
+            user.PhoneNumber = phone;
+            user.PhoneNumberConfirmed = true;
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            await ClearPhoneTokensAsync(user);
+            return "Xác minh số điện thoại thành công. Từ giờ bạn có thể dùng số này để khôi phục mật khẩu.";
+        }
+
+        private async Task ClearPhoneTokensAsync(AppUser user)
+        {
+            await _userManager.RemoveAuthenticationTokenAsync(user, PhoneProvider, "OtpHash");
+            await _userManager.RemoveAuthenticationTokenAsync(user, PhoneProvider, "OtpExp");
+            await _userManager.RemoveAuthenticationTokenAsync(user, PhoneProvider, "Att");
+            await _userManager.RemoveAuthenticationTokenAsync(user, PhoneProvider, "Pending");
+            await _userManager.RemoveAuthenticationTokenAsync(user, PhoneProvider, "LastSent");
         }
 
         // ══════════════════════════════════════════════

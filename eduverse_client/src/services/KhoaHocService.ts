@@ -43,6 +43,10 @@ export default class KhoaHocService {
         await apiService.get<PagedList<KhoaHocType>>(url, { signal });
       return response;
     } catch (error) {
+      const err = error as { name?: string; message?: string };
+      if (err?.name === "CanceledError" || err?.message === "canceled") {
+        throw error;
+      }
       console.error("Error fetching course list:", error);
       throw error;
     }
@@ -69,6 +73,10 @@ export default class KhoaHocService {
         await apiService.get<PagedList<KhoaHocType>>(url, { signal });
       return response;
     } catch (error) {
+      const err = error as { name?: string; message?: string };
+      if (err?.name === "CanceledError" || err?.message === "canceled") {
+        throw error;
+      }
       console.error("Error fetching learning course by user:", error);
       throw error;
     }

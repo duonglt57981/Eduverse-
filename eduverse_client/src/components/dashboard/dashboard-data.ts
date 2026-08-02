@@ -200,11 +200,6 @@ export function getSidebarItemsByRole(roles: string[]): DashboardNavItem[] {
  * Trả về secondary sidebar items phù hợp với vai trò người dùng
  */
 export function getSecondarySidebarItemsByRole(roles: string[]): DashboardNavItem[] {
-  if (roles.includes('Admin')) {
-    return [
-      { label: 'Hỗ trợ', icon: HelpOutlineRounded }
-    ];
-  }
   return [];
 }
 

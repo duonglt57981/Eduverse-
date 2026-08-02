@@ -1128,6 +1128,7 @@ export default function StudentHomeContent() {
   const router = useRouter();
   const { fetchFavorites } = useFavorite();
   const user = useSelector((state: any) => state.auth.user);
+  const roles = useSelector((state: any) => state.auth.roles) || [];
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -1164,23 +1165,25 @@ export default function StudentHomeContent() {
       setError(null);
 
       // Fetch approved courses to retrieve real image urls (bypassing dashboard endpoint omissions)
-      try {
-        const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
-        const items = approvedRes.data || [];
-        const imgMap: Record<string, string> = {};
-        const tMap: Record<string, string> = {};
-        items.forEach((item: any) => {
-          if (item.id && item.hinhAnhKhoaHoc) {
-            imgMap[item.id] = item.hinhAnhKhoaHoc;
-          }
-          if (item.tieuDe && item.hinhAnhKhoaHoc) {
-            tMap[item.tieuDe] = item.hinhAnhKhoaHoc;
-          }
-        });
-        setCourseImages(imgMap);
-        setTitleImages(tMap);
-      } catch (err) {
-        console.error("Failed to load course image map:", err);
+      if (roles.includes("Admin") || roles.includes("GiaoVien")) {
+        try {
+          const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
+          const items = approvedRes.data || [];
+          const imgMap: Record<string, string> = {};
+          const tMap: Record<string, string> = {};
+          items.forEach((item: any) => {
+            if (item.id && item.hinhAnhKhoaHoc) {
+              imgMap[item.id] = item.hinhAnhKhoaHoc;
+            }
+            if (item.tieuDe && item.hinhAnhKhoaHoc) {
+              tMap[item.tieuDe] = item.hinhAnhKhoaHoc;
+            }
+          });
+          setCourseImages(imgMap);
+          setTitleImages(tMap);
+        } catch (err) {
+          console.error("Failed to load course image map:", err);
+        }
       }
 
       // Toàn bộ khóa học đã duyệt cho mục "Khóa học mới nhất".

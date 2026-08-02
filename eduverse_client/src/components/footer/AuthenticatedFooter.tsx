@@ -102,11 +102,13 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
     <Box
       component="footer"
       sx={{
-        width: "100%",
+        width: "auto",
+        mx: { xs: -2, sm: -3, md: -4 },
+        mb: { xs: -2, md: -3 },
         bgcolor: COLORS.bg,
         borderTop: `1px solid ${COLORS.border}`,
         py: { xs: 4, md: 5 },
-        px: { xs: 3, md: 6 },
+        px: { xs: 5, sm: 6, md: 10 },
       }}
     >
       {/* Wrapper dàn đều nội dung */}

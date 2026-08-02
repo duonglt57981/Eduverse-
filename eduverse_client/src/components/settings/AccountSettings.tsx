@@ -22,6 +22,11 @@ import {
   IconButton,
   Skeleton,
   useTheme,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -34,6 +39,8 @@ import {
   PhoneRounded,
   CakeRounded,
   LocationOnRounded,
+  VerifiedRounded,
+  ErrorOutlineRounded,
 } from '@mui/icons-material';
 import { apiService } from '@/src/services/index';
 
@@ -41,6 +48,7 @@ interface ProfileData {
   hoTen: string;
   email: string;
   phoneNumber: string;
+  phoneNumberConfirmed: boolean;
   ngaySinh: string;
   diaChi: string;
   tieuSu: string;
@@ -60,10 +68,19 @@ export default function AccountSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
+  // ── Xác minh số điện thoại ──
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyStep, setVerifyStep] = useState<1 | 2>(1);
+  const [verifyOtp, setVerifyOtp] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
+  const [verifyInfo, setVerifyInfo] = useState('');
+
   const [profile, setProfile] = useState<ProfileData>({
     hoTen: '',
     email: '',
     phoneNumber: '',
+    phoneNumberConfirmed: false,
     ngaySinh: '',
     diaChi: '',
     tieuSu: '',
@@ -85,6 +102,7 @@ export default function AccountSettings() {
           hoTen: data.hoTen || '',
           email: data.email || '',
           phoneNumber: data.phoneNumber || '',
+          phoneNumberConfirmed: Boolean(data.phoneNumberConfirmed),
           ngaySinh: data.ngaySinh || '',
           diaChi: data.diaChi || '',
           tieuSu: data.tieuSu || '',
@@ -118,6 +136,60 @@ export default function AccountSettings() {
       setTempProfile({ ...profile });
     }
     setIsEditing(!isEditing);
+  };
+
+  // Gửi mã OTP tới số điện thoại đang lưu trong hồ sơ
+  const handleSendPhoneOtp = async () => {
+    setVerifyError('');
+    setVerifyInfo('');
+    setVerifyLoading(true);
+    try {
+      const res = await apiService.post<any>('/auth/send-phone-otp', {
+        phoneNumber: profile.phoneNumber,
+      });
+      setVerifyInfo(res.message || 'Đã gửi mã xác minh.');
+      setVerifyStep(2);
+    } catch (err: unknown) {
+      setVerifyError(typeof err === 'string' ? err : 'Không gửi được mã xác minh.');
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  // Xác nhận mã OTP và đánh dấu số điện thoại đã xác minh
+  const handleConfirmPhoneOtp = async () => {
+    setVerifyError('');
+    setVerifyLoading(true);
+    try {
+      const res = await apiService.post<any>('/auth/confirm-phone-otp', {
+        phoneNumber: profile.phoneNumber,
+        otp: verifyOtp.trim(),
+      });
+      setProfile((prev) => ({ ...prev, phoneNumberConfirmed: true }));
+      setSnackbarMessage(res.message || 'Xác minh số điện thoại thành công.');
+      setSnackbarSeverity('success');
+      setShowSnackbar(true);
+      closeVerifyDialog();
+    } catch (err: unknown) {
+      setVerifyError(typeof err === 'string' ? err : 'Xác minh thất bại.');
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const openVerifyDialog = () => {
+    setVerifyStep(1);
+    setVerifyOtp('');
+    setVerifyError('');
+    setVerifyInfo('');
+    setVerifyOpen(true);
+  };
+
+  const closeVerifyDialog = () => {
+    setVerifyOpen(false);
+    setVerifyOtp('');
+    setVerifyError('');
+    setVerifyInfo('');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
@@ -270,6 +342,88 @@ export default function AccountSettings() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      {/* ── Hộp thoại xác minh số điện thoại ── */}
+      <Dialog
+        open={verifyOpen}
+        onClose={closeVerifyDialog}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: '20px' } } }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography sx={{ fontSize: 16.5, fontWeight: 900, color: 'text.primary' }}>
+            Xác minh số điện thoại
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+              {verifyStep === 1
+                ? `Hệ thống sẽ gửi một mã gồm 6 chữ số tới số ${profile.phoneNumber}. Sau khi xác minh, bạn có thể dùng số này để khôi phục mật khẩu.`
+                : 'Nhập mã gồm 6 chữ số vừa nhận được. Mã có hiệu lực trong 5 phút.'}
+            </Typography>
+
+            {verifyInfo ? (
+              <Alert severity="info" sx={{ borderRadius: 2, fontSize: 12.5 }}>
+                {verifyInfo}
+              </Alert>
+            ) : null}
+            {verifyError ? (
+              <Alert severity="error" sx={{ borderRadius: 2, fontSize: 12.5 }}>
+                {verifyError}
+              </Alert>
+            ) : null}
+
+            {verifyStep === 2 ? (
+              <TextField
+                fullWidth
+                autoFocus
+                label="Mã xác minh"
+                value={verifyOtp}
+                onChange={(e) => setVerifyOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                slotProps={{
+                  htmlInput: {
+                    inputMode: 'numeric',
+                    maxLength: 6,
+                    style: { letterSpacing: 8, fontWeight: 800, fontSize: 20, textAlign: 'center' },
+                  },
+                }}
+              />
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button
+            onClick={closeVerifyDialog}
+            sx={{ color: 'text.secondary', fontWeight: 800, textTransform: 'none' }}
+          >
+            Hủy
+          </Button>
+          {verifyStep === 1 ? (
+            <Button
+              variant="contained"
+              disableElevation
+              disabled={verifyLoading || !profile.phoneNumber}
+              onClick={handleSendPhoneOtp}
+              sx={{ textTransform: 'none', fontWeight: 800, borderRadius: '10px' }}
+            >
+              {verifyLoading ? 'Đang gửi...' : 'Gửi mã xác minh'}
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              disableElevation
+              disabled={verifyLoading || verifyOtp.length < 6}
+              onClick={handleConfirmPhoneOtp}
+              sx={{ textTransform: 'none', fontWeight: 800, borderRadius: '10px' }}
+            >
+              {verifyLoading ? 'Đang xác minh...' : 'Xác nhận'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
 
       <Card
         elevation={0}
@@ -479,9 +633,48 @@ export default function AccountSettings() {
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={0.75}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PhoneRounded fontSize="inherit" sx={{ color: 'rgba(25,23,28,0.4)' }} /> Số điện thoại
-                </Typography>
+                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PhoneRounded fontSize="inherit" sx={{ color: 'rgba(25,23,28,0.4)' }} /> Số điện thoại
+                  </Typography>
+                  {profile.phoneNumber ? (
+                    profile.phoneNumberConfirmed ? (
+                      <Chip
+                        size="small"
+                        icon={<VerifiedRounded sx={{ fontSize: 15 }} />}
+                        label="Đã xác minh"
+                        sx={{
+                          height: 22,
+                          fontSize: 11,
+                          fontWeight: 800,
+                          color: '#059669',
+                          bgcolor: 'rgba(16,185,129,0.10)',
+                          '& .MuiChip-icon': { color: '#059669' },
+                        }}
+                      />
+                    ) : (
+                      <Button
+                        size="small"
+                        onClick={openVerifyDialog}
+                        startIcon={<ErrorOutlineRounded sx={{ fontSize: 15 }} />}
+                        sx={{
+                          minWidth: 0,
+                          px: 1,
+                          py: 0.2,
+                          fontSize: 11.5,
+                          fontWeight: 800,
+                          textTransform: 'none',
+                          borderRadius: '8px',
+                          color: '#D97706',
+                          bgcolor: 'rgba(245,158,11,0.10)',
+                          '&:hover': { bgcolor: 'rgba(245,158,11,0.18)' },
+                        }}
+                      >
+                        Chưa xác minh — Xác minh ngay
+                      </Button>
+                    )
+                  ) : null}
+                </Stack>
                 <TextField
                   fullWidth
                   name="phoneNumber"

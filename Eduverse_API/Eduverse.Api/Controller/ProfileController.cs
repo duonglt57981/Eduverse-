@@ -102,6 +102,7 @@ namespace Eduverse.Api.Controller
                     hoTen = user.HoTen ?? "Học viên EduVerse",
                     email = user.Email,
                     phoneNumber = user.PhoneNumber,
+                    phoneNumberConfirmed = user.PhoneNumberConfirmed,
                     diaChi = user.DiaChi,
                     ngaySinh = user.NgaySinh?.ToString("yyyy-MM-dd"),
                     tieuSu = user.TieuSu,
@@ -150,6 +151,13 @@ namespace Eduverse.Api.Controller
             user.HoTen = request.HoTen;
             user.Email = request.Email;
             user.NormalizedEmail = request.Email.ToUpper();
+            // Đổi số điện thoại thì phải xác minh lại từ đầu.
+            // Nếu không huỷ cờ này, người dùng có thể gán số của người khác
+            // mà vẫn giữ trạng thái "đã xác minh" và dùng nó để khôi phục mật khẩu.
+            if (!string.Equals(user.PhoneNumber, request.PhoneNumber, StringComparison.Ordinal))
+            {
+                user.PhoneNumberConfirmed = false;
+            }
             user.PhoneNumber = request.PhoneNumber;
             user.DiaChi = request.DiaChi;
             user.TieuSu = request.TieuSu;
@@ -178,6 +186,7 @@ namespace Eduverse.Api.Controller
                     hoTen = user.HoTen,
                     email = user.Email,
                     phoneNumber = user.PhoneNumber,
+                    phoneNumberConfirmed = user.PhoneNumberConfirmed,
                     diaChi = user.DiaChi,
                     ngaySinh = user.NgaySinh?.ToString("yyyy-MM-dd"),
                     tieuSu = user.TieuSu

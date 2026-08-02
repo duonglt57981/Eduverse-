@@ -126,7 +126,9 @@ export default function RootLayout({
 
         <title>{appTitle}</title>
         {/* Chống nháy nền sáng khi tải trang ở chế độ tối */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {typeof window === "undefined" && (
+          <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        )}
       </head>
       <body className={`${beVietnamPro.className} dir-ltr`}>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>

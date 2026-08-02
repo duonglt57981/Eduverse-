@@ -99,7 +99,21 @@ export class ApiService {
           return Promise.reject(error.response?.data?.message || "Không có quyền truy cập");
         }
 
-        return Promise.reject(error.response?.data?.message || error.message);
+        // Backend trả lỗi nghiệp vụ dạng { status, message }.
+        // Nhưng lỗi kiểm tra dữ liệu của ASP.NET lại trả ProblemDetails dạng
+        // { title, errors: { Ten: ["..."] } } — không có trường message.
+        // Nếu không bóc tách, người dùng chỉ thấy chuỗi thô của axios.
+        const data = error.response?.data;
+        if (data?.message) return Promise.reject(data.message);
+        if (data?.errors && typeof data.errors === "object") {
+          const chiTiet = Object.values(data.errors as Record<string, string[]>)
+            .flat()
+            .filter(Boolean)
+            .join(" ");
+          if (chiTiet) return Promise.reject(chiTiet);
+        }
+        if (data?.title) return Promise.reject(data.title);
+        return Promise.reject(error.message);
       },
     );
   }

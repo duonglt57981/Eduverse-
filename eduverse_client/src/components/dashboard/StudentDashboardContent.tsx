@@ -947,6 +947,8 @@ export default function StudentDashboardContent() {
   const { fetchFavorites } = useFavorite();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const user = useSelector((state: any) => state.auth.user);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const roles = useSelector((state: any) => state.auth.roles) || [];
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -981,25 +983,27 @@ export default function StudentDashboardContent() {
         setLoading(true);
 
         // Fetch approved courses to retrieve real image urls (bypassing dashboard endpoint omissions)
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
-          const items = approvedRes.data || [];
-          const imgMap: Record<string, string> = {};
-          const tMap: Record<string, string> = {};
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          items.forEach((item: any) => {
-            if (item.id && item.hinhAnhKhoaHoc) {
-              imgMap[item.id] = item.hinhAnhKhoaHoc;
-            }
-            if (item.tieuDe && item.hinhAnhKhoaHoc) {
-              tMap[item.tieuDe] = item.hinhAnhKhoaHoc;
-            }
-          });
-          setCourseImages(imgMap);
-          setTitleImages(tMap);
-        } catch (err) {
-          console.error("Failed to load course image map:", err);
+        if (roles.includes("Admin") || roles.includes("GiaoVien")) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
+            const items = approvedRes.data || [];
+            const imgMap: Record<string, string> = {};
+            const tMap: Record<string, string> = {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            items.forEach((item: any) => {
+              if (item.id && item.hinhAnhKhoaHoc) {
+                imgMap[item.id] = item.hinhAnhKhoaHoc;
+              }
+              if (item.tieuDe && item.hinhAnhKhoaHoc) {
+                tMap[item.tieuDe] = item.hinhAnhKhoaHoc;
+              }
+            });
+            setCourseImages(imgMap);
+            setTitleImages(tMap);
+          } catch (err) {
+            console.error("Failed to load course image map:", err);
+          }
         }
 
         const res = await apiService.get<DashboardData>("/dashboard?role=HocVien");

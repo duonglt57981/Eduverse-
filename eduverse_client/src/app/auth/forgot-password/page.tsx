@@ -9,6 +9,7 @@ import {
   clearError,
   clearSuccess,
 } from '../../../store/auth/AuthSlice';
+import type { OtpChannel } from '../../../store/auth/AuthSlice';
 import {
   Box,
   Button,
@@ -22,6 +23,7 @@ import {
 } from '@mui/material';
 import {
   EmailRounded,
+  SmartphoneRounded,
   ArrowBackRounded,
   VisibilityOffRounded,
   VisibilityRounded,
@@ -122,6 +124,8 @@ export default function ForgotPasswordPage() {
   // 1: Nhập email | 2: Xác minh OTP | 3: Đặt mật khẩu mới
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
+  // Kênh nhận mã OTP: qua email hoặc qua tin nhắn tới số điện thoại
+  const [channel, setChannel] = useState<OtpChannel>('Email');
   const [otp, setOtp] = useState('');
   const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -166,7 +170,9 @@ export default function ForgotPasswordPage() {
     dispatch(clearError());
     dispatch(clearSuccess());
 
-    const result = await dispatch(forgotPassword(email.trim()));
+    const result = await dispatch(
+      forgotPassword({ identifier: email.trim(), channel }),
+    );
     if (forgotPassword.fulfilled.match(result)) {
       // Cố tình KHÔNG hiển thị nội dung phản hồi từ backend ra màn hình,
       // để mã OTP không bao giờ lộ trên giao diện. OTP chỉ được gửi qua email.
@@ -183,7 +189,9 @@ export default function ForgotPasswordPage() {
     dispatch(clearSuccess());
     setOtp('');
 
-    const result = await dispatch(forgotPassword(email.trim()));
+    const result = await dispatch(
+      forgotPassword({ identifier: email.trim(), channel }),
+    );
     if (forgotPassword.fulfilled.match(result)) {
       setResendCountdown(60);
       dispatch(clearSuccess());
@@ -197,7 +205,9 @@ export default function ForgotPasswordPage() {
     dispatch(clearError());
     dispatch(clearSuccess());
 
-    const result = await dispatch(verifyOtp({ email: email.trim(), otp }));
+    const result = await dispatch(
+      verifyOtp({ identifier: email.trim(), channel, otp }),
+    );
     if (verifyOtp.fulfilled.match(result)) {
       setResetToken((result.payload as string) || '');
       setStep(3);
@@ -212,7 +222,7 @@ export default function ForgotPasswordPage() {
     dispatch(clearSuccess());
 
     const result = await dispatch(
-      resetPassword({ email: email.trim(), resetToken, newPassword }),
+      resetPassword({ identifier: email.trim(), channel, resetToken, newPassword }),
     );
     if (resetPassword.fulfilled.match(result)) {
       setTimeout(() => {
@@ -240,9 +250,12 @@ export default function ForgotPasswordPage() {
   };
 
   const titleByStep = step === 1 ? 'Quên mật khẩu' : step === 2 ? 'Xác minh OTP' : 'Đặt lại mật khẩu';
+  const isSms = channel === 'Sms';
   const subtitleByStep =
     step === 1
-      ? 'Nhập email đã đăng ký. Hệ thống sẽ gửi một mã OTP gồm 6 chữ số để xác nhận đặt lại mật khẩu.'
+      ? isSms
+        ? 'Nhập số điện thoại đã xác minh trên tài khoản. Hệ thống sẽ gửi một mã OTP gồm 6 chữ số qua tin nhắn.'
+        : 'Nhập email đã đăng ký. Hệ thống sẽ gửi một mã OTP gồm 6 chữ số để xác nhận đặt lại mật khẩu.'
       : step === 2
         ? `Chúng tôi đã gửi mã OTP đến ${email}. Vui lòng nhập mã gồm 6 chữ số để tiếp tục.`
         : 'Xác minh thành công. Hãy tạo mật khẩu mới cho tài khoản của bạn.';
@@ -344,8 +357,9 @@ export default function ForgotPasswordPage() {
                 lineHeight: 1.5,
               }}
             >
-              Mã OTP đã được gửi tới email của bạn. Nếu chưa thấy, vui lòng kiểm tra mục Spam/Quảng cáo.
-              Mã có hiệu lực trong 5 phút.
+              {isSms
+                ? 'Mã OTP đã được gửi qua tin nhắn tới số điện thoại của bạn. Mã có hiệu lực trong 5 phút.'
+                : 'Mã OTP đã được gửi tới email của bạn. Nếu chưa thấy, vui lòng kiểm tra mục Spam/Quảng cáo. Mã có hiệu lực trong 5 phút.'}
             </Box>
           ) : null}
 
@@ -372,28 +386,87 @@ export default function ForgotPasswordPage() {
           {step === 1 ? (
             <Box component="form" onSubmit={handleSendOtp}>
               <Stack spacing={2.5}>
+                {/* Chọn kênh nhận mã OTP */}
+                <Stack direction="row" spacing={1}>
+                  {(
+                    [
+                      { key: 'Email' as OtpChannel, label: 'Qua Email', Icon: EmailRounded },
+                      { key: 'Sms' as OtpChannel, label: 'Qua số điện thoại', Icon: SmartphoneRounded },
+                    ]
+                  ).map((opt) => {
+                    const active = channel === opt.key;
+                    return (
+                      <Button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => {
+                          setChannel(opt.key);
+                          setEmail('');
+                          dispatch(clearError());
+                        }}
+                        startIcon={<opt.Icon sx={{ fontSize: 18 }} />}
+                        sx={{
+                          flex: 1,
+                          py: 1.1,
+                          borderRadius: 3,
+                          textTransform: 'none',
+                          fontWeight: 800,
+                          fontSize: 13.5,
+                          boxShadow: 'none',
+                          color: active ? '#fff' : 'rgba(17,17,17,0.6)',
+                          bgcolor: active ? MAROON : 'rgba(17,17,17,0.04)',
+                          border: active
+                            ? '1px solid transparent'
+                            : '1px solid rgba(17,17,17,0.1)',
+                          '&:hover': {
+                            bgcolor: active ? '#6D0F0F' : 'rgba(17,17,17,0.07)',
+                            boxShadow: 'none',
+                          },
+                        }}
+                      >
+                        {opt.label}
+                      </Button>
+                    );
+                  })}
+                </Stack>
+
                 <FormControl fullWidth>
                   <Typography
                     variant="caption"
                     sx={{ mb: 1, fontWeight: 700, color: 'rgba(17,17,17,0.7)' }}
                   >
-                    Địa chỉ Email
+                    {isSms ? 'Số điện thoại' : 'Địa chỉ Email'}
                   </Typography>
                   <OutlinedInput
-                    type="email"
-                    placeholder="name@company.com"
+                    type={isSms ? 'tel' : 'email'}
+                    placeholder={isSms ? '0912345678' : 'name@company.com'}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    autoComplete="email"
-                    inputProps={{ 'aria-label': 'Địa chỉ email' }}
+                    autoComplete={isSms ? 'tel' : 'email'}
+                    inputProps={{
+                      'aria-label': isSms ? 'Số điện thoại' : 'Địa chỉ email',
+                      inputMode: isSms ? 'numeric' : 'email',
+                    }}
                     endAdornment={
                       <InputAdornment position="end">
-                        <EmailRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
+                        {isSms ? (
+                          <SmartphoneRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
+                        ) : (
+                          <EmailRounded sx={{ color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
+                        )}
                       </InputAdornment>
                     }
                     sx={inputSx}
                   />
+                  {isSms ? (
+                    <Typography
+                      variant="caption"
+                      sx={{ mt: 1, color: 'rgba(17,17,17,0.5)', lineHeight: 1.5 }}
+                    >
+                      Chỉ áp dụng cho số điện thoại đã được xác minh trong phần Hồ sơ cá nhân.
+                    </Typography>
+                  ) : null}
                 </FormControl>
 
                 <Button type="submit" variant="contained" disabled={loading} sx={primaryButtonSx}>
