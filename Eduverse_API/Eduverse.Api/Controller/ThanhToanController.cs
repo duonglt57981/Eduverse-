@@ -37,7 +37,7 @@ namespace Eduverse.Api.Controller
             return Guid.Parse(userId);
         }
 
-        [Authorize(Roles = "HocVien")]
+        [Authorize(Roles = "HocVien,GiaoVien")]
         [HttpPost("tao-thanh-toan")]
         public async Task<IActionResult> TaoThanhToan([FromBody] TaoThanhToanDto dto)
         {
@@ -49,7 +49,7 @@ namespace Eduverse.Api.Controller
             ));
         }
 
-        [Authorize(Roles = "HocVien")]
+        [Authorize(Roles = "HocVien,GiaoVien")]
         [HttpPost("kiem-tra-ma-giam-gia")]
         public async Task<IActionResult> KiemTraMaGiamGia([FromBody] ApDungMaGiamGiaDto dto)
         {
@@ -102,7 +102,7 @@ namespace Eduverse.Api.Controller
             ));
         }
 
-        [Authorize(Roles = "HocVien")]
+        [Authorize(Roles = "HocVien,GiaoVien")]
         [HttpGet("don-hang/{id}")]
         public async Task<IActionResult> GetDonHangById(Guid id)
         {

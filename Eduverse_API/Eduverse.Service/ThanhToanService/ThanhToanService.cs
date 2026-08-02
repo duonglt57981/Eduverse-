@@ -106,16 +106,23 @@ namespace Eduverse.Service.ThanhToanService
             if (!khoaHocs.Any())
                 throw new Exception("Không tìm thấy khóa học");
 
-            ApDungNhieuMaGiamGiaResponseDto? ketQuaMa = null;
+           
 
             double tongTien = khoaHocs.Sum(k => k.Gia ?? 0);
+            var ketQuaMa = new ApDungNhieuMaGiamGiaResponseDto
+            {
+                KetQua = new List<KetQuaApDungMaDto>(),
+                TongSoTienGiam = 0,
+                SoTienGoc = tongTien,
+                SoTienSauGiam = tongTien
+            };
             double giamGia = 0;
 
             if (dto.DanhSachMaGiamGia != null && dto.DanhSachMaGiamGia.Any())
             {
                 ketQuaMa = await TinhKetQuaNhieuMaGiamGiaAsync(dto.DanhSachMaGiamGia, khoaHocs);
-                giamGia = ketQuaMa.TongSoTienGiam;
             }
+            giamGia = ketQuaMa.TongSoTienGiam;
 
             double thanhToan = tongTien - giamGia;
             long orderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
