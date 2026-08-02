@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Suspense, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Box,
   Container,
@@ -10,15 +10,15 @@ import {
   Card,
   Stack,
   Divider,
-} from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import { useDispatch, useSelector } from '../../../store/hook';
-import { getDonHang } from '../../../store/thanhToan/ThanhToanSlice';
-import AuthGuard from '@/src/components/AuthGuard';
+} from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import { useDispatch, useSelector } from "../../../store/hook";
+import { getDonHang } from "../../../store/thanhToan/ThanhToanSlice";
+import AuthGuard from "@/src/components/AuthGuard";
 import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 
-const PRIMARY = '#8B1313';
+const PRIMARY = "#8B1313";
 
 function PaymentResultContent() {
   const searchParams = useSearchParams();
@@ -26,9 +26,9 @@ function PaymentResultContent() {
   const dispatch = useDispatch();
   const { donHangs } = useSelector((s) => s.thanhToan);
 
-  const code = searchParams.get('code');
-  const orderCode = searchParams.get('orderCode');
-  const isSuccess = code === '00';
+  const code = searchParams.get("code");
+  const orderCode = searchParams.get("orderCode");
+  const isSuccess = code === "00";
 
   useEffect(() => {
     if (isSuccess) {
@@ -39,27 +39,33 @@ function PaymentResultContent() {
   const donHang = donHangs.find(
     (d) =>
       d.maGiaoDich === `EDU${orderCode}` ||
-      d.maGiaoDich?.includes(orderCode ?? ''),
+      d.maGiaoDich?.includes(orderCode ?? ""),
   );
 
+  // idDangKi trả về trong chiTiets của đơn hàng - dùng để điều hướng thẳng
+  // vào đúng khóa học vừa mua trên trang học
+  const idDangKiVuaMua = (
+    donHang?.chiTiets?.[0] as { idDangKi?: string | number } | undefined
+  )?.idDangKi;
+
   return (
-    <AuthGuard allowedRoles={['HocVien', 'GiaoVien']}>
+    <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
       <StudentDashboardShell>
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '70vh',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "70vh",
           }}
         >
           <Container maxWidth="sm">
             {/* Icon + tiêu đề */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box sx={{ textAlign: "center", mb: 4 }}>
               {isSuccess ? (
                 <CheckCircleIcon sx={{ fontSize: 72, color: PRIMARY }} />
               ) : (
-                <CancelIcon sx={{ fontSize: 72, color: '#999' }} />
+                <CancelIcon sx={{ fontSize: 72, color: "#999" }} />
               )}
 
               <Typography
@@ -67,20 +73,20 @@ function PaymentResultContent() {
                   fontSize: 24,
                   fontWeight: 800,
                   mt: 2,
-                  color: isSuccess ? PRIMARY : 'text.secondary',
+                  color: isSuccess ? PRIMARY : "text.secondary",
                 }}
               >
                 {isSuccess
-                  ? 'Thanh toán thành công!'
-                  : code === 'cancel'
-                    ? 'Đã hủy thanh toán'
-                    : 'Thanh toán thất bại'}
+                  ? "Thanh toán thành công!"
+                  : code === "cancel"
+                    ? "Đã hủy thanh toán"
+                    : "Thanh toán thất bại"}
               </Typography>
 
-              <Typography sx={{ color: 'text.secondary', fontSize: 14, mt: 1 }}>
+              <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 1 }}>
                 {isSuccess
-                  ? 'Chào mừng bạn đến với khóa học. Giao dịch của bạn đã được xử lý thành công.'
-                  : 'Giao dịch không thành công. Vui lòng thử lại.'}
+                  ? "Chào mừng bạn đến với khóa học. Giao dịch của bạn đã được xử lý thành công."
+                  : "Giao dịch không thành công. Vui lòng thử lại."}
               </Typography>
             </Box>
 
@@ -88,31 +94,36 @@ function PaymentResultContent() {
             {isSuccess && donHang && (
               <Card
                 sx={{
-                  borderRadius: '24px',
+                  borderRadius: "24px",
                   p: 2.5,
                   mb: 3,
-                  border: '1px solid rgba(141,19,19,0.06)',
+                  border: "1px solid rgba(141,19,19,0.06)",
                   borderLeft: `4px solid ${PRIMARY}`,
-                  bgcolor: 'var(--ev-paper, #ffffff)',
-                  boxShadow: '0 10px 30px rgba(141,19,19,0.015)',
+                  bgcolor: "#ffffff",
+                  boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
                 }}
               >
                 <Typography
-                  sx={{ fontWeight: 700, fontSize: 13, mb: 1.5, letterSpacing: 0.5 }}
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 13,
+                    mb: 1.5,
+                    letterSpacing: 0.5,
+                  }}
                 >
                   CHI TIẾT ĐƠN HÀNG
                 </Typography>
 
                 <Box
                   sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                     gap: 1,
                     mb: 2,
                   }}
                 >
                   <Box>
-                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                    <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
                       Mã đơn hàng
                     </Typography>
                     <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
@@ -120,11 +131,13 @@ function PaymentResultContent() {
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                    <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
                       Tổng thanh toán
                     </Typography>
-                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: PRIMARY }}>
-                      {donHang.soTienThanhToan?.toLocaleString('vi-VN')}đ
+                    <Typography
+                      sx={{ fontSize: 13, fontWeight: 700, color: PRIMARY }}
+                    >
+                      {donHang.soTienThanhToan?.toLocaleString("vi-VN")}đ
                     </Typography>
                   </Box>
                 </Box>
@@ -132,7 +145,9 @@ function PaymentResultContent() {
                 {donHang.chiTiets && donHang.chiTiets.length > 0 && (
                   <>
                     <Divider sx={{ mb: 1.5 }} />
-                    <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>
+                    <Typography
+                      sx={{ fontSize: 12, color: "text.secondary", mb: 1 }}
+                    >
                       Khóa học đã mua:
                     </Typography>
                     <Stack spacing={0.5}>
@@ -140,16 +155,22 @@ function PaymentResultContent() {
                         <Box
                           key={i}
                           sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
                           }}
                         >
                           <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
-                            📚 {ct.tenKhoaHoc ?? 'Khóa học'}
+                            📚 {ct.tenKhoaHoc ?? "Khóa học"}
                           </Typography>
-                          <Typography sx={{ fontSize: 12, color: PRIMARY, fontWeight: 600 }}>
-                            {ct.giaLucDat?.toLocaleString('vi-VN')}đ
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              color: PRIMARY,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {ct.giaLucDat?.toLocaleString("vi-VN")}đ
                           </Typography>
                         </Box>
                       ))}
@@ -160,13 +181,23 @@ function PaymentResultContent() {
             )}
 
             {/* Nút hành động */}
-            <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ justifyContent: "center" }}
+            >
               <Button
                 variant="contained"
-                onClick={() => router.push('/khoa-hoc-cua-toi')}
+                onClick={() =>
+                  router.push(
+                    idDangKiVuaMua
+                      ? `/student/courses/my-courses/learning/${idDangKiVuaMua}`
+                      : "/student/courses/my-courses/learning/",
+                  )
+                }
                 sx={{
                   bgcolor: PRIMARY,
-                  '&:hover': { bgcolor: '#7f1d1d' },
+                  "&:hover": { bgcolor: "#7f1d1d" },
                   borderRadius: 2,
                   fontWeight: 700,
                 }}
@@ -176,7 +207,7 @@ function PaymentResultContent() {
 
               <Button
                 variant="outlined"
-                onClick={() => router.push('/student/explore')}
+                onClick={() => router.push("/student/explore")}
                 sx={{
                   borderColor: PRIMARY,
                   color: PRIMARY,

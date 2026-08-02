@@ -16,5 +16,6 @@ namespace Eduverse.Model.Entities
 
         public DateTime? NgayKetThuc { get; set; }
         public int? SoLuongHieuLuc { get; set; }
+        public ICollection<DonHang_KhuyenMai>? DonHang_KhuyenMais { get; set; }
     }
 }

@@ -18,6 +18,7 @@ namespace Eduverse.Service.YeuCauRutTienService
         Task TaoYeuCauAsync(Guid userId, TaoYeuCauRutTienDto dto);
         Task XuLyYeuCauAsync(Guid id, XuLyYeuCauDto dto); // Admin
         Task GuiOtpAsync(Guid userId, GuiOtpRutTienRequest request);
+        Task HuyYeuCauAsync(Guid id, Guid userId);
 
     }
 }

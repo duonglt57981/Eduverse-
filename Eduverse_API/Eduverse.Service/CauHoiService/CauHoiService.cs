@@ -314,8 +314,8 @@ namespace Eduverse.Service.CauHoiService
             if (noiDungCauHoi.Trim().Length > 1000)
                 throw new Exception("Nội dung câu hỏi không được vượt quá 1000 ký tự.");
 
-            if (!string.IsNullOrWhiteSpace(tenCauHoi) && tenCauHoi.Trim().Length > 255)
-                throw new Exception("Tên câu hỏi không được vượt quá 255 ký tự.");
+            if (!string.IsNullOrWhiteSpace(tenCauHoi) && tenCauHoi.Trim().Length > 200)
+                throw new Exception("Tên câu hỏi không được vượt quá 200 ký tự.");
 
             if (string.IsNullOrWhiteSpace(doKho) || !ValidDoKho.Contains(doKho))
                 throw new Exception($"Độ khó '{doKho}' không hợp lệ. Chỉ chấp nhận: De, TrungBinh, Kho.");
@@ -329,8 +329,8 @@ namespace Eduverse.Service.CauHoiService
             if (danhSachDapAn.Count < 2)
                 throw new Exception($"Câu hỏi '{noiDungCauHoi}' phải có ít nhất 2 đáp án.");
 
-            if (danhSachDapAn.Count > 6)
-                throw new Exception($"Câu hỏi '{noiDungCauHoi}' không được vượt quá 6 đáp án.");
+            if (danhSachDapAn.Count > 15)
+                throw new Exception($"Câu hỏi '{noiDungCauHoi}' không được vượt quá 15 đáp án.");
 
             var noiDungSet = new HashSet<string>();
             var soDapAnDung = 0;
@@ -347,8 +347,8 @@ namespace Eduverse.Service.CauHoiService
                 if (string.IsNullOrWhiteSpace(noiDung))
                     throw new Exception($"Câu hỏi '{noiDungCauHoi}' có đáp án bị để trống.");
 
-                if (noiDung.Trim().Length > 500)
-                    throw new Exception($"Câu hỏi '{noiDungCauHoi}' có đáp án vượt quá 500 ký tự.");
+                if (noiDung.Trim().Length > 99)
+                    throw new Exception($"Câu hỏi '{noiDungCauHoi}' có đáp án vượt quá 99 ký tự.");
 
                 var trimmed = noiDung.Trim();
                 if (!noiDungSet.Add(trimmed))

@@ -1,8 +1,8 @@
 export interface KiemDuyetSearchDto extends SearchBase {
   Keyword?: string;
-  TrangThaiPheDuyet?: string; // "ChoDuyet" | "DangDuyet"
-  SapXepNgay?: string; // "Moi" | "Cu"
-  SapXepTen?: string; // "AZ" | "ZA"
+  TrangThaiPheDuyet?: string;
+  SapXepNgay?: string;
+  SapXepTen?: string;
 }
 
 export interface KhoaHocKiemDuyetListDto {
@@ -26,40 +26,21 @@ export interface KiemDuyetDetailDto {
   trangThai?: string | null;
   idBanGhiTruoc?: string | null;
   isBanHienTai: boolean;
-  baiGiangChoDuyet: BaiGiangChoDuyetDto[];
-  taiLieuChoDuyet: TaiLieuChoDuyetDto[];
   createBy?: string | null;
+  lichSuKiemDuyetDto?: LichSuKiemDuyetDto;
 }
-
-export interface BaiGiangChoDuyetDto {
-  idBaiGiang: string; // Guid
-  tieuDe?: string | null;
-  loaiBaiGiang?: string | null;
-  urlBaiGiang?: string | null;
-  thoiLuong?: number | null; // int?
-  laBaiGiangFree?: boolean | null; // bool?
-  trangThai?: string | null;
-  trangThaiPheDuyet?: string | null;
-  idPhan: string; // Guid
-  isBanHienTai: boolean;
-  idBanGhiTruoc?: string | null; // Guid?
-}
-
-export interface TaiLieuChoDuyetDto {
-  idTaiLieu: string; // Guid
-  loaiTaiLieu?: string | null;
-  tenTaiLieu?: string | null;
-  url?: string | null;
-  idDocument?: string | null;
-  trangThai?: string | null;
-  trangThaiPheDuyet?: string | null;
-  idBaiGiang: string; // Guid
-  createBy?: string | null;
-}
-
 export interface KiemDuyetKhoaHocDto {
   idDoiTuong?: string | null; // Guid?
   loaiDoiTuong: string;
   trangThaiPheDuyet?: string | null; // string?
   ngayDuyet?: Date | null; // DateTime?
+}
+
+export interface LichSuKiemDuyetDto {
+  id: string;
+  idNguoiDuyet?: string | null;
+  trangThaiPheDuyet?: string | null;
+  lyDo?: string | null;
+  ngayDuyet?: Date | null;
+  ngayTao?: Date | null;
 }

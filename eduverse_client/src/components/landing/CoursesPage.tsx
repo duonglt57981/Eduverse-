@@ -8,6 +8,7 @@ import { danhMucService } from "@/src/services/danhmucService";
 import {
   ArrowForwardRounded,
   FavoriteBorderRounded,
+  FavoriteRounded,
   QueryStatsRounded,
   SchoolRounded,
   SearchRounded,
@@ -34,7 +35,9 @@ import {
 import { type CourseCatalogItem, type CourseCategory } from "./landing-data";
 import { useRouter } from "next/navigation";
 import { useDispatch } from '@/src/store/hook';
+import { useSelector } from '@/src/store/hook';
 import { themVaoGioHang } from "@/src/store/gioHang/GioHangSlice";
+import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
@@ -92,6 +95,9 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
 
   const dispatch = useDispatch();
   const router = useRouter();
+  const user = useSelector((state) => state.auth.user);
+  const { isFavorited, toggleFavorite } = useFavorite();
+  const favorited = isFavorited(course.id);
 
   // Handle "Chưa cập nhật" values gracefully
   const hasCategory =
@@ -205,7 +211,16 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
 
         {/* Favorite icon */}
         <IconButton
-          aria-label="Thêm vào danh sách yêu thích"
+          aria-label={favorited ? "Bỏ khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
+          onClick={async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!user) {
+              router.push(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+              return;
+            }
+            await toggleFavorite(course.id, course.title);
+          }}
           sx={{
             position: "absolute",
             top: 10,
@@ -214,7 +229,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             height: 32,
             bgcolor: "rgba(255,255,255,0.75)",
             backdropFilter: "blur(8px)",
-            color: "var(--ev-text-secondary, #4B5563)",
+            color: favorited ? BRAND_COLORS.primary : "var(--ev-text-secondary, #4B5563)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             transition: "all 0.2s ease",
             "&:hover": {
@@ -224,7 +239,11 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             },
           }}
         >
-          <FavoriteBorderRounded sx={{ fontSize: 16 }} />
+          {favorited ? (
+            <FavoriteRounded sx={{ fontSize: 16 }} />
+          ) : (
+            <FavoriteBorderRounded sx={{ fontSize: 16 }} />
+          )}
         </IconButton>
       </Box>
 
@@ -502,8 +521,14 @@ export default function CoursesPage({
   const [pageIndex, setPageIndex] = useState(1);
   const pageSize = -1;
   const [loading, setLoading] = useState(false);
+  const user = useSelector((state) => state.auth.user);
+  const { fetchFavorites } = useFavorite();
 
   const courseService = useMemo(() => new KhoaHocService(), []);
+
+  useEffect(() => {
+    if (user) void fetchFavorites();
+  }, [fetchFavorites, user]);
 
   // Danh mục thật từ phần quản lý danh mục của Admin (/danhmuc, công khai)
   const [categories, setCategories] = useState<CourseCategory[]>([]);

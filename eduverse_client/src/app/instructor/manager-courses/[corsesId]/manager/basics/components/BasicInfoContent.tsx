@@ -33,7 +33,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import AttachMoneyRoundedIcon from "@mui/icons-material/AttachMoneyRounded";
 import CropIcon from "@mui/icons-material/Crop";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { DanhMucDto } from "@/src/types/khoaHoc";
 import { danhMucService } from "@/src/services/danhmucService";
@@ -45,29 +45,21 @@ import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
 // ===== Ràng buộc (theo chuẩn Udemy) =====
-const DO_DAI_TIEU_DE_TOI_THIEU = 3; // Tối thiểu 3 ký tự (không tính dấu cách)
-const DO_DAI_TIEU_DE_TOI_DA = 99; // Tối đa 99 ký tự (không tính dấu cách)
+const DO_DAI_TIEU_DE_TOI_THIEU = 3;
+const DO_DAI_TIEU_DE_TOI_DA = 99;
 const DO_DAI_MO_TA_TOI_THIEU = 200;
 const DO_DAI_MO_TA_TOI_DA = 9999;
 const DUNG_LUONG_ANH_TOI_DA = 10 * 1024 * 1024; // 10MB
 const DUOI_ANH_HOP_LE = [".jpg", ".jpeg", ".png"];
-const DO_PHAN_GIAI_TOI_THIEU_WIDTH = 1280; // 720p width
-const DO_PHAN_GIAI_TOI_THIEU_HEIGHT = 720; // 720p height
-const TY_LE_ANH = 16 / 9; // Udemy standard
+const DO_PHAN_GIAI_TOI_THIEU_WIDTH = 1280;
+const DO_PHAN_GIAI_TOI_THIEU_HEIGHT = 720;
+const TY_LE_ANH = 16 / 9;
 
-/**
- * Đếm số ký tự thực tế trong văn bản, KHÔNG tính dấu cách/khoảng trắng.
- * Dùng cho các điều kiện TỐI THIỂU và TỐI ĐA của tiêu đề.
- */
 function demSoKyTuKhongTinhDauCach(text: string): number {
   if (!text || typeof text !== "string") return 0;
-  // Loại bỏ toàn bộ khoảng trắng (đầu, cuối, giữa các từ)
   return text.replace(/\s+/g, "").length;
 }
 
-/**
- * Kiểm tra xem chuỗi có chỉ chứa khoảng trắng hay không
- */
 function isOnlySpaces(text: string): boolean {
   if (!text || typeof text !== "string") return true;
   return text.trim().length === 0;
@@ -86,7 +78,51 @@ function layDuoiFile(tenFile: string): string {
   return idx === -1 ? "" : tenFile.slice(idx).toLowerCase();
 }
 
-// Hàm cắt ảnh - giữ nguyên độ phân giải gốc.
+// ===== VALIDATE IMAGE FILE =====
+function validateImageFile(
+  file: File,
+): Promise<{ valid: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    const duoi = layDuoiFile(file.name);
+    if (!DUOI_ANH_HOP_LE.includes(duoi)) {
+      resolve({
+        valid: false,
+        error: `Định dạng ảnh không hợp lệ. Chỉ chấp nhận: ${DUOI_ANH_HOP_LE.join(", ")}`,
+      });
+      return;
+    }
+    if (file.size > DUNG_LUONG_ANH_TOI_DA) {
+      resolve({
+        valid: false,
+        error: `Dung lượng ảnh vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
+      });
+      return;
+    }
+    // Kiểm tra kích thước ảnh gốc
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      if (
+        img.width < DO_PHAN_GIAI_TOI_THIEU_WIDTH ||
+        img.height < DO_PHAN_GIAI_TOI_THIEU_HEIGHT
+      ) {
+        resolve({
+          valid: false,
+          error: `Độ phân giải ảnh tối thiểu ${DO_PHAN_GIAI_TOI_THIEU_WIDTH}x${DO_PHAN_GIAI_TOI_THIEU_HEIGHT} (720p). Hiện tại: ${img.width}x${img.height}`,
+        });
+      } else {
+        resolve({ valid: true });
+      }
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      resolve({ valid: false, error: "Không thể đọc thông tin ảnh" });
+    };
+    img.src = url;
+  });
+}
+
 function cropImage(
   imageSrc: string,
   crop: PixelCrop,
@@ -188,7 +224,6 @@ function SectionHeader({
   );
 }
 
-// Component crop ảnh theo chuẩn Udemy
 function ImageCropper({
   imageSrc,
   onCropComplete,
@@ -446,10 +481,8 @@ export default function BasicInfoContent() {
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
-  // Kiểm tra có thể chỉnh sửa hay không (chỉ DangSua mới cho sửa)
   const isEditable = trangThai === "DangSua";
 
-  // Danh mục sau khi lọc theo từ khóa tìm kiếm
   const danhMucDaLoc = useMemo(() => {
     const tuKhoa = timKiemDanhMuc.trim().toLowerCase();
     if (!tuKhoa) return danhMucList;
@@ -458,13 +491,12 @@ export default function BasicInfoContent() {
     );
   }, [danhMucList, timKiemDanhMuc]);
 
-  // Lấy danh sách danh mục
   useEffect(() => {
     const fetchDanhMuc = async () => {
       try {
         const res = await danhMucService.getList({
           pageIndex: 1,
-          pageSize: 100,
+          pageSize: 10,
           trangThai: "HoatDong",
         });
         if (res.status !== false && res.data) {
@@ -498,15 +530,12 @@ export default function BasicInfoContent() {
     fetchData();
   }, [idKhoaHoc, khoaHocService]);
 
-  // Validate form
   const validateForm = (): boolean => {
     let hopLe = true;
 
-    // Validate tiêu đề
     const tieuDe = thongTin.tieuDe || "";
     const soKyTuTieuDe = demSoKyTuKhongTinhDauCach(tieuDe);
 
-    // Kiểm tra trống hoặc chỉ có khoảng trắng
     if (isOnlySpaces(tieuDe)) {
       setLoiTieuDe("Vui lòng nhập tiêu đề khóa học");
       hopLe = false;
@@ -524,7 +553,6 @@ export default function BasicInfoContent() {
       setLoiTieuDe(null);
     }
 
-    // Validate giá
     if (thongTin.giaGoc !== undefined && thongTin.giaGoc < 0) {
       setLoiGia("Giá không được nhỏ hơn 0");
       hopLe = false;
@@ -535,7 +563,6 @@ export default function BasicInfoContent() {
       setLoiGia(null);
     }
 
-    // Validate mô tả
     const doDaiMoTa = boTheHtml(thongTin.moTa || "").length;
     if (doDaiMoTa < DO_DAI_MO_TA_TOI_THIEU) {
       setLoiMoTa(
@@ -551,7 +578,6 @@ export default function BasicInfoContent() {
       setLoiMoTa(null);
     }
 
-    // Validate hình ảnh
     if (imageFile) {
       const duoi = layDuoiFile(imageFile.name);
       if (!DUOI_ANH_HOP_LE.includes(duoi)) {
@@ -581,27 +607,25 @@ export default function BasicInfoContent() {
     if (!isEditable) return;
     const file = e.target.files?.[0] || null;
     if (file) {
-      const duoi = layDuoiFile(file.name);
-      if (!DUOI_ANH_HOP_LE.includes(duoi)) {
-        setLoiHinhAnh(
-          `Định dạng ảnh không hợp lệ. Chỉ chấp nhận: ${DUOI_ANH_HOP_LE.join(", ")}`,
-        );
-        e.target.value = "";
-        return;
+      setLoadingSave(true);
+      try {
+        const validation = await validateImageFile(file);
+        if (!validation.valid) {
+          setLoiHinhAnh(validation.error || "Ảnh không hợp lệ");
+          e.target.value = "";
+          setLoadingSave(false);
+          return;
+        }
+        setTempImageFile(file);
+        const imageUrl = URL.createObjectURL(file);
+        setImageToCrop(imageUrl);
+        setShowCropper(true);
+        setLoiHinhAnh(null);
+      } catch (err: any) {
+        setLoiHinhAnh(err.message || "Lỗi kiểm tra ảnh");
+      } finally {
+        setLoadingSave(false);
       }
-      if (file.size > DUNG_LUONG_ANH_TOI_DA) {
-        setLoiHinhAnh(
-          `Dung lượng ảnh vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
-        );
-        e.target.value = "";
-        return;
-      }
-
-      setTempImageFile(file);
-      const imageUrl = URL.createObjectURL(file);
-      setImageToCrop(imageUrl);
-      setShowCropper(true);
-      setLoiHinhAnh(null);
       e.target.value = "";
     }
   };
@@ -612,25 +636,24 @@ export default function BasicInfoContent() {
     if (!isEditable) return;
     const file = e.dataTransfer.files?.[0] || null;
     if (file) {
-      const duoi = layDuoiFile(file.name);
-      if (!DUOI_ANH_HOP_LE.includes(duoi)) {
-        setLoiHinhAnh(
-          `Định dạng ảnh không hợp lệ. Chỉ chấp nhận: ${DUOI_ANH_HOP_LE.join(", ")}`,
-        );
-        return;
+      setLoadingSave(true);
+      try {
+        const validation = await validateImageFile(file);
+        if (!validation.valid) {
+          setLoiHinhAnh(validation.error || "Ảnh không hợp lệ");
+          setLoadingSave(false);
+          return;
+        }
+        setTempImageFile(file);
+        const imageUrl = URL.createObjectURL(file);
+        setImageToCrop(imageUrl);
+        setShowCropper(true);
+        setLoiHinhAnh(null);
+      } catch (err: any) {
+        setLoiHinhAnh(err.message || "Lỗi kiểm tra ảnh");
+      } finally {
+        setLoadingSave(false);
       }
-      if (file.size > DUNG_LUONG_ANH_TOI_DA) {
-        setLoiHinhAnh(
-          `Dung lượng ảnh vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
-        );
-        return;
-      }
-
-      setTempImageFile(file);
-      const imageUrl = URL.createObjectURL(file);
-      setImageToCrop(imageUrl);
-      setShowCropper(true);
-      setLoiHinhAnh(null);
     }
   };
 
@@ -700,13 +723,22 @@ export default function BasicInfoContent() {
       setSuccess("Cập nhật thông tin thành công!");
       await refreshData();
       setImageFile(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Đã xảy ra lỗi khi cập nhật");
+      setError(err.message || "Đã xảy ra lỗi khi cập nhật");
     } finally {
       setLoadingSave(false);
     }
   };
+
+  // Xử lý thay đổi mô tả - KHÔNG re-render editor
+  const handleMoTaChange = useCallback(
+    (html: string) => {
+      setThongTin({ moTa: html });
+      if (loiMoTa) setLoiMoTa(null);
+    },
+    [setThongTin, loiMoTa],
+  );
 
   const cardSx = {
     p: 3.5,
@@ -754,8 +786,9 @@ export default function BasicInfoContent() {
           >
             Trang đích của khóa học
           </Typography>
-          <Typography sx={{ fontSize: 14, color: "var(--ev-text-secondary, #64748B)" }}>
-            Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ ràng và hấp dẫn.
+          <Typography sx={{ fontSize: 14, color: "#64748B" }}>
+            Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ
+            ràng và hấp dẫn.
           </Typography>
         </Box>
 
@@ -787,7 +820,6 @@ export default function BasicInfoContent() {
 
         {!loading && (
           <>
-            {/* Tên khóa học */}
             <Paper elevation={0} sx={cardSx}>
               <SectionHeader
                 icon={<TitleRoundedIcon fontSize="small" />}
@@ -814,7 +846,10 @@ export default function BasicInfoContent() {
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
                     "&.Mui-focused fieldset": { borderColor: "#991B1B" },
                   },
-                  "& .MuiInputBase-input": { color: "var(--ev-text-primary, #1E293B)", fontWeight: 500 },
+                  "& .MuiInputBase-input": {
+                    color: "#1E293B",
+                    fontWeight: 500,
+                  },
                 }}
               />
               <Typography
@@ -832,7 +867,6 @@ export default function BasicInfoContent() {
               </Typography>
             </Paper>
 
-            {/* Mô tả */}
             <Paper elevation={0} sx={cardSx}>
               <SectionHeader
                 icon={<DescriptionRoundedIcon fontSize="small" />}
@@ -851,7 +885,7 @@ export default function BasicInfoContent() {
                   "&:focus-within": {
                     borderColor: "#991B1B",
                     boxShadow: "0 0 0 1px #991B1B",
-                  }
+                  },
                 }}
               >
                 {!isEditable ? (
@@ -868,12 +902,9 @@ export default function BasicInfoContent() {
                   />
                 ) : (
                   <RichTextEditor
-                    key={thongTin.moTa}
+                    // KHÔNG dùng key để tránh re-render khi thay đổi nội dung
                     value={thongTin.moTa || ""}
-                    onChange={(html) => {
-                      setThongTin({ moTa: html });
-                      if (loiMoTa) setLoiMoTa(null);
-                    }}
+                    onChange={handleMoTaChange}
                     placeholder="Nhập mô tả chi tiết về khóa học..."
                     minHeight={200}
                   />
@@ -892,7 +923,6 @@ export default function BasicInfoContent() {
               </Typography>
             </Paper>
 
-            {/* Thông tin cơ bản */}
             <Paper elevation={0} sx={cardSx}>
               <SectionHeader
                 icon={<TuneRoundedIcon fontSize="small" />}
@@ -1035,7 +1065,6 @@ export default function BasicInfoContent() {
               </Stack>
             </Paper>
 
-            {/* Giá khóa học */}
             <Paper elevation={0} sx={cardSx}>
               <SectionHeader
                 icon={<AttachMoneyRoundedIcon fontSize="small" />}
@@ -1047,7 +1076,11 @@ export default function BasicInfoContent() {
                 type="text"
                 inputMode="numeric"
                 placeholder="VD: 500.000"
-                value={thongTin.giaGoc !== undefined && thongTin.giaGoc !== null ? thongTin.giaGoc : ""}
+                value={
+                  thongTin.giaGoc !== undefined && thongTin.giaGoc !== null
+                    ? thongTin.giaGoc
+                    : ""
+                }
                 onChange={(e) => {
                   if (!isEditable) return;
                   const raw = e.target.value.replace(/\D/g, "");
@@ -1073,15 +1106,24 @@ export default function BasicInfoContent() {
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
                     "&.Mui-focused fieldset": { borderColor: "#991B1B" },
                   },
-                  "& .MuiInputBase-input": { color: "var(--ev-text-primary, #1E293B)", fontWeight: 500 },
+                  "& .MuiInputBase-input": {
+                    color: "#1E293B",
+                    fontWeight: 500,
+                  },
                 }}
               />
-              <Typography sx={{ fontSize: 12, color: "var(--ev-text-secondary, #64748B)", mt: 0.75, fontWeight: 500 }}>
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: "#64748B",
+                  mt: 0.75,
+                  fontWeight: 500,
+                }}
+              >
                 Giá trị lưu là số nguyên (VNĐ), dấu chấm chỉ để hiển thị.
               </Typography>
             </Paper>
 
-            {/* Hình ảnh */}
             <Paper elevation={0} sx={cardSx}>
               <SectionHeader
                 icon={<ImageRoundedIcon fontSize="small" />}
@@ -1276,7 +1318,6 @@ export default function BasicInfoContent() {
               </Stack>
             </Paper>
 
-            {/* Thanh lưu */}
             {isEditable && (
               <Box
                 sx={{
@@ -1329,7 +1370,6 @@ export default function BasicInfoContent() {
         )}
       </Box>
 
-      {/* Image Cropper Dialog */}
       {showCropper && imageToCrop && (
         <ImageCropper
           imageSrc={imageToCrop}

@@ -20,22 +20,25 @@ import {
   Select,
   MenuItem,
   Paper,
+  Button,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
-
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
-import PendingActionsRoundedIcon from "@mui/icons-material/PendingActionsRounded";
-import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
-import AssignmentTurnedInRoundedIcon from "@mui/icons-material/AssignmentTurnedInRounded";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import Button from "@mui/material/Button";
+import AssignmentTurnedInRoundedIcon from "@mui/icons-material/AssignmentTurnedInRounded";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
+import PendingActionsRoundedIcon from "@mui/icons-material/PendingActionsRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
+  COLORS,
+  FONTS,
   PAGE_SIZE,
   normalizeListResponse,
 } from "./types/constants";
@@ -128,7 +131,7 @@ export default function DuyetKhoaHocPage() {
 
   const searchParams = useMemo(() => {
     const params: any = {
-      pageNumber: page,
+      pageIndex: page,
       pageSize: PAGE_SIZE,
     };
     if (keyword.trim()) params.Keyword = keyword.trim();
@@ -171,7 +174,7 @@ export default function DuyetKhoaHocPage() {
   const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try {
-      const params: any = { pageNumber: 1, pageSize: 1000 };
+      const params: any = { pageIndex: 1, pageSize: 20 };
       const res = await kiemDuyetService.GetListKiemDuyetKhoaHoc(params);
       const { list } = normalizeListResponse(res, 1000);
       setStats({
@@ -196,11 +199,6 @@ export default function DuyetKhoaHocPage() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
-
-  const handleRefresh = () => {
-    fetchList();
-    fetchStats();
-  };
 
   const handleTabChange = (_: any, newTab: string) => {
     setTab(newTab as any);
@@ -231,86 +229,61 @@ export default function DuyetKhoaHocPage() {
     router.push(`/admin/approve-courses/${id}`);
   };
 
-  // --- Contextual empty message ---
-  const emptyTitle = keyword.trim()
-    ? "Không tìm thấy khóa học phù hợp"
-    : tab === "ChoDuyet"
-      ? "Không có khóa học đang chờ duyệt"
-      : tab === "DangDuyet"
-        ? "Không có khóa học đang được kiểm duyệt"
-        : "Không có khóa học nào cần kiểm duyệt";
+  const handleOpenHistory = () => {
+    router.push(`/admin/approve-courses/history`);
+  };
 
   return (
     <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
-          {/* ═══════ HEADER ═══════ */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              mb: 3,
-            }}
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
+          {/* Header */}
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{ alignItems: "center", mb: 0.5 }}
           >
-            <Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 sx={{
-                  fontSize: 28,
-                  fontWeight: 900,
-                  color: "var(--ev-text-primary, #1F2937)",
-                  lineHeight: 1.2,
-                  mb: 0.5,
+                  fontSize: { xs: 20, sm: 24 },
+                  fontWeight: 700,
+                  fontFamily: FONTS.display,
+                  color: COLORS.ink,
+                  lineHeight: 1.25,
                 }}
               >
                 Kiểm duyệt khóa học
               </Typography>
-              <Typography sx={{ color: "var(--ev-text-secondary, #64748B)", fontSize: 14 }}>
-                Xem xét và xử lý các khóa học được Giảng viên gửi phê duyệt.
+              <Typography
+                sx={{ fontSize: 13, color: COLORS.inkSoft, mt: 0.25 }}
+              >
+                Xem và xử lý các khóa học đang chờ phê duyệt.
               </Typography>
             </Box>
-            <Tooltip title="Tải lại dữ liệu">
+
+            <Tooltip title="Lịch sử duyệt">
               <IconButton
-                onClick={handleRefresh}
+                onClick={handleOpenHistory}
                 sx={{
-                  bgcolor: alpha("#991B1B", 0.08),
-                  borderRadius: 2.5,
-                  width: 42,
-                  height: 42,
-                  transition: "all .2s ease",
-                  "&:hover": {
-                    bgcolor: alpha("#991B1B", 0.15),
-                    transform: "rotate(45deg)",
-                  },
+                  bgcolor: alpha(COLORS.primary, 0.08),
+                  borderRadius: 2,
+                  flexShrink: 0,
                 }}
               >
-                <RefreshIcon
-                  sx={{
-                    color: "#991B1B",
-                    animation:
-                      loading || loadingStats
-                        ? "spin 1s linear infinite"
-                        : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
-                    },
-                  }}
-                />
+                <HistoryRoundedIcon sx={{ color: COLORS.primary }} />
               </IconButton>
             </Tooltip>
-          </Box>
+          </Stack>
 
           {/* ═══════ STATS CARDS ═══════ */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(3, 1fr)",
-              },
-              gap: 2,
-              mb: 3,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1.5,
+              mt: 2.5,
+              mb: 2.5,
             }}
           >
             {[
@@ -352,61 +325,30 @@ export default function DuyetKhoaHocPage() {
                 key={i}
                 elevation={0}
                 sx={{
-                  p: 2.5,
-                  borderRadius: 4,
-                  border: "1px solid #E5E7EB",
-                  bgcolor: "var(--ev-paper, #fff)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  transition: "all .2s ease",
-                  "&:hover": {
-                    borderColor: stat.color,
-                    boxShadow: `0 4px 16px ${alpha(stat.color, 0.1)}`,
+                  flex: 1,
+                  minWidth: {
+                    xs: "100%",
+                    sm: "calc(50% - 6px)",
+                    md: "calc(33.33% - 8px)",
                   },
                 }}
               >
                 <Box
                   sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 3,
-                    bgcolor: stat.bgColor,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    p: 1.75,
+                    borderRadius: 2.5,
+                    border: `1px solid ${COLORS.line}`,
+                    textAlign: "center",
                   }}
                 >
-                  {stat.icon}
-                </Box>
-                <Box>
-                  {loadingStats ? (
-                    <Skeleton
-                      variant="rounded"
-                      width={48}
-                      height={32}
-                      sx={{ borderRadius: 1.5, mb: 0.25 }}
-                    />
-                  ) : (
-                    <Typography
-                      sx={{
-                        fontSize: 28,
-                        fontWeight: 800,
-                        color: stat.color,
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {stat.value}
-                    </Typography>
-                  )}
                   <Typography
-                    sx={{
-                      fontSize: 13,
-                      color: "var(--ev-text-muted, #6B7280)",
-                      fontWeight: 500,
-                      mt: 0.25,
-                    }}
+                    variant="h6"
+                    sx={{ fontWeight: 700, color: stat.color, lineHeight: 1.3 }}
+                  >
+                    {loadingStats ? <CircularProgress size={20} /> : stat.value}
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: 12.5, color: COLORS.inkSoft, mt: 0.25 }}
                   >
                     {stat.label}
                   </Typography>
@@ -415,171 +357,143 @@ export default function DuyetKhoaHocPage() {
             ))}
           </Box>
 
-          {/* ═══════ TOOLBAR ═══════ */}
-          <Paper
-            elevation={0}
+          {/* ═══════ BỘ LỌC + DANH SÁCH ═══════ */}
+          <Box
             sx={{
-              borderRadius: 3.5,
-              border: "1px solid #E5E7EB",
-              bgcolor: "var(--ev-paper, #fff)",
+              border: `1px solid ${COLORS.line}`,
+              borderRadius: 3,
+              bgcolor: "#fff",
               overflow: "hidden",
-              mb: 0,
             }}
           >
-            {/* Search + Tabs + Sort row */}
+            {/* Thanh công cụ lọc */}
             <Box
               sx={{
                 p: 2,
-                borderBottom: "1px solid #F3F4F6",
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: { md: "center" },
-                gap: 1.5,
+                bgcolor: alpha(COLORS.primary, 0.04),
+                borderBottom: `1px solid ${COLORS.line}`,
               }}
             >
-              {/* Search */}
-              <Box
-                component="form"
-                onSubmit={handleSearchSubmit}
-                sx={{ flex: 1 }}
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: "center", mb: 1.25 }}
               >
-                <TextField
-                  size="small"
-                  fullWidth
-                  placeholder="Tìm theo tên khóa học..."
-                  value={keywordInput}
-                  onChange={(e) => setKeywordInput(e.target.value)}
+                <FilterListRoundedIcon
+                  sx={{ fontSize: 17, color: COLORS.primary }}
+                />
+                <Typography
                   sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 3,
-                      bgcolor: "var(--ev-paper-alt, #F9FAFB)",
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    color: COLORS.ink,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  Tìm kiếm & lọc
+                </Typography>
+              </Stack>
+
+              <Box component="form" onSubmit={handleSearchSubmit}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.25}
+                  sx={{ alignItems: { sm: "center" } }}
+                >
+                  <TextField
+                    size="small"
+                    fullWidth
+                    placeholder="Tìm theo tên khóa học..."
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    sx={{
+                      bgcolor: "#fff",
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 2,
+                        "& fieldset": { borderColor: COLORS.line },
+                        "&:hover fieldset": { borderColor: COLORS.primary },
+                        "&.Mui-focused fieldset": {
+                          borderColor: COLORS.primary,
+                        },
+                      },
+                    }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon
+                              sx={{ color: COLORS.inkSoft, fontSize: 19 }}
+                            />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+
+                  {/* Sort */}
+                  <Select
+                    size="small"
+                    value={sortBy}
+                    onChange={handleSortChange}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <SwapVertRoundedIcon
+                          sx={{ fontSize: 18, color: "#9CA3AF" }}
+                        />
+                      </InputAdornment>
+                    }
+                    sx={{
+                      minWidth: { xs: "100%", sm: 165 },
+                      borderRadius: 2.5,
                       height: 42,
-                      "& fieldset": { borderColor: "var(--ev-divider, #E5E7EB)" },
-                      "&:hover fieldset": { borderColor: "#991B1B" },
-                      "&.Mui-focused fieldset": {
+                      bgcolor: "#F9FAFB",
+                      flexShrink: 0,
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#E5E7EB",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#991B1B",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                         borderColor: "#991B1B",
                         borderWidth: 1.5,
                       },
-                    },
-                  }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon
-                            sx={{ color: "var(--ev-grey, #9CA3AF)", fontSize: 20 }}
-                          />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-              </Box>
-
-              {/* Segmented Tabs */}
-              <Tabs
-                value={tab}
-                onChange={handleTabChange}
-                variant="scrollable"
-                scrollButtons={false}
-                sx={{
-                  minHeight: 38,
-                  bgcolor: "var(--ev-paper-alt, #F3F4F6)",
-                  border: "1px solid #E5E7EB",
-                  borderRadius: 2.5,
-                  px: 0.5,
-                  width: "fit-content",
-                  flexShrink: 0,
-                  "& .MuiTabs-indicator": { display: "none" },
-                  "& .MuiTab-root": {
-                    textTransform: "none",
-                    fontWeight: 600,
-                    color: "var(--ev-text-muted, #6B7280)",
-                    minHeight: 34,
-                    fontSize: 13,
-                    px: 2,
-                    my: 0.3,
-                    minWidth: "auto",
-                    borderRadius: 2,
-                    transition: "all .18s ease",
-                    "&:hover": {
-                      color: "var(--ev-text-secondary, #374151)",
-                      bgcolor: alpha("#991B1B", 0.04),
-                    },
-                  },
-                  "& .Mui-selected": {
-                    color: "#fff !important",
-                    bgcolor: "#991B1B",
-                    boxShadow: "0 1px 3px rgba(153,27,27,0.3)",
-                  },
-                }}
-              >
-                <Tab label="Tất cả" value="TatCa" />
-                <Tab label="Chờ duyệt" value="ChoDuyet" />
-                <Tab label="Đang duyệt" value="DangDuyet" />
-              </Tabs>
-
-              {/* Sort */}
-              <Select
-                size="small"
-                value={sortBy}
-                onChange={handleSortChange}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <SwapVertRoundedIcon
-                      sx={{ fontSize: 18, color: "var(--ev-grey, #9CA3AF)" }}
-                    />
-                  </InputAdornment>
-                }
-                sx={{
-                  minWidth: { xs: "100%", sm: 165 },
-                  borderRadius: 2.5,
-                  height: 42,
-                  bgcolor: "var(--ev-paper-alt, #F9FAFB)",
-                  flexShrink: 0,
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "var(--ev-divider, #E5E7EB)",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#991B1B",
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#991B1B",
-                    borderWidth: 1.5,
-                  },
-                }}
-              >
-                <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
-                <MenuItem value="moi-nhat">Mới nhất</MenuItem>
-                <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
-                <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
-              </Select>
-
-              {/* Reset filter */}
-              {isFilterDirty && (
-                <Tooltip title="Đặt lại bộ lọc">
-                  <IconButton
-                    onClick={handleResetFilters}
-                    sx={{
-                      bgcolor: alpha("#991B1B", 0.06),
-                      border: "1px solid",
-                      borderColor: alpha("#991B1B", 0.15),
-                      borderRadius: 2.5,
-                      width: 42,
-                      height: 42,
-                      flexShrink: 0,
-                      color: "#991B1B",
-                      transition: "all .18s ease",
-                      "&:hover": {
-                        bgcolor: alpha("#991B1B", 0.12),
-                        borderColor: "#991B1B",
-                      },
                     }}
                   >
-                    <RestartAltRoundedIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
+                    <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
+                    <MenuItem value="moi-nhat">Mới nhất</MenuItem>
+                    <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
+                    <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
+                  </Select>
+
+                  {/* Reset filter */}
+                  {isFilterDirty && (
+                    <Tooltip title="Đặt lại bộ lọc">
+                      <IconButton
+                        onClick={handleResetFilters}
+                        sx={{
+                          bgcolor: alpha("#991B1B", 0.06),
+                          border: "1px solid",
+                          borderColor: alpha("#991B1B", 0.15),
+                          borderRadius: 2.5,
+                          width: 42,
+                          height: 42,
+                          flexShrink: 0,
+                          color: "#991B1B",
+                          transition: "all .18s ease",
+                          "&:hover": {
+                            bgcolor: alpha("#991B1B", 0.12),
+                            borderColor: "#991B1B",
+                          },
+                        }}
+                      >
+                        <RestartAltRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Stack>
+              </Box>
             </Box>
 
             {/* ═══════ COURSE LIST ═══════ */}
@@ -596,53 +510,12 @@ export default function DuyetKhoaHocPage() {
                   ))}
                 </Stack>
               ) : items.length === 0 ? (
-                /* ═══════ EMPTY STATE ═══════ */
-                <Box
-                  sx={{
-                    py: 8,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: "50%",
-                      bgcolor: "#FEF2F2",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      mb: 2.5,
-                    }}
-                  >
-                    <SchoolRoundedIcon
-                      sx={{ fontSize: 30, color: alpha("#991B1B", 0.45) }}
-                    />
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: "var(--ev-text-secondary, #374151)",
-                      mb: 0.75,
-                    }}
-                  >
-                    {emptyTitle}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 13.5,
-                      color: "var(--ev-grey, #9CA3AF)",
-                      mb: isFilterDirty ? 2.5 : 0,
-                      textAlign: "center",
-                      maxWidth: 360,
-                    }}
-                  >
-                    Các khóa học được Giảng viên gửi phê duyệt sẽ xuất hiện tại
-                    đây.
+                <Box sx={{ py: 6, textAlign: "center" }}>
+                  <SchoolRoundedIcon
+                    sx={{ fontSize: 34, color: COLORS.line, mb: 1 }}
+                  />
+                  <Typography sx={{ color: COLORS.inkSoft, fontSize: 14 }}>
+                    Không có khóa học nào.
                   </Typography>
                   {isFilterDirty && (
                     <Button
@@ -651,6 +524,7 @@ export default function DuyetKhoaHocPage() {
                       startIcon={<RestartAltRoundedIcon />}
                       onClick={handleResetFilters}
                       sx={{
+                        mt: 1.5,
                         textTransform: "none",
                         fontWeight: 600,
                         fontSize: 13,
@@ -670,8 +544,7 @@ export default function DuyetKhoaHocPage() {
                   )}
                 </Box>
               ) : (
-                /* ═══════ ITEMS ═══════ */
-                <Stack spacing={1.5}>
+                <Stack spacing={1.25}>
                   {items.map((item) => {
                     const id = item.idKhoaHoc || item.id;
                     const trangThaiPheDuyet =
@@ -684,10 +557,10 @@ export default function DuyetKhoaHocPage() {
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 2.5,
-                          p: 2,
-                          border: "1px solid #E5E7EB",
-                          borderRadius: 3.5,
+                          gap: 2,
+                          p: 1.25,
+                          border: `1px solid ${COLORS.line}`,
+                          borderRadius: 2.5,
                           cursor: "pointer",
                           transition: "all .2s ease",
                           bgcolor: "var(--ev-paper, #fff)",
@@ -714,15 +587,12 @@ export default function DuyetKhoaHocPage() {
                           <Typography
                             sx={{
                               fontWeight: 700,
-                              fontSize: 15,
-                              color: "var(--ev-text-primary, #1F2937)",
+                              fontSize: 14.5,
+                              color: COLORS.ink,
                               overflow: "hidden",
                               textOverflow: "ellipsis",
-                              display: "-webkit-box",
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: "vertical",
-                              lineHeight: 1.4,
-                              mb: 1,
+                              whiteSpace: "nowrap",
+                              mb: 0.5,
                             }}
                           >
                             {item.tieuDe}
@@ -751,9 +621,9 @@ export default function DuyetKhoaHocPage() {
                                 }}
                               >
                                 Tạo:{" "}
-                                {new Date(
-                                  item.createDate,
-                                ).toLocaleDateString("vi-VN")}
+                                {new Date(item.createDate).toLocaleDateString(
+                                  "vi-VN",
+                                )}
                               </Typography>
                             )}
                           </Stack>
@@ -778,9 +648,7 @@ export default function DuyetKhoaHocPage() {
                               transition: "all .18s ease",
                             }}
                           >
-                            <ArrowForwardRoundedIcon
-                              sx={{ fontSize: 18 }}
-                            />
+                            <ArrowForwardRoundedIcon sx={{ fontSize: 18 }} />
                           </IconButton>
                         </Tooltip>
                       </Box>
@@ -791,10 +659,7 @@ export default function DuyetKhoaHocPage() {
 
               {/* ═══════ PAGINATION ═══════ */}
               {!loading && items.length > 0 && totalPage > 1 && (
-                <Stack
-                  direction="row"
-                  sx={{ justifyContent: "center", pt: 3 }}
-                >
+                <Stack direction="row" sx={{ justifyContent: "center", pt: 3 }}>
                   <Pagination
                     count={totalPage}
                     page={page}
@@ -818,10 +683,9 @@ export default function DuyetKhoaHocPage() {
                 </Stack>
               )}
             </Box>
-          </Paper>
+          </Box>
         </Box>
       </DashboardShell>
     </AuthGuard>
   );
 }
-

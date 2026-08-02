@@ -28,6 +28,7 @@ namespace Eduverse.Api.Controller
         private readonly IService<DanhMuc_KhoaHoc> _danhMucKhoaHocService;
         private readonly UserManager<AppUser> _userManager;
         private readonly IService<DonHang> _donHangService;
+        private readonly IService<DonHangChiTiet> _donHangChiTietService;
 
         public DashboardController(
             IService<KhoaHoc> khoaHocService,
@@ -35,6 +36,7 @@ namespace Eduverse.Api.Controller
             IService<DangKyKhoaHoc> dangKyKhoaHocService,
             IService<TienDoHocTap> tienDoHocTapService,
             IService<DonHang> donHangService,
+            IService<DonHangChiTiet> donHangChiTietService,
             IService<ChungChi> chungChiService,
             IService<BaiKiemTra> baiKiemTraService,
             IService<DanhMuc_KhoaHoc> danhMucKhoaHocService,
@@ -46,6 +48,7 @@ namespace Eduverse.Api.Controller
             _tienDoHocTapService = tienDoHocTapService;
             _chungChiService = chungChiService;
             _donHangService = donHangService;
+            _donHangChiTietService = donHangChiTietService;
             _baiKiemTraService = baiKiemTraService;
             _danhMucKhoaHocService = danhMucKhoaHocService;
             _userManager = userManager;
@@ -647,7 +650,40 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error fetching all registrations: " + ex.Message);
             }
 
-            double totalRevenue = allRegistrations.Sum(r => r.GiaDangKy ?? 0);
+            double totalRevenue = 0;
+
+            try
+            {
+                // Lấy tất cả đơn hàng đã thanh toán
+                var donHangsDaThanhToan = await _donHangService.GetQueryable()
+                    .Where(d => !d.IsDeleted && d.TrangThai == 1)
+                    .ToListAsync();
+
+                var donHangIds = donHangsDaThanhToan
+                    .Select(d => d.Id)
+                    .ToList();
+
+                // Lấy chi tiết các đơn hàng
+                var chiTiets = await _donHangChiTietService.GetQueryable()
+                    .Where(ct =>
+                        !ct.IsDeleted &&
+                        ct.IdDonHang.HasValue &&
+                        donHangIds.Contains(ct.IdDonHang.Value))
+                    .ToListAsync();
+
+                // Tổng tiền học viên đã thanh toán
+                double tongThu = donHangsDaThanhToan.Sum(d => d.SoTienThanhToan ?? 0);
+
+                // Tổng tiền trả giảng viên (70% giá lúc đặt)
+                double tongTraGiangVien = chiTiets.Sum(ct => (ct.GiaLucDat ?? 0) * 0.7);
+
+                // Doanh thu thực nhận của Admin
+                totalRevenue = Math.Round(tongThu - tongTraGiangVien, 0);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error calculating total revenue: " + ex.Message);
+            }
 
             // 2. Fetch total students (users count)
             int totalStudents = 0;
@@ -753,12 +789,38 @@ namespace Eduverse.Api.Controller
                 }
                 else
                 {
+                    var donHangIds = donHangsDaThanhToan
+                        .Select(d => d.Id)
+                        .ToList();
+
+                    var chiTiets = await _donHangChiTietService.GetQueryable()
+                        .Where(ct =>
+                            !ct.IsDeleted &&
+                            ct.IdDonHang.HasValue &&
+                            donHangIds.Contains(ct.IdDonHang.Value))
+                        .ToListAsync();
+
                     for (int m = 1; m <= 12; m++)
                     {
-                        var tong = donHangsDaThanhToan
+                        var donHangThang = donHangsDaThanhToan
                             .Where(d => d.NgayTao!.Value.Month == m)
-                            .Sum(d => d.SoTienThanhToan ?? 0);
-                        revenueTrendList.Add(Math.Round(tong * 0.3, 0));
+                            .ToList();
+
+                        var idsThang = donHangThang
+                            .Select(d => d.Id)
+                            .ToHashSet();
+
+                        // Tổng tiền học viên đã thanh toán
+                        double tongThu = donHangThang.Sum(d => d.SoTienThanhToan ?? 0);
+
+                        // Tổng tiền trả cho giảng viên (70%)
+                        double tongGV = chiTiets
+                            .Where(ct => ct.IdDonHang.HasValue &&
+                                         idsThang.Contains(ct.IdDonHang.Value))
+                            .Sum(ct => (ct.GiaLucDat ?? 0) * 0.7);
+
+                        // Doanh thu admin thực nhận
+                        revenueTrendList.Add(Math.Round(tongThu - tongGV, 0));
                         revenueLabels.Add("Th" + m);
                     }
                 }
@@ -901,8 +963,58 @@ namespace Eduverse.Api.Controller
             var curMonthStart = new DateTime(nowDate.Year, nowDate.Month, 1);
             var prevMonthStart = curMonthStart.AddMonths(-1);
 
-            double revThisMonth = allRegistrations.Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= curMonthStart).Sum(r => r.GiaDangKy ?? 0);
-            double revPrevMonth = allRegistrations.Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= prevMonthStart && r.ThoiGianDK.Value < curMonthStart).Sum(r => r.GiaDangKy ?? 0);
+            double revThisMonth = 0;
+            double revPrevMonth = 0;
+
+            try
+            {
+                var donHangThangNay = await _donHangService.GetQueryable()
+                    .Where(d => !d.IsDeleted
+                             && d.TrangThai == 1
+                             && d.NgayTao >= curMonthStart)
+                    .ToListAsync();
+
+                var donHangThangTruoc = await _donHangService.GetQueryable()
+                    .Where(d => !d.IsDeleted
+                             && d.TrangThai == 1
+                             && d.NgayTao >= prevMonthStart
+                             && d.NgayTao < curMonthStart)
+                    .ToListAsync();
+
+                // ===== Tháng này =====
+                var idsThis = donHangThangNay.Select(d => d.Id).ToList();
+
+                var ctThis = await _donHangChiTietService.GetQueryable()
+                    .Where(ct =>
+                        !ct.IsDeleted &&
+                        ct.IdDonHang.HasValue &&
+                        idsThis.Contains(ct.IdDonHang.Value))
+                    .ToListAsync();
+
+                double thuThis = donHangThangNay.Sum(d => d.SoTienThanhToan ?? 0);
+                double traGVThis = ctThis.Sum(ct => (ct.GiaLucDat ?? 0) * 0.7);
+
+                revThisMonth = thuThis - traGVThis;
+
+                // ===== Tháng trước =====
+                var idsPrev = donHangThangTruoc.Select(d => d.Id).ToList();
+
+                var ctPrev = await _donHangChiTietService.GetQueryable()
+                    .Where(ct =>
+                        !ct.IsDeleted &&
+                        ct.IdDonHang.HasValue &&
+                        idsPrev.Contains(ct.IdDonHang.Value))
+                    .ToListAsync();
+
+                double thuPrev = donHangThangTruoc.Sum(d => d.SoTienThanhToan ?? 0);
+                double traGVPrev = ctPrev.Sum(ct => (ct.GiaLucDat ?? 0) * 0.7);
+
+                revPrevMonth = thuPrev - traGVPrev;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error calculating revenue trend percent: " + ex.Message);
+            }
 
             int stuThisMonth = 0, stuPrevMonth = 0;
             try

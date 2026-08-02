@@ -1,5 +1,6 @@
 using Eduverse.Model.Entities;
 using Eduverse.Service.Common;
+using Eduverse.Service.Dto;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using System;
@@ -33,6 +34,9 @@ namespace Eduverse.Service.KhoaHocService
 
         Task<PagedList<KhoaHocDto>> GetListForManager(GetListSearch search);
 
+        Task<GiangVienKhoaHocDto> GetListByGiangVien(GetListSearch search, Guid UserId);
+
+        Task<PagedList<KhoaHocDto>> GetListByDanhMuc(Guid idKhoaHoc, SearchBase search);
         Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request);
 
         Task<KhoaHocDto> UpdateKhoaHoc(UpdateKhoaHocRequest request);

@@ -60,7 +60,8 @@ namespace Eduverse.Service.ThanhToanService.Dto
             public Guid? IdKhoaHoc { get; set; }
             public string? TenKhoaHoc { get; set; }
             public double? GiaLucDat { get; set; }
-        }
+            public Guid? IdDangKi { get; set; }
+    }
 
         // Webhook payload từ PayOS v2.1.0
         public class WebhookPayload

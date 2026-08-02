@@ -42,16 +42,49 @@ export default class KiemDuyetService {
     }
   }
 
+  async GetListLichSuKiemDuyet(
+    search: KiemDuyetSearchDto,
+  ): Promise<ApiResponse<PagedList<KhoaHocKiemDuyetListDto>>> {
+    try {
+      const response = await apiService.get<PagedList<KhoaHocKiemDuyetListDto>>(
+        "/KiemDuyetKhoaHoc/kiemduyet-list-gethistory",
+        {
+          params: search, // axios tự động chuyển object thành query string
+        },
+      );
+
+      return response; // response.data là ApiResponse
+    } catch (error) {
+      console.error("Error fetching course approval list:", error);
+      throw error;
+    }
+  }
+
+  async GetDetailLichSuKiemDuyet(
+    idKhoaHoc: string,
+  ): Promise<ApiResponse<KiemDuyetDetailDto>> {
+    try {
+      const response = await apiService.get<KiemDuyetDetailDto>(
+        `/KiemDuyetKhoaHoc/kiemduyet-detail-gethistory/${idKhoaHoc}`,
+      );
+
+      return response;
+    } catch (error) {
+      console.error("Error fetching course approval list:", error);
+      throw error;
+    }
+  }
+
   async KiemDuyetKhoaHoc(
     request: KiemDuyetKhoaHocRequest,
   ): Promise<ApiResponse<KiemDuyetKhoaHocDto>> {
     try {
-      const response = await apiService.post<ApiResponse<KiemDuyetKhoaHocDto>>(
+      const response = await apiService.post<KiemDuyetKhoaHocDto>(
         `KiemDuyetKhoaHoc/kiemduyet-khoahoc`,
         request,
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error fetching course approval list:", error);
       throw error;

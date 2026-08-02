@@ -157,6 +157,8 @@ namespace Eduverse.Service.AuthService
             // Reset AccessFailedCount khi login thành công
             await _userManager.ResetAccessFailedCountAsync(user);
 
+            await AssignNewSessionAsync(user, httpResponse);
+
             var accessToken = GenerateAccessToken(user);
             var refreshTokenStr = GenerateRefreshToken();
 
@@ -183,6 +185,8 @@ namespace Eduverse.Service.AuthService
                 Roles = roles.ToList()
             };
         }
+
+
 
         // ══════════════════════════════════════════════
         // REFRESH TOKEN
@@ -242,6 +246,15 @@ namespace Eduverse.Service.AuthService
                 {
                     await _authRepo.RevokeRefreshTokenAsync(tokenEntity);
                     await _authRepo.SaveChangesAsync();
+
+                    var user = tokenEntity.AppUser;
+                    if (user is not null)
+                    {
+                        user.CurrentSessionId = null;
+                        user.CurrentDeviceInfo = null;
+                        user.CurrentSessionAt = null;
+                        await _userManager.UpdateAsync(user);
+                    }
                 }
             }
             httpResponse.Cookies.Delete("refreshToken");
@@ -267,8 +280,13 @@ namespace Eduverse.Service.AuthService
             // Xóa cookie thiết bị hiện tại
             httpResponse.Cookies.Delete("refreshToken");
 
+            user.CurrentSessionId = null;
+            user.CurrentDeviceInfo = null;
+            user.CurrentSessionAt = null;
+
             // Cập nhật SecurityStamp → invalidate tất cả JWT cũ
             await _userManager.UpdateSecurityStampAsync(user);
+            await _userManager.UpdateAsync(user);
 
             return "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.";
         }
@@ -549,6 +567,11 @@ namespace Eduverse.Service.AuthService
             await _authRepo.RevokeAllRefreshTokensByUserIdAsync(user.Id);
             await _authRepo.SaveChangesAsync();
             await _userManager.UpdateSecurityStampAsync(user);
+
+            user.CurrentSessionId = null;
+            user.CurrentDeviceInfo = null;
+            user.CurrentSessionAt = null;
+            await _userManager.UpdateAsync(user);
 
             return "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.";
         }
@@ -863,6 +886,8 @@ namespace Eduverse.Service.AuthService
                     : "Tài khoản của bạn hiện đang bị khóa.");
             }
 
+            await AssignNewSessionAsync(user, httpResponse);
+
             var accessToken = GenerateAccessToken(user);
             var refreshTokenStr = GenerateRefreshToken();
 
@@ -890,6 +915,8 @@ namespace Eduverse.Service.AuthService
             };
         }
 
+        
+
         // ══════════════════════════════════════════════
         // HELPERS
         // ══════════════════════════════════════════════
@@ -908,6 +935,7 @@ namespace Eduverse.Service.AuthService
             new Claim(ClaimTypes.Surname,        user.UserName!),
             new Claim(ClaimTypes.Email,          user.Email ?? ""),
             new Claim("HoTen",                   user.HoTen ?? ""),
+            new Claim("sid",                     user.CurrentSessionId ?? ""),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
 
@@ -942,6 +970,49 @@ namespace Eduverse.Service.AuthService
                 SameSite = SameSiteMode.Strict,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
+        }
+
+        private const string DeviceFingerprintHeader = "X-Device-Fingerprint";
+
+        /// <summary>
+        /// Lấy device key từ fingerprint FE gửi lên (qua header X-Device-Fingerprint).
+        /// Fingerprint tính từ đặc điểm phần cứng/OS (canvas, webgl, screen, timezone...)
+        /// nên KHÔNG đổi giữa các trình duyệt khác nhau trên CÙNG 1 máy.
+        /// Nếu client không gửi (client cũ/gọi API trực tiếp) → fallback về User-Agent,
+        /// độ chính xác thấp hơn nhưng không chặn luồng đăng nhập.
+        /// </summary>
+        private string GetDeviceKey(HttpContext? httpContext)
+        {
+            var fingerprint = httpContext?.Request.Headers[DeviceFingerprintHeader].ToString();
+            if (!string.IsNullOrWhiteSpace(fingerprint))
+                return HashValue(fingerprint.Trim());
+
+            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+            return HashValue(string.IsNullOrWhiteSpace(userAgent) ? "unknown-device" : userAgent);
+        }
+
+        private static string GetDeviceInfo(HttpContext? httpContext)
+        {
+            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+            return string.IsNullOrWhiteSpace(userAgent) ? "Unknown device" : userAgent;
+        }
+
+        /// <summary>
+        /// Cấp session mới cho user (dùng chung cho login thường + Google/Facebook).
+        /// deviceKey dựa trên fingerprint → cùng máy khác trình duyệt không bị đá,
+        /// khác máy thì đá session cũ ra.
+        /// </summary>
+        private async Task AssignNewSessionAsync(AppUser user, HttpResponse httpResponse)
+        {
+            var deviceKey = GetDeviceKey(httpResponse.HttpContext);
+
+            user.CurrentSessionId = deviceKey;
+            user.CurrentDeviceInfo = GetDeviceInfo(httpResponse.HttpContext);
+            user.CurrentSessionAt = DateTime.UtcNow;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                throw new Exception("Không thể khởi tạo phiên đăng nhập. Vui lòng thử lại.");
         }
     }
 }

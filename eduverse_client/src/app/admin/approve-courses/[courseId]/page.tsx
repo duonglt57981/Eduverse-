@@ -23,6 +23,7 @@ import {
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 
@@ -133,14 +134,12 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
       });
 
       console.log("Kết quả duyệt khóa học:", res); // TODO: xoá sau khi debug xong
-
-      // Chuẩn: kiểm tra res.status === true (đúng theo ApiResponse<T>)
       const isSuccess = res?.status === true;
 
       if (isSuccess) {
         setSnackbar({
           open: true,
-          message: res?.message || "✅ Duyệt khóa học thành công!",
+          message: "✅ Duyệt khóa học thành công!",
           severity: "success",
         });
         setTimeout(() => {
@@ -230,8 +229,78 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     ? (detail.trangThaiPheDuyet ?? detail.trangThai)
     : null;
   const isChoDuyet = isTrangThaiCho(trangThaiKhoaHoc);
+  const isDaDuyet =
+    trangThaiKhoaHoc === "DaDuyet" || trangThaiKhoaHoc === "TuChoi";
 
   const hasDescription = detail?.moTa && detail.moTa.trim().length > 0;
+
+  // ── Khóa học đã được duyệt: hiển thị nguyên trang thông báo, không cho
+  // kiểm duyệt lại nữa. Bấm quay lại sẽ điều hướng về danh sách kiểm duyệt. ──
+  if (!detailLoading && detail && isDaDuyet) {
+    return (
+      <AuthGuard allowedRoles={["Admin"]}>
+        <Box
+          sx={{
+            height: "100dvh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              ...boxSx,
+              p: 5,
+              maxWidth: 480,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <CheckCircleRoundedIcon
+              sx={{ fontSize: 64, color: COLORS.success, mb: 2 }}
+            />
+            <Typography
+              sx={{
+                fontSize: 22,
+                fontWeight: 700,
+                fontFamily: FONTS.display,
+                color: COLORS.ink,
+                mb: 1,
+              }}
+            >
+              Khóa học này đã được duyệt
+            </Typography>
+            <Typography sx={{ color: COLORS.inkSoft, mb: 3 }}>
+              &quot;{detail?.tieuDe || detail?.tenKhoaHoc || "Khóa học"}&quot;
+              đã được duyệt trước đó và không còn nằm trong danh sách chờ kiểm
+              duyệt.
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<ArrowBackRoundedIcon />}
+              onClick={goBackToList}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                bgcolor: COLORS.primary,
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: COLORS.primaryDark,
+                  boxShadow: "none",
+                },
+              }}
+            >
+              Quay lại danh sách kiểm duyệt
+            </Button>
+          </Box>
+        </Box>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard allowedRoles={["Admin"]}>

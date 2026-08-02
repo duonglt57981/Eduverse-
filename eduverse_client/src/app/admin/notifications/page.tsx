@@ -40,7 +40,6 @@ import {
 } from "@mui/material";
 import {
   SearchRounded,
-  AddRounded,
   EditRounded,
   DeleteRounded,
   RefreshRounded,
@@ -114,7 +113,6 @@ export default function AdminThongBaoPage() {
 
   // Dialog CRUD states
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Form states
@@ -187,25 +185,7 @@ export default function AdminThongBaoPage() {
     setTrigger((prev) => prev + 1);
   };
 
-  const openAddDialog = () => {
-    setDialogMode("add");
-    setEditingId(null);
-    setFormState({
-      tieuDe: "",
-      noiDung: "",
-      message: "",
-      idNguoiDung: "",
-      type: "System",
-      loaiThongBao: "HeThong",
-      link: "",
-      isDisplay: true,
-      isXuatBan: true,
-    });
-    setDialogOpen(true);
-  };
-
   const openEditDialog = (noti: ThongBao) => {
-    setDialogMode("edit");
     setEditingId(noti.id);
     setFormState({
       tieuDe: noti.tieuDe || "",
@@ -221,9 +201,15 @@ export default function AdminThongBaoPage() {
     setDialogOpen(true);
   };
 
-  const openDetailDialog = (noti: ThongBao) => {
+  const openDetailDialog = async (noti: ThongBao) => {
     setDetailItem(noti);
     setDetailOpen(true);
+    try {
+      const res = await thongBaoService.getNotificationDetail(noti.id);
+      if (res.status && res.data) setDetailItem(res.data);
+    } catch (err) {
+      console.error("Không thể tải chi tiết thông báo:", err);
+    }
   };
 
   const handleSubmitForm = async () => {
@@ -242,7 +228,6 @@ export default function AdminThongBaoPage() {
 
     setLoading(true);
     try {
-      let res;
       const payload: ThongBaoRequest = {
         ...formState,
         // sync message field with noiDung
@@ -250,20 +235,14 @@ export default function AdminThongBaoPage() {
         noiDung: formState.noiDung || formState.message,
       };
 
-      if (dialogMode === "add") {
-        res = await thongBaoService.createNotification(payload);
-      } else {
-        res = await thongBaoService.updateNotification(editingId!, payload);
-      }
+      if (!editingId) return;
+      const res = await thongBaoService.updateNotification(editingId, payload);
 
       if (res.status) {
         Swal.fire({
           icon: "success",
           title: "Thành công",
-          text:
-            dialogMode === "add"
-              ? "Tạo thông báo mới thành công!"
-              : "Cập nhật thông báo thành công!",
+          text: "Cập nhật thông báo thành công!",
           confirmButtonColor: COLORS.primary,
           timer: 2000,
           showConfirmButton: false,
@@ -398,36 +377,9 @@ export default function AdminThongBaoPage() {
                 variant="body2"
                 sx={{ color: COLORS.textSecondary, fontWeight: 500 }}
               >
-                Tạo, chỉnh sửa, gửi và quản lý hệ thống thông báo người dùng trong EduVerse.
+                Theo dõi, xem chi tiết và quản lý thông báo trong EduVerse.
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddRounded />}
-              onClick={openAddDialog}
-              sx={{
-                bgcolor: COLORS.primary,
-                borderRadius: "10px",
-                px: 3,
-                height: 44,
-                fontWeight: 700,
-                textTransform: "none",
-                fontSize: 14,
-                boxShadow: "0 4px 12px rgba(153, 27, 27, 0.12)",
-                transition: "all 200ms ease",
-                "&:hover": {
-                  bgcolor: COLORS.primaryHover,
-                  transform: "translateY(-1.5px)",
-                  boxShadow: "0 6px 16px rgba(153, 27, 27, 0.2)",
-                },
-                "&:active": {
-                  bgcolor: COLORS.primaryActive,
-                },
-                width: { xs: "100%", sm: "auto" },
-              }}
-            >
-              Tạo thông báo mới
-            </Button>
           </Stack>
 
           {/* Quick Stats Grid */}
@@ -841,7 +793,9 @@ export default function AdminThongBaoPage() {
                       return (
                         <TableRow
                           key={noti.id}
+                          onClick={() => openDetailDialog(noti)}
                           sx={{
+                            cursor: "pointer",
                             transition: "all 150ms ease",
                             bgcolor: isUnread ? "rgba(153, 27, 27, 0.015)" : "transparent",
                             "&:hover": {
@@ -958,6 +912,7 @@ export default function AdminThongBaoPage() {
                             <Stack
                               direction="row"
                               spacing={0.5}
+                              onClick={(event) => event.stopPropagation()}
                               sx={{ justifyContent: "center" }}
                             >
                               {!noti.daDoc && (
@@ -1117,9 +1072,7 @@ export default function AdminThongBaoPage() {
             <DialogTitle
               sx={{ fontWeight: 850, color: COLORS.primary, fontSize: 20 }}
             >
-              {dialogMode === "add"
-                ? "Tạo thông báo mới"
-                : "Chỉnh sửa thông báo"}
+              Chỉnh sửa thông báo
             </DialogTitle>
             <DialogContent sx={{ px: 3, py: 1 }}>
               <Stack spacing={2.5} sx={{ mt: 1.5 }}>
@@ -1383,7 +1336,7 @@ export default function AdminThongBaoPage() {
                   "&:hover": { bgcolor: COLORS.primaryHover },
                 }}
               >
-                {dialogMode === "add" ? "Tạo mới" : "Lưu thay đổi"}
+                Lưu thay đổi
               </Button>
             </DialogActions>
           </Dialog>
@@ -1392,7 +1345,7 @@ export default function AdminThongBaoPage() {
           <Dialog
             open={detailOpen}
             onClose={() => setDetailOpen(false)}
-            maxWidth="xs"
+            maxWidth="sm"
             fullWidth
             slotProps={{
               paper: {
@@ -1469,6 +1422,38 @@ export default function AdminThongBaoPage() {
                   </Typography>
                   <Typography>{formatDate(detailItem?.thoiGianTao)}</Typography>
                 </Box>
+                <Grid container spacing={2}>
+                  {[
+                    ["Mã thông báo", detailItem?.id],
+                    ["Type", detailItem?.type],
+                    ["Người gửi", detailItem?.fromUser],
+                    ["Người nhận", detailItem?.toUser || detailItem?.idNguoiDung],
+                    ["Email", detailItem?.email],
+                    ["Tên mục", detailItem?.itemName],
+                    ["Mã mục", detailItem?.itemId],
+                    ["Loại mục", detailItem?.itemType],
+                    ["Tên sản phẩm", detailItem?.productName],
+                    ["Mã sản phẩm", detailItem?.productId],
+                    ["Đơn vị", detailItem?.donViId],
+                    ["Người tạo", detailItem?.nguoiTao],
+                    ["Trạng thái", detailItem?.trangThai],
+                    ["Đã đọc", detailItem?.daDoc || detailItem?.isRead ? "Có" : "Chưa"],
+                    ["Thời gian đọc", formatDate(detailItem?.thoiGianDoc)],
+                    ["Hiển thị", detailItem?.isDisplay === false ? "Không" : "Có"],
+                    ["Xuất bản", detailItem?.isXuatBan === false ? "Không" : "Có"],
+                    ["Gửi frontend", detailItem?.sendToFrontEndUser === false ? "Không" : "Có"],
+                    ["File đính kèm", detailItem?.fileDinhKem],
+                  ].map(([label, value]) => (
+                    <Grid key={String(label)} size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        {label}:
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500, wordBreak: "break-word" }}>
+                        {value || "—"}
+                      </Typography>
+                    </Grid>
+                  ))}
+                </Grid>
               </Stack>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 3 }}>

@@ -1,5 +1,6 @@
 ﻿using Eduverse.Model.Entities;
 using Eduverse.Service.Common;
+using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhuyenMaiService.Dto;
 using Eduverse.Service.KhuyenMaiService.Request;
 using System;
@@ -16,5 +17,6 @@ namespace Eduverse.Service.KhuyenMaiService
         Task<KhuyenMaiDto> CreateKhuyenMai(CreateKhuyenMaiRequest request);
         Task<KhuyenMaiDto> UpdateKhuyenMai(UpdateKhuyenMaiRequest request);
         Task<bool> DeleteKhuyenMai(Guid id);
+        Task<List<KhoaHocMiniDto>> GetAllApprovedKhoaHocAsync();
     }
 }

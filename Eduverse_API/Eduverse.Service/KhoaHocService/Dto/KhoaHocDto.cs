@@ -23,6 +23,9 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public double PhanTramHoanThanh { get; set; }
         public int TongTaiLieu { get; set; }
         public bool hasDraft { get; set; }
+        public Guid? CreatedId { get; set; }
+
+        public AppUser? ThongTinGiangVien { get; set; }
         //thêm list 
         public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
         public List<DanhMuc_KhoaHocDto>? DanhMucs { get; set; }

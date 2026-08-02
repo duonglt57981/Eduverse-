@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -24,6 +25,8 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import { MAU } from "./components/courseEditCore";
 
@@ -43,7 +46,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     saveState,
     isDirty,
     resetDirty,
-    // Không dùng refreshData khi chuyển trang để tránh reload
   } = useCourseEdit();
 
   const [dangXuLy, setDangXuLy] = useState(false);
@@ -51,6 +53,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     null,
   );
   const [showDirtyDialog, setShowDirtyDialog] = useState(false);
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({ open: false, message: "", severity: "success" });
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
@@ -79,7 +86,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   );
 
   const curriculumHoanThanh = phans.some((p) =>
-    (p.DanhSachBaiGiang ?? []).some((bg) => bg.uRLBaiGiang),
+    (p.DanhSachBaiGiang ?? []).some((bg) => bg.urlBaiGiang),
   );
 
   const nhomSidebar = [
@@ -100,27 +107,25 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     },
   ];
 
-  // Hàm thực hiện chuyển trang - KHÔNG gọi refreshData
   const performNavigation = useCallback(
     (key: string) => {
-      // Lưu state trước khi chuyển
+      // LƯU DỮ LIỆU TRƯỚC KHI CHUYỂN TRANG
       saveState();
-      // Chuyển trang bằng router.push (không reload)
       router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/${key}`);
     },
     [idKhoaHoc, router, saveState],
   );
 
-  // Hàm thực hiện quay lại - KHÔNG gọi refreshData
   const performBack = useCallback(() => {
+    // XÓA STATE KHI QUAY LẠI DANH SÁCH
     clearState();
     resetDirty();
     router.push("/instructor/manager-courses");
   }, [clearState, resetDirty, router]);
 
-  // Hàm thực hiện di chuyển từ validate - KHÔNG gọi refreshData
   const performDiChuyenDen = useCallback(
     (diChuyenDen: MucThieu["diChuyenDen"]) => {
+      // LƯU DỮ LIỆU TRƯỚC KHI CHUYỂN TRANG
       saveState();
       if (diChuyenDen === "basics") {
         router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
@@ -133,7 +138,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     [idKhoaHoc, router, saveState],
   );
 
-  // Hàm xử lý khi click vào sidebar
   const handleNavigateSidebar = useCallback(
     (key: string) => {
       if (isDirty && trangThai === "DangSua") {
@@ -146,7 +150,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     [isDirty, trangThai, performNavigation],
   );
 
-  // Hàm xử lý khi click back
   const handleBack = useCallback(() => {
     if (isDirty && trangThai === "DangSua") {
       setPendingNavigation("back");
@@ -156,7 +159,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [isDirty, trangThai, performBack]);
 
-  // Hàm xử lý khi click từ validate
   const handleDiChuyenDenTuValidate = useCallback(
     (diChuyenDen: MucThieu["diChuyenDen"]) => {
       if (isDirty && trangThai === "DangSua") {
@@ -169,12 +171,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     [isDirty, trangThai, performDiChuyenDen],
   );
 
-  // Hàm xác nhận chuyển trang
   const handleConfirmNavigation = useCallback(() => {
     setShowDirtyDialog(false);
     if (pendingNavigation) {
-      // Lưu state trước khi chuyển
-      saveState();
+      // KHI NGƯỜI DÙNG XÁC NHẬN RỜI ĐI, KHÔNG LƯU MÀ XÓA DỮ LIỆU ĐANG SỬA
+      // resetDirty() sẽ xóa trạng thái dirty
       resetDirty();
 
       if (pendingNavigation === "back") {
@@ -191,41 +192,64 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     setPendingNavigation(null);
   }, [
     pendingNavigation,
-    saveState,
     resetDirty,
     performBack,
     performDiChuyenDen,
     performNavigation,
   ]);
 
-  // Hàm hủy chuyển trang - chỉ đóng dialog, KHÔNG reload
   const handleCancelNavigation = useCallback(() => {
     setShowDirtyDialog(false);
     setPendingNavigation(null);
-    // KHÔNG gọi refreshData để giữ nguyên dữ liệu đang sửa
   }, []);
 
-  // Hàm gửi phê duyệt
   const handleGuiPheDuyet = useCallback(async () => {
+    // VALIDATE: Cần ít nhất 5 bài giảng
+    const totalBaiGiang = phans.reduce((total, phan) => {
+      return total + (phan.DanhSachBaiGiang?.length || 0);
+    }, 0);
+
+    if (totalBaiGiang < 5) {
+      setToast({
+        open: true,
+        message: `Cần ít nhất 5 bài giảng để gửi duyệt. Hiện tại: ${totalBaiGiang} bài giảng.`,
+        severity: "error",
+      });
+      return;
+    }
+
     setDangXuLy(true);
     try {
       const res = await khoaHocService.ChuyenTTChoDuyetBatch(idKhoaHoc);
-      if (res.status === true) {
+
+      // KIỂM TRA ĐÚNG CÁCH: res.status === true HOẶC res.success === true
+      if (res?.status === true) {
         setTrangThai("ChoDuyet");
-        // Sau khi gửi thành công, cần refresh dữ liệu
         await refreshData();
         resetDirty();
-        alert("Đã gửi phê duyệt thành công!");
+        setToast({
+          open: true,
+          message: "Đã gửi phê duyệt thành công!",
+          severity: "success",
+        });
       } else {
-        alert(res.message || "Gửi phê duyệt thất bại");
+        setToast({
+          open: true,
+          message: res?.message || "Gửi phê duyệt thất bại",
+          severity: "error",
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Đã xảy ra lỗi khi gửi phê duyệt");
+      setToast({
+        open: true,
+        message: error?.message || "Đã xảy ra lỗi khi gửi phê duyệt",
+        severity: "error",
+      });
     } finally {
       setDangXuLy(false);
     }
-  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty]);
+  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty, phans]);
 
   const dialogContent = useMemo(() => {
     if (pendingNavigation === "back") {
@@ -258,6 +282,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         nhomSidebar={nhomSidebar}
         activeKey={activeKey}
         loading={loading || dangXuLy}
+        idKhoaHoc={idKhoaHoc}
         onBack={handleBack}
         onNavigateSidebar={handleNavigateSidebar}
         onGuiPheDuyet={handleGuiPheDuyet}
@@ -326,6 +351,21 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={5000}
+        onClose={() => setToast({ ...toast, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          severity={toast.severity}
+          sx={{ width: "100%", borderRadius: "12px" }}
+          onClose={() => setToast({ ...toast, open: false })}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

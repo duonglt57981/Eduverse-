@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   Box,
@@ -39,11 +39,13 @@ import AllInclusiveIcon from "@mui/icons-material/AllInclusive";
 import FolderIcon from "@mui/icons-material/Folder";
 import CloseIcon from "@mui/icons-material/Close";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import AuthGuard from "@/src/components/AuthGuard";
 import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import DangKiService from "@/src/services/DangKiService";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { KhoaHocType, GiangVienKhoaHocDto } from "@/src/types/khoaHoc/Dto/dto";
 import { apiService } from "@/src/services/index";
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -51,14 +53,16 @@ import { apiService } from "@/src/services/index";
 const RED = "#8B1313";
 const RED_HOVER = "#6B1010";
 const RED_SOFT = "#fdf2f2";
+const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
+const GIANG_VIEN_COURSES_PAGE_SIZE = 4;
 
 // ─── styled components ────────────────────────────────────────────────────────
 
 const HeroBanner = styled(Box)(() => ({
   background: "linear-gradient(135deg, #1c1d1f 0%, #141414 100%)",
-  borderRadius: 24,
-  padding: "2.5rem",
-  marginBottom: "1.5rem",
+  borderRadius: 14,
+  padding: "1.5rem 1.75rem",
+  marginBottom: "1rem",
   position: "relative",
   overflow: "hidden",
   "&::before": {
@@ -66,20 +70,20 @@ const HeroBanner = styled(Box)(() => ({
     position: "absolute",
     top: 0,
     right: 0,
-    width: 320,
+    width: 260,
     height: "100%",
-    background: `radial-gradient(circle at top right, ${alpha(RED, 0.4)}, transparent 70%)`,
+    background: `radial-gradient(circle at top right, ${alpha(RED, 0.35)}, transparent 70%)`,
     pointerEvents: "none",
   },
   "&::after": {
     content: '""',
     position: "absolute",
-    bottom: -60,
-    left: -60,
-    width: 200,
-    height: 200,
+    bottom: -50,
+    left: -50,
+    width: 160,
+    height: 160,
     borderRadius: "50%",
-    background: `radial-gradient(circle, ${alpha(RED, 0.15)}, transparent 70%)`,
+    background: `radial-gradient(circle, ${alpha(RED, 0.12)}, transparent 70%)`,
     pointerEvents: "none",
   },
 }));
@@ -193,6 +197,40 @@ function findFirstFreeVideo(
   return null;
 }
 
+function isValidGuid(id?: string | null): id is string {
+  return !!id && id !== EMPTY_GUID;
+}
+
+// Id giảng viên (người tạo khóa học) — dùng để gọi API
+// /KhoaHoc/khoahoc-list-bygiangvien/{userId} và để build link hồ sơ giảng
+// viên /instructor/profile/{id}. Ưu tiên createdId (id tài khoản tạo khóa
+// học), dự phòng giangVien.id nếu BE có populate sẵn quan hệ.
+function getGiangVienId(khoaHoc: any): string | null {
+  const id = khoaHoc?.createdId || khoaHoc?.giangVien?.id;
+  return typeof id === "string" && isValidGuid(id) ? id : null;
+}
+
+// PagedList<T> phía BE — lấy mảng item bất kể tên field cụ thể là gì.
+function extractPagedItems(paged: any): any[] {
+  if (!paged) return [];
+  if (Array.isArray(paged)) return paged;
+  const candidates = [paged.items, paged.data, paged.list, paged.results];
+  for (const c of candidates) {
+    if (Array.isArray(c)) return c;
+  }
+  return [];
+}
+
+function getPagedTotalCount(paged: any, fallback: number): number {
+  return (
+    paged?.totalCount ??
+    paged?.totalItems ??
+    paged?.total ??
+    paged?.totalRecords ??
+    fallback
+  );
+}
+
 // ─── inner content ──────────────────────────────────────────────────────────────
 
 function CourseRegistrationContent() {
@@ -204,7 +242,8 @@ function CourseRegistrationContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
-  const [idDangKi, setIdDangKi] = useState<string | null>(null); // ✅ thêm state
+  const [idDangKi, setIdDangKi] = useState<string | null>(null);
+  const [navigatingToLearn, setNavigatingToLearn] = useState(false);
 
   const [khoaHoc, setKhoaHoc] = useState<KhoaHocType | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -221,26 +260,39 @@ function CourseRegistrationContent() {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: "success" | "error";
+    severity: "success" | "error" | "info";
   }>({ open: false, message: "", severity: "success" });
+
+  // Thông tin giảng viên + các khóa học khác của giảng viên (hiển thị cuối trang)
+  const [giangVienInfo, setGiangVienInfo] = useState<{
+    ten: string;
+    avatar?: string;
+    moTa?: string;
+    chucDanh?: string;
+    tongKhoaHoc?: number;
+    tongHocVien?: number;
+  } | null>(null);
+  const [giangVienKhoaHocs, setGiangVienKhoaHocs] = useState<any[]>([]);
+  const [loadingGiangVien, setLoadingGiangVien] = useState(false);
+  const [bioExpanded, setBioExpanded] = useState(false);
 
   const dangKiService = new DangKiService();
   const khoaHocService = new KhoaHocService();
 
-  // ── Fetch dữ liệu khóa học ──────────────────────────────────────────────
-  useEffect(() => {
-    if (!courseId) return;
+  // ── Tải (hoặc đồng bộ lại) dữ liệu khóa học từ server ───────────────────
+  // silent = true: không bật spinner toàn trang, dùng để đồng bộ ngầm sau khi
+  // đăng ký thành công (tránh phải reload cả trang / bấm nút 2 lần).
+  const loadKhoaHoc = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!courseId) return null;
 
-    let active = true;
+      if (!opts?.silent) {
+        setPageLoading(true);
+        setPageError(null);
+      }
 
-    (async () => {
-      setPageLoading(true);
-      setPageError(null);
       try {
         const res = await khoaHocService.GetKhoaHocPreview(courseId);
-        if (!active) return;
-
-        // Lấy khóa học từ response (có thể ở nhiều cấp)
         const course = extractKhoaHoc(res);
 
         if (course) {
@@ -248,11 +300,26 @@ function CourseRegistrationContent() {
           const isEnrolled = !!course.daDangKy;
           setEnrolled(isEnrolled);
 
-          // Lấy idDangKi từ nhiều nguồn: res.data.idDangKiKhoaHoc, course.idDangKi, res.idDangKi
-          const idDangKiFromRes =
-            res.data?.idDangKiKhoaHoc || course.idDangKi || null;
-          setIdDangKi(idDangKiFromRes);
-        } else {
+          // Lấy idDangKi từ nhiều nguồn khả dĩ trong response
+          let idDangKiFromRes: string | null = null;
+          if (res?.data?.idDangKiKhoaHoc) {
+            idDangKiFromRes = res.data.idDangKiKhoaHoc;
+          } else if (course.idDangKi) {
+            idDangKiFromRes = course.idDangKi;
+          }
+
+          if (isEnrolled && idDangKiFromRes) {
+            setIdDangKi(idDangKiFromRes);
+            localStorage.setItem(`enrolled_${courseId}`, idDangKiFromRes);
+          } else if (isEnrolled && !idDangKiFromRes) {
+            const savedId = localStorage.getItem(`enrolled_${courseId}`);
+            if (savedId) setIdDangKi(savedId);
+          }
+
+          return { course, idDangKi: idDangKiFromRes, isEnrolled };
+        }
+
+        if (!opts?.silent) {
           const errMsg =
             res?.message ||
             (Array.isArray(res?.errors)
@@ -261,28 +328,100 @@ function CourseRegistrationContent() {
             "Không tìm thấy khóa học.";
           setPageError(String(errMsg));
         }
+        return null;
       } catch (err) {
-        if (active) {
+        if (!opts?.silent) {
           setPageError("Không tải được thông tin khóa học. Vui lòng thử lại.");
         }
+        return null;
       } finally {
-        if (active) setPageLoading(false);
+        if (!opts?.silent) setPageLoading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [courseId],
+  );
+
+  // ── Fetch dữ liệu khóa học lần đầu ──────────────────────────────────────
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount is the intended sync point
+    loadKhoaHoc();
+  }, [loadKhoaHoc]);
+
+  // ── Fetch các khóa học khác của giảng viên (hiển thị cuối trang, kiểu Udemy) ──
+  useEffect(() => {
+    if (!khoaHoc) return;
+
+    const giangVienId = getGiangVienId(khoaHoc);
+    if (!giangVienId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      setLoadingGiangVien(true);
+      try {
+        const res = await apiService.get<GiangVienKhoaHocDto>(
+          `/KhoaHoc/khoahoc-list-bygiangvien/${giangVienId}`,
+          {
+            params: {
+              pageIndex: 1,
+              pageSize: GIANG_VIEN_COURSES_PAGE_SIZE,
+            },
+          },
+        );
+        if (cancelled) return;
+
+        const dto = res?.data;
+        const list = extractPagedItems(dto?.khoaHocs)
+          .filter((kh: any) => kh?.id !== khoaHoc.id)
+          .slice(0, GIANG_VIEN_COURSES_PAGE_SIZE);
+        setGiangVienKhoaHocs(list);
+
+        const gv = dto?.thongTinGiangVien;
+        setGiangVienInfo({
+          ten: gv?.hoTen || String(khoaHoc.createdBy || "Không xác định"),
+          avatar: gv?.anhDaiDien,
+          moTa: gv?.gioiThieu || gv?.tieuSu,
+          chucDanh: gv?.chucVu,
+          tongKhoaHoc: getPagedTotalCount(dto?.khoaHocs, list.length + 1),
+          tongHocVien: dto?.tongHocVienDangKy ?? dto?.tongHocVienDangHoc,
+        });
+      } catch (err) {
+        console.error("Error getting course list by giang vien:", err);
+        if (!cancelled) {
+          setGiangVienKhoaHocs([]);
+          setGiangVienInfo({
+            ten: String(khoaHoc.createdBy || "Không xác định"),
+          });
+        }
+      } finally {
+        if (!cancelled) setLoadingGiangVien(false);
       }
     })();
 
     return () => {
-      active = false;
+      cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
+  }, [khoaHoc]);
 
   const handleRegister = async () => {
     setRegistering(true);
     try {
       const res = await dangKiService.DangKiKhoaHocMienPhi(courseId);
-      // Lấy idDangKi từ response (thường nằm trong res.data.idDangKi)
-      const id = res.data?.idDangKi || null;
-      if (id) setIdDangKi(id);
+
+      let id: string | null = res?.data?.idDangKi ?? null;
+
+      // Luôn đồng bộ lại dữ liệu mới nhất từ server ngay sau khi đăng ký,
+      // để lấy idDangKi chuẩn — tránh tình trạng phải bấm "Vào học ngay" 2 lần.
+      const synced = await loadKhoaHoc({ silent: true });
+      if (!id) id = synced?.idDangKi ?? null;
+
+      if (id) {
+        setIdDangKi(id);
+        localStorage.setItem(`enrolled_${courseId}`, id);
+      }
+
       setModalOpen(false);
       setEnrolled(true);
       setSnackbar({
@@ -292,12 +431,24 @@ function CourseRegistrationContent() {
       });
     } catch (error: any) {
       setModalOpen(false);
-      // Nếu lỗi là "đã đăng ký", coi như thành công
       const msg = error?.response?.data?.message || error?.message || "";
       if (msg.includes("đã đăng ký") || msg.includes("already registered")) {
         setEnrolled(true);
-        const idFromError = error?.response?.data?.idDangKi || null;
-        if (idFromError) setIdDangKi(idFromError);
+
+        let idFromError: string | null =
+          error?.response?.data?.idDangKi || error?.response?.data?.id || null;
+
+        // Nếu response lỗi không kèm id, đồng bộ ngầm từ server thay vì reload.
+        if (!idFromError) {
+          const synced = await loadKhoaHoc({ silent: true });
+          idFromError = synced?.idDangKi ?? null;
+        }
+
+        if (idFromError) {
+          setIdDangKi(idFromError);
+          localStorage.setItem(`enrolled_${courseId}`, idFromError);
+        }
+
         setSnackbar({
           open: true,
           message: "Bạn đã đăng ký khóa học này rồi.",
@@ -312,6 +463,34 @@ function CourseRegistrationContent() {
       }
     } finally {
       setRegistering(false);
+    }
+  };
+
+  // ── Vào học ngay: nếu chưa có id hợp lệ, tự đồng bộ rồi điều hướng luôn
+  // trong cùng một lần bấm, không cần reload cả trang.
+  const handleGoToLearning = async () => {
+    if (isValidGuid(idDangKi)) {
+      router.push(`/student/courses/my-courses/learning/${idDangKi}`);
+      return;
+    }
+
+    setNavigatingToLearn(true);
+    try {
+      const synced = await loadKhoaHoc({ silent: true });
+      const freshId = synced?.idDangKi;
+
+      if (isValidGuid(freshId)) {
+        router.push(`/student/courses/my-courses/learning/${freshId}`);
+      } else {
+        setSnackbar({
+          open: true,
+          message:
+            "Không tìm thấy dữ liệu đăng ký. Vui lòng thử lại sau ít phút.",
+          severity: "error",
+        });
+      }
+    } finally {
+      setNavigatingToLearn(false);
     }
   };
 
@@ -377,6 +556,28 @@ function CourseRegistrationContent() {
 
   const giangVien = khoaHoc.createdBy || "Không xác định";
 
+  // Id giảng viên dùng để build link hồ sơ /instructor/profile/{id}
+  const giangVienId = getGiangVienId(khoaHoc);
+
+  // Thông tin giảng viên hiển thị cuối trang: ưu tiên dữ liệu đã có sẵn từ
+  // khoaHoc.giangVien (trả kèm ngay trong GetKhoaHocPreview), sau đó bổ sung
+  // thêm tongKhoaHoc/tongHocVien từ giangVienInfo (API khoahoc-list-bygiangvien)
+  // nếu tải được — nhờ vậy khối này luôn hiển thị kể cả khi API thứ 2 lỗi
+  // hoặc không xác định được id giảng viên.
+  const gvGoc = (khoaHoc as any).giangVien;
+  const giangVienDisplay = {
+    ten: giangVienInfo?.ten || gvGoc?.hoTen || giangVien,
+    avatar: giangVienInfo?.avatar ?? gvGoc?.avatar,
+    moTa: giangVienInfo?.moTa ?? gvGoc?.tieuSu,
+    chucDanh: giangVienInfo?.chucDanh,
+    tongKhoaHoc: giangVienInfo?.tongKhoaHoc,
+    tongHocVien: giangVienInfo?.tongHocVien,
+  };
+
+  const goToInstructorProfile = () => {
+    if (giangVienId) router.push(`/instructor/profile/${giangVienId}`);
+  };
+
   return (
     <Box>
       <Grid container spacing={3}>
@@ -425,8 +626,8 @@ function CourseRegistrationContent() {
               dangerouslySetInnerHTML={{ __html: khoaHoc.moTa || "" }}
             />
 
-            {/* Hiển thị tên giảng viên */}
             <Typography
+              onClick={giangVienId ? goToInstructorProfile : undefined}
               sx={{
                 color: "#ddd",
                 fontSize: 13,
@@ -434,10 +635,20 @@ function CourseRegistrationContent() {
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
+                cursor: giangVienId ? "pointer" : "default",
+                width: "fit-content",
+                "&:hover": giangVienId ? { color: "#fff" } : undefined,
               }}
             >
               <SchoolIcon sx={{ fontSize: 16, color: RED }} />
-              Giảng viên: <strong>{giangVien}</strong>
+              Giảng viên:{" "}
+              <strong
+                style={{
+                  textDecoration: giangVienId ? "underline" : "none",
+                }}
+              >
+                {giangVien}
+              </strong>
             </Typography>
 
             <Stack
@@ -865,7 +1076,7 @@ function CourseRegistrationContent() {
                     fullWidth
                     variant="contained"
                     startIcon={<SchoolIcon />}
-                    onClick={handleRegister}
+                    onClick={() => setModalOpen(true)}
                     sx={{
                       bgcolor: "#2d7a35",
                       "&:hover": { bgcolor: "#245f2a" },
@@ -975,22 +1186,15 @@ function CourseRegistrationContent() {
                   <Button
                     fullWidth
                     variant="contained"
-                    startIcon={<SchoolIcon />}
-                    onClick={() => {
-                      if (idDangKi) {
-                        router.push(
-                          `/student/courses/my-courses/learning/${idDangKi}`,
-                        );
-                      } else {
-                        // Fallback: nếu không có idDangKi, có thể dùng courseId hoặc hiển thị thông báo
-                        setSnackbar({
-                          open: true,
-                          message:
-                            "Không tìm thấy ID đăng ký. Vui lòng vào trang 'Khóa học của tôi'.",
-                          severity: "error",
-                        });
-                      }
-                    }}
+                    disabled={navigatingToLearn}
+                    startIcon={
+                      navigatingToLearn ? (
+                        <CircularProgress size={16} sx={{ color: "#fff" }} />
+                      ) : (
+                        <SchoolIcon />
+                      )
+                    }
+                    onClick={handleGoToLearning}
                     sx={{
                       bgcolor: "#22c55e",
                       "&:hover": { bgcolor: "#16a34a" },
@@ -1002,7 +1206,7 @@ function CourseRegistrationContent() {
                       boxShadow: "0 8px 20px rgba(34,197,94,0.3)",
                     }}
                   >
-                    Vào học ngay
+                    {navigatingToLearn ? "Đang mở khóa học..." : "Vào học ngay"}
                   </Button>
                 </Box>
               )}
@@ -1072,6 +1276,271 @@ function CourseRegistrationContent() {
           </SidebarCard>
         </Grid>
       </Grid>
+
+      {/* ── Giảng viên & các khóa học khác (kiểu Udemy) ── */}
+      <SectionCard sx={{ mt: 3 }}>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: 22,
+            mb: 3,
+            letterSpacing: 0.2,
+          }}
+        >
+          Giảng viên
+        </Typography>
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2.5}
+          sx={{ alignItems: { xs: "flex-start", sm: "flex-start" }, mb: 2.5 }}
+        >
+          <Box
+            onClick={giangVienId ? goToInstructorProfile : undefined}
+            sx={{ cursor: giangVienId ? "pointer" : "default", flexShrink: 0 }}
+          >
+            {giangVienDisplay.avatar ? (
+              <Box
+                component="img"
+                src={giangVienDisplay.avatar}
+                sx={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: `2px solid ${RED_SOFT}`,
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: "50%",
+                  bgcolor: RED,
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 32,
+                  fontWeight: 700,
+                }}
+              >
+                {giangVienDisplay.ten.charAt(0).toUpperCase()}
+              </Box>
+            )}
+          </Box>
+
+          <Box sx={{ flex: 1, minWidth: 0, pt: 0.5 }}>
+            <Typography
+              onClick={giangVienId ? goToInstructorProfile : undefined}
+              sx={{
+                fontWeight: 700,
+                fontSize: 19,
+                color: RED,
+                mb: 0.25,
+                width: "fit-content",
+                cursor: giangVienId ? "pointer" : "default",
+                "&:hover": giangVienId
+                  ? { textDecoration: "underline" }
+                  : undefined,
+              }}
+            >
+              {giangVienDisplay.ten}
+            </Typography>
+            {giangVienDisplay.chucDanh && (
+              <Typography sx={{ fontSize: 13.5, color: "text.secondary" }}>
+                {giangVienDisplay.chucDanh}
+              </Typography>
+            )}
+          </Box>
+        </Stack>
+
+        {/* Thống kê giảng viên — mỗi chỉ số một dòng, kiểu Udemy */}
+        <Stack spacing={1} sx={{ mb: 2.75, maxWidth: 340 }}>
+          <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
+            <PlayCircleIcon sx={{ fontSize: 18, color: RED }} />
+            <Typography sx={{ fontSize: 13.5, color: "text.secondary" }}>
+              <strong>
+                {giangVienDisplay.tongKhoaHoc ?? giangVienKhoaHocs.length + 1}
+              </strong>{" "}
+              khóa học
+            </Typography>
+          </Stack>
+          {typeof giangVienDisplay.tongHocVien === "number" && (
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
+              <PeopleAltIcon sx={{ fontSize: 18, color: RED }} />
+              <Typography sx={{ fontSize: 13.5, color: "text.secondary" }}>
+                <strong>
+                  {giangVienDisplay.tongHocVien.toLocaleString("vi-VN")}
+                </strong>{" "}
+                học viên
+              </Typography>
+            </Stack>
+          )}
+        </Stack>
+
+        {/* Tiểu sử giảng viên — render HTML vì nội dung được soạn từ rich-text editor */}
+        {giangVienDisplay.moTa && (
+          <Box sx={{ mb: 1 }}>
+            <Box
+              sx={{
+                fontSize: 13.5,
+                color: "text.secondary",
+                lineHeight: 1.85,
+                "& p": { mb: 1 },
+                "& p:last-child": { mb: 0 },
+                "& ul, & ol": { pl: 2.5, mb: 1 },
+                "& a": { color: RED },
+                "& img": { maxWidth: "100%", borderRadius: 8 },
+                "& strong, & b": { color: "text.primary" },
+                ...(!bioExpanded && {
+                  display: "-webkit-box",
+                  WebkitLineClamp: 4,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }),
+              }}
+              dangerouslySetInnerHTML={{ __html: giangVienDisplay.moTa }}
+            />
+            <Button
+              onClick={() => setBioExpanded((v) => !v)}
+              sx={{
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: 13,
+                color: RED,
+                px: 0,
+                mt: 0.75,
+                minWidth: 0,
+                "&:hover": {
+                  bgcolor: "transparent",
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              {bioExpanded ? "Ẩn bớt" : "Hiển thị thêm"}
+            </Button>
+          </Box>
+        )}
+
+        <Divider sx={{ my: 2.75, borderColor: "#f3d9d9" }} />
+
+        <Stack
+          direction="row"
+          sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}
+        >
+          <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+            Khóa học khác của {giangVienDisplay.ten}
+          </Typography>
+        </Stack>
+
+        {loadingGiangVien ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+            <CircularProgress size={26} sx={{ color: RED }} thickness={4} />
+          </Box>
+        ) : giangVienKhoaHocs.length === 0 ? (
+          <Typography sx={{ fontSize: 13, color: "text.disabled", mb: 2 }}>
+            Giảng viên chưa có khóa học nào khác.
+          </Typography>
+        ) : (
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            {giangVienKhoaHocs.map((kh: any, i: number) => {
+              const khGia = kh.gia ?? kh.giaGoc ?? 0;
+              const khFree =
+                kh.loaiKhoaHoc !== "Khóa học trả phí" &&
+                (!kh.gia || kh.gia <= 0);
+              return (
+                <Grid key={kh.id ?? i} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Paper
+                    onClick={() =>
+                      kh.id && router.push(`/student/enroll-courses/${kh.id}`)
+                    }
+                    sx={{
+                      borderRadius: 3,
+                      border: "1px solid #f3d9d9",
+                      overflow: "hidden",
+                      cursor: kh.id ? "pointer" : "default",
+                      transition: "box-shadow 0.2s ease, transform 0.2s ease",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      "&:hover": kh.id
+                        ? {
+                            boxShadow: "0 10px 26px rgba(141,19,19,0.14)",
+                            transform: "translateY(-2px)",
+                          }
+                        : undefined,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: "relative",
+                        paddingTop: "56%",
+                        bgcolor: "#1c1d1f",
+                        backgroundImage: kh.hinhAnhKhoaHoc
+                          ? `url(${kh.hinhAnhKhoaHoc})`
+                          : undefined,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                    <Box sx={{ p: 1.75, flex: 1 }}>
+                      <Typography
+                        sx={{
+                          fontSize: 13.5,
+                          fontWeight: 600,
+                          mb: 1,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          minHeight: 36,
+                        }}
+                      >
+                        {kh.tieuDe}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 14,
+                          fontWeight: 800,
+                          color: khFree ? "#2d7a35" : RED,
+                        }}
+                      >
+                        {khFree
+                          ? "Miễn phí"
+                          : khGia > 0
+                            ? `${khGia.toLocaleString("vi-VN")}₫`
+                            : "Liên hệ"}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
+
+        {giangVienId && (
+          <Button
+            onClick={goToInstructorProfile}
+            endIcon={<ArrowForwardIcon sx={{ fontSize: 16 }} />}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              fontSize: 13.5,
+              color: RED,
+              px: 0,
+              "&:hover": {
+                bgcolor: "transparent",
+                textDecoration: "underline",
+              },
+            }}
+          >
+            Xem thêm khóa học của {giangVienDisplay.ten}
+          </Button>
+        )}
+      </SectionCard>
 
       {/* ── Confirm dialog ── */}
       <Dialog

@@ -55,6 +55,37 @@ namespace Eduverse.Api.Controller
             }
         }
 
+        [HttpGet("kiemduyet-list-gethistory")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<PagedList<KhoaHocKiemDuyetListDto>>> GetListLichSuKiemDuyet([FromQuery]  KhoaHocKiemDuyetSearchDto search)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.GetListLichSuKiemDuyet(search);
+                return DataResponse< PagedList<KhoaHocKiemDuyetListDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse< PagedList<KhoaHocKiemDuyetListDto>>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("kiemduyet-detail-gethistory/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<KiemDuyetDetailDto>> GetDetailLichSuKiemDuyet(Guid idKhoaHoc)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.GetDetailLichSuKiemDuyet(idKhoaHoc);
+                return DataResponse<KiemDuyetDetailDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KiemDuyetDetailDto>.False(ex.Message);
+            }
+        }
+
 
         [HttpPost("kiemduyet-khoahoc")]
         [Authorize(Roles = "Admin")]
@@ -105,22 +136,5 @@ namespace Eduverse.Api.Controller
         //        return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
         //    }
         //}
-
-
-        [HttpGet("kiemduyet-khoahoc-gethistory/{idKhoaHoc}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<DataResponse<List<LichSuKiemDuyetDto>>> GetLichSuKiemDuyet(Guid idKhoaHoc)
-        {
-            try
-            {
-                var result = await _lichSuKiemDuyetKhoaHocService.GetLichSuKiemDuyet(idKhoaHoc);
-                return DataResponse<List<LichSuKiemDuyetDto>>.Success(result);
-
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<List<LichSuKiemDuyetDto>>.False(ex.Message);
-            }
-        }
     } 
 }

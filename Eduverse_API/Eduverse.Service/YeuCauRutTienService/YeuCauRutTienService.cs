@@ -8,6 +8,7 @@ using Eduverse.Service.EmailService;
 using Eduverse.Service.KetQuaBaiThiService;
 using Eduverse.Service.YeuCauRutTienService.Dto;
 using Eduverse.Service.YeuCauRutTienService.Request;
+using Eduverse.Service.ThongBaoService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,9 +28,9 @@ namespace Eduverse.Service.YeuCauRutTienService
         private readonly IRepository<YeuCauRutTien> _repo;
         private readonly IRepository<NganHang> _nganHangRepo;
         private readonly IAppUserRepository _userRepo;
-        private readonly IRepository<ThongBao> _thongBaoRepo;
         private readonly PayOSClient _payOS;
         private readonly PayOSClient _payOSPayout;
+        private readonly INotificationPublisher _notificationPublisher;
 
         public YeuCauRutTienService(
             IRepository<YeuCauRutTien> repo,
@@ -37,9 +38,9 @@ namespace Eduverse.Service.YeuCauRutTienService
             IAppUserRepository userRepo,
             IMemoryCache cache,
             IEmailService emailService,
-            IRepository<ThongBao> thongBaoRepo,
             PayOSClient payOS,
-            [FromKeyedServices("payout")] PayOSClient payOSPayout
+            [FromKeyedServices("payout")] PayOSClient payOSPayout,
+            INotificationPublisher notificationPublisher
             ) : base(repo)
         {
             _repo = repo;
@@ -47,9 +48,9 @@ namespace Eduverse.Service.YeuCauRutTienService
             _cache = cache;
             _nganHangRepo = nganHangRepo;
             _userRepo = userRepo;
-            _thongBaoRepo = thongBaoRepo;
             _payOS = payOS;
             _payOSPayout = payOSPayout;
+            _notificationPublisher = notificationPublisher;
         }
         private static string OtpCacheKey(Guid userId) => $"OTP_RUT_TIEN_{userId}";
         private record OtpData(string Code, decimal SoTienRut, Guid IdNganHang, DateTime Expiry);
@@ -225,20 +226,51 @@ namespace Eduverse.Service.YeuCauRutTienService
             };
             await CreateAsync(entity);
 
-            // Thông báo admin
-            _thongBaoRepo.Add(new ThongBao
+            await _notificationPublisher.NotifyRoleAsync("Admin", new NotificationPayload
             {
                 TieuDe = "Yêu cầu rút tiền mới",
                 NoiDung = $"Giảng viên {user.HoTen} yêu cầu rút {dto.SoTienRut:N0}đ",
-                DaDoc = false,
-                ThoiGianTao = DateTime.Now,
-                TrangThai = "MoiNhan",
                 LoaiThongBao = "YeuCauRutTien",
-                IdNguoiDung = null,
-                CreatedDate = DateTime.Now,
-                UpdatedDate = DateTime.Now
+                Link = "/admin/withdrawal-request",
+                FromUser = userId,
+                ItemId = entity.Id,
+                ItemName = $"{dto.SoTienRut:N0}đ"
+            }, new[] { userId });
+            await _notificationPublisher.NotifyUserAsync(userId, new NotificationPayload
+            {
+                TieuDe = "Đã gửi yêu cầu rút tiền",
+                NoiDung = $"Yêu cầu rút {dto.SoTienRut:N0}đ đã được gửi và đang chờ quản trị viên xử lý.",
+                LoaiThongBao = "GuiYeuCauRutTien",
+                Link = "/instructor/revenue",
+                ItemId = entity.Id,
+                ItemName = $"{dto.SoTienRut:N0}đ"
             });
-            await _thongBaoRepo.SaveAsync();
+        }
+
+        public async Task HuyYeuCauAsync(Guid id, Guid userId)
+        {
+            var yeuCau = await GetByIdAsync(id)
+                ?? throw new Exception("Không tìm thấy yêu cầu");
+
+            if (yeuCau.IdNguoiDung != userId)
+                throw new Exception("Bạn không có quyền hủy yêu cầu này");
+
+            if (yeuCau.TrangThai != "ChoDuyet")
+                throw new Exception("Chỉ có thể hủy yêu cầu đang chờ duyệt");
+
+            // Hoàn tiền lại
+            var user = await _userRepo.GetByIdAsync(userId)
+                ?? throw new Exception("Không tìm thấy người dùng");
+
+            user.SoDuTaiKhoan += yeuCau.SoTienRut ?? 0;
+            user.UpdatedDate = DateTime.Now;
+            _userRepo.Update(user);
+            await _userRepo.SaveAsync();
+
+            yeuCau.TrangThai = "DaHuy";
+            yeuCau.NgayXuLy = DateTime.Now;
+            yeuCau.UpdatedDate = DateTime.Now;
+            await UpdateAsync(yeuCau);
         }
 
         public async Task XuLyYeuCauAsync(Guid id, XuLyYeuCauDto dto)
@@ -255,22 +287,22 @@ namespace Eduverse.Service.YeuCauRutTienService
             var user = await _userRepo.GetByIdAsync(yeuCau.IdNguoiDung)
                 ?? throw new Exception("Không tìm thấy giảng viên");
 
+            yeuCau.NgayXuLy = DateTime.Now;
+            yeuCau.UpdatedDate = DateTime.Now;
 
             if (dto.TrangThai == "DaDuyet")
             {
                 yeuCau.TrangThai = "DaChuyenTien";
+                await UpdateAsync(yeuCau);
 
-                _thongBaoRepo.Add(new ThongBao
+                await _notificationPublisher.NotifyUserAsync(yeuCau.IdNguoiDung!.Value, new NotificationPayload
                 {
                     TieuDe = "Yêu cầu rút tiền được duyệt",
                     NoiDung = $"Yêu cầu rút {yeuCau.SoTienRut:N0}đ đã được duyệt và chuyển vào tài khoản {nganHang.SoTaiKhoan}.",
-                    DaDoc = false,
-                    ThoiGianTao = DateTime.Now,
-                    TrangThai = "MoiNhan",
                     LoaiThongBao = "RutTienThanhCong",
-                    IdNguoiDung = yeuCau.IdNguoiDung,
-                    CreatedDate = DateTime.Now,
-                    UpdatedDate = DateTime.Now
+                    Link = "/instructor/revenue",
+                    ItemId = yeuCau.Id,
+                    ItemName = $"{yeuCau.SoTienRut:N0}đ"
                 });
             }
             else // TuChoi
@@ -281,25 +313,19 @@ namespace Eduverse.Service.YeuCauRutTienService
                 await _userRepo.SaveAsync();
 
                 yeuCau.TrangThai = "TuChoi";
+                await UpdateAsync(yeuCau);
 
-                _thongBaoRepo.Add(new ThongBao
+                await _notificationPublisher.NotifyUserAsync(yeuCau.IdNguoiDung!.Value, new NotificationPayload
                 {
                     TieuDe = "Yêu cầu rút tiền bị từ chối",
                     NoiDung = $"Yêu cầu rút {yeuCau.SoTienRut:N0}đ đã bị từ chối. Lý do: {dto.GhiChu}. Số tiền đã được hoàn lại vào số dư.",
-                    DaDoc = false,
-                    ThoiGianTao = DateTime.Now,
-                    TrangThai = "MoiNhan",
                     LoaiThongBao = "RutTienTuChoi",
-                    IdNguoiDung = yeuCau.IdNguoiDung,
-                    CreatedDate = DateTime.Now,
-                    UpdatedDate = DateTime.Now
+                    Link = "/instructor/revenue",
+                    ItemId = yeuCau.Id,
+                    ItemName = $"{yeuCau.SoTienRut:N0}đ"
                 });
             }
 
-            yeuCau.NgayXuLy = DateTime.Now;
-            yeuCau.UpdatedDate = DateTime.Now;
-            await UpdateAsync(yeuCau);
-            await _thongBaoRepo.SaveAsync();
         }
 
     }

@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/student/courses/my-courses/learning/[courseId]/page.tsx
 
 "use client";
@@ -21,6 +23,7 @@ import {
   Paper,
   Chip,
   LinearProgress,
+  Avatar,
 } from "@mui/material";
 import {
   ChevronRight as ChevronRightIcon,
@@ -29,6 +32,7 @@ import {
   NavigateNext as NavigateNextIcon,
   CheckCircle as CheckCircleIcon,
   VideoLibrary as VideoLibraryIcon,
+  School as SchoolIcon,
 } from "@mui/icons-material";
 
 import { VideoPlayer } from "./components/VideoPlayer";
@@ -60,10 +64,19 @@ interface PhanHocApi {
   danhSachBaiKiemTra?: BaiKiemTraDto[];
 }
 
+// Interface cho thông tin giảng viên từ API
+interface ThongTinGiangVien {
+  id?: string;
+  hoTen?: string;
+  anhDaiDien?: string;
+  tieuSu?: string;
+  gioiThieu?: string;
+  chucVu?: string;
+  email?: string;
+}
+
 // ─────────────────────────────────────────────────────────
-// VideoArea: tách ra thành component riêng NGOÀI component cha
-// để tránh lỗi react-hooks/static-components (component không
-// được tạo lại mỗi lần render, giữ được state con ổn định).
+// VideoArea
 // ─────────────────────────────────────────────────────────
 interface VideoAreaProps {
   loading: boolean;
@@ -100,7 +113,8 @@ function VideoArea({
     return (
       <Box
         sx={{
-          height: 280,
+          width: "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -122,7 +136,8 @@ function VideoArea({
     return (
       <Box
         sx={{
-          height: 280,
+          width: "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -142,7 +157,8 @@ function VideoArea({
     return (
       <Box
         sx={{
-          height: 280,
+          width: "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -160,20 +176,9 @@ function VideoArea({
     );
   }
 
-  // Chỉ render VideoPlayer full khi isVideoFullMounted = true và không ở chế độ mini
   if (isVideoFullMounted && !showMini) {
     return (
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "1150px",
-          mx: "auto",
-          borderRadius: "12px",
-          overflow: "hidden",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-          border: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
+      <Box sx={{ width: "100%", height: "100%", bgcolor: "#000" }}>
         <VideoPlayer
           key={baiGiang.id}
           url={baiGiang.urlBaiGiang}
@@ -192,9 +197,8 @@ function VideoArea({
     );
   }
 
-  // Khi ở chế độ mini, hiển thị placeholder để giữ layout
   return (
-    <Box sx={{ width: "100%", aspectRatio: "16/9", bgcolor: "#000" }}>
+    <Box sx={{ width: "100%", height: "100%", bgcolor: "#000" }}>
       <Box
         sx={{
           display: "flex",
@@ -208,6 +212,188 @@ function VideoArea({
         </Typography>
       </Box>
     </Box>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// InstructorInfo: Component hiển thị thông tin giảng viên
+// ─────────────────────────────────────────────────────────
+interface InstructorInfoProps {
+  thongTinGiangVien?: ThongTinGiangVien | null;
+}
+
+function InstructorInfo({ thongTinGiangVien }: InstructorInfoProps) {
+  // Nếu không có thông tin giảng viên, không hiển thị gì
+  if (!thongTinGiangVien || !thongTinGiangVien.hoTen) {
+    return null;
+  }
+
+  const { hoTen, anhDaiDien, tieuSu, gioiThieu, id, chucVu } =
+    thongTinGiangVien;
+  const bioHtml = tieuSu || gioiThieu || "";
+
+  const handleClick = () => {
+    if (id) {
+      window.location.href = `/instructor/profile/${id}`;
+    }
+  };
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 3, md: 4 },
+        mt: 4,
+        borderRadius: "16px",
+        border: "1px solid #E5E7EB",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
+        backgroundColor: "background.paper",
+      }}
+    >
+      <Typography
+        variant="subtitle1"
+        sx={{ fontWeight: 800, mb: 2.5, color: "text.primary" }}
+      >
+        Giảng viên
+      </Typography>
+
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
+        {/* Avatar */}
+        <Avatar
+          src={anhDaiDien}
+          alt={hoTen}
+          sx={{
+            width: 72,
+            height: 72,
+            bgcolor: PRIMARY_RED,
+            fontSize: 28,
+            fontWeight: 700,
+            flexShrink: 0,
+            border: `3px solid ${alpha(PRIMARY_RED, 0.15)}`,
+          }}
+        >
+          {hoTen.charAt(0).toUpperCase()}
+        </Avatar>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {/* Tên giảng viên */}
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 800,
+              color: "#111827",
+              cursor: id ? "pointer" : "default",
+              "&:hover": id
+                ? {
+                    color: PRIMARY_RED,
+                    textDecoration: "underline",
+                  }
+                : {},
+              transition: "color 0.2s",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+            onClick={handleClick}
+          >
+            {hoTen}
+            {id && (
+              <ChevronRightIcon
+                sx={{
+                  fontSize: 18,
+                  color: PRIMARY_RED,
+                  opacity: 0.6,
+                }}
+              />
+            )}
+          </Typography>
+
+          {/* Chức vụ */}
+          {chucVu && (
+            <Typography
+              sx={{
+                fontSize: "0.8rem",
+                fontWeight: 500,
+                color: "text.secondary",
+                mt: 0.25,
+              }}
+            >
+              {chucVu}
+            </Typography>
+          )}
+
+          {/* Tiểu sử - hiển thị HTML, không thu gọn */}
+          {bioHtml && (
+            <Box
+              sx={{
+                mt: 1.5,
+                fontSize: "0.875rem",
+                lineHeight: 1.8,
+                color: "text.secondary",
+                "& p": { margin: "0 0 0.75em 0" },
+                "& ul, & ol": {
+                  paddingLeft: "1.5em",
+                  margin: "0.5em 0 0.75em 0",
+                },
+                "& li": { marginBottom: "0.25em" },
+                "& h1, & h2, & h3, & h4, & h5, & h6": {
+                  margin: "0.75em 0 0.25em 0",
+                  fontWeight: 700,
+                  color: "text.primary",
+                },
+                "& img": {
+                  maxWidth: "100%",
+                  height: "auto",
+                  borderRadius: 1,
+                  margin: "0.5em 0",
+                },
+                "& a": {
+                  color: PRIMARY_RED,
+                  textDecoration: "underline",
+                  "&:hover": { color: PRIMARY_RED_DARK },
+                },
+                "& blockquote": {
+                  borderLeft: `4px solid ${PRIMARY_RED}`,
+                  paddingLeft: "1.5em",
+                  margin: "0.75em 0",
+                  color: "text.secondary",
+                  fontStyle: "italic",
+                },
+              }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(bioHtml),
+              }}
+            />
+          )}
+
+          {/* Badge giảng viên */}
+          <Box
+            sx={{
+              mt: 1.5,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.75,
+              px: 1.5,
+              py: 0.5,
+              borderRadius: "20px",
+              bgcolor: alpha(PRIMARY_RED, 0.08),
+              color: PRIMARY_RED,
+            }}
+          >
+            <SchoolIcon sx={{ fontSize: 14 }} />
+            <Typography
+              sx={{
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                letterSpacing: "0.03em",
+              }}
+            >
+              GIẢNG VIÊN
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Paper>
   );
 }
 
@@ -254,6 +440,15 @@ export default function KhoaHocLearningPage() {
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const videoSectionRef = useRef<HTMLDivElement>(null);
 
+  // ── Lấy thông tin giảng viên từ khoaHoc ──
+  const thongTinGiangVien = useMemo(() => {
+    if (!khoaHoc) return null;
+    return (
+      ((khoaHoc as any).thongTinGiangVien as ThongTinGiangVien | undefined) ||
+      null
+    );
+  }, [khoaHoc]);
+
   // ── Stats ──
   const tongBai = danhSachTatCa.length;
   const soBaiHoanThanh = useMemo(
@@ -273,9 +468,9 @@ export default function KhoaHocLearningPage() {
     getPhanHocApi().forEach((phan: PhanHocApi) => {
       const validQuizzes = (phan.danhSachBaiKiemTra ?? []).filter(
         (q) =>
-          q.isBanHienTai === true && // chỉ lấy bản hiện tại
-          q.trangThai !== "NgungHoatDong" && // không lấy đã ngừng
-          q.trangThai !== "DaXoa", // không lấy đã xóa
+          q.isBanHienTai === true &&
+          q.trangThai !== "NgungHoatDong" &&
+          q.trangThai !== "DaXoa",
       );
       if (phan.id && validQuizzes.length > 0) {
         map.set(phan.id, validQuizzes);
@@ -291,20 +486,17 @@ export default function KhoaHocLearningPage() {
       return;
     }
 
-    // Ưu tiên thời gian đã lưu từ lastSavedTimeRef (khi chuyển mini -> full)
     if (lastSavedTimeRef.current > 0) {
       setCurrentSavedTime(lastSavedTimeRef.current);
       return;
     }
 
-    // Fallback: từ progress map
     const progress = progressMap.get(baiGiang.id);
     if (progress?.thoiGianXem && progress.thoiGianXem > 0) {
       setCurrentSavedTime(progress.thoiGianXem);
       return;
     }
 
-    // Fallback cuối cùng: từ bài giảng
     setCurrentSavedTime(baiGiang.thoiGianXem);
   }, [baiGiang, progressMap, lastSavedTimeRef]);
 
@@ -329,16 +521,7 @@ export default function KhoaHocLearningPage() {
     }
   }, [danhSachTatCa, baiGiang, chonBaiGiang]);
 
-  // ── Cập nhật currentSavedTime khi bài giảng đang phát thay đổi ──
-  // Bắt buộc dùng useEffect (KHÔNG thể tính trong lúc render) vì
-  // updateCurrentSavedTime() cần đọc lastSavedTimeRef.current — theo
-  // Rules of React, ref chỉ được đọc trong effect/event handler, không
-  // được đọc trong lúc render (nếu không sẽ bị lỗi react-hooks/refs).
-  // Vì vậy đây là trường hợp hợp lệ để tắt có chủ đích rule
-  // set-state-in-effect (không phải lách luật, mà do ràng buộc kỹ thuật
-  // của việc đọc ref).
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- cần đọc lastSavedTimeRef (ref) nên không thể tính giá trị này lúc render
     updateCurrentSavedTime();
   }, [baiGiang?.id, updateCurrentSavedTime]);
 
@@ -353,19 +536,15 @@ export default function KhoaHocLearningPage() {
         return;
       }
       const rect = videoSectionRef.current.getBoundingClientRect();
-      // Hiển thị mini khi video section đã cuộn qua khỏi header
       const shouldShow = rect.bottom < HEADER_H;
 
       if (shouldShow && !showMini) {
-        // Chuyển sang mini: lưu thời gian hiện tại
         const currentTime = currentTimeRef.current;
         lastSavedTimeRef.current = currentTime;
         setCurrentSavedTime(currentTime);
         setIsVideoFullMounted(false);
       } else if (!shouldShow && showMini) {
-        // Chuyển về full: sẽ remount VideoPlayer với thời gian đã lưu
         setIsVideoFullMounted(true);
-        // Cập nhật lại thời gian
         updateCurrentSavedTime();
       }
 
@@ -373,7 +552,6 @@ export default function KhoaHocLearningPage() {
     };
 
     el.addEventListener("scroll", onScroll, { passive: true });
-    // Initial check
     setTimeout(onScroll, 100);
 
     return () => el.removeEventListener("scroll", onScroll);
@@ -386,12 +564,9 @@ export default function KhoaHocLearningPage() {
   ]);
 
   const scrollToVideo = useCallback(() => {
-    // Mở rộng mini: chuyển về full
     setIsVideoFullMounted(true);
     setShowMini(false);
-    // Cập nhật lại thời gian
     updateCurrentSavedTime();
-    // Cuộn lên video section
     mainScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [updateCurrentSavedTime]);
 
@@ -411,7 +586,6 @@ export default function KhoaHocLearningPage() {
     await sendProgress(baiGiang.id, thoiLuong, courseId);
     const idx = danhSachTatCa.findIndex((b) => b.id === baiGiang.id);
     if (idx !== -1 && idx + 1 < danhSachTatCa.length) {
-      // Reset thời gian khi chuyển bài
       lastSavedTimeRef.current = 0;
       currentTimeRef.current = 0;
       setCurrentSavedTime(undefined);
@@ -430,7 +604,6 @@ export default function KhoaHocLearningPage() {
   const handleSelectBaiGiang = useCallback(
     (bg: BaiGiangType) => {
       setQuizDangChon(null);
-      // Reset các ref thời gian
       lastSavedTimeRef.current = 0;
       currentTimeRef.current = 0;
       setCurrentSavedTime(undefined);
@@ -476,7 +649,6 @@ export default function KhoaHocLearningPage() {
   const goToNextLesson = useCallback(() => {
     const n = currentIdx + 1;
     if (n < danhSachTatCa.length) {
-      // Reset thời gian khi chuyển bài
       lastSavedTimeRef.current = 0;
       currentTimeRef.current = 0;
       setCurrentSavedTime(undefined);
@@ -605,8 +777,22 @@ export default function KhoaHocLearningPage() {
           flexShrink: 0,
         }}
       >
-        <Toolbar sx={{ minHeight: HEADER_H, height: HEADER_H, gap: 3, px: { xs: 2, md: 3 } }}>
-          <Box sx={{ width: { xs: 110, sm: 130, lg: 150 }, cursor: "pointer", display: "flex", alignItems: "center" }}>
+        <Toolbar
+          sx={{
+            minHeight: HEADER_H,
+            height: HEADER_H,
+            gap: 3,
+            px: { xs: 2, md: 3 },
+          }}
+        >
+          <Box
+            sx={{
+              width: { xs: 110, sm: 130, lg: 150 },
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
             <Link
               href={dashboardPath}
               style={{ display: "block", width: "100%" }}
@@ -762,7 +948,18 @@ export default function KhoaHocLearningPage() {
             </Box>
           ) : (
             <>
-              <Box ref={videoSectionRef} sx={{ flexShrink: 0, bgcolor: "#111827", p: { xs: 0, md: 3 }, display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <Box
+                ref={videoSectionRef}
+                sx={{
+                  flexShrink: 0,
+                  bgcolor: "#000",
+                  width: "100%",
+                  height: {
+                    xs: "56.25vw",
+                    md: `calc(100vh - ${HEADER_H}px)`,
+                  },
+                }}
+              >
                 <VideoArea
                   loading={loading}
                   hasLessons={danhSachTatCa.length > 0}
@@ -801,9 +998,7 @@ export default function KhoaHocLearningPage() {
                         khoaHoc.danhSachPhanHoc as unknown as PhanHocApi[]
                       )?.find((p) => p.id === idPhanPlay)?.tenPhan ?? ""}
                     </Typography>
-                    <ChevronRightIcon
-                      sx={{ fontSize: 16, color: "var(--ev-text-muted, #94A3B8)" }}
-                    />
+                    <ChevronRightIcon sx={{ fontSize: 16, color: "#94A3B8" }} />
                     <Typography
                       variant="body2"
                       sx={{ fontWeight: 600, color: PRIMARY_RED }}
@@ -825,7 +1020,12 @@ export default function KhoaHocLearningPage() {
                   <Box sx={{ minWidth: 0 }}>
                     <Typography
                       variant="h4"
-                      sx={{ fontWeight: 900, mb: 1.5, color: "var(--ev-text-primary, #111827)", fontSize: { xs: "20px", sm: "24px" } }}
+                      sx={{
+                        fontWeight: 900,
+                        mb: 1.5,
+                        color: "#111827",
+                        fontSize: { xs: "20px", sm: "24px" },
+                      }}
                     >
                       {baiGiang?.tieuDe ?? khoaHoc.tieuDe}
                     </Typography>
@@ -835,7 +1035,10 @@ export default function KhoaHocLearningPage() {
                       sx={{ alignItems: "center", flexWrap: "wrap" }}
                     >
                       {baiGiang && (
-                        <Typography variant="caption" sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)" }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 600, color: "#64748B" }}
+                        >
                           Bài {currentIdx + 1}/{danhSachTatCa.length} ·{" "}
                           {Math.floor((baiGiang.thoiLuong ?? 0) / 60)}p{" "}
                           {(baiGiang.thoiLuong ?? 0) % 60}s
@@ -853,7 +1056,7 @@ export default function KhoaHocLearningPage() {
                             height: 24,
                             px: 0.5,
                             border: "none",
-                            "& .MuiChip-icon": { color: "#15803D" }
+                            "& .MuiChip-icon": { color: "#15803D" },
                           }}
                           icon={
                             <CheckCircleIcon
@@ -894,6 +1097,7 @@ export default function KhoaHocLearningPage() {
 
                 <StatsBar khoaHoc={khoaHoc} />
 
+                {/* Mô tả khóa học - hiển thị toàn bộ, không thu gọn */}
                 {khoaHoc.moTa && (
                   <Paper
                     elevation={0}
@@ -912,6 +1116,7 @@ export default function KhoaHocLearningPage() {
                     >
                       Mô tả khóa học
                     </Typography>
+
                     <Box
                       sx={{
                         fontSize: "0.875rem",
@@ -954,6 +1159,9 @@ export default function KhoaHocLearningPage() {
                     />
                   </Paper>
                 )}
+
+                {/* Thông tin giảng viên */}
+                <InstructorInfo thongTinGiangVien={thongTinGiangVien} />
               </Box>
             </>
           )}
@@ -1063,7 +1271,7 @@ export default function KhoaHocLearningPage() {
         )}
       </Box>
 
-      {/* Mini player - Chỉ hiển thị khi showMini = true và có video */}
+      {/* Mini player */}
       {showMini && baiGiang?.urlBaiGiang && (
         <MiniPlayer
           key={`mini-${baiGiang.id}`}

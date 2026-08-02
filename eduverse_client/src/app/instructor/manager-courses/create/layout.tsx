@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { ReactNode } from "react";
@@ -12,7 +13,9 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
-import StepConnector, { stepConnectorClasses } from "@mui/material/StepConnector";
+import StepConnector, {
+  stepConnectorClasses,
+} from "@mui/material/StepConnector";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import { CourseCreateProvider } from "./context/CourseCreateContext";
@@ -46,7 +49,11 @@ const QontoConnector = styled(StepConnector)(() => ({
 }));
 
 // Tùy chỉnh Icon hiển thị cho từng bước
-function QontoStepIcon(props: { active?: boolean; completed?: boolean; icon?: ReactNode }) {
+function QontoStepIcon(props: {
+  active?: boolean;
+  completed?: boolean;
+  icon?: ReactNode;
+}) {
   const { active, completed, icon } = props;
 
   return (
@@ -140,7 +147,13 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
             }}
           >
             {/* Left side: Logo & Step indicator */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, sm: 2 } }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1.5, sm: 2 },
+              }}
+            >
               <Image
                 src="/khoahoc/1-removebg-preview.png"
                 alt="EduVerse"
@@ -168,7 +181,10 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                     display: { xs: "block", sm: "block" },
                   }}
                 >
-                  <Box component="span" sx={{ display: { sm: "inline", xs: "none" } }}>
+                  <Box
+                    component="span"
+                    sx={{ display: { sm: "inline", xs: "none" } }}
+                  >
                     |{" "}
                   </Box>
                   Bước {currentStep + 1} / {total}

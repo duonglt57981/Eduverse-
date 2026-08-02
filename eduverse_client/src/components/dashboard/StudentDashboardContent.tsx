@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
@@ -158,7 +159,15 @@ function getGradient(course: KhoaHocDto) {
 function isValidImage(url?: string): boolean {
   if (!url) return false;
   const t = url.trim();
-  if (!t || t === "không có" || t === "aaaaaaaa" || t === "string" || t === "null" || t === "undefined") return false;
+  if (
+    !t ||
+    t === "không có" ||
+    t === "aaaaaaaa" ||
+    t === "string" ||
+    t === "null" ||
+    t === "undefined"
+  )
+    return false;
   return t.startsWith("http") || t.startsWith("/") || t.startsWith(".");
 }
 
@@ -280,46 +289,46 @@ function HoverPanel({
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-  const update = () => {
-    const el = anchorEl.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const PANEL_WIDTH = 310;
-    const GAP = 12;
+    const update = () => {
+      const el = anchorEl.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const PANEL_WIDTH = 310;
+      const GAP = 12;
 
-    // Thử hiện bên phải trước
-    let left = rect.right + GAP;
+      // Thử hiện bên phải trước
+      let left = rect.right + GAP;
 
-    // Nếu tràn phải → hiện bên trái
-    if (left + PANEL_WIDTH > window.innerWidth - 8) {
-      left = rect.left - PANEL_WIDTH - GAP;
-    }
+      // Nếu tràn phải → hiện bên trái
+      if (left + PANEL_WIDTH > window.innerWidth - 8) {
+        left = rect.left - PANEL_WIDTH - GAP;
+      }
 
-    // Nếu vẫn tràn trái → căn giữa màn hình
-    if (left < 8) {
-      left = Math.max(8, (window.innerWidth - PANEL_WIDTH) / 2);
-    }
+      // Nếu vẫn tràn trái → căn giữa màn hình
+      if (left < 8) {
+        left = Math.max(8, (window.innerWidth - PANEL_WIDTH) / 2);
+      }
 
-    // Tính top
-    let top = rect.top + window.scrollY; // ← thêm scrollY
-    const PANEL_HEIGHT = 420;
-    if (rect.top + PANEL_HEIGHT > window.innerHeight) {
-      top = window.scrollY + window.innerHeight - PANEL_HEIGHT - 8;
-    }
-    if (top < window.scrollY + 8) {
-      top = window.scrollY + 8;
-    }
+      // Tính top
+      let top = rect.top + window.scrollY; // ← thêm scrollY
+      const PANEL_HEIGHT = 420;
+      if (rect.top + PANEL_HEIGHT > window.innerHeight) {
+        top = window.scrollY + window.innerHeight - PANEL_HEIGHT - 8;
+      }
+      if (top < window.scrollY + 8) {
+        top = window.scrollY + 8;
+      }
 
-    setPos({ top, left });
-  };
-  update();
-  window.addEventListener("scroll", update, true);
-  window.addEventListener("resize", update);
-  return () => {
-    window.removeEventListener("scroll", update, true);
-    window.removeEventListener("resize", update);
-  };
-}, [anchorEl]);
+      setPos({ top, left });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [anchorEl]);
 
   if (!pos) return null;
 
@@ -338,7 +347,8 @@ function HoverPanel({
         left: pos.left,
         width: 310,
         zIndex: 1500,
-        bgcolor: C.white,
+        bgcolor: "#ffffff",
+        backdropFilter: "none",
         borderRadius: "16px",
         boxShadow: "0 16px 48px rgba(0,0,0,0.18)",
         border: "1px solid rgba(0,0,0,0.07)",
@@ -962,7 +972,8 @@ export default function StudentDashboardContent() {
     };
     window.addEventListener("avatar_updated", handleAvatarUpdate);
     handleAvatarUpdate();
-    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
+    return () =>
+      window.removeEventListener("avatar_updated", handleAvatarUpdate);
   }, [user?.email]);
 
   const [courseImages, setCourseImages] = useState<Record<string, string>>({});
@@ -970,9 +981,9 @@ export default function StudentDashboardContent() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    "courses" | "assigned" | "paths"
-  >("courses");
+  const [activeTab, setActiveTab] = useState<"courses" | "assigned" | "paths">(
+    "courses",
+  );
   const [selectedSkill, setSelectedSkill] = useState<string>("");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
@@ -1006,7 +1017,9 @@ export default function StudentDashboardContent() {
           }
         }
 
-        const res = await apiService.get<DashboardData>("/dashboard?role=HocVien");
+        const res = await apiService.get<DashboardData>(
+          "/dashboard?role=HocVien",
+        );
         if (res.status && res.data) {
           setData(res.data);
           // Set default selected skill
@@ -1150,7 +1163,8 @@ export default function StudentDashboardContent() {
           borderRadius: "24px",
           bgcolor: C.white,
           border: `1px solid rgba(139,19,19,0.08)`,
-          background: "linear-gradient(135deg, rgba(139,19,19,0.02) 0%, rgba(255,255,255,1) 100%)",
+          background:
+            "linear-gradient(135deg, rgba(139,19,19,0.02) 0%, rgba(255,255,255,1) 100%)",
           boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02)",
           display: "flex",
           alignItems: "center",
@@ -1160,9 +1174,17 @@ export default function StudentDashboardContent() {
           mb: 4,
         }}
       >
-        <Stack direction="row" sx={{ alignItems: "center", gap: 3, flex: 1, minWidth: 280 }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "center", gap: 3, flex: 1, minWidth: 280 }}
+        >
           <Avatar
-            src={userAvatar || user?.anhDaiDien || welcomeStats?.avatarUrl || undefined}
+            src={
+              userAvatar ||
+              user?.anhDaiDien ||
+              welcomeStats?.avatarUrl ||
+              undefined
+            }
             sx={{
               width: 72,
               height: 72,
@@ -1176,11 +1198,18 @@ export default function StudentDashboardContent() {
           >
             {welcomeStats?.userName || user?.hoTen
               ? (() => {
-                  const name = (user?.hoTen || welcomeStats?.userName || '').trim();
+                  const name = (
+                    user?.hoTen ||
+                    welcomeStats?.userName ||
+                    ""
+                  ).trim();
                   const parts = name.split(/\s+/);
                   if (parts.length === 0) return "HV";
-                  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-                  return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+                  if (parts.length === 1)
+                    return parts[0].substring(0, 2).toUpperCase();
+                  return (
+                    parts[0][0] + (parts[1] ? parts[1][0] : "")
+                  ).toUpperCase();
                 })()
               : "HV"}
           </Avatar>
@@ -1194,7 +1223,8 @@ export default function StudentDashboardContent() {
                 mb: 0.5,
               }}
             >
-              Chào mừng {user?.hoTen || welcomeStats?.userName || "học viên"} trở lại! 👋
+              Chào mừng {user?.hoTen || welcomeStats?.userName || "học viên"}{" "}
+              trở lại! 👋
             </Typography>
             <Typography
               sx={{
@@ -1205,7 +1235,8 @@ export default function StudentDashboardContent() {
                 maxWidth: 480,
               }}
             >
-              {welcomeStats?.subtitle || "Khám phá các khóa học mới và tiếp tục hành trình nâng cao tri thức của bạn ngay hôm nay."}
+              {welcomeStats?.subtitle ||
+                "Khám phá các khóa học mới và tiếp tục hành trình nâng cao tri thức của bạn ngay hôm nay."}
             </Typography>
           </Box>
         </Stack>
@@ -1236,10 +1267,19 @@ export default function StudentDashboardContent() {
             }}
           >
             <SchoolRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
-            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
+            <Typography
+              sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
+            >
               {welcomeStats?.totalCourses || 0}
             </Typography>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: C.textSecondary,
+                mt: 0.25,
+              }}
+            >
               Khóa học
             </Typography>
           </Box>
@@ -1259,10 +1299,19 @@ export default function StudentDashboardContent() {
             }}
           >
             <TrendingUpRounded sx={{ color: C.primary, fontSize: 24, mb: 1 }} />
-            <Typography sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}>
+            <Typography
+              sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
+            >
               {welcomeStats?.progressPercent || 0}%
             </Typography>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, mt: 0.25 }}>
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: C.textSecondary,
+                mt: 0.25,
+              }}
+            >
               Tiến độ
             </Typography>
           </Box>
@@ -1594,9 +1643,7 @@ export default function StudentDashboardContent() {
 
       {/* ── 4. Continue Learning ───────────────────────────────────── */}
       <Box>
-        <SectionHeader
-          title="Hoàn thành nốt phần bạn đang làm dở"
-        />
+        <SectionHeader title="Hoàn thành nốt phần bạn đang làm dở" />
 
         <Tabs
           value={activeTab}
@@ -1938,8 +1985,6 @@ export default function StudentDashboardContent() {
               </Typography>
             </Paper>
           ))}
-
-
       </Box>
 
       {/* ── 5. Next Sectors ────────────────────────────────────────── */}
@@ -2060,9 +2105,7 @@ export default function StudentDashboardContent() {
       {/* ── 6. Skills Courses ──────────────────────────────────────── */}
       {(interestedSkills?.length || filteredSkillCourses.length > 0) && (
         <Box>
-          <SectionHeader
-            title="Dựa trên kỹ năng bạn quan tâm, chúng tôi khuyến nghị bạn"
-          />
+          <SectionHeader title="Dựa trên kỹ năng bạn quan tâm, chúng tôi khuyến nghị bạn" />
           {interestedSkills && interestedSkills.length > 0 && (
             <Stack
               direction="row"
