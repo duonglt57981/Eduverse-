@@ -302,5 +302,22 @@ namespace Eduverse.Service.KhuyenMaiService
             await SaveAsync();
             return true;
         }
+
+        public async Task<List<KhoaHocMiniDto>> GetAllApprovedKhoaHocAsync()
+        {
+            return await _khoaHocRepository.GetQueryable()
+                .Where(x => x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.IsBanHienTai == true
+                         && !x.IsDeleted
+                         && x.TrangThai == "HoatDong")
+                .OrderByDescending(x => x.CreatedDate)
+                .Select(x => new KhoaHocMiniDto
+                {
+                    Id = x.Id,
+                    TieuDe = x.TieuDe,
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
+                })
+                .ToListAsync();
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Eduverse.Service.KhuyenMaiService;
+﻿using Eduverse.Service.KhoaHocService.Dto;
+using Eduverse.Service.KhuyenMaiService;
 using Eduverse.Service.KhuyenMaiService.Dto;
 using Eduverse.Service.KhuyenMaiService.Request;
 using Hinet.Api.Dto;
@@ -76,6 +77,21 @@ namespace Eduverse.Api.Controller
             catch (Exception ex)
             {
                 return DataResponse<bool>.False(ex.Message);
+            }
+        }
+
+        [HttpGet("khuyenmai-getall-khoahoc-daduyet")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<List<KhoaHocMiniDto>>> GetAllApprovedKhoaHoc()
+        {
+            try
+            {
+                var result = await _khuyenMaiService.GetAllApprovedKhoaHocAsync();
+                return DataResponse<List<KhoaHocMiniDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<KhoaHocMiniDto>>.False(ex.Message);
             }
         }
     }

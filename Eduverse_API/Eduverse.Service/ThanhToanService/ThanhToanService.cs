@@ -350,9 +350,9 @@ namespace Eduverse.Service.ThanhToanService
                     await _khoaHocRepo.SaveAsync();
 
                     var donHangVouchers = await _donHangKhuyenMaiRepo.GetQueryable()
-    .AsNoTracking()
-    .Where(x => x.IdDonHang == donHang.Id && !x.IsDeleted)
-    .ToListAsync();
+                        .AsNoTracking()
+                        .Where(x => x.IdDonHang == donHang.Id && !x.IsDeleted)
+                        .ToListAsync();
 
                     var voucherIds = donHangVouchers
                         .Where(x => x.IdKhuyenMai.HasValue)
@@ -689,6 +689,7 @@ namespace Eduverse.Service.ThanhToanService
             // Admin nhận = tiền thu được - tiền đã trả giảng viên
             return Math.Round(tongThanhToan - tongGiangVienNhan, 0);
         }
+
 
     }
 }
