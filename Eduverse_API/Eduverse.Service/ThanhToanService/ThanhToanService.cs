@@ -559,13 +559,27 @@ namespace Eduverse.Service.ThanhToanService
         }
         public async Task<double> GetTongDoanhThuNenTangAsync()
         {
-            // Tổng tất cả đơn hàng đã thanh toán thành công (TrangThai == 1)
-            var tongHoaDon = await _donHangRepo.GetQueryable()
+            // Tổng tiền học viên thực trả (sau discount)
+            var tongThanhToan = await _donHangRepo.GetQueryable()
                 .Where(x => !x.IsDeleted && x.TrangThai == 1)
                 .SumAsync(x => (double?)x.SoTienThanhToan ?? 0);
 
-            // Nền tảng giữ 30%
-            return Math.Round(tongHoaDon * 0.3, 0);
+            // Tổng đã trả cho giảng viên (70% giá gốc, không bị ảnh hưởng discount)
+            var donHangDaThanhToanIds = await _donHangRepo.GetQueryable()
+                .Where(x => !x.IsDeleted && x.TrangThai == 1)
+                .Select(x => x.Id)
+                .ToListAsync();
+
+            var tongGiangVienNhan = await _donHangChiTietRepo.GetQueryable()
+                .Where(ct =>
+                    !ct.IsDeleted &&
+                    ct.IdDonHang.HasValue &&
+                    donHangDaThanhToanIds.Contains(ct.IdDonHang.Value)
+                )
+                .SumAsync(ct => (ct.GiaLucDat ?? 0) * 0.7);
+
+            // Admin nhận = tiền thu được - tiền đã trả giảng viên
+            return Math.Round(tongThanhToan - tongGiangVienNhan, 0);
         }
 
     }

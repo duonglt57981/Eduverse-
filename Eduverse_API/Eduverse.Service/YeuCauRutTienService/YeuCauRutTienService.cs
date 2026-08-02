@@ -241,6 +241,32 @@ namespace Eduverse.Service.YeuCauRutTienService
             await _thongBaoRepo.SaveAsync();
         }
 
+        public async Task HuyYeuCauAsync(Guid id, Guid userId)
+        {
+            var yeuCau = await GetByIdAsync(id)
+                ?? throw new Exception("Không tìm thấy yêu cầu");
+
+            if (yeuCau.IdNguoiDung != userId)
+                throw new Exception("Bạn không có quyền hủy yêu cầu này");
+
+            if (yeuCau.TrangThai != "ChoDuyet")
+                throw new Exception("Chỉ có thể hủy yêu cầu đang chờ duyệt");
+
+            // Hoàn tiền lại
+            var user = await _userRepo.GetByIdAsync(userId)
+                ?? throw new Exception("Không tìm thấy người dùng");
+
+            user.SoDuTaiKhoan += yeuCau.SoTienRut ?? 0;
+            user.UpdatedDate = DateTime.Now;
+            _userRepo.Update(user);
+            await _userRepo.SaveAsync();
+
+            yeuCau.TrangThai = "DaHuy";
+            yeuCau.NgayXuLy = DateTime.Now;
+            yeuCau.UpdatedDate = DateTime.Now;
+            await UpdateAsync(yeuCau);
+        }
+
         public async Task XuLyYeuCauAsync(Guid id, XuLyYeuCauDto dto)
         {
             var yeuCau = await GetByIdAsync(id)

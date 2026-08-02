@@ -190,7 +190,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "998ff4af-ecaf-4ab4-9c10-a69dbfb40b91",
+                            ConcurrencyStamp = "09d0a31a-84b8-4671-a633-808f0835d038",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -199,9 +199,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEFCIvBN8aSMhi2To7ZeZujUBC18wRBGXq3onCgs75JZMybQsyYqCqnrHqqJHzt+iNw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGDKND7KXHhMnLfyL5lgPCld6bIPfAskfERsijRbQtle0EZpPNZBpBeaUhcEVgStJA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "d47336f4-83cc-4d0b-8ef4-bfaf0de422e2",
+                            SecurityStamp = "1df389f8-091d-4429-8f6f-ac58c639a52a",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -1063,6 +1063,66 @@ namespace Eduverse.Model.Migrations
                     b.HasIndex("IdKhoaHoc");
 
                     b.ToTable("donHangChiTiets");
+                });
+
+            modelBuilder.Entity("Eduverse.Model.Entities.DonHang_KhuyenMai", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("DonHangId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IdDonHang")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IdKhoaHocDuocGiam")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IdKhuyenMai")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("KhuyenMaiId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<double?>("SoTienGiam")
+                        .HasColumnType("float");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DonHangId");
+
+                    b.HasIndex("KhuyenMaiId");
+
+                    b.ToTable("DonHang_KhuyenMai");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.GioHang", b =>
@@ -2517,6 +2577,17 @@ namespace Eduverse.Model.Migrations
                         .HasForeignKey("IdKhoaHoc");
                 });
 
+            modelBuilder.Entity("Eduverse.Model.Entities.DonHang_KhuyenMai", b =>
+                {
+                    b.HasOne("Eduverse.Model.Entities.DonHang", null)
+                        .WithMany("DonHang_KhuyenMais")
+                        .HasForeignKey("DonHangId");
+
+                    b.HasOne("Eduverse.Model.Entities.KhuyenMai", null)
+                        .WithMany("DonHang_KhuyenMais")
+                        .HasForeignKey("KhuyenMaiId");
+                });
+
             modelBuilder.Entity("Eduverse.Model.Entities.InstructorRequest", b =>
                 {
                     b.HasOne("Eduverse.Model.Entities.AppUser", "AppUser")
@@ -2593,6 +2664,13 @@ namespace Eduverse.Model.Migrations
             modelBuilder.Entity("Eduverse.Model.Entities.DonHang", b =>
                 {
                     b.Navigation("DonHangChiTiets");
+
+                    b.Navigation("DonHang_KhuyenMais");
+                });
+
+            modelBuilder.Entity("Eduverse.Model.Entities.KhuyenMai", b =>
+                {
+                    b.Navigation("DonHang_KhuyenMais");
                 });
 #pragma warning restore 612, 618
         }

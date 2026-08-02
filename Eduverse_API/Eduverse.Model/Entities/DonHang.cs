@@ -15,8 +15,9 @@ namespace Eduverse.Model.Entities
 
         public DateTime? NgayTao { get; set; } = DateTime.Now;
         public int? TrangThai { get; set; }
+      
         public Guid? IdNguoiDung { get; set; }
-        //không tạo FK mới, chỉ để EF biết quan hệ
         public ICollection<DonHangChiTiet>? DonHangChiTiets { get; set; }
+        public ICollection<DonHang_KhuyenMai>? DonHang_KhuyenMais { get; set; }
     }
 }
