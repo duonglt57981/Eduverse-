@@ -181,6 +181,7 @@ export const sidebarAdminItems: DashboardNavItem[] = [
   { label: 'Vai trò', icon: AdminPanelSettingsRounded },
   { label: 'Danh mục', icon: CategoryRounded },
   { label: 'Khóa học', icon: SchoolRounded },
+  { label: 'Khuyến mãi', icon: LocalOfferRounded },
   { label: "Rút tiền", icon: AccountBalanceWalletRounded },
   { label: 'Thông báo', icon: NotificationsRounded },
 ] as const;

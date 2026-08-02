@@ -414,6 +414,8 @@ function SidebarContent({
           return "/admin/tests";
         case "Khuyến mãi":
           return "/admin/promotions";
+        case "Khuyến mãi":
+          return "/admin/promotions";
         case "Thanh toán":
           return "/admin/payments";
         case "Thông báo":
@@ -619,11 +621,17 @@ function SidebarContent({
                   borderRadius: isAdmin ? "8px" : "16px",
                   px: 2,
                   py: isAdmin ? 1 : 1.25,
-                  color: isAdmin ? "var(--ev-text-secondary, #475569)" : "rgba(31,41,55,0.72)",
+                  color: isAdmin
+                    ? "var(--ev-text-secondary, #475569)"
+                    : "rgba(31,41,55,0.72)",
                   transition: "all 150ms ease",
                   "&:hover": {
-                    bgcolor: isAdmin ? "var(--ev-paper-alt, #FAFAFA)" : "rgba(141,19,19,0.03)",
-                    color: isAdmin ? "var(--ev-text-primary, #1F2937)" : "rgba(31,41,55,0.85)",
+                    bgcolor: isAdmin
+                      ? "var(--ev-paper-alt, #FAFAFA)"
+                      : "rgba(141,19,19,0.03)",
+                    color: isAdmin
+                      ? "var(--ev-text-primary, #1F2937)"
+                      : "rgba(31,41,55,0.85)",
                   },
                 }}
               >
@@ -765,7 +773,13 @@ function CourseCard({ course }: { course: CourseCardItem }) {
         >
           {course.title}
         </Typography>
-        <Typography sx={{ mt: 0.8, fontSize: 13, color: "var(--ev-text-secondary, rgba(31,41,55,0.6))" }}>
+        <Typography
+          sx={{
+            mt: 0.8,
+            fontSize: 13,
+            color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
+          }}
+        >
           {course.instructor}
         </Typography>
 
@@ -782,7 +796,11 @@ function CourseCard({ course }: { course: CourseCardItem }) {
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <StarRounded sx={{ color: "#F59E0B", fontSize: 18 }} />
             <Typography
-              sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-primary, #1F2937)" }}
+              sx={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--ev-text-primary, #1F2937)",
+              }}
             >
               {course.rating}
             </Typography>
@@ -790,7 +808,10 @@ function CourseCard({ course }: { course: CourseCardItem }) {
           <Stack
             direction="row"
             spacing={0.5}
-            sx={{ alignItems: "center", color: "var(--ev-text-muted, rgba(31,41,55,0.5))" }}
+            sx={{
+              alignItems: "center",
+              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+            }}
           >
             <PeopleAltRounded sx={{ fontSize: 16 }} />
             <Typography sx={{ fontSize: 12, fontWeight: 500 }}>
@@ -881,7 +902,6 @@ export default function DashboardShell({
         console.error("Lỗi đánh dấu đã đọc:", err);
       }
     }
-
   };
 
   const handleMarkAllAsRead = async () => {
@@ -1063,7 +1083,6 @@ export default function DashboardShell({
       console.error("Export report error:", err);
     }
   };
-
 
   const theme = useMemo(
     () => createAppTheme("light", COLORS.primary, COLORS.primaryDark),
@@ -1640,7 +1659,12 @@ export default function DashboardShell({
                     </Box>
                   </Box>
 
-                  <Divider sx={{ my: 0.5, borderColor: "var(--ev-divider, rgba(0,0,0,0.06))" }} />
+                  <Divider
+                    sx={{
+                      my: 0.5,
+                      borderColor: "var(--ev-divider, rgba(0,0,0,0.06))",
+                    }}
+                  />
 
                   {!pathname.startsWith("/admin") ? (
                     <>
@@ -1913,1270 +1937,1296 @@ export default function DashboardShell({
                 flexShrink: 0,
               }}
             >
-              <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 4.5 }}>
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4.5,
+                }}
+              >
                 {children ? (
                   children
                 ) : (
-                <>
-                  {/* ========================================================= */}
-                  {/* 2. WELCOME SECTION                                        */}
-                  {/* ========================================================= */}
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: { xs: 3, md: 4 },
-                      borderRadius: "24px",
-                      bgcolor: COLORS.white,
-                      border: "1px solid rgba(141,19,19,0.06)",
-                      position: "relative",
-                      overflow: "hidden",
-                      boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
-                    }}
-                  >
-                    {/* Glowing background highlights */}
-                    <Box
+                  <>
+                    {/* ========================================================= */}
+                    {/* 2. WELCOME SECTION                                        */}
+                    {/* ========================================================= */}
+                    <Paper
+                      elevation={0}
                       sx={{
-                        position: "absolute",
-                        top: -100,
-                        right: -100,
-                        width: 250,
-                        height: 250,
-                        borderRadius: "50%",
-                        background:
-                          "radial-gradient(circle, rgba(124,58,237,0.05) 0%, transparent 70%)",
-                        zIndex: 0,
-                      }}
-                    />
-
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      sx={{
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 3,
+                        p: { xs: 3, md: 4 },
+                        borderRadius: "24px",
+                        bgcolor: COLORS.white,
+                        border: "1px solid rgba(141,19,19,0.06)",
                         position: "relative",
-                        zIndex: 1,
+                        overflow: "hidden",
+                        boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
                       }}
                     >
-                      {/* User profile details */}
+                      {/* Glowing background highlights */}
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: -100,
+                          right: -100,
+                          width: 250,
+                          height: 250,
+                          borderRadius: "50%",
+                          background:
+                            "radial-gradient(circle, rgba(124,58,237,0.05) 0%, transparent 70%)",
+                          zIndex: 0,
+                        }}
+                      />
+
                       <Stack
                         direction={{ xs: "column", md: "row" }}
-                        spacing={3}
                         sx={{
                           alignItems: "center",
-                          textAlign: { xs: "center", md: "left" },
+                          justifyContent: "space-between",
+                          gap: 3,
+                          position: "relative",
+                          zIndex: 1,
                         }}
                       >
-                        <Avatar
-                          src={
-                            userAvatar ||
-                            dashboardData?.welcomeStats?.avatarUrl ||
-                            undefined
-                          }
+                        {/* User profile details */}
+                        <Stack
+                          direction={{ xs: "column", md: "row" }}
+                          spacing={3}
                           sx={{
-                            width: 80,
-                            height: 80,
-                            bgcolor: "rgba(141, 19, 19, 0.05)",
-                            color: COLORS.primary,
-                            fontSize: 28,
-                            fontWeight: 900,
-                            boxShadow: "0 10px 24px rgba(141,19,19,0.08)",
+                            alignItems: "center",
+                            textAlign: { xs: "center", md: "left" },
                           }}
                         >
-                          {dashboardData?.welcomeStats?.userName
-                            ? dashboardData.welcomeStats.userName
-                                .split(" ")
-                                .pop()
-                                ?.substring(0, 1)
-                                .toUpperCase()
-                            : "A"}
-                        </Avatar>
-                        <Box>
-                          <Typography
+                          <Avatar
+                            src={
+                              userAvatar ||
+                              dashboardData?.welcomeStats?.avatarUrl ||
+                              undefined
+                            }
                             sx={{
-                              fontSize: { xs: 24, md: 28 },
+                              width: 80,
+                              height: 80,
+                              bgcolor: "rgba(141, 19, 19, 0.05)",
+                              color: COLORS.primary,
+                              fontSize: 28,
                               fontWeight: 900,
-                              color: "var(--ev-text-primary, #1F2937)",
+                              boxShadow: "0 10px 24px rgba(141,19,19,0.08)",
                             }}
                           >
-                            Chào mừng trở lại,{" "}
-                            {dashboardData?.welcomeStats?.userName} 👋
-                          </Typography>
-                          <Typography
-                            sx={{
-                              mt: 0.5,
-                              fontSize: 14.5,
-                              color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
-                              maxWidth: 550,
-                            }}
-                          >
-                            {dashboardData?.welcomeStats?.subtitle}
-                          </Typography>
-
-                          {/* Quick Stats list */}
-                          <Stack
-                            direction="row"
-                            spacing={2.5}
-                            sx={{
-                              mt: 2.5,
-                              flexWrap: "wrap",
-                              justifyContent: {
-                                xs: "center",
-                                md: "flex-start",
-                              },
-                              gap: 1.5,
-                            }}
-                          >
-                            <Chip
-                              icon={<SchoolRounded sx={{ fontSize: "18px" }} />}
-                              label={`${dashboardData?.welcomeStats?.totalCourses || 0} Khóa học`}
+                            {dashboardData?.welcomeStats?.userName
+                              ? dashboardData.welcomeStats.userName
+                                  .split(" ")
+                                  .pop()
+                                  ?.substring(0, 1)
+                                  .toUpperCase()
+                              : "A"}
+                          </Avatar>
+                          <Box>
+                            <Typography
                               sx={{
-                                bgcolor: "rgba(141, 19, 19, 0.05)",
-                                color: COLORS.primary,
-                                fontWeight: 700,
-                                fontSize: 13,
-                                height: 32,
-                                border: "1px solid rgba(141,19,19,0.08)",
-                                borderRadius: "50px",
-                                "& .MuiChip-icon": {
-                                  color: COLORS.primary,
-                                  ml: 1.5,
-                                },
+                                fontSize: { xs: 24, md: 28 },
+                                fontWeight: 900,
+                                color: "var(--ev-text-primary, #1F2937)",
                               }}
-                            />
-                            <Chip
-                              icon={
-                                <TimelineRounded sx={{ fontSize: "18px" }} />
-                              }
-                              label={`${dashboardData?.welcomeStats?.progressPercent || 0}% Tiến độ`}
+                            >
+                              Chào mừng trở lại,{" "}
+                              {dashboardData?.welcomeStats?.userName} 👋
+                            </Typography>
+                            <Typography
                               sx={{
-                                bgcolor: "rgba(141, 19, 19, 0.05)",
-                                color: COLORS.primary,
-                                fontWeight: 700,
-                                fontSize: 13,
-                                height: 32,
-                                border: "1px solid rgba(141,19,19,0.08)",
-                                borderRadius: "50px",
-                                "& .MuiChip-icon": {
-                                  color: COLORS.primary,
-                                  ml: 1.5,
-                                },
+                                mt: 0.5,
+                                fontSize: 14.5,
+                                color:
+                                  "var(--ev-text-secondary, rgba(31,41,55,0.6))",
+                                maxWidth: 550,
                               }}
-                            />
+                            >
+                              {dashboardData?.welcomeStats?.subtitle}
+                            </Typography>
 
-                          </Stack>
+                            {/* Quick Stats list */}
+                            <Stack
+                              direction="row"
+                              spacing={2.5}
+                              sx={{
+                                mt: 2.5,
+                                flexWrap: "wrap",
+                                justifyContent: {
+                                  xs: "center",
+                                  md: "flex-start",
+                                },
+                                gap: 1.5,
+                              }}
+                            >
+                              <Chip
+                                icon={
+                                  <SchoolRounded sx={{ fontSize: "18px" }} />
+                                }
+                                label={`${dashboardData?.welcomeStats?.totalCourses || 0} Khóa học`}
+                                sx={{
+                                  bgcolor: "rgba(141, 19, 19, 0.05)",
+                                  color: COLORS.primary,
+                                  fontWeight: 700,
+                                  fontSize: 13,
+                                  height: 32,
+                                  border: "1px solid rgba(141,19,19,0.08)",
+                                  borderRadius: "50px",
+                                  "& .MuiChip-icon": {
+                                    color: COLORS.primary,
+                                    ml: 1.5,
+                                  },
+                                }}
+                              />
+                              <Chip
+                                icon={
+                                  <TimelineRounded sx={{ fontSize: "18px" }} />
+                                }
+                                label={`${dashboardData?.welcomeStats?.progressPercent || 0}% Tiến độ`}
+                                sx={{
+                                  bgcolor: "rgba(141, 19, 19, 0.05)",
+                                  color: COLORS.primary,
+                                  fontWeight: 700,
+                                  fontSize: 13,
+                                  height: 32,
+                                  border: "1px solid rgba(141,19,19,0.08)",
+                                  borderRadius: "50px",
+                                  "& .MuiChip-icon": {
+                                    color: COLORS.primary,
+                                    ml: 1.5,
+                                  },
+                                }}
+                              />
+                            </Stack>
+                          </Box>
+                        </Stack>
+
+                        {/* AI Learning Assistant graphic on right */}
+                        <Box>
+                          <AIGraphic />
                         </Box>
                       </Stack>
+                    </Paper>
 
-                      {/* AI Learning Assistant graphic on right */}
-                      <Box>
-                        <AIGraphic />
-                      </Box>
-                    </Stack>
-                  </Paper>
-
-                  {/* ========================================================= */}
-                  {/* 3. AI RECOMMENDATION BANNER (2 Horizontal Cards)           */}
-                  {/* ========================================================= */}
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                      gap: 3,
-                      mb: 1,
-                    }}
-                  >
-                    {aiRecommendationBanners.map((banner) => (
-                      <Paper
-                        key={banner.id}
-                        elevation={0}
-                        sx={{
-                          p: 3.5,
-                          borderRadius: "24px",
-                          background: banner.bgGradient,
-                          color: "#FFFFFF",
-                          minHeight: 210,
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          position: "relative",
-                          overflow: "hidden",
-                          boxShadow: "0 12px 30px rgba(141, 19, 19, 0.05)",
-                          transition:
-                            "transform 200ms ease, box-shadow 200ms ease",
-                          "&:hover": {
-                            transform: "translateY(-4px)",
-                            boxShadow:
-                              banner.type === "ai_recommend"
-                                ? "0 16px 36px rgba(124, 58, 237, 0.2)"
-                                : "0 16px 36px rgba(14, 165, 233, 0.2)",
-                          },
-                        }}
-                      >
-                        {/* Vector graphic accents */}
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            right: -30,
-                            bottom: -30,
-                            width: 140,
-                            height: 140,
-                            borderRadius: "50%",
-                            background: "rgba(255,255,255,0.06)",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                          }}
-                        />
-
-                        <Box sx={{ zIndex: 1 }}>
-                          {banner.type === "ai_recommend" ? (
-                            <Chip
-                              icon={
-                                <AutoAwesomeRounded sx={{ fontSize: "14px" }} />
-                              }
-                              label="AI CÁ NHÂN HÓA"
-                              size="small"
-                              sx={{
-                                bgcolor: "rgba(255,255,255,0.15)",
-                                color: "#FFFFFF",
-                                fontWeight: 800,
-                                fontSize: 11,
-                                mb: 2,
-                                borderRadius: "50px",
-                                "& .MuiChip-icon": {
-                                  color: "#FFFFFF",
-                                  ml: 1,
-                                },
-                              }}
-                            />
-                          ) : (
-                            <Chip
-                              icon={<QuizRounded sx={{ fontSize: "14px" }} />}
-                              label="KIỂM TRA NĂNG LỰC"
-                              size="small"
-                              sx={{
-                                bgcolor: "rgba(255,255,255,0.15)",
-                                color: "#FFFFFF",
-                                fontWeight: 800,
-                                fontSize: 11,
-                                mb: 2,
-                                borderRadius: "50px",
-                                "& .MuiChip-icon": {
-                                  color: "#FFFFFF",
-                                  ml: 1,
-                                },
-                              }}
-                            />
-                          )}
-                          <Typography
-                            sx={{
-                              fontSize: 20,
-                              fontWeight: 900,
-                              letterSpacing: "-0.3px",
-                              mb: 1,
-                            }}
-                          >
-                            {banner.title}
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: 13.5,
-                              lineHeight: 1.6,
-                              opacity: 0.88,
-                              mb: 3.5,
-                              maxWidth: "90%",
-                            }}
-                          >
-                            {banner.description}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ zIndex: 1 }}>
-                          <Button
-                            variant="contained"
-                            endIcon={<ArrowForwardRounded />}
-                            sx={{
-                              bgcolor: COLORS.white,
-                              color:
-                                banner.type === "ai_recommend"
-                                  ? COLORS.primary
-                                  : "#0284C7",
-                              fontWeight: 800,
-                              borderRadius: "50px",
-                              px: 3,
-                              py: 1.25,
-                              boxShadow: "none",
-                              "&:hover": {
-                                bgcolor: "rgba(255,255,255,0.92)",
-                                boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-                              },
-                            }}
-                          >
-                            {banner.buttonText}
-                          </Button>
-                        </Box>
-                      </Paper>
-                    ))}
-                  </Box>
-
-                  {/* ========================================================= */}
-                  {/* 4. HOÀN THÀNH NỐT PHẦN BẠN ĐANG LÀM DỞ                     */}
-                  {/* ========================================================= */}
-                  <Box sx={{ mt: 2.5 }}>
-                    <Typography
-                      sx={{
-                        fontSize: 21,
-                        fontWeight: 900,
-                        mb: 2,
-                        color: "var(--ev-text-primary, #1F2937)",
-                      }}
-                    >
-                      Hoàn thành nốt phần bạn đang làm dở
-                    </Typography>
-
-                    {/* Tabs */}
-                    <Tabs
-                      value={activeContinueTab}
-                      onChange={(_, val) => setActiveContinueTab(val)}
-                      variant="scrollable"
-                      scrollButtons="auto"
-                      sx={{
-                        mb: 2.5,
-                        borderBottom: "1px solid rgba(0,0,0,0.06)",
-                        "& .MuiTabs-indicator": {
-                          bgcolor: COLORS.primary,
-                          height: 3,
-                          borderRadius: "3px",
-                        },
-                        "& .MuiTab-root": {
-                          textTransform: "none",
-                          fontSize: 14.5,
-                          fontWeight: 700,
-                          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                          minWidth: 100,
-                          px: 1.5,
-                          "&.Mui-selected": {
-                            color: COLORS.primary,
-                          },
-                        },
-                      }}
-                    >
-                      <Tab value="courses" label="Khóa học" />
-                      <Tab
-                        value="assigned"
-                        label="Các khóa học được chỉ định"
-                      />
-                      <Tab value="paths" label="Lộ trình học tập" />
-                    </Tabs>
-
-                    {/* Tab Content rendering logic */}
-                    {activeContinueTab === "courses" && (
-                      <CarouselRow>
-                        {dashboardData?.continueLearning?.courses?.map(
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (item: any) => (
-                            <Paper
-                              key={item.id}
-                              elevation={0}
-                              sx={{
-                                width: 290,
-                                flexShrink: 0,
-                                p: 2.5,
-                                borderRadius: "20px",
-                                border: "1px solid rgba(0,0,0,0.06)",
-                                bgcolor: COLORS.white,
-                                transition:
-                                  "transform 200ms ease, box-shadow 200ms ease",
-                                "&:hover": {
-                                  transform: "translateY(-4px)",
-                                  boxShadow: "0 12px 28px rgba(0,0,0,0.04)",
-                                },
-                              }}
-                            >
-                              {/* Course Thumbnail placeholder */}
-                              <Box
-                                sx={{
-                                  height: 120,
-                                  borderRadius: "14px",
-                                  background: item.thumbnailGradient,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  position: "relative",
-                                  overflow: "hidden",
-                                  mb: 2,
-                                }}
-                              >
-                                <Typography
-                                  sx={{
-                                    color: "#FFFFFF",
-                                    fontSize: 28,
-                                    fontWeight: 900,
-                                    opacity: 0.15,
-                                  }}
-                                >
-                                  EduVerse
-                                </Typography>
-                                <Chip
-                                  label={item.contentType}
-                                  size="small"
-                                  sx={{
-                                    position: "absolute",
-                                    bottom: 8,
-                                    left: 8,
-                                    bgcolor: "rgba(0, 0, 0, 0.65)",
-                                    color: "#FFFFFF",
-                                    fontWeight: 700,
-                                    fontSize: 10,
-                                    height: 20,
-                                  }}
-                                />
-                              </Box>
-
-                              <Typography
-                                sx={{
-                                  fontSize: 15,
-                                  fontWeight: 800,
-                                  lineHeight: 1.4,
-                                  height: 42,
-                                  overflow: "hidden",
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: "vertical",
-                                  color: "var(--ev-text-primary, #1F2937)",
-                                }}
-                              >
-                                {item.title}
-                              </Typography>
-
-                              <Typography
-                                sx={{
-                                  mt: 1,
-                                  fontSize: 12.5,
-                                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {item.duration}
-                              </Typography>
-
-                              {/* Progress Bar */}
-                              <Stack
-                                direction="row"
-                                sx={{
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  mt: 2,
-                                  mb: 0.5,
-                                }}
-                              >
-                                <Typography
-                                  sx={{
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                                  }}
-                                >
-                                  Tiến độ
-                                </Typography>
-                                <Typography
-                                  sx={{
-                                    fontSize: 12,
-                                    fontWeight: 800,
-                                    color: COLORS.primary,
-                                  }}
-                                >
-                                  {item.progress}%
-                                </Typography>
-                              </Stack>
-                              <LinearProgress
-                                variant="determinate"
-                                value={item.progress}
-                                sx={{
-                                  height: 6,
-                                  borderRadius: "3px",
-                                  bgcolor: "rgba(141,19,19,0.06)",
-                                  "& .MuiLinearProgress-bar": {
-                                    borderRadius: "3px",
-                                    background: `linear-gradient(90deg, ${COLORS.primaryLight}, ${COLORS.primary})`,
-                                  },
-                                }}
-                              />
-
-                              {/* Continue Button */}
-                              <Button
-                                fullWidth
-                                variant="outlined"
-                                endIcon={
-                                  <ArrowForwardRounded fontSize="small" />
-                                }
-                                sx={{
-                                  mt: 2,
-                                  py: 1,
-                                  borderRadius: "12px",
-                                  border: "1px solid rgba(141,19,19,0.12)",
-                                  color: COLORS.primary,
-                                  fontWeight: 800,
-                                  fontSize: 13,
-                                  "&:hover": {
-                                    border: `1px solid ${COLORS.primary}`,
-                                    bgcolor: "rgba(141,19,19,0.04)",
-                                  },
-                                }}
-                              >
-                                Tiếp tục học
-                              </Button>
-                            </Paper>
-                          ),
-                        )}
-                      </CarouselRow>
-                    )}
-
-                    {activeContinueTab === "assigned" && (
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          p: 4,
-                          borderRadius: "24px",
-                          border: "1px solid rgba(141,19,19,0.06)",
-                          bgcolor: COLORS.white,
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                          gap: 2,
-                          boxShadow: "0 8px 24px rgba(141,19,19,0.01)",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            fontSize: 20,
-                            fontWeight: 900,
-                            color: "var(--ev-text-primary, #1F2937)",
-                          }}
-                        >
-                          Chưa có khóa học nào được chỉ định
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: 14.5,
-                            color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
-                            maxWidth: 650,
-                            lineHeight: 1.6,
-                          }}
-                        >
-                          Chưa có khóa học nào được chỉ định cho bạn. Khi khóa
-                          học được chỉ định cho bạn, khóa học sẽ xuất hiện ở
-                          đây.
-                        </Typography>
-                        <Button
-                          variant="contained"
-                          onClick={() => router.push("/courses")}
-                          sx={{
-                            background: COLORS.gradientCrimson,
-                            color: "#FFFFFF",
-                            borderRadius: "12px",
-                            px: 3.5,
-                            py: 1.25,
-                            fontWeight: 800,
-                            "&:hover": {
-                              background: COLORS.gradientCrimsonHover,
-                            },
-                          }}
-                        >
-                          Khám phá khóa học
-                        </Button>
-                      </Paper>
-                    )}
-
-                    {activeContinueTab === "paths" && (
-                      <CarouselRow>
-                        {/* Mock learning paths from user's screen */}
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            width: 320,
-                            flexShrink: 0,
-                            p: 3,
-                            borderRadius: "20px",
-                            border: "1px solid rgba(0,0,0,0.07)",
-                            bgcolor: COLORS.white,
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "space-between",
-                            height: 160,
-                            position: "relative",
-                            overflow: "hidden",
-                            transition:
-                              "transform 200ms ease, box-shadow 200ms ease",
-                            "&:hover": {
-                              transform: "translateY(-4px)",
-                              boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
-                            },
-                          }}
-                        >
-                          <Box>
-                            <Typography
-                              sx={{
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px",
-                              }}
-                            >
-                              Lộ trình học tập
-                            </Typography>
-                            <Typography
-                              sx={{
-                                mt: 1.5,
-                                fontSize: 16,
-                                fontWeight: 800,
-                                color: "var(--ev-text-primary, #1F2937)",
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              Poly - SYB3013 - Khởi sự doanh nghiệp_SP2026
-                            </Typography>
-                          </Box>
-                          <Typography
-                            sx={{
-                              fontSize: 12.5,
-                              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                              fontWeight: 600,
-                            }}
-                          >
-                            4/4 mục đã hoàn thành
-                          </Typography>
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              height: 4,
-                              background: COLORS.gradientCrimson,
-                            }}
-                          />
-                        </Paper>
-
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            width: 320,
-                            flexShrink: 0,
-                            p: 3,
-                            borderRadius: "20px",
-                            border: "1px solid rgba(0,0,0,0.07)",
-                            bgcolor: COLORS.white,
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "space-between",
-                            height: 160,
-                            position: "relative",
-                            overflow: "hidden",
-                            transition:
-                              "transform 200ms ease, box-shadow 200ms ease",
-                            "&:hover": {
-                              transform: "translateY(-4px)",
-                              boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
-                            },
-                          }}
-                        >
-                          <Box>
-                            <Typography
-                              sx={{
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px",
-                              }}
-                            >
-                              Lộ trình học tập
-                            </Typography>
-                            <Typography
-                              sx={{
-                                mt: 1.5,
-                                fontSize: 16,
-                                fontWeight: 800,
-                                color: "var(--ev-text-primary, #1F2937)",
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              Poly - SOF1021 - Nhập môn kỹ thuật phần mềm -
-                              FA2025
-                            </Typography>
-                          </Box>
-                          <Typography
-                            sx={{
-                              fontSize: 12.5,
-                              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                              fontWeight: 600,
-                            }}
-                          >
-                            4/4 mục đã hoàn thành
-                          </Typography>
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              height: 4,
-                              background: COLORS.gradientCrimson,
-                            }}
-                          />
-                        </Paper>
-
-                        {/* Backend API learning paths */}
-                        {dashboardData?.continueLearning?.paths?.map(
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (item: any) => (
-                            <Paper
-                              key={item.id}
-                              elevation={0}
-                              sx={{
-                                width: 320,
-                                flexShrink: 0,
-                                p: 3,
-                                borderRadius: "20px",
-                                border: "1px solid rgba(0,0,0,0.07)",
-                                bgcolor: COLORS.white,
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between",
-                                height: 160,
-                                position: "relative",
-                                overflow: "hidden",
-                                transition:
-                                  "transform 200ms ease, box-shadow 200ms ease",
-                                "&:hover": {
-                                  transform: "translateY(-4px)",
-                                  boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
-                                },
-                              }}
-                            >
-                              <Box>
-                                <Typography
-                                  sx={{
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.5px",
-                                  }}
-                                >
-                                  {item.contentType || "Lộ trình học tập"}
-                                </Typography>
-                                <Typography
-                                  sx={{
-                                    mt: 1.5,
-                                    fontSize: 16,
-                                    fontWeight: 800,
-                                    color: "var(--ev-text-primary, #1F2937)",
-                                    lineHeight: 1.4,
-                                  }}
-                                >
-                                  {item.title}
-                                </Typography>
-                              </Box>
-                              <Stack
-                                direction="row"
-                                sx={{
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                }}
-                              >
-                                <Typography
-                                  sx={{
-                                    fontSize: 12.5,
-                                    color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {item.duration || "Đang thực hiện"}
-                                </Typography>
-                                <Typography
-                                  sx={{
-                                    fontSize: 12.5,
-                                    color: COLORS.primary,
-                                    fontWeight: 800,
-                                  }}
-                                >
-                                  {item.progress}%
-                                </Typography>
-                              </Stack>
-                              <Box
-                                sx={{
-                                  position: "absolute",
-                                  bottom: 0,
-                                  left: 0,
-                                  right: 0,
-                                  height: 4,
-                                  background: `linear-gradient(90deg, ${COLORS.primaryLight} 0%, ${COLORS.primary} ${item.progress}%, rgba(0,0,0,0.06) ${item.progress}%)`,
-                                }}
-                              />
-                            </Paper>
-                          ),
-                        )}
-                      </CarouselRow>
-                    )}
-
-
-
-
-                  </Box>
-
-                  {/* ========================================================= */}
-                  {/* 5. LĨNH VỰC HỌC TIẾP THEO                                 */}
-                  {/* ========================================================= */}
-                  <Box>
-                    <Typography
-                      sx={{ fontSize: 21, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)" }}
-                    >
-                      Lĩnh vực nên học tiếp theo
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: 13.5,
-                        color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                        mb: 2.5,
-                        mt: 0.5,
-                      }}
-                    >
-                      Được đề xuất dựa trên hành vi học tập của bạn.
-                    </Typography>
-
+                    {/* ========================================================= */}
+                    {/* 3. AI RECOMMENDATION BANNER (2 Horizontal Cards)           */}
+                    {/* ========================================================= */}
                     <Box
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: {
-                          xs: "1fr",
-                          sm: "1fr 1fr",
-                          md: "repeat(4, minmax(0, 1fr))",
-                        },
-                        gap: 2.5,
+                        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                        gap: 3,
+                        mb: 1,
                       }}
                     >
-                      {(dashboardData?.nextSectors || []).map((sec: any) => (
+                      {aiRecommendationBanners.map((banner) => (
                         <Paper
-                          key={sec.id}
+                          key={banner.id}
                           elevation={0}
                           sx={{
-                            p: 3,
-                            borderRadius: "20px",
-                            border: "1px solid rgba(0,0,0,0.06)",
-                            bgcolor: COLORS.white,
+                            p: 3.5,
+                            borderRadius: "24px",
+                            background: banner.bgGradient,
+                            color: "#FFFFFF",
+                            minHeight: 210,
                             display: "flex",
                             flexDirection: "column",
                             justifyContent: "space-between",
-                            transition: "all 200ms ease",
-                            cursor: "pointer",
+                            position: "relative",
+                            overflow: "hidden",
+                            boxShadow: "0 12px 30px rgba(141, 19, 19, 0.05)",
+                            transition:
+                              "transform 200ms ease, box-shadow 200ms ease",
                             "&:hover": {
-                              borderColor: COLORS.primary,
-                              boxShadow: `0 10px 24px rgba(141, 19, 19, 0.04)`,
-                              transform: "translateY(-2px)",
+                              transform: "translateY(-4px)",
+                              boxShadow:
+                                banner.type === "ai_recommend"
+                                  ? "0 16px 36px rgba(124, 58, 237, 0.2)"
+                                  : "0 16px 36px rgba(14, 165, 233, 0.2)",
                             },
                           }}
                         >
-                          <Box>
-                            <Box
-                              sx={{
-                                width: 52,
-                                height: 52,
-                                borderRadius: "14px",
-                                display: "grid",
-                                placeItems: "center",
-                                bgcolor: "rgba(141, 19, 19, 0.05)",
-                                mb: 2,
-                              }}
-                            >
-                              <SectorIcon
-                                iconName={sec.iconName}
-                                color={COLORS.primary}
-                              />
-                            </Box>
+                          {/* Vector graphic accents */}
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              right: -30,
+                              bottom: -30,
+                              width: 140,
+                              height: 140,
+                              borderRadius: "50%",
+                              background: "rgba(255,255,255,0.06)",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                            }}
+                          />
 
+                          <Box sx={{ zIndex: 1 }}>
+                            {banner.type === "ai_recommend" ? (
+                              <Chip
+                                icon={
+                                  <AutoAwesomeRounded
+                                    sx={{ fontSize: "14px" }}
+                                  />
+                                }
+                                label="AI CÁ NHÂN HÓA"
+                                size="small"
+                                sx={{
+                                  bgcolor: "rgba(255,255,255,0.15)",
+                                  color: "#FFFFFF",
+                                  fontWeight: 800,
+                                  fontSize: 11,
+                                  mb: 2,
+                                  borderRadius: "50px",
+                                  "& .MuiChip-icon": {
+                                    color: "#FFFFFF",
+                                    ml: 1,
+                                  },
+                                }}
+                              />
+                            ) : (
+                              <Chip
+                                icon={<QuizRounded sx={{ fontSize: "14px" }} />}
+                                label="KIỂM TRA NĂNG LỰC"
+                                size="small"
+                                sx={{
+                                  bgcolor: "rgba(255,255,255,0.15)",
+                                  color: "#FFFFFF",
+                                  fontWeight: 800,
+                                  fontSize: 11,
+                                  mb: 2,
+                                  borderRadius: "50px",
+                                  "& .MuiChip-icon": {
+                                    color: "#FFFFFF",
+                                    ml: 1,
+                                  },
+                                }}
+                              />
+                            )}
                             <Typography
                               sx={{
-                                fontSize: 16,
+                                fontSize: 20,
                                 fontWeight: 900,
-                                mb: 1.5,
-                                color: "var(--ev-text-primary, #1F2937)",
+                                letterSpacing: "-0.3px",
+                                mb: 1,
                               }}
                             >
-                              {sec.title}
+                              {banner.title}
                             </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: 13.5,
+                                lineHeight: 1.6,
+                                opacity: 0.88,
+                                mb: 3.5,
+                                maxWidth: "90%",
+                              }}
+                            >
+                              {banner.description}
+                            </Typography>
+                          </Box>
 
-                            <Stack spacing={0.75}>
-                              {(sec.subfields || []).map(
-                                (sub: string, i: number) => (
-                                  <Typography
-                                    key={i}
-                                    sx={{
-                                      fontSize: 13,
-                                      color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
-                                      fontWeight: 500,
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 1,
-                                      "&:before": {
-                                        content: '""',
-                                        width: 5,
-                                        height: 5,
-                                        borderRadius: "50%",
-                                        bgcolor: COLORS.primary,
-                                        display: "inline-block",
-                                      },
-                                    }}
-                                  >
-                                    {sub}
-                                  </Typography>
-                                ),
-                              )}
-                            </Stack>
+                          <Box sx={{ zIndex: 1 }}>
+                            <Button
+                              variant="contained"
+                              endIcon={<ArrowForwardRounded />}
+                              sx={{
+                                bgcolor: COLORS.white,
+                                color:
+                                  banner.type === "ai_recommend"
+                                    ? COLORS.primary
+                                    : "#0284C7",
+                                fontWeight: 800,
+                                borderRadius: "50px",
+                                px: 3,
+                                py: 1.25,
+                                boxShadow: "none",
+                                "&:hover": {
+                                  bgcolor: "rgba(255,255,255,0.92)",
+                                  boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                                },
+                              }}
+                            >
+                              {banner.buttonText}
+                            </Button>
                           </Box>
                         </Paper>
                       ))}
                     </Box>
-                  </Box>
 
-                  {/* ========================================================= */}
-                  {/* 6. DỰA TRÊN KỸ NĂNG BẠN QUAN TÂM                           */}
-                  {/* ========================================================= */}
-                  <Box sx={{ mt: 3 }}>
-                    <Typography
-                      sx={{
-                        fontSize: 21,
-                        fontWeight: 900,
-                        mb: 2,
-                        color: "var(--ev-text-primary, #1F2937)",
-                      }}
-                    >
-                      Dựa trên kỹ năng bạn quan tâm
-                    </Typography>
-
-                    {/* Skill Badges */}
-                    <Stack
-                      direction="row"
-                      spacing={1.25}
-                      sx={{ mb: 2.5, flexWrap: "wrap", gap: 1 }}
-                    >
-                      {(dashboardData?.interestedSkills || []).map(
-                        (badge: string) => {
-                          const isActive = selectedSkill === badge;
-                          return (
-                            <Chip
-                              key={badge}
-                              label={badge}
-                              onClick={() => setSelectedSkill(badge)}
-                              sx={{
-                                bgcolor: isActive
-                                  ? COLORS.primary
-                                  : "rgba(0,0,0,0.03)",
-                                color: isActive
-                                  ? "var(--ev-paper, #FFFFFF)"
-                                  : "rgba(31,41,55,0.65)",
-                                fontWeight: 700,
-                                fontSize: 13.5,
-                                px: 1,
-                                py: 2,
-                                borderRadius: "50px",
-                                border: isActive
-                                  ? `1px solid ${COLORS.primary}`
-                                  : "1px solid rgba(0,0,0,0.05)",
-                                cursor: "pointer",
-                                "&:hover": {
-                                  bgcolor: isActive
-                                    ? COLORS.primary
-                                    : "rgba(141, 19, 19, 0.05)",
-                                  color: isActive ? "var(--ev-paper, #FFFFFF)" : COLORS.primary,
-                                },
-                                transition: "all 150ms ease",
-                              }}
-                            />
-                          );
-                        },
-                      )}
-                    </Stack>
-
-                    {/* Skill based courses Carousel */}
-                    <CarouselRow>
-                      {(filteredSkillsCourses || []).map((course: any) => (
-                        <CourseCard key={course.id} course={course} />
-                      ))}
-                    </CarouselRow>
-                  </Box>
-
-                  {/* ========================================================= */}
-                  {/* 7. CÁC KHÓA HỌC HÀNG ĐẦU CHÚNG TÔI CHỌN CHO BẠN             */}
-                  {/* ========================================================= */}
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: 21,
-                        fontWeight: 900,
-                        mb: 2.5,
-                        color: "var(--ev-text-primary, #1F2937)",
-                      }}
-                    >
-                      Các khóa học hàng đầu chúng tôi chọn cho bạn
-                    </Typography>
-
-                    {/* Premium Featured Hero Card */}
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        borderRadius: "24px",
-                        overflow: "hidden",
-                        border: "1px solid rgba(141, 19, 19, 0.08)",
-                        bgcolor: COLORS.white,
-                        mb: 3.5,
-                        boxShadow: "0 15px 35px rgba(141, 19, 19, 0.04)",
-                      }}
-                    >
-                      <Box
+                    {/* ========================================================= */}
+                    {/* 4. HOÀN THÀNH NỐT PHẦN BẠN ĐANG LÀM DỞ                     */}
+                    {/* ========================================================= */}
+                    <Box sx={{ mt: 2.5 }}>
+                      <Typography
                         sx={{
-                          display: "grid",
-                          gridTemplateColumns: { xs: "1fr", md: "1.2fr 1fr" },
+                          fontSize: 21,
+                          fontWeight: 900,
+                          mb: 2,
+                          color: "var(--ev-text-primary, #1F2937)",
                         }}
                       >
-                        {/* Left: Thumbnail image with overlay design */}
-                        <Box
-                          sx={{
-                            height: { xs: 240, md: "100%" },
-                            minHeight: { md: 340 },
-                            background:
-                              dashboardData?.premiumSelection
-                                ?.thumbnailGradient,
-                            position: "relative",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              inset: 0,
-                              background:
-                                "radial-gradient(circle, rgba(255,255,255,0.08), transparent 85%)",
-                            }}
-                          />
-                          <Typography
-                            sx={{
-                              color: "#FFFFFF",
-                              fontSize: 48,
-                              fontWeight: 900,
-                              opacity: 0.08,
-                            }}
-                          >
-                            PREMIUM
-                          </Typography>
-                          <Chip
-                            icon={<StarRounded sx={{ fontSize: "15px" }} />}
-                            label="LỰA CHỌN HÀNG ĐẦU"
-                            sx={{
-                              position: "absolute",
-                              top: 20,
-                              left: 20,
-                              bgcolor: "rgba(255,255,255,0.95)",
-                              color: COLORS.primary,
-                              fontWeight: 900,
-                              fontSize: 11,
-                              height: 26,
-                              boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-                              "& .MuiChip-icon": {
-                                color: `${COLORS.primary} !important`,
-                                ml: 1.25,
-                              },
-                            }}
-                          />
-                        </Box>
+                        Hoàn thành nốt phần bạn đang làm dở
+                      </Typography>
 
-                        {/* Right: Info details */}
-                        <Box
+                      {/* Tabs */}
+                      <Tabs
+                        value={activeContinueTab}
+                        onChange={(_, val) => setActiveContinueTab(val)}
+                        variant="scrollable"
+                        scrollButtons="auto"
+                        sx={{
+                          mb: 2.5,
+                          borderBottom: "1px solid rgba(0,0,0,0.06)",
+                          "& .MuiTabs-indicator": {
+                            bgcolor: COLORS.primary,
+                            height: 3,
+                            borderRadius: "3px",
+                          },
+                          "& .MuiTab-root": {
+                            textTransform: "none",
+                            fontSize: 14.5,
+                            fontWeight: 700,
+                            color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                            minWidth: 100,
+                            px: 1.5,
+                            "&.Mui-selected": {
+                              color: COLORS.primary,
+                            },
+                          },
+                        }}
+                      >
+                        <Tab value="courses" label="Khóa học" />
+                        <Tab
+                          value="assigned"
+                          label="Các khóa học được chỉ định"
+                        />
+                        <Tab value="paths" label="Lộ trình học tập" />
+                      </Tabs>
+
+                      {/* Tab Content rendering logic */}
+                      {activeContinueTab === "courses" && (
+                        <CarouselRow>
+                          {dashboardData?.continueLearning?.courses?.map(
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (item: any) => (
+                              <Paper
+                                key={item.id}
+                                elevation={0}
+                                sx={{
+                                  width: 290,
+                                  flexShrink: 0,
+                                  p: 2.5,
+                                  borderRadius: "20px",
+                                  border: "1px solid rgba(0,0,0,0.06)",
+                                  bgcolor: COLORS.white,
+                                  transition:
+                                    "transform 200ms ease, box-shadow 200ms ease",
+                                  "&:hover": {
+                                    transform: "translateY(-4px)",
+                                    boxShadow: "0 12px 28px rgba(0,0,0,0.04)",
+                                  },
+                                }}
+                              >
+                                {/* Course Thumbnail placeholder */}
+                                <Box
+                                  sx={{
+                                    height: 120,
+                                    borderRadius: "14px",
+                                    background: item.thumbnailGradient,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    position: "relative",
+                                    overflow: "hidden",
+                                    mb: 2,
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      color: "#FFFFFF",
+                                      fontSize: 28,
+                                      fontWeight: 900,
+                                      opacity: 0.15,
+                                    }}
+                                  >
+                                    EduVerse
+                                  </Typography>
+                                  <Chip
+                                    label={item.contentType}
+                                    size="small"
+                                    sx={{
+                                      position: "absolute",
+                                      bottom: 8,
+                                      left: 8,
+                                      bgcolor: "rgba(0, 0, 0, 0.65)",
+                                      color: "#FFFFFF",
+                                      fontWeight: 700,
+                                      fontSize: 10,
+                                      height: 20,
+                                    }}
+                                  />
+                                </Box>
+
+                                <Typography
+                                  sx={{
+                                    fontSize: 15,
+                                    fontWeight: 800,
+                                    lineHeight: 1.4,
+                                    height: 42,
+                                    overflow: "hidden",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                    color: "var(--ev-text-primary, #1F2937)",
+                                  }}
+                                >
+                                  {item.title}
+                                </Typography>
+
+                                <Typography
+                                  sx={{
+                                    mt: 1,
+                                    fontSize: 12.5,
+                                    color:
+                                      "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {item.duration}
+                                </Typography>
+
+                                {/* Progress Bar */}
+                                <Stack
+                                  direction="row"
+                                  sx={{
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    mt: 2,
+                                    mb: 0.5,
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      color:
+                                        "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                                    }}
+                                  >
+                                    Tiến độ
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontSize: 12,
+                                      fontWeight: 800,
+                                      color: COLORS.primary,
+                                    }}
+                                  >
+                                    {item.progress}%
+                                  </Typography>
+                                </Stack>
+                                <LinearProgress
+                                  variant="determinate"
+                                  value={item.progress}
+                                  sx={{
+                                    height: 6,
+                                    borderRadius: "3px",
+                                    bgcolor: "rgba(141,19,19,0.06)",
+                                    "& .MuiLinearProgress-bar": {
+                                      borderRadius: "3px",
+                                      background: `linear-gradient(90deg, ${COLORS.primaryLight}, ${COLORS.primary})`,
+                                    },
+                                  }}
+                                />
+
+                                {/* Continue Button */}
+                                <Button
+                                  fullWidth
+                                  variant="outlined"
+                                  endIcon={
+                                    <ArrowForwardRounded fontSize="small" />
+                                  }
+                                  sx={{
+                                    mt: 2,
+                                    py: 1,
+                                    borderRadius: "12px",
+                                    border: "1px solid rgba(141,19,19,0.12)",
+                                    color: COLORS.primary,
+                                    fontWeight: 800,
+                                    fontSize: 13,
+                                    "&:hover": {
+                                      border: `1px solid ${COLORS.primary}`,
+                                      bgcolor: "rgba(141,19,19,0.04)",
+                                    },
+                                  }}
+                                >
+                                  Tiếp tục học
+                                </Button>
+                              </Paper>
+                            ),
+                          )}
+                        </CarouselRow>
+                      )}
+
+                      {activeContinueTab === "assigned" && (
+                        <Paper
+                          elevation={0}
                           sx={{
-                            p: { xs: 3, md: 4.5 },
-                            pt: { xs: 4, md: 5 },
-                            pb: { xs: 4, md: 5 },
+                            p: 4,
+                            borderRadius: "24px",
+                            border: "1px solid rgba(141,19,19,0.06)",
+                            bgcolor: COLORS.white,
                             display: "flex",
                             flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: 2,
+                            boxShadow: "0 8px 24px rgba(141,19,19,0.01)",
                           }}
                         >
-                          <Typography
-                            sx={{
-                              fontSize: 13,
-                              fontWeight: 800,
-                              color: COLORS.primaryLight,
-                              mb: 1,
-                            }}
-                          >
-                            KHÓA HỌC ĐẶC BIỆT
-                          </Typography>
                           <Typography
                             sx={{
                               fontSize: 20,
                               fontWeight: 900,
-                              lineHeight: 1.35,
-                              mb: 1.5,
                               color: "var(--ev-text-primary, #1F2937)",
                             }}
                           >
-                            {dashboardData?.premiumSelection?.title}
+                            Chưa có khóa học nào được chỉ định
                           </Typography>
                           <Typography
                             sx={{
-                              fontSize: 13.5,
+                              fontSize: 14.5,
+                              color:
+                                "var(--ev-text-secondary, rgba(31,41,55,0.6))",
+                              maxWidth: 650,
                               lineHeight: 1.6,
-                              color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
-                              mb: 3,
                             }}
                           >
-                            {dashboardData?.premiumSelection?.description}
+                            Chưa có khóa học nào được chỉ định cho bạn. Khi khóa
+                            học được chỉ định cho bạn, khóa học sẽ xuất hiện ở
+                            đây.
                           </Typography>
+                          <Button
+                            variant="contained"
+                            onClick={() => router.push("/courses")}
+                            sx={{
+                              background: COLORS.gradientCrimson,
+                              color: "#FFFFFF",
+                              borderRadius: "12px",
+                              px: 3.5,
+                              py: 1.25,
+                              fontWeight: 800,
+                              "&:hover": {
+                                background: COLORS.gradientCrimsonHover,
+                              },
+                            }}
+                          >
+                            Khám phá khóa học
+                          </Button>
+                        </Paper>
+                      )}
 
-                          <Stack spacing={1} sx={{ mb: 3 }}>
+                      {activeContinueTab === "paths" && (
+                        <CarouselRow>
+                          {/* Mock learning paths from user's screen */}
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              width: 320,
+                              flexShrink: 0,
+                              p: 3,
+                              borderRadius: "20px",
+                              border: "1px solid rgba(0,0,0,0.07)",
+                              bgcolor: COLORS.white,
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              height: 160,
+                              position: "relative",
+                              overflow: "hidden",
+                              transition:
+                                "transform 200ms ease, box-shadow 200ms ease",
+                              "&:hover": {
+                                transform: "translateY(-4px)",
+                                boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
+                              },
+                            }}
+                          >
+                            <Box>
+                              <Typography
+                                sx={{
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  color:
+                                    "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.5px",
+                                }}
+                              >
+                                Lộ trình học tập
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  mt: 1.5,
+                                  fontSize: 16,
+                                  fontWeight: 800,
+                                  color: "var(--ev-text-primary, #1F2937)",
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                Poly - SYB3013 - Khởi sự doanh nghiệp_SP2026
+                              </Typography>
+                            </Box>
                             <Typography
                               sx={{
-                                fontSize: 13.5,
-                                fontWeight: 700,
+                                fontSize: 12.5,
+                                color:
+                                  "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                                fontWeight: 600,
+                              }}
+                            >
+                              4/4 mục đã hoàn thành
+                            </Typography>
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                height: 4,
+                                background: COLORS.gradientCrimson,
+                              }}
+                            />
+                          </Paper>
+
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              width: 320,
+                              flexShrink: 0,
+                              p: 3,
+                              borderRadius: "20px",
+                              border: "1px solid rgba(0,0,0,0.07)",
+                              bgcolor: COLORS.white,
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              height: 160,
+                              position: "relative",
+                              overflow: "hidden",
+                              transition:
+                                "transform 200ms ease, box-shadow 200ms ease",
+                              "&:hover": {
+                                transform: "translateY(-4px)",
+                                boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
+                              },
+                            }}
+                          >
+                            <Box>
+                              <Typography
+                                sx={{
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  color:
+                                    "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.5px",
+                                }}
+                              >
+                                Lộ trình học tập
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  mt: 1.5,
+                                  fontSize: 16,
+                                  fontWeight: 800,
+                                  color: "var(--ev-text-primary, #1F2937)",
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                Poly - SOF1021 - Nhập môn kỹ thuật phần mềm -
+                                FA2025
+                              </Typography>
+                            </Box>
+                            <Typography
+                              sx={{
+                                fontSize: 12.5,
+                                color:
+                                  "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                                fontWeight: 600,
+                              }}
+                            >
+                              4/4 mục đã hoàn thành
+                            </Typography>
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                height: 4,
+                                background: COLORS.gradientCrimson,
+                              }}
+                            />
+                          </Paper>
+
+                          {/* Backend API learning paths */}
+                          {dashboardData?.continueLearning?.paths?.map(
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (item: any) => (
+                              <Paper
+                                key={item.id}
+                                elevation={0}
+                                sx={{
+                                  width: 320,
+                                  flexShrink: 0,
+                                  p: 3,
+                                  borderRadius: "20px",
+                                  border: "1px solid rgba(0,0,0,0.07)",
+                                  bgcolor: COLORS.white,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  height: 160,
+                                  position: "relative",
+                                  overflow: "hidden",
+                                  transition:
+                                    "transform 200ms ease, box-shadow 200ms ease",
+                                  "&:hover": {
+                                    transform: "translateY(-4px)",
+                                    boxShadow: "0 12px 28px rgba(0,0,0,0.05)",
+                                  },
+                                }}
+                              >
+                                <Box>
+                                  <Typography
+                                    sx={{
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      color:
+                                        "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                                      textTransform: "uppercase",
+                                      letterSpacing: "0.5px",
+                                    }}
+                                  >
+                                    {item.contentType || "Lộ trình học tập"}
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      mt: 1.5,
+                                      fontSize: 16,
+                                      fontWeight: 800,
+                                      color: "var(--ev-text-primary, #1F2937)",
+                                      lineHeight: 1.4,
+                                    }}
+                                  >
+                                    {item.title}
+                                  </Typography>
+                                </Box>
+                                <Stack
+                                  direction="row"
+                                  sx={{
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      fontSize: 12.5,
+                                      color:
+                                        "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {item.duration || "Đang thực hiện"}
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontSize: 12.5,
+                                      color: COLORS.primary,
+                                      fontWeight: 800,
+                                    }}
+                                  >
+                                    {item.progress}%
+                                  </Typography>
+                                </Stack>
+                                <Box
+                                  sx={{
+                                    position: "absolute",
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    height: 4,
+                                    background: `linear-gradient(90deg, ${COLORS.primaryLight} 0%, ${COLORS.primary} ${item.progress}%, rgba(0,0,0,0.06) ${item.progress}%)`,
+                                  }}
+                                />
+                              </Paper>
+                            ),
+                          )}
+                        </CarouselRow>
+                      )}
+                    </Box>
+
+                    {/* ========================================================= */}
+                    {/* 5. LĨNH VỰC HỌC TIẾP THEO                                 */}
+                    {/* ========================================================= */}
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontSize: 21,
+                          fontWeight: 900,
+                          color: "var(--ev-text-primary, #1F2937)",
+                        }}
+                      >
+                        Lĩnh vực nên học tiếp theo
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 13.5,
+                          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                          mb: 2.5,
+                          mt: 0.5,
+                        }}
+                      >
+                        Được đề xuất dựa trên hành vi học tập của bạn.
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: {
+                            xs: "1fr",
+                            sm: "1fr 1fr",
+                            md: "repeat(4, minmax(0, 1fr))",
+                          },
+                          gap: 2.5,
+                        }}
+                      >
+                        {(dashboardData?.nextSectors || []).map((sec: any) => (
+                          <Paper
+                            key={sec.id}
+                            elevation={0}
+                            sx={{
+                              p: 3,
+                              borderRadius: "20px",
+                              border: "1px solid rgba(0,0,0,0.06)",
+                              bgcolor: COLORS.white,
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              transition: "all 200ms ease",
+                              cursor: "pointer",
+                              "&:hover": {
+                                borderColor: COLORS.primary,
+                                boxShadow: `0 10px 24px rgba(141, 19, 19, 0.04)`,
+                                transform: "translateY(-2px)",
+                              },
+                            }}
+                          >
+                            <Box>
+                              <Box
+                                sx={{
+                                  width: 52,
+                                  height: 52,
+                                  borderRadius: "14px",
+                                  display: "grid",
+                                  placeItems: "center",
+                                  bgcolor: "rgba(141, 19, 19, 0.05)",
+                                  mb: 2,
+                                }}
+                              >
+                                <SectorIcon
+                                  iconName={sec.iconName}
+                                  color={COLORS.primary}
+                                />
+                              </Box>
+
+                              <Typography
+                                sx={{
+                                  fontSize: 16,
+                                  fontWeight: 900,
+                                  mb: 1.5,
+                                  color: "var(--ev-text-primary, #1F2937)",
+                                }}
+                              >
+                                {sec.title}
+                              </Typography>
+
+                              <Stack spacing={0.75}>
+                                {(sec.subfields || []).map(
+                                  (sub: string, i: number) => (
+                                    <Typography
+                                      key={i}
+                                      sx={{
+                                        fontSize: 13,
+                                        color:
+                                          "var(--ev-text-secondary, rgba(31,41,55,0.6))",
+                                        fontWeight: 500,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                        "&:before": {
+                                          content: '""',
+                                          width: 5,
+                                          height: 5,
+                                          borderRadius: "50%",
+                                          bgcolor: COLORS.primary,
+                                          display: "inline-block",
+                                        },
+                                      }}
+                                    >
+                                      {sub}
+                                    </Typography>
+                                  ),
+                                )}
+                              </Stack>
+                            </Box>
+                          </Paper>
+                        ))}
+                      </Box>
+                    </Box>
+
+                    {/* ========================================================= */}
+                    {/* 6. DỰA TRÊN KỸ NĂNG BẠN QUAN TÂM                           */}
+                    {/* ========================================================= */}
+                    <Box sx={{ mt: 3 }}>
+                      <Typography
+                        sx={{
+                          fontSize: 21,
+                          fontWeight: 900,
+                          mb: 2,
+                          color: "var(--ev-text-primary, #1F2937)",
+                        }}
+                      >
+                        Dựa trên kỹ năng bạn quan tâm
+                      </Typography>
+
+                      {/* Skill Badges */}
+                      <Stack
+                        direction="row"
+                        spacing={1.25}
+                        sx={{ mb: 2.5, flexWrap: "wrap", gap: 1 }}
+                      >
+                        {(dashboardData?.interestedSkills || []).map(
+                          (badge: string) => {
+                            const isActive = selectedSkill === badge;
+                            return (
+                              <Chip
+                                key={badge}
+                                label={badge}
+                                onClick={() => setSelectedSkill(badge)}
+                                sx={{
+                                  bgcolor: isActive
+                                    ? COLORS.primary
+                                    : "rgba(0,0,0,0.03)",
+                                  color: isActive
+                                    ? "var(--ev-paper, #FFFFFF)"
+                                    : "rgba(31,41,55,0.65)",
+                                  fontWeight: 700,
+                                  fontSize: 13.5,
+                                  px: 1,
+                                  py: 2,
+                                  borderRadius: "50px",
+                                  border: isActive
+                                    ? `1px solid ${COLORS.primary}`
+                                    : "1px solid rgba(0,0,0,0.05)",
+                                  cursor: "pointer",
+                                  "&:hover": {
+                                    bgcolor: isActive
+                                      ? COLORS.primary
+                                      : "rgba(141, 19, 19, 0.05)",
+                                    color: isActive
+                                      ? "var(--ev-paper, #FFFFFF)"
+                                      : COLORS.primary,
+                                  },
+                                  transition: "all 150ms ease",
+                                }}
+                              />
+                            );
+                          },
+                        )}
+                      </Stack>
+
+                      {/* Skill based courses Carousel */}
+                      <CarouselRow>
+                        {(filteredSkillsCourses || []).map((course: any) => (
+                          <CourseCard key={course.id} course={course} />
+                        ))}
+                      </CarouselRow>
+                    </Box>
+
+                    {/* ========================================================= */}
+                    {/* 7. CÁC KHÓA HỌC HÀNG ĐẦU CHÚNG TÔI CHỌN CHO BẠN             */}
+                    {/* ========================================================= */}
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontSize: 21,
+                          fontWeight: 900,
+                          mb: 2.5,
+                          color: "var(--ev-text-primary, #1F2937)",
+                        }}
+                      >
+                        Các khóa học hàng đầu chúng tôi chọn cho bạn
+                      </Typography>
+
+                      {/* Premium Featured Hero Card */}
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          borderRadius: "24px",
+                          overflow: "hidden",
+                          border: "1px solid rgba(141, 19, 19, 0.08)",
+                          bgcolor: COLORS.white,
+                          mb: 3.5,
+                          boxShadow: "0 15px 35px rgba(141, 19, 19, 0.04)",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: { xs: "1fr", md: "1.2fr 1fr" },
+                          }}
+                        >
+                          {/* Left: Thumbnail image with overlay design */}
+                          <Box
+                            sx={{
+                              height: { xs: 240, md: "100%" },
+                              minHeight: { md: 340 },
+                              background:
+                                dashboardData?.premiumSelection
+                                  ?.thumbnailGradient,
+                              position: "relative",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                inset: 0,
+                                background:
+                                  "radial-gradient(circle, rgba(255,255,255,0.08), transparent 85%)",
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                color: "#FFFFFF",
+                                fontSize: 48,
+                                fontWeight: 900,
+                                opacity: 0.08,
+                              }}
+                            >
+                              PREMIUM
+                            </Typography>
+                            <Chip
+                              icon={<StarRounded sx={{ fontSize: "15px" }} />}
+                              label="LỰA CHỌN HÀNG ĐẦU"
+                              sx={{
+                                position: "absolute",
+                                top: 20,
+                                left: 20,
+                                bgcolor: "rgba(255,255,255,0.95)",
+                                color: COLORS.primary,
+                                fontWeight: 900,
+                                fontSize: 11,
+                                height: 26,
+                                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                                "& .MuiChip-icon": {
+                                  color: `${COLORS.primary} !important`,
+                                  ml: 1.25,
+                                },
+                              }}
+                            />
+                          </Box>
+
+                          {/* Right: Info details */}
+                          <Box
+                            sx={{
+                              p: { xs: 3, md: 4.5 },
+                              pt: { xs: 4, md: 5 },
+                              pb: { xs: 4, md: 5 },
+                              display: "flex",
+                              flexDirection: "column",
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: 13,
+                                fontWeight: 800,
+                                color: COLORS.primaryLight,
+                                mb: 1,
+                              }}
+                            >
+                              KHÓA HỌC ĐẶC BIỆT
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: 20,
+                                fontWeight: 900,
+                                lineHeight: 1.35,
+                                mb: 1.5,
                                 color: "var(--ev-text-primary, #1F2937)",
                               }}
                             >
-                              Giảng viên:{" "}
-                              <span
-                                style={{
-                                  fontWeight: 500,
-                                  color: "var(--ev-text-secondary, rgba(31,41,55,0.7))",
+                              {dashboardData?.premiumSelection?.title}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: 13.5,
+                                lineHeight: 1.6,
+                                color:
+                                  "var(--ev-text-secondary, rgba(31,41,55,0.6))",
+                                mb: 3,
+                              }}
+                            >
+                              {dashboardData?.premiumSelection?.description}
+                            </Typography>
+
+                            <Stack spacing={1} sx={{ mb: 3 }}>
+                              <Typography
+                                sx={{
+                                  fontSize: 13.5,
+                                  fontWeight: 700,
+                                  color: "var(--ev-text-primary, #1F2937)",
                                 }}
                               >
-                                {dashboardData?.premiumSelection?.instructor}
-                              </span>
-                            </Typography>
-                            <Stack
-                              direction="row"
-                              spacing={2.5}
-                              sx={{ alignItems: "center" }}
-                            >
+                                Giảng viên:{" "}
+                                <span
+                                  style={{
+                                    fontWeight: 500,
+                                    color:
+                                      "var(--ev-text-secondary, rgba(31,41,55,0.7))",
+                                  }}
+                                >
+                                  {dashboardData?.premiumSelection?.instructor}
+                                </span>
+                              </Typography>
                               <Stack
                                 direction="row"
-                                spacing={0.5}
+                                spacing={2.5}
                                 sx={{ alignItems: "center" }}
                               >
-                                <StarRounded
-                                  sx={{ color: "#F59E0B", fontSize: 18 }}
-                                />
+                                <Stack
+                                  direction="row"
+                                  spacing={0.5}
+                                  sx={{ alignItems: "center" }}
+                                >
+                                  <StarRounded
+                                    sx={{ color: "#F59E0B", fontSize: 18 }}
+                                  />
+                                  <Typography
+                                    sx={{
+                                      fontSize: 13,
+                                      fontWeight: 700,
+                                      color: "var(--ev-text-primary, #1F2937)",
+                                    }}
+                                  >
+                                    {dashboardData?.premiumSelection?.rating}
+                                  </Typography>
+                                </Stack>
                                 <Typography
                                   sx={{
                                     fontSize: 13,
-                                    fontWeight: 700,
-                                    color: "var(--ev-text-primary, #1F2937)",
+                                    color:
+                                      "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                                    fontWeight: 500,
                                   }}
                                 >
-                                  {dashboardData?.premiumSelection?.rating}
+                                  👥{" "}
+                                  {dashboardData?.premiumSelection?.studentsCount?.toLocaleString()}{" "}
+                                  học viên
                                 </Typography>
                               </Stack>
-                              <Typography
+                            </Stack>
+
+                            <Stack direction="row" spacing={2}>
+                              <Button
+                                variant="contained"
                                 sx={{
-                                  fontSize: 13,
-                                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                                  fontWeight: 500,
+                                  background: COLORS.gradientCrimson,
+                                  color: "#FFFFFF",
+                                  fontWeight: 800,
+                                  borderRadius: "12px",
+                                  px: 3,
+                                  py: 1.25,
+                                  "&:hover": {
+                                    background: COLORS.gradientCrimsonHover,
+                                  },
                                 }}
                               >
-                                👥{" "}
-                                {dashboardData?.premiumSelection?.studentsCount?.toLocaleString()}{" "}
-                                học viên
-                              </Typography>
+                                Xem khóa học
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                sx={{
+                                  borderColor: "rgba(141, 19, 19, 0.25)",
+                                  color: COLORS.primary,
+                                  fontWeight: 800,
+                                  borderRadius: "12px",
+                                  px: 2.5,
+                                  py: 1.25,
+                                  "&:hover": {
+                                    borderColor: COLORS.primary,
+                                    bgcolor: "rgba(141, 19, 19, 0.03)",
+                                  },
+                                }}
+                              >
+                                Thêm vào danh sách
+                              </Button>
                             </Stack>
-                          </Stack>
-
-                          <Stack direction="row" spacing={2}>
-                            <Button
-                              variant="contained"
-                              sx={{
-                                background: COLORS.gradientCrimson,
-                                color: "#FFFFFF",
-                                fontWeight: 800,
-                                borderRadius: "12px",
-                                px: 3,
-                                py: 1.25,
-                                "&:hover": {
-                                  background: COLORS.gradientCrimsonHover,
-                                },
-                              }}
-                            >
-                              Xem khóa học
-                            </Button>
-                            <Button
-                              variant="outlined"
-                              sx={{
-                                borderColor: "rgba(141, 19, 19, 0.25)",
-                                color: COLORS.primary,
-                                fontWeight: 800,
-                                borderRadius: "12px",
-                                px: 2.5,
-                                py: 1.25,
-                                "&:hover": {
-                                  borderColor: COLORS.primary,
-                                  bgcolor: "rgba(141, 19, 19, 0.03)",
-                                },
-                              }}
-                            >
-                              Thêm vào danh sách
-                            </Button>
-                          </Stack>
+                          </Box>
                         </Box>
-                      </Box>
-                    </Paper>
+                      </Paper>
 
-                    {/* Underneath related courses Carousel */}
-                    <CarouselRow>
-                      {(
-                        dashboardData?.premiumSelection?.relatedCourses || []
-                      ).map((course: any) => (
-                        <CourseCard key={course.id} course={course} />
-                      ))}
-                    </CarouselRow>
-                  </Box>
+                      {/* Underneath related courses Carousel */}
+                      <CarouselRow>
+                        {(
+                          dashboardData?.premiumSelection?.relatedCourses || []
+                        ).map((course: any) => (
+                          <CourseCard key={course.id} course={course} />
+                        ))}
+                      </CarouselRow>
+                    </Box>
 
-                  {/* ========================================================= */}
-                  {/* 8. VÌ BẠN ĐÃ ĐĂNG KÝ KHÓA HỌC NÀY                            */}
-                  {/* ========================================================= */}
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: 21,
-                        fontWeight: 900,
-                        mb: 0.5,
-                        color: "var(--ev-text-primary, #1F2937)",
-                      }}
-                    >
-                      Vì bạn đã học &quot;
-                      {dashboardData?.historyRecommendation?.basedOnCourse}
-                      &quot;
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: 13.5,
-                        color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                        mb: 2.5,
-                      }}
-                    >
-                      Đề xuất từ động cơ trí tuệ nhân tạo (AI Recommendation
-                      Engine).
-                    </Typography>
+                    {/* ========================================================= */}
+                    {/* 8. VÌ BẠN ĐÃ ĐĂNG KÝ KHÓA HỌC NÀY                            */}
+                    {/* ========================================================= */}
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontSize: 21,
+                          fontWeight: 900,
+                          mb: 0.5,
+                          color: "var(--ev-text-primary, #1F2937)",
+                        }}
+                      >
+                        Vì bạn đã học &quot;
+                        {dashboardData?.historyRecommendation?.basedOnCourse}
+                        &quot;
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 13.5,
+                          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                          mb: 2.5,
+                        }}
+                      >
+                        Đề xuất từ động cơ trí tuệ nhân tạo (AI Recommendation
+                        Engine).
+                      </Typography>
 
-                    <CarouselRow>
-                      {(
-                        dashboardData?.historyRecommendation?.courses || []
-                      ).map((course: any) => (
-                        <CourseCard key={course.id} course={course} />
-                      ))}
-                    </CarouselRow>
-                  </Box>
-                </>
-              )}
-            </Box>
+                      <CarouselRow>
+                        {(
+                          dashboardData?.historyRecommendation?.courses || []
+                        ).map((course: any) => (
+                          <CourseCard key={course.id} course={course} />
+                        ))}
+                      </CarouselRow>
+                    </Box>
+                  </>
+                )}
+              </Box>
             </Box>
             {!pathname.startsWith("/admin") && (
               <Box
@@ -3189,13 +3239,18 @@ export default function DashboardShell({
                   "@media (min-width: 900px)": {
                     width: "calc(100% + 80px)",
                     mx: -5,
-                  }
+                  },
                 }}
               >
-                {!activeRoles.includes("GiaoVien") && !activeRoles.includes("Admin") ? (
+                {!activeRoles.includes("GiaoVien") &&
+                !activeRoles.includes("Admin") ? (
                   <StudentFooter />
                 ) : (
-                  <AuthenticatedFooter role={activeRoles.includes("GiaoVien") ? "GiaoVien" : "Admin"} />
+                  <AuthenticatedFooter
+                    role={
+                      activeRoles.includes("GiaoVien") ? "GiaoVien" : "Admin"
+                    }
+                  />
                 )}
               </Box>
             )}
@@ -3238,7 +3293,11 @@ export default function DashboardShell({
             }}
           >
             <Typography
-              sx={{ fontWeight: 800, fontSize: 16, color: "var(--ev-text-primary, #1F2937)" }}
+              sx={{
+                fontWeight: 800,
+                fontSize: 16,
+                color: "var(--ev-text-primary, #1F2937)",
+              }}
             >
               Thông báo
             </Typography>
@@ -3353,7 +3412,13 @@ export default function DashboardShell({
             },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800, fontSize: 18, color: "var(--ev-text-primary, #1F2937)" }}>
+          <DialogTitle
+            sx={{
+              fontWeight: 800,
+              fontSize: 18,
+              color: "var(--ev-text-primary, #1F2937)",
+            }}
+          >
             {selectedNoti?.tieuDe || selectedNoti?.type || "Thông báo chi tiết"}
           </DialogTitle>
           <DialogContent>
