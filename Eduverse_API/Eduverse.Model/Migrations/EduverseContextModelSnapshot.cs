@@ -190,7 +190,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "09d0a31a-84b8-4671-a633-808f0835d038",
+                            ConcurrencyStamp = "aeb31476-4c2f-4f99-996d-8c9ee1e0f875",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -199,9 +199,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGDKND7KXHhMnLfyL5lgPCld6bIPfAskfERsijRbQtle0EZpPNZBpBeaUhcEVgStJA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEEB5b4c6Gi5GEREW9v/iT/hPxPRm4dhjEM1gLlFEXlq7CEJVtHLIYsWj4qCN+Qptgw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "1df389f8-091d-4429-8f6f-ac58c639a52a",
+                            SecurityStamp = "7e663523-78f0-4df5-a5f7-2f99440df590",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -1122,7 +1122,7 @@ namespace Eduverse.Model.Migrations
 
                     b.HasIndex("KhuyenMaiId");
 
-                    b.ToTable("DonHang_KhuyenMai");
+                    b.ToTable("DonHang_KhuyenMais");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.GioHang", b =>

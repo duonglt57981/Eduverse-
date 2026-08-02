@@ -2,6 +2,7 @@
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AppUserRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.DonHang_KhuyenMaiRepository;
 using Eduverse.Repository.DonHangChiTietRepository;
 using Eduverse.Repository.DonHangRepositoryRepository;
 using Eduverse.Repository.GioHangChiTietRepository;
@@ -16,6 +17,7 @@ using Eduverse.Service.EmailService;
 using Eduverse.Service.ThanhToanService.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -47,6 +49,9 @@ namespace Eduverse.Service.ThanhToanService
         private readonly IKhuyenMaiRepository _khuyenMaiRepository;
         private readonly IThongBaoRepository _thongBaoRepository;
         private readonly IAppUserRepository _userRepository;
+        private readonly IDonHang_KhuyenMaiRepository _donHangKhuyenMaiRepo;
+        private readonly IKhuyenMaiRepository _khuyenMaiRepo;
+        private readonly UserManager<AppUser> _userManager;
         private readonly PayOSClient _payOS;
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -64,6 +69,9 @@ namespace Eduverse.Service.ThanhToanService
             IKhuyenMaiRepository khuyenMaiRepository,
             IThongBaoRepository thongBaoRepository,
             IAppUserRepository userRepository,
+            IDonHang_KhuyenMaiRepository donHangKhuyenMaiRepo,
+            IKhuyenMaiRepository khuyenMaiRepo,
+            UserManager<AppUser> userManager,
             PayOSClient payOS,
             IConfiguration config,
             IHttpContextAccessor httpContextAccessor
@@ -81,6 +89,9 @@ namespace Eduverse.Service.ThanhToanService
             _khuyenMai_KhoaHocRepository = khuyenMai_KhoaHocRepository;
             _thongBaoRepository = thongBaoRepository;
             _userRepository = userRepository;
+            _donHangKhuyenMaiRepo = donHangKhuyenMaiRepo;
+            _khuyenMaiRepo = khuyenMaiRepo;
+            _userManager = userManager;
             _payOS = payOS;
             _config = config;
             _httpContextAccessor = httpContextAccessor;
@@ -95,32 +106,15 @@ namespace Eduverse.Service.ThanhToanService
             if (!khoaHocs.Any())
                 throw new Exception("Không tìm thấy khóa học");
 
+            ApDungNhieuMaGiamGiaResponseDto? ketQuaMa = null;
+
             double tongTien = khoaHocs.Sum(k => k.Gia ?? 0);
             double giamGia = 0;
 
             if (dto.DanhSachMaGiamGia != null && dto.DanhSachMaGiamGia.Any())
             {
-                var ketQuaMa = await TinhKetQuaNhieuMaGiamGiaAsync(dto.DanhSachMaGiamGia, khoaHocs);
+                ketQuaMa = await TinhKetQuaNhieuMaGiamGiaAsync(dto.DanhSachMaGiamGia, khoaHocs);
                 giamGia = ketQuaMa.TongSoTienGiam;
-
-                var maCodeHopLe = ketQuaMa.KetQua.Where(k => k.HopLe).Select(k => k.MaGiamGia).ToList();
-                if (maCodeHopLe.Any())
-                {
-                    var khuyenMaisDaDung = await _khuyenMaiRepository.GetQueryable()
-                        .Where(x => maCodeHopLe.Contains(x.MaGiamGia))
-                        .ToListAsync();
-
-                    foreach (var km in khuyenMaisDaDung)
-                    {
-                        if (km.SoLuongHieuLuc.HasValue)
-                        {
-                            km.SoLuongHieuLuc -= 1;
-                            km.UpdatedDate = DateTime.Now;
-                            _khuyenMaiRepository.Update(km);
-                        }
-                    }
-                    await _khuyenMaiRepository.SaveAsync();
-                }
             }
 
             double thanhToan = tongTien - giamGia;
@@ -157,6 +151,26 @@ namespace Eduverse.Service.ThanhToanService
                 }
 
                 await _donHangRepo.SaveAsync();
+
+                foreach (var kq in ketQuaMa.KetQua
+                .Where(k => k.HopLe && k.IdKhoaHocDuocGiam.HasValue))
+                {
+                    var voucher = await _khuyenMaiRepo.GetQueryable()
+                        .FirstOrDefaultAsync(x => x.MaGiamGia == kq.MaGiamGia);
+                    if (voucher == null) continue;
+
+                    _donHangKhuyenMaiRepo.Add(new DonHang_KhuyenMai
+                    {
+                        IdDonHang = donHang.Id,
+                        IdKhuyenMai = voucher.Id,
+                        SoTienGiam = kq.SoTienGiam,
+                        IdKhoaHocDuocGiam = kq.IdKhoaHocDuocGiam,
+                        CreatedDate = DateTime.Now,
+                        UpdatedDate = DateTime.Now
+                    });
+                }
+                await _donHangKhuyenMaiRepo.SaveAsync();
+
             }
             catch (Exception ex)
             {
@@ -237,6 +251,24 @@ namespace Eduverse.Service.ThanhToanService
                     donHang.UpdatedDate = DateTime.Now;
                     _donHangRepo.Update(donHang);
                     await _donHangRepo.SaveAsync();
+                    var dsVoucher = await _donHangKhuyenMaiRepo.GetQueryable()
+                    .Where(x => x.IdDonHang == donHang.Id)
+                    .ToListAsync();
+
+                    foreach (var item in dsVoucher)
+                    {
+                        if (!item.IdKhuyenMai.HasValue) continue;
+                        var km = await _khuyenMaiRepo.GetQueryable().FirstOrDefaultAsync(x => x.Id == item.IdKhuyenMai.Value);
+
+                        if (km != null && km.SoLuongHieuLuc.HasValue)
+                        {
+                            km.SoLuongHieuLuc--;
+                            km.UpdatedDate = DateTime.Now;
+                            _khuyenMaiRepo.Update(km);
+                        }
+                    }
+
+                    await _khuyenMaiRepo.SaveAsync();
 
                     _thanhToanRepo.Add(new ThanhToan
                     {
@@ -317,37 +349,113 @@ namespace Eduverse.Service.ThanhToanService
 
                     await _khoaHocRepo.SaveAsync();
 
+                    var donHangVouchers = await _donHangKhuyenMaiRepo.GetQueryable()
+    .AsNoTracking()
+    .Where(x => x.IdDonHang == donHang.Id && !x.IsDeleted)
+    .ToListAsync();
+
+                    var voucherIds = donHangVouchers
+                        .Where(x => x.IdKhuyenMai.HasValue)
+                        .Select(x => x.IdKhuyenMai!.Value)
+                        .Distinct().ToList();
+
+                    var voucherMap = new Dictionary<Guid, bool>(); // voucherId → isAdmin
+                    if (voucherIds.Any())
+                    {
+                        var vouchers = await _khuyenMaiRepo.GetQueryable()
+                            .AsNoTracking()
+                            .Where(x => voucherIds.Contains(x.Id))
+                            .ToListAsync();
+
+                        foreach (var v in vouchers)
+                        {
+                            bool isAdmin = false;
+                            if (v.CreatedId.HasValue)
+                            {
+                                var creator = await _userRepository.GetByIdAsync(v.CreatedId.Value);
+                                if (creator != null)
+                                    isAdmin = await _userManager.IsInRoleAsync(creator, "Admin");
+                            }
+                            voucherMap[v.Id] = isAdmin;
+                        }
+                    }
+
+                    // courseId → (soTienGiam, isAdminVoucher)
+                    var courseDiscountInfo = new Dictionary<Guid, (double soTienGiam, bool isAdmin)>();
+                    foreach (var dkm in donHangVouchers)
+                    {
+                        if (!dkm.IdKhoaHocDuocGiam.HasValue || !dkm.IdKhuyenMai.HasValue
+                            || !dkm.SoTienGiam.HasValue) continue;
+
+                        courseDiscountInfo[dkm.IdKhoaHocDuocGiam.Value] = (
+                            dkm.SoTienGiam.Value,
+                            voucherMap.GetValueOrDefault(dkm.IdKhuyenMai.Value, false)
+                        );
+                    }
+
+                    // ── Tính doanh thu giảng viên theo từng khóa học ────────────────────
                     foreach (var ct in chiTiets)
                     {
                         var khoaHoc = await _khoaHocRepo.GetQueryable()
                             .FirstOrDefaultAsync(k => k.Id == ct.IdKhoaHoc);
 
-                        if (khoaHoc?.CreatedId != null && ct.GiaLucDat > 0)
+                        if (khoaHoc?.CreatedId == null || (ct.GiaLucDat ?? 0) <= 0)
+                            continue;
+
+                        var giaGoc = ct.GiaLucDat ?? 0;
+                        var normalGV = giaGoc * 0.7;
+                        var normalAdmin = giaGoc * 0.3;
+                        double instructorRevenue;
+
+                        if (ct.IdKhoaHoc.HasValue
+                            && courseDiscountInfo.TryGetValue(ct.IdKhoaHoc.Value, out var disc))
                         {
-                            var giangVien = await _userRepository.GetQueryable()
-                                .FirstOrDefaultAsync(u => u.Id == khoaHoc.CreatedId);
+                            var giam = disc.soTienGiam;
+                            var tienThuVe = Math.Max(0, giaGoc - giam);
 
-                            if (giangVien != null)
+                            if (disc.isAdmin)
                             {
-                                double doanhThuGiangVien = (ct.GiaLucDat ?? 0) * 0.7; // 70%
-                                giangVien.SoDuTaiKhoan = (giangVien.SoDuTaiKhoan ?? 0) + (decimal)doanhThuGiangVien;
-                                giangVien.UpdatedDate = DateTime.Now;
-                                _userRepository.Update(giangVien);
-
-                                _thongBaoRepository.Add(new ThongBao
-                                {
-                                    TieuDe = "Bạn vừa nhận được doanh thu mới",
-                                    NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. Bạn nhận được {doanhThuGiangVien.ToString("N0")}đ (70%).",
-                                    DaDoc = false,
-                                    ThoiGianTao = DateTime.Now,
-                                    TrangThai = "MoiNhan",
-                                    LoaiThongBao = "DoanhThu",
-                                    IdNguoiDung = giangVien.Id,
-                                    CreatedDate = DateTime.Now,
-                                    UpdatedDate = DateTime.Now
-                                });
+                                // Admin tạo voucher → Admin chịu thiệt từ phần 30% của mình
+                                // Instructor vẫn cố lấy 70%, nhưng bị cap bởi tiền thực thu
+                                var adminNhan = Math.Max(0, normalAdmin - giam);
+                                instructorRevenue = Math.Max(0, Math.Min(normalGV, tienThuVe - adminNhan));
+                            }
+                            else
+                            {
+                                // GiaoVien tạo voucher → Instructor chịu thiệt từ phần 70%
+                                instructorRevenue = Math.Max(0, normalGV - giam);
                             }
                         }
+                        else
+                        {
+                            // Không có voucher → chia bình thường 70%
+                            instructorRevenue = normalGV;
+                        }
+
+                        if (instructorRevenue <= 0) continue;
+
+                        var giangVien = await _userRepository.GetQueryable()
+                            .FirstOrDefaultAsync(u => u.Id == khoaHoc.CreatedId);
+
+                        if (giangVien == null) continue;
+
+                        giangVien.SoDuTaiKhoan = (giangVien.SoDuTaiKhoan ?? 0) + (decimal)instructorRevenue;
+                        giangVien.UpdatedDate = DateTime.Now;
+                        _userRepository.Update(giangVien);
+
+                        _thongBaoRepository.Add(new ThongBao
+                        {
+                            TieuDe = "Bạn vừa nhận được doanh thu mới",
+                            NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. " +
+                                           $"Bạn nhận được {instructorRevenue:N0}đ.",
+                            DaDoc = false,
+                            ThoiGianTao = DateTime.Now,
+                            TrangThai = "MoiNhan",
+                            LoaiThongBao = "DoanhThu",
+                            IdNguoiDung = giangVien.Id,
+                            CreatedDate = DateTime.Now,
+                            UpdatedDate = DateTime.Now
+                        });
                     }
                     await _userRepository.SaveAsync();
 

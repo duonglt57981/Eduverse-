@@ -293,7 +293,7 @@ namespace Eduverse.Service.KhuyenMaiService
                 .ToListAsync();
 
             if (lienKets.Any())
-            {
+            { 
                 _khuyenMai_KhoaHocRepository.Delete(lienKets);
                 await _khuyenMai_KhoaHocRepository.SaveAsync();
             }
