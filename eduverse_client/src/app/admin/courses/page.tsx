@@ -8,7 +8,7 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
-const BRAND = "#7A1F2B";
+const BRAND = "#8B1313";
 const BRAND_SOFT = "#FDEDEF";
 
 const options = [
@@ -78,7 +78,7 @@ export default function Step1Page() {
                 sx={{
                   fontWeight: 800,
                   fontSize: { xs: "1.35rem", sm: "1.75rem" },
-                  color: "#111827",
+                  color: "var(--ev-text-primary, #1F2937)",
                   mb: 1,
                   letterSpacing: "-0.01em",
                 }}
@@ -89,7 +89,7 @@ export default function Step1Page() {
               <Typography
                 sx={{
                   fontSize: { xs: 13.5, sm: 15 },
-                  color: "#6B7280",
+                  color: "var(--ev-text-muted, #8A7676)",
                   maxWidth: 440,
                   mx: "auto",
                   lineHeight: 1.5,
@@ -115,7 +115,7 @@ export default function Step1Page() {
                     sx={{
                       borderRadius: "18px",
                       borderColor: "#E7E7EA",
-                      bgcolor: "#ffffff",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
                       boxShadow: "0 1px 2px rgba(17, 24, 39, 0.04)",
                       transition: "all 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
                       "&:hover": {
@@ -165,7 +165,7 @@ export default function Step1Page() {
                           fontWeight: 700,
                           letterSpacing: "0.05em",
                           textTransform: "uppercase",
-                          color: "#9CA3AF",
+                          color: "var(--ev-text-muted, #8A7676)",
                           mb: 0.75,
                         }}
                       >
@@ -177,7 +177,7 @@ export default function Step1Page() {
                           fontWeight: 700,
                           fontSize: 17,
                           mb: 0.75,
-                          color: "#111827",
+                          color: "var(--ev-text-primary, #1F2937)",
                         }}
                       >
                         {title}
@@ -186,7 +186,7 @@ export default function Step1Page() {
                       <Typography
                         sx={{
                           fontSize: 13.5,
-                          color: "#6B7280",
+                          color: "var(--ev-text-muted, #8A7676)",
                           lineHeight: 1.55,
                           mb: 2,
                         }}
@@ -225,7 +225,7 @@ export default function Step1Page() {
               sx={{
                 mt: 3,
                 fontSize: 12.5,
-                color: "#9CA3AF",
+                color: "var(--ev-text-muted, #8A7676)",
                 textAlign: "center",
               }}
             >

@@ -120,7 +120,7 @@ export default function InstructorProfilePage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien", "Admin"]}>
       <StudentDashboardShell>
-        <Box>
+        <Box sx={{ "& *": { fontFamily: "var(--ev-font-family, 'Be Vietnam Pro', sans-serif) !important" } }}>
           {duLieu?.thongTinGiangVien ? (
             <InstructorHeroSection
               giangVien={duLieu.thongTinGiangVien}
@@ -132,16 +132,16 @@ export default function InstructorProfilePage() {
               tongHocVienDangKy={(duLieu as any)?.tongHocVienDangKy}
             />
           ) : (
-            <Box sx={{ bgcolor: "#1c1d1f", height: 220 }} />
+            <Box sx={{ bgcolor: "#0A0505", height: 220 }} />
           )}
 
           <Container maxWidth="lg" sx={{ py: { xs: 4, md: 5 } }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 900, fontSize: 22, color: "var(--ev-text-primary, #1F2937)", mb: 2 }}>
               {duLieu?.thongTinGiangVien
                 ? `Khóa học của ${trichXuatTenHienThi(duLieu.thongTinGiangVien)}`
                 : "Khóa học"}
             </Typography>
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: 4, borderColor: "var(--ev-divider, #ECE7E4)" }} />
 
             <InstructorCourseList
               danhSachKhoaHoc={danhSachKhoaHoc}

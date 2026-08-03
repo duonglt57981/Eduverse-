@@ -31,12 +31,24 @@ export function LandingThemeProvider({ children }: { children: React.ReactNode }
   );
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (typeof payload.exp !== "number") return false;
+    return payload.exp < Math.floor(Date.now() / 1000);
+  } catch {
+    return true;
+  }
+}
+
 export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
   const user = useSelector((s) => s.auth.user);
-  const roles = useSelector((s) => s.auth.roles) || [];
+  const hasUser = !!(user && user.accessToken && !isTokenExpired(user.accessToken));
 
   const filteredNavItems = navItems.filter((item) => {
-    if (item.href === '/favorite' && !user) {
+    if (item.href === '/favorite' && !hasUser) {
       return false;
     }
     return true;
@@ -109,6 +121,7 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
             })}
           </Stack>
 
+          {/* Luôn hiện Đăng nhập / Đăng ký, kể cả khi phiên đăng nhập còn hiệu lực */}
           <Stack direction="row" spacing={1.25}>
             <Chip
               component={Link}
@@ -121,7 +134,7 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
                 borderColor: 'primary.main',
                 color: 'primary.main',
                 fontWeight: 900,
-                '&:hover': { bgcolor: 'rgba(139,19,19,0.08)' },
+                '&:hover': { bgcolor: 'var(--ev-brand-tint, rgba(139,19,19,0.08))' },
               }}
             />
             <Chip

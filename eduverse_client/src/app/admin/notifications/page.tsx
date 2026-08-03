@@ -48,30 +48,31 @@ import {
   CheckCircleRounded,
   VisibilityRounded,
 } from "@mui/icons-material";
+import { BRAND, NEUTRAL, STATUS } from "@/src/theme/tokens";
 
 const COLORS = {
-  primary: "#991B1B",
-  primaryHover: "#7F1D1D",
-  primaryActive: "#6B1515",
-  primarySoft: "#FEF2F2",
-  primaryBorder: "#FECACA",
-  bgLight: "#F7F8FA",
-  white: "var(--ev-paper, #FFFFFF)",
-  textDark: "var(--ev-text-primary, #111827)",
-  textTitle: "var(--ev-text-primary, #1F2937)",
-  textSecondary: "var(--ev-text-secondary, #64748B)",
-  textMuted: "var(--ev-text-muted, #94A3B8)",
-  borderMain: "#E5E7EB",
-  borderLight: "var(--ev-divider, #EEF0F3)",
-  divider: "#F1F5F9",
-  green: "#15803D",
-  greenBg: "#ECFDF5",
-  orange: "#D97706",
-  orangeBg: "#FFF7ED",
-  red: "#DC2626",
-  redBg: "#FEF2F2",
-  blue: "#2563EB",
-  blueBg: "#EFF6FF",
+  primary: BRAND.main,
+  primaryHover: BRAND.dark,
+  primaryActive: BRAND.darker,
+  primarySoft: BRAND.light,
+  primaryBorder: BRAND.border,
+  bgLight: NEUTRAL.bg,
+  white: NEUTRAL.paper,
+  textDark: NEUTRAL.textPrimary,
+  textTitle: NEUTRAL.textPrimary,
+  textSecondary: NEUTRAL.textSecondary,
+  textMuted: NEUTRAL.textMuted,
+  borderMain: NEUTRAL.divider,
+  borderLight: NEUTRAL.divider,
+  divider: NEUTRAL.divider,
+  green: STATUS.success,
+  greenBg: STATUS.successSoft,
+  orange: STATUS.warningDark,
+  orangeBg: STATUS.warningSoft,
+  red: STATUS.error,
+  redBg: STATUS.errorSoft,
+  blue: STATUS.info,
+  blueBg: STATUS.infoSoft,
 };
 
 const getTypeBadgeStyles = (type: string) => {
@@ -87,7 +88,7 @@ const getTypeBadgeStyles = (type: string) => {
     case "HeThong":
       return { bgcolor: "var(--ev-paper-alt, #EFF6FF)", color: "#2563EB", label: "Hệ thống" };
     default:
-      return { bgcolor: "var(--ev-paper-alt, #F1F5F9)", color: "var(--ev-text-secondary, #475569)", label: "Khác" };
+      return { bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-secondary, #4B5563)", label: "Khác" };
   }
 };
 
@@ -522,7 +523,7 @@ export default function AdminThongBaoPage() {
                         width: { xs: "100%", sm: 240 },
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "10px",
-                          bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+                          bgcolor: "var(--ev-paper-alt, #F7F5F2)",
                           height: 42,
                           "& fieldset": { borderColor: COLORS.borderMain },
                           "&:hover fieldset": { borderColor: COLORS.primary },
@@ -563,7 +564,7 @@ export default function AdminThongBaoPage() {
                       onChange={(e) => setFilterLoai(e.target.value)}
                       sx={{
                         borderRadius: "10px",
-                        bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
                         height: 42,
                         fontSize: 13.5,
                         fontWeight: 500,
@@ -594,7 +595,7 @@ export default function AdminThongBaoPage() {
                       onChange={(e) => setFilterRead(e.target.value)}
                       sx={{
                         borderRadius: "10px",
-                        bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
                         height: 42,
                         fontSize: 13.5,
                         fontWeight: 500,
@@ -627,7 +628,7 @@ export default function AdminThongBaoPage() {
                         borderRadius: "10px",
                         width: 42,
                         height: 42,
-                        bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
                         color: COLORS.textSecondary,
                         transition: "all 150ms ease",
                         "&:hover": {
@@ -647,7 +648,7 @@ export default function AdminThongBaoPage() {
             {/* Table layout */}
             <TableContainer>
               <Table>
-                <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F8FAFC)" }}>
+                <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F7F5F2)" }}>
                   <TableRow sx={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                     <TableCell
                       sx={{
@@ -869,8 +870,8 @@ export default function AdminThongBaoPage() {
                                 label="Tất cả"
                                 size="small"
                                 sx={{
-                                  bgcolor: "var(--ev-paper-alt, #F1F5F9)",
-                                  color: "var(--ev-text-secondary, #475569)",
+                                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                                  color: "var(--ev-text-secondary, #4B5563)",
                                   fontWeight: 600,
                                   fontSize: 11.5,
                                   borderRadius: "6px",
@@ -1048,7 +1049,7 @@ export default function AdminThongBaoPage() {
                         "&:hover": { bgcolor: COLORS.primaryHover },
                       },
                       "&:hover": {
-                        bgcolor: "var(--ev-paper-alt, #F1F5F9)",
+                        bgcolor: "var(--ev-paper-alt, #FBFAF9)",
                       },
                     },
                   }}
@@ -1082,7 +1083,7 @@ export default function AdminThongBaoPage() {
                     sx={{ fontWeight: 700, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)" }}
                   >
                     Tiêu đề thông báo{" "}
-                    <span style={{ color: "#EF4444" }}>*</span>
+                    <span style={{ color: "#DC2626" }}>*</span>
                   </Typography>
                   <TextField
                     fullWidth
@@ -1110,7 +1111,7 @@ export default function AdminThongBaoPage() {
                     sx={{ fontWeight: 700, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)" }}
                   >
                     Nội dung thông báo{" "}
-                    <span style={{ color: "#EF4444" }}>*</span>
+                    <span style={{ color: "#DC2626" }}>*</span>
                   </Typography>
                   <TextField
                     fullWidth

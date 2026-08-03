@@ -14,12 +14,12 @@ export type ThongTinKhoaHocCoBan = {
 };
 
 export const MAU = {
-  chinh: "#7A1F2B",
-  chinhDam: "#611722",
+  chinh: "#8B1313",
+  chinhDam: "#6D0F0F",
   chinhNhat: "#FDF2F3",
-  vien: "#E7DADC",
+  vien: "#ECE7E4",
   chuDen: "#1A1A1A",
-  chuXam: "#6A6F73",
+  chuXam: "#8A7676",
   canhBaoNen: "#FFF4E5",
   canhBaoChu: "#B26A00",
   loiNen: "#FDECEC",

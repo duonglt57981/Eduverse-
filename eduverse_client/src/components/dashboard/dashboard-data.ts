@@ -293,7 +293,7 @@ export const continueLearningTabsData: ContinueLearningData = {
       contentType: 'Bài thi lý thuyết & Thực hành',
       duration: 'Còn 1 bài thi',
       progress: 80,
-      thumbnailGradient: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
+      thumbnailGradient: 'linear-gradient(135deg, #F59E0B 0%, #DC2626 100%)',
     },
   ],
   assessments: [
@@ -303,7 +303,7 @@ export const continueLearningTabsData: ContinueLearningData = {
       contentType: 'Trắc nghiệm & Code',
       duration: '45 phút',
       progress: 0,
-      thumbnailGradient: 'linear-gradient(135deg, #6B7280 0%, #374151 100%)',
+      thumbnailGradient: 'linear-gradient(135deg, #8A7676 0%, #4B5563 100%)',
     },
     {
       id: 'test-2',
@@ -450,7 +450,7 @@ export const historyRecommendationData: HistoryRecommendation = {
       rating: 4.85,
       studentsCount: 1450,
       level: 'Nâng cao',
-      thumbnailGradient: 'linear-gradient(135deg, #0F172A 0%, #334155 100%)',
+      thumbnailGradient: 'linear-gradient(135deg, #1F2937 0%, #334155 100%)',
     },
     {
       id: 'hist-3',

@@ -4,6 +4,7 @@ import React from "react";
 import { Box, Typography, Stack, Grid, Divider, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Link from "next/link";
+import { BRAND } from "@/src/theme/tokens";
 
 interface AuthenticatedFooterProps {
   role: "HocVien" | "GiaoVien" | "Admin" | string;
@@ -14,7 +15,7 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
   const isAdmin = role === "Admin";
 
   const COLORS = {
-    bg: "#8B1313", // Đỏ đô thương hiệu cho giảng viên / admin
+    bg: BRAND.main, // Đỏ đô thương hiệu cho giảng viên / admin
     textMain: "var(--ev-paper, #FFFFFF)",
     textMuted: "rgba(255, 255, 255, 0.72)",
     border: "rgba(255, 255, 255, 0.12)",

@@ -195,17 +195,23 @@ export default function KiemDuyetSidebar({
     const open = openTaiLieu[bgId] ?? false;
     const soCho = dem(taiLieus);
     return (
-      <Box sx={{ borderTop: `1px solid ${COLORS.line}` }}>
+      <Box>
         <ListItemButton
           onClick={() => toggleTaiLieu(bgId)}
-          sx={{ pl: 4, py: 0.75 }}
+          sx={{
+            pl: 7,
+            pr: 2.5,
+            py: 0.5,
+            color: "var(--ev-text-secondary, #4B5563)",
+            "&:hover": { bgcolor: "transparent", color: COLORS.primary },
+          }}
         >
           <AttachFileIcon
-            sx={{ fontSize: 14, color: COLORS.primary, mr: 0.75 }}
+            sx={{ fontSize: 14, mr: 0.75 }}
           />
           <Typography
             variant="caption"
-            sx={{ flex: 1, fontWeight: 500, color: COLORS.inkSoft }}
+            sx={{ flex: 1, fontWeight: 700, fontSize: 12 }}
           >
             {taiLieus.length} tài liệu
           </Typography>
@@ -224,13 +230,13 @@ export default function KiemDuyetSidebar({
             />
           )}
           {open ? (
-            <ExpandLessIcon sx={{ fontSize: 16 }} />
+            <ExpandLessIcon sx={{ fontSize: 14 }} />
           ) : (
-            <ExpandMoreIcon sx={{ fontSize: 16 }} />
+            <ExpandMoreIcon sx={{ fontSize: 14 }} />
           )}
         </ListItemButton>
         <Collapse in={open}>
-          <Stack sx={{ pl: 4, pr: 1.5, pb: 1, gap: 0.5 }}>
+          <Stack sx={{ pl: 7, pr: 2, pb: 1, gap: 0.75, mt: 0.5 }}>
             {taiLieus.map((tl: any, idx: number) => {
               const active = isActive("taiLieu", tl);
               const pending = isTrangThaiCho(tl.trangThaiPheDuyet);
@@ -242,22 +248,28 @@ export default function KiemDuyetSidebar({
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: "6px",
                     cursor: "pointer",
-                    border: `1px solid ${active ? COLORS.primary : pending ? COLORS.gold : COLORS.line}`,
+                    border: `1px solid ${active ? COLORS.primary : pending ? COLORS.gold : "var(--ev-divider, #ECE7E4)"}`,
                     bgcolor: active
-                      ? alpha(COLORS.primary, 0.08)
+                      ? "rgba(139, 19, 19, 0.05)"
                       : pending
-                        ? COLORS.goldSoft
+                        ? alpha(COLORS.gold, 0.025)
                         : "transparent",
+                    transition: "all 0.15s ease",
+                    "&:hover": {
+                      bgcolor: active
+                        ? "rgba(139, 19, 19, 0.08)"
+                        : "var(--ev-hover, rgba(24, 18, 20, 0.04))",
+                    },
                   }}
                 >
                   <AttachFileIcon
                     sx={{
                       fontSize: 14,
-                      color: pending ? COLORS.gold : COLORS.primary,
+                      color: active ? COLORS.primary : pending ? COLORS.gold : "var(--ev-text-muted, #8A7676)",
                       flexShrink: 0,
                     }}
                   />
@@ -265,8 +277,9 @@ export default function KiemDuyetSidebar({
                     variant="caption"
                     sx={{
                       flex: 1,
-                      fontWeight: active || pending ? 600 : 400,
-                      color: COLORS.ink,
+                      fontWeight: active ? 700 : pending ? 600 : 500,
+                      fontSize: 12.5,
+                      color: active ? COLORS.primary : "var(--ev-text-primary, #1F2937)",
                     }}
                     noWrap
                   >
@@ -292,27 +305,34 @@ export default function KiemDuyetSidebar({
           selected={active}
           onClick={() => onSelectContent("baiGiang", bg)}
           sx={{
-            pl: 3.5,
-            pr: 2.5,
+            pl: 2,
+            pr: 2,
             py: 1.1,
-            borderLeft: `3px solid ${active ? COLORS.primary : pending ? COLORS.gold : "transparent"}`,
+            borderLeft: `3px solid ${active ? COLORS.primary : pending ? alpha(COLORS.gold, 0.45) : "transparent"}`,
             bgcolor: active
-              ? alpha(COLORS.primary, 0.08)
+              ? `${alpha(COLORS.primary, 0.06)} !important`
               : pending
-                ? COLORS.goldSoft
+                ? alpha(COLORS.gold, 0.025)
                 : "transparent",
-            transition: "all 0.2s",
-            "&:hover": { bgcolor: alpha(COLORS.primary, 0.05) },
+            mb: 0.5,
+            mx: 1.5,
+            borderRadius: "8px",
+            transition: "all 0.2s ease",
+            "&:hover": {
+              bgcolor: active
+                ? "rgba(139, 19, 19, 0.08) !important"
+                : "var(--ev-hover, rgba(24, 18, 20, 0.04))",
+            },
           }}
         >
-          <ListItemIcon sx={{ minWidth: 30 }}>
+          <ListItemIcon sx={{ minWidth: 28 }}>
             <PlayArrowIcon
               sx={{
                 color: active
                   ? COLORS.primary
                   : pending
                     ? COLORS.gold
-                    : COLORS.inkSoft,
+                    : "var(--ev-text-muted, #8A7676)",
                 fontSize: 18,
               }}
             />
@@ -322,9 +342,12 @@ export default function KiemDuyetSidebar({
               <Typography
                 variant="body2"
                 sx={{
-                  fontWeight: active || pending ? 600 : 400,
+                  fontWeight: active ? 700 : pending ? 600 : 500,
+                  fontSize: 13.5,
                   lineHeight: 1.4,
-                  color: active ? COLORS.primary : COLORS.ink,
+                  color: active
+                    ? COLORS.primary
+                    : "var(--ev-text-primary, #1F2937)",
                 }}
                 noWrap
               >
@@ -350,18 +373,28 @@ export default function KiemDuyetSidebar({
         <ListItemButton
           selected={active}
           sx={{
-            pl: 3,
-            py: 1,
-            borderLeft: `3px solid ${active ? COLORS.primary : pending ? COLORS.gold : "transparent"}`,
+            pl: 2,
+            pr: 2,
+            py: 1.1,
+            borderLeft: `3px solid ${active ? COLORS.primary : pending ? alpha(COLORS.gold, 0.45) : "transparent"}`,
             bgcolor: active
-              ? alpha(COLORS.primary, 0.08)
+              ? `${alpha(COLORS.primary, 0.06)} !important`
               : pending
-                ? COLORS.goldSoft
+                ? alpha(COLORS.gold, 0.025)
                 : "transparent",
+            mb: 0.5,
+            mx: 1.5,
+            borderRadius: "8px",
+            transition: "all 0.2s ease",
+            "&:hover": {
+              bgcolor: active
+                ? "rgba(139, 19, 19, 0.08) !important"
+                : "var(--ev-hover, rgba(24, 18, 20, 0.04))",
+            },
           }}
         >
           <ListItemIcon
-            sx={{ minWidth: 30 }}
+            sx={{ minWidth: 28 }}
             onClick={() => onSelectContent("baiKiemTra", bkt)}
           >
             <QuizIcon
@@ -370,7 +403,7 @@ export default function KiemDuyetSidebar({
                   ? COLORS.primary
                   : pending
                     ? COLORS.gold
-                    : COLORS.inkSoft,
+                    : "var(--ev-text-muted, #8A7676)",
                 fontSize: 18,
               }}
             />
@@ -381,9 +414,12 @@ export default function KiemDuyetSidebar({
               <Typography
                 variant="body2"
                 sx={{
-                  fontWeight: active || pending ? 600 : 400,
+                  fontWeight: active ? 700 : pending ? 600 : 500,
+                  fontSize: 13.5,
                   lineHeight: 1.4,
-                  color: active ? COLORS.primary : COLORS.ink,
+                  color: active
+                    ? COLORS.primary
+                    : "var(--ev-text-primary, #1F2937)",
                 }}
                 noWrap
               >
@@ -392,7 +428,7 @@ export default function KiemDuyetSidebar({
             }
             secondary={
               cauHois.length > 0 ? (
-                <Typography variant="caption" sx={{ color: COLORS.inkSoft }}>
+                <Typography variant="caption" sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 11 }}>
                   {cauHois.length} câu hỏi
                 </Typography>
               ) : undefined
@@ -406,6 +442,7 @@ export default function KiemDuyetSidebar({
                 e.stopPropagation();
                 toggleBaiKiemTra(bktId);
               }}
+              sx={{ ml: 0.5, color: "var(--ev-text-muted, #8A7676)" }}
             >
               {open ? (
                 <ExpandLessIcon sx={{ fontSize: 16 }} />
@@ -417,7 +454,7 @@ export default function KiemDuyetSidebar({
         </ListItemButton>
         {cauHois.length > 0 && (
           <Collapse in={open}>
-            <Stack spacing={0.75} sx={{ pl: 4.5, pr: 1.5, py: 1 }}>
+            <Stack spacing={0.75} sx={{ pl: 6.5, pr: 2, py: 1 }}>
               {cauHois.map((ch: any, chIndex: number) => (
                 <CauHoiRow key={ch.idCauHoi ?? ch.id ?? chIndex} cauHoi={ch} />
               ))}
@@ -446,27 +483,27 @@ export default function KiemDuyetSidebar({
       {/* Header */}
       <Box
         sx={{
-          p: 2,
-          borderBottom: `1px solid ${COLORS.line}`,
-          bgcolor: COLORS.paperRaised,
+          p: 2.5,
+          borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
+          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
           flexShrink: 0,
         }}
       >
         <Stack
           direction="row"
           sx={{
-            mb: 1.25,
+            mb: 1.5,
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
           <Typography
             sx={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.1em",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
               textTransform: "uppercase",
-              color: COLORS.inkSoft,
+              color: "var(--ev-text-muted, #8A7676)",
               fontFamily: FONTS.body,
             }}
           >
@@ -486,20 +523,21 @@ export default function KiemDuyetSidebar({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
-            mb: 1.5,
-            bgcolor: "var(--ev-paper, #fff)",
+            mb: 2,
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             "& .MuiOutlinedInput-root": {
-              borderRadius: 1.5,
-              "& fieldset": { borderColor: COLORS.line },
-              "&:hover fieldset": { borderColor: COLORS.primary },
-              "&.Mui-focused fieldset": { borderColor: COLORS.primary },
+              borderRadius: "10px",
+              fontSize: 13,
+              "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+              "&:hover fieldset": { borderColor: "rgba(139,19,19,0.3)" },
+              "&.Mui-focused fieldset": { borderColor: "#8B1313", borderWidth: 1.5 },
             },
           }}
           slotProps={{
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, color: COLORS.inkSoft }} />
+                  <SearchIcon sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A7676)" }} />
                 </InputAdornment>
               ),
               endAdornment: searchTerm ? (
@@ -518,20 +556,21 @@ export default function KiemDuyetSidebar({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 0.5,
+            mb: 0.75,
           }}
         >
           <Typography
             variant="caption"
-            sx={{ fontWeight: 600, color: COLORS.ink }}
+            sx={{ fontWeight: 700, color: "var(--ev-text-primary, #1F2937)", fontSize: 12.5 }}
           >
             Tiến độ kiểm duyệt
           </Typography>
           <Typography
             variant="caption"
             sx={{
-              fontWeight: 700,
-              color: tongSoCho > 0 ? COLORS.gold : COLORS.success,
+              fontWeight: 800,
+              fontSize: 13,
+              color: tongSoCho > 0 ? COLORS.gold : "#10B981",
             }}
           >
             {phanTram}%
@@ -543,7 +582,7 @@ export default function KiemDuyetSidebar({
           sx={{
             height: 6,
             borderRadius: 3,
-            backgroundColor: alpha(COLORS.gold, 0.15),
+            backgroundColor: alpha(COLORS.gold, 0.10),
             "& .MuiLinearProgress-bar": {
               backgroundColor: tongSoCho > 0 ? COLORS.gold : COLORS.success,
               borderRadius: 3,
@@ -553,7 +592,7 @@ export default function KiemDuyetSidebar({
         />
         <Typography
           variant="caption"
-          sx={{ display: "block", textAlign: "right", color: COLORS.inkSoft }}
+          sx={{ display: "block", textAlign: "right", color: "var(--ev-text-muted, #8A7676)", fontWeight: 500, fontSize: 11.5 }}
         >
           {tongSoCho} / {tongSo} mục đang chờ duyệt
         </Typography>
@@ -581,45 +620,45 @@ export default function KiemDuyetSidebar({
               const isOpen = openPhan[id] !== false;
 
               return (
-                <Box key={id}>
+                <Box key={id} sx={{ borderBottom: "1px solid var(--ev-divider, #ECE7E4)" }}>
                   <ListItemButton
                     onClick={() => togglePhan(id)}
                     sx={{
-                      bgcolor: soCho > 0 ? COLORS.goldSoft : "transparent",
-                      borderLeft: `3px solid ${soCho > 0 ? COLORS.gold : "transparent"}`,
-                      py: 1.5,
+                      bgcolor: soCho > 0 ? "rgba(245, 158, 11, 0.02)" : "transparent",
+                      borderLeft: `3px solid ${soCho > 0 ? alpha(COLORS.gold, 0.45) : "transparent"}`,
+                      py: 1.75,
                       px: 2.5,
-                      transition: "background-color 0.2s",
-                      "&:hover": { bgcolor: alpha(COLORS.primary, 0.05) },
+                      transition: "all 0.2s ease",
+                      "&:hover": { bgcolor: "var(--ev-hover, rgba(24, 18, 20, 0.04))" },
                     }}
                   >
                     <FolderRoundedIcon
-                      sx={{ color: COLORS.gold, fontSize: 18, mr: 1.25 }}
+                      sx={{ color: COLORS.gold, fontSize: 20, mr: 1.5 }}
                     />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 700, color: COLORS.ink }}
+                        sx={{ fontWeight: 800, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)", fontFamily: FONTS.body }}
                         noWrap
                       >
                         {phanIndex + 1}. {phan.tenPhan}
                       </Typography>
                       <Typography
                         variant="caption"
-                        sx={{ color: COLORS.inkSoft }}
+                        sx={{ color: "var(--ev-text-muted, #8A7676)", fontWeight: 600, fontSize: 11 }}
                       >
                         {baiGiangs.length + baiKiemTras.length} mục
                         {soCho > 0 ? ` · ${soCho} chờ duyệt` : ""}
                       </Typography>
                     </Box>
                     {isOpen ? (
-                      <ExpandLessIcon sx={{ fontSize: 20 }} />
+                      <ExpandLessIcon sx={{ fontSize: 20, color: "var(--ev-text-muted, #8A7676)" }} />
                     ) : (
-                      <ExpandMoreIcon sx={{ fontSize: 20 }} />
+                      <ExpandMoreIcon sx={{ fontSize: 20, color: "var(--ev-text-muted, #8A7676)" }} />
                     )}
                   </ListItemButton>
                   <Collapse in={isOpen}>
-                    <List disablePadding>
+                    <List disablePadding sx={{ py: 1.5 }}>
                       {baiGiangs.map((bg: any) => renderBaiGiang(bg))}
                       {baiKiemTras.map((bkt: any) => renderBaiKiemTra(bkt))}
                     </List>

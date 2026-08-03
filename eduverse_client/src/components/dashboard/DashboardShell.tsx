@@ -150,7 +150,7 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             height: { xs: 36, md: 42 },
             color: "var(--ev-text-primary, #1F2937)",
             "&:hover": {
-              bgcolor: "var(--ev-paper-alt, #F3F4F6)",
+              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
               boxShadow: "0 6px 20px rgba(0,0,0,0.16)",
             },
             display: "inline-flex",
@@ -177,7 +177,7 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             height: { xs: 36, md: 42 },
             color: "var(--ev-text-primary, #1F2937)",
             "&:hover": {
-              bgcolor: "var(--ev-paper-alt, #F3F4F6)",
+              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
               boxShadow: "0 6px 20px rgba(0,0,0,0.16)",
             },
             display: "inline-flex",
@@ -552,10 +552,10 @@ function SidebarContent({
                   py: isAdmin ? 1 : 1.25,
                   color: isActive
                     ? isAdmin
-                      ? "#991B1B"
+                      ? "#8B1313"
                       : COLORS.primary
                     : isAdmin
-                      ? "#475569"
+                      ? "#4B5563"
                       : "rgba(31,41,55,0.72)",
                   bgcolor: isActive
                     ? isAdmin
@@ -564,7 +564,7 @@ function SidebarContent({
                     : "transparent",
                   borderLeft: isActive
                     ? isAdmin
-                      ? "3px solid #991B1B"
+                      ? "3px solid #8B1313"
                       : `4px solid ${COLORS.primary}`
                     : isAdmin
                       ? "3px solid transparent"
@@ -580,7 +580,7 @@ function SidebarContent({
                         : "rgba(141,19,19,0.03)",
                     color: isActive
                       ? isAdmin
-                        ? "#991B1B"
+                        ? "#8B1313"
                         : COLORS.primary
                       : isAdmin
                         ? "#1F2937"
@@ -605,7 +605,7 @@ function SidebarContent({
           sx={{
             my: 2,
             opacity: 0.6,
-            borderColor: pathname.startsWith("/admin") ? "#EEF0F3" : "divider",
+            borderColor: pathname.startsWith("/admin") ? "#ECE7E4" : "divider",
           }}
         />
 
@@ -622,7 +622,7 @@ function SidebarContent({
                   px: 2,
                   py: isAdmin ? 1 : 1.25,
                   color: isAdmin
-                    ? "var(--ev-text-secondary, #475569)"
+                    ? "var(--ev-text-secondary, #4B5563)"
                     : "rgba(31,41,55,0.72)",
                   transition: "all 150ms ease",
                   "&:hover": {
@@ -930,7 +930,7 @@ export default function DashboardShell({
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#8B1313",
-      cancelButtonColor: "#6B7280",
+      cancelButtonColor: "#8A7676",
       confirmButtonText: "Đăng xuất",
       cancelButtonText: "Hủy",
       reverseButtons: true,
@@ -1220,7 +1220,7 @@ export default function DashboardShell({
               height: headerHeight,
               zIndex: 1200,
               px: { xs: 2, md: 4 },
-              borderBottom: "1px solid #EEF0F3",
+              borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
               bgcolor: "var(--ev-paper, #FFFFFF)",
               display: "flex",
               alignItems: "center",
@@ -1236,7 +1236,7 @@ export default function DashboardShell({
                 onClick={() => setMobileOpen(true)}
                 sx={{
                   display: { xs: "inline-flex", lg: "none" },
-                  color: "#991B1B",
+                  color: "#8B1313",
                 }}
               >
                 <MenuRounded />
@@ -1280,11 +1280,11 @@ export default function DashboardShell({
                 px: 2.5,
                 py: 0.75,
                 borderRadius: "10px",
-                bgcolor: "var(--ev-paper-alt, #F8FAFC)",
-                border: "1px solid #EEF0F3",
+                bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                border: "1px solid var(--ev-divider, #ECE7E4)",
                 transition: "all 150ms ease",
                 "&:focus-within": {
-                  borderColor: "#991B1B",
+                  borderColor: "#8B1313",
                   boxShadow: "0 0 0 3px rgba(153, 27, 27, 0.05)",
                   bgcolor: "var(--ev-paper, #FFFFFF)",
                 },
@@ -1313,49 +1313,6 @@ export default function DashboardShell({
                 <SearchRounded />
               </IconButton>
 
-              {roles.includes("Admin") && (
-                <Stack
-                  direction="row"
-                  spacing={1.5}
-                  sx={{
-                    display: { xs: "none", md: "flex" },
-                    alignItems: "center",
-                  }}
-                >
-                  <Button
-                    variant="outlined"
-                    onClick={handleExportReport}
-                    startIcon={
-                      <ArrowForwardRounded
-                        sx={{
-                          transform: "rotate(90deg)",
-                          fontSize: "16px !important",
-                        }}
-                      />
-                    }
-                    sx={{
-                      borderRadius: "10px",
-                      borderColor: "#E5E7EB",
-                      color: "#475569",
-                      px: 2.2,
-                      py: 0.7,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      textTransform: "none",
-                      boxShadow: "none",
-                      height: 38,
-                      transition: "all 150ms ease",
-                      "&:hover": {
-                        bgcolor: "#F8FAFC",
-                        borderColor: "#CBD5E1",
-                        color: "#1E2937",
-                      },
-                    }}
-                  >
-                    Xuất báo cáo
-                  </Button>
-                </Stack>
-              )}
 
               {/* User Avatar + Role Badge */}
               <Stack
@@ -1486,7 +1443,7 @@ export default function DashboardShell({
                     sx={{
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "var(--ev-text-primary, #111827)",
+                      color: "var(--ev-text-primary, #1F2937)",
                       lineHeight: 1.3,
                     }}
                   >
@@ -1501,7 +1458,7 @@ export default function DashboardShell({
                       fontSize: 10.5,
                       fontWeight: 500,
                       color: pathname.startsWith("/admin")
-                        ? "#991B1B"
+                        ? "#8B1313"
                         : COLORS.primary,
                       letterSpacing: "0.2px",
                       textTransform: "uppercase",
@@ -1530,7 +1487,7 @@ export default function DashboardShell({
                     bgcolor: "#8B1313",
                     color: "#fff",
                     border: pathname.startsWith("/admin")
-                      ? "1px solid #E5E7EB"
+                      ? "1px solid #ECE7E4"
                       : "2px solid #fff",
                     boxShadow: pathname.startsWith("/admin")
                       ? "none"
@@ -1903,7 +1860,7 @@ export default function DashboardShell({
                 flexShrink: 0,
                 display: { xs: "none", lg: "block" },
                 borderRight: pathname.startsWith("/admin")
-                  ? "1px solid #EEF0F3"
+                  ? "1px solid #ECE7E4"
                   : "1px solid rgba(0,0,0,0.06)",
                 height: "100%",
                 bgcolor: COLORS.white,
@@ -1924,6 +1881,7 @@ export default function DashboardShell({
               alignItems: "center",
               height: "100%",
               overflowY: "auto",
+              overflowX: "hidden",
             }}
           >
             <Box
@@ -3425,7 +3383,7 @@ export default function DashboardShell({
             <Typography
               sx={{
                 fontSize: 14.5,
-                color: "var(--ev-text-secondary, #374151)",
+                color: "var(--ev-text-secondary, #4B5563)",
                 mb: 2,
                 whiteSpace: "pre-wrap",
               }}

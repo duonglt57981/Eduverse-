@@ -38,9 +38,9 @@ export default function Step1Page() {
           {/* Main Card Container */}
           <Box
             sx={{
-              bgcolor: "var(--ev-paper, #ffffff)",
+              bgcolor: "var(--ev-paper, #FFFFFF)",
               borderRadius: "20px",
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--ev-divider, #ECE7E4)",
               boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
               p: { xs: 3, sm: 6 },
               width: "100%",
@@ -59,7 +59,7 @@ export default function Step1Page() {
                 fontWeight: 700,
                 fontSize: { xs: "1.25rem", sm: "1.6rem" },
                 mb: 1.5,
-                color: "var(--ev-text-primary, #111827)",
+                color: "var(--ev-text-primary, #1F2937)",
               }}
             >
               Bạn muốn tạo nội dung học tập nào?
@@ -68,7 +68,7 @@ export default function Step1Page() {
             <Typography
               sx={{
                 fontSize: { xs: 13, sm: 15 },
-                color: "var(--ev-text-muted, #6B7280)",
+                color: "var(--ev-text-muted, #8A7676)",
                 mb: 4,
                 maxWidth: 480,
                 lineHeight: 1.5,
@@ -84,7 +84,7 @@ export default function Step1Page() {
                 width: "100%",
                 maxWidth: 380,
                 borderRadius: "16px",
-                borderColor: selected ? "#7A1F2B" : "#E5E7EB",
+                borderColor: selected ? "#8B1313" : "#ECE7E4",
                 borderWidth: selected ? 2 : 1,
                 bgcolor: selected ? "#FFF1F2" : "#ffffff",
                 boxShadow: selected
@@ -96,10 +96,10 @@ export default function Step1Page() {
                 "&:hover": {
                   boxShadow: "0 10px 30px rgba(122, 31, 43, 0.1)",
                   transform: "translateY(-4px)",
-                  borderColor: "#7A1F2B",
+                  borderColor: "#8B1313",
                 },
                 "&:focus-within": {
-                  outline: "2px solid #7A1F2B",
+                  outline: "2px solid #8B1313",
                   outlineOffset: "2px",
                 },
               }}
@@ -124,7 +124,7 @@ export default function Step1Page() {
                       width: 22,
                       height: 22,
                       borderRadius: "50%",
-                      bgcolor: "#7A1F2B",
+                      bgcolor: "#8B1313",
                       color: "#ffffff",
                       display: "flex",
                       alignItems: "center",
@@ -138,8 +138,8 @@ export default function Step1Page() {
 
                 <Box
                   sx={{
-                    color: selected ? "#7A1F2B" : "#4B5563",
-                    bgcolor: selected ? "#FEE2E2" : "#F3F4F6",
+                    color: selected ? "#8B1313" : "#4B5563",
+                    bgcolor: selected ? "#FEE2E2" : "#FBFAF9",
                     borderRadius: "12px",
                     p: 2,
                     display: "flex",
@@ -157,7 +157,7 @@ export default function Step1Page() {
                     fontWeight: 700,
                     fontSize: 18,
                     mb: 1.5,
-                    color: selected ? "#7A1F2B" : "#111827",
+                    color: selected ? "#8B1313" : "#1F2937",
                   }}
                 >
                   Khóa học
@@ -182,7 +182,7 @@ export default function Step1Page() {
               sx={{
                 mt: 4,
                 fontSize: 13,
-                color: "var(--ev-grey, #9CA3AF)",
+                color: "var(--ev-grey, #8A7676)",
               }}
             >
               Bạn vẫn có thể cập nhật nội dung chi tiết sau khi khóa học được khởi tạo.

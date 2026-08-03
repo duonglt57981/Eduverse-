@@ -57,14 +57,14 @@ function EnrollmentBarChart({
     <Box sx={{ position: "relative", width: "100%", height: 210 }}>
       <Stack spacing={3.5} sx={{ position: "absolute", top: 10, left: 0, right: 0, zIndex: 1, pointerEvents: "none" }}>
         {[1, 2, 3, 4].map((i) => (
-          <Box key={i} sx={{ borderBottom: "1px dashed #E2E8F0", width: "100%" }} />
+          <Box key={i} sx={{ borderBottom: "1px dashed var(--ev-divider, #ECE7E4)", width: "100%" }} />
         ))}
       </Stack>
 
       {allZero && (
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 3, bgcolor: "rgba(255,255,255,0.6)", backdropFilter: "blur(1px)", borderRadius: "12px" }}>
-          <PeopleAltRounded sx={{ fontSize: 32, color: "var(--ev-text-muted, #94A3B8)", mb: 1 }} />
-          <Typography sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #64748B)", fontWeight: 600 }}>
+          <PeopleAltRounded sx={{ fontSize: 32, color: "var(--ev-text-muted, #8A7676)", mb: 1 }} />
+          <Typography sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}>
             Chưa có học viên đăng ký trong 7 tháng qua
           </Typography>
         </Box>
@@ -77,19 +77,19 @@ function EnrollmentBarChart({
           return (
             <Stack key={month.label} sx={{ alignItems: "center", flex: 1, gap: 1.5, position: "relative" }}>
               {!allZero && month.value > 0 && (
-                <Typography sx={{ position: "absolute", bottom: barHeight + 24, fontSize: 11, fontWeight: 800, color: isHighlight ? COLORS.primary : "#64748B" }}>
+                <Typography sx={{ position: "absolute", bottom: barHeight + 24, fontSize: 11, fontWeight: 800, color: isHighlight ? COLORS.primary : "#4B5563" }}>
                   {month.value}
                 </Typography>
               )}
               <Box sx={{
                 width: "100%", maxWidth: 32, height: barHeight,
                 borderRadius: "6px 6px 4px 4px",
-                bgcolor: allZero ? "#F1F5F9" : isHighlight ? COLORS.primary : "rgba(141,19,19,0.18)",
+                bgcolor: allZero ? "#FBFAF9" : isHighlight ? COLORS.primary : "rgba(141,19,19,0.18)",
                 transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
                 boxShadow: !allZero && isHighlight ? "0 4px 12px rgba(139,19,19,0.25)" : "none",
-                "&:hover": { bgcolor: allZero ? "#F1F5F9" : isHighlight ? "#7F1D1D" : "rgba(141,19,19,0.35)", transform: !allZero ? "scaleY(1.03)" : "none" },
+                "&:hover": { bgcolor: allZero ? "#FBFAF9" : isHighlight ? "#7F1D1D" : "rgba(141,19,19,0.35)", transform: !allZero ? "scaleY(1.03)" : "none" },
               }} />
-              <Typography sx={{ fontSize: 11.5, fontWeight: isHighlight ? 800 : 600, color: isHighlight ? COLORS.primary : "#64748B", whiteSpace: "nowrap" }}>
+              <Typography sx={{ fontSize: 11.5, fontWeight: isHighlight ? 800 : 600, color: isHighlight ? COLORS.primary : "#4B5563", whiteSpace: "nowrap" }}>
                 {month.label}
               </Typography>
             </Stack>
@@ -116,14 +116,14 @@ function RevenueBarChart({
     <Box sx={{ position: "relative", width: "100%", height: 210 }}>
       <Stack spacing={3.5} sx={{ position: "absolute", top: 10, left: 0, right: 0, zIndex: 1, pointerEvents: "none" }}>
         {[1, 2, 3, 4].map((i) => (
-          <Box key={i} sx={{ borderBottom: "1px dashed #E2E8F0", width: "100%" }} />
+          <Box key={i} sx={{ borderBottom: "1px dashed var(--ev-divider, #ECE7E4)", width: "100%" }} />
         ))}
       </Stack>
 
       {allZero && (
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 3, bgcolor: "rgba(255,255,255,0.6)", backdropFilter: "blur(1px)", borderRadius: "12px" }}>
-          <AttachMoneyRounded sx={{ fontSize: 32, color: "var(--ev-text-muted, #94A3B8)", mb: 1 }} />
-          <Typography sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #64748B)", fontWeight: 600 }}>
+          <AttachMoneyRounded sx={{ fontSize: 32, color: "var(--ev-text-muted, #8A7676)", mb: 1 }} />
+          <Typography sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}>
             Chưa có doanh thu trong 7 tháng qua
           </Typography>
         </Box>
@@ -134,7 +134,7 @@ function RevenueBarChart({
           const isHighlight = i === highlightIndex;
           const isHovered = hoveredIndex === i;
           const barHeight = allZero ? 6 : (month.value / maxVal) * 130;
-          const barColor = allZero ? "#F1F5F9" : isHighlight ? "#15803D" : "rgba(21,128,61,0.2)";
+          const barColor = allZero ? "#FBFAF9" : isHighlight ? "#15803D" : "rgba(21,128,61,0.2)";
 
           return (
             <Stack key={month.label} sx={{ alignItems: "center", flex: 1, gap: 1.5, position: "relative" }}
@@ -149,7 +149,7 @@ function RevenueBarChart({
               )}
               {/* Label trên thanh */}
               {!allZero && month.value > 0 && !isHovered && (
-                <Typography sx={{ position: "absolute", bottom: barHeight + 24, fontSize: 11, fontWeight: 800, color: isHighlight ? "#15803D" : "#64748B" }}>
+                <Typography sx={{ position: "absolute", bottom: barHeight + 24, fontSize: 11, fontWeight: 800, color: isHighlight ? "#15803D" : "#4B5563" }}>
                   {formatTienCompact(month.raw)}
                 </Typography>
               )}
@@ -161,7 +161,7 @@ function RevenueBarChart({
                 boxShadow: isHighlight && !allZero ? "0 4px 12px rgba(21,128,61,0.3)" : "none",
                 cursor: "default",
               }} />
-              <Typography sx={{ fontSize: 11.5, fontWeight: isHighlight ? 800 : 600, color: isHighlight ? "#15803D" : "#64748B", whiteSpace: "nowrap" }}>
+              <Typography sx={{ fontSize: 11.5, fontWeight: isHighlight ? 800 : 600, color: isHighlight ? "#15803D" : "#4B5563", whiteSpace: "nowrap" }}>
                 {month.label}
               </Typography>
             </Stack>
@@ -280,10 +280,10 @@ export default function InstructorDashboardContent() {
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.primary, textTransform: "uppercase", letterSpacing: "1px", mb: 1 }}>
               Bảng điều khiển Giảng viên
             </Typography>
-            <Typography sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 900, color: "var(--ev-text-primary, #111827)", mb: 1.5, lineHeight: 1.2 }}>
+            <Typography sx={{ fontSize: { xs: 26, md: 32 }, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 1.5, lineHeight: 1.2 }}>
               Chào mừng trở lại, GS. {fullName}
             </Typography>
-            <Typography sx={{ fontSize: 14.5, color: "var(--ev-text-secondary, #64748B)", maxWidth: 480, lineHeight: 1.6, mb: 3 }}>
+            <Typography sx={{ fontSize: 14.5, color: "var(--ev-text-secondary, #4B5563)", maxWidth: 480, lineHeight: 1.6, mb: 3 }}>
               Theo dõi hiệu quả giảng dạy và quản lý hoạt động khóa học của bạn.
             </Typography>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
@@ -317,8 +317,8 @@ export default function InstructorDashboardContent() {
                 <Icon sx={{ fontSize: 24, color: stat.iconColor }} />
               </Box>
               <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: "var(--ev-text-secondary, #64748B)", mb: 0.5, textTransform: "uppercase", letterSpacing: "0.5px" }}>{stat.label}</Typography>
-                <Typography noWrap sx={{ fontSize: 20, fontWeight: 900, color: "var(--ev-text-primary, #111827)", lineHeight: 1.2 }}>{stat.value}</Typography>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: "var(--ev-text-secondary, #4B5563)", mb: 0.5, textTransform: "uppercase", letterSpacing: "0.5px" }}>{stat.label}</Typography>
+                <Typography noWrap sx={{ fontSize: 20, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", lineHeight: 1.2 }}>{stat.value}</Typography>
               </Box>
             </Paper>
           );
@@ -338,7 +338,7 @@ export default function InstructorDashboardContent() {
                 <Typography sx={{ fontSize: 16.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)" }}>
                   Học viên đăng ký theo tháng
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #64748B)", mt: 0.3 }}>
+                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #4B5563)", mt: 0.3 }}>
                   Số lượt đăng ký khóa học 7 tháng gần nhất
                 </Typography>
               </Box>
@@ -355,12 +355,12 @@ export default function InstructorDashboardContent() {
                 <Typography sx={{ fontSize: 16.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)" }}>
                   Doanh thu theo tháng
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #64748B)", mt: 0.3 }}>
+                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #4B5563)", mt: 0.3 }}>
                   70% từ doanh số khóa học · 7 tháng gần nhất
                 </Typography>
               </Box>
               <Box sx={{ textAlign: "right" }}>
-                <Typography sx={{ fontSize: 11, color: "var(--ev-text-secondary, #64748B)", fontWeight: 600 }}>Tháng này</Typography>
+                <Typography sx={{ fontSize: 11, color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}>Tháng này</Typography>
                 <Typography sx={{ fontSize: 18, fontWeight: 900, color: "#15803D" }}>
                   {doanhThuThangNay.toLocaleString("vi-VN")}đ
                 </Typography>
@@ -377,9 +377,9 @@ export default function InstructorDashboardContent() {
           <Paper elevation={0} sx={{ p: 3, borderRadius: "20px", border: "1px solid rgba(141,19,19,0.06)", bgcolor: "var(--ev-paper, #FFFFFF)" }}>
             <Typography sx={{ fontSize: 14.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)", mb: 2 }}>Tăng trưởng học viên</Typography>
             <Stack direction="row" sx={{ alignItems: "center", gap: 2.5 }}>
-              <Box sx={{ width: 64, height: 64, borderRadius: "50%", background: `conic-gradient(#10B981 0% ${growthPct > 0 ? growthPct : 0}%, #F1F5F9 ${growthPct > 0 ? growthPct : 0}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 6px #fff" }}>
+              <Box sx={{ width: 64, height: 64, borderRadius: "50%", background: `conic-gradient(#10B981 0% ${growthPct > 0 ? growthPct : 0}%, #FBFAF9 ${growthPct > 0 ? growthPct : 0}% 100%)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 6px #fff" }}>
                 <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "var(--ev-paper, #FFFFFF)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: growthPct >= 0 ? "#10B981" : "#EF4444" }}>
+                  <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: growthPct >= 0 ? "#10B981" : "#DC2626" }}>
                     {growthPct >= 0 ? "+" : ""}{growthPct}%
                   </Typography>
                 </Box>
@@ -388,7 +388,7 @@ export default function InstructorDashboardContent() {
                 <Typography sx={{ fontSize: 30, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", lineHeight: 1, mb: 0.5 }}>
                   {growthCount.toLocaleString("vi-VN")}
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #64748B)", fontWeight: 600 }}>Đăng ký mới tháng này</Typography>
+                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}>Đăng ký mới tháng này</Typography>
               </Box>
             </Stack>
           </Paper>
@@ -398,17 +398,17 @@ export default function InstructorDashboardContent() {
             <Typography sx={{ fontSize: 14.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)", mb: 2 }}>Tỷ lệ hoàn thành</Typography>
             {completionData.length === 0 ? (
               <Box sx={{ py: 2.5, textAlign: "center" }}>
-                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #64748B)", fontWeight: 500 }}>Chưa có số liệu hoàn thành</Typography>
+                <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-secondary, #4B5563)", fontWeight: 500 }}>Chưa có số liệu hoàn thành</Typography>
               </Box>
             ) : (
               <Stack spacing={2}>
                 {completionData.map((item) => (
                   <Box key={item.title}>
                     <Stack direction="row" sx={{ justifyContent: "space-between", mb: 0.8 }}>
-                      <Typography noWrap sx={{ fontSize: 12.5, fontWeight: 700, color: "var(--ev-text-secondary, #475569)", maxWidth: "80%" }}>{item.title}</Typography>
+                      <Typography noWrap sx={{ fontSize: 12.5, fontWeight: 700, color: "var(--ev-text-secondary, #4B5563)", maxWidth: "80%" }}>{item.title}</Typography>
                       <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: COLORS.primary }}>{item.rate}%</Typography>
                     </Stack>
-                    <LinearProgress variant="determinate" value={item.rate} sx={{ height: 8, borderRadius: 4, bgcolor: "var(--ev-paper-alt, #F1F5F9)", "& .MuiLinearProgress-bar": { borderRadius: 4, bgcolor: COLORS.primary } }} />
+                    <LinearProgress variant="determinate" value={item.rate} sx={{ height: 8, borderRadius: 4, bgcolor: "var(--ev-paper-alt, #FBFAF9)", "& .MuiLinearProgress-bar": { borderRadius: 4, bgcolor: COLORS.primary } }} />
                   </Box>
                 ))}
               </Stack>
@@ -447,12 +447,12 @@ export default function InstructorDashboardContent() {
                   <Typography sx={{ fontSize: 13, fontWeight: 750, color: "#065F46" }}>Đã tạo khóa học trên hệ thống</Typography>
                 </Stack>
               )}
-              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: "12px", bgcolor: "var(--ev-paper-alt, #F8FAFC)", border: "1px solid #E2E8F0" }}>
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: "12px", bgcolor: "var(--ev-paper-alt, #F7F5F2)", border: "1px solid var(--ev-divider, #ECE7E4)" }}>
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#64748B" }} />
-                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-secondary, #475569)" }}>Cập nhật hồ sơ giảng viên</Typography>
+                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#4B5563" }} />
+                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-secondary, #4B5563)" }}>Cập nhật hồ sơ giảng viên</Typography>
                 </Stack>
-                <Button size="small" onClick={() => router.push("/settings")} sx={{ textTransform: "none", fontSize: 12, fontWeight: 850, color: "var(--ev-text-secondary, #475569)", p: 0, minWidth: 0 }}>Cập nhật</Button>
+                <Button size="small" onClick={() => router.push("/settings")} sx={{ textTransform: "none", fontSize: 12, fontWeight: 850, color: "var(--ev-text-secondary, #4B5563)", p: 0, minWidth: 0 }}>Cập nhật</Button>
               </Stack>
             </Stack>
           </Paper>

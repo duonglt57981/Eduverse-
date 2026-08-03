@@ -20,13 +20,19 @@ export default function KhoiTenKhoaHoc({
   onTuChoiClick,
 }: any) {
   return (
-    <Box sx={{ ...boxSx, p: 2.5 }}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+    <Box sx={{ ...boxSx, p: 3 }}>
+      <Stack direction="row" spacing={3} sx={{ alignItems: "center" }}>
         {detail?.hinhAnhKhoaHoc && (
           <Avatar
             variant="rounded"
             src={detail.hinhAnhKhoaHoc}
-            sx={{ width: 229, height: 139, borderRadius: 1.5 }} // ✅ tăng kích thước
+            sx={{
+              width: 190,
+              height: 114,
+              borderRadius: "16px",
+              border: "1px solid var(--ev-divider, #ECE7E4)",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+            }}
           />
         )}
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -37,9 +43,10 @@ export default function KhoiTenKhoaHoc({
             <Typography
               sx={{
                 fontFamily: FONTS.body,
-                fontWeight: 600,
+                fontWeight: 900,
                 fontSize: 22,
-                color: COLORS.ink,
+                letterSpacing: "-0.4px",
+                color: "var(--ev-text-primary, #1F2937)",
                 flex: 1,
                 minWidth: 200,
               }}
@@ -52,30 +59,50 @@ export default function KhoiTenKhoaHoc({
               direction="row"
               spacing={1}
               useFlexGap
-              sx={{ mt: 0.5, flexWrap: "wrap" }}
+              sx={{ mt: 1.5, flexWrap: "wrap", alignItems: "center" }}
             >
-              <Typography variant="caption" sx={{ color: COLORS.inkSoft }}>
-                Giảng viên: {detail.createBy || "Không xác định"}
+              <Typography variant="caption" sx={{ color: "var(--ev-text-muted, #8A7676)", fontWeight: 600, mr: 1 }}>
+                Giảng viên: <span style={{ color: "var(--ev-text-primary, #1F2937)", fontWeight: 700 }}>{detail.createBy || "Không xác định"}</span>
               </Typography>
               {detail.loaiKhoaHoc && (
                 <Chip
                   label={detail.loaiKhoaHoc}
                   size="small"
-                  sx={{ bgcolor: "#F1EBE8", color: COLORS.inkSoft }}
+                  sx={{
+                    bgcolor: "transparent",
+                    color: "var(--ev-text-secondary, #4B5563)",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    borderRadius: "8px",
+                    border: "1px solid var(--ev-divider, #ECE7E4)",
+                  }}
                 />
               )}
               {detail.capDo && (
                 <Chip
                   label={`Cấp độ: ${detail.capDo}`}
                   size="small"
-                  sx={{ bgcolor: "#F1EBE8", color: COLORS.inkSoft }}
+                  sx={{
+                    bgcolor: "transparent",
+                    color: "var(--ev-text-secondary, #4B5563)",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    borderRadius: "8px",
+                    border: "1px solid var(--ev-divider, #ECE7E4)",
+                  }}
                 />
               )}
               {detail.giaGoc != null && (
                 <Chip
                   label={`Giá: ${detail.giaGoc.toLocaleString()} VND`}
                   size="small"
-                  sx={{ bgcolor: "#F1EBE8", color: COLORS.inkSoft }}
+                  sx={{
+                    bgcolor: COLORS.successSoft,
+                    color: COLORS.success,
+                    fontWeight: 800,
+                    fontSize: 12,
+                    borderRadius: "8px",
+                  }}
                 />
               )}
             </Stack>

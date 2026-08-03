@@ -90,7 +90,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#8B1313",
-      cancelButtonColor: "#6B7280",
+      cancelButtonColor: "#8A7676",
       confirmButtonText: "Đăng xuất",
       cancelButtonText: "Hủy",
       reverseButtons: true,

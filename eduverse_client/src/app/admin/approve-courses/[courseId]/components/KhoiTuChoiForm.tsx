@@ -29,7 +29,7 @@ export default function KhoiTuChoiForm({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Nhập lý do để giảng viên chỉnh sửa lại..."
         size="small"
-        sx={{ bgcolor: "var(--ev-paper, #fff)", borderRadius: 1 }}
+        sx={{ bgcolor: "var(--ev-paper, #FFFFFF)", borderRadius: 1 }}
       />
       <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
         <Button

@@ -401,8 +401,8 @@ export default function AdminSettingsPage() {
         text: 'Bạn đang thay đổi các chỉ số tài chính hoặc chế độ hoạt động của toàn bộ hệ thống. Bạn chắc chắn muốn áp dụng các thiết lập mới?',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#991B1B',
-        cancelButtonColor: '#64748B',
+        confirmButtonColor: '#8B1313',
+        cancelButtonColor: '#4B5563',
         confirmButtonText: 'Đồng ý cập nhật',
         cancelButtonText: 'Hủy bỏ',
       }).then((result) => {
@@ -445,7 +445,7 @@ export default function AdminSettingsPage() {
         text: 'Cổng kết nối sẽ tạo mã QR bảo mật. Bạn cần dùng Google Authenticator quét để lấy OTP đăng nhập.',
         icon: 'info',
         showCancelButton: true,
-        confirmButtonColor: '#991B1B',
+        confirmButtonColor: '#8B1313',
         confirmButtonText: 'Tiếp tục',
         cancelButtonText: 'Quay lại',
       }).then(async (res) => {
@@ -525,7 +525,7 @@ export default function AdminSettingsPage() {
       text: 'Phiên làm việc trên thiết bị này sẽ lập tức mất hiệu lực.',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#991B1B',
+      confirmButtonColor: '#8B1313',
       confirmButtonText: 'Đăng xuất',
       cancelButtonText: 'Hủy',
     }).then((res) => {
@@ -626,7 +626,7 @@ export default function AdminSettingsPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: 'var(--ev-text-primary, #111827)',
+                  color: 'var(--ev-text-primary, #1F2937)',
                 }}
               >
                 Cấu hình & Cài đặt hệ thống
@@ -641,13 +641,13 @@ export default function AdminSettingsPage() {
                     borderRadius: '8px',
                   }}
                 >
-                  <Typography sx={{ fontSize: 11, fontWeight: 800, color: '#991B1B' }}>
+                  <Typography sx={{ fontSize: 11, fontWeight: 800, color: '#8B1313' }}>
                     SUPER ADMIN
                   </Typography>
                 </Box>
               )}
             </Stack>
-            <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 14 }}>
+            <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 14 }}>
               Cổng quản lý và điều chỉnh thông tin hồ sơ bảo mật cá nhân, thông số vận hành của EduVerse.
             </Typography>
           </Box>
@@ -675,7 +675,7 @@ export default function AdminSettingsPage() {
                     '& .MuiTabs-indicator': {
                       left: 0,
                       right: 'auto',
-                      bgcolor: '#991B1B',
+                      bgcolor: '#8B1313',
                       width: 4,
                       borderRadius: '4px',
                     },
@@ -689,17 +689,17 @@ export default function AdminSettingsPage() {
                       py: 1.6,
                       px: 2,
                       borderRadius: '12px',
-                      color: 'var(--ev-text-secondary, #64748B)',
+                      color: 'var(--ev-text-secondary, #4B5563)',
                       minHeight: 48,
                       mb: 0.8,
                       transition: 'all 200ms ease',
                       '&:hover': {
                         bgcolor: '#FEF2F2',
-                        color: '#991B1B',
+                        color: '#8B1313',
                       },
                       '&.Mui-selected': {
                         bgcolor: '#FEF2F2',
-                        color: '#991B1B',
+                        color: '#8B1313',
                       },
                     },
                   }}
@@ -740,8 +740,8 @@ export default function AdminSettingsPage() {
                       justifyContent: 'center',
                     }}
                   >
-                    <CircularProgress size={36} sx={{ color: '#991B1B', mr: 2 }} />
-                    <Typography sx={{ fontWeight: 650, color: 'var(--ev-text-secondary, #64748B)' }}>
+                    <CircularProgress size={36} sx={{ color: '#8B1313', mr: 2 }} />
+                    <Typography sx={{ fontWeight: 650, color: 'var(--ev-text-secondary, #4B5563)' }}>
                       Đang đồng bộ hồ sơ máy chủ...
                     </Typography>
                   </Paper>
@@ -759,7 +759,7 @@ export default function AdminSettingsPage() {
                             p: { xs: 3, md: 4.5 },
                           }}
                         >
-                          <Typography variant="h6" sx={{ fontWeight: 800, mb: 3.5, color: 'var(--ev-text-primary, #111827)' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 800, mb: 3.5, color: 'var(--ev-text-primary, #1F2937)' }}>
                             Hồ sơ quản trị viên
                           </Typography>
 
@@ -770,7 +770,7 @@ export default function AdminSettingsPage() {
                                 sx={{
                                   width: 80,
                                   height: 80,
-                                  bgcolor: '#991B1B',
+                                  bgcolor: '#8B1313',
                                   color: '#fff',
                                   fontWeight: 800,
                                   fontSize: 26,
@@ -794,7 +794,7 @@ export default function AdminSettingsPage() {
                                   position: 'absolute',
                                   bottom: -2,
                                   right: -2,
-                                  bgcolor: '#111827',
+                                  bgcolor: '#1F2937',
                                   color: '#fff',
                                   p: 0.8,
                                   boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -810,8 +810,8 @@ export default function AdminSettingsPage() {
                             </Box>
                             <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                               <Typography sx={{ fontWeight: 800, fontSize: 16.5 }}>{profile.hoTen}</Typography>
-                              <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 13, mt: 0.5 }}>
-                                Vai trò hệ thống: <strong style={{ color: '#991B1B' }}>{profile.roles}</strong>
+                              <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 13, mt: 0.5 }}>
+                                Vai trò hệ thống: <strong style={{ color: '#8B1313' }}>{profile.roles}</strong>
                               </Typography>
                             </Box>
                           </Stack>
@@ -844,10 +844,10 @@ export default function AdminSettingsPage() {
                                   input: {
                                     startAdornment: (
                                       <InputAdornment position="start">
-                                        <EmailRounded sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 18 }} />
+                                        <EmailRounded sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 18 }} />
                                       </InputAdornment>
                                     ),
-                                    style: { borderRadius: '12px', backgroundColor: 'var(--ev-paper-alt, #F9FAFB)' },
+                                    style: { borderRadius: '12px', backgroundColor: 'var(--ev-paper-alt, #FBFAF9)' },
                                   },
                                 }}
                                 helperText="Email được liên kết với tài khoản Google và không thể chỉnh sửa tại đây."
@@ -865,7 +865,7 @@ export default function AdminSettingsPage() {
                                   input: {
                                     startAdornment: (
                                       <InputAdornment position="start">
-                                        <PhoneRounded sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 18 }} />
+                                        <PhoneRounded sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 18 }} />
                                       </InputAdornment>
                                     ),
                                     style: { borderRadius: '12px' },
@@ -899,7 +899,7 @@ export default function AdminSettingsPage() {
                               onClick={handleSaveProfile}
                               disabled={savingProfile || !isProfileDirty}
                               sx={{
-                                bgcolor: '#991B1B',
+                                bgcolor: '#8B1313',
                                 color: '#fff',
                                 borderRadius: '12px',
                                 px: 3,
@@ -917,14 +917,14 @@ export default function AdminSettingsPage() {
                               onClick={handleResetProfile}
                               disabled={!isProfileDirty}
                               sx={{
-                                borderColor: 'var(--ev-divider, #E5E7EB)',
-                                color: 'var(--ev-text-secondary, #64748B)',
+                                borderColor: 'var(--ev-divider, #ECE7E4)',
+                                color: 'var(--ev-text-secondary, #4B5563)',
                                 borderRadius: '12px',
                                 px: 3,
                                 py: 1.25,
                                 fontWeight: 700,
                                 fontSize: 13,
-                                '&:hover': { bgcolor: 'var(--ev-paper-alt, #F9FAFB)', borderColor: 'var(--ev-divider, #D1D5DB)' },
+                                '&:hover': { bgcolor: 'var(--ev-paper-alt, #FBFAF9)', borderColor: 'var(--ev-divider, #ECE7E4)' },
                               }}
                             >
                               Đặt lại
@@ -942,30 +942,30 @@ export default function AdminSettingsPage() {
                             p: { xs: 3, md: 4.5 },
                           }}
                         >
-                          <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, color: 'var(--ev-text-primary, #111827)' }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, color: 'var(--ev-text-primary, #1F2937)' }}>
                             Phạm vi vai trò & Quyền hạn
                           </Typography>
-                          <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 13, mb: 3 }}>
+                          <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 13, mb: 3 }}>
                             Quyền lực của tài khoản được đồng bộ hóa từ hệ thống phân quyền của EduVerse.
                           </Typography>
 
                           <Grid container spacing={3}>
                             <Grid size={{ xs: 12, sm: 6 }}>
-                              <Box sx={{ p: 2.5, borderRadius: '14px', border: '1px dashed #E5E7EB', bgcolor: 'var(--ev-paper-alt, #F8FAFC)' }}>
-                                <Typography sx={{ fontSize: 11, fontWeight: 800, color: 'var(--ev-text-secondary, #64748B)', mb: 0.5 }}>
+                              <Box sx={{ p: 2.5, borderRadius: '14px', border: '1px dashed #ECE7E4', bgcolor: 'var(--ev-paper-alt, #F7F5F2)' }}>
+                                <Typography sx={{ fontSize: 11, fontWeight: 800, color: 'var(--ev-text-secondary, #4B5563)', mb: 0.5 }}>
                                   VAI TRÒ HIỆN TẠI
                                 </Typography>
-                                <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#991B1B' }}>
+                                <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#8B1313' }}>
                                   {profile.roles === 'Super Admin' ? 'Super Administrator' : 'Administrator'}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid size={{ xs: 12, sm: 6 }}>
-                              <Box sx={{ p: 2.5, borderRadius: '14px', border: '1px dashed #E5E7EB', bgcolor: 'var(--ev-paper-alt, #F8FAFC)' }}>
-                                <Typography sx={{ fontSize: 11, fontWeight: 800, color: 'var(--ev-text-secondary, #64748B)', mb: 0.5 }}>
+                              <Box sx={{ p: 2.5, borderRadius: '14px', border: '1px dashed #ECE7E4', bgcolor: 'var(--ev-paper-alt, #F7F5F2)' }}>
+                                <Typography sx={{ fontSize: 11, fontWeight: 800, color: 'var(--ev-text-secondary, #4B5563)', mb: 0.5 }}>
                                   PHẠM VI QUYỀN HẠN
                                 </Typography>
-                                <Typography sx={{ fontSize: 15, fontWeight: 800, color: 'var(--ev-text-primary, #111827)' }}>
+                                <Typography sx={{ fontSize: 15, fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)' }}>
                                   {profile.roles === 'Super Admin' ? 'Toàn quyền cấu hình (Full Control)' : 'Kiểm duyệt viên (Moderator)'}
                                 </Typography>
                               </Box>
@@ -979,7 +979,7 @@ export default function AdminSettingsPage() {
                               variant="text"
                               sx={{
                                 textTransform: 'none',
-                                color: '#991B1B',
+                                color: '#8B1313',
                                 fontWeight: 700,
                                 fontSize: 13,
                                 p: 0,
@@ -1001,7 +1001,7 @@ export default function AdminSettingsPage() {
                             p: { xs: 3, md: 4.5 },
                           }}
                         >
-                          <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, color: '#991B1B' }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, color: '#8B1313' }}>
                             Khu vực nguy hiểm (Danger Zone)
                           </Typography>
                           <Typography sx={{ color: '#7F1D1D', fontSize: 13, mb: 3 }}>
@@ -1015,10 +1015,10 @@ export default function AdminSettingsPage() {
                               sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' } }}
                             >
                               <Box>
-                                <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #111827)' }}>
+                                <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #1F2937)' }}>
                                   Tạm khóa / Vô hiệu hóa tài khoản
                                 </Typography>
-                                <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-secondary, #64748B)' }}>
+                                <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-secondary, #4B5563)' }}>
                                   Tài khoản Admin của bạn sẽ bị tạm ngưng và đăng xuất tức thì.
                                 </Typography>
                               </Box>
@@ -1049,10 +1049,10 @@ export default function AdminSettingsPage() {
                               sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' } }}
                             >
                               <Box>
-                                <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #111827)' }}>
+                                <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #1F2937)' }}>
                                   Đăng xuất khỏi thiết bị khác
                                 </Typography>
-                                <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-secondary, #64748B)' }}>
+                                <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-secondary, #4B5563)' }}>
                                   Thu hồi toàn bộ phiên đăng nhập của tài khoản này ở mọi trình duyệt khác.
                                 </Typography>
                               </Box>
@@ -1094,7 +1094,7 @@ export default function AdminSettingsPage() {
                           }}
                         >
                           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #111827)' }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)' }}>
                               Xác thực hai yếu tố (2FA)
                             </Typography>
                             {profile.twoFactorEnabled ? (
@@ -1135,7 +1135,7 @@ export default function AdminSettingsPage() {
                               </Box>
                             )}
                           </Stack>
-                          <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 13, mb: 3 }}>
+                          <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 13, mb: 3 }}>
                             Kích hoạt phương pháp mật mã động sử dụng Google Authenticator để bổ sung thêm một lớp bảo mật nghiêm ngặt cho tài khoản Admin của bạn.
                           </Typography>
 
@@ -1150,7 +1150,7 @@ export default function AdminSettingsPage() {
                             }
                             label={
                               <Box>
-                                <Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--ev-text-primary, #111827)' }}>
+                                <Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--ev-text-primary, #1F2937)' }}>
                                   Yêu cầu mã xác thực khi đăng nhập tài khoản
                                 </Typography>
                               </Box>
@@ -1174,10 +1174,10 @@ export default function AdminSettingsPage() {
                             sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: 3.5 }}
                           >
                             <Box>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #111827)' }}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)' }}>
                                 Phiên hoạt động đang chạy
                               </Typography>
-                              <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 13 }}>
+                              <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 13 }}>
                                 Danh sách các trình duyệt và thiết bị đang duy trì phiên kết nối vào tài khoản của bạn.
                               </Typography>
                             </Box>
@@ -1208,19 +1208,19 @@ export default function AdminSettingsPage() {
                                   justifyContent: 'space-between',
                                   p: 2,
                                   borderRadius: '14px',
-                                  border: '1px solid #E5E7EB',
+                                  border: '1px solid #ECE7E4',
                                   bgcolor: sess.current ? '#EFF6FF' : 'transparent',
                                 }}
                               >
                                 <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                                   {sess.os.toLowerCase().includes('windows') || sess.os.toLowerCase().includes('mac') ? (
-                                    <LaptopMacRounded sx={{ fontSize: 24, color: sess.current ? '#2563EB' : '#64748B' }} />
+                                    <LaptopMacRounded sx={{ fontSize: 24, color: sess.current ? '#2563EB' : '#4B5563' }} />
                                   ) : (
-                                    <PhoneIphoneRounded sx={{ fontSize: 24, color: sess.current ? '#2563EB' : '#64748B' }} />
+                                    <PhoneIphoneRounded sx={{ fontSize: 24, color: sess.current ? '#2563EB' : '#4B5563' }} />
                                   )}
                                   <Box>
                                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                                      <Typography sx={{ fontSize: 14, fontWeight: 750, color: 'var(--ev-text-primary, #111827)' }}>
+                                      <Typography sx={{ fontSize: 14, fontWeight: 750, color: 'var(--ev-text-primary, #1F2937)' }}>
                                         {sess.browser} ({sess.os})
                                       </Typography>
                                       {sess.current && (
@@ -1231,7 +1231,7 @@ export default function AdminSettingsPage() {
                                         </Box>
                                       )}
                                     </Stack>
-                                    <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-secondary, #64748B)', mt: 0.2 }}>
+                                    <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-secondary, #4B5563)', mt: 0.2 }}>
                                       IP: {sess.ip} • {sess.location} • Đăng nhập lúc: {sess.time}
                                     </Typography>
                                   </Box>
@@ -1242,7 +1242,7 @@ export default function AdminSettingsPage() {
                                     onClick={() => handleRevokeSession(sess.id)}
                                     sx={{
                                       textTransform: 'none',
-                                      color: 'var(--ev-text-secondary, #64748B)',
+                                      color: 'var(--ev-text-secondary, #4B5563)',
                                       fontWeight: 700,
                                       fontSize: 12,
                                     }}
@@ -1269,7 +1269,7 @@ export default function AdminSettingsPage() {
                             p: { xs: 3, md: 4.5 },
                           }}
                         >
-                          <Typography variant="h6" sx={{ fontWeight: 800, mb: 3.5, color: 'var(--ev-text-primary, #111827)' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 800, mb: 3.5, color: 'var(--ev-text-primary, #1F2937)' }}>
                             Cấu hình cổng LMS & Vận hành
                           </Typography>
 
@@ -1358,7 +1358,7 @@ export default function AdminSettingsPage() {
                                   label="Đơn vị tiền tệ chính"
                                   disabled
                                   onChange={handleSystemChange}
-                                  sx={{ borderRadius: '12px', bgcolor: 'var(--ev-paper-alt, #F9FAFB)' }}
+                                  sx={{ borderRadius: '12px', bgcolor: 'var(--ev-paper-alt, #FBFAF9)' }}
                                 >
                                   <MenuItem value="VND">Việt Nam Đồng (đ)</MenuItem>
                                   <MenuItem value="USD">Đô la Mỹ ($)</MenuItem>
@@ -1378,10 +1378,10 @@ export default function AdminSettingsPage() {
                             p: { xs: 3, md: 4.5 },
                           }}
                         >
-                          <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, color: 'var(--ev-text-primary, #111827)' }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, color: 'var(--ev-text-primary, #1F2937)' }}>
                             Thông số Tài chính & Thanh toán
                           </Typography>
-                          <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 13, mb: 3.5 }}>
+                          <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 13, mb: 3.5 }}>
                             Cấu hình mức rút tiền và tỷ lệ khấu trừ chiết khấu hoa hồng khóa học trên hệ thống.
                           </Typography>
 
@@ -1450,7 +1450,7 @@ export default function AdminSettingsPage() {
                             p: { xs: 3, md: 4.5 },
                           }}
                         >
-                          <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 3, color: 'var(--ev-text-primary, #111827)' }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 3, color: 'var(--ev-text-primary, #1F2937)' }}>
                             Các tùy chọn vận hành
                           </Typography>
 
@@ -1466,10 +1466,10 @@ export default function AdminSettingsPage() {
                               }
                               label={
                                 <Box>
-                                  <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #111827)' }}>
+                                  <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #1F2937)' }}>
                                     Cho phép đăng ký thành viên mới
                                   </Typography>
-                                  <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 12.5 }}>
+                                  <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 12.5 }}>
                                     Mở cổng form đăng ký cho phép học viên và giảng viên tự tạo tài khoản mới.
                                   </Typography>
                                 </Box>
@@ -1489,10 +1489,10 @@ export default function AdminSettingsPage() {
                               }
                               label={
                                 <Box>
-                                  <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #111827)' }}>
+                                  <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #1F2937)' }}>
                                     Bắt buộc phê duyệt khóa học
                                   </Typography>
-                                  <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 12.5 }}>
+                                  <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 12.5 }}>
                                     Khóa học mới tạo bởi Giảng viên phải thông qua Admin kiểm duyệt trước khi hiển thị công khai.
                                   </Typography>
                                 </Box>
@@ -1512,10 +1512,10 @@ export default function AdminSettingsPage() {
                               }
                               label={
                                 <Box>
-                                  <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #111827)' }}>
+                                  <Typography sx={{ fontWeight: 750, fontSize: 14, color: 'var(--ev-text-primary, #1F2937)' }}>
                                     Ràng buộc liên kết tài khoản ngân hàng
                                   </Typography>
-                                  <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 12.5 }}>
+                                  <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 12.5 }}>
                                     Gi giảng viên bắt buộc phải liên kết tài khoản ngân hàng trước khi tạo yêu cầu rút tiền.
                                   </Typography>
                                 </Box>
@@ -1536,7 +1536,7 @@ export default function AdminSettingsPage() {
                           }}
                         >
                           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: system.maintenanceMode ? '#991B1B' : '#111827' }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: system.maintenanceMode ? '#8B1313' : '#1F2937' }}>
                               Chế độ Bảo trì Hệ thống
                             </Typography>
                             <Switch
@@ -1546,7 +1546,7 @@ export default function AdminSettingsPage() {
                               color="error"
                             />
                           </Stack>
-                          <Typography sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 13, mb: 2 }}>
+                          <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 13, mb: 2 }}>
                             Kích hoạt chế độ bảo trì sẽ chặn tạm thời mọi phiên truy cập thông thường từ Học viên và Giảng viên, chỉ cho phép tài khoản Admin vào hệ thống để sửa lỗi.
                           </Typography>
                           {system.maintenanceMode && (
@@ -1564,7 +1564,7 @@ export default function AdminSettingsPage() {
                             onClick={handleSaveSystem}
                             disabled={!isSystemDirty}
                             sx={{
-                              bgcolor: '#991B1B',
+                              bgcolor: '#8B1313',
                               color: '#fff',
                               borderRadius: '12px',
                               px: 3,
@@ -1582,14 +1582,14 @@ export default function AdminSettingsPage() {
                             onClick={handleResetSystem}
                             disabled={!isSystemDirty}
                             sx={{
-                              borderColor: 'var(--ev-divider, #E5E7EB)',
-                              color: 'var(--ev-text-secondary, #64748B)',
+                              borderColor: 'var(--ev-divider, #ECE7E4)',
+                              color: 'var(--ev-text-secondary, #4B5563)',
                               borderRadius: '12px',
                               px: 3,
                               py: 1.25,
                               fontWeight: 700,
                               fontSize: 13,
-                              '&:hover': { bgcolor: 'var(--ev-paper-alt, #F9FAFB)', borderColor: 'var(--ev-divider, #D1D5DB)' },
+                              '&:hover': { bgcolor: 'var(--ev-paper-alt, #FBFAF9)', borderColor: 'var(--ev-divider, #ECE7E4)' },
                             }}
                           >
                             Đặt lại
@@ -1630,12 +1630,12 @@ export default function AdminSettingsPage() {
                     width: 160,
                     height: 160,
                     borderRadius: '12px',
-                    border: '1px solid #E5E7EB',
+                    border: '1px solid #ECE7E4',
                     p: 1,
                   }}
                 />
               )}
-              <Typography sx={{ fontSize: 13, color: 'var(--ev-text-secondary, #64748B)', textAlign: 'center', lineHeight: 1.6 }}>
+              <Typography sx={{ fontSize: 13, color: 'var(--ev-text-secondary, #4B5563)', textAlign: 'center', lineHeight: 1.6 }}>
                 Quét mã này bằng ứng dụng Authenticator (Google/Microsoft), sau đó nhập mã OTP 6 chữ số được tạo ra bên dưới để hoàn tất kích hoạt.
               </Typography>
               <TextField
@@ -1652,7 +1652,7 @@ export default function AdminSettingsPage() {
               />
               {secretKey && (
                 <Tooltip title="Sử dụng khóa này nếu không quét được mã QR">
-                  <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--ev-text-muted, #94A3B8)', cursor: 'help' }}>
+                  <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--ev-text-muted, #8A7676)', cursor: 'help' }}>
                     Khóa thủ công: {secretKey}
                   </Typography>
                 </Tooltip>
@@ -1662,7 +1662,7 @@ export default function AdminSettingsPage() {
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button
               onClick={() => setOtpDialogOpen(false)}
-              sx={{ color: 'var(--ev-text-secondary, #64748B)', fontWeight: 700, textTransform: 'none' }}
+              sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontWeight: 700, textTransform: 'none' }}
             >
               Hủy bỏ
             </Button>
@@ -1671,7 +1671,7 @@ export default function AdminSettingsPage() {
               onClick={handleVerifyOtp}
               disabled={verifyingOtp}
               sx={{
-                bgcolor: '#991B1B',
+                bgcolor: '#8B1313',
                 color: '#fff',
                 borderRadius: '10px',
                 fontWeight: 700,
@@ -1694,7 +1694,7 @@ export default function AdminSettingsPage() {
               bottom: 24,
               left: { xs: 16, md: 300 },
               right: 16,
-              bgcolor: '#111827',
+              bgcolor: '#1F2937',
               color: '#fff',
               py: 1.8,
               px: 3,
@@ -1741,7 +1741,7 @@ export default function AdminSettingsPage() {
                   if (isSystemDirty) handleSaveSystem();
                 }}
                 sx={{
-                  bgcolor: '#991B1B',
+                  bgcolor: '#8B1313',
                   color: '#fff',
                   borderRadius: '10px',
                   fontWeight: 800,
