@@ -488,7 +488,7 @@ export default function LichSuKiemDuyetPage() {
                           flexShrink: 0,
                           color: isFilterDirty
                             ? COLORS.primary
-                            : alpha(COLORS.inkSoft, 0.4),
+                            : "rgba(75, 85, 99, 0.4)",
                           "&:hover": {
                             borderColor: COLORS.primary,
                             bgcolor: alpha(COLORS.primary, 0.06),
@@ -563,8 +563,7 @@ export default function LichSuKiemDuyetPage() {
                   </Typography>
                   <Typography
                     variant="caption"
-                    color={COLORS.inkSoft}
-                    sx={{ display: "block", mt: 0.25 }}
+                    sx={{ display: "block", mt: 0.25, color: COLORS.inkSoft }}
                   >
                     {tab === "TatCa"
                       ? "Hiện chưa có khóa học nào được duyệt hoặc từ chối."
@@ -635,7 +634,7 @@ export default function LichSuKiemDuyetPage() {
                             {item.createDate && (
                               <Typography
                                 variant="caption"
-                                color={COLORS.inkSoft}
+                                sx={{ color: COLORS.inkSoft }}
                               >
                                 Ngày tạo:{" "}
                                 {new Date(item.createDate).toLocaleDateString(
@@ -646,7 +645,7 @@ export default function LichSuKiemDuyetPage() {
                             {item.createBy && (
                               <Typography
                                 variant="caption"
-                                color={COLORS.inkSoft}
+                                sx={{ color: COLORS.inkSoft }}
                               >
                                 Người tạo: {item.createBy}
                               </Typography>
@@ -660,7 +659,7 @@ export default function LichSuKiemDuyetPage() {
                             e.stopPropagation();
                             handleOpenCourse(id);
                           }}
-                          sx={{ color: alpha(COLORS.ink, 0.5) }}
+                          sx={{ color: "rgba(31, 41, 55, 0.5)" }}
                         >
                           <VisibilityRoundedIcon fontSize="small" />
                         </IconButton>

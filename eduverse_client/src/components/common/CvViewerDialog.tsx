@@ -121,8 +121,10 @@ export default function CvViewerDialog({
   // Mỗi lần mở lại thì đặt về trạng thái đang tải
   useEffect(() => {
     if (open) {
-      setDangTai(true);
-      setLoi(false);
+      queueMicrotask(() => {
+        setDangTai(true);
+        setLoi(false);
+      });
     }
   }, [open, cvUrl]);
 
