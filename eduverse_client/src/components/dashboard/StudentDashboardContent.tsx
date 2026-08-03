@@ -867,7 +867,7 @@ function CourseCard({
                     fontWeight: 600,
                   }}
                 >
-                  {course.giaGoc.toLocaleString("vi-VN")}đ
+                  {course.giaGoc?.toLocaleString("vi-VN")}đ
                 </Typography>
               )}
             </Box>
