@@ -39,6 +39,12 @@ export default function InstructorCourseCard({
     khoaHoc.gia !== undefined &&
     khoaHoc.giaGoc > (khoaHoc.gia ?? 0);
 
+  // Clean description text
+  const cleanMoTa = (khoaHoc.moTa || "")
+    .replace(/<p>\s*<strong>\s*Mô tả khóa học\s*<\/strong>\s*<\/p>/gi, "")
+    .replace(/Mô tả khóa học/gi, "")
+    .trim();
+
   return (
     <Card
       variant="outlined"
@@ -46,18 +52,20 @@ export default function InstructorCourseCard({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        borderRadius: "16px",
+        borderRadius: "20px",
         border: "1px solid var(--ev-divider, #ECE7E4)",
         bgcolor: "var(--ev-paper, #FFFFFF)",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.02)",
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        overflow: "hidden",
         "&:hover": {
-          boxShadow: "0 12px 30px rgba(0, 0, 0, 0.05)",
-          transform: "translateY(-4px)",
-          borderColor: "rgba(139,19,19,0.2)",
+          boxShadow: "0 16px 36px rgba(139,19,19,0.08)",
+          transform: "translateY(-6px)",
+          borderColor: "rgba(139,19,19,0.25)",
         },
         "& *": {
-          fontFamily: "var(--ev-font-family, 'Be Vietnam Pro', sans-serif) !important",
+          fontFamily:
+            "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif)) !important",
         },
       }}
     >
@@ -70,96 +78,184 @@ export default function InstructorCourseCard({
           alignItems: "stretch",
         }}
       >
-        <CardMedia
-          component="img"
-          image={khoaHoc.hinhAnhKhoaHoc || "/images/course-placeholder.png"}
-          alt={khoaHoc.tieuDe}
-          sx={{ aspectRatio: "16/9", objectFit: "cover" }}
-        />
+        <Box sx={{ position: "relative", overflow: "hidden", aspectRatio: "16/9" }}>
+          <CardMedia
+            component="img"
+            image={khoaHoc.hinhAnhKhoaHoc || "/images/course-placeholder.png"}
+            alt={khoaHoc.tieuDe}
+            sx={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              "&:hover": {
+                transform: "scale(1.05)",
+              },
+            }}
+          />
+
+          {khoaHoc.capDo && (
+            <Chip
+              size="small"
+              label={khoaHoc.capDo}
+              sx={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                zIndex: 2,
+                bgcolor: "rgba(31, 41, 55, 0.8)",
+                color: "#FFFFFF",
+                backdropFilter: "blur(8px)",
+                fontWeight: 700,
+                fontSize: 11,
+                borderRadius: "8px",
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}
+            />
+          )}
+        </Box>
+
         <CardContent
           sx={{
             flex: 1,
             display: "flex",
             flexDirection: "column",
             width: "100%",
+            p: 2.5,
           }}
         >
           <Typography
             variant="subtitle1"
             sx={{
-              fontWeight: 700,
-              mb: 0.5,
+              fontWeight: 800,
+              fontSize: 16,
+              color: "var(--ev-text-primary, #1F2937)",
+              lineHeight: 1.35,
+              mb: 1,
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
               overflow: "hidden",
-              minHeight: 48,
+              minHeight: 44,
             }}
             title={khoaHoc.tieuDe}
           >
             {khoaHoc.tieuDe}
           </Typography>
 
-          {/* Hiển thị mô tả với HTML và line clamp */}
-          {khoaHoc.moTa && (
+          {/* Hiển thị mô tả sạch với HTML */}
+          {cleanMoTa && (
             <SafeHTML
-              html={khoaHoc.moTa}
+              html={cleanMoTa}
               lineClamp={2}
               expandable={false}
               sx={{
-                mb: 1.5,
+                mb: 2,
                 fontSize: "0.875rem",
-                color: "text.secondary",
+                color: "var(--ev-text-secondary, #4B5563)",
+                lineHeight: 1.5,
               }}
             />
           )}
 
           <Stack
             direction="row"
-            spacing={1.5}
+            spacing={1.2}
             sx={{
-              mb: 1.5,
+              mb: 2,
               flexWrap: "wrap",
-              gap: 1,
+              gap: 0.8,
             }}
           >
-            {khoaHoc.capDo && (
-              <Chip
-                size="small"
-                label={khoaHoc.capDo}
-                color={CAP_DO_MAU[khoaHoc.capDo] ?? "default"}
-                variant="outlined"
-              />
-            )}
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{
+                alignItems: "center",
+                px: 1,
+                py: 0.4,
+                borderRadius: "6px",
+                bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+              }}
+            >
               <AccessTimeOutlinedIcon
-                sx={{ fontSize: 16, color: "text.secondary" }}
+                sx={{ fontSize: 15, color: "var(--ev-text-secondary, #4B5563)" }}
               />
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: 11.5,
+                  color: "var(--ev-text-secondary, #4B5563)",
+                }}
+              >
                 {formatThoiLuong(khoaHoc.tongThoiLuong)}
               </Typography>
             </Stack>
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{
+                alignItems: "center",
+                px: 1,
+                py: 0.4,
+                borderRadius: "6px",
+                bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+              }}
+            >
               <PlayLessonOutlinedIcon
-                sx={{ fontSize: 16, color: "text.secondary" }}
+                sx={{ fontSize: 15, color: "var(--ev-text-secondary, #4B5563)" }}
               />
-              <Typography variant="caption" color="text.secondary">
-                {khoaHoc.tongBaiGiang ?? 0} bài giảng
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: 11.5,
+                  color: "var(--ev-text-secondary, #4B5563)",
+                }}
+              >
+                {khoaHoc.tongBaiGiang ?? 0} bài
               </Typography>
             </Stack>
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{
+                alignItems: "center",
+                px: 1,
+                py: 0.4,
+                borderRadius: "6px",
+                bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+              }}
+            >
               <GroupsOutlinedIcon
-                sx={{ fontSize: 16, color: "text.secondary" }}
+                sx={{ fontSize: 15, color: "var(--ev-text-secondary, #4B5563)" }}
               />
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: 11.5,
+                  color: "var(--ev-text-secondary, #4B5563)",
+                }}
+              >
                 {formatSoLuong(khoaHoc.soLuongHocVien)} học viên
               </Typography>
             </Stack>
           </Stack>
 
-          <Box sx={{ mt: "auto" }}>
+          <Box sx={{ mt: "auto", pt: 1, borderTop: "1px dashed var(--ev-divider, #ECE7E4)" }}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 900,
+                  fontSize: 17,
+                  color: "#8B1313",
+                }}
+              >
                 {formatGiaTien(khoaHoc.gia)}
               </Typography>
               {coGiaGoc && (
@@ -168,6 +264,7 @@ export default function InstructorCourseCard({
                   sx={{
                     color: "text.disabled",
                     textDecoration: "line-through",
+                    fontSize: 13,
                   }}
                 >
                   {formatGiaTien(khoaHoc.giaGoc)}

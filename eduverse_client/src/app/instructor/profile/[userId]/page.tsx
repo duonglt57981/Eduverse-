@@ -120,7 +120,16 @@ export default function InstructorProfilePage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien", "Admin"]}>
       <StudentDashboardShell>
-        <Box sx={{ "& *": { fontFamily: "var(--ev-font-family, 'Be Vietnam Pro', sans-serif) !important" } }}>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            bgcolor: "var(--ev-bg, #F7F5F2)",
+            "& *": {
+              fontFamily:
+                "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif)) !important",
+            },
+          }}
+        >
           {duLieu?.thongTinGiangVien ? (
             <InstructorHeroSection
               giangVien={duLieu.thongTinGiangVien}
@@ -132,15 +141,51 @@ export default function InstructorProfilePage() {
               tongHocVienDangKy={(duLieu as any)?.tongHocVienDangKy}
             />
           ) : (
-            <Box sx={{ bgcolor: "#0A0505", height: 220 }} />
+            <Box sx={{ bgcolor: "#0D0505", height: 220 }} />
           )}
 
-          <Container maxWidth="lg" sx={{ py: { xs: 4, md: 5 } }}>
-            <Typography variant="h6" sx={{ fontWeight: 900, fontSize: 22, color: "var(--ev-text-primary, #1F2937)", mb: 2 }}>
-              {duLieu?.thongTinGiangVien
-                ? `Khóa học của ${trichXuatTenHienThi(duLieu.thongTinGiangVien)}`
-                : "Khóa học"}
-            </Typography>
+          <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 2,
+                mb: 2,
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 900,
+                  fontSize: { xs: 20, md: 24 },
+                  color: "var(--ev-text-primary, #1F2937)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {duLieu?.thongTinGiangVien
+                  ? `Khóa học của ${trichXuatTenHienThi(duLieu.thongTinGiangVien)}`
+                  : "Danh sách khóa học"}
+              </Typography>
+
+              {danhSachKhoaHoc.length > 0 && (
+                <Box
+                  sx={{
+                    px: 1.8,
+                    py: 0.5,
+                    borderRadius: "10px",
+                    bgcolor: "rgba(139,19,19,0.08)",
+                    border: "1px solid rgba(139,19,19,0.15)",
+                    color: "#8B1313",
+                    fontWeight: 800,
+                    fontSize: 13,
+                  }}
+                >
+                  {(duLieu?.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length} khóa học
+                </Box>
+              )}
+            </Box>
             <Divider sx={{ mb: 4, borderColor: "var(--ev-divider, #ECE7E4)" }} />
 
             <InstructorCourseList

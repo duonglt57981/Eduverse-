@@ -380,7 +380,7 @@ function SidebarContent({
         case "Học viên":
           return "/instructor/students";
         case "Doanh thu":
-          return "/instructor/revenue";
+          return "/instructor/money";
         case "Q&A":
           return "/instructor/qa";
         case "Cài đặt":
@@ -830,8 +830,12 @@ const getNotificationTarget = (notification: ThongBao, pathname: string) => {
     : null;
 
   if (!pathname.startsWith("/admin")) {
+    let target = normalizedLink;
+    if (target === "/instructor/revenue") {
+      target = "/instructor/money";
+    }
     return (
-      normalizedLink ||
+      target ||
       (pathname.startsWith("/instructor")
         ? "/instructor/dashboard"
         : "/student/dashboard")
@@ -2072,7 +2076,7 @@ export default function DashboardShell({
                               }}
                             >
                               Chào mừng trở lại,{" "}
-                              {dashboardData?.welcomeStats?.userName} 👋
+                              {dashboardData?.welcomeStats?.userName}
                             </Typography>
                             <Typography
                               sx={{

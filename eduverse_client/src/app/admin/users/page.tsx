@@ -212,6 +212,36 @@ export default function AdminUsersPage() {
       return;
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Email không hợp lệ',
+        text: 'Vui lòng nhập đúng định dạng email.',
+        confirmButtonColor: COLORS.primary,
+      });
+      return;
+    }
+
+    if (phoneNumber && !/^[0-9]{9,11}$/.test(phoneNumber.trim())) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Số điện thoại không hợp lệ',
+        text: 'Số điện thoại chỉ được chứa chữ số và phải có 9-11 chữ số.',
+        confirmButtonColor: COLORS.primary,
+      });
+      return;
+    }
+
+    if (hoTen && hoTen.trim().length > 0 && !/[a-zA-ZÀ-ỹ]/.test(hoTen)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Họ tên không hợp lệ',
+        text: 'Họ tên không được chỉ chứa số hoặc ký tự đặc biệt.',
+        confirmButtonColor: COLORS.primary,
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       if (dialogMode === 'add') {

@@ -207,22 +207,32 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
         </Typography>
 
         {/* Description */}
-        <Typography
-          variant="body2"
-          sx={{
-            color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))',
-            fontSize: 12.5,
-            lineHeight: 1.5,
-            mb: 2,
-            height: 38,
-            overflow: 'hidden',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-          }}
-        >
-          {course.moTa}
-        </Typography>
+        {course.moTa && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))',
+              fontSize: 12.5,
+              lineHeight: 1.5,
+              mb: 2,
+              height: 38,
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {course.moTa
+              .replace(/<[^>]*>/g, ' ')
+              .replace(/&nbsp;/gi, ' ')
+              .replace(/&amp;/gi, '&')
+              .replace(/&lt;/gi, '<')
+              .replace(/&gt;/gi, '>')
+              .replace(/Mô tả khóa học/gi, '')
+              .replace(/\s+/g, ' ')
+              .trim()}
+          </Typography>
+        )}
 
         {/* Metadata Details */}
         <Stack

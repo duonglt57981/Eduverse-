@@ -20,7 +20,7 @@ namespace Eduverse.Service.ThanhToanService
 
         Task<List<DonHangDto>> GetDonHangByUserAsync(Guid userId);
 
-        Task<DonHangDto?> GetDonHangByIdAsync(Guid id);
+        Task<DonHangDto?> GetDonHangByIdAsync(Guid id, Guid? nguoiDungHienTai = null, bool laAdmin = false);
         Task<ApDungNhieuMaGiamGiaResponseDto> KiemTraMaGiamGiaAsync(ApDungMaGiamGiaDto dto);
         Task<double> GetTongDoanhThuNenTangAsync();
     }

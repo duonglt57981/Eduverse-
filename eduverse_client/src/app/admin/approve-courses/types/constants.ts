@@ -3,26 +3,26 @@ import { BRAND, NEUTRAL, STATUS, FONT_FAMILY } from "@/src/theme/tokens";
 // Giữ nguyên tên khoá để không phải sửa các component đang dùng,
 // chỉ trỏ GIÁ TRỊ về design system chung trong src/theme/tokens.ts.
 export const COLORS = {
-  primary: BRAND.main,
-  primaryDark: BRAND.dark,
-  primarySoft: BRAND.light,
-  ink: NEUTRAL.textPrimary,
-  inkSoft: NEUTRAL.textSecondary,
-  paper: NEUTRAL.bg,
-  paperRaised: NEUTRAL.paper,
-  line: NEUTRAL.divider,
-  gold: STATUS.warningDark,
-  goldSoft: STATUS.warningSoft,
-  success: STATUS.success,
-  successSoft: STATUS.successSoft,
-  danger: STATUS.error,
-  dangerSoft: STATUS.errorSoft,
+  primary: "#8B1313",
+  primaryDark: "#6B0E0E",
+  primarySoft: "rgba(139,19,19,0.08)",
+  ink: "var(--ev-text-primary, #1F2937)",
+  inkSoft: "var(--ev-text-secondary, #4B5563)",
+  paper: "var(--ev-bg, #F7F5F2)",
+  paperRaised: "var(--ev-paper, #FFFFFF)",
+  line: "var(--ev-divider, #ECE7E4)",
+  gold: "#D97706",
+  goldSoft: "#FEF3C7",
+  success: "#16A34A",
+  successSoft: "#DCFCE7",
+  danger: "#DC2626",
+  dangerSoft: "#FEE2E2",
 };
 
 // Toàn hệ thống dùng chung một bộ chữ Be Vietnam Pro.
 export const FONTS = {
-  display: FONT_FAMILY,
-  body: FONT_FAMILY,
+  display: "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))",
+  body: "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))",
 };
 
 export const boxSx = {

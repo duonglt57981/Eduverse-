@@ -57,12 +57,18 @@ const TRANG_THAI_CONFIG: Record<string, TrangThaiConfig> = {
 export default function StatusChip({
   trangThai,
   size = "medium",
+  hidePending = false,
 }: {
   trangThai: string | null | undefined;
   size?: "small" | "medium";
+  hidePending?: boolean;
 }) {
   const status = normalizeTrangThai(trangThai);
+  if (hidePending && (status === "ChoDuyet" || status === "DangDuyet")) {
+    return null;
+  }
   const cfg = TRANG_THAI_CONFIG[status];
+  if (!cfg) return null;
 
   if (cfg.stamp) {
     const rotate = status === "DaDuyet" ? "-6deg" : "4deg";

@@ -234,6 +234,11 @@ function PromotionsContent() {
 
     const pct = Number(form.phanTramGiam);
 
+    if (!form.phanTramGiam.trim() || !Number.isFinite(pct)) {
+      setFormError("Vui lòng nhập phần trăm giảm hợp lệ");
+      return false;
+    }
+
     if (pct <= 0) {
       setFormError("Phần trăm giảm phải lớn hơn 0%");
       return false;

@@ -285,7 +285,7 @@ export default function KiemDuyetSidebar({
                   >
                     {tl.tenTaiLieu ?? tl.tieuDe}
                   </Typography>
-                  <StatusChip trangThai={tl.trangThaiPheDuyet} size="small" />
+                  <StatusChip trangThai={tl.trangThaiPheDuyet} size="small" hidePending />
                 </Box>
               );
             })}
@@ -355,7 +355,7 @@ export default function KiemDuyetSidebar({
               </Typography>
             }
           />
-          <StatusChip trangThai={bg.trangThaiPheDuyet} size="small" />
+          <StatusChip trangThai={bg.trangThaiPheDuyet} size="small" hidePending />
         </ListItemButton>
         {renderTaiLieu(bg)}
       </Box>
@@ -434,7 +434,7 @@ export default function KiemDuyetSidebar({
               ) : undefined
             }
           />
-          <StatusChip trangThai={bkt.trangThaiPheDuyet} size="small" />
+          <StatusChip trangThai={bkt.trangThaiPheDuyet} size="small" hidePending />
           {cauHois.length > 0 && (
             <IconButton
               size="small"

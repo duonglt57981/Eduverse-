@@ -57,15 +57,18 @@ export default function InstructorHeroSection({
   return (
     <Box
       sx={{
-        bgcolor: "#0A0505",
-        background: "linear-gradient(135deg, #1C0A0A 0%, #0B0505 100%)",
+        bgcolor: "#0D0505",
+        background:
+          "linear-gradient(135deg, #1A0909 0%, #0D0505 50%, #170808 100%)",
         color: "common.white",
-        pt: { xs: 6, md: 8 },
+        pt: { xs: 6, md: 7 },
         pb: { xs: 6, md: 7 },
         position: "relative",
         overflow: "hidden",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
         "& *": {
-          fontFamily: "var(--ev-font-family, 'Be Vietnam Pro', sans-serif) !important",
+          fontFamily:
+            "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif)) !important",
         },
       }}
     >
@@ -73,12 +76,28 @@ export default function InstructorHeroSection({
       <Box
         sx={{
           position: "absolute",
-          top: "-20%",
-          right: "-10%",
-          width: 320,
-          height: 320,
+          top: "-30%",
+          right: "-5%",
+          width: 420,
+          height: 420,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(139,19,19,0.18) 0%, rgba(139,19,19,0) 70%)",
+          background:
+            "radial-gradient(circle, rgba(139,19,19,0.25) 0%, rgba(139,19,19,0) 70%)",
+          filter: "blur(60px)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: "-30%",
+          left: "-5%",
+          width: 380,
+          height: 380,
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(139,19,19,0.15) 0%, rgba(139,19,19,0) 70%)",
           filter: "blur(50px)",
           pointerEvents: "none",
           zIndex: 0,
@@ -94,23 +113,41 @@ export default function InstructorHeroSection({
             textAlign: { xs: "center", md: "left" },
           }}
         >
-          <Avatar
-            src={giangVien.anhDaiDien}
-            alt={tenHienThi}
+          {/* Avatar Ring */}
+          <Box
             sx={{
-              width: { xs: 110, md: 145 },
-              height: { xs: 110, md: 145 },
-              fontSize: 48,
-              border: "4px solid rgba(255, 255, 255, 0.08)",
-              boxShadow: "0 12px 36px rgba(0, 0, 0, 0.3)",
-              bgcolor: "rgba(139, 19, 19, 0.1)",
-              color: "#FFFFFF",
+              p: "4px",
+              borderRadius: "50%",
+              background:
+                "linear-gradient(135deg, #8B1313 0%, rgba(255,255,255,0.2) 100%)",
+              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.4)",
+              flexShrink: 0,
             }}
           >
-            {tenHienThi.charAt(0)}
-          </Avatar>
+            <Avatar
+              src={giangVien.anhDaiDien}
+              alt={tenHienThi}
+              sx={{
+                width: { xs: 110, md: 145 },
+                height: { xs: 110, md: 145 },
+                fontSize: 48,
+                bgcolor: "#2D0B0B",
+                color: "#FFFFFF",
+                fontWeight: 800,
+              }}
+            >
+              {tenHienThi.charAt(0)}
+            </Avatar>
+          </Box>
 
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: { xs: "center", md: "flex-start" } }}>
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: { xs: "center", md: "flex-start" },
+            }}
+          >
             <Typography
               variant="h4"
               sx={{
@@ -121,23 +158,29 @@ export default function InstructorHeroSection({
                 background: "linear-gradient(120deg, #FFFFFF 0%, #F3F4F6 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
+                letterSpacing: "-0.02em",
               }}
             >
               {tenHienThi}
             </Typography>
 
             {giangVien.chucVu && (
-              <Typography
-                variant="subtitle1"
+              <Box
                 sx={{
-                  color: "rgba(255, 255, 255, 0.85)",
-                  fontWeight: 600,
-                  fontSize: "1.05rem",
+                  display: "inline-block",
+                  px: 1.6,
+                  py: 0.4,
+                  borderRadius: "20px",
+                  bgcolor: "rgba(139, 19, 19, 0.25)",
+                  border: "1px solid rgba(139, 19, 19, 0.4)",
+                  color: "#FECDD3",
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
                   mb: 2,
                 }}
               >
                 {giangVien.chucVu}
-              </Typography>
+              </Box>
             )}
 
             {/* Hiển thị tiểu sử với expand/collapse */}
@@ -145,23 +188,24 @@ export default function InstructorHeroSection({
               <SafeHTML
                 html={giangVien.tieuSu || giangVien.gioiThieu || ""}
                 maxLength={200}
+                buttonColor="#F87171"
                 sx={{
                   fontSize: "0.95rem",
                   lineHeight: 1.8,
                   maxWidth: 680,
-                  color: "rgba(255, 255, 255, 0.7)",
+                  color: "rgba(255, 255, 255, 0.8)",
                 }}
               />
             )}
 
             <Stack
               direction="row"
-              spacing={2.5}
+              spacing={2}
               sx={{
                 flexWrap: "wrap",
                 justifyContent: { xs: "center", md: "flex-start" },
                 gap: 1.5,
-                mt: 3.5,
+                mt: 3,
               }}
             >
               <Box
@@ -169,18 +213,65 @@ export default function InstructorHeroSection({
                   display: "flex",
                   alignItems: "center",
                   gap: 1.2,
-                  px: 2.2,
-                  py: 1.1,
+                  px: 2,
+                  py: 1,
                   borderRadius: "12px",
-                  bgcolor: "rgba(255, 255, 255, 0.04)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  bgcolor: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
                   backdropFilter: "blur(12px)",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
                 }}
               >
-                <GroupsOutlinedIcon sx={{ color: "rgba(255, 255, 255, 0.6)", fontSize: 20 }} />
-                <Typography sx={{ fontSize: 13, color: "rgba(255, 255, 255, 0.65)" }}>
-                  <Box component="span" sx={{ fontWeight: 800, color: "#FFFFFF", mr: 0.5, fontSize: 15.5 }}>
+                <SchoolOutlinedIcon
+                  sx={{ color: "#FCA5A5", fontSize: 20 }}
+                />
+                <Typography
+                  sx={{ fontSize: 13, color: "rgba(255, 255, 255, 0.7)" }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      fontWeight: 850,
+                      color: "#FFFFFF",
+                      mr: 0.5,
+                      fontSize: 15,
+                    }}
+                  >
+                    {tongSoKhoaHoc}
+                  </Box>
+                  khóa học
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.2,
+                  px: 2,
+                  py: 1,
+                  borderRadius: "12px",
+                  bgcolor: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backdropFilter: "blur(12px)",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                }}
+              >
+                <GroupsOutlinedIcon
+                  sx={{ color: "#93C5FD", fontSize: 20 }}
+                />
+                <Typography
+                  sx={{ fontSize: 13, color: "rgba(255, 255, 255, 0.7)" }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      fontWeight: 850,
+                      color: "#FFFFFF",
+                      mr: 0.5,
+                      fontSize: 15,
+                    }}
+                  >
                     {formatSoLuong(tongHocVienDangHoc)}
                   </Box>
                   học viên đang học
@@ -192,18 +283,30 @@ export default function InstructorHeroSection({
                   display: "flex",
                   alignItems: "center",
                   gap: 1.2,
-                  px: 2.2,
-                  py: 1.1,
+                  px: 2,
+                  py: 1,
                   borderRadius: "12px",
-                  bgcolor: "rgba(255, 255, 255, 0.04)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  bgcolor: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
                   backdropFilter: "blur(12px)",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
                 }}
               >
-                <HowToRegOutlinedIcon sx={{ color: "rgba(255, 255, 255, 0.6)", fontSize: 20 }} />
-                <Typography sx={{ fontSize: 13, color: "rgba(255, 255, 255, 0.65)" }}>
-                  <Box component="span" sx={{ fontWeight: 800, color: "#FFFFFF", mr: 0.5, fontSize: 15.5 }}>
+                <HowToRegOutlinedIcon
+                  sx={{ color: "#6EE7B7", fontSize: 20 }}
+                />
+                <Typography
+                  sx={{ fontSize: 13, color: "rgba(255, 255, 255, 0.7)" }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      fontWeight: 850,
+                      color: "#FFFFFF",
+                      mr: 0.5,
+                      fontSize: 15,
+                    }}
+                  >
                     {formatSoLuong(tongHocVienDangKy)}
                   </Box>
                   học viên đã đăng ký

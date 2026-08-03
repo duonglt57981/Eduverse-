@@ -59,7 +59,7 @@ function BaiGiangRow({ baiGiang, active, onClick }: any) {
         >
           {baiGiang.tenBaiGiang || baiGiang.tieuDe}
         </Typography>
-        <StatusChip trangThai={baiGiang.trangThaiPheDuyet} size="small" />
+        <StatusChip trangThai={baiGiang.trangThaiPheDuyet} size="small" hidePending />
       </Stack>
     </Box>
   );
@@ -101,7 +101,7 @@ function TaiLieuRow({ taiLieu, active, onClick, nested = false }: any) {
         >
           {taiLieu.tenTaiLieu || taiLieu.tieuDe}
         </Typography>
-        <StatusChip trangThai={taiLieu.trangThaiPheDuyet} size="small" />
+        <StatusChip trangThai={taiLieu.trangThaiPheDuyet} size="small" hidePending />
       </Stack>
     </Box>
   );
@@ -151,7 +151,7 @@ function BaiKiemTraRow({ baiKiemTra, active, onClick }: any) {
           >
             {baiKiemTra.tenBaiKiemTra || baiKiemTra.tieuDe}
           </Typography>
-          <StatusChip trangThai={baiKiemTra.trangThaiPheDuyet} size="small" />
+          <StatusChip trangThai={baiKiemTra.trangThaiPheDuyet} size="small" hidePending />
           {cauHois.length > 0 && (
             <ExpandMoreIcon
               onClick={(e: any) => {

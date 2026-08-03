@@ -39,17 +39,84 @@ import { apiService } from "@/src/services/index";
 
 const PRIMARY = "#8B1313";
 
-const trangThaiColor: Record<string, "warning" | "success" | "error" | "info"> =
-  {
-    ChoDuyet: "warning",
-    DaChuyenTien: "success",
-    TuChoi: "error",
-  };
-
-const trangThaiLabel: Record<string, string> = {
-  ChoDuyet: "Chờ duyệt",
-  DaChuyenTien: "Đã chuyển tiền",
-  TuChoi: "Từ chối",
+const getStatusChip = (trangThai?: string) => {
+  const status = trangThai ?? "";
+  if (status === "ChoDuyet") {
+    return (
+      <Chip
+        label="Chờ duyệt"
+        size="small"
+        sx={{
+          bgcolor: "#FEF3C7",
+          color: "#92400E",
+          fontWeight: 700,
+          border: "1px solid #FDE68A",
+          fontSize: "12px",
+          px: 0.5,
+        }}
+      />
+    );
+  }
+  if (status === "DaChuyenTien") {
+    return (
+      <Chip
+        label="Đã chuyển tiền"
+        size="small"
+        sx={{
+          bgcolor: "#D1FAE5",
+          color: "#065F46",
+          fontWeight: 700,
+          border: "1px solid #A7F3D0",
+          fontSize: "12px",
+          px: 0.5,
+        }}
+      />
+    );
+  }
+  if (status === "TuChoi") {
+    return (
+      <Chip
+        label="Từ chối"
+        size="small"
+        sx={{
+          bgcolor: "#FEE2E2",
+          color: "#991B1B",
+          fontWeight: 700,
+          border: "1px solid #FCA5A5",
+          fontSize: "12px",
+          px: 0.5,
+        }}
+      />
+    );
+  }
+  if (status === "DaHuy" || status === "DaHuyYeuCau" || status === "Huy") {
+    return (
+      <Chip
+        label="Đã hủy"
+        size="small"
+        sx={{
+          bgcolor: "#F3F4F6",
+          color: "#374151",
+          fontWeight: 700,
+          border: "1px solid #E5E7EB",
+          fontSize: "12px",
+          px: 0.5,
+        }}
+      />
+    );
+  }
+  return (
+    <Chip
+      label={status}
+      size="small"
+      sx={{
+        bgcolor: "#F3F4F6",
+        color: "#374151",
+        fontWeight: 700,
+        fontSize: "12px",
+      }}
+    />
+  );
 };
 
 // Bước trong flow rút tiền
@@ -347,14 +414,7 @@ function DoanhThuContent() {
                   </Box>
                 </Box>
                 <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                  <Chip
-                    label={
-                      trangThaiLabel[item.trangThai ?? ""] ?? item.trangThai
-                    }
-                    color={trangThaiColor[item.trangThai ?? ""] ?? "default"}
-                    size="small"
-                    sx={{ fontWeight: 700 }}
-                  />
+                  {getStatusChip(item.trangThai)}
                   {/* Nút hủy — chỉ hiện khi ChoDuyet */}
                   {item.trangThai === "ChoDuyet" && (
                     <Button
@@ -413,9 +473,8 @@ function DoanhThuContent() {
 
               <TextField
                 fullWidth
-                label="Số tiền rút (đ)"
+                placeholder="Số tiền rút (đ)"
                 type="number"
-                size="small"
                 value={soTienRut}
                 onChange={(e) => {
                   setSoTienRut(e.target.value);
@@ -423,23 +482,31 @@ function DoanhThuContent() {
                 }}
                 sx={{
                   mb: 2,
-                  "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                  "& .MuiOutlinedInput-root": {
+                    height: "44px",
+                    borderRadius: "10px",
+                  },
                 }}
                 slotProps={{ htmlInput: { min: 50000, max: soDu } }}
                 helperText="Tối thiểu 50.000đ"
               />
 
-              <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                <InputLabel>Tài khoản ngân hàng</InputLabel>
+              <FormControl fullWidth sx={{ mb: 2 }}>
                 <Select
                   value={idNganHang}
                   onChange={(e) => {
                     setIdNganHang(e.target.value);
                     setError("");
                   }}
-                  label="Tài khoản ngân hàng"
-                  sx={{ borderRadius: "10px" }}
+                  displayEmpty
+                  sx={{
+                    height: "44px",
+                    borderRadius: "10px",
+                  }}
                 >
+                  <MenuItem value="" disabled>
+                    <span style={{ color: "rgba(0, 0, 0, 0.38)" }}>Tài khoản ngân hàng</span>
+                  </MenuItem>
                   {nganHangs.map((n) => (
                     <MenuItem key={n.id} value={n.id}>
                       {n.tenNganHang} - {n.soTaiKhoan} ({n.tenTaiKhoan})

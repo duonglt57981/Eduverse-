@@ -1888,6 +1888,9 @@ namespace Eduverse.Service.KhoaHocService
             var banGoc = await GetAll()
                 .FirstOrDefaultAsync(x => x.Id == request.IdKhoaHoc && x.IsBanHienTai && !x.IsDeleted);
 
+            if (banGoc == null)
+                throw new Exception("Không tìm thấy khóa học");
+
             if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
                 throw new Exception("Chuyển sang DangSua để sửa khóa học này!");
 
@@ -1902,9 +1905,6 @@ namespace Eduverse.Service.KhoaHocService
 
             if (banGoc.TrangThaiPheDuyet == "DaDuyet")
                 throw new Exception("Khóa học đang ở chế độ Đã Duyệt không thể sửa");
-
-            if (banGoc == null)
-                throw new Exception("Không tìm thấy khóa học");
 
             if (banGoc.CreatedId != nguoiTao)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
@@ -2576,11 +2576,11 @@ namespace Eduverse.Service.KhoaHocService
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
             var khoaHoc = await GetByIdAsync(idKhoaHoc);
-            if (khoaHoc.CreatedId != nguoiTao)
-                throw new Exception("Ban kh có quyền hạn để xóa khóa học này!");
-
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khoa học");
+
+            if (khoaHoc.CreatedId != nguoiTao)
+                throw new Exception("Ban kh có quyền hạn để xóa khóa học này!");
 
             if (khoaHoc.TrangThaiPheDuyet == "ChoDuyet" || khoaHoc.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
@@ -2613,7 +2613,7 @@ namespace Eduverse.Service.KhoaHocService
             if (!Guid.TryParse(userIdClaim, out var userId))
                 throw new UnauthorizedAccessException("Không thể xác định người dùng.");
 
-            return await GetAll()
+            var list = await GetAll()
                 .Where(x => x.CreatedId == userId
                          && x.TrangThaiPheDuyet == "DaDuyet"
                          && x.IsBanHienTai == true)
@@ -2625,6 +2625,8 @@ namespace Eduverse.Service.KhoaHocService
                     HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
                 })
                 .ToListAsync();
+
+            return list.GroupBy(x => x.Id).Select(g => g.First()).ToList();
         }
         public async Task<List<string>> GetSearchSuggestions(string query)
         {
