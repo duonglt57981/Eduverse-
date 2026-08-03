@@ -190,7 +190,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "aeb31476-4c2f-4f99-996d-8c9ee1e0f875",
+                            ConcurrencyStamp = "cc581283-bd7b-402e-9a3b-580dab15ad65",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -199,9 +199,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEB5b4c6Gi5GEREW9v/iT/hPxPRm4dhjEM1gLlFEXlq7CEJVtHLIYsWj4qCN+Qptgw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEJHwRbju7/3SvZSp/BQ6RjZ+ZgPTbqfQtObHWfgqdi69/TarEm/wrjJ7oU6llEeY9w==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "7e663523-78f0-4df5-a5f7-2f99440df590",
+                            SecurityStamp = "8300b077-32cf-4154-a2ad-c449b0bd560a",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -644,11 +644,17 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid?>("DeletedId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("IdKhoaHoc")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("NoiDung")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SoSao")
+                        .HasColumnType("int");
 
                     b.Property<string>("TenDanhMuc")
                         .HasColumnType("nvarchar(max)");
