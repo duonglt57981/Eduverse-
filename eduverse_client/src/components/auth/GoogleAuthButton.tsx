@@ -178,6 +178,8 @@ export default function GoogleAuthButton({
             router.push('/admin/dashboard');
           } else if (roles.includes('GiaoVien')) {
             router.push('/instructor/dashboard');
+          } else if (roles.includes('personnel')) {
+            router.push('/personnel/courses');
           } else {
             router.push('/student/dashboard');
           }

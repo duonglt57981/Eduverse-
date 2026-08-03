@@ -67,7 +67,7 @@ export default function LoginPage() {
         login({ userName: userName.trim(), password }),
       );
       if (login.fulfilled.match(result)) {
-        console.log("Login successful:", result);
+       
         const roles: string[] = result.payload.roles || [];
         if (roles.includes("Admin")) {
           router.push("/admin/dashboard");
