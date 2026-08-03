@@ -41,6 +41,17 @@ namespace Eduverse.Api.Controller
         {
             try
             {
+                var isAdmin = User.IsInRole("Admin");
+
+                if (isAdmin && request.PhanTramGiam > 30)
+                    return DataResponse<KhuyenMaiDto>.False("Admin chỉ được tạo tối đa 30%");
+
+                if (!isAdmin && request.PhanTramGiam > 100)
+                    return DataResponse<KhuyenMaiDto>.False("Phần trăm giảm không được vượt quá 100%");
+
+                if (request.PhanTramGiam <= 0)
+                    return DataResponse<KhuyenMaiDto>.False("Phần trăm giảm phải lớn hơn 0%");
+
                 var result = await _khuyenMaiService.CreateKhuyenMai(request);
                 return DataResponse<KhuyenMaiDto>.Success(result);
             }
@@ -56,6 +67,17 @@ namespace Eduverse.Api.Controller
         {
             try
             {
+                var isAdmin = User.IsInRole("Admin");
+
+                if (isAdmin && request.PhanTramGiam > 30)
+                    return DataResponse<KhuyenMaiDto>.False("Admin chỉ được tạo tối đa 30%");
+
+                if (!isAdmin && request.PhanTramGiam > 100)
+                    return DataResponse<KhuyenMaiDto>.False("Phần trăm giảm không được vượt quá 100%");
+
+                if (request.PhanTramGiam <= 0)
+                    return DataResponse<KhuyenMaiDto>.False("Phần trăm giảm phải lớn hơn 0%");
+
                 var result = await _khuyenMaiService.UpdateKhuyenMai(request);
                 return DataResponse<KhuyenMaiDto>.Success(result);
             }
