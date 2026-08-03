@@ -52,6 +52,22 @@ const DEFAULT_SORT = "moi-nhat";
 // Trang này chỉ hiển thị các khóa học đã được DUYỆT — không còn lọc theo trạng thái
 const TRANG_THAI_CO_DINH = "DaDuyet";
 
+/**
+ * MUI's `alpha()` only accepts real color values (#hex, rgb(), hsl()...).
+ * Several tokens in COLORS (ink, inkSoft, primary, ...) are CSS custom
+ * properties like `var(--ev-text-primary, #1F2937)`, which `alpha()`
+ * cannot parse and throws on at runtime.
+ *
+ * `mix()` uses native CSS `color-mix()` instead, which works with CSS
+ * variables directly (and stays correct if the variable changes at
+ * runtime, e.g. theme switching) — a drop-in replacement for
+ * `alpha(color, opacity)` wherever `color` may be a CSS variable.
+ */
+function mix(cssColor: string, opacity: number) {
+  const pct = Math.round(Math.max(0, Math.min(1, opacity)) * 100);
+  return `color-mix(in srgb, ${cssColor} ${pct}%, transparent)`;
+}
+
 function resolveImageUrl(path?: string | null): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
@@ -80,7 +96,7 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
             justifyContent: "center",
           }}
         >
-          <ImageRoundedIcon sx={{ color: alpha(COLORS.primary, 0.25) }} />
+          <ImageRoundedIcon sx={{ color: mix(COLORS.primary, 0.25) }} />
         </Box>
       ) : (
         <Box
@@ -260,10 +276,10 @@ export default function LichSuKiemDuyetPage() {
               overflow: "hidden",
               borderRadius: 3,
               border: `1px solid ${COLORS.line}`,
-              background: `linear-gradient(135deg, ${alpha(
+              background: `linear-gradient(135deg, ${mix(
                 COLORS.primary,
                 0.1,
-              )} 0%, ${alpha(COLORS.primary, 0.03)} 55%, transparent 100%)`,
+              )} 0%, ${mix(COLORS.primary, 0.03)} 55%, transparent 100%)`,
               p: { xs: 2.5, sm: 3.5 },
               mb: 2.5,
             }}
@@ -275,7 +291,7 @@ export default function LichSuKiemDuyetPage() {
                 right: -18,
                 top: -18,
                 fontSize: 160,
-                color: alpha(COLORS.primary, 0.06),
+                color: mix(COLORS.primary, 0.06),
                 transform: "rotate(-12deg)",
               }}
             />
@@ -306,7 +322,7 @@ export default function LichSuKiemDuyetPage() {
                       "&:hover": {
                         borderColor: COLORS.primary,
                         color: COLORS.primary,
-                        bgcolor: alpha(COLORS.primary, 0.06),
+                        bgcolor: mix(COLORS.primary, 0.06),
                       },
                     }}
                   >
@@ -344,7 +360,7 @@ export default function LichSuKiemDuyetPage() {
                   pl: { xs: 0, sm: 2.5 },
                   borderLeft: {
                     xs: "none",
-                    sm: `1px solid ${alpha(COLORS.ink, 0.08)}`,
+                    sm: `1px solid ${mix(COLORS.ink, 0.08)}`,
                   },
                   flexShrink: 0,
                 }}
@@ -421,7 +437,7 @@ export default function LichSuKiemDuyetPage() {
                 sx={{
                   fontSize: 11,
                   fontWeight: 700,
-                  color: alpha(COLORS.ink, 0.45),
+                  color: mix(COLORS.ink, 0.45),
                   textTransform: "uppercase",
                   letterSpacing: 0.5,
                   mb: 1.25,
@@ -512,10 +528,10 @@ export default function LichSuKiemDuyetPage() {
                         flexShrink: 0,
                         color: isFilterDirty
                           ? COLORS.primary
-                          : alpha(COLORS.inkSoft, 0.4),
+                          : mix(COLORS.inkSoft, 0.4),
                         "&:hover": {
                           borderColor: COLORS.primary,
-                          bgcolor: alpha(COLORS.primary, 0.06),
+                          bgcolor: mix(COLORS.primary, 0.06),
                         },
                       }}
                     >
@@ -555,7 +571,7 @@ export default function LichSuKiemDuyetPage() {
                     }}
                   >
                     <SchoolRoundedIcon
-                      sx={{ fontSize: 26, color: alpha(COLORS.primary, 0.35) }}
+                      sx={{ fontSize: 26, color: mix(COLORS.primary, 0.35) }}
                     />
                   </Box>
                   <Typography
@@ -593,11 +609,11 @@ export default function LichSuKiemDuyetPage() {
                           transition: "all .18s ease",
                           "&:hover": {
                             transform: "translateY(-2px)",
-                            boxShadow: `0 8px 20px ${alpha(
+                            boxShadow: `0 8px 20px ${mix(
                               COLORS.primary,
                               0.12,
                             )}`,
-                            borderColor: alpha(COLORS.primary, 0.4),
+                            borderColor: mix(COLORS.primary, 0.4),
                           },
                           "&:hover .go-arrow": {
                             transform: "translateX(2px)",
@@ -639,7 +655,7 @@ export default function LichSuKiemDuyetPage() {
                                 <CalendarTodayRoundedIcon
                                   sx={{
                                     fontSize: 13,
-                                    color: alpha(COLORS.inkSoft, 0.8),
+                                    color: mix(COLORS.inkSoft, 0.8),
                                   }}
                                 />
                                 <Typography
@@ -661,7 +677,7 @@ export default function LichSuKiemDuyetPage() {
                                 <PersonRoundedIcon
                                   sx={{
                                     fontSize: 13,
-                                    color: alpha(COLORS.inkSoft, 0.8),
+                                    color: mix(COLORS.inkSoft, 0.8),
                                   }}
                                 />
                                 <Typography
@@ -687,7 +703,7 @@ export default function LichSuKiemDuyetPage() {
                                 e.stopPropagation();
                                 handleOpenCourse(id);
                               }}
-                              sx={{ color: alpha(COLORS.ink, 0.5) }}
+                              sx={{ color: mix(COLORS.ink, 0.5) }}
                             >
                               <VisibilityRoundedIcon fontSize="small" />
                             </IconButton>
@@ -695,7 +711,7 @@ export default function LichSuKiemDuyetPage() {
                           <ChevronRightRoundedIcon
                             className="go-arrow"
                             sx={{
-                              color: alpha(COLORS.ink, 0.25),
+                              color: mix(COLORS.ink, 0.25),
                               transition: "all .18s ease",
                             }}
                           />

@@ -3086,7 +3086,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 lineHeight: 1.15,
               }}
             >
-              Kiểm duyệt khóa học
+              Xem xét lại khóa học
             </Typography>
             <Typography
               sx={{
@@ -3096,7 +3096,8 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 mt: 0.25,
               }}
             >
-              Xem lại nội dung và đưa ra quyết định phê duyệt
+              Xem lại nội dung và đưa ra quyết định phê duyệt đối với các khóa
+              học đang phát hành
             </Typography>
           </Box>
 
