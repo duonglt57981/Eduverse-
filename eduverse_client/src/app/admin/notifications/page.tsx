@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import { thongBaoService } from "@/src/services/ThongBaoService";
@@ -40,15 +41,14 @@ import {
 } from "@mui/material";
 import {
   SearchRounded,
-  EditRounded,
-  DeleteRounded,
   RefreshRounded,
   NotificationsRounded,
   FolderOpenRounded,
   CheckCircleRounded,
-  VisibilityRounded,
 } from "@mui/icons-material";
 import { BRAND, NEUTRAL, STATUS } from "@/src/theme/tokens";
+import { isNotificationForRole } from "@/src/libs/notificationRole";
+import { useSignalR } from "@/src/hook/useSignalR";
 
 const COLORS = {
   primary: BRAND.main,
@@ -75,23 +75,6 @@ const COLORS = {
   blueBg: STATUS.infoSoft,
 };
 
-const getTypeBadgeStyles = (type: string) => {
-  switch (type) {
-    case "YeuCauRutTien":
-      return { bgcolor: "#FFF7ED", color: "#D97706", label: "Rút tiền" };
-    case "DoanhThu":
-      return { bgcolor: "#ECFDF5", color: "#15803D", label: "Doanh thu" };
-    case "RutTienThanhCong":
-      return { bgcolor: "#ECFDF5", color: "#15803D", label: "Thành công" };
-    case "RutTienTuChoi":
-      return { bgcolor: "#FEF2F2", color: "#DC2626", label: "Từ chối" };
-    case "HeThong":
-      return { bgcolor: "var(--ev-paper-alt, #EFF6FF)", color: "#2563EB", label: "Hệ thống" };
-    default:
-      return { bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-secondary, #4B5563)", label: "Khác" };
-  }
-};
-
 const loaiLabel: Record<string, string> = {
   YeuCauRutTien: "Rút tiền",
   DoanhThu: "Doanh thu",
@@ -101,20 +84,65 @@ const loaiLabel: Record<string, string> = {
   Khac: "Khác",
 };
 
+const getAdminNotificationTarget = (notification: ThongBao) => {
+  const rawLink = notification.link?.trim();
+  if (rawLink && !/^https?:\/\//i.test(rawLink)) {
+    const normalizedLink = rawLink.startsWith("/") ? rawLink : `/${rawLink}`;
+    if (normalizedLink.startsWith("/admin")) return normalizedLink;
+  }
+
+  const searchableText = [
+    notification.type,
+    notification.loaiThongBao,
+    notification.tieuDe,
+    notification.noiDung,
+    notification.message,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLocaleLowerCase("vi-VN");
+
+  if (/rút tiền|rut tien|withdraw/.test(searchableText)) {
+    return "/admin/withdrawal-request";
+  }
+  if (/thanh toán|thanh toan|payment/.test(searchableText)) {
+    return "/admin/payments";
+  }
+  if (/nâng cấp giảng viên|nang cap giang vien|instructor request/.test(searchableText)) {
+    return "/admin/dashboard?tab=instructor-requests";
+  }
+  if (/phê duyệt khóa học|phe duyet khoa hoc|khóa học chờ duyệt|khoa hoc cho duyet/.test(searchableText)) {
+    return notification.itemId
+      ? `/admin/approve-courses/${notification.itemId}`
+      : "/admin/approve-courses";
+  }
+  if (/khuyến mãi|khuyen mai|promotion/.test(searchableText)) {
+    return "/admin/promotions";
+  }
+  if (/khóa học|khoa hoc|course/.test(searchableText)) {
+    return "/admin/courses";
+  }
+  if (/người dùng|nguoi dung|user|tài khoản|tai khoan/.test(searchableText)) {
+    return "/admin/users";
+  }
+
+  return null;
+};
+
 export default function AdminThongBaoPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<ThongBao[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
-  const [filterLoai, setFilterLoai] = useState("");
   const [filterRead, setFilterRead] = useState(""); // "" | "read" | "unread"
   const [loading, setLoading] = useState(false);
 
   // Dialog CRUD states
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId] = useState<string | null>(null);
 
   // Form states
   const [formState, setFormState] = useState<ThongBaoRequest>({
@@ -135,30 +163,56 @@ export default function AdminThongBaoPage() {
 
   const [trigger, setTrigger] = useState(0);
 
+  useSignalR("ReceiveNotification", (notification: ThongBao) => {
+    if (!isNotificationForRole(notification, "Admin")) return;
+    setTrigger((current) => current + 1);
+  });
+
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const isReadParam =
-        filterRead === "read"
-          ? true
-          : filterRead === "unread"
-            ? false
-            : undefined;
-
-      const res = await thongBaoService.getNotifications({
-        keyword: search || undefined,
-        loaiThongBao: filterLoai || undefined,
-        isRead: isReadParam,
-        pageIndex,
-        pageSize,
-      });
+      const res = await thongBaoService.getMyNotifications();
 
       if (res.status && res.data) {
-        setNotifications(res.data.items || []);
-        setTotalItems(res.data.totalCount || 0);
-        setTotalPages(res.data.totalPage || 1);
+        const keyword = search.trim().toLocaleLowerCase("vi-VN");
+        const adminNotifications = res.data.filter((notification) => {
+          const belongsToAdmin = isNotificationForRole(notification, "Admin");
+          const isRead = Boolean(notification.daDoc || notification.isRead);
+          const matchesReadState =
+            filterRead === "read"
+              ? isRead
+              : filterRead === "unread"
+                ? !isRead
+                : true;
+          const searchableText = [
+            notification.tieuDe,
+            notification.noiDung,
+            notification.message,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLocaleLowerCase("vi-VN");
+
+          return (
+            belongsToAdmin &&
+            matchesReadState &&
+            (!keyword || searchableText.includes(keyword))
+          );
+        });
+        const pageCount = Math.max(1, Math.ceil(adminNotifications.length / pageSize));
+        const safePageIndex = Math.min(pageIndex, pageCount);
+        const startIndex = (safePageIndex - 1) * pageSize;
+
+        setNotifications(
+          adminNotifications.slice(startIndex, startIndex + pageSize),
+        );
+        setTotalItems(adminNotifications.length);
+        setTotalPages(pageCount);
+        if (safePageIndex !== pageIndex) setPageIndex(safePageIndex);
       } else {
         setNotifications([]);
+        setTotalItems(0);
+        setTotalPages(1);
       }
     } catch (err: unknown) {
       console.error(err);
@@ -178,28 +232,12 @@ export default function AdminThongBaoPage() {
       fetchNotifications();
     }, 0);
     return () => clearTimeout(timer);
-  }, [pageIndex, filterLoai, filterRead, trigger]);
+  }, [pageIndex, filterRead, trigger]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPageIndex(1);
     setTrigger((prev) => prev + 1);
-  };
-
-  const openEditDialog = (noti: ThongBao) => {
-    setEditingId(noti.id);
-    setFormState({
-      tieuDe: noti.tieuDe || "",
-      noiDung: noti.noiDung || "",
-      message: noti.message || "",
-      idNguoiDung: noti.idNguoiDung || "",
-      type: noti.type || "System",
-      loaiThongBao: noti.loaiThongBao || "HeThong",
-      link: noti.link || "",
-      isDisplay: noti.isDisplay !== false,
-      isXuatBan: noti.isXuatBan !== false,
-    });
-    setDialogOpen(true);
   };
 
   const openDetailDialog = async (noti: ThongBao) => {
@@ -271,70 +309,42 @@ export default function AdminThongBaoPage() {
     }
   };
 
-  const handleDelete = async (noti: ThongBao) => {
-    const result = await Swal.fire({
-      title: "Xác nhận xóa",
-      html: `Bạn có chắc muốn xóa thông báo <b>"${noti.tieuDe || "Không tiêu đề"}"</b>?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: COLORS.red,
-      cancelButtonColor: COLORS.textSecondary,
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
-    });
+  const handleNotificationClick = async (noti: ThongBao) => {
+    if (!noti.daDoc && !noti.isRead) {
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === noti.id
+            ? {
+                ...item,
+                daDoc: true,
+                isRead: true,
+                thoiGianDoc: new Date().toISOString(),
+              }
+            : item,
+        ),
+      );
 
-    if (result.isConfirmed) {
-      setLoading(true);
       try {
-        const res = await thongBaoService.deleteNotification(noti.id);
-        if (res.status) {
-          Swal.fire({
-            icon: "success",
-            title: "Đã xóa!",
-            text: "Thông báo đã được xóa thành công.",
-            confirmButtonColor: COLORS.primary,
-            timer: 2000,
-            showConfirmButton: false,
-          });
-          setTrigger((prev) => prev + 1);
-        } else {
-          Swal.fire({
-            icon: "error",
-            title: "Lỗi",
-            text: res.message || "Xóa thông báo thất bại",
-            confirmButtonColor: COLORS.primary,
-          });
-        }
-      } catch (err) {
-        console.error(err);
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: "Không thể kết nối đến API",
-          confirmButtonColor: COLORS.primary,
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const handleMarkAsRead = async (noti: ThongBao) => {
-    try {
-      const res = await thongBaoService.markAsRead(noti.id);
-      if (res.status) {
-        Swal.fire({
-          icon: "success",
-          title: "Thành công",
-          text: "Đã đánh dấu đã đọc",
-          timer: 1500,
-          showConfirmButton: false,
-        });
+        const response = await thongBaoService.markAsRead(noti.id);
+        if (!response.status) setTrigger((prev) => prev + 1);
+      } catch (error) {
+        console.error("Không thể đánh dấu thông báo đã đọc:", error);
         setTrigger((prev) => prev + 1);
       }
-    } catch (err) {
-      console.error(err);
     }
+
+    const target = getAdminNotificationTarget(noti);
+    if (!target) {
+      await openDetailDialog({ ...noti, daDoc: true, isRead: true });
+      return;
+    }
+
+    if (/^https?:\/\//i.test(target)) {
+      window.location.assign(target);
+      return;
+    }
+
+    router.push(target.startsWith("/") ? target : `/${target}`);
   };
 
   const formatDate = (dateStr?: string) => {
@@ -554,37 +564,6 @@ export default function AdminThongBaoPage() {
                     />
                   </form>
 
-                  {/* Filter category */}
-                  <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                    <InputLabel id="filter-type-label" sx={{ fontSize: 13.5, fontWeight: 500 }}>Loại</InputLabel>
-                    <Select
-                      labelId="filter-type-label"
-                      value={filterLoai}
-                      label="Loại"
-                      onChange={(e) => setFilterLoai(e.target.value)}
-                      sx={{
-                        borderRadius: "10px",
-                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
-                        height: 42,
-                        fontSize: 13.5,
-                        fontWeight: 500,
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: COLORS.borderMain,
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: COLORS.primary,
-                        },
-                      }}
-                    >
-                      <MenuItem value="">Tất cả loại</MenuItem>
-                      {Object.keys(loaiLabel).map((key) => (
-                        <MenuItem key={key} value={key}>
-                          {loaiLabel[key]}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
                   {/* Filter status */}
                   <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 130 } }}>
                     <InputLabel id="filter-read-label" sx={{ fontSize: 13.5, fontWeight: 500 }}>Trạng thái</InputLabel>
@@ -618,7 +597,6 @@ export default function AdminThongBaoPage() {
                     <IconButton
                       onClick={() => {
                         setSearch("");
-                        setFilterLoai("");
                         setFilterRead("");
                         setPageIndex(1);
                         setTrigger((prev) => prev + 1);
@@ -675,32 +653,6 @@ export default function AdminThongBaoPage() {
                         borderBottom: `1px solid ${COLORS.borderLight}`,
                       }}
                     >
-                      Loại thông báo
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 600,
-                        color: COLORS.textSecondary,
-                        fontSize: 12,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                        py: 2,
-                        borderBottom: `1px solid ${COLORS.borderLight}`,
-                      }}
-                    >
-                      Người nhận
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 600,
-                        color: COLORS.textSecondary,
-                        fontSize: 12,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                        py: 2,
-                        borderBottom: `1px solid ${COLORS.borderLight}`,
-                      }}
-                    >
                       Thời gian
                     </TableCell>
                     <TableCell
@@ -716,27 +668,12 @@ export default function AdminThongBaoPage() {
                     >
                       Trạng thái
                     </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: 600,
-                        color: COLORS.textSecondary,
-                        fontSize: 12,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                        py: 2,
-                        pr: 3,
-                        borderBottom: `1px solid ${COLORS.borderLight}`,
-                      }}
-                    >
-                      Thao tác
-                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                      <TableCell colSpan={3} align="center" sx={{ py: 8 }}>
                         <CircularProgress
                           size={32}
                           sx={{ color: COLORS.primary }}
@@ -755,7 +692,7 @@ export default function AdminThongBaoPage() {
                     </TableRow>
                   ) : notifications.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                      <TableCell colSpan={3} align="center" sx={{ py: 8 }}>
                         <FolderOpenRounded
                           sx={{ fontSize: 48, color: COLORS.textMuted, mb: 1 }}
                         />
@@ -772,15 +709,7 @@ export default function AdminThongBaoPage() {
                     </TableRow>
                   ) : (
                     notifications.map((noti) => {
-                      const isUnread = !noti.daDoc;
-                      const badge = getTypeBadgeStyles(noti.loaiThongBao ?? "");
-                      const recipient = noti.idNguoiDung || noti.email || "Tất cả";
-                      const isAll = recipient === "Tất cả" || recipient === "all";
-                      const displayRecipient = isAll
-                        ? "Tất cả"
-                        : recipient.length > 15
-                          ? `${recipient.substring(0, 8)}...${recipient.substring(recipient.length - 4)}`
-                          : recipient;
+                      const isUnread = !noti.daDoc && !noti.isRead;
 
                       const formatTimeDate = (dateStr?: string) => {
                         if (!dateStr) return { time: "—", date: "—" };
@@ -794,7 +723,7 @@ export default function AdminThongBaoPage() {
                       return (
                         <TableRow
                           key={noti.id}
-                          onClick={() => openDetailDialog(noti)}
+                          onClick={() => void handleNotificationClick(noti)}
                           sx={{
                             cursor: "pointer",
                             transition: "all 150ms ease",
@@ -851,41 +780,6 @@ export default function AdminThongBaoPage() {
                             </Box>
                           </TableCell>
                           <TableCell sx={{ py: 2 }}>
-                            <Chip
-                              label={badge.label}
-                              size="small"
-                              sx={{
-                                bgcolor: badge.bgcolor,
-                                color: badge.color,
-                                fontWeight: 600,
-                                fontSize: 11.5,
-                                borderRadius: "6px",
-                                border: "1px solid rgba(0,0,0,0.03)",
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ py: 2 }}>
-                            {isAll ? (
-                              <Chip
-                                label="Tất cả"
-                                size="small"
-                                sx={{
-                                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-                                  color: "var(--ev-text-secondary, #4B5563)",
-                                  fontWeight: 600,
-                                  fontSize: 11.5,
-                                  borderRadius: "6px",
-                                }}
-                              />
-                            ) : (
-                              <Tooltip title={recipient} arrow>
-                                <Typography sx={{ fontSize: 13, fontWeight: 500, color: COLORS.textDark }}>
-                                  {displayRecipient}
-                                </Typography>
-                              </Tooltip>
-                            )}
-                          </TableCell>
-                          <TableCell sx={{ py: 2 }}>
                             <Stack spacing={0.25}>
                               <Typography sx={{ fontSize: 13, fontWeight: 600, color: COLORS.textDark }}>
                                 {time}
@@ -897,112 +791,17 @@ export default function AdminThongBaoPage() {
                           </TableCell>
                           <TableCell sx={{ py: 2 }}>
                             <Chip
-                              label={noti.daDoc ? "Đã đọc" : "Chưa đọc"}
+                              label={isUnread ? "Chưa đọc" : "Đã đọc"}
                               size="small"
                               sx={{
-                                bgcolor: noti.daDoc ? COLORS.greenBg : COLORS.orangeBg,
-                                color: noti.daDoc ? COLORS.green : COLORS.orange,
+                                bgcolor: isUnread ? COLORS.orangeBg : COLORS.greenBg,
+                                color: isUnread ? COLORS.orange : COLORS.green,
                                 fontWeight: 600,
                                 fontSize: 11.5,
                                 borderRadius: "6px",
-                                border: `1px solid ${noti.daDoc ? "rgba(21, 128, 61, 0.1)" : "rgba(217, 119, 6, 0.1)"}`,
+                                border: `1px solid ${isUnread ? "rgba(217, 119, 6, 0.1)" : "rgba(21, 128, 61, 0.1)"}`,
                               }}
                             />
-                          </TableCell>
-                          <TableCell align="center" sx={{ py: 2, pr: 3 }}>
-                            <Stack
-                              direction="row"
-                              spacing={0.5}
-                              onClick={(event) => event.stopPropagation()}
-                              sx={{ justifyContent: "center" }}
-                            >
-                              {!noti.daDoc && (
-                                <Tooltip title="Đánh dấu đã đọc" arrow>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleMarkAsRead(noti)}
-                                    aria-label="Đánh dấu đã đọc"
-                                    sx={{
-                                      color: COLORS.green,
-                                      bgcolor: "transparent",
-                                      borderRadius: "8px",
-                                      width: 34,
-                                      height: 34,
-                                      transition: "all 150ms ease",
-                                      "&:hover": {
-                                        bgcolor: "#DCFCE7",
-                                        color: "#15803D",
-                                      },
-                                    }}
-                                  >
-                                    <CheckCircleRounded sx={{ fontSize: 17 }} />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              <Tooltip title="Xem chi tiết" arrow>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => openDetailDialog(noti)}
-                                  aria-label="Xem chi tiết"
-                                  sx={{
-                                    color: COLORS.blue,
-                                    bgcolor: "transparent",
-                                    borderRadius: "8px",
-                                    width: 34,
-                                    height: 34,
-                                    transition: "all 150ms ease",
-                                    "&:hover": {
-                                      bgcolor: "var(--ev-paper-alt, #EFF6FF)",
-                                      color: "#2563EB",
-                                    },
-                                  }}
-                                >
-                                  <VisibilityRounded sx={{ fontSize: 17 }} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Chỉnh sửa" arrow>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => openEditDialog(noti)}
-                                  aria-label="Chỉnh sửa"
-                                  sx={{
-                                    color: COLORS.orange,
-                                    bgcolor: "transparent",
-                                    borderRadius: "8px",
-                                    width: 34,
-                                    height: 34,
-                                    transition: "all 150ms ease",
-                                    "&:hover": {
-                                      bgcolor: "#FEF3C7",
-                                      color: "#D97706",
-                                    },
-                                  }}
-                                >
-                                  <EditRounded sx={{ fontSize: 17 }} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Xóa" arrow>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleDelete(noti)}
-                                  aria-label="Xóa"
-                                  sx={{
-                                    color: COLORS.red,
-                                    bgcolor: "transparent",
-                                    borderRadius: "8px",
-                                    width: 34,
-                                    height: 34,
-                                    transition: "all 150ms ease",
-                                    "&:hover": {
-                                      bgcolor: "#FEE2E2",
-                                      color: "#DC2626",
-                                    },
-                                  }}
-                                >
-                                  <DeleteRounded sx={{ fontSize: 17 }} />
-                                </IconButton>
-                              </Tooltip>
-                            </Stack>
                           </TableCell>
                         </TableRow>
                       );

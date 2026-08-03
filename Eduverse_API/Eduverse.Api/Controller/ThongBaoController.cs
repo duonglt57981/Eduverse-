@@ -64,9 +64,16 @@ namespace Eduverse.Api.Controller
             {
                 search ??= new ThongBaoSearch();
                 var query = ApplySearch(_repo.GetQueryable(), search);
-                if (!IsAdmin())
+                var userId = GetUserId();
+                if (IsAdmin())
                 {
-                    var userId = GetUserId();
+                    query = query.Where(t =>
+                        t.IdNguoiDung == userId ||
+                        t.ToUser == userId ||
+                        (t.IdNguoiDung == null && t.ToUser == null));
+                }
+                else
+                {
                     query = query.Where(t => t.IdNguoiDung == userId || t.ToUser == userId);
                 }
 

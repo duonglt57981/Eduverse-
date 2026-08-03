@@ -30,6 +30,7 @@ import {
   ListItemIcon,
   Divider,
   Avatar,
+  Badge,
 } from "@mui/material";
 import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
@@ -39,11 +40,17 @@ import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
+  onNotificationClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  unreadNotificationCount?: number;
 }
 
 const EMPTY_ROLES: string[] = [];
 
-export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
+export default function DashboardHeader({
+  onMenuClick,
+  onNotificationClick,
+  unreadNotificationCount = 0,
+}: DashboardHeaderProps) {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname() || "/";
@@ -749,6 +756,8 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           )}
 
           <IconButton
+            aria-label="Mở thông báo"
+            onClick={onNotificationClick}
             sx={{
               width: 42,
               height: 42,
@@ -757,7 +766,9 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               "&:hover": { color: "primary.main" },
             }}
           >
-            <NotificationsNoneRounded fontSize="small" />
+            <Badge badgeContent={unreadNotificationCount} color="error">
+              <NotificationsNoneRounded fontSize="small" />
+            </Badge>
           </IconButton>
 
           {/* User Avatar dropdown */}

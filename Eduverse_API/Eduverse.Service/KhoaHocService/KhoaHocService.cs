@@ -1310,15 +1310,6 @@ namespace Eduverse.Service.KhoaHocService
                 ItemName = khoaHoc.TieuDe
             };
             await _notificationPublisher.NotifyRoleAsync("Admin", approvalPayload, new[] { userId });
-            await _notificationPublisher.NotifyUserAsync(userId, new NotificationPayload
-            {
-                TieuDe = "Đã gửi khóa học để phê duyệt",
-                NoiDung = $"Khóa học '{khoaHoc.TieuDe}' đã được gửi đến quản trị viên.",
-                LoaiThongBao = "GuiPheDuyetKhoaHoc",
-                Link = $"/instructor/manager-courses/{khoaHoc.Id}/manager",
-                ItemId = khoaHoc.Id,
-                ItemName = khoaHoc.TieuDe
-            });
 
             return _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
         }
@@ -1869,30 +1860,6 @@ namespace Eduverse.Service.KhoaHocService
 
             await _danhMuc_KhoaHocService.CreateRange(khoaHocDanhMucs);
             await _danhMuc_KhoaHocService.SaveAsync();
-
-            if (khoaHoc.CreatedId.HasValue)
-            {
-                await _notificationPublisher.NotifyUserAsync(khoaHoc.CreatedId.Value, new NotificationPayload
-                {
-                    TieuDe = "Tạo khóa học thành công",
-                    NoiDung = $"Khóa học '{khoaHoc.TieuDe}' đã được tạo. Bạn có thể tiếp tục xây dựng nội dung.",
-                    LoaiThongBao = "TaoKhoaHoc",
-                    Link = $"/instructor/manager-courses/{khoaHoc.Id}/manager",
-                    ItemId = khoaHoc.Id,
-                    ItemName = khoaHoc.TieuDe
-                });
-
-                await _notificationPublisher.NotifyRoleAsync("Admin", new NotificationPayload
-                {
-                    TieuDe = "Khóa học mới được tạo",
-                    NoiDung = $"Giảng viên vừa tạo khóa học '{khoaHoc.TieuDe}'. Khóa học đang ở trạng thái bản nháp.",
-                    LoaiThongBao = "TaoKhoaHoc",
-                    Link = "/admin/courses",
-                    FromUser = khoaHoc.CreatedId,
-                    ItemId = khoaHoc.Id,
-                    ItemName = khoaHoc.TieuDe
-                }, new[] { khoaHoc.CreatedId.Value });
-            }
 
             var KhoaHocDto = _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
             KhoaHocDto.DanhMucs = _mapper.MapToList<DanhMuc_KhoaHoc, DanhMuc_KhoaHocDto>(khoaHocDanhMucs);

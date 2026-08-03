@@ -80,14 +80,11 @@ import { apiService } from "@/src/services/index";
 import {
   Badge,
   Popover,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
 import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
+import { isNotificationForRole } from "@/src/libs/notificationRole";
 import Swal from "sweetalert2";
 
 // --- Bảng màu dùng chung (đồng bộ từ src/theme/tokens) ---
@@ -824,6 +821,63 @@ function CourseCard({ course }: { course: CourseCardItem }) {
   );
 }
 
+const getNotificationTarget = (notification: ThongBao, pathname: string) => {
+  const rawLink = notification.link?.trim();
+  const normalizedLink = rawLink
+    ? /^https?:\/\//i.test(rawLink) || rawLink.startsWith("/")
+      ? rawLink
+      : `/${rawLink}`
+    : null;
+
+  if (!pathname.startsWith("/admin")) {
+    return (
+      normalizedLink ||
+      (pathname.startsWith("/instructor")
+        ? "/instructor/dashboard"
+        : "/student/dashboard")
+    );
+  }
+
+  if (normalizedLink?.startsWith("/admin")) return normalizedLink;
+
+  const searchableText = [
+    notification.type,
+    notification.loaiThongBao,
+    notification.tieuDe,
+    notification.noiDung,
+    notification.message,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLocaleLowerCase("vi-VN");
+
+  if (/rút tiền|rut tien|withdraw/.test(searchableText)) {
+    return "/admin/withdrawal-request";
+  }
+  if (/thanh toán|thanh toan|đơn mua|don mua|payment/.test(searchableText)) {
+    return "/admin/payments";
+  }
+  if (/nâng cấp giảng viên|nang cap giang vien|instructor request/.test(searchableText)) {
+    return "/admin/dashboard?tab=instructor-requests";
+  }
+  if (/phê duyệt khóa học|phe duyet khoa hoc|khóa học mới chờ phê duyệt|khoa hoc moi cho phe duyet/.test(searchableText)) {
+    return notification.itemId
+      ? `/admin/approve-courses/${notification.itemId}`
+      : "/admin/approve-courses";
+  }
+  if (/khuyến mãi|khuyen mai|promotion/.test(searchableText)) {
+    return "/admin/promotions";
+  }
+  if (/khóa học|khoa hoc|course/.test(searchableText)) {
+    return "/admin/courses";
+  }
+  if (/người dùng|nguoi dung|user|tài khoản|tai khoan/.test(searchableText)) {
+    return "/admin/users";
+  }
+
+  return "/admin/notifications";
+};
+
 // MAIN RENDER COMPONENT
 export default function DashboardShell({
   children,
@@ -841,27 +895,35 @@ export default function DashboardShell({
   const [notiAnchorEl, setNotiAnchorEl] = useState<HTMLButtonElement | null>(
     null,
   );
-  const [selectedNoti, setSelectedNoti] = useState<ThongBao | null>(null);
   const openNotiPopover = Boolean(notiAnchorEl);
+  const notificationRole = pathname.startsWith("/admin")
+    ? "Admin"
+    : pathname.startsWith("/instructor")
+      ? "GiaoVien"
+      : "HocVien";
 
   useEffect(() => {
     if (user) {
       thongBaoService.getMyNotifications().then((res) => {
         console.log("Eduverse Notifications Response:", res);
         if (res.status && res.data) {
-          setNotifications(res.data);
-        }
-      });
-      thongBaoService.getUnreadCount().then((res) => {
-        console.log("Eduverse Unread Count Response:", res);
-        if (res.status && typeof res.data === "number") {
-          setUnreadCount(res.data);
+          const roleNotifications = res.data.filter((notification) =>
+            isNotificationForRole(notification, notificationRole),
+          );
+          setNotifications(roleNotifications);
+          setUnreadCount(
+            roleNotifications.filter(
+              (notification) => !notification.daDoc && !notification.isRead,
+            ).length,
+          );
         }
       });
     }
-  }, [user]);
+  }, [notificationRole, user]);
 
   useSignalR("ReceiveNotification", (newNoti: ThongBao) => {
+    if (!isNotificationForRole(newNoti, notificationRole)) return;
+
     setNotifications((prev) => {
       if (prev.some((n) => n.id === newNoti.id)) return prev;
       return [newNoti, ...prev].slice(0, 50);
@@ -888,26 +950,41 @@ export default function DashboardShell({
 
   const handleNotiClick = async (noti: ThongBao) => {
     setNotiAnchorEl(null);
-    // Open the detail first so every notification remains clickable, including
-    // notifications whose optional link is missing or no longer valid.
-    setSelectedNoti(noti);
     if (!noti.daDoc && !noti.isRead) {
       try {
         await thongBaoService.markAsRead(noti.id);
         setNotifications((prev) =>
-          prev.map((n) => (n.id === noti.id ? { ...n, daDoc: true } : n)),
+          prev.map((n) =>
+            n.id === noti.id ? { ...n, daDoc: true, isRead: true } : n,
+          ),
         );
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } catch (err) {
         console.error("Lỗi đánh dấu đã đọc:", err);
       }
     }
+
+    const target = getNotificationTarget(noti, pathname);
+    if (/^https?:\/\//i.test(target)) {
+      window.location.assign(target);
+      return;
+    }
+    router.push(target);
   };
 
   const handleMarkAllAsRead = async () => {
     try {
-      await thongBaoService.markAllAsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, daDoc: true })));
+      const unreadIds = notifications
+        .filter((notification) => !notification.daDoc && !notification.isRead)
+        .map((notification) => notification.id);
+      await Promise.all(
+        unreadIds.map((notificationId) =>
+          thongBaoService.markAsRead(notificationId),
+        ),
+      );
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, daDoc: true, isRead: true })),
+      );
       setUnreadCount(0);
     } catch (err) {
       console.error("Lỗi đánh dấu tất cả đã đọc:", err);
@@ -1820,7 +1897,13 @@ export default function DashboardShell({
             </Stack>
           </Box>
         ) : (
-          <DashboardHeader onMenuClick={undefined} />
+          <DashboardHeader
+            onMenuClick={undefined}
+            onNotificationClick={(event) =>
+              setNotiAnchorEl(event.currentTarget)
+            }
+            unreadNotificationCount={unreadCount}
+          />
         )}
         {/* ========================================================= */}
         {/* SIDEBAR DRAWER (COLLAPSED FOR MOBILE/TABLET)              */}
@@ -3218,6 +3301,11 @@ export default function DashboardShell({
           anchorEl={notiAnchorEl}
           open={openNotiPopover}
           onClose={() => setNotiAnchorEl(null)}
+          sx={{
+            "& .MuiBackdrop-root": {
+              backgroundColor: "transparent !important",
+            },
+          }}
           anchorOrigin={{
             vertical: "bottom",
             horizontal: "right",
@@ -3227,6 +3315,10 @@ export default function DashboardShell({
             horizontal: "right",
           }}
           slotProps={{
+            backdrop: {
+              invisible: true,
+              sx: { backgroundColor: "transparent !important" },
+            },
             paper: {
               sx: {
                 width: 360,
@@ -3356,76 +3448,6 @@ export default function DashboardShell({
             )}
           </Box>
         </Popover>
-        <Dialog
-          open={Boolean(selectedNoti)}
-          onClose={() => setSelectedNoti(null)}
-          slotProps={{
-            paper: {
-              sx: {
-                borderRadius: "16px",
-                width: "100%",
-                maxWidth: 480,
-                p: 1,
-              },
-            },
-          }}
-        >
-          <DialogTitle
-            sx={{
-              fontWeight: 800,
-              fontSize: 18,
-              color: "var(--ev-text-primary, #1F2937)",
-            }}
-          >
-            {selectedNoti?.tieuDe || selectedNoti?.type || "Thông báo chi tiết"}
-          </DialogTitle>
-          <DialogContent>
-            <Typography
-              sx={{
-                fontSize: 14.5,
-                color: "var(--ev-text-secondary, #4B5563)",
-                mb: 2,
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {selectedNoti?.noiDung || selectedNoti?.message}
-            </Typography>
-            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-              Thời gian:{" "}
-              {selectedNoti?.thoiGianTao
-                ? new Date(selectedNoti.thoiGianTao).toLocaleString("vi-VN")
-                : ""}
-            </Typography>
-            {selectedNoti?.link && (
-              <Button
-                onClick={() => {
-                  const link = selectedNoti.link!;
-                  setSelectedNoti(null);
-                  if (/^https?:\/\//i.test(link)) {
-                    window.location.assign(link);
-                  } else {
-                    router.push(link.startsWith("/") ? link : `/${link}`);
-                  }
-                }}
-                variant="outlined"
-                sx={{ mt: 2, textTransform: "none", fontWeight: 700 }}
-              >
-                Xem nội dung liên quan
-              </Button>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => setSelectedNoti(null)}
-              sx={{
-                color: COLORS.primary,
-                fontWeight: 700,
-              }}
-            >
-              Đóng
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
     </ThemeProvider>
   );
