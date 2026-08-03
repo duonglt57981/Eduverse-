@@ -12,5 +12,5 @@ namespace Eduverse.Repository.TienDoHocTapRepository
     {
         public TienDoHocTapRepository(EduverseContext context) : base(context)
         { }
-        }
+    }
 }

@@ -34,6 +34,7 @@ import AssignmentTurnedInRoundedIcon from "@mui/icons-material/AssignmentTurnedI
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import PendingActionsRoundedIcon from "@mui/icons-material/PendingActionsRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
@@ -233,8 +234,12 @@ export default function DuyetKhoaHocPage() {
     router.push(`/admin/approve-courses/history`);
   };
 
+  const handleGoBack = () => {
+    router.push("/admin/courses");
+  };
+
   return (
-    <AuthGuard allowedRoles={["Admin"]}>
+    <AuthGuard allowedRoles={["Admin", "personnel"]}>
       <DashboardShell>
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           {/* Header */}
@@ -243,6 +248,25 @@ export default function DuyetKhoaHocPage() {
             spacing={1.5}
             sx={{ alignItems: "center", mb: 0.5 }}
           >
+            {/* Nút quay lại */}
+            <Tooltip title="Quay lại danh sách khóa học">
+              <IconButton
+                onClick={handleGoBack}
+                sx={{
+                  bgcolor: alpha(COLORS.primary, 0.06),
+                  borderRadius: 2,
+                  flexShrink: 0,
+                  width: 40,
+                  height: 40,
+                  "&:hover": {
+                    bgcolor: alpha(COLORS.primary, 0.12),
+                  },
+                }}
+              >
+                <ArrowBackRoundedIcon sx={{ color: COLORS.primary }} />
+              </IconButton>
+            </Tooltip>
+
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 sx={{

@@ -124,7 +124,12 @@ function RevenueLineChart({
           >
             Phân tích doanh thu
           </Typography>
-          <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.48))" }}>
+          <Typography
+            sx={{
+              fontSize: 13,
+              color: "var(--ev-text-muted, rgba(31,41,55,0.48))",
+            }}
+          >
             {period === "month"
               ? "Doanh thu nền tảng (30%) theo từng ngày trong tháng này."
               : period === "quarter"
@@ -203,7 +208,11 @@ function RevenueLineChart({
                   y={y + 4}
                   textAnchor="end"
                   fill="var(--ev-text-muted, rgba(31,41,55,0.4))"
-                  style={{ fontSize: 11, fontWeight: 600, fontFamily: '"Be Vietnam Pro"' }}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: '"Be Vietnam Pro"',
+                  }}
                 >
                   {formatYLabel(tick * maxVal)}
                 </text>
@@ -273,11 +282,16 @@ function RevenueLineChart({
                   <g>
                     {/* Box nền */}
                     <rect
-                      x={tx} y={ty}
-                      width={tooltipW} height={tooltipH}
-                      rx={10} ry={10}
+                      x={tx}
+                      y={ty}
+                      width={tooltipW}
+                      height={tooltipH}
+                      rx={10}
+                      ry={10}
                       fill="var(--ev-text-primary, #1F2937)"
-                      style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))" }}
+                      style={{
+                        filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))",
+                      }}
                     />
                     {/* Mũi tên */}
                     {arrowUp ? (
@@ -313,7 +327,11 @@ function RevenueLineChart({
                       y={ty + 38}
                       textAnchor="middle"
                       fill="var(--ev-paper, #FFFFFF)"
-                      style={{ fontSize: 14, fontWeight: 800, fontFamily: '"Be Vietnam Pro"' }}
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 800,
+                        fontFamily: '"Be Vietnam Pro"',
+                      }}
                     >
                       {formatTooltipVal(p.val)}
                     </text>
@@ -336,7 +354,11 @@ function RevenueLineChart({
                   x={p.x}
                   y={height - paddingBottom + 20}
                   textAnchor="middle"
-                  fill={isHovered ? COLORS.primary : "var(--ev-text-muted, rgba(31,41,55,0.5))"}
+                  fill={
+                    isHovered
+                      ? COLORS.primary
+                      : "var(--ev-text-muted, rgba(31,41,55,0.5))"
+                  }
                   style={{
                     fontSize: 11,
                     fontWeight: isHovered ? 800 : 600,
@@ -387,7 +409,13 @@ function StudentGrowthChart({ data }: { data: number[] }) {
       >
         Tăng trưởng học viên
       </Typography>
-      <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.48))", mb: 3 }}>
+      <Typography
+        sx={{
+          fontSize: 13,
+          color: "var(--ev-text-muted, rgba(31,41,55,0.48))",
+          mb: 3,
+        }}
+      >
         Số học viên unique đăng ký khóa học theo từng tháng.
       </Typography>
 
@@ -548,7 +576,13 @@ function LearningActivityHeatmap({ data }: { data: number[] }) {
       >
         Hoạt động học tập (Heatmap)
       </Typography>
-      <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.5))", mb: 3 }}>
+      <Typography
+        sx={{
+          fontSize: 13,
+          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+          mb: 3,
+        }}
+      >
         Tần suất hoạt động học tập và tương tác của hệ thống.
       </Typography>
 
@@ -825,14 +859,15 @@ export default function AdminDashboardContent() {
     );
   }
 
+  // Destructure with default values to prevent undefined errors
   const {
-    welcomeStats,
-    revenueTrend,
-    studentGrowth,
-    bestSellingCourses,
-    heatmap,
-    recentActivities,
-  } = dashboardData;
+    welcomeStats = {},
+    revenueTrend = [],
+    studentGrowth = [],
+    bestSellingCourses = [],
+    heatmap = [],
+    recentActivities = [],
+  } = dashboardData || {};
 
   // % xu hướng THẬT từ API (không fix cứng)
   const fmtTrend = (p: number) => `${(p ?? 0) > 0 ? "+" : ""}${p ?? 0}%`;
@@ -1202,7 +1237,13 @@ export default function AdminDashboardContent() {
           >
             Danh sách yêu cầu nâng cấp Giảng viên
           </Typography>
-          <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.5))", mb: 3 }}>
+          <Typography
+            sx={{
+              fontSize: 13,
+              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+              mb: 3,
+            }}
+          >
             Xem xét và phê duyệt hoặc từ chối các yêu cầu nâng cấp vai trò từ
             Học viên.
           </Typography>
@@ -1385,11 +1426,13 @@ export default function AdminDashboardContent() {
                             sx={{
                               ...ACTION_BTN,
                               color: COLORS.textSecondary,
-                              borderColor: "var(--ev-divider, rgba(0,0,0,0.14))",
+                              borderColor:
+                                "var(--ev-divider, rgba(0,0,0,0.14))",
                               "&:hover": {
                                 color: COLORS.primary,
                                 borderColor: COLORS.primary,
-                                bgcolor: "var(--ev-hover, rgba(141,19,19,0.04))",
+                                bgcolor:
+                                  "var(--ev-hover, rgba(141,19,19,0.04))",
                               },
                             }}
                           >
@@ -1422,10 +1465,12 @@ export default function AdminDashboardContent() {
                                 sx={{
                                   ...ACTION_BTN,
                                   color: COLORS.primary,
-                                  borderColor: "var(--ev-brand-border, rgba(141,19,19,0.32))",
+                                  borderColor:
+                                    "var(--ev-brand-border, rgba(141,19,19,0.32))",
                                   "&:hover": {
                                     borderColor: COLORS.primary,
-                                    bgcolor: "var(--ev-brand-tint, rgba(141,19,19,0.05))",
+                                    bgcolor:
+                                      "var(--ev-brand-tint, rgba(141,19,19,0.05))",
                                   },
                                 }}
                               >
@@ -1482,7 +1527,10 @@ export default function AdminDashboardContent() {
         <DialogActions sx={{ p: 2.5 }}>
           <Button
             onClick={() => setDialogOpen(false)}
-            sx={{ color: "var(--ev-text-muted, rgba(31,41,55,0.5))", fontWeight: 800 }}
+            sx={{
+              color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+              fontWeight: 800,
+            }}
           >
             Hủy
           </Button>
@@ -1565,7 +1613,10 @@ export default function AdminDashboardContent() {
           </Stack>
         </DialogTitle>
 
-        <DialogContent dividers sx={{ borderColor: "var(--ev-divider, rgba(0,0,0,0.08))" }}>
+        <DialogContent
+          dividers
+          sx={{ borderColor: "var(--ev-divider, rgba(0,0,0,0.08))" }}
+        >
           {detailRequest && (
             <Stack spacing={2.2} sx={{ py: 0.5 }}>
               <Stack
@@ -1591,7 +1642,10 @@ export default function AdminDashboardContent() {
                 label="Kinh nghiệm giảng dạy"
                 value={detailRequest.kinhNghiem}
               />
-              <DetailField label="Bằng cấp / Chứng chỉ" value={detailRequest.bangCap} />
+              <DetailField
+                label="Bằng cấp / Chứng chỉ"
+                value={detailRequest.bangCap}
+              />
               <DetailField
                 label="Lý do muốn trở thành giảng viên"
                 value={detailRequest.lyDo}
@@ -1614,7 +1668,11 @@ export default function AdminDashboardContent() {
                     variant="outlined"
                     size="small"
                     onClick={() =>
-                      window.open(detailRequest.cvUrl, "_blank", "noopener,noreferrer")
+                      window.open(
+                        detailRequest.cvUrl,
+                        "_blank",
+                        "noopener,noreferrer",
+                      )
                     }
                     sx={{
                       alignSelf: "flex-start",
@@ -1622,7 +1680,8 @@ export default function AdminDashboardContent() {
                       fontWeight: 800,
                       borderRadius: "10px",
                       color: COLORS.primary,
-                      borderColor: "var(--ev-brand-border, rgba(141,19,19,0.25))",
+                      borderColor:
+                        "var(--ev-brand-border, rgba(141,19,19,0.25))",
                     }}
                   >
                     Mở CV trong tab mới
@@ -1646,7 +1705,8 @@ export default function AdminDashboardContent() {
                     p: 2,
                     borderRadius: "14px",
                     bgcolor: "var(--ev-brand-tint, rgba(141,19,19,0.05))",
-                    border: "1px solid var(--ev-brand-border, rgba(141,19,19,0.14))",
+                    border:
+                      "1px solid var(--ev-brand-border, rgba(141,19,19,0.14))",
                   }}
                 >
                   <Typography
@@ -1774,7 +1834,9 @@ function DetailField({
           fontSize: 13.5,
           lineHeight: 1.65,
           fontWeight: 600,
-          color: value ? COLORS.textDark : "var(--ev-text-muted, rgba(31,41,55,0.45))",
+          color: value
+            ? COLORS.textDark
+            : "var(--ev-text-muted, rgba(31,41,55,0.45))",
           fontStyle: value ? "normal" : "italic",
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",

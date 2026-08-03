@@ -244,7 +244,7 @@ export default function LichSuKiemDuyetPage() {
   };
 
   return (
-    <AuthGuard allowedRoles={["Admin"]}>
+    <AuthGuard allowedRoles={["Admin", "personnel"]}>
       <DashboardShell>
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           {/* Header */}

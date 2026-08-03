@@ -213,6 +213,22 @@ namespace Eduverse.Api.Controller
         }
 
 
+        [HttpGet("khoahoc-list-phathanh")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<PagedList<KhoaHocDto>>> GetLitsKhoaHocPhatHanh([FromQuery] GetListSearch search)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetLitsKhoaHocPhatHanh(search);
+                return DataResponse<PagedList<KhoaHocDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<KhoaHocDto>>.False(ex.Message);
+            }
+        }
+
+
         [HttpPost("khoahoc-create")]   
         [Consumes("multipart/form-data")]
         [Authorize(Roles = "Admin,GiaoVien")]

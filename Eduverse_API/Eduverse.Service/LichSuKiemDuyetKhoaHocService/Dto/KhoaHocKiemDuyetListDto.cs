@@ -16,5 +16,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public string TrangThai { get; set; }
         public string TrangThaiPheDuyet { get; set; }
         public string CreateBy { get; set; }
+        public Guid? IdNguoiDuyet { get; set; }
+        public string? TenNguoiDuyet { get; set; }
     }
 }

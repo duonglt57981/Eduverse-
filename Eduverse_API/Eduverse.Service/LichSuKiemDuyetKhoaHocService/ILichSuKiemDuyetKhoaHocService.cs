@@ -1,4 +1,7 @@
-﻿using Eduverse.Service.Common;
+﻿using Eduverse.Service.AppUserService.Dto;
+using Eduverse.Service.Common;
+using Eduverse.Service.Dto;
+using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Request;
 using System;
@@ -16,6 +19,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         //Task<KiemDuyetKhoaHocDto> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request);
         Task<PagedList<KhoaHocKiemDuyetListDto>> GetListLichSuKiemDuyet(KhoaHocKiemDuyetSearchDto search);
         Task<KiemDuyetDetailDto> GetDetailLichSuKiemDuyet(Guid idKhoaHoc);
+        Task<PagedList<NhanVienPheDuyetDto>> GetNhanVienPheDuyet(NhanVienSearch search);
+        Task<List<KhoaHocDto>> PhanDuyetKhoaHoc(Guid idNguoiDuyet, List<Guid> danhSachKhoaHocId);
         //Task<KiemDuyetKhoaHocDto> KiemDuyetBaiGiang(KiemDuyetKhoaHocRequest request);
         //Task<KiemDuyetKhoaHocDto> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request);
         Task<KiemDuyetKhoaHocDto> KiemDuyetFullKhoaHoc(KiemDuyetKhoaHocRequest request);

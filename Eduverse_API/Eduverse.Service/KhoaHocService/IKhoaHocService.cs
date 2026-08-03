@@ -37,6 +37,9 @@ namespace Eduverse.Service.KhoaHocService
         Task<GiangVienKhoaHocDto> GetListByGiangVien(GetListSearch search, Guid UserId);
 
         Task<PagedList<KhoaHocDto>> GetListByDanhMuc(Guid idKhoaHoc, SearchBase search);
+
+        Task<PagedList<KhoaHocDto>> GetLitsKhoaHocPhatHanh(GetListSearch search);
+
         Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request);
 
         Task<KhoaHocDto> UpdateKhoaHoc(UpdateKhoaHocRequest request);

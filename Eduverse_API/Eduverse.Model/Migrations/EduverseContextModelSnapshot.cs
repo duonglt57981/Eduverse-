@@ -190,7 +190,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "998ff4af-ecaf-4ab4-9c10-a69dbfb40b91",
+                            ConcurrencyStamp = "bc5d3894-62c7-4dfb-a1b5-1bb33b9c110f",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -199,9 +199,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEFCIvBN8aSMhi2To7ZeZujUBC18wRBGXq3onCgs75JZMybQsyYqCqnrHqqJHzt+iNw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGDd23Ap+PJ7Mnhm74QS2xBvB3Z4YxrsRQSRDf+iB2a71UB4KJKr+x+pGbVB0i01UA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "d47336f4-83cc-4d0b-8ef4-bfaf0de422e2",
+                            SecurityStamp = "ffa3e122-47cd-4584-91b3-7a52708b8ecb",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -1372,6 +1372,9 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<string>("IdHinhAnhKhoaHoc")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("IdNguoiDuyet")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsBanHienTai")
                         .HasColumnType("bit");

@@ -233,12 +233,9 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     trangThaiKhoaHoc === "DaDuyet" || trangThaiKhoaHoc === "TuChoi";
 
   const hasDescription = detail?.moTa && detail.moTa.trim().length > 0;
-
-  // ── Khóa học đã được duyệt: hiển thị nguyên trang thông báo, không cho
-  // kiểm duyệt lại nữa. Bấm quay lại sẽ điều hướng về danh sách kiểm duyệt. ──
   if (!detailLoading && detail && isDaDuyet) {
     return (
-      <AuthGuard allowedRoles={["Admin"]}>
+      <AuthGuard allowedRoles={["Admin", "personnel"]}>
         <Box
           sx={{
             height: "100dvh",
@@ -303,7 +300,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   }
 
   return (
-    <AuthGuard allowedRoles={["Admin"]}>
+    <AuthGuard allowedRoles={["Admin", "personnel"]}>
       {/* Snackbar thông báo */}
       <Snackbar
         open={snackbar.open}

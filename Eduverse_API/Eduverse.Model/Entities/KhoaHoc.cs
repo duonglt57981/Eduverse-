@@ -45,5 +45,7 @@ namespace Eduverse.Model.Entities
         public Guid? IdBanGhiTruoc { get; set; }
         public bool IsBanHienTai { get; set; } = true;
 
+        public Guid? IdNguoiDuyet { get; set; }
+
     }
 }

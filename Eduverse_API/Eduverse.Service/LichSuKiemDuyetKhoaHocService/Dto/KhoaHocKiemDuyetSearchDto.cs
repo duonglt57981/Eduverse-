@@ -16,5 +16,11 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public string? SapXepNgay { get; set; } = "Cu";
 
         public string? SapXepTen { get; set; }
+
+        public Guid? IdNguoiDuyet { get; set; }
+
+        public Guid? idNguoiDuyet { get; set; }
+
+        public List<Guid>? danhSachKhoaHocId { get; set; }
     }
 }

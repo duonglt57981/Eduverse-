@@ -1,8 +1,10 @@
 export interface KiemDuyetSearchDto extends SearchBase {
-  Keyword?: string;
-  TrangThaiPheDuyet?: string;
-  SapXepNgay?: string;
-  SapXepTen?: string;
+  keyword?: string;
+  trangThaiPheDuyet?: string;
+  sapXepNgay?: string;
+  sapXepTen?: string;
+  idNguoiDuyet?: string;
+  danhSachKhoaHocId?: string[];
 }
 
 export interface KhoaHocKiemDuyetListDto {
@@ -43,4 +45,23 @@ export interface LichSuKiemDuyetDto {
   lyDo?: string | null;
   ngayDuyet?: Date | null;
   ngayTao?: Date | null;
+}
+
+export interface NhanVienPheDuyetDto {
+  userId?: string; // Guid? -> string (UUID) hoặc null/undefined
+  hoTen: string;
+  role: string;
+  anhDaiDien: string;
+  soLuongKhoaHocDuyet: number;
+}
+
+export interface NhanVienSearch extends SearchBase {
+  keyword?: string;
+  chuaCoKhoaHoc?: boolean;
+  SapXepTheoSoLuongKhoaHoc: string;
+}
+
+export interface SearchBase {
+  pageIndex?: int | 1;
+  pageSize?: int | 20;
 }

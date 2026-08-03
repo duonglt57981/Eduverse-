@@ -21,4 +21,8 @@
     <ProjectReference Include="..\Eduverse.Model\Eduverse.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="AppUserRepository\" />
+  </ItemGroup>
+
 </Project>

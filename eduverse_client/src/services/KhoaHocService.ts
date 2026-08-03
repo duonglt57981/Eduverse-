@@ -273,7 +273,6 @@ export default class KhoaHocService {
     }
   }
 
-  // API 1
   async GetListByGiangVien(
     userId: string,
     search: KhoaHocManagerSearch = { pageIndex: 1, pageSize: 10 },
@@ -294,7 +293,6 @@ export default class KhoaHocService {
     }
   }
 
-  // API 2
   async GetListByDanhMuc(
     idKhoaHoc: string,
     search: KhoaHocManagerSearch = { pageIndex: 1, pageSize: 10 },
@@ -312,6 +310,45 @@ export default class KhoaHocService {
       );
     } catch (error) {
       console.error("Error getting course list by danh muc:", error);
+      throw error;
+    }
+  }
+
+  async GetListKhoaHocPhatHanh(
+    searchParams?: KhoaHocManagerSearch,
+  ): Promise<ApiResponse<PagedList<KhoaHocType>>> {
+    try {
+      // Xây dựng query string thủ công để kiểm soát
+      const params = new URLSearchParams();
+
+      if (searchParams) {
+        if (
+          searchParams.pageIndex !== undefined &&
+          searchParams.pageIndex !== null
+        ) {
+          params.append("pageIndex", searchParams.pageIndex.toString());
+        }
+        if (
+          searchParams.pageSize !== undefined &&
+          searchParams.pageSize !== null
+        ) {
+          params.append("pageSize", searchParams.pageSize.toString());
+        }
+
+        // Keyword
+        if (searchParams.keyword) {
+          params.append("keyword", searchParams.keyword);
+        }
+      }
+
+      const queryString = params.toString();
+      const url = `/KhoaHoc/khoahoc-list-phathanh/${queryString ? `?${queryString}` : ""}`;
+      console.log("URL:", url); // Kiểm tra URL
+
+      const response = await apiService.get<PagedList<KhoaHocType>>(url);
+      return response;
+    } catch (error) {
+      console.error("Error fetching course list for manager:", error);
       throw error;
     }
   }

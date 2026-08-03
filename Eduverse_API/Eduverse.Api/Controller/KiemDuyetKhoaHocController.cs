@@ -1,6 +1,9 @@
 ﻿using CloudinaryDotNet;
 using Eduverse.Model.Entities;
+using Eduverse.Service.AppUserService.Dto;
 using Eduverse.Service.Common;
+using Eduverse.Service.Dto;
+using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Request;
@@ -25,7 +28,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpGet("kiemduyet-khoahoc-getdanhsach")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,personnel")]
         public async Task<DataResponse<PagedList<KhoaHocKiemDuyetListDto>>> GetListKiemDuyetKhoaHoc([FromQuery] KhoaHocKiemDuyetSearchDto search)
         {
             try
@@ -41,7 +44,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpGet("kiemduyet-khoahoc-getdetail/{idKhoaHoc}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,personnel")]
         public async Task<DataResponse<KiemDuyetDetailDto>> GetDetailKiemDuyetKhoaHoc( Guid idKhoaHoc)
         {
             try
@@ -56,7 +59,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpGet("kiemduyet-list-gethistory")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,personnel")]
         public async Task<DataResponse<PagedList<KhoaHocKiemDuyetListDto>>> GetListLichSuKiemDuyet([FromQuery]  KhoaHocKiemDuyetSearchDto search)
         {
             try
@@ -70,9 +73,8 @@ namespace Eduverse.Api.Controller
             }
         }
 
-
         [HttpGet("kiemduyet-detail-gethistory/{idKhoaHoc}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,personnel")]
         public async Task<DataResponse<KiemDuyetDetailDto>> GetDetailLichSuKiemDuyet(Guid idKhoaHoc)
         {
             try
@@ -87,8 +89,42 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpPost("kiemduyet-khoahoc")]
+        [HttpGet("kiemduyet-list-nhanvienkiemduyet")]
+        [Authorize(Roles = "Admin,personnel")]
+        public async Task<DataResponse<PagedList<NhanVienPheDuyetDto>>> GetNhanVienPheDuyet([FromQuery] NhanVienSearch search)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.GetNhanVienPheDuyet(search);
+                return DataResponse<PagedList<NhanVienPheDuyetDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<PagedList<NhanVienPheDuyetDto>>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPut("kiemduyet-phankhoahoc/{idNguoiDuyet}")]
         [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<List<KhoaHocDto>>> KiemDuyetKhoaHoc(Guid idNguoiDuyet,[FromBody] List<Guid> danhSachKhoaHocId)
+        {
+            try
+            {
+                var result = await _lichSuKiemDuyetKhoaHocService.PhanDuyetKhoaHoc(idNguoiDuyet, danhSachKhoaHocId);
+                return DataResponse< List<KhoaHocDto>>.Success(result);
+
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<KhoaHocDto>>.False(ex.Message);
+            }
+        }
+
+
+
+        [HttpPost("kiemduyet-khoahoc")]
+        [Authorize(Roles = "Admin,personnel")]
         public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request)
         {
             try

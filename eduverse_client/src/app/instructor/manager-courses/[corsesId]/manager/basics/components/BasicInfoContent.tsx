@@ -211,11 +211,23 @@ function SectionHeader({
         {icon}
       </Box>
       <Box>
-        <Typography sx={{ fontWeight: 700, fontSize: 15, color: "var(--ev-text-primary, #1F2937)" }}>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: 15,
+            color: "var(--ev-text-primary, #1F2937)",
+          }}
+        >
           {title}
         </Typography>
         {subtitle && (
-          <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-muted, #8A93A3)", mt: 0.25 }}>
+          <Typography
+            sx={{
+              fontSize: 12.5,
+              color: "var(--ev-text-muted, #8A93A3)",
+              mt: 0.25,
+            }}
+          >
             {subtitle}
           </Typography>
         )}
@@ -496,7 +508,7 @@ export default function BasicInfoContent() {
       try {
         const res = await danhMucService.getList({
           pageIndex: 1,
-          pageSize: 10,
+          pageSize: 1000,
           trangThai: "HoatDong",
         });
         if (res.status !== false && res.data) {
@@ -761,7 +773,9 @@ export default function BasicInfoContent() {
       color: "#1E293B !important",
       WebkitTextFillColor: "#1E293B !important",
     },
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--ev-divider, #E2E8F0)" },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "var(--ev-divider, #E2E8F0)",
+    },
     "&:hover .MuiOutlinedInput-notchedOutline": {
       borderColor: "#991B1B80",
     },
@@ -782,7 +796,12 @@ export default function BasicInfoContent() {
       <Box sx={{ maxWidth: 900, mx: "auto", pb: 12 }}>
         <Box sx={{ mb: 4 }}>
           <Typography
-            sx={{ fontWeight: 900, fontSize: 26, color: "var(--ev-text-primary, #1E293B)", mb: 0.5 }}
+            sx={{
+              fontWeight: 900,
+              fontSize: 26,
+              color: "var(--ev-text-primary, #1E293B)",
+              mb: 0.5,
+            }}
           >
             Trang đích của khóa học
           </Typography>
@@ -943,7 +962,9 @@ export default function BasicInfoContent() {
                           paper: {
                             sx: {
                               bgcolor: "var(--ev-paper, #FFFFFF)",
-                              "& .MuiMenuItem-root": { color: "var(--ev-text-primary, #1F2937)" },
+                              "& .MuiMenuItem-root": {
+                                color: "var(--ev-text-primary, #1F2937)",
+                              },
                             },
                           },
                         },
@@ -1002,7 +1023,9 @@ export default function BasicInfoContent() {
                             sx: {
                               bgcolor: "var(--ev-paper, #FFFFFF)",
                               maxHeight: 360,
-                              "& .MuiMenuItem-root": { color: "var(--ev-text-primary, #1F2937)" },
+                              "& .MuiMenuItem-root": {
+                                color: "var(--ev-text-primary, #1F2937)",
+                              },
                             },
                           },
                         },
@@ -1034,7 +1057,10 @@ export default function BasicInfoContent() {
                               startAdornment: (
                                 <InputAdornment position="start">
                                   <SearchRoundedIcon
-                                    sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A93A3)" }}
+                                    sx={{
+                                      fontSize: 18,
+                                      color: "var(--ev-text-muted, #8A93A3)",
+                                    }}
                                   />
                                 </InputAdornment>
                               ),
@@ -1048,7 +1074,12 @@ export default function BasicInfoContent() {
 
                       {danhMucDaLoc.length === 0 ? (
                         <Box sx={{ px: 2, py: 1.5 }}>
-                          <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A93A3)" }}>
+                          <Typography
+                            sx={{
+                              fontSize: 13,
+                              color: "var(--ev-text-muted, #8A93A3)",
+                            }}
+                          >
                             Không tìm thấy danh mục nào.
                           </Typography>
                         </Box>
@@ -1233,21 +1264,46 @@ export default function BasicInfoContent() {
                       pl: 1,
                     }}
                   >
-                    <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                      }}
+                    >
                       • <strong>Định dạng:</strong> {DUOI_ANH_HOP_LE.join(", ")}
                     </Typography>
-                    <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                      }}
+                    >
                       • <strong>Tỷ lệ:</strong> 16:9
                     </Typography>
-                    <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                      }}
+                    >
                       • <strong>Độ phân giải tối thiểu:</strong>{" "}
                       {DO_PHAN_GIAI_TOI_THIEU_WIDTH}x
                       {DO_PHAN_GIAI_TOI_THIEU_HEIGHT} (720p)
                     </Typography>
-                    <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                      }}
+                    >
                       • <strong>Khuyến nghị:</strong> 1920x1080px (Full HD)
                     </Typography>
-                    <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                      }}
+                    >
                       • <strong>Dung lượng tối đa:</strong>{" "}
                       {DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB
                     </Typography>
@@ -1278,7 +1334,10 @@ export default function BasicInfoContent() {
                     >
                       <Typography
                         noWrap
-                        sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #64748B)" }}
+                        sx={{
+                          fontSize: 13.5,
+                          color: "var(--ev-text-secondary, #64748B)",
+                        }}
                       >
                         {imageFile
                           ? imageFile.name

@@ -1700,6 +1700,91 @@ namespace Eduverse.Service.KhoaHocService
             return await PagedList<KhoaHocDto>.CreateAsync(result, search);
         }
 
+        public async Task<PagedList<KhoaHocDto>> GetLitsKhoaHocPhatHanh(GetListSearch search)
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                throw new UnauthorizedAccessException("Không thể xác định người dùng.");
+            }
+
+            var query = GetQueryable()
+                .Where(x => x.IsBanHienTai == true
+                         && x.TrangThai == "HoatDong"
+                         && x.TrangThaiPheDuyet == "DaDuyet");
+
+            var DangKiKhoaHocs = await _dangKyKhoaHocRepository.GetQueryable().ToListAsync();
+
+            // ── Áp dụng bộ lọc ──
+            if (!string.IsNullOrEmpty(search.Keyword))
+            {
+                query = query.Where(x => x.TieuDe != null && x.TieuDe.Contains(search.Keyword));
+            }
+
+            if (!string.IsNullOrEmpty(search.TrangThai) && search.TrangThai != "TatCa")
+            {
+                query = query.Where(x => x.TrangThaiPheDuyet == search.TrangThai);
+            }
+
+            // ── Sắp xếp đa cấp (kết hợp nhiều tiêu chí) ──
+            IOrderedQueryable<KhoaHoc> orderedQuery = null;
+            bool hasSort = false;
+
+            // 1. Ưu tiên chính: Ngày tạo
+            if (!string.IsNullOrEmpty(search.SapXepNgay))
+            {
+                orderedQuery = search.SapXepNgay == "Moi"
+                    ? query.OrderByDescending(x => x.CreatedDate)
+                    : query.OrderBy(x => x.CreatedDate);
+                hasSort = true;
+            }
+
+            // 2. Sau đó: Tên (nếu có yêu cầu)
+            if (!string.IsNullOrEmpty(search.SapXepTen))
+            {
+                if (hasSort)
+                {
+                    orderedQuery = search.SapXepTen == "AZ"
+                        ? orderedQuery.ThenBy(x => x.TieuDe ?? string.Empty)
+                        : orderedQuery.ThenByDescending(x => x.TieuDe ?? string.Empty);
+                }
+                else
+                {
+                    orderedQuery = search.SapXepTen == "AZ"
+                        ? query.OrderBy(x => x.TieuDe ?? string.Empty)
+                        : query.OrderByDescending(x => x.TieuDe ?? string.Empty);
+                    hasSort = true;
+                }
+            }
+
+            if (!hasSort)
+            {
+                orderedQuery = query.OrderByDescending(x => x.CreatedDate);
+            }
+
+            query = orderedQuery;
+
+            var dtoQuery = query.Select(x => new KhoaHocDto
+            {
+                Id = x.Id,
+                TieuDe = x.TieuDe,
+                MoTa = x.MoTa,
+                Gia = x.Gia,
+                GiaGoc = x.GiaGoc,
+                CapDo = x.CapDo,
+                HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+                TrangThai = x.TrangThai,
+                TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                CreatedBy = x.CreatedBy,
+                CreatedId = x.CreatedId,
+                CreatedDate = x.CreatedDate,
+                IsBanHienTai = x.IsBanHienTai,
+                IdBanGhiTruoc = x.IdBanGhiTruoc,
+            });
+
+            return await PagedList<KhoaHocDto>.CreateAsync(dtoQuery, search);
+        }
+
 
         #region CreateKhoaHoc
         public async Task<KhoaHocDto> CreateKhoaHoc(CreateKhoaHocRequest request)

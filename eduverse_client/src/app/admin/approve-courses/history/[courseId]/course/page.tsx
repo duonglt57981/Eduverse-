@@ -2909,7 +2909,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   };
 
   const goBackToList = useCallback(() => {
-    router.push("/admin/approve-courses");
+    router.push("/admin/approve-courses/history");
   }, [router]);
 
   const handleDuyet = async () => {
@@ -3020,7 +3020,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   const hasDescription = moTa.trim().length > 0;
 
   return (
-    <AuthGuard allowedRoles={["Admin"]}>
+    <AuthGuard allowedRoles={["Admin", "personnel"]}>
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
