@@ -23,7 +23,7 @@ import {
 import { useState, useEffect } from "react";
 import type { CauHoiLamBaiDto } from "../../hooks/useQuiz";
 
-const RED = "#8D1313";
+const RED = "#8B1313";
 const LABELS = ["A", "B", "C", "D", "E", "F"];
 
 interface QuizViewProps {
@@ -80,7 +80,7 @@ export function QuizView({
           px: 2.5,
           py: 1.5,
           borderBottom: "1px solid rgba(0,0,0,0.06)",
-          bgcolor: "#fff",
+          bgcolor: "var(--ev-paper, #FFFFFF)",
           flexShrink: 0,
         }}
       >
@@ -109,7 +109,7 @@ export function QuizView({
                   ? "#DC2626"
                   : canhoHetGio
                     ? "#D97706"
-                    : "#374151",
+                    : "#4B5563",
                 animation: sapHetGio ? "blink 1s step-end infinite" : "none",
                 "@keyframes blink": {
                   "0%,100%": { opacity: 1 },
@@ -173,7 +173,7 @@ export function QuizView({
             sx={{
               fontSize: 16,
               fontWeight: 800,
-              color: "#1F2937",
+              color: "var(--ev-text-primary, #1F2937)",
               lineHeight: 1.6,
               mb: 0.5,
             }}
@@ -269,7 +269,7 @@ export function QuizView({
                     lineHeight: 1.6,
                     flex: 1,
                     fontWeight: isSelected ? 600 : 400,
-                    color: "#1F2937",
+                    color: "var(--ev-text-primary, #1F2937)",
                   }}
                 >
                   {da.noiDungDapAn}
@@ -286,7 +286,7 @@ export function QuizView({
           px: 2.5,
           py: 2,
           borderTop: "1px solid rgba(0,0,0,0.06)",
-          bgcolor: "#fff",
+          bgcolor: "var(--ev-paper, #FFFFFF)",
           flexShrink: 0,
         }}
       >
@@ -300,7 +300,7 @@ export function QuizView({
               borderRadius: "10px",
               fontWeight: 700,
               borderColor: "rgba(0,0,0,0.12)",
-              color: "#374151",
+              color: "var(--ev-text-secondary, #4B5563)",
               "&:hover": { borderColor: RED, color: RED },
             }}
           >
@@ -326,7 +326,7 @@ export function QuizView({
                 borderRadius: "10px",
                 fontWeight: 700,
                 borderColor: "rgba(0,0,0,0.12)",
-                color: "#374151",
+                color: "var(--ev-text-secondary, #4B5563)",
                 "&:hover": { borderColor: RED, color: RED },
               }}
             >

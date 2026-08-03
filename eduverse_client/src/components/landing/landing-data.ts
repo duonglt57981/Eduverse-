@@ -190,10 +190,10 @@ export const benefits: LandingBenefit[] = [
 ];
 
 export const mentorHighlights = [
-  { name: 'Amanda Mason', role: 'Chuyên gia Chiến lược Tăng trưởng Marketing' },
-  { name: 'Nguyễn Nam', role: 'Chuyên gia Lãnh đạo Số' },
-  { name: 'Isabella Nguyen', role: 'Trưởng bộ phận Trải nghiệm Học tập' },
-  { name: 'Daniel Torres', role: 'Cố vấn AI cho Doanh nghiệp' },
+  { name: 'Nguyễn Thị Lương Hậu', role: 'Chuyên gia Lập trình Frontend & UX/UI' },
+  { name: 'Hoàng Long', role: 'Chuyên gia Lập trình Fullstack & Backend' },
+  { name: 'Dương Lương Triều', role: 'Kiến trúc sư giải pháp & Cloud DevOps' },
+  { name: 'Mạnh Lê Đức', role: 'Chuyên gia Trí tuệ Nhân tạo & AI Engineer' },
 ] as const;
 
 export const testimonials: LandingTestimonial[] = [
@@ -323,7 +323,7 @@ export const courseCatalog: CourseCatalogItem[] = [
     level: 'Người mới bắt đầu',
     isFree: false,
     tags: ['React', 'Frontend', 'JavaScript'],
-    palette: ['#0f172a', '#2563eb', '#1e293b'],
+    palette: ['#1F2937', '#2563eb', '#1F2937'],
   },
   {
     id: 'aspnetcore',
@@ -371,7 +371,7 @@ export const courseCatalog: CourseCatalogItem[] = [
     level: 'Người mới bắt đầu',
     isFree: false,
     tags: ['Flutter', 'Dart', 'Mobile'],
-    palette: ['#0f172a', '#0284c7', '#0f172a'],
+    palette: ['#1F2937', '#0284c7', '#1F2937'],
   },
   {
     id: 'docker',
@@ -449,16 +449,16 @@ export const instructorCategories: InstructorCategory[] = [
 
 export const instructorCatalog: InstructorItem[] = [
   {
-    id: 'nguyen-minh-anh',
-    name: 'TS. Nguyễn Minh Anh',
-    specialization: 'Chuyên gia Khoa học Dữ liệu & AI',
+    id: 'luong-hau',
+    name: 'Nguyễn Thị Lương Hậu',
+    specialization: 'Chuyên gia Lập trình Frontend & UX/UI',
     shortBio:
-      'Hơn 12 năm kinh nghiệm thiết kế hệ thống dữ liệu, cố vấn chiến lược AI và triển khai đổi mới số cho doanh nghiệp.',
+      'Hơn 8 năm kinh nghiệm thiết kế giao diện hiện đại, giảng dạy các công nghệ Next.js, Tailwind CSS và tối ưu hóa trải nghiệm người dùng.',
     rating: 4.9,
     students: '12,500+',
     courses: 8,
-    experience: '12 năm',
-    category: 'ai-data',
+    experience: '8 năm',
+    category: 'design',
     featured: true,
     palette: ['#1f0f12', '#8B1313', '#251013'],
     socials: [
@@ -468,16 +468,16 @@ export const instructorCatalog: InstructorItem[] = [
     ],
   },
   {
-    id: 'ha-hoang-nam',
-    name: 'ThS. Lê Hoàng Nam',
-    specialization: 'Giám đốc Sáng tạo & Thiết kế UX/UI',
+    id: 'hoang-long',
+    name: 'Hoàng Long',
+    specialization: 'Chuyên gia Lập trình Fullstack & Backend',
     shortBio:
-      'Người đứng sau nhiều sản phẩm số quy mô lớn, tập trung vào trải nghiệm người dùng và hệ thiết kế hiện đại.',
+      'Chuyên gia thiết kế hệ thống phần mềm lớn, phát triển API hiệu năng cao với ASP.NET Core, SQL Server và Node.js.',
     rating: 5.0,
     students: '8,900+',
     courses: 6,
     experience: '10 năm',
-    category: 'design',
+    category: 'technology',
     featured: true,
     palette: ['#160f16', '#8e4a59', '#241621'],
     socials: [
@@ -487,16 +487,17 @@ export const instructorCatalog: InstructorItem[] = [
     ],
   },
   {
-    id: 'tran-thu-ha',
-    name: 'Trần Thu Hà',
-    specialization: 'Trưởng nhóm Quản lý Sản phẩm',
+    id: 'duong-trieu',
+    name: 'Dương Lương Triều',
+    specialization: 'Kiến trúc sư giải pháp & Cloud DevOps',
     shortBio:
-      'Cố vấn sản phẩm số, chuyên xây dựng lộ trình phát triển kỹ năng quản trị sản phẩm cho đội ngũ trẻ.',
+      'Nhiều năm kinh nghiệm tư vấn giải pháp chuyển đổi số, triển khai CI/CD và kiến trúc Microservices trên nền tảng đám mây AWS/Docker.',
     rating: 4.8,
     students: '8,700+',
     courses: 5,
     experience: '8 năm',
-    category: 'business',
+    category: 'technology',
+    featured: true,
     palette: ['#2b1214', '#aa3d4e', '#2a1518'],
     socials: [
       { label: 'LinkedIn', href: '#' },
@@ -504,16 +505,16 @@ export const instructorCatalog: InstructorItem[] = [
     ],
   },
   {
-    id: 'pham-viet-hung',
-    name: 'Phạm Việt Hùng',
-    specialization: 'Tư vấn Điện toán Đám mây',
+    id: 'manh-le-duc',
+    name: 'Mạnh Lê Đức',
+    specialization: 'Chuyên gia Trí tuệ Nhân tạo & AI Engineer',
     shortBio:
-      'Chuyên gia kiến trúc hệ thống và điện toán đám mây, đào tạo thực chiến cho kỹ sư backend và DevOps.',
+      'Nghiên cứu và triển khai các mô hình Machine Learning, tích hợp mô hình ngôn ngữ lớn (LLM) và phát triển ứng dụng AI thực chiến.',
     rating: 4.9,
     students: '12,450+',
     courses: 9,
     experience: '12 năm',
-    category: 'technology',
+    category: 'ai-data',
     palette: ['#13212f', '#385671', '#1a2835'],
     socials: [
       { label: 'GitHub', href: '#' },

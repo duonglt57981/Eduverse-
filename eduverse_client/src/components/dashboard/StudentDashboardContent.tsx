@@ -153,7 +153,7 @@ function fmtDuration(seconds?: number) {
 }
 
 function getGradient(course: KhoaHocDto) {
-  return "#F1F5F9";
+  return "#FBFAF9";
 }
 
 function isValidImage(url?: string): boolean {
@@ -222,7 +222,7 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             border: "1px solid rgba(0,0,0,0.06)",
             width: 38,
             height: 38,
-            "&:hover": { bgcolor: "var(--ev-paper-alt, #F3F4F6)" },
+            "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
           }}
         >
           <ChevronLeftRounded />
@@ -242,7 +242,7 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             border: "1px solid rgba(0,0,0,0.06)",
             width: 38,
             height: 38,
-            "&:hover": { bgcolor: "var(--ev-paper-alt, #F3F4F6)" },
+            "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
           }}
         >
           <ChevronRightRounded />
@@ -347,7 +347,7 @@ function HoverPanel({
         left: pos.left,
         width: 310,
         zIndex: 1500,
-        bgcolor: "#ffffff",
+        bgcolor: "var(--ev-paper, #FFFFFF)",
         backdropFilter: "none",
         borderRadius: "16px",
         boxShadow: "0 16px 48px rgba(0,0,0,0.18)",
@@ -458,7 +458,15 @@ function HoverPanel({
               overflow: "hidden",
             }}
           >
-            {course.moTa}
+            {course.moTa
+              .replace(/<[^>]*>/g, "")
+              .replace(/&nbsp;/g, " ")
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+              .trim()}
           </Typography>
         )}
 
@@ -673,7 +681,7 @@ function CourseCard({
             height: 136,
             background: isValidImage(course.hinhAnhKhoaHoc)
               ? `url(${course.hinhAnhKhoaHoc}) center/cover no-repeat`
-              : "#F1F5F9",
+              : "#FBFAF9",
             position: "relative",
             display: "flex",
             alignItems: "center",
@@ -682,10 +690,10 @@ function CourseCard({
         >
           {!isValidImage(course.hinhAnhKhoaHoc) && (
             <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
-              <SchoolRounded sx={{ color: "var(--ev-text-muted, #94A3B8)", fontSize: 32 }} />
+              <SchoolRounded sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 32 }} />
               <Typography
                 sx={{
-                  color: "var(--ev-text-muted, #94A3B8)",
+                  color: "var(--ev-text-muted, #8A7676)",
                   fontSize: 11,
                   fontWeight: 700,
                   mt: 0.75,

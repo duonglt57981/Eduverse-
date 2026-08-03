@@ -5,6 +5,9 @@
      sẽ ghi đè các biến --ev-* này khi người dùng chọn chế độ tối.
      KHÔNG dùng @media prefers-color-scheme ở đây để không đè lên
      lựa chọn thủ công của người dùng. */
+  /* Bộ chữ chung — khớp FONT_FAMILY trong src/theme/tokens.ts */
+  --ev-font-family: "Be Vietnam Pro", "Roboto", system-ui, -apple-system,
+    "Segoe UI", Arial, sans-serif;
   --ev-bg: #F7F5F2;
   --ev-paper: #FFFFFF;
   --ev-paper-alt: #FBFAF9;
@@ -43,6 +46,7 @@ html,
 body {
   background-color: var(--ev-bg);
   color: var(--ev-text-primary);
+  overflow-x: hidden;
 }
 
 /* Ảnh, logo và media KHÔNG bị đảo màu ở chế độ tối */
@@ -58,7 +62,8 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
-  font-family: "Be Vietnam Pro", "Roboto", Arial, Helvetica, sans-serif;
+  font-family: var(--ev-font-family);
+  overflow-x: hidden;
 }
 
 * {

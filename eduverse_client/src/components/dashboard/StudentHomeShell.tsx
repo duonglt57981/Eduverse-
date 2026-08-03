@@ -75,6 +75,7 @@ export default function StudentHomeShell({ children }: StudentHomeShellProps) {
             maxWidth: 1400,
             mx: "auto",
             px: { xs: 2, md: 3 },
+            overflowX: "hidden",
           }}
         >
           {children}

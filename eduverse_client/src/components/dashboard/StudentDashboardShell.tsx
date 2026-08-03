@@ -66,9 +66,9 @@ export default function StudentDashboardShell({
         transition: "background-color 200ms ease, color 200ms ease",
         "--dashboard-surface": (theme) => theme.palette.background.paper,
         "--dashboard-surface-raised": (theme) =>
-          theme.palette.mode === "dark" ? "#20252D" : "#F7F8FA",
+          theme.palette.mode === "dark" ? "#20252D" : "#F7F5F2",
         "--dashboard-surface-muted": (theme) =>
-          theme.palette.mode === "dark" ? "#252B34" : "#F1F5F9",
+          theme.palette.mode === "dark" ? "#252B34" : "#FBFAF9",
         "--dashboard-border": (theme) =>
           theme.palette.mode === "dark"
             ? "rgba(255,255,255,0.10)"
@@ -116,6 +116,7 @@ export default function StudentDashboardShell({
             maxWidth: "100%",
             mx: "auto",
             px: { xs: 2, md: 6 },
+            overflowX: "hidden",
           }}
         >
           {children}

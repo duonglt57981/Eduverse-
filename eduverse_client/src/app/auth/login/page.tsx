@@ -109,7 +109,7 @@ export default function LoginPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: 'var(--ev-paper-alt, #F8FAFC)',
+          bgcolor: 'var(--ev-paper-alt, #F7F5F2)',
           px: 2.5,
           py: 4,
           position: 'relative',
@@ -130,7 +130,7 @@ export default function LoginPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                color: 'var(--ev-text-secondary, #64748B)',
+                color: 'var(--ev-text-secondary, #4B5563)',
                 fontWeight: 600,
                 fontSize: 14.5,
                 transition: 'color 200ms ease',
@@ -191,13 +191,13 @@ export default function LoginPage() {
             <Box sx={{ textAlign: 'center' }}>
               <Typography
                 variant="h5"
-                sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', fontSize: 26, letterSpacing: '-0.5px', mb: 1.5 }}
+                sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', fontSize: 26, letterSpacing: '-0.5px', mb: 1.5 }}
               >
                 Chào mừng trở lại!
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 15, lineHeight: 1.6 }}
+                sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 15, lineHeight: 1.6 }}
               >
                 Đăng nhập để tiếp tục hành trình học tập tại EduVerse
               </Typography>
@@ -215,7 +215,7 @@ export default function LoginPage() {
                 borderRadius: '14px',
                 border: '1px solid #FECACA',
                 background: '#FEF2F2',
-                color: '#991B1B',
+                color: '#8B1313',
                 fontSize: 14,
                 fontWeight: 500,
                 textAlign: 'center',
@@ -397,7 +397,7 @@ export default function LoginPage() {
             sx={{
               textAlign: 'center',
               fontSize: 12.5,
-              color: '#94A3B8',
+              color: '#8A7676',
               lineHeight: 1.6,
               position: 'relative',
               zIndex: 999,

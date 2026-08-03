@@ -53,26 +53,27 @@ import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import AuthGuard from "@/src/components/AuthGuard";
 import { apiService } from "@/src/services/index";
 import Swal from "sweetalert2";
+import { BRAND, NEUTRAL, STATUS, CSSVAR } from "@/src/theme/tokens";
 
 // Premium color tokens based on the EduVerse design
 const COLORS = {
-  primary: "#8B1313", // Deep Crimson
-  primaryLight: "#B91C1C", // Light Crimson
-  primaryBgLight: "#FFF5F5", // Extra light pink/red background
-  bgLight: "var(--ev-bg, #F7F5F2)", // Premium cream-rose background
-  white: "var(--ev-paper, #FFFFFF)",
-  textDark: "var(--ev-text-primary, #1E293B)", // Slate 800
-  textSecondary: "var(--ev-text-secondary, #64748B)", // Slate 500
-  green: "#10B981", // Active state emerald
-  greenBg: "#ECFDF5",
-  orange: "#F59E0B", // Warning/key gold
-  orangeBg: "#FFFBEB",
-  red: "#EF4444", // Error red
-  redBg: "#FEF2F2",
-  blue: "#3B82F6", // Royal blue
-  blueBg: "#EFF6FF",
-  greyBorder: "#E2E8F0", // Slate 200
-  greyLight: "#F1F5F9", // Slate 100
+  primary: BRAND.main,
+  primaryLight: STATUS.errorDark,
+  primaryBgLight: BRAND.light,
+  bgLight: NEUTRAL.bg,
+  white: NEUTRAL.paper,
+  textDark: NEUTRAL.textPrimary,
+  textSecondary: NEUTRAL.textSecondary,
+  green: STATUS.success,
+  greenBg: STATUS.successSoft,
+  orange: STATUS.warning,
+  orangeBg: STATUS.warningSoft,
+  red: STATUS.error,
+  redBg: STATUS.errorSoft,
+  blue: STATUS.info,
+  blueBg: STATUS.infoSoft,
+  greyBorder: NEUTRAL.divider,
+  greyLight: CSSVAR.paperAlt,
 };
 
 interface RoleItem {
@@ -558,7 +559,7 @@ export default function AdminRolesPage() {
                   p: 3,
                   borderRadius: "16px",
                   bgcolor: COLORS.white,
-                  border: "1.5px solid #F1F5F9",
+                  border: "1.5px solid #FBFAF9",
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
@@ -608,7 +609,7 @@ export default function AdminRolesPage() {
                   p: 3,
                   borderRadius: "16px",
                   bgcolor: COLORS.white,
-                  border: "1.5px solid #F1F5F9",
+                  border: "1.5px solid #FBFAF9",
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
@@ -656,7 +657,7 @@ export default function AdminRolesPage() {
                   p: 3,
                   borderRadius: "16px",
                   bgcolor: COLORS.white,
-                  border: "1.5px solid #F1F5F9",
+                  border: "1.5px solid #FBFAF9",
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
@@ -704,7 +705,7 @@ export default function AdminRolesPage() {
                   p: 3,
                   borderRadius: "16px",
                   bgcolor: COLORS.white,
-                  border: "1.5px solid #F1F5F9",
+                  border: "1.5px solid #FBFAF9",
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
@@ -752,7 +753,7 @@ export default function AdminRolesPage() {
             elevation={0}
             sx={{
               borderRadius: "16px",
-              border: "1.5px solid #E2E8F0",
+              border: "1.5px solid var(--ev-divider, #ECE7E4)",
               overflow: "hidden",
               bgcolor: COLORS.white,
               mb: 4,
@@ -765,7 +766,7 @@ export default function AdminRolesPage() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 p: 3,
-                borderBottom: "1.5px solid #F1F5F9",
+                borderBottom: "1.5px solid #FBFAF9",
               }}
             >
               <Typography
@@ -794,7 +795,7 @@ export default function AdminRolesPage() {
                 </form>
                 <IconButton
                   sx={{
-                    border: "1.5px solid #E2E8F0",
+                    border: "1.5px solid var(--ev-divider, #ECE7E4)",
                     borderRadius: "8px",
                     width: "38px",
                     height: "38px",
@@ -808,7 +809,7 @@ export default function AdminRolesPage() {
                 <IconButton
                   onClick={handleRefresh}
                   sx={{
-                    border: "1.5px solid #E2E8F0",
+                    border: "1.5px solid var(--ev-divider, #ECE7E4)",
                     borderRadius: "8px",
                     width: "38px",
                     height: "38px",
@@ -843,7 +844,7 @@ export default function AdminRolesPage() {
             ) : (
               <TableContainer>
                 <Table>
-                  <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F8FAFC)" }}>
+                  <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F7F5F2)" }}>
                     <TableRow>
                       <TableCell
                         sx={{
@@ -1091,7 +1092,7 @@ export default function AdminRolesPage() {
               elevation={0}
               sx={{
                 borderRadius: "16px",
-                border: "1.5px solid #E2E8F0",
+                border: "1.5px solid var(--ev-divider, #ECE7E4)",
                 bgcolor: COLORS.white,
                 overflow: "hidden",
               }}
@@ -1301,7 +1302,7 @@ export default function AdminRolesPage() {
               sx={{
                 fontWeight: 800,
                 color: COLORS.textDark,
-                borderBottom: "1.5px solid #F1F5F9",
+                borderBottom: "1.5px solid #FBFAF9",
                 pb: 2,
               }}
             >
@@ -1348,7 +1349,7 @@ export default function AdminRolesPage() {
                 </Grid>
               </DialogContent>
               <DialogActions
-                sx={{ p: 3, borderTop: "1.5px solid #F1F5F9", gap: 1.5 }}
+                sx={{ p: 3, borderTop: "1.5px solid #FBFAF9", gap: 1.5 }}
               >
                 <Button
                   onClick={() => setDialogOpen(false)}

@@ -215,7 +215,7 @@ function SectionHeader({
           {title}
         </Typography>
         {subtitle && (
-          <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-muted, #8A93A3)", mt: 0.25 }}>
+          <Typography sx={{ fontSize: 12.5, color: "var(--ev-text-muted, #8A7676)", mt: 0.25 }}>
             {subtitle}
           </Typography>
         )}
@@ -406,7 +406,7 @@ function ImageCropper({
               mt: 1.5,
               textAlign: "center",
               fontSize: 12.5,
-              color: "var(--ev-text-muted, #8A93A3)",
+              color: "var(--ev-text-muted, #8A7676)",
             }}
           >
             Kích thước sau khi cắt:{" "}
@@ -421,7 +421,7 @@ function ImageCropper({
           onClick={onCancel}
           sx={{
             textTransform: "none",
-            color: "var(--ev-text-muted, #8A93A3)",
+            color: "var(--ev-text-muted, #8A7676)",
             fontWeight: 600,
             "&:hover": {
               bgcolor: "var(--ev-paper-alt, #F5F6F8)",
@@ -744,12 +744,12 @@ export default function BasicInfoContent() {
     p: 3.5,
     mb: 4,
     bgcolor: "var(--ev-paper, #FFFFFF)",
-    border: `1px solid #E5E7EB`,
+    border: `1px solid #ECE7E4`,
     borderRadius: "16px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.015)",
     transition: "box-shadow 0.25s ease, border-color 0.25s ease",
     "&:hover": {
-      borderColor: "#991B1B",
+      borderColor: "#8B1313",
       boxShadow: "0 6px 24px rgba(0, 0, 0, 0.03)",
     },
   } as const;
@@ -758,15 +758,15 @@ export default function BasicInfoContent() {
     borderRadius: "12px",
     bgcolor: "var(--ev-paper, #FFFFFF)",
     "& .MuiSelect-select": {
-      color: "#1E293B !important",
-      WebkitTextFillColor: "#1E293B !important",
+      color: "var(--ev-text-primary, #1F2937) !important",
+      WebkitTextFillColor: "var(--ev-text-primary, #1F2937) !important",
     },
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--ev-divider, #E2E8F0)" },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--ev-divider, #ECE7E4)" },
     "&:hover .MuiOutlinedInput-notchedOutline": {
       borderColor: "#991B1B80",
     },
     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#991B1B",
+      borderColor: "#8B1313",
     },
   } as const;
 
@@ -782,11 +782,11 @@ export default function BasicInfoContent() {
       <Box sx={{ maxWidth: 900, mx: "auto", pb: 12 }}>
         <Box sx={{ mb: 4 }}>
           <Typography
-            sx={{ fontWeight: 900, fontSize: 26, color: "var(--ev-text-primary, #1E293B)", mb: 0.5 }}
+            sx={{ fontWeight: 900, fontSize: 26, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}
           >
             Trang đích của khóa học
           </Typography>
-          <Typography sx={{ fontSize: 14, color: "#64748B" }}>
+          <Typography sx={{ fontSize: 14, color: "var(--ev-text-secondary, #4B5563)" }}>
             Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ
             ràng và hấp dẫn.
           </Typography>
@@ -842,12 +842,12 @@ export default function BasicInfoContent() {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
                     height: "52px",
-                    "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
+                    "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
-                    "&.Mui-focused fieldset": { borderColor: "#991B1B" },
+                    "&.Mui-focused fieldset": { borderColor: "#8B1313" },
                   },
                   "& .MuiInputBase-input": {
-                    color: "#1E293B",
+                    color: "var(--ev-text-primary, #1F2937)",
                     fontWeight: 500,
                   },
                 }}
@@ -855,7 +855,7 @@ export default function BasicInfoContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: loiTieuDe ? "#DC2626" : "#64748B",
+                  color: loiTieuDe ? "#DC2626" : "#4B5563",
                   mt: 0.75,
                   textAlign: "right",
                   fontWeight: 500,
@@ -877,14 +877,14 @@ export default function BasicInfoContent() {
                 sx={{
                   borderRadius: "12px",
                   overflow: "hidden",
-                  border: loiMoTa ? "1px solid #DC2626" : "1px solid #E2E8F0",
+                  border: loiMoTa ? "1px solid #DC2626" : "1px solid #ECE7E4",
                   transition: "all 0.2s ease",
                   "&:hover": {
                     borderColor: loiMoTa ? "#DC2626" : "#CBD5E1",
                   },
                   "&:focus-within": {
-                    borderColor: "#991B1B",
-                    boxShadow: "0 0 0 1px #991B1B",
+                    borderColor: "#8B1313",
+                    boxShadow: "0 0 0 1px #8B1313",
                   },
                 }}
               >
@@ -893,7 +893,7 @@ export default function BasicInfoContent() {
                     sx={{
                       p: 2.5,
                       minHeight: 200,
-                      bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+                      bgcolor: "var(--ev-paper-alt, #F7F5F2)",
                       borderRadius: "12px",
                       "& img": { maxWidth: "100%" },
                       "& *": { maxWidth: "100%" },
@@ -913,7 +913,7 @@ export default function BasicInfoContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: loiMoTa ? "#D32F2F" : "#8A93A3",
+                  color: loiMoTa ? "#D32F2F" : "#8A7676",
                   mt: 0.75,
                 }}
               >
@@ -1034,7 +1034,7 @@ export default function BasicInfoContent() {
                               startAdornment: (
                                 <InputAdornment position="start">
                                   <SearchRoundedIcon
-                                    sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A93A3)" }}
+                                    sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A7676)" }}
                                   />
                                 </InputAdornment>
                               ),
@@ -1048,7 +1048,7 @@ export default function BasicInfoContent() {
 
                       {danhMucDaLoc.length === 0 ? (
                         <Box sx={{ px: 2, py: 1.5 }}>
-                          <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A93A3)" }}>
+                          <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}>
                             Không tìm thấy danh mục nào.
                           </Typography>
                         </Box>
@@ -1102,12 +1102,12 @@ export default function BasicInfoContent() {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
                     height: "52px",
-                    "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
+                    "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
-                    "&.Mui-focused fieldset": { borderColor: "#991B1B" },
+                    "&.Mui-focused fieldset": { borderColor: "#8B1313" },
                   },
                   "& .MuiInputBase-input": {
-                    color: "#1E293B",
+                    color: "var(--ev-text-primary, #1F2937)",
                     fontWeight: 500,
                   },
                 }}
@@ -1115,7 +1115,7 @@ export default function BasicInfoContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: "#64748B",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   mt: 0.75,
                   fontWeight: 500,
                 }}
@@ -1180,7 +1180,7 @@ export default function BasicInfoContent() {
                               boxShadow: 1,
                               width: 26,
                               height: 26,
-                              "&:hover": { bgcolor: "var(--ev-paper, #fff)" },
+                              "&:hover": { bgcolor: "var(--ev-paper, #FFFFFF)" },
                             }}
                           >
                             <CloseRoundedIcon sx={{ fontSize: 16 }} />
@@ -1196,7 +1196,7 @@ export default function BasicInfoContent() {
                               boxShadow: 1,
                               width: 26,
                               height: 26,
-                              "&:hover": { bgcolor: "var(--ev-paper, #fff)" },
+                              "&:hover": { bgcolor: "var(--ev-paper, #FFFFFF)" },
                             }}
                             title="Thay đổi ảnh"
                           >
@@ -1269,16 +1269,16 @@ export default function BasicInfoContent() {
                         alignItems: "center",
                         px: 1.5,
                         borderRadius: "10px",
-                        border: "1px solid #E2E8F0",
-                        bgcolor: "var(--ev-paper-alt, #F8FAFC)",
-                        color: "var(--ev-text-secondary, #64748B)",
+                        border: "1px solid var(--ev-divider, #ECE7E4)",
+                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                        color: "var(--ev-text-secondary, #4B5563)",
                         fontSize: 13.5,
                         minWidth: 0,
                       }}
                     >
                       <Typography
                         noWrap
-                        sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #64748B)" }}
+                        sx={{ fontSize: 13.5, color: "var(--ev-text-secondary, #4B5563)" }}
                       >
                         {imageFile
                           ? imageFile.name
@@ -1302,8 +1302,8 @@ export default function BasicInfoContent() {
                         flexShrink: 0,
                         textTransform: "none",
                         borderRadius: "10px",
-                        borderColor: "#991B1B",
-                        color: "#991B1B",
+                        borderColor: "#8B1313",
+                        color: "#8B1313",
                         fontWeight: 700,
                         "&:hover": {
                           borderColor: "#7F1D1D",
@@ -1329,7 +1329,7 @@ export default function BasicInfoContent() {
                   py: 2.5,
                   bgcolor: "rgba(247, 248, 250, 0.9)",
                   backdropFilter: "blur(8px)",
-                  borderTop: "1px solid #E5E7EB",
+                  borderTop: "1px solid var(--ev-divider, #ECE7E4)",
                   display: "flex",
                   justifyContent: "flex-end",
                   zIndex: 900,

@@ -112,7 +112,7 @@ function NganHangContent() {
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
         <Box>
-          <Typography sx={{ fontSize: 26, fontWeight: 900, color: PRIMARY, mb: 0.5 }}>
+          <Typography sx={{ fontSize: 26, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}>
             Tài khoản ngân hàng
           </Typography>
           <Typography sx={{ fontSize: 14, color: "var(--ev-text-secondary, rgba(31,41,55,0.55))" }}>
@@ -168,7 +168,7 @@ function NganHangContent() {
 
                       {n.hinhAnhQR && (
                         <Box sx={{ mt: 1.5, p: 1, border: "1px solid rgba(141,19,19,0.15)",
-                          borderRadius: "10px", display: "inline-block", bgcolor: "var(--ev-paper, #fff)" }}>
+                          borderRadius: "10px", display: "inline-block", bgcolor: "var(--ev-paper, #FFFFFF)" }}>
                           <img src={n.hinhAnhQR} alt="QR"
                             style={{ width: 120, height: 120, objectFit: "contain", display: "block" }} />
                           <Typography sx={{ fontSize: 10, color: "text.secondary", textAlign: "center", mt: 0.5 }}>

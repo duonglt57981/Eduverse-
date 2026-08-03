@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { Box, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
+import { BRAND } from "@/src/theme/tokens";
 
 interface Props {
   children: ReactNode;
@@ -16,10 +17,10 @@ interface Props {
 
 // ====== Bảng màu ======
 const MAU = {
-  chinh: "#7A1F2B",
-  chinhDam: "#611722",
-  chinhNhat: "#F8ECEE",
-  vien: "#EFE0E2",
+  chinh: BRAND.main,
+  chinhDam: BRAND.darker,
+  chinhNhat: BRAND.light,
+  vien: BRAND.border,
 };
 
 export default function StepWrapper({
@@ -67,19 +68,19 @@ export default function StepWrapper({
                 textTransform: "none",
                 fontWeight: 600,
                 color: "var(--ev-text-secondary, #4B5563)",
-                borderColor: "var(--ev-divider, #D1D5DB)",
+                borderColor: "var(--ev-divider, #ECE7E4)",
                 px: { xs: 2.5, sm: 3 },
                 py: 1.2,
                 borderRadius: "10px",
                 fontSize: 14,
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  bgcolor: "var(--ev-paper-alt, #F3F4F6)",
-                  borderColor: "#9CA3AF",
-                  color: "var(--ev-text-primary, #111827)",
+                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                  borderColor: "#8A7676",
+                  color: "var(--ev-text-primary, #1F2937)",
                 },
                 "&:focus-visible": {
-                  outline: "2px solid #7A1F2B",
+                  outline: "2px solid #8B1313",
                 },
               }}
             >
@@ -110,12 +111,12 @@ export default function StepWrapper({
                 transform: "translateY(-1px)",
               },
               "&.Mui-disabled": {
-                bgcolor: "#E5E7EB",
-                color: "var(--ev-grey, #9CA3AF)",
+                bgcolor: "#ECE7E4",
+                color: "var(--ev-grey, #8A7676)",
                 boxShadow: "none",
               },
               "&:focus-visible": {
-                outline: "2px solid #7A1F2B",
+                outline: "2px solid #8B1313",
               },
             }}
           >

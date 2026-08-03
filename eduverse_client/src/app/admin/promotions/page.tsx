@@ -75,7 +75,7 @@ const EMPTY_FORM: FormState = {
   idsKhoaHoc: [],
 };
 
-const PRIMARY = "#8D1313";
+const PRIMARY = "#8B1313";
 const PRIMARY_SOFT = "#FEF2F2";
 const PRIMARY_BORDER = "#FECACA";
 
@@ -96,7 +96,7 @@ function StatusChip({
       <Chip
         label="Không xác định"
         size="small"
-        sx={{ bgcolor: "#F3F4F6", color: "#6B7280" }}
+        sx={{ bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-muted, #8A7676)" }}
       />
     );
   if (now < start)
@@ -112,7 +112,7 @@ function StatusChip({
       <Chip
         label="Hết hạn"
         size="small"
-        sx={{ bgcolor: "#F3F4F6", color: "#6B7280", fontWeight: 700 }}
+        sx={{ bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-muted, #8A7676)", fontWeight: 700 }}
       />
     );
   return (
@@ -331,7 +331,7 @@ function PromotionsContent() {
       >
         <Box>
           <Typography
-            sx={{ fontSize: 26, fontWeight: 900, color: "#1F2937", mb: 0.5 }}
+            sx={{ fontSize: 26, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}
           >
             Quản lý khuyến mãi
           </Typography>
@@ -400,7 +400,7 @@ function PromotionsContent() {
         elevation={0}
         sx={{
           borderRadius: "20px",
-          border: "1px solid #E5E7EB",
+          border: "1px solid var(--ev-divider, #ECE7E4)",
           overflow: "hidden",
         }}
       >
@@ -410,13 +410,13 @@ function PromotionsContent() {
           </Box>
         ) : list.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 10 }}>
-            <LocalOfferIcon sx={{ fontSize: 56, color: "#D1D5DB", mb: 2 }} />
+            <LocalOfferIcon sx={{ fontSize: 56, color: "#ECE7E4", mb: 2 }} />
             <Typography
-              sx={{ fontWeight: 700, fontSize: 16, color: "#374151", mb: 0.5 }}
+              sx={{ fontWeight: 700, fontSize: 16, color: "var(--ev-text-secondary, #4B5563)", mb: 0.5 }}
             >
               Chưa có khuyến mãi nào
             </Typography>
-            <Typography sx={{ color: "#9CA3AF", fontSize: 14, mb: 3 }}>
+            <Typography sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 14, mb: 3 }}>
               Tạo mã giảm giá đầu tiên để bắt đầu
             </Typography>
             <Button
@@ -437,7 +437,7 @@ function PromotionsContent() {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: "#F9FAFB" }}>
+                <TableRow sx={{ bgcolor: "var(--ev-paper-alt, #FBFAF9)" }}>
                   {[
                     "Mã giảm giá",
                     "Giảm giá",
@@ -452,9 +452,9 @@ function PromotionsContent() {
                       sx={{
                         fontWeight: 700,
                         fontSize: 13,
-                        color: "#374151",
+                        color: "var(--ev-text-secondary, #4B5563)",
                         py: 1.5,
-                        borderBottom: "1px solid #E5E7EB",
+                        borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
                       }}
                     >
                       {h}
@@ -494,13 +494,13 @@ function PromotionsContent() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography sx={{ fontSize: 13, color: "#374151" }}>
+                      <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
                         {formatDate(km.ngayBatDau)} →{" "}
                         {formatDate(km.ngayKetThuc)}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography sx={{ fontSize: 13, color: "#374151" }}>
+                      <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
                         {km.soLuongHieuLuc ?? "∞"}
                       </Typography>
                     </TableCell>
@@ -532,8 +532,8 @@ function PromotionsContent() {
                               width: 28,
                               height: 28,
                               fontSize: 11,
-                              bgcolor: "#F3F4F6",
-                              color: "#6B7280",
+                              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                              color: "var(--ev-text-muted, #8A7676)",
                             }}
                           >
                             +{(km.danhSachKhoaHoc?.length ?? 0) - 2}
@@ -558,7 +558,7 @@ function PromotionsContent() {
                             size="small"
                             onClick={() => handleOpenEdit(km)}
                             sx={{
-                              color: "#6B7280",
+                              color: "var(--ev-text-muted, #8A7676)",
                               "&:hover": {
                                 color: PRIMARY,
                                 bgcolor: PRIMARY_SOFT,
@@ -574,7 +574,7 @@ function PromotionsContent() {
                             onClick={() => setConfirmDelete(km)}
                             disabled={deleting === km.id}
                             sx={{
-                              color: "#6B7280",
+                              color: "var(--ev-text-muted, #8A7676)",
                               "&:hover": {
                                 color: "#DC2626",
                                 bgcolor: "#FEF2F2",
@@ -650,7 +650,7 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#374151",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   mb: 0.8,
                 }}
               >
@@ -658,7 +658,6 @@ function PromotionsContent() {
               </Typography>
               <TextField
                 fullWidth
-                size="small"
                 placeholder="VD: SALE20"
                 value={form.maGiamGia}
                 onChange={(e) =>
@@ -670,6 +669,7 @@ function PromotionsContent() {
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
+                    height: 46,
                     "&.Mui-focused fieldset": { borderColor: PRIMARY },
                   },
                 }}
@@ -682,7 +682,7 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#374151",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   mb: 0.8,
                 }}
               >
@@ -690,7 +690,6 @@ function PromotionsContent() {
               </Typography>
               <TextField
                 fullWidth
-                size="small"
                 type="number"
                 placeholder="VD: 20"
                 slotProps={{
@@ -703,6 +702,7 @@ function PromotionsContent() {
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
+                    height: 46,
                     "&.Mui-focused fieldset": { borderColor: PRIMARY },
                   },
                 }}
@@ -715,18 +715,17 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#374151",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   mb: 0.8,
                 }}
               >
                 Số lượt dùng{" "}
-                <span style={{ color: "#9CA3AF", fontWeight: 400 }}>
+                <span style={{ color: "var(--ev-text-muted, #8A7676)", fontWeight: 400 }}>
                   (để trống = không giới hạn)
                 </span>
               </Typography>
               <TextField
                 fullWidth
-                size="small"
                 type="number"
                 placeholder="Không giới hạn"
                 slotProps={{
@@ -739,6 +738,7 @@ function PromotionsContent() {
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
+                    height: 46,
                     "&.Mui-focused fieldset": { borderColor: PRIMARY },
                   },
                 }}
@@ -751,7 +751,7 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#374151",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   mb: 0.8,
                 }}
               >
@@ -759,7 +759,6 @@ function PromotionsContent() {
               </Typography>
               <TextField
                 fullWidth
-                size="small"
                 type="date"
                 value={form.ngayBatDau}
                 onChange={(e) =>
@@ -768,6 +767,7 @@ function PromotionsContent() {
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
+                    height: 46,
                     "&.Mui-focused fieldset": { borderColor: PRIMARY },
                   },
                 }}
@@ -780,7 +780,7 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#374151",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   mb: 0.8,
                 }}
               >
@@ -788,7 +788,6 @@ function PromotionsContent() {
               </Typography>
               <TextField
                 fullWidth
-                size="small"
                 type="date"
                 value={form.ngayKetThuc}
                 onChange={(e) =>
@@ -797,6 +796,7 @@ function PromotionsContent() {
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
+                    height: 46,
                     "&.Mui-focused fieldset": { borderColor: PRIMARY },
                   },
                 }}
@@ -808,7 +808,7 @@ function PromotionsContent() {
 
           {/* Chọn khóa học */}
           <Typography
-            sx={{ fontSize: 13, fontWeight: 700, color: "#374151", mb: 1.5 }}
+            sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-secondary, #4B5563)", mb: 1.5 }}
           >
             Chọn khóa học áp dụng *
             {form.idsKhoaHoc.length > 0 && (
@@ -829,7 +829,6 @@ function PromotionsContent() {
           {/* Search khóa học */}
           <TextField
             fullWidth
-            size="small"
             placeholder="Tìm kiếm khóa học..."
             value={searchKH}
             onChange={(e) => setSearchKH(e.target.value)}
@@ -837,7 +836,7 @@ function PromotionsContent() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#9CA3AF", fontSize: 18 }} />
+                    <SearchIcon sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 18 }} />
                   </InputAdornment>
                 ),
               },
@@ -846,6 +845,7 @@ function PromotionsContent() {
               mb: 1.5,
               "& .MuiOutlinedInput-root": {
                 borderRadius: "10px",
+                height: 46,
                 "&.Mui-focused fieldset": { borderColor: PRIMARY },
               },
             }}
@@ -856,7 +856,7 @@ function PromotionsContent() {
             sx={{
               maxHeight: 260,
               overflowY: "auto",
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--ev-divider, #ECE7E4)",
               borderRadius: "12px",
               p: 1,
             }}
@@ -870,7 +870,7 @@ function PromotionsContent() {
                 sx={{
                   textAlign: "center",
                   py: 4,
-                  color: "#9CA3AF",
+                  color: "var(--ev-text-muted, #8A7676)",
                   fontSize: 14,
                 }}
               >
@@ -896,7 +896,7 @@ function PromotionsContent() {
                         : "1px solid transparent",
                       mb: 0.5,
                       "&:hover": {
-                        bgcolor: checked ? PRIMARY_SOFT : "#F9FAFB",
+                        bgcolor: checked ? PRIMARY_SOFT : "#FBFAF9",
                       },
                       transition: "all 150ms ease",
                     }}
@@ -906,7 +906,7 @@ function PromotionsContent() {
                       size="small"
                       sx={{
                         p: 0,
-                        color: "#D1D5DB",
+                        color: "#ECE7E4",
                         "&.Mui-checked": { color: PRIMARY },
                       }}
                     />
@@ -921,7 +921,7 @@ function PromotionsContent() {
                       sx={{
                         fontSize: 13,
                         fontWeight: checked ? 700 : 500,
-                        color: checked ? PRIMARY : "#374151",
+                        color: checked ? PRIMARY : "#4B5563",
                         flex: 1,
                       }}
                     >
@@ -958,17 +958,17 @@ function PromotionsContent() {
         </DialogContent>
 
         <DialogActions
-          sx={{ px: 3, py: 2.5, borderTop: "1px solid #E5E7EB", gap: 1 }}
+          sx={{ px: 3, py: 2.5, borderTop: "1px solid var(--ev-divider, #ECE7E4)", gap: 1 }}
         >
           <Button
             onClick={() => setOpenDialog(false)}
             variant="outlined"
             sx={{
-              borderColor: "#D1D5DB",
-              color: "#374151",
+              borderColor: "var(--ev-divider, #ECE7E4)",
+              color: "var(--ev-text-secondary, #4B5563)",
               borderRadius: "10px",
               fontWeight: 600,
-              "&:hover": { borderColor: "#9CA3AF" },
+              "&:hover": { borderColor: "#8A7676" },
             }}
           >
             Huỷ
@@ -1005,11 +1005,11 @@ function PromotionsContent() {
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 800, fontSize: 17, color: "#1F2937" }}>
+        <DialogTitle sx={{ fontWeight: 800, fontSize: 17, color: "var(--ev-text-primary, #1F2937)" }}>
           Xoá khuyến mãi?
         </DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontSize: 14, color: "#6B7280" }}>
+          <Typography sx={{ fontSize: 14, color: "var(--ev-text-muted, #8A7676)" }}>
             Bạn có chắc muốn xoá mã{" "}
             <strong style={{ color: PRIMARY }}>
               {confirmDelete?.maGiamGia}
@@ -1022,8 +1022,8 @@ function PromotionsContent() {
             onClick={() => setConfirmDelete(null)}
             variant="outlined"
             sx={{
-              borderColor: "#D1D5DB",
-              color: "#374151",
+              borderColor: "var(--ev-divider, #ECE7E4)",
+              color: "var(--ev-text-secondary, #4B5563)",
               borderRadius: "10px",
               fontWeight: 600,
             }}

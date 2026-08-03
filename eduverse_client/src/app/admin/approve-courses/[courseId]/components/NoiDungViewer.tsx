@@ -368,21 +368,21 @@ export default function NoiDungViewer({ selected }: { selected: any }) {
         isolation: "isolate",
       }}
     >
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1 }}>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 2 }}>
         {loai === "baiGiang" ? (
-          <PlayCircleIcon sx={{ color: COLORS.primary }} />
+          <PlayCircleIcon sx={{ color: COLORS.primary, fontSize: 22 }} />
         ) : loai === "taiLieu" ? (
-          <AttachFileIcon sx={{ color: COLORS.primary }} />
+          <AttachFileIcon sx={{ color: COLORS.gold, fontSize: 22 }} />
         ) : (
-          <QuizRoundedIcon sx={{ color: COLORS.primary }} />
+          <QuizRoundedIcon sx={{ color: "#7C3AED", fontSize: 22 }} />
         )}
         <Typography
           sx={{
             flex: 1,
             fontFamily: FONTS.display,
-            fontWeight: 600,
+            fontWeight: 800,
             fontSize: 18,
-            color: COLORS.ink,
+            color: "var(--ev-text-primary, #1F2937)",
           }}
           noWrap
         >
@@ -508,7 +508,7 @@ function ViewerBody({
           position: "relative",
           isolation: "isolate",
           contain: "layout paint",
-          bgcolor: "#f9f6f4",
+          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
           border: `1px solid ${COLORS.line}`,
           p: 2,
           // Không sử dụng ...clipFixSx ở đây để tránh ghi đè position
@@ -569,7 +569,7 @@ function ViewerBody({
                 sx={{
                   p: 2,
                   border: `1px solid ${COLORS.line}`,
-                  backgroundColor: "var(--ev-paper, #ffffff)",
+                  backgroundColor: "var(--ev-paper, #FFFFFF)",
                   transition: "box-shadow 0.2s",
                   "&:hover": {
                     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
@@ -1480,7 +1480,7 @@ function TaiLieuPreview({
           maxWidth: "100%",
           boxSizing: "border-box",
           border: `1px solid ${COLORS.line}`,
-          bgcolor: "#F5F1EE",
+          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",

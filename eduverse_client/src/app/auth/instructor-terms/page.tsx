@@ -28,7 +28,7 @@ export default function InstructorTermsPage() {
       <Box
         sx={{
           minHeight: '100vh',
-          bgcolor: 'var(--ev-paper-alt, #F8FAFC)',
+          bgcolor: 'var(--ev-paper-alt, #F7F5F2)',
           py: { xs: 4, sm: 6 },
           px: 2,
         }}
@@ -41,7 +41,7 @@ export default function InstructorTermsPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 1,
-                color: 'var(--ev-text-secondary, #64748B)',
+                color: 'var(--ev-text-secondary, #4B5563)',
                 mb: 3,
                 fontSize: 14.5,
                 fontWeight: 600,
@@ -86,7 +86,7 @@ export default function InstructorTermsPage() {
                 variant="h4"
                 sx={{
                   fontWeight: 900,
-                  color: 'var(--ev-text-primary, #1E293B)',
+                  color: 'var(--ev-text-primary, #1F2937)',
                   letterSpacing: '-1px',
                   mb: 1.5,
                   fontSize: { xs: 26, sm: 32 },
@@ -96,7 +96,7 @@ export default function InstructorTermsPage() {
                 Điều khoản & Quy định Hợp tác Giảng viên
               </Typography>
 
-              <Typography variant="body1" sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 15, lineHeight: 1.6 }}>
+              <Typography variant="body1" sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 15, lineHeight: 1.6 }}>
                 Chào mừng bạn đến với cộng đồng Giảng viên của EduVerse! Các điều khoản dưới đây điều chỉnh quyền lợi, trách nhiệm và quy trình hợp tác giảng dạy giữa bạn và nền tảng EduVerse.
               </Typography>
             </Box>
@@ -108,10 +108,10 @@ export default function InstructorTermsPage() {
               
               {/* Section 1 */}
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 18 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
                   1. Quyền Sở hữu Trí tuệ & Bản quyền Nội dung
                 </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #475569)' }}>
+                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
                   - Giảng viên luôn giữ trọn vẹn quyền sở hữu trí tuệ đối với tài liệu, bài giảng và nội dung khóa học do mình tự biên soạn.<br />
                   - Bằng việc cấp phép phân phối khóa học trên EduVerse, Giảng viên đồng ý cấp cho EduVerse quyền không độc quyền (non-exclusive) để tiếp thị, quảng bá và phân phối khóa học tới học viên trên toàn cầu.<br />
                   - Giảng viên cam kết nội dung tải lên là chính chủ, không sao chép trái phép hoặc vi phạm bản quyền của bất kỳ cá nhân hay tổ chức nào khác.
@@ -120,10 +120,10 @@ export default function InstructorTermsPage() {
 
               {/* Section 2 */}
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 18 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
                   2. Phân chia Doanh thu & Quy trình Thanh toán
                 </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #475569)' }}>
+                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
                   - <strong>Tỷ lệ phân chia:</strong> Giảng viên nhận tỷ lệ doanh thu theo thỏa thuận trong từng chương trình khuyến mại hoặc bán hàng trực tiếp trên EduVerse.<br />
                   - <strong>Rút tiền:</strong> Yêu cầu rút tiền được xử lý định kỳ thông qua tài khoản ngân hàng chính chủ đã được liên kết và xác minh trên hệ thống.<br />
                   - <strong>Nghĩa vụ thuế:</strong> Giảng viên có trách nhiệm thực hiện khai báo và nộp thuế thu nhập cá nhân theo đúng quy định của pháp luật Việt Nam đối với nguồn thu nhập từ nền tảng.
@@ -132,10 +132,10 @@ export default function InstructorTermsPage() {
 
               {/* Section 3 */}
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 18 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
                   3. Quy chuẩn Chất lượng & Tương tác Học viên
                 </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #475569)' }}>
+                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
                   - Video bài giảng cần đảm bảo hình ảnh rõ nét, âm thanh trong trẻo, không chứa nội dung phản cảm, kích động hoặc vi phạm pháp luật.<br />
                   - Giảng viên có trách nhiệm phản hồi và giải đáp các thắc mắc (Q&A) của học viên liên quan đến bài giảng trong vòng 48 giờ làm việc.<br />
                   - Nghiêm cấm chèn liên kết lừa đảo, quảng cáo dịch vụ bên ngoài trái phép hoặc chủ động lôi kéo học viên thanh toán ngoài hệ thống EduVerse.
@@ -144,10 +144,10 @@ export default function InstructorTermsPage() {
 
               {/* Section 4 */}
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 18 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
                   4. Quy trình Duyệt & Quản lý Khóa học
                 </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #475569)' }}>
+                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
                   - Tất cả khóa học mới tạo hoặc chỉnh sửa nội dung lớn sẽ trải qua quy trình duyệt bởi Ban Quản trị EduVerse trước khi phát hành.<br />
                   - EduVerse bảo lưu quyền tạm ẩn hoặc hạ khóa học nếu nhận được các khiếu nại xác đáng về vi phạm bản quyền, nội dung sai lệch hoặc giả mạo bằng cấp.
                 </Typography>
@@ -155,10 +155,10 @@ export default function InstructorTermsPage() {
 
               {/* Section 5 */}
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 18 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
                   5. Bảo mật Thông tin & Hỗ trợ
                 </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #475569)' }}>
+                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
                   - Thông tin cá nhân, CV và hồ sơ năng lực của Giảng viên được EduVerse bảo mật nghiêm ngặt theo chính sách quyền riêng tư.<br />
                   - Nếu cần hỗ trợ thêm thông tin về thủ tục nâng cấp tài khoản Giảng viên, bạn có thể liên hệ trực tiếp với bộ phận Hỗ trợ Giảng viên qua email: <a href="mailto:instructor@eduverse.website" style={{ color: PRIMARY_COLOR, fontWeight: 700 }}>instructor@eduverse.website</a>.
                 </Typography>
@@ -169,7 +169,7 @@ export default function InstructorTermsPage() {
             <Divider sx={{ my: 4, borderColor: 'rgba(0, 0, 0, 0.06)' }} />
 
             {/* Footer */}
-            <Typography variant="body2" sx={{ textAlign: 'center', color: 'var(--ev-text-muted, #94A3B8)', fontSize: 13 }}>
+            <Typography variant="body2" sx={{ textAlign: 'center', color: 'var(--ev-text-muted, #8A7676)', fontSize: 13 }}>
               EduVerse © 2026. Tất cả các quyền được bảo lưu. Việc nâng cấp tài khoản Giảng viên đồng nghĩa với việc bạn đồng ý với toàn bộ các điều khoản trên.
             </Typography>
           </Paper>

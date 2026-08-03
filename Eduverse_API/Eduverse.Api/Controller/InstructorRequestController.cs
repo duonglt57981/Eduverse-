@@ -227,6 +227,68 @@ namespace Eduverse.Api.Controller
         }
 
         // ══════════════════════════════════════════════
+        // 3b. GET /api/admin/instructor-requests/{id}/cv
+        // Phát tệp CV qua chính máy chủ thay vì để trình duyệt gọi thẳng
+        // Cloudinary. Có ba lý do:
+        //   - Cloudinary phát tệp raw kèm Content-Type octet-stream nên trình
+        //     duyệt tải về thay vì mở, và chặn phát PDF ở một số cấu hình.
+        //   - Đặt đúng Content-Type + inline thì xem được ngay trong trang.
+        //   - Hồ sơ CV là dữ liệu cá nhân, đi qua đây thì chỉ quản trị viên
+        //     đăng nhập mới đọc được, không còn ai có đường dẫn cũng xem được.
+        // ══════════════════════════════════════════════
+        [HttpGet("admin/instructor-requests/{id}/cv")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetCvFile(Guid id)
+        {
+            var request = await _requestService.GetByIdAsync(id);
+            if (request == null || string.IsNullOrWhiteSpace(request.CvUrl))
+                return NotFound(new { status = false, message = "Không tìm thấy hồ sơ CV" });
+
+            try
+            {
+                using var client = new System.Net.Http.HttpClient
+                {
+                    Timeout = TimeSpan.FromSeconds(30)
+                };
+                var response = await client.GetAsync(request.CvUrl);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode(502, new
+                    {
+                        status = false,
+                        message = $"Máy chủ lưu trữ trả về mã {(int)response.StatusCode} khi tải CV"
+                    });
+                }
+
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                var duoi = System.IO.Path.GetExtension(
+                    request.CvUrl.Split('?')[0].Split('#')[0]).ToLowerInvariant();
+
+                var contentType = duoi switch
+                {
+                    ".pdf" => "application/pdf",
+                    ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    ".doc" => "application/msword",
+                    _ => "application/octet-stream"
+                };
+
+                // inline = mở ngay trong trình duyệt, không ép tải về
+                Response.Headers["Content-Disposition"] =
+                    $"inline; filename=\"CV_{id}{duoi}\"";
+
+                return File(bytes, contentType);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(502, new
+                {
+                    status = false,
+                    message = "Không tải được tệp CV từ máy chủ lưu trữ: " + ex.Message
+                });
+            }
+        }
+
+        // ══════════════════════════════════════════════
         // 4. POST /api/admin/instructor-requests/{id}/approve
         // ══════════════════════════════════════════════
         [HttpPost("admin/instructor-requests/{id}/approve")]

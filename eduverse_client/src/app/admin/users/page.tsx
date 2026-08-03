@@ -813,7 +813,16 @@ export default function AdminUsersPage() {
                               {user.hoTen || 'Chưa cập nhật họ tên'}
                             </Typography>
                             <Typography variant="caption" sx={{ color: COLORS.textSecondary }}>
-                              {user.chucVu || 'Học viên'}
+                              {user.roles && user.roles.length > 0
+                                ? user.roles
+                                    .map((r) => {
+                                      if (r === "Admin") return "Quản trị viên";
+                                      if (r === "GiaoVien") return "Giảng viên";
+                                      if (r === "HocVien") return "Học viên";
+                                      return r;
+                                    })
+                                    .join(", ")
+                                : "Học viên"}
                             </Typography>
                           </Box>
                         </Stack>
@@ -867,7 +876,7 @@ export default function AdminUsersPage() {
                             size="small"
                             sx={{
                               bgcolor: 'rgba(239,68,68,0.1)',
-                              color: '#EF4444',
+                              color: '#DC2626',
                               fontWeight: 700,
                               fontSize: 11.5,
                             }}
@@ -905,7 +914,7 @@ export default function AdminUsersPage() {
                             onClick={() => handleToggleLock(user)}
                             size="small"
                             sx={{
-                              color: user.isLocked ? COLORS.green : '#EF4444',
+                              color: user.isLocked ? COLORS.green : '#DC2626',
                               bgcolor: user.isLocked ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)',
                               '&:hover': {
                                 bgcolor: user.isLocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',

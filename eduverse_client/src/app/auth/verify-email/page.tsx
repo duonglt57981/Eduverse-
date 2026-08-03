@@ -51,8 +51,8 @@ function VerifyEmailForm() {
       <div
         style={{
           textAlign: "center",
-          background: "var(--ev-paper, #ffffff)",
-          border: "1px solid #ECE7E4",
+          background: "var(--ev-paper, #FFFFFF)",
+          border: "1px solid var(--ev-divider, #ECE7E4)",
           borderRadius: 16,
           boxShadow: "0 8px 24px rgba(24,18,20,0.06)",
           padding: "40px 32px",

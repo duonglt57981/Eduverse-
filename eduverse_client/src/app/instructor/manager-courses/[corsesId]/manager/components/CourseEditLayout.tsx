@@ -86,7 +86,7 @@ export default function CourseEditLayout({
       case "DangDuyet":
         return { bgcolor: "#EFF6FF", color: "#2563EB" };
       default:
-        return { bgcolor: "#F3F4F6", color: "#4B5563" };
+        return { bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-secondary, #4B5563)" };
     }
   };
 
@@ -124,7 +124,7 @@ export default function CourseEditLayout({
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F7F8FA" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "var(--ev-bg, #F7F5F2)" }}>
       {/* Header Panel */}
       <Box
         sx={{
@@ -169,7 +169,7 @@ export default function CourseEditLayout({
                 alignItems: "center",
                 gap: 1,
                 cursor: "pointer",
-                color: "#D1D5DB",
+                color: "#ECE7E4",
                 py: 0.8,
                 px: 1.2,
                 borderRadius: "8px",
@@ -235,7 +235,7 @@ export default function CourseEditLayout({
             <Typography
               sx={{
                 fontSize: 13,
-                color: "#9CA3AF",
+                color: "var(--ev-text-muted, #8A7676)",
                 display: { xs: "none", md: "block" },
                 flexShrink: 0,
                 fontWeight: 500,
@@ -259,7 +259,7 @@ export default function CourseEditLayout({
               onClick={handleXemTruoc}
               variant="outlined"
               sx={{
-                color: "#D1D5DB",
+                color: "#ECE7E4",
                 borderColor: "rgba(255,255,255,0.3)",
                 textTransform: "none",
                 fontWeight: 700,
@@ -294,7 +294,7 @@ export default function CourseEditLayout({
             <IconButton
               size="small"
               sx={{
-                color: "#D1D5DB",
+                color: "#ECE7E4",
                 p: 1,
                 borderRadius: "8px",
                 border: "1px solid rgba(255,255,255,0.2)",
@@ -315,7 +315,7 @@ export default function CourseEditLayout({
         sx={{
           display: "flex",
           alignItems: "flex-start",
-          bgcolor: "#F7F8FA",
+          bgcolor: "var(--ev-bg, #F7F5F2)",
           minHeight: "calc(100vh - 72px)",
         }}
       >
@@ -326,8 +326,8 @@ export default function CourseEditLayout({
             flexShrink: 0,
             px: 2.5,
             py: 4,
-            bgcolor: "var(--ev-paper, #ffffff)",
-            borderRight: "1px solid #E5E7EB",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
+            borderRight: "1px solid var(--ev-divider, #ECE7E4)",
             minHeight: "calc(100vh - 72px)",
             position: "sticky",
             top: 72,
@@ -344,7 +344,7 @@ export default function CourseEditLayout({
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     mb: 2,
-                    color: "var(--ev-text-muted, #94A3B8)",
+                    color: "var(--ev-text-muted, #8A7676)",
                   }}
                 >
                   {nhom.tieuDe}
@@ -371,14 +371,14 @@ export default function CourseEditLayout({
                           py: 1.2,
                           pl: dangChon ? 1.5 : 2,
                           borderLeft: dangChon
-                            ? `3.5px solid #991B1B`
+                            ? `3.5px solid #8B1313`
                             : "3.5px solid transparent",
                           cursor: "pointer",
                           borderRadius: dangChon ? "0 8px 8px 0" : "8px",
                           bgcolor: dangChon ? "#FEF2F2" : "transparent",
                           transition: "all 0.2s ease",
                           "&:hover": {
-                            bgcolor: dangChon ? "#FEF2F2" : "#F1F5F9",
+                            bgcolor: dangChon ? "#FEF2F2" : "#FBFAF9",
                           },
                           "&:focus-visible": {
                             outline: `2px solid ${MAU.chinh}`,
@@ -391,14 +391,14 @@ export default function CourseEditLayout({
                           />
                         ) : (
                           <RadioButtonUncheckedIcon
-                            sx={{ fontSize: 18, color: "var(--ev-text-muted, #94A3B8)" }}
+                            sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A7676)" }}
                           />
                         )}
                         <Typography
                           sx={{
                             fontSize: 14,
                             fontWeight: dangChon ? 800 : 500,
-                            color: dangChon ? "#991B1B" : "#475569",
+                            color: dangChon ? "#8B1313" : "#4B5563",
                             transition: "color 0.2s ease",
                           }}
                         >

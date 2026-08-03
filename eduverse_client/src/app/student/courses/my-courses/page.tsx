@@ -47,10 +47,10 @@ import KhoaHocService from "@/src/services/KhoaHocService";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const RED = "#991B1B";
+const RED = "#8B1313";
 const RED_HOVER = "#7F1D1D";
-const TEXT_MAIN = "#1E293B";
-const TEXT_MUTED = "#64748B";
+const TEXT_MAIN = "#1F2937";
+const TEXT_MUTED = "#4B5563";
 const PAGE_SIZE = 9;
 
 // ─── token helpers ────────────────────────────────────────────────────────────
@@ -264,14 +264,14 @@ const waveLine = keyframes`
 const CourseCard = styled(Card)(() => ({
   cursor: "pointer",
   borderRadius: 20,
-  border: "1px solid #E2E8F0",
+  border: "1px solid var(--ev-divider, #ECE7E4)",
   height: "100%",
   display: "flex",
   flexDirection: "column",
   transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
   boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
   overflow: "hidden",
-  backgroundColor: "var(--ev-paper, #fff)",
+  backgroundColor: "var(--ev-paper, #FFFFFF)",
   position: "relative",
   "&:hover": {
     transform: "translateY(-6px)",
@@ -288,7 +288,7 @@ const ThumbBox = styled(Box)({
   position: "relative",
   paddingTop: "56.25%",
   overflow: "hidden",
-  backgroundColor: "var(--ev-paper-alt, #F1F5F9)",
+  backgroundColor: "var(--ev-paper-alt, #FBFAF9)",
 });
 
 const ThumbImg = styled("img")({
@@ -304,12 +304,12 @@ const ThumbImg = styled("img")({
 const StatCard = styled(Paper)(() => ({
   padding: "1.5rem 1.25rem",
   borderRadius: 16,
-  border: "1px solid #E2E8F0",
+  border: "1px solid var(--ev-divider, #ECE7E4)",
   boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
   display: "flex",
   alignItems: "center",
   gap: 16,
-  backgroundColor: "var(--ev-paper, #fff)",
+  backgroundColor: "var(--ev-paper, #FFFFFF)",
   transition: "all 0.2s ease-in-out",
   "&:hover": {
     boxShadow:
@@ -321,7 +321,7 @@ const StatCard = styled(Paper)(() => ({
 
 const CourseProgress = styled(LinearProgress)(() => ({
   height: 3,
-  backgroundColor: "var(--ev-divider, #E2E8F0)",
+  backgroundColor: "var(--ev-divider, #ECE7E4)",
   "& .MuiLinearProgress-bar": {
     backgroundColor: RED,
   },
@@ -396,7 +396,7 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
         variant="h5"
         sx={{
           fontWeight: 800,
-          color: "var(--ev-text-primary, #1E293B)",
+          color: "var(--ev-text-primary, #1F2937)",
           mb: 1.5,
         }}
       >
@@ -405,7 +405,7 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
       <Typography
         variant="body2"
         sx={{
-          color: "#64748B",
+          color: "var(--ev-text-secondary, #4B5563)",
           maxWidth: 320,
           mx: "auto",
           fontSize: 14.5,
@@ -422,8 +422,8 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
 
 const ThumbPlaceholder = ({ title }: { title?: string }) => {
   const palettes: [string, string][] = [
-    ["#F8FAFC", "#64748B"],
-    ["#F1F5F9", "#475569"],
+    ["#F7F5F2", "#4B5563"],
+    ["#FBFAF9", "#4B5563"],
     ["#EEF2F6", "#334155"],
   ];
   const idx = (title?.charCodeAt(0) ?? 0) % palettes.length;
@@ -754,7 +754,7 @@ function MyCoursesContent() {
                     fontSize: 22,
                     fontWeight: 800,
                     lineHeight: 1.1,
-                    color: "var(--ev-text-primary, #0F172A)",
+                    color: "var(--ev-text-primary, #1F2937)",
                   }}
                 >
                   {s.val}
@@ -762,7 +762,7 @@ function MyCoursesContent() {
                 <Typography
                   sx={{
                     fontSize: 13,
-                    color: "#64748B",
+                    color: "var(--ev-text-secondary, #4B5563)",
                     fontWeight: 500,
                     mt: 0.5,
                   }}
@@ -910,11 +910,11 @@ function MyCoursesContent() {
           </Box>
           <Typography
             variant="h5"
-            sx={{ fontWeight: 800, mb: 1.5, color: "#1E293B" }}
+            sx={{ fontWeight: 800, mb: 1.5, color: "var(--ev-text-primary, #1F2937)" }}
           >
             Chưa có khóa học nào
           </Typography>
-          <Typography sx={{ color: "#64748B", mb: 4, fontSize: 15 }}>
+          <Typography sx={{ color: "var(--ev-text-secondary, #4B5563)", mb: 4, fontSize: 15 }}>
             Hành trình học tập của bạn đang chờ đợi. Hãy khám phá kho khóa học
             đa dạng của chúng tôi để bắt đầu ngay!
           </Typography>
@@ -976,7 +976,7 @@ function MyCoursesContent() {
               const progressColor = isCompleted ? "#16A34A" : RED;
               const progressBg = isCompleted
                 ? "rgba(22, 163, 74, 0.1)"
-                : "#F1F5F9";
+                : "#FBFAF9";
 
               return (
                 <Grid
@@ -1058,7 +1058,7 @@ function MyCoursesContent() {
                           fontSize: 15,
                           mb: 1.25,
                           lineHeight: 1.4,
-                          color: "#1E293B",
+                          color: "var(--ev-text-primary, #1F2937)",
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: "vertical",
@@ -1078,11 +1078,11 @@ function MyCoursesContent() {
                           }}
                         >
                           <MenuBookIcon
-                            sx={{ fontSize: 15, color: "#94A3B8" }}
+                            sx={{ fontSize: 15, color: "var(--ev-text-muted, #8A7676)" }}
                           />
                           <Typography
                             variant="caption"
-                            sx={{ color: "#64748B", fontWeight: 600 }}
+                            sx={{ color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}
                           >
                             {course.tongBaiGiang ?? 0} bài học
                           </Typography>
@@ -1096,11 +1096,11 @@ function MyCoursesContent() {
                             }}
                           >
                             <AccessTimeIcon
-                              sx={{ fontSize: 15, color: "#94A3B8" }}
+                              sx={{ fontSize: 15, color: "var(--ev-text-muted, #8A7676)" }}
                             />
                             <Typography
                               variant="caption"
-                              sx={{ color: "#64748B", fontWeight: 600 }}
+                              sx={{ color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}
                             >
                               {minutes} phút
                             </Typography>
@@ -1118,7 +1118,7 @@ function MyCoursesContent() {
                         >
                           <Typography
                             variant="caption"
-                            sx={{ color: "#64748B", fontWeight: 600 }}
+                            sx={{ color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}
                           >
                             Tiến độ học tập
                           </Typography>
@@ -1197,7 +1197,7 @@ function MyCoursesContent() {
               justifyContent: "center",
               mt: 4,
               pt: 2,
-              borderTop: "1px solid #E2E8F0",
+              borderTop: "1px solid var(--ev-divider, #ECE7E4)",
             }}
           >
             <Pagination
@@ -1326,8 +1326,8 @@ function MyCoursesContent() {
             "& .MuiOutlinedInput-root": {
               height: 40,
               borderRadius: "12px",
-              bgcolor: "var(--ev-paper, #fff)",
-              "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
+              bgcolor: "var(--ev-paper, #FFFFFF)",
+              "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
               "&:hover fieldset": { borderColor: "#CBD5E1" },
               "&.Mui-focused fieldset": { borderColor: RED },
             },
@@ -1335,7 +1335,7 @@ function MyCoursesContent() {
           slotProps={{
             input: {
               startAdornment: (
-                <SearchIcon sx={{ color: "var(--ev-text-muted, #94A3B8)", mr: 1, fontSize: 20 }} />
+                <SearchIcon sx={{ color: "var(--ev-text-muted, #8A7676)", mr: 1, fontSize: 20 }} />
               ),
             },
           }}
@@ -1365,9 +1365,9 @@ function MyCoursesContent() {
             sx={{
               height: 40,
               borderRadius: "12px",
-              bgcolor: "var(--ev-paper, #fff)",
+              bgcolor: "var(--ev-paper, #FFFFFF)",
               "&.MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "var(--ev-divider, #E2E8F0)" },
+                "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
                 "&:hover fieldset": { borderColor: "#CBD5E1" },
                 "&.Mui-focused fieldset": { borderColor: RED },
               },
@@ -1398,8 +1398,8 @@ export default function StudentCoursesPage() {
           sx={{
             p: { xs: 2.5, md: 4.5 },
             borderRadius: "24px",
-            border: "1px solid #E2E8F0",
-            bgcolor: "#ffffff",
+            border: "1px solid var(--ev-divider, #ECE7E4)",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow:
               "0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.01)",
           }}

@@ -64,7 +64,7 @@ export default function StudentFooter() {
         width: "auto",
         mx: { xs: -2, sm: -3, md: -4 },
         mb: { xs: -2, md: -3 },
-        bgcolor: (theme) => theme.palette.mode === "dark" ? "background.paper" : "#F9FAFB",
+        bgcolor: (theme) => theme.palette.mode === "dark" ? "background.paper" : "#FBFAF9",
         borderTop: "1px solid",
         borderColor: "divider",
         py: { xs: 4, md: 5 },

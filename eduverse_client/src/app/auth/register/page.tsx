@@ -205,7 +205,7 @@ export default function RegisterPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #F8FAFC 0%, #FFF1F1 50%, #F8FAFC 100%)',
+          background: 'linear-gradient(135deg, #F7F5F2 0%, #FFF1F1 50%, #F7F5F2 100%)',
           px: 2.5,
           py: 6,
           position: 'relative',
@@ -227,7 +227,7 @@ export default function RegisterPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                color: 'var(--ev-text-secondary, #64748B)',
+                color: 'var(--ev-text-secondary, #4B5563)',
                 fontWeight: 600,
                 fontSize: 14.5,
                 transition: 'color 200ms ease',
@@ -294,7 +294,7 @@ export default function RegisterPage() {
                   fontSize: 27,
                   letterSpacing: '-0.5px',
                   mb: 1.5,
-                  background: 'linear-gradient(135deg, #1E293B 30%, #8B1313 100%)',
+                  background: 'linear-gradient(135deg, #1F2937 30%, #8B1313 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
@@ -303,7 +303,7 @@ export default function RegisterPage() {
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ color: 'var(--ev-text-secondary, #64748B)', fontSize: 15, lineHeight: 1.6 }}
+                sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 15, lineHeight: 1.6 }}
               >
                 Chào mừng bạn! Hãy điền thông tin để bắt đầu hành trình học tập.
               </Typography>
@@ -321,7 +321,7 @@ export default function RegisterPage() {
                 borderRadius: '14px',
                 border: '1px solid #FECACA',
                 background: '#FEF2F2',
-                color: '#991B1B',
+                color: '#8B1313',
                 fontSize: 14,
                 fontWeight: 500,
                 textAlign: 'center',

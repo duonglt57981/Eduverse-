@@ -64,7 +64,7 @@ function CauHoiReviewItem({
           <CancelIcon sx={{ color: RED, fontSize: 20, mt: 0.15, flexShrink: 0 }} />
         )}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: "#1F2937", lineHeight: 1.5 }}>
+          <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: "var(--ev-text-primary, #1F2937)", lineHeight: 1.5 }}>
             Câu {stt}. {cauHoi.tenCauHoi}
           </Typography>
           {cauHoi.noiDungCauHoi && cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi && (
@@ -242,7 +242,7 @@ export function QuizReview({ review, tieuDe, onQuayLai }: QuizReviewProps) {
       >
         <EmojiEventsIcon sx={{ fontSize: 36, color: daDat ? GREEN : RED }} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 900, color: "#1F2937", mb: 0.25 }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.25 }}>
             {tieuDe ?? "Kết quả chi tiết"}
           </Typography>
           <Typography sx={{ fontSize: 13, color: "rgba(31,41,55,0.55)" }}>

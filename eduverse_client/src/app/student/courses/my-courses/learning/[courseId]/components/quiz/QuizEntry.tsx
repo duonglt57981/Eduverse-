@@ -9,7 +9,7 @@ import {
 } from "@mui/icons-material";
 import type { BaiKiemTraInfoDto, LichSuLamBaiDto } from "../../hooks/useQuiz";
 
-const RED = "#8D1313";
+const RED = "#8B1313";
 
 interface QuizEntryProps {
   info: BaiKiemTraInfoDto;
@@ -181,7 +181,7 @@ export function QuizEntry({
                   onClick={() => onXemLai(l.idLanLamBaiKiemTra)}
                   sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
                     p: 1.5, borderRadius: "10px", cursor: "pointer",
-                    border: "1px solid rgba(0,0,0,0.07)", bgcolor: "var(--ev-paper, #fff)",
+                    border: "1px solid rgba(0,0,0,0.07)", bgcolor: "var(--ev-paper, #FFFFFF)",
                     "&:hover": { borderColor: RED, bgcolor: "rgba(141,19,19,0.02)" } }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                     <HistoryRounded sx={{ fontSize: 16, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }} />

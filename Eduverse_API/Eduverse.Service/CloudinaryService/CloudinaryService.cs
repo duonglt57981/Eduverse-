@@ -804,7 +804,9 @@ namespace Eduverse.Service.CloudinaryService
 
             var extension = Path.GetExtension(file.FileName).ToLower();
 
-            string[] allowedExtensions ={".docx"};
+            // Giao diện đang cho người dùng chọn .pdf/.doc/.docx nên máy chủ
+            // phải chấp nhận cả ba, tránh trường hợp chọn được nhưng gửi lên bị lỗi.
+            string[] allowedExtensions = { ".pdf", ".doc", ".docx" };
 
             if (!allowedExtensions.Contains(extension))
                 throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");

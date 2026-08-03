@@ -597,7 +597,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
           position: 'relative',
           height: { xs: 140, md: 180 },
           borderRadius: '24px',
-          bgcolor: 'var(--ev-divider, #E2E8F0)',
+          bgcolor: 'var(--ev-divider, #ECE7E4)',
           backgroundImage: profile.anhBia ? `url(${profile.anhBia})` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -627,7 +627,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             py: 0.8,
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             textTransform: 'none',
-            '&:hover': { bgcolor: 'var(--ev-paper-alt, #F9FAFB)' },
+            '&:hover': { bgcolor: 'var(--ev-paper-alt, #FBFAF9)' },
           }}
         >
           Đổi ảnh bìa
@@ -1218,7 +1218,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                                         ? COLORS.green
                                         : passwordStrength >= 2
                                         ? '#F59E0B'
-                                        : '#EF4444'
+                                        : '#DC2626'
                                       : 'rgba(0,0,0,0.06)',
                                 }}
                               />
@@ -2185,7 +2185,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           }}
                         >
                           <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Typography component="span" sx={{ fontWeight: 900, color: 'var(--ev-text-primary, #1E293B)', fontSize: { xs: 18, sm: 22 } }}>
+                            <Typography component="span" sx={{ fontWeight: 900, color: 'var(--ev-text-primary, #1F2937)', fontSize: { xs: 18, sm: 22 } }}>
                               Điều khoản & Quy định Hợp tác Giảng viên
                             </Typography>
                             <IconButton onClick={() => setOpenTermsDialog(false)}>
@@ -2196,10 +2196,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           <DialogContent sx={{ py: 3 }}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, color: 'var(--ev-text-secondary, #334155)' }}>
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
                                   1. Quyền Sở hữu Trí tuệ & Bản quyền Nội dung
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
                                   - Giảng viên luôn giữ trọn vẹn quyền sở hữu trí tuệ đối với tài liệu, bài giảng và nội dung khóa học do mình tự biên soạn.<br />
                                   - Bằng việc cấp phép phân phối khóa học trên EduVerse, Giảng viên đồng ý cấp cho EduVerse quyền không độc quyền (non-exclusive) để tiếp thị, quảng bá và phân phối khóa học tới học viên trên toàn cầu.<br />
                                   - Giảng viên cam kết nội dung tải lên là chính chủ, không sao chép trái phép hoặc vi phạm bản quyền của bất kỳ cá nhân hay tổ chức nào khác.
@@ -2207,10 +2207,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
                                   2. Phân chia Doanh thu & Quy trình Thanh toán
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
                                   - <strong>Tỷ lệ phân chia:</strong> Giảng viên nhận tỷ lệ doanh thu theo thỏa thuận trong từng chương trình khuyến mại hoặc bán hàng trực tiếp trên EduVerse.<br />
                                   - <strong>Rút tiền:</strong> Yêu cầu rút tiền được xử lý định kỳ thông qua tài khoản ngân hàng chính chủ đã được liên kết và xác minh trên hệ thống.<br />
                                   - <strong>Nghĩa vụ thuế:</strong> Giảng viên có trách nhiệm thực hiện khai báo và nộp thuế thu nhập cá nhân theo đúng quy định của pháp luật Việt Nam đối với nguồn thu nhập từ nền tảng.
@@ -2218,10 +2218,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
                                   3. Quy chuẩn Chất lượng & Tương tác Học viên
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
                                   - Video bài giảng cần đảm bảo hình ảnh rõ nét, âm thanh trong trẻo, không chứa nội dung phản cảm, kích động hoặc vi phạm pháp luật.<br />
                                   - Giảng viên có trách nhiệm phản hồi và giải đáp các thắc mắc (Q&A) của học viên liên quan đến bài giảng trong vòng 48 giờ làm việc.<br />
                                   - Nghiêm cấm chèn liên kết lừa đảo, quảng cáo dịch vụ bên ngoài trái phép hoặc chủ động lôi kéo học viên thanh toán ngoài hệ thống EduVerse.
@@ -2229,20 +2229,20 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
                                   4. Quy trình Duyệt & Quản lý Khóa học
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
                                   - Tất cả khóa học mới tạo hoặc chỉnh sửa nội dung lớn sẽ trải qua quy trình duyệt bởi Ban Quản trị EduVerse trước khi phát hành.<br />
                                   - EduVerse bảo lưu quyền tạm ẩn hoặc hạ khóa học nếu nhận được các khiếu nại xác đáng về vi phạm bản quyền, nội dung sai lệch hoặc giả mạo bằng cấp.
                                 </Typography>
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1E293B)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
                                   5. Bảo mật Thông tin & Hỗ trợ
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #475569)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
                                   - Thông tin cá nhân, CV và hồ sơ năng lực của Giảng viên được EduVerse bảo mật nghiêm ngặt theo chính sách quyền riêng tư.<br />
                                   - Nếu cần hỗ trợ thêm thông tin về thủ tục nâng cấp tài khoản Giảng viên, bạn có thể liên hệ trực tiếp với bộ phận Hỗ trợ Giảng viên qua email: <a href="mailto:instructor@eduverse.website" style={{ color: COLORS.primary, fontWeight: 700 }}>instructor@eduverse.website</a>.
                                 </Typography>
@@ -2285,7 +2285,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             <CloseRounded />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ display: 'grid', placeItems: 'center', bgcolor: 'var(--ev-paper-alt, #F9FAFB)', py: 4 }}>
+        <DialogContent dividers sx={{ display: 'grid', placeItems: 'center', bgcolor: 'var(--ev-paper-alt, #FBFAF9)', py: 4 }}>
           {/* Canvas crop box */}
           <Box sx={{ border: '2px dashed rgba(0,0,0,0.1)', borderRadius: cropType === 'avatar' ? '20px' : '8px', overflow: 'hidden', bgcolor: 'var(--ev-paper, #fff)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <canvas ref={canvasRef} style={{ display: 'block', maxWidth: '100%' }} />

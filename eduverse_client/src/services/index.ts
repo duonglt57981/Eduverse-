@@ -47,8 +47,34 @@ export class ApiService {
         };
         const area = typeof window !== "undefined" ? window.__APP_AREA || "dashboard" : "dashboard";
 
+        const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+        const isPublicPage = !(
+          pathname.startsWith("/admin/") || pathname === "/admin" ||
+          pathname.startsWith("/instructor/") || pathname === "/instructor" ||
+          pathname.startsWith("/student/") || pathname === "/student" ||
+          pathname.startsWith("/dashboard/") || pathname === "/dashboard" ||
+          pathname.startsWith("/auth/") || pathname === "/auth" ||
+          pathname === "/learning-paths" ||
+          pathname === "/settings"
+        );
+
         if (error.response?.status === 401 && !original._retry) {
           original._retry = true;
+
+          if (isPublicPage) {
+            localStorage.removeItem("AccessToken");
+            try {
+              const { store } = await import("../store/store");
+              const { logout } = await import("../store/auth/AuthSlice");
+              store.dispatch(logout());
+            } catch (e) {
+              console.error("Failed to dispatch logout", e);
+            }
+            if (original.headers) {
+              delete original.headers.Authorization;
+            }
+            return this.api(original);
+          }
 
           // ← Không retry nếu đang gọi các endpoint auth
           const authEndpoints = [
@@ -89,7 +115,7 @@ export class ApiService {
         }
 
         if (error.response?.status === 403) {
-          if (typeof window !== "undefined") {
+          if (typeof window !== "undefined" && !isPublicPage) {
             const token = localStorage.getItem("AccessToken");
             if (!token) {
               window.location.href = "/auth/login";

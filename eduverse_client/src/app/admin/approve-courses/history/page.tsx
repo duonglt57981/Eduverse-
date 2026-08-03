@@ -260,7 +260,7 @@ export default function LichSuKiemDuyetPage() {
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 2,
                   color: COLORS.ink,
-                  bgcolor: "#fff",
+                  bgcolor: "var(--ev-paper, #FFFFFF)",
                   "&:hover": {
                     borderColor: COLORS.primary,
                     color: COLORS.primary,
@@ -419,7 +419,7 @@ export default function LichSuKiemDuyetPage() {
                     value={keywordInput}
                     onChange={(e) => setKeywordInput(e.target.value)}
                     sx={{
-                      bgcolor: "#fff",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
                         "& fieldset": { borderColor: COLORS.line },
@@ -455,7 +455,7 @@ export default function LichSuKiemDuyetPage() {
                     }
                     sx={{
                       minWidth: { xs: "100%", sm: 170 },
-                      bgcolor: "#fff",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
                       borderRadius: 2,
                       "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: COLORS.line,
@@ -480,7 +480,7 @@ export default function LichSuKiemDuyetPage() {
                         onClick={handleResetFilters}
                         disabled={!isFilterDirty}
                         sx={{
-                          bgcolor: "#fff",
+                          bgcolor: "var(--ev-paper, #FFFFFF)",
                           border: `1px solid ${COLORS.line}`,
                           borderRadius: 2,
                           width: 40,
@@ -510,7 +510,7 @@ export default function LichSuKiemDuyetPage() {
                 sx={{
                   mt: 1.5,
                   minHeight: 34,
-                  bgcolor: "#fff",
+                  bgcolor: "var(--ev-paper, #FFFFFF)",
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 2,
                   px: 0.5,
@@ -593,7 +593,7 @@ export default function LichSuKiemDuyetPage() {
                           borderRadius: 2.5,
                           cursor: "pointer",
                           transition: "all .15s ease",
-                          bgcolor: "#fff",
+                          bgcolor: "var(--ev-paper, #FFFFFF)",
                           "&:hover": {
                             boxShadow: `0 2px 10px ${alpha(
                               COLORS.primary,

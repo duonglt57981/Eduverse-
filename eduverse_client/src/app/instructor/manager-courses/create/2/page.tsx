@@ -47,9 +47,9 @@ export default function Step2Page() {
           <Box
             sx={{
               flex: { xs: "1 1 auto", md: "0 0 62%" },
-              bgcolor: "var(--ev-paper, #ffffff)",
+              bgcolor: "var(--ev-paper, #FFFFFF)",
               borderRadius: "20px",
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--ev-divider, #ECE7E4)",
               boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
               p: { xs: 3, sm: 5 },
               display: "flex",
@@ -62,7 +62,7 @@ export default function Step2Page() {
                 fontWeight: 700,
                 mb: 1.5,
                 fontSize: { xs: "1.25rem", sm: "1.6rem" },
-                color: "var(--ev-text-primary, #111827)",
+                color: "var(--ev-text-primary, #1F2937)",
               }}
             >
               Đặt tên cho khóa học
@@ -70,7 +70,7 @@ export default function Step2Page() {
 
             <Typography
               sx={{
-                color: "var(--ev-text-muted, #6B7280)",
+                color: "var(--ev-text-muted, #8A7676)",
                 fontSize: 14,
                 mb: 4,
                 lineHeight: 1.6,
@@ -89,10 +89,10 @@ export default function Step2Page() {
                   alignItems: "center",
                 }}
               >
-                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "var(--ev-text-secondary, #374151)" }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "var(--ev-text-secondary, #4B5563)" }}>
                   Tên khóa học <Box component="span" sx={{ color: "#DC2626" }}>*</Box>
                 </Typography>
-                <Typography sx={{ fontSize: 12, color: "var(--ev-grey, #9CA3AF)", fontWeight: 500 }}>
+                <Typography sx={{ fontSize: 12, color: "var(--ev-grey, #8A7676)", fontWeight: 500 }}>
                   {formData.tieuDe?.length || 0}/99 ký tự
                 </Typography>
               </Box>
@@ -109,15 +109,15 @@ export default function Step2Page() {
                     borderRadius: "10px",
                     height: "48px",
                     fontSize: 14,
-                    bgcolor: "var(--ev-paper, #ffffff)",
+                    bgcolor: "var(--ev-paper, #FFFFFF)",
                     "& fieldset": {
-                      borderColor: "var(--ev-divider, #D1D5DB)",
+                      borderColor: "var(--ev-divider, #ECE7E4)",
                     },
                     "&:hover fieldset": {
-                      borderColor: "#7A1F2B",
+                      borderColor: "#8B1313",
                     },
                     "&.Mui-focused fieldset": {
-                      borderColor: "#7A1F2B",
+                      borderColor: "#8B1313",
                       borderWidth: 2,
                     },
                   },
@@ -139,9 +139,9 @@ export default function Step2Page() {
           <Box
             sx={{
               flex: { xs: "1 1 auto", md: "0 0 38%" },
-              bgcolor: "var(--ev-paper, #ffffff)",
+              bgcolor: "var(--ev-paper, #FFFFFF)",
               borderRadius: "20px",
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--ev-divider, #ECE7E4)",
               boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
               p: { xs: 3, sm: 4 },
               display: "flex",
@@ -162,35 +162,35 @@ export default function Step2Page() {
               >
                 <LightbulbOutlinedIcon sx={{ fontSize: 20 }} />
               </Box>
-              <Typography sx={{ fontWeight: 700, fontSize: 16, color: "var(--ev-text-primary, #111827)" }}>
+              <Typography sx={{ fontWeight: 700, fontSize: 16, color: "var(--ev-text-primary, #1F2937)" }}>
                 Mẹo đặt tên khóa học
               </Typography>
             </Box>
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
               <Box>
-                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "var(--ev-text-secondary, #374151)", mb: 0.5 }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "var(--ev-text-secondary, #4B5563)", mb: 0.5 }}>
                   Nêu rõ kết quả học tập
                 </Typography>
-                <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #6B7280)", lineHeight: 1.5 }}>
+                <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)", lineHeight: 1.5 }}>
                   Hãy nêu bật kỹ năng hoặc mục tiêu cụ thể mà học viên sẽ có được (ví dụ: làm chủ, xây dựng dự án thực tế).
                 </Typography>
               </Box>
 
               <Box>
-                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "var(--ev-text-secondary, #374151)", mb: 0.5 }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "var(--ev-text-secondary, #4B5563)", mb: 0.5 }}>
                   Tránh viết hoa toàn bộ
                 </Typography>
-                <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #6B7280)", lineHeight: 1.5 }}>
+                <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)", lineHeight: 1.5 }}>
                   Không nên viết hoa tất cả các chữ cái (như LẬP TRÌNH REACT). Điều này giúp tiêu đề chuyên nghiệp và dễ đọc hơn.
                 </Typography>
               </Box>
 
               <Box>
-                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "var(--ev-text-secondary, #374151)", mb: 0.5 }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "var(--ev-text-secondary, #4B5563)", mb: 0.5 }}>
                   Ngắn gọn và trực diện
                 </Typography>
-                <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #6B7280)", lineHeight: 1.5 }}>
+                <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)", lineHeight: 1.5 }}>
                   Tiêu đề nên súc tích, tránh lan man, giúp người học dễ dàng nhận diện chủ đề khóa học khi lướt tìm kiếm.
                 </Typography>
               </Box>

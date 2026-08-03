@@ -193,6 +193,8 @@ function InstructorCard({ mentor }: { mentor: InstructorItem }) {
           p: 1.1,
           borderRadius: 2.8,
           background: 'linear-gradient(180deg, rgba(127,18,18,0.06), rgba(127,18,18,0.02))',
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
         <MentorPortrait mentor={mentor} size={176} />

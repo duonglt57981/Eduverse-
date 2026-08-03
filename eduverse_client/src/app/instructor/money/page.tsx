@@ -191,7 +191,7 @@ function DoanhThuContent() {
       {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Typography
-          sx={{ fontSize: 26, fontWeight: 900, color: PRIMARY, mb: 0.5 }}
+          sx={{ fontSize: 26, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}
         >
           Doanh thu & Rút tiền
         </Typography>
@@ -260,7 +260,7 @@ function DoanhThuContent() {
               onClick={() => setOpenRut(true)}
               disabled={soDu < 50000 || nganHangs.length === 0}
               sx={{
-                bgcolor: "var(--ev-paper, #fff)",
+                bgcolor: "var(--ev-paper, #FFFFFF)",
                 color: PRIMARY,
                 fontWeight: 800,
                 borderRadius: "10px",
@@ -657,7 +657,7 @@ export default function InstructorRevenuePage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #ffffff)",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >
