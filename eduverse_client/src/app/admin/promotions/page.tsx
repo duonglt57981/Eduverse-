@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import AuthGuard from "@/src/components/AuthGuard";
@@ -38,6 +39,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import SchoolIcon from "@mui/icons-material/School";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { apiService } from "@/src/services/index";
+import { useSelector } from "react-redux";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface KhoaHocMiniDto {
@@ -96,7 +98,10 @@ function StatusChip({
       <Chip
         label="Không xác định"
         size="small"
-        sx={{ bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-muted, #8A7676)" }}
+        sx={{
+          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+          color: "var(--ev-text-muted, #8A7676)",
+        }}
       />
     );
   if (now < start)
@@ -112,7 +117,11 @@ function StatusChip({
       <Chip
         label="Hết hạn"
         size="small"
-        sx={{ bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-muted, #8A7676)", fontWeight: 700 }}
+        sx={{
+          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+          color: "var(--ev-text-muted, #8A7676)",
+          fontWeight: 700,
+        }}
       />
     );
   return (
@@ -213,32 +222,48 @@ function PromotionsContent() {
   };
 
   // ── Validate form ──
+  const user = useSelector((state: any) => state.auth.user);
+  const isAdmin = user?.roles?.includes("Admin");
+  const max = isAdmin ? 30 : 100;
+
   const validateForm = (): boolean => {
     if (!form.maGiamGia.trim()) {
       setFormError("Vui lòng nhập mã giảm giá");
       return false;
     }
+
     const pct = Number(form.phanTramGiam);
-    if (!pct || pct <= 0 || pct > 100) {
-      setFormError("Phần trăm giảm phải từ 1 đến 100");
+
+    if (pct <= 0) {
+      setFormError("Phần trăm giảm phải lớn hơn 0%");
       return false;
     }
+
+    if (pct > max) {
+      setFormError(`Phần trăm giảm không được vượt quá ${max}%`);
+      return false;
+    }
+
     if (!form.ngayBatDau) {
       setFormError("Vui lòng chọn ngày bắt đầu");
       return false;
     }
+
     if (!form.ngayKetThuc) {
       setFormError("Vui lòng chọn ngày kết thúc");
       return false;
     }
+
     if (new Date(form.ngayBatDau) > new Date(form.ngayKetThuc)) {
       setFormError("Ngày bắt đầu không được sau ngày kết thúc");
       return false;
     }
+
     if (form.idsKhoaHoc.length === 0) {
       setFormError("Vui lòng chọn ít nhất 1 khóa học");
       return false;
     }
+
     setFormError("");
     return true;
   };
@@ -331,7 +356,12 @@ function PromotionsContent() {
       >
         <Box>
           <Typography
-            sx={{ fontSize: 26, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}
+            sx={{
+              fontSize: 26,
+              fontWeight: 900,
+              color: "var(--ev-text-primary, #1F2937)",
+              mb: 0.5,
+            }}
           >
             Quản lý khuyến mãi
           </Typography>
@@ -412,11 +442,22 @@ function PromotionsContent() {
           <Box sx={{ textAlign: "center", py: 10 }}>
             <LocalOfferIcon sx={{ fontSize: 56, color: "#ECE7E4", mb: 2 }} />
             <Typography
-              sx={{ fontWeight: 700, fontSize: 16, color: "var(--ev-text-secondary, #4B5563)", mb: 0.5 }}
+              sx={{
+                fontWeight: 700,
+                fontSize: 16,
+                color: "var(--ev-text-secondary, #4B5563)",
+                mb: 0.5,
+              }}
             >
               Chưa có khuyến mãi nào
             </Typography>
-            <Typography sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 14, mb: 3 }}>
+            <Typography
+              sx={{
+                color: "var(--ev-text-muted, #8A7676)",
+                fontSize: 14,
+                mb: 3,
+              }}
+            >
               Tạo mã giảm giá đầu tiên để bắt đầu
             </Typography>
             <Button
@@ -494,13 +535,23 @@ function PromotionsContent() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
+                      <Typography
+                        sx={{
+                          fontSize: 13,
+                          color: "var(--ev-text-secondary, #4B5563)",
+                        }}
+                      >
                         {formatDate(km.ngayBatDau)} →{" "}
                         {formatDate(km.ngayKetThuc)}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography sx={{ fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
+                      <Typography
+                        sx={{
+                          fontSize: 13,
+                          color: "var(--ev-text-secondary, #4B5563)",
+                        }}
+                      >
                         {km.soLuongHieuLuc ?? "∞"}
                       </Typography>
                     </TableCell>
@@ -720,7 +771,12 @@ function PromotionsContent() {
                 }}
               >
                 Số lượt dùng{" "}
-                <span style={{ color: "var(--ev-text-muted, #8A7676)", fontWeight: 400 }}>
+                <span
+                  style={{
+                    color: "var(--ev-text-muted, #8A7676)",
+                    fontWeight: 400,
+                  }}
+                >
                   (để trống = không giới hạn)
                 </span>
               </Typography>
@@ -808,7 +864,12 @@ function PromotionsContent() {
 
           {/* Chọn khóa học */}
           <Typography
-            sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-secondary, #4B5563)", mb: 1.5 }}
+            sx={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "var(--ev-text-secondary, #4B5563)",
+              mb: 1.5,
+            }}
           >
             Chọn khóa học áp dụng *
             {form.idsKhoaHoc.length > 0 && (
@@ -836,7 +897,12 @@ function PromotionsContent() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 18 }} />
+                    <SearchIcon
+                      sx={{
+                        color: "var(--ev-text-muted, #8A7676)",
+                        fontSize: 18,
+                      }}
+                    />
                   </InputAdornment>
                 ),
               },
@@ -958,7 +1024,12 @@ function PromotionsContent() {
         </DialogContent>
 
         <DialogActions
-          sx={{ px: 3, py: 2.5, borderTop: "1px solid var(--ev-divider, #ECE7E4)", gap: 1 }}
+          sx={{
+            px: 3,
+            py: 2.5,
+            borderTop: "1px solid var(--ev-divider, #ECE7E4)",
+            gap: 1,
+          }}
         >
           <Button
             onClick={() => setOpenDialog(false)}
@@ -1005,11 +1076,19 @@ function PromotionsContent() {
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 800, fontSize: 17, color: "var(--ev-text-primary, #1F2937)" }}>
+        <DialogTitle
+          sx={{
+            fontWeight: 800,
+            fontSize: 17,
+            color: "var(--ev-text-primary, #1F2937)",
+          }}
+        >
           Xoá khuyến mãi?
         </DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontSize: 14, color: "var(--ev-text-muted, #8A7676)" }}>
+          <Typography
+            sx={{ fontSize: 14, color: "var(--ev-text-muted, #8A7676)" }}
+          >
             Bạn có chắc muốn xoá mã{" "}
             <strong style={{ color: PRIMARY }}>
               {confirmDelete?.maGiamGia}
