@@ -570,6 +570,7 @@ export default function InstructorsPage() {
             elevation={0}
             sx={{
               mt: { xs: 1, md: 2 },
+              mb: { xs: 6, md: 8 },
               p: { xs: 3, md: 5 },
               borderRadius: 2.8,
               overflow: 'hidden',

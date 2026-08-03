@@ -493,7 +493,7 @@ export default function LandingPage() {
             </Box>
           </Box>
 
-          <Box id="testimonials" sx={{ py: { xs: 5, md: 7 } }}>
+          <Box id="testimonials" sx={{ py: { xs: 5, md: 7 }, mb: { xs: 4, md: 6 } }}>
             <SectionHeading title="Cảm nhận từ học viên" align="center" />
             <Box
               sx={{
