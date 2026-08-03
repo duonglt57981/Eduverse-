@@ -2910,7 +2910,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   };
 
   const goBackToList = useCallback(() => {
-    router.push("/admin/approve-courses/history");
+    router.push("/personnel/approve-courses/history");
   }, [router]);
 
   const handleDuyet = async () => {

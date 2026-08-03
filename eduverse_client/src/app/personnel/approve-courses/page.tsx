@@ -231,15 +231,11 @@ export default function DuyetKhoaHocPage() {
 
   const handleOpenCourse = (id: string) => {
     if (!id) return;
-    router.push(`/admin/approve-courses/${id}`);
+    router.push(`/personnel/approve-courses/${id}`);
   };
 
   const handleOpenHistory = () => {
-    router.push(`/admin/approve-courses/history`);
-  };
-
-  const handleGoBack = () => {
-    router.push("/admin/courses");
+    router.push(`/personnel/approve-courses/history`);
   };
 
   return (
@@ -251,25 +247,6 @@ export default function DuyetKhoaHocPage() {
           spacing={2}
           sx={{ alignItems: "center", mb: 0.5 }}
         >
-          {/* Nút quay lại */}
-          <Tooltip title="Quay lại danh sách khóa học">
-            <IconButton
-              onClick={handleGoBack}
-              sx={{
-                bgcolor: alpha(COLORS.primary, 0.06),
-                borderRadius: 2,
-                flexShrink: 0,
-                width: 40,
-                height: 40,
-                "&:hover": {
-                  bgcolor: alpha(COLORS.primary, 0.12),
-                },
-              }}
-            >
-              <ArrowBackRoundedIcon sx={{ color: COLORS.primary }} />
-            </IconButton>
-          </Tooltip>
-
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               sx={{

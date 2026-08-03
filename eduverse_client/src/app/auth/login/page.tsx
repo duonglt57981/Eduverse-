@@ -74,7 +74,7 @@ export default function LoginPage() {
         } else if (roles.includes("GiaoVien")) {
           router.push("/instructor/dashboard");
         } else if (roles.includes("personnel")) {
-          router.push("/personnel/courses");
+          router.push("/personnel/approve-courses");
         } else {
           router.push("/student/dashboard");
         }

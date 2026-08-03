@@ -32,6 +32,42 @@ export const boxSx = {
   boxShadow: "0 4px 20px rgba(0, 0, 0, 0.015)",
 };
 
+/**
+ * Trộn một màu (hex hoặc rgb/rgba) với độ mờ `weight` (0 -> 1) để tạo màu nền/viền nhạt.
+ * Dùng thay cho alpha() của MUI khi không có theme trong tay (component/hàm thuần).
+ * Ví dụ: mix(COLORS.primary, 0.06) -> "rgba(37, 99, 235, 0.06)"
+ */
+export function mix(color: string, weight: number): string {
+  const w = Math.min(1, Math.max(0, weight));
+
+  // rgb/rgba(...)
+  const rgbMatch = color.match(
+    /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i,
+  );
+  if (rgbMatch) {
+    const [, r, g, b] = rgbMatch;
+    return `rgba(${r}, ${g}, ${b}, ${w})`;
+  }
+
+  // hex (#rgb, #rrggbb)
+  let hex = color.replace("#", "");
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${w})`;
+  }
+
+  // Không nhận diện được định dạng màu -> trả nguyên màu gốc (an toàn, không crash UI)
+  return color;
+}
+
 export const SCROLL_AREA_HEIGHT = "calc(100vh - 220px)";
 
 export const TABS = [

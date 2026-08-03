@@ -120,7 +120,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
 
   // ── Hàm quay về trang danh sách ──
   const goBackToList = useCallback(() => {
-    router.push("/admin/approve-courses");
+    router.push("/personnel/approve-courses");
   }, [router]);
 
   // ── Hàm duyệt khóa học ──
@@ -494,7 +494,9 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 boxShadow: "none",
                 "&:hover": {
                   bgcolor:
-                    confirmAction === "tuChoi" ? COLORS.primaryDark : COLORS.primaryDark,
+                    confirmAction === "tuChoi"
+                      ? COLORS.primaryDark
+                      : COLORS.primaryDark,
                   boxShadow: "none",
                 },
               }}
