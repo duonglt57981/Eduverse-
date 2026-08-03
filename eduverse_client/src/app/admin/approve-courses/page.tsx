@@ -45,6 +45,7 @@ import {
 } from "./types/constants";
 import { StatusChip } from "./types";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
+import { STATUS } from "@/src/theme/tokens";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
 
 const kiemDuyetService = new KiemDuyetService();
@@ -73,18 +74,18 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
     return (
       <Box
         sx={{
-          width: 120,
-          height: 80,
-          borderRadius: 2.5,
+          width: 132,
+          height: 84,
+          borderRadius: "14px",
           flexShrink: 0,
-          bgcolor: "var(--ev-paper-alt, #F9FAFB)",
-          border: "1px dashed #E5E7EB",
+          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+          border: "1px dashed var(--ev-divider, #ECE7E4)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <ImageRoundedIcon sx={{ color: alpha("#991B1B", 0.2), fontSize: 28 }} />
+        <ImageRoundedIcon sx={{ color: "var(--ev-grey, #8A7676)", fontSize: 30 }} />
       </Box>
     );
   }
@@ -96,12 +97,13 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
       alt={alt}
       onError={() => setErrored(true)}
       sx={{
-        width: 120,
-        height: 80,
-        borderRadius: 2.5,
+        width: 132,
+        height: 84,
+        borderRadius: "14px",
         objectFit: "cover",
         flexShrink: 0,
-        bgcolor: "var(--ev-paper-alt, #F3F4F6)",
+        bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+        border: "1px solid var(--ev-divider, #ECE7E4)",
       }}
     />
   );
@@ -245,7 +247,7 @@ export default function DuyetKhoaHocPage() {
           {/* Header */}
           <Stack
             direction="row"
-            spacing={1.5}
+            spacing={2}
             sx={{ alignItems: "center", mb: 0.5 }}
           >
             {/* Nút quay lại */}
@@ -270,17 +272,23 @@ export default function DuyetKhoaHocPage() {
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 sx={{
-                  fontSize: { xs: 20, sm: 24 },
-                  fontWeight: 700,
+                  fontSize: { xs: 21, sm: 26 },
+                  fontWeight: 900,
                   fontFamily: FONTS.display,
                   color: COLORS.ink,
-                  lineHeight: 1.25,
+                  letterSpacing: "-0.5px",
+                  lineHeight: 1.2,
                 }}
               >
                 Kiểm duyệt khóa học
               </Typography>
               <Typography
-                sx={{ fontSize: 13, color: COLORS.inkSoft, mt: 0.25 }}
+                sx={{
+                  fontSize: 13.5,
+                  fontWeight: 500,
+                  color: COLORS.inkSoft,
+                  mt: 0.4,
+                }}
               >
                 Xem và xử lý các khóa học đang chờ phê duyệt.
               </Typography>
@@ -290,12 +298,21 @@ export default function DuyetKhoaHocPage() {
               <IconButton
                 onClick={handleOpenHistory}
                 sx={{
-                  bgcolor: alpha(COLORS.primary, 0.08),
-                  borderRadius: 2,
+                  width: 44,
+                  height: 44,
+                  borderRadius: "14px",
                   flexShrink: 0,
+                  color: COLORS.primary,
+                  bgcolor: alpha(COLORS.primary, 0.08),
+                  border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                  transition: "all .18s ease",
+                  "&:hover": {
+                    bgcolor: alpha(COLORS.primary, 0.16),
+                    transform: "translateY(-1px)",
+                  },
                 }}
               >
-                <HistoryRoundedIcon sx={{ color: COLORS.primary }} />
+                <HistoryRoundedIcon sx={{ fontSize: 21 }} />
               </IconButton>
             </Tooltip>
           </Stack>
@@ -314,40 +331,39 @@ export default function DuyetKhoaHocPage() {
               {
                 label: "Tổng cần duyệt",
                 value: stats.choDuyet + stats.dangDuyet,
-                color: "#991B1B",
-                bgColor: "#FEF2F2",
+                color: COLORS.primary,
+                bgColor: alpha(COLORS.primary, 0.09),
                 icon: (
                   <AssignmentTurnedInRoundedIcon
-                    sx={{ fontSize: 22, color: "#991B1B" }}
+                    sx={{ fontSize: 24, color: COLORS.primary }}
                   />
                 ),
               },
               {
                 label: "Chờ duyệt",
                 value: stats.choDuyet,
-                color: "#D97706",
-                bgColor: "#FFFBEB",
+                color: COLORS.gold,
+                bgColor: COLORS.goldSoft,
                 icon: (
                   <HourglassTopRoundedIcon
-                    sx={{ fontSize: 22, color: "#D97706" }}
+                    sx={{ fontSize: 24, color: COLORS.gold }}
                   />
                 ),
               },
               {
                 label: "Đang duyệt",
                 value: stats.dangDuyet,
-                color: "#2563EB",
-                bgColor: "#EFF6FF",
+                color: STATUS.info,
+                bgColor: STATUS.infoSoft,
                 icon: (
                   <PendingActionsRoundedIcon
-                    sx={{ fontSize: 22, color: "#2563EB" }}
+                    sx={{ fontSize: 24, color: STATUS.info }}
                   />
                 ),
               },
             ].map((stat, i) => (
-              <Paper
+              <Box
                 key={i}
-                elevation={0}
                 sx={{
                   flex: 1,
                   minWidth: {
@@ -357,27 +373,62 @@ export default function DuyetKhoaHocPage() {
                   },
                 }}
               >
-                <Box
+                <Stack
+                  direction="row"
+                  spacing={1.75}
                   sx={{
-                    p: 1.75,
-                    borderRadius: 2.5,
+                    alignItems: "center",
+                    p: 2.25,
+                    borderRadius: "18px",
                     border: `1px solid ${COLORS.line}`,
-                    textAlign: "center",
+                    bgcolor: COLORS.paperRaised,
+                    transition: "all .2s ease",
+                    "&:hover": {
+                      borderColor: alpha(stat.color, 0.35),
+                      transform: "translateY(-2px)",
+                      boxShadow: `0 8px 22px ${alpha(stat.color, 0.10)}`,
+                    },
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 700, color: stat.color, lineHeight: 1.3 }}
+                  <Box
+                    sx={{
+                      width: 46,
+                      height: 46,
+                      flexShrink: 0,
+                      borderRadius: "14px",
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: stat.bgColor,
+                    }}
                   >
-                    {loadingStats ? <CircularProgress size={20} /> : stat.value}
-                  </Typography>
-                  <Typography
-                    sx={{ fontSize: 12.5, color: COLORS.inkSoft, mt: 0.25 }}
-                  >
-                    {stat.label}
-                  </Typography>
-                </Box>
-              </Paper>
+                    {stat.icon}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 26,
+                        fontWeight: 900,
+                        color: stat.color,
+                        lineHeight: 1.15,
+                        letterSpacing: "-0.5px",
+                      }}
+                    >
+                      {loadingStats ? <CircularProgress size={20} /> : stat.value}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: COLORS.inkSoft,
+                        mt: 0.2,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {stat.label}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
             ))}
           </Box>
 
@@ -385,16 +436,17 @@ export default function DuyetKhoaHocPage() {
           <Box
             sx={{
               border: `1px solid ${COLORS.line}`,
-              borderRadius: 3,
-              bgcolor: "#fff",
+              borderRadius: "22px",
+              bgcolor: COLORS.paperRaised,
               overflow: "hidden",
+              boxShadow: `0 4px 20px ${alpha(COLORS.primary, 0.04)}`,
             }}
           >
             {/* Thanh công cụ lọc */}
             <Box
               sx={{
-                p: 2,
-                bgcolor: alpha(COLORS.primary, 0.04),
+                p: 2.5,
+                bgcolor: alpha(COLORS.primary, 0.035),
                 borderBottom: `1px solid ${COLORS.line}`,
               }}
             >
@@ -432,9 +484,10 @@ export default function DuyetKhoaHocPage() {
                     value={keywordInput}
                     onChange={(e) => setKeywordInput(e.target.value)}
                     sx={{
-                      bgcolor: "#fff",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
                       "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
+                        borderRadius: "10px",
+                        height: 42,
                         "& fieldset": { borderColor: COLORS.line },
                         "&:hover fieldset": { borderColor: COLORS.primary },
                         "&.Mui-focused fieldset": {
@@ -463,24 +516,24 @@ export default function DuyetKhoaHocPage() {
                     startAdornment={
                       <InputAdornment position="start">
                         <SwapVertRoundedIcon
-                          sx={{ fontSize: 18, color: "#9CA3AF" }}
+                          sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A7676)" }}
                         />
                       </InputAdornment>
                     }
                     sx={{
                       minWidth: { xs: "100%", sm: 165 },
-                      borderRadius: 2.5,
+                      borderRadius: "10px",
                       height: 42,
-                      bgcolor: "#F9FAFB",
+                      bgcolor: "var(--ev-paper-alt, #FBFAF9)",
                       flexShrink: 0,
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#E5E7EB",
+                        borderColor: "var(--ev-divider, #ECE7E4)",
                       },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#991B1B",
+                        borderColor: COLORS.primary,
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#991B1B",
+                        borderColor: "#8B1313",
                         borderWidth: 1.5,
                       },
                     }}
@@ -497,18 +550,18 @@ export default function DuyetKhoaHocPage() {
                       <IconButton
                         onClick={handleResetFilters}
                         sx={{
-                          bgcolor: alpha("#991B1B", 0.06),
+                          bgcolor: alpha("#8B1313", 0.06),
                           border: "1px solid",
-                          borderColor: alpha("#991B1B", 0.15),
-                          borderRadius: 2.5,
+                          borderColor: alpha("#8B1313", 0.15),
+                          borderRadius: "10px",
                           width: 42,
                           height: 42,
                           flexShrink: 0,
-                          color: "#991B1B",
+                          color: "#8B1313",
                           transition: "all .18s ease",
                           "&:hover": {
-                            bgcolor: alpha("#991B1B", 0.12),
-                            borderColor: "#991B1B",
+                            bgcolor: alpha("#8B1313", 0.12),
+                            borderColor: "#8B1313",
                           },
                         }}
                       >
@@ -552,14 +605,14 @@ export default function DuyetKhoaHocPage() {
                         textTransform: "none",
                         fontWeight: 600,
                         fontSize: 13,
-                        borderColor: "var(--ev-divider, #E5E7EB)",
-                        color: "var(--ev-text-muted, #6B7280)",
+                        borderColor: "var(--ev-divider, #ECE7E4)",
+                        color: "var(--ev-text-muted, #8A7676)",
                         borderRadius: 2.5,
                         px: 2.5,
                         "&:hover": {
-                          borderColor: "#991B1B",
-                          color: "#991B1B",
-                          bgcolor: alpha("#991B1B", 0.04),
+                          borderColor: COLORS.primary,
+                          color: COLORS.primary,
+                          bgcolor: alpha(COLORS.primary, 0.05),
                         },
                       }}
                     >
@@ -568,7 +621,7 @@ export default function DuyetKhoaHocPage() {
                   )}
                 </Box>
               ) : (
-                <Stack spacing={1.25}>
+                <Stack spacing={1.5}>
                   {items.map((item) => {
                     const id = item.idKhoaHoc || item.id;
                     const trangThaiPheDuyet =
@@ -579,23 +632,38 @@ export default function DuyetKhoaHocPage() {
                         key={id}
                         onClick={() => handleOpenCourse(id)}
                         sx={{
+                          position: "relative",
                           display: "flex",
                           alignItems: "center",
-                          gap: 2,
-                          p: 1.25,
+                          gap: 2.25,
+                          p: 1.75,
                           border: `1px solid ${COLORS.line}`,
-                          borderRadius: 2.5,
+                          borderRadius: "18px",
                           cursor: "pointer",
+                          overflow: "hidden",
                           transition: "all .2s ease",
-                          bgcolor: "var(--ev-paper, #fff)",
+                          bgcolor: COLORS.paperRaised,
+                          // Vạch màu bên trái, chỉ hiện khi rê chuột
+                          "&::before": {
+                            content: '""',
+                            position: "absolute",
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: 4,
+                            bgcolor: COLORS.primary,
+                            opacity: 0,
+                            transition: "opacity .2s ease",
+                          },
                           "&:hover": {
-                            borderColor: "#991B1B",
-                            boxShadow: `0 4px 18px ${alpha("#991B1B", 0.1)}`,
-                            transform: "translateY(-1px)",
+                            borderColor: alpha(COLORS.primary, 0.35),
+                            boxShadow: `0 10px 28px ${alpha(COLORS.primary, 0.10)}`,
+                            transform: "translateY(-2px)",
+                            "&::before": { opacity: 1 },
                             "& .view-btn": {
-                              color: "#991B1B",
-                              borderColor: "#991B1B",
-                              bgcolor: alpha("#991B1B", 0.04),
+                              color: COLORS.paperRaised,
+                              borderColor: COLORS.primary,
+                              bgcolor: COLORS.primary,
                             },
                           },
                         }}
@@ -610,13 +678,14 @@ export default function DuyetKhoaHocPage() {
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
                             sx={{
-                              fontWeight: 700,
-                              fontSize: 14.5,
+                              fontWeight: 800,
+                              fontSize: 15.5,
                               color: COLORS.ink,
+                              letterSpacing: "-0.2px",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
-                              mb: 0.5,
+                              mb: 0.75,
                             }}
                           >
                             {item.tieuDe}
@@ -638,7 +707,7 @@ export default function DuyetKhoaHocPage() {
                               <Typography
                                 sx={{
                                   fontSize: 12,
-                                  color: "var(--ev-grey, #9CA3AF)",
+                                  color: "var(--ev-grey, #8A7676)",
                                   display: "flex",
                                   alignItems: "center",
                                   gap: 0.3,
@@ -663,11 +732,11 @@ export default function DuyetKhoaHocPage() {
                               handleOpenCourse(id);
                             }}
                             sx={{
-                              border: "1px solid #E5E7EB",
-                              borderRadius: 2.5,
-                              color: "var(--ev-grey, #9CA3AF)",
-                              width: 36,
-                              height: 36,
+                              border: `1px solid ${COLORS.line}`,
+                              borderRadius: "12px",
+                              color: "var(--ev-grey, #8A7676)",
+                              width: 40,
+                              height: 40,
                               flexShrink: 0,
                               transition: "all .18s ease",
                             }}
@@ -698,9 +767,9 @@ export default function DuyetKhoaHocPage() {
                         transition: "all .15s ease",
                       },
                       "& .Mui-selected": {
-                        bgcolor: "#991B1B !important",
+                        bgcolor: `${COLORS.primary} !important`,
                         color: "#fff",
-                        boxShadow: "0 2px 6px rgba(153,27,27,0.25)",
+                        boxShadow: `0 2px 8px ${alpha(COLORS.primary, 0.3)}`,
                       },
                     }}
                   />

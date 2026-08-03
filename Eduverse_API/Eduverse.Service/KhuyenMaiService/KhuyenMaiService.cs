@@ -34,7 +34,8 @@ namespace Eduverse.Service.KhuyenMaiService
             _khoaHocRepository = khoaHocRepository;
             _httpContextAccessor = httpContextAccessor;
         }
-
+        private bool IsAdmin() =>
+    _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
         private Guid GetCurrentUserId()
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
@@ -45,6 +46,13 @@ namespace Eduverse.Service.KhuyenMaiService
         public async Task<List<KhuyenMaiDto>> GetListAll()
         {
             var userId = GetCurrentUserId();
+            var isAdmin = IsAdmin();
+
+            IQueryable<KhuyenMai> query = GetQueryable()
+                .OrderByDescending(x => x.CreatedDate);
+
+            if (!isAdmin)
+                query = query.Where(x => x.CreatedId == userId);
 
             var khuyenMais = await GetQueryable()
                 .Where(x => x.CreatedId == userId)
@@ -131,13 +139,19 @@ namespace Eduverse.Service.KhuyenMaiService
             if (idsKhongTonTai.Any())
                 throw new Exception($"Không tìm thấy khóa học: {string.Join(", ", idsKhongTonTai)}");
 
-            var khongThuocQuyen = khoaHocs.Where(x => x.CreatedId != userId).Select(x => x.Id).ToList();
-            if (khongThuocQuyen.Any())
-                throw new Exception("Bạn không có quyền áp dụng mã giảm giá cho một số khóa học đã chọn");
+            if (!IsAdmin())
+            {
+                var khongThuocQuyen = khoaHocs
+                    .Where(x => x.CreatedId != userId)
+                    .Select(x => x.Id).ToList();
+                if (khongThuocQuyen.Any())
+                    throw new Exception("Bạn không có quyền áp dụng mã giảm giá cho một số khóa học đã chọn");
+            }
 
             var chuaDuyet = khoaHocs.Where(x => x.TrangThaiPheDuyet != "DaDuyet").Select(x => x.TieuDe).ToList();
             if (chuaDuyet.Any())
                 throw new Exception($"Chỉ áp dụng được cho khóa học đã duyệt. Chưa duyệt: {string.Join(", ", chuaDuyet)}");
+
 
             return khoaHocs;
         }
@@ -279,7 +293,7 @@ namespace Eduverse.Service.KhuyenMaiService
                 .ToListAsync();
 
             if (lienKets.Any())
-            {
+            { 
                 _khuyenMai_KhoaHocRepository.Delete(lienKets);
                 await _khuyenMai_KhoaHocRepository.SaveAsync();
             }
@@ -287,6 +301,23 @@ namespace Eduverse.Service.KhuyenMaiService
             await DeleteAsync(khuyenMai);
             await SaveAsync();
             return true;
+        }
+
+        public async Task<List<KhoaHocMiniDto>> GetAllApprovedKhoaHocAsync()
+        {
+            return await _khoaHocRepository.GetQueryable()
+                .Where(x => x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.IsBanHienTai == true
+                         && !x.IsDeleted
+                         && x.TrangThai == "HoatDong")
+                .OrderByDescending(x => x.CreatedDate)
+                .Select(x => new KhoaHocMiniDto
+                {
+                    Id = x.Id,
+                    TieuDe = x.TieuDe,
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
+                })
+                .ToListAsync();
         }
     }
 }

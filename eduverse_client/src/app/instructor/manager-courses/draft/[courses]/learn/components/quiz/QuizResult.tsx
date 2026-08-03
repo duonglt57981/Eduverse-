@@ -289,7 +289,7 @@ export const QuizResult = ({
               }}
             >
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <CancelIcon sx={{ color: "#9ca3af", fontSize: 18 }} />
+                <CancelIcon sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 18 }} />
                 <Box>
                   <Typography
                     variant="caption"

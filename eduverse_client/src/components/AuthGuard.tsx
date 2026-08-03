@@ -2,13 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSelector } from '@/src/store/hook';
+import { useDispatch, useSelector } from '@/src/store/hook';
+import { logout } from '@/src/store/auth/AuthSlice';
 import { Box, Paper, Typography } from '@mui/material';
 
 interface AuthGuardProps {
   children: React.ReactNode;
   /** Roles allowed to access this page. If empty, any authenticated user can access. */
   allowedRoles?: string[];
+}
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (typeof payload.exp !== "number") return false;
+    return payload.exp < Math.floor(Date.now() / 1000);
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -25,6 +38,7 @@ interface AuthGuardProps {
  */
 export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProps) {
   const router = useRouter();
+  const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
   const roles = useSelector((s) => s.auth.roles) || [];
   const [checked, setChecked] = useState(false);
@@ -37,13 +51,21 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
   };
 
   useEffect(() => {
-    // Not logged in → redirect to login
-    if (!user) {
+    // 1. Not logged in → redirect to login
+    if (!user || !user.accessToken) {
       router.replace('/auth/login');
       return;
     }
 
-    // Check role permission
+    // 2. Check token expiration
+    if (isTokenExpired(user.accessToken)) {
+      localStorage.removeItem("AccessToken");
+      dispatch(logout());
+      router.replace('/auth/login');
+      return;
+    }
+
+    // 3. Check role permission
     if (allowedRoles.length > 0) {
       const hasPermission = allowedRoles.some((role) => roles.includes(role));
       if (!hasPermission) {
@@ -55,7 +77,12 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
     }
 
     setChecked(true);
-  }, [user, roles, allowedRoles, router]);
+  }, [user, roles, allowedRoles, router, dispatch]);
+
+  // 1. Not logged in → don't render children while redirecting
+  if (!user || !user.accessToken) {
+    return null;
+  }
 
   // Show 403 Forbidden page
   if (forbidden) {
@@ -105,7 +132,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
             sx={{
               mt: 1,
               fontSize: 14,
-              color: 'var(--ev-text-muted, #6B7280)',
+              color: 'var(--ev-text-muted, #8A7676)',
               lineHeight: 1.6,
             }}
           >

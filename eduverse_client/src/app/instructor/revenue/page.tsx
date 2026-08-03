@@ -100,7 +100,7 @@ export default function DoanhThuPage() {
       <DashboardShell>
         <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
       <Typography
-        sx={{ fontSize: 24, fontWeight: 700, mb: 3, color: "text.primary" }}
+        sx={{ fontSize: 26, fontWeight: 900, mb: 3, color: "var(--ev-text-primary, #1F2937)" }}
       >
         Doanh thu & Rút tiền
       </Typography>
@@ -159,7 +159,7 @@ export default function DoanhThuPage() {
               onClick={() => setOpenRut(true)}
               disabled={soDu < 50000 || nganHangs.length === 0}
               sx={{
-                bgcolor: "var(--ev-paper, #fff)",
+                bgcolor: "var(--ev-paper, #FFFFFF)",
                 color: PRIMARY,
                 fontWeight: 700,
                 borderRadius: 2,

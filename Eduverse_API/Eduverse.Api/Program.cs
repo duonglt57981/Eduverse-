@@ -4,6 +4,7 @@ using CloudinaryDotNet;
 using CloudinaryDotNet;
 using CloudinaryDotNet;
 using Eduverse.Api.Hubs;
+using Eduverse.Api.Services;
 using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AuthRepository;
@@ -19,7 +20,9 @@ using Eduverse.Service.DangKyKhoaHocService;
 using Eduverse.Service.ElasticsearchService;
 using Eduverse.Service.EmailService;
 using Eduverse.Service.GeminiService;
+using Eduverse.Service.SmsService;
 using Eduverse.Service.YeuCauRutTienService;
+using Eduverse.Service.ThongBaoService;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
@@ -64,9 +67,13 @@ namespace Eduverse.Api
             }).AddEntityFrameworkStores<EduverseContext>().AddDefaultTokenProviders();
             // Đăng ký services
             builder.Services.AddScoped<IEmailService, EmailService>();
+            // Dịch vụ gửi SMS. Khi chưa điền Sms:ApiKey / Sms:SecretKey trong appsettings,
+            // dịch vụ tự chạy ở chế độ ghi log: in mã OTP ra console thay vì gửi tin thật.
+            builder.Services.AddScoped<ISmsService, Eduverse.Service.SmsService.SmsService>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IYeuCauRutTienService, YeuCauRutTienService>();
+            builder.Services.AddScoped<INotificationPublisher, NotificationPublisher>();
             builder.Services.AddScoped<Eduverse.IService.DanhSachYeuThichService.IDanhSachYeuThichService, Eduverse.Service.DanhSachYeuThichService.DanhSachYeuThichService>();
             builder.Services.AddScoped<Eduverse.IService.ChungChiService.IChungChiService, Eduverse.IService.ChungChiService.ChungChiService>();
             builder.Services.AddDependencyInjection();

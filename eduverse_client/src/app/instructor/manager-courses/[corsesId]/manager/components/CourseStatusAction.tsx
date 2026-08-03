@@ -115,7 +115,7 @@ export default function CourseStatusAction({
         <Typography sx={{ fontSize: 13, color: "#ffb4b4", maxWidth: 360 }}>
           Bị từ chối{lyDoTuChoi ? `: ${lyDoTuChoi}` : "."}
         </Typography>
-        <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A93A3)" }}>
+        <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}>
           Vui lòng chỉnh sửa và gửi lại
         </Typography>
       </Box>

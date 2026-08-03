@@ -107,6 +107,10 @@ interface GoogleAuthButtonProps {
   onError?: (message: string) => void;
   /** Theme của nút Google. Mặc định 'outline'. */
   theme?: 'outline' | 'filled_blue' | 'filled_black';
+  /** Bo góc tùy chỉnh (px hoặc string). */
+  borderRadius?: string | number;
+  /** Chiều cao tùy chỉnh (px hoặc string). */
+  height?: string | number;
 }
 
 export default function GoogleAuthButton({
@@ -115,6 +119,8 @@ export default function GoogleAuthButton({
   onSize,
   onError,
   theme = 'outline',
+  borderRadius = 999,
+  height = 48,
 }: GoogleAuthButtonProps) {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -126,7 +132,7 @@ export default function GoogleAuthButton({
   const [btnWidth, setBtnWidth] = useState(320);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const cap = Math.min(maxWidth, GIS_MAX_WIDTH);
+  const cap = maxWidth;
 
   // Đo bề rộng khung + chiều cao thực tế của nút Google (dùng ResizeObserver để bắt
   // cả lúc GIS render xong lẫn khi đổi kích thước màn hình → luôn responsive & khớp).
@@ -261,7 +267,7 @@ export default function GoogleAuthButton({
       ref={wrapperRef}
       sx={{ 
         width: '100%', 
-        maxWidth: 400,
+        maxWidth: maxWidth,
         position: 'relative',
         display: 'flex', 
         flexDirection: 'column', 
@@ -274,8 +280,8 @@ export default function GoogleAuthButton({
         sx={{
           position: 'relative',
           width: '100%',
-          height: 48,
-          borderRadius: 999,
+          height: height,
+          borderRadius: borderRadius,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -332,7 +338,7 @@ export default function GoogleAuthButton({
               position: 'absolute',
               inset: 0,
               bgcolor: 'rgba(255, 245, 245, 0.7)',
-              borderRadius: 999,
+              borderRadius: borderRadius,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

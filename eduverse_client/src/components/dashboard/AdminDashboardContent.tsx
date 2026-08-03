@@ -4,6 +4,7 @@ import { COLORS } from "@/src/theme/tokens";
 
 import { useEffect, useMemo, useState } from "react";
 import { apiService } from "@/src/services/index";
+import CvViewerDialog from "@/src/components/common/CvViewerDialog";
 import {
   Box,
   Button,
@@ -32,6 +33,7 @@ import {
   AssignmentTurnedInRounded,
   StarRounded,
   FiberManualRecordRounded,
+  VisibilityRounded as VisibilityRoundedIcon,
 } from "@mui/icons-material";
 
 // Crimson palette matches the design theme
@@ -39,12 +41,16 @@ import {
 // SVG-based monthly revenue line chart
 function RevenueLineChart({
   data,
+  labels,
   period,
   onPeriodChange,
+  lastUpdated,
 }: {
   data: number[];
+  labels: string[];
   period: string;
   onPeriodChange: (p: string) => void;
+  lastUpdated: Date | null;
 }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
@@ -89,10 +95,24 @@ function RevenueLineChart({
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
+  // Cả trục dùng CHUNG một đơn vị, chọn theo giá trị lớn nhất.
+  // Trước đây mỗi vạch tự chọn đơn vị nên trục lẫn lộn "2 tr" với "505,800",
+  // và hai vạch khác nhau cùng làm tròn thành "2 tr".
+  const yUnit =
+    maxVal >= 1000000000
+      ? { chia: 1000000000, ten: " tỷ", le: 2 }
+      : maxVal >= 1000000
+        ? { chia: 1000000, ten: " tr", le: 2 }
+        : maxVal >= 1000
+          ? { chia: 1000, ten: " N", le: 1 }
+          : { chia: 1, ten: "", le: 0 };
+
   const formatYLabel = (val: number) => {
-    if (val >= 1000000000) return (val / 1000000000).toFixed(1) + " tỷ";
-    if (val >= 1000000) return (val / 1000000).toFixed(0) + " tr";
-    return val.toLocaleString();
+    if (val === 0) return "0";
+    const v = val / yUnit.chia;
+    // Bỏ số 0 thừa ở cuối phần thập phân: 2.50 -> 2,5
+    const so = v.toFixed(yUnit.le).replace(/\.?0+$/, "");
+    return so.replace(".", ",") + yUnit.ten;
   };
 
   // Format giá trị hiển thị trong tooltip
@@ -136,6 +156,7 @@ function RevenueLineChart({
                 ? "Doanh thu nền tảng (30%) theo từng tháng trong quý này."
                 : "Doanh thu nền tảng (30%) theo từng tháng trong năm nay."}
           </Typography>
+
         </Box>
         <Tabs
           value={period}
@@ -319,7 +340,9 @@ function RevenueLineChart({
                         fontFamily: '"Be Vietnam Pro"',
                       }}
                     >
-                      Tháng {idx + 1}
+                      {period === "month"
+                        ? `Ngày ${labels[idx] ?? idx + 1}`
+                        : `Tháng ${(labels[idx] ?? "").replace("Th", "") || idx + 1}`}
                     </text>
                     {/* Giá trị */}
                     <text
@@ -366,7 +389,7 @@ function RevenueLineChart({
                     transition: "fill 120ms",
                   }}
                 >
-                  Th{idx + 1}
+                  {labels[idx] ?? String(idx + 1)}
                 </text>
               </g>
             );
@@ -492,7 +515,7 @@ function StudentGrowthChart({ data }: { data: number[] }) {
                   height: `${Math.max(pct, 2)}%`,
                   borderRadius: "8px 8px 4px 4px",
                   background: isHovered
-                    ? `linear-gradient(180deg, #EF4444 0%, ${COLORS.primary} 100%)`
+                    ? `linear-gradient(180deg, #DC2626 0%, ${COLORS.primary} 100%)`
                     : isLatest
                       ? `linear-gradient(180deg, ${COLORS.primaryLight} 0%, ${COLORS.primary} 100%)`
                       : "rgba(141,19,19,0.10)",
@@ -712,10 +735,14 @@ export default function AdminDashboardContent() {
   // Hộp thoại xem chi tiết yêu cầu nâng cấp giảng viên
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<any>(null);
+  // Trình xem hồ sơ CV ngay trong trang, không phải rời đi tab khác
+  const [cvOpen, setCvOpen] = useState(false);
   // Bộ lọc yêu cầu theo trạng thái: "all" | 0 (chờ duyệt) | 1 (đã duyệt) | 2 (đã từ chối)
   const [statusFilter, setStatusFilter] = useState<"all" | 0 | 1 | 2>("all");
   // Khoảng thời gian của biểu đồ doanh thu: month | quarter | year
   const [revenuePeriod, setRevenuePeriod] = useState("year");
+  // Mốc lần lấy dữ liệu gần nhất, để hiển thị "Cập nhật lúc ..."
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchRequests = async () => {
     try {
@@ -798,26 +825,54 @@ export default function AdminDashboardContent() {
   }, [adminActiveTab]);
 
   useEffect(() => {
-    const fetchAdminData = async () => {
+    let huy = false;
+
+    // silent = làm mới ngầm, không bật màn hình chờ để biểu đồ không nhấp nháy
+    const fetchAdminData = async (silent = false) => {
       try {
-        setLoading(true);
+        if (!silent) setLoading(true);
         const res = await apiService.get<any>(
           `/dashboard?role=Admin&period=${revenuePeriod}`,
         );
+        if (huy) return;
         if (res.status && res.data) {
           setDashboardData(res.data);
-        } else {
+          setLastUpdated(new Date());
+          setError(null);
+        } else if (!silent) {
           setError(res.message || "Không thể lấy dữ liệu Admin Dashboard");
         }
       } catch (err: any) {
+        if (huy || silent) return;
         setError(
           typeof err === "string" ? err : "Đã xảy ra lỗi khi tải dữ liệu",
         );
       } finally {
-        setLoading(false);
+        if (!huy && !silent) setLoading(false);
       }
     };
+
     fetchAdminData();
+
+    // Làm mới ngầm mỗi 30 giây để số liệu bám sát thực tế
+    const dinhKy = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      void fetchAdminData(true);
+    }, 30000);
+
+    // Quay lại tab sau khi rời đi thì lấy lại ngay, không đợi hết 30 giây
+    const khiHienLai = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        void fetchAdminData(true);
+      }
+    };
+    document.addEventListener("visibilitychange", khiHienLai);
+
+    return () => {
+      huy = true;
+      clearInterval(dinhKy);
+      document.removeEventListener("visibilitychange", khiHienLai);
+    };
   }, [revenuePeriod]);
 
   // Danh sách sau khi lọc + số lượng từng trạng thái (tính tại chỗ, không gọi thêm API)
@@ -861,13 +916,14 @@ export default function AdminDashboardContent() {
 
   // Destructure with default values to prevent undefined errors
   const {
-    welcomeStats = {},
-    revenueTrend = [],
-    studentGrowth = [],
-    bestSellingCourses = [],
-    heatmap = [],
-    recentActivities = [],
-  } = dashboardData || {};
+    welcomeStats,
+    revenueTrend,
+    revenueLabels,
+    studentGrowth,
+    bestSellingCourses,
+    heatmap,
+    recentActivities,
+  } = dashboardData;
 
   // % xu hướng THẬT từ API (không fix cứng)
   const fmtTrend = (p: number) => `${(p ?? 0) > 0 ? "+" : ""}${p ?? 0}%`;
@@ -1044,8 +1100,10 @@ export default function AdminDashboardContent() {
           {/* 3. Revenue Trend Chart */}
           <RevenueLineChart
             data={revenueTrend}
+            labels={revenueLabels ?? []}
             period={revenuePeriod}
             onPeriodChange={setRevenuePeriod}
+            lastUpdated={lastUpdated}
           />
 
           {/* 4. Split Row: Student growth & Best Selling */}
@@ -1552,6 +1610,15 @@ export default function AdminDashboardContent() {
         </DialogActions>
       </Dialog>
 
+      {/* Trình xem hồ sơ CV */}
+      <CvViewerDialog
+        open={cvOpen}
+        onClose={() => setCvOpen(false)}
+        cvUrl={detailRequest?.cvUrl}
+        hoTen={detailRequest?.hoTen || detailRequest?.userName}
+        requestId={detailRequest?.id}
+      />
+
       {/* Hộp thoại xem chi tiết yêu cầu nâng cấp giảng viên */}
       <Dialog
         open={detailOpen}
@@ -1664,28 +1731,41 @@ export default function AdminDashboardContent() {
                   Hồ sơ CV
                 </Typography>
                 {detailRequest.cvUrl ? (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() =>
-                      window.open(
-                        detailRequest.cvUrl,
-                        "_blank",
-                        "noopener,noreferrer",
-                      )
-                    }
-                    sx={{
-                      alignSelf: "flex-start",
-                      textTransform: "none",
-                      fontWeight: 800,
-                      borderRadius: "10px",
-                      color: COLORS.primary,
-                      borderColor:
-                        "var(--ev-brand-border, rgba(141,19,19,0.25))",
-                    }}
-                  >
-                    Mở CV trong tab mới
-                  </Button>
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disableElevation
+                      startIcon={<VisibilityRoundedIcon sx={{ fontSize: 17 }} />}
+                      onClick={() => setCvOpen(true)}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 800,
+                        borderRadius: "10px",
+                        bgcolor: COLORS.primary,
+                        color: "#fff",
+                        "&:hover": { bgcolor: COLORS.primaryDark },
+                      }}
+                    >
+                      Xem CV
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() =>
+                        window.open(detailRequest.cvUrl, "_blank", "noopener,noreferrer")
+                      }
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 800,
+                        borderRadius: "10px",
+                        color: COLORS.primary,
+                        borderColor: "var(--ev-brand-border, rgba(141,19,19,0.25))",
+                      }}
+                    >
+                      Mở tab mới
+                    </Button>
+                  </Stack>
                 ) : (
                   <Typography
                     sx={{
@@ -1876,7 +1956,7 @@ function ChipTrend({ value, isUp }: { value: string; isUp: boolean | null }) {
       spacing={0.5}
       sx={{
         bgcolor: isUp ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
-        color: isUp ? COLORS.green : "#EF4444",
+        color: isUp ? COLORS.green : "#DC2626",
         borderRadius: "50px",
         px: 1,
         py: 0.4,

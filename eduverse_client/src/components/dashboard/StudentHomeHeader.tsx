@@ -43,7 +43,7 @@ import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 
-const RED = "#991B1B"; // Đỏ đô
+const RED = "#8B1313"; // Đỏ đô
 const HEADER_H = 74;
 
 export default function StudentHomeHeader() {
@@ -120,7 +120,7 @@ export default function StudentHomeHeader() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: RED,
-      cancelButtonColor: "#6B7280",
+      cancelButtonColor: "#8A7676",
       confirmButtonText: "Đăng xuất",
       cancelButtonText: "Hủy",
       reverseButtons: true,

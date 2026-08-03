@@ -42,7 +42,7 @@ import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { getTatCaYeuCau, xuLyYeuCau } from "@/src/store/rutTien/RutTienSlice";
 
-const PRIMARY = "#991B1B";
+const PRIMARY = "#8B1313";
 const PRIMARY_HOVER = "#7F1D1D";
 
 interface YeuCauRutTien {
@@ -231,8 +231,8 @@ function RutTienContent() {
   };
 
   const renderStatusBadge = (trangThai?: string) => {
-    let bg = "#F1F5F9",
-      color = "#475569",
+    let bg = "#FBFAF9",
+      color = "#4B5563",
       text = trangThai ?? "";
     if (trangThai === "ChoDuyet") {
       bg = "#FFF7ED";
@@ -292,7 +292,7 @@ function RutTienContent() {
             >
               Quản lý rút tiền
             </Typography>
-            <Typography variant="body2" sx={{ color: "var(--ev-text-secondary, #64748B)" }}>
+            <Typography variant="body2" sx={{ color: "var(--ev-text-secondary, #4B5563)" }}>
               Kiểm tra, phê duyệt và theo dõi các yêu cầu rút tiền của giảng
               viên.
             </Typography>
@@ -316,7 +316,7 @@ function RutTienContent() {
           {
             icon: (
               <AccountBalanceWalletRoundedIcon
-                sx={{ color: "var(--ev-text-primary, #111827)", fontSize: 24 }}
+                sx={{ color: "var(--ev-text-primary, #1F2937)", fontSize: 24 }}
               />
             ),
             bg: "rgba(17,24,39,0.04)",
@@ -324,7 +324,7 @@ function RutTienContent() {
             value: totalRequests,
             chip: "Tất cả",
             chipBg: "rgba(17,24,39,0.04)",
-            chipColor: "#111827",
+            chipColor: "#1F2937",
           },
           {
             icon: (
@@ -367,7 +367,7 @@ function RutTienContent() {
               sx={{
                 p: 3,
                 borderRadius: "16px",
-                border: "1px solid #E5E7EB",
+                border: "1px solid var(--ev-divider, #ECE7E4)",
                 boxShadow: "0 4px 20px rgba(0,0,0,0.01)",
                 bgcolor: "var(--ev-paper, #FFFFFF)",
               }}
@@ -398,7 +398,7 @@ function RutTienContent() {
               <Typography
                 variant="caption"
                 sx={{
-                  color: "var(--ev-text-secondary, #64748B)",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   fontWeight: 800,
                   textTransform: "uppercase",
                   fontSize: "11px",
@@ -409,7 +409,7 @@ function RutTienContent() {
               </Typography>
               <Typography
                 variant="h4"
-                sx={{ fontWeight: 900, color: "var(--ev-text-primary, #111827)", mt: 0.5 }}
+                sx={{ fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mt: 0.5 }}
               >
                 {s.value}
               </Typography>
@@ -423,7 +423,7 @@ function RutTienContent() {
         sx={{
           borderRadius: "16px",
           mb: 4,
-          border: "1px solid #E5E7EB",
+          border: "1px solid var(--ev-divider, #ECE7E4)",
           boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
           bgcolor: "var(--ev-paper, #FFFFFF)",
           overflow: "hidden",
@@ -442,7 +442,7 @@ function RutTienContent() {
         >
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Typography
-              sx={{ fontWeight: 850, fontSize: 17, color: "var(--ev-text-primary, #111827)" }}
+              sx={{ fontWeight: 850, fontSize: 17, color: "var(--ev-text-primary, #1F2937)" }}
             >
               Yêu cầu chờ duyệt
             </Typography>
@@ -488,8 +488,8 @@ function RutTienContent() {
                 onClick={handleExportExcel}
                 disabled={choDuyet.length === 0}
                 sx={{
-                  borderColor: "var(--ev-divider, #E5E7EB)",
-                  color: "var(--ev-text-secondary, #374151)",
+                  borderColor: "var(--ev-divider, #ECE7E4)",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   fontWeight: 700,
                   borderRadius: "10px",
                   textTransform: "none",
@@ -523,7 +523,7 @@ function RutTienContent() {
           </Stack>
         </Box>
 
-        <Divider sx={{ borderColor: "var(--ev-divider, #E5E7EB)" }} />
+        <Divider sx={{ borderColor: "var(--ev-divider, #ECE7E4)" }} />
 
         {choDuyet.length === 0 ? (
           <Box
@@ -553,11 +553,11 @@ function RutTienContent() {
               />
             </Box>
             <Typography
-              sx={{ color: "var(--ev-text-primary, #111827)", fontSize: 16, fontWeight: 700, mb: 0.5 }}
+              sx={{ color: "var(--ev-text-primary, #1F2937)", fontSize: 16, fontWeight: 700, mb: 0.5 }}
             >
               Không có yêu cầu nào đang chờ duyệt
             </Typography>
-            <Typography sx={{ color: "var(--ev-text-secondary, #64748B)", fontSize: 13 }}>
+            <Typography sx={{ color: "var(--ev-text-secondary, #4B5563)", fontSize: 13 }}>
               Các yêu cầu rút tiền mới sẽ được hiển thị tại đây.
             </Typography>
           </Box>
@@ -565,7 +565,7 @@ function RutTienContent() {
           <TableContainer>
             <Table size="medium">
               <TableHead>
-                <TableRow sx={{ bgcolor: "var(--ev-paper-alt, #F8FAFC)" }}>
+                <TableRow sx={{ bgcolor: "var(--ev-paper-alt, #F7F5F2)" }}>
                   {/* Checkbox chọn tất cả */}
                   <TableCell padding="checkbox" sx={{ pl: 2 }}>
                     <Checkbox
@@ -573,7 +573,7 @@ function RutTienContent() {
                       checked={isAllSelected}
                       onChange={toggleAll}
                       sx={{
-                        color: "var(--ev-text-muted, #94A3B8)",
+                        color: "var(--ev-text-muted, #8A7676)",
                         "&.Mui-checked": { color: PRIMARY },
                         "&.MuiCheckbox-indeterminate": { color: PRIMARY },
                       }}
@@ -593,7 +593,7 @@ function RutTienContent() {
                       align={i === 6 ? "right" : "left"}
                       sx={{
                         fontWeight: 800,
-                        color: "var(--ev-text-secondary, #64748B)",
+                        color: "var(--ev-text-secondary, #4B5563)",
                         fontSize: 13,
                         ...(i === 6 ? { pr: 3 } : {}),
                       }}
@@ -626,7 +626,7 @@ function RutTienContent() {
                           checked={isChecked}
                           onChange={() => toggleOne(y.id)}
                           sx={{
-                            color: "var(--ev-text-muted, #94A3B8)",
+                            color: "var(--ev-text-muted, #8A7676)",
                             "&.Mui-checked": { color: PRIMARY },
                           }}
                         />
@@ -654,7 +654,7 @@ function RutTienContent() {
                             sx={{
                               fontSize: 14,
                               fontWeight: 700,
-                              color: "var(--ev-text-primary, #111827)",
+                              color: "var(--ev-text-primary, #1F2937)",
                             }}
                           >
                             {y.tenGiangVien}
@@ -672,7 +672,7 @@ function RutTienContent() {
                         sx={{
                           py: 2,
                           fontSize: 13.5,
-                          color: "var(--ev-text-primary, #111827)",
+                          color: "var(--ev-text-primary, #1F2937)",
                           fontWeight: 500,
                         }}
                       >
@@ -682,7 +682,7 @@ function RutTienContent() {
                         sx={{
                           py: 2,
                           fontSize: 13.5,
-                          color: "var(--ev-text-primary, #111827)",
+                          color: "var(--ev-text-primary, #1F2937)",
                           fontFamily: "monospace",
                           fontWeight: 700,
                         }}
@@ -698,7 +698,7 @@ function RutTienContent() {
                               width: 44,
                               height: 44,
                               objectFit: "contain",
-                              border: "1px solid #E5E7EB",
+                              border: "1px solid var(--ev-divider, #ECE7E4)",
                               borderRadius: 8,
                               cursor: "pointer",
                             }}
@@ -708,12 +708,12 @@ function RutTienContent() {
                             }}
                           />
                         ) : (
-                          <Typography sx={{ fontSize: 12, color: "var(--ev-text-muted, #94A3B8)" }}>
+                          <Typography sx={{ fontSize: 12, color: "var(--ev-text-muted, #8A7676)" }}>
                             Chưa có QR
                           </Typography>
                         )}
                       </TableCell>
-                      <TableCell sx={{ py: 2, fontSize: 13, color: "var(--ev-text-secondary, #64748B)" }}>
+                      <TableCell sx={{ py: 2, fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
                         {y.ngayYeuCau
                           ? new Date(y.ngayYeuCau).toLocaleDateString("vi-VN")
                           : ""}
@@ -787,7 +787,7 @@ function RutTienContent() {
         <Card
           sx={{
             borderRadius: "16px",
-            border: "1px solid #E5E7EB",
+            border: "1px solid var(--ev-divider, #ECE7E4)",
             boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
             bgcolor: "var(--ev-paper, #FFFFFF)",
             overflow: "hidden",
@@ -795,21 +795,21 @@ function RutTienContent() {
         >
           <Box sx={{ p: 2.5 }}>
             <Typography
-              sx={{ fontWeight: 850, fontSize: 17, color: "var(--ev-text-primary, #111827)" }}
+              sx={{ fontWeight: 850, fontSize: 17, color: "var(--ev-text-primary, #1F2937)" }}
             >
               Lịch sử đã xử lý
             </Typography>
           </Box>
-          <Divider sx={{ borderColor: "var(--ev-divider, #E5E7EB)" }} />
+          <Divider sx={{ borderColor: "var(--ev-divider, #ECE7E4)" }} />
           <TableContainer>
             <Table size="medium">
               <TableHead>
-                <TableRow sx={{ bgcolor: "var(--ev-paper-alt, #F8FAFC)" }}>
+                <TableRow sx={{ bgcolor: "var(--ev-paper-alt, #F7F5F2)" }}>
                   {["Giảng viên", "Số tiền", "Trạng thái", "Ngày xử lý"].map(
                     (h) => (
                       <TableCell
                         key={h}
-                        sx={{ fontWeight: 800, color: "var(--ev-text-secondary, #64748B)", fontSize: 13 }}
+                        sx={{ fontWeight: 800, color: "var(--ev-text-secondary, #4B5563)", fontSize: 13 }}
                       >
                         {h}
                       </TableCell>
@@ -842,7 +842,7 @@ function RutTienContent() {
                           sx={{
                             fontSize: 13.5,
                             fontWeight: 700,
-                            color: "var(--ev-text-primary, #111827)",
+                            color: "var(--ev-text-primary, #1F2937)",
                           }}
                         >
                           {y.tenGiangVien}
@@ -854,7 +854,7 @@ function RutTienContent() {
                         py: 2,
                         fontWeight: 700,
                         fontSize: 14,
-                        color: "var(--ev-text-primary, #111827)",
+                        color: "var(--ev-text-primary, #1F2937)",
                       }}
                     >
                       {formatTien(y.soTienRut)}
@@ -862,7 +862,7 @@ function RutTienContent() {
                     <TableCell sx={{ py: 2 }}>
                       {renderStatusBadge(y.trangThai)}
                     </TableCell>
-                    <TableCell sx={{ py: 2, fontSize: 13, color: "var(--ev-text-secondary, #64748B)" }}>
+                    <TableCell sx={{ py: 2, fontSize: 13, color: "var(--ev-text-secondary, #4B5563)" }}>
                       {y.ngayXuLy
                         ? new Date(y.ngayXuLy).toLocaleDateString("vi-VN")
                         : ""}
@@ -908,16 +908,16 @@ function RutTienContent() {
             <>
               <Box
                 sx={{
-                  bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+                  bgcolor: "var(--ev-paper-alt, #F7F5F2)",
                   borderRadius: "14px",
-                  border: "1px solid #E2E8F0",
+                  border: "1px solid var(--ev-divider, #ECE7E4)",
                   p: 2.5,
                   mb: 3,
                 }}
               >
                 <Typography
                   sx={{
-                    color: "var(--ev-text-secondary, #64748B)",
+                    color: "var(--ev-text-secondary, #4B5563)",
                     fontSize: "12px",
                     fontWeight: 700,
                     textTransform: "uppercase",
@@ -928,7 +928,7 @@ function RutTienContent() {
                 <Typography
                   sx={{
                     fontWeight: 800,
-                    color: "var(--ev-text-primary, #111827)",
+                    color: "var(--ev-text-primary, #1F2937)",
                     fontSize: 15,
                     mb: 1,
                   }}
@@ -937,7 +937,7 @@ function RutTienContent() {
                 </Typography>
                 <Typography
                   sx={{
-                    color: "var(--ev-text-secondary, #64748B)",
+                    color: "var(--ev-text-secondary, #4B5563)",
                     fontSize: "12px",
                     fontWeight: 700,
                     textTransform: "uppercase",
@@ -946,7 +946,7 @@ function RutTienContent() {
                   Thông tin tài khoản
                 </Typography>
                 <Typography
-                  sx={{ fontWeight: 700, color: "var(--ev-text-primary, #111827)", fontSize: 14.5 }}
+                  sx={{ fontWeight: 700, color: "var(--ev-text-primary, #1F2937)", fontSize: 14.5 }}
                 >
                   {selected.tenNganHang} • {selected.soTaiKhoan} •{" "}
                   {selected.tenTaiKhoan}
@@ -959,7 +959,7 @@ function RutTienContent() {
                     <Typography
                       sx={{
                         fontSize: 13,
-                        color: "var(--ev-text-secondary, #64748B)",
+                        color: "var(--ev-text-secondary, #4B5563)",
                         mb: 0.5,
                         fontWeight: 600,
                       }}
@@ -1010,7 +1010,7 @@ function RutTienContent() {
                     <Typography
                       sx={{
                         fontSize: 12,
-                        color: "var(--ev-text-secondary, #64748B)",
+                        color: "var(--ev-text-secondary, #4B5563)",
                         mt: 2,
                         fontWeight: 500,
                       }}
@@ -1029,7 +1029,7 @@ function RutTienContent() {
                       alignItems: "center",
                       gap: 1.5,
                       p: 2,
-                      border: `2px solid ${daChuyen ? "#15803D" : "#E2E8F0"}`,
+                      border: `2px solid ${daChuyen ? "#15803D" : "#ECE7E4"}`,
                       borderRadius: "12px",
                       cursor: "pointer",
                       mt: 3,
@@ -1063,7 +1063,7 @@ function RutTienContent() {
                       sx={{
                         fontSize: 13.5,
                         fontWeight: daChuyen ? 800 : 600,
-                        color: daChuyen ? "#15803D" : "#111827",
+                        color: daChuyen ? "#15803D" : "#1F2937",
                       }}
                     >
                       Tôi đã quét mã QR và chuyển thành công{" "}
@@ -1090,7 +1090,7 @@ function RutTienContent() {
                     mt: 1,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "12px",
-                      bgcolor: "var(--ev-paper-alt, #F8FAFC)",
+                      bgcolor: "var(--ev-paper-alt, #F7F5F2)",
                     },
                   }}
                 />
@@ -1111,7 +1111,7 @@ function RutTienContent() {
           <Button
             onClick={closeDialog}
             sx={{
-              color: "var(--ev-text-secondary, #64748B)",
+              color: "var(--ev-text-secondary, #4B5563)",
               borderRadius: "10px",
               fontWeight: 700,
               textTransform: "none",
@@ -1204,7 +1204,7 @@ function RutTienContent() {
               alignItems: "center",
               gap: 1.5,
               p: 2,
-              border: `2px solid ${bulkDaChuyen ? "#15803D" : "#E2E8F0"}`,
+              border: `2px solid ${bulkDaChuyen ? "#15803D" : "#ECE7E4"}`,
               borderRadius: "12px",
               cursor: "pointer",
               bgcolor: bulkDaChuyen ? "rgba(21,128,61,0.04)" : "transparent",
@@ -1232,7 +1232,7 @@ function RutTienContent() {
               sx={{
                 fontSize: 13.5,
                 fontWeight: bulkDaChuyen ? 800 : 600,
-                color: bulkDaChuyen ? "#15803D" : "#111827",
+                color: bulkDaChuyen ? "#15803D" : "#1F2937",
               }}
             >
               Tôi đã chuyển khoản thành công cho tất cả {selectedIds.size} giảng
@@ -1247,7 +1247,7 @@ function RutTienContent() {
               setBulkDaChuyen(false);
             }}
             sx={{
-              color: "var(--ev-text-secondary, #64748B)",
+              color: "var(--ev-text-secondary, #4B5563)",
               borderRadius: "10px",
               fontWeight: 700,
               textTransform: "none",

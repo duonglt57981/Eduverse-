@@ -47,8 +47,34 @@ export class ApiService {
         };
         const area = typeof window !== "undefined" ? window.__APP_AREA || "dashboard" : "dashboard";
 
+        const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+        const isPublicPage = !(
+          pathname.startsWith("/admin/") || pathname === "/admin" ||
+          pathname.startsWith("/instructor/") || pathname === "/instructor" ||
+          pathname.startsWith("/student/") || pathname === "/student" ||
+          pathname.startsWith("/dashboard/") || pathname === "/dashboard" ||
+          pathname.startsWith("/auth/") || pathname === "/auth" ||
+          pathname === "/learning-paths" ||
+          pathname === "/settings"
+        );
+
         if (error.response?.status === 401 && !original._retry) {
           original._retry = true;
+
+          if (isPublicPage) {
+            localStorage.removeItem("AccessToken");
+            try {
+              const { store } = await import("../store/store");
+              const { logout } = await import("../store/auth/AuthSlice");
+              store.dispatch(logout());
+            } catch (e) {
+              console.error("Failed to dispatch logout", e);
+            }
+            if (original.headers) {
+              delete original.headers.Authorization;
+            }
+            return this.api(original);
+          }
 
           // ← Không retry nếu đang gọi các endpoint auth
           const authEndpoints = [
@@ -89,7 +115,7 @@ export class ApiService {
         }
 
         if (error.response?.status === 403) {
-          if (typeof window !== "undefined") {
+          if (typeof window !== "undefined" && !isPublicPage) {
             const token = localStorage.getItem("AccessToken");
             if (!token) {
               window.location.href = "/auth/login";
@@ -99,7 +125,21 @@ export class ApiService {
           return Promise.reject(error.response?.data?.message || "Không có quyền truy cập");
         }
 
-        return Promise.reject(error.response?.data?.message || error.message);
+        // Backend trả lỗi nghiệp vụ dạng { status, message }.
+        // Nhưng lỗi kiểm tra dữ liệu của ASP.NET lại trả ProblemDetails dạng
+        // { title, errors: { Ten: ["..."] } } — không có trường message.
+        // Nếu không bóc tách, người dùng chỉ thấy chuỗi thô của axios.
+        const data = error.response?.data;
+        if (data?.message) return Promise.reject(data.message);
+        if (data?.errors && typeof data.errors === "object") {
+          const chiTiet = Object.values(data.errors as Record<string, string[]>)
+            .flat()
+            .filter(Boolean)
+            .join(" ");
+          if (chiTiet) return Promise.reject(chiTiet);
+        }
+        if (data?.title) return Promise.reject(data.title);
+        return Promise.reject(error.message);
       },
     );
   }

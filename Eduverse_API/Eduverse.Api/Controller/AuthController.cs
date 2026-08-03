@@ -88,7 +88,7 @@ namespace Eduverse.Api.Controller
         [AllowAnonymous]
         public async Task<DataResponse<string>> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
-            var result = await _authService.ForgotPasswordAsync(request.Email);
+            var result = await _authService.ForgotPasswordAsync(request);
             return new DataResponse<string> { Status = true, Message = result };
         }
 
@@ -106,6 +106,31 @@ namespace Eduverse.Api.Controller
         {
             var resetToken = await _authService.VerifyOtpAsync(request);
             return new DataResponse<string> { Status = true, Message = "Xác minh thành công", Data = resetToken };
+        }
+
+        /// <summary>
+        /// Gửi mã OTP tới số điện thoại để xác minh quyền sở hữu.
+        /// Phải xác minh trước khi được dùng số điện thoại để khôi phục mật khẩu.
+        /// </summary>
+        [HttpPost("send-phone-otp")]
+        [Authorize]
+        public async Task<DataResponse<string>> SendPhoneOtp([FromBody] SendPhoneOtpRequest request)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await _authService.SendPhoneOtpAsync(userId, request);
+            return new DataResponse<string> { Status = true, Message = result };
+        }
+
+        /// <summary>
+        /// Xác nhận mã OTP và đánh dấu số điện thoại đã xác minh.
+        /// </summary>
+        [HttpPost("confirm-phone-otp")]
+        [Authorize]
+        public async Task<DataResponse<string>> ConfirmPhoneOtp([FromBody] ConfirmPhoneOtpRequest request)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var result = await _authService.ConfirmPhoneOtpAsync(userId, request);
+            return new DataResponse<string> { Status = true, Message = result };
         }
 
         [HttpPost("change-password")]

@@ -260,7 +260,7 @@ export default function LichSuKiemDuyetPage() {
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 2,
                   color: COLORS.ink,
-                  bgcolor: "#fff",
+                  bgcolor: "var(--ev-paper, #FFFFFF)",
                   "&:hover": {
                     borderColor: COLORS.primary,
                     color: COLORS.primary,
@@ -419,7 +419,7 @@ export default function LichSuKiemDuyetPage() {
                     value={keywordInput}
                     onChange={(e) => setKeywordInput(e.target.value)}
                     sx={{
-                      bgcolor: "#fff",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
                         "& fieldset": { borderColor: COLORS.line },
@@ -455,7 +455,7 @@ export default function LichSuKiemDuyetPage() {
                     }
                     sx={{
                       minWidth: { xs: "100%", sm: 170 },
-                      bgcolor: "#fff",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
                       borderRadius: 2,
                       "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: COLORS.line,
@@ -480,7 +480,7 @@ export default function LichSuKiemDuyetPage() {
                         onClick={handleResetFilters}
                         disabled={!isFilterDirty}
                         sx={{
-                          bgcolor: "#fff",
+                          bgcolor: "var(--ev-paper, #FFFFFF)",
                           border: `1px solid ${COLORS.line}`,
                           borderRadius: 2,
                           width: 40,
@@ -488,7 +488,7 @@ export default function LichSuKiemDuyetPage() {
                           flexShrink: 0,
                           color: isFilterDirty
                             ? COLORS.primary
-                            : alpha(COLORS.inkSoft, 0.4),
+                            : "rgba(75, 85, 99, 0.4)",
                           "&:hover": {
                             borderColor: COLORS.primary,
                             bgcolor: alpha(COLORS.primary, 0.06),
@@ -510,7 +510,7 @@ export default function LichSuKiemDuyetPage() {
                 sx={{
                   mt: 1.5,
                   minHeight: 34,
-                  bgcolor: "#fff",
+                  bgcolor: "var(--ev-paper, #FFFFFF)",
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 2,
                   px: 0.5,
@@ -563,8 +563,7 @@ export default function LichSuKiemDuyetPage() {
                   </Typography>
                   <Typography
                     variant="caption"
-                    color={COLORS.inkSoft}
-                    sx={{ display: "block", mt: 0.25 }}
+                    sx={{ display: "block", mt: 0.25, color: COLORS.inkSoft }}
                   >
                     {tab === "TatCa"
                       ? "Hiện chưa có khóa học nào được duyệt hoặc từ chối."
@@ -593,7 +592,7 @@ export default function LichSuKiemDuyetPage() {
                           borderRadius: 2.5,
                           cursor: "pointer",
                           transition: "all .15s ease",
-                          bgcolor: "#fff",
+                          bgcolor: "var(--ev-paper, #FFFFFF)",
                           "&:hover": {
                             boxShadow: `0 2px 10px ${alpha(
                               COLORS.primary,
@@ -635,7 +634,7 @@ export default function LichSuKiemDuyetPage() {
                             {item.createDate && (
                               <Typography
                                 variant="caption"
-                                color={COLORS.inkSoft}
+                                sx={{ color: COLORS.inkSoft }}
                               >
                                 Ngày tạo:{" "}
                                 {new Date(item.createDate).toLocaleDateString(
@@ -646,7 +645,7 @@ export default function LichSuKiemDuyetPage() {
                             {item.createBy && (
                               <Typography
                                 variant="caption"
-                                color={COLORS.inkSoft}
+                                sx={{ color: COLORS.inkSoft }}
                               >
                                 Người tạo: {item.createBy}
                               </Typography>
@@ -660,7 +659,7 @@ export default function LichSuKiemDuyetPage() {
                             e.stopPropagation();
                             handleOpenCourse(id);
                           }}
-                          sx={{ color: alpha(COLORS.ink, 0.5) }}
+                          sx={{ color: "rgba(31, 41, 55, 0.5)" }}
                         >
                           <VisibilityRoundedIcon fontSize="small" />
                         </IconButton>

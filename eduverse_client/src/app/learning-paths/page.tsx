@@ -303,7 +303,7 @@ export default function LearningPathsPage() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: COLORS.primary,
-      cancelButtonColor: "#6B7280",
+      cancelButtonColor: "#8A7676",
       confirmButtonText: "Đăng xuất",
       cancelButtonText: "Hủy",
       reverseButtons: true,
@@ -416,7 +416,7 @@ export default function LearningPathsPage() {
             zIndex: 1200,
             px: { xs: 2, md: 4 },
             borderBottom: "1px solid rgba(0,0,0,0.06)",
-            bgcolor: "var(--ev-paper, #ffffff)",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -855,7 +855,7 @@ export default function LearningPathsPage() {
                         border: "1px solid rgba(0,0,0,0.12)",
                         borderRadius: "10px",
                         width: { xs: "100%", sm: 260 },
-                        bgcolor: "var(--ev-paper, #FFF)",
+                        bgcolor: "var(--ev-paper, #FFFFFF)",
                       }}
                     >
                       <InputBase

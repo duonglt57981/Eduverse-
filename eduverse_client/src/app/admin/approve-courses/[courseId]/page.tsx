@@ -329,26 +329,33 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         {/* Header */}
         <Stack
           direction="row"
-          spacing={1.5}
-          sx={{ alignItems: "center", mb: 3, flexShrink: 0 }}
+          spacing={2}
+          sx={{ alignItems: "center", mb: 3.5, flexShrink: 0 }}
         >
           <IconButton
             onClick={goBackToList}
             sx={{
-              border: `1px solid ${COLORS.line}`,
-              borderRadius: 1.5,
-              color: COLORS.ink,
+              border: "1px solid var(--ev-divider, #ECE7E4)",
+              borderRadius: "12px",
+              color: "var(--ev-text-primary, #1F2937)",
+              bgcolor: "var(--ev-paper, #FFFFFF)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                borderColor: "var(--ev-text-muted, #8A7676)",
+                transform: "translateX(-2px)",
+              },
             }}
-            size="small"
+            size="medium"
           >
             <ArrowBackRoundedIcon fontSize="small" />
           </IconButton>
           <Typography
             sx={{
-              fontSize: 28,
-              fontWeight: 700,
+              fontSize: 26,
+              fontWeight: 900,
               fontFamily: FONTS.display,
-              color: COLORS.ink,
+              color: "var(--ev-text-primary, #1F2937)",
               flex: 1,
             }}
           >
@@ -356,19 +363,24 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           </Typography>
 
           {!detailLoading && detail && isChoDuyet && (
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1.5}>
               <Button
                 variant="outlined"
-                size="small"
                 disabled={actionLoading}
                 onClick={() => setShowTuChoi(true)}
                 sx={{
                   textTransform: "none",
-                  fontWeight: 600,
-                  borderColor: COLORS.danger,
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  borderRadius: "10px",
+                  borderColor: alpha(COLORS.danger, 0.35),
                   color: COLORS.danger,
+                  px: 2.5,
+                  py: 1,
+                  height: 40,
+                  transition: "all 150ms ease",
                   "&:hover": {
-                    borderColor: "#8F2E24",
+                    borderColor: COLORS.danger,
                     bgcolor: COLORS.dangerSoft,
                   },
                 }}
@@ -377,17 +389,23 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               </Button>
               <Button
                 variant="contained"
-                size="small"
                 disabled={actionLoading}
                 onClick={handleDuyetClick}
                 sx={{
                   textTransform: "none",
-                  fontWeight: 600,
+                  fontWeight: 800,
+                  fontSize: 13.5,
+                  borderRadius: "10px",
                   bgcolor: COLORS.primary,
-                  boxShadow: "none",
+                  boxShadow: `0 4px 14px ${alpha(COLORS.primary, 0.28)}`,
+                  px: 3,
+                  py: 1,
+                  height: 40,
+                  transition: "all 150ms ease",
                   "&:hover": {
                     bgcolor: COLORS.primaryDark,
-                    boxShadow: "none",
+                    boxShadow: `0 6px 18px ${alpha(COLORS.primary, 0.34)}`,
+                    transform: "translateY(-1px)",
                   },
                 }}
               >
@@ -476,7 +494,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 boxShadow: "none",
                 "&:hover": {
                   bgcolor:
-                    confirmAction === "tuChoi" ? "#8F2E24" : COLORS.primaryDark,
+                    confirmAction === "tuChoi" ? COLORS.primaryDark : COLORS.primaryDark,
                   boxShadow: "none",
                 },
               }}

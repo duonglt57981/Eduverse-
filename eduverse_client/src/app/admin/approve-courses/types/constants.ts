@@ -1,30 +1,35 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { BRAND, NEUTRAL, STATUS, FONT_FAMILY } from "@/src/theme/tokens";
+// Giữ nguyên tên khoá để không phải sửa các component đang dùng,
+// chỉ trỏ GIÁ TRỊ về design system chung trong src/theme/tokens.ts.
 export const COLORS = {
-  primary: "#7A1F2B",
-  primaryDark: "#5A171F",
-  primarySoft: "#F4E3DE",
-  ink: "#241A1C",
-  inkSoft: "#5C4B47",
-  paper: "#FBF7F4",
-  paperRaised: "#FFFFFF",
-  line: "#E2D5CF",
-  gold: "#A9772F",
-  goldSoft: "#F7EDDD",
-  success: "#3F7A4E",
-  successSoft: "#E7F1E8",
-  danger: "#AE3A2E",
-  dangerSoft: "#F8E9E6",
+  primary: BRAND.main,
+  primaryDark: BRAND.dark,
+  primarySoft: BRAND.light,
+  ink: NEUTRAL.textPrimary,
+  inkSoft: NEUTRAL.textSecondary,
+  paper: NEUTRAL.bg,
+  paperRaised: NEUTRAL.paper,
+  line: NEUTRAL.divider,
+  gold: STATUS.warningDark,
+  goldSoft: STATUS.warningSoft,
+  success: STATUS.success,
+  successSoft: STATUS.successSoft,
+  danger: STATUS.error,
+  dangerSoft: STATUS.errorSoft,
 };
 
+// Toàn hệ thống dùng chung một bộ chữ Be Vietnam Pro.
 export const FONTS = {
-  display: `'Fraunces', 'Georgia', serif`,
-  body: `'Inter', 'Roboto', 'Helvetica Neue', sans-serif`,
+  display: FONT_FAMILY,
+  body: FONT_FAMILY,
 };
 
 export const boxSx = {
   border: `1px solid ${COLORS.line}`,
-  borderRadius: 2,
+  borderRadius: "16px",
   bgcolor: COLORS.paperRaised,
+  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.015)",
 };
 
 export const SCROLL_AREA_HEIGHT = "calc(100vh - 220px)";

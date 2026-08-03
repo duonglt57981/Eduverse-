@@ -66,28 +66,29 @@ import {
   LichSuKiemDuyetDto,
 } from "@/src/types/KiemDuyet/Dto/dto";
 import { ApiResponse } from "@/src/types/types";
+import { BRAND, NEUTRAL, STATUS, FONT_FAMILY } from "@/src/theme/tokens";
 
 // ======================== CONSTANTS ========================
 const COLORS = {
-  primary: "#7A1F2B",
-  primaryDark: "#5A171F",
-  primarySoft: "#F4E3DE",
-  ink: "#241A1C",
-  inkSoft: "#5C4B47",
-  paper: "#FBF7F4",
-  paperRaised: "#FFFFFF",
-  line: "#E2D5CF",
-  gold: "#A9772F",
-  goldSoft: "#F7EDDD",
-  success: "#3F7A4E",
-  successSoft: "#E7F1E8",
-  danger: "#AE3A2E",
-  dangerSoft: "#F8E9E6",
+  primary: BRAND.main,
+  primaryDark: BRAND.dark,
+  primarySoft: BRAND.light,
+  ink: NEUTRAL.textPrimary,
+  inkSoft: NEUTRAL.textSecondary,
+  paper: NEUTRAL.bg,
+  paperRaised: NEUTRAL.paper,
+  line: NEUTRAL.divider,
+  gold: STATUS.warningDark,
+  goldSoft: STATUS.warningSoft,
+  success: STATUS.success,
+  successSoft: STATUS.successSoft,
+  danger: STATUS.error,
+  dangerSoft: STATUS.errorSoft,
 };
 
 const FONTS = {
-  display: `'Fraunces', 'Georgia', serif`,
-  body: `'Inter', 'Roboto', 'Helvetica Neue', sans-serif`,
+  display: FONT_FAMILY,
+  body: FONT_FAMILY,
 };
 
 const boxSx = {
@@ -911,7 +912,7 @@ function KhoiTuChoiForm({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Nhập lý do để giảng viên chỉnh sửa lại..."
         size="small"
-        sx={{ bgcolor: "#fff", borderRadius: 1 }}
+        sx={{ bgcolor: "var(--ev-paper, #FFFFFF)", borderRadius: 1 }}
       />
       <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
         <Button
@@ -1452,7 +1453,7 @@ function KiemDuyetSidebar({
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
             mb: 1.5,
-            bgcolor: "#fff",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             "& .MuiOutlinedInput-root": {
               borderRadius: 1.5,
               "& fieldset": { borderColor: COLORS.line },
@@ -2558,7 +2559,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
                   sx={{
                     p: 2,
                     border: `1px solid ${COLORS.line}`,
-                    backgroundColor: "#ffffff",
+                    backgroundColor: "var(--ev-paper, #FFFFFF)",
                     transition: "box-shadow 0.2s",
                     "&:hover": {
                       boxShadow: "0 2px 8px rgba(0,0,0,0.06)",

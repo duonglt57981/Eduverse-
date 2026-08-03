@@ -31,6 +31,7 @@ using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.TaiLieuService.Dto;
+using Eduverse.Service.ThongBaoService;
 using Elastic.Clients.Elasticsearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,7 @@ namespace Eduverse.Service.KhoaHocService
         private readonly IDapAnService _dapAnService;
         private readonly IMemoryCache _cache;
         private readonly IAppUserService _appUserService;
+        private readonly INotificationPublisher _notificationPublisher;
         public KhoaHocService(
             IMemoryCache memoryCache,
             IKhoaHocRepository khoaHocRepository,
@@ -92,7 +94,8 @@ namespace Eduverse.Service.KhoaHocService
             IElasticsearchService elasticsearchService,
             IDapAnService dapAnService,
             IMemoryCache cache,
-            IAppUserService appUserService
+            IAppUserService appUserService,
+            INotificationPublisher notificationPublisher
 
         ) : base(khoaHocRepository)
         {
@@ -119,6 +122,7 @@ namespace Eduverse.Service.KhoaHocService
             _dapAnService = dapAnService;
             _cache = cache;
             _appUserService = appUserService;
+            _notificationPublisher = notificationPublisher;
         }
         
 
@@ -1295,6 +1299,27 @@ namespace Eduverse.Service.KhoaHocService
                 }
             }
 
+            var approvalPayload = new NotificationPayload
+            {
+                TieuDe = "Khóa học mới chờ phê duyệt",
+                NoiDung = $"Giảng viên đã gửi khóa học '{khoaHoc.TieuDe}' để phê duyệt.",
+                LoaiThongBao = "KhoaHocChoDuyet",
+                Link = $"/admin/approve-courses/{khoaHoc.Id}",
+                FromUser = userId,
+                ItemId = khoaHoc.Id,
+                ItemName = khoaHoc.TieuDe
+            };
+            await _notificationPublisher.NotifyRoleAsync("Admin", approvalPayload, new[] { userId });
+            await _notificationPublisher.NotifyUserAsync(userId, new NotificationPayload
+            {
+                TieuDe = "Đã gửi khóa học để phê duyệt",
+                NoiDung = $"Khóa học '{khoaHoc.TieuDe}' đã được gửi đến quản trị viên.",
+                LoaiThongBao = "GuiPheDuyetKhoaHoc",
+                Link = $"/instructor/manager-courses/{khoaHoc.Id}/manager",
+                ItemId = khoaHoc.Id,
+                ItemName = khoaHoc.TieuDe
+            });
+
             return _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
         }
 
@@ -1844,6 +1869,30 @@ namespace Eduverse.Service.KhoaHocService
 
             await _danhMuc_KhoaHocService.CreateRange(khoaHocDanhMucs);
             await _danhMuc_KhoaHocService.SaveAsync();
+
+            if (khoaHoc.CreatedId.HasValue)
+            {
+                await _notificationPublisher.NotifyUserAsync(khoaHoc.CreatedId.Value, new NotificationPayload
+                {
+                    TieuDe = "Tạo khóa học thành công",
+                    NoiDung = $"Khóa học '{khoaHoc.TieuDe}' đã được tạo. Bạn có thể tiếp tục xây dựng nội dung.",
+                    LoaiThongBao = "TaoKhoaHoc",
+                    Link = $"/instructor/manager-courses/{khoaHoc.Id}/manager",
+                    ItemId = khoaHoc.Id,
+                    ItemName = khoaHoc.TieuDe
+                });
+
+                await _notificationPublisher.NotifyRoleAsync("Admin", new NotificationPayload
+                {
+                    TieuDe = "Khóa học mới được tạo",
+                    NoiDung = $"Giảng viên vừa tạo khóa học '{khoaHoc.TieuDe}'. Khóa học đang ở trạng thái bản nháp.",
+                    LoaiThongBao = "TaoKhoaHoc",
+                    Link = "/admin/courses",
+                    FromUser = khoaHoc.CreatedId,
+                    ItemId = khoaHoc.Id,
+                    ItemName = khoaHoc.TieuDe
+                }, new[] { khoaHoc.CreatedId.Value });
+            }
 
             var KhoaHocDto = _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
             KhoaHocDto.DanhMucs = _mapper.MapToList<DanhMuc_KhoaHoc, DanhMuc_KhoaHocDto>(khoaHocDanhMucs);

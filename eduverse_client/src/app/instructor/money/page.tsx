@@ -33,6 +33,7 @@ import {
   getLichSuRutTien,
   getNganHangs,
   taoYeuCauRutTien,
+  huyYeuCau,
 } from "@/src/store/rutTien/RutTienSlice";
 import { apiService } from "@/src/services/index";
 
@@ -190,11 +191,16 @@ function DoanhThuContent() {
       {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Typography
-          sx={{ fontSize: 26, fontWeight: 900, color: PRIMARY, mb: 0.5 }}
+          sx={{ fontSize: 26, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}
         >
           Doanh thu & Rút tiền
         </Typography>
-        <Typography sx={{ color: "var(--ev-text-secondary, rgba(31,41,55,0.55))", fontSize: 14 }}>
+        <Typography
+          sx={{
+            color: "var(--ev-text-secondary, rgba(31,41,55,0.55))",
+            fontSize: 14,
+          }}
+        >
           Quản lý số dư và yêu cầu rút tiền của bạn
         </Typography>
       </Box>
@@ -254,7 +260,7 @@ function DoanhThuContent() {
               onClick={() => setOpenRut(true)}
               disabled={soDu < 50000 || nganHangs.length === 0}
               sx={{
-                bgcolor: "var(--ev-paper, #fff)",
+                bgcolor: "var(--ev-paper, #FFFFFF)",
                 color: PRIMARY,
                 fontWeight: 800,
                 borderRadius: "10px",
@@ -315,33 +321,70 @@ function DoanhThuContent() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  p: 2,
-                  bgcolor: "rgba(141,19,19,0.02)",
-                  border: "1px solid rgba(141,19,19,0.06)",
-                  borderRadius: "12px",
+                  p: 1.5,
+                  bgcolor: "#f9f8f6",
+                  borderRadius: 2,
+                  border:
+                    item.trangThai === "ChoDuyet"
+                      ? "1px solid #fde68a"
+                      : "1px solid transparent",
                 }}
               >
-                <Box>
-                  <Typography
-                    sx={{ fontWeight: 700, fontSize: 14, color: PRIMARY }}
-                  >
-                    {formatTien(item.soTienRut)}
-                  </Typography>
-                  <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                    {item.tenNganHang} • {item.soTaiKhoan}
-                  </Typography>
-                  <Typography sx={{ fontSize: 11, color: "text.secondary" }}>
-                    {item.ngayYeuCau
-                      ? new Date(item.ngayYeuCau).toLocaleDateString("vi-VN")
-                      : ""}
-                  </Typography>
+                <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+                  <AccountBalanceIcon sx={{ fontSize: 18, color: PRIMARY }} />
+                  <Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
+                      {formatTien(item.soTienRut)}
+                    </Typography>
+                    <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                      {item.tenNganHang} • {item.soTaiKhoan}
+                    </Typography>
+                    <Typography sx={{ fontSize: 11, color: "text.secondary" }}>
+                      {item.ngayYeuCau
+                        ? new Date(item.ngayYeuCau).toLocaleString("vi-VN")
+                        : ""}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Chip
-                  label={trangThaiLabel[item.trangThai ?? ""] ?? item.trangThai}
-                  color={trangThaiColor[item.trangThai ?? ""] ?? "default"}
-                  size="small"
-                  sx={{ fontWeight: 700 }}
-                />
+                <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                  <Chip
+                    label={
+                      trangThaiLabel[item.trangThai ?? ""] ?? item.trangThai
+                    }
+                    color={trangThaiColor[item.trangThai ?? ""] ?? "default"}
+                    size="small"
+                    sx={{ fontWeight: 700 }}
+                  />
+                  {/* Nút hủy — chỉ hiện khi ChoDuyet */}
+                  {item.trangThai === "ChoDuyet" && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={async () => {
+                        if (
+                          !confirm(
+                            "Bạn có chắc muốn hủy yêu cầu này? Tiền sẽ được hoàn lại vào số dư.",
+                          )
+                        )
+                          return;
+                        await dispatch(huyYeuCau(item.id)).unwrap();
+                        dispatch(getSoDu());
+                        dispatch(getLichSuRutTien());
+                      }}
+                      sx={{
+                        borderColor: "error.main",
+                        color: "error.main",
+                        fontSize: 12,
+                        borderRadius: "8px",
+                        py: 0.3,
+                        fontWeight: 700,
+                        "&:hover": { bgcolor: "rgba(220,38,38,0.04)" },
+                      }}
+                    >
+                      Hủy
+                    </Button>
+                  )}
+                </Box>
               </Box>
             ))}
           </Stack>
@@ -614,7 +657,7 @@ export default function InstructorRevenuePage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #ffffff)",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

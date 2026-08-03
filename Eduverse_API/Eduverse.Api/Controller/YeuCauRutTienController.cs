@@ -75,7 +75,19 @@ namespace Eduverse.Api.Controller
             }
         }
 
-
+        [HttpDelete("{id}/huy")]
+        public async Task<IActionResult> HuyYeuCau(Guid id)
+        {
+            try
+            {
+                await _service.HuyYeuCauAsync(id, GetUserId());
+                return Ok(DataResponse.Success(null, "Đã hủy yêu cầu và hoàn tiền"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(DataResponse.False(ex.Message));
+            }
+        }
     }
 
 }

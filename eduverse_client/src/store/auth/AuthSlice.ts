@@ -68,14 +68,51 @@ export const logout = createAsyncThunk(
     }
   },
 );
+/** Kênh nhận mã OTP khi khôi phục mật khẩu. */
+export type OtpChannel = "Email" | "Sms";
+
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
-  async (email: string, { rejectWithValue }) => {
+  async (
+    payload: { identifier: string; channel?: OtpChannel },
+    { rejectWithValue },
+  ) => {
     try {
-      const res = await apiService.post("/auth/forgot-password", { email });
+      const res = await apiService.post("/auth/forgot-password", {
+        identifier: payload.identifier,
+        channel: payload.channel ?? "Email",
+      });
       return res.message;
     } catch (err: unknown) {
       const message = typeof err === "string" ? err : "Có lỗi xảy ra";
+      return rejectWithValue(message);
+    }
+  },
+);
+
+/** Gửi mã OTP để xác minh số điện thoại (yêu cầu đã đăng nhập). */
+export const sendPhoneOtp = createAsyncThunk(
+  "auth/sendPhoneOtp",
+  async (phoneNumber: string, { rejectWithValue }) => {
+    try {
+      const res = await apiService.post("/auth/send-phone-otp", { phoneNumber });
+      return res.message;
+    } catch (err: unknown) {
+      const message = typeof err === "string" ? err : "Không gửi được mã xác minh";
+      return rejectWithValue(message);
+    }
+  },
+);
+
+/** Xác nhận OTP để đánh dấu số điện thoại đã xác minh. */
+export const confirmPhoneOtp = createAsyncThunk(
+  "auth/confirmPhoneOtp",
+  async (data: { phoneNumber: string; otp: string }, { rejectWithValue }) => {
+    try {
+      const res = await apiService.post("/auth/confirm-phone-otp", data);
+      return res.message;
+    } catch (err: unknown) {
+      const message = typeof err === "string" ? err : "Xác minh thất bại";
       return rejectWithValue(message);
     }
   },
@@ -100,11 +137,19 @@ export const changePassword = createAsyncThunk(
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async (
-    data: { email: string; resetToken: string; newPassword: string },
+    data: {
+      identifier: string;
+      channel?: OtpChannel;
+      resetToken: string;
+      newPassword: string;
+    },
     { rejectWithValue },
   ) => {
     try {
-      const res = await apiService.post("/auth/reset-password", data);
+      const res = await apiService.post("/auth/reset-password", {
+        ...data,
+        channel: data.channel ?? "Email",
+      });
       return res.message;
     } catch (err: unknown) {
       const message = typeof err === "string" ? err : "Có lỗi xảy ra";
@@ -115,9 +160,15 @@ export const resetPassword = createAsyncThunk(
 
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
-  async (data: { email: string; otp: string }, { rejectWithValue }) => {
+  async (
+    data: { identifier: string; channel?: OtpChannel; otp: string },
+    { rejectWithValue },
+  ) => {
     try {
-      const res = await apiService.post<string>("/auth/verify-otp", data);
+      const res = await apiService.post<string>("/auth/verify-otp", {
+        ...data,
+        channel: data.channel ?? "Email",
+      });
       return res.data; // reset token ngắn hạn
     } catch (err: unknown) {
       const message = typeof err === "string" ? err : "Xác minh OTP thất bại";

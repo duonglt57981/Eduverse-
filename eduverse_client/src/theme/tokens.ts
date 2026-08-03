@@ -85,8 +85,15 @@ export const STATUS = {
   success: "#10B981",
   successDark: "#0A5A3A",
   warning: "#F59E0B",
+  warningDark: "#D97706",
   error: "#DC2626",
+  errorDark: "#B91C1C",
   info: "#0284C7",
+  // Nền nhạt của từng trạng thái — dùng alpha để hiển thị đúng ở cả chế độ tối
+  successSoft: "rgba(16,185,129,0.10)",
+  warningSoft: "rgba(245,158,11,0.10)",
+  errorSoft: "rgba(220,38,38,0.10)",
+  infoSoft: "rgba(2,132,199,0.10)",
 } as const;
 
 // -------- Bo góc / bóng đổ / kiểu chữ --------
@@ -101,6 +108,28 @@ export const SHADOWS = {
 
 export const FONT_FAMILY =
   '"Be Vietnam Pro","Roboto",system-ui,-apple-system,"Segoe UI",Arial,sans-serif';
+
+/** Thang độ đậm — dùng thay cho số rời rạc trong component. */
+export const FONT_WEIGHT = {
+  regular: 400,
+  medium: 500,
+  semibold: 600,
+  bold: 700,
+  extrabold: 800,
+  black: 900,
+} as const;
+
+/** Thang cỡ chữ (px) — nhân đôi mỗi bậc theo tỉ lệ quen thuộc của giao diện. */
+export const FONT_SIZE = {
+  xs: 11,
+  sm: 12.5,
+  base: 14,
+  md: 15,
+  lg: 17,
+  xl: 20,
+  "2xl": 24,
+  "3xl": 30,
+} as const;
 
 // -------- Gradient dùng lại --------
 export const GRADIENTS = {

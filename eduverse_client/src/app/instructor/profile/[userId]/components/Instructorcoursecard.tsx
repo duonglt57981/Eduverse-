@@ -46,9 +46,19 @@ export default function InstructorCourseCard({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        borderRadius: 2,
-        transition: "box-shadow 0.15s ease, transform 0.15s ease",
-        "&:hover": { boxShadow: 4, transform: "translateY(-2px)" },
+        borderRadius: "16px",
+        border: "1px solid var(--ev-divider, #ECE7E4)",
+        bgcolor: "var(--ev-paper, #FFFFFF)",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.02)",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        "&:hover": {
+          boxShadow: "0 12px 30px rgba(0, 0, 0, 0.05)",
+          transform: "translateY(-4px)",
+          borderColor: "rgba(139,19,19,0.2)",
+        },
+        "& *": {
+          fontFamily: "var(--ev-font-family, 'Be Vietnam Pro', sans-serif) !important",
+        },
       }}
     >
       <CardActionArea

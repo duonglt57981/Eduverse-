@@ -22,7 +22,7 @@ import { QualityLevel } from "../types";
 import { getOptimalHlsUrl, buildCloudinaryHlsUrl } from "../utils/cloudinary";
 import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
 
-const PRIMARY_RED = "#991B1B";
+const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#7F1D1D";
 const LOAD_TIMEOUT_MS = 30000;
 

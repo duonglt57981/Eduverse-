@@ -33,6 +33,7 @@ import {
   CheckCircle as CheckCircleIcon,
   VideoLibrary as VideoLibraryIcon,
   School as SchoolIcon,
+  Star as StarIcon,
 } from "@mui/icons-material";
 
 import { VideoPlayer } from "./components/VideoPlayer";
@@ -41,6 +42,7 @@ import { StatsBar } from "./components/StatsBar";
 import { CourseSkeleton } from "./components/CourseSkeleton";
 import { SidebarContent } from "./components/SidebarContent";
 import { QuizContainer } from "./components/quiz/QuizContainer";
+import { DanhGiaDialog } from "./components/DanhGiaDialog";
 
 import { useCourseData } from "./hooks/useCourseData";
 import { useProgress } from "./hooks/useProgress";
@@ -49,8 +51,9 @@ import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 
 import DOMPurify from "dompurify";
+import { apiService } from "@/src/services";
 
-const PRIMARY_RED = "#991B1B";
+const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#7F1D1D";
 const SIDEBAR_W = 380;
 const HEADER_H = 68;
@@ -245,7 +248,7 @@ function InstructorInfo({ thongTinGiangVien }: InstructorInfoProps) {
         p: { xs: 3, md: 4 },
         mt: 4,
         borderRadius: "16px",
-        border: "1px solid #E5E7EB",
+        border: "1px solid var(--ev-divider, #ECE7E4)",
         boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
         backgroundColor: "background.paper",
       }}
@@ -281,7 +284,7 @@ function InstructorInfo({ thongTinGiangVien }: InstructorInfoProps) {
             variant="h6"
             sx={{
               fontWeight: 800,
-              color: "#111827",
+              color: "var(--ev-text-primary, #1F2937)",
               cursor: id ? "pointer" : "default",
               "&:hover": id
                 ? {
@@ -439,6 +442,9 @@ export default function KhoaHocLearningPage() {
 
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const videoSectionRef = useRef<HTMLDivElement>(null);
+  const [showDanhGia, setShowDanhGia] = useState(false);
+  const [daDanhGia, setDaDanhGia] = useState(false);
+  const danhGiaTriggeredRef = useRef(false);
 
   // ── Lấy thông tin giảng viên từ khoaHoc ──
   const thongTinGiangVien = useMemo(() => {
@@ -510,6 +516,18 @@ export default function KhoaHocLearningPage() {
       initProgress(danhSachTatCa);
     }
   }, [danhSachTatCa, initProgress]);
+
+  useEffect(() => {
+    if (!khoaHoc?.id) return;
+
+    (async () => {
+      try {
+        const res = await apiService.get(`/danhgia/kiem-tra/${khoaHoc.id}`);
+
+        setDaDanhGia((res.data as { daDanhGia?: boolean })?.daDanhGia ?? false);
+      } catch {}
+    })();
+  }, [khoaHoc?.id]);
 
   // ── Auto select first lesson ──
   useEffect(() => {
@@ -761,7 +779,7 @@ export default function KhoaHocLearningPage() {
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "#F7F8FA",
+        bgcolor: "var(--ev-bg, #F7F5F2)",
         overflow: "hidden",
       }}
     >
@@ -771,8 +789,8 @@ export default function KhoaHocLearningPage() {
         color="default"
         elevation={0}
         sx={{
-          borderBottom: "1px solid #E5E7EB",
-          bgcolor: "var(--ev-paper, #ffffff)",
+          borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
+          bgcolor: "var(--ev-paper, #FFFFFF)",
           boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
           flexShrink: 0,
         }}
@@ -811,7 +829,7 @@ export default function KhoaHocLearningPage() {
             <IconButton
               onClick={() => setSidebarOpen(true)}
               sx={{
-                border: `1px solid ${sidebarOpen ? PRIMARY_RED : "#E5E7EB"}`,
+                border: `1px solid ${sidebarOpen ? PRIMARY_RED : "#ECE7E4"}`,
                 bgcolor: sidebarOpen ? alpha(PRIMARY_RED, 0.05) : "transparent",
                 borderRadius: "10px",
                 p: 1,
@@ -819,7 +837,7 @@ export default function KhoaHocLearningPage() {
             >
               <MenuBookIcon
                 sx={{
-                  color: sidebarOpen ? PRIMARY_RED : "#64748B",
+                  color: sidebarOpen ? PRIMARY_RED : "#4B5563",
                   fontSize: 20,
                 }}
               />
@@ -832,21 +850,30 @@ export default function KhoaHocLearningPage() {
               sx={{
                 fontWeight: 800,
                 fontSize: { xs: "14px", sm: "16px" },
-                color: "var(--ev-text-primary, #111827)",
+                color: "var(--ev-text-primary, #1F2937)",
               }}
             >
               {khoaHoc.tieuDe}
             </Typography>
           </Box>
           <Stack direction="row" spacing={3} sx={{ alignItems: "center" }}>
+            {!daDanhGia && tongBai > 0 && (
+              <Button
+                size="small"
+                startIcon={<StarIcon />}
+                onClick={() => setShowDanhGia(true)}
+              >
+                Đánh giá
+              </Button>
+            )}
             <Stack
               direction="row"
               spacing={1.5}
               sx={{
                 alignItems: "center",
                 display: { xs: "none", sm: "flex" },
-                bgcolor: "var(--ev-paper-alt, #F8FAFC)",
-                border: "1px solid #E2E8F0",
+                bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                border: "1px solid var(--ev-divider, #ECE7E4)",
                 px: 2,
                 py: 0.75,
                 borderRadius: "10px",
@@ -865,7 +892,7 @@ export default function KhoaHocLearningPage() {
                   sx={{
                     height: 5,
                     borderRadius: 3,
-                    backgroundColor: "var(--ev-divider, #E2E8F0)",
+                    backgroundColor: "var(--ev-divider, #ECE7E4)",
                     "& .MuiLinearProgress-bar": {
                       backgroundColor: PRIMARY_RED,
                       borderRadius: 3,
@@ -875,7 +902,11 @@ export default function KhoaHocLearningPage() {
               </Box>
               <Typography
                 variant="caption"
-                sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)", fontSize: "12px" }}
+                sx={{
+                  fontWeight: 600,
+                  color: "var(--ev-text-secondary, #4B5563)",
+                  fontSize: "12px",
+                }}
               >
                 {soBaiHoanThanh}/{tongBai} bài
               </Typography>
@@ -992,13 +1023,16 @@ export default function KhoaHocLearningPage() {
                   >
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)" }}
+                      sx={{
+                        fontWeight: 600,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                      }}
                     >
                       {(
                         khoaHoc.danhSachPhanHoc as unknown as PhanHocApi[]
                       )?.find((p) => p.id === idPhanPlay)?.tenPhan ?? ""}
                     </Typography>
-                    <ChevronRightIcon sx={{ fontSize: 16, color: "#94A3B8" }} />
+                    <ChevronRightIcon sx={{ fontSize: 16, color: "var(--ev-text-muted, #8A7676)" }} />
                     <Typography
                       variant="body2"
                       sx={{ fontWeight: 600, color: PRIMARY_RED }}
@@ -1023,7 +1057,7 @@ export default function KhoaHocLearningPage() {
                       sx={{
                         fontWeight: 900,
                         mb: 1.5,
-                        color: "#111827",
+                        color: "var(--ev-text-primary, #1F2937)",
                         fontSize: { xs: "20px", sm: "24px" },
                       }}
                     >
@@ -1037,7 +1071,7 @@ export default function KhoaHocLearningPage() {
                       {baiGiang && (
                         <Typography
                           variant="caption"
-                          sx={{ fontWeight: 600, color: "#64748B" }}
+                          sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #4B5563)" }}
                         >
                           Bài {currentIdx + 1}/{danhSachTatCa.length} ·{" "}
                           {Math.floor((baiGiang.thoiLuong ?? 0) / 60)}p{" "}
@@ -1105,7 +1139,7 @@ export default function KhoaHocLearningPage() {
                       p: { xs: 2.5, md: 4 },
                       mt: 4,
                       borderRadius: "16px",
-                      border: "1px solid #E5E7EB",
+                      border: "1px solid var(--ev-divider, #ECE7E4)",
                       boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
                       backgroundColor: "background.paper",
                     }}
@@ -1285,6 +1319,15 @@ export default function KhoaHocLearningPage() {
           onUnmount={handleMiniUnmount}
         />
       )}
+      <DanhGiaDialog
+        open={showDanhGia}
+        onClose={() => setShowDanhGia(false)}
+        idKhoaHoc={khoaHoc.id}
+        tenKhoaHoc={khoaHoc.tieuDe}
+        onSuccess={() => {
+          setDaDanhGia(true);
+        }}
+      />
     </Box>
   );
 }

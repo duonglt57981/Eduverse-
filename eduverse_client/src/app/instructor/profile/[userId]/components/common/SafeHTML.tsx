@@ -94,6 +94,7 @@ export default function SafeHTML({
   // CSS chung cho các thẻ HTML
   const htmlStyles = {
     fontSize: fontSize,
+    fontFamily: "var(--ev-font-family, 'Be Vietnam Pro', sans-serif)",
     "& p": { margin: "0 0 0.5rem 0" },
     "& ul, & ol": { paddingLeft: "1.5rem", margin: "0 0 0.5rem 0" },
     "& li": { marginBottom: "0.25rem" },

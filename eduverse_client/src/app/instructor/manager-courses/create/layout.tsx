@@ -32,16 +32,16 @@ const QontoConnector = styled(StepConnector)(() => ({
   },
   [`&.${stepConnectorClasses.active}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      borderColor: "#7A1F2B",
+      borderColor: "#8B1313",
     },
   },
   [`&.${stepConnectorClasses.completed}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      borderColor: "#7A1F2B",
+      borderColor: "#8B1313",
     },
   },
   [`& .${stepConnectorClasses.line}`]: {
-    borderColor: "var(--ev-divider, #E5E7EB)",
+    borderColor: "var(--ev-divider, #ECE7E4)",
     borderTopWidth: 2,
     borderRadius: 1,
     transition: "border-color 0.2s ease",
@@ -72,7 +72,7 @@ function QontoStepIcon(props: {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            bgcolor: "#7A1F2B",
+            bgcolor: "#8B1313",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -88,12 +88,12 @@ function QontoStepIcon(props: {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            border: `2px solid ${active ? "#7A1F2B" : "#D1D5DB"}`,
+            border: `2px solid ${active ? "#8B1313" : "#ECE7E4"}`,
             bgcolor: active ? "#fff" : "#fff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: active ? "#7A1F2B" : "#9CA3AF",
+            color: active ? "#8B1313" : "#8A7676",
             fontSize: 13,
             fontWeight: 700,
             boxShadow: active ? "0 2px 8px rgba(122,31,43,0.15)" : "none",
@@ -129,8 +129,8 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
         <Box
           component="header"
           sx={{
-            bgcolor: "var(--ev-paper, #ffffff)",
-            borderBottom: "1px solid #E5E7EB",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
+            borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
             boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
             position: "sticky",
             top: 0,
@@ -162,13 +162,13 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                 style={{ objectFit: "contain" }}
                 priority
               />
-              <Box sx={{ width: "1px", height: 20, bgcolor: "#E5E7EB" }} />
+              <Box sx={{ width: "1px", height: 20, bgcolor: "#ECE7E4" }} />
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography
                   sx={{
                     fontSize: { xs: 13, sm: 15 },
                     fontWeight: 600,
-                    color: "var(--ev-text-primary, #111827)",
+                    color: "var(--ev-text-primary, #1F2937)",
                     display: { xs: "none", sm: "block" },
                   }}
                 >
@@ -177,7 +177,7 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                 <Typography
                   sx={{
                     fontSize: { xs: 13, sm: 15 },
-                    color: "var(--ev-text-muted, #6B7280)",
+                    color: "var(--ev-text-muted, #8A7676)",
                     display: { xs: "block", sm: "block" },
                   }}
                 >
@@ -209,10 +209,10 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                 borderRadius: "8px",
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  bgcolor: "var(--ev-paper-alt, #F3F4F6)",
+                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
                 },
                 "&:focus-visible": {
-                  outline: "2px solid #7A1F2B",
+                  outline: "2px solid #8B1313",
                 },
               }}
             >
@@ -233,8 +233,8 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
         {/* Stepper Section */}
         <Box
           sx={{
-            bgcolor: "var(--ev-paper, #ffffff)",
-            borderBottom: "1px solid #E5E7EB",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
+            borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
             pt: 3,
             pb: 2.5,
           }}
@@ -253,12 +253,12 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                       "& .MuiStepLabel-label": {
                         fontSize: { xs: 11, sm: 13 },
                         fontWeight: 500,
-                        color: "var(--ev-grey, #9CA3AF)",
+                        color: "var(--ev-grey, #8A7676)",
                         mt: 0.8,
                         transition: "color 0.2s ease",
                       },
                       "& .MuiStepLabel-label.Mui-active": {
-                        color: "#7A1F2B",
+                        color: "#8B1313",
                         fontWeight: 600,
                       },
                       "& .MuiStepLabel-label.Mui-completed": {

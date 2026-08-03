@@ -23,7 +23,7 @@ const TRANG_THAI_CONFIG: Record<string, TrangThaiConfig> = {
   DangSua: {
     label: "Đang sửa",
     color: COLORS.inkSoft,
-    bg: "#F1EBE8",
+    bg: "var(--ev-paper-alt, #FBFAF9)",
     icon: <EditNoteRoundedIcon sx={{ fontSize: 15 }} />,
   },
   ChoDuyet: {
@@ -105,7 +105,7 @@ export default function StatusChip({
         fontWeight: 600,
         fontSize: size === "small" ? 11 : 12,
         height: size === "small" ? 22 : 24,
-        borderRadius: 1,
+        borderRadius: "8px",
         flexShrink: 0,
         "& .MuiChip-icon": { color: cfg.color },
       }}

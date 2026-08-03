@@ -470,7 +470,7 @@ function GioHangContent() {
                             <Typography
                               sx={{
                                 fontSize: 12,
-                                color: "#6a6f73",
+                                color: "var(--ev-text-muted, #8A7676)",
                                 textDecoration: "line-through",
                               }}
                             >
@@ -685,7 +685,7 @@ function GioHangContent() {
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "8px",
                         fontSize: 13,
-                        bgcolor: "var(--ev-paper, #fff)",
+                        bgcolor: "var(--ev-paper, #FFFFFF)",
                         "&.Mui-focused fieldset": { borderColor: PRIMARY },
                       },
                     }}
@@ -870,7 +870,7 @@ function GioHangContent() {
                         <Typography
                           sx={{
                             fontSize: 12,
-                            color: "#6a6f73",
+                            color: "var(--ev-text-muted, #8A7676)",
                             textDecoration: "line-through",
                           }}
                         >
@@ -1002,7 +1002,7 @@ function GioHangContent() {
                             <Typography
                               sx={{
                                 fontSize: 12,
-                                color: "#6a6f73",
+                                color: "var(--ev-text-muted, #8A7676)",
                                 textDecoration: "line-through",
                                 mb: 0.5,
                               }}
@@ -1105,7 +1105,7 @@ export default function StudentCartPage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #ffffff)",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

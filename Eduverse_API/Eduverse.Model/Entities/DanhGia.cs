@@ -13,5 +13,7 @@ namespace Eduverse.Model.Entities
         public string? TenDanhMuc { get; set; }
         public string? NoiDung { get; set; }
         public string? TrangThai { get; set; }
+        public int? SoSao { get; set; }
+        public Guid? IdKhoaHoc { get; set; }
     }
 }

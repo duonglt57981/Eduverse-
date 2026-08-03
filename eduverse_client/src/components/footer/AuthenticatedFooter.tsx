@@ -4,6 +4,7 @@ import React from "react";
 import { Box, Typography, Stack, Grid, Divider, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Link from "next/link";
+import { BRAND } from "@/src/theme/tokens";
 
 interface AuthenticatedFooterProps {
   role: "HocVien" | "GiaoVien" | "Admin" | string;
@@ -14,7 +15,7 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
   const isAdmin = role === "Admin";
 
   const COLORS = {
-    bg: "#8B1313", // Đỏ đô thương hiệu cho giảng viên / admin
+    bg: BRAND.main, // Đỏ đô thương hiệu cho giảng viên / admin
     textMain: "var(--ev-paper, #FFFFFF)",
     textMuted: "rgba(255, 255, 255, 0.72)",
     border: "rgba(255, 255, 255, 0.12)",
@@ -102,11 +103,13 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
     <Box
       component="footer"
       sx={{
-        width: "100%",
+        width: "auto",
+        mx: { xs: -2, sm: -3, md: -4 },
+        mb: { xs: -2, md: -3 },
         bgcolor: COLORS.bg,
         borderTop: `1px solid ${COLORS.border}`,
         py: { xs: 4, md: 5 },
-        px: { xs: 3, md: 6 },
+        px: { xs: 5, sm: 6, md: 10 },
       }}
     >
       {/* Wrapper dàn đều nội dung */}

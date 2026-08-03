@@ -32,7 +32,7 @@ export const MOCK_COURSES: CourseData[] = [
     level: "Người mới bắt đầu",
     isFree: false,
     tags: ["React", "Frontend", "JavaScript"],
-    palette: ["#0f172a", "#2563eb", "#1e293b"],
+    palette: ["#1F2937", "#2563eb", "#1F2937"],
     badge: "Phổ biến",
     description: "Học ReactJS từ cơ bản đến nâng cao, làm chủ Hooks, Router, Redux/Zustand và xây dựng dự án SPA thực chiến."
   },
@@ -83,7 +83,7 @@ export const MOCK_COURSES: CourseData[] = [
     level: "Người mới bắt đầu",
     isFree: false,
     tags: ["Flutter", "Dart", "Mobile"],
-    palette: ["#0f172a", "#0284c7", "#0f172a"],
+    palette: ["#1F2937", "#0284c7", "#1F2937"],
     badge: "Xu hướng",
     description: "Tạo ứng dụng Android & iOS mượt mà, tối ưu UI/UX, quản lý state với Bloc/Provider và tích hợp Firebase."
   },

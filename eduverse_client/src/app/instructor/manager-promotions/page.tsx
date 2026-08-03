@@ -252,7 +252,7 @@ function QuanLyKhuyenMaiContent() {
         }}
       >
         <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: 24, color: "var(--ev-text-primary, #1F2937)" }}>
+          <Typography sx={{ fontWeight: 900, fontSize: 26, color: "var(--ev-text-primary, #1F2937)" }}>
             Quản lý khuyến mãi
           </Typography>
           <Typography sx={{ fontSize: 13.5, color: MAU.chuXam, mt: 0.5 }}>
@@ -431,12 +431,12 @@ function QuanLyKhuyenMaiContent() {
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
                 minHeight: "44px",
-                bgcolor: "var(--ev-paper, #ffffff)",
+                bgcolor: "var(--ev-paper, #FFFFFF)",
                 "& fieldset": {
-                  borderColor: "var(--ev-divider, #E5E7EB)",
+                  borderColor: "var(--ev-divider, #ECE7E4)",
                 },
                 "&:hover fieldset": {
-                  borderColor: "#9CA3AF",
+                  borderColor: "#8A7676",
                 },
                 "&.Mui-focused fieldset": {
                   borderColor: MAU.chinh,
@@ -556,9 +556,9 @@ function QuanLyKhuyenMaiContent() {
                           borderRadius: "999px",
                           fontWeight: 600,
                           maxWidth: 260,
-                          border: `1.5px solid ${active ? MAU.chinh : "#D1D5DB"}`,
+                          border: `1.5px solid ${active ? MAU.chinh : "#ECE7E4"}`,
                           bgcolor: active ? MAU.chinhNhat : "transparent",
-                          color: active ? MAU.chinh : "#374151",
+                          color: active ? MAU.chinh : "#4B5563",
                           "&:hover": { bgcolor: MAU.chinhNhat },
                         }}
                       />
@@ -627,7 +627,7 @@ export default function ManagerPromotionsPage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #ffffff)",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

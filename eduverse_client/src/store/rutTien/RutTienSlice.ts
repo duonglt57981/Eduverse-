@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { apiService } from "../../services/index";
 import axios from "axios";
@@ -54,7 +55,9 @@ export const themNganHang = createAsyncThunk(
       return res.data;
     } catch (err: unknown) {
       if (axios.isAxiosError<{ message?: string }>(err)) {
-        return rejectWithValue(err.response?.data?.message ?? "Lỗi thêm ngân hàng");
+        return rejectWithValue(
+          err.response?.data?.message ?? "Lỗi thêm ngân hàng",
+        );
       }
       return rejectWithValue("Lỗi thêm ngân hàng");
     }
@@ -87,7 +90,7 @@ export const getLichSuRutTien = createAsyncThunk(
 export const taoYeuCauRutTien = createAsyncThunk(
   "rutTien/taoYeuCau",
   async (
-    dto: { soTienRut: number; idNganHang: string ;otp: string},
+    dto: { soTienRut: number; idNganHang: string; otp: string },
     { rejectWithValue },
   ) => {
     try {
@@ -95,11 +98,23 @@ export const taoYeuCauRutTien = createAsyncThunk(
     } catch (err: unknown) {
       if (axios.isAxiosError<{ message?: string }>(err)) {
         return rejectWithValue(
-          err.response?.data?.message ?? "Lỗi tạo yêu cầu"
+          err.response?.data?.message ?? "Lỗi tạo yêu cầu",
         );
       }
 
       return rejectWithValue("Lỗi tạo yêu cầu");
+    }
+  },
+);
+
+export const huyYeuCau = createAsyncThunk(
+  "rutTien/huyYeuCau",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await apiService.delete(`/yeucauruttien/${id}/huy`);
+      return id;
+    } catch (e: unknown) {
+      return rejectWithValue((e as any)?.response?.data?.message ?? "Lỗi");
     }
   },
 );
@@ -197,6 +212,11 @@ const rutTienSlice = createSlice({
       })
       .addCase(getTatCaYeuCau.fulfilled, (state, action) => {
         state.tatCaYeuCau = action.payload;
+      })
+      .addCase(huyYeuCau.fulfilled, (state, action) => {
+        state.lichSu = state.lichSu.map((y) =>
+          y.id === action.payload ? { ...y, trangThai: "DaHuy" } : y,
+        );
       })
       .addCase(xuLyYeuCau.fulfilled, (state, action) => {
         state.tatCaYeuCau = state.tatCaYeuCau.filter(

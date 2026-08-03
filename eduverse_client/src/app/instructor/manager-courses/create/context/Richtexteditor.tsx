@@ -31,13 +31,14 @@ import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import CodeIcon from "@mui/icons-material/Code";
 import FormatColorTextIcon from "@mui/icons-material/FormatColorText";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
+import { BRAND, NEUTRAL } from "@/src/theme/tokens";
 
 const MAU = {
-  chinh: "#7A1F2B",
-  chinhNhat: "#F8ECEE",
-  vien: "#E7DADC",
-  chuXam: "#6a6f73",
-  nenTrang: "#ffffff",
+  chinh: BRAND.main,
+  chinhNhat: BRAND.light,
+  vien: BRAND.border,
+  chuXam: NEUTRAL.textMuted,
+  nenTrang: NEUTRAL.paper,
 };
 
 const FONT_FAMILIES = [

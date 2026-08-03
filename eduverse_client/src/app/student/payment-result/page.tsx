@@ -99,7 +99,7 @@ function PaymentResultContent() {
                   mb: 3,
                   border: "1px solid rgba(141,19,19,0.06)",
                   borderLeft: `4px solid ${PRIMARY}`,
-                  bgcolor: "#ffffff",
+                  bgcolor: "var(--ev-paper, #FFFFFF)",
                   boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
                 }}
               >
