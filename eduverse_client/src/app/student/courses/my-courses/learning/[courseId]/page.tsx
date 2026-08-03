@@ -33,6 +33,7 @@ import {
   CheckCircle as CheckCircleIcon,
   VideoLibrary as VideoLibraryIcon,
   School as SchoolIcon,
+  Star as StarIcon,
 } from "@mui/icons-material";
 
 import { VideoPlayer } from "./components/VideoPlayer";
@@ -41,6 +42,7 @@ import { StatsBar } from "./components/StatsBar";
 import { CourseSkeleton } from "./components/CourseSkeleton";
 import { SidebarContent } from "./components/SidebarContent";
 import { QuizContainer } from "./components/quiz/QuizContainer";
+import { DanhGiaDialog } from "./components/DanhGiaDialog";
 
 import { useCourseData } from "./hooks/useCourseData";
 import { useProgress } from "./hooks/useProgress";
@@ -49,6 +51,7 @@ import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 
 import DOMPurify from "dompurify";
+import { apiService } from "@/src/services";
 
 const PRIMARY_RED = "#991B1B";
 const PRIMARY_RED_DARK = "#7F1D1D";
@@ -439,6 +442,9 @@ export default function KhoaHocLearningPage() {
 
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const videoSectionRef = useRef<HTMLDivElement>(null);
+  const [showDanhGia, setShowDanhGia] = useState(false);
+  const [daDanhGia, setDaDanhGia] = useState(false);
+  const danhGiaTriggeredRef = useRef(false);
 
   // ── Lấy thông tin giảng viên từ khoaHoc ──
   const thongTinGiangVien = useMemo(() => {
@@ -510,6 +516,18 @@ export default function KhoaHocLearningPage() {
       initProgress(danhSachTatCa);
     }
   }, [danhSachTatCa, initProgress]);
+
+  useEffect(() => {
+    if (!khoaHoc?.id) return;
+
+    (async () => {
+      try {
+        const res = await apiService.get(`/danhgia/kiem-tra/${khoaHoc.id}`);
+
+        setDaDanhGia((res.data as { daDanhGia?: boolean })?.daDanhGia ?? false);
+      } catch {}
+    })();
+  }, [khoaHoc?.id]);
 
   // ── Auto select first lesson ──
   useEffect(() => {
@@ -839,6 +857,15 @@ export default function KhoaHocLearningPage() {
             </Typography>
           </Box>
           <Stack direction="row" spacing={3} sx={{ alignItems: "center" }}>
+            {!daDanhGia && tongBai > 0 && (
+              <Button
+                size="small"
+                startIcon={<StarIcon />}
+                onClick={() => setShowDanhGia(true)}
+              >
+                Đánh giá
+              </Button>
+            )}
             <Stack
               direction="row"
               spacing={1.5}
@@ -875,7 +902,11 @@ export default function KhoaHocLearningPage() {
               </Box>
               <Typography
                 variant="caption"
-                sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)", fontSize: "12px" }}
+                sx={{
+                  fontWeight: 600,
+                  color: "var(--ev-text-secondary, #64748B)",
+                  fontSize: "12px",
+                }}
               >
                 {soBaiHoanThanh}/{tongBai} bài
               </Typography>
@@ -992,7 +1023,10 @@ export default function KhoaHocLearningPage() {
                   >
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #64748B)" }}
+                      sx={{
+                        fontWeight: 600,
+                        color: "var(--ev-text-secondary, #64748B)",
+                      }}
                     >
                       {(
                         khoaHoc.danhSachPhanHoc as unknown as PhanHocApi[]
@@ -1285,6 +1319,15 @@ export default function KhoaHocLearningPage() {
           onUnmount={handleMiniUnmount}
         />
       )}
+      <DanhGiaDialog
+        open={showDanhGia}
+        onClose={() => setShowDanhGia(false)}
+        idKhoaHoc={khoaHoc.id}
+        tenKhoaHoc={khoaHoc.tieuDe}
+        onSuccess={() => {
+          setDaDanhGia(true);
+        }}
+      />
     </Box>
   );
 }
