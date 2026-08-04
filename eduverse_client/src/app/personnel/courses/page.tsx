@@ -9,8 +9,9 @@ import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurned
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
-const BRAND = "#7A1F2B";
-const BRAND_SOFT = "#FDEDEF";
+const BRAND = "#8B1313";
+const BRAND_SOFT = "rgba(139,19,19,0.08)";
+const FONT = "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))";
 
 const options = [
   {
@@ -20,7 +21,7 @@ const options = [
     description:
       "Xem xét và phê duyệt các khóa học đang chờ được kiểm duyệt trước khi xuất bản.",
     tag: "Dành cho quản trị viên",
-    route: "/admin/approve-courses",
+    route: "/personnel/approve-courses",
   },
   {
     key: "manage",
@@ -29,7 +30,7 @@ const options = [
     description:
       "Quản lý và theo dõi tất cả các khóa học đang phát hành trên Eduverses.",
     tag: "Dành cho quản trị viên",
-    route: "/admin/inspect-courses",
+    route: "/personnel/inspect-courses",
   },
   {
     key: "tasks",
@@ -38,7 +39,7 @@ const options = [
     description:
       "Phân công và quản lý các khóa học cần được kiểm duyệt cho các thành viên trong nhóm.",
     tag: "Dành cho quản trị viên",
-    route: "/admin/tasks-course",
+    route: "/personnel/tasks-course",
   },
 ];
 
@@ -58,8 +59,8 @@ export default function Step1Page() {
             minHeight: { xs: "auto", sm: "calc(100vh - 64px)" },
             py: { xs: 4, sm: 5 },
             px: { xs: 2, sm: 3 },
-            background:
-              "radial-gradient(1100px 500px at 50% -10%, #FBE7E9 0%, rgba(251,231,233,0) 60%), #FAFAFA",
+            bgcolor: "var(--ev-bg, #F7F5F2)",
+            fontFamily: FONT,
           }}
         >
           <Box sx={{ width: "100%", maxWidth: 760, mx: "auto" }}>
@@ -78,6 +79,7 @@ export default function Step1Page() {
                   py: 0.5,
                   borderRadius: "999px",
                   mb: 1.5,
+                  fontFamily: FONT,
                 }}
               >
                 Quản lý khóa học
@@ -88,9 +90,10 @@ export default function Step1Page() {
                 sx={{
                   fontWeight: 800,
                   fontSize: { xs: "1.35rem", sm: "1.75rem" },
-                  color: "#111827",
+                  color: "var(--ev-text-primary, #1F2937)",
                   mb: 1,
                   letterSpacing: "-0.01em",
+                  fontFamily: FONT,
                 }}
               >
                 Bạn muốn thực hiện điều gì?
@@ -99,10 +102,11 @@ export default function Step1Page() {
               <Typography
                 sx={{
                   fontSize: { xs: 13.5, sm: 15 },
-                  color: "#6B7280",
+                  color: "var(--ev-text-secondary, #4B5563)",
                   maxWidth: 440,
                   mx: "auto",
                   lineHeight: 1.5,
+                  fontFamily: FONT,
                 }}
               >
                 Chọn một chức năng bên dưới để tiếp tục với khóa học của bạn.
@@ -123,13 +127,13 @@ export default function Step1Page() {
                     key={key}
                     variant="outlined"
                     sx={{
-                      borderRadius: "18px",
-                      borderColor: "#E7E7EA",
-                      bgcolor: "#ffffff",
-                      boxShadow: "0 1px 2px rgba(17, 24, 39, 0.04)",
+                      borderRadius: "20px",
+                      borderColor: "var(--ev-divider, #ECE7E4)",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
                       transition: "all 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
                       "&:hover": {
-                        boxShadow: "0 16px 32px rgba(122, 31, 43, 0.12)",
+                        boxShadow: "0 16px 32px rgba(139, 19, 19, 0.10)",
                         transform: "translateY(-5px)",
                         borderColor: BRAND,
                       },
@@ -157,7 +161,7 @@ export default function Step1Page() {
                         sx={{
                           color: BRAND,
                           bgcolor: BRAND_SOFT,
-                          borderRadius: "12px",
+                          borderRadius: "14px",
                           width: 48,
                           height: 48,
                           display: "flex",
@@ -175,8 +179,9 @@ export default function Step1Page() {
                           fontWeight: 700,
                           letterSpacing: "0.05em",
                           textTransform: "uppercase",
-                          color: "#9CA3AF",
+                          color: "var(--ev-text-secondary, #4B5563)",
                           mb: 0.75,
+                          fontFamily: FONT,
                         }}
                       >
                         {tag}
@@ -187,7 +192,8 @@ export default function Step1Page() {
                           fontWeight: 700,
                           fontSize: 17,
                           mb: 0.75,
-                          color: "#111827",
+                          color: "var(--ev-text-primary, #1F2937)",
+                          fontFamily: FONT,
                         }}
                       >
                         {title}
@@ -196,10 +202,11 @@ export default function Step1Page() {
                       <Typography
                         sx={{
                           fontSize: 13.5,
-                          color: "#6B7280",
+                          color: "var(--ev-text-secondary, #4B5563)",
                           lineHeight: 1.55,
                           mb: 2,
                           flex: 1,
+                          fontFamily: FONT,
                         }}
                       >
                         {description}
@@ -214,6 +221,7 @@ export default function Step1Page() {
                           fontSize: 14,
                           fontWeight: 600,
                           color: BRAND,
+                          fontFamily: FONT,
                         }}
                       >
                         Bắt đầu
@@ -236,8 +244,9 @@ export default function Step1Page() {
               sx={{
                 mt: 3,
                 fontSize: 12.5,
-                color: "#9CA3AF",
+                color: "var(--ev-text-secondary, #4B5563)",
                 textAlign: "center",
+                fontFamily: FONT,
               }}
             >
               Bạn có thể kiểm duyệt hoặc quản lý khóa học từ đây bất cứ lúc nào.

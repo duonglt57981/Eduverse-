@@ -41,11 +41,13 @@ function formatCount(n: number): string {
 function mapFeatured(kh: any): LandingCourse {
   const isFree = kh?.gia === 0 || kh?.gia == null;
   return {
+    id: kh?.id || kh?.idKhoaHoc,
     badge: isFree ? 'Miễn phí' : (kh?.capDo || 'Khóa học'),
     title: kh?.tieuDe || 'Khóa học',
     subtitle: `${kh?.capDo || 'Mọi cấp độ'} • ${kh?.tongBaiGiang ?? 0} bài giảng`,
     price: isFree ? 'Miễn phí' : `${(kh?.gia ?? 0).toLocaleString('vi-VN')}đ`,
     palette: ['#8B1313', '#c2410c', '#fff7f4'],
+    hinhAnhKhoaHoc: kh?.hinhAnhKhoaHoc || kh?.urlHinhAnh || kh?.hinhAnh || kh?.hinhAnhBia,
   };
 }
 
@@ -324,7 +326,11 @@ export default function LandingPage() {
                     },
                   }}
                 >
-                  <CourseVisual palette={course.palette} badge={course.badge} />
+                  <CourseVisual
+                    palette={course.palette}
+                    badge={course.badge}
+                    hinhAnhKhoaHoc={course.hinhAnhKhoaHoc}
+                  />
                   <Typography sx={{ mt: 1.75, fontSize: 21, fontWeight: 900, letterSpacing: '-0.4px' }}>
                     {course.title}
                   </Typography>
@@ -340,7 +346,7 @@ export default function LandingPage() {
                     </Typography>
                     <Button
                       component={Link}
-                      href="/auth/login"
+                      href={course.id ? `/student/enroll-courses/${course.id}` : '/courses'}
                       variant="outlined"
                       sx={{
                         borderRadius: 2.8,
@@ -487,7 +493,7 @@ export default function LandingPage() {
             </Box>
           </Box>
 
-          <Box id="testimonials" sx={{ py: { xs: 5, md: 7 } }}>
+          <Box id="testimonials" sx={{ py: { xs: 5, md: 7 }, mb: { xs: 4, md: 6 } }}>
             <SectionHeading title="Cảm nhận từ học viên" align="center" />
             <Box
               sx={{

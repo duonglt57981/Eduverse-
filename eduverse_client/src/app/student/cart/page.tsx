@@ -466,7 +466,7 @@ function GioHangContent() {
                           >
                             {formatGia(item.gia)}
                           </Typography>
-                          {item.giaGoc && item.giaGoc > (item.gia ?? 0) && (
+                          {Boolean(item.giaGoc && item.giaGoc > (item.gia ?? 0)) && (
                             <Typography
                               sx={{
                                 fontSize: 12,
@@ -866,7 +866,7 @@ function GioHangContent() {
                       >
                         {formatGia(item.gia)}
                       </Typography>
-                      {item.giaGoc && item.giaGoc > (item.gia ?? 0) && (
+                      {Boolean(item.giaGoc && item.giaGoc > (item.gia ?? 0)) && (
                         <Typography
                           sx={{
                             fontSize: 12,
@@ -998,7 +998,7 @@ function GioHangContent() {
                           >
                             {formatGia(kh.gia)}
                           </Typography>
-                          {kh.giaGoc && kh.giaGoc > (kh.gia ?? 0) && (
+                          {Boolean(kh.giaGoc && kh.giaGoc > (kh.gia ?? 0)) && (
                             <Typography
                               sx={{
                                 fontSize: 12,

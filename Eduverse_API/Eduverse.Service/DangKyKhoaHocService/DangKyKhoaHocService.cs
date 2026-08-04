@@ -107,17 +107,6 @@ namespace Eduverse.Service.DangKyKhoaHocService
             var learnerName = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name)
                               ?? "Học viên";
 
-            await _notificationPublisher.NotifyUserAsync(idNguoiDangKi, new NotificationPayload
-            {
-                TieuDe = "Đăng ký khóa học thành công",
-                NoiDung = $"Bạn đã đăng ký khóa học '{khoaHoc.TieuDe}' thành công.",
-                LoaiThongBao = "DangKyKhoaHocThanhCong",
-                Link = "/student/courses/my-courses",
-                FromUser = khoaHoc.CreatedId,
-                ItemId = khoaHoc.Id,
-                ItemName = khoaHoc.TieuDe
-            });
-
             if (khoaHoc.CreatedId.HasValue && khoaHoc.CreatedId.Value != idNguoiDangKi)
             {
                 await _notificationPublisher.NotifyUserAsync(khoaHoc.CreatedId.Value, new NotificationPayload
@@ -131,17 +120,6 @@ namespace Eduverse.Service.DangKyKhoaHocService
                     ItemName = khoaHoc.TieuDe
                 });
             }
-
-            await _notificationPublisher.NotifyRoleAsync("Admin", new NotificationPayload
-            {
-                TieuDe = "Đăng ký khóa học mới",
-                NoiDung = $"{learnerName} vừa đăng ký khóa học '{khoaHoc.TieuDe}'.",
-                LoaiThongBao = "DangKyKhoaHoc",
-                Link = "/admin/courses",
-                FromUser = idNguoiDangKi,
-                ItemId = khoaHoc.Id,
-                ItemName = khoaHoc.TieuDe
-            }, new[] { idNguoiDangKi });
 
             return _mapper.Map<DangKyKhoaHoc,DangKyKhoaHocMienPhiDto>(dangKy);
         }

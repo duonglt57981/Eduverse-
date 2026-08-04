@@ -82,6 +82,10 @@ namespace Eduverse.Service.TaiLieuService
             var baiGiang = await _baiGiangRepository.GetByIdAsync(request.IdBaiGiang);
             if (baiGiang == null) throw new Exception("Không tìm thấy bài giảng");
 
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTaoTaiLieu);
+            if (baiGiang.CreatedId != nguoiTaoTaiLieu)
+                throw new Exception("Bạn không có quyền hạn để thêm tài liệu vào bài giảng này!");
+
             if (string.IsNullOrWhiteSpace(request.TenTaiLieu))
                 throw new Exception("Vui lòng nhập tên tài liệu");
 
@@ -118,6 +122,9 @@ namespace Eduverse.Service.TaiLieuService
             var banGoc = await GetAll()
                 .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted);
 
+            if (banGoc == null)
+                throw new Exception("Không tìm thấy tài liệu");
+
             if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
                 throw new Exception("Chuyển sang DangSua để sửa khóa học này!");
 
@@ -129,9 +136,6 @@ namespace Eduverse.Service.TaiLieuService
                        $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
                        $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
                 );
-
-            if (banGoc == null)
-                throw new Exception("Không tìm thấy tài liệu");
 
             if (banGoc.CreatedId != nguoiTao)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
@@ -190,6 +194,9 @@ namespace Eduverse.Service.TaiLieuService
             if (taiLieu == null)
                 throw new Exception("Không tìm thấy bài giảng");
 
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiXoaTaiLieu);
+            if (taiLieu.CreatedId != nguoiXoaTaiLieu)
+                throw new Exception("Bạn không có quyền hạn để xóa tài liệu này!");
 
             if (taiLieu.TrangThaiPheDuyet == "ChoDuyet" || taiLieu.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");

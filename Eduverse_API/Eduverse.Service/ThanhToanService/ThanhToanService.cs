@@ -571,11 +571,12 @@ namespace Eduverse.Service.ThanhToanService
             return query;
         }
 
-        public async Task<DonHangDto?> GetDonHangByIdAsync(Guid id)
+        public async Task<DonHangDto?> GetDonHangByIdAsync(Guid id, Guid? nguoiDungHienTai = null, bool laAdmin = false)
         {
             var result = await (
                 from dh in _donHangRepo.GetQueryable().AsNoTracking()
                 where dh.Id == id && dh.IsDeleted == false
+                      && (laAdmin || !nguoiDungHienTai.HasValue || dh.IdNguoiDung == nguoiDungHienTai)
                 join ct in _donHangChiTietRepo.GetQueryable().AsNoTracking()
                     on dh.Id equals ct.IdDonHang into ctGroup
                 from ct in ctGroup.DefaultIfEmpty()

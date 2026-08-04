@@ -81,7 +81,7 @@ namespace Eduverse.Service.YeuCauRutTienService
 
             // Tạo OTP 6 số
             var otp = new Random().Next(100000, 999999).ToString();
-            Console.WriteLine($"[OTP SET] Key={OtpCacheKey(userId)}, OTP={otp}");
+            Console.WriteLine($"[OTP SET] Key={OtpCacheKey(userId)} - đã tạo mã xác nhận rút tiền (gửi qua email, không ghi log giá trị thật)");
             // Lưu vào cache 5 phút
             var otpData = new OtpData(otp, request.SoTienRut, request.IdNganHang, DateTime.Now.AddMinutes(5));
             _cache.Set(OtpCacheKey(userId), otpData, TimeSpan.FromMinutes(5));

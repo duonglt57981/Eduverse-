@@ -19,6 +19,8 @@ interface SafeHTMLProps {
   className?: string;
   /** Màu chữ */
   color?: string;
+  /** Màu nút Xem thêm */
+  buttonColor?: string;
   /** Cho phép expand/collapse */
   expandable?: boolean;
   /** Kích thước font */
@@ -32,6 +34,7 @@ export default function SafeHTML({
   sx,
   className,
   color,
+  buttonColor = "primary.main",
   expandable = true,
   fontSize = "inherit",
 }: SafeHTMLProps) {
@@ -94,7 +97,7 @@ export default function SafeHTML({
   // CSS chung cho các thẻ HTML
   const htmlStyles = {
     fontSize: fontSize,
-    fontFamily: "var(--ev-font-family, 'Be Vietnam Pro', sans-serif)",
+    fontFamily: "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))",
     "& p": { margin: "0 0 0.5rem 0" },
     "& ul, & ol": { paddingLeft: "1.5rem", margin: "0 0 0.5rem 0" },
     "& li": { marginBottom: "0.25rem" },
@@ -125,7 +128,7 @@ export default function SafeHTML({
       fontFamily: "monospace",
     },
     "& a": {
-      color: "primary.main",
+      color: buttonColor,
       textDecoration: "none",
       "&:hover": { textDecoration: "underline" },
     },
@@ -201,9 +204,9 @@ export default function SafeHTML({
         onClick={() => setExpanded(!expanded)}
         sx={{
           mt: 1,
-          color: "primary.main",
+          color: buttonColor,
           textTransform: "none",
-          fontWeight: 600,
+          fontWeight: 700,
           fontSize: "0.875rem",
           p: 0,
           minWidth: "auto",

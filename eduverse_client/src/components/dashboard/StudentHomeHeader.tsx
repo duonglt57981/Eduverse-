@@ -42,6 +42,7 @@ import { clearGioHang } from "@/src/store/gioHang/GioHangSlice";
 import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
+import { isNotificationForRole } from "@/src/libs/notificationRole";
 
 const RED = "#8B1313"; // Đỏ đô
 const HEADER_H = 74;
@@ -69,19 +70,20 @@ export default function StudentHomeHeader() {
 
     const loadNotifications = async () => {
       try {
-        const [notificationsResponse, unreadResponse] = await Promise.all([
-          thongBaoService.getMyNotifications(),
-          thongBaoService.getUnreadCount(),
-        ]);
+        const notificationsResponse =
+          await thongBaoService.getMyNotifications();
 
         if (notificationsResponse.status && notificationsResponse.data) {
-          setNotifications(notificationsResponse.data);
-        }
-        if (
-          unreadResponse.status &&
-          typeof unreadResponse.data === "number"
-        ) {
-          setUnreadCount(unreadResponse.data);
+          const studentNotifications = notificationsResponse.data.filter(
+            (notification) =>
+              isNotificationForRole(notification, "HocVien"),
+          );
+          setNotifications(studentNotifications);
+          setUnreadCount(
+            studentNotifications.filter(
+              (notification) => !notification.daDoc && !notification.isRead,
+            ).length,
+          );
         }
       } catch (error) {
         console.error("Không thể tải thông báo:", error);
@@ -92,6 +94,8 @@ export default function StudentHomeHeader() {
   }, [user]);
 
   useSignalR("ReceiveNotification", (notification: ThongBao) => {
+    if (!isNotificationForRole(notification, "HocVien")) return;
+
     setNotifications((current) => {
       if (current.some((item) => item.id === notification.id)) return current;
       return [notification, ...current].slice(0, 50);
@@ -163,13 +167,18 @@ export default function StudentHomeHeader() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      const response = await thongBaoService.markAllAsRead();
-      if (response.status) {
-        setNotifications((current) =>
-          current.map((item) => ({ ...item, daDoc: true, isRead: true })),
-        );
-        setUnreadCount(0);
-      }
+      const unreadIds = notifications
+        .filter((notification) => !notification.daDoc && !notification.isRead)
+        .map((notification) => notification.id);
+      await Promise.all(
+        unreadIds.map((notificationId) =>
+          thongBaoService.markAsRead(notificationId),
+        ),
+      );
+      setNotifications((current) =>
+        current.map((item) => ({ ...item, daDoc: true, isRead: true })),
+      );
+      setUnreadCount(0);
     } catch (error) {
       console.error("Không thể đánh dấu tất cả thông báo đã đọc:", error);
     }
@@ -579,9 +588,18 @@ export default function StudentHomeHeader() {
           anchorEl={notiAnchorEl}
           open={Boolean(notiAnchorEl)}
           onClose={() => setNotiAnchorEl(null)}
+          sx={{
+            "& .MuiBackdrop-root": {
+              backgroundColor: "transparent !important",
+            },
+          }}
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
           slotProps={{
+            backdrop: {
+              invisible: true,
+              sx: { backgroundColor: "transparent !important" },
+            },
             paper: {
               sx: {
                 mt: 1.5,

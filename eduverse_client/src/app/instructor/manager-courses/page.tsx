@@ -659,24 +659,6 @@ function KhoaHocContent() {
         }}
       >
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-          <Tooltip title="Quay lại">
-            <IconButton
-              onClick={handleGoBack}
-              sx={{
-                border: `1px solid ${MAU.vien}`,
-                borderRadius: "12px",
-                color: MAU.chuDen,
-                bgcolor: "var(--ev-paper, #FFFFFF)",
-                "&:hover": {
-                  borderColor: MAU.chinh,
-                  color: MAU.chinh,
-                  bgcolor: MAU.chinhNhat,
-                },
-              }}
-            >
-              <ArrowBackRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
           <Box>
             <Typography
               sx={{ fontWeight: 900, fontSize: 26, color: MAU.chuDen }}

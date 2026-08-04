@@ -493,7 +493,7 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     badge: isFree ? "Miễn phí" : "Trả phí",
     tags: [kh.capDo || "Tự chọn", isFree ? "Free" : "Pro"],
     palette: ["#8B1313", "#c2410c", "#fff7f4"],
-    hinhAnhKhoaHoc: kh.hinhAnhKhoaHoc || kh.urlHinhAnh,
+    hinhAnhKhoaHoc: kh.hinhAnhKhoaHoc || kh.urlHinhAnh || kh.hinhAnh || kh.hinhAnhBia,
     isFree,
   };
 };

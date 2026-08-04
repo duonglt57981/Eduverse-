@@ -106,7 +106,7 @@ namespace Eduverse.Api.Controller
         [HttpGet("don-hang/{id}")]
         public async Task<IActionResult> GetDonHangById(Guid id)
         {
-            var result = await _service.GetDonHangByIdAsync(id);
+            var result = await _service.GetDonHangByIdAsync(id, GetUserId(), User.IsInRole("Admin"));
 
             if (result == null)
             {

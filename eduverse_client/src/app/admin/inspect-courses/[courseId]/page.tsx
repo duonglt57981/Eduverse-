@@ -477,11 +477,16 @@ const VIDEO_JS_STYLES = `
 function StatusChip({
   trangThai,
   size = "medium",
+  hidePending = false,
 }: {
   trangThai: string | null | undefined;
   size?: "small" | "medium";
+  hidePending?: boolean;
 }) {
   const status = normalizeTrangThai(trangThai);
+  if (hidePending && (status === "ChoDuyet" || status === "DangDuyet")) {
+    return null;
+  }
 
   const configs: Record<
     string,
@@ -1251,7 +1256,7 @@ function KiemDuyetSidebar({
                   >
                     {tl.tenTaiLieu ?? tl.tieuDe}
                   </Typography>
-                  <StatusChip trangThai={tl.trangThaiPheDuyet} size="small" />
+                  <StatusChip trangThai={tl.trangThaiPheDuyet} size="small" hidePending />
                 </Box>
               );
             })}
@@ -1311,7 +1316,7 @@ function KiemDuyetSidebar({
               </Typography>
             }
           />
-          <StatusChip trangThai={bg.trangThaiPheDuyet} size="small" />
+          <StatusChip trangThai={bg.trangThaiPheDuyet} size="small" hidePending />
         </ListItemButton>
         {renderTaiLieu(bg)}
       </Box>
@@ -1377,7 +1382,7 @@ function KiemDuyetSidebar({
               ) : undefined
             }
           />
-          <StatusChip trangThai={bkt.trangThaiPheDuyet} size="small" />
+          <StatusChip trangThai={bkt.trangThaiPheDuyet} size="small" hidePending />
           {cauHois.length > 0 && (
             <IconButton
               size="small"

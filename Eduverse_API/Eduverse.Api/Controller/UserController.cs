@@ -119,6 +119,18 @@ namespace Eduverse.Api.Controller
                 return DataResponse<object>.False("Username và Password không được để trống");
             }
 
+            if (!string.IsNullOrWhiteSpace(request.Email) &&
+                !System.Text.RegularExpressions.Regex.IsMatch(request.Email.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
+            {
+                return DataResponse<object>.False("Email không đúng định dạng");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.PhoneNumber) &&
+                !System.Text.RegularExpressions.Regex.IsMatch(request.PhoneNumber.Trim(), @"^[0-9]{9,11}$"))
+            {
+                return DataResponse<object>.False("Số điện thoại chỉ được chứa chữ số và phải có 9-11 chữ số");
+            }
+
             try
             {
                 var existingUser = await _userManager.FindByNameAsync(request.UserName);
@@ -193,6 +205,18 @@ namespace Eduverse.Api.Controller
                     return DataResponse<object>.False("Không tìm thấy người dùng");
                 }
 
+                if (!string.IsNullOrWhiteSpace(request.Email) &&
+                    !System.Text.RegularExpressions.Regex.IsMatch(request.Email.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
+                {
+                    return DataResponse<object>.False("Email không đúng định dạng");
+                }
+
+                if (!string.IsNullOrWhiteSpace(request.PhoneNumber) &&
+                    !System.Text.RegularExpressions.Regex.IsMatch(request.PhoneNumber.Trim(), @"^[0-9]{9,11}$"))
+                {
+                    return DataResponse<object>.False("Số điện thoại chỉ được chứa chữ số và phải có 9-11 chữ số");
+                }
+
                 if (!string.IsNullOrWhiteSpace(request.Email) && !string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
                 {
                     var existingEmail = await _userManager.FindByEmailAsync(request.Email);
@@ -234,6 +258,21 @@ namespace Eduverse.Api.Controller
                     var currentRoles = await _userManager.GetRolesAsync(user);
                     var rolesToRemove = currentRoles.Except(request.Roles).ToList();
                     var rolesToAdd = request.Roles.Except(currentRoles).ToList();
+
+                    if (rolesToRemove.Contains("Admin"))
+                    {
+                        if (id == UserId)
+                        {
+                            return DataResponse<object>.False("Bạn không thể tự gỡ quyền Admin của chính mình");
+                        }
+
+                        var soAdminConLai = (await _userManager.GetUsersInRoleAsync("Admin"))
+                            .Count(u => !u.IsDeleted);
+                        if (soAdminConLai <= 1)
+                        {
+                            return DataResponse<object>.False("Không thể gỡ quyền Admin của tài khoản Admin cuối cùng trong hệ thống");
+                        }
+                    }
 
                     if (rolesToRemove.Any())
                     {

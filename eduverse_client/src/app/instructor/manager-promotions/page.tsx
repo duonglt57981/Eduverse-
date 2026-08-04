@@ -108,7 +108,15 @@ function QuanLyKhuyenMaiContent() {
         setLoi(res.message || "Không tải được danh sách khóa học đã duyệt");
         return;
       }
-      setKhoaHocDaDuyet(res.data ?? []);
+      const rawData = res.data ?? [];
+      const uniqueMap = new Map<string, KhoaHocMiniDto>();
+      for (const item of rawData) {
+        const key = item.id || item.tieuDe;
+        if (key && !uniqueMap.has(key)) {
+          uniqueMap.set(key, item);
+        }
+      }
+      setKhoaHocDaDuyet(Array.from(uniqueMap.values()));
     } catch (err) {
       console.error(err);
       setLoi("Đã xảy ra lỗi khi tải danh sách khóa học");

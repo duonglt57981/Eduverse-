@@ -268,20 +268,18 @@ export default function LichSuKiemDuyetPage() {
   return (
     <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
-        <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 980, mx: "auto" }}>
+        <Box sx={{ p: { xs: 2.5, sm: 3.5 }, width: "100%", fontFamily: FONTS.display }}>
           {/* Hero — tiêu đề, quay lại và số liệu gộp thành một dải duy nhất */}
           <Box
             sx={{
               position: "relative",
               overflow: "hidden",
-              borderRadius: 3,
+              borderRadius: "20px",
               border: `1px solid ${COLORS.line}`,
-              background: `linear-gradient(135deg, ${mix(
-                COLORS.primary,
-                0.1,
-              )} 0%, ${mix(COLORS.primary, 0.03)} 55%, transparent 100%)`,
+              bgcolor: "var(--ev-paper, #FFFFFF)",
               p: { xs: 2.5, sm: 3.5 },
               mb: 2.5,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
             }}
           >
             {/* Watermark trang trí — gắn với chủ đề "khóa học" */}
@@ -459,6 +457,7 @@ export default function LichSuKiemDuyetPage() {
                   onChange={(e) => setKeywordInput(e.target.value)}
                   sx={{
                     "& .MuiOutlinedInput-root": {
+                      height: 40,
                       borderRadius: 2,
                       bgcolor: COLORS.paper,
                       "& fieldset": { borderColor: "transparent" },
@@ -495,6 +494,7 @@ export default function LichSuKiemDuyetPage() {
                   }
                   sx={{
                     minWidth: { xs: "100%", sm: 170 },
+                    height: 40,
                     borderRadius: 2,
                     bgcolor: COLORS.paper,
                     "& .MuiOutlinedInput-notchedOutline": {

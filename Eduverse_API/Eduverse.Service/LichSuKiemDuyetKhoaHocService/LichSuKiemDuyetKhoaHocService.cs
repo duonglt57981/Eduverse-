@@ -1016,18 +1016,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     await _dapAnRepository.SaveAsync();
                 }
 
-                _thongBaoRepository.Add(new ThongBao
-                {
-                    TieuDe = "Khóa học của bạn đã bị từ chối phê duyệt",
-                    NoiDung = $"Khóa học '{khoaHoc.TieuDe}' bị từ chối với lý do: \"{request.LyDo}\".",
-                    DaDoc = false,
-                    ThoiGianTao = DateTime.Now,
-                    TrangThai = "MoiNhan",
-                    LoaiThongBao = "KhoaHoc",
-                    IdNguoiDung = khoaHoc.CreatedId,
-                });
-                await _thongBaoRepository.SaveAsync();
-
                 if (GetLichSuKiemDuyetKhoaHoc != null)
                 {
                     GetLichSuKiemDuyetKhoaHoc.TrangThaiPheDuyet = request.TrangThaiPheDuyet;
@@ -1097,18 +1085,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     _dapAnRepository.Update(da);
                     await _dapAnRepository.SaveAsync();
                 }
-
-                _thongBaoRepository.Add(new ThongBao
-                {
-                    TieuDe = "Khóa học của bạn đã được phê duyệt",
-                    NoiDung = $"Khóa học '{khoaHoc.TieuDe}' đã được phê duyệt.",
-                    DaDoc = false,
-                    ThoiGianTao = DateTime.Now,
-                    TrangThai = "MoiNhan",
-                    LoaiThongBao = "KhoaHoc",
-                    IdNguoiDung = khoaHoc.CreatedId,
-                });
-                await _thongBaoRepository.SaveAsync();
 
                 if (GetLichSuKiemDuyetKhoaHoc != null)
                 {
@@ -1216,7 +1192,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     {
                         TieuDe = "Khóa học vừa có bản cập nhật",
                         NoiDung = $"Khóa học '{khoaHoc.TieuDe}' vừa có bản nhập nhật mới.",
-                        Link = $"/student/courses/my-courses/learning/{item.Id}",
+                        Link = $"/student/courses/my-courses/learning/{item.IdKhoaHoc}",
                         DaDoc = false,
                         ThoiGianTao = DateTime.Now,
                         TrangThai = "MoiNhan",

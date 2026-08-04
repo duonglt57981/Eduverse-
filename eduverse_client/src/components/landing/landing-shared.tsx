@@ -318,10 +318,15 @@ export function SectionHeading({
 export function CourseVisual({
   palette,
   badge,
+  hinhAnhKhoaHoc,
 }: {
   palette: readonly string[];
   badge: string;
+  hinhAnhKhoaHoc?: string | null;
 }) {
+  const [imgError, setImgError] = React.useState(false);
+  const hasImage = Boolean(hinhAnhKhoaHoc && !imgError);
+
   return (
     <Box
       sx={{
@@ -329,37 +334,61 @@ export function CourseVisual({
         height: 200,
         borderRadius: 2.8,
         overflow: 'hidden',
-        background: `linear-gradient(135deg, ${palette[0]} 0%, ${palette[1]} 55%, ${palette[2]} 100%)`,
+        background: hasImage
+          ? 'var(--ev-paper-alt, #FBFAF9)'
+          : `linear-gradient(135deg, ${palette[0]} 0%, ${palette[1]} 55%, ${palette[2]} 100%)`,
       }}
     >
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.10), transparent 18%), radial-gradient(circle at 78% 28%, rgba(255,255,255,0.08), transparent 16%), linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.34) 100%)',
-        }}
-      />
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 16,
-          borderRadius: 2.8,
-          border: '1px solid rgba(255,255,255,0.08)',
-        }}
-      />
-      <Box
-        sx={{
-          position: 'absolute',
-          left: 18,
-          right: 18,
-          bottom: 18,
-          height: 56,
-          borderRadius: 2.8,
-          bgcolor: 'rgba(255,255,255,0.06)',
-          boxShadow: '0 16px 30px rgba(0,0,0,0.22)',
-        }}
-      />
+      {hasImage ? (
+        <Box
+          component="img"
+          src={hinhAnhKhoaHoc!}
+          alt={badge}
+          onError={() => setImgError(true)}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transition: 'transform 0.4s ease',
+            '&:hover': {
+              transform: 'scale(1.05)',
+            },
+          }}
+        />
+      ) : (
+        <>
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              background:
+                'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.10), transparent 18%), radial-gradient(circle at 78% 28%, rgba(255,255,255,0.08), transparent 16%), linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.34) 100%)',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 16,
+              borderRadius: 2.8,
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 18,
+              right: 18,
+              bottom: 18,
+              height: 56,
+              borderRadius: 2.8,
+              bgcolor: 'rgba(255,255,255,0.06)',
+              boxShadow: '0 16px 30px rgba(0,0,0,0.22)',
+            }}
+          />
+        </>
+      )}
       <Chip
         label={badge}
         size="small"
@@ -370,6 +399,7 @@ export function CourseVisual({
           bgcolor: 'primary.main',
           color: '#fff',
           fontWeight: 900,
+          zIndex: 2,
         }}
       />
     </Box>

@@ -246,6 +246,10 @@ function RutTienContent() {
       bg = "#FEF2F2";
       color = "#DC2626";
       text = "Từ chối";
+    } else if (trangThai === "DaHuy" || trangThai === "DaHuyYeuCau" || trangThai === "Huy") {
+      bg = "#F3F4F6";
+      color = "#374151";
+      text = "Đã hủy";
     }
     return (
       <Box

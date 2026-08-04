@@ -62,9 +62,21 @@ namespace Eduverse.Api.Controllers
         {
             try
             {
-                var result = await _service.XoaYeuThich(id);
-                if (result == null)
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                    return DataResponse<object>.False("Không xác định được người dùng.");
+
+                var userGuid = Guid.Parse(userId);
+                var yeuThich = await _service.GetQueryable()
+                    .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+
+                if (yeuThich == null)
                     return DataResponse<object>.False("Không tìm thấy yêu thích cần xóa.");
+
+                if (yeuThich.IdNguoiDung != userGuid)
+                    return DataResponse<object>.False("Bạn không có quyền xóa mục yêu thích này.");
+
+                var result = await _service.XoaYeuThich(id);
                 return DataResponse<object>.Success(result);
             }
             catch (Exception ex)

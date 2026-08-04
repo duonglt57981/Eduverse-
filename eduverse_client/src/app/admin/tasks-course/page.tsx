@@ -65,24 +65,26 @@ interface SnackbarState {
 // Đồng bộ với hệ giao diện Dashboard hiện có: nền kem, card trắng bo tròn
 // đổ bóng nhẹ, chữ navy đậm, điểm nhấn burgundy, font Plus Jakarta Sans.
 const tokens = {
-  bg: "#F5F2EA",
-  surface: "#FFFFFF",
-  surfaceAlt: "#FAF8F2",
-  border: "#ECE7DB",
-  navy: "#1B2140",
-  navySoft: "#6B7280",
-  maroon: "#7B1E2E",
-  maroonDark: "#5C1522",
-  maroonSoft: "#FBE6E8",
-  green: "#1F9D63",
-  greenSoft: "#E3F5EA",
+  bg: "var(--ev-bg, #F7F5F2)",
+  surface: "var(--ev-paper, #FFFFFF)",
+  surfaceAlt: "var(--ev-paper-alt, #FBFAF9)",
+  border: "var(--ev-divider, #ECE7E4)",
+  navy: "var(--ev-text-primary, #1F2937)",
+  navySoft: "var(--ev-text-secondary, #4B5563)",
+  maroon: "#8B1313",
+  maroonDark: "#6B0E0E",
+  maroonSoft: "rgba(139,19,19,0.08)",
+  green: "#16A34A",
+  greenSoft: "#DCFCE7",
+  amber: "#D97706",
+  amberSoft: "#FEF3C7",
   violet: "#7C5CFC",
   violetSoft: "#EEE9FE",
-  blue: "#2F8FE0",
-  blueSoft: "#DFF0FB",
-  font: "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
+  blue: "#2563EB",
+  blueSoft: "#EFF6FF",
+  font: "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))",
   radius: "16px",
-  shadow: "0 1px 2px rgba(27,33,64,0.04), 0 8px 20px rgba(27,33,64,0.05)",
+  shadow: "0 4px 20px rgba(0,0,0,0.03)",
 };
 
 // Huy hiệu số đếm dạng viên thuốc bo tròn — dùng cho "đã duyệt" / số lượng chọn
@@ -504,6 +506,7 @@ export default function PhanKhoaHocKiemDuyet() {
                     onChange={(e) => setSearchNhanVien(e.target.value)}
                     sx={{
                       "& .MuiOutlinedInput-root": {
+                        height: 40,
                         bgcolor: tokens.surfaceAlt,
                         borderRadius: "10px",
                         fontFamily: tokens.font,
@@ -560,6 +563,7 @@ export default function PhanKhoaHocKiemDuyet() {
                     }
                     displayEmpty
                     sx={{
+                      height: 40,
                       borderRadius: "10px",
                       bgcolor: tokens.surfaceAlt,
                       fontFamily: tokens.font,
@@ -812,6 +816,7 @@ export default function PhanKhoaHocKiemDuyet() {
                   onChange={(e) => setSearchKhoaHoc(e.target.value)}
                   sx={{
                     "& .MuiOutlinedInput-root": {
+                      height: 40,
                       bgcolor: tokens.surfaceAlt,
                       borderRadius: "10px",
                       fontFamily: tokens.font,
@@ -969,15 +974,16 @@ export default function PhanKhoaHocKiemDuyet() {
                               sx={{ mt: 0.5 }}
                             >
                               <Chip
-                                label={kh.trangThaiPheDuyet}
+                                label={kh.trangThaiPheDuyet === "ChoDuyet" ? "ChoDuyet" : kh.trangThaiPheDuyet}
                                 size="small"
                                 sx={{
-                                  height: 20,
+                                  height: 22,
                                   fontFamily: tokens.font,
                                   fontSize: 11,
-                                  fontWeight: 700,
-                                  color: tokens.maroon,
-                                  bgcolor: tokens.maroonSoft,
+                                  fontWeight: 750,
+                                  borderRadius: "6px",
+                                  color: tokens.amber,
+                                  bgcolor: tokens.amberSoft,
                                 }}
                               />
                             </Stack>

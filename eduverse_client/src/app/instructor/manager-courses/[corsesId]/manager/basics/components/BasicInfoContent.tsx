@@ -565,7 +565,10 @@ export default function BasicInfoContent() {
       setLoiTieuDe(null);
     }
 
-    if (thongTin.giaGoc !== undefined && thongTin.giaGoc < 0) {
+    if (thongTin.giaGoc !== undefined && !Number.isFinite(thongTin.giaGoc)) {
+      setLoiGia("Giá không hợp lệ, vui lòng nhập một số");
+      hopLe = false;
+    } else if (thongTin.giaGoc !== undefined && thongTin.giaGoc < 0) {
       setLoiGia("Giá không được nhỏ hơn 0");
       hopLe = false;
     } else if (thongTin.giaGoc !== undefined && thongTin.giaGoc > 100000000) {
@@ -1380,18 +1383,10 @@ export default function BasicInfoContent() {
             {isEditable && (
               <Box
                 sx={{
-                  position: "sticky",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
                   mt: 3,
-                  py: 2.5,
-                  bgcolor: "rgba(247, 248, 250, 0.9)",
-                  backdropFilter: "blur(8px)",
-                  borderTop: "1px solid var(--ev-divider, #ECE7E4)",
+                  pt: 1,
                   display: "flex",
                   justifyContent: "flex-end",
-                  zIndex: 900,
                 }}
               >
                 <Button
@@ -1402,9 +1397,10 @@ export default function BasicInfoContent() {
                     bgcolor: MAU.chinh,
                     textTransform: "none",
                     fontWeight: 800,
+                    fontSize: 14.5,
                     borderRadius: "10px",
                     px: 4,
-                    py: 1.25,
+                    py: 1.2,
                     boxShadow: "none",
                     "&:hover": {
                       bgcolor: MAU.chinhDam,

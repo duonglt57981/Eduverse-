@@ -21,11 +21,13 @@ export type LandingStat = {
 };
 
 export type LandingCourse = {
+  id?: string;
   badge: string;
   title: string;
   subtitle: string;
   price: string;
   palette: [string, string, string];
+  hinhAnhKhoaHoc?: string;
 };
 
 export type CourseCategory = {

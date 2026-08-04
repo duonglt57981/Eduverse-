@@ -220,11 +220,11 @@ namespace Eduverse.Service.BaiKiemTraService
             if (request == null)
                 throw new ArgumentNullException(nameof(request), "Yêu cầu không hợp lệ.");
 
-            if (entity.CreatedId != nguoiTao)
-                throw new Exception("Bạn không có quyền chỉnh sửa bài kiểm tra này");
-
             if (entity == null)
                 throw new Exception("Không tìm thấy bài kiểm tra");
+
+            if (entity.CreatedId != nguoiTao)
+                throw new Exception("Bạn không có quyền chỉnh sửa bài kiểm tra này");
 
             if (string.IsNullOrWhiteSpace(request.TenBaiKiemTra))
                 throw new Exception("Tên bài kiểm tra không được để trống.");
@@ -264,6 +264,10 @@ namespace Eduverse.Service.BaiKiemTraService
 
             if (quiz == null)
                 throw new Exception("Không tìm thấy bài kiểm tra.");
+
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiXoaQuiz);
+            if (quiz.CreatedId != nguoiXoaQuiz)
+                throw new Exception("Bạn không có quyền hạn để xóa bài kiểm tra này!");
 
             if (quiz.TrangThaiPheDuyet == "ChoDuyet" || quiz.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");

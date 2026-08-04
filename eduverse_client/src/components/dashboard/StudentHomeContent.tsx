@@ -565,7 +565,7 @@ function HoverPanel({
           >
             {isFree ? "Miễn phí" : fmtPrice(displayPrice)}
           </Typography>
-          {course.giaGoc && course.giaGoc > displayPrice && (
+          {Boolean(course.giaGoc && course.giaGoc > displayPrice) && (
             <Typography
               sx={{
                 fontSize: 13,
@@ -574,7 +574,7 @@ function HoverPanel({
                 fontWeight: 600,
               }}
             >
-              {course.giaGoc.toLocaleString("vi-VN")}đ
+              {course.giaGoc?.toLocaleString("vi-VN")}đ
             </Typography>
           )}
         </Stack>
@@ -914,7 +914,7 @@ function CourseCard({
               >
                 {isFree ? "Miễn phí" : fmtPrice(displayPrice)}
               </Typography>
-              {course.giaGoc && course.giaGoc > displayPrice && (
+              {Boolean(course.giaGoc && course.giaGoc > displayPrice) && (
                 <Typography
                   sx={{
                     fontSize: 10.5,
@@ -923,7 +923,7 @@ function CourseCard({
                     fontWeight: 600,
                   }}
                 >
-                  {course.giaGoc.toLocaleString("vi-VN")}đ
+                  {course.giaGoc?.toLocaleString("vi-VN")}đ
                 </Typography>
               )}
             </Box>
@@ -1451,7 +1451,7 @@ export default function StudentHomeContent() {
               }}
             >
               Chào mừng {user?.hoTen || welcomeStats?.userName || "học viên"}{" "}
-              trở lại! 👋
+              trở lại!
             </Typography>
             <Typography
               sx={{

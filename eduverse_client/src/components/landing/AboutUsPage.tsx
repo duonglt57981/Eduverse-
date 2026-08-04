@@ -479,6 +479,7 @@ export default function AboutUsPage() {
             elevation={0}
             sx={{
               mt: { xs: 2, md: 4 },
+              mb: { xs: 6, md: 8 },
               p: { xs: 3, md: 5 },
               borderRadius: 2.8,
               overflow: 'hidden',

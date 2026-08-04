@@ -3,6 +3,7 @@
 import { COLORS } from "@/src/theme/tokens";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { apiService } from "@/src/services/index";
 import CvViewerDialog from "@/src/components/common/CvViewerDialog";
 import {
@@ -720,12 +721,15 @@ function LearningActivityHeatmap({ data }: { data: number[] }) {
 
 // Main component
 export default function AdminDashboardContent() {
+  const searchParams = useSearchParams();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Tabs and request states
-  const [adminActiveTab, setAdminActiveTab] = useState(0);
+  const [adminActiveTab, setAdminActiveTab] = useState(() =>
+    searchParams.get("tab") === "instructor-requests" ? 1 : 0,
+  );
   const [requests, setRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [invoiceTotal, setInvoiceTotal] = useState<number>(0);

@@ -129,6 +129,8 @@ namespace Eduverse.Service.PhanService
             if (string.IsNullOrWhiteSpace(request.TenPhan))
                 throw new Exception("Vui lòng nhập tên phần học");
 
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTaoPhan);
+
             var khoaHoc = await _khoaHocRepository
                 .GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == request.IdKhoaHoc);
@@ -136,6 +138,8 @@ namespace Eduverse.Service.PhanService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học");
 
+            if (khoaHoc.CreatedId != nguoiTaoPhan)
+                throw new Exception("Bạn không có quyền hạn để thêm phần học vào khóa học này!");
 
             var content = $"{request.TenPhan} {request.MieuTa}";
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(content);
@@ -219,11 +223,11 @@ namespace Eduverse.Service.PhanService
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
 
             var phan = await GetAll().FirstOrDefaultAsync(x => x.Id == id);
-            if (phan.CreatedId != nguoiTao)
-                throw new Exception("Bạn không có quyền hạn để xóa phần học này!");
-
             if (phan == null)
                 throw new Exception("Không tim thấy phần học");
+
+            if (phan.CreatedId != nguoiTao)
+                throw new Exception("Bạn không có quyền hạn để xóa phần học này!");
 
             if (phan.TrangThaiPheDuyet == "ChoDuyet" || phan.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
@@ -245,6 +249,18 @@ namespace Eduverse.Service.PhanService
 
         public async Task UpdateStructure(UpdateCourseStructureRequest request)
         {
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTaoStructure);
+
+            var khoaHocStructure = await _khoaHocRepository
+                .GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == request.IdKhoaHoc);
+
+            if (khoaHocStructure == null)
+                throw new Exception("Không tìm thấy khóa học");
+
+            if (khoaHocStructure.CreatedId != nguoiTaoStructure)
+                throw new Exception("Bạn không có quyền hạn để sắp xếp cấu trúc khóa học này!");
+
             var phans = await
                 GetQueryable()
                 .Where(x =>

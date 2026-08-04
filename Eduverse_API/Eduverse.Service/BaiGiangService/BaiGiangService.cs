@@ -185,6 +185,10 @@ namespace Eduverse.Service.BaiGiangService
             if (phanHoc == null)
                 throw new Exception("Không tìm thấy phần học");
 
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTaoBaiGiang);
+            if (phanHoc.CreatedId != nguoiTaoBaiGiang)
+                throw new Exception("Bạn không có quyền hạn để thêm bài giảng vào phần học này!");
+
             var uploadResult = await _bunnyService.UploadVideoAsync(request.Video);
 
             int thoiLuongBaiGiang = (int)uploadResult.Duration;
@@ -221,6 +225,9 @@ namespace Eduverse.Service.BaiGiangService
             var banGoc = await GetQueryable()
                .FirstOrDefaultAsync(x => x.Id == request.IdBaiGiang && x.IsBanHienTai);
 
+            if (banGoc == null)
+                throw new Exception("Không tim thấy bài giảng");
+
               if (banGoc.CreatedId != nguoiTao)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
 
@@ -237,9 +244,6 @@ namespace Eduverse.Service.BaiGiangService
 
             if (banGoc.TrangThaiPheDuyet == "DaDuyet")
                 throw new Exception("Khóa học đang ở chế độ Đã Duyệt không thể sửa");
-
-            if (banGoc == null)
-                throw new Exception("Không tim thấy bài giảng");
 
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -393,6 +397,10 @@ namespace Eduverse.Service.BaiGiangService
             var baiGiang = await GetByIdAsync(id);
             if (baiGiang == null)
                 throw new Exception("Không tìm thấy bài giảng");
+
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiXoaBaiGiang);
+            if (baiGiang.CreatedId != nguoiXoaBaiGiang)
+                throw new Exception("Bạn không có quyền hạn để xóa bài giảng này!");
 
             if (baiGiang.TrangThaiPheDuyet == "ChoDuyet" || baiGiang.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
