@@ -16,7 +16,6 @@ import {
   Collapse,
   Chip,
   alpha,
-  LinearProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
@@ -34,7 +33,6 @@ import {
   FONTS,
   isTrangThaiCho,
 } from "@/src/app/admin/approve-courses/types/constants";
-import StatusChip from "./StatusChip";
 
 type LoaiNoiDung = "baiGiang" | "taiLieu" | "baiKiemTra";
 
@@ -102,18 +100,19 @@ export default function KiemDuyetSidebar({
   const flatBaiKiemTra: any[] =
     detail?.baiKiemTras ?? detail?.baiKiemTraChoDuyet ?? [];
 
+  // Bỏ qua trạng thái của tài liệu, chỉ lấy tất cả
   const taiLieuOfBaiGiang = (bg: any) => {
-    if (Array.isArray(bg.taiLieus) && bg.taiLieus.length > 0)
-      return sortPending(bg.taiLieus);
-    return sortPending(
-      flatTaiLieu.filter((tl) => tl.idBaiGiang === bg.idBaiGiang),
-    );
+    if (Array.isArray(bg.taiLieus) && bg.taiLieus.length > 0) {
+      return bg.taiLieus;
+    }
+    return flatTaiLieu.filter((tl) => tl.idBaiGiang === bg.idBaiGiang);
   };
 
   const baiKiemTraOfPhan = (phan: any, phanId: any) => {
-    if (Array.isArray(phan.baiKiemTras) && phan.baiKiemTras.length > 0)
-      return sortPending(phan.baiKiemTras);
-    return sortPending(flatBaiKiemTra.filter((bkt) => bkt.idPhan === phanId));
+    if (Array.isArray(phan.baiKiemTras) && phan.baiKiemTras.length > 0) {
+      return phan.baiKiemTras;
+    }
+    return flatBaiKiemTra.filter((bkt) => bkt.idPhan === phanId);
   };
 
   // Lọc theo search (khớp tên phần / bài giảng / tài liệu / bài kiểm tra)
@@ -151,49 +150,11 @@ export default function KiemDuyetSidebar({
       .filter(Boolean) as any[];
   }, [phans, searchTerm, flatBaiGiang]);
 
-  // Thống kê tổng số mục chờ duyệt (bài giảng + tài liệu + bài kiểm tra)
-  const { tongSo, tongSoCho } = useMemo(() => {
-    let tong = 0;
-    let cho = 0;
-    const countBg = (bg: any) => {
-      tong += 1;
-      if (isTrangThaiCho(bg.trangThaiPheDuyet)) cho += 1;
-      taiLieuOfBaiGiang(bg).forEach((tl: any) => {
-        tong += 1;
-        if (isTrangThaiCho(tl.trangThaiPheDuyet)) cho += 1;
-      });
-    };
-    if (phans.length > 0) {
-      phans.forEach((phan: any, idx: number) => {
-        const id = phan.id ?? phan.idPhan ?? `phan-${idx}`;
-        const baiGiangs = Array.isArray(phan.baiGiangs)
-          ? phan.baiGiangs
-          : flatBaiGiang.filter((bg) => bg.idPhan === id);
-        baiGiangs.forEach(countBg);
-        baiKiemTraOfPhan(phan, id).forEach((bkt: any) => {
-          tong += 1;
-          if (isTrangThaiCho(bkt.trangThaiPheDuyet)) cho += 1;
-        });
-      });
-    } else {
-      flatBaiGiang.forEach(countBg);
-      flatBaiKiemTra.forEach((bkt: any) => {
-        tong += 1;
-        if (isTrangThaiCho(bkt.trangThaiPheDuyet)) cho += 1;
-      });
-    }
-    return { tongSo: tong, tongSoCho: cho };
-  }, [phans, flatBaiGiang, flatBaiKiemTra]);
-
-  const phanTram =
-    tongSo > 0 ? Math.round(((tongSo - tongSoCho) / tongSo) * 100) : 100;
-
   const renderTaiLieu = (bg: any) => {
     const taiLieus = taiLieuOfBaiGiang(bg);
     if (taiLieus.length === 0) return null;
     const bgId = bg.idBaiGiang ?? bg.id;
     const open = openTaiLieu[bgId] ?? false;
-    const soCho = dem(taiLieus);
     return (
       <Box>
         <ListItemButton
@@ -206,29 +167,13 @@ export default function KiemDuyetSidebar({
             "&:hover": { bgcolor: "transparent", color: COLORS.primary },
           }}
         >
-          <AttachFileIcon
-            sx={{ fontSize: 14, mr: 0.75 }}
-          />
+          <AttachFileIcon sx={{ fontSize: 14, mr: 0.75 }} />
           <Typography
             variant="caption"
             sx={{ flex: 1, fontWeight: 700, fontSize: 12 }}
           >
             {taiLieus.length} tài liệu
           </Typography>
-          {soCho > 0 && (
-            <Chip
-              label={`${soCho} chờ duyệt`}
-              size="small"
-              sx={{
-                height: 18,
-                fontSize: 10,
-                fontWeight: 700,
-                bgcolor: COLORS.gold,
-                color: "#fff",
-                mr: 0.5,
-              }}
-            />
-          )}
           {open ? (
             <ExpandLessIcon sx={{ fontSize: 14 }} />
           ) : (
@@ -239,7 +184,6 @@ export default function KiemDuyetSidebar({
           <Stack sx={{ pl: 7, pr: 2, pb: 1, gap: 0.75, mt: 0.5 }}>
             {taiLieus.map((tl: any, idx: number) => {
               const active = isActive("taiLieu", tl);
-              const pending = isTrangThaiCho(tl.trangThaiPheDuyet);
               return (
                 <Box
                   key={tl.idTaiLieu ?? tl.id ?? idx}
@@ -252,12 +196,8 @@ export default function KiemDuyetSidebar({
                     py: 0.75,
                     borderRadius: "6px",
                     cursor: "pointer",
-                    border: `1px solid ${active ? COLORS.primary : pending ? COLORS.gold : "var(--ev-divider, #ECE7E4)"}`,
-                    bgcolor: active
-                      ? "rgba(139, 19, 19, 0.05)"
-                      : pending
-                        ? alpha(COLORS.gold, 0.025)
-                        : "transparent",
+                    border: `1px solid ${active ? COLORS.primary : "var(--ev-divider, #ECE7E4)"}`,
+                    bgcolor: active ? "rgba(139, 19, 19, 0.05)" : "transparent",
                     transition: "all 0.15s ease",
                     "&:hover": {
                       bgcolor: active
@@ -269,7 +209,9 @@ export default function KiemDuyetSidebar({
                   <AttachFileIcon
                     sx={{
                       fontSize: 14,
-                      color: active ? COLORS.primary : pending ? COLORS.gold : "var(--ev-text-muted, #8A7676)",
+                      color: active
+                        ? COLORS.primary
+                        : "var(--ev-text-muted, #8A7676)",
                       flexShrink: 0,
                     }}
                   />
@@ -277,15 +219,16 @@ export default function KiemDuyetSidebar({
                     variant="caption"
                     sx={{
                       flex: 1,
-                      fontWeight: active ? 700 : pending ? 600 : 500,
+                      fontWeight: active ? 700 : 500,
                       fontSize: 12.5,
-                      color: active ? COLORS.primary : "var(--ev-text-primary, #1F2937)",
+                      color: active
+                        ? COLORS.primary
+                        : "var(--ev-text-primary, #1F2937)",
                     }}
                     noWrap
                   >
                     {tl.tenTaiLieu ?? tl.tieuDe}
                   </Typography>
-                  <StatusChip trangThai={tl.trangThaiPheDuyet} size="small" />
                 </Box>
               );
             })}
@@ -355,7 +298,6 @@ export default function KiemDuyetSidebar({
               </Typography>
             }
           />
-          <StatusChip trangThai={bg.trangThaiPheDuyet} size="small" />
         </ListItemButton>
         {renderTaiLieu(bg)}
       </Box>
@@ -428,13 +370,15 @@ export default function KiemDuyetSidebar({
             }
             secondary={
               cauHois.length > 0 ? (
-                <Typography variant="caption" sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 11 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 11 }}
+                >
                   {cauHois.length} câu hỏi
                 </Typography>
               ) : undefined
             }
           />
-          <StatusChip trangThai={bkt.trangThaiPheDuyet} size="small" />
           {cauHois.length > 0 && (
             <IconButton
               size="small"
@@ -523,21 +467,28 @@ export default function KiemDuyetSidebar({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
-            mb: 2,
             bgcolor: "var(--ev-paper, #FFFFFF)",
             "& .MuiOutlinedInput-root": {
               borderRadius: "10px",
               fontSize: 13,
               "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
               "&:hover fieldset": { borderColor: "rgba(139,19,19,0.3)" },
-              "&.Mui-focused fieldset": { borderColor: "#8B1313", borderWidth: 1.5 },
+              "&.Mui-focused fieldset": {
+                borderColor: "#8B1313",
+                borderWidth: 1.5,
+              },
             },
           }}
           slotProps={{
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A7676)" }} />
+                  <SearchIcon
+                    sx={{
+                      fontSize: 18,
+                      color: "var(--ev-text-muted, #8A7676)",
+                    }}
+                  />
                 </InputAdornment>
               ),
               endAdornment: searchTerm ? (
@@ -550,52 +501,6 @@ export default function KiemDuyetSidebar({
             },
           }}
         />
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 0.75,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 700, color: "var(--ev-text-primary, #1F2937)", fontSize: 12.5 }}
-          >
-            Tiến độ kiểm duyệt
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 800,
-              fontSize: 13,
-              color: tongSoCho > 0 ? COLORS.gold : "#10B981",
-            }}
-          >
-            {phanTram}%
-          </Typography>
-        </Box>
-        <LinearProgress
-          variant="determinate"
-          value={phanTram}
-          sx={{
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: alpha(COLORS.gold, 0.10),
-            "& .MuiLinearProgress-bar": {
-              backgroundColor: tongSoCho > 0 ? COLORS.gold : COLORS.success,
-              borderRadius: 3,
-            },
-            mb: 0.75,
-          }}
-        />
-        <Typography
-          variant="caption"
-          sx={{ display: "block", textAlign: "right", color: "var(--ev-text-muted, #8A7676)", fontWeight: 500, fontSize: 11.5 }}
-        >
-          {tongSoCho} / {tongSo} mục đang chờ duyệt
-        </Typography>
       </Box>
 
       {/* Danh sách */}
@@ -610,26 +515,32 @@ export default function KiemDuyetSidebar({
           <>
             {filteredPhans.map((phan: any, phanIndex: number) => {
               const id = phan.id ?? phan.idPhan ?? `phan-${phanIndex}`;
-              const baiGiangs = sortPending(
-                Array.isArray(phan.baiGiangs) ? phan.baiGiangs : [],
-              );
-              const baiKiemTras = sortPending(
-                Array.isArray(phan.baiKiemTras) ? phan.baiKiemTras : [],
-              );
+              const baiGiangs = Array.isArray(phan.baiGiangs)
+                ? phan.baiGiangs
+                : [];
+              const baiKiemTras = Array.isArray(phan.baiKiemTras)
+                ? phan.baiKiemTras
+                : [];
               const soCho = dem(baiGiangs) + dem(baiKiemTras);
               const isOpen = openPhan[id] !== false;
 
               return (
-                <Box key={id} sx={{ borderBottom: "1px solid var(--ev-divider, #ECE7E4)" }}>
+                <Box
+                  key={id}
+                  sx={{ borderBottom: "1px solid var(--ev-divider, #ECE7E4)" }}
+                >
                   <ListItemButton
                     onClick={() => togglePhan(id)}
                     sx={{
-                      bgcolor: soCho > 0 ? "rgba(245, 158, 11, 0.02)" : "transparent",
+                      bgcolor:
+                        soCho > 0 ? "rgba(245, 158, 11, 0.02)" : "transparent",
                       borderLeft: `3px solid ${soCho > 0 ? alpha(COLORS.gold, 0.45) : "transparent"}`,
                       py: 1.75,
                       px: 2.5,
                       transition: "all 0.2s ease",
-                      "&:hover": { bgcolor: "var(--ev-hover, rgba(24, 18, 20, 0.04))" },
+                      "&:hover": {
+                        bgcolor: "var(--ev-hover, rgba(24, 18, 20, 0.04))",
+                      },
                     }}
                   >
                     <FolderRoundedIcon
@@ -638,23 +549,42 @@ export default function KiemDuyetSidebar({
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 800, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)", fontFamily: FONTS.body }}
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 13.5,
+                          color: "var(--ev-text-primary, #1F2937)",
+                          fontFamily: FONTS.body,
+                        }}
                         noWrap
                       >
                         {phanIndex + 1}. {phan.tenPhan}
                       </Typography>
                       <Typography
                         variant="caption"
-                        sx={{ color: "var(--ev-text-muted, #8A7676)", fontWeight: 600, fontSize: 11 }}
+                        sx={{
+                          color: "var(--ev-text-muted, #8A7676)",
+                          fontWeight: 600,
+                          fontSize: 11,
+                        }}
                       >
                         {baiGiangs.length + baiKiemTras.length} mục
                         {soCho > 0 ? ` · ${soCho} chờ duyệt` : ""}
                       </Typography>
                     </Box>
                     {isOpen ? (
-                      <ExpandLessIcon sx={{ fontSize: 20, color: "var(--ev-text-muted, #8A7676)" }} />
+                      <ExpandLessIcon
+                        sx={{
+                          fontSize: 20,
+                          color: "var(--ev-text-muted, #8A7676)",
+                        }}
+                      />
                     ) : (
-                      <ExpandMoreIcon sx={{ fontSize: 20, color: "var(--ev-text-muted, #8A7676)" }} />
+                      <ExpandMoreIcon
+                        sx={{
+                          fontSize: 20,
+                          color: "var(--ev-text-muted, #8A7676)",
+                        }}
+                      />
                     )}
                   </ListItemButton>
                   <Collapse in={isOpen}>
@@ -676,10 +606,8 @@ export default function KiemDuyetSidebar({
           </>
         ) : (
           <List disablePadding>
-            {sortPending(flatBaiGiang).map((bg: any) => renderBaiGiang(bg))}
-            {sortPending(flatBaiKiemTra).map((bkt: any) =>
-              renderBaiKiemTra(bkt),
-            )}
+            {flatBaiGiang.map((bg: any) => renderBaiGiang(bg))}
+            {flatBaiKiemTra.map((bkt: any) => renderBaiKiemTra(bkt))}
           </List>
         )}
       </Box>
