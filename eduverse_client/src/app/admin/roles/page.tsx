@@ -486,10 +486,13 @@ export default function AdminRolesPage() {
   };
 
   const getRoleDisplayNameVi = (name: string) => {
-    if (name === "Admin") return "Quản trị viên";
-    if (name === "GiaoVien" || name === "Instructor") return "Giảng viên";
-    if (name === "HocVien" || name === "Student") return "Học viên";
-    return "Vai trò tùy chỉnh";
+    if (!name) return "Vai trò tùy chỉnh";
+    const lower = name.toLowerCase();
+    if (lower === "admin") return "Quản trị viên";
+    if (lower === "giaovien" || lower === "instructor") return "Giảng viên";
+    if (lower === "hocvien" || lower === "student") return "Học viên";
+    if (lower === "personnel" || lower === "nhanvien") return "Nhân viên";
+    return name;
   };
 
   return (
@@ -947,7 +950,7 @@ export default function AdminRolesPage() {
                               <Typography
                                 sx={{ fontWeight: 700, color: COLORS.textDark }}
                               >
-                                {role.displayName}
+                                {getRoleDisplayNameVi(role.displayName || role.name)}
                               </Typography>
                             </Stack>
                           </TableCell>
@@ -1110,7 +1113,7 @@ export default function AdminRolesPage() {
               >
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                    Ma trận phân quyền: {selectedRole.displayName}
+                    Ma trận phân quyền: {getRoleDisplayNameVi(selectedRole.displayName || selectedRole.name)}
                   </Typography>
                   <Typography
                     variant="body2"

@@ -45,7 +45,14 @@ namespace Eduverse.Api
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddScoped<DbContext, EduverseContext>();
-            builder.Services.AddDbContext<EduverseContext>(op => op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddDbContext<EduverseContext>(op => op.UseSqlServer(
+                builder.Configuration.GetConnectionString("DefaultConnection"),
+                sqlOp => sqlOp.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorNumbersToAdd: null
+                )
+            ));
             builder.Services.AddIdentity<AppUser, AppRole>(options =>
             {
                 options.User.AllowedUserNameCharacters =

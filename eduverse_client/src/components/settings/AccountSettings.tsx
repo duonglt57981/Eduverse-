@@ -24,6 +24,9 @@ import {
   DialogActions,
   Divider,
   Tooltip,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import type { Theme } from "@mui/material/styles";
@@ -47,6 +50,8 @@ import {
   FormatListNumberedRounded,
   LinkRounded,
   FormatQuoteRounded,
+  WcRounded,
+  BadgeRounded,
 } from "@mui/icons-material";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -58,15 +63,18 @@ import DOMPurify from "dompurify";
 import { apiService } from "@/src/services/index";
 
 interface ProfileData {
+  userName?: string;
   hoTen: string;
   email: string;
   phoneNumber: string;
   phoneNumberConfirmed: boolean;
   ngaySinh: string;
+  gioiTinh: number;
   diaChi: string;
   tieuSu: string;
   anhDaiDien: string;
   chucVu: string;
+  roles?: string[];
   twoFactorEnabled: boolean;
 }
 
@@ -265,6 +273,7 @@ export default function AccountSettings() {
     phoneNumber: "",
     phoneNumberConfirmed: false,
     ngaySinh: "",
+    gioiTinh: 0,
     diaChi: "",
     tieuSu: "",
     anhDaiDien: "",
@@ -316,15 +325,18 @@ export default function AccountSettings() {
       if (res.status && res.data) {
         const data = res.data;
         const profileData: ProfileData = {
+          userName: data.userName || "",
           hoTen: data.hoTen || "",
           email: data.email || "",
           phoneNumber: data.phoneNumber || "",
           phoneNumberConfirmed: Boolean(data.phoneNumberConfirmed),
           ngaySinh: data.ngaySinh || "",
+          gioiTinh: data.gioiTinh !== undefined ? data.gioiTinh : 1,
           diaChi: data.diaChi || "",
           tieuSu: data.tieuSu || "",
           anhDaiDien: data.anhDaiDien || "",
           chucVu: data.chucVu || "",
+          roles: Array.isArray(data.roles) ? data.roles : [],
           twoFactorEnabled: data.twoFactorEnabled || false,
         };
         setProfile(profileData);
@@ -521,6 +533,7 @@ export default function AccountSettings() {
         phoneNumber: tempProfile.phoneNumber,
         diaChi: tempProfile.diaChi,
         ngaySinh: tempProfile.ngaySinh,
+        gioiTinh: tempProfile.gioiTinh,
         tieuSu: tempProfile.tieuSu,
       };
 
@@ -790,13 +803,19 @@ export default function AccountSettings() {
               >
                 {profile.hoTen || "Học viên EduVerse"}
               </Typography>
-              <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                {profile.chucVu || "Học viên"}
+              <Typography sx={{ color: "text.secondary", fontSize: 14, fontWeight: 700 }}>
+                {profile.roles?.some(r => r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien")
+                  ? "Nhân viên kiểm duyệt"
+                  : profile.roles?.some(r => r.toLowerCase() === "admin")
+                  ? "Quản trị viên"
+                  : profile.roles?.some(r => r.toLowerCase() === "giaovien" || r.toLowerCase() === "instructor")
+                  ? "Giảng viên EduVerse"
+                  : profile.chucVu || "Học viên EduVerse"}
               </Typography>
               <Typography
                 sx={{ color: "primary.main", fontSize: 13, fontWeight: 700 }}
               >
-                {profile.email}
+                {profile.email} {profile.userName ? `(@${profile.userName})` : ""}
               </Typography>
             </Stack>
 
@@ -877,6 +896,7 @@ export default function AccountSettings() {
           </Stack>
 
           <Grid container spacing={3}>
+            {/* Row 1: Họ tên & Tên đăng nhập */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={0.75}>
                 <Typography
@@ -924,6 +944,51 @@ export default function AccountSettings() {
               </Stack>
             </Grid>
 
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Stack spacing={0.75}>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "text.primary",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <BadgeRounded
+                    fontSize="inherit"
+                    sx={{ color: "rgba(25,23,28,0.4)" }}
+                  />{" "}
+                  Tên đăng nhập
+                </Typography>
+                <TextField
+                  fullWidth
+                  name="userName"
+                  value={profile.userName}
+                  disabled
+                  placeholder="Tên đăng nhập hệ thống"
+                  slotProps={{
+                    input: {
+                      sx: {
+                        borderRadius: 2.8,
+                        bgcolor: "action.hover",
+                        transition: "all 160ms ease",
+                      },
+                    },
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      "& fieldset": {
+                        borderColor: "rgba(17,17,17,0.08)",
+                      },
+                    },
+                  }}
+                />
+              </Stack>
+            </Grid>
+
+            {/* Row 2: Email & Số điện thoại */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={0.75}>
                 <Typography
@@ -1046,6 +1111,7 @@ export default function AccountSettings() {
               </Stack>
             </Grid>
 
+            {/* Row 3: Ngày sinh & Giới tính */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={0.75}>
                 <Typography
@@ -1094,7 +1160,7 @@ export default function AccountSettings() {
               </Stack>
             </Grid>
 
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={0.75}>
                 <Typography
                   sx={{
@@ -1106,184 +1172,36 @@ export default function AccountSettings() {
                     gap: 1,
                   }}
                 >
-                  <LocationOnRounded
+                  <WcRounded
                     fontSize="inherit"
                     sx={{ color: "rgba(25,23,28,0.4)" }}
                   />{" "}
-                  Địa chỉ
+                  Giới tính
                 </Typography>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={2}
-                  name="diaChi"
-                  value={isEditing ? tempProfile.diaChi : profile.diaChi}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  placeholder="Nhập địa chỉ của bạn"
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: 2.8,
-                        bgcolor: !isEditing
-                          ? "action.hover"
-                          : "background.paper",
-                        transition: "all 160ms ease",
-                      },
-                    },
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "rgba(17,17,17,0.08)",
-                      },
-                    },
-                  }}
-                />
-              </Stack>
-            </Grid>
-
-            {/* Tiểu sử: chỉnh sửa bằng Tiptap (rich text), hiển thị HTML đã sanitize bằng DOMPurify */}
-            <Grid size={{ xs: 12 }}>
-              <Stack spacing={0.75}>
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "text.primary",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  <DescriptionRounded
-                    fontSize="inherit"
-                    sx={{ color: "rgba(25,23,28,0.4)" }}
-                  />{" "}
-                  Tiểu sử
-                </Typography>
-
-                {isEditing ? (
-                  <>
-                    <Box
-                      sx={{
-                        borderRadius: 2.8,
-                        border: "1px solid",
-                        borderColor: tieuSuError
-                          ? "error.main"
-                          : "rgba(17,17,17,0.08)",
-                        overflow: "hidden",
-                        bgcolor: "background.paper",
-                        "&:focus-within": {
-                          borderColor: tieuSuError
-                            ? "error.main"
-                            : "primary.main",
-                          boxShadow: (t) =>
-                            `0 0 0 3px ${alpha(
-                              tieuSuError
-                                ? t.palette.error.main
-                                : t.palette.primary.main,
-                              0.12,
-                            )}`,
-                        },
-                      }}
-                    >
-                      <TieuSuToolbar editor={tieuSuEditor} />
-                      <Box
-                        sx={{
-                          px: 1.75,
-                          py: 1.25,
-                          minHeight: 96,
-                          maxHeight: 260,
-                          overflowY: "auto",
-                          fontSize: 14,
-                          lineHeight: 1.6,
-                          "& .ProseMirror": { outline: "none" },
-                          "& .ProseMirror p.is-editor-empty:first-of-type::before":
-                            {
-                              content: "attr(data-placeholder)",
-                              color: "text.disabled",
-                              float: "left",
-                              height: 0,
-                              pointerEvents: "none",
-                            },
-                          "& p": { m: 0, mb: 0.75 },
-                          "& ul, & ol": { pl: 3, mb: 0.75 },
-                          "& a": { color: theme.palette.primary.main },
-                          "& blockquote": {
-                            borderLeft: "3px solid",
-                            borderColor: "divider",
-                            pl: 1.5,
-                            ml: 0,
-                            color: "text.secondary",
-                          },
-                        }}
-                      >
-                        <EditorContent editor={tieuSuEditor} />
-                      </Box>
-                    </Box>
-                    <Stack
-                      direction="row"
-                      sx={{
-                        mt: 0.5,
-                        px: 0.25,
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: 12,
-                          color: tieuSuError ? "error.main" : "text.secondary",
-                          fontWeight: tieuSuError ? 700 : 400,
-                        }}
-                      >
-                        {tieuSuError ||
-                          "Không bắt buộc — nếu nhập, cần 50–1500 từ"}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 12,
-                          flexShrink: 0,
-                          ml: 1,
-                          color: tieuSuError ? "error.main" : "text.disabled",
-                        }}
-                      >
-                        {tieuSuWordCount}/{TIEU_SU_MAX_WORDS} từ
-                      </Typography>
-                    </Stack>
-                  </>
-                ) : (
-                  <Box
+                <FormControl fullWidth disabled={!isEditing}>
+                  <Select
+                    name="gioiTinh"
+                    value={isEditing ? tempProfile.gioiTinh : profile.gioiTinh}
+                    onChange={(e) => setTempProfile(prev => ({ ...prev, gioiTinh: Number(e.target.value) }))}
                     sx={{
                       borderRadius: 2.8,
-                      bgcolor: "action.hover",
-                      px: 1.75,
-                      py: 1.25,
-                      minHeight: 96,
-                      fontSize: 14,
-                      lineHeight: 1.6,
-                      color: profile.tieuSu ? "text.primary" : "text.disabled",
-                      "& p": { m: 0, mb: 0.75 },
-                      "& ul, & ol": { pl: 3, mb: 0.75 },
-                      "& a": { color: "primary.main" },
-                      "& blockquote": {
-                        borderLeft: "3px solid",
-                        borderColor: "divider",
-                        pl: 1.5,
-                        ml: 0,
-                        color: "text.secondary",
+                      bgcolor: !isEditing
+                        ? "action.hover"
+                        : "background.paper",
+                      height: '53px',
+                      '& fieldset': {
+                        borderColor: "rgba(17,17,17,0.08)",
                       },
                     }}
-                    dangerouslySetInnerHTML={{
-                      __html: profile.tieuSu
-                        ? sanitizeHtml(profile.tieuSu)
-                        : "Giới thiệu ngắn gọn về bản thân...",
-                    }}
-                  />
-                )}
+                  >
+                    <MenuItem value={1}>Nam</MenuItem>
+                    <MenuItem value={2}>Nữ</MenuItem>
+                    <MenuItem value={0}>Khác</MenuItem>
+                  </Select>
+                </FormControl>
               </Stack>
             </Grid>
+
           </Grid>
         </CardContent>
       </Card>
