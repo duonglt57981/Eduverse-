@@ -240,7 +240,8 @@ export default function DuyetKhoaHocPage() {
 
   return (
     <AuthGuard allowedRoles={["Admin", "personnel"]}>
-      <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      <DashboardShell>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
         {/* Header */}
         <Stack
           direction="row"
@@ -360,12 +361,6 @@ export default function DuyetKhoaHocPage() {
                   borderRadius: "18px",
                   border: `1px solid ${COLORS.line}`,
                   bgcolor: COLORS.paperRaised,
-                  transition: "all .2s ease",
-                  "&:hover": {
-                    borderColor: alpha(stat.color, 0.35),
-                    transform: "translateY(-2px)",
-                    boxShadow: `0 8px 22px ${alpha(stat.color, 0.1)}`,
-                  },
                 }}
               >
                 <Box
@@ -759,6 +754,7 @@ export default function DuyetKhoaHocPage() {
           </Box>
         </Box>
       </Box>
+      </DashboardShell>
     </AuthGuard>
   );
 }

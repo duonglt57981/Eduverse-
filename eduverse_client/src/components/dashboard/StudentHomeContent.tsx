@@ -1013,13 +1013,15 @@ function SectionHeader({
   );
 }
 
-// ─── Continue-learning progress card ─────────────────────────────────────────
+// ─── Continue-learning progress card (Sleek Modern Square Card) ───────────────
 function ContinueLearningCard({
   item,
   onOpen,
+  width = 245,
 }: {
   item: KhoaHocDto;
   onOpen: (c: KhoaHocDto) => void;
+  width?: number;
 }) {
   const title = item.tieuDe || item.title || "";
   const gradient = getGradient(item);
@@ -1035,97 +1037,236 @@ function ContinueLearningCard({
       elevation={0}
       onClick={() => onOpen(item)}
       sx={{
-        display: "flex",
-        gap: 1.75,
-        p: 1.5,
-        borderRadius: "14px",
+        width,
+        flexShrink: 0,
+        borderRadius: "18px",
+        overflow: "hidden",
         border: `1px solid ${C.border}`,
         bgcolor: C.white,
         cursor: "pointer",
         transition:
-          "transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease",
+          "transform 280ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1), border-color 280ms ease",
         "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: "0 12px 32px rgba(139,19,19,0.10)",
-          borderColor: C.primaryBorder,
+          transform: "translateY(-6px)",
+          boxShadow: "0 16px 36px -8px rgba(139, 19, 19, 0.14)",
+          borderColor: "rgba(139, 19, 19, 0.3)",
+          "& .play-glass-btn": {
+            transform: "scale(1.15)",
+            background: "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
+            color: "#ffffff",
+            boxShadow: "0 10px 24px rgba(139,19,19,0.45)",
+          },
+          "& .card-title-text": {
+            color: C.primary,
+          },
         },
       }}
     >
+      {/* ── 1. Top Image Thumbnail Container ── */}
       <Box
         sx={{
-          width: 116,
-          height: 80,
-          borderRadius: "10px",
-          flexShrink: 0,
+          height: 140,
           position: "relative",
           overflow: "hidden",
-          background: item.hinhAnhKhoaHoc
-            ? `url(${item.hinhAnhKhoaHoc}) center/cover no-repeat`
+          background: isValidImage(item.hinhAnhKhoaHoc)
+            ? `linear-gradient(to top, rgba(15, 23, 42, 0.6) 0%, transparent 60%), url(${item.hinhAnhKhoaHoc}) center/cover no-repeat`
             : gradient,
-          display: "grid",
-          placeItems: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
+        {/* Glassmorphic Play Button */}
         <Box
+          className="play-glass-btn"
           sx={{
-            width: 34,
-            height: 34,
+            width: 46,
+            height: 46,
             borderRadius: "50%",
-            bgcolor: "rgba(255,255,255,0.92)",
+            background: "rgba(255, 255, 255, 0.90)",
+            backdropFilter: "blur(12px)",
             color: C.primary,
             display: "grid",
             placeItems: "center",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.22)",
+            transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         >
-          <PlayArrowRounded />
+          <PlayArrowRounded sx={{ fontSize: 28, ml: 0.2 }} />
         </Box>
+
+        {/* Level Badge (Top Left) */}
+        {(item.capDo || item.level) && (
+          <Chip
+            label={item.capDo || item.level}
+            size="small"
+            sx={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              bgcolor: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(8px)",
+              color: C.primary,
+              fontWeight: 800,
+              fontSize: 10,
+              height: 22,
+              px: 0.5,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            }}
+          />
+        )}
+
+        {/* Percentage Chip Badge (Bottom Right) */}
+        <Chip
+          label={pct === 100 ? "100% ✓" : pct === 0 ? "Mới" : `${pct}%`}
+          size="small"
+          sx={{
+            position: "absolute",
+            bottom: 10,
+            right: 10,
+            background:
+              pct === 100
+                ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+                : pct === 0
+                ? "rgba(15, 23, 42, 0.75)"
+                : C.gradientCrimson,
+            backdropFilter: pct === 0 ? "blur(8px)" : undefined,
+            color: "#fff",
+            fontWeight: 800,
+            fontSize: 10.5,
+            height: 22,
+            px: 0.75,
+            boxShadow:
+              pct === 100
+                ? "0 4px 12px rgba(16,185,129,0.35)"
+                : "0 4px 12px rgba(139,19,19,0.35)",
+          }}
+        />
       </Box>
-      <Box
-        sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}
-      >
+
+      {/* ── 2. Card Body Content ── */}
+      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1.25 }}>
         <Typography
+          className="card-title-text"
           sx={{
             fontSize: 14,
             fontWeight: 800,
-            color: C.textDark,
-            lineHeight: 1.35,
+            lineHeight: 1.4,
+            height: 40,
+            overflow: "hidden",
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
-            overflow: "hidden",
+            color: C.textDark,
+            transition: "color 200ms ease",
           }}
         >
           {title}
         </Typography>
-        {done != null && total != null && (
-          <Typography sx={{ fontSize: 11.5, color: C.textMuted, mt: 0.4 }}>
-            {done}/{total} bài giảng
-          </Typography>
-        )}
-        <Box
-          sx={{
-            mt: "auto",
-            pt: 1,
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
+
+        {/* Progress Info & Bar */}
+        <Box sx={{ mt: 0.25 }}>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 0.75,
+            }}
+          >
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+              <MenuBookRounded sx={{ fontSize: 13, color: C.textMuted }} />
+              <Typography
+                sx={{ fontSize: 11.5, color: C.textSecondary, fontWeight: 600 }}
+              >
+                {done != null && total != null
+                  ? `${done}/${total} bài học`
+                  : "Tiến độ học tập"}
+              </Typography>
+            </Stack>
+
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 900,
+                color: pct === 100 ? "#10B981" : C.primary,
+              }}
+            >
+              {pct}%
+            </Typography>
+          </Stack>
+
           <LinearProgress
             variant="determinate"
             value={pct}
             sx={{
-              flex: 1,
-              height: 6,
+              height: 7,
               borderRadius: 99,
               bgcolor: "var(--dashboard-surface-muted)",
-              "& .MuiLinearProgress-bar": { bgcolor: C.ok, borderRadius: 99 },
+              "& .MuiLinearProgress-bar": {
+                background:
+                  pct === 100
+                    ? "linear-gradient(90deg, #34D399 0%, #10B981 100%)"
+                    : "linear-gradient(90deg, #F43F5E 0%, #8B1313 100%)",
+                borderRadius: 99,
+                boxShadow:
+                  pct === 100
+                    ? "0 2px 8px rgba(16,185,129,0.35)"
+                    : "0 2px 8px rgba(139,19,19,0.3)",
+              },
             }}
           />
-          <Typography sx={{ fontSize: 11.5, fontWeight: 800, color: C.ok }}>
-            {pct}%
-          </Typography>
         </Box>
+
+        {/* Soft Tint Interactive Action Button */}
+        <Button
+          fullWidth
+          variant="contained"
+          size="small"
+          startIcon={
+            pct === 100 ? (
+              <CheckCircleRounded sx={{ fontSize: "16px !important" }} />
+            ) : (
+              <PlayCircleFilledRounded sx={{ fontSize: "16px !important" }} />
+            )
+          }
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(item);
+          }}
+          sx={{
+            mt: 0.5,
+            borderRadius: "12px",
+            py: 1,
+            fontWeight: 800,
+            fontSize: 12.5,
+            bgcolor:
+              pct === 100
+                ? "rgba(16, 185, 129, 0.09)"
+                : "rgba(139, 19, 19, 0.08)",
+            color: pct === 100 ? "#059669" : C.primary,
+            border:
+              pct === 100
+                ? "1px solid rgba(16, 185, 129, 0.22)"
+                : "1px solid rgba(139, 19, 19, 0.2)",
+            boxShadow: "none",
+            transition: "all 240ms ease",
+            "&:hover": {
+              background:
+                pct === 100
+                  ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+                  : C.gradientCrimson,
+              color: "#ffffff",
+              borderColor: "transparent",
+              boxShadow:
+                pct === 100
+                  ? "0 6px 20px rgba(16,185,129,0.35)"
+                  : "0 6px 20px rgba(139,19,19,0.35)",
+            },
+          }}
+        >
+          {pct === 100 ? "Xem lại" : "Tiếp tục học"}
+        </Button>
       </Box>
     </Paper>
   );
@@ -1166,6 +1307,48 @@ export default function StudentHomeContent() {
   >("courses");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  // Lọc danh sách "Khóa học mới nhất":
+  // 1. Chỉ lấy khóa học được tạo trong 1 tháng gần nhất
+  // 2. Chỉ hiển thị khóa học người dùng chưa sở hữu, chưa đăng ký
+  const filteredLatestCourses = useMemo(() => {
+    if (!latestCourses || !Array.isArray(latestCourses)) return [];
+
+    const enrolledIds = new Set<string>();
+    if (data?.continueLearning?.courses) {
+      data.continueLearning.courses.forEach((item) => {
+        if (item.id) enrolledIds.add(String(item.id));
+        if (item.idDangKiKhoaHoc) enrolledIds.add(String(item.idDangKiKhoaHoc));
+      });
+    }
+
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+
+    return latestCourses.filter((c: any) => {
+      // Loại bỏ nếu người dùng đã đăng ký / sở hữu khóa học
+      if (c.daDangKy) return false;
+      const courseId = String(c.id || c.idDangKiKhoaHoc || "");
+      if (courseId && enrolledIds.has(courseId)) return false;
+
+      // Loại bỏ khóa học cũ hơn 1 tháng
+      const rawDate =
+        c.createdDate ||
+        c.ngayTao ||
+        c.ngayTaoKhoaHoc ||
+        c.createdAt ||
+        c.created_at;
+
+      if (rawDate) {
+        const date = new Date(rawDate);
+        if (!isNaN(date.getTime()) && date < oneMonthAgo) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [latestCourses, data?.continueLearning?.courses]);
 
   const load = useCallback(async () => {
     try {
@@ -1574,26 +1757,31 @@ export default function StudentHomeContent() {
             onAction={goExplore}
           />
         ) : (
-          <Grid container spacing={2}>
+          <CarouselRow>
             {continueLearning.courses.map((item, i) => (
-              <Grid
+              <ContinueLearningCard
                 key={item.id || item.idDangKiKhoaHoc || i}
-                size={{ xs: 12, md: 6 }}
-              >
-                <ContinueLearningCard item={item} onOpen={handleOpenCourse} />
-              </Grid>
+                item={{
+                  ...item,
+                  hinhAnhKhoaHoc:
+                    item.hinhAnhKhoaHoc ||
+                    courseImages[item.id || ""] ||
+                    titleImages[item.tieuDe || item.title || ""],
+                }}
+                onOpen={handleOpenCourse}
+              />
             ))}
-          </Grid>
+          </CarouselRow>
         )}
       </Box>
 
 
-      {/* ── 6. Khóa học mới nhất (toàn bộ khóa học đã duyệt) ────────── */}
-      {latestCourses.length > 0 && (
+      {/* ── 6. Khóa học mới nhất (chỉ khóa tạo trong 1 tháng & chưa đăng ký) ── */}
+      {filteredLatestCourses.length > 0 && (
         <Box>
           <SectionHeader title="Khóa học mới nhất" />
           <CarouselRow>
-            {latestCourses.map((c: any, i: number) => (
+            {filteredLatestCourses.map((c: any, i: number) => (
               <CourseCard
                 key={c.id || i}
                 course={{

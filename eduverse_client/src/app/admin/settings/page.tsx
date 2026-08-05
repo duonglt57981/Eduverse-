@@ -43,22 +43,29 @@ import {
   VisibilityOffRounded,
   WarningRounded,
   CheckCircleOutlineRounded,
-  LaptopMacRounded,
   PhoneIphoneRounded,
+  LaptopMacRounded,
   ErrorOutlineRounded,
+  PersonRounded,
 } from "@mui/icons-material";
 import { useSelector } from "@/src/store/hook";
 import { apiService } from "@/src/services/index";
 import Swal from "sweetalert2";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import AccountSettings from "@/src/components/settings/AccountSettings";
 
 export default function AdminSettingsPage() {
+  const pathname = usePathname();
   const [activeTab, setActiveTab] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load user info from Redux store as baseline
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reduxUser = useSelector((state: any) => state.auth.user);
+  const isPersonnel =
+    pathname.startsWith("/personnel") ||
+    reduxUser?.roles?.some((r: string) => r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien");
 
   // --- Real-time loading & profile states ---
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -706,6 +713,43 @@ export default function AdminSettingsPage() {
     ? profile.hoTen.split(" ").pop()?.substring(0, 2).toUpperCase() || "AD"
     : "AD";
 
+  if (isPersonnel) {
+    return (
+      <AuthGuard allowedRoles={["Admin", "personnel"]}>
+        <DashboardShell>
+          <Box
+            sx={{
+              px: { xs: 2.5, md: 4.5 },
+              py: { xs: 3, md: 5 },
+              width: "100%",
+              maxWidth: 1200,
+              mx: "auto",
+            }}
+          >
+            <Box sx={{ mb: 3.5 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 900,
+                  color: "text.primary",
+                  letterSpacing: "-0.7px",
+                  mb: 1,
+                }}
+              >
+                Hồ sơ cá nhân
+              </Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: 14.5 }}>
+                Quản lý và cập nhật thông tin tài khoản cá nhân của bạn trên hệ thống EduVerse.
+              </Typography>
+            </Box>
+
+            <AccountSettings />
+          </Box>
+        </DashboardShell>
+      </AuthGuard>
+    );
+  }
+
   return (
     <AuthGuard allowedRoles={["Admin", "personnel"]}>
       <DashboardShell>
@@ -724,26 +768,26 @@ export default function AdminSettingsPage() {
                   color: 'var(--ev-text-primary, #1F2937)',
                 }}
               >
-                Cấu hình & Cài đặt hệ thống
+                {isPersonnel ? "Thông tin tài khoản cá nhân" : "Cấu hình & Cài đặt hệ thống"}
               </Typography>
-              {profile.roles === "Super Admin" && (
-                <Box
-                  sx={{
-                    px: 1.5,
-                    py: 0.5,
-                    bgcolor: "#FEF2F2",
-                    border: "1px solid #FCA5A5",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <Typography sx={{ fontSize: 11, fontWeight: 800, color: '#8B1313' }}>
-                    SUPER ADMIN
-                  </Typography>
-                </Box>
-              )}
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  bgcolor: isPersonnel ? "#F3E8FF" : "#FEF2F2",
+                  border: isPersonnel ? "1px solid #C084FC" : "1px solid #FCA5A5",
+                  borderRadius: "8px",
+                }}
+              >
+                <Typography sx={{ fontSize: 11, fontWeight: 800, color: isPersonnel ? "#7C3AED" : "#8B1313" }}>
+                  {isPersonnel ? "NHÂN VIÊN KIỂM DUYỆT" : "SUPER ADMIN"}
+                </Typography>
+              </Box>
             </Stack>
             <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 14 }}>
-              Cổng quản lý và điều chỉnh thông tin hồ sơ bảo mật cá nhân, thông số vận hành của EduVerse.
+              {isPersonnel
+                ? "Cổng quản lý và điều chỉnh thông tin hồ sơ cá nhân của bạn tại EduVerse."
+                : "Cổng quản lý và điều chỉnh thông tin hồ sơ bảo mật cá nhân, thông số vận hành của EduVerse."}
             </Typography>
           </Box>
 
@@ -800,28 +844,34 @@ export default function AdminSettingsPage() {
                   }}
                 >
                   <Tab
-                    label="Tài khoản Admin"
+                    label={isPersonnel ? "Tài khoản cá nhân" : "Tài khoản Admin"}
                     icon={
-                      <AdminPanelSettingsRounded
-                        sx={{ mr: 1.5, fontSize: 20 }}
-                      />
+                      isPersonnel ? (
+                        <PersonRounded sx={{ mr: 1.5, fontSize: 20 }} />
+                      ) : (
+                        <AdminPanelSettingsRounded sx={{ mr: 1.5, fontSize: 20 }} />
+                      )
                     }
                     iconPosition="start"
                   />
-                  <Tab
-                    label="Bảo mật & Phiên"
-                    icon={<SecurityRounded sx={{ mr: 1.5, fontSize: 20 }} />}
-                    iconPosition="start"
-                  />
-                  <Tab
-                    label="Vận hành hệ thống"
-                    icon={
-                      <SettingsApplicationsRounded
-                        sx={{ mr: 1.5, fontSize: 20 }}
-                      />
-                    }
-                    iconPosition="start"
-                  />
+                  {!isPersonnel && (
+                    <Tab
+                      label="Bảo mật & Phiên"
+                      icon={<SecurityRounded sx={{ mr: 1.5, fontSize: 20 }} />}
+                      iconPosition="start"
+                    />
+                  )}
+                  {!isPersonnel && (
+                    <Tab
+                      label="Vận hành hệ thống"
+                      icon={
+                        <SettingsApplicationsRounded
+                          sx={{ mr: 1.5, fontSize: 20 }}
+                        />
+                      }
+                      iconPosition="start"
+                    />
+                  )}
                 </Tabs>
               </Paper>
             </Grid>
@@ -863,7 +913,7 @@ export default function AdminSettingsPage() {
                           }}
                         >
                           <Typography variant="h6" sx={{ fontWeight: 800, mb: 3.5, color: 'var(--ev-text-primary, #1F2937)' }}>
-                            Hồ sơ quản trị viên
+                            {isPersonnel ? "Hồ sơ cá nhân nhân viên" : "Hồ sơ quản trị viên"}
                           </Typography>
 
                           <Stack
@@ -921,7 +971,9 @@ export default function AdminSettingsPage() {
                             <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                               <Typography sx={{ fontWeight: 800, fontSize: 16.5 }}>{profile.hoTen}</Typography>
                               <Typography sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 13, mt: 0.5 }}>
-                                Vai trò hệ thống: <strong style={{ color: '#8B1313' }}>{profile.roles}</strong>
+                                Vai trò hệ thống: <strong style={{ color: isPersonnel ? '#7C3AED' : '#8B1313' }}>
+                                  {isPersonnel || profile.roles?.toLowerCase() === "personnel" ? "Nhân viên kiểm duyệt" : profile.roles}
+                                </strong>
                               </Typography>
                             </Box>
                           </Stack>

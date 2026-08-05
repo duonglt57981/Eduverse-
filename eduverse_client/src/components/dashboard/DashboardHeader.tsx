@@ -118,6 +118,11 @@ export default function DashboardHeader({
     .toUpperCase();
 
   const getHomeRoute = () => {
+    if (
+      pathname.startsWith("/personnel") ||
+      roles.some((r: string) => r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien")
+    )
+      return "/personnel/approve-courses";
     if (roles.includes("Admin")) return "/admin/dashboard";
     if (roles.includes("GiaoVien")) return "/instructor/dashboard";
     return "/student/dashboard";

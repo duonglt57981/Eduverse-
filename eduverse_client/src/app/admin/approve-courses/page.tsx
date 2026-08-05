@@ -382,12 +382,6 @@ export default function DuyetKhoaHocPage() {
                     borderRadius: "18px",
                     border: `1px solid ${COLORS.line}`,
                     bgcolor: COLORS.paperRaised,
-                    transition: "all .2s ease",
-                    "&:hover": {
-                      borderColor: alpha(stat.color, 0.35),
-                      transform: "translateY(-2px)",
-                      boxShadow: `0 8px 22px ${alpha(stat.color, 0.10)}`,
-                    },
                   }}
                 >
                   <Box

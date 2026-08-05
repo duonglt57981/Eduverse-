@@ -307,19 +307,34 @@ export default function LichSuKiemDuyetPage() {
                 label: "Tổng đã xử lý",
                 value: stats.tong,
                 color: COLORS.primary,
-                icon: <SchoolRoundedIcon sx={{ fontSize: 18 }} />,
+                cardBg:
+                  "linear-gradient(135deg, rgba(139,19,19,0.04) 0%, rgba(139,19,19,0.01) 100%)",
+                borderColor: "rgba(139,19,19,0.14)",
+                iconBg: "linear-gradient(135deg, #8B1313 0%, #6D0F0F 100%)",
+                iconShadow: "0 4px 12px rgba(139,19,19,0.22)",
+                icon: <SchoolRoundedIcon sx={{ fontSize: 20 }} />,
               },
               {
                 label: "Đã duyệt",
                 value: stats.daDuyet,
-                color: "success.main",
-                icon: <CheckCircleRoundedIcon sx={{ fontSize: 18 }} />,
+                color: "#059669",
+                cardBg:
+                  "linear-gradient(135deg, rgba(16,185,129,0.04) 0%, rgba(16,185,129,0.01) 100%)",
+                borderColor: "rgba(16,185,129,0.16)",
+                iconBg: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                iconShadow: "0 4px 12px rgba(16,185,129,0.22)",
+                icon: <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />,
               },
               {
                 label: "Từ chối",
                 value: stats.tuChoi,
-                color: "error.main",
-                icon: <CancelRoundedIcon sx={{ fontSize: 18 }} />,
+                color: "#DC2626",
+                cardBg:
+                  "linear-gradient(135deg, rgba(239,68,68,0.04) 0%, rgba(239,68,68,0.01) 100%)",
+                borderColor: "rgba(239,68,68,0.16)",
+                iconBg: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
+                iconShadow: "0 4px 12px rgba(239,68,68,0.22)",
+                icon: <CancelRoundedIcon sx={{ fontSize: 20 }} />,
               },
             ].map((stat, index) => (
               <Box
@@ -336,28 +351,38 @@ export default function LichSuKiemDuyetPage() {
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 1.75,
-                    borderRadius: 2.5,
-                    border: `1px solid ${COLORS.line}`,
-                    textAlign: "center",
+                    p: "1.25rem 1.5rem",
+                    borderRadius: "18px",
+                    border: `1px solid ${stat.borderColor}`,
+                    background: stat.cardBg,
                     display: "flex",
-                    flexDirection: "column",
                     alignItems: "center",
-                    gap: 0.4,
+                    gap: 2,
                   }}
                 >
                   <Box
-                    sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: stat.iconBg,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#ffffff",
+                      flexShrink: 0,
+                      boxShadow: stat.iconShadow,
+                    }}
                   >
-                    <Box sx={{ color: stat.color, display: "flex" }}>
-                      {stat.icon}
-                    </Box>
+                    {stat.icon}
+                  </Box>
+                  <Box>
                     <Typography
-                      variant="h6"
                       sx={{
-                        fontWeight: 700,
+                        fontSize: 22,
+                        fontWeight: 900,
+                        lineHeight: 1.1,
                         color: stat.color,
-                        lineHeight: 1.3,
                       }}
                     >
                       {loadingStats ? (
@@ -366,10 +391,17 @@ export default function LichSuKiemDuyetPage() {
                         stat.value
                       )}
                     </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 12.5,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                        fontWeight: 600,
+                        mt: 0.4,
+                      }}
+                    >
+                      {stat.label}
+                    </Typography>
                   </Box>
-                  <Typography sx={{ fontSize: 12.5, color: COLORS.inkSoft }}>
-                    {stat.label}
-                  </Typography>
                 </Paper>
               </Box>
             ))}
@@ -421,7 +453,8 @@ export default function LichSuKiemDuyetPage() {
                     sx={{
                       bgcolor: "var(--ev-paper, #FFFFFF)",
                       "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
+                        height: 40,
+                        borderRadius: "12px",
                         "& fieldset": { borderColor: COLORS.line },
                         "&:hover fieldset": { borderColor: COLORS.primary },
                         "&.Mui-focused fieldset": {
@@ -454,9 +487,10 @@ export default function LichSuKiemDuyetPage() {
                       </InputAdornment>
                     }
                     sx={{
+                      height: 40,
                       minWidth: { xs: "100%", sm: 170 },
                       bgcolor: "var(--ev-paper, #FFFFFF)",
-                      borderRadius: 2,
+                      borderRadius: "12px",
                       "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: COLORS.line,
                       },
@@ -482,7 +516,7 @@ export default function LichSuKiemDuyetPage() {
                         sx={{
                           bgcolor: "var(--ev-paper, #FFFFFF)",
                           border: `1px solid ${COLORS.line}`,
-                          borderRadius: 2,
+                          borderRadius: "12px",
                           width: 40,
                           height: 40,
                           flexShrink: 0,

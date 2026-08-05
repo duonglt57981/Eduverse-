@@ -91,6 +91,8 @@ namespace Eduverse.Api.Controller
             if (registeredCoursesCount <= 0) registeredCoursesCount = 12;
             if (certificatesCount <= 0) certificatesCount = 8;
 
+            var roles = await _userManager.GetRolesAsync(user);
+
             return new DataResponse<object>
             {
                 Status = true,
@@ -103,12 +105,14 @@ namespace Eduverse.Api.Controller
                     email = user.Email,
                     phoneNumber = user.PhoneNumber,
                     phoneNumberConfirmed = user.PhoneNumberConfirmed,
+                    gioiTinh = user.GioiTinh ?? 1,
                     diaChi = user.DiaChi,
                     ngaySinh = user.NgaySinh?.ToString("yyyy-MM-dd"),
                     tieuSu = user.TieuSu,
                     anhDaiDien = user.AnhDaiDien,
                     anhBia = user.AnhBia,
-                    chucVu = user.ChucVu ?? "Học viên Cao cấp",
+                    chucVu = user.ChucVu ?? "Học viên",
+                    roles = roles,
                     twoFactorEnabled = user.TwoFactorEnabled,
                     stats = new
                     {
@@ -161,6 +165,10 @@ namespace Eduverse.Api.Controller
             user.PhoneNumber = request.PhoneNumber;
             user.DiaChi = request.DiaChi;
             user.TieuSu = request.TieuSu;
+            if (request.GioiTinh.HasValue)
+            {
+                user.GioiTinh = request.GioiTinh.Value;
+            }
             
             if (DateTime.TryParse(request.NgaySinh, out var dob))
             {
@@ -580,6 +588,7 @@ namespace Eduverse.Api.Controller
         public string PhoneNumber { get; set; }
         public string DiaChi { get; set; }
         public string NgaySinh { get; set; }
+        public int? GioiTinh { get; set; }
         public string TieuSu { get; set; }
     }
 
