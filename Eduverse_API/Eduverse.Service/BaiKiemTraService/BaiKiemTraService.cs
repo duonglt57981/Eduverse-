@@ -133,7 +133,7 @@ namespace Eduverse.Service.BaiKiemTraService
                         return cauHoiDto;
                     })
                     .ToList();
-                
+
                 item.SoCauHoi = item.DanhSachCauHois.Count;
 
                 return item;
@@ -172,7 +172,7 @@ namespace Eduverse.Service.BaiKiemTraService
                 throw new Exception("Mô tả không được vượt quá 299 ký tự.");
             try
             {
-                var newQuiz =  new BaiKiemTra
+                var newQuiz = new BaiKiemTra
                 {
                     Id = Guid.NewGuid(),
                     IdPhan = request.IdPhan.Value,
@@ -216,7 +216,7 @@ namespace Eduverse.Service.BaiKiemTraService
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
             var entity = await GetQueryable().FirstOrDefaultAsync(x => x.Id == request.IdBaiKiemTra);
-            
+
             if (request == null)
                 throw new ArgumentNullException(nameof(request), "Yêu cầu không hợp lệ.");
 
@@ -281,7 +281,7 @@ namespace Eduverse.Service.BaiKiemTraService
                 select dk.Id
             ).AnyAsync();
 
-             quiz.TrangThai = coNguoiHoc? "NgungHoatDong": "DaXoa";
+            quiz.TrangThai = coNguoiHoc ? "NgungHoatDong" : "DaXoa";
             await DeleteAsync(quiz);
             await SaveAsync();
             return true;
@@ -370,11 +370,11 @@ namespace Eduverse.Service.BaiKiemTraService
                     x.ThoiGianNop != null &&
                     !x.IsDeleted);
 
-            if (baiKiemTra.ChoLamLai != true && soLanDaLam > 0)
+            if (baiKiemTra.ChoLamLai == false && soLanDaLam > 0)
                 throw new Exception("Bài kiểm tra không cho phép làm lại.");
 
             if (baiKiemTra.SoLanLamToiDa.HasValue &&
-                baiKiemTra.SoLanLamToiDa.Value > 0 && 
+                baiKiemTra.SoLanLamToiDa.Value > 0 &&
                 soLanDaLam >= baiKiemTra.SoLanLamToiDa.Value)
                 throw new Exception("Đã vượt quá số lần làm bài.");
 
@@ -496,13 +496,33 @@ namespace Eduverse.Service.BaiKiemTraService
             }
             else
             {
-                if (request.CauTraLois != null)
+                // 🔽 CẢI TIẾN: Nếu request gửi lên bị null, vẫn lấy từ DB để tránh mất điểm oan
+                if (request.CauTraLois != null && request.CauTraLois.Any())
                 {
                     cauTraLois = request.CauTraLois.Select(r => new CauTraLoiSubmitDto
                     {
                         IdCauHoi = r.IdCauHoi,
                         IdDapAnChons = r.IdDapAnChons ?? new List<Guid>()
                     }).ToList();
+                }
+                else
+                {
+                    var chiTietList = await _chiTietLamBaiKiemTraService
+                        .GetQueryable()
+                        .AsNoTracking()
+                        .Where(x => x.IdLanLamBaiKiemTra == lanLam.Id && !x.IsDeleted && x.IdCauHoi.HasValue)
+                        .ToListAsync();
+
+                    cauTraLois = chiTietList
+                        .GroupBy(x => x.IdCauHoi!.Value)
+                        .Select(g => new CauTraLoiSubmitDto
+                        {
+                            IdCauHoi = g.Key,
+                            IdDapAnChons = g.Where(x => x.IdDapAnChon.HasValue)
+                                             .Select(x => x.IdDapAnChon!.Value)
+                                             .ToList()
+                        })
+                        .ToList();
                 }
             }
 
@@ -705,12 +725,17 @@ namespace Eduverse.Service.BaiKiemTraService
                 .GroupBy(x => x.IdCauHoi!.Value)
                 .ToDictionary(x => x.Key, x => x.ToList());
 
+            // 🚀 Tính flag cho xem đáp án: Chỉ được xem nếu Đúng 100%
+            var tongDiem = chiTiets.Sum(x => x.DiemNhanDuoc ?? 0);
+            var choXemDapAn = lanLam.Dat == true && Math.Round(tongDiem, 2) >= 99.99;
+
             var review = new ReviewQizzDto
             {
                 IdLanLamBaiKiemTra = lanLam.Id,
                 Dat = lanLam.Dat ?? false,
-                TongDiem = chiTiets.Sum(x => x.DiemNhanDuoc ?? 0),
+                TongDiem = tongDiem,
                 ThoiGianNop = lanLam.ThoiGianNop,
+                ChoXemDapAn = choXemDapAn, // <-- Gán giá trị vào DTO
                 CauHois = new List<CauHoiReviewDto>()
             };
 
@@ -722,6 +747,33 @@ namespace Eduverse.Service.BaiKiemTraService
                 dapAnDungLookup.TryGetValue(cauHoi.Id, out var dapAnDung);
                 dapAnLookup.TryGetValue(cauHoi.Id, out var dsDapAn);
 
+                // 🚀 Quyết định gửi đáp án nào về FE
+                List<DapAnReviewDto> dapAnGuiVe;
+                if (choXemDapAn)
+                {
+                    // Nếu được xem, gửi toàn bộ
+                    dapAnGuiVe = dsDapAn?
+                        .Select(x => new DapAnReviewDto
+                        {
+                            Id = x.Id,
+                            NoiDungDapAn = x.NoiDungDapAn,
+                            LaDapAnDung = x.LaDapAnDung ?? false
+                        })
+                        .ToList() ?? new List<DapAnReviewDto>();
+                }
+                else
+                {
+                    // Nếu không được xem, ẩn toàn bộ đáp án đúng (set LaDapAnDung = false)
+                    dapAnGuiVe = dsDapAn?
+                        .Select(x => new DapAnReviewDto
+                        {
+                            Id = x.Id,
+                            NoiDungDapAn = x.NoiDungDapAn,
+                            LaDapAnDung = false // 🛡️ Không cho FE biết đâu là đáp án đúng
+                        })
+                        .ToList() ?? new List<DapAnReviewDto>();
+                }
+
                 var cauHoiReview = new CauHoiReviewDto
                 {
                     IdCauHoi = cauHoi.Id,
@@ -731,15 +783,7 @@ namespace Eduverse.Service.BaiKiemTraService
                     IdDapAnDung = dapAnDung?.Id,
                     LaDung = chiTiet.LaDung ?? false,
                     DiemNhanDuoc = chiTiet.DiemNhanDuoc ?? 0,
-                    DapAns = dsDapAn?
-                        .Select(x => new DapAnReviewDto
-                        {
-                            Id = x.Id,
-                            NoiDungDapAn = x.NoiDungDapAn,
-                            LaDapAnDung = x.LaDapAnDung ?? false
-                        })
-                        .ToList()
-                        ?? new List<DapAnReviewDto>()
+                    DapAns = dapAnGuiVe
                 };
 
                 review.CauHois.Add(cauHoiReview);
@@ -1134,4 +1178,3 @@ namespace Eduverse.Service.BaiKiemTraService
         #endregion
     }
 }
-

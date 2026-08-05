@@ -126,29 +126,15 @@
       }
     }
 
-    async GetQuizToLearning(
-      idDangKi: string,
-    ): Promise<ApiResponse<GetQuizToLearningDto>> {
-      try {
-        const response = await apiService.get<ApiResponse<GetQuizToLearningDto>>(
-          `/BaiKiemTra/getquizz-learning/${idDangKi}`,
-        );
-        return response.data;
-      } catch (error) {
-        console.error("Error getting quiz to learning:", error);
-        throw error;
-      }
-    }
-
     async StartQuizz(
       startQuizRequest: StartQuizRequest,
     ): Promise<ApiResponse<LanLamBaiKiemTraDto>> {
       try {
-        const response = await apiService.post<ApiResponse<LanLamBaiKiemTraDto>>(
+        const response = await apiService.post<LanLamBaiKiemTraDto>(
           `/BaiKiemTra/start`,
           startQuizRequest,
         );
-        return response.data;
+        return response;
       } catch (error) {
         console.error("Error starting quiz:", error);
         throw error;
@@ -159,10 +145,10 @@
       idBaiKiemTra: string,
     ): Promise<ApiResponse<BaiKiemTraLamBaiDto>> {
       try {
-        const response = await apiService.get<ApiResponse<BaiKiemTraLamBaiDto>>(
+        const response = await apiService.get<BaiKiemTraLamBaiDto>(
           `/BaiKiemTra/${idBaiKiemTra}/quiz`,
         );
-        return response.data;
+        return response;
       } catch (error) {
         console.error("Error getting quiz for student:", error);
         throw error;
@@ -173,11 +159,11 @@
       submitQuizRequest: SubmitQuizRequest,
     ): Promise<ApiResponse<KetQuaLanKiemTraDto>> {
       try {
-        const response = await apiService.post<ApiResponse<KetQuaLanKiemTraDto>>(
+        const response = await apiService.post<KetQuaLanKiemTraDto>(
           `/BaiKiemTra/submit`,
           submitQuizRequest,
         );
-        return response.data;
+        return response;
       } catch (error) {
         console.error("Error submitting quiz:", error);
         throw error;
@@ -188,10 +174,10 @@
       idLanLamBai: string,
     ): Promise<ApiResponse<ReviewQuizDto>> {
       try {
-        const response = await apiService.get<ApiResponse<ReviewQuizDto>>(
+        const response = await apiService.get<ReviewQuizDto>(
           `/BaiKiemTra/review/${idLanLamBai}`,
         );
-        return response.data;
+        return response;
       } catch (error) {
         console.error("Error getting review quiz:", error);
         throw error;
@@ -203,10 +189,10 @@
     ): Promise<ApiResponse<LichSuLamBaiDto>> {
       try {
         const userId = this.getUserIdFromToken();
-        const response = await apiService.get<ApiResponse<LichSuLamBaiDto>>(
+        const response = await apiService.get<LichSuLamBaiDto>(
           `/BaiKiemTra/${idBaiKiemTra}/can-retake/${userId}`,
         );
-        return response.data;
+        return response;
       } catch (error) {
         console.error("Error getting history quiz:", error);
         throw error;
@@ -217,11 +203,11 @@
       autoSaveRequest: AutoSaveRequest,
     ): Promise<ApiResponse<AutoSaveDapAnDto>> {
       try {
-        const response = await apiService.post<ApiResponse<AutoSaveDapAnDto>>(
+        const response = await apiService.post<AutoSaveDapAnDto>(
           `/BaiKiemTra/auto-save`,
           autoSaveRequest,
         );
-        return response.data;
+        return response;
       } catch (error) {
         console.error("Error auto-saving answer:", error);
         throw error;
@@ -232,10 +218,10 @@
       idLanLamBaiKiemTra: string,
     ): Promise<ApiResponse<ContinueQuizFullDto>> {
       try {
-        const response = await apiService.get<ApiResponse<ContinueQuizFullDto>>(
+        const response = await apiService.get<ContinueQuizFullDto>(
           `/BaiKiemTra/continue/${idLanLamBaiKiemTra}`,
         );
-        return response.data;
+        return response;
       } catch (error) {
         console.error("Error continuing quiz:", error);
         throw error;
@@ -246,11 +232,11 @@
       idLanLamBaiKiemTra: string,
     ): Promise<ApiResponse<HeartbeatResultDto>> {
       try {
-        const response = await apiService.post<ApiResponse<HeartbeatResultDto>>(
+        const response = await apiService.post<HeartbeatResultDto>(
           `/BaiKiemTra/heartbeat`,
           { idLanLamBaiKiemTra },
         );
-        return response.data;
+        return response;
       } catch (error) {
         console.error("Error sending heartbeat:", error);
         throw error;

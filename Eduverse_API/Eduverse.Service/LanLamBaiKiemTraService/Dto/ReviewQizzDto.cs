@@ -18,5 +18,6 @@ namespace Eduverse.Service.LanLamBaiKiemTraService.Dto
         public bool Dat { get; set; }
 
         public List<CauHoiReviewDto> CauHois { get; set; } = new();
+        public bool ChoXemDapAn { get; set; }
     }
 }

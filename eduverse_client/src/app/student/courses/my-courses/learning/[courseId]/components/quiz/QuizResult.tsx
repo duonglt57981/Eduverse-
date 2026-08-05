@@ -1,5 +1,4 @@
-"use client";
-
+// QuizResult.tsx
 import {
   Box,
   Typography,
@@ -10,8 +9,6 @@ import {
   Chip,
   Divider,
 } from "@mui/material";
-// FIX: MUI v9 - import named từ root package "@mui/icons-material" thay vì
-// subpath (subpath không resolve được ở v9, gây lỗi "Module not found").
 import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
@@ -20,10 +17,19 @@ import {
   ArrowBack as ArrowBackIcon,
   School as SchoolIcon,
   Timer as TimerIcon,
+  Lock as LockIcon,
 } from "@mui/icons-material";
+import type { ReviewQizzDto } from "../../hooks/useQuiz";
 
-const PRIMARY_RED = "#8B1313";
-const PRIMARY_RED_DARK = "#6B1414";
+// ── Design tokens — đồng bộ với QuizContainer / QuizView / QuizReview ──
+const RED = "#8B1313";
+const RED_DARK = "#6B1414";
+const GREEN = "#10B981";
+const AMBER = "#D97706";
+const CRIMSON = "#DC2626";
+const INK = "#1c1d1f";
+const SUB = "#6a6f73";
+const RADIUS = "4px";
 
 interface KetQuaProps {
   tieuDe: string;
@@ -32,12 +38,14 @@ interface KetQuaProps {
   diemDat?: number;
   soCauDung: number;
   tongSoCau: number;
-  thoiGianLam?: number; // giây
+  thoiGianLam?: number;
   soLanLam?: number;
   canRetake?: boolean;
   onRetake?: () => void;
   onClose?: () => void;
   onXemLai?: () => void;
+  daDat100?: boolean;
+  review?: ReviewQizzDto | null;
 }
 
 function formatDuration(seconds: number): string {
@@ -60,18 +68,23 @@ export const QuizResult = ({
   onRetake,
   onClose,
   onXemLai,
+  daDat100 = false,
+  review,
 }: KetQuaProps) => {
   const phanTram = diemToiDa > 0 ? Math.round((diem / diemToiDa) * 100) : 0;
   const nguongDat = diemDat ?? diemToiDa * 0.5;
   const daDat = diem >= nguongDat;
 
-  const getScoreColor = () => {
-    if (daDat) return PRIMARY_RED;
-    if (phanTram >= 40) return "#d97706";
-    return "#dc2626";
-  };
+  const scoreColor = daDat100
+    ? GREEN
+    : daDat
+      ? RED
+      : phanTram >= 40
+        ? AMBER
+        : CRIMSON;
 
   const getScoreLabel = () => {
+    if (daDat100) return "Hoàn hảo!";
     if (phanTram === 100) return "Xuất sắc!";
     if (phanTram >= 80) return "Tốt lắm!";
     if (phanTram >= 60) return "Khá!";
@@ -79,71 +92,66 @@ export const QuizResult = ({
     return "Chưa đạt";
   };
 
-  const scoreColor = getScoreColor();
-
   return (
     <Box
       sx={{
-        maxWidth: 520,
+        maxWidth: 620,
         mx: "auto",
         my: { xs: 3, md: 5 },
         px: { xs: 2, md: 0 },
       }}
     >
-      {/* Result card */}
       <Box
         sx={{
-          borderRadius: 3,
+          borderRadius: RADIUS,
           overflow: "hidden",
-          border: `1px solid ${alpha(scoreColor, 0.2)}`,
-          boxShadow: `0 4px 24px ${alpha(scoreColor, 0.1)}`,
+          border: `1px solid ${alpha(scoreColor, 0.18)}`,
+          boxShadow: `0 12px 32px ${alpha(scoreColor, 0.1)}`,
         }}
       >
         {/* Header */}
         <Box
           sx={{
-            px: 3,
-            pt: 4,
-            pb: 3,
-            bgcolor: daDat ? alpha(PRIMARY_RED, 0.03) : alpha("#dc2626", 0.03),
+            px: 4,
+            pt: 4.5,
+            pb: 3.5,
+            background: `linear-gradient(180deg, ${alpha(scoreColor, 0.06)} 0%, ${alpha(scoreColor, 0.015)} 100%)`,
             textAlign: "center",
-            borderBottom: `1px solid ${alpha(scoreColor, 0.12)}`,
+            borderBottom: `1px solid ${alpha(scoreColor, 0.1)}`,
           }}
         >
           {/* Score ring */}
           <Box
             sx={{
-              width: 110,
-              height: 110,
+              width: 132,
+              height: 132,
               borderRadius: "50%",
-              border: `5px solid ${alpha(scoreColor, 0.15)}`,
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               mx: "auto",
-              mb: 2,
+              mb: 2.5,
               position: "relative",
-              background: `conic-gradient(${scoreColor} ${phanTram * 3.6}deg, ${alpha(scoreColor, 0.08)} 0deg)`,
+              background: `conic-gradient(${scoreColor} ${phanTram * 3.6}deg, ${alpha(scoreColor, 0.1)} 0deg)`,
+              p: "6px",
             }}
           >
             <Box
               sx={{
-                width: 88,
-                height: 88,
+                width: "100%",
+                height: "100%",
                 borderRadius: "50%",
-                bgcolor: "background.paper",
+                bgcolor: "#fff",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                position: "absolute",
               }}
             >
               <Typography
                 sx={{
-                  fontSize: "1.6rem",
-                  fontWeight: 900,
+                  fontSize: "2rem",
+                  fontWeight: 800,
                   color: scoreColor,
                   lineHeight: 1,
                 }}
@@ -152,20 +160,20 @@ export const QuizResult = ({
               </Typography>
               <Typography
                 sx={{
-                  fontSize: "0.6rem",
-                  color: "text.secondary",
+                  fontSize: "0.72rem",
+                  color: SUB,
                   fontWeight: 600,
+                  mt: 0.5,
                 }}
               >
-                {diem}/{diemToiDa}đ
+                {diem}/{diemToiDa} điểm
               </Typography>
             </Box>
           </Box>
 
-          {/* Status badge */}
           <Chip
             icon={
-              daDat ? (
+              daDat || daDat100 ? (
                 <EmojiEventsIcon
                   sx={{
                     fontSize: "16px !important",
@@ -176,7 +184,7 @@ export const QuizResult = ({
                 <CancelIcon
                   sx={{
                     fontSize: "16px !important",
-                    color: "#dc2626 !important",
+                    color: `${CRIMSON} !important`,
                   }}
                 />
               )
@@ -185,60 +193,60 @@ export const QuizResult = ({
             sx={{
               bgcolor: alpha(scoreColor, 0.1),
               color: scoreColor,
-              fontWeight: 800,
+              fontWeight: 700,
               fontSize: "0.8rem",
               height: 28,
-              mb: 1.5,
+              mb: 1.75,
+              borderRadius: RADIUS,
             }}
           />
 
           <Typography
-            variant="h6"
-            sx={{ fontWeight: 800, lineHeight: 1.3, mb: 0.5 }}
+            sx={{
+              fontSize: 19,
+              fontWeight: 800,
+              lineHeight: 1.3,
+              mb: 0.75,
+              color: INK,
+            }}
           >
             {tieuDe}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {daDat
-              ? "Chúc mừng, bạn đã vượt qua bài kiểm tra!"
-              : "Bạn chưa đạt yêu cầu. Hãy ôn lại và thử lại nhé!"}
+          <Typography sx={{ fontSize: 14, color: SUB }}>
+            {daDat100
+              ? "Chúc mừng! Bạn đã hoàn thành xuất sắc bài kiểm tra!"
+              : daDat
+                ? "Chúc mừng, bạn đã vượt qua bài kiểm tra!"
+                : "Bạn chưa đạt yêu cầu. Hãy ôn lại và thử lại nhé!"}
           </Typography>
         </Box>
 
         {/* Stats */}
-        <Box sx={{ bgcolor: "background.paper" }}>
-          {/* Progress bar */}
-          <Box sx={{ px: 3, pt: 2.5, pb: 1.5 }}>
-            {/* FIX: MUI v9 - Stack không còn nhận justifyContent/alignItems làm
-                prop riêng (StackOwnProps đã bỏ 2 prop này) -> chuyển vào sx. */}
+        <Box sx={{ bgcolor: "#fff" }}>
+          <Box sx={{ px: 4, pt: 3, pb: 2 }}>
             <Stack
               direction="row"
-              sx={{ mb: 0.75, justifyContent: "space-between" }}
+              sx={{ mb: 1, justifyContent: "space-between" }}
             >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontWeight: 600 }}
-              >
+              <Typography sx={{ fontSize: 12, color: SUB, fontWeight: 700 }}>
                 Tiến độ
               </Typography>
               <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, color: scoreColor }}
+                sx={{ fontSize: 12, fontWeight: 700, color: scoreColor }}
               >
                 {soCauDung}/{tongSoCau} câu đúng
               </Typography>
             </Stack>
             <LinearProgress
               variant="determinate"
-              value={(soCauDung / tongSoCau) * 100}
+              value={tongSoCau > 0 ? (soCauDung / tongSoCau) * 100 : 0}
               sx={{
-                height: 8,
-                borderRadius: 4,
-                bgcolor: alpha(scoreColor, 0.1),
+                height: 6,
+                borderRadius: 3,
+                bgcolor: "#eceef0",
                 "& .MuiLinearProgress-bar": {
                   bgcolor: scoreColor,
-                  borderRadius: 4,
+                  borderRadius: 3,
                 },
               }}
             />
@@ -246,34 +254,34 @@ export const QuizResult = ({
 
           <Divider sx={{ borderColor: alpha(scoreColor, 0.08) }} />
 
-          {/* Detail stats */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-            }}
-          >
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             <Box
               sx={{
-                px: 3,
-                py: 2,
+                px: 4,
+                py: 2.25,
                 borderRight: `1px solid ${alpha(scoreColor, 0.08)}`,
                 borderBottom: `1px solid ${alpha(scoreColor, 0.08)}`,
               }}
             >
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <CheckCircleIcon sx={{ color: PRIMARY_RED, fontSize: 18 }} />
+              <Stack
+                direction="row"
+                spacing={1.5}
+                sx={{ alignItems: "center" }}
+              >
+                <CheckCircleIcon sx={{ color: GREEN, fontSize: 20 }} />
                 <Box>
                   <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", lineHeight: 1 }}
+                    sx={{
+                      fontSize: 11,
+                      color: SUB,
+                      display: "block",
+                      lineHeight: 1,
+                    }}
                   >
                     Câu đúng
                   </Typography>
                   <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 800, color: PRIMARY_RED }}
+                    sx={{ fontSize: 14, fontWeight: 700, color: INK, mt: 0.4 }}
                   >
                     {soCauDung} câu
                   </Typography>
@@ -283,24 +291,30 @@ export const QuizResult = ({
 
             <Box
               sx={{
-                px: 3,
-                py: 2,
+                px: 4,
+                py: 2.25,
                 borderBottom: `1px solid ${alpha(scoreColor, 0.08)}`,
               }}
             >
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <CancelIcon sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 18 }} />
+              <Stack
+                direction="row"
+                spacing={1.5}
+                sx={{ alignItems: "center" }}
+              >
+                <CancelIcon sx={{ color: CRIMSON, fontSize: 20 }} />
                 <Box>
                   <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", lineHeight: 1 }}
+                    sx={{
+                      fontSize: 11,
+                      color: SUB,
+                      display: "block",
+                      lineHeight: 1,
+                    }}
                   >
                     Câu sai
                   </Typography>
                   <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 800, color: "text.secondary" }}
+                    sx={{ fontSize: 14, fontWeight: 700, color: INK, mt: 0.4 }}
                   >
                     {tongSoCau - soCauDung} câu
                   </Typography>
@@ -311,26 +325,36 @@ export const QuizResult = ({
             {thoiGianLam != null && (
               <Box
                 sx={{
-                  px: 3,
-                  py: 2,
+                  px: 4,
+                  py: 2.25,
                   borderRight: `1px solid ${alpha(scoreColor, 0.08)}`,
                 }}
               >
                 <Stack
                   direction="row"
-                  spacing={1}
+                  spacing={1.5}
                   sx={{ alignItems: "center" }}
                 >
-                  <TimerIcon sx={{ color: "text.disabled", fontSize: 18 }} />
+                  <TimerIcon sx={{ color: SUB, fontSize: 20 }} />
                   <Box>
                     <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", lineHeight: 1 }}
+                      sx={{
+                        fontSize: 11,
+                        color: SUB,
+                        display: "block",
+                        lineHeight: 1,
+                      }}
                     >
                       Thời gian
                     </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: INK,
+                        mt: 0.4,
+                      }}
+                    >
                       {formatDuration(thoiGianLam)}
                     </Typography>
                   </Box>
@@ -339,22 +363,32 @@ export const QuizResult = ({
             )}
 
             {soLanLam != null && (
-              <Box sx={{ px: 3, py: 2 }}>
+              <Box sx={{ px: 4, py: 2.25 }}>
                 <Stack
                   direction="row"
-                  spacing={1}
+                  spacing={1.5}
                   sx={{ alignItems: "center" }}
                 >
-                  <SchoolIcon sx={{ color: "text.disabled", fontSize: 18 }} />
+                  <SchoolIcon sx={{ color: SUB, fontSize: 20 }} />
                   <Box>
                     <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", lineHeight: 1 }}
+                      sx={{
+                        fontSize: 11,
+                        color: SUB,
+                        display: "block",
+                        lineHeight: 1,
+                      }}
                     >
                       Lần làm
                     </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: INK,
+                        mt: 0.4,
+                      }}
+                    >
                       Lần {soLanLam}
                     </Typography>
                   </Box>
@@ -363,31 +397,27 @@ export const QuizResult = ({
             )}
           </Box>
 
-          {/* Điểm đạt threshold */}
           {diemDat != null && (
             <Box
               sx={{
-                mx: 3,
+                mx: 4,
                 mb: 2,
-                mt: 0.5,
-                px: 2,
-                py: 1.25,
-                borderRadius: 1.5,
-                bgcolor: daDat
-                  ? alpha(PRIMARY_RED, 0.05)
-                  : alpha("#dc2626", 0.05),
-                border: `1px solid ${daDat ? alpha(PRIMARY_RED, 0.15) : alpha("#dc2626", 0.15)}`,
+                mt: 2,
+                px: 3,
+                py: 1.5,
+                borderRadius: RADIUS,
+                bgcolor: alpha(scoreColor, 0.04),
+                border: `1px solid ${alpha(scoreColor, 0.14)}`,
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
               }}
             >
-              <Typography variant="caption" color="text.secondary">
+              <Typography sx={{ fontSize: 12, color: SUB }}>
                 Điểm yêu cầu để đạt
               </Typography>
               <Typography
-                variant="body2"
-                sx={{ fontWeight: 800, color: daDat ? PRIMARY_RED : "#dc2626" }}
+                sx={{ fontSize: 14, fontWeight: 700, color: scoreColor }}
               >
                 {diemDat}/{diemToiDa}
               </Typography>
@@ -395,22 +425,24 @@ export const QuizResult = ({
           )}
 
           {/* Actions */}
-          <Box sx={{ px: 3, pb: 3 }}>
+          <Box sx={{ px: 4, pb: 4, pt: diemDat != null ? 0 : 1 }}>
             <Stack spacing={1.25}>
-              {canRetake && onRetake && (
+              {onRetake && (
                 <Button
                   fullWidth
                   variant="outlined"
                   startIcon={<ReplayIcon />}
                   onClick={onRetake}
                   sx={{
-                    borderColor: PRIMARY_RED,
-                    color: PRIMARY_RED,
+                    borderColor: RED,
+                    color: RED,
                     fontWeight: 700,
-                    borderRadius: 1.5,
+                    borderRadius: RADIUS,
+                    textTransform: "none",
+                    py: 1.25,
                     "&:hover": {
-                      borderColor: PRIMARY_RED_DARK,
-                      bgcolor: alpha(PRIMARY_RED, 0.04),
+                      borderColor: RED_DARK,
+                      bgcolor: alpha(RED, 0.04),
                     },
                   }}
                 >
@@ -418,27 +450,42 @@ export const QuizResult = ({
                 </Button>
               )}
 
-              {/* ← thêm button này */}
-              {onXemLai && (
+              {onXemLai && review?.choXemDapAn ? (
                 <Button
                   fullWidth
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<SchoolIcon />}
                   onClick={onXemLai}
                   sx={{
-                    borderColor: "#3b82f6",
-                    color: "#3b82f6",
+                    bgcolor: GREEN,
                     fontWeight: 700,
-                    borderRadius: 1.5,
-                    "&:hover": {
-                      borderColor: "#2563eb",
-                      bgcolor: alpha("#3b82f6", 0.04),
-                    },
+                    borderRadius: RADIUS,
+                    textTransform: "none",
+                    py: 1.25,
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: "#059669", boxShadow: "none" },
                   }}
                 >
-                  Xem lại kết quả
+                  Xem đáp án đúng
                 </Button>
-              )}
+              ) : onXemLai && !review?.choXemDapAn && (review?.dat || daDat) ? (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  disabled
+                  startIcon={<LockIcon />}
+                  sx={{
+                    borderColor: "#d1d7dc",
+                    color: SUB,
+                    fontWeight: 600,
+                    borderRadius: RADIUS,
+                    textTransform: "none",
+                    py: 1.25,
+                  }}
+                >
+                  Đạt 100% để xem đáp án
+                </Button>
+              ) : null}
 
               {onClose && (
                 <Button
@@ -449,15 +496,21 @@ export const QuizResult = ({
                   sx={
                     canRetake
                       ? {
-                          color: "text.secondary",
+                          color: SUB,
                           fontWeight: 600,
-                          borderRadius: 1.5,
+                          borderRadius: RADIUS,
+                          textTransform: "none",
+                          py: 1.25,
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
                         }
                       : {
-                          bgcolor: PRIMARY_RED,
+                          bgcolor: RED,
                           fontWeight: 700,
-                          borderRadius: 1.5,
-                          "&:hover": { bgcolor: PRIMARY_RED_DARK },
+                          borderRadius: RADIUS,
+                          textTransform: "none",
+                          py: 1.25,
+                          boxShadow: "none",
+                          "&:hover": { bgcolor: RED_DARK, boxShadow: "none" },
                         }
                   }
                 >

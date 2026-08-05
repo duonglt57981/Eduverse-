@@ -41,7 +41,6 @@ import { MiniPlayer } from "./components/MiniPlayer";
 import { StatsBar } from "./components/StatsBar";
 import { CourseSkeleton } from "./components/CourseSkeleton";
 import { SidebarContent } from "./components/SidebarContent";
-import { QuizContainer } from "./components/quiz/QuizContainer";
 import { DanhGiaDialog } from "./components/DanhGiaDialog";
 
 import { useCourseData } from "./hooks/useCourseData";
@@ -52,6 +51,7 @@ import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 
 import DOMPurify from "dompurify";
 import { apiService } from "@/src/services";
+import { QuizSession } from "./components/quiz/QuizSession";
 
 const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#7F1D1D";
@@ -76,6 +76,31 @@ interface ThongTinGiangVien {
   gioiThieu?: string;
   chucVu?: string;
   email?: string;
+}
+
+// 🚀 Hàm lấy userId từ Token để truyền vào QuizSession
+function getUserIdFromToken(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const token = localStorage.getItem("AccessToken");
+  if (!token) return undefined;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return undefined;
+    const payload = JSON.parse(
+      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
+    );
+    const keys = [
+      "sub",
+      "id",
+      "userId",
+      "nameid",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
+    ];
+    for (const key of keys) {
+      if (payload[key]) return String(payload[key]);
+    }
+  } catch {}
+  return undefined;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -226,7 +251,6 @@ interface InstructorInfoProps {
 }
 
 function InstructorInfo({ thongTinGiangVien }: InstructorInfoProps) {
-  // Nếu không có thông tin giảng viên, không hiển thị gì
   if (!thongTinGiangVien || !thongTinGiangVien.hoTen) {
     return null;
   }
@@ -523,7 +547,6 @@ export default function KhoaHocLearningPage() {
     (async () => {
       try {
         const res = await apiService.get(`/danhgia/kiem-tra/${khoaHoc.id}`);
-
         setDaDanhGia((res.data as { daDanhGia?: boolean })?.daDanhGia ?? false);
       } catch {}
     })();
@@ -686,6 +709,58 @@ export default function KhoaHocLearningPage() {
   const currentIsCompleted = baiGiang?.id
     ? progressMap.get(baiGiang.id)?.daHoanThanh
     : baiGiang?.daHoanThanh;
+
+  // 🆕 Hàm tìm bài giảng kế tiếp sau một quiz
+  const findNextLessonAfterQuiz = useCallback(
+    (quizId: string): BaiGiangType | null => {
+      const phanHocs = getPhanHocApi();
+      let found = false;
+      for (const phan of phanHocs) {
+        const lessons = phan.danhSachBaiGiang ?? [];
+        const quizzes = phan.danhSachBaiKiemTra ?? [];
+
+        // Duyệt tuần tự: các bài giảng trước quiz trong cùng phần, sau đó quiz, rồi bài giảng sau quiz
+        for (const item of [...lessons, ...quizzes]) {
+          if (found && "urlBaiGiang" in item) {
+            return item as BaiGiangType; // gặp bài giảng đầu tiên sau quiz
+          }
+          if (item.id === quizId) {
+            found = true;
+          }
+        }
+
+        // Nếu tìm thấy quiz ở phần này nhưng không có bài giảng tiếp theo, chuyển sang phần sau
+        if (found) {
+          // Tìm phần tiếp theo có bài giảng
+          const nextPhan = phanHocs
+            .slice(phanHocs.indexOf(phan) + 1)
+            .find((p) => (p.danhSachBaiGiang?.length ?? 0) > 0);
+          if (nextPhan && nextPhan.danhSachBaiGiang?.length) {
+            return nextPhan.danhSachBaiGiang[0];
+          }
+          return null;
+        }
+      }
+      return null;
+    },
+    [getPhanHocApi],
+  );
+
+  // 🆕 Hàm xử lý bỏ qua quiz
+  const handleSkipQuiz = useCallback(() => {
+    if (!quizDangChon) return;
+    const nextLesson = findNextLessonAfterQuiz(quizDangChon.id!);
+    if (nextLesson) {
+      handleSelectBaiGiang(nextLesson);
+    }
+    // Đóng quiz
+    handleCloseQuiz();
+  }, [
+    quizDangChon,
+    handleSelectBaiGiang,
+    handleCloseQuiz,
+    findNextLessonAfterQuiz,
+  ]);
 
   // ── Loading & Error ──
   if (loading) {
@@ -963,18 +1038,12 @@ export default function KhoaHocLearningPage() {
         >
           {quizDangChon ? (
             <Box sx={{ flex: 1, minHeight: 0 }}>
-              <QuizContainer
-                baiKiemTra={{
-                  id: quizDangChon.id!,
-                  tieuDe: quizDangChon.tenBaiKiemTra,
-                  moTa: quizDangChon.moTa,
-                  thoiGianGioiHan: quizDangChon.gioiHanThoiGian ?? null,
-                  soLuongCauHoi: quizDangChon.soCauHoi,
-                  diemDat: quizDangChon.diemDat,
-                  soLanLamToiDa: quizDangChon.soLanLamToiDa,
-                }}
+              <QuizSession
+                idBaiKiemTra={quizDangChon.id!}
                 idDangKyKhoaHoc={courseId ?? ""}
+                userId={getUserIdFromToken()}
                 onClose={handleCloseQuiz}
+                onSkip={handleSkipQuiz} // 🆕 Truyền hàm skip
               />
             </Box>
           ) : (
@@ -1032,7 +1101,12 @@ export default function KhoaHocLearningPage() {
                         khoaHoc.danhSachPhanHoc as unknown as PhanHocApi[]
                       )?.find((p) => p.id === idPhanPlay)?.tenPhan ?? ""}
                     </Typography>
-                    <ChevronRightIcon sx={{ fontSize: 16, color: "var(--ev-text-muted, #8A7676)" }} />
+                    <ChevronRightIcon
+                      sx={{
+                        fontSize: 16,
+                        color: "var(--ev-text-muted, #8A7676)",
+                      }}
+                    />
                     <Typography
                       variant="body2"
                       sx={{ fontWeight: 600, color: PRIMARY_RED }}
@@ -1071,7 +1145,10 @@ export default function KhoaHocLearningPage() {
                       {baiGiang && (
                         <Typography
                           variant="caption"
-                          sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #4B5563)" }}
+                          sx={{
+                            fontWeight: 600,
+                            color: "var(--ev-text-secondary, #4B5563)",
+                          }}
                         >
                           Bài {currentIdx + 1}/{danhSachTatCa.length} ·{" "}
                           {Math.floor((baiGiang.thoiLuong ?? 0) / 60)}p{" "}

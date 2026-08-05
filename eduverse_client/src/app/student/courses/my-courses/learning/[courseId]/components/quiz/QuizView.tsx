@@ -1,3 +1,4 @@
+// QuizView.tsx
 import {
   Box,
   Typography,
@@ -18,13 +19,73 @@ import {
   ChevronRightRounded,
   SendRounded,
   GridViewRounded,
-  CheckCircleRounded,
+  CheckRounded,
 } from "@mui/icons-material";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { CauHoiLamBaiDto } from "../../hooks/useQuiz";
 
+// ── Design tokens ──
 const RED = "#8B1313";
+const RED_DARK = "#6B1414";
+const RED_TINT = "rgba(139,19,19,0.04)";
+const INK = "#1c1d1f";
+const SUB = "#6a6f73";
+const BORDER = "#e2e5e8";
+const GREEN = "#10B981";
+const RADIUS = "4px";
 const LABELS = ["A", "B", "C", "D", "E", "F"];
+
+interface CauHoiGridProps {
+  cauHois: CauHoiLamBaiDto[];
+  cauHoiHienTai: number;
+  traLois: Record<string, string[]>;
+  onPick: (i: number) => void;
+}
+
+function CauHoiGrid({
+  cauHois,
+  cauHoiHienTai,
+  traLois,
+  onPick,
+}: CauHoiGridProps) {
+  return (
+    <Box
+      sx={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 1 }}
+    >
+      {cauHois.map((c, i) => {
+        const daTraLoi = (traLois[c.id] ?? []).length > 0;
+        const isHienTai = i === cauHoiHienTai;
+        return (
+          <Box
+            key={c.id}
+            onClick={() => onPick(i)}
+            sx={{
+              aspectRatio: "1 / 1",
+              borderRadius: RADIUS,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              fontWeight: 700,
+              fontSize: 13,
+              border: `1.5px solid ${isHienTai ? RED : daTraLoi ? "rgba(16,185,129,0.4)" : BORDER}`,
+              bgcolor: isHienTai
+                ? RED
+                : daTraLoi
+                  ? "rgba(16,185,129,0.08)"
+                  : "#fff",
+              color: isHienTai ? "#fff" : daTraLoi ? GREEN : SUB,
+              transition: "all 0.15s",
+              "&:hover": { borderColor: RED, transform: "translateY(-1px)" },
+            }}
+          >
+            {i + 1}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
 
 interface QuizViewProps {
   cauHois: CauHoiLamBaiDto[];
@@ -59,7 +120,8 @@ export function QuizView({
   const soDaTraLoi = cauHois.filter(
     (c) => (traLois[c.id] ?? []).length > 0,
   ).length;
-  const progress = ((cauHoiHienTai + 1) / tongCau) * 100;
+  const tatCaDaTraLoi = soDaTraLoi === tongCau;
+  const progress = tongCau > 0 ? ((cauHoiHienTai + 1) / tongCau) * 100 : 0;
 
   const sapHetGio = coGioiHanThoiGian && thoiGianConLai <= 60;
   const canhoHetGio = coGioiHanThoiGian && thoiGianConLai <= 180;
@@ -70,65 +132,103 @@ export function QuizView({
   const selected = traLois[cauHoi.id] ?? [];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        bgcolor: "#fafafa",
+      }}
+    >
       {/* Top bar */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          px: 2.5,
-          py: 1.5,
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          px: 3,
+          py: 2,
+          borderBottom: `1px solid ${BORDER}`,
+          bgcolor: "#fff",
           flexShrink: 0,
         }}
       >
-        <Typography
-          sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-muted, rgba(31,41,55,0.5))" }}
-        >
-          {cauHoiHienTai + 1} / {tongCau}
-        </Typography>
+        <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
+          <Box
+            sx={{
+              px: 1.5,
+              py: 0.5,
+              borderRadius: RADIUS,
+              bgcolor: RED_TINT,
+              color: RED,
+              fontWeight: 800,
+              fontSize: 13,
+            }}
+          >
+            {cauHoiHienTai + 1}
+            <Typography
+              component="span"
+              sx={{ fontSize: 13, fontWeight: 600, color: SUB }}
+            >
+              {" "}
+              / {tongCau}
+            </Typography>
+          </Box>
+          {isMulti && (
+            <Chip
+              label="Chọn nhiều đáp án"
+              size="small"
+              sx={{
+                fontWeight: 700,
+                fontSize: 11,
+                height: 22,
+                borderRadius: RADIUS,
+                bgcolor: "rgba(59,130,246,0.08)",
+                color: "#1E40AF",
+              }}
+            />
+          )}
+        </Stack>
 
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           {coGioiHanThoiGian && (
             <Chip
-              icon={<AccessTimeRounded sx={{ fontSize: "14px !important" }} />}
+              icon={<AccessTimeRounded sx={{ fontSize: 16 }} />}
               label={formatTimer(thoiGianConLai)}
               size="small"
               sx={{
-                fontWeight: 900,
+                fontWeight: 700,
                 fontFamily: "monospace",
-                fontSize: 13,
+                fontSize: 14,
+                borderRadius: RADIUS,
                 bgcolor: sapHetGio
                   ? "rgba(220,38,38,0.08)"
                   : canhoHetGio
                     ? "rgba(245,158,11,0.08)"
-                    : "rgba(0,0,0,0.04)",
-                color: sapHetGio
-                  ? "#DC2626"
-                  : canhoHetGio
-                    ? "#D97706"
-                    : "#4B5563",
+                    : "#f7f9fa",
+                color: sapHetGio ? "#DC2626" : canhoHetGio ? "#92400e" : SUB,
                 animation: sapHetGio ? "blink 1s step-end infinite" : "none",
                 "@keyframes blink": {
                   "0%,100%": { opacity: 1 },
-                  "50%": { opacity: 0.35 },
+                  "50%": { opacity: 0.4 },
                 },
                 "& .MuiChip-icon": { color: "inherit !important" },
               }}
             />
           )}
-          <Tooltip title="Tổng quan">
+          <Tooltip title="Danh sách câu hỏi">
             <IconButton
               size="small"
               onClick={() => setOpenOverview(true)}
               sx={{
-                bgcolor: "rgba(0,0,0,0.04)",
-                "&:hover": { bgcolor: "rgba(141,19,19,0.08)" },
+                display: { xs: "inline-flex", md: "none" },
+                borderRadius: RADIUS,
+                bgcolor: "#f7f9fa",
+                border: `1px solid ${BORDER}`,
+                "&:hover": { bgcolor: RED_TINT, borderColor: RED },
               }}
             >
-              <GridViewRounded sx={{ fontSize: 18 }} />
+              <GridViewRounded sx={{ fontSize: 20 }} />
             </IconButton>
           </Tooltip>
         </Stack>
@@ -140,153 +240,207 @@ export function QuizView({
         value={progress}
         sx={{
           height: 3,
-          bgcolor: "rgba(0,0,0,0.04)",
+          bgcolor: "#eceef0",
           "& .MuiLinearProgress-bar": { bgcolor: RED },
         }}
       />
 
-      {/* Câu hỏi */}
-      <Box sx={{ flex: 1, overflow: "auto", p: 3 }}>
-        <Box sx={{ mb: 3.5 }}>
-          {cauHoi.doKho && (
-            <Chip
-              label={cauHoi.doKho}
-              size="small"
+      {/* Content */}
+      <Box sx={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <Box sx={{ flex: 1, overflow: "auto", p: { xs: 2.5, md: 4 } }}>
+          <Box sx={{ maxWidth: 760, mx: "auto" }}>
+            <Box
               sx={{
-                mb: 1.5,
-                fontWeight: 700,
-                fontSize: 11,
-                bgcolor: "rgba(0,0,0,0.05)",
-                color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
-              }}
-            />
-          )}
-          {isMulti && (
-            <Chip
-              label="Nhiều đáp án đúng"
-              size="small"
-              color="info"
-              sx={{ mb: 1.5, ml: 1, fontWeight: 700, fontSize: 11 }}
-            />
-          )}
-          <Typography
-            sx={{
-              fontSize: 16,
-              fontWeight: 800,
-              color: "var(--ev-text-primary, #1F2937)",
-              lineHeight: 1.6,
-              mb: 0.5,
-            }}
-          >
-            Câu {cauHoiHienTai + 1}. {cauHoi.tenCauHoi}
-          </Typography>
-          {cauHoi.noiDungCauHoi &&
-            cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi && (
-              <Typography
-                sx={{
-                  fontSize: 14,
-                  color: "var(--ev-text-secondary, rgba(31,41,55,0.65))",
-                  lineHeight: 1.7,
-                }}
-              >
-                {cauHoi.noiDungCauHoi}
-              </Typography>
-            )}
-          {cauHoi.diem && (
-            <Typography
-              sx={{
-                fontSize: 11.5,
-                color: "rgba(31,41,55,0.38)",
-                mt: 0.5,
-                fontWeight: 600,
+                bgcolor: "#fff",
+                border: `1px solid ${BORDER}`,
+                borderRadius: RADIUS,
+                p: { xs: 2.5, md: 3.5 },
+                mb: 2.5,
               }}
             >
-              ({cauHoi.diem} điểm)
-            </Typography>
-          )}
-        </Box>
-
-        {/* Đáp án */}
-        <Stack spacing={1.5}>
-          {cauHoi.dapAns.map((da, i) => {
-            const isSelected = selected.includes(da.id);
-            return (
-              <Box
-                key={da.id}
-                onClick={() => onChonDapAn(cauHoi.id, da.id)}
+              <Typography
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  p: 2,
-                  borderRadius: "12px",
-                  cursor: "pointer",
-                  border: `2px solid ${isSelected ? RED : "rgba(0,0,0,0.08)"}`,
-                  bgcolor: isSelected ? "rgba(141,19,19,0.04)" : "#fff",
-                  transition: "all 0.15s",
-                  "&:hover": {
-                    borderColor: isSelected ? RED : "rgba(141,19,19,0.3)",
-                    bgcolor: "rgba(141,19,19,0.02)",
-                  },
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: INK,
+                  lineHeight: 1.5,
+                  mb: 0.5,
                 }}
               >
-                {/* Label A/B/C */}
+                {cauHoi.tenCauHoi}
+              </Typography>
+              {cauHoi.noiDungCauHoi &&
+                cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi && (
+                  <Box
+                    sx={{
+                      fontSize: 14,
+                      color: "#3c3d40",
+                      lineHeight: 1.7,
+                      "& p": { m: 0, mb: 1 },
+                      "& p:last-child": { mb: 0 },
+                      "& ul, & ol": { pl: 2.5, mb: 1 },
+                      "& li": { mb: 0.5 },
+                      "& img": {
+                        maxWidth: "100%",
+                        borderRadius: RADIUS,
+                        my: 1,
+                        display: "block",
+                      },
+                      "& b, & strong": { fontWeight: 700, color: INK },
+                      "& a": { color: RED },
+                      "& table": {
+                        borderCollapse: "collapse",
+                        width: "100%",
+                        my: 1,
+                      },
+                      "& td, & th": {
+                        border: `1px solid ${BORDER}`,
+                        p: 1,
+                        fontSize: 13,
+                      },
+                    }}
+                    dangerouslySetInnerHTML={{ __html: cauHoi.noiDungCauHoi }}
+                  />
+                )}
+              {cauHoi.diem && (
+                <Typography
+                  sx={{ fontSize: 12, color: SUB, mt: 1, fontWeight: 600 }}
+                >
+                  {cauHoi.diem} điểm
+                </Typography>
+              )}
+            </Box>
+
+            {/* Đáp án */}
+            <Stack spacing={1.25}>
+              {cauHoi.dapAns.map((da, i) => {
+                const isSelected = selected.includes(da.id);
+                return (
+                  <Box
+                    key={da.id}
+                    onClick={() => onChonDapAn(cauHoi.id, da.id)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      p: 2,
+                      borderRadius: RADIUS,
+                      cursor: "pointer",
+                      border: `1.5px solid ${isSelected ? RED : BORDER}`,
+                      bgcolor: isSelected ? RED_TINT : "#fff",
+                      transition:
+                        "border-color 0.15s, background-color 0.15s, box-shadow 0.15s",
+                      boxShadow: isSelected ? `0 1px 0 ${RED_TINT}` : "none",
+                      "&:hover": { borderColor: isSelected ? RED : "#a4a9ac" },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: isMulti ? "6px" : "50%",
+                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: `1.5px solid ${isSelected ? RED : "#a4a9ac"}`,
+                        bgcolor: isSelected ? RED : "transparent",
+                        color: isSelected ? "#fff" : SUB,
+                        fontWeight: 700,
+                        fontSize: 12.5,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {isMulti ? (
+                        isSelected ? (
+                          <CheckRounded sx={{ fontSize: 17 }} />
+                        ) : null
+                      ) : (
+                        (LABELS[i] ?? i + 1)
+                      )}
+                    </Box>
+                    <Typography
+                      sx={{
+                        fontSize: 15,
+                        lineHeight: 1.5,
+                        flex: 1,
+                        fontWeight: isSelected ? 600 : 400,
+                        color: isSelected ? RED_DARK : INK,
+                      }}
+                    >
+                      {da.noiDungDapAn}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Box>
+        </Box>
+
+        {/* Sidebar */}
+        <Box
+          sx={{
+            display: { xs: "none", md: "block" },
+            width: 288,
+            flexShrink: 0,
+            borderLeft: `1px solid ${BORDER}`,
+            bgcolor: "#fff",
+            p: 3,
+            overflow: "auto",
+          }}
+        >
+          <Typography
+            sx={{ fontSize: 13, fontWeight: 700, color: INK, mb: 0.5 }}
+          >
+            Danh sách câu hỏi
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: SUB, mb: 2 }}>
+            Đã trả lời <strong style={{ color: RED }}>{soDaTraLoi}</strong>/
+            {tongCau}
+          </Typography>
+          <CauHoiGrid
+            cauHois={cauHois}
+            cauHoiHienTai={cauHoiHienTai}
+            traLois={traLois}
+            onPick={onSetCauHoi}
+          />
+          <Stack spacing={1} sx={{ mt: 3 }}>
+            {[
+              { c: RED, l: "Đang xem" },
+              { c: GREEN, l: "Đã trả lời" },
+              { c: BORDER, l: "Chưa trả lời" },
+            ].map((item, i) => (
+              <Stack
+                key={i}
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: "center" }}
+              >
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: isSelected ? RED : "rgba(0,0,0,0.05)",
-                    color: isSelected ? "#fff" : "rgba(31,41,55,0.4)",
-                    fontWeight: 800,
-                    fontSize: 13,
+                    width: 10,
+                    height: 10,
+                    borderRadius: "3px",
+                    border: i === 2 ? `1.5px solid ${BORDER}` : "none",
+                    bgcolor: i === 2 ? "transparent" : item.c,
                   }}
-                >
-                  {isMulti ? (
-                    isSelected ? (
-                      <CheckCircleRounded sx={{ fontSize: 18 }} />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: "3px",
-                          border: "2px solid rgba(0,0,0,0.2)",
-                        }}
-                      />
-                    )
-                  ) : (
-                    (LABELS[i] ?? i + 1)
-                  )}
-                </Box>
-                <Typography
-                  sx={{
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    flex: 1,
-                    fontWeight: isSelected ? 600 : 400,
-                    color: "var(--ev-text-primary, #1F2937)",
-                  }}
-                >
-                  {da.noiDungDapAn}
+                />
+                <Typography sx={{ fontSize: 12, color: SUB }}>
+                  {item.l}
                 </Typography>
-              </Box>
-            );
-          })}
-        </Stack>
+              </Stack>
+            ))}
+          </Stack>
+        </Box>
       </Box>
 
       {/* Navigation */}
       <Box
         sx={{
-          px: 2.5,
+          px: 3,
           py: 2,
-          borderTop: "1px solid rgba(0,0,0,0.06)",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          borderTop: `1px solid ${BORDER}`,
+          bgcolor: "#fff",
           flexShrink: 0,
         }}
       >
@@ -297,23 +451,29 @@ export function QuizView({
             disabled={cauHoiHienTai === 0}
             onClick={() => onSetCauHoi(cauHoiHienTai - 1)}
             sx={{
-              borderRadius: "10px",
-              fontWeight: 700,
-              borderColor: "rgba(0,0,0,0.12)",
-              color: "var(--ev-text-secondary, #4B5563)",
-              "&:hover": { borderColor: RED, color: RED },
+              borderRadius: RADIUS,
+              fontWeight: 600,
+              textTransform: "none",
+              borderColor: "#a4a9ac",
+              color: "#3c3d40",
+              "&:hover": {
+                borderColor: RED,
+                color: RED,
+                bgcolor: "transparent",
+              },
+              "&:disabled": { borderColor: BORDER, color: "#a4a9ac" },
             }}
           >
-            Trước
+            Câu trước
           </Button>
-          <Box sx={{ flex: 1, textAlign: "center" }}>
-            <Typography
-              sx={{
-                fontSize: 12,
-                color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
-                fontWeight: 600,
-              }}
-            >
+          <Box
+            sx={{
+              flex: 1,
+              textAlign: "center",
+              display: { xs: "none", sm: "block" },
+            }}
+          >
+            <Typography sx={{ fontSize: 13, color: SUB, fontWeight: 500 }}>
               Đã trả lời {soDaTraLoi}/{tongCau}
             </Typography>
           </Box>
@@ -323,195 +483,217 @@ export function QuizView({
               endIcon={<ChevronRightRounded />}
               onClick={() => onSetCauHoi(cauHoiHienTai + 1)}
               sx={{
-                borderRadius: "10px",
-                fontWeight: 700,
-                borderColor: "rgba(0,0,0,0.12)",
-                color: "var(--ev-text-secondary, #4B5563)",
-                "&:hover": { borderColor: RED, color: RED },
+                borderRadius: RADIUS,
+                fontWeight: 600,
+                textTransform: "none",
+                borderColor: "#a4a9ac",
+                color: "#3c3d40",
+                "&:hover": {
+                  borderColor: RED,
+                  color: RED,
+                  bgcolor: "transparent",
+                },
               }}
             >
-              Tiếp
+              Câu tiếp
             </Button>
           ) : (
-            <Button
-              variant="contained"
-              endIcon={<SendRounded />}
-              onClick={() => setOpenConfirm(true)}
-              disabled={loading}
-              sx={{
-                borderRadius: "10px",
-                fontWeight: 800,
-                background: `linear-gradient(135deg, ${RED}, #7C3AED)`,
-                boxShadow: "none",
-              }}
+            <Tooltip
+              title={
+                !tatCaDaTraLoi
+                  ? "Bạn cần trả lời tất cả câu hỏi trước khi nộp bài"
+                  : ""
+              }
             >
-              Nộp bài
-            </Button>
+              <span>
+                <Button
+                  variant="contained"
+                  endIcon={<SendRounded />}
+                  onClick={() => setOpenConfirm(true)}
+                  disabled={loading || !tatCaDaTraLoi}
+                  sx={{
+                    borderRadius: RADIUS,
+                    fontWeight: 700,
+                    textTransform: "none",
+                    bgcolor: RED,
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: RED_DARK, boxShadow: "none" },
+                    "&:disabled": { bgcolor: BORDER, color: SUB },
+                  }}
+                >
+                  Nộp bài
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </Stack>
       </Box>
 
-      {/* Confirm dialog */}
+      {/* Confirm Dialog */}
       <Dialog
         open={openConfirm}
         onClose={() => setOpenConfirm(false)}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: "16px" } } }}
+        slotProps={{ paper: { sx: { borderRadius: RADIUS } } }}
       >
-        <DialogTitle sx={{ fontWeight: 900 }}>Xác nhận nộp bài?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, color: INK }}>
+          Xác nhận nộp bài?
+        </DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontSize: 14, mb: 1.5 }}>
-            Đã trả lời{" "}
+          <Typography sx={{ fontSize: 14, color: "#3c3d40", mb: 2 }}>
+            Bạn đã trả lời{" "}
             <strong style={{ color: RED }}>
               {soDaTraLoi}/{tongCau}
             </strong>{" "}
-            câu.
+            câu hỏi.
           </Typography>
-          {soDaTraLoi < tongCau && (
+          {!tatCaDaTraLoi ? (
             <Box
               sx={{
                 p: 2,
-                borderRadius: "10px",
-                bgcolor: "rgba(245,158,11,0.07)",
-                border: "1px solid rgba(245,158,11,0.2)",
+                borderRadius: RADIUS,
+                bgcolor: "rgba(220,38,38,0.06)",
+                border: "1px solid rgba(220,38,38,0.15)",
               }}
             >
               <Typography
-                sx={{ fontSize: 13, color: "#D97706", fontWeight: 600 }}
+                sx={{ fontSize: 13, color: "#DC2626", fontWeight: 600 }}
               >
-                ⚠️ Còn {tongCau - soDaTraLoi} câu chưa trả lời, sẽ bị tính 0
-                điểm.
+                ⚠️ Bạn cần trả lời tất cả {tongCau} câu hỏi trước khi nộp bài.
+                Còn {tongCau - soDaTraLoi} câu chưa trả lời.
+              </Typography>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: RADIUS,
+                bgcolor: "rgba(16,185,129,0.06)",
+                border: "1px solid rgba(16,185,129,0.15)",
+              }}
+            >
+              <Typography
+                sx={{ fontSize: 13, color: "#10B981", fontWeight: 500 }}
+              >
+                ✅ Bạn đã trả lời tất cả câu hỏi.
               </Typography>
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
           <Button
             onClick={() => setOpenConfirm(false)}
-            sx={{ color: "#666", borderRadius: "10px" }}
+            sx={{
+              color: SUB,
+              borderRadius: RADIUS,
+              textTransform: "none",
+              fontWeight: 600,
+            }}
           >
             Quay lại
           </Button>
           <Button
             variant="contained"
-            disabled={loading}
+            disabled={loading || !tatCaDaTraLoi}
             onClick={() => {
-              console.log("[QuizView] Nộp bài được gọi!");
               setOpenConfirm(false);
               onNopBai();
             }}
             sx={{
-              background: `linear-gradient(135deg, ${RED}, #7C3AED)`,
-              borderRadius: "10px",
-              fontWeight: 800,
+              bgcolor: RED,
+              borderRadius: RADIUS,
+              fontWeight: 600,
+              textTransform: "none",
               boxShadow: "none",
+              "&:hover": { bgcolor: RED_DARK },
+              "&:disabled": { bgcolor: BORDER, color: SUB },
             }}
           >
-            Xác nhận nộp
+            Nộp bài
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Overview dialog */}
+      {/* Overview Dialog - Mobile */}
       <Dialog
         open={openOverview}
         onClose={() => setOpenOverview(false)}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: "16px" } } }}
+        slotProps={{ paper: { sx: { borderRadius: RADIUS } } }}
       >
-        <DialogTitle sx={{ fontWeight: 900, pb: 0.5 }}>Tổng quan</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, color: INK, pb: 0.5 }}>
+          Danh sách câu hỏi
+        </DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 2 }}>
+          <Typography sx={{ fontSize: 13, color: SUB, mb: 2 }}>
             Đã trả lời:{" "}
-            <strong>
+            <strong style={{ color: INK }}>
               {soDaTraLoi}/{tongCau}
-            </strong>{" "}
-            câu
+            </strong>
           </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-            {cauHois.map((c, i) => {
-              const daTraLoi = (traLois[c.id] ?? []).length > 0;
-              const isHienTai = i === cauHoiHienTai;
-              return (
-                <Box
-                  key={c.id}
-                  onClick={() => {
-                    onSetCauHoi(i);
-                    setOpenOverview(false);
-                  }}
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    fontWeight: 800,
-                    fontSize: 13,
-                    border: `2px solid ${isHienTai ? RED : daTraLoi ? "#10B981" : "rgba(0,0,0,0.1)"}`,
-                    bgcolor: isHienTai
-                      ? RED
-                      : daTraLoi
-                        ? "rgba(16,185,129,0.07)"
-                        : "transparent",
-                    color: isHienTai
-                      ? "#fff"
-                      : daTraLoi
-                        ? "#10B981"
-                        : "rgba(31,41,55,0.38)",
-                    "&:hover": { borderColor: RED },
-                  }}
-                >
-                  {i + 1}
-                </Box>
-              );
-            })}
-          </Box>
-          <Stack direction="row" spacing={2} sx={{ mt: 2.5 }}>
+          <CauHoiGrid
+            cauHois={cauHois}
+            cauHoiHienTai={cauHoiHienTai}
+            traLois={traLois}
+            onPick={(i) => {
+              onSetCauHoi(i);
+              setOpenOverview(false);
+            }}
+          />
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ mt: 2.5, flexWrap: "wrap", rowGap: 1 }}
+          >
             {[
               { c: RED, l: "Đang xem" },
-              { c: "#10B981", l: "Đã trả lời" },
-              { c: "rgba(0,0,0,0.1)", l: "Chưa trả lời" },
+              { c: GREEN, l: "Đã trả lời" },
+              { c: BORDER, l: "Chưa trả lời" },
             ].map((item, i) => (
               <Stack
                 key={i}
                 direction="row"
-                spacing={0.75}
+                spacing={1}
                 sx={{ alignItems: "center" }}
               >
                 <Box
                   sx={{
-                    width: 12,
-                    height: 12,
+                    width: 10,
+                    height: 10,
                     borderRadius: "3px",
-                    bgcolor: item.c,
+                    border: i === 2 ? `1.5px solid ${BORDER}` : "none",
+                    bgcolor: i === 2 ? "transparent" : item.c,
                   }}
                 />
-                <Typography sx={{ fontSize: 11, color: "text.secondary" }}>
+                <Typography sx={{ fontSize: 12, color: SUB }}>
                   {item.l}
                 </Typography>
               </Stack>
             ))}
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button
+            variant="contained"
+            fullWidth
+            disabled={!tatCaDaTraLoi}
             onClick={() => {
               setOpenConfirm(true);
               setOpenOverview(false);
             }}
-            variant="contained"
             sx={{
-              background: `linear-gradient(135deg, ${RED}, #7C3AED)`,
-              borderRadius: "10px",
-              fontWeight: 800,
+              bgcolor: RED,
+              borderRadius: RADIUS,
+              fontWeight: 600,
+              textTransform: "none",
               boxShadow: "none",
+              "&:hover": { bgcolor: RED_DARK },
+              "&:disabled": { bgcolor: BORDER, color: SUB },
             }}
           >
-            Nộp bài ngay
+            {tatCaDaTraLoi ? "Nộp bài ngay" : "Chưa trả lời hết"}
           </Button>
         </DialogActions>
       </Dialog>

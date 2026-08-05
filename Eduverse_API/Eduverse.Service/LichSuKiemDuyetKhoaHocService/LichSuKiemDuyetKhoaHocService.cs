@@ -70,8 +70,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
     public class LichSuKiemDuyetKhoaHocService : Service<Model.Entities.LichSuKiemDuyetKhoaHoc>, ILichSuKiemDuyetKhoaHocService
     {
-        private const double NGUONG_CHAN = 0.7;      // Reject if score >= 0.7
-        private const double NGUONG_PHAN_VAN = 0.4;  // Need admin review if score >= 0.4 and < 0.7
+        private const double NGUONG_CHAN = 0.7;    
+        private const double NGUONG_PHAN_VAN = 0.4; 
 
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly IPhanRepository _phanRepository;

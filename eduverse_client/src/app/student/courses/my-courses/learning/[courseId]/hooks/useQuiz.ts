@@ -80,6 +80,7 @@ export interface ReviewQizzDto {
   thoiGianNop?: string;
   dat: boolean;
   cauHois: CauHoiReviewDto[];
+  choXemDapAn?: boolean; // 🚀 Thêm dòng này
 }
 
 export interface ContinueQuizFullDto {
@@ -120,7 +121,7 @@ export interface LichSuLamBaiDto {
   idLanLamBaiKiemTra: string;
   lamLanThu?: number;
   dat?: boolean;
-  tongDiem?: number;       // điểm lần đó
+  tongDiem?: number; // điểm lần đó
   thoiGianBatDau?: string;
   thoiGianNop?: string;
 }
@@ -162,14 +163,29 @@ export function useQuiz(
     const load = async () => {
       setLoading(true);
       try {
-        const [infoRes, histRes, retakeRes] = await Promise.all([
-          apiService.get<BaiKiemTraLamBaiDto>(`/baikiemtra/${idBaiKiemTra}/quiz`),
-          apiService.get<LichSuLamBaiDto[]>(`/baikiemtra/${idBaiKiemTra}/history/${userId}`),
-          apiService.get<boolean>(`/baikiemtra/${idBaiKiemTra}/can-retake/${userId}`),
+        const [infoRes, histRes] = await Promise.all([
+          apiService.get<BaiKiemTraLamBaiDto>(
+            `/BaiKiemTra/${idBaiKiemTra}/quiz`, // ✅ viết hoa
+          ),
+          apiService.get<LichSuLamBaiDto[]>(
+            `/BaiKiemTra/${idBaiKiemTra}/history/${userId}`, // ✅ viết hoa
+          ),
         ]);
-        setInfo(infoRes.data);
+
+        // 🚀 FIX: BaiKiemTraLamBaiDto (trả về từ /quiz) không có field
+        // soCauHoi — chỉ có mảng cauHois. Trước đây setInfo(infoRes.data)
+        // gán thẳng nên soCauHoi luôn undefined -> UI hiện "0 câu hỏi".
+        // Map lại đúng field của BaiKiemTraInfoDto, tính soCauHoi từ
+        // độ dài mảng cauHois đã được BE trả về.
+        setInfo({
+          id: infoRes.data.id,
+          tenBaiKiemTra: infoRes.data.tenBaiKiemTra,
+          moTa: infoRes.data.moTa,
+          gioiHanThoiGian: infoRes.data.gioiHanThoiGian,
+          soCauHoi: infoRes.data.cauHois?.length ?? 0,
+        });
         setLichSu(histRes.data ?? []);
-        setCanRetake(retakeRes.data);
+        setCanRetake(true); // ✅ Luôn cho phép làm lại
       } catch {
         setError("Không thể tải thông tin bài kiểm tra");
       } finally {
@@ -201,6 +217,7 @@ export function useQuiz(
     stopHeartbeat();
     setPhase("submitting");
     try {
+      // Lấy đáp án từ traLois hiện tại (đã được cập nhật khi chọn đáp án)
       const payload = {
         idLanLamBaiKiemTra: idLanLam,
         cauTraLois: cauHois.map((c) => ({
@@ -208,24 +225,39 @@ export function useQuiz(
           idDapAnChons: traLois[c.id] ?? [],
         })),
       };
-      const res = await apiService.post<KetQuaLanKiemTraDto>("/baikiemtra/submit", payload);
+      const res = await apiService.post<KetQuaLanKiemTraDto>(
+        "/BaiKiemTra/submit", // ✅ viết hoa
+        payload,
+      );
       setKetQua(res.data);
+
       setPhase("result");
 
-      // Refresh lịch sử + điểm cao nhất
+      // Refresh lịch sử
       if (userId && idBaiKiemTra) {
-        const [histRes, retakeRes] = await Promise.all([
-          apiService.get<LichSuLamBaiDto[]>(`/baikiemtra/${idBaiKiemTra}/history/${userId}`),
-          apiService.get<boolean>(`/baikiemtra/${idBaiKiemTra}/can-retake/${userId}`),
+        const [histRes] = await Promise.all([
+          apiService.get<LichSuLamBaiDto[]>(
+            `/BaiKiemTra/${idBaiKiemTra}/history/${userId}`, // ✅ viết hoa
+          ),
         ]);
         setLichSu(histRes.data ?? []);
-        setCanRetake(retakeRes.data);
       }
+
+      // Luôn cho phép làm lại (unlimited retake)
+      setCanRetake(true);
     } catch {
       setError("Không thể nộp bài. Vui lòng thử lại.");
       setPhase("doing");
     }
-  }, [idLanLam, cauHois, traLois, stopTimer, stopHeartbeat, userId, idBaiKiemTra]);
+  }, [
+    idLanLam,
+    cauHois,
+    traLois,
+    stopTimer,
+    stopHeartbeat,
+    userId,
+    idBaiKiemTra,
+  ]);
 
   // ── Cập nhật ref mỗi khi nopBai thay đổi (tránh stale closure trong timer) ─
   useEffect(() => {
@@ -240,14 +272,13 @@ export function useQuiz(
       setThoiGianConLai((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          // Gọi qua ref → luôn là bản mới nhất, không bị stale closure
           nopBaiRef.current();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, []); // deps rỗng là đúng — ref không cần khai báo dep
+  }, []);
 
   // ── Heartbeat ──────────────────────────────────────────────────────────────
   const startHeartbeat = useCallback((id: string) => {
@@ -255,7 +286,7 @@ export function useQuiz(
     heartbeatRef.current = setInterval(async () => {
       try {
         const res = await apiService.post<{ thoiGianConLai?: number }>(
-          `/baikiemtra/heartbeat-timequiz/${id}`,
+          `/BaiKiemTra/heartbeat-timequiz/${id}`, // ✅ viết hoa
         );
         if (res.data?.thoiGianConLai != null) {
           setThoiGianConLai(res.data.thoiGianConLai);
@@ -280,10 +311,13 @@ export function useQuiz(
     setLoading(true);
     setError("");
     try {
-      const startRes = await apiService.post<any>("/baikiemtra/start", {
-        idBaiKiemTra,
-        idDangKi: idDangKi ?? null,
-      });
+      const startRes = await apiService.post<any>(
+        "/BaiKiemTra/start", // ✅ viết hoa
+        {
+          idBaiKiemTra,
+          idDangKi: idDangKi ?? null,
+        },
+      );
 
       if (!startRes.status || !startRes.data) {
         setError(startRes.message ?? "Không thể bắt đầu làm bài");
@@ -306,7 +340,7 @@ export function useQuiz(
 
       // Lấy câu hỏi
       const quizRes = await apiService.get<BaiKiemTraLamBaiDto>(
-        `/baikiemtra/${idBaiKiemTra}/quiz`,
+        `/BaiKiemTra/${idBaiKiemTra}/quiz`, // ✅ viết hoa
       );
       const questions = quizRes.data?.cauHois ?? [];
       setCauHois(questions);
@@ -316,9 +350,7 @@ export function useQuiz(
 
       // Ưu tiên lấy thời gian từ info (đã load trước), fallback sang quizRes
       const gioiHanPhut =
-        info?.gioiHanThoiGian ??
-        quizRes.data?.gioiHanThoiGian ??
-        0;
+        info?.gioiHanThoiGian ?? quizRes.data?.gioiHanThoiGian ?? 0;
 
       if (gioiHanPhut > 0) {
         startTimer(gioiHanPhut * 60);
@@ -339,7 +371,7 @@ export function useQuiz(
       setLoading(true);
       try {
         const res = await apiService.get<ContinueQuizFullDto>(
-          `/baikiemtra/continue-full/${idLanLamCu}`,
+          `/BaiKiemTra/continue-full/${idLanLamCu}`, // ✅ viết hoa
         );
         const d = res.data;
         setIdLanLam(idLanLamCu);
@@ -369,6 +401,7 @@ export function useQuiz(
   // ── Chọn đáp án + auto-save ────────────────────────────────────────────────
   const chonDapAn = useCallback(
     async (idCauHoi: string, idDapAn: string) => {
+      // Cập nhật state ngay lập tức (optimistic update)
       setTraLois((prev) => {
         const current = prev[idCauHoi] ?? [];
         const cauHoi = cauHois.find((c) => c.id === idCauHoi);
@@ -382,6 +415,7 @@ export function useQuiz(
         return { ...prev, [idCauHoi]: [idDapAn] };
       });
 
+      // Auto-save (không chặn UI)
       if (savingRef.current || !idLanLam) return;
       savingRef.current = true;
       try {
@@ -394,18 +428,23 @@ export function useQuiz(
             : [...current, idDapAn]
           : [idDapAn];
 
-        const res = await apiService.post<AutoSaveDapAnDto>("/baikiemtra/auto-save", {
-          idLanLamBaiKiemTra: idLanLam,
-          idCauHoi,
-          idDapAnChons: updated,
-        });
+        const res = await apiService.post<AutoSaveDapAnDto>(
+          "/BaiKiemTra/auto-save", // ✅ viết hoa
+          {
+            idLanLamBaiKiemTra: idLanLam,
+            idCauHoi,
+            idDapAnChons: updated,
+          },
+        );
 
         if (res.data?.coGioiHan && res.data.thoiGianConLai > 0) {
           setThoiGianConLai(res.data.thoiGianConLai);
         }
 
         if (res.data?.nextQuestionId) {
-          const nextIdx = cauHois.findIndex((c) => c.id === res.data.nextQuestionId);
+          const nextIdx = cauHois.findIndex(
+            (c) => c.id === res.data.nextQuestionId,
+          );
           if (nextIdx !== -1) setCauHoiHienTai(nextIdx);
         }
       } catch {
@@ -424,7 +463,9 @@ export function useQuiz(
       if (!id) return;
       setLoading(true);
       try {
-        const res = await apiService.get<ReviewQizzDto>(`/baikiemtra/review/${id}`);
+        const res = await apiService.get<ReviewQizzDto>(
+          `/BaiKiemTra/review/${id}`, // ✅ viết hoa
+        );
         setReview(res.data);
         setPhase("review");
       } catch {
@@ -449,13 +490,18 @@ export function useQuiz(
   }, [stopTimer, stopHeartbeat]);
 
   const formatTimer = (giay: number) => {
-    const m = Math.floor(giay / 60).toString().padStart(2, "0");
+    const m = Math.floor(giay / 60)
+      .toString()
+      .padStart(2, "0");
     const s = (giay % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
   const soLanDaLam = lichSu.length;
   const lanLamDoDang = lichSu.find((l) => !l.thoiGianNop);
+
+  // ── Kiểm tra đạt 100% ───────────────────────────────────────────────────────
+  const daDat100 = ketQua?.tongDiem === 100;
 
   return {
     phase,
@@ -491,5 +537,6 @@ export function useQuiz(
     nopBai,
     xemLaiBai,
     lamLaiDau,
+    daDat100,
   };
 }
