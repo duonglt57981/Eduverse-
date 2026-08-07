@@ -73,8 +73,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       const isReviewResult =
         type === "khoahoctuchoi" || type === "khoahocdaduyet";
       const isCurrentCourse =
-        notification.itemId?.toLocaleLowerCase() === idKhoaHoc.toLocaleLowerCase() ||
-        notification.link?.toLocaleLowerCase().includes(idKhoaHoc.toLocaleLowerCase());
+        notification.itemId?.toLocaleLowerCase() ===
+          idKhoaHoc.toLocaleLowerCase() ||
+        notification.link
+          ?.toLocaleLowerCase()
+          .includes(idKhoaHoc.toLocaleLowerCase());
 
       if (
         !notification.id ||
@@ -110,7 +113,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     const loadMissedReviewNotification = async () => {
       try {
         const response = await thongBaoService.getUnreadNotifications();
-        if (!active || !response?.status || !Array.isArray(response.data)) return;
+        if (!active || !response?.status || !Array.isArray(response.data))
+          return;
 
         response.data.forEach(handleCourseReviewNotification);
       } catch (error) {
@@ -176,6 +180,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           nhan: "Chương trình giảng dạy",
           hoanThanh: curriculumHoanThanh,
         },
+        {
+          key: "instructors", // ← thêm mới
+          nhan: "Quản lý giảng viên",
+          hoanThanh: false, // không cần check hoàn thành
+        },
       ],
     },
   ];
@@ -197,19 +206,17 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, [clearState, resetDirty, router]);
 
   const performDiChuyenDen = useCallback(
-    (diChuyenDen: MucThieu["diChuyenDen"]) => {
-      // LƯU DỮ LIỆU TRƯỚC KHI CHUYỂN TRANG
-      saveState();
-      if (diChuyenDen === "basics") {
-        router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
-      } else {
-        router.push(
-          `/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`,
-        );
-      }
-    },
-    [idKhoaHoc, router, saveState],
-  );
+  (diChuyenDen: MucThieu["diChuyenDen"]) => {
+    saveState();
+    if (diChuyenDen === "basics") {
+      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
+    } else if (diChuyenDen === "curriculum") {
+      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`);
+    }
+    // instructors không có trong validate flow, chỉ navigate bình thường
+  },
+  [idKhoaHoc, router, saveState],
+);
 
   const handleNavigateSidebar = useCallback(
     (key: string) => {

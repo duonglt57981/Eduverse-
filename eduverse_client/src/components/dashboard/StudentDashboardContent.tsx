@@ -99,6 +99,8 @@ interface KhoaHocDto {
   instructor?: string;
   title?: string;
   subtitle?: string;
+  soGiangVien?: number;
+  laCongTacVien?: boolean;
 }
 
 interface DashboardData {
@@ -413,7 +415,10 @@ function HoverPanel({
           {course.tongThoiLuong != null && (
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               <AccessTimeRounded
-                sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
+                sx={{
+                  fontSize: 13,
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                }}
               />
               <Typography
                 sx={{
@@ -429,7 +434,10 @@ function HoverPanel({
           {course.tongBaiGiang != null && (
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               <MenuBookRounded
-                sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
+                sx={{
+                  fontSize: 13,
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                }}
               />
               <Typography
                 sx={{
@@ -612,7 +620,11 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice = course.gia ?? course.giaGoc ?? (course as unknown as Record<string, unknown>).giagoc as number ?? 0;
+  const displayPrice =
+    course.gia ??
+    course.giaGoc ??
+    ((course as unknown as Record<string, unknown>).giagoc as number) ??
+    0;
   const title = course.tieuDe || course.title || "";
   const rating = course.rating ?? 4.8;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
@@ -690,7 +702,9 @@ function CourseCard({
         >
           {!isValidImage(course.hinhAnhKhoaHoc) && (
             <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
-              <SchoolRounded sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 32 }} />
+              <SchoolRounded
+                sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 32 }}
+              />
               <Typography
                 sx={{
                   color: "var(--ev-text-muted, #8A7676)",
@@ -810,6 +824,40 @@ function CourseCard({
           >
             {title}
           </Typography>
+          {(course.soGiangVien! > 1 || course.laCongTacVien) && (
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ mb: 1, flexWrap: "wrap", gap: 0.5 }}
+            >
+              {course.soGiangVien! > 1 && (
+                <Chip
+                  label={`${course.soGiangVien} giảng viên`}
+                  size="small"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 10.5,
+                    bgcolor: "#EFF6FF",
+                    color: "#2563EB",
+                    borderRadius: "6px",
+                  }}
+                />
+              )}
+              {course.laCongTacVien && (
+                <Chip
+                  label="Cộng tác viên"
+                  size="small"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 10.5,
+                    bgcolor: "#F5F3FF",
+                    color: "#8B5CF6",
+                    borderRadius: "6px",
+                  }}
+                />
+              )}
+            </Stack>
+          )}
 
           {/* Meta */}
           <Stack
@@ -878,7 +926,10 @@ function CourseCard({
                 sx={{ alignItems: "center" }}
               >
                 <PeopleAltRounded
-                  sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
+                  sx={{
+                    fontSize: 13,
+                    color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                  }}
                 />
                 <Typography
                   sx={{
@@ -1005,7 +1056,9 @@ export default function StudentDashboardContent() {
         if (roles.includes("Admin") || roles.includes("GiaoVien")) {
           try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
+            const approvedRes = await apiService.get<any>(
+              "/KhoaHoc/khoahoc-getlist-daduyet",
+            );
             const items = approvedRes.data || [];
             const imgMap: Record<string, string> = {};
             const tMap: Record<string, string> = {};
@@ -1615,7 +1668,10 @@ export default function StudentDashboardContent() {
                     0/30 phút khóa học
                   </Typography>
                   <InfoOutlined
-                    sx={{ fontSize: 13, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
+                    sx={{
+                      fontSize: 13,
+                      color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                    }}
                   />
                 </Stack>
                 <Typography
@@ -1723,7 +1779,9 @@ export default function StudentDashboardContent() {
                     }}
                   >
                     {item.contentType === "Bài viết" ? (
-                      <ArticleOutlined sx={{ fontSize: 26, color: "#FFFFFF" }} />
+                      <ArticleOutlined
+                        sx={{ fontSize: 26, color: "#FFFFFF" }}
+                      />
                     ) : (
                       <PlayCircleOutlineRounded
                         sx={{ fontSize: 28, color: "#FFFFFF" }}
@@ -1776,7 +1834,10 @@ export default function StudentDashboardContent() {
                     sx={{ alignSelf: "flex-start", mt: -0.5, mr: -0.5 }}
                   >
                     <MoreVertRounded
-                      sx={{ fontSize: 18, color: "var(--ev-text-muted, rgba(31,41,55,0.4))" }}
+                      sx={{
+                        fontSize: 18,
+                        color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                      }}
                     />
                   </IconButton>
                   {/* Progress bar */}
@@ -1988,7 +2049,12 @@ export default function StudentDashboardContent() {
                 textAlign: "center",
               }}
             >
-              <Typography sx={{ fontSize: 15, color: "var(--ev-text-muted, rgba(31,41,55,0.5))" }}>
+              <Typography
+                sx={{
+                  fontSize: 15,
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                }}
+              >
                 Chưa có lộ trình học tập nào.
               </Typography>
             </Paper>
@@ -2129,7 +2195,9 @@ export default function StudentDashboardContent() {
                     onClick={() => setSelectedSkill(badge)}
                     sx={{
                       bgcolor: isActive ? C.primary : "rgba(0,0,0,0.03)",
-                      color: isActive ? "var(--ev-paper, #FFFFFF)" : "rgba(31,41,55,0.65)",
+                      color: isActive
+                        ? "var(--ev-paper, #FFFFFF)"
+                        : "rgba(31,41,55,0.65)",
                       fontWeight: 800,
                       fontSize: 13,
                       px: 1,
@@ -2141,7 +2209,9 @@ export default function StudentDashboardContent() {
                       cursor: "pointer",
                       "&:hover": {
                         bgcolor: isActive ? C.primary : "rgba(141,19,19,0.05)",
-                        color: isActive ? "var(--ev-paper, #FFFFFF)" : C.primary,
+                        color: isActive
+                          ? "var(--ev-paper, #FFFFFF)"
+                          : C.primary,
                       },
                       transition: "all 150ms ease",
                     }}
@@ -2173,7 +2243,12 @@ export default function StudentDashboardContent() {
                 textAlign: "center",
               }}
             >
-              <Typography sx={{ fontSize: 14, color: "var(--ev-text-muted, rgba(31,41,55,0.5))" }}>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                }}
+              >
                 Không có khóa học phù hợp với kỹ năng này.
               </Typography>
             </Paper>
@@ -2289,7 +2364,10 @@ export default function StudentDashboardContent() {
                     >
                       Giảng viên:{" "}
                       <span
-                        style={{ fontWeight: 500, color: "var(--ev-text-secondary, rgba(31,41,55,0.7))" }}
+                        style={{
+                          fontWeight: 500,
+                          color: "var(--ev-text-secondary, rgba(31,41,55,0.7))",
+                        }}
                       >
                         {premiumSelection.instructor}
                       </span>

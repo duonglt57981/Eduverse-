@@ -96,6 +96,8 @@ interface KhoaHocDto {
   title?: string;
   subtitle?: string;
   categoryNames?: string[];
+  tenGiangVien?: string;
+  danhSachGiangVienHienThi?: string[];
 }
 
 interface DashboardData {
@@ -165,7 +167,15 @@ function getGradient(_course: KhoaHocDto) {
 function isValidImage(url?: string): boolean {
   if (!url) return false;
   const t = url.trim();
-  if (!t || t === "không có" || t === "aaaaaaaa" || t === "string" || t === "null" || t === "undefined") return false;
+  if (
+    !t ||
+    t === "không có" ||
+    t === "aaaaaaaa" ||
+    t === "string" ||
+    t === "null" ||
+    t === "undefined"
+  )
+    return false;
   return t.startsWith("http") || t.startsWith("/") || t.startsWith(".");
 }
 
@@ -428,7 +438,11 @@ function HoverPanel({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice = course.gia ?? course.giaGoc ?? (course as unknown as Record<string, unknown>).giagoc as number ?? 0;
+  const displayPrice =
+    course.gia ??
+    course.giaGoc ??
+    ((course as unknown as Record<string, unknown>).giagoc as number) ??
+    0;
 
   return (
     <Box
@@ -694,7 +708,11 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice = course.gia ?? course.giaGoc ?? (course as unknown as Record<string, unknown>).giagoc as number ?? 0;
+  const displayPrice =
+    course.gia ??
+    course.giaGoc ??
+    ((course as unknown as Record<string, unknown>).giagoc as number) ??
+    0;
   const title = course.tieuDe || course.title || "";
   // Chỉ hiển thị đánh giá khi có dữ liệu thật (không dùng giá trị bịa)
   const rating = course.rating ?? null;
@@ -876,7 +894,22 @@ function CourseCard({
           >
             {title}
           </Typography>
-
+          {course.danhSachGiangVienHienThi &&
+            course.danhSachGiangVienHienThi.length > 0 && (
+              <Typography
+                sx={{
+                  fontSize: 11.5,
+                  color: C.textMuted,
+                  fontWeight: 600,
+                  mb: 0.75,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {course.danhSachGiangVienHienThi.join(", ")}
+              </Typography>
+            )}
           <Stack
             direction="row"
             spacing={1.5}
@@ -1128,8 +1161,8 @@ function ContinueLearningCard({
               pct === 100
                 ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
                 : pct === 0
-                ? "rgba(15, 23, 42, 0.75)"
-                : C.gradientCrimson,
+                  ? "rgba(15, 23, 42, 0.75)"
+                  : C.gradientCrimson,
             backdropFilter: pct === 0 ? "blur(8px)" : undefined,
             color: "#fff",
             fontWeight: 800,
@@ -1302,9 +1335,9 @@ export default function StudentHomeContent() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    "courses" | "assigned" | "paths"
-  >("courses");
+  const [activeTab, setActiveTab] = useState<"courses" | "assigned" | "paths">(
+    "courses",
+  );
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const tabsRef = useRef<HTMLDivElement>(null);
 
@@ -1348,7 +1381,7 @@ export default function StudentHomeContent() {
 
       return true;
     });
-  }, [latestCourses, data?.continueLearning?.courses]);
+  }, [latestCourses, data]);
 
   const load = useCallback(async () => {
     try {
@@ -1358,7 +1391,9 @@ export default function StudentHomeContent() {
       // Fetch approved courses to retrieve real image urls (bypassing dashboard endpoint omissions)
       if (roles.includes("Admin") || roles.includes("GiaoVien")) {
         try {
-          const approvedRes = await apiService.get<any>("/KhoaHoc/khoahoc-getlist-daduyet");
+          const approvedRes = await apiService.get<any>(
+            "/KhoaHoc/khoahoc-getlist-daduyet",
+          );
           const items = approvedRes.data || [];
           const imgMap: Record<string, string> = {};
           const tMap: Record<string, string> = {};
@@ -1411,7 +1446,6 @@ export default function StudentHomeContent() {
         setError(res.message ?? "Không thể tải dữ liệu.");
       }
     } catch (e) {
-
       setError(e instanceof Error ? e.message : "Đã xảy ra lỗi.");
     } finally {
       setLoading(false);
@@ -1459,7 +1493,6 @@ export default function StudentHomeContent() {
     setActiveTab("courses");
     tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
-
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading) {
@@ -1680,7 +1713,7 @@ export default function StudentHomeContent() {
                 bgcolor: C.white,
                 borderColor: "rgba(139,19,19,0.12)",
                 boxShadow: "0 6px 16px rgba(139,19,19,0.04)",
-              }
+              },
             }}
           >
             <AutoStoriesRounded
@@ -1721,7 +1754,7 @@ export default function StudentHomeContent() {
                 bgcolor: C.white,
                 borderColor: "rgba(139,19,19,0.12)",
                 boxShadow: "0 6px 16px rgba(139,19,19,0.04)",
-              }
+              },
             }}
           >
             <AccessTimeRounded sx={{ color: "#0284C7", fontSize: 24, mb: 1 }} />
@@ -1744,11 +1777,10 @@ export default function StudentHomeContent() {
         </Stack>
       </Paper>
 
-
       {/* ── 3. Tiếp tục học ─────────────────────────────────────────── */}
       <Box ref={tabsRef}>
         <SectionHeader title="Tiếp tục học" />
-        {(!continueLearning?.courses || continueLearning.courses.length === 0) ? (
+        {!continueLearning?.courses || continueLearning.courses.length === 0 ? (
           <EmptyState
             icon={<InboxRounded />}
             title="Chưa có khóa học đang học"
@@ -1774,7 +1806,6 @@ export default function StudentHomeContent() {
           </CarouselRow>
         )}
       </Box>
-
 
       {/* ── 6. Khóa học mới nhất (chỉ khóa tạo trong 1 tháng & chưa đăng ký) ── */}
       {filteredLatestCourses.length > 0 && (
@@ -1817,7 +1848,10 @@ export default function StudentHomeContent() {
                   key={c.id || i}
                   course={{
                     ...c,
-                    hinhAnhKhoaHoc: c.hinhAnhKhoaHoc || courseImages[c.id || ""] || titleImages[c.title || c.tieuDe || ""],
+                    hinhAnhKhoaHoc:
+                      c.hinhAnhKhoaHoc ||
+                      courseImages[c.id || ""] ||
+                      titleImages[c.title || c.tieuDe || ""],
                   }}
                   onAddCart={handleAddCart}
                   onClick={handleOpenCourse}
