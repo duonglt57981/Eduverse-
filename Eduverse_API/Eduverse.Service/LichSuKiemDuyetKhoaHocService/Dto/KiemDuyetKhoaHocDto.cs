@@ -11,6 +11,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public Guid? IdDoiTuong { get; set; }
         public string LoaiDoiTuong { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
+        public string? LyDo { get; set; }
         public DateTime? NgayDuyet { get; set; }
     }
 }

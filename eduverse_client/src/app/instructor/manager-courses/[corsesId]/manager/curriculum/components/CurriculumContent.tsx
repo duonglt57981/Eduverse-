@@ -519,7 +519,7 @@ function RichTextEditor({
           border-left: 3px solid ${MAU.chinh};
           padding-left: 1em;
           margin: 0.5em 0;
-          color: #8A7676;
+          color: #8a7676;
         }
         .rich-text-editor img {
           max-width: 100%;
@@ -735,7 +735,10 @@ function SectionItem({
                     onEdit(id);
                   }}
                 >
-                  <EditOutlined fontSize="small" sx={{ color: "var(--ev-text-muted, #9AA2B1)" }} />
+                  <EditOutlined
+                    fontSize="small"
+                    sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
+                  />
                 </IconButton>
                 <Tooltip title="Xóa phần">
                   <IconButton
@@ -777,6 +780,7 @@ function LectureItem({
   isComplete,
   isExpanded,
   isEditable,
+  dangTai = false,
   children,
   onToggle,
   onEdit,
@@ -789,6 +793,9 @@ function LectureItem({
   isComplete: boolean;
   isExpanded: boolean;
   isEditable: boolean;
+  // Bài giảng đang tải video lên nền (đang sửa) — không chặn thao tác khác,
+  // chỉ hiện badge nhỏ báo trạng thái ngay trên chính bài giảng này.
+  dangTai?: boolean;
   children: React.ReactNode;
   onToggle: (id: string) => void;
   onEdit: (phanId: string, id: string) => void;
@@ -837,22 +844,33 @@ function LectureItem({
             },
           }}
           secondaryAction={
-            <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {dangTai && (
+                <CircularProgress
+                  size={16}
+                  sx={{ color: MAU.chinh, mr: 0.5 }}
+                />
+              )}
               {isEditable && (
                 <>
                   <IconButton
                     {...noPropagation}
                     size="small"
+                    disabled={dangTai}
                     onClick={(e) => {
                       e.stopPropagation();
                       onEdit(phanId, itemId);
                     }}
                   >
-                    <EditOutlined fontSize="small" sx={{ color: "var(--ev-text-muted, #9AA2B1)" }} />
+                    <EditOutlined
+                      fontSize="small"
+                      sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
+                    />
                   </IconButton>
                   <IconButton
                     {...noPropagation}
                     size="small"
+                    disabled={dangTai}
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(phanId, itemId);
@@ -886,7 +904,9 @@ function LectureItem({
             {isComplete ? (
               <CheckCircle sx={{ fontSize: 18, color: MAU.chinh }} />
             ) : (
-              <RadioButtonUnchecked sx={{ fontSize: 18, color: "var(--ev-grey, #C7CCD6)" }} />
+              <RadioButtonUnchecked
+                sx={{ fontSize: 18, color: "var(--ev-grey, #C7CCD6)" }}
+              />
             )}
           </ListItemIcon>
           <ListItemText
@@ -918,12 +938,26 @@ function LectureItem({
                 </Box>
                 <Chip
                   size="small"
-                  label={bg.urlBaiGiang ? "Có video" : "Chưa có video"}
+                  label={
+                    dangTai
+                      ? "Đang tải video..."
+                      : bg.urlBaiGiang
+                        ? "Có video"
+                        : "Chưa có video"
+                  }
                   sx={{
                     fontSize: 10,
                     fontWeight: 700,
-                    bgcolor: bg.urlBaiGiang ? `${MAU.chinh}1A` : "#F1F2F5",
-                    color: bg.urlBaiGiang ? MAU.chinhDam : "#8A7676",
+                    bgcolor: dangTai
+                      ? "#FFF7ED"
+                      : bg.urlBaiGiang
+                        ? `${MAU.chinh}1A`
+                        : "#F1F2F5",
+                    color: dangTai
+                      ? "#D97706"
+                      : bg.urlBaiGiang
+                        ? MAU.chinhDam
+                        : "#8A7676",
                     flexShrink: 0,
                   }}
                 />
@@ -937,6 +971,76 @@ function LectureItem({
         </Collapse>
       </Paper>
     </div>
+  );
+}
+
+// ===== BÀI GIẢNG ĐANG TẢI LÊN (placeholder) =====
+// Hiển thị tạm một dòng "đang tải video" cho bài giảng vừa bấm Thêm nhưng
+// video vẫn đang upload — không nằm trong `phans` state nên không đụng tới
+// id/thứ tự thật, chỉ biến mất khi upload xong (thành công hoặc lỗi).
+function PendingLectureItem({
+  tieuDe,
+  soThuTuMuc,
+}: {
+  tieuDe: string;
+  soThuTuMuc: number;
+}) {
+  return (
+    <Paper
+      sx={{
+        mb: 1,
+        border: "1px dashed #EDEFF3",
+        borderRadius: "8px",
+        overflow: "hidden",
+        bgcolor: "#FAFAFB",
+      }}
+    >
+      <ListItem sx={{ px: 1.5, py: 0.75 }}>
+        <ListItemIcon sx={{ minWidth: 28 }}>
+          <CircularProgress size={16} sx={{ color: MAU.chinh }} />
+        </ListItemIcon>
+        <ListItemText
+          primary={
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                fontSize: 14,
+                fontWeight: 500,
+                minWidth: 0,
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                <Box component="span" sx={{ fontWeight: 800 }}>
+                  {`Bài giảng ${soThuTuMuc}: `}
+                </Box>
+                {tieuDe}
+              </Box>
+              <Chip
+                size="small"
+                label="Đang tải video..."
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  bgcolor: "#FFF7ED",
+                  color: "#D97706",
+                  flexShrink: 0,
+                }}
+              />
+            </Box>
+          }
+        />
+      </ListItem>
+    </Paper>
   );
 }
 
@@ -1067,7 +1171,9 @@ function QuizItem({
             {isComplete ? (
               <CheckCircle sx={{ fontSize: 18, color: MAU.chinh }} />
             ) : (
-              <RadioButtonUnchecked sx={{ fontSize: 18, color: "var(--ev-grey, #C7CCD6)" }} />
+              <RadioButtonUnchecked
+                sx={{ fontSize: 18, color: "var(--ev-grey, #C7CCD6)" }}
+              />
             )}
           </ListItemIcon>
           <ListItemText
@@ -1164,7 +1270,13 @@ function QuizCreateForm({
         bgcolor: "var(--ev-paper, #FFFFFF)",
       }}
     >
-      <Typography sx={{ fontWeight: 700, fontSize: 16, color: "var(--ev-text-primary, #1F2937)" }}>
+      <Typography
+        sx={{
+          fontWeight: 700,
+          fontSize: 16,
+          color: "var(--ev-text-primary, #1F2937)",
+        }}
+      >
         Bài kiểm tra mới: Nhập tiêu đề
       </Typography>
 
@@ -1298,7 +1410,13 @@ function QuizUpdateForm({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Typography sx={{ fontWeight: 700, fontSize: 16, color: "var(--ev-text-primary, #1F2937)" }}>
+      <Typography
+        sx={{
+          fontWeight: 700,
+          fontSize: 16,
+          color: "var(--ev-text-primary, #1F2937)",
+        }}
+      >
         Sửa bài kiểm tra
       </Typography>
 
@@ -1486,7 +1604,13 @@ function QuestionDetailForm({
               <Add sx={{ fontSize: 18 }} />
             )}
           </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: 16, color: "var(--ev-text-primary, #1F2937)" }}>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: 16,
+              color: "var(--ev-text-primary, #1F2937)",
+            }}
+          >
             {isEditing ? "Sửa câu hỏi" : "Thêm câu hỏi trắc nghiệm"}
           </Typography>
         </Box>
@@ -1529,7 +1653,12 @@ function QuestionDetailForm({
 
       <Box>
         <Typography
-          sx={{ fontWeight: 700, fontSize: 14, color: "var(--ev-text-primary, #1F2937)", mb: 1 }}
+          sx={{
+            fontWeight: 700,
+            fontSize: 14,
+            color: "var(--ev-text-primary, #1F2937)",
+            mb: 1,
+          }}
         >
           Câu hỏi
         </Typography>
@@ -1551,10 +1680,18 @@ function QuestionDetailForm({
             mb: 1,
           }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: 14, color: "var(--ev-text-primary, #1F2937)" }}>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: 14,
+              color: "var(--ev-text-primary, #1F2937)",
+            }}
+          >
             Đáp án
           </Typography>
-          <Typography sx={{ fontSize: 12, color: "var(--ev-text-muted, #8A7676)" }}>
+          <Typography
+            sx={{ fontSize: 12, color: "var(--ev-text-muted, #8A7676)" }}
+          >
             {soDapAn}/15 đáp án
           </Typography>
         </Box>
@@ -1863,11 +2000,22 @@ function QuestionListView({
           mb: 1.5,
         }}
       >
-        <Typography sx={{ fontWeight: 700, fontSize: 14.5, color: "var(--ev-text-primary, #1F2937)" }}>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: 14.5,
+            color: "var(--ev-text-primary, #1F2937)",
+          }}
+        >
           Câu hỏi{" "}
           <Box
             component="span"
-            sx={{ fontWeight: 600, fontSize: 12.5, color: "var(--ev-text-muted, #8A7676)", ml: 0.5 }}
+            sx={{
+              fontWeight: 600,
+              fontSize: 12.5,
+              color: "var(--ev-text-muted, #8A7676)",
+              ml: 0.5,
+            }}
           >
             ({questions.length})
           </Box>
@@ -1901,8 +2049,12 @@ function QuestionListView({
             textAlign: "center",
           }}
         >
-          <QuizOutlined sx={{ fontSize: 28, color: "var(--ev-grey, #C7CCD6)", mb: 0.5 }} />
-          <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}>
+          <QuizOutlined
+            sx={{ fontSize: 28, color: "var(--ev-grey, #C7CCD6)", mb: 0.5 }}
+          />
+          <Typography
+            sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}
+          >
             Chưa có câu hỏi nào trong bài kiểm tra này.
           </Typography>
         </Box>
@@ -2010,7 +2162,12 @@ function QuestionListView({
                         }}
                       />
                     )}
-                    <Typography sx={{ fontSize: 11, color: "var(--ev-text-muted, #8A7676)" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 11,
+                        color: "var(--ev-text-muted, #8A7676)",
+                      }}
+                    >
                       {q.danhSachDapAn?.length ?? 0} đáp án
                     </Typography>
                   </Box>
@@ -2120,7 +2277,9 @@ function LectureInfoView({
               }}
             />
           ) : (
-            <OndemandVideoOutlined sx={{ fontSize: 26, color: "var(--ev-grey, #C7CCD6)" }} />
+            <OndemandVideoOutlined
+              sx={{ fontSize: 26, color: "var(--ev-grey, #C7CCD6)" }}
+            />
           )}
         </Box>
 
@@ -2167,7 +2326,10 @@ function LectureInfoView({
                 height: 22,
                 bgcolor: "#F1F2F5",
                 color: "var(--ev-text-secondary, #4B5563)",
-                "& .MuiChip-icon": { color: "var(--ev-text-muted, #8A7676)", ml: "6px" },
+                "& .MuiChip-icon": {
+                  color: "var(--ev-text-muted, #8A7676)",
+                  ml: "6px",
+                },
               }}
             />
             <Chip
@@ -2271,7 +2433,12 @@ function LectureInfoView({
                     {tl.tenTaiLieu}
                   </Typography>
                   {tl.loaiTaiLieu && (
-                    <Typography sx={{ fontSize: 10.5, color: "var(--ev-text-muted, #9AA2B1)" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 10.5,
+                        color: "var(--ev-text-muted, #9AA2B1)",
+                      }}
+                    >
                       {tl.loaiTaiLieu}
                     </Typography>
                   )}
@@ -2284,7 +2451,10 @@ function LectureInfoView({
                       e.stopPropagation();
                       onDeleteDoc(tl.id as string);
                     }}
-                    sx={{ color: "var(--ev-grey, #C7CCD6)", "&:hover": { color: "#C62828" } }}
+                    sx={{
+                      color: "var(--ev-grey, #C7CCD6)",
+                      "&:hover": { color: "#C62828" },
+                    }}
                   >
                     <DeleteOutlined fontSize="small" />
                   </IconButton>
@@ -2466,7 +2636,12 @@ function LectureCreateForm({
 
         <Box>
           <Typography
-            sx={{ fontWeight: 700, fontSize: 12.5, color: "var(--ev-text-muted, #8A7676)", mb: 0.75 }}
+            sx={{
+              fontWeight: 700,
+              fontSize: 12.5,
+              color: "var(--ev-text-muted, #8A7676)",
+              mb: 0.75,
+            }}
           >
             Video bài giảng
           </Typography>
@@ -2516,11 +2691,17 @@ function LectureCreateForm({
                 <CloudUploadOutlined sx={{ fontSize: 26, color: MAU.chinh }} />
               </Box>
               <Typography
-                sx={{ fontSize: 14, fontWeight: 700, color: "var(--ev-text-primary, #1F2937)" }}
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "var(--ev-text-primary, #1F2937)",
+                }}
               >
                 Kéo thả hoặc bấm để chọn video
               </Typography>
-              <Typography sx={{ fontSize: 11.5, color: "var(--ev-text-muted, #9AA2B1)" }}>
+              <Typography
+                sx={{ fontSize: 11.5, color: "var(--ev-text-muted, #9AA2B1)" }}
+              >
                 Dung lượng tối đa 100MB · Độ phân giải tối thiểu 854×480
               </Typography>
               <input
@@ -2658,16 +2839,24 @@ function LectureCreateForm({
               {data.isFree ? (
                 <LockOpenOutlined sx={{ fontSize: 17, color: "#fff" }} />
               ) : (
-                <LockOutlined sx={{ fontSize: 17, color: "var(--ev-text-muted, #9AA2B1)" }} />
+                <LockOutlined
+                  sx={{ fontSize: 17, color: "var(--ev-text-muted, #9AA2B1)" }}
+                />
               )}
             </Box>
             <Box>
               <Typography
-                sx={{ fontSize: 13, fontWeight: 700, color: "var(--ev-text-primary, #1F2937)" }}
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "var(--ev-text-primary, #1F2937)",
+                }}
               >
                 Xem thử miễn phí
               </Typography>
-              <Typography sx={{ fontSize: 11, color: "var(--ev-text-muted, #8A7676)" }}>
+              <Typography
+                sx={{ fontSize: 11, color: "var(--ev-text-muted, #8A7676)" }}
+              >
                 Cho phép học viên xem trước khi đăng ký
               </Typography>
             </Box>
@@ -2820,6 +3009,23 @@ export default function CurriculumContent() {
   } | null>(null);
 
   const [loading, setLoading] = useState(false);
+
+  // ===== Trạng thái thêm/sửa bài giảng chạy NGẦM (không chặn cả trang) =====
+  // Cho phép thêm/sửa NHIỀU bài giảng cùng lúc: mỗi bài giảng khi đang tải
+  // video lên sẽ hiện một placeholder/badge "Đang tải video..." riêng, còn
+  // các thao tác khác (thêm phần, thêm bài giảng khác, sửa bài kiểm tra...)
+  // vẫn dùng được bình thường trong lúc đó.
+  type BaiGiangDangCho = {
+    key: string;
+    tieuDe: string;
+    isFree: boolean;
+  };
+  const [pendingLectures, setPendingLectures] = useState<
+    Record<string, BaiGiangDangCho[]>
+  >({});
+  const [updatingLectureIds, setUpdatingLectureIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
@@ -3101,7 +3307,6 @@ export default function CurriculumContent() {
         });
       }
       setPhanForm(null);
-      await refreshData();
     } catch (error: any) {
       setToast({
         open: true,
@@ -3189,7 +3394,6 @@ export default function CurriculumContent() {
       if (result.id) {
         setExpandedQuizzes((prev) => ({ ...prev, [result.id!]: true }));
       }
-      await refreshData();
     } catch (error: any) {
       setToast({
         open: true,
@@ -3264,7 +3468,6 @@ export default function CurriculumContent() {
         severity: "success",
       });
       setQuizUpdateForm(null);
-      await refreshData();
     } catch (error: any) {
       setToast({
         open: true,
@@ -3466,7 +3669,6 @@ export default function CurriculumContent() {
       }
 
       setQuestionEditor(null);
-      await refreshData();
     } catch (error: any) {
       setToast({
         open: true,
@@ -3496,7 +3698,6 @@ export default function CurriculumContent() {
             message: "Đã xóa câu hỏi",
             severity: "success",
           });
-          await refreshData();
         } catch (error: any) {
           setToast({
             open: true,
@@ -3555,7 +3756,6 @@ export default function CurriculumContent() {
             message: "Đã xóa bài giảng",
             severity: "success",
           });
-          await refreshData();
         } catch (error: any) {
           setToast({
             open: true,
@@ -3606,7 +3806,12 @@ export default function CurriculumContent() {
       return;
     }
 
-    setLoading(true);
+    // Đóng khung sửa NGAY, không chờ video upload xong — nhờ vậy người dùng
+    // có thể mở sửa/thêm bài giảng khác trong khi video của bài này vẫn
+    // đang tải lên nền. UI chỉ hiện badge "đang tải" trên đúng bài giảng đó.
+    setEditingLecture(null);
+    setUpdatingLectureIds((prev) => new Set(prev).add(lectureId));
+
     try {
       await updateBaiGiang(phanId, lectureId, {
         tieuDe: title.trim(),
@@ -3614,14 +3819,11 @@ export default function CurriculumContent() {
         file: file || null,
       });
 
-      await refreshData();
-
       setToast({
         open: true,
         message: "Bài giảng đã được cập nhật",
         severity: "success",
       });
-      setEditingLecture(null);
       setTempVideoFiles((prev) => {
         const newState = { ...prev };
         delete newState[lectureId];
@@ -3634,7 +3836,11 @@ export default function CurriculumContent() {
         severity: "error",
       });
     } finally {
-      setLoading(false);
+      setUpdatingLectureIds((prev) => {
+        const next = new Set(prev);
+        next.delete(lectureId);
+        return next;
+      });
     }
   };
 
@@ -3697,7 +3903,6 @@ export default function CurriculumContent() {
         ...prev,
         [baiGiangId]: { tenTaiLieu: "", file: null, open: false },
       }));
-      await refreshData();
     } catch (error: any) {
       setToast({
         open: true,
@@ -3727,7 +3932,6 @@ export default function CurriculumContent() {
             message: "Đã xóa tài liệu",
             severity: "success",
           });
-          await refreshData();
         } catch (error: any) {
           setToast({
             open: true,
@@ -3814,7 +4018,21 @@ export default function CurriculumContent() {
       return;
     }
 
-    setLoading(true);
+    // Đóng form NGAY khi bắt đầu tải lên — không chờ video upload xong.
+    // Nhờ vậy người dùng có thể bấm "Thêm bài giảng" tiếp để tạo bài giảng
+    // khác trong khi video của bài trước vẫn đang tải lên nền, thay vì phải
+    // đợi từng bài một và bị chặn toàn bộ trang.
+    setAddForm(null);
+
+    const key = `pending_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setPendingLectures((prev) => ({
+      ...prev,
+      [phanId]: [
+        ...(prev[phanId] || []),
+        { key, tieuDe: titleTrimmed, isFree: !!isFree },
+      ],
+    }));
+
     try {
       await createBaiGiang(phanId, {
         tieuDe: titleTrimmed,
@@ -3823,19 +4041,20 @@ export default function CurriculumContent() {
       });
       setToast({
         open: true,
-        message: "Đã thêm bài giảng",
+        message: `Đã thêm bài giảng "${titleTrimmed}"`,
         severity: "success",
       });
-      setAddForm(null);
-      await refreshData();
     } catch (error: any) {
       setToast({
         open: true,
-        message: error.message || "Lỗi tạo bài giảng",
+        message: error.message || `Lỗi tạo bài giảng "${titleTrimmed}"`,
         severity: "error",
       });
     } finally {
-      setLoading(false);
+      setPendingLectures((prev) => ({
+        ...prev,
+        [phanId]: (prev[phanId] || []).filter((item) => item.key !== key),
+      }));
     }
   };
 
@@ -3854,13 +4073,24 @@ export default function CurriculumContent() {
             mb: 3,
           }}
         >
-          <Typography sx={{ fontWeight: 900, fontSize: 26, color: "var(--ev-text-primary, #1F2937)" }}>
+          <Typography
+            sx={{
+              fontWeight: 900,
+              fontSize: 26,
+              color: "var(--ev-text-primary, #1F2937)",
+            }}
+          >
             Chương trình giảng dạy
           </Typography>
         </Box>
 
         <Typography
-          sx={{ fontSize: 14, color: "var(--ev-text-secondary, #4B5563)", mb: 2.5, lineHeight: 1.7 }}
+          sx={{
+            fontSize: 14,
+            color: "var(--ev-text-secondary, #4B5563)",
+            mb: 2.5,
+            lineHeight: 1.7,
+          }}
         >
           Thiết kế khóa học của bạn theo từng phần, mỗi phần tập trung vào một
           mục tiêu học tập duy nhất. Sau đó, thêm nội dung, hoạt động thực hành
@@ -4021,7 +4251,9 @@ export default function CurriculumContent() {
                               py: 0.75,
                               px: 2.5,
                               borderRadius: "8px",
-                              "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
+                              "&:hover": {
+                                bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                              },
                             }}
                           >
                             Hủy bỏ
@@ -4094,6 +4326,7 @@ export default function CurriculumContent() {
                                   isComplete={isComplete}
                                   isExpanded={isExpanded}
                                   isEditable={isEditable}
+                                  dangTai={updatingLectureIds.has(itemId)}
                                   onToggle={toggleLecture}
                                   onEdit={handleEditLecture}
                                   onDelete={xoaBaiGiang}
@@ -4153,7 +4386,8 @@ export default function CurriculumContent() {
                                           sx={{
                                             fontWeight: 700,
                                             fontSize: 14.5,
-                                            color: "var(--ev-text-primary, #1F2937)",
+                                            color:
+                                              "var(--ev-text-primary, #1F2937)",
                                           }}
                                         >
                                           Chỉnh sửa bài giảng
@@ -4172,7 +4406,8 @@ export default function CurriculumContent() {
                                           sx={{
                                             fontWeight: 700,
                                             fontSize: 12.5,
-                                            color: "var(--ev-text-muted, #8A7676)",
+                                            color:
+                                              "var(--ev-text-muted, #8A7676)",
                                             mb: 0.5,
                                           }}
                                         >
@@ -4199,7 +4434,8 @@ export default function CurriculumContent() {
                                           slotProps={{
                                             input: {
                                               sx: {
-                                                bgcolor: "var(--ev-paper, #FFFFFF)",
+                                                bgcolor:
+                                                  "var(--ev-paper, #FFFFFF)",
                                                 borderRadius: "10px",
                                                 fontWeight: 600,
                                                 height: "50px",
@@ -4252,7 +4488,8 @@ export default function CurriculumContent() {
                                             sx={{
                                               fontSize: 13.5,
                                               fontWeight: 700,
-                                              color: "var(--ev-text-primary, #1F2937)",
+                                              color:
+                                                "var(--ev-text-primary, #1F2937)",
                                             }}
                                           >
                                             Chọn video bài giảng
@@ -4260,7 +4497,8 @@ export default function CurriculumContent() {
                                           <Typography
                                             sx={{
                                               fontSize: 11.5,
-                                              color: "var(--ev-text-muted, #8A7676)",
+                                              color:
+                                                "var(--ev-text-muted, #8A7676)",
                                             }}
                                           >
                                             Dung lượng tối đa 100MB, độ phân
@@ -4364,7 +4602,8 @@ export default function CurriculumContent() {
                                                 <Typography
                                                   sx={{
                                                     fontSize: 11.5,
-                                                    color: "var(--ev-text-muted, #8A7676)",
+                                                    color:
+                                                      "var(--ev-text-muted, #8A7676)",
                                                   }}
                                                 >
                                                   Video mới đã chọn
@@ -4382,7 +4621,8 @@ export default function CurriculumContent() {
                                                   sx={{
                                                     fontSize: 13,
                                                     fontWeight: 700,
-                                                    color: "var(--ev-text-primary, #1F2937)",
+                                                    color:
+                                                      "var(--ev-text-primary, #1F2937)",
                                                   }}
                                                 >
                                                   {dinhDangThoiLuong(
@@ -4392,7 +4632,8 @@ export default function CurriculumContent() {
                                                 <Typography
                                                   sx={{
                                                     fontSize: 11.5,
-                                                    color: "var(--ev-text-muted, #8A7676)",
+                                                    color:
+                                                      "var(--ev-text-muted, #8A7676)",
                                                   }}
                                                 >
                                                   Video hiện tại
@@ -4490,7 +4731,8 @@ export default function CurriculumContent() {
                                             <LockOutlined
                                               sx={{
                                                 fontSize: 18,
-                                                color: "var(--ev-text-muted, #9AA2B1)",
+                                                color:
+                                                  "var(--ev-text-muted, #9AA2B1)",
                                               }}
                                             />
                                           )}
@@ -4499,7 +4741,8 @@ export default function CurriculumContent() {
                                               sx={{
                                                 fontSize: 13,
                                                 fontWeight: 700,
-                                                color: "var(--ev-text-primary, #1F2937)",
+                                                color:
+                                                  "var(--ev-text-primary, #1F2937)",
                                               }}
                                             >
                                               Xem thử miễn phí
@@ -4507,7 +4750,8 @@ export default function CurriculumContent() {
                                             <Typography
                                               sx={{
                                                 fontSize: 11,
-                                                color: "var(--ev-text-muted, #8A7676)",
+                                                color:
+                                                  "var(--ev-text-muted, #8A7676)",
                                               }}
                                             >
                                               Cho phép học viên xem trước khi
@@ -4554,7 +4798,8 @@ export default function CurriculumContent() {
                                             onClick={cancelEditLecture}
                                             sx={{
                                               textTransform: "none",
-                                              color: "var(--ev-text-muted, #8A7676)",
+                                              color:
+                                                "var(--ev-text-muted, #8A7676)",
                                               fontWeight: 600,
                                               borderRadius: "8px",
                                             }}
@@ -4617,7 +4862,8 @@ export default function CurriculumContent() {
                                                 flexDirection: "column",
                                                 gap: 1,
                                                 p: 1.5,
-                                                bgcolor: "var(--ev-paper-alt, #F5F6F8)",
+                                                bgcolor:
+                                                  "var(--ev-paper-alt, #F5F6F8)",
                                                 borderRadius: "10px",
                                               }}
                                             >
@@ -4716,7 +4962,8 @@ export default function CurriculumContent() {
                                                   <Typography
                                                     variant="body2"
                                                     sx={{
-                                                      color: "var(--ev-text-muted, #8A7676)",
+                                                      color:
+                                                        "var(--ev-text-muted, #8A7676)",
                                                       fontSize: 12.5,
                                                     }}
                                                   >
@@ -4730,7 +4977,8 @@ export default function CurriculumContent() {
                                               <Typography
                                                 variant="caption"
                                                 sx={{
-                                                  color: "var(--ev-text-muted, #8A7676)",
+                                                  color:
+                                                    "var(--ev-text-muted, #8A7676)",
                                                   display: "block",
                                                 }}
                                               >
@@ -4761,7 +5009,8 @@ export default function CurriculumContent() {
                                                   }
                                                   sx={{
                                                     textTransform: "none",
-                                                    color: "var(--ev-text-muted, #8A7676)",
+                                                    color:
+                                                      "var(--ev-text-muted, #8A7676)",
                                                   }}
                                                 >
                                                   Hủy bỏ
@@ -5078,6 +5327,17 @@ export default function CurriculumContent() {
                               );
                             }
                           })}
+
+                          {/* BÀI GIẢNG ĐANG TẢI VIDEO LÊN (placeholder) —
+                              cho phép hiện nhiều bài cùng lúc, mỗi bài một
+                              dòng riêng, không chặn phần còn lại của trang */}
+                          {(pendingLectures[phanId] || []).map((item, idx) => (
+                            <PendingLectureItem
+                              key={item.key}
+                              tieuDe={item.tieuDe}
+                              soThuTuMuc={items.length + idx + 1}
+                            />
+                          ))}
                         </Box>
                       </SortableContext>
                     </DndContext>
@@ -5320,7 +5580,10 @@ export default function CurriculumContent() {
                   py: 1.2,
                   px: 3,
                   borderRadius: "10px",
-                  "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-primary, #1F2937)" },
+                  "&:hover": {
+                    bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                    color: "var(--ev-text-primary, #1F2937)",
+                  },
                 }}
               >
                 Hủy bỏ
@@ -5472,10 +5735,22 @@ export default function CurriculumContent() {
         <Dialog
           open={videoPopup.open}
           onClose={() => setVideoPopup({ ...videoPopup, open: false })}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
+          slotProps={{
+            paper: {
+              sx: {
+                height: "90vh",
+                maxHeight: "90vh",
+                display: "flex",
+                flexDirection: "column",
+              },
+            },
+          }}
         >
-          <DialogTitle sx={{ fontWeight: 700, color: MAU.chuDen }}>
+          <DialogTitle
+            sx={{ fontWeight: 700, color: MAU.chuDen, flexShrink: 0 }}
+          >
             Video bài giảng
             <IconButton
               aria-label="close"
@@ -5485,15 +5760,40 @@ export default function CurriculumContent() {
               <CloseIcon />
             </IconButton>
           </DialogTitle>
-          <DialogContent dividers>
+          <DialogContent
+            dividers
+            sx={{
+              flex: 1,
+              display: "flex",
+              p: 0,
+              bgcolor: "#000",
+              minHeight: 0, // để flex con co giãn đúng thay vì tràn
+            }}
+          >
             {videoPopup.url ? (
               <video
                 controls
-                style={{ width: "100%", maxHeight: "70vh" }}
+                autoPlay
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                  display: "block",
+                }}
                 src={videoPopup.url}
               />
             ) : (
-              <Typography>Không có video</Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography sx={{ color: "#fff" }}>Không có video</Typography>
+              </Box>
             )}
           </DialogContent>
         </Dialog>
@@ -5502,10 +5802,22 @@ export default function CurriculumContent() {
         <Dialog
           open={docPopup.open}
           onClose={() => setDocPopup({ ...docPopup, open: false })}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
+          slotProps={{
+            paper: {
+              sx: {
+                height: "90vh",
+                maxHeight: "90vh",
+                display: "flex",
+                flexDirection: "column",
+              },
+            },
+          }}
         >
-          <DialogTitle sx={{ fontWeight: 700, color: MAU.chuDen }}>
+          <DialogTitle
+            sx={{ fontWeight: 700, color: MAU.chuDen, flexShrink: 0 }}
+          >
             {docPopup.name || "Tài liệu"}
             <IconButton
               aria-label="close"
@@ -5515,18 +5827,32 @@ export default function CurriculumContent() {
               <CloseIcon />
             </IconButton>
           </DialogTitle>
-          <DialogContent dividers>
+          <DialogContent
+            dividers
+            sx={{ flex: 1, display: "flex", p: 0, minHeight: 0 }}
+          >
             {docPopup.url ? (
               <iframe
-                src={docPopup.url}
-                style={{ width: "100%", height: "60vh", border: "none" }}
+                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+                  docPopup.url,
+                )}`}
+                style={{ width: "100%", height: "100%", border: "none" }}
                 title={docPopup.name}
               />
             ) : (
-              <Typography>Không thể xem trước tài liệu</Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography>Không thể xem trước tài liệu</Typography>
+              </Box>
             )}
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ flexShrink: 0 }}>
             <Button
               {...noPropagation}
               onClick={() => {

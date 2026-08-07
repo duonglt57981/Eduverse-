@@ -30,6 +30,7 @@ export interface KiemDuyetDetailDto {
   isBanHienTai: boolean;
   createBy?: string | null;
   lichSuKiemDuyetDto?: LichSuKiemDuyetDto;
+  danhMucs?: string[];
 }
 export interface KiemDuyetKhoaHocDto {
   idDoiTuong?: string | null; // Guid?
@@ -64,4 +65,19 @@ export interface NhanVienSearch extends SearchBase {
 export interface SearchBase {
   pageIndex?: int | 1;
   pageSize?: int | 20;
+}
+
+export interface LyDoTuChoiDto {
+  idDoiTuong?: string;
+  loaiDoiTuong?: string;
+  lyDo?: string;
+  trangThai?: string;
+  createdId?: string;
+}
+
+export interface LyDoTuChoiRequest {
+  id?: string;
+  idDoiTuong?: string;
+  loaiDoiTuong?: string;
+  lyDo?: string;
 }

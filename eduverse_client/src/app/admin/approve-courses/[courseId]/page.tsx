@@ -43,12 +43,12 @@ import {
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
 import KiemDuyetSidebar from "./components/KiemDuyetSidebar";
 import { ApiResponse } from "@/src/types/types";
+import { LyDoTuChoiRequest } from "@/src/types/KiemDuyet/Dto/dto";
 
 const kiemDuyetService = new KiemDuyetService();
 
 type ConfirmAction = "duyet" | "tuChoi" | null;
 
-// Style thanh cuộn mảnh, đồng bộ theme - dùng chung cho cả 2 cột
 const scrollbarSx = {
   overflowY: "auto" as const,
   overflowX: "hidden" as const,
@@ -77,7 +77,8 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   const [showTuChoi, setShowTuChoi] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
-  // Snackbar state
+  const [lyDoIdMap, setLyDoIdMap] = useState<Record<string, string>>({});
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -88,42 +89,226 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     severity: "success",
   });
 
+  // ── Tìm nội dung đầu tiên (bài giảng hoặc bài kiểm tra) trong cây detail ──
+  const findFirstContent = useCallback((detailData: any) => {
+    if (!detailData?.phans || detailData.phans.length === 0) return null;
+    for (const phan of detailData.phans) {
+      if (phan.baiGiangs && phan.baiGiangs.length > 0) {
+        return { loai: "baiGiang" as const, item: phan.baiGiangs[0] };
+      }
+      if (phan.baiKiemTras && phan.baiKiemTras.length > 0) {
+        return { loai: "baiKiemTra" as const, item: phan.baiKiemTras[0] };
+      }
+    }
+    return null;
+  }, []);
+
+  // ── Hàm tải chi tiết (trả về dữ liệu) ──
   const fetchDetail = useCallback(async () => {
     if (!idKhoaHoc) {
       setDetailLoading(false);
-      return;
+      return null;
     }
     setDetailLoading(true);
     try {
       const res = await kiemDuyetService.GetDetailKiemDuyetKhoaHoc(idKhoaHoc);
       const normalizedData = normalizeDetailResponse(res);
       setDetail(normalizedData);
+      return normalizedData;
     } catch (error) {
       console.error("Lỗi tải chi tiết:", error);
       setDetail(null);
+      return null;
     } finally {
       setDetailLoading(false);
     }
   }, [idKhoaHoc]);
 
-  // Fetch khi component mount hoặc id thay đổi
+  // ── Chọn nội dung ──
+  const handleSelectContent = useCallback(
+    (loai: "baiGiang" | "taiLieu" | "baiKiemTra", item: any) => {
+      setSelectedContent({ loai, item });
+
+      if (loai === "baiGiang" || loai === "baiKiemTra") {
+        const doiTuongId =
+          loai === "baiGiang" ? item?.idBaiGiang : item?.idBaiKiemTra;
+        let existingLyDoId: string | null = null;
+        const lyDoData = item?.lyDoTuChois;
+
+        if (lyDoData) {
+          if (Array.isArray(lyDoData) && lyDoData.length > 0) {
+            const first = lyDoData[0];
+            if (first?.id) existingLyDoId = first.id;
+          } else if (typeof lyDoData === "object" && lyDoData.id) {
+            existingLyDoId = lyDoData.id;
+          }
+        }
+
+        if (!existingLyDoId) {
+          existingLyDoId =
+            item?.idLyDoTuChoi ?? item?.lyDoTuChoiId ?? item?.lyDo?.id ?? null;
+        }
+
+        if (doiTuongId && existingLyDoId) {
+          const key = `${loai}-${doiTuongId}`;
+          setLyDoIdMap((prev) =>
+            prev[key] ? prev : { ...prev, [key]: String(existingLyDoId) },
+          );
+        }
+      }
+    },
+    [],
+  );
+
+  // ── Tự động chọn nội dung đầu tiên khi detail load xong ──
+  useEffect(() => {
+    if (!detailLoading && detail && !selectedContent) {
+      const first = findFirstContent(detail);
+      if (first) {
+        handleSelectContent(first.loai, first.item);
+      }
+    }
+  }, [
+    detailLoading,
+    detail,
+    selectedContent,
+    findFirstContent,
+    handleSelectContent,
+  ]);
+
+  // ── Fetch khi component mount ──
   useEffect(() => {
     fetchDetail();
   }, [fetchDetail]);
 
-  const handleSelectContent = (
-    loai: "baiGiang" | "taiLieu" | "baiKiemTra",
-    item: any,
-  ) => {
-    setSelectedContent({ loai, item });
-  };
-
-  // ── Hàm quay về trang danh sách ──
   const goBackToList = useCallback(() => {
-    router.push("/admin/approve-courses");
+    router.push("/personnel/approve-courses");
   }, [router]);
 
-  // ── Hàm duyệt khóa học ──
+  // ── Hàm đệ quy tìm và cập nhật lý do từ chối trong cây dữ liệu detail ──
+  const patchLyDoInTree = (
+    node: any,
+    matchKey: string,
+    id: string,
+    lyDo: string,
+  ): boolean => {
+    if (node == null || typeof node !== "object") return false;
+
+    if (Array.isArray(node)) {
+      for (const child of node) {
+        if (patchLyDoInTree(child, matchKey, id, lyDo)) return true;
+      }
+      return false;
+    }
+
+    if (node[matchKey] === id) {
+      if (Array.isArray(node.lyDoTuChois) && node.lyDoTuChois.length > 0) {
+        node.lyDoTuChois[0].lyDo = lyDo;
+      } else if (
+        typeof node.lyDoTuChois === "object" &&
+        node.lyDoTuChois !== null
+      ) {
+        node.lyDoTuChois.lyDo = lyDo;
+      } else {
+        node.lyDoTuChois = { lyDo };
+      }
+      node.lyDoTuChoi = lyDo;
+      return true;
+    }
+
+    for (const key of Object.keys(node)) {
+      if (key !== "lyDoTuChois" && key !== "lyDoTuChoi") {
+        if (patchLyDoInTree(node[key], matchKey, id, lyDo)) return true;
+      }
+    }
+    return false;
+  };
+
+  // ── Lưu lý do từ chối (Create hoặc Update) và cập nhật UI ──
+  const handleSaveLyDo = useCallback(
+    async (
+      loai: "baiGiang" | "baiKiemTra",
+      id: string | number,
+      lyDo: string,
+    ) => {
+      const key = `${loai}-${id}`;
+      const existingId = lyDoIdMap[key];
+
+      try {
+        const request: LyDoTuChoiRequest = {
+          ...(existingId ? { id: existingId } : {}),
+          idDoiTuong: String(id),
+          loaiDoiTuong: loai === "baiGiang" ? "BaiGiang" : "BaiKiemTra",
+          lyDo,
+        };
+
+        const res = existingId
+          ? await kiemDuyetService.UpdateLyDoTuChoi(request)
+          : await kiemDuyetService.CreateLyDoTuChoi(request);
+
+        if (!existingId) {
+          const newId = (res?.data as any)?.id ?? (res?.data as any)?.createdId;
+          if (newId) {
+            setLyDoIdMap((prev) => ({ ...prev, [key]: String(newId) }));
+          }
+        }
+
+        // ⭐ Cập nhật local state thay vì fetch lại toàn bộ
+        setDetail((prevDetail: any) => {
+          if (!prevDetail) return prevDetail;
+          const matchKey = loai === "baiGiang" ? "idBaiGiang" : "idBaiKiemTra";
+          const newDetail = { ...prevDetail };
+          const found = patchLyDoInTree(newDetail, matchKey, String(id), lyDo);
+          if (found) {
+            if (
+              selectedContent &&
+              selectedContent.loai === loai &&
+              selectedContent.item[matchKey] === id
+            ) {
+              const newItem = { ...selectedContent.item };
+              if (
+                Array.isArray(newItem.lyDoTuChois) &&
+                newItem.lyDoTuChois.length > 0
+              ) {
+                newItem.lyDoTuChois[0].lyDo = lyDo;
+              } else if (
+                typeof newItem.lyDoTuChois === "object" &&
+                newItem.lyDoTuChois !== null
+              ) {
+                newItem.lyDoTuChois.lyDo = lyDo;
+              } else {
+                newItem.lyDoTuChois = { lyDo };
+              }
+              newItem.lyDoTuChoi = lyDo;
+              setSelectedContent({ loai, item: newItem });
+            }
+            return newDetail;
+          }
+          fetchDetail();
+          return prevDetail;
+        });
+
+        setSnackbar({
+          open: true,
+          message: existingId
+            ? "✅ Đã cập nhật lý do từ chối!"
+            : "✅ Đã lưu lý do từ chối!",
+          severity: "success",
+        });
+      } catch (error: any) {
+        console.error("Lỗi lưu lý do:", error);
+        setSnackbar({
+          open: true,
+          message: error?.message || "❌ Lỗi khi lưu lý do từ chối!",
+          severity: "error",
+        });
+        throw error;
+      }
+    },
+    [fetchDetail, lyDoIdMap, selectedContent],
+  );
+
+  // ── Duyệt toàn bộ khóa học ──
   const handleDuyet = async () => {
     if (!detail) return;
     setActionLoading(true);
@@ -132,19 +317,14 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         idKhoaHoc: detail.idKhoaHoc,
         trangThaiPheDuyet: "DaDuyet",
       });
-
-      console.log("Kết quả duyệt khóa học:", res); // TODO: xoá sau khi debug xong
       const isSuccess = res?.status === true;
-
       if (isSuccess) {
         setSnackbar({
           open: true,
           message: "✅ Duyệt khóa học thành công!",
           severity: "success",
         });
-        setTimeout(() => {
-          goBackToList();
-        }, 1500);
+        setTimeout(goBackToList, 1500);
       } else {
         setSnackbar({
           open: true,
@@ -168,7 +348,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     }
   };
 
-  // ── Hàm từ chối khóa học ──
+  // ── Từ chối toàn bộ khóa học ──
   const handleTuChoi = async () => {
     if (!detail) return;
     setActionLoading(true);
@@ -178,20 +358,14 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         trangThaiPheDuyet: "TuChoi",
         lyDo: ghiChu,
       });
-
-      console.log("Kết quả từ chối khóa học:", res); // TODO: xoá sau khi debug xong
-
       const isSuccess = res?.status === true;
-
       if (isSuccess) {
         setSnackbar({
           open: true,
           message: res?.message || "✅ Từ chối khóa học thành công!",
           severity: "success",
         });
-        setTimeout(() => {
-          goBackToList();
-        }, 1500);
+        setTimeout(goBackToList, 1500);
       } else {
         setSnackbar({
           open: true,
@@ -219,7 +393,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
 
   const handleDuyetClick = () => setConfirmAction("duyet");
   const handleTuChoiConfirmClick = () => setConfirmAction("tuChoi");
-
   const handleConfirmDialogOk = () => {
     if (confirmAction === "duyet") handleDuyet();
     else if (confirmAction === "tuChoi") handleTuChoi();
@@ -231,8 +404,9 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   const isChoDuyet = isTrangThaiCho(trangThaiKhoaHoc);
   const isDaDuyet =
     trangThaiKhoaHoc === "DaDuyet" || trangThaiKhoaHoc === "TuChoi";
-
   const hasDescription = detail?.moTa && detail.moTa.trim().length > 0;
+
+  // ── Nếu đã duyệt / từ chối ──
   if (!detailLoading && detail && isDaDuyet) {
     return (
       <AuthGuard allowedRoles={["Admin", "personnel"]}>
@@ -299,9 +473,9 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     );
   }
 
+  // ── Giao diện chính ──
   return (
     <AuthGuard allowedRoles={["Admin", "personnel"]}>
-      {/* Snackbar thông báo */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -326,7 +500,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           p: 3,
         }}
       >
-        {/* Header */}
         <Stack
           direction="row"
           spacing={2}
@@ -419,7 +592,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           )}
         </Stack>
 
-        {/* Form từ chối */}
         {showTuChoi && (
           <Box sx={{ mb: 2, flexShrink: 0 }}>
             <KhoiTuChoiForm
@@ -435,7 +607,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           </Box>
         )}
 
-        {/* Dialog xác nhận */}
         <Dialog
           open={confirmAction !== null}
           onClose={() => {
@@ -494,7 +665,9 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 boxShadow: "none",
                 "&:hover": {
                   bgcolor:
-                    confirmAction === "tuChoi" ? COLORS.primaryDark : COLORS.primaryDark,
+                    confirmAction === "tuChoi"
+                      ? COLORS.primaryDark
+                      : COLORS.primaryDark,
                   boxShadow: "none",
                 },
               }}
@@ -510,7 +683,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           </DialogActions>
         </Dialog>
 
-        {/* Nội dung chính */}
         <Box
           sx={{
             flex: 1,
@@ -521,7 +693,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
             overflow: { xs: "auto", md: "hidden" },
           }}
         >
-          {/* Cột trái */}
           <Box
             sx={{
               flex: 1,
@@ -542,11 +713,12 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
             ) : detail ? (
               <>
                 <KhoiTenKhoaHoc detail={detail} />
-
                 <Box sx={{ ...boxSx, p: 2.5 }}>
-                  <NoiDungViewer selected={selectedContent} />
+                  <NoiDungViewer
+                    selected={selectedContent}
+                    onSaveLyDo={handleSaveLyDo}
+                  />
                 </Box>
-
                 {hasDescription && (
                   <Box sx={{ ...boxSx, p: 2.5 }}>
                     <Typography
@@ -590,7 +762,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
             )}
           </Box>
 
-          {/* Cột phải: Sidebar */}
           <Box
             sx={{
               width: { xs: "100%", md: 380 },

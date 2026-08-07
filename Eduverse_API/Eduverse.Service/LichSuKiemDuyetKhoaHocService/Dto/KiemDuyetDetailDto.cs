@@ -2,6 +2,7 @@
 using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.DanhMuc_KhoaHocService.Dto;
 using Eduverse.Service.DapAnService.Dto;
+using Eduverse.Service.LyDoTuChoiService.Dto;
 using Eduverse.Service.PhanService.Dto;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public string? CreateBy { get; set; }
         public LichSuKiemDuyetDto LichSuKiemDuyetDto { get; set; }
         public List<PhanChoDuyetDto> Phans { get; set; } = new();
+        public List<string> DanhMucs { get; set; } = new();
 
 
     }
@@ -67,6 +69,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public bool IsBanHienTai { get; set; } = true;
         public Guid? IdBanGhiTruoc { get; set; }
         public List<TaiLieuChoDuyetDto> TaiLieus { get; set; } = new();
+        public LyDoTuChoiDto LyDoTuChois { get; set; } = new();
     }
 
     public class TaiLieuChoDuyetDto
@@ -99,6 +102,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public string? TrangThaiPheDuyet { get; set; }
 
         public List<CauHoiChoDuyetDto> CauHois { get; set; }
+        public LyDoTuChoiDto LyDoTuChois { get; set; } = new();
 
     }
 

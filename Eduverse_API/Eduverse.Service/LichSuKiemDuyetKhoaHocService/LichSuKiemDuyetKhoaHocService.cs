@@ -65,6 +65,9 @@ using Elastic.Clients.Elasticsearch;
 using Eduverse.Service.TienDoHocTapService;
 using Eduverse.Repository.TienDoHocTapRepository;
 using Eduverse.Service.ThongBaoService;
+using Eduverse.Repository.LyDoTuChoiRepository;
+using Eduverse.Service.LyDoTuChoiService.Dto;
+using System.Data;
 
 namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 {
@@ -99,6 +102,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         private readonly IAppUserService _appUserService;
         private readonly EduverseContext _eduverseContext;
         private readonly INotificationPublisher _notificationPublisher;
+        private readonly ILyDoTuChoiRepository _lyDoTuChoiRepository;
 
         public LichSuKiemDuyetKhoaHocService(
             ILichSuKiemDuyetKhoaHocRepository repository,
@@ -127,6 +131,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             IUserRoleService userRoleService,
             EduverseContext eduverseContext,
             INotificationPublisher notificationPublisher,
+            ILyDoTuChoiRepository lyDoTuChoiRepository,
 
 
         IHttpContextAccessor? httpContextAccessor = null) : base(repository)
@@ -154,7 +159,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             _userRoleRepository = userRoleRepository;
             _appUserService = appUserService;
             _eduverseContext = eduverseContext;
-
+            _lyDoTuChoiRepository = lyDoTuChoiRepository;
             _notificationPublisher = notificationPublisher;
         }
 
@@ -267,7 +272,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
 
         #region GetDetailKiemDuyet
-
         public async Task<KiemDuyetDetailDto> GetDetailKiemDuyet(Guid idKhoaHoc)
         {
             // 1. Lấy đúng bản khóa học theo Id được truyền vào
@@ -292,6 +296,10 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             var baiGiangIds = baiGiangs.Select(b => b.Id).ToList();
 
+            var lyDoBaiGiangs = await _lyDoTuChoiRepository.GetAll()
+                .Where(x => baiGiangIds.Contains(x.IdDoiTuong ?? Guid.Empty))
+                .ToListAsync();
+
             var taiLieus = await _taiLieuRepository.GetAll()
                 .Where(x => baiGiangIds.Contains(x.IdBaiGiang) && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet" || x.TrangThaiPheDuyet == "DaDuyet"))
                 .ToListAsync();
@@ -300,8 +308,12 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 .Where(x => x.IdPhan.HasValue && phanIds.Contains(x.IdPhan.Value) && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet" || x.TrangThaiPheDuyet == "DaDuyet"))
                 .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
-
+            
             var baiKiemTraIds = baiKiemTras.Select(b => b.Id).ToList();
+
+            var lyDoBaiKiemTras = await _lyDoTuChoiRepository.GetAll()
+                .Where(x => baiKiemTraIds.Contains(x.IdDoiTuong ?? Guid.Empty))
+                .ToListAsync();
 
             var cauHois = await _cauHoiRepository.GetAll()
                 .Where(x => baiKiemTraIds.Contains(x.IdBaiKiemTra.Value) && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet" || x.TrangThaiPheDuyet == "DaDuyet"))
@@ -314,7 +326,14 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value) && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet" || x.TrangThaiPheDuyet == "DaDuyet"))
                 .ToListAsync();
 
-            // 3. Chuyển toàn bộ cây sang trạng thái "DangDuyet" — mỗi item xử lý ĐỘC LẬP
+            var tenDanhMucs = await _danhMuc_KhoaHocRepository.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc)
+                .Join(_danhMucRepository.GetQueryable(),    
+                      dk => dk.IdDanhMuc,     
+                      dm => dm.Id,              
+                      (dk, dm) => dm.TenDanhMuc)       
+                .ToListAsync();
+
             if (targetVersion.TrangThaiPheDuyet == "ChoDuyet" || targetVersion.TrangThaiPheDuyet == null)
             {
                 var KiemDuyetKhoaHoc = new LichSuKiemDuyetKhoaHoc
@@ -415,11 +434,15 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             // 4. Dựng cây lồng nhau: Phan -> BaiGiang -> TaiLieu, Phan -> BaiKiemTra -> CauHoi -> DapAn
             var taiLieuLookup = taiLieus.ToLookup(t => t.IdBaiGiang);
             var baiGiangLookup = baiGiangs.ToLookup(b => b.IdPhan);
+            var lyDoBaiGiangLookup = lyDoBaiGiangs.ToLookup(l => l.IdDoiTuong);
             var dapAnLookup = dapAns.Where(d => d.IdCauHoi.HasValue).ToLookup(d => d.IdCauHoi.Value);
             var cauHoiLookup = cauHois.ToLookup(c => c.IdBaiKiemTra);
             var baiKiemTraLookup = baiKiemTras
                 .Where(b => b.IdPhan.HasValue)
                 .ToLookup(b => b.IdPhan.Value);
+            var lyDoBaiKiemTraLookup = lyDoBaiKiemTras.ToLookup(l => l.IdDoiTuong);
+
+
 
             var phanDtos = phans.Select(p => new PhanChoDuyetDto
             {
@@ -447,6 +470,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     IdPhan = b.IdPhan,
                     IsBanHienTai = b.IsBanHienTai,
                     IdBanGhiTruoc = b.IdBanGhiTruoc,
+                    LyDoTuChois = lyDoBaiGiangLookup[b.Id]
+                        .Select(l => new LyDoTuChoiDto { Id = l.Id, LyDo = l.LyDo })
+                        .FirstOrDefault(),
 
                     TaiLieus = taiLieuLookup[b.Id].Select(t => new TaiLieuChoDuyetDto
                     {
@@ -475,6 +501,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     IdBanGhiTruoc = bkt.IdBanGhiTruoc,
                     TrangThai = bkt.TrangThai,
                     TrangThaiPheDuyet = bkt.TrangThaiPheDuyet,
+                    LyDoTuChois = lyDoBaiKiemTraLookup[bkt.Id]
+                        .Select(l => new LyDoTuChoiDto { Id = l.Id, LyDo = l.LyDo })
+                        .FirstOrDefault(),
                     CauHois = cauHoiLookup[bkt.Id].Select(c => new CauHoiChoDuyetDto
                     {
                         Id = c.Id,
@@ -516,7 +545,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 IdBanGhiTruoc = targetVersion.IdBanGhiTruoc,
                 IsBanHienTai = targetVersion.IsBanHienTai,
                 CreateBy = targetVersion.CreatedBy,
-                Phans = phanDtos
+                DanhMucs = tenDanhMucs,
+                Phans = phanDtos,
+                
             };
 
             return result;
@@ -1030,6 +1061,18 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             // ── DaDuyet ─────────────────────────────────────────
             else
             {
+                var lydoBaiGiangs = await _lyDoTuChoiRepository.GetQueryable().Where(x => idBaiGiangs.Contains(x.IdDoiTuong?? Guid.Empty)).ToListAsync();
+
+                if (lydoBaiGiangs.Any())
+                {
+                    foreach(var item in lydoBaiGiangs)
+                    {
+                        item.TrangThai = "DaXoa";
+                        _lyDoTuChoiRepository.Delete(item);
+                    }
+                    await _lyDoTuChoiRepository.SaveAsync();
+                }
+
                 khoaHoc.TrangThaiPheDuyet = "DaDuyet";
                 khoaHoc.TrangThai = "HoatDong";
                 _khoaHocRepository.Update(khoaHoc);
@@ -1128,6 +1171,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 IdDoiTuong = request.IdKhoaHoc,
                 LoaiDoiTuong = "KhoaHoc",
                 TrangThaiPheDuyet = request.TrangThaiPheDuyet,
+                LyDo = request.TrangThaiPheDuyet == "TuChoi" ? request.LyDo : "Khóa học đã được chấp thuận",
                 NgayDuyet = ngayDuyet
             };
         }
@@ -1184,7 +1228,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     })
                     .ToDictionaryAsync(x => x.Id);
 
-                // Thêm hàng loạt, chỉ Save 1 lần (tránh N+1 query)
                 foreach (var item in danhSachDangKyMoi)
                 {
                     khoaHocs.TryGetValue(item.IdKhoaHoc ?? Guid.Empty, out var khoaHoc);
@@ -1228,7 +1271,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         {
             try
             {
-                // Lấy toàn bộ bài giảng của khóa học mới, map với bài giảng cũ tương ứng
+
                 var baiGiangs = await (
                     from p in _phanRepository.GetQueryable()
                     join bg in _baiGiangRepository.GetQueryable()
@@ -1285,9 +1328,6 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             }
         }
         #endregion
-
-
-        
 
 
         #region KiemDuyetInputAIandThuCong
