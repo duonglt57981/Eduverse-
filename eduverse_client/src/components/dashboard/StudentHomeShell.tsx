@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Paper, Typography } from "@mui/material";
 import StudentHomeHeader from "./StudentHomeHeader";
+import { LAYOUT_SPACING, PAGE_SPACING } from "@/src/theme/tokens";
 
 interface StudentHomeShellProps {
   children: React.ReactNode;
@@ -72,9 +73,11 @@ export default function StudentHomeShell({ children }: StudentHomeShellProps) {
           sx={{
             flex: 1,
             width: "100%",
-            maxWidth: 1400,
+            maxWidth: LAYOUT_SPACING.containerMaxWidthWide,
             mx: "auto",
-            px: { xs: 2, md: 3 },
+            px: PAGE_SPACING.px,
+            mt: PAGE_SPACING.mt,
+            pb: LAYOUT_SPACING.pagePy,
             overflowX: "hidden",
           }}
         >

@@ -283,7 +283,6 @@ function TheTrangThai({
         "&:hover": {
           borderColor: dangChon ? MAU.chinh : "#ECE7E4",
           boxShadow: `0 4px 12px rgba(0, 0, 0, 0.04)`,
-          transform: "translateY(-2px)",
         },
       }}
     >
@@ -1012,7 +1011,6 @@ function KhoaHocContent() {
                     "&:hover": {
                       boxShadow: "0 12px 24px rgba(0, 0, 0, 0.04)",
                       borderColor: MAU.chinh,
-                      transform: "translateY(-3px)",
                     },
                   }}
                 >

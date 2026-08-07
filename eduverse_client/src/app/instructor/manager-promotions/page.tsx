@@ -1,5 +1,5 @@
 "use client";
-import { MAU } from "@/src/theme/tokens";
+import { LAYOUT_SPACING, MAU } from "@/src/theme/tokens";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
@@ -234,7 +234,7 @@ function QuanLyKhuyenMaiContent() {
   };
 
   const cardSx = {
-    p: 3,
+    p: LAYOUT_SPACING.cardPadding,
     mb: 2,
     bgcolor: "var(--ev-paper, #FFFFFF)",
     border: `1px solid #EDEFF3`,

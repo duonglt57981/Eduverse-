@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Box, Paper, Typography } from "@mui/material";
 import StudentHomeHeader from "./StudentHomeHeader";
+import { LAYOUT_SPACING, PAGE_SPACING } from "@/src/theme/tokens";
 
 interface StudentDashboardShellProps {
   children: React.ReactNode;
@@ -13,6 +14,8 @@ export default function StudentDashboardShell({
   children,
 }: StudentDashboardShellProps) {
   const router = useRouter();
+  const pathname = usePathname() || "";
+  const isExplore = pathname.includes("/explore") || pathname.includes("/courses");
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
@@ -39,7 +42,7 @@ export default function StudentDashboardShell({
         <Paper
           elevation={0}
           sx={{
-            px: 3,
+            px: 2,
             py: 2,
             borderRadius: 2.8,
             border: "1px solid",
@@ -113,9 +116,11 @@ export default function StudentDashboardShell({
           sx={{
             flex: 1,
             width: "100%",
-            maxWidth: "100%",
+            maxWidth: isExplore ? "100%" : LAYOUT_SPACING.containerMaxWidth,
             mx: "auto",
-            px: { xs: 2, md: 6 },
+            px: isExplore ? 0 : LAYOUT_SPACING.pagePx,
+            mt: isExplore ? 0 : PAGE_SPACING.mt,
+            pb: LAYOUT_SPACING.pagePy,
             overflowX: "hidden",
           }}
         >

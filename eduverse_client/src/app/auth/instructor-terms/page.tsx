@@ -1,6 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Box,
   CssBaseline,
@@ -11,13 +12,52 @@ import {
   Chip,
 } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
-import {
-  ArrowBackRounded,
-  SchoolRounded,
-} from '@mui/icons-material';
+import { ArrowBackRounded } from '@mui/icons-material';
 import { createAppTheme } from '@/src/theme/createAppTheme';
+import { LAYOUT_SPACING } from '@/src/theme/tokens';
 
-const PRIMARY_COLOR = '#8B1313';
+const instructorTermsList = [
+  {
+    title: '1. Quyền Sở hữu Trí tuệ & Bản quyền Bài giảng',
+    content:
+      'Giảng viên sở hữu toàn bộ quyền sở hữu trí tuệ đối với các bài giảng, tài liệu học tập và video khóa học do mình tự biên soạn và tải lên hệ thống EduVerse.',
+    bullets: [
+      'Giảng viên cấp cho EduVerse quyền không độc quyền (non-exclusive) để lưu trữ, tiếp thị, quảng bá và phân phối khóa học tới học viên.',
+      'Giảng viên cam kết nội dung tải lên là chính chủ, không sao chép trái phép hoặc xâm phạm bản quyền của bất kỳ bên thứ ba nào.',
+    ],
+  },
+  {
+    title: '2. Quy định Phân chia Doanh thu & Rút tiền',
+    content:
+      'Doanh thu phát sinh từ bán khóa học sẽ được ghi nhận và phân chia minh bạch trên bảng điều khiển tài chính của Giảng viên.',
+    bullets: [
+      'Rút tiền: Giảng viên thực hiện yêu cầu rút tiền trực tiếp về tài khoản ngân hàng chính chủ đã xác minh.',
+      'Nghĩa vụ Thuế: Giảng viên tự chịu trách nhiệm thực hiện nghĩa vụ thuế thu nhập cá nhân theo quy định của pháp luật hiện hành.',
+    ],
+  },
+  {
+    title: '3. Tiêu chuẩn Chất lượng & Tương tác Học viên',
+    content:
+      'Bài giảng tải lên phải đảm bảo chất lượng hình ảnh, âm thanh rõ ràng, nội dung chính xác và không chứa thông tin phản cảm hay vi phạm tiêu chuẩn cộng đồng.',
+    bullets: [
+      'Giảng viên có trách nhiệm phản hồi và giải đáp các câu hỏi Q&A của học viên trong thời gian hợp lý (khuyên dùng trong 48 giờ làm việc).',
+      'Nghiêm cấm hành vi chèn liên kết lừa đảo hoặc lôi kéo học viên giao dịch ngoài hệ thống EduVerse.',
+    ],
+  },
+  {
+    title: '4. Quy trình Duyệt & Kiểm duyệt Khóa học',
+    content:
+      'Tất cả khóa học mới tạo hoặc cập nhật nội dung lớn sẽ qua quy trình kiểm duyệt bởi Ban Quản trị EduVerse trước khi phát hành công khai.',
+    bullets: [
+      'EduVerse bảo lưu quyền tạm ẩn hoặc hủy phát hành khóa học nếu có phản ánh chính xác về vi phạm bản quyền hoặc nội dung giả mạo.',
+    ],
+  },
+  {
+    title: '5. Bảo mật Thông tin & Điều khoản Chung',
+    content:
+      'Thông tin cá nhân, tài khoản ngân hàng và hồ sơ giảng dạy của Giảng viên được EduVerse bảo mật nghiêm ngặt theo quy định bảo mật.',
+  },
+];
 
 export default function InstructorTermsPage() {
   const theme = useMemo(() => createAppTheme('light'), []);
@@ -28,150 +68,136 @@ export default function InstructorTermsPage() {
       <Box
         sx={{
           minHeight: '100vh',
-          bgcolor: 'var(--ev-paper-alt, #F7F5F2)',
-          py: { xs: 4, sm: 6 },
-          px: 2,
+          bgcolor: 'var(--ev-bg, #F7F5F2)',
+          py: LAYOUT_SPACING.pagePy,
+          px: LAYOUT_SPACING.pagePx,
         }}
       >
-        <Box sx={{ maxWidth: 880, mx: 'auto' }}>
+        <Box sx={{ maxWidth: LAYOUT_SPACING.containerMaxWidth, mx: 'auto' }}>
           {/* Back button */}
-          <Link href="/student/dashboard" style={{ textDecoration: 'none' }}>
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 1,
-                color: 'var(--ev-text-secondary, #4B5563)',
-                mb: 3,
-                fontSize: 14.5,
-                fontWeight: 600,
-                transition: 'color 200ms ease',
-                '&:hover': {
-                  color: PRIMARY_COLOR,
-                },
-              }}
-            >
-              <ArrowBackRounded fontSize="small" />
-              Quay lại EduVerse
-            </Box>
-          </Link>
+          <Box sx={{ mb: 3 }}>
+            <Link href="/student/dashboard" style={{ textDecoration: 'none' }}>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  color: 'var(--ev-text-secondary, #4B5563)',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  transition: 'color 200ms ease',
+                  '&:hover': {
+                    color: '#8B1313',
+                  },
+                }}
+              >
+                <ArrowBackRounded fontSize="small" />
+                Quay lại EduVerse
+              </Box>
+            </Link>
+          </Box>
 
           <Paper
             elevation={0}
             sx={{
               borderRadius: '24px',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              boxShadow: '0 12px 36px rgba(30, 41, 59, 0.05)',
-              p: { xs: 3.5, sm: 5, md: 6 },
+              border: '1px solid rgba(17, 17, 17, 0.08)',
+              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.03)',
+              p: { xs: 3.5, sm: 6 },
               bgcolor: 'var(--ev-paper, #ffffff)',
             }}
           >
-            {/* Header Badge & Title */}
+            {/* Logo & Document Title */}
             <Box sx={{ mb: 4 }}>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 1.5 }}>
-                <Chip
-                  icon={<SchoolRounded sx={{ fontSize: 16, color: `${PRIMARY_COLOR} !important` }} />}
-                  label="Dành cho Giảng viên"
-                  sx={{
-                    bgcolor: 'rgba(139, 19, 19, 0.08)',
-                    color: PRIMARY_COLOR,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    px: 0.5,
-                  }}
-                />
-              </Stack>
+              <Box sx={{ width: 210, mb: 3 }}>
+                <Link href="/">
+                  <Image
+                    src="/auth/img/logo_nentrang.png"
+                    alt="EduVerse Logo"
+                    width={210}
+                    height={55}
+                    priority
+                    style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+                  />
+                </Link>
+              </Box>
 
               <Typography
                 variant="h4"
                 sx={{
-                  fontWeight: 900,
+                  fontWeight: 850,
                   color: 'var(--ev-text-primary, #1F2937)',
-                  letterSpacing: '-1px',
-                  mb: 1.5,
                   fontSize: { xs: 26, sm: 32 },
-                  lineHeight: 1.2,
+                  letterSpacing: '-0.6px',
+                  mb: 1,
                 }}
               >
-                Điều khoản & Quy định Hợp tác Giảng viên
+                Điều khoản Hợp tác Giảng viên
               </Typography>
 
-              <Typography variant="body1" sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 15, lineHeight: 1.6 }}>
-                Chào mừng bạn đến với cộng đồng Giảng viên của EduVerse! Các điều khoản dưới đây điều chỉnh quyền lợi, trách nhiệm và quy trình hợp tác giảng dạy giữa bạn và nền tảng EduVerse.
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'var(--ev-text-muted, #6B7280)',
+                  fontSize: 13.5,
+                  fontWeight: 500,
+                }}
+              >
+                Quy định về quyền lợi, trách nhiệm và quy trình giảng dạy dành cho Giảng viên EduVerse
               </Typography>
             </Box>
 
-            <Divider sx={{ mb: 4, borderColor: 'rgba(0, 0, 0, 0.06)' }} />
+            <Divider sx={{ mb: 4, borderColor: 'rgba(17, 17, 17, 0.08)' }} />
 
-            {/* Terms Content List */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, color: 'var(--ev-text-secondary, #334155)' }}>
-              
-              {/* Section 1 */}
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
-                  1. Quyền Sở hữu Trí tuệ & Bản quyền Nội dung
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
-                  - Giảng viên luôn giữ trọn vẹn quyền sở hữu trí tuệ đối với tài liệu, bài giảng và nội dung khóa học do mình tự biên soạn.<br />
-                  - Bằng việc cấp phép phân phối khóa học trên EduVerse, Giảng viên đồng ý cấp cho EduVerse quyền không độc quyền (non-exclusive) để tiếp thị, quảng bá và phân phối khóa học tới học viên trên toàn cầu.<br />
-                  - Giảng viên cam kết nội dung tải lên là chính chủ, không sao chép trái phép hoặc vi phạm bản quyền của bất kỳ cá nhân hay tổ chức nào khác.
-                </Typography>
-              </Box>
+            {/* Content List */}
+            <Stack spacing={3.5}>
+              {instructorTermsList.map((item, index) => (
+                <Box key={index}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 800,
+                      color: 'var(--ev-text-primary, #1F2937)',
+                      fontSize: 17,
+                      mb: 1,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
 
-              {/* Section 2 */}
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
-                  2. Phân chia Doanh thu & Quy trình Thanh toán
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
-                  - <strong>Tỷ lệ phân chia:</strong> Giảng viên nhận tỷ lệ doanh thu theo thỏa thuận trong từng chương trình khuyến mại hoặc bán hàng trực tiếp trên EduVerse.<br />
-                  - <strong>Rút tiền:</strong> Yêu cầu rút tiền được xử lý định kỳ thông qua tài khoản ngân hàng chính chủ đã được liên kết và xác minh trên hệ thống.<br />
-                  - <strong>Nghĩa vụ thuế:</strong> Giảng viên có trách nhiệm thực hiện khai báo và nộp thuế thu nhập cá nhân theo đúng quy định của pháp luật Việt Nam đối với nguồn thu nhập từ nền tảng.
-                </Typography>
-              </Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: 14.5,
+                      lineHeight: 1.75,
+                      color: 'var(--ev-text-secondary, #374151)',
+                    }}
+                  >
+                    {item.content}
+                  </Typography>
 
-              {/* Section 3 */}
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
-                  3. Quy chuẩn Chất lượng & Tương tác Học viên
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
-                  - Video bài giảng cần đảm bảo hình ảnh rõ nét, âm thanh trong trẻo, không chứa nội dung phản cảm, kích động hoặc vi phạm pháp luật.<br />
-                  - Giảng viên có trách nhiệm phản hồi và giải đáp các thắc mắc (Q&A) của học viên liên quan đến bài giảng trong vòng 48 giờ làm việc.<br />
-                  - Nghiêm cấm chèn liên kết lừa đảo, quảng cáo dịch vụ bên ngoài trái phép hoặc chủ động lôi kéo học viên thanh toán ngoài hệ thống EduVerse.
-                </Typography>
-              </Box>
-
-              {/* Section 4 */}
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
-                  4. Quy trình Duyệt & Quản lý Khóa học
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
-                  - Tất cả khóa học mới tạo hoặc chỉnh sửa nội dung lớn sẽ trải qua quy trình duyệt bởi Ban Quản trị EduVerse trước khi phát hành.<br />
-                  - EduVerse bảo lưu quyền tạm ẩn hoặc hạ khóa học nếu nhận được các khiếu nại xác đáng về vi phạm bản quyền, nội dung sai lệch hoặc giả mạo bằng cấp.
-                </Typography>
-              </Box>
-
-              {/* Section 5 */}
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 18 }}>
-                  5. Bảo mật Thông tin & Hỗ trợ
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--ev-text-secondary, #4B5563)' }}>
-                  - Thông tin cá nhân, CV và hồ sơ năng lực của Giảng viên được EduVerse bảo mật nghiêm ngặt theo chính sách quyền riêng tư.<br />
-                  - Nếu cần hỗ trợ thêm thông tin về thủ tục nâng cấp tài khoản Giảng viên, bạn có thể liên hệ trực tiếp với bộ phận Hỗ trợ Giảng viên qua email: <a href="mailto:instructor@eduverse.website" style={{ color: PRIMARY_COLOR, fontWeight: 700 }}>instructor@eduverse.website</a>.
-                </Typography>
-              </Box>
-
-            </Box>
-
-            <Divider sx={{ my: 4, borderColor: 'rgba(0, 0, 0, 0.06)' }} />
-
-            {/* Footer */}
-            <Typography variant="body2" sx={{ textAlign: 'center', color: 'var(--ev-text-muted, #8A7676)', fontSize: 13 }}>
-              EduVerse © 2026. Tất cả các quyền được bảo lưu. Việc nâng cấp tài khoản Giảng viên đồng nghĩa với việc bạn đồng ý với toàn bộ các điều khoản trên.
-            </Typography>
+                  {item.bullets && (
+                    <Box component="ul" sx={{ pl: 2.5, mt: 1.25, mb: 0 }}>
+                      {item.bullets.map((bullet, bIdx) => (
+                        <Typography
+                          key={bIdx}
+                          component="li"
+                          variant="body2"
+                          sx={{
+                            fontSize: 14,
+                            lineHeight: 1.7,
+                            color: 'var(--ev-text-secondary, #4B5563)',
+                            mb: 0.75,
+                          }}
+                        >
+                          {bullet}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              ))}
+            </Stack>
           </Paper>
         </Box>
       </Box>

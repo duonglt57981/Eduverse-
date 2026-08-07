@@ -40,7 +40,7 @@ import SignalWifiOffIcon from "@mui/icons-material/SignalWifiOff";
 import LoginIcon from "@mui/icons-material/Login";
 import SearchIcon from "@mui/icons-material/Search";
 import AuthGuard from "@/src/components/AuthGuard";
-import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
+import StudentHomeShell from "@/src/components/dashboard/StudentHomeShell";
 
 import { KhoaHocDangKiSearch, KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import KhoaHocService from "@/src/services/KhoaHocService";
@@ -274,9 +274,8 @@ const CourseCard = styled(Card)(() => ({
   backgroundColor: "var(--ev-paper, #FFFFFF)",
   position: "relative",
   "&:hover": {
-    transform: "translateY(-6px)",
     boxShadow:
-      "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
+      "0 8px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
     borderColor: "#CBD5E1",
   },
   "&:hover img": {
@@ -314,7 +313,6 @@ const StatCard = styled(Paper)(() => ({
   "&:hover": {
     boxShadow:
       "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
-    transform: "translateY(-2px)",
     borderColor: "#CBD5E1",
   },
 }));
@@ -993,8 +991,7 @@ function MyCoursesContent() {
                       overflow: "hidden",
                       bgcolor: "var(--ev-paper, #FFFFFF)",
                       "&:hover": {
-                        transform: "translateY(-5px)",
-                        boxShadow: "0 16px 36px -8px rgba(139, 19, 19, 0.14)",
+                        boxShadow: "0 12px 28px -8px rgba(139, 19, 19, 0.12)",
                         borderColor: "rgba(139, 19, 19, 0.3)",
                         "& .play-glass-btn": {
                           transform: "translate(-50%, -50%) scale(1.15)",
@@ -1513,21 +1510,9 @@ function MyCoursesContent() {
 export default function StudentCoursesPage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
-      <StudentDashboardShell>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, md: 3 },
-            borderRadius: "20px",
-            border: "1px solid var(--ev-divider, #ECE7E4)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
-            boxShadow:
-              "0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.01)",
-          }}
-        >
-          <MyCoursesContent />
-        </Paper>
-      </StudentDashboardShell>
+      <StudentHomeShell>
+        <MyCoursesContent />
+      </StudentHomeShell>
     </AuthGuard>
   );
 }

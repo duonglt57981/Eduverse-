@@ -681,8 +681,7 @@ function CourseCard({
           transition:
             "transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease",
           "&:hover": {
-            transform: "translateY(-4px)",
-            boxShadow: "0 12px 32px rgba(141,19,19,0.08)",
+            boxShadow: "0 8px 24px rgba(141,19,19,0.06)",
             borderColor: "rgba(141,19,19,0.15)",
           },
         }}
@@ -1397,7 +1396,7 @@ export default function StudentDashboardContent() {
               overflow: "hidden",
               boxShadow: "0 10px 24px rgba(124,58,237,0.15)",
               transition: "transform 200ms ease",
-              "&:hover": { transform: "translateY(-4px)" },
+              "&:hover": { boxShadow: "0 8px 20px rgba(0,0,0,0.06)" },
             }}
           >
             <Box
@@ -1478,7 +1477,7 @@ export default function StudentDashboardContent() {
               overflow: "hidden",
               boxShadow: "0 10px 24px rgba(13,148,136,0.15)",
               transition: "transform 200ms ease",
-              "&:hover": { transform: "translateY(-4px)" },
+              "&:hover": { boxShadow: "0 8px 20px rgba(0,0,0,0.06)" },
             }}
           >
             <Box
@@ -1762,8 +1761,7 @@ export default function StudentDashboardContent() {
                     cursor: "pointer",
                     transition: "transform 200ms, box-shadow 200ms",
                     "&:hover": {
-                      transform: "translateY(-3px)",
-                      boxShadow: "0 8px 20px rgba(0,0,0,0.03)",
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
                     },
                   }}
                 >

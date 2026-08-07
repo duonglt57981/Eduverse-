@@ -17,7 +17,6 @@ import PlayLessonOutlinedIcon from "@mui/icons-material/PlayLessonOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import {
-  CAP_DO_MAU,
   formatGiaTien,
   formatSoLuong,
   formatThoiLuong,
@@ -39,6 +38,24 @@ export default function InstructorCourseCard({
     khoaHoc.gia !== undefined &&
     khoaHoc.giaGoc > (khoaHoc.gia ?? 0);
 
+  // Extract accurate metadata fields with safe fallbacks across backend DTO schemas
+  const khAny = khoaHoc as unknown as Record<string, unknown>;
+  const thoiLuong =
+    khoaHoc.tongThoiLuong ||
+    (khAny.thoiLuong as number) ||
+    (khAny.tongThoiGian as number) ||
+    0;
+  const tongBaiGiang =
+    khoaHoc.tongBaiGiang ||
+    (khAny.soBaiGiang as number) ||
+    (khAny.soLuongBaiGiang as number) ||
+    0;
+  const soHocVien =
+    khoaHoc.soLuongHocVien ||
+    (khAny.tongHocVien as number) ||
+    (khAny.soHocVien as number) ||
+    0;
+
   // Clean description text
   const cleanMoTa = (khoaHoc.moTa || "")
     .replace(/<p>\s*<strong>\s*Mô tả khóa học\s*<\/strong>\s*<\/p>/gi, "")
@@ -52,15 +69,14 @@ export default function InstructorCourseCard({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        borderRadius: "20px",
+        borderRadius: "18px",
         border: "1px solid var(--ev-divider, #ECE7E4)",
         bgcolor: "var(--ev-paper, #FFFFFF)",
         boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: "box-shadow 0.25s ease, border-color 0.25s ease",
         overflow: "hidden",
         "&:hover": {
-          boxShadow: "0 16px 36px rgba(139,19,19,0.08)",
-          transform: "translateY(-6px)",
+          boxShadow: "0 14px 32px rgba(139,19,19,0.08)",
           borderColor: "rgba(139,19,19,0.25)",
         },
         "& *": {
@@ -87,9 +103,9 @@ export default function InstructorCourseCard({
               width: "100%",
               height: "100%",
               objectFit: "cover",
-              transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: "transform 0.4s ease",
               "&:hover": {
-                transform: "scale(1.05)",
+                transform: "scale(1.04)",
               },
             }}
           />
@@ -103,7 +119,7 @@ export default function InstructorCourseCard({
                 top: 10,
                 left: 10,
                 zIndex: 2,
-                bgcolor: "rgba(31, 41, 55, 0.8)",
+                bgcolor: "rgba(31, 41, 55, 0.82)",
                 color: "#FFFFFF",
                 backdropFilter: "blur(8px)",
                 fontWeight: 700,
@@ -121,14 +137,14 @@ export default function InstructorCourseCard({
             display: "flex",
             flexDirection: "column",
             width: "100%",
-            p: 2.5,
+            p: 2.25,
           }}
         >
           <Typography
             variant="subtitle1"
             sx={{
               fontWeight: 800,
-              fontSize: 16,
+              fontSize: 15.5,
               color: "var(--ev-text-primary, #1F2937)",
               lineHeight: 1.35,
               mb: 1,
@@ -136,7 +152,7 @@ export default function InstructorCourseCard({
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
               overflow: "hidden",
-              minHeight: 44,
+              minHeight: 42,
             }}
             title={khoaHoc.tieuDe}
           >
@@ -151,7 +167,7 @@ export default function InstructorCourseCard({
               expandable={false}
               sx={{
                 mb: 2,
-                fontSize: "0.875rem",
+                fontSize: "0.85rem",
                 color: "var(--ev-text-secondary, #4B5563)",
                 lineHeight: 1.5,
               }}
@@ -179,17 +195,17 @@ export default function InstructorCourseCard({
               }}
             >
               <AccessTimeOutlinedIcon
-                sx={{ fontSize: 15, color: "var(--ev-text-secondary, #4B5563)" }}
+                sx={{ fontSize: 14, color: "var(--ev-text-secondary, #4B5563)" }}
               />
               <Typography
                 variant="caption"
                 sx={{
                   fontWeight: 600,
-                  fontSize: 11.5,
+                  fontSize: 11,
                   color: "var(--ev-text-secondary, #4B5563)",
                 }}
               >
-                {formatThoiLuong(khoaHoc.tongThoiLuong)}
+                {formatThoiLuong(thoiLuong)}
               </Typography>
             </Stack>
 
@@ -205,17 +221,17 @@ export default function InstructorCourseCard({
               }}
             >
               <PlayLessonOutlinedIcon
-                sx={{ fontSize: 15, color: "var(--ev-text-secondary, #4B5563)" }}
+                sx={{ fontSize: 14, color: "var(--ev-text-secondary, #4B5563)" }}
               />
               <Typography
                 variant="caption"
                 sx={{
                   fontWeight: 600,
-                  fontSize: 11.5,
+                  fontSize: 11,
                   color: "var(--ev-text-secondary, #4B5563)",
                 }}
               >
-                {khoaHoc.tongBaiGiang ?? 0} bài
+                {tongBaiGiang} bài
               </Typography>
             </Stack>
 
@@ -231,22 +247,22 @@ export default function InstructorCourseCard({
               }}
             >
               <GroupsOutlinedIcon
-                sx={{ fontSize: 15, color: "var(--ev-text-secondary, #4B5563)" }}
+                sx={{ fontSize: 14, color: "var(--ev-text-secondary, #4B5563)" }}
               />
               <Typography
                 variant="caption"
                 sx={{
                   fontWeight: 600,
-                  fontSize: 11.5,
+                  fontSize: 11,
                   color: "var(--ev-text-secondary, #4B5563)",
                 }}
               >
-                {formatSoLuong(khoaHoc.soLuongHocVien)} học viên
+                {formatSoLuong(soHocVien)} học viên
               </Typography>
             </Stack>
           </Stack>
 
-          <Box sx={{ mt: "auto", pt: 1, borderTop: "1px dashed var(--ev-divider, #ECE7E4)" }}>
+          <Box sx={{ mt: "auto", pt: 1.5, borderTop: "1px dashed var(--ev-divider, #ECE7E4)" }}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
               <Typography
                 variant="subtitle1"
@@ -264,7 +280,7 @@ export default function InstructorCourseCard({
                   sx={{
                     color: "text.disabled",
                     textDecoration: "line-through",
-                    fontSize: 13,
+                    fontSize: 12.5,
                   }}
                 >
                   {formatGiaTien(khoaHoc.giaGoc)}

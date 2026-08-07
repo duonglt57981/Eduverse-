@@ -65,7 +65,7 @@ import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { createAppTheme } from "@/src/theme/createAppTheme";
-import { COLORS } from "@/src/theme/tokens";
+import { COLORS, LAYOUT_SPACING, PAGE_SPACING } from "@/src/theme/tokens";
 import DashboardHeader from "./DashboardHeader";
 import {
   getSidebarItemsByRole,
@@ -1573,7 +1573,7 @@ export default function DashboardShell({
                       fontWeight: 500,
                       color:
                         pathname.startsWith("/admin") ||
-                        pathname.startsWith("/personnel")
+                          pathname.startsWith("/personnel")
                           ? "#8B1313"
                           : COLORS.primary,
                       letterSpacing: "0.2px",
@@ -1622,16 +1622,16 @@ export default function DashboardShell({
                 >
                   {dashboardData?.welcomeStats?.userName
                     ? dashboardData.welcomeStats.userName
+                      .split(" ")
+                      .pop()
+                      ?.substring(0, 2)
+                      .toUpperCase()
+                    : user?.hoTen
+                      ? user.hoTen
                         .split(" ")
                         .pop()
                         ?.substring(0, 2)
                         .toUpperCase()
-                    : user?.hoTen
-                      ? user.hoTen
-                          .split(" ")
-                          .pop()
-                          ?.substring(0, 2)
-                          .toUpperCase()
                       : "HV"}
                 </Avatar>
 
@@ -1693,16 +1693,16 @@ export default function DashboardShell({
                     >
                       {dashboardData?.welcomeStats?.userName
                         ? dashboardData.welcomeStats.userName
+                          .split(" ")
+                          .pop()
+                          ?.substring(0, 2)
+                          .toUpperCase()
+                        : user?.hoTen
+                          ? user.hoTen
                             .split(" ")
                             .pop()
                             ?.substring(0, 2)
                             .toUpperCase()
-                        : user?.hoTen
-                          ? user.hoTen
-                              .split(" ")
-                              .pop()
-                              ?.substring(0, 2)
-                              .toUpperCase()
                           : "HV"}
                     </Avatar>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -1998,8 +1998,18 @@ export default function DashboardShell({
             sx={{
               flex: 1,
               minWidth: 0,
-              px: { xs: 2, md: 5 },
-              py: 3,
+              px: pathname.startsWith("/admin")
+                ? { xs: 2, sm: 3, md: 4, lg: 5 }
+                : PAGE_SPACING.px,
+              py: pathname.startsWith("/admin")
+                ? { xs: 2.5, sm: 3, md: 3.5 }
+                : undefined,
+              pt: pathname.startsWith("/admin")
+                ? undefined
+                : PAGE_SPACING.mt,
+              pb: pathname.startsWith("/admin")
+                ? undefined
+                : LAYOUT_SPACING.pagePy,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -2011,7 +2021,7 @@ export default function DashboardShell({
             <Box
               sx={{
                 width: "100%",
-                maxWidth: "1280px",
+                maxWidth: LAYOUT_SPACING.containerMaxWidth,
                 display: "flex",
                 flexDirection: "column",
                 gap: 4.5,
@@ -2098,10 +2108,10 @@ export default function DashboardShell({
                           >
                             {dashboardData?.welcomeStats?.userName
                               ? dashboardData.welcomeStats.userName
-                                  .split(" ")
-                                  .pop()
-                                  ?.substring(0, 1)
-                                  .toUpperCase()
+                                .split(" ")
+                                .pop()
+                                ?.substring(0, 1)
+                                .toUpperCase()
                               : "A"}
                           </Avatar>
                           <Box>
@@ -3313,19 +3323,15 @@ export default function DashboardShell({
             {!pathname.startsWith("/admin") && !pathname.startsWith("/personnel") && (
               <Box
                 sx={{
-                  width: "calc(100% + 32px)",
-                  mx: -2,
+                  width: { xs: "calc(100% + 32px)", md: "calc(100% + 40px)" },
+                  mx: { xs: -2, md: -2.5 },
                   mt: 6,
-                  mb: -3,
+                  mb: -2.5,
                   flexShrink: 0,
-                  "@media (min-width: 900px)": {
-                    width: "calc(100% + 80px)",
-                    mx: -5,
-                  },
                 }}
               >
                 {!activeRoles.includes("GiaoVien") &&
-                !activeRoles.includes("Admin") ? (
+                  !activeRoles.includes("Admin") ? (
                   <StudentFooter />
                 ) : (
                   <AuthenticatedFooter
