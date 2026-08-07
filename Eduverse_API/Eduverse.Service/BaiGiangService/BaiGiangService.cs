@@ -1,6 +1,8 @@
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.KhoaHoc_GiangVienRepository;
+using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.BaiGiangService.Request;
@@ -29,7 +31,8 @@ namespace Eduverse.Service.BaiGiangService
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IBunnyService _bunnyService;
-
+        private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
+        private readonly IKhoaHocRepository _khoaHocRepository;
 
         public BaiGiangService(
             IBaiGiangRepository baiGiangRepository,
@@ -39,7 +42,10 @@ namespace Eduverse.Service.BaiGiangService
             IDangKyKhoaHocRepository dangkyKhoaHocRepository,
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
             IHttpContextAccessor httpContextAccessor,
-            IBunnyService bunnyService
+            IBunnyService bunnyService,
+             IKhoaHoc_GiangVienRepository khoaHocGVRepository,
+             IKhoaHocRepository khoaHocRepository
+
             ) : base(baiGiangRepository)
         {
             _cloudinaryService = cloudinaryService;
@@ -49,6 +55,8 @@ namespace Eduverse.Service.BaiGiangService
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
             _httpContextAccessor = httpContextAccessor;
             _bunnyService = bunnyService;
+            _khoaHocGVRepository = khoaHocGVRepository;
+            _khoaHocRepository = khoaHocRepository;
         }
 
 
@@ -61,8 +69,7 @@ namespace Eduverse.Service.BaiGiangService
             }
 
             var query = GetQueryable()
-                .Where(x => x.IdPhan == IdPhan
-                            && x.CreatedId == userId)
+                .Where(x => x.IdPhan == IdPhan && !x.IsDeleted)
                 .AsNoTracking() 
                 .OrderBy(x => x.ThuTuSapXep ?? 0) 
                 .Select(x => new BaiGiangDto
@@ -92,17 +99,16 @@ namespace Eduverse.Service.BaiGiangService
             if (IdBaiGiang == Guid.Empty)
                 throw new Exception("Id khóa học không hợp lệ");
 
-            // ── Lấy bản gốc (IsBanHienTai = true) ───────────────
             var banGoc = await GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == IdBaiGiang && !x.IsDeleted);
 
             if (banGoc == null)
                 throw new Exception("Không tìm thấy khóa học");
 
-            if (banGoc.CreatedId != nguoiTao)
+            var coQuyen = await CoQuyenQuaPhan(banGoc.IdPhan, nguoiTao, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
 
-            // ── Chỉ tìm bản đang ở DangSua: ưu tiên bản nháp, không có thì xét bản gốc ──
             var banCanXuLy = await GetAll()
                 .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
                                         && !x.IsDeleted
@@ -114,7 +120,6 @@ namespace Eduverse.Service.BaiGiangService
             if (banCanXuLy == null)
                 throw new Exception("Bài giảng hiện không ở trạng thái Đang sửa nên không thể gửi CHỜ DUYỆT");
 
-            // ── Chuyển sang ChoDuyet ──
             banCanXuLy.TrangThaiPheDuyet = "ChoDuyet";
             banCanXuLy.TrangThai = "ChoDuyet";
             banCanXuLy.UpdatedDate = DateTime.UtcNow;
@@ -133,17 +138,16 @@ namespace Eduverse.Service.BaiGiangService
             if (IdBaiGiang == Guid.Empty)
                 throw new Exception("Id khóa học không hợp lệ");
 
-            // ── Lấy bản gốc (IsBanHienTai = true) ───────────────
             var banGoc = await GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == IdBaiGiang && !x.IsDeleted);
 
             if (banGoc == null)
                 throw new Exception("Không tìm thấy khóa học");
 
-            if (banGoc.CreatedId != nguoiTao)
+            var coQuyen = await CoQuyenQuaPhan(banGoc.IdPhan, nguoiTao, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
 
-            // ── Chỉ tìm bản đang ở DangSua: ưu tiên bản nháp, không có thì xét bản gốc ──
             var banCanXuLy = await GetAll()
                 .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
                                         && !x.IsDeleted
@@ -155,7 +159,6 @@ namespace Eduverse.Service.BaiGiangService
             if (banCanXuLy == null)
                 throw new Exception("Bài giảng hiện không ở trạng thái CHỜ DUYỆT nên không thể chuyển sang ĐANG SỬA");
 
-            // ── Chuyển sang ChoDuyet ──
             banCanXuLy.TrangThaiPheDuyet = "DangSua";
             banCanXuLy.TrangThai = "DangSua";
             banCanXuLy.UpdatedDate = DateTime.UtcNow;
@@ -186,15 +189,14 @@ namespace Eduverse.Service.BaiGiangService
                 throw new Exception("Không tìm thấy phần học");
 
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTaoBaiGiang);
-            if (phanHoc.CreatedId != nguoiTaoBaiGiang)
+
+            var coQuyen = await CoQuyenQuaPhan(request.IdPhan.Value, nguoiTaoBaiGiang, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để thêm bài giảng vào phần học này!");
 
             var uploadResult = await _bunnyService.UploadVideoAsync(request.Video);
 
             int thoiLuongBaiGiang = (int)uploadResult.Duration;
-
-
-            //await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TieuDe);
 
             var entity = new BaiGiang
             {
@@ -228,7 +230,8 @@ namespace Eduverse.Service.BaiGiangService
             if (banGoc == null)
                 throw new Exception("Không tim thấy bài giảng");
 
-              if (banGoc.CreatedId != nguoiTao)
+            var coQuyen = await CoQuyenQuaPhan(banGoc.IdPhan, nguoiTao, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
 
             if (banGoc.TrangThaiPheDuyet == "ChoDuyet")
@@ -332,7 +335,8 @@ namespace Eduverse.Service.BaiGiangService
 
             if(banNhap != null && banNhap.TrangThaiPheDuyet == "DangSua" )
             {
-                if (banNhap.CreatedId != nguoiTao)
+                var coQuyenBanNhap = await CoQuyenQuaPhan(banNhap.IdPhan, nguoiTao, gv => gv.Manage);
+                if (!coQuyenBanNhap)
                     throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
 
                 if (banNhap.TrangThaiPheDuyet == "ChoDuyet")
@@ -399,7 +403,9 @@ namespace Eduverse.Service.BaiGiangService
                 throw new Exception("Không tìm thấy bài giảng");
 
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiXoaBaiGiang);
-            if (baiGiang.CreatedId != nguoiXoaBaiGiang)
+
+            var coQuyen = await CoQuyenQuaPhan(baiGiang.IdPhan, nguoiXoaBaiGiang, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để xóa bài giảng này!");
 
             if (baiGiang.TrangThaiPheDuyet == "ChoDuyet" || baiGiang.TrangThaiPheDuyet == "DangDuyet")
@@ -413,12 +419,32 @@ namespace Eduverse.Service.BaiGiangService
                  select dk.Id
              ).AnyAsync();
 
-            baiGiang.TrangThai = coNguoiHoc == false ? "DaXoa" : "NgungHoatDong"; // nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
-                                                                                 //nếu isdele = true + HoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc
+            baiGiang.TrangThai = coNguoiHoc == false ? "DaXoa" : "NgungHoatDong";
 
             await DeleteAsync(baiGiang);
             await SaveAsync();
             return true;
+        }
+        // ── Helper: kiểm tra chủ sở hữu HOẶC cộng tác viên có quyền trên khóa học ──
+        private async Task<bool> CoQuyenTrenKhoaHoc(Guid idKhoaHoc, Guid userId, Func<KhoaHoc_GiangVien, bool> capQuyenCuThe = null)
+        {
+            var khoaHoc = await _khoaHocRepository.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
+            if (khoaHoc == null) return false;
+            if (khoaHoc.CreatedId == userId) return true;
+
+            var thanhVien = await _khoaHocGVRepository.GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == userId && !x.IsDeleted);
+            if (thanhVien == null) return false;
+            if (thanhVien.LaChuSoHuu) return true;
+
+            return capQuyenCuThe == null || capQuyenCuThe(thanhVien);
+        }
+
+        private async Task<bool> CoQuyenQuaPhan(Guid idPhan, Guid userId, Func<KhoaHoc_GiangVien, bool> capQuyenCuThe = null)
+        {
+            var phan = await _phanRepository.GetQueryable().FirstOrDefaultAsync(x => x.Id == idPhan);
+            if (phan == null || !phan.IdKhoaHoc.HasValue) return false;
+            return await CoQuyenTrenKhoaHoc(phan.IdKhoaHoc.Value, userId, capQuyenCuThe);
         }
     }
 }

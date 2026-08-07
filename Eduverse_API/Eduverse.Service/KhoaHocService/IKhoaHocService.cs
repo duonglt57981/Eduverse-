@@ -54,5 +54,6 @@ namespace Eduverse.Service.KhoaHocService
 
         Task<List<string>> GetSearchSuggestions(string query);
         Task SyncElasticsearch();
+        Task<int> BackfillChuSoHuuGiangVien();
     }
 }

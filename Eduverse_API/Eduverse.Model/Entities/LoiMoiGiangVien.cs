@@ -10,11 +10,7 @@ namespace Eduverse.Model.Entities
     public class LoiMoiGiangVien : AuditableEntity
     {
         public Guid IdKhoaHoc { get; set; }
-
-        // Người gửi lời mời (luôn là CreatedId của KhoaHoc)
         public Guid IdNguoiMoi { get; set; }
-
-        // Người được mời — resolve từ email sang Guid khi tạo lời mời
         public Guid IdNguoiDuocMoi { get; set; }
 
         [MaxLength(256)]
@@ -25,11 +21,8 @@ namespace Eduverse.Model.Entities
         public string TrangThai { get; set; } = "Pending";
 
         public DateTime? NgayPhanHoi { get; set; }
-
-        // ── Quyền đề xuất khi gửi lời mời ─────────────────────────────
-        // Người tạo set ngay lúc mời; khi Accepted thì copy sang KhoaHoc_GiangVien
         public bool Visible { get; set; }
-        public int TyLeChiaDoanhThu { get; set; }  // 0-100, tổng tất cả GV ≤ 100
+        public int TyLeChiaDoanhThu { get; set; }
         public bool Manage { get; set; }
         public bool Performance { get; set; }
         public bool QnA { get; set; }

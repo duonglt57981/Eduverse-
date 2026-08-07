@@ -3,6 +3,7 @@ using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.KhoaHoc_GiangVienRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Service.BaiKiemTraService.Dto;
@@ -48,6 +49,7 @@ namespace Eduverse.Service.BaiKiemTraService
         private readonly IPhanRepository _phanRepository;
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
+        private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
 
         private const int HEARTBEAT_TIMEOUT_SECONDS = 20;
 
@@ -67,7 +69,8 @@ namespace Eduverse.Service.BaiKiemTraService
             IPhanRepository phanRepository,
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
             IKhoaHocRepository khoaHocRepository,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository
             ) : base(baiKiemTraRepository)
         {
             _lanLamBaiKiemTraService = lanLamBaiKiemTraService;
@@ -85,6 +88,7 @@ namespace Eduverse.Service.BaiKiemTraService
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
             _eduverseContext = eduverseContext;
             _khoaHocRepository = khoaHocRepository;
+            _khoaHocGVRepository = khoaHocGVRepository;
         }
 
         #region GetListForManager
@@ -159,6 +163,11 @@ namespace Eduverse.Service.BaiKiemTraService
             if (phan.TrangThai == "DaXoa" && phan.IsDeleted == true)
                 throw new Exception("Phần học đã bị xóa");
 
+            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTaoQuiz);
+            var coQuyenTao = await CoQuyenQuaPhan(request.IdPhan.Value, nguoiTaoQuiz, gv => gv.Manage || gv.Assignments);
+            if (!coQuyenTao)
+                throw new Exception("Bạn không có quyền hạn để thêm bài kiểm tra vào phần học này!");
+
             if (string.IsNullOrWhiteSpace(request.TenBaiKiemTra))
                 throw new Exception("Tên bài kiểm tra không được để trống.");
 
@@ -222,8 +231,12 @@ namespace Eduverse.Service.BaiKiemTraService
 
             if (entity == null)
                 throw new Exception("Không tìm thấy bài kiểm tra");
-
-            if (entity.CreatedId != nguoiTao)
+            if (!entity.IdPhan.HasValue)
+            {
+                throw new ArgumentNullException(nameof(entity.IdPhan), "(IdPhan) không được phép bỏ trống.");
+            }
+            var coQuyen = await CoQuyenQuaPhan(entity.IdPhan.Value, nguoiTao, gv => gv.Manage || gv.Assignments);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền chỉnh sửa bài kiểm tra này");
 
             if (string.IsNullOrWhiteSpace(request.TenBaiKiemTra))
@@ -266,7 +279,13 @@ namespace Eduverse.Service.BaiKiemTraService
                 throw new Exception("Không tìm thấy bài kiểm tra.");
 
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiXoaQuiz);
-            if (quiz.CreatedId != nguoiXoaQuiz)
+            if (!quiz.IdPhan.HasValue)
+            {
+                // Ném ngoại lệ thông báo thiếu dữ liệu
+                throw new ArgumentNullException(nameof(quiz.IdPhan), "(IdPhan) không được phép bỏ trống.");
+            }
+            var coQuyen = await CoQuyenQuaPhan(quiz.IdPhan.Value, nguoiXoaQuiz, gv => gv.Manage || gv.Assignments);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để xóa bài kiểm tra này!");
 
             if (quiz.TrangThaiPheDuyet == "ChoDuyet" || quiz.TrangThaiPheDuyet == "DangDuyet")
@@ -1176,5 +1195,25 @@ namespace Eduverse.Service.BaiKiemTraService
             return Math.Max(0, gioiHanThoiGian - thoiGianDaLam);
         }
         #endregion
+        private async Task<bool> CoQuyenTrenKhoaHoc(Guid idKhoaHoc, Guid userId, Func<KhoaHoc_GiangVien, bool> capQuyenCuThe = null)
+        {
+            var khoaHoc = await _khoaHocRepository.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
+            if (khoaHoc == null) return false;
+            if (khoaHoc.CreatedId == userId) return true;
+
+            var thanhVien = await _khoaHocGVRepository.GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == userId && !x.IsDeleted);
+            if (thanhVien == null) return false;
+            if (thanhVien.LaChuSoHuu) return true;
+
+            return capQuyenCuThe == null || capQuyenCuThe(thanhVien);
+        }
+
+        private async Task<bool> CoQuyenQuaPhan(Guid idPhan, Guid userId, Func<KhoaHoc_GiangVien, bool> capQuyenCuThe = null)
+        {
+            var phan = await _phanRepository.GetQueryable().FirstOrDefaultAsync(x => x.Id == idPhan);
+            if (phan == null || !phan.IdKhoaHoc.HasValue) return false;
+            return await CoQuyenTrenKhoaHoc(phan.IdKhoaHoc.Value, userId, capQuyenCuThe);
+        }
     }
 }
