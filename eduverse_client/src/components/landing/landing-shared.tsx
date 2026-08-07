@@ -51,6 +51,9 @@ export function LandingNavbar({ activePath = '/' }: { activePath?: string }) {
     if (item.href === '/favorite' && !hasUser) {
       return false;
     }
+    if (item.href === '/contact' && !hasUser) {
+      return false;
+    }
     return true;
   });
 
@@ -172,14 +175,11 @@ export function LandingFooter() {
       title: 'Về EduVerse',
       links: [
         { label: 'Giới thiệu', href: '/about-us' },
-        { label: 'Liên hệ', href: '/contact' },
-        { label: 'Câu hỏi thường gặp', href: '/contact' },
       ],
     },
     {
       title: 'Hỗ trợ',
       links: [
-        { label: 'Trung tâm trợ giúp', href: '/contact' },
         { label: 'Điều khoản dịch vụ' },
         { label: 'Chính sách bảo mật' },
       ],

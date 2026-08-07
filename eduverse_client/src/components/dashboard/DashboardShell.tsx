@@ -1948,8 +1948,8 @@ export default function DashboardShell({
         )}
         {/* ========================================================= */}
         {/* SIDEBAR DRAWER (COLLAPSED FOR MOBILE/TABLET)              */}
-        {/* ========================================================= */}{" "}
-        {!pathname.startsWith("/instructor") && !pathname.startsWith("/personnel") && !pathname.startsWith("/admin") && (
+        {/* ========================================================= */}
+        {!pathname.startsWith("/instructor") && (
           <Drawer
             open={mobileOpen}
             onClose={() => setMobileOpen(false)}
@@ -1969,15 +1969,15 @@ export default function DashboardShell({
             <SidebarContent onLogout={handleLogout} roles={roles} />
           </Drawer>
         )}
+
         {/* ========================================================= */}
         {/* MAIN LAYOUT STRUCTURE                                     */}
         {/* ========================================================= */}
         <Box
           sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
         >
-          {" "}
           {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
-          {!pathname.startsWith("/instructor") && !pathname.startsWith("/personnel") && !pathname.startsWith("/admin") && (
+          {!pathname.startsWith("/instructor") && (
             <Box
               sx={{
                 width: sidebarWidth,
