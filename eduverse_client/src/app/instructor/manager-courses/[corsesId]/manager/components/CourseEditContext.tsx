@@ -332,146 +332,140 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     setIsDirty(false);
   }, [idKhoaHoc, stateKey]);
 
+  // ---- Map 1 phần (raw) từ response GetKhoaHocDetail sang PhanHocType ----
+  const mapPhanRaw = useCallback((phanRaw: any): PhanHocType => {
+    const baiGiangs: BaiGiangDto[] = (phanRaw.danhSachBaiGiang || []).map(
+      (bg: any) => ({
+        ...bg,
+        id: bg.id,
+        tieuDe: bg.tieuDe || "",
+        urlBaiGiang: bg.urlBaiGiang || "",
+        thoiLuong: bg.thoiLuong || 0,
+        laBaiGiangFree: bg.laBaiGiangFree || false,
+        thuTuSapXep: bg.thuTuSapXep,
+        danhSachTaiLieu: bg.danhSachTaiLieu || [],
+      }),
+    );
+
+    const quizzes: BaiKiemTraDto[] = (phanRaw.danhSachBaiKiemTra || []).map(
+      (kt: any) => ({
+        ...kt,
+        id: kt.id,
+        tenBaiKiemTra: kt.tenBaiKiemTra || "",
+        moTa: kt.moTa || "",
+        thuTuSapXep: kt.thuTuSapXep,
+        cauHois: (kt.danhSachCauHois || []).map((q: any) => ({
+          id: chuanHoaId(q.id),
+          noiDungCauHoi: q.noiDungCauHoi || q.tenCauHoi || "",
+          loaiCauHoi: q.loaiCauHoi || "ONE",
+          doKho: q.doKho || "TrungBinh",
+          thuTuSapXep: q.thuTuSapXep,
+          danhSachDapAn: (q.danhSachDapAns || []).map((d: any) => ({
+            id: chuanHoaId(d.id),
+            noiDungDapAn: d.noiDungDapAn || "",
+            laDapAnDung: d.laDapAnDung || false,
+            thuTuSapXep: d.thuTuSapXep || 0,
+          })),
+        })),
+        soCauHoi: (kt.danhSachCauHois || []).length,
+      }),
+    );
+
+    return {
+      ...phanRaw,
+      id: phanRaw.id,
+      tenPhan: phanRaw.tenPhan || "",
+      mieuTa: phanRaw.mieuTa || "",
+      thuTuSapXep: phanRaw.thuTuSapXep,
+      DanhSachBaiGiang: baiGiangs,
+      DanhDachBaiKiemTra: quizzes,
+    } as PhanHocType;
+  }, []);
+
+  // ---- Tải toàn bộ chi tiết khóa học (thông tin + phần + bài giảng + tài liệu + bài kiểm tra + câu hỏi) chỉ bằng 1 API ----
+  const fetchCourseDetail = useCallback(async () => {
+    if (!idKhoaHoc) return;
+    try {
+      const res = await khoaHocService.GetKhoaHocDetail(idKhoaHoc);
+      const data = extractData<any>(res);
+      if (res?.status === false || !data) {
+        setPhans([]);
+        return;
+      }
+
+      // ---- Thông tin cơ bản của khóa học ----
+      setThongTinState({
+        tieuDe: data.tieuDe || "",
+        moTa: data.moTa || "",
+        capDo: data.capDo || "",
+        hinhAnhKhoaHoc: data.hinhAnhKhoaHoc || "",
+        giaGoc: data.giaGoc,
+        trangThai: data.trangThai || "",
+        trangThaiPheDuyet: data.trangThaiPheDuyet || "",
+      });
+
+      setTrangThai((data.trangThaiPheDuyet as TrangThaiKhoaHoc) || "DangSua");
+
+      // ---- Danh sách phần (kèm bài giảng, tài liệu, bài kiểm tra, câu hỏi) ----
+      const phanHocList: PhanHocType[] = (data.danhSachPhanHoc || []).map(
+        (phanRaw: any) => mapPhanRaw(phanRaw),
+      );
+
+      setPhans(phanHocList);
+    } catch (error) {
+      console.error("Lỗi lấy chi tiết khóa học:", error);
+      setPhans([]);
+    }
+  }, [idKhoaHoc, khoaHocService, mapPhanRaw]);
+
+  // ---- Tải lại bài kiểm tra cho 1 phần (dùng chung API GetKhoaHocDetail) ----
   const loadQuizzesForSection = useCallback(
     async (phanId: string) => {
+      if (!idKhoaHoc) return;
       try {
-        const res = await baiKiemTraService.GetListForManager(phanId);
-        const rawList = extractData<any[]>(res);
-        if (res.status !== false && rawList) {
-          const mappedList = rawList.map((item: any) => ({
-            ...item,
-            cauHois: (item.danhSachCauHois || []).map((q: any) => ({
-              id: chuanHoaId(q.id),
-              noiDungCauHoi: q.noiDungCauHoi || q.tenCauHoi || "",
-              loaiCauHoi: q.loaiCauHoi || "ONE",
-              doKho: q.doKho || "TrungBinh",
-              danhSachDapAn: (q.danhSachDapAns || []).map((d: any) => ({
-                id: chuanHoaId(d.id),
-                noiDungDapAn: d.noiDungDapAn || "",
-                laDapAnDung: d.laDapAnDung || false,
-                thuTuSapXep: d.thuTuSapXep || 0,
-              })),
+        const res = await khoaHocService.GetKhoaHocDetail(idKhoaHoc);
+        const data = extractData<any>(res);
+        if (res?.status === false || !data) return;
+
+        const phanRaw = (data.danhSachPhanHoc || []).find(
+          (p: any) => p.id === phanId,
+        );
+        if (!phanRaw) return;
+
+        const mappedList: BaiKiemTraDto[] = (
+          phanRaw.danhSachBaiKiemTra || []
+        ).map((kt: any) => ({
+          ...kt,
+          id: kt.id,
+          tenBaiKiemTra: kt.tenBaiKiemTra || "",
+          moTa: kt.moTa || "",
+          thuTuSapXep: kt.thuTuSapXep,
+          cauHois: (kt.danhSachCauHois || []).map((q: any) => ({
+            id: chuanHoaId(q.id),
+            noiDungCauHoi: q.noiDungCauHoi || q.tenCauHoi || "",
+            loaiCauHoi: q.loaiCauHoi || "ONE",
+            doKho: q.doKho || "TrungBinh",
+            danhSachDapAn: (q.danhSachDapAns || []).map((d: any) => ({
+              id: chuanHoaId(d.id),
+              noiDungDapAn: d.noiDungDapAn || "",
+              laDapAnDung: d.laDapAnDung || false,
+              thuTuSapXep: d.thuTuSapXep || 0,
             })),
-            soCauHoi: (item.danhSachCauHois || []).length,
-          }));
-          setPhans((prevPhans) =>
-            prevPhans.map((p) =>
-              p.id === phanId
-                ? {
-                    ...p,
-                    DanhDachBaiKiemTra: mappedList,
-                  }
-                : p,
-            ),
-          );
-        }
+          })),
+          soCauHoi: (kt.danhSachCauHois || []).length,
+        }));
+
+        setPhans((prevPhans) =>
+          prevPhans.map((p) =>
+            p.id === phanId ? { ...p, DanhDachBaiKiemTra: mappedList } : p,
+          ),
+        );
       } catch (err) {
         console.error("Lỗi tải bài kiểm tra cho phần", phanId, err);
       }
     },
-    [baiKiemTraService],
+    [idKhoaHoc, khoaHocService],
   );
-
-  const fetchCourseInfo = useCallback(async () => {
-    if (!idKhoaHoc) return;
-    try {
-      const data = await khoaHocService.GetToUpdateKhoaHoc(idKhoaHoc);
-      if (data) {
-        setThongTinState({
-          tieuDe: data.tieuDe || "",
-          moTa: data.moTa || "",
-          capDo: data.capDo || "",
-          hinhAnhKhoaHoc: data.urlHinhAnh || "",
-          giaGoc: data.giaGoc,
-          trangThai: data.trangThai || "",
-          trangThaiPheDuyet: data.trangThaiPheDuyet || "",
-        });
-
-        if (data.trangThaiPheDuyet) {
-          setTrangThai(data.trangThaiPheDuyet as TrangThaiKhoaHoc);
-        } else {
-          setTrangThai("DangSua");
-        }
-      }
-    } catch (error) {
-      console.error("Lỗi lấy thông tin khóa học:", error);
-    }
-  }, [idKhoaHoc, khoaHocService]);
-
-  const fetchSections = useCallback(async () => {
-    if (!idKhoaHoc) return;
-    try {
-      const phanResult = await phanService.GetListPhanManager(idKhoaHoc);
-      if (phanResult?.status !== false && phanResult?.data) {
-        const phanDtoList = phanResult.data;
-        const phanHocList = await Promise.all(
-          phanDtoList.map(async (phanDto) => {
-            const phanId = phanDto.id!;
-            const bgResult =
-              await baiGiangService.GetListBaiGiangManager(phanId);
-            const baiGiangs =
-              bgResult?.status !== false ? bgResult?.data || [] : [];
-
-            const baiGiangsWithTaiLieu = await Promise.all(
-              baiGiangs.map(async (bg) => {
-                const taiLieuResult =
-                  await taiLieuService.GetListTaiLieuManager(bg.id!);
-                const taiLieus =
-                  taiLieuResult?.status !== false
-                    ? taiLieuResult?.data || []
-                    : [];
-                return { ...bg, danhSachTaiLieu: taiLieus };
-              }),
-            );
-
-            let quizzes: BaiKiemTraDto[] = [];
-            try {
-              const quizRes = await baiKiemTraService.GetListForManager(phanId);
-              const rawList = extractData<any[]>(quizRes);
-              if (quizRes.status !== false && rawList) {
-                quizzes = rawList.map((item: any) => ({
-                  ...item,
-                  cauHois: (item.danhSachCauHois || []).map((q: any) => ({
-                    id: chuanHoaId(q.id),
-                    noiDungCauHoi: q.noiDungCauHoi || q.tenCauHoi || "",
-                    loaiCauHoi: q.loaiCauHoi || "ONE",
-                    doKho: q.doKho || "TrungBinh",
-                    danhSachDapAn: (q.danhSachDapAns || []).map((d: any) => ({
-                      id: chuanHoaId(d.id),
-                      noiDungDapAn: d.noiDungDapAn || "",
-                      laDapAnDung: d.laDapAnDung || false,
-                      thuTuSapXep: d.thuTuSapXep || 0,
-                    })),
-                  })),
-                  soCauHoi: (item.danhSachCauHois || []).length,
-                }));
-              }
-            } catch (err) {
-              console.error("Lỗi tải bài kiểm tra cho phần", phanId, err);
-            }
-
-            return {
-              ...phanDto,
-              DanhSachBaiGiang: baiGiangsWithTaiLieu,
-              DanhDachBaiKiemTra: quizzes,
-            } as PhanHocType;
-          }),
-        );
-        setPhans(phanHocList);
-      } else {
-        setPhans([]);
-      }
-    } catch (error) {
-      console.error("Lỗi lấy danh sách phần:", error);
-      setPhans([]);
-    }
-  }, [
-    idKhoaHoc,
-    phanService,
-    baiGiangService,
-    taiLieuService,
-    baiKiemTraService,
-  ]);
 
   const refreshData = useCallback(async () => {
     if (isNavigating) {
@@ -479,7 +473,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     }
     setLoading(true);
     try {
-      await Promise.all([fetchCourseInfo(), fetchSections()]);
+      await fetchCourseDetail();
       setIsDirty(false);
       initialDataRef.current = {
         thongTin: { ...thongTin },
@@ -491,14 +485,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [
-    fetchCourseInfo,
-    fetchSections,
-    saveState,
-    thongTin,
-    phans,
-    isNavigating,
-  ]);
+  }, [fetchCourseDetail, saveState, thongTin, phans, isNavigating]);
 
   // ---- CRUD Phan ----
   const createPhan = useCallback(
@@ -668,39 +655,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
       );
       saveState();
 
-      // Nếu API chưa trả về thời lượng, gọi thêm API chi tiết để lấy (nếu có)
-      if (!raw.thoiLuong && raw.id) {
-        try {
-          // Giả sử service có method GetBaiGiang
-          const detailRes = await baiGiangService.GetListBaiGiangManager(
-            raw.id,
-          );
-          const detail = extractData<Partial<BaiGiangType>>(detailRes);
-          if (detail?.thoiLuong || detail?.urlBaiGiang) {
-            setPhans((prev) =>
-              prev.map((p) =>
-                p.id === phanId
-                  ? {
-                      ...p,
-                      DanhSachBaiGiang: (p.DanhSachBaiGiang || []).map((bg) =>
-                        bg.id === raw.id
-                          ? {
-                              ...bg,
-                              thoiLuong: detail.thoiLuong ?? bg.thoiLuong,
-                              urlBaiGiang: detail.urlBaiGiang ?? bg.urlBaiGiang,
-                            }
-                          : bg,
-                      ),
-                    }
-                  : p,
-              ),
-            );
-            saveState();
-          }
-        } catch (e) {
-          console.warn("Không lấy được chi tiết bài giảng:", raw.id);
-        }
-      }
+      // Lưu ý: nếu server chưa kịp trả về thoiLuong (do xử lý video bất đồng bộ),
+      // hãy gọi refreshData() ở phía UI sau một khoảng thời gian để lấy dữ liệu mới nhất
+      // qua GetKhoaHocDetail, thay vì gọi API chi tiết riêng lẻ.
 
       return newBg;
     },
@@ -774,22 +731,6 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
             danhSachTaiLieu: [],
             laBaiGiangFree: raw.laBaiGiangFree ?? isFree,
           } as BaiGiangType;
-
-          // Cập nhật thời lượng nếu có thể
-          if (!raw.thoiLuong && raw.id) {
-            try {
-              const detailRes = await baiGiangService.GetListBaiGiangManager(
-                raw.id,
-              );
-              const detail = extractData<Partial<BaiGiangType>>(detailRes);
-              if (detail?.thoiLuong) {
-                newBg.thoiLuong = detail.thoiLuong;
-                newBg.urlBaiGiang = detail.urlBaiGiang ?? newBg.urlBaiGiang;
-              }
-            } catch (e) {
-              // bỏ qua
-            }
-          }
 
           if (onProgress) {
             onProgress({
@@ -1181,7 +1122,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
           laDapAnDung: d.laDapAnDung || false,
           thuTuSapXep: d.thuTuSapXep || 0,
         })),
-      };
+      } as unknown as CauHoiDto;
 
       setPhans((prev) =>
         prev.map((p) =>
@@ -1411,10 +1352,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
                   bg.id === baiGiangId
                     ? {
                         ...bg,
-                        danhSachTaiLieu: [
-                          ...(bg.danhSachTaiLieu || []),
-                          newDoc,
-                        ],
+                        danhSachTaiLieu: [...(bg.taiLieus || []), newDoc],
                       }
                     : bg,
                 ),
@@ -1441,7 +1379,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
                   bg.id === baiGiangId
                     ? {
                         ...bg,
-                        danhSachTaiLieu: bg.danhSachTaiLieu?.filter(
+                        danhSachTaiLieu: bg.taiLieus?.filter(
                           (tl: TaiLieuType) => tl.id !== taiLieuId,
                         ),
                       }
@@ -1464,8 +1402,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         initialFetchDone.current = true;
         setLoading(true);
         try {
-          await fetchCourseInfo();
-          await fetchSections();
+          await fetchCourseDetail();
           setIsDirty(false);
           saveState();
         } catch (error) {

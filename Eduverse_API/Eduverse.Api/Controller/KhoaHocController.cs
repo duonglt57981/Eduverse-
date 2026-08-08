@@ -133,25 +133,10 @@ namespace Eduverse.Api.Controller
             }
         }
 
-        [HttpPost("khoahoc-chuyentrangthai-dangsua-batch")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<List<KhoaHocDto>>> ChuyenTTDangSuaBatch(BatchIdsRequest request)
-        {
-            try
-            {
-                var result = await _khoaHocService.ChuyenTrangThaiDangSua(request);
-                return DataResponse<List<KhoaHocDto>>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<List<KhoaHocDto>>.False(ex.Message);
-            }
-        }
-
 
         [HttpGet("khoahoc-get-toupdatekhoahoc/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<GetToUpdateKhoaHoc>> GetToUpdateKhoaHoc(Guid  idKhoaHoc)
+        public async Task<DataResponse<GetToUpdateKhoaHoc>> GetToUpdateKhoaHoc(Guid idKhoaHoc)
         {
             try
             {
@@ -161,6 +146,22 @@ namespace Eduverse.Api.Controller
             catch (Exception ex)
             {
                 return DataResponse<GetToUpdateKhoaHoc>.False(ex.Message);
+            }
+        }
+
+
+        [HttpGet("khoahoc-get-detail/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocGetDetailDto>> GetKhoaHocDetail(Guid idKhoaHoc)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetKhoaHocDetail(idKhoaHoc);
+                return DataResponse<KhoaHocGetDetailDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocGetDetailDto>.False(ex.Message);
             }
         }
 

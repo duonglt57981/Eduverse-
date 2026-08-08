@@ -3222,7 +3222,7 @@ export default function CurriculumContent() {
       updatedPhan.DanhDachBaiKiemTra.forEach((kt) => {
         updatePromises.push(
           updateBaiKiemTra(kt.id, {
-            tenBaiKiemTra: kt.tenBaiKiemTra,
+            tenBaiKiemTra: kt.tenBaiKiemTra ?? "",
             moTa: kt.moTa || "",
             thuTuSapXep: kt.thuTuSapXep,
           }),

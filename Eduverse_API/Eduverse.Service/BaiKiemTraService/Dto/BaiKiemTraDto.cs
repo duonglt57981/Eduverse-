@@ -1,4 +1,5 @@
 ﻿using Eduverse.Service.CauHoiService.Dto;
+using Eduverse.Service.LyDoTuChoiService.Dto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace Eduverse.Service.BaiKiemTraService.Dto
         public string? TrangThaiPheDuyet { get; set; }
         public bool IsSwap { get; set; }
         public int? ThuTuSapXep { get; set; }
-
+        public LyDoTuChoiDto? LyDoTuChois { get; set; }
         public List<CauHoiDto> DanhSachCauHois { get; set; }
     }
 }

@@ -28,23 +28,6 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("getlistformanager/{IdPhan}")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<List<BaiKiemTraDto>>> GetListForManager(Guid IdPhan)
-        {
-            try
-            {
-                var result = await _baiKiemTraService.GetListForManager(IdPhan);
-                return DataResponse<List<BaiKiemTraDto>>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<List<BaiKiemTraDto>>.False(ex.Message);
-            }
-
-        }
-
-
         [HttpPost("create")]
         [Authorize(Roles = "Admin,GiaoVien")]
         public  async Task<DataResponse<CreateBaiKiemTraDto>> CreateBaiKiemTra ( CreateBaiKiemTraRequest request)

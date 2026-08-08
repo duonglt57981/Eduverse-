@@ -64,63 +64,6 @@ namespace Eduverse.Service.PhanService
             this._httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<GetToUpdatePhanDto> GetToUpdatePhan(Guid IdPhan)
-        {
-            Guid.TryParse(
-                _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
-                out var nguoiTao);
-
-            var Phan = await GetQueryable()
-                .Where(x => x.Id == IdPhan
-                         && !x.IsDeleted
-                         && x.CreatedId == nguoiTao)
-                .Select(x => new GetToUpdatePhanDto
-                {
-                   Id = x.Id,
-                   TenPhan = x.TenPhan,
-                   MieuTa = x.MieuTa,
-                   ThuTuSapXep = x.ThuTuSapXep
-                  
-                })
-                .FirstOrDefaultAsync();
-
-            if (Phan == null)
-                throw new Exception("Không tìm thấy phần học hoặc bạn không có quyền.");
-
-            return Phan;
-        }
-
-
-        public async Task<List<PhanHocDto>> GetListForManager(Guid IdKhoaHoc)
-        {
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                throw new UnauthorizedAccessException("Không thể xác định người dùng.");
-            }
-
-            var query = GetAll()
-                .Where(x => x.CreatedId == userId
-                            && x.IdKhoaHoc == IdKhoaHoc
-                            && x.IsDeleted == false)
-                .AsNoTracking() 
-                .OrderBy(x => x.ThuTuSapXep ?? 0) 
-                .Select(x => new PhanHocDto
-                {
-                    Id = x.Id,
-                    IdKhoaHoc = x.IdKhoaHoc, 
-                    TenPhan = x.TenPhan,
-                    TrangThai = x.TrangThai,
-                    ThuTuSapXep = x.ThuTuSapXep,
-                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
-                    IsBanHienTai = x.IsBanHienTai,
-                    IdBanGhiTruoc = x.IdBanGhiTruoc
-                });
-
-            return await query.ToListAsync();
-        }
-
-
         public async Task<PhanHocDto> CreatePhanHoc(CreatePhanRequest request)  
         {
             if (request == null)

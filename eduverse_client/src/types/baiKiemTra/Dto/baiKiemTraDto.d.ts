@@ -1,3 +1,5 @@
+import { LyDoTuChoiDto } from "./khoaHoc/Dto/dto.d.ts";
+
 // ---------- AutoSaveDapAnDto ----------
 export interface AutoSaveDapAnDto {
   success: boolean;
@@ -17,7 +19,6 @@ export interface CauHoiDto {
   noiDung: string;
   thuTuSapXep?: number;
   dapAns: DapAnDto[];
-  // ... các thuộc tính khác
 }
 
 export interface DapAnDto {
@@ -53,7 +54,8 @@ export interface BaiKiemTraDto {
   trangThaiPheDuyet?: string;
   isSwap?: boolean;
   thuTuSapXep?: number;
-  cauHois: CauHoiDto[];
+  cauHois?: CauHoiDto[];
+  LyDoTuChois?: LyDoTuChoiDto;
 }
 
 // ---------- BaiKiemTraLamBaiDto ----------

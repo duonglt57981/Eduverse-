@@ -1,6 +1,7 @@
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.LyDoTuChoiRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.BaiGiangService.Request;
@@ -29,6 +30,7 @@ namespace Eduverse.Service.BaiGiangService
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IBunnyService _bunnyService;
+        private readonly ILyDoTuChoiRepository _lyDoTuChoiRepository;
 
 
         public BaiGiangService(
@@ -39,7 +41,8 @@ namespace Eduverse.Service.BaiGiangService
             IDangKyKhoaHocRepository dangkyKhoaHocRepository,
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
             IHttpContextAccessor httpContextAccessor,
-            IBunnyService bunnyService
+            IBunnyService bunnyService,
+            ILyDoTuChoiRepository lyDoTuChoiRepository
             ) : base(baiGiangRepository)
         {
             _cloudinaryService = cloudinaryService;
@@ -49,123 +52,8 @@ namespace Eduverse.Service.BaiGiangService
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
             _httpContextAccessor = httpContextAccessor;
             _bunnyService = bunnyService;
+            _lyDoTuChoiRepository = lyDoTuChoiRepository;
         }
-
-
-        public async Task<List<BaiGiangDto>> GetListForManager(Guid IdPhan)
-        {
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                throw new UnauthorizedAccessException("Không thể xác định người dùng.");
-            }
-
-            var query = GetQueryable()
-                .Where(x => x.IdPhan == IdPhan
-                            && x.CreatedId == userId)
-                .AsNoTracking() 
-                .OrderBy(x => x.ThuTuSapXep ?? 0) 
-                .Select(x => new BaiGiangDto
-                {
-                    Id = x.Id,
-                    IdPhan = x.IdPhan, 
-                    TieuDe = x.TieuDe,
-                    LoaiBaiGiang = x.LoaiBaiGiang,
-                    ThuTuSapXep = x.ThuTuSapXep,
-                    URLBaiGiang = x.URLBaiGiang,
-                    LaBaiGiangFree = x.LaBaiGiangFree,
-                    ThoiLuong = x.ThoiLuong,
-                    TrangThai = x.TrangThai,
-                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
-                    IsBanHienTai = x.IsBanHienTai,
-                    IdBanGhiTruoc = x.IdBanGhiTruoc
-                });
-
-            return await query.ToListAsync();
-        }
-
-
-        public async Task<BaiGiangDto> ChuyenTrangThaiChoDuyet(Guid IdBaiGiang)
-        {
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
-
-            if (IdBaiGiang == Guid.Empty)
-                throw new Exception("Id khóa học không hợp lệ");
-
-            // ── Lấy bản gốc (IsBanHienTai = true) ───────────────
-            var banGoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == IdBaiGiang && !x.IsDeleted);
-
-            if (banGoc == null)
-                throw new Exception("Không tìm thấy khóa học");
-
-            if (banGoc.CreatedId != nguoiTao)
-                throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
-
-            // ── Chỉ tìm bản đang ở DangSua: ưu tiên bản nháp, không có thì xét bản gốc ──
-            var banCanXuLy = await GetAll()
-                .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
-                                        && !x.IsDeleted
-                                        && x.TrangThaiPheDuyet == "DangSua");
-
-            if (banCanXuLy == null && banGoc.TrangThaiPheDuyet == "DangSua")
-                banCanXuLy = banGoc;
-
-            if (banCanXuLy == null)
-                throw new Exception("Bài giảng hiện không ở trạng thái Đang sửa nên không thể gửi CHỜ DUYỆT");
-
-            // ── Chuyển sang ChoDuyet ──
-            banCanXuLy.TrangThaiPheDuyet = "ChoDuyet";
-            banCanXuLy.TrangThai = "ChoDuyet";
-            banCanXuLy.UpdatedDate = DateTime.UtcNow;
-
-            await UpdateAsync(banCanXuLy);
-            await SaveAsync();
-
-            return _mapper.Map<BaiGiang, BaiGiangDto>(banCanXuLy);
-        }
-
-
-        public async Task<BaiGiangDto> ChuyenTrangThaiDangSua(Guid IdBaiGiang)
-        {
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
-
-            if (IdBaiGiang == Guid.Empty)
-                throw new Exception("Id khóa học không hợp lệ");
-
-            // ── Lấy bản gốc (IsBanHienTai = true) ───────────────
-            var banGoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == IdBaiGiang && !x.IsDeleted);
-
-            if (banGoc == null)
-                throw new Exception("Không tìm thấy khóa học");
-
-            if (banGoc.CreatedId != nguoiTao)
-                throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
-
-            // ── Chỉ tìm bản đang ở DangSua: ưu tiên bản nháp, không có thì xét bản gốc ──
-            var banCanXuLy = await GetAll()
-                .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
-                                        && !x.IsDeleted
-                                        && x.TrangThaiPheDuyet == "ChoDuyet");
-
-            if (banCanXuLy == null && banGoc.TrangThaiPheDuyet == "ChoDuyet")
-                banCanXuLy = banGoc;
-
-            if (banCanXuLy == null)
-                throw new Exception("Bài giảng hiện không ở trạng thái CHỜ DUYỆT nên không thể chuyển sang ĐANG SỬA");
-
-            // ── Chuyển sang ChoDuyet ──
-            banCanXuLy.TrangThaiPheDuyet = "DangSua";
-            banCanXuLy.TrangThai = "DangSua";
-            banCanXuLy.UpdatedDate = DateTime.UtcNow;
-
-            await UpdateAsync(banCanXuLy);
-            await SaveAsync();
-
-            return _mapper.Map<BaiGiang, BaiGiangDto>(banCanXuLy);
-        }
-
 
         public async Task<BaiGiangDto> CreateBaiGiang(CreateBaiGiangRequest request)
         {
