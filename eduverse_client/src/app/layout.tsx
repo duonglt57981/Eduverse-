@@ -28,6 +28,7 @@ function RouteLayoutWrapper({ children }: { children: React.ReactNode }) {
 
   const isPublicRoute = !(
     pathname.startsWith("/admin") ||
+    pathname.startsWith("/personnel") ||
     (pathname === "/instructor" || pathname.startsWith("/instructor/")) ||
     pathname.startsWith("/student") ||
     pathname.startsWith("/dashboard") ||

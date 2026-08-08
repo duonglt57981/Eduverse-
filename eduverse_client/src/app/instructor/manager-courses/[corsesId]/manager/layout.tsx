@@ -17,7 +17,7 @@ import {
   SO_KY_TU_MO_TA_TOI_DA,
 } from "./components/courseEditCore";
 import KhoaHocService from "@/src/services/KhoaHocService";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -29,6 +29,9 @@ import {
   Snackbar,
 } from "@mui/material";
 import { MAU } from "./components/courseEditCore";
+import { useSignalR } from "@/src/hook/useSignalR";
+import { thongBaoService } from "@/src/services/ThongBaoService";
+import type { ThongBao } from "@/src/types/thongbao";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -58,8 +61,82 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     message: string;
     severity: "success" | "error" | "info" | "warning";
   }>({ open: false, message: "", severity: "success" });
+  const handledNotificationIds = useRef(new Set<string>());
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
+
+  const handleCourseReviewNotification = useCallback(
+    (notification: ThongBao) => {
+      const type = (notification.loaiThongBao || notification.type || "")
+        .replace(/\s+/g, "")
+        .toLocaleLowerCase();
+      const isReviewResult =
+        type === "khoahoctuchoi" || type === "khoahocdaduyet";
+      const isCurrentCourse =
+        notification.itemId?.toLocaleLowerCase() ===
+          idKhoaHoc.toLocaleLowerCase() ||
+        notification.link
+          ?.toLocaleLowerCase()
+          .includes(idKhoaHoc.toLocaleLowerCase());
+
+      if (
+        !notification.id ||
+        !isReviewResult ||
+        !isCurrentCourse ||
+        handledNotificationIds.current.has(notification.id)
+      ) {
+        return;
+      }
+
+      handledNotificationIds.current.add(notification.id);
+      const rejected = type === "khoahoctuchoi";
+      setToast({
+        open: true,
+        message:
+          notification.noiDung ||
+          notification.message ||
+          (rejected
+            ? "Khóa học đã bị từ chối. Vui lòng xem lý do và chỉnh sửa lại."
+            : "Khóa học đã được phê duyệt."),
+        severity: rejected ? "warning" : "success",
+      });
+      void refreshData();
+    },
+    [idKhoaHoc, refreshData],
+  );
+
+  useSignalR("ReceiveNotification", handleCourseReviewNotification);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadMissedReviewNotification = async () => {
+      try {
+        const response = await thongBaoService.getUnreadNotifications();
+        if (!active || !response?.status || !Array.isArray(response.data))
+          return;
+
+        response.data.forEach(handleCourseReviewNotification);
+      } catch (error) {
+        console.error("Không thể tải thông báo kiểm duyệt khóa học:", error);
+      }
+    };
+
+    void loadMissedReviewNotification();
+    const intervalId = window.setInterval(loadMissedReviewNotification, 30_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void loadMissedReviewNotification();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [handleCourseReviewNotification]);
 
   useEffect(() => {
     return () => {
@@ -103,6 +180,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           nhan: "Chương trình giảng dạy",
           hoanThanh: curriculumHoanThanh,
         },
+        {
+          key: "instructors", // ← thêm mới
+          nhan: "Quản lý giảng viên",
+          hoanThanh: false, // không cần check hoàn thành
+        },
       ],
     },
   ];
@@ -124,19 +206,17 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, [clearState, resetDirty, router]);
 
   const performDiChuyenDen = useCallback(
-    (diChuyenDen: MucThieu["diChuyenDen"]) => {
-      // LƯU DỮ LIỆU TRƯỚC KHI CHUYỂN TRANG
-      saveState();
-      if (diChuyenDen === "basics") {
-        router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
-      } else {
-        router.push(
-          `/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`,
-        );
-      }
-    },
-    [idKhoaHoc, router, saveState],
-  );
+  (diChuyenDen: MucThieu["diChuyenDen"]) => {
+    saveState();
+    if (diChuyenDen === "basics") {
+      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
+    } else if (diChuyenDen === "curriculum") {
+      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`);
+    }
+    // instructors không có trong validate flow, chỉ navigate bình thường
+  },
+  [idKhoaHoc, router, saveState],
+);
 
   const handleNavigateSidebar = useCallback(
     (key: string) => {

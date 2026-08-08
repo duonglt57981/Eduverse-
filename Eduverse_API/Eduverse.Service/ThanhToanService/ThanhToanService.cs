@@ -7,6 +7,7 @@ using Eduverse.Repository.DonHangChiTietRepository;
 using Eduverse.Repository.DonHangRepositoryRepository;
 using Eduverse.Repository.GioHangChiTietRepository;
 using Eduverse.Repository.GioHangRepository;
+using Eduverse.Repository.KhoaHoc_GiangVienRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.KhuyenMai_KhoaHocRepository;
 using Eduverse.Repository.KhuyenMaiRepository;
@@ -55,6 +56,7 @@ namespace Eduverse.Service.ThanhToanService
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly INotificationPublisher _notificationPublisher;
+        private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
 
         public ThanhToanService(
             IThanhToanRepository thanhToanRepo,
@@ -74,7 +76,8 @@ namespace Eduverse.Service.ThanhToanService
             PayOSClient payOS,
             IConfiguration config,
             IHttpContextAccessor httpContextAccessor,
-            INotificationPublisher notificationPublisher
+            INotificationPublisher notificationPublisher,
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository
         ) : base(thanhToanRepo)
         {
             _thanhToanRepo = thanhToanRepo;
@@ -95,6 +98,7 @@ namespace Eduverse.Service.ThanhToanService
             _config = config;
             _httpContextAccessor = httpContextAccessor;
             _notificationPublisher = notificationPublisher;
+            _khoaHocGVRepository = khoaHocGVRepository;
         }
 
         public async Task<TaoThanhToanResponseDto> TaoThanhToanAsync(Guid userId, TaoThanhToanDto dto)
@@ -441,25 +445,68 @@ namespace Eduverse.Service.ThanhToanService
 
                         if (instructorRevenue <= 0) continue;
 
-                        var giangVien = await _userRepository.GetQueryable()
-                            .FirstOrDefaultAsync(u => u.Id == khoaHoc.CreatedId);
+                        // Lấy toàn bộ thành viên (chủ sở hữu + cộng tác viên) của khóa học này
+                        var thanhVienList = await _khoaHocGVRepository.GetQueryable()
+                            .AsNoTracking()
+                            .Where(x => x.IdKhoaHoc == ct.IdKhoaHoc && !x.IsDeleted)
+                            .ToListAsync();
 
-                        if (giangVien == null) continue;
-
-                        giangVien.SoDuTaiKhoan = (giangVien.SoDuTaiKhoan ?? 0) + (decimal)instructorRevenue;
-                        giangVien.UpdatedDate = DateTime.Now;
-                        _userRepository.Update(giangVien);
-
-                        await _notificationPublisher.NotifyUserAsync(giangVien.Id, new NotificationPayload
+                        if (!thanhVienList.Any())
                         {
-                            TieuDe = "Bạn vừa nhận được doanh thu mới",
-                            NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. " +
-                                           $"Bạn nhận được {instructorRevenue:N0}đ.",
-                            LoaiThongBao = "DoanhThu",
-                            Link = "/instructor/revenue",
-                            ItemId = khoaHoc.Id,
-                            ItemName = khoaHoc.TieuDe
-                        });
+                            // Fallback an toàn: phòng trường hợp khóa học chưa có dòng nào trong
+                            // KhoaHoc_GiangVien (không nên xảy ra sau khi đã backfill), đổ hết cho người tạo
+                            var giangVienFallback = await _userRepository.GetQueryable()
+                                .FirstOrDefaultAsync(u => u.Id == khoaHoc.CreatedId);
+
+                            if (giangVienFallback != null)
+                            {
+                                giangVienFallback.SoDuTaiKhoan = (giangVienFallback.SoDuTaiKhoan ?? 0) + (decimal)instructorRevenue;
+                                giangVienFallback.UpdatedDate = DateTime.Now;
+                                _userRepository.Update(giangVienFallback);
+
+                                await _notificationPublisher.NotifyUserAsync(giangVienFallback.Id, new NotificationPayload
+                                {
+                                    TieuDe = "Bạn vừa nhận được doanh thu mới",
+                                    NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. Bạn nhận được {instructorRevenue:N0}đ.",
+                                    LoaiThongBao = "DoanhThu",
+                                    Link = "/instructor/revenue",
+                                    ItemId = khoaHoc.Id,
+                                    ItemName = khoaHoc.TieuDe
+                                });
+                            }
+                            continue;
+                        }
+
+                        // Chia theo đúng tỷ lệ TyLeChiaDoanhThu của từng người (tổng có thể không tròn 100
+                        // nếu dữ liệu lệch, nên chia theo tỷ trọng thực tế thay vì giả định tổng = 100)
+                        var tongTyLe = thanhVienList.Sum(x => x.TyLeChiaDoanhThu);
+                        if (tongTyLe <= 0) continue;
+
+                        foreach (var tv in thanhVienList)
+                        {
+                            var phanChia = instructorRevenue * (tv.TyLeChiaDoanhThu / (double)tongTyLe);
+                            if (phanChia <= 0) continue;
+
+                            var giangVien = await _userRepository.GetQueryable()
+                                .FirstOrDefaultAsync(u => u.Id == tv.IdGiangVien);
+
+                            if (giangVien == null) continue;
+
+                            giangVien.SoDuTaiKhoan = (giangVien.SoDuTaiKhoan ?? 0) + (decimal)phanChia;
+                            giangVien.UpdatedDate = DateTime.Now;
+                            _userRepository.Update(giangVien);
+
+                            await _notificationPublisher.NotifyUserAsync(giangVien.Id, new NotificationPayload
+                            {
+                                TieuDe = "Bạn vừa nhận được doanh thu mới",
+                                NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. " +
+                                               $"Bạn nhận được {phanChia:N0}đ ({tv.TyLeChiaDoanhThu}% doanh thu giảng viên).",
+                                LoaiThongBao = "DoanhThu",
+                                Link = "/instructor/revenue",
+                                ItemId = khoaHoc.Id,
+                                ItemName = khoaHoc.TieuDe
+                            });
+                        }
                     }
                     await _userRepository.SaveAsync();
 

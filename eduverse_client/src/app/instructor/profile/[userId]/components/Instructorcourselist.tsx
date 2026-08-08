@@ -38,9 +38,9 @@ export default function InstructorCourseList({
       <Grid container spacing={3}>
         {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Skeleton variant="rounded" height={160} sx={{ mb: 1 }} />
-            <Skeleton variant="text" height={24} />
-            <Skeleton variant="text" width="60%" />
+            <Skeleton variant="rounded" height={160} sx={{ mb: 1.5, borderRadius: "16px" }} />
+            <Skeleton variant="text" height={24} sx={{ borderRadius: "4px" }} />
+            <Skeleton variant="text" width="60%" sx={{ borderRadius: "4px" }} />
           </Grid>
         ))}
       </Grid>
@@ -58,8 +58,8 @@ export default function InstructorCourseList({
         }}
         spacing={1.5}
       >
-        <SentimentDissatisfiedOutlinedIcon sx={{ fontSize: 48 }} />
-        <Typography variant="body1">
+        <SentimentDissatisfiedOutlinedIcon sx={{ fontSize: 48, color: "var(--ev-text-muted, #9CA3AF)" }} />
+        <Typography variant="body1" sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #4B5563)" }}>
           Giảng viên này chưa có khóa học nào được công bố.
         </Typography>
       </Stack>
@@ -86,9 +86,18 @@ export default function InstructorCourseList({
           <Pagination
             page={pageIndex}
             count={tongSoTrang}
-            color="primary"
             onChange={(_, trang) => onDoiTrang(trang)}
             shape="rounded"
+            sx={{
+              "& .MuiPaginationItem-root": {
+                fontWeight: 700,
+                borderRadius: "8px",
+              },
+              "& .MuiPaginationItem-root.Mui-selected": {
+                bgcolor: "#8B1313 !important",
+                color: "#FFFFFF !important",
+              },
+            }}
           />
         </Stack>
       )}

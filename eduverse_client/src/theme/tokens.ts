@@ -96,7 +96,29 @@ export const STATUS = {
   infoSoft: "rgba(2,132,199,0.10)",
 } as const;
 
-// -------- Bo góc / bóng đổ / kiểu chữ --------
+export const PAGE_SPACING = {
+  /** mt = 2 (16px) — khoảng cách từ Header xuống khối nội dung đầu tiên trên tất cả màn hình hệ thống */
+  mt: 2,
+  /** mx/px = 2.5 (20px trên desktop/tablet, 16px trên mobile xs) — lề trái/phải nội dung so với mép màn hình */
+  mx: { xs: 2, md: 2.5 },
+  px: { xs: 2, md: 2.5 },
+} as const;
+
+// -------- Bo góc / bóng đổ / kiểu chữ / Khoảng cách lề layout --------
+export const LAYOUT_SPACING = {
+  /** Lề ngang (padding-left/right) chuẩn cho container chính: xs: 16px (2), md: 24px (3) */
+  pagePx: PAGE_SPACING.px,
+  /** Lề dọc (padding-top/bottom) chuẩn giữa header và nội dung chính */
+  pagePy: { xs: 2, md: 2.5 },
+  /** Chiều rộng tối đa chuẩn của container cho các trang dashboard & public */
+  containerMaxWidth: "1280px" as const,
+  containerMaxWidthWide: "1400px" as const,
+  /** Spacing chuẩn giữa các section / card nội dung */
+  sectionGap: { xs: 2.5, md: 3.5 },
+  /** Padding trong card chuẩn: xs: 16px (2), sm: 20px (2.5), md: 24px (3) */
+  cardPadding: { xs: 2, sm: 2.5, md: 3 },
+} as const;
+
 export const RADIUS = { sm: 8, base: 10, card: 16, pill: 999 } as const;
 
 export const SHADOWS = {

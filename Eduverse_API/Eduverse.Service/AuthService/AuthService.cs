@@ -123,7 +123,7 @@ namespace Eduverse.Service.AuthService
         public async Task<AuthResponse> LoginAsync(LoginRequest request, HttpResponse httpResponse)
         {
             var user = await _userManager.FindByNameAsync(request.UserName);
-            if (user is null && request.UserName.Contains("@"))
+            if (user is null)
             {
                 user = await _userManager.FindByEmailAsync(request.UserName);
             }

@@ -94,8 +94,7 @@ export default function Step1Page() {
                 position: "relative",
                 cursor: "pointer",
                 "&:hover": {
-                  boxShadow: "0 10px 30px rgba(122, 31, 43, 0.1)",
-                  transform: "translateY(-4px)",
+                  boxShadow: "0 8px 24px rgba(122, 31, 43, 0.08)",
                   borderColor: "#8B1313",
                 },
                 "&:focus-within": {

@@ -29,6 +29,7 @@ namespace Eduverse.Api.Controller
         private readonly UserManager<AppUser> _userManager;
         private readonly IService<DonHang> _donHangService;
         private readonly IService<DonHangChiTiet> _donHangChiTietService;
+        private readonly IService<KhoaHoc_GiangVien> _khoaHocGiangVienService;
 
         public DashboardController(
             IService<KhoaHoc> khoaHocService,
@@ -40,6 +41,7 @@ namespace Eduverse.Api.Controller
             IService<ChungChi> chungChiService,
             IService<BaiKiemTra> baiKiemTraService,
             IService<DanhMuc_KhoaHoc> danhMucKhoaHocService,
+            IService<KhoaHoc_GiangVien> khoaHocGiangVienService,
             UserManager<AppUser> userManager)
         {
             _khoaHocService = khoaHocService;
@@ -52,6 +54,7 @@ namespace Eduverse.Api.Controller
             _baiKiemTraService = baiKiemTraService;
             _danhMucKhoaHocService = danhMucKhoaHocService;
             _userManager = userManager;
+            _khoaHocGiangVienService = khoaHocGiangVienService;
         }
 
         [HttpGet]
@@ -382,7 +385,7 @@ namespace Eduverse.Api.Controller
                     id = c.Id.ToString(),
                     title = c.TieuDe,
                     hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
-                    instructor = premiumCourse?.CreatedBy ?? "An Danh",
+                    instructor = c.CreatedBy ?? "An Danh",
                     rating = 0, // KhoaHoc chưa có hệ thống đánh giá
                     studentsCount = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Cơ bản",
@@ -403,7 +406,7 @@ namespace Eduverse.Api.Controller
                     id = c.Id.ToString(),
                     title = c.TieuDe,
                     hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
-                    instructor = premiumCourse?.CreatedBy ?? "An Danh",
+                    instructor = c.CreatedBy ?? "An Danh",
                     rating = 0, // KhoaHoc chưa có hệ thống đánh giá
                     studentsCount = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Trung cấp",
@@ -480,12 +483,30 @@ namespace Eduverse.Api.Controller
             var fullName = user?.HoTen ?? "Giảng viên";
             var avatarUrl = user?.AnhDaiDien;
 
-            // Khóa học của giảng viên (CreatedId == instructorId)
+            // Lấy tất cả bản ghi tham gia khóa học của giảng viên (chủ sở hữu HOẶC cộng tác viên)
+            var myMemberships = new List<KhoaHoc_GiangVien>();
+            try
+            {
+                myMemberships = await _khoaHocGiangVienService.GetQueryable()
+                    .Where(x => x.IdGiangVien == instructorId && !x.IsDeleted)
+                    .ToListAsync();
+            }
+            catch (Exception ex) { Console.WriteLine("Error fetching instructor memberships: " + ex.Message); }
+
+            // Tỷ lệ chia doanh thu của giảng viên theo từng khóa học
+            var tyLeChiaByCourseId = myMemberships
+                .GroupBy(x => x.IdKhoaHoc)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.TyLeChiaDoanhThu));
+
+            var collabCourseIds = myMemberships.Select(x => x.IdKhoaHoc).Distinct().ToList();
+
+            // Khóa học của giảng viên (do chính mình tạo HOẶC được mời làm cộng tác viên)
             var myCourses = new List<KhoaHoc>();
             try
             {
                 myCourses = await _khoaHocService.GetQueryable()
-                    .Where(c => c.CreatedId == instructorId && c.IsDeleted == false && c.TrangThai != "DaXoa")
+                    .Where(c => (c.CreatedId == instructorId || collabCourseIds.Contains(c.Id))
+                             && c.IsDeleted == false && c.TrangThai != "DaXoa")
                     .ToListAsync();
             }
             catch (Exception ex) { Console.WriteLine("Error fetching instructor courses: " + ex.Message); }
@@ -501,8 +522,18 @@ namespace Eduverse.Api.Controller
             catch (Exception ex) { Console.WriteLine("Error fetching registrations: " + ex.Message); }
             var myRegs = allRegs.Where(r => r.IdKhoaHoc.HasValue && myCourseIds.Contains(r.IdKhoaHoc.Value)).ToList();
 
+            // Doanh thu THỰC NHẬN của giảng viên cho 1 lượt đăng ký, theo đúng % chia trên khóa học đó
+            // (nếu khóa chưa có bản ghi chia sẻ - dữ liệu cũ chưa backfill - mặc định 100%)
+            double RevenueForReg(DangKyKhoaHoc r)
+            {
+                var gia = r.GiaDangKy ?? 0;
+                if (r.IdKhoaHoc.HasValue && tyLeChiaByCourseId.TryGetValue(r.IdKhoaHoc.Value, out var tyLe))
+                    return gia * (tyLe / 100.0);
+                return gia;
+            }
+
             int totalStudents = myRegs.Where(r => r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
-            double totalRevenue = myRegs.Sum(r => r.GiaDangKy ?? 0);
+            double totalRevenue = myRegs.Sum(RevenueForReg);
 
             // Tiến độ học tập của các đăng ký (dùng cho tỷ lệ hoàn thành + tiến độ học viên)
             var allProgress = new List<TienDoHocTap>();
@@ -542,7 +573,7 @@ namespace Eduverse.Api.Controller
                     .Where(r => r.ThoiGianDK.HasValue
                              && r.ThoiGianDK.Value >= mStart
                              && r.ThoiGianDK.Value < mEnd)
-                    .Sum(r => r.GiaDangKy ?? 0);
+                    .Sum(RevenueForReg);
 
                 monthlyRevenue.Add(new
                 {
@@ -615,7 +646,7 @@ namespace Eduverse.Api.Controller
                     newStudentsThisMonth = newThisMonth,
                     studentGrowthPercent = studentGrowthPercent,
                     monthlyEnrollments = monthlyEnrollments,
-                    monthlyRevenue = monthlyRevenue, 
+                    monthlyRevenue = monthlyRevenue,
                     completionByCourse = completionByCourse,
                     recentStudents = recentStudents
                 }

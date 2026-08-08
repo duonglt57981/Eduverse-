@@ -81,7 +81,7 @@ export default function AdminUsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [availableRoles, setAvailableRoles] = useState<string[]>(['Admin', 'GiaoVien', 'HocVien']);
+  const [availableRoles, setAvailableRoles] = useState<string[]>(['Admin', 'GiaoVien', 'HocVien', 'personnel']);
   const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -417,11 +417,15 @@ export default function AdminUsersPage() {
   const getRoleChipColor = (role: string) => {
     switch (role) {
       case 'Admin':
-        return { bg: 'rgba(141,19,19,0.1)', text: COLORS.primary, label: 'Admin' };
+        return { bg: 'rgba(141,19,19,0.1)', text: COLORS.primary, label: 'Quản trị viên' };
       case 'GiaoVien':
         return { bg: 'rgba(59,130,246,0.1)', text: '#2563EB', label: 'Giảng viên' };
       case 'HocVien':
         return { bg: 'rgba(16,185,129,0.1)', text: COLORS.green, label: 'Học viên' };
+      case 'personnel':
+      case 'Personnel':
+      case 'NhanVien':
+        return { bg: 'rgba(124,58,237,0.1)', text: '#7C3AED', label: 'Nhân viên' };
       default:
         return { bg: 'rgba(107,114,128,0.1)', text: COLORS.textSecondary, label: role };
     }
@@ -452,28 +456,6 @@ export default function AdminUsersPage() {
                 Quản lý thông tin tài khoản, phân quyền vai trò và khóa/mở khóa học viên, giảng viên.
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddRounded />}
-              onClick={openAddDialog}
-              sx={{
-                bgcolor: COLORS.primary,
-                borderRadius: '50px',
-                px: 3,
-                py: 1.25,
-                fontWeight: 700,
-                textTransform: 'none',
-                boxShadow: '0 8px 24px rgba(141,19,19,0.25)',
-                transition: 'all 200ms ease',
-                '&:hover': {
-                  bgcolor: COLORS.primaryDark,
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 12px 32px rgba(141,19,19,0.35)',
-                },
-              }}
-            >
-              Thêm người dùng
-            </Button>
           </Stack>
 
           {/* Statistics Cards */}
@@ -505,23 +487,12 @@ export default function AdminUsersPage() {
                   >
                     <PeopleAltRounded sx={{ color: COLORS.primary, fontSize: 24 }} />
                   </Box>
-                  <Chip
-                    label="+12%"
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(59,130,246,0.1)',
-                      color: '#2563EB',
-                      fontWeight: 800,
-                      fontSize: 12,
-                      borderRadius: '10px',
-                    }}
-                  />
                 </Stack>
                 <Typography variant="caption" sx={{ color: COLORS.textSecondary, fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
                   Tổng tài khoản
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS.textDark, lineHeight: 1.1, fontSize: '2rem' }}>
-                  {totalUsersCount ? totalUsersCount.toLocaleString() : '12,840'}
+                  {totalUsersCount !== undefined ? totalUsersCount.toLocaleString() : 0}
                 </Typography>
               </Paper>
             </Grid>
@@ -552,23 +523,12 @@ export default function AdminUsersPage() {
                   >
                     <GppGoodRounded sx={{ color: COLORS.green, fontSize: 24 }} />
                   </Box>
-                  <Chip
-                    label="Ổn định"
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(16,185,129,0.1)',
-                      color: COLORS.green,
-                      fontWeight: 800,
-                      fontSize: 12,
-                      borderRadius: '10px',
-                    }}
-                  />
                 </Stack>
                 <Typography variant="caption" sx={{ color: COLORS.textSecondary, fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
                   Đang hoạt động
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS.textDark, lineHeight: 1.1, fontSize: '2rem' }}>
-                  {activeUsersCount ? activeUsersCount.toLocaleString() : '11,204'}
+                  {activeUsersCount !== undefined ? activeUsersCount.toLocaleString() : 0}
                 </Typography>
               </Paper>
             </Grid>
@@ -599,23 +559,12 @@ export default function AdminUsersPage() {
                   >
                     <LockRounded sx={{ color: COLORS.red, fontSize: 24 }} />
                   </Box>
-                  <Chip
-                    label="8 mới"
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(220,38,38,0.1)',
-                      color: COLORS.red,
-                      fontWeight: 800,
-                      fontSize: 12,
-                      borderRadius: '10px',
-                    }}
-                  />
                 </Stack>
                 <Typography variant="caption" sx={{ color: COLORS.textSecondary, fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
                   Đã khóa
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS.textDark, lineHeight: 1.1, fontSize: '2rem' }}>
-                  {lockedUsersCount !== undefined ? lockedUsersCount.toLocaleString() : '156'}
+                  {lockedUsersCount !== undefined ? lockedUsersCount.toLocaleString() : 0}
                 </Typography>
               </Paper>
             </Grid>
@@ -646,24 +595,13 @@ export default function AdminUsersPage() {
                   >
                     <DonutLargeRounded sx={{ color: '#2563EB', fontSize: 24 }} />
                   </Box>
-                  <Chip
-                    label="Chi tiết"
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(37,99,235,0.1)',
-                      color: '#2563EB',
-                      fontWeight: 800,
-                      fontSize: 12,
-                      borderRadius: '10px',
-                    }}
-                  />
                 </Stack>
                 <Typography variant="caption" sx={{ color: COLORS.textSecondary, fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
                   Phân bố vai trò
                 </Typography>
                 <Stack direction="row" sx={{ alignItems: 'baseline', gap: 0.5 }}>
                   <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS.textDark, lineHeight: 1.1, fontSize: '2rem' }}>
-                    {roleGroupsCount ? roleGroupsCount : '3'}
+                    {roleGroupsCount !== undefined ? roleGroupsCount : 0}
                   </Typography>
                   <Typography variant="body2" sx={{ color: COLORS.textSecondary, fontWeight: 700 }}>
                     Nhóm chính
@@ -731,6 +669,7 @@ export default function AdminUsersPage() {
                       <MenuItem value="">Tất cả vai trò</MenuItem>
                       <MenuItem value="Admin">Quản trị viên (Admin)</MenuItem>
                       <MenuItem value="GiaoVien">Giảng viên</MenuItem>
+                      <MenuItem value="personnel">Nhân viên</MenuItem>
                       <MenuItem value="HocVien">Học viên</MenuItem>
                     </Select>
                   </FormControl>
@@ -849,6 +788,7 @@ export default function AdminUsersPage() {
                                       if (r === "Admin") return "Quản trị viên";
                                       if (r === "GiaoVien") return "Giảng viên";
                                       if (r === "HocVien") return "Học viên";
+                                      if (r === "personnel" || r === "Personnel" || r === "NhanVien") return "Nhân viên";
                                       return r;
                                     })
                                     .join(", ")
@@ -1020,20 +960,20 @@ export default function AdminUsersPage() {
                   {/* Account detail section */}
                   <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: COLORS.primary, mb: 1, textTransform: 'uppercase', fontSize: 12 }}>
-                      Tài khoản đăng nhập Google
+                      Thông tin tài khoản đăng nhập
                     </Typography>
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Stack spacing={0.75}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Địa chỉ Email đăng nhập <span style={{ color: COLORS.primary }}>*</span></Typography>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Tên đăng nhập <span style={{ color: COLORS.primary }}>*</span></Typography>
                       <TextField
                         fullWidth
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Nhập địa chỉ email Google..."
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        placeholder="Nhập tên đăng nhập..."
                         required
+                        disabled={dialogMode === 'edit'}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: '12px',
@@ -1045,6 +985,26 @@ export default function AdminUsersPage() {
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6 }}>
+                    <Stack spacing={0.75}>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Địa chỉ Email đăng nhập <span style={{ color: COLORS.primary }}>*</span></Typography>
+                      <TextField
+                        fullWidth
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Nhập địa chỉ email..."
+                        required
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '12px',
+                            height: '50px',
+                          },
+                        }}
+                      />
+                    </Stack>
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
                     <Stack spacing={0.75}>
                       <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Vai trò phân quyền</Typography>
                       <FormControl fullWidth>
@@ -1075,12 +1035,12 @@ export default function AdminUsersPage() {
                               })}
                             </Box>
                           )}
-                          sx={{ borderRadius: '12px', height: '50px' }}
+                          sx={{ borderRadius: '12px', minHeight: '50px' }}
                         >
                           {availableRoles.map((role) => (
                             <MenuItem key={role} value={role}>
                               <Checkbox checked={selectedRoles.includes(role)} sx={{ color: COLORS.primary, '&.Mui-checked': { color: COLORS.primary } }} />
-                              <ListItemText primary={role === 'Admin' ? 'Quản trị viên (Admin)' : role === 'GiaoVien' ? 'Giảng viên' : 'Học viên'} />
+                              <ListItemText primary={role === 'Admin' ? 'Quản trị viên (Admin)' : role === 'GiaoVien' ? 'Giảng viên' : role === 'personnel' || role === 'Personnel' ? 'Nhân viên' : 'Học viên'} />
                             </MenuItem>
                           ))}
                         </Select>
@@ -1133,41 +1093,6 @@ export default function AdminUsersPage() {
 
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Stack spacing={0.75}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Địa chỉ thường trú</Typography>
-                      <TextField
-                        fullWidth
-                        value={diaChi}
-                        onChange={(e) => setDiaChi(e.target.value)}
-                        placeholder="Nhập địa chỉ..."
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: '12px',
-                            height: '50px',
-                          },
-                        }}
-                      />
-                    </Stack>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <Stack spacing={0.75}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Giới tính</Typography>
-                      <FormControl fullWidth>
-                        <Select
-                          value={gioiTinh}
-                          onChange={(e) => setGioiTinh(Number(e.target.value))}
-                          sx={{ borderRadius: '12px', height: '50px' }}
-                        >
-                          <MenuItem value={1}>Nam</MenuItem>
-                          <MenuItem value={2}>Nữ</MenuItem>
-                          <MenuItem value={0}>Khác</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Stack>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <Stack spacing={0.75}>
                       <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Ngày sinh</Typography>
                       <TextField
                         fullWidth
@@ -1184,14 +1109,31 @@ export default function AdminUsersPage() {
                     </Stack>
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Stack spacing={0.75}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Chức danh / Chức vụ</Typography>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Giới tính</Typography>
+                      <FormControl fullWidth>
+                        <Select
+                          value={gioiTinh}
+                          onChange={(e) => setGioiTinh(Number(e.target.value))}
+                          sx={{ borderRadius: '12px', height: '50px' }}
+                        >
+                          <MenuItem value={1}>Nam</MenuItem>
+                          <MenuItem value={2}>Nữ</MenuItem>
+                          <MenuItem value={0}>Khác</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Stack>
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <Stack spacing={0.75}>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>Địa chỉ thường trú</Typography>
                       <TextField
                         fullWidth
-                        value={chucVu}
-                        onChange={(e) => setChucVu(e.target.value)}
-                        placeholder="Nhập chức danh..."
+                        value={diaChi}
+                        onChange={(e) => setDiaChi(e.target.value)}
+                        placeholder="Nhập địa chỉ..."
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: '12px',

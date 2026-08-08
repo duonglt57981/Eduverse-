@@ -3,6 +3,7 @@ using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.KhoaHoc_GiangVienRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Repository.TienDoHocTapRepository;
@@ -21,6 +22,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using static Grpc.Core.Metadata;
 
 
 namespace Eduverse.Service.PhanService
@@ -37,7 +39,9 @@ namespace Eduverse.Service.PhanService
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
         private readonly IBaiKiemTraRepository _baiKiemTraRepository;
-        
+        private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
+        private readonly IPhanRepository _phanRepository;
+
         public PhanService(
             IPhanRepository phanRepository,
             IBaiGiangService baiGiangService,
@@ -49,7 +53,8 @@ namespace Eduverse.Service.PhanService
             ITienDoHocTapRepository tienDoHocTapRepository,
             IKhoaHocService khoaHocService,
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
-            IBaiKiemTraRepository baiKiemTraRepository
+            IBaiKiemTraRepository baiKiemTraRepository,
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository
             ) : base(phanRepository)
         {
             _mapper = mapper;
@@ -61,7 +66,9 @@ namespace Eduverse.Service.PhanService
             _khoaHocService = khoaHocService;
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
             _baiKiemTraRepository = baiKiemTraRepository;
+            _khoaHocGVRepository = khoaHocGVRepository; 
             this._httpContextAccessor = httpContextAccessor;
+            _phanRepository = phanRepository;
         }
 
         public async Task<PhanHocDto> CreatePhanHoc(CreatePhanRequest request)  
@@ -80,13 +87,16 @@ namespace Eduverse.Service.PhanService
 
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học");
-
-            if (khoaHoc.CreatedId != nguoiTaoPhan)
+            if (!request.IdKhoaHoc.HasValue)
+            {
+                throw new ArgumentNullException(nameof(request.IdKhoaHoc), "Mã khóa học (IdKhoaHoc) không được phép bỏ trống.");
+            }
+            var coQuyen = await CoQuyenTrenKhoaHoc(request.IdKhoaHoc.Value, nguoiTaoPhan, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để thêm phần học vào khóa học này!");
 
             var content = $"{request.TenPhan} {request.MieuTa}";
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(content);
-
 
             var entity = new Phan
             {
@@ -97,14 +107,12 @@ namespace Eduverse.Service.PhanService
                 ThuTuSapXep = request.ThuTuSapXep,
                 TrangThai = "DangSua",
                 TrangThaiPheDuyet = "DangSua"
-
             };
-
 
             await CreateAsync(entity);
             await SaveAsync();
 
-            return _mapper.Map<Phan,PhanHocDto>(entity);
+            return _mapper.Map<Phan, PhanHocDto>(entity);
         }
 
 
@@ -117,38 +125,26 @@ namespace Eduverse.Service.PhanService
             if (string.IsNullOrWhiteSpace(request.TenPhan))
                 throw new Exception("Vui lòng nhập tên phần học");
 
-            //var khoaHocExists = await _khoaHocRepository
-            //    .GetQueryable()
-            //    .AnyAsync(x => x.Id == request.IdKhoaHoc);
-
-            //if (!khoaHocExists)
-            //    throw new Exception("Không tìm thấy khóa học");
-
             var entity = await GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted);
 
             if (entity == null)
                 throw new Exception("Không tìm thấy phần học");
-
-            if (entity.CreatedId != nguoiTao)
+            if (!entity.IdKhoaHoc.HasValue)
+            {
+                throw new ArgumentNullException(nameof(entity.IdKhoaHoc), "Mã khóa học (IdKhoaHoc) không được phép bỏ trống.");
+            }
+            // Kiểm tra quyền theo khóa học chứa phần học này (chủ sở hữu HOẶC cộng tác viên)
+            var coQuyen = await CoQuyenTrenKhoaHoc(entity.IdKhoaHoc.Value, nguoiTao, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để sửa phần học này!");
 
             if (entity.TrangThaiPheDuyet == "DaDuyet")
                 throw new Exception("Khóa học đang ở chế độ Đã Duyệt không thể sửa");
 
-            //var thuTuDaTon = await GetQueryable()
-            //    .AnyAsync(x =>
-            //        x.IdKhoaHoc == request.IdKhoaHoc &&
-            //        x.ThuTuSapXep == request.ThuTuSapXep &&
-            //        x.Id != request.Id && !x.IsDeleted);
-
-            //if (thuTuDaTon)
-            //    throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại trong phần học này");
-
             var content = $"{request.TenPhan} {request.MieuTa}";
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(content);
 
-            
             entity.TenPhan = request.TenPhan.Trim();
             entity.ThuTuSapXep = request.ThuTuSapXep;
             entity.TrangThai = "DangSua";
@@ -168,25 +164,26 @@ namespace Eduverse.Service.PhanService
             var phan = await GetAll().FirstOrDefaultAsync(x => x.Id == id);
             if (phan == null)
                 throw new Exception("Không tim thấy phần học");
+            if (!phan.IdKhoaHoc.HasValue)
+            {
+                throw new ArgumentNullException(nameof(phan.IdKhoaHoc), "Mã khóa học (IdKhoaHoc) không được phép bỏ trống.");
+            }
 
-            if (phan.CreatedId != nguoiTao)
+            var coQuyen = await CoQuyenTrenKhoaHoc(phan.IdKhoaHoc.Value, nguoiTao, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để xóa phần học này!");
 
             if (phan.TrangThaiPheDuyet == "ChoDuyet" || phan.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
 
-
             var coNguoiHoc = await _dangKyKhoaHocRepository.GetQueryable()
                 .AnyAsync(x => x.IdKhoaHoc == phan.IdKhoaHoc);
 
-            phan.TrangThai = coNguoiHoc == false ? "DaXoa" : "NgungHoatDong";// nếu isdele = true + DaXoa  coi như kh ai co thể nhìn thấy(xóa khi chưa có ai đăng kí)
-                                                                       //nếu isdele = true + HoatDong nhưng người đăng kí trước ngày xóa vẫn xem đc
+            phan.TrangThai = coNguoiHoc == false ? "DaXoa" : "NgungHoatDong";
 
             await DeleteAsync(phan);
             await SaveAsync();
             return true;
-
-
         }
 
 
@@ -201,8 +198,10 @@ namespace Eduverse.Service.PhanService
             if (khoaHocStructure == null)
                 throw new Exception("Không tìm thấy khóa học");
 
-            if (khoaHocStructure.CreatedId != nguoiTaoStructure)
+            var coQuyen = await CoQuyenTrenKhoaHoc(request.IdKhoaHoc, nguoiTaoStructure, gv => gv.Manage);
+            if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để sắp xếp cấu trúc khóa học này!");
+
 
             var phans = await
                 GetQueryable()
@@ -263,6 +262,26 @@ namespace Eduverse.Service.PhanService
             }
 
             await SaveAsync();
+        }
+        private async Task<bool> CoQuyenTrenKhoaHoc(Guid idKhoaHoc, Guid userId, Func<KhoaHoc_GiangVien, bool> capQuyenCuThe = null)
+        {
+            var khoaHoc = await _khoaHocRepository.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
+            if (khoaHoc == null) return false;
+            if (khoaHoc.CreatedId == userId) return true;
+
+            var thanhVien = await _khoaHocGVRepository.GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == userId && !x.IsDeleted);
+            if (thanhVien == null) return false;
+            if (thanhVien.LaChuSoHuu) return true;
+
+            return capQuyenCuThe == null || capQuyenCuThe(thanhVien);
+        }
+
+        private async Task<bool> CoQuyenQuaPhan(Guid idPhan, Guid userId, Func<KhoaHoc_GiangVien, bool> capQuyenCuThe = null)
+        {
+            var phan = await _phanRepository.GetQueryable().FirstOrDefaultAsync(x => x.Id == idPhan);
+            if (phan == null || !phan.IdKhoaHoc.HasValue) return false;
+            return await CoQuyenTrenKhoaHoc(phan.IdKhoaHoc.Value, userId, capQuyenCuThe);
         }
     }
 }

@@ -61,10 +61,11 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
+import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { createAppTheme } from "@/src/theme/createAppTheme";
-import { COLORS } from "@/src/theme/tokens";
+import { COLORS, LAYOUT_SPACING, PAGE_SPACING } from "@/src/theme/tokens";
 import DashboardHeader from "./DashboardHeader";
 import {
   getSidebarItemsByRole,
@@ -85,7 +86,6 @@ import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 import { isNotificationForRole } from "@/src/libs/notificationRole";
-import Swal from "sweetalert2";
 
 // --- Bảng màu dùng chung (đồng bộ từ src/theme/tokens) ---
 
@@ -342,6 +342,9 @@ function SidebarContent({
     if (!pathname.startsWith("/admin")) {
       list = list.filter((r) => r !== "Admin");
     }
+    if (!pathname.startsWith("/personnel")) {
+      list = list.filter((r) => r !== "personnel");
+    }
     return list;
   }, [roles, pathname]);
 
@@ -353,6 +356,12 @@ function SidebarContent({
         label: "Admin",
         color: "#DC2626",
         bg: "rgba(220, 38, 38, 0.08)",
+      };
+    if (activeRoles.includes("personnel"))
+      return {
+        label: "Nhân viên",
+        color: "#2563EB",
+        bg: "rgba(37, 99, 235, 0.08)",
       };
     if (activeRoles.includes("GiaoVien"))
       return {
@@ -367,6 +376,19 @@ function SidebarContent({
   const getRouteByLabel = (label: string) => {
     const isInstructorView = pathname.startsWith("/instructor");
     const isAdminView = pathname.startsWith("/admin");
+    const isPersonnelView = pathname.startsWith("/personnel");
+
+    // Personnel roles
+    if (isPersonnelView) {
+      switch (label) {
+        case "Kiểm duyệt khóa học":
+          return "/personnel/approve-courses";
+        case "Cài đặt":
+          return "/student/settings";
+        default:
+          return "/personnel/approve-courses";
+      }
+    }
 
     // Instructor roles
     if (isInstructorView && roles.includes("GiaoVien")) {
@@ -1033,6 +1055,11 @@ export default function DashboardShell({
     return list;
   }, [roles, pathname]);
   const getHomeRoute = () => {
+    if (
+      pathname.startsWith("/personnel") ||
+      roles.some((r: string) => r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien")
+    )
+      return "/personnel/approve-courses";
     if (activeRoles.includes("Admin")) return "/admin/dashboard";
     if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
     return "/student/dashboard";
@@ -1290,7 +1317,7 @@ export default function DashboardShell({
         {/* ========================================================= */}
         {/* 1. HEADER NAVIGATION (Fixed)                              */}
         {/* ========================================================= */}
-        {pathname.startsWith("/admin") ? (
+        {pathname.startsWith("/admin") || pathname.startsWith("/personnel") ? (
           <Box
             component="header"
             sx={{
@@ -1349,34 +1376,36 @@ export default function DashboardShell({
             </Stack>
 
             {/* Search bar (Center) */}
-            <Paper
-              elevation={0}
-              sx={{
-                flex: 1,
-                maxWidth: 480,
-                mx: { md: 3, lg: 5 },
-                display: { xs: "none", md: "flex" },
-                alignItems: "center",
-                gap: 1.5,
-                px: 2.5,
-                py: 0.75,
-                borderRadius: "10px",
-                bgcolor: "var(--ev-paper-alt, #F7F5F2)",
-                border: "1px solid var(--ev-divider, #ECE7E4)",
-                transition: "all 150ms ease",
-                "&:focus-within": {
-                  borderColor: "#8B1313",
-                  boxShadow: "0 0 0 3px rgba(153, 27, 27, 0.05)",
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
-                },
-              }}
-            >
-              <SearchRounded sx={{ color: "rgba(0,0,0,0.35)", fontSize: 18 }} />
-              <InputBase
-                placeholder="Tìm kiếm trong hệ thống..."
-                sx={{ flex: 1, fontSize: 13.5, fontWeight: 500 }}
-              />
-            </Paper>
+            {!pathname.startsWith("/admin") && !pathname.startsWith("/personnel") && (
+              <Paper
+                elevation={0}
+                sx={{
+                  flex: 1,
+                  maxWidth: 480,
+                  mx: { md: 3, lg: 5 },
+                  display: { xs: "none", md: "flex" },
+                  alignItems: "center",
+                  gap: 1.5,
+                  px: 2.5,
+                  py: 0.75,
+                  borderRadius: "10px",
+                  bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                  border: "1px solid var(--ev-divider, #ECE7E4)",
+                  transition: "all 150ms ease",
+                  "&:focus-within": {
+                    borderColor: "#8B1313",
+                    boxShadow: "0 0 0 3px rgba(153, 27, 27, 0.05)",
+                    bgcolor: "var(--ev-paper, #FFFFFF)",
+                  },
+                }}
+              >
+                <SearchRounded sx={{ color: "rgba(0,0,0,0.35)", fontSize: 18 }} />
+                <InputBase
+                  placeholder="Tìm kiếm trong hệ thống..."
+                  sx={{ flex: 1, fontSize: 13.5, fontWeight: 500 }}
+                />
+              </Paper>
+            )}
 
             {/* Actions & Avatar (Right) */}
             <Stack
@@ -1385,14 +1414,16 @@ export default function DashboardShell({
               sx={{ alignItems: "center", flexShrink: 0 }}
             >
               {/* Search Toggle Mobile */}
-              <IconButton
-                sx={{
-                  display: { xs: "flex", md: "none" },
-                  color: "var(--ev-text-secondary, rgba(31,41,55,0.65))",
-                }}
-              >
-                <SearchRounded />
-              </IconButton>
+              {!pathname.startsWith("/admin") && !pathname.startsWith("/personnel") && (
+                <IconButton
+                  sx={{
+                    display: { xs: "flex", md: "none" },
+                    color: "var(--ev-text-secondary, rgba(31,41,55,0.65))",
+                  }}
+                >
+                  <SearchRounded />
+                </IconButton>
+              )}
 
 
               {/* User Avatar + Role Badge */}
@@ -1455,7 +1486,7 @@ export default function DashboardShell({
                     Về trang học viên
                   </Button>
                 )}
-                {!pathname.startsWith("/admin") && (
+                {!pathname.startsWith("/admin") && !pathname.startsWith("/personnel") && (
                   <>
                     <IconButton
                       onClick={() => router.push("/student/favorites")}
@@ -1530,26 +1561,32 @@ export default function DashboardShell({
                   >
                     {pathname.startsWith("/admin")
                       ? "Admin Panel"
-                      : pathname.startsWith("/instructor")
-                        ? `GS. ${dashboardData?.welcomeStats?.userName || "Giảng viên"}`
-                        : dashboardData?.welcomeStats?.userName || "Học viên"}
+                      : pathname.startsWith("/personnel")
+                        ? (user?.hoTen || dashboardData?.welcomeStats?.userName || "Nhân viên")
+                        : pathname.startsWith("/instructor")
+                          ? `GS. ${dashboardData?.welcomeStats?.userName || "Giảng viên"}`
+                          : dashboardData?.welcomeStats?.userName || user?.hoTen || "Học viên"}
                   </Typography>
                   <Typography
                     sx={{
                       fontSize: 10.5,
                       fontWeight: 500,
-                      color: pathname.startsWith("/admin")
-                        ? "#8B1313"
-                        : COLORS.primary,
+                      color:
+                        pathname.startsWith("/admin") ||
+                          pathname.startsWith("/personnel")
+                          ? "#8B1313"
+                          : COLORS.primary,
                       letterSpacing: "0.2px",
                       textTransform: "uppercase",
                     }}
                   >
                     {pathname.startsWith("/admin")
                       ? "Super Administrator"
-                      : pathname.startsWith("/instructor")
-                        ? "Premium Instructor"
-                        : "Học viên"}
+                      : pathname.startsWith("/personnel")
+                        ? "Nhân viên kiểm duyệt"
+                        : pathname.startsWith("/instructor")
+                          ? "Premium Instructor"
+                          : "Học viên"}
                   </Typography>
                 </Stack>
                 <Avatar
@@ -1585,16 +1622,16 @@ export default function DashboardShell({
                 >
                   {dashboardData?.welcomeStats?.userName
                     ? dashboardData.welcomeStats.userName
+                      .split(" ")
+                      .pop()
+                      ?.substring(0, 2)
+                      .toUpperCase()
+                    : user?.hoTen
+                      ? user.hoTen
                         .split(" ")
                         .pop()
                         ?.substring(0, 2)
                         .toUpperCase()
-                    : user?.hoTen
-                      ? user.hoTen
-                          .split(" ")
-                          .pop()
-                          ?.substring(0, 2)
-                          .toUpperCase()
                       : "HV"}
                 </Avatar>
 
@@ -1656,16 +1693,16 @@ export default function DashboardShell({
                     >
                       {dashboardData?.welcomeStats?.userName
                         ? dashboardData.welcomeStats.userName
+                          .split(" ")
+                          .pop()
+                          ?.substring(0, 2)
+                          .toUpperCase()
+                        : user?.hoTen
+                          ? user.hoTen
                             .split(" ")
                             .pop()
                             ?.substring(0, 2)
                             .toUpperCase()
-                        : user?.hoTen
-                          ? user.hoTen
-                              .split(" ")
-                              .pop()
-                              ?.substring(0, 2)
-                              .toUpperCase()
                           : "HV"}
                     </Avatar>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -1704,7 +1741,7 @@ export default function DashboardShell({
                     }}
                   />
 
-                  {!pathname.startsWith("/admin") ? (
+                  {!pathname.startsWith("/admin") && !pathname.startsWith("/personnel") ? (
                     <>
                       {/* Section 1 */}
                       <MenuItem
@@ -1855,7 +1892,7 @@ export default function DashboardShell({
                     </>
                   ) : (
                     <>
-                      <MenuItem onClick={() => router.push("/admin/settings")}>
+                      <MenuItem onClick={() => router.push(pathname.startsWith("/personnel") ? "/personnel/settings" : "/admin/settings")}>
                         Cài đặt tài khoản
                       </MenuItem>
                       <MenuItem
@@ -1911,7 +1948,7 @@ export default function DashboardShell({
         )}
         {/* ========================================================= */}
         {/* SIDEBAR DRAWER (COLLAPSED FOR MOBILE/TABLET)              */}
-        {/* ========================================================= */}{" "}
+        {/* ========================================================= */}
         {!pathname.startsWith("/instructor") && (
           <Drawer
             open={mobileOpen}
@@ -1932,13 +1969,13 @@ export default function DashboardShell({
             <SidebarContent onLogout={handleLogout} roles={roles} />
           </Drawer>
         )}
+
         {/* ========================================================= */}
         {/* MAIN LAYOUT STRUCTURE                                     */}
         {/* ========================================================= */}
         <Box
           sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
         >
-          {" "}
           {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
           {!pathname.startsWith("/instructor") && (
             <Box
@@ -1961,8 +1998,18 @@ export default function DashboardShell({
             sx={{
               flex: 1,
               minWidth: 0,
-              px: { xs: 2, md: 5 },
-              py: 3,
+              px: pathname.startsWith("/admin")
+                ? { xs: 2, sm: 3, md: 4, lg: 5 }
+                : PAGE_SPACING.px,
+              py: pathname.startsWith("/admin")
+                ? { xs: 2.5, sm: 3, md: 3.5 }
+                : undefined,
+              pt: pathname.startsWith("/admin")
+                ? undefined
+                : PAGE_SPACING.mt,
+              pb: pathname.startsWith("/admin")
+                ? undefined
+                : LAYOUT_SPACING.pagePy,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -1974,7 +2021,7 @@ export default function DashboardShell({
             <Box
               sx={{
                 width: "100%",
-                maxWidth: "1280px",
+                maxWidth: LAYOUT_SPACING.containerMaxWidth,
                 display: "flex",
                 flexDirection: "column",
                 gap: 4.5,
@@ -2061,10 +2108,10 @@ export default function DashboardShell({
                           >
                             {dashboardData?.welcomeStats?.userName
                               ? dashboardData.welcomeStats.userName
-                                  .split(" ")
-                                  .pop()
-                                  ?.substring(0, 1)
-                                  .toUpperCase()
+                                .split(" ")
+                                .pop()
+                                ?.substring(0, 1)
+                                .toUpperCase()
                               : "A"}
                           </Avatar>
                           <Box>
@@ -3273,22 +3320,18 @@ export default function DashboardShell({
                 )}
               </Box>
             </Box>
-            {!pathname.startsWith("/admin") && (
+            {!pathname.startsWith("/admin") && !pathname.startsWith("/personnel") && (
               <Box
                 sx={{
-                  width: "calc(100% + 32px)",
-                  mx: -2,
+                  width: { xs: "calc(100% + 32px)", md: "calc(100% + 40px)" },
+                  mx: { xs: -2, md: -2.5 },
                   mt: 6,
-                  mb: -3,
+                  mb: -2.5,
                   flexShrink: 0,
-                  "@media (min-width: 900px)": {
-                    width: "calc(100% + 80px)",
-                    mx: -5,
-                  },
                 }}
               >
                 {!activeRoles.includes("GiaoVien") &&
-                !activeRoles.includes("Admin") ? (
+                  !activeRoles.includes("Admin") ? (
                   <StudentFooter />
                 ) : (
                   <AuthenticatedFooter

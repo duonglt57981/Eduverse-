@@ -1,4 +1,4 @@
-using Eduverse.Service.Common;
+﻿using Eduverse.Service.Common;
 using Eduverse.Service.Dto;
 using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.KhoaHocService.Dto;
@@ -338,6 +338,14 @@ namespace Eduverse.Api.Controller
             {
                 return DataResponse<string>.False(ex.Message);
             }
+        }
+
+        [HttpPost("backfill-chu-so-huu-giang-vien")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> BackfillChuSoHuuGiangVien()
+        {
+            var soLuong = await _khoaHocService.BackfillChuSoHuuGiangVien();
+            return Ok(new { message = $"Đã thêm {soLuong} chủ sở hữu vào KhoaHoc_GiangVien" });
         }
     }
 }

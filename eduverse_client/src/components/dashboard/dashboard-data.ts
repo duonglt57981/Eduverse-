@@ -186,6 +186,10 @@ export const sidebarAdminItems: DashboardNavItem[] = [
   { label: 'Thông báo', icon: NotificationsRounded },
 ] as const;
 
+export const sidebarPersonnelItems: DashboardNavItem[] = [
+  { label: 'Kiểm duyệt khóa học', icon: SchoolRounded },
+] as const;
+
 export const sidebarSecondaryItems: DashboardNavItem[] = [] as const;
 
 /**
@@ -193,6 +197,7 @@ export const sidebarSecondaryItems: DashboardNavItem[] = [] as const;
  */
 export function getSidebarItemsByRole(roles: string[]): DashboardNavItem[] {
   if (roles.includes('Admin')) return [...sidebarAdminItems];
+  if (roles.includes('personnel')) return [...sidebarPersonnelItems];
   if (roles.includes('GiaoVien')) return [...sidebarGiaoVienItems];
   return [...sidebarPrimaryItems];
 }

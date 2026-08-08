@@ -1,6 +1,5 @@
 "use client";
 
-import "@fontsource/inter"; // Đảm bảo font Inter được tải
 import {
   Box,
   Typography,

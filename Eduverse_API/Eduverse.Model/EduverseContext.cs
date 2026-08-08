@@ -43,8 +43,10 @@ namespace Eduverse.Model
         public DbSet<KetQuaBaiThi> ketQuaBaiThis { get; set; }
         public DbSet<KhuyenMai> khuyenMais { get; set; }
         public DbSet<KhuyenMai_KhoaHoc> khuyenMai_KhoaHocs   { get; set; }
+        public DbSet<KhoaHoc_GiangVien> khoaHoc_GiangViens { get; set; }
         public DbSet<LanLamBaiKiemTra> lanLamBaiKiemTras { get; set; }
         public DbSet<LienKet> lienKets { get; set; }
+        public DbSet<LoiMoiGiangVien> loiMoiGiangViens { get; set; }
         public DbSet<DonHang_KhuyenMai> DonHang_KhuyenMais { get; set; }
         public DbSet<LoaiThongBao> loaiThongBaos { get; set; }
         public DbSet<NganHang> nganHangs { get; set; }
@@ -56,11 +58,21 @@ namespace Eduverse.Model
         public DbSet<VaiTro_NguoiDung> vaiTro_NguoiDungs { get; set; }
         public DbSet<LichSuKiemDuyetKhoaHoc> lichSuKiemDuyetKhoaHocs { get; set; }
         public DbSet<YeuCauRutTien> yeuCauRutTiens { get; set; }
+        public DbSet<LikeHoiDap> likeHoiDaps { get; set; }
+
         public DbSet<InstructorRequest> InstructorRequests { get; set; }
         public DbSet<LyDoTuChoi> lyDoTuChois { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+                    builder.Entity<KhoaHoc_GiangVien>()
+            .HasIndex(x => new { x.IdKhoaHoc, x.IdGiangVien })
+            .IsUnique();
+
+            builder.Entity<LoiMoiGiangVien>()
+                .HasIndex(x => new { x.IdKhoaHoc, x.IdNguoiDuocMoi })
+                .IsUnique();  // 1 người chỉ có 1 lời mời active cho 1 khóa
+
             builder.Entity<KhoaHoc>()
        .ToTable("KhoaHocs");
 

@@ -40,7 +40,7 @@ import SignalWifiOffIcon from "@mui/icons-material/SignalWifiOff";
 import LoginIcon from "@mui/icons-material/Login";
 import SearchIcon from "@mui/icons-material/Search";
 import AuthGuard from "@/src/components/AuthGuard";
-import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
+import StudentHomeShell from "@/src/components/dashboard/StudentHomeShell";
 
 import { KhoaHocDangKiSearch, KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import KhoaHocService from "@/src/services/KhoaHocService";
@@ -274,9 +274,8 @@ const CourseCard = styled(Card)(() => ({
   backgroundColor: "var(--ev-paper, #FFFFFF)",
   position: "relative",
   "&:hover": {
-    transform: "translateY(-6px)",
     boxShadow:
-      "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
+      "0 8px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
     borderColor: "#CBD5E1",
   },
   "&:hover img": {
@@ -314,7 +313,6 @@ const StatCard = styled(Paper)(() => ({
   "&:hover": {
     boxShadow:
       "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
-    transform: "translateY(-2px)",
     borderColor: "#CBD5E1",
   },
 }));
@@ -641,8 +639,8 @@ function MyCoursesContent() {
     const avg =
       total > 0
         ? Math.round(
-            courses.reduce((s, c) => s + (c.phanTramHoanThanh ?? 0), 0) / total,
-          )
+          courses.reduce((s, c) => s + (c.phanTramHoanThanh ?? 0), 0) / total,
+        )
         : 0;
     return { total, inProgress, completed, avg };
   }, [courses]);
@@ -974,17 +972,53 @@ function MyCoursesContent() {
 
               const isCompleted = progress >= 100;
               const progressColor = isCompleted ? "#16A34A" : RED;
-              const progressBg = isCompleted
-                ? "rgba(22, 163, 74, 0.1)"
-                : "#FBFAF9";
 
               return (
                 <Grid
                   key={registrationId || course.id}
-                  size={{ xs: 12, sm: 6, md: 4 }}
+                  size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
                 >
-                  <CourseCard onClick={() => handleCourseClick(registrationId)}>
-                    <ThumbBox>
+                  <CourseCard
+                    onClick={() => handleCourseClick(registrationId)}
+                    sx={{
+                      borderRadius: "18px",
+                      border: "1px solid var(--ev-divider, #ECE7E4)",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "all 280ms cubic-bezier(0.4, 0, 0.2, 1)",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
+                      overflow: "hidden",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      "&:hover": {
+                        boxShadow: "0 12px 28px -8px rgba(139, 19, 19, 0.12)",
+                        borderColor: "rgba(139, 19, 19, 0.3)",
+                        "& .play-glass-btn": {
+                          transform: "translate(-50%, -50%) scale(1.15)",
+                          background:
+                            "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
+                          color: "#ffffff",
+                          boxShadow: "0 10px 24px rgba(139,19,19,0.45)",
+                        },
+                        "& .course-card-title": {
+                          color: RED,
+                        },
+                      },
+                    }}
+                  >
+                    <ThumbBox
+                      sx={{
+                        position: "relative",
+                        paddingTop: "52%",
+                        overflow: "hidden",
+                        background: hasImg
+                          ? `linear-gradient(to top, rgba(15, 23, 42, 0.6) 0%, transparent 60%), url(${course.hinhAnhKhoaHoc}) center/cover no-repeat`
+                          : "var(--ev-paper-alt, #FBFAF9)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       {hasImg ? (
                         <ThumbImg
                           src={course.hinhAnhKhoaHoc ?? ""}
@@ -995,10 +1029,38 @@ function MyCoursesContent() {
                               [registrationId ?? ""]: true,
                             }))
                           }
+                          sx={{ opacity: 0.92 }}
                         />
                       ) : (
                         <ThumbPlaceholder title={course.tieuDe} />
                       )}
+
+                      {/* Glassmorphic Play Button Overlay */}
+                      <Box
+                        className="play-glass-btn"
+                        sx={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)",
+                          width: 44,
+                          height: 44,
+                          borderRadius: "50%",
+                          background: "rgba(255, 255, 255, 0.88)",
+                          backdropFilter: "blur(12px)",
+                          color: RED,
+                          display: "grid",
+                          placeItems: "center",
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.22)",
+                          transition:
+                            "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                          zIndex: 2,
+                        }}
+                      >
+                        <PlayArrowIcon sx={{ fontSize: 26, ml: 0.2 }} />
+                      </Box>
+
+                      {/* Percentage Badge */}
                       {progress > 0 && progress < 100 && (
                         <Chip
                           label={`${progress}%`}
@@ -1006,85 +1068,113 @@ function MyCoursesContent() {
                           sx={{
                             position: "absolute",
                             bottom: 8,
-                            left: 8,
-                            bgcolor: "rgba(15, 23, 42, 0.8)",
+                            right: 8,
+                            background:
+                              "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
                             color: "#fff",
-                            fontWeight: 700,
-                            fontSize: "0.75rem",
-                            backdropFilter: "blur(4px)",
-                            height: 22,
+                            fontWeight: 800,
+                            fontSize: "0.72rem",
+                            height: 20,
+                            px: 0.6,
+                            boxShadow: "0 4px 12px rgba(139,19,19,0.35)",
+                            zIndex: 2,
                           }}
                         />
                       )}
+
                       {progress >= 100 && (
-                        <Box
+                        <Chip
+                          label="100% ✓"
+                          size="small"
                           sx={{
                             position: "absolute",
-                            top: 8,
+                            bottom: 8,
                             right: 8,
-                            bgcolor: "#16A34A",
-                            borderRadius: "50%",
-                            width: 28,
-                            height: 28,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                            background:
+                              "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                            color: "#fff",
+                            fontWeight: 800,
+                            fontSize: "0.72rem",
+                            height: 20,
+                            px: 0.6,
+                            boxShadow: "0 4px 12px rgba(16,185,129,0.35)",
+                            zIndex: 2,
                           }}
-                        >
-                          <CheckCircleIcon
-                            sx={{ color: "#fff", fontSize: 18 }}
-                          />
-                        </Box>
+                        />
+                      )}
+
+                      {progress === 0 && (
+                        <Chip
+                          label="Chưa học"
+                          size="small"
+                          sx={{
+                            position: "absolute",
+                            bottom: 8,
+                            right: 8,
+                            background: "rgba(15, 23, 42, 0.75)",
+                            backdropFilter: "blur(8px)",
+                            color: "#E2E8F0",
+                            fontWeight: 700,
+                            fontSize: "0.72rem",
+                            height: 20,
+                            px: 0.6,
+                            zIndex: 2,
+                          }}
+                        />
                       )}
                     </ThumbBox>
 
-                    <CourseProgress
-                      variant="determinate"
-                      value={Math.min(progress, 100)}
-                      sx={{
-                        "& .MuiLinearProgress-bar": {
-                          bgcolor: progressColor,
-                        },
-                      }}
-                    />
-
                     <CardContent
-                      sx={{ flexGrow: 1, p: 2.5, "&:last-child": { pb: 2.5 } }}
+                      sx={{
+                        flexGrow: 1,
+                        p: 2,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                        "&:last-child": { pb: 2 },
+                      }}
                     >
                       <Typography
+                        className="course-card-title"
                         sx={{
                           fontWeight: 800,
-                          fontSize: 15,
-                          mb: 1.25,
-                          lineHeight: 1.4,
+                          fontSize: 14,
+                          lineHeight: 1.35,
                           color: "var(--ev-text-primary, #1F2937)",
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: "vertical",
                           overflow: "hidden",
-                          height: 42,
+                          height: 38,
+                          transition: "color 200ms ease",
                         }}
                       >
                         {course.tieuDe}
                       </Typography>
 
-                      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                      <Stack direction="row" spacing={1.5} sx={{ mb: 0.25 }}>
                         <Box
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 0.75,
+                            gap: 0.5,
                           }}
                         >
                           <MenuBookIcon
-                            sx={{ fontSize: 15, color: "var(--ev-text-muted, #8A7676)" }}
+                            sx={{
+                              fontSize: 14,
+                              color: "var(--ev-text-muted, #8A7676)",
+                            }}
                           />
                           <Typography
                             variant="caption"
-                            sx={{ color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}
+                            sx={{
+                              color: "var(--ev-text-secondary, #4B5563)",
+                              fontWeight: 600,
+                              fontSize: 11.5,
+                            }}
                           >
-                            {course.tongBaiGiang ?? 0} bài học
+                            {course.tongBaiGiang ?? 0} bài
                           </Typography>
                         </Box>
                         {minutes > 0 && (
@@ -1092,15 +1182,22 @@ function MyCoursesContent() {
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              gap: 0.75,
+                              gap: 0.5,
                             }}
                           >
                             <AccessTimeIcon
-                              sx={{ fontSize: 15, color: "var(--ev-text-muted, #8A7676)" }}
+                              sx={{
+                                fontSize: 14,
+                                color: "var(--ev-text-muted, #8A7676)",
+                              }}
                             />
                             <Typography
                               variant="caption"
-                              sx={{ color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}
+                              sx={{
+                                color: "var(--ev-text-secondary, #4B5563)",
+                                fontWeight: 600,
+                                fontSize: 11.5,
+                              }}
                             >
                               {minutes} phút
                             </Typography>
@@ -1108,23 +1205,27 @@ function MyCoursesContent() {
                         )}
                       </Stack>
 
-                      <Box sx={{ mb: 2.5 }}>
+                      <Box sx={{ mb: 0.5 }}>
                         <Box
                           sx={{
                             display: "flex",
                             justifyContent: "space-between",
-                            mb: 0.75,
+                            mb: 0.5,
                           }}
                         >
                           <Typography
                             variant="caption"
-                            sx={{ color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}
+                            sx={{
+                              color: "var(--ev-text-secondary, #4B5563)",
+                              fontWeight: 600,
+                              fontSize: 11,
+                            }}
                           >
-                            Tiến độ học tập
+                            Tiến độ
                           </Typography>
                           <Typography
                             variant="caption"
-                            sx={{ fontWeight: 800, color: progressColor }}
+                            sx={{ fontWeight: 800, color: progressColor, fontSize: 11 }}
                           >
                             {course.soBaiGiangHoanThanh ?? 0}/
                             {course.tongBaiGiang ?? 0} bài
@@ -1135,11 +1236,16 @@ function MyCoursesContent() {
                           value={Math.min(progress, 100)}
                           sx={{
                             height: 6,
-                            borderRadius: 3,
-                            bgcolor: progressBg,
+                            borderRadius: 99,
+                            bgcolor: "rgba(0,0,0,0.06)",
                             "& .MuiLinearProgress-bar": {
-                              borderRadius: 3,
-                              bgcolor: progressColor,
+                              borderRadius: 99,
+                              background: isCompleted
+                                ? "linear-gradient(90deg, #34D399 0%, #10B981 100%)"
+                                : "linear-gradient(90deg, #F43F5E 0%, #8B1313 100%)",
+                              boxShadow: isCompleted
+                                ? "0 2px 8px rgba(16,185,129,0.35)"
+                                : "0 2px 8px rgba(139,19,19,0.3)",
                             },
                           }}
                         />
@@ -1149,29 +1255,41 @@ function MyCoursesContent() {
                         fullWidth
                         variant="contained"
                         size="small"
-                        startIcon={<PlayArrowIcon />}
+                        startIcon={
+                          isCompleted ? (
+                            <CheckCircleIcon sx={{ fontSize: "15px !important" }} />
+                          ) : (
+                            <PlayArrowIcon sx={{ fontSize: "15px !important" }} />
+                          )
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCourseClick(registrationId);
                         }}
                         sx={{
                           textTransform: "none",
-                          fontWeight: 700,
+                          fontWeight: 800,
                           borderRadius: "10px",
-                          py: 1,
+                          py: 0.8,
+                          fontSize: 12.5,
                           bgcolor: isCompleted
-                            ? "rgba(22, 163, 74, 0.08)"
-                            : RED,
-                          color: isCompleted ? "#16A34A" : "#fff",
-                          boxShadow: "none",
+                            ? "rgba(16, 185, 129, 0.09)"
+                            : "rgba(139, 19, 19, 0.08)",
+                          color: isCompleted ? "#059669" : RED,
                           border: isCompleted
-                            ? "1px solid rgba(22, 163, 74, 0.2)"
-                            : "none",
+                            ? "1px solid rgba(16, 185, 129, 0.22)"
+                            : "1px solid rgba(139, 19, 19, 0.2)",
+                          boxShadow: "none",
+                          transition: "all 240ms ease",
                           "&:hover": {
-                            bgcolor: isCompleted
-                              ? "rgba(22, 163, 74, 0.15)"
-                              : RED_HOVER,
-                            boxShadow: "none",
+                            background: isCompleted
+                              ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+                              : "linear-gradient(135deg, #8B1313 0%, #6D0F0F 100%)",
+                            color: "#ffffff",
+                            borderColor: "transparent",
+                            boxShadow: isCompleted
+                              ? "0 6px 20px rgba(16,185,129,0.35)"
+                              : "0 6px 20px rgba(139,19,19,0.35)",
                           },
                         }}
                       >
@@ -1392,21 +1510,9 @@ function MyCoursesContent() {
 export default function StudentCoursesPage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
-      <StudentDashboardShell>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2.5, md: 4.5 },
-            borderRadius: "24px",
-            border: "1px solid var(--ev-divider, #ECE7E4)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
-            boxShadow:
-              "0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.01)",
-          }}
-        >
-          <MyCoursesContent />
-        </Paper>
-      </StudentDashboardShell>
+      <StudentHomeShell>
+        <MyCoursesContent />
+      </StudentHomeShell>
     </AuthGuard>
   );
 }
