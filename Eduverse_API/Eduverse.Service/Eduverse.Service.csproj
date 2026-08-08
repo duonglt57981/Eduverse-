@@ -37,8 +37,6 @@
     <Folder Include="GioHangChiTietService\Request\" />
     <Folder Include="GioHangService\Dto\" />
     <Folder Include="GioHangService\Request\" />
-    <Folder Include="HoiDapService\Dto\" />
-    <Folder Include="HoiDapService\Request\" />
     <Folder Include="KetQuaBaiThiService\Dto\" />
     <Folder Include="KetQuaBaiThiService\Request\" />
     <Folder Include="KhuyenMaiService\Dto\" />
