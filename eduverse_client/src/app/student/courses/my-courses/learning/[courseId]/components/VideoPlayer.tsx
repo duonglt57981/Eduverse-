@@ -412,12 +412,20 @@ export const VideoPlayer = ({
   // Xử lý khi mini thay đổi - chỉ trigger resize, không dispose
   useEffect(() => {
     const player = playerRef.current;
-    if (player && !player.isDisposed?.()) {
-      // Trigger resize để video.js cập nhật layout
-      setTimeout(() => {
-        player.trigger("resize");
-      }, 50);
-    }
+
+    if (!player || player.isDisposed()) return;
+
+    const timer = setTimeout(() => {
+      const currentPlayer = playerRef.current;
+
+      if (!currentPlayer || currentPlayer.isDisposed()) return;
+
+      currentPlayer.trigger("resize");
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [mini]);
 
   // Xử lý autoPlay khi mini thay đổi

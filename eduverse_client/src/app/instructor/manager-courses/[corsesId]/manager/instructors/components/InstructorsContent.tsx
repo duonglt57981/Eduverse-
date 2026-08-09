@@ -149,12 +149,23 @@ export default function InstructorsContent() {
   const tongTyLe = rows.reduce((s, r) => s + (r.tyLeChiaDoanhThu || 0), 0);
   const hasDirty = rows.some((r) => r._dirty);
 
+  const vuot100 = tongTyLe > 100;
+  const coSoAm = rows.some((r) => r.tyLeChiaDoanhThu < 0);
+  const coLoi = vuot100 || coSoAm;
+
   // ── Sửa 1 cell trên bảng ─────────────────────────────────────────────────
   const setCell = (
     idGiangVien: string,
     field: keyof CapNhatQuyenRequest,
     value: boolean | number,
   ) => {
+    if (
+      field === "tyLeChiaDoanhThu" &&
+      typeof value === "number" &&
+      value < 0
+    ) {
+      return;
+    }
     setRows((prev) =>
       prev.map((r) =>
         r.idGiangVien === idGiangVien
@@ -334,7 +345,7 @@ export default function InstructorsContent() {
               sx={{
                 height: "100%",
                 width: `${Math.min(tongTyLe, 100)}%`,
-                bgcolor: tongTyLe > 100 ? "#DC2626" : MAU.chinh,
+                bgcolor: vuot100 ? "#DC2626" : MAU.chinh,
                 borderRadius: 99,
                 transition: "width 0.3s ease",
               }}
@@ -345,10 +356,18 @@ export default function InstructorsContent() {
               fontSize: 13,
               fontWeight: 700,
               flexShrink: 0,
-              color: tongTyLe > 100 ? "#DC2626" : "#4B5563",
+              color: vuot100 ? "#DC2626" : "#4B5563",
             }}
           >
             {tongTyLe}% / 100% doanh thu giảng viên
+            {vuot100 && (
+              <Box
+                component="span"
+                sx={{ ml: 1, fontSize: 11, fontWeight: 600 }}
+              >
+                (vượt {tongTyLe - 100}%)
+              </Box>
+            )}
           </Typography>
         </Box>
 
@@ -362,18 +381,19 @@ export default function InstructorsContent() {
             sx={{
               borderRadius: "14px",
               border: "1px solid var(--ev-divider, #ECE7E4)",
-              overflow: "hidden",
+              overflow: "auto",
             }}
           >
             {/* ── Header bảng ── */}
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: `2fr 100px repeat(${COT_QUYEN.length}, 1fr) 80px`,
+                gridTemplateColumns: `240px 90px repeat(${COT_QUYEN.length}, 1fr) 80px`,
                 px: 2.5,
                 py: 1.5,
                 bgcolor: "var(--ev-paper-alt, #F7F5F2)",
                 borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
+                minWidth: 900,
               }}
             >
               <Typography
@@ -413,7 +433,7 @@ export default function InstructorsContent() {
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: `2fr 100px repeat(${COT_QUYEN.length}, 1fr) 80px`,
+                    gridTemplateColumns: `240px 90px repeat(${COT_QUYEN.length}, 1fr) 80px`,
                     px: 2.5,
                     py: 2,
                     alignItems: "center",
@@ -422,12 +442,21 @@ export default function InstructorsContent() {
                   }}
                 >
                   {/* Instructor info */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      minWidth: 0,
+                      overflow: "hidden",
+                    }}
+                  >
                     <Avatar
                       src={row.anhDaiDien || ""}
                       sx={{
                         width: 36,
                         height: 36,
+                        flexShrink: 0,
                         bgcolor: `${MAU.chinh}22`,
                         color: MAU.chinh,
                         fontSize: 14,
@@ -438,9 +467,16 @@ export default function InstructorsContent() {
                         <PersonOutlineIcon sx={{ fontSize: 18 }} />
                       )}
                     </Avatar>
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                       <Typography
-                        sx={{ fontWeight: 700, fontSize: 14, color: "#1F2937" }}
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: 14,
+                          color: "#1F2937",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
                       >
                         {row.hoTen || "Chưa có tên"}
                       </Typography>
@@ -458,7 +494,15 @@ export default function InstructorsContent() {
                           }}
                         />
                       ) : (
-                        <Typography sx={{ fontSize: 12, color: "#8A7676" }}>
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            color: "#8A7676",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           {row.email}
                         </Typography>
                       )}
@@ -498,8 +542,27 @@ export default function InstructorsContent() {
                             fontSize: 14,
                             p: "0 8px",
                           },
-                          "& fieldset": { borderColor: "#ECE7E4" },
-                          "&.Mui-focused fieldset": { borderColor: MAU.chinh },
+                          "& fieldset": {
+                            borderColor:
+                              row.tyLeChiaDoanhThu < 0 ||
+                              (tongTyLe > 100 && row._dirty)
+                                ? "#DC2626"
+                                : "#ECE7E4",
+                          },
+                          "&:hover fieldset": {
+                            borderColor:
+                              row.tyLeChiaDoanhThu < 0 ||
+                              (tongTyLe > 100 && row._dirty)
+                                ? "#DC2626"
+                                : "#CBD5E1",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor:
+                              row.tyLeChiaDoanhThu < 0 ||
+                              (tongTyLe > 100 && row._dirty)
+                                ? "#DC2626"
+                                : MAU.chinh,
+                          },
                         },
                       }}
                     />
@@ -566,7 +629,7 @@ export default function InstructorsContent() {
             <Button
               variant="contained"
               onClick={handleSave}
-              disabled={dangLuu || tongTyLe > 100}
+              disabled={dangLuu || coLoi} // ← dùng coLoi thay vì chỉ tongTyLe > 100
               sx={{
                 bgcolor: "#1F2937",
                 textTransform: "none",
@@ -586,10 +649,35 @@ export default function InstructorsContent() {
                 "Save"
               )}
             </Button>
-            {tongTyLe > 100 && (
-              <Typography sx={{ fontSize: 12, color: "#DC2626", mt: 1 }}>
-                Tổng tỷ lệ đang là {tongTyLe}%, vui lòng điều chỉnh về ≤ 100%
-                trước khi lưu.
+
+            {/* Hiện lỗi cụ thể */}
+            {vuot100 && (
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: "#DC2626",
+                  mt: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                }}
+              >
+                ⚠ Tổng tỷ lệ đang là {tongTyLe}%, vượt quá 100%. Vui lòng điều
+                chỉnh lại.
+              </Typography>
+            )}
+            {coSoAm && (
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: "#DC2626",
+                  mt: 0.5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                }}
+              >
+                ⚠ Có giảng viên đang có tỷ lệ âm. Vui lòng nhập lại.
               </Typography>
             )}
           </Box>

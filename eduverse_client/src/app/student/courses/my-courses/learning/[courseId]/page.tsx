@@ -19,7 +19,6 @@ import {
   useTheme,
   alpha,
   useMediaQuery,
-  Drawer,
   Paper,
   Chip,
   LinearProgress,
@@ -34,6 +33,7 @@ import {
   VideoLibrary as VideoLibraryIcon,
   School as SchoolIcon,
   Star as StarIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 
 import { VideoPlayer } from "./components/VideoPlayer";
@@ -52,6 +52,10 @@ import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
 import DOMPurify from "dompurify";
 import { apiService } from "@/src/services";
 import { QuizSession } from "./components/quiz/QuizSession";
+
+import { Drawer, Tab, Tabs } from "@mui/material";
+import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
+import { QnAPanel } from "./components/QnAPanel";
 
 const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#7F1D1D";
@@ -430,9 +434,14 @@ export default function KhoaHocLearningPage() {
   const params = useParams();
   const pathname = usePathname();
   const courseId = (params?.courseId || params?.id) as string | undefined;
+  const [idDangKyKhoaHoc, setIdDangKyKhoaHoc] = useState<string | null>(null);
 
   const role = pathname.split("/")[1] || "student";
   const dashboardPath = `/${role}/dashboard`;
+
+  const [qnaDrawerBaiGiang, setQnaDrawerBaiGiang] =
+    useState<BaiGiangType | null>(null);
+  const [tabDuoiVideo, setTabDuoiVideo] = useState(0);
 
   console.log("📌 [KhoaHocLearningPage] courseId:", courseId);
 
@@ -612,20 +621,24 @@ export default function KhoaHocLearningPage() {
   }, [updateCurrentSavedTime]);
 
   // ── Handlers ──
+  const khoaHocId = khoaHoc?.id;
+
   const handleTimeUpdateWrapper = useCallback(
     (ct: number) => {
       handleTimeUpdate(ct, (id, time) => {
-        if (courseId) sendProgress(id, time, courseId);
+        if (khoaHocId) {
+          sendProgress(id, time, khoaHocId);
+        }
       });
     },
-    [handleTimeUpdate, sendProgress, courseId],
+    [handleTimeUpdate, sendProgress, khoaHocId],
   );
-
+  const idKhoaHoc = khoaHoc?.id;
   const handleVideoEnded = useCallback(async () => {
-    if (!baiGiang?.id || !courseId) return;
+    if (!baiGiang?.id || !khoaHoc?.id) return;
     const thoiLuong = baiGiang.thoiLuong ?? 0;
-    await sendProgress(baiGiang.id, thoiLuong, courseId);
-    const idx = danhSachTatCa.findIndex((b) => b.id === baiGiang.id);
+    await sendProgress(baiGiang.id, thoiLuong, khoaHoc.id);
+    const idx = danhSachTatCa.findIndex((b) => b.id === idKhoaHoc);
     if (idx !== -1 && idx + 1 < danhSachTatCa.length) {
       lastSavedTimeRef.current = 0;
       currentTimeRef.current = 0;
@@ -637,7 +650,7 @@ export default function KhoaHocLearningPage() {
     danhSachTatCa,
     sendProgress,
     chonBaiGiang,
-    courseId,
+    khoaHoc?.id,
     lastSavedTimeRef,
     currentTimeRef,
   ]);
@@ -1208,68 +1221,132 @@ export default function KhoaHocLearningPage() {
 
                 <StatsBar khoaHoc={khoaHoc} />
 
-                {/* Mô tả khóa học - hiển thị toàn bộ, không thu gọn */}
-                {khoaHoc.moTa && (
-                  <Paper
-                    elevation={0}
+                {/* ── Tabs bên dưới video ─────────────────────────────────── */}
+                <Box sx={{ mt: 4 }}>
+                  <Tabs
+                    value={tabDuoiVideo}
+                    onChange={(_, v) => setTabDuoiVideo(v)}
                     sx={{
-                      p: { xs: 2.5, md: 4 },
-                      mt: 4,
-                      borderRadius: "16px",
-                      border: "1px solid var(--ev-divider, #ECE7E4)",
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
-                      backgroundColor: "background.paper",
+                      borderBottom: "1px solid #ECE7E4",
+                      mb: 3,
+                      "& .MuiTab-root": {
+                        textTransform: "none",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        color: "#4B5563",
+                        minHeight: 44,
+                        px: 0,
+                        mr: 4,
+                      },
+                      "& .Mui-selected": { color: `${PRIMARY_RED} !important` },
+                      "& .MuiTabs-indicator": { backgroundColor: PRIMARY_RED },
                     }}
                   >
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 800, mb: 1.5, color: "text.primary" }}
-                    >
-                      Mô tả khóa học
-                    </Typography>
-
-                    <Box
-                      sx={{
-                        fontSize: "0.875rem",
-                        fontWeight: 400,
-                        lineHeight: 1.7,
-                        color: "text.secondary",
-                        "& p": { margin: "0 0 0.75em 0" },
-                        "& ul, & ol": {
-                          paddingLeft: "1.5em",
-                          margin: "0.5em 0 0.75em 0",
-                        },
-                        "& li": { marginBottom: "0.25em" },
-                        "& h1, & h2, & h3, & h4, & h5, & h6": {
-                          margin: "0.75em 0 0.25em 0",
-                          fontWeight: 700,
-                          color: "text.primary",
-                        },
-                        "& img": {
-                          maxWidth: "100%",
-                          height: "auto",
-                          borderRadius: 1,
-                          margin: "0.5em 0",
-                        },
-                        "& a": {
-                          color: PRIMARY_RED,
-                          textDecoration: "underline",
-                          "&:hover": { color: PRIMARY_RED_DARK },
-                        },
-                        "& blockquote": {
-                          borderLeft: `4px solid ${PRIMARY_RED}`,
-                          paddingLeft: "1.5em",
-                          margin: "0.75em 0",
-                          color: "text.secondary",
-                          fontStyle: "italic",
-                        },
-                      }}
-                      dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(khoaHoc.moTa),
-                      }}
+                    <Tab label="Mô tả" />
+                    <Tab
+                      label={
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.75,
+                          }}
+                        >
+                          <QuestionAnswerOutlinedIcon sx={{ fontSize: 16 }} />
+                          Hỏi đáp
+                        </Box>
+                      }
                     />
-                  </Paper>
-                )}
+                  </Tabs>
+
+                  {/* Tab 0 — Mô tả */}
+                  {tabDuoiVideo === 0 && (
+                    <>
+                      {khoaHoc.moTa && (
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: { xs: 2.5, md: 4 },
+                            borderRadius: "16px",
+                            border: "1px solid var(--ev-divider, #ECE7E4)",
+                            boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
+                            backgroundColor: "background.paper",
+                          }}
+                        >
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              fontWeight: 800,
+                              mb: 1.5,
+                              color: "text.primary",
+                            }}
+                          >
+                            Mô tả khóa học
+                          </Typography>
+                          <Box
+                            sx={{
+                              fontSize: "0.875rem",
+                              fontWeight: 400,
+                              lineHeight: 1.7,
+                              color: "text.secondary",
+                              "& p": { margin: "0 0 0.75em 0" },
+                              "& ul, & ol": {
+                                paddingLeft: "1.5em",
+                                margin: "0.5em 0 0.75em 0",
+                              },
+                              "& li": { marginBottom: "0.25em" },
+                              "& h1, & h2, & h3, & h4, & h5, & h6": {
+                                margin: "0.75em 0 0.25em 0",
+                                fontWeight: 700,
+                                color: "text.primary",
+                              },
+                              "& img": {
+                                maxWidth: "100%",
+                                height: "auto",
+                                borderRadius: 1,
+                                margin: "0.5em 0",
+                              },
+                              "& a": {
+                                color: PRIMARY_RED,
+                                textDecoration: "underline",
+                                "&:hover": { color: PRIMARY_RED_DARK },
+                              },
+                              "& blockquote": {
+                                borderLeft: `4px solid ${PRIMARY_RED}`,
+                                paddingLeft: "1.5em",
+                                margin: "0.75em 0",
+                                color: "text.secondary",
+                                fontStyle: "italic",
+                              },
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html: DOMPurify.sanitize(khoaHoc.moTa),
+                            }}
+                          />
+                        </Paper>
+                      )}
+                    </>
+                  )}
+
+                  {/* Tab 1 — Q&A tổng */}
+                  {tabDuoiVideo === 1 && courseId && (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: { xs: 2.5, md: 3 },
+                        borderRadius: "16px",
+                        border: "1px solid var(--ev-divider, #ECE7E4)",
+                        minHeight: 500,
+                      }}
+                    >
+                      <QnAPanel
+                        idKhoaHoc={khoaHoc.id}
+                        idBaiGiang={null}
+                        laGiangVien={false}
+                      />
+                    </Paper>
+                  )}
+                </Box>
 
                 {/* Thông tin giảng viên */}
                 <InstructorInfo thongTinGiangVien={thongTinGiangVien} />
@@ -1309,6 +1386,7 @@ export default function KhoaHocLearningPage() {
               quizTheoPhan={quizTheoPhan}
               idQuizDangChon={quizDangChon?.id}
               onSelectQuiz={handleSelectQuiz}
+              onOpenQnA={(bg) => setQnaDrawerBaiGiang(bg)}
             />
           </Box>
         )}
@@ -1339,6 +1417,7 @@ export default function KhoaHocLearningPage() {
               onSelectQuiz={handleSelectQuiz}
               isMobile={true}
               onCloseMobile={() => setSidebarOpen(false)}
+              onOpenQnA={(bg) => setQnaDrawerBaiGiang(bg)}
             />
           </Drawer>
         )}
@@ -1396,6 +1475,80 @@ export default function KhoaHocLearningPage() {
           onUnmount={handleMiniUnmount}
         />
       )}
+      <Drawer
+        anchor="right"
+        open={!!qnaDrawerBaiGiang}
+        onClose={() => setQnaDrawerBaiGiang(null)}
+        sx={{
+          "& .MuiDrawer-paper": {
+            width: { xs: "92%", sm: 480 },
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+      >
+        {qnaDrawerBaiGiang && courseId && (
+          <>
+            {/* Header drawer */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                mb: 3,
+                pb: 2,
+                borderBottom: "1px solid #ECE7E4",
+              }}
+            >
+              <Box>
+                <Typography
+                  sx={{ fontWeight: 900, fontSize: 17, color: "#1F2937" }}
+                >
+                  Hỏi đáp bài giảng
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: "#8A7676",
+                    mt: 0.5,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    maxWidth: 340,
+                  }}
+                >
+                  📹 {qnaDrawerBaiGiang.tieuDe}
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                onClick={() => setQnaDrawerBaiGiang(null)}
+                sx={{ mt: -0.5 }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {/* Panel Q&A */}
+            <Box
+              sx={{
+                flex: 1,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <QnAPanel
+                idKhoaHoc={khoaHoc.id}
+                idBaiGiang={qnaDrawerBaiGiang.id}
+                tenBaiGiang={qnaDrawerBaiGiang.tieuDe}
+                laGiangVien={false}
+              />
+            </Box>
+          </>
+        )}
+      </Drawer>
       <DanhGiaDialog
         open={showDanhGia}
         onClose={() => setShowDanhGia(false)}

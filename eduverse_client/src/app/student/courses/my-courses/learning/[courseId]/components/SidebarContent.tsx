@@ -28,6 +28,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Quiz as QuizIcon,
 } from "@mui/icons-material";
+import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import { TaiLieuDropdown } from "./TaiLieuDropdown";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
@@ -62,6 +63,7 @@ interface SidebarContentProps {
   quizTheoPhan?: Map<string, BaiKiemTraDto[]>;
   idQuizDangChon?: string;
   onSelectQuiz?: (quiz: BaiKiemTraDto) => void;
+  onOpenQnA?: (bg: BaiGiangType) => void;
 }
 
 export const SidebarContent = ({
@@ -72,6 +74,7 @@ export const SidebarContent = ({
   onSearchChange,
   onTogglePhan,
   onSelectBaiGiang,
+  onOpenQnA,
   progressMap,
   phanTramHoanThanh,
   soBaiHoanThanh,
@@ -226,7 +229,12 @@ export const SidebarContent = ({
               input: {
                 startAdornment: (
                   <InputAdornment position="start" sx={{ ml: 0.5 }}>
-                    <SearchIcon sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A7676)" }} />
+                    <SearchIcon
+                      sx={{
+                        fontSize: 18,
+                        color: "var(--ev-text-muted, #8A7676)",
+                      }}
+                    />
                   </InputAdornment>
                 ),
                 endAdornment: searchTerm ? (
@@ -248,7 +256,12 @@ export const SidebarContent = ({
                       onClick={handleClearSearch}
                       sx={{ p: 0.5 }}
                     >
-                      <CloseIcon sx={{ fontSize: 16, color: "var(--ev-text-muted, #8A7676)" }} />
+                      <CloseIcon
+                        sx={{
+                          fontSize: 16,
+                          color: "var(--ev-text-muted, #8A7676)",
+                        }}
+                      />
                     </IconButton>
                   </InputAdornment>
                 ) : undefined,
@@ -368,9 +381,19 @@ export const SidebarContent = ({
                     </Typography>
                   </Box>
                   {isOpen ? (
-                    <ExpandLessIcon sx={{ fontSize: 20, color: "var(--ev-text-secondary, #4B5563)" }} />
+                    <ExpandLessIcon
+                      sx={{
+                        fontSize: 20,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                      }}
+                    />
                   ) : (
-                    <ExpandMoreIcon sx={{ fontSize: 20, color: "var(--ev-text-secondary, #4B5563)" }} />
+                    <ExpandMoreIcon
+                      sx={{
+                        fontSize: 20,
+                        color: "var(--ev-text-secondary, #4B5563)",
+                      }}
+                    />
                   )}
                 </ListItemButton>
 
@@ -454,6 +477,47 @@ export const SidebarContent = ({
                             <TaiLieuDropdown
                               danhSachTaiLieu={bg.danhSachTaiLieu!}
                             />
+                          )}
+                          {onOpenQnA && (
+                            <Box
+                              sx={{
+                                pl: 9,
+                                pr: 3,
+                                pb: 1,
+                                display: "flex",
+                              }}
+                            >
+                              <Box
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenQnA(bg);
+                                }}
+                                sx={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                  px: 1.25,
+                                  py: 0.4,
+                                  borderRadius: "6px",
+                                  border: "1px solid #ECE7E4",
+                                  cursor: "pointer",
+                                  color: "#4B5563",
+                                  fontSize: 11.5,
+                                  fontWeight: 600,
+                                  transition: "all 0.15s ease",
+                                  "&:hover": {
+                                    borderColor: PRIMARY_RED,
+                                    color: PRIMARY_RED,
+                                    bgcolor: `${PRIMARY_RED}08`,
+                                  },
+                                }}
+                              >
+                                <QuestionAnswerOutlinedIcon
+                                  sx={{ fontSize: 13 }}
+                                />
+                                Q&A
+                              </Box>
+                            </Box>
                           )}
                         </Box>
                       );
@@ -541,7 +605,11 @@ export const SidebarContent = ({
               <>
                 <Typography
                   variant="body1"
-                  sx={{ fontWeight: 700, color: "var(--ev-text-primary, #1F2937)", mb: 1 }}
+                  sx={{
+                    fontWeight: 700,
+                    color: "var(--ev-text-primary, #1F2937)",
+                    mb: 1,
+                  }}
                 >
                   Không tìm thấy kết quả
                 </Typography>
