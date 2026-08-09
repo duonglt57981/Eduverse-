@@ -54,8 +54,6 @@ function tenTepTuUrl(url: string): string {
   }
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002";
-
 export default function CvViewerDialog({
   open,
   onClose,
@@ -69,7 +67,7 @@ export default function CvViewerDialog({
   hoTen?: string | null;
   requestId?: string | null;
 }) {
-  const [dangTai, setDangTai] = useState(true);
+  const [dangTai, setDangTai] = useState(false);
   const [loi, setLoi] = useState(false);
   // Địa chỉ tạm trỏ tới tệp đã tải về bộ nhớ trình duyệt
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -97,7 +95,6 @@ export default function CvViewerDialog({
   // Tải tệp PDF qua apiService (tự động kèm Authorization Bearer token) để tạo Blob URL chuẩn
   useEffect(() => {
     if (!open || !cvUrl) {
-      setDangTai(false);
       return;
     }
 
@@ -159,8 +156,6 @@ export default function CvViewerDialog({
 
     if (loaiTep === "pdf") {
       void loadPdfBlob();
-    } else {
-      setDangTai(false);
     }
 
     return () => {

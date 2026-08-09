@@ -91,10 +91,6 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error fetching profile stats: " + ex.Message);
             }
 
-            if (totalHoursSpent <= 0) totalHoursSpent = 145; // default fallback matching mockup
-            if (registeredCoursesCount <= 0) registeredCoursesCount = 12;
-            if (certificatesCount <= 0) certificatesCount = 8;
-
             var roles = await _userManager.GetRolesAsync(user);
 
             return new DataResponse<object>
@@ -260,7 +256,7 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<object> { Status = false, Message = "Không tìm thấy người dùng đăng nhập" };
             }
 
-            var user = await _userManager.FindByIdAsync(loggedInUserId.ToString());
+            var user = await _userManager.FindByIdAsync(loggedInUserId.Value.ToString());
             if (user == null)
             {
                 return new DataResponse<object> { Status = false, Message = "Người dùng không tồn tại" };
@@ -302,7 +298,7 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<string> { Status = false, Message = "Không tìm thấy người dùng đăng nhập" };
             }
 
-            var user = await _userManager.FindByIdAsync(loggedInUserId.ToString());
+            var user = await _userManager.FindByIdAsync(loggedInUserId.Value.ToString());
             if (user == null)
             {
                 return new DataResponse<string> { Status = false, Message = "Người dùng không tồn tại" };
@@ -337,7 +333,7 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<object> { Status = false, Message = "Không tìm thấy người dùng đăng nhập" };
             }
 
-            var user = await _userManager.FindByIdAsync(loggedInUserId.ToString());
+            var user = await _userManager.FindByIdAsync(loggedInUserId.Value.ToString());
             if (user == null)
             {
                 return new DataResponse<object> { Status = false, Message = "Người dùng không tồn tại" };
@@ -396,7 +392,7 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<string> { Status = false, Message = "Không tìm thấy người dùng đăng nhập" };
             }
 
-            var user = await _userManager.FindByIdAsync(loggedInUserId.ToString());
+            var user = await _userManager.FindByIdAsync(loggedInUserId.Value.ToString());
             if (user == null)
             {
                 return new DataResponse<string> { Status = false, Message = "Người dùng không tồn tại" };
