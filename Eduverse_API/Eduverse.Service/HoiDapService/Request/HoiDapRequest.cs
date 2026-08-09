@@ -32,4 +32,10 @@ namespace Eduverse.Service.HoiDapService.Request
         // "MoiNhat" | "NhieuTraLoi" | "DaGhim"
         public string SapXep { get; set; } = "MoiNhat";
     }
+    public class ReplyRequest
+    {
+        public Guid IdCauHoi { get; set; }
+        public Guid IdTraLoiDuocReply { get; set; } 
+        public string NoiDung { get; set; } = string.Empty;
+    }
 }

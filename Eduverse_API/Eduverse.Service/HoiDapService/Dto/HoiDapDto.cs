@@ -18,10 +18,11 @@ namespace Eduverse.Service.HoiDapService.Dto
         public string? NguoiTraLoiTen { get; set; }
         public string? NguoiTraLoiAnh { get; set; }
         public DateTime NgayTao { get; set; }
-        public bool LaCuaToi { get; set; }  
+        public bool LaCuaToi { get; set; }
+        public List<TraLoiDto> DanhSachReply { get; set; } = new();
     }
 
-    public class CauHoiDto
+    public class HoiDapDto
     {
         public Guid Id { get; set; }
         public Guid? IdBaiGiang { get; set; }
