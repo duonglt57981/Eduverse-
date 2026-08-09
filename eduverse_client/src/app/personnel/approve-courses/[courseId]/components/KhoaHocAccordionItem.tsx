@@ -59,7 +59,11 @@ function BaiGiangRow({ baiGiang, active, onClick }: any) {
         >
           {baiGiang.tenBaiGiang || baiGiang.tieuDe}
         </Typography>
-        <StatusChip trangThai={baiGiang.trangThaiPheDuyet} size="small" hidePending />
+        <StatusChip
+          trangThai={baiGiang.trangThaiPheDuyet}
+          size="small"
+          hidePending
+        />
       </Stack>
     </Box>
   );
@@ -101,7 +105,11 @@ function TaiLieuRow({ taiLieu, active, onClick, nested = false }: any) {
         >
           {taiLieu.tenTaiLieu || taiLieu.tieuDe}
         </Typography>
-        <StatusChip trangThai={taiLieu.trangThaiPheDuyet} size="small" hidePending />
+        <StatusChip
+          trangThai={taiLieu.trangThaiPheDuyet}
+          size="small"
+          hidePending
+        />
       </Stack>
     </Box>
   );
@@ -151,7 +159,11 @@ function BaiKiemTraRow({ baiKiemTra, active, onClick }: any) {
           >
             {baiKiemTra.tenBaiKiemTra || baiKiemTra.tieuDe}
           </Typography>
-          <StatusChip trangThai={baiKiemTra.trangThaiPheDuyet} size="small" hidePending />
+          <StatusChip
+            trangThai={baiKiemTra.trangThaiPheDuyet}
+            size="small"
+            hidePending
+          />
           {cauHois.length > 0 && (
             <ExpandMoreIcon
               onClick={(e: any) => {
@@ -337,8 +349,28 @@ export default function KhoaHocAccordionItem({
           }}
         />
       </Stack>
-      <Collapse in={isExpanded}>
-        <Box sx={{ borderTop: `1px solid ${COLORS.line}` }}>
+      <Collapse in={isExpanded} sx={{ maxHeight: "calc(100vh - 220px)" }}>
+        <Box
+          sx={{
+            borderTop: `1px solid ${COLORS.line}`,
+            maxHeight: "calc(100vh - 220px)",
+            overflowY: "auto",
+            // custom scrollbar - mỏng, đồng bộ màu với theme
+            "&::-webkit-scrollbar": {
+              width: 6,
+            },
+            "&::-webkit-scrollbar-track": {
+              bgcolor: "transparent",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: alpha(COLORS.primary, 0.25),
+              borderRadius: 3,
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: alpha(COLORS.primary, 0.4),
+            },
+          }}
+        >
           {detailLoading ? (
             <Stack spacing={1} sx={{ p: 1.5 }}>
               <Skeleton variant="rounded" height={32} />
@@ -600,3 +632,4 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
     </Stack>
   );
 }
+  

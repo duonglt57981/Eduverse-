@@ -28,6 +28,7 @@ import {
 } from "@mui/icons-material";
 import { ThemeProvider } from "@mui/material/styles";
 import { createAppTheme } from "@/src/theme/createAppTheme";
+import { LAYOUT_SPACING } from "@/src/theme/tokens";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -118,8 +119,8 @@ export default function LoginPage() {
           alignItems: "center",
           justifyContent: "center",
           bgcolor: "var(--ev-paper-alt, #F7F5F2)",
-          px: 2.5,
-          py: 4,
+          px: LAYOUT_SPACING.pagePx,
+          py: LAYOUT_SPACING.pagePy,
           position: "relative",
         }}
       >
@@ -360,7 +361,7 @@ export default function LoginPage() {
                 zIndex: 999,
               }}
             >
-              <a
+              <NextLink
                 href="/auth/forgot-password"
                 style={{ textDecoration: "none" }}
               >
@@ -368,17 +369,17 @@ export default function LoginPage() {
                   sx={{
                     fontSize: 13,
                     fontWeight: 600,
-                    color: "#8B1313",
+                    color: "primary.main",
                     cursor: "pointer",
                     "&:hover": {
                       textDecoration: "underline",
-                      color: "#5c1111",
+                      color: "primary.dark",
                     },
                   }}
                 >
                   Quên mật khẩu?
                 </Box>
-              </a>
+              </NextLink>
             </Box>
 
             <Button
@@ -448,19 +449,19 @@ export default function LoginPage() {
             }}
           >
             Chưa có tài khoản?{" "}
-            <a href="/auth/register" style={{ textDecoration: "none" }}>
+            <NextLink href="/auth/register" style={{ textDecoration: "none" }}>
               <Box
                 component="span"
                 sx={{
-                  color: "#8B1313",
+                  color: "primary.main",
                   fontWeight: 900,
                   cursor: "pointer",
-                  "&:hover": { textDecoration: "underline", color: "#5c1111" },
+                  "&:hover": { textDecoration: "underline", color: "primary.dark" },
                 }}
               >
                 Đăng ký ngay
               </Box>
-            </a>
+            </NextLink>
           </Typography>
 
           {/* Elegant Footer */}
@@ -468,7 +469,7 @@ export default function LoginPage() {
             sx={{
               textAlign: "center",
               fontSize: 12.5,
-              color: "#8A7676",
+              color: "var(--ev-text-muted, #8A7676)",
               lineHeight: 1.6,
               position: "relative",
               zIndex: 999,
@@ -476,11 +477,11 @@ export default function LoginPage() {
             }}
           >
             Bằng cách đăng nhập, bạn đồng ý với{" "}
-            <a href="/auth/terms" style={{ textDecoration: "none" }}>
+            <NextLink href="/auth/terms" style={{ textDecoration: "none" }}>
               <Box
                 component="span"
                 sx={{
-                  color: "#8B1313",
+                  color: "primary.main",
                   fontWeight: 600,
                   cursor: "pointer",
                   "&:hover": {
@@ -490,13 +491,13 @@ export default function LoginPage() {
               >
                 Điều khoản Dịch vụ
               </Box>
-            </a>{" "}
+            </NextLink>{" "}
             và{" "}
-            <a href="/auth/privacy" style={{ textDecoration: "none" }}>
+            <NextLink href="/auth/privacy" style={{ textDecoration: "none" }}>
               <Box
                 component="span"
                 sx={{
-                  color: "#8B1313",
+                  color: "primary.main",
                   fontWeight: 600,
                   cursor: "pointer",
                   "&:hover": {
@@ -506,7 +507,7 @@ export default function LoginPage() {
               >
                 Chính sách Bảo mật
               </Box>
-            </a>{" "}
+            </NextLink>{" "}
             của EduVerse.
           </Typography>
         </Paper>

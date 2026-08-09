@@ -61,9 +61,25 @@ export default function KhoiTenKhoaHoc({
               useFlexGap
               sx={{ mt: 1.5, flexWrap: "wrap", alignItems: "center" }}
             >
-              <Typography variant="caption" sx={{ color: "var(--ev-text-muted, #8A7676)", fontWeight: 600, mr: 1 }}>
-                Giảng viên: <span style={{ color: "var(--ev-text-primary, #1F2937)", fontWeight: 700 }}>{detail.createBy || "Không xác định"}</span>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "var(--ev-text-muted, #8A7676)",
+                  fontWeight: 600,
+                  mr: 1,
+                }}
+              >
+                Giảng viên:{" "}
+                <span
+                  style={{
+                    color: "var(--ev-text-primary, #1F2937)",
+                    fontWeight: 700,
+                  }}
+                >
+                  {detail.createBy || "Không xác định"}
+                </span>
               </Typography>
+
               {detail.loaiKhoaHoc && (
                 <Chip
                   label={detail.loaiKhoaHoc}
@@ -78,6 +94,7 @@ export default function KhoiTenKhoaHoc({
                   }}
                 />
               )}
+
               {detail.capDo && (
                 <Chip
                   label={`Cấp độ: ${detail.capDo}`}
@@ -92,6 +109,7 @@ export default function KhoiTenKhoaHoc({
                   }}
                 />
               )}
+
               {detail.giaGoc != null && (
                 <Chip
                   label={`Giá: ${detail.giaGoc.toLocaleString()} VND`}
@@ -105,6 +123,23 @@ export default function KhoiTenKhoaHoc({
                   }}
                 />
               )}
+
+              {/* 👇 Hiển thị danh sách danh mục */}
+              {detail.danhMucs?.map((cat: string, index: number) => (
+                <Chip
+                  key={index}
+                  label={cat}
+                  size="small"
+                  sx={{
+                    bgcolor: "transparent",
+                    color: "var(--ev-text-secondary, #4B5563)",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    borderRadius: "8px",
+                    border: "1px solid var(--ev-divider, #ECE7E4)",
+                  }}
+                />
+              ))}
             </Stack>
           )}
         </Box>

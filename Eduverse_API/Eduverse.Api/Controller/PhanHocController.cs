@@ -20,35 +20,9 @@ namespace Eduverse.Api.Controller
             _phanHocService = phanHocService;
         }
 
-        [HttpGet("phanhoc-get-toupdate/{idKhoaHoc}")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<GetToUpdatePhanDto>> GetToUpdatePhan(Guid IdPhan)
-        {
-            try
-            {
-                var result = await _phanHocService.GetToUpdatePhan(IdPhan);
-                return DataResponse<GetToUpdatePhanDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<GetToUpdatePhanDto>.False(ex.Message);
-            }
-        }
+        
 
-        [HttpGet("phanhoc-getlistformanager/{idKhoaHoc}")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<List<PhanHocDto>>> GetListForManager(Guid IdKhoaHoc)
-        {
-            try
-            {
-                var result = await _phanHocService.GetListForManager(IdKhoaHoc);
-                return DataResponse<List<PhanHocDto>>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<List<PhanHocDto>>.False(ex.Message);
-            }
-        }
+        
 
         [HttpPost("phanhoc-create")]
         [Authorize(Roles = "Admin,GiaoVien")]

@@ -91,62 +91,6 @@ namespace Eduverse.Service.BaiKiemTraService
             _khoaHocGVRepository = khoaHocGVRepository;
         }
 
-        #region GetListForManager
-        public async Task<List<BaiKiemTraDto>> GetListForManager(Guid idPhan)
-        {
-            var baiKiemTras = await GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdPhan == idPhan && !x.IsDeleted)
-                .OrderBy(x => x.ThuTuSapXep)
-                .ToListAsync();
-
-            if (baiKiemTras.Count == 0)
-                return new List<BaiKiemTraDto>();
-
-            var baiKiemTraIds = baiKiemTras.Select(x => x.Id).ToList();
-
-            var cauHois = await _cauHoiService
-                .GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdBaiKiemTra.HasValue && baiKiemTraIds.Contains(x.IdBaiKiemTra.Value) && !x.IsDeleted)
-                .OrderBy(x => x.ThuTuSapXep)
-                .ToListAsync();
-
-            var cauHoiIds = cauHois.Select(x => x.Id).ToList();
-
-            var dapAns = await _dapAnService
-                .GetQueryable()
-                .AsNoTracking()
-                .Where(x => x.IdCauHoi.HasValue && cauHoiIds.Contains(x.IdCauHoi.Value) && !x.IsDeleted)
-                .OrderBy(x => x.ThuTuSapXep)
-                .ToListAsync();
-
-            var result = baiKiemTras.Select(bkt =>
-            {
-                var item = _mapper.Map<BaiKiemTra, BaiKiemTraDto>(bkt);
-
-                item.DanhSachCauHois = cauHois
-                    .Where(c => c.IdBaiKiemTra == bkt.Id)
-                    .Select(c =>
-                    {
-                        var cauHoiDto = _mapper.Map<CauHoi, CauHoiDto>(c);
-                        cauHoiDto.DanhSachDapAns = dapAns
-                            .Where(d => d.IdCauHoi == c.Id)
-                            .Select(d => _mapper.Map<DapAn, DapAnDto>(d))
-                            .ToList();
-                        return cauHoiDto;
-                    })
-                    .ToList();
-
-                item.SoCauHoi = item.DanhSachCauHois.Count;
-
-                return item;
-            }).ToList();
-
-            return result;
-        }
-        #endregion
-
         public async Task<CreateBaiKiemTraDto> CreateQuiz(CreateBaiKiemTraRequest request)
         {
             // ===== 1. VALIDATE ĐẦU VÀO =====

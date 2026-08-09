@@ -57,34 +57,6 @@ namespace Eduverse.Service.TaiLieuService
         }
 
 
-        public async Task<List<TaiLieuDto>> GetListForManager(Guid IdBaiGiang)
-        {
-            // Lấy userId từ token
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                throw new UnauthorizedAccessException("Không thể xác định người dùng.");
-            }
-
-            var query = GetQueryable()
-                .Where(x => x.CreatedId == userId
-                    && x.IdBaiGiang == IdBaiGiang)
-                .OrderBy(x => x.CreatedDate)
-                .Select(x => new TaiLieuDto
-                {
-                    Id = x.Id,
-                    IdBaiGiang = IdBaiGiang,
-                    TenTaiLieu = x.TenTaiLieu,
-                    URL = x.URL,
-                    TrangThai = x.TrangThai,
-                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
-
-                });
-
-            return await query.ToListAsync();
-        }
-
-
         public async Task<TaiLieuDto> CreateTaiLieu(CreateTaiLieuRequest request)
         {
             var baiGiang = await _baiGiangRepository.GetByIdAsync(request.IdBaiGiang);

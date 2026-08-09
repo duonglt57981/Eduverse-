@@ -161,8 +161,8 @@ const LessonRow = styled(Box)<{ clickable?: number }>(({ clickable }) => ({
   "&:last-child": { borderBottom: "none" },
   "&:hover": clickable
     ? {
-        backgroundColor: RED_SOFT,
-      }
+      backgroundColor: RED_SOFT,
+    }
     : undefined,
 }));
 
@@ -1848,9 +1848,9 @@ function CourseRegistrationContent() {
                       flexDirection: "column",
                       "&:hover": kh.id
                         ? {
-                            boxShadow: "0 10px 26px rgba(141,19,19,0.14)",
-                            transform: "translateY(-2px)",
-                          }
+                          boxShadow: "0 10px 26px rgba(141,19,19,0.14)",
+                          transform: "translateY(-2px)",
+                        }
                         : undefined,
                     }}
                   >
@@ -2196,7 +2196,7 @@ export default function CourseRegistrationPage() {
   return (
     <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
       <StudentDashboardShell>
-        <Box sx={{ py: { xs: 2.5, md: 4.5 } }}>
+        <Box sx={{ mt: 0, pb: 3 }}>
           <Paper
             elevation={0}
             sx={{

@@ -285,8 +285,8 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
                 height: 22,
                 fontSize: 11,
                 fontWeight: 600,
-                bgcolor: "var(--ev-paper-alt, #EFF6FF)",
-                color: "#2563EB",
+                bgcolor: "rgba(139, 19, 19, 0.06)",
+                color: BRAND_COLORS.primary,
                 borderRadius: "4px",
               }}
             />
@@ -695,17 +695,21 @@ export default function CoursesPage({
     sortBy !== "newest";
 
   return (
-    <Box sx={{ width: "100%", pt: 3 }}>
-      {/* Modern Compact Hero Section */}
+    <Box sx={{ width: "100%", pt: 0, px: { xs: 2, sm: 3, md: 4 } }}>
+      {/* Modern Compact Hero Card Section */}
       <Box
         sx={{
-          py: { xs: 4, sm: 5, md: 6 },
-          px: 0,
+          py: { xs: 4, sm: 5, md: 5.5 },
+          px: { xs: 2.5, sm: 4, md: 5 },
+          borderRadius: "24px",
+          bgcolor: "var(--ev-paper, #FFFFFF)",
+          border: "1px solid var(--ev-divider, #ECE7E4)",
+          boxShadow: "0 8px 30px rgba(139, 19, 19, 0.04)",
           display: "grid",
           gridTemplateColumns: { xs: "1fr", lg: "1.1fr 0.9fr" },
           gap: { xs: 4, lg: 6 },
           alignItems: "center",
-          mb: 6,
+          mb: 4,
         }}
       >
         <Box>
@@ -811,16 +815,18 @@ export default function CoursesPage({
                 px: 4,
                 height: 52,
                 borderRadius: "12px",
-                bgcolor: BRAND_COLORS.primary,
-                fontWeight: 700,
+                background: "linear-gradient(135deg, #8B1313 0%, #6D0F0F 100%)",
+                color: "#FFFFFF",
+                fontWeight: 800,
                 fontSize: 14.5,
                 textTransform: "none",
                 whiteSpace: "nowrap",
-                boxShadow: "none",
+                boxShadow: "0 4px 14px rgba(139, 19, 19, 0.25)",
                 transition: "all 200ms ease",
                 "&:hover": {
-                  bgcolor: BRAND_COLORS.primaryHover,
-                  boxShadow: "0 4px 14px rgba(153, 27, 27, 0.2)",
+                  background: "linear-gradient(135deg, #7F1D1D 0%, #5B0B0B 100%)",
+                  boxShadow: "0 6px 20px rgba(139, 19, 19, 0.38)",
+                  transform: "translateY(-1px)",
                 },
               }}
             >
@@ -1340,15 +1346,15 @@ export default function CoursesPage({
                       minWidth: 100,
                       height: 38,
                       px: 2,
-                      borderRadius: "4px",
-                      bgcolor: active ? "#F04438" : "#ffffff",
+                      borderRadius: "6px",
+                      bgcolor: active ? BRAND_COLORS.primary : "#ffffff",
                       color: active ? "#ffffff" : BRAND_COLORS.textBody,
                       fontSize: 13.5,
                       fontWeight: active ? 700 : 500,
                       textTransform: "none",
                       boxShadow: "none",
                       "&:hover": {
-                        bgcolor: active ? "#D92D20" : "#FEF2F2",
+                        bgcolor: active ? BRAND_COLORS.primaryHover : "rgba(139,19,19,0.06)",
                       },
                     }}
                   >

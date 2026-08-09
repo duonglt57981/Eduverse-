@@ -5,6 +5,8 @@ import {
   KiemDuyetDetailDto,
   KiemDuyetKhoaHocDto,
   KiemDuyetSearchDto,
+  LyDoTuChoiDto,
+  LyDoTuChoiRequest,
   NhanVienPheDuyetDto,
   NhanVienSearch,
 } from "../types/KiemDuyet/Dto/dto";
@@ -157,6 +159,38 @@ export default class KiemDuyetService {
       // FIX: cùng lỗi double-unwrap như GetListKiemDuyetKhoaHoc ở trên.
       const response = await apiService.get<KiemDuyetDetailDto>(
         `/KiemDuyetKhoaHoc/kiemduyet-khoahoc-getdetail/${idKhoaHoc}`,
+      );
+
+      return response;
+    } catch (error) {
+      console.error("Error fetching course approval list:", error);
+      throw error;
+    }
+  }
+
+  async UpdateLyDoTuChoi(
+    request: LyDoTuChoiRequest,
+  ): Promise<ApiResponse<LyDoTuChoiDto>> {
+    try {
+      const response = await apiService.put<LyDoTuChoiDto>(
+        `/KiemDuyetKhoaHoc/kiemduyet-updatelydo`,
+        request,
+      );
+
+      return response;
+    } catch (error) {
+      console.error("Error fetching course approval list:", error);
+      throw error;
+    }
+  }
+
+  async CreateLyDoTuChoi(
+    request: LyDoTuChoiRequest,
+  ): Promise<ApiResponse<LyDoTuChoiDto>> {
+    try {
+      const response = await apiService.post<LyDoTuChoiDto>(
+        `/KiemDuyetKhoaHoc/kiemduyet-createlydo`,
+        request,
       );
 
       return response;

@@ -494,6 +494,9 @@ export default function BasicInfoContent() {
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
   const isEditable = trangThai === "DangSua";
+  // Khi khóa học đã được duyệt (DaDuyet), không cho sửa các thông tin khác
+  // trong trang Basics, chỉ cho phép sửa riêng giá gốc (giaGoc).
+  const isGiaGocEditable = isEditable || trangThai === "DaDuyet";
 
   const danhMucDaLoc = useMemo(() => {
     const tuKhoa = timKiemDanhMuc.trim().toLowerCase();
@@ -545,22 +548,28 @@ export default function BasicInfoContent() {
   const validateForm = (): boolean => {
     let hopLe = true;
 
-    const tieuDe = thongTin.tieuDe || "";
-    const soKyTuTieuDe = demSoKyTuKhongTinhDauCach(tieuDe);
+    // Khi khóa học ở trạng thái DaDuyet, chỉ được sửa giaGoc nên không
+    // validate lại tiêu đề/mô tả/hình ảnh (các trường này bị khóa, không đổi).
+    if (isEditable) {
+      const tieuDe = thongTin.tieuDe || "";
+      const soKyTuTieuDe = demSoKyTuKhongTinhDauCach(tieuDe);
 
-    if (isOnlySpaces(tieuDe)) {
-      setLoiTieuDe("Vui lòng nhập tiêu đề khóa học");
-      hopLe = false;
-    } else if (soKyTuTieuDe < DO_DAI_TIEU_DE_TOI_THIEU) {
-      setLoiTieuDe(
-        `Tiêu đề cần tối thiểu ${DO_DAI_TIEU_DE_TOI_THIEU} ký tự (không tính dấu cách). Hiện tại: ${soKyTuTieuDe} ký tự.`,
-      );
-      hopLe = false;
-    } else if (soKyTuTieuDe > DO_DAI_TIEU_DE_TOI_DA) {
-      setLoiTieuDe(
-        `Tiêu đề không được vượt quá ${DO_DAI_TIEU_DE_TOI_DA} ký tự (không tính dấu cách). Hiện tại: ${soKyTuTieuDe} ký tự.`,
-      );
-      hopLe = false;
+      if (isOnlySpaces(tieuDe)) {
+        setLoiTieuDe("Vui lòng nhập tiêu đề khóa học");
+        hopLe = false;
+      } else if (soKyTuTieuDe < DO_DAI_TIEU_DE_TOI_THIEU) {
+        setLoiTieuDe(
+          `Tiêu đề cần tối thiểu ${DO_DAI_TIEU_DE_TOI_THIEU} ký tự (không tính dấu cách). Hiện tại: ${soKyTuTieuDe} ký tự.`,
+        );
+        hopLe = false;
+      } else if (soKyTuTieuDe > DO_DAI_TIEU_DE_TOI_DA) {
+        setLoiTieuDe(
+          `Tiêu đề không được vượt quá ${DO_DAI_TIEU_DE_TOI_DA} ký tự (không tính dấu cách). Hiện tại: ${soKyTuTieuDe} ký tự.`,
+        );
+        hopLe = false;
+      } else {
+        setLoiTieuDe(null);
+      }
     } else {
       setLoiTieuDe(null);
     }
@@ -578,40 +587,45 @@ export default function BasicInfoContent() {
       setLoiGia(null);
     }
 
-    const doDaiMoTa = boTheHtml(thongTin.moTa || "").length;
-    if (doDaiMoTa < DO_DAI_MO_TA_TOI_THIEU) {
-      setLoiMoTa(
-        `Mô tả phải có ít nhất ${DO_DAI_MO_TA_TOI_THIEU} ký tự (hiện tại: ${doDaiMoTa})`,
-      );
-      hopLe = false;
-    } else if (doDaiMoTa > DO_DAI_MO_TA_TOI_DA) {
-      setLoiMoTa(
-        `Mô tả không được vượt quá ${DO_DAI_MO_TA_TOI_DA} ký tự (hiện tại: ${doDaiMoTa})`,
-      );
-      hopLe = false;
-    } else {
-      setLoiMoTa(null);
-    }
-
-    if (imageFile) {
-      const duoi = layDuoiFile(imageFile.name);
-      if (!DUOI_ANH_HOP_LE.includes(duoi)) {
-        setLoiHinhAnh(
-          `Định dạng ảnh không hợp lệ. Chỉ chấp nhận: ${DUOI_ANH_HOP_LE.join(", ")}`,
+    if (isEditable) {
+      const doDaiMoTa = boTheHtml(thongTin.moTa || "").length;
+      if (doDaiMoTa < DO_DAI_MO_TA_TOI_THIEU) {
+        setLoiMoTa(
+          `Mô tả phải có ít nhất ${DO_DAI_MO_TA_TOI_THIEU} ký tự (hiện tại: ${doDaiMoTa})`,
         );
         hopLe = false;
-      } else if (imageFile.size > DUNG_LUONG_ANH_TOI_DA) {
-        setLoiHinhAnh(
-          `Dung lượng ảnh vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
+      } else if (doDaiMoTa > DO_DAI_MO_TA_TOI_DA) {
+        setLoiMoTa(
+          `Mô tả không được vượt quá ${DO_DAI_MO_TA_TOI_DA} ký tự (hiện tại: ${doDaiMoTa})`,
         );
+        hopLe = false;
+      } else {
+        setLoiMoTa(null);
+      }
+
+      if (imageFile) {
+        const duoi = layDuoiFile(imageFile.name);
+        if (!DUOI_ANH_HOP_LE.includes(duoi)) {
+          setLoiHinhAnh(
+            `Định dạng ảnh không hợp lệ. Chỉ chấp nhận: ${DUOI_ANH_HOP_LE.join(", ")}`,
+          );
+          hopLe = false;
+        } else if (imageFile.size > DUNG_LUONG_ANH_TOI_DA) {
+          setLoiHinhAnh(
+            `Dung lượng ảnh vượt quá ${DUNG_LUONG_ANH_TOI_DA / (1024 * 1024)}MB`,
+          );
+          hopLe = false;
+        } else {
+          setLoiHinhAnh(null);
+        }
+      } else if (isBanHienTai && !thongTin.hinhAnhKhoaHoc) {
+        setLoiHinhAnh("Vui lòng chọn hình ảnh cho khóa học");
         hopLe = false;
       } else {
         setLoiHinhAnh(null);
       }
-    } else if (isBanHienTai && !thongTin.hinhAnhKhoaHoc) {
-      setLoiHinhAnh("Vui lòng chọn hình ảnh cho khóa học");
-      hopLe = false;
     } else {
+      setLoiMoTa(null);
       setLoiHinhAnh(null);
     }
 
@@ -705,7 +719,7 @@ export default function BasicInfoContent() {
   };
 
   const handleSave = async () => {
-    if (!isEditable) {
+    if (!isGiaGocEditable) {
       setError("Không thể chỉnh sửa khi khóa học không ở trạng thái Đang sửa");
       return;
     }
@@ -808,7 +822,9 @@ export default function BasicInfoContent() {
           >
             Trang đích của khóa học
           </Typography>
-          <Typography sx={{ fontSize: 14, color: "var(--ev-text-secondary, #4B5563)" }}>
+          <Typography
+            sx={{ fontSize: 14, color: "var(--ev-text-secondary, #4B5563)" }}
+          >
             Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ
             ràng và hấp dẫn.
           </Typography>
@@ -820,7 +836,7 @@ export default function BasicInfoContent() {
             sx={{ mb: 2 }}
           >
             {trangThai === "DaDuyet"
-              ? "Khóa học đã được duyệt. Bạn chỉ có thể xem thông tin."
+              ? "Khóa học đã được duyệt. Các thông tin khác đã bị khóa, bạn chỉ có thể chỉnh sửa giá khóa học."
               : trangThai === "TuChoi"
                 ? "Khóa học bị từ chối. Bạn chỉ có thể xem thông tin."
                 : "Khóa học đang trong quá trình duyệt. Bạn chỉ có thể xem thông tin."}
@@ -1103,7 +1119,11 @@ export default function BasicInfoContent() {
               <SectionHeader
                 icon={<AttachMoneyRoundedIcon fontSize="small" />}
                 title="Giá khóa học"
-                subtitle="Nhập mức giá cho khóa học (VNĐ). Để trống nếu muốn miễn phí."
+                subtitle={
+                  !isEditable && trangThai === "DaDuyet"
+                    ? "Khóa học đã duyệt vẫn có thể cập nhật giá (VNĐ). Để trống nếu muốn miễn phí."
+                    : "Nhập mức giá cho khóa học (VNĐ). Để trống nếu muốn miễn phí."
+                }
               />
               <TextField
                 fullWidth
@@ -1116,7 +1136,7 @@ export default function BasicInfoContent() {
                     : ""
                 }
                 onChange={(e) => {
-                  if (!isEditable) return;
+                  if (!isGiaGocEditable) return;
                   const raw = e.target.value.replace(/\D/g, "");
                   const val = raw === "" ? undefined : Number(raw);
                   setThongTin({ giaGoc: val });
@@ -1124,7 +1144,7 @@ export default function BasicInfoContent() {
                 }}
                 error={!!loiGia}
                 helperText={loiGia}
-                disabled={!isEditable}
+                disabled={!isGiaGocEditable}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -1214,7 +1234,9 @@ export default function BasicInfoContent() {
                               boxShadow: 1,
                               width: 26,
                               height: 26,
-                              "&:hover": { bgcolor: "var(--ev-paper, #FFFFFF)" },
+                              "&:hover": {
+                                bgcolor: "var(--ev-paper, #FFFFFF)",
+                              },
                             }}
                           >
                             <CloseRoundedIcon sx={{ fontSize: 16 }} />
@@ -1230,7 +1252,9 @@ export default function BasicInfoContent() {
                               boxShadow: 1,
                               width: 26,
                               height: 26,
-                              "&:hover": { bgcolor: "var(--ev-paper, #FFFFFF)" },
+                              "&:hover": {
+                                bgcolor: "var(--ev-paper, #FFFFFF)",
+                              },
                             }}
                             title="Thay đổi ảnh"
                           >
@@ -1380,7 +1404,7 @@ export default function BasicInfoContent() {
               </Stack>
             </Paper>
 
-            {isEditable && (
+            {isGiaGocEditable && (
               <Box
                 sx={{
                   mt: 3,

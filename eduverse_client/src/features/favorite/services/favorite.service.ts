@@ -2,7 +2,6 @@
 import { apiService } from "@/src/services";
 import { ApiResponse } from "@/src/types/types";
 import { FavoriteCourse } from "../types/favorite.type";
-import { MOCK_COURSES, mapToFavoriteCourse } from "../mock/favorite.mock";
 
 const STORAGE_KEY = "eduverse_wishlist";
 
@@ -27,27 +26,70 @@ const saveLocalFavorites = (favorites: FavoriteCourse[]) => {
 export const favoriteService = {
   /**
    * GET /api/DanhSachYeuThich/get-data
-   * Lấy danh sách khóa học yêu thích
+   * Lấy danh sách khóa học yêu thích và đồng bộ giá tiền chính xác từ hệ thống khóa học
    */
   async getFavorites(): Promise<ApiResponse<FavoriteCourse[]>> {
-    const response = await apiService.get<any>(
-      "/DanhSachYeuThich/get-data?pageSize=-1",
-    );
-    const items = response.data?.items || [];
-    const mapped: FavoriteCourse[] = items.map((item: any) => ({
-      id: item.id,
-      khoaHocId: item.idKhoaHoc,
-      tieuDe: item.tenKhoaHoc || "",
-      moTa: item.moTa || "",
-      hinhAnh: item.hinhAnh || "",
-      giangVien: item.giangVien || "Giảng viên EduVerse",
-      giaTien: item.giaTien || 0,
-      createdDate: item.createdDate,
-      isFavorite: true,
-    }));
+    const [favRes, courseRes] = await Promise.allSettled([
+      apiService.get<any>("/DanhSachYeuThich/get-data?pageSize=-1"),
+      apiService.get<any>("/KhoaHoc/khoahoc-list?pageSize=100"),
+    ]);
+
+    const favData: any = favRes.status === "fulfilled" ? favRes.value : null;
+    const courseData: any = courseRes.status === "fulfilled" ? courseRes.value : null;
+
+    const items = favData?.data?.items || favData?.items || [];
+    const courseItems = courseData?.data?.items || courseData?.items || [];
+
+    // Map course ID to real course details
+    const courseMap = new Map<string, any>();
+    if (Array.isArray(courseItems)) {
+      courseItems.forEach((kh: any) => {
+        if (kh.id) courseMap.set(String(kh.id), kh);
+      });
+    }
+
+    const mapped: FavoriteCourse[] = items.map((item: any) => {
+      const courseId = String(item.idKhoaHoc || item.khoaHocId || item.id || "");
+      const matchedCourse = courseMap.get(courseId);
+
+      // Determine accurate price: check backend item fields first, then matched course
+      let realPrice: number = 0;
+      if (typeof item.giaTien === "number" && item.giaTien > 0) {
+        realPrice = item.giaTien;
+      } else if (typeof item.gia === "number" && item.gia > 0) {
+        realPrice = item.gia;
+      } else if (matchedCourse && typeof matchedCourse.gia === "number") {
+        realPrice = matchedCourse.gia;
+      } else if (typeof item.giaTien === "number") {
+        realPrice = item.giaTien;
+      }
+
+      return {
+        id: item.id || courseId,
+        khoaHocId: courseId,
+        tieuDe: item.tenKhoaHoc || item.tieuDe || matchedCourse?.tieuDe || "Khóa học",
+        moTa: item.moTa || matchedCourse?.moTa || "",
+        hinhAnh:
+          item.hinhAnh ||
+          item.hinhAnhKhoaHoc ||
+          matchedCourse?.hinhAnhKhoaHoc ||
+          matchedCourse?.urlHinhAnh ||
+          "",
+        giangVien:
+          item.giangVien ||
+          item.tenGiangVien ||
+          matchedCourse?.tenGiangVien ||
+          matchedCourse?.createdBy ||
+          "Giảng viên EduVerse",
+        giaTien: realPrice,
+        createdDate: item.createdDate || item.ngayTao || new Date().toISOString(),
+        isFavorite: true,
+      };
+    });
+
     return {
-      status: response.status,
-      message: response.message,
+      status: favData?.status ?? true,
+      message: favData?.message ?? "",
       data: mapped,
     };
   },
@@ -89,7 +131,6 @@ export const favoriteService = {
       status: response.status,
       message: response.message,
       data: response.status ?? false,
-
     };
   },
 };

@@ -12,10 +12,6 @@ namespace Eduverse.Service.BaiKiemTraService
 {
     public interface IBaiKiemTraService : IService<Model.Entities.BaiKiemTra>
     {
-        Task<List<BaiKiemTraDto>> GetListForManager(Guid idPhan);
-
-
-        //Task<GetQuizToLearningDto> GetQuizToLearning(Guid idDangKy);
 
         Task<CreateBaiKiemTraDto> CreateQuiz(CreateBaiKiemTraRequest request);
 

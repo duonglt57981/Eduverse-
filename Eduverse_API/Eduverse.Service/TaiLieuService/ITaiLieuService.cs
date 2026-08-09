@@ -11,7 +11,6 @@ namespace Eduverse.Service.TaiLieuService
 {
     public interface ITaiLieuService : IService<Model.Entities.TaiLieu>
     {
-        Task<List<TaiLieuDto>> GetListForManager(Guid IdBaiGiang);
 
         Task<TaiLieuDto> CreateTaiLieu(CreateTaiLieuRequest request);
         Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request);

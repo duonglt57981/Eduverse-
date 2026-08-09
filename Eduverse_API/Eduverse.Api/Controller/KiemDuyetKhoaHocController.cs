@@ -7,6 +7,9 @@ using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Request;
+using Eduverse.Service.LyDoTuChoiService;
+using Eduverse.Service.LyDoTuChoiService.Dto;
+using Eduverse.Service.LyDoTuChoiService.Request;
 using Hinet.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -21,10 +24,12 @@ namespace Eduverse.Api.Controller
     public class KiemDuyetKhoaHocController : EduverseController
     {
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
+        private readonly ILyDoTuChoiService _lyDoTuChoiService;
 
-        public KiemDuyetKhoaHocController(ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService)
+        public KiemDuyetKhoaHocController(ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService, ILyDoTuChoiService lyDoTuChoiService)
         {
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
+            _lyDoTuChoiService = lyDoTuChoiService;
         }
 
         [HttpGet("kiemduyet-khoahoc-getdanhsach")]
@@ -139,6 +144,39 @@ namespace Eduverse.Api.Controller
             }
         }
 
+
+        [HttpPost("kiemduyet-createlydo")]
+        [Authorize(Roles = "Admin,personnel")]
+        public async Task<DataResponse<LyDoTuChoiDto>> CreateLyDoTuChoi(LyDoTuChoiRequest request)
+        {
+            try
+            {
+                var result = await _lyDoTuChoiService.CreateLyDoTuChoi(request);
+                return DataResponse<LyDoTuChoiDto>.Success(result);
+
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<LyDoTuChoiDto>.False(ex.Message);
+            }
+        }
+
+
+        [HttpPut("kiemduyet-updatelydo")]
+        [Authorize(Roles = "Admin,personnel")]
+        public async Task<DataResponse<LyDoTuChoiDto>> UpdateLyDoTuChoi(LyDoTuChoiRequest request)
+        {
+            try
+            {
+                var result = await _lyDoTuChoiService.UpdateLyDoTuChoi(request);
+                return DataResponse<LyDoTuChoiDto>.Success(result);
+
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<LyDoTuChoiDto>.False(ex.Message);
+            }
+        }
 
         //[HttpPost("kiemduyet-baigiang")]
         //[Authorize(Roles = "Admin")]

@@ -22,11 +22,13 @@ export interface BaiGiangDto {
   id: string;
   tieuDe?: string;
   loaiBaiGiang?: string;
-  uRLBaiGiang?: string;
+  urlBaiGiang?: string;
   thuTuSapXep?: number;
   thoiLuong?: number;
   laBaiGiangFree?: boolean;
   trangThai?: number;
+  lyDoTuChois: LyDoTuChoiDto;
+  taiLieus?: TaiLieuDto[];
 }
 
 export interface PhanDto {

@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { createAppTheme } from '@/src/theme/createAppTheme';
+import { LAYOUT_SPACING } from '@/src/theme/tokens';
 import {
   ArrowBackRounded,
   BadgeRounded,
@@ -206,8 +207,8 @@ export default function RegisterPage() {
           alignItems: 'center',
           justifyContent: 'center',
           background: 'linear-gradient(135deg, #F7F5F2 0%, #FFF1F1 50%, #F7F5F2 100%)',
-          px: 2.5,
-          py: 6,
+          px: LAYOUT_SPACING.pagePx,
+          py: LAYOUT_SPACING.pagePy,
           position: 'relative',
           overflowY: 'auto',
         }}
@@ -555,17 +556,17 @@ export default function RegisterPage() {
                     label={
                       <Typography sx={{ mt: 0.2, fontSize: 11.5, color: 'rgba(17,17,17,0.65)' }}>
                         Tôi đồng ý với{' '}
-                        <a href="/auth/terms" style={{ color: '#8B1313', fontWeight: 800, textDecoration: 'none' }}>
+                        <Link href="/auth/terms" style={{ color: '#8B1313', fontWeight: 800, textDecoration: 'none' }}>
                           <Box component="span" sx={{ '&:hover': { textDecoration: 'underline' } }}>
                             Điều khoản dịch vụ
                           </Box>
-                        </a>{' '}
+                        </Link>{' '}
                         và{' '}
-                        <a href="/auth/privacy" style={{ color: '#8B1313', fontWeight: 800, textDecoration: 'none' }}>
+                        <Link href="/auth/privacy" style={{ color: '#8B1313', fontWeight: 800, textDecoration: 'none' }}>
                           <Box component="span" sx={{ '&:hover': { textDecoration: 'underline' } }}>
                             Chính sách bảo mật
                           </Box>
-                        </a>
+                        </Link>
                         .
                       </Typography>
                     }
@@ -581,7 +582,7 @@ export default function RegisterPage() {
                           py: 0.25,
                           pl: 0.5,
                           color: 'var(--ev-text-muted, rgba(17,17,17,0.35))',
-                          '&.Mui-checked': { color: '#8B1313' },
+                          '&.Mui-checked': { color: 'primary.main' },
                         }}
                       />
                     }
@@ -611,16 +612,12 @@ export default function RegisterPage() {
                     background:
                       'linear-gradient(135deg, #8B1313 0%, #6b1414 100%)',
                     boxShadow: '0 8px 20px rgba(139,19,19,0.15)',
-                    transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'background 200ms ease, box-shadow 200ms ease',
                     '&:hover': {
                       background:
                         'linear-gradient(135deg, #9b1c1c 0%, #5c1111 100%)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 12px 28px rgba(139,19,19,0.25)',
+                      boxShadow: '0 8px 20px rgba(139,19,19,0.25)',
                     },
-                    '&:active': {
-                      transform: 'translateY(0)',
-                    }
                   }}
                 >
                   {loading ? 'Đang đăng ký...' : 'Đăng ký tài khoản'}
@@ -652,19 +649,19 @@ export default function RegisterPage() {
             }}
           >
             Đã có tài khoản?{' '}
-            <a href="/auth/login" style={{ textDecoration: 'none' }}>
+            <Link href="/auth/login" style={{ textDecoration: 'none' }}>
               <Box
                 component="span"
                 sx={{
-                  color: '#8B1313',
+                  color: 'primary.main',
                   fontWeight: 900,
                   cursor: 'pointer',
-                  '&:hover': { textDecoration: 'underline', color: '#5c1111' },
+                  '&:hover': { textDecoration: 'underline', color: 'primary.dark' },
                 }}
               >
                 Đăng nhập ngay
               </Box>
-            </a>
+            </Link>
           </Typography>
         </Paper>
       </Box>

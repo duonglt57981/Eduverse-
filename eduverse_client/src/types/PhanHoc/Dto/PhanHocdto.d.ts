@@ -1,3 +1,5 @@
+import { BaiKiemTraDto } from "../../baiKiemTra/Dto/baiKiemTraDto";
+import { BaiGiangDto } from "../../khoaHoc";
 import { BaiGiangType } from "../BaiGiang/Dto/BaiGiangDto";
 
 export interface PhanHocType {
@@ -7,7 +9,7 @@ export interface PhanHocType {
   thuTuSapXep?: number;
   ngayTao?: Date;
   idKhoaHoc?: Guid;
-  DanhSachBaiGiang?: BaiGiangType[];
+  DanhSachBaiGiang?: BaiGiangDto[];
   DanhDachBaiKiemTra?: BaiKiemTraDto[];
 }
 

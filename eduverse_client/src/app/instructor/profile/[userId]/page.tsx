@@ -5,7 +5,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { Box, Container, Typography, Alert, Divider } from "@mui/material";
+import { Box, Container, Typography, Alert, Divider, Chip } from "@mui/material";
 import { useRouter, useParams } from "next/navigation";
 import InstructorCourseList from "./components/Instructorcourselist";
 import InstructorHeroSection from "./components/Instructorherosection";
@@ -44,16 +44,69 @@ export default function InstructorProfilePage() {
       setDangTai(true);
       setLoi(null);
       try {
-        const res = await khoaHocService.GetListByGiangVien(userId, {
-          pageIndex: trang,
-          pageSize: PAGE_SIZE,
-        });
+        const [gvRes, publicListRes] = await Promise.allSettled([
+          khoaHocService.GetListByGiangVien(userId, {
+            pageIndex: trang,
+            pageSize: PAGE_SIZE,
+          }),
+          khoaHocService.GetList({ pageSize: 100 }),
+        ]);
+
+        const res = gvRes.status === "fulfilled" ? gvRes.value : null;
+        const publicRes = publicListRes.status === "fulfilled" ? publicListRes.value : null;
+
         const ketQua = trichXuatGiangVienKhoaHoc(res);
 
         if (!ketQua) {
           setLoi("Không thể tải thông tin giảng viên.");
           setDuLieu(null);
           return;
+        }
+
+        // Build a lookup map of public courses to enrich duration, lessons count & student count accurately
+        const publicCourseItems = (publicRes?.data as any)?.items || (publicRes as any)?.items || [];
+        const publicCourseMap = new Map<string, any>();
+        if (Array.isArray(publicCourseItems)) {
+          publicCourseItems.forEach((kh: any) => {
+            if (kh.id) publicCourseMap.set(String(kh.id), kh);
+          });
+        }
+
+        // Enrich items list
+        const rawItems = (ketQua.khoaHocs as any)?.items || [];
+        const enrichedItems = rawItems.map((kh: any) => {
+          const matched = publicCourseMap.get(String(kh.id || ""));
+          return {
+            ...kh,
+            tongThoiLuong:
+              kh.tongThoiLuong ||
+              kh.thoiLuong ||
+              kh.tongThoiGian ||
+              matched?.tongThoiLuong ||
+              matched?.thoiLuong ||
+              0,
+            tongBaiGiang:
+              kh.tongBaiGiang ||
+              kh.soBaiGiang ||
+              kh.soLuongBaiGiang ||
+              matched?.tongBaiGiang ||
+              matched?.soBaiGiang ||
+              0,
+            soLuongHocVien:
+              kh.soLuongHocVien ||
+              kh.tongHocVien ||
+              kh.soHocVien ||
+              matched?.soLuongHocVien ||
+              matched?.tongHocVien ||
+              0,
+            capDo: kh.capDo || matched?.capDo || "Tất cả cấp độ",
+            gia: kh.gia ?? matched?.gia ?? 0,
+            giaGoc: kh.giaGoc ?? matched?.giaGoc,
+          };
+        });
+
+        if ((ketQua.khoaHocs as any)?.items) {
+          (ketQua.khoaHocs as any).items = enrichedItems;
         }
 
         setDuLieu(ketQua);
@@ -130,21 +183,23 @@ export default function InstructorProfilePage() {
             },
           }}
         >
-          {duLieu?.thongTinGiangVien ? (
-            <InstructorHeroSection
-              giangVien={duLieu.thongTinGiangVien}
-              danhSachKhoaHoc={danhSachKhoaHoc}
-              tongSoKhoaHoc={
-                (duLieu.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length
-              }
-              tongHocVienDangHoc={(duLieu as any)?.tongHocVienDangHoc}
-              tongHocVienDangKy={(duLieu as any)?.tongHocVienDangKy}
-            />
-          ) : (
-            <Box sx={{ bgcolor: "#0D0505", height: 220 }} />
-          )}
+          <Container maxWidth="lg" sx={{ mt: 2, px: { xs: 2, md: 2.5 }, pt: 0, pb: { xs: 1, md: 2 } }}>
+            {duLieu?.thongTinGiangVien ? (
+              <InstructorHeroSection
+                giangVien={duLieu.thongTinGiangVien}
+                danhSachKhoaHoc={danhSachKhoaHoc}
+                tongSoKhoaHoc={
+                  (duLieu.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length
+                }
+                tongHocVienDangHoc={(duLieu as any)?.tongHocVienDangHoc}
+                tongHocVienDangKy={(duLieu as any)?.tongHocVienDangKy}
+              />
+            ) : (
+              <Box sx={{ bgcolor: "#0D0505", height: 220, borderRadius: "24px" }} />
+            )}
+          </Container>
 
-          <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
+          <Container maxWidth="lg" sx={{ px: { xs: 2, md: 2.5 }, py: { xs: 3, md: 4 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -170,20 +225,19 @@ export default function InstructorProfilePage() {
               </Typography>
 
               {danhSachKhoaHoc.length > 0 && (
-                <Box
+                <Chip
+                  label={`${(duLieu?.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length} khóa học`}
+                  size="medium"
                   sx={{
-                    px: 1.8,
-                    py: 0.5,
-                    borderRadius: "10px",
-                    bgcolor: "rgba(139,19,19,0.08)",
-                    border: "1px solid rgba(139,19,19,0.15)",
+                    bgcolor: "rgba(139,19,19,0.06)",
+                    border: "1px solid rgba(139,19,19,0.18)",
                     color: "#8B1313",
                     fontWeight: 800,
                     fontSize: 13,
+                    height: 32,
+                    borderRadius: "10px",
                   }}
-                >
-                  {(duLieu?.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length} khóa học
-                </Box>
+                />
               )}
             </Box>
             <Divider sx={{ mb: 4, borderColor: "var(--ev-divider, #ECE7E4)" }} />

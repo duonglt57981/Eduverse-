@@ -25,53 +25,6 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("baigiang-getlistformanager/{IdPhan}")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<List<BaiGiangDto>>> GetListForManagerBaiGiang(Guid IdPhan)
-        {
-            try
-            {
-                var result = await _baiGiangService.GetListForManager(IdPhan);
-                return DataResponse<List<BaiGiangDto>>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<List<BaiGiangDto>>.False(ex.Message);
-            }
-        }
-
-
-        [HttpPost("baigiang-chuyentrangthai-dangsua")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<BaiGiangDto>> ChuyenTTDangSua([FromForm] Guid id)
-        {
-            try
-            {
-                var result = await _baiGiangService.ChuyenTrangThaiDangSua(id);
-                return DataResponse<BaiGiangDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<BaiGiangDto>.False(ex.Message);
-            }
-        }
-
-
-        [HttpPost("baigiang-chuyentrangthai-choduyet")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<BaiGiangDto>> ChuyenTTChoDuyet([FromForm] Guid id)
-        {
-            try
-            {
-                var result = await _baiGiangService.ChuyenTrangThaiChoDuyet(id);
-                return DataResponse<BaiGiangDto>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<BaiGiangDto>.False(ex.Message);
-            }
-        }
-
 
         [HttpPost("baigiang-create")]
         [RequestSizeLimit(2L * 1024 * 1024 * 1024)]

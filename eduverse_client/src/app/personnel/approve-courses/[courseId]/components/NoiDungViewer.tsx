@@ -30,8 +30,15 @@ import HighQualityRoundedIcon from "@mui/icons-material/HighQualityRounded";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 import "@videojs/http-streaming";
-import { COLORS, FONTS, getFileKind, getFileName } from "../../types/constants";
+import {
+  COLORS,
+  FONTS,
+  getFileKind,
+  getFileName,
+  isTrangThaiCho,
+} from "../../types/constants";
 import StatusChip from "./StatusChip";
+import LyDoTuChoiInput from "./LyDoTuChoiInput";
 
 // ======================== CLOUDINARY HELPERS ========================
 interface CloudinaryUrlInfo {
@@ -120,167 +127,62 @@ function getOptimalHlsUrl(originalUrl: string): {
 }
 
 // ======================== VIDEO.JS STYLES ========================
+// Thay thế toàn bộ phần VIDEO_JS_STYLES bằng nội dung dưới đây
 const VIDEO_JS_STYLES = (PRIMARY_RED: string) => `
+  /* Nút play tam giác, không nền, không poster */
   .video-js .vjs-big-play-button {
-    background-color: rgba(0,0,0,0.6) !important;
+    background-color: transparent !important;
     border: none !important;
-    border-radius: 12px !important;
-    width: 68px !important;
-    height: 48px !important;
-    line-height: 48px !important;
+    border-radius: 0 !important;
+    width: 80px !important;
+    height: 80px !important;
+    line-height: 80px !important;
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     margin: 0 !important;
-    transition: background-color 0.2s !important;
+    padding: 0 !important;
+    transition: opacity 0.2s ease, transform 0.2s ease !important;
+    opacity: 0.9 !important;
+    font-size: 5em !important;
+    color: #fff !important;
+    text-shadow: 0 0 20px rgba(0,0,0,0.6) !important;
+  }
+  .video-js .vjs-big-play-button .vjs-icon-placeholder:before {
+    content: "\\25B6" !important;
+    font-size: 1em !important;
+    line-height: 1 !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
   }
   .video-js:hover .vjs-big-play-button {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1.05) !important;
+  }
+  /* Khi đang phát, ẩn nút tam giác */
+  .video-js.vjs-playing .vjs-big-play-button {
+    display: none !important;
+  }
+  /* Giữ màu primary cho thanh tiến trình */
+  .video-js .vjs-play-progress {
     background-color: ${PRIMARY_RED} !important;
   }
-  .video-js .vjs-control-bar {
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, transparent 100%) !important;
-    height: 48px !important;
-    padding: 0 12px !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-  .video-js .vjs-progress-control {
-    position: absolute !important;
-    top: -5px !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    height: 5px !important;
-    display: flex !important;
-    align-items: center !important;
-    cursor: pointer !important;
-    transition: transform 0.1s, top 0.1s, height 0.1s !important;
-  }
-  .video-js .vjs-progress-control .vjs-progress-holder {
-    margin: 0 12px !important;
-    height: 3px !important;
-    transition: height 0.1s !important;
-    border-radius: 0 !important;
-    background-color: rgba(255,255,255,0.2) !important;
-  }
-  .video-js .vjs-progress-control:hover .vjs-progress-holder {
-    height: 5px !important;
-  }
-  .video-js .vjs-play-progress {
+  .video-js .vjs-volume-level {
     background-color: ${PRIMARY_RED} !important;
   }
   .video-js .vjs-load-progress {
     background-color: rgba(255,255,255,0.4) !important;
   }
-  .video-js .vjs-load-progress div {
-    background: transparent !important;
-  }
-  .video-js .vjs-play-progress:before {
-    content: "" !important;
-    position: absolute !important;
-    top: 50% !important;
-    right: -6.5px !important;
-    width: 13px !important;
-    height: 13px !important;
-    background-color: ${PRIMARY_RED} !important;
-    border-radius: 50% !important;
-    transform: translateY(-50%) scale(0) !important;
-    transition: transform 0.1s cubic-bezier(0.4,0.0,1,1) !important;
-  }
-  .video-js .vjs-progress-control:hover .vjs-play-progress:before {
-    transform: translateY(-50%) scale(1) !important;
-  }
-  .video-js .vjs-slider {
-    border-radius: 0 !important;
-  }
-  .video-js .vjs-volume-panel {
-    display: flex !important;
-    align-items: center !important;
-    margin-right: 8px !important;
-    transition: width 0.2s !important;
-  }
-  .video-js .vjs-volume-level {
-    background-color: #fff !important;
-  }
-  .video-js .vjs-volume-level:before {
-    content: "" !important;
-    position: absolute !important;
-    top: 50% !important;
-    right: -6px !important;
-    width: 12px !important;
-    height: 12px !important;
-    background-color: #fff !important;
-    border-radius: 50% !important;
-    transform: translateY(-50%) !important;
-  }
-  .video-js .vjs-time-control {
-    display: flex !important;
-    align-items: center !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    font-family: "Roboto", Arial, sans-serif !important;
-    padding: 0 4px !important;
-    height: 48px !important;
-    line-height: normal !important;
-  }
-  .video-js .vjs-time-divider {
-    display: flex !important;
-    align-items: center !important;
-    padding: 0 2px !important;
-    height: 48px !important;
-    line-height: normal !important;
-  }
-  .video-js .vjs-remaining-time {
+  /* Ẩn poster (ảnh đại diện) */
+  .video-js .vjs-poster {
     display: none !important;
   }
-  .video-js .vjs-button, .video-js .vjs-control {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    height: 48px !important;
-  }
-  .video-js .vjs-button {
-    width: 44px !important;
-  }
-  .video-js .vjs-icon-placeholder:before {
-    position: static !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-  .video-js .vjs-mouse-display .vjs-time-tooltip,
-  .video-js .vjs-play-progress .vjs-time-tooltip {
-    background: rgba(28,28,28,0.9) !important;
-    border-radius: 2px !important;
-    font-size: 13px !important;
-    font-family: "Roboto", Arial, sans-serif !important;
-    padding: 5px 9px !important;
-    bottom: 15px !important;
-  }
-  .video-js .vjs-menu-item.vjs-selected,
-  .video-js .vjs-menu-item.vjs-selected:focus,
-  .video-js .vjs-menu-item.vjs-selected:hover {
-    background-color: rgba(255,255,255,0.1) !important;
-    color: #fff !important;
-  }
-  .video-js .vjs-menu-item:hover {
-    background-color: rgba(255,255,255,0.1) !important;
-  }
-  .video-js .vjs-menu-button-popup .vjs-menu {
-    bottom: 2em !important;
-  }
-  .video-js .vjs-menu-content {
-    background-color: rgba(28,28,28,0.9) !important;
-    border-radius: 8px !important;
-    padding: 8px 0 !important;
-  }
-  .video-js {
-    width: 100% !important;
-    font-family: "Roboto", Arial, sans-serif !important;
-  }
-  .video-js .vjs-loading-spinner { display: none !important; }
-  .video-js.vjs-waiting .vjs-loading-spinner { display: none !important; }
-  .video-js.vjs-seeking .vjs-loading-spinner { display: none !important; }
 `;
 
 // ======================== CONSTANTS ========================
@@ -289,15 +191,6 @@ const VIEW_MAX_HEIGHT = 600;
 const FULL_HEIGHT = "calc(100vh - 132px)";
 const TOOLBAR_CROP_PX = 48;
 const LOAD_TIMEOUT_MS = 30000;
-
-// Sửa clipFixSx để không gây conflict với các style khác
-const clipFixSx = {
-  position: "relative" as const,
-  isolation: "isolate" as const,
-  overflow: "hidden" as const,
-  borderRadius: 2,
-  flexShrink: 0,
-};
 
 interface QualityLevel {
   index: number;
@@ -315,7 +208,17 @@ interface TechWithVhs {
 }
 
 // ======================== MAIN COMPONENT ========================
-export default function NoiDungViewer({ selected }: { selected: any }) {
+export default function NoiDungViewer({
+  selected,
+  onSaveLyDo,
+}: {
+  selected: any;
+  onSaveLyDo?: (
+    loai: "baiGiang" | "baiKiemTra",
+    id: string | number,
+    lyDo: string,
+  ) => Promise<void>;
+}) {
   const [openFull, setOpenFull] = useState(false);
 
   if (!selected) {
@@ -357,6 +260,46 @@ export default function NoiDungViewer({ selected }: { selected: any }) {
     null;
 
   const isTest = loai === "baiKiemTra";
+
+  // ----- Xác định id và lý do hiện tại cho form -----
+  const idDoiTuong =
+    loai === "baiGiang"
+      ? item.idBaiGiang
+      : loai === "baiKiemTra"
+        ? item.idBaiKiemTra
+        : null;
+  const isPending = isTrangThaiCho(item.trangThaiPheDuyet);
+  const showLyDoForm =
+    (loai === "baiGiang" || loai === "baiKiemTra") &&
+    isPending &&
+    typeof onSaveLyDo === "function" &&
+    idDoiTuong;
+
+  // ---- LẤY LÝ DO TỪ CHỐI (hỗ trợ object và array) ----
+  let currentLyDo = "";
+  const lyDoData = item.lyDoTuChois;
+
+  if (lyDoData) {
+    if (Array.isArray(lyDoData) && lyDoData.length > 0) {
+      currentLyDo = lyDoData
+        .map((l: any) => l.lyDo || "")
+        .filter(Boolean)
+        .join(", ");
+    } else if (typeof lyDoData === "object" && lyDoData.lyDo) {
+      currentLyDo = lyDoData.lyDo;
+    } else if (typeof lyDoData === "string") {
+      currentLyDo = lyDoData;
+    }
+  }
+
+  // Fallback cho trường cũ (nếu có)
+  if (!currentLyDo && typeof item.lyDoTuChoi === "string") {
+    currentLyDo = item.lyDoTuChoi;
+  }
+  if (!currentLyDo && Array.isArray(item.lyDoTuChoi)) {
+    currentLyDo = item.lyDoTuChoi.filter(Boolean).join(", ");
+  }
+  // ------------------------------------
 
   return (
     <Box
@@ -420,6 +363,17 @@ export default function NoiDungViewer({ selected }: { selected: any }) {
         />
       </Box>
 
+      {/* ---- HIỂN THỊ FORM LÝ DO TỪ CHỐI NẾU CÓ ---- */}
+      {showLyDoForm && (
+        <LyDoTuChoiInput
+          key={`${loai}-${idDoiTuong}`}
+          idDoiTuong={idDoiTuong}
+          loaiDoiTuong={loai === "baiGiang" ? "BaiGiang" : "BaiKiemTra"}
+          initialValue={currentLyDo}
+          onSave={(lyDo) => onSaveLyDo(loai, idDoiTuong, lyDo)}
+        />
+      )}
+
       {url && !isTest && (
         <Dialog
           open={openFull}
@@ -463,7 +417,7 @@ export default function NoiDungViewer({ selected }: { selected: any }) {
               <CloseRoundedIcon fontSize="small" />
             </IconButton>
           </Stack>
-          <Box sx={{ p: 2 }}>
+          <Box sx={{ p: 2, height: FULL_HEIGHT, boxSizing: "border-box" }}>
             <ViewerBody
               loai={loai}
               url={url}
@@ -511,7 +465,6 @@ function ViewerBody({
           bgcolor: "var(--ev-paper-alt, #FBFAF9)",
           border: `1px solid ${COLORS.line}`,
           p: 2,
-          // Không sử dụng ...clipFixSx ở đây để tránh ghi đè position
           borderRadius: 2,
           "&::-webkit-scrollbar": {
             width: "6px",
@@ -723,7 +676,7 @@ function ViewerBody({
     );
   }
 
-  // Video – sử dụng aspectRatio 16:9
+  // Video
   if (loai === "baiGiang") {
     return (
       <VideoPlayer
@@ -742,11 +695,12 @@ function ViewerBody({
       tenTaiLieu={item.tenTaiLieu || item.tieuDe || "Tài liệu"}
       minHeight={minHeight}
       maxHeight={maxHeight}
+      isFullscreen={isFullscreen}
     />
   );
 }
 
-// ======================== VIDEO PLAYER (HLS + fallback) ========================
+// ======================== VIDEO PLAYER ========================
 function VideoPlayer({
   url,
   minHeight,
@@ -1228,7 +1182,6 @@ function VideoJsPlayer({
     }
   }, [startLoadTimeout]);
 
-  // Sửa containerStyle để không ghi đè minHeight/maxHeight
   const containerStyle = isFullscreen
     ? {
         width: "100%",
@@ -1269,7 +1222,6 @@ function VideoJsPlayer({
           },
         }}
       />
-
       {!isLoading && !hasError && !loadTimedOut && isHls && (
         <>
           <Tooltip title="Chất lượng video">
@@ -1407,14 +1359,22 @@ function TaiLieuPreview({
   tenTaiLieu,
   minHeight,
   maxHeight,
+  isFullscreen = false,
 }: {
   url: string;
   tenTaiLieu: string;
   minHeight: string | number;
   maxHeight: string | number;
+  isFullscreen?: boolean;
 }) {
   const kind = getFileKind(url);
   const fileName = getFileName(url, tenTaiLieu);
+  // Nội dung bên trong (iframe/absolute) không tự đẩy chiều cao của Box cha,
+  // nên nếu chỉ set minHeight/maxHeight thì Box sẽ co lại theo minHeight.
+  // Khi xem toàn màn hình (Dialog), ép height 100% để khung lấp đầy đúng
+  // theo chiều cao đã cấp phát của Box cha (Dialog đã trừ sẵn padding),
+  // thay vì bị bé xíu theo minHeight.
+  const filledHeight = isFullscreen ? "100%" : undefined;
 
   const frameBox = (children: React.ReactNode) => (
     <Box
@@ -1425,6 +1385,7 @@ function TaiLieuPreview({
         border: `1px solid ${COLORS.line}`,
         minHeight: minHeight,
         maxHeight: maxHeight,
+        height: filledHeight,
         position: "relative",
         isolation: "isolate",
         overflow: "hidden",
@@ -1486,6 +1447,7 @@ function TaiLieuPreview({
           alignItems: "center",
           minHeight: minHeight,
           maxHeight: maxHeight,
+          height: filledHeight,
           position: "relative",
           isolation: "isolate",
           overflow: "hidden",
@@ -1543,6 +1505,7 @@ function TaiLieuPreview({
         justifyContent: "center",
         minHeight: minHeight,
         maxHeight: maxHeight,
+        height: filledHeight,
         border: `1px dashed ${COLORS.line}`,
         bgcolor: COLORS.paper,
         position: "relative",

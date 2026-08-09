@@ -80,11 +80,11 @@
     );
   }
 
-  export const THOI_LUONG_TOI_THIEU_GIAY = 30 * 60;
-  export const SO_BAI_GIANG_TOI_THIEU = 5;
-  export const SO_KY_TU_TIEU_DE_TOI_THIEU = 10;
-  export const SO_KY_TU_MO_TA_TOI_THIEU = 200;
-  export const SO_KY_TU_MO_TA_TOI_DA = 9999;
+export const THOI_LUONG_TOI_THIEU_GIAY = 10 * 60;
+export const SO_BAI_GIANG_TOI_THIEU = 5;
+export const SO_KY_TU_TIEU_DE_TOI_THIEU = 10;
+export const SO_KY_TU_MO_TA_TOI_THIEU = 200;
+export const SO_KY_TU_MO_TA_TOI_DA = 9999;
 
   // ===== VALIDATION CONSTANTS =====
   // Phần
@@ -381,16 +381,16 @@
   ): KetQuaValidate {
     const danhSachThieu: MucThieu[] = [];
 
-    const tongGiay = tinhTongThoiLuongGiay(phans);
-    if (tongGiay < THOI_LUONG_TOI_THIEU_GIAY) {
-      const conThieuPhut = Math.ceil((THOI_LUONG_TOI_THIEU_GIAY - tongGiay) / 60);
-      danhSachThieu.push({
-        id: "thoi-luong",
-        nhan: "Thời lượng bài giảng chưa đủ",
-        moTa: `Khóa học cần tối thiểu 30 phút nội dung video. Bạn cần thêm khoảng ${conThieuPhut} phút nữa.`,
-        diChuyenDen: "curriculum",
-      });
-    }
+  const tongGiay = tinhTongThoiLuongGiay(phans);
+  if (tongGiay < THOI_LUONG_TOI_THIEU_GIAY) {
+    const conThieuPhut = Math.ceil((THOI_LUONG_TOI_THIEU_GIAY - tongGiay) / 60);
+    danhSachThieu.push({
+      id: "thoi-luong",
+      nhan: "Thời lượng bài giảng chưa đủ",
+      moTa: `Khóa học cần tối thiểu 10 phút nội dung video. Bạn cần thêm khoảng ${conThieuPhut} phút nữa.`,
+      diChuyenDen: "curriculum",
+    });
+  }
 
     const tongSoBaiGiang = demTongSoBaiGiang(phans);
     if (tongSoBaiGiang < SO_BAI_GIANG_TOI_THIEU) {
@@ -492,29 +492,40 @@
     return { hopLe: danhSachThieu.length === 0, danhSachThieu };
   }
 
-  export function kiemTraCoBanGhiDangSua(
-    thongTin: ThongTinKhoaHocCoBan,
-    phans: PhanHocType[],
-  ): {
-    coDangSua: boolean;
-    chiTiet: {
-      khoaHoc: boolean;
-      baiGiang: boolean;
-      taiLieu: boolean;
-      baiKiemTra: boolean;
-      cauHoi: boolean;
-      dapAn: boolean;
-    };
-  } {
-    let coDangSua = false;
-    const chiTiet = {
-      khoaHoc: false,
-      baiGiang: false,
-      taiLieu: false,
-      baiKiemTra: false,
-      cauHoi: false,
-      dapAn: false,
-    };
+export function extractData<T = any>(res: any): T | undefined {
+  if (!res) return undefined;
+  if (res.data?.data !== undefined) {
+    return res.data.data as T;
+  }
+  if (res.data !== undefined) {
+    return res.data as T;
+  }
+  return res as T;
+}
+
+export function kiemTraCoBanGhiDangSua(
+  thongTin: ThongTinKhoaHocCoBan,
+  phans: PhanHocType[],
+): {
+  coDangSua: boolean;
+  chiTiet: {
+    khoaHoc: boolean;
+    baiGiang: boolean;
+    taiLieu: boolean;
+    baiKiemTra: boolean;
+    cauHoi: boolean;
+    dapAn: boolean;
+  };
+} {
+  let coDangSua = false;
+  const chiTiet = {
+    khoaHoc: false,
+    baiGiang: false,
+    taiLieu: false,
+    baiKiemTra: false,
+    cauHoi: false,
+    dapAn: false,
+  };
 
     if (laDangSua(thongTin)) {
       chiTiet.khoaHoc = true;

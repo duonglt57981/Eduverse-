@@ -35,6 +35,40 @@ export interface KhoaHocType {
   giangVien?: GiangVienType;
 }
 
+export interface KhoaHocDetailType {
+  id?: Guid;
+  tieuDe?: string;
+  moTa?: string;
+  gia?: number;
+  giaGoc?: number;
+  loaiKhoaHoc?: string;
+  hinhAnhKhoaHoc?: string;
+  urlViewPreviewKhoaHoc?: string;
+  capDo?: string;
+  tongThoiLuong?: number;
+  tongBaiGiang?: number;
+  ngayTao?: Date;
+  ngayCapNhat?: Date;
+  soLuongHocVien?: number;
+  trangThaiPheDuyet?: string;
+  trangThai?: string;
+  idBanGhiTruoc?: string | null;
+  tongBaiGiang?: number;
+  tongTaiLieu?: number;
+  isBanHienTai?: boolean;
+  daDangKy: boolean;
+  idDangKiKhoaHoc?: string;
+  ngayDangKy: Date;
+  soBaiGiangHoanThanh: number;
+  phanTramHoanThanh: double;
+  createdBy?: string;
+  createdId?: string;
+
+  danhSachPhanHoc?: PhanHocType[];
+  danhSachDanhMuc?: string[];
+  giangVien?: GiangVienType;
+}
+
 export type KhoaHocSearch = SearchBase & {
   keyword?: string;
   tieuDe?: string;

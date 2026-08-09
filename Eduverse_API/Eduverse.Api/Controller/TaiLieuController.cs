@@ -23,23 +23,6 @@ namespace Eduverse.Api.Controller
         }
 
 
-        [HttpGet("tailieu-getlistformanager/{IdBaiGiang}")]
-        [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<List<TaiLieuDto>>> GetListForManagerTaiLieu(Guid IdBaiGiang)
-        {
-            try
-            {
-                var result = await _taiLieuService.GetListForManager(IdBaiGiang);
-                return DataResponse<List<TaiLieuDto>>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return DataResponse<List<TaiLieuDto>>.False(ex.Message);
-            }
-        }
-
-
-
         [HttpPost("tailieu-create")]
         [Consumes("multipart/form-data")]
         [Authorize(Roles = "Admin,GiaoVien")]

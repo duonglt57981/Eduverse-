@@ -3,6 +3,7 @@ using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.KhoaHoc_GiangVienRepository;
 using Eduverse.Repository.KhoaHocRepository;
+using Eduverse.Repository.LyDoTuChoiRepository;
 using Eduverse.Repository.PhanRepository;
 using Eduverse.Service.BaiGiangService.Dto;
 using Eduverse.Service.BaiGiangService.Request;
@@ -33,6 +34,7 @@ namespace Eduverse.Service.BaiGiangService
         private readonly IBunnyService _bunnyService;
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
         private readonly IKhoaHocRepository _khoaHocRepository;
+        private readonly ILyDoTuChoiRepository _lyDoTuChoiRepository;
 
         public BaiGiangService(
             IBaiGiangRepository baiGiangRepository,
@@ -43,9 +45,9 @@ namespace Eduverse.Service.BaiGiangService
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
             IHttpContextAccessor httpContextAccessor,
             IBunnyService bunnyService,
-             IKhoaHoc_GiangVienRepository khoaHocGVRepository,
-             IKhoaHocRepository khoaHocRepository
-
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository,
+            IKhoaHocRepository khoaHocRepository,
+            ILyDoTuChoiRepository lyDoTuChoiRepository
             ) : base(baiGiangRepository)
         {
             _cloudinaryService = cloudinaryService;
@@ -55,6 +57,7 @@ namespace Eduverse.Service.BaiGiangService
             _lichSuKiemDuyetKhoaHocService = lichSuKiemDuyetKhoaHocService;
             _httpContextAccessor = httpContextAccessor;
             _bunnyService = bunnyService;
+            _lyDoTuChoiRepository = lyDoTuChoiRepository;
             _khoaHocGVRepository = khoaHocGVRepository;
             _khoaHocRepository = khoaHocRepository;
         }
@@ -129,46 +132,6 @@ namespace Eduverse.Service.BaiGiangService
 
             return _mapper.Map<BaiGiang, BaiGiangDto>(banCanXuLy);
         }
-
-
-        public async Task<BaiGiangDto> ChuyenTrangThaiDangSua(Guid IdBaiGiang)
-        {
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
-
-            if (IdBaiGiang == Guid.Empty)
-                throw new Exception("Id khóa học không hợp lệ");
-
-            var banGoc = await GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == IdBaiGiang && !x.IsDeleted);
-
-            if (banGoc == null)
-                throw new Exception("Không tìm thấy khóa học");
-
-            var coQuyen = await CoQuyenQuaPhan(banGoc.IdPhan, nguoiTao, gv => gv.Manage);
-            if (!coQuyen)
-                throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
-
-            var banCanXuLy = await GetAll()
-                .FirstOrDefaultAsync(x => x.IdBanGhiTruoc == banGoc.Id
-                                        && !x.IsDeleted
-                                        && x.TrangThaiPheDuyet == "ChoDuyet");
-
-            if (banCanXuLy == null && banGoc.TrangThaiPheDuyet == "ChoDuyet")
-                banCanXuLy = banGoc;
-
-            if (banCanXuLy == null)
-                throw new Exception("Bài giảng hiện không ở trạng thái CHỜ DUYỆT nên không thể chuyển sang ĐANG SỬA");
-
-            banCanXuLy.TrangThaiPheDuyet = "DangSua";
-            banCanXuLy.TrangThai = "DangSua";
-            banCanXuLy.UpdatedDate = DateTime.UtcNow;
-
-            await UpdateAsync(banCanXuLy);
-            await SaveAsync();
-
-            return _mapper.Map<BaiGiang, BaiGiangDto>(banCanXuLy);
-        }
-
 
         public async Task<BaiGiangDto> CreateBaiGiang(CreateBaiGiangRequest request)
         {

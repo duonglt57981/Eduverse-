@@ -759,8 +759,7 @@ function CourseCard({
           transition:
             "transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease",
           "&:hover": {
-            transform: "translateY(-4px)",
-            boxShadow: "0 12px 32px rgba(139,19,19,0.10)",
+            boxShadow: "0 8px 24px rgba(139,19,19,0.08)",
             borderColor: C.primaryBorder,
           },
         }}
@@ -1046,11 +1045,11 @@ function SectionHeader({
   );
 }
 
-// ─── Continue-learning progress card (Sleek Modern Square Card) ───────────────
+// ─── Continue-learning progress card (Ultra-Premium Modern Card) ──────────────
 function ContinueLearningCard({
   item,
   onOpen,
-  width = 245,
+  width = 260,
 }: {
   item: KhoaHocDto;
   onOpen: (c: KhoaHocDto) => void;
@@ -1072,19 +1071,19 @@ function ContinueLearningCard({
       sx={{
         width,
         flexShrink: 0,
-        borderRadius: "18px",
+        borderRadius: "16px",
         overflow: "hidden",
-        border: `1px solid ${C.border}`,
+        border: `1px solid var(--ev-divider, #ECE7E4)`,
         bgcolor: C.white,
         cursor: "pointer",
-        transition:
-          "transform 280ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1), border-color 280ms ease",
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)",
+        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         "&:hover": {
-          transform: "translateY(-6px)",
-          boxShadow: "0 16px 36px -8px rgba(139, 19, 19, 0.14)",
-          borderColor: "rgba(139, 19, 19, 0.3)",
+          transform: "translateY(-4px)",
+          boxShadow: "0 14px 32px rgba(139, 19, 19, 0.10)",
+          borderColor: "rgba(139, 19, 19, 0.28)",
           "& .play-glass-btn": {
-            transform: "scale(1.15)",
+            transform: "scale(1.12)",
             background: "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
             color: "#ffffff",
             boxShadow: "0 10px 24px rgba(139,19,19,0.45)",
@@ -1092,40 +1091,80 @@ function ContinueLearningCard({
           "& .card-title-text": {
             color: C.primary,
           },
+          "& .card-thumb-img": {
+            transform: "scale(1.05)",
+          },
         },
       }}
     >
       {/* ── 1. Top Image Thumbnail Container ── */}
       <Box
         sx={{
-          height: 140,
+          height: 145,
           position: "relative",
           overflow: "hidden",
-          background: isValidImage(item.hinhAnhKhoaHoc)
-            ? `linear-gradient(to top, rgba(15, 23, 42, 0.6) 0%, transparent 60%), url(${item.hinhAnhKhoaHoc}) center/cover no-repeat`
-            : gradient,
+          bgcolor: "var(--dashboard-surface-muted, #FBFAF9)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
+        {isValidImage(item.hinhAnhKhoaHoc) ? (
+          <Box
+            className="card-thumb-img"
+            component="img"
+            src={item.hinhAnhKhoaHoc}
+            alt={title}
+            sx={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              transition: "transform 0.4s ease",
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: "100%",
+              height: "100%",
+              background: gradient,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          />
+        )}
+
+        {/* Dark bottom gradient overlay for readability */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to top, rgba(15, 23, 42, 0.65) 0%, transparent 60%)",
+            pointerEvents: "none",
+          }}
+        />
+
         {/* Glassmorphic Play Button */}
         <Box
           className="play-glass-btn"
           sx={{
-            width: 46,
-            height: 46,
+            position: "relative",
+            zIndex: 2,
+            width: 48,
+            height: 48,
             borderRadius: "50%",
             background: "rgba(255, 255, 255, 0.90)",
-            backdropFilter: "blur(12px)",
+            backdropFilter: "blur(10px)",
             color: C.primary,
             display: "grid",
             placeItems: "center",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.22)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.24)",
             transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         >
-          <PlayArrowRounded sx={{ fontSize: 28, ml: 0.2 }} />
+          <PlayArrowRounded sx={{ fontSize: 30, ml: 0.2 }} />
         </Box>
 
         {/* Level Badge (Top Left) */}
@@ -1137,14 +1176,16 @@ function ContinueLearningCard({
               position: "absolute",
               top: 10,
               left: 10,
-              bgcolor: "rgba(255,255,255,0.92)",
+              bgcolor: "rgba(15, 23, 42, 0.78)",
+              color: "#FFFFFF",
               backdropFilter: "blur(8px)",
-              color: C.primary,
               fontWeight: 800,
-              fontSize: 10,
+              fontSize: 10.5,
               height: 22,
               px: 0.5,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              borderRadius: "8px",
+              border: "1px solid rgba(255,255,255,0.18)",
+              zIndex: 3,
             }}
           />
         )}
@@ -1161,31 +1202,33 @@ function ContinueLearningCard({
               pct === 100
                 ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
                 : pct === 0
-                  ? "rgba(15, 23, 42, 0.75)"
+                  ? "rgba(15, 23, 42, 0.78)"
                   : C.gradientCrimson,
-            backdropFilter: pct === 0 ? "blur(8px)" : undefined,
-            color: "#fff",
+            backdropFilter: "blur(8px)",
+            color: "#ffffff",
             fontWeight: 800,
             fontSize: 10.5,
             height: 22,
             px: 0.75,
+            borderRadius: "8px",
             boxShadow:
               pct === 100
                 ? "0 4px 12px rgba(16,185,129,0.35)"
                 : "0 4px 12px rgba(139,19,19,0.35)",
+            zIndex: 3,
           }}
         />
       </Box>
 
       {/* ── 2. Card Body Content ── */}
-      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1.25 }}>
+      <Box sx={{ p: 2.25, display: "flex", flexDirection: "column", gap: 1.5 }}>
         <Typography
           className="card-title-text"
           sx={{
-            fontSize: 14,
+            fontSize: 14.5,
             fontWeight: 800,
-            lineHeight: 1.4,
-            height: 40,
+            lineHeight: 1.38,
+            height: 42,
             overflow: "hidden",
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -1198,17 +1241,17 @@ function ContinueLearningCard({
         </Typography>
 
         {/* Progress Info & Bar */}
-        <Box sx={{ mt: 0.25 }}>
+        <Box>
           <Stack
             direction="row"
             sx={{
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 0.75,
+              mb: 0.85,
             }}
           >
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <MenuBookRounded sx={{ fontSize: 13, color: C.textMuted }} />
+            <Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}>
+              <MenuBookRounded sx={{ fontSize: 14, color: C.primary }} />
               <Typography
                 sx={{ fontSize: 11.5, color: C.textSecondary, fontWeight: 600 }}
               >
@@ -1220,9 +1263,9 @@ function ContinueLearningCard({
 
             <Typography
               sx={{
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: 900,
-                color: pct === 100 ? "#10B981" : C.primary,
+                color: pct === 100 ? "#10B981" : pct > 0 ? C.primary : C.textMuted,
               }}
             >
               {pct}%
@@ -1233,15 +1276,17 @@ function ContinueLearningCard({
             variant="determinate"
             value={pct}
             sx={{
-              height: 7,
-              borderRadius: 99,
-              bgcolor: "var(--dashboard-surface-muted)",
+              height: 6,
+              borderRadius: 6,
+              bgcolor: "rgba(0,0,0,0.06)",
               "& .MuiLinearProgress-bar": {
                 background:
                   pct === 100
                     ? "linear-gradient(90deg, #34D399 0%, #10B981 100%)"
-                    : "linear-gradient(90deg, #F43F5E 0%, #8B1313 100%)",
-                borderRadius: 99,
+                    : pct > 0
+                      ? "linear-gradient(90deg, #B91C1C 0%, #8B1313 100%)"
+                      : "linear-gradient(90deg, #E5E7EB 0%, #D1D5DB 100%)",
+                borderRadius: 6,
                 boxShadow:
                   pct === 100
                     ? "0 2px 8px rgba(16,185,129,0.35)"
@@ -1251,7 +1296,7 @@ function ContinueLearningCard({
           />
         </Box>
 
-        {/* Soft Tint Interactive Action Button */}
+        {/* Unified Brand Crimson Action Button */}
         <Button
           fullWidth
           variant="contained"
@@ -1268,33 +1313,18 @@ function ContinueLearningCard({
             onOpen(item);
           }}
           sx={{
-            mt: 0.5,
-            borderRadius: "12px",
-            py: 1,
+            borderRadius: "10px",
+            py: 1.1,
             fontWeight: 800,
-            fontSize: 12.5,
-            bgcolor:
-              pct === 100
-                ? "rgba(16, 185, 129, 0.09)"
-                : "rgba(139, 19, 19, 0.08)",
-            color: pct === 100 ? "#059669" : C.primary,
-            border:
-              pct === 100
-                ? "1px solid rgba(16, 185, 129, 0.22)"
-                : "1px solid rgba(139, 19, 19, 0.2)",
-            boxShadow: "none",
-            transition: "all 240ms ease",
+            fontSize: 13,
+            background: C.gradientCrimson,
+            color: "#ffffff",
+            boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
+            transition: "all 220ms ease",
             "&:hover": {
-              background:
-                pct === 100
-                  ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
-                  : C.gradientCrimson,
-              color: "#ffffff",
-              borderColor: "transparent",
-              boxShadow:
-                pct === 100
-                  ? "0 6px 20px rgba(16,185,129,0.35)"
-                  : "0 6px 20px rgba(139,19,19,0.35)",
+              background: "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
+              boxShadow: "0 6px 20px rgba(139,19,19,0.36)",
+              transform: "translateY(-1px)",
             },
           }}
         >
@@ -1709,7 +1739,6 @@ export default function StudentHomeContent() {
               minWidth: { xs: 90, sm: 110 },
               transition: "all 0.2s ease",
               "&:hover": {
-                transform: "translateY(-2px)",
                 bgcolor: C.white,
                 borderColor: "rgba(139,19,19,0.12)",
                 boxShadow: "0 6px 16px rgba(139,19,19,0.04)",
@@ -1750,7 +1779,6 @@ export default function StudentHomeContent() {
               minWidth: { xs: 90, sm: 110 },
               transition: "all 0.2s ease",
               "&:hover": {
-                transform: "translateY(-2px)",
                 bgcolor: C.white,
                 borderColor: "rgba(139,19,19,0.12)",
                 boxShadow: "0 6px 16px rgba(139,19,19,0.04)",

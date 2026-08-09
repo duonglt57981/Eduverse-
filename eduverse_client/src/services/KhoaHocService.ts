@@ -2,6 +2,7 @@ import {
   GetToUpdateKhoaHoc,
   GiangVienKhoaHocDto,
   KhoaHocDangKiSearch,
+  KhoaHocDetailType,
   KhoaHocDraftResultType,
   KhoaHocManagerSearch,
   KhoaHocSearch,
@@ -212,6 +213,20 @@ export default class KhoaHocService {
       return response.data;
     } catch (error) {
       console.error("Error fetching course for update:", error);
+      throw error;
+    }
+  }
+
+  async GetKhoaHocDetail(
+    idKhoaHoc: string,
+  ): Promise<ApiResponse<KhoaHocDetailType>> {
+    try {
+      const response = await apiService.get<KhoaHocDetailType>(
+        `/KhoaHoc/khoahoc-get-detail/${idKhoaHoc}`,
+      );
+      return response;
+    } catch (error) {
+      console.error("Error fetching course for detail:", error);
       throw error;
     }
   }
