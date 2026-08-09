@@ -1079,11 +1079,10 @@ function ContinueLearningCard({
         boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)",
         transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         "&:hover": {
-          transform: "translateY(-4px)",
           boxShadow: "0 14px 32px rgba(139, 19, 19, 0.10)",
           borderColor: "rgba(139, 19, 19, 0.28)",
           "& .play-glass-btn": {
-            transform: "scale(1.12)",
+            transform: "translate(-50%, -50%) scale(1.12)",
             background: "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
             color: "#ffffff",
             boxShadow: "0 10px 24px rgba(139,19,19,0.45)",
@@ -1150,7 +1149,10 @@ function ContinueLearningCard({
         <Box
           className="play-glass-btn"
           sx={{
-            position: "relative",
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             zIndex: 2,
             width: 48,
             height: 48,

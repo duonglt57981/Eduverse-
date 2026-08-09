@@ -54,6 +54,8 @@ function tenTepTuUrl(url: string): string {
   }
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002";
+
 export default function CvViewerDialog({
   open,
   onClose,
@@ -78,80 +80,138 @@ export default function CvViewerDialog({
   );
 
   const nguonNhung = useMemo(() => {
-    // PDF: dùng tệp đã tải qua API (đúng Content-Type, không bị chặn phát)
-    if (loaiTep === "pdf") return blobUrl ?? "";
-    // Word: nhờ Office Online kết xuất, việc này cần đường dẫn công khai
-    if (loaiTep === "office" && cvUrl) {
+    if (!cvUrl) return "";
+
+    if (loaiTep === "pdf") {
+      // PDF bắt buộc dùng Blob URL trong bộ nhớ (được tải bằng apiService kèm Token Authorization)
+      return blobUrl ?? "";
+    }
+
+    if (loaiTep === "office") {
       return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(cvUrl)}`;
     }
-    return "";
+
+    return cvUrl;
   }, [cvUrl, loaiTep, blobUrl]);
 
-  // Tải PDF qua API của hệ thống thay vì để iframe gọi thẳng Cloudinary
+  // Tải tệp PDF qua apiService (tự động kèm Authorization Bearer token) để tạo Blob URL chuẩn
   useEffect(() => {
-    if (!open || loaiTep !== "pdf" || !requestId) return;
-    let huy = false;
-    let diaChiTam: string | null = null;
+    if (!open || !cvUrl) {
+      setDangTai(false);
+      return;
+    }
 
-    (async () => {
+    let cancel = false;
+    let createdUrl: string | null = null;
+
+    const loadPdfBlob = async () => {
+      setDangTai(true);
+      setLoi(false);
+
       try {
-        setDangTai(true);
-        setLoi(false);
-        const blob = await apiService.getBlob(
-          `/admin/instructor-requests/${requestId}/cv`,
-        );
-        if (huy) return;
-        diaChiTam = URL.createObjectURL(blob);
-        setBlobUrl(diaChiTam);
-      } catch {
-        if (!huy) {
+        let pdfBlob: Blob | null = null;
+
+        // 1. Lấy tệp qua Backend API theo requestId
+        if (requestId) {
+          try {
+            pdfBlob = await apiService.getBlob(
+              `/admin/instructor-requests/${requestId}/cv`,
+            );
+          } catch (err) {
+            console.warn("Lỗi lấy CV qua requestId:", err);
+          }
+        }
+
+        // 2. Nếu không lấy được qua requestId, tải qua Proxy API của backend (gửi kèm Token)
+        if (!pdfBlob && cvUrl) {
+          try {
+            pdfBlob = await apiService.getBlob(
+              `/admin/cv-proxy?url=${encodeURIComponent(cvUrl)}`,
+            );
+          } catch (err) {
+            console.warn("Lỗi lấy CV qua Proxy:", err);
+          }
+        }
+
+        if (cancel) return;
+
+        if (pdfBlob && pdfBlob.size > 0) {
+          // Ép kiểu application/pdf để trình duyệt bật bộ đọc PDF native
+          const buffer = await pdfBlob.arrayBuffer();
+          const purePdfBlob = new Blob([buffer], {
+            type: "application/pdf",
+          });
+          createdUrl = URL.createObjectURL(purePdfBlob);
+          setBlobUrl(createdUrl);
+          setDangTai(false);
+          return;
+        }
+
+        throw new Error("Không thể đọc tệp PDF");
+      } catch (err) {
+        console.error("Lỗi tải PDF Blob:", err);
+        if (!cancel) {
           setDangTai(false);
           setLoi(true);
         }
       }
-    })();
+    };
+
+    if (loaiTep === "pdf") {
+      void loadPdfBlob();
+    } else {
+      setDangTai(false);
+    }
 
     return () => {
-      huy = true;
-      if (diaChiTam) URL.revokeObjectURL(diaChiTam);
+      cancel = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
       setBlobUrl(null);
     };
-  }, [open, loaiTep, requestId]);
+  }, [open, cvUrl, requestId, loaiTep]);
 
-  // Mỗi lần mở lại thì đặt về trạng thái đang tải
-  useEffect(() => {
-    if (open) {
-      queueMicrotask(() => {
-        setDangTai(true);
-        setLoi(false);
-      });
-    }
-  }, [open, cvUrl]);
-
-  // Bộ hiển thị Office đôi khi không phát sự kiện tải xong.
-  // Sau 12 giây thì tự tắt vòng quay để người dùng không phải chờ vô tận.
+  // Tự động tắt spinner sau 6 giây
   useEffect(() => {
     if (!open || !dangTai) return;
-    const hen = setTimeout(() => setDangTai(false), 12000);
+    const hen = setTimeout(() => setDangTai(false), 6000);
     return () => clearTimeout(hen);
   }, [open, dangTai]);
 
-  // Ưu tiên tệp đã tải qua API; chỉ lùi về đường dẫn Cloudinary khi chưa có.
-  const diaChiDung = blobUrl ?? cvUrl ?? "";
-
   const moTabMoi = () => {
-    if (diaChiDung) window.open(diaChiDung, "_blank", "noopener,noreferrer");
+    if (blobUrl) {
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+    } else if (cvUrl) {
+      window.open(cvUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
-  const taiVe = () => {
-    if (!diaChiDung) return;
-    const the = document.createElement("a");
-    the.href = diaChiDung;
-    the.download = tenTepTuUrl(cvUrl ?? "CV");
-    the.rel = "noopener noreferrer";
-    document.body.appendChild(the);
-    the.click();
-    document.body.removeChild(the);
+  const taiVe = async () => {
+    if (blobUrl) {
+      const the = document.createElement("a");
+      the.href = blobUrl;
+      the.download = tenTepTuUrl(cvUrl ?? "Hoso_CV.pdf");
+      document.body.appendChild(the);
+      the.click();
+      document.body.removeChild(the);
+    } else if (requestId) {
+      try {
+        const blob = await apiService.getBlob(
+          `/admin/instructor-requests/${requestId}/cv`,
+        );
+        const url = URL.createObjectURL(blob);
+        const the = document.createElement("a");
+        the.href = url;
+        the.download = tenTepTuUrl(cvUrl ?? "Hoso_CV.pdf");
+        document.body.appendChild(the);
+        the.click();
+        document.body.removeChild(the);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch {
+        if (cvUrl) window.open(cvUrl, "_blank");
+      }
+    } else if (cvUrl) {
+      window.open(cvUrl, "_blank");
+    }
   };
 
   return (
@@ -310,7 +370,7 @@ export default function CvViewerDialog({
                 >
                   {loaiTep === "office"
                     ? "Đang kết xuất tài liệu Word..."
-                    : "Đang tải tài liệu..."}
+                    : "Đang tải tài liệu PDF..."}
                 </Typography>
               </Stack>
             )}
@@ -335,8 +395,7 @@ export default function CvViewerDialog({
                 <Typography
                   sx={{ fontSize: 12.5, color: NEUTRAL.textMuted, maxWidth: 420 }}
                 >
-                  Tệp có thể đã bị xóa trên máy chủ lưu trữ, hoặc bộ hiển thị tài
-                  liệu đang không phản hồi. Bạn vẫn có thể tải tệp về để xem.
+                  Tệp có thể đã bị xóa trên máy chủ lưu trữ. Bạn vẫn có thể tải tệp về để xem.
                 </Typography>
                 <Stack direction="row" spacing={1.25} sx={{ mt: 1 }}>
                   <Button
@@ -368,6 +427,28 @@ export default function CvViewerDialog({
                   </Button>
                 </Stack>
               </Stack>
+            ) : loaiTep === "pdf" ? (
+              <Box
+                component="object"
+                key={nguonNhung}
+                data={nguonNhung}
+                type="application/pdf"
+                onLoad={() => setDangTai(false)}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  border: "none",
+                  display: "block",
+                  bgcolor: "#525659",
+                }}
+              >
+                <iframe
+                  src={nguonNhung}
+                  title="Hồ sơ CV PDF"
+                  onLoad={() => setDangTai(false)}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                />
+              </Box>
             ) : (
               <Box
                 component="iframe"

@@ -23,6 +23,18 @@ namespace Eduverse.Service.AuthService
 
         [RegularExpression(@"^0[0-9]{9}$", ErrorMessage = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0")]
         public string? PhoneNumber { get; set; }
+
+        public string? Otp { get; set; }
+    }
+
+    public class SendRegisterOtpRequest
+    {
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Tên đăng nhập là bắt buộc")]
+        public string UserName { get; set; }
     }
 
     public class LoginRequest

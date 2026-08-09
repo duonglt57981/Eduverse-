@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -15,10 +16,16 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Eduverse.Model.Entities;
 
 namespace Eduverse.Service.AuthService
 {
+    public class RegisterOtpCacheItem
+    {
+        public string Hash { get; set; } = string.Empty;
+        public DateTime Expiry { get; set; }
+        public int Attempts { get; set; }
+    }
+
     public class AuthService : IAuthService
     {
         private readonly UserManager<AppUser> _userManager;
@@ -26,40 +33,130 @@ namespace Eduverse.Service.AuthService
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
         private readonly ISmsService _smsService;
+        private readonly IMemoryCache _memoryCache;
 
         public AuthService(
             UserManager<AppUser> userManager,
             IAuthRepository authRepo,
             IConfiguration config,
             IEmailService emailService,
-            ISmsService smsService)
+            ISmsService smsService,
+            IMemoryCache memoryCache)
         {
             _userManager = userManager;
             _authRepo = authRepo;
             _config = config;
             _emailService = emailService;
             _smsService = smsService;
+            _memoryCache = memoryCache;
         }
 
         // ══════════════════════════════════════════════
-        // REGISTER + GỬI EMAIL VERIFY
+        // GỬI EMAIL OTP ĐĂNG KÝ
         // ══════════════════════════════════════════════
-        public async Task<string> RegisterAsync(RegisterRequest request)
+        public async Task<string> SendRegisterOtpAsync(SendRegisterOtpRequest request)
         {
+            if (request is null)
+                throw new Exception("Dữ liệu không hợp lệ.");
+
+            var email = (request.Email ?? string.Empty).Trim();
+            var userName = (request.UserName ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(email))
+                throw new Exception("Vui lòng nhập địa chỉ email.");
+            if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
+                throw new Exception("Email không đúng định dạng.");
+
+            if (string.IsNullOrWhiteSpace(userName))
+                throw new Exception("Vui lòng nhập tên đăng nhập.");
+
             // Check trùng username
-            var existingUser = await _userManager.FindByNameAsync(request.UserName);
+            var existingUser = await _userManager.FindByNameAsync(userName);
             if (existingUser is not null)
                 throw new Exception("Tên đăng nhập đã được sử dụng");
 
             // Check trùng email
-            var existingEmail = await _userManager.FindByEmailAsync(request.Email);
+            var existingEmail = await _userManager.FindByEmailAsync(email);
+            if (existingEmail is not null)
+                throw new Exception("Email này đã được đăng ký");
+
+            // Check cooldown gửi lại mã OTP (60s)
+            var cacheKey = $"REG_OTP_{email.ToLower()}";
+            if (_memoryCache.TryGetValue(cacheKey, out RegisterOtpCacheItem? oldItem) && oldItem != null)
+            {
+                var secondsLeft = (oldItem.Expiry.AddMinutes(-4) - DateTime.UtcNow).TotalSeconds;
+                if (secondsLeft > 0)
+                {
+                    throw new Exception($"Vui lòng chờ {Math.Ceiling(secondsLeft)} giây trước khi yêu cầu gửi lại mã OTP.");
+                }
+            }
+
+            // Sinh mã OTP 6 chữ số an toàn
+            var otpCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+
+            // Lưu mã OTP đã mã hóa SHA-256 vào MemoryCache (5 phút)
+            var cacheItem = new RegisterOtpCacheItem
+            {
+                Hash = HashValue(otpCode),
+                Expiry = DateTime.UtcNow.AddMinutes(5),
+                Attempts = 0
+            };
+            _memoryCache.Set(cacheKey, cacheItem, TimeSpan.FromMinutes(5));
+
+            // Gửi email chứa mã OTP
+            try
+            {
+                await _emailService.SendAsync(
+                    to: email,
+                    subject: "[EduVerse] Mã xác minh đăng ký tài khoản",
+                    body: BuildRegisterOtpEmail(otpCode)
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EduVerse][RegisterOtp] Gửi email OTP THẤT BẠI tới {email}: {ex.Message}");
+                throw new Exception("Không thể gửi email OTP. Vui lòng kiểm tra lại địa chỉ email hoặc thử lại sau.");
+            }
+
+            return "Mã xác minh OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.";
+        }
+
+        private static string BuildRegisterOtpEmail(string otpCode) => $@"
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
+                <div style='text-align: center; margin-bottom: 20px;'>
+                    <h2 style='color: #8B1313; margin: 0; font-size: 24px; font-weight: bold;'>EduVerse</h2>
+                </div>
+                <h3 style='color: #1F2937; margin-bottom: 10px; text-align: center;'>Mã xác minh đăng ký tài khoản</h3>
+                <p style='color: #4B5563; font-size: 15px; line-height: 1.5; text-align: center;'>Xin chào, cảm ơn bạn đã đăng ký tài khoản tại <strong>EduVerse</strong>. Đây là mã xác minh email 6 chữ số của bạn:</p>
+                <div style='text-align: center; margin: 25px 0;'>
+                    <span style='display: inline-block; font-size: 32px; font-weight: 800; color: #8B1313; letter-spacing: 8px; text-indent: 8px; padding: 12px 32px; background-color: #FEF2F2; border: 1px dashed #FCA5A5; border-radius: 10px;'>{otpCode}</span>
+                </div>
+                <p style='color: #6B7280; font-size: 13.5px; line-height: 1.5; text-align: center;'>Mã này có hiệu lực trong <strong>5 phút</strong>. Vui lòng không chia sẻ mã này cho bất kỳ ai khác.</p>
+                <hr style='border: none; border-top: 1px solid #E5E7EB; margin: 20px 0;' />
+                <p style='color: #9CA3AF; font-size: 12px; text-align: center; margin: 0;'>Nếu bạn không thực hiện yêu cầu đăng ký này, vui lòng bỏ qua email này.</p>
+            </div>";
+
+        // ══════════════════════════════════════════════
+        // REGISTER + XÁC MINH OTP
+        // ══════════════════════════════════════════════
+        public async Task<string> RegisterAsync(RegisterRequest request)
+        {
+            var email = (request.Email ?? string.Empty).Trim();
+            var userName = (request.UserName ?? string.Empty).Trim();
+
+            // Check trùng username
+            var existingUser = await _userManager.FindByNameAsync(userName);
+            if (existingUser is not null)
+                throw new Exception("Tên đăng nhập đã được sử dụng");
+
+            // Check trùng email
+            var existingEmail = await _userManager.FindByEmailAsync(email);
             if (existingEmail is not null)
                 throw new Exception("Email này đã được đăng ký");
 
             // Check trùng số điện thoại (nếu có nhập)
             if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
             {
-                // Validate format: 10 số, bắt đầu bằng 0
                 if (!System.Text.RegularExpressions.Regex.IsMatch(request.PhoneNumber, @"^0[0-9]{9}$"))
                     throw new Exception("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0");
 
@@ -67,6 +164,32 @@ namespace Eduverse.Service.AuthService
                 if (phoneExists)
                     throw new Exception("Số điện thoại này đã được đăng ký");
             }
+
+            // Validate OTP
+            if (string.IsNullOrWhiteSpace(request.Otp))
+                throw new Exception("Vui lòng nhập mã xác minh OTP gửi về email");
+
+            var cacheKey = $"REG_OTP_{email.ToLower()}";
+            if (!_memoryCache.TryGetValue(cacheKey, out RegisterOtpCacheItem? otpItem) || otpItem is null || otpItem.Expiry < DateTime.UtcNow)
+            {
+                throw new Exception("Mã OTP đã hết hạn hoặc chưa được gửi. Vui lòng lấy mã mới.");
+            }
+
+            if (otpItem.Attempts >= 5)
+            {
+                _memoryCache.Remove(cacheKey);
+                throw new Exception("Mã OTP đã bị hủy do nhập sai quá 5 lần. Vui lòng gửi lại mã mới.");
+            }
+
+            if (HashValue(request.Otp.Trim()) != otpItem.Hash)
+            {
+                otpItem.Attempts++;
+                _memoryCache.Set(cacheKey, otpItem, otpItem.Expiry - DateTime.UtcNow);
+                throw new Exception($"Mã OTP không chính xác. Bạn còn {5 - otpItem.Attempts} lần thử.");
+            }
+
+            // OTP hợp lệ -> xóa khỏi cache
+            _memoryCache.Remove(cacheKey);
 
             // Validate mật khẩu: ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt
             if (request.Password.Length < 8)
@@ -82,12 +205,13 @@ namespace Eduverse.Service.AuthService
 
             var user = new AppUser
             {
-                UserName = request.UserName,
-                Email = request.Email,
+                UserName = userName,
+                Email = email,
                 HoTen = request.HoTen,
                 PhoneNumber = request.PhoneNumber,
                 ChucVu = request.ChucVu,
-                GioiTinh = request.GioiTinh
+                GioiTinh = request.GioiTinh ?? 0,
+                EmailConfirmed = true
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
@@ -97,7 +221,7 @@ namespace Eduverse.Service.AuthService
             // Mặc định gán role HocVien
             await _userManager.AddToRoleAsync(user, "HocVien");
 
-            return "Đăng ký thành công!";
+            return "Đăng ký tài khoản thành công!";
         }
 
         // ══════════════════════════════════════════════
@@ -449,13 +573,13 @@ namespace Eduverse.Service.AuthService
                     <h2 style='color: #7f1d1d; margin: 0; font-size: 24px; font-weight: bold;'>EduVerse</h2>
                 </div>
                 <hr style='border: none; border-top: 1px solid #f0f0f0; margin-bottom: 20px;' />
-                <p style='font-size: 16px; color: #333333; line-height: 1.5;'>Chào bạn,</p>
-                <p style='font-size: 16px; color: #333333; line-height: 1.5;'>Bạn vừa yêu cầu đặt lại mật khẩu tài khoản <strong>EduVerse</strong>. Vui lòng dùng mã xác minh bên dưới để tiếp tục:</p>
+                <p style='font-size: 16px; color: #333333; line-height: 1.5; text-align: center;'>Chào bạn,</p>
+                <p style='font-size: 16px; color: #333333; line-height: 1.5; text-align: center;'>Bạn vừa yêu cầu đặt lại mật khẩu tài khoản <strong>EduVerse</strong>. Vui lòng dùng mã xác minh bên dưới để tiếp tục:</p>
                 <div style='background: #f9f8f6; border: 1px dashed #7f1d1d; border-radius: 8px; padding: 15px; text-align: center; margin: 25px 0;'>
-                    <span style='font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #7f1d1d;'>{otpCode}</span>
+                    <span style='display: inline-block; font-size: 32px; font-weight: 800; letter-spacing: 6px; text-indent: 6px; color: #7f1d1d;'>{otpCode}</span>
                 </div>
-                <p style='font-size: 14px; color: #666666; line-height: 1.5;'>Mã này có hiệu lực trong <strong>5 phút</strong>. Vì lý do bảo mật, tuyệt đối không chia sẻ mã với bất kỳ ai.</p>
-                <p style='font-size: 14px; color: #666666; line-height: 1.5;'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+                <p style='font-size: 14px; color: #666666; line-height: 1.5; text-align: center;'>Mã này có hiệu lực trong <strong>5 phút</strong>. Vì lý do bảo mật, tuyệt đối không chia sẻ mã với bất kỳ ai.</p>
+                <p style='font-size: 14px; color: #666666; line-height: 1.5; text-align: center;'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
                 <hr style='border: none; border-top: 1px solid #f0f0f0; margin: 25px 0;' />
                 <div style='text-align: center;'>
                     <p style='font-size: 12px; color: #999999; margin: 0;'>Đây là email tự động, vui lòng không phản hồi.</p>

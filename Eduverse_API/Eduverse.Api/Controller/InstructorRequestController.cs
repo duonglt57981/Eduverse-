@@ -90,6 +90,12 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<object> { Status = false, Message = "Lỗi khi tải file CV lên máy chủ Cloudinary" };
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            {
+                user.PhoneNumber = dto.PhoneNumber.Trim();
+                await _userManager.UpdateAsync(user);
+            }
+
             var newRequest = new InstructorRequest
             {
                 AppUserId = loggedInUserId.Value,
@@ -207,6 +213,7 @@ namespace Eduverse.Api.Controller
                     hoTen = r.AppUser != null ? r.AppUser.HoTen : string.Empty,
                     email = r.AppUser != null ? r.AppUser.Email : string.Empty,
                     phoneNumber = r.AppUser != null ? r.AppUser.PhoneNumber : string.Empty,
+                    anhDaiDien = r.AppUser != null ? r.AppUser.AnhDaiDien : string.Empty,
                     chuyenMon = r.ChuyenMon,
                     kinhNghiem = r.KinhNghiem,
                     bangCap = r.BangCap,
@@ -289,6 +296,53 @@ namespace Eduverse.Api.Controller
         }
 
         // ══════════════════════════════════════════════
+        // 3c. GET /api/admin/cv-proxy?url=...
+        // Proxy tải file từ Cloudinary và phát lại dạng inline application/pdf
+        // ══════════════════════════════════════════════
+        [HttpGet("admin/cv-proxy")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ProxyCv([FromQuery] string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return BadRequest(new { status = false, message = "URL không hợp lệ" });
+
+            try
+            {
+                using var client = new System.Net.Http.HttpClient
+                {
+                    Timeout = TimeSpan.FromSeconds(30)
+                };
+                var response = await client.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode, new { status = false, message = "Lỗi khi tải tệp từ Cloudinary" });
+                }
+
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                var cleanUrl = url.Split('?')[0].Split('#')[0];
+                var duoi = System.IO.Path.GetExtension(cleanUrl).ToLowerInvariant();
+
+                var contentType = duoi switch
+                {
+                    ".pdf" => "application/pdf",
+                    ".png" => "image/png",
+                    ".jpg" or ".jpeg" => "image/jpeg",
+                    ".webp" => "image/webp",
+                    ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    ".doc" => "application/msword",
+                    _ => "application/pdf"
+                };
+
+                Response.Headers["Content-Disposition"] = "inline";
+                return File(bytes, contentType);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { status = false, message = ex.Message });
+            }
+        }
+
+        // ══════════════════════════════════════════════
         // 4. POST /api/admin/instructor-requests/{id}/approve
         // ══════════════════════════════════════════════
         [HttpPost("admin/instructor-requests/{id}/approve")]
@@ -312,12 +366,8 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<object> { Status = false, Message = "Người dùng yêu cầu không tồn tại" };
             }
 
-            // Update user roles
+            // Update user roles (Kích hoạt vai trò Giảng viên, giữ nguyên vai trò Học viên)
             var userRoles = await _userManager.GetRolesAsync(user);
-            if (userRoles.Contains("HocVien"))
-            {
-                await _userManager.RemoveFromRoleAsync(user, "HocVien");
-            }
             if (!userRoles.Contains("GiaoVien"))
             {
                 await _userManager.AddToRoleAsync(user, "GiaoVien");
@@ -414,6 +464,8 @@ namespace Eduverse.Api.Controller
 
     public class UpgradeRequestDto
     {
+        public string? PhoneNumber { get; set; }
+
         [Required]
         public string ChuyenMon { get; set; } = string.Empty;
 

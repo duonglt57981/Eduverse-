@@ -55,6 +55,14 @@ interface Device {
   isCurrent: boolean;
 }
 
+interface LoginHistoryItem {
+  time: string;
+  dev: string;
+  ip: string;
+  loc: string;
+  status: string;
+}
+
 export default function SecuritySettings() {
   const theme = useTheme();
   const [showPass, setShowPass] = useState({ current: false, new: false, confirm: false });
@@ -62,11 +70,10 @@ export default function SecuritySettings() {
   const [passErrors, setPassErrors] = useState({ current: '', new: '', confirm: '' });
   const [passLoading, setPassLoading] = useState(false);
 
-  const [devices] = useState<Device[]>([
-    { id: 1, name: 'Windows 11 PC', browser: 'Google Chrome', location: 'Hà Nội, Việt Nam', ip: '14.232.245.88', time: 'Đang hoạt động', isCurrent: true },
-    { id: 2, name: 'iPhone 15 Pro', browser: 'Safari Mobile', location: 'Hồ Chí Minh, Việt Nam', ip: '113.161.44.12', time: 'Hoạt động 2 giờ trước', isCurrent: false },
-    { id: 3, name: 'MacBook Pro 16', browser: 'Mozilla Firefox', location: 'Đà Nẵng, Việt Nam', ip: '171.244.11.39', time: 'Hoạt động 3 ngày trước', isCurrent: false },
-  ]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [loginHistory, setLoginHistory] = useState<LoginHistoryItem[]>([]);
+  const [loadingDevices, setLoadingDevices] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
   const [twoFactor, setTwoFactor] = useState(false);
   const [open2FA, setOpen2FA] = useState(false);
@@ -90,10 +97,38 @@ export default function SecuritySettings() {
     }
   }, []);
 
+  // Fetch real active devices and login history from backend
+  const fetchDevicesAndHistory = useCallback(async () => {
+    try {
+      setLoadingDevices(true);
+      const resDev = await apiService.get<Device[]>('/profile/active-devices');
+      if (resDev.status && Array.isArray(resDev.data)) {
+        setDevices(resDev.data);
+      }
+    } catch {
+      // Silent catch
+    } finally {
+      setLoadingDevices(false);
+    }
+
+    try {
+      setLoadingHistory(true);
+      const resHist = await apiService.get<LoginHistoryItem[]>('/profile/login-history');
+      if (resHist.status && Array.isArray(resHist.data)) {
+        setLoginHistory(resHist.data);
+      }
+    } catch {
+      // Silent catch
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetch2FAStatus();
-  }, [fetch2FAStatus]);
+    fetchDevicesAndHistory();
+  }, [fetch2FAStatus, fetchDevicesAndHistory]);
 
   const handleTogglePassVisibility = (field: 'current' | 'new' | 'confirm') => {
     setShowPass((prev) => ({ ...prev, [field]: !prev[field] }));
@@ -152,8 +187,18 @@ export default function SecuritySettings() {
     }
   };
 
-  const handleLogoutDevice = (id: number) => {
-    setSnackbar({ open: true, message: 'Đã hủy phiên đăng nhập trên thiết bị!', severity: 'info' });
+  const handleLogoutDevice = async (id: number) => {
+    try {
+      const res = await apiService.post<any>(`/profile/logout-device/${id}`, {});
+      if (res.status) {
+        setSnackbar({ open: true, message: res.message || 'Đã hủy phiên đăng nhập trên thiết bị!', severity: 'info' });
+        fetchDevicesAndHistory();
+      } else {
+        setSnackbar({ open: true, message: res.message || 'Không thể hủy phiên đăng nhập', severity: 'error' });
+      }
+    } catch (err: any) {
+      setSnackbar({ open: true, message: typeof err === 'string' ? err : 'Không thể đăng xuất thiết bị', severity: 'error' });
+    }
   };
 
   // Real API: POST /api/enable-2fa
@@ -425,79 +470,89 @@ export default function SecuritySettings() {
               Danh sách các thiết bị hiện đang duy trì phiên đăng nhập vào tài khoản của bạn.
             </Typography>
 
-            <Stack spacing={2} divider={<Divider sx={{ opacity: 0.6 }} />}>
-              {devices.map((device) => (
-                <Stack key={device.id} direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 2,
-                        bgcolor: 'action.hover',
-                        display: 'grid',
-                        placeItems: 'center',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      {device.name.includes('iPhone') || device.name.includes('Android') ? (
-                        <SmartphoneRounded />
-                      ) : (
-                        <DesktopWindowsRounded />
-                      )}
-                    </Box>
-                    <Box>
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                        <Typography sx={{ fontSize: 15, fontWeight: 800, color: 'text.primary' }}>
-                          {device.name}
-                        </Typography>
-                        {device.isCurrent && (
-                          <Chip
-                            label="Phiên hiện tại"
-                            size="small"
-                            sx={{
-                              bgcolor: alpha(theme.palette.primary.main, 0.08),
-                              color: 'primary.main',
-                              fontWeight: 800,
-                              height: 20,
-                              fontSize: 11,
-                            }}
-                          />
-                        )}
-                      </Stack>
-                      <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mt: 0.3 }}>
-                        {device.browser} • {device.location} • IP: {device.ip}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                    <Typography sx={{ fontSize: 13, color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
-                      {device.time}
-                    </Typography>
-                    {!device.isCurrent && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        onClick={() => handleLogoutDevice(device.id)}
+            {loadingDevices ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                <CircularProgress size={26} />
+              </Box>
+            ) : devices.length === 0 ? (
+              <Typography sx={{ fontSize: 13.5, color: 'text.secondary', py: 2, textAlign: 'center' }}>
+                Không tìm thấy phiên đăng nhập nào.
+              </Typography>
+            ) : (
+              <Stack spacing={2} divider={<Divider sx={{ opacity: 0.6 }} />}>
+                {devices.map((device) => (
+                  <Stack key={device.id} direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                      <Box
                         sx={{
-                          borderRadius: 999,
-                          borderColor: 'rgba(211,47,47,0.25)',
-                          fontWeight: 700,
-                          px: 2,
-                          '&:hover': {
-                            borderColor: 'error.main',
-                            bgcolor: 'rgba(211,47,47,0.03)',
-                          },
+                          width: 44,
+                          height: 44,
+                          borderRadius: 2,
+                          bgcolor: 'action.hover',
+                          display: 'grid',
+                          placeItems: 'center',
+                          color: 'text.secondary',
                         }}
                       >
-                        Đăng xuất
-                      </Button>
-                    )}
+                        {device.name.includes('iPhone') || device.name.includes('Android') ? (
+                          <SmartphoneRounded />
+                        ) : (
+                          <DesktopWindowsRounded />
+                        )}
+                      </Box>
+                      <Box>
+                        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                          <Typography sx={{ fontSize: 15, fontWeight: 800, color: 'text.primary' }}>
+                            {device.name}
+                          </Typography>
+                          {device.isCurrent && (
+                            <Chip
+                              label="Phiên hiện tại"
+                              size="small"
+                              sx={{
+                                bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                color: 'primary.main',
+                                fontWeight: 800,
+                                height: 20,
+                                fontSize: 11,
+                              }}
+                            />
+                          )}
+                        </Stack>
+                        <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mt: 0.3 }}>
+                          {device.browser} • {device.location} • IP: {device.ip}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                      <Typography sx={{ fontSize: 13, color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
+                        {device.time}
+                      </Typography>
+                      {!device.isCurrent && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          onClick={() => handleLogoutDevice(device.id)}
+                          sx={{
+                            borderRadius: 999,
+                            borderColor: 'rgba(211,47,47,0.25)',
+                            fontWeight: 700,
+                            px: 2,
+                            '&:hover': {
+                              borderColor: 'error.main',
+                              bgcolor: 'rgba(211,47,47,0.03)',
+                            },
+                          }}
+                        >
+                          Đăng xuất
+                        </Button>
+                      )}
+                    </Stack>
                   </Stack>
-                </Stack>
-              ))}
-            </Stack>
+                ))}
+              </Stack>
+            )}
           </CardContent>
         </Card>
 
@@ -519,46 +574,51 @@ export default function SecuritySettings() {
               Giám sát hoạt động truy cập tài khoản gần đây.
             </Typography>
 
-            <TableContainer>
-              <Table sx={{ minWidth: 600 }}>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thời gian</TableCell>
-                    <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thiết bị / Trình duyệt</TableCell>
-                    <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Địa chỉ IP</TableCell>
-                    <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Vị trí</TableCell>
-                    <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Trạng thái</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {[
-                    { time: '19/06/2026 20:30', dev: 'Windows PC / Chrome', ip: '14.232.245.88', loc: 'Hà Nội', status: 'Thành công' },
-                    { time: '19/06/2026 18:15', dev: 'iPhone 15 / Safari', ip: '113.161.44.12', loc: 'Hồ Chí Minh', status: 'Thành công' },
-                    { time: '18/06/2026 09:42', dev: 'Windows PC / Chrome', ip: '14.232.245.88', loc: 'Hà Nội', status: 'Thành công' },
-                    { time: '16/06/2026 14:10', dev: 'MacBook / Firefox', ip: '171.244.11.39', loc: 'Đà Nẵng', status: 'Thành công' },
-                  ].map((row, index) => (
-                    <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell sx={{ fontSize: 13.5 }}>{row.time}</TableCell>
-                      <TableCell sx={{ fontSize: 13.5, fontWeight: 700 }}>{row.dev}</TableCell>
-                      <TableCell sx={{ fontSize: 13.5 }}>{row.ip}</TableCell>
-                      <TableCell sx={{ fontSize: 13.5 }}>{row.loc}</TableCell>
-                      <TableCell sx={{ fontSize: 13.5 }}>
-                        <Chip
-                          label={row.status}
-                          size="small"
-                          sx={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            bgcolor: 'rgba(46,125,50,0.08)',
-                            color: '#2e7d32',
-                          }}
-                        />
-                      </TableCell>
+            {loadingHistory ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                <CircularProgress size={26} />
+              </Box>
+            ) : loginHistory.length === 0 ? (
+              <Typography sx={{ fontSize: 13.5, color: 'text.secondary', py: 2, textAlign: 'center' }}>
+                Chưa có lịch sử đăng nhập.
+              </Typography>
+            ) : (
+              <TableContainer>
+                <Table sx={{ minWidth: 600 }}>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'action.hover' }}>
+                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thời gian</TableCell>
+                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thiết bị / Trình duyệt</TableCell>
+                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Địa chỉ IP</TableCell>
+                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Vị trí</TableCell>
+                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Trạng thái</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {loginHistory.map((row, index) => (
+                      <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        <TableCell sx={{ fontSize: 13.5 }}>{row.time}</TableCell>
+                        <TableCell sx={{ fontSize: 13.5, fontWeight: 700 }}>{row.dev}</TableCell>
+                        <TableCell sx={{ fontSize: 13.5 }}>{row.ip}</TableCell>
+                        <TableCell sx={{ fontSize: 13.5 }}>{row.loc}</TableCell>
+                        <TableCell sx={{ fontSize: 13.5 }}>
+                          <Chip
+                            label={row.status}
+                            size="small"
+                            sx={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              bgcolor: row.status.includes('thành công') || row.status.includes('Thành công') ? 'rgba(46,125,50,0.08)' : 'rgba(211,47,47,0.08)',
+                              color: row.status.includes('thành công') || row.status.includes('Thành công') ? '#2e7d32' : '#d32f2f',
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </CardContent>
         </Card>
       </Stack>
