@@ -30,6 +30,12 @@ import HighQualityRoundedIcon from "@mui/icons-material/HighQualityRounded";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 import "@videojs/http-streaming";
+
+try {
+  if (typeof videojs !== "undefined" && (videojs as any).log) {
+    (videojs as any).log.level("off");
+  }
+} catch (_) {}
 import {
   COLORS,
   FONTS,

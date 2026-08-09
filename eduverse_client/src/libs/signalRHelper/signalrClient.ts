@@ -18,6 +18,9 @@ class signalrClient {
           if (typeof window === 'undefined') return '';
           return localStorage.getItem('AccessToken') ?? '';
         },
+        transport:
+          signalR.HttpTransportType.WebSockets |
+          signalR.HttpTransportType.LongPolling,
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000])
       .build();
@@ -49,7 +52,7 @@ class signalrClient {
       await conn.start();
       console.log('[SignalR] connected');
     } catch (err) {
-      console.error('[SignalR] start failed', err);
+      console.warn('[SignalR] start failed', err);
     } finally {
       this.starting = false;
     }

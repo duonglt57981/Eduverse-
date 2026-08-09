@@ -715,7 +715,7 @@ export function QnAPanel({
       </Box>
 
       {/* Filter & Sort */}
-      <Box sx={{ display: "flex", gap: 1 }}>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
         <TextField
           size="small"
           placeholder="Tìm câu hỏi..."
@@ -725,6 +725,7 @@ export function QnAPanel({
           sx={{
             flex: 1,
             "& .MuiOutlinedInput-root": {
+              height: "38px",
               borderRadius: "8px",
               fontSize: 13,
               "& fieldset": { borderColor: "#ECE7E4" },
@@ -746,9 +747,14 @@ export function QnAPanel({
           value={hd.sapXep}
           onChange={(e) => hd.setSapXep(e.target.value as any)}
           sx={{
+            height: "38px",
             fontSize: 13,
             borderRadius: "8px",
             minWidth: 120,
+            "& .MuiSelect-select": {
+              display: "flex",
+              alignItems: "center",
+            },
             "& .MuiOutlinedInput-notchedOutline": { borderColor: "#ECE7E4" },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: PRIMARY,

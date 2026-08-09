@@ -2152,7 +2152,7 @@ function CourseRegistrationContent() {
               crossOrigin="anonymous"
               onCanPlay={() => setIsVideoLoading(false)}
               onError={(e) => {
-                console.error("Video error:", e);
+                console.warn("Video error in preview:", e);
                 setIsVideoLoading(false);
               }}
               onWaiting={() => setIsVideoLoading(true)}
