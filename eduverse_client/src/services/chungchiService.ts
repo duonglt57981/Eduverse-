@@ -37,13 +37,14 @@ export const chungChiService = {
   async create(
     data: CreateChungChiRequest
   ): Promise<ApiResponse<ChungChiDto>> {
-    return apiService.post<ChungChiDto>("/chungchi", data);
+    return apiService.post<ChungChiDto>("/chungchi/Create", data);
   },
 
   async update(
+    id: string,
     data: UpdateChungChiRequest
   ): Promise<ApiResponse<ChungChiDto>> {
-    return apiService.put<ChungChiDto>("/chungchi", data);
+    return apiService.put<ChungChiDto>(`/chungchi/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<boolean>> {

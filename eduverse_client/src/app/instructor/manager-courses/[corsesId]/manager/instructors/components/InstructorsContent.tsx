@@ -28,6 +28,20 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutlined";
+import PersonAddAlt1RoundedIcon from "@mui/icons-material/PersonAddAlt1Rounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
+import ForumRoundedIcon from "@mui/icons-material/ForumRounded";
+import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import FolderRoundedIcon from "@mui/icons-material/FolderRounded";
+import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
+import PercentRoundedIcon from "@mui/icons-material/PercentRounded";
+import Stack from "@mui/material/Stack";
+import Grid from "@mui/material/Grid";
 import { useState, useEffect, useCallback } from "react";
 import AuthGuard from "@/src/components/AuthGuard";
 import { useCourseEdit } from "../../components/CourseEditContext";
@@ -50,6 +64,52 @@ const COT_QUYEN: { key: keyof CapNhatQuyenRequest; nhan: string }[] = [
   { key: "materials", nhan: "Materials" },
   { key: "promotions", nhan: "Promotions" },
 ];
+
+const QUYEN_MO_TA: Record<
+  string,
+  { label: string; desc: string; icon: React.ReactNode }
+> = {
+  visible: {
+    label: "Visible",
+    desc: "Hiển thị tên công khai trên khóa học",
+    icon: <VisibilityRoundedIcon sx={{ fontSize: 18 }} />,
+  },
+  manage: {
+    label: "Manage",
+    desc: "Quản lý bài giảng & nội dung khóa học",
+    icon: <TuneRoundedIcon sx={{ fontSize: 18 }} />,
+  },
+  performance: {
+    label: "Performance",
+    desc: "Xem báo cáo hiệu suất & học viên",
+    icon: <InsightsRoundedIcon sx={{ fontSize: 18 }} />,
+  },
+  qnA: {
+    label: "Q&A",
+    desc: "Trả lời câu hỏi & tương tác học viên",
+    icon: <ForumRoundedIcon sx={{ fontSize: 18 }} />,
+  },
+  reviews: {
+    label: "Reviews",
+    desc: "Quản lý & phản hồi đánh giá khóa học",
+    icon: <RateReviewRoundedIcon sx={{ fontSize: 18 }} />,
+  },
+  assignments: {
+    label: "Assignments",
+    desc: "Tạo và chấm bài tập cho học viên",
+    icon: <AssignmentRoundedIcon sx={{ fontSize: 18 }} />,
+  },
+  materials: {
+    label: "Materials",
+    desc: "Tải lên & quản lý tài liệu đính kèm",
+    icon: <FolderRoundedIcon sx={{ fontSize: 18 }} />,
+  },
+  promotions: {
+    label: "Promotions",
+    desc: "Tạo mã giảm giá & chương trình ưu đãi",
+    icon: <LocalOfferRoundedIcon sx={{ fontSize: 18 }} />,
+  },
+};
 
 // ── Row state (giá trị đang sửa trên bảng, chưa save) ───────────────────────
 interface RowState extends GiangVienCongTacDto {
@@ -843,60 +903,193 @@ export default function InstructorsContent() {
         <Dialog
           open={showMoiDialog}
           onClose={() => !dangGui && setShowMoiDialog(false)}
-          maxWidth="xs"
+          maxWidth="sm"
           fullWidth
-          slotProps={{ paper: { sx: { borderRadius: "16px" } } }}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: "24px",
+                boxShadow: "0 24px 48px rgba(0, 0, 0, 0.16)",
+                overflow: "hidden",
+                border: "1px solid var(--ev-divider, #ECE7E4)",
+              },
+            },
+          }}
         >
-          <DialogTitle
+          {/* Header */}
+          <Box
             sx={{
-              fontWeight: 700,
-              fontSize: 17,
-              borderBottom: "1px solid #ECE7E4",
-              py: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              p: 2.75,
+              pb: 2,
+              background:
+                "linear-gradient(135deg, #FFFBFB 0%, #FDF2F2 60%, #FAF0F0 100%)",
+              borderBottom: "1px solid #F3E8E8",
             }}
           >
-            Mời giảng viên cộng tác
-          </DialogTitle>
-          <DialogContent
-            sx={{ pt: 3, display: "flex", flexDirection: "column", gap: 2.5 }}
-          >
-            {/* Email */}
-            <TextField
-              fullWidth
-              label="Email giảng viên"
-              placeholder="example@email.com"
-              value={formMoi.email}
-              onChange={(e) =>
-                setFormMoi((p) => ({ ...p, email: e.target.value }))
-              }
-              disabled={dangGui}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailOutlinedIcon
-                        sx={{ color: "#8A7676", fontSize: 18 }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "10px",
-                  "&.Mui-focused fieldset": { borderColor: MAU.chinh },
-                },
-              }}
-            />
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Box
+                sx={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: "14px",
+                  bgcolor: `${MAU.chinh}15`,
+                  color: MAU.chinh,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 12px rgba(139,19,19,0.12)",
+                }}
+              >
+                <PersonAddAlt1RoundedIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: 18,
+                    color: "#1F2937",
+                    lineHeight: 1.25,
+                  }}
+                >
+                  Mời giảng viên cộng tác
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 12.5,
+                    color: "#6B7280",
+                    mt: 0.25,
+                    fontWeight: 500,
+                  }}
+                >
+                  Phân quyền quản lý và chia sẻ tỷ lệ doanh thu khóa học
+                </Typography>
+              </Box>
+            </Stack>
 
-            {/* % doanh thu */}
+            <IconButton
+              onClick={() => !dangGui && setShowMoiDialog(false)}
+              disabled={dangGui}
+              sx={{
+                color: "#9CA3AF",
+                bgcolor: "#FFFFFF",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                "&:hover": { color: "#1F2937", bgcolor: "#F3F4F6" },
+              }}
+            >
+              <CloseRoundedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Box>
+
+          <DialogContent
+            sx={{
+              p: 3,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2.75,
+              maxHeight: "75vh",
+            }}
+          >
+            {/* Email Input Section */}
             <Box>
               <Typography
-                sx={{ fontWeight: 700, fontSize: 13, mb: 1, color: "#1F2937" }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  color: "#1F2937",
+                  mb: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.75,
+                }}
               >
-                Tỷ lệ doanh thu
+                Email giảng viên <span style={{ color: "#DC2626" }}>*</span>
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <TextField
+                fullWidth
+                placeholder="Ví dụ: giangvien@email.com"
+                value={formMoi.email}
+                onChange={(e) =>
+                  setFormMoi((p) => ({ ...p, email: e.target.value }))
+                }
+                disabled={dangGui}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailOutlinedIcon
+                          sx={{ color: MAU.chinh, fontSize: 20 }}
+                        />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "14px",
+                    bgcolor: "#FAFAFA",
+                    fontSize: 14,
+                    transition: "all 0.2s ease",
+                    "& fieldset": { borderColor: "#E5E7EB" },
+                    "&:hover fieldset": { borderColor: "#CBD5E1" },
+                    "&.Mui-focused": {
+                      bgcolor: "#FFFFFF",
+                      boxShadow: "0 0 0 4px rgba(139,19,19,0.08)",
+                      "& fieldset": { borderColor: MAU.chinh, borderWidth: 1.5 },
+                    },
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Revenue Share Section */}
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2.25,
+                borderRadius: "16px",
+                bgcolor: "#FAFAFA",
+                border: "1px solid #E5E7EB",
+              }}
+            >
+              <Stack
+                direction="row"
+                sx={{
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 1.5,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 13.5,
+                    color: "#1F2937",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                  }}
+                >
+                  <PercentRoundedIcon sx={{ fontSize: 18, color: MAU.chinh }} />
+                  Tỷ lệ chia doanh thu
+                </Typography>
+
+                <Chip
+                  label={`Còn lại: ${100 - tongTyLe}%`}
+                  size="small"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 11.5,
+                    bgcolor: 100 - tongTyLe > 0 ? "#ECFDF5" : "#FEF2F2",
+                    color: 100 - tongTyLe > 0 ? "#059669" : "#DC2626",
+                    border: `1px solid ${100 - tongTyLe > 0 ? "#A7F3D0" : "#FCA5A5"}`,
+                  }}
+                />
+              </Stack>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
                 <TextField
                   type="number"
                   size="small"
@@ -909,131 +1102,295 @@ export default function InstructorsContent() {
                     setFormMoi((p) => ({ ...p, tyLeChiaDoanhThu: v }));
                   }}
                   disabled={dangGui}
-                  slotProps={{ htmlInput: { min: 0, max: 100, step: 5 } }}
+                  slotProps={{
+                    htmlInput: { min: 0, max: 100, step: 5 },
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Typography
+                            sx={{
+                              fontSize: 14,
+                              fontWeight: 800,
+                              color: MAU.chinh,
+                            }}
+                          >
+                            %
+                          </Typography>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                   sx={{
-                    width: 80,
+                    width: 120,
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                      "& input": { textAlign: "center", fontWeight: 700 },
-                      "& fieldset": { borderColor: "#ECE7E4" },
+                      borderRadius: "12px",
+                      bgcolor: "#FFFFFF",
+                      "& input": { textAlign: "center", fontWeight: 800, fontSize: 16 },
+                      "& fieldset": { borderColor: "#CBD5E1" },
                       "&.Mui-focused fieldset": { borderColor: MAU.chinh },
                     },
                   }}
                 />
-                <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
-                  % &nbsp;·&nbsp; Còn lại: <strong>{100 - tongTyLe}%</strong>
-                </Typography>
-              </Box>
-            </Box>
 
-            <Divider />
-
-            {/* Quyền dạng bảng nhỏ */}
-            <Box>
-              <Typography
-                sx={{
-                  fontWeight: 700,
-                  fontSize: 13,
-                  mb: 1.5,
-                  color: "#1F2937",
-                }}
-              >
-                Quyền hạn
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                {/* visible riêng vì có label dài */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    py: 0.5,
-                  }}
-                >
-                  <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
-                      Visible
-                    </Typography>
-                    <Typography sx={{ fontSize: 11, color: "#8A7676" }}>
-                      Hiển thị công khai trên trang khóa học
-                    </Typography>
-                  </Box>
-                  <Switch
-                    checked={formMoi.visible}
-                    onChange={(e) =>
-                      setFormMoi((p) => ({ ...p, visible: e.target.checked }))
-                    }
-                    disabled={dangGui}
-                    size="small"
-                    sx={{
-                      "& .MuiSwitch-switchBase.Mui-checked": {
-                        color: MAU.chinh,
-                      },
-                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                        { bgcolor: MAU.chinh },
-                    }}
-                  />
-                </Box>
-                {COT_QUYEN.filter((c) => c.key !== "visible").map((c) => (
-                  <Box
-                    key={c.key}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      py: 0.5,
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
-                      {c.nhan}
-                    </Typography>
-                    <Checkbox
-                      checked={!!formMoi[c.key as keyof GuiLoiMoiRequest]}
-                      onChange={(e) =>
-                        setFormMoi((p) => ({ ...p, [c.key]: e.target.checked }))
-                      }
+                {/* Preset Chips */}
+                <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.5 }}>
+                  {[0, 10, 20, 30, 50].map((val) => (
+                    <Chip
+                      key={val}
+                      label={`${val}%`}
+                      clickable
                       disabled={dangGui}
-                      size="small"
+                      onClick={() =>
+                        setFormMoi((p) => ({
+                          ...p,
+                          tyLeChiaDoanhThu: Math.min(100 - tongTyLe, val),
+                        }))
+                      }
                       sx={{
-                        p: 0.5,
-                        color: "#C7CCD6",
-                        "&.Mui-checked": { color: MAU.chinh },
+                        fontSize: 12,
+                        fontWeight: 700,
+                        borderRadius: "8px",
+                        bgcolor:
+                          formMoi.tyLeChiaDoanhThu === val
+                            ? `${MAU.chinh}15`
+                            : "#FFFFFF",
+                        color:
+                          formMoi.tyLeChiaDoanhThu === val
+                            ? MAU.chinh
+                            : "#4B5563",
+                        border:
+                          formMoi.tyLeChiaDoanhThu === val
+                            ? `1.5px solid ${MAU.chinh}`
+                            : "1px solid #E2E8F0",
+                        "&:hover": { bgcolor: `${MAU.chinh}10` },
                       }}
                     />
-                  </Box>
-                ))}
+                  ))}
+                </Stack>
               </Box>
+            </Paper>
+
+            {/* Permissions Section */}
+            <Box>
+              <Stack
+                direction="row"
+                sx={{
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 1.5,
+                }}
+              >
+                <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
+                  Phân quyền truy cập
+                </Typography>
+                <Typography sx={{ fontSize: 12, color: "#6B7280", fontWeight: 600 }}>
+                  Đã chọn:{" "}
+                  <strong style={{ color: MAU.chinh }}>
+                    {COT_QUYEN.filter(
+                      (c) => !!formMoi[c.key as keyof GuiLoiMoiRequest],
+                    ).length}
+                    /8
+                  </strong>
+                </Typography>
+              </Stack>
+
+              <Grid container spacing={1.25}>
+                {COT_QUYEN.map((c) => {
+                  const isChecked = !!formMoi[c.key as keyof GuiLoiMoiRequest];
+                  const info = QUYEN_MO_TA[c.key];
+
+                  return (
+                    <Grid size={{ xs: 12, sm: 6 }} key={c.key}>
+                      <Paper
+                        elevation={0}
+                        onClick={() =>
+                          !dangGui &&
+                          setFormMoi((p) => ({
+                            ...p,
+                            [c.key]: !isChecked,
+                          }))
+                        }
+                        sx={{
+                          p: 1.5,
+                          borderRadius: "14px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 1.25,
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          bgcolor: isChecked ? `${MAU.chinh}09` : "#FFFFFF",
+                          border: isChecked
+                            ? `1.5px solid ${MAU.chinh}`
+                            : "1px solid #E5E7EB",
+                          boxShadow: isChecked
+                            ? "0 4px 12px rgba(139,19,19,0.08)"
+                            : "none",
+                          "&:hover": {
+                            borderColor: MAU.chinh,
+                            transform: "translateY(-1px)",
+                          },
+                        }}
+                      >
+                        <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", minWidth: 0 }}>
+                          <Box
+                            sx={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: "10px",
+                              bgcolor: isChecked ? `${MAU.chinh}18` : "#F3F4F6",
+                              color: isChecked ? MAU.chinh : "#6B7280",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            {info?.icon}
+                          </Box>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography
+                              sx={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: isChecked ? MAU.chinh : "#1F2937",
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {info?.label || c.nhan}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: 10.5,
+                                color: "#6B7280",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                mt: 0.25,
+                              }}
+                            >
+                              {info?.desc}
+                            </Typography>
+                          </Box>
+                        </Stack>
+
+                        {c.key === "visible" ? (
+                          <Switch
+                            checked={isChecked}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              setFormMoi((p) => ({
+                                ...p,
+                                visible: e.target.checked,
+                              }));
+                            }}
+                            disabled={dangGui}
+                            size="small"
+                            sx={{
+                              "& .MuiSwitch-switchBase.Mui-checked": {
+                                color: MAU.chinh,
+                              },
+                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                { bgcolor: MAU.chinh },
+                            }}
+                          />
+                        ) : (
+                          <Checkbox
+                            checked={isChecked}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              setFormMoi((p) => ({
+                                ...p,
+                                [c.key]: e.target.checked,
+                              }));
+                            }}
+                            disabled={dangGui}
+                            size="small"
+                            sx={{
+                              p: 0.25,
+                              color: "#CBD5E1",
+                              "&.Mui-checked": { color: MAU.chinh },
+                            }}
+                          />
+                        )}
+                      </Paper>
+                    </Grid>
+                  );
+                })}
+              </Grid>
             </Box>
 
-            {loiMoiDialog && <Alert severity="error">{loiMoiDialog}</Alert>}
+            {loiMoiDialog && (
+              <Alert
+                severity="error"
+                sx={{
+                  borderRadius: "12px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                {loiMoiDialog}
+              </Alert>
+            )}
           </DialogContent>
-          <DialogActions sx={{ p: 2, borderTop: "1px solid #ECE7E4", gap: 1 }}>
+
+          <DialogActions
+            sx={{
+              px: 3,
+              py: 2,
+              borderTop: "1px solid #ECE7E4",
+              bgcolor: "#FAFAFA",
+              gap: 1.25,
+            }}
+          >
             <Button
               onClick={() => setShowMoiDialog(false)}
               disabled={dangGui}
-              sx={{ textTransform: "none", color: "#8A7676", fontWeight: 600 }}
+              sx={{
+                textTransform: "none",
+                color: "#6B7280",
+                fontWeight: 700,
+                fontSize: 13.5,
+                borderRadius: "12px",
+                px: 2.5,
+                py: 1,
+                "&:hover": { bgcolor: "#E5E7EB" },
+              }}
             >
               Hủy bỏ
             </Button>
+
             <Button
               variant="contained"
               onClick={handleGuiLoiMoi}
               disabled={dangGui || !formMoi.email.trim()}
+              startIcon={
+                dangGui ? (
+                  <CircularProgress size={18} sx={{ color: "#fff" }} />
+                ) : (
+                  <SendRoundedIcon sx={{ fontSize: 18 }} />
+                )
+              }
               sx={{
                 bgcolor: MAU.chinh,
                 textTransform: "none",
-                fontWeight: 700,
-                borderRadius: "10px",
-                px: 3,
-                boxShadow: "none",
-                "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
+                fontWeight: 800,
+                fontSize: 14,
+                borderRadius: "12px",
+                px: 3.5,
+                py: 1,
+                boxShadow: "0 4px 14px rgba(139,19,19,0.25)",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: MAU.chinhDam,
+                  boxShadow: "0 6px 20px rgba(139,19,19,0.38)",
+                  transform: "translateY(-1px)",
+                },
+                "&.Mui-disabled": { bgcolor: "#E2E8F0", color: "#94A3B8" },
               }}
             >
-              {dangGui ? (
-                <CircularProgress size={18} sx={{ color: "#fff" }} />
-              ) : (
-                "Gửi lời mời"
-              )}
+              {dangGui ? "Đang gửi..." : "Gửi lời mời"}
             </Button>
           </DialogActions>
         </Dialog>

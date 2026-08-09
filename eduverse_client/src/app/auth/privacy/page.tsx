@@ -219,15 +219,7 @@ export default function PrivacyPage() {
               ))}
             </Stack>
 
-            <Divider sx={{ my: 4, borderColor: 'rgba(17, 17, 17, 0.08)' }} />
 
-            {/* Contact Footer */}
-            <Typography variant="body2" sx={{ textAlign: 'center', color: 'var(--ev-text-muted, #8A7676)', fontSize: 13 }}>
-              Nếu bạn có bất kỳ thắc mắc nào về Chính sách Bảo mật, vui lòng liên hệ Ban Quản trị EduVerse tại{' '}
-              <a href="mailto:admin.eduverse10@gmail.com" style={{ color: '#8B1313', textDecoration: 'none', fontWeight: 700 }}>
-                admin.eduverse10@gmail.com
-              </a>.
-            </Typography>
           </Paper>
         </Box>
       </Box>

@@ -331,7 +331,7 @@ export default function AccountSettings() {
           phoneNumber: data.phoneNumber || "",
           phoneNumberConfirmed: Boolean(data.phoneNumberConfirmed),
           ngaySinh: data.ngaySinh || "",
-          gioiTinh: data.gioiTinh !== undefined ? data.gioiTinh : 1,
+          gioiTinh: data.gioiTinh !== undefined && data.gioiTinh !== null ? data.gioiTinh : 0,
           diaChi: data.diaChi || "",
           tieuSu: data.tieuSu || "",
           anhDaiDien: data.anhDaiDien || "",
@@ -812,11 +812,6 @@ export default function AccountSettings() {
                   ? "Giảng viên EduVerse"
                   : profile.chucVu || "Học viên EduVerse"}
               </Typography>
-              <Typography
-                sx={{ color: "primary.main", fontSize: 13, fontWeight: 700 }}
-              >
-                {profile.email} {profile.userName ? `(@${profile.userName})` : ""}
-              </Typography>
             </Stack>
 
             <Box>
@@ -907,6 +902,7 @@ export default function AccountSettings() {
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
+                    height: 24,
                   }}
                 >
                   <PersonRounded
@@ -935,6 +931,8 @@ export default function AccountSettings() {
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
+                      height: 46,
+                      borderRadius: 2.8,
                       "& fieldset": {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
@@ -954,6 +952,7 @@ export default function AccountSettings() {
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
+                    height: 24,
                   }}
                 >
                   <BadgeRounded
@@ -979,6 +978,8 @@ export default function AccountSettings() {
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
+                      height: 46,
+                      borderRadius: 2.8,
                       "& fieldset": {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
@@ -999,6 +1000,7 @@ export default function AccountSettings() {
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
+                    height: 24,
                   }}
                 >
                   <EmailRounded
@@ -1027,6 +1029,8 @@ export default function AccountSettings() {
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
+                      height: 46,
+                      borderRadius: 2.8,
                       "& fieldset": {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
@@ -1038,7 +1042,7 @@ export default function AccountSettings() {
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={0.75}>
-                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, height: 24 }}>
                   <Typography sx={{ fontSize: 13, fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
                     <PhoneRounded fontSize="inherit" sx={{ color: 'rgba(25,23,28,0.4)' }} /> Số điện thoại
                   </Typography>
@@ -1102,6 +1106,8 @@ export default function AccountSettings() {
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
+                      height: 46,
+                      borderRadius: 2.8,
                       "& fieldset": {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
@@ -1122,6 +1128,7 @@ export default function AccountSettings() {
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
+                    height: 24,
                   }}
                 >
                   <CakeRounded
@@ -1151,6 +1158,8 @@ export default function AccountSettings() {
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
+                      height: 46,
+                      borderRadius: 2.8,
                       "& fieldset": {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
@@ -1170,6 +1179,7 @@ export default function AccountSettings() {
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
+                    height: 24,
                   }}
                 >
                   <WcRounded
@@ -1184,19 +1194,20 @@ export default function AccountSettings() {
                     value={isEditing ? tempProfile.gioiTinh : profile.gioiTinh}
                     onChange={(e) => setTempProfile(prev => ({ ...prev, gioiTinh: Number(e.target.value) }))}
                     sx={{
+                      height: 46,
                       borderRadius: 2.8,
                       bgcolor: !isEditing
                         ? "action.hover"
                         : "background.paper",
-                      height: '53px',
                       '& fieldset': {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
                     }}
                   >
+                    <MenuItem value={0}>Chưa cập nhật</MenuItem>
                     <MenuItem value={1}>Nam</MenuItem>
                     <MenuItem value={2}>Nữ</MenuItem>
-                    <MenuItem value={0}>Khác</MenuItem>
+                    <MenuItem value={3}>Khác</MenuItem>
                   </Select>
                 </FormControl>
               </Stack>

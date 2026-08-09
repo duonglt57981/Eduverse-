@@ -1438,7 +1438,7 @@ function CourseRegistrationContent() {
                       ? `${gia.toLocaleString("vi-VN")}₫`
                       : "Liên hệ"}
                 </Typography>
-                {khoaHoc.giaGoc && khoaHoc.giaGoc !== gia && (
+                {Boolean(khoaHoc.giaGoc && khoaHoc.giaGoc > gia) && (
                   <Typography
                     sx={{
                       fontSize: 13,
@@ -1446,7 +1446,7 @@ function CourseRegistrationContent() {
                       textDecoration: "line-through",
                     }}
                   >
-                    {khoaHoc.giaGoc.toLocaleString("vi-VN")}₫
+                    {(khoaHoc.giaGoc ?? 0).toLocaleString("vi-VN")}₫
                   </Typography>
                 )}
               </Stack>

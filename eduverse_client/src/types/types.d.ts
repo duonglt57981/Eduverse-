@@ -95,6 +95,12 @@ export interface RegisterRequest {
   email: string;
   password: string;
   phoneNumber?: string;
+  otp?: string;
+}
+
+export interface SendRegisterOtpRequest {
+  email: string;
+  userName: string;
 }
 
 export interface AuthResponse {

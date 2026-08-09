@@ -232,11 +232,16 @@ export default function AdminUsersPage() {
       return;
     }
 
-    if (hoTen && hoTen.trim().length > 0 && !/[a-zA-ZÀ-ỹ]/.test(hoTen)) {
+    const isExclusiveRoleName = (r: string) => {
+      const str = r.toLowerCase();
+      return str === 'admin' || str === 'personnel' || str === 'nhanvien';
+    };
+
+    if (selectedRoles.some(isExclusiveRoleName) && selectedRoles.length > 1) {
       Swal.fire({
         icon: 'warning',
-        title: 'Họ tên không hợp lệ',
-        text: 'Họ tên không được chỉ chứa số hoặc ký tự đặc biệt.',
+        title: 'Phân quyền không hợp lệ',
+        text: 'Vai trò Admin và Nhân viên là vai trò độc quyền, không thể đồng thời kết hợp với các vai trò khác.',
         confirmButtonColor: COLORS.primary,
       });
       return;
@@ -1012,8 +1017,47 @@ export default function AdminUsersPage() {
                           multiple
                           value={selectedRoles}
                           onChange={(e) => {
-                            const val = e.target.value;
-                            setSelectedRoles(typeof val === 'string' ? val.split(',') : val);
+                            const val = typeof e.target.value === 'string' ? e.target.value.split(',') : (e.target.value as string[]);
+                            
+                            const isExclusive = (r: string) => {
+                              const str = r.toLowerCase();
+                              return str === 'admin' || str === 'personnel' || str === 'nhanvien';
+                            };
+
+                            const previousExclusive = selectedRoles.find(isExclusive);
+                            const newExclusiveAdded = val.find((r) => isExclusive(r) && !selectedRoles.includes(r));
+
+                            let newRoles: string[] = [];
+                            if (newExclusiveAdded) {
+                              // Tích chọn vai trò độc quyền (Admin / Nhân viên) -> chỉ giữ vai trò này
+                              newRoles = [newExclusiveAdded];
+                            } else if (previousExclusive && val.length > 1) {
+                              // Đang có vai trò độc quyền mà tích chọn thêm vai trò khác -> gỡ vai trò độc quyền
+                              const nonExclusive = val.filter((r) => !isExclusive(r));
+                              if (nonExclusive.includes('GiaoVien') && !nonExclusive.includes('HocVien')) {
+                                newRoles = ['HocVien', 'GiaoVien'];
+                              } else {
+                                newRoles = nonExclusive;
+                              }
+                            } else {
+                              // Chuyển đổi giữa Học viên và Giảng viên
+                              if (val.includes('GiaoVien') && !selectedRoles.includes('GiaoVien')) {
+                                // Tích Giảng viên -> tự động tích thêm Học viên
+                                newRoles = Array.from(new Set([...val, 'HocVien']));
+                              } else if (!val.includes('HocVien') && selectedRoles.includes('HocVien') && val.includes('GiaoVien')) {
+                                // Gỡ Học viên trong khi vẫn có Giảng viên -> tự động gỡ Giảng viên
+                                newRoles = val.filter((r) => r !== 'GiaoVien');
+                              } else {
+                                newRoles = val;
+                              }
+                            }
+
+                            // Đảm bảo không bị trống
+                            if (newRoles.length === 0) {
+                              newRoles = ['HocVien'];
+                            }
+
+                            setSelectedRoles(newRoles);
                           }}
                           renderValue={(selected) => (
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>

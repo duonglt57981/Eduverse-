@@ -18,6 +18,14 @@ namespace Eduverse.Api.Controller
             _authService = authService;
         }
 
+        [HttpPost("send-register-otp")]
+        [AllowAnonymous]
+        public async Task<DataResponse<string>> SendRegisterOtp([FromBody] SendRegisterOtpRequest request)
+        {
+            var result = await _authService.SendRegisterOtpAsync(request);
+            return new DataResponse<string> { Status = true, Message = result };
+        }
+
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<DataResponse<string>> Register([FromBody] RegisterRequest request)
