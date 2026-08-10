@@ -14,5 +14,8 @@ namespace Eduverse.Service.DanhGiaService
         Task<bool> KiemTraDaDanhGiaAsync(Guid userId, Guid idKhoaHoc);
         Task TaoDanhGiaAsync(Guid userId, TaoDanhGiaDto dto);
         Task<DanhGiaKhoaHocDto> GetDanhGiaByKhoaHocAsync(Guid idKhoaHoc);
+        Task PhanHoiDanhGia(Guid userId, TaoPhanHoiDto dto);
+        Task SuaPhanHoi(Guid userId, Guid idPhanHoi, string noiDung);
+        Task XoaPhanHoi(Guid userId, Guid idPhanHoi);
     }
 }
