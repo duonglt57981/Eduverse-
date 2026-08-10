@@ -639,8 +639,8 @@ function MyCoursesContent() {
     const avg =
       total > 0
         ? Math.round(
-          courses.reduce((s, c) => s + (c.phanTramHoanThanh ?? 0), 0) / total,
-        )
+            courses.reduce((s, c) => s + (c.phanTramHoanThanh ?? 0), 0) / total,
+          )
         : 0;
     return { total, inProgress, completed, avg };
   }, [courses]);
@@ -908,11 +908,21 @@ function MyCoursesContent() {
           </Box>
           <Typography
             variant="h5"
-            sx={{ fontWeight: 800, mb: 1.5, color: "var(--ev-text-primary, #1F2937)" }}
+            sx={{
+              fontWeight: 800,
+              mb: 1.5,
+              color: "var(--ev-text-primary, #1F2937)",
+            }}
           >
             Chưa có khóa học nào
           </Typography>
-          <Typography sx={{ color: "var(--ev-text-secondary, #4B5563)", mb: 4, fontSize: 15 }}>
+          <Typography
+            sx={{
+              color: "var(--ev-text-secondary, #4B5563)",
+              mb: 4,
+              fontSize: 15,
+            }}
+          >
             Hành trình học tập của bạn đang chờ đợi. Hãy khám phá kho khóa học
             đa dạng của chúng tôi để bắt đầu ngay!
           </Typography>
@@ -1052,8 +1062,7 @@ function MyCoursesContent() {
                           display: "grid",
                           placeItems: "center",
                           boxShadow: "0 8px 24px rgba(0,0,0,0.22)",
-                          transition:
-                            "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                          transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
                           zIndex: 2,
                         }}
                       >
@@ -1225,7 +1234,11 @@ function MyCoursesContent() {
                           </Typography>
                           <Typography
                             variant="caption"
-                            sx={{ fontWeight: 800, color: progressColor, fontSize: 11 }}
+                            sx={{
+                              fontWeight: 800,
+                              color: progressColor,
+                              fontSize: 11,
+                            }}
                           >
                             {course.soBaiGiangHoanThanh ?? 0}/
                             {course.tongBaiGiang ?? 0} bài
@@ -1257,9 +1270,13 @@ function MyCoursesContent() {
                         size="small"
                         startIcon={
                           isCompleted ? (
-                            <CheckCircleIcon sx={{ fontSize: "15px !important" }} />
+                            <CheckCircleIcon
+                              sx={{ fontSize: "15px !important" }}
+                            />
                           ) : (
-                            <PlayArrowIcon sx={{ fontSize: "15px !important" }} />
+                            <PlayArrowIcon
+                              sx={{ fontSize: "15px !important" }}
+                            />
                           )
                         }
                         onClick={(e) => {
@@ -1453,7 +1470,13 @@ function MyCoursesContent() {
           slotProps={{
             input: {
               startAdornment: (
-                <SearchIcon sx={{ color: "var(--ev-text-muted, #8A7676)", mr: 1, fontSize: 20 }} />
+                <SearchIcon
+                  sx={{
+                    color: "var(--ev-text-muted, #8A7676)",
+                    mr: 1,
+                    fontSize: 20,
+                  }}
+                />
               ),
             },
           }}

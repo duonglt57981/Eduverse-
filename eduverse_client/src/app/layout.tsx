@@ -29,7 +29,8 @@ function RouteLayoutWrapper({ children }: { children: React.ReactNode }) {
   const isPublicRoute = !(
     pathname.startsWith("/admin") ||
     pathname.startsWith("/personnel") ||
-    (pathname === "/instructor" || pathname.startsWith("/instructor/")) ||
+    pathname === "/instructor" ||
+    pathname.startsWith("/instructor/") ||
     pathname.startsWith("/student") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/auth") ||
@@ -37,13 +38,33 @@ function RouteLayoutWrapper({ children }: { children: React.ReactNode }) {
     pathname === "/settings"
   );
 
-  const role = roles.includes("GiaoVien") ? "GiaoVien" : roles.includes("Admin") ? "Admin" : "HocVien";
+  const role = roles.includes("GiaoVien")
+    ? "GiaoVien"
+    : roles.includes("Admin")
+      ? "Admin"
+      : "HocVien";
 
   if (isPublicRoute) {
     return (
       <LandingThemeProvider>
-        <Box sx={{ minHeight: "100vh", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
-          <Box sx={{ width: "100%", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 }, flexGrow: 1, display: "flex", flexDirection: "column" }}>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            bgcolor: "background.default",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Box
+            sx={{
+              width: "100%",
+              px: { xs: 2, sm: 3, md: 4 },
+              py: { xs: 2, md: 3 },
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <LandingNavbar activePath={pathname} />
             <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
               {children}
@@ -111,8 +132,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const appTitle = process.env.NEXT_PUBLIC_APP_NAME
-    ?.replace(/\r?\n|\r/g, " ")
+  const appTitle = process.env.NEXT_PUBLIC_APP_NAME?.replace(/\r?\n|\r/g, " ")
     ?.replace(/\s+/g, " ")
     ?.trim();
 
@@ -136,7 +156,7 @@ export default function RootLayout({
           <div className="App">
             <Providers>
               {/* <ConfigProvider theme={lightTheme} locale={viVN}> */}
-                <RouteLayoutWrapper>{children}</RouteLayoutWrapper>
+              <RouteLayoutWrapper>{children}</RouteLayoutWrapper>
               {/* </ConfigProvider> */}
             </Providers>
           </div>

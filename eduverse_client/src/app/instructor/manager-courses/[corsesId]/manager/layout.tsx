@@ -145,7 +145,15 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     };
   }, [saveState]);
 
-  const activeKey = pathname?.includes("/basics") ? "basics" : "curriculum";
+  const activeKey = pathname?.includes("/basics")
+    ? "basics"
+    : pathname?.includes("/instructors")
+      ? "instructors"
+      : pathname?.includes("/qna")
+        ? "qna"
+        : pathname?.includes("/performance")
+          ? "performance"
+          : "curriculum";
 
   const tongGiay = tinhTongThoiLuongGiay(phans);
   const tongPhut = Math.floor(tongGiay / 60);
@@ -186,6 +194,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           nhan: "Quản lý giảng viên",
           hoanThanh: false, // không cần check hoàn thành
         },
+        {
+          key: "qna",
+          nhan: "Hỏi đáp",
+          hoanThanh: false,
+        },
+        {
+          key: "performance",
+          nhan: "Thống kê",
+          hoanThanh: false,
+        },
       ],
     },
   ];
@@ -214,6 +232,12 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       } else if (diChuyenDen === "curriculum") {
         router.push(
           `/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`,
+        );
+      } else if (diChuyenDen === "qna") {
+        router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/qna`);
+      } else if (diChuyenDen === "performance") {
+        router.push(
+          `/instructor/manager-courses/${idKhoaHoc}/manager/performance`,
         );
       }
       // instructors không có trong validate flow, chỉ navigate bình thường

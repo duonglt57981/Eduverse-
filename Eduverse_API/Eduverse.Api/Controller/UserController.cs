@@ -170,6 +170,24 @@ namespace Eduverse.Api.Controller
 
                 if (request.Roles != null && request.Roles.Any())
                 {
+                    var hasExclusiveRole = request.Roles.Any(r =>
+                        string.Equals(r, "Admin", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, "personnel", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, "Personnel", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, "NhanVien", StringComparison.OrdinalIgnoreCase)
+                    );
+
+                    if (hasExclusiveRole && request.Roles.Count > 1)
+                    {
+                        return DataResponse<object>.False("Vai trò Admin và Nhân viên là vai trò độc quyền, không thể đồng thời sở hữu các vai trò khác.");
+                    }
+
+                    // Đã có vai trò Giảng viên thì bắt buộc phải có vai trò Học viên
+                    if (request.Roles.Contains("GiaoVien") && !request.Roles.Contains("HocVien"))
+                    {
+                        request.Roles.Add("HocVien");
+                    }
+
                     foreach (var role in request.Roles)
                     {
                         if (await _roleManager.RoleExistsAsync(role))
@@ -255,6 +273,23 @@ namespace Eduverse.Api.Controller
 
                 if (request.Roles != null)
                 {
+                    var hasExclusiveRole = request.Roles.Any(r =>
+                        string.Equals(r, "Admin", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, "personnel", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, "Personnel", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(r, "NhanVien", StringComparison.OrdinalIgnoreCase)
+                    );
+
+                    if (hasExclusiveRole && request.Roles.Count > 1)
+                    {
+                        return DataResponse<object>.False("Vai trò Admin và Nhân viên là vai trò độc quyền, không thể đồng thời sở hữu các vai trò khác.");
+                    }
+
+                    // Đã có vai trò Giảng viên thì bắt buộc phải có vai trò Học viên
+                    if (request.Roles.Contains("GiaoVien") && !request.Roles.Contains("HocVien"))
+                    {
+                        request.Roles.Add("HocVien");
+                    }
                     var currentRoles = await _userManager.GetRolesAsync(user);
                     var rolesToRemove = currentRoles.Except(request.Roles).ToList();
                     var rolesToAdd = request.Roles.Except(currentRoles).ToList();

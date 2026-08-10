@@ -34,8 +34,8 @@ import {
 } from "@mui/material";
 import { type CourseCatalogItem, type CourseCategory } from "./landing-data";
 import { useRouter } from "next/navigation";
-import { useDispatch } from '@/src/store/hook';
-import { useSelector } from '@/src/store/hook';
+import { useDispatch } from "@/src/store/hook";
+import { useSelector } from "@/src/store/hook";
 import { themVaoGioHang } from "@/src/store/gioHang/GioHangSlice";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
 
@@ -211,12 +211,18 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
 
         {/* Favorite icon */}
         <IconButton
-          aria-label={favorited ? "Bỏ khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
+          aria-label={
+            favorited
+              ? "Bỏ khỏi danh sách yêu thích"
+              : "Thêm vào danh sách yêu thích"
+          }
           onClick={async (event) => {
             event.preventDefault();
             event.stopPropagation();
             if (!user) {
-              router.push(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+              router.push(
+                `/auth/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+              );
               return;
             }
             await toggleFavorite(course.id, course.title);
@@ -229,7 +235,9 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             height: 32,
             bgcolor: "rgba(255,255,255,0.75)",
             backdropFilter: "blur(8px)",
-            color: favorited ? BRAND_COLORS.primary : "var(--ev-text-secondary, #4B5563)",
+            color: favorited
+              ? BRAND_COLORS.primary
+              : "var(--ev-text-secondary, #4B5563)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             transition: "all 0.2s ease",
             "&:hover": {
@@ -382,7 +390,9 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
                 gap: 0.5,
               }}
             >
-              <TimerRounded sx={{ fontSize: 15, color: "var(--ev-grey, #8A7676)" }} />
+              <TimerRounded
+                sx={{ fontSize: 15, color: "var(--ev-grey, #8A7676)" }}
+              />
               {course.duration}
             </Typography>
           )}
@@ -493,7 +503,8 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     badge: isFree ? "Miễn phí" : "Trả phí",
     tags: [kh.capDo || "Tự chọn", isFree ? "Free" : "Pro"],
     palette: ["#8B1313", "#c2410c", "#fff7f4"],
-    hinhAnhKhoaHoc: kh.hinhAnhKhoaHoc || kh.urlHinhAnh || kh.hinhAnh || kh.hinhAnhBia,
+    hinhAnhKhoaHoc:
+      kh.hinhAnhKhoaHoc || kh.urlHinhAnh || kh.hinhAnh || kh.hinhAnhBia,
     isFree,
   };
 };
@@ -752,7 +763,7 @@ export default function CoursesPage({
             spacing={1.5}
             sx={{ maxWidth: 520 }}
           >
-            <TextFieldAny
+            <TextField
               fullWidth
               variant="outlined"
               value={search}
@@ -764,12 +775,16 @@ export default function CoursesPage({
                 }
               }}
               placeholder="Bạn muốn học kỹ năng gì?"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchRounded sx={{ color: "var(--ev-grey, #8A7676)" }} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRounded
+                        sx={{ color: "var(--ev-grey, #8A7676)" }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -1257,7 +1272,9 @@ export default function CoursesPage({
                     "& .MuiRating-iconEmpty": { color: "#ECE7E4" },
                   }}
                 />
-                <Typography sx={{ fontSize: 12.5, color: BRAND_COLORS.textMuted }}>
+                <Typography
+                  sx={{ fontSize: 12.5, color: BRAND_COLORS.textMuted }}
+                >
                   {ratingFrom}–{ratingTo} sao
                 </Typography>
               </Stack>
@@ -1372,7 +1389,9 @@ export default function CoursesPage({
                   fontSize: 13.5,
                   color: BRAND_COLORS.textBody,
                   "& fieldset": { borderColor: "transparent" },
-                  "&:hover fieldset": { borderColor: BRAND_COLORS.primaryBorder },
+                  "&:hover fieldset": {
+                    borderColor: BRAND_COLORS.primaryBorder,
+                  },
                   "&.Mui-focused fieldset": {
                     borderColor: BRAND_COLORS.primary,
                   },
