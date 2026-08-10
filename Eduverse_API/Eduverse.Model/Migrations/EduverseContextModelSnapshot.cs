@@ -190,7 +190,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "35b1e385-7e21-4a8a-a229-7e1fd0a19e05",
+                            ConcurrencyStamp = "164e03a1-9c5d-4ced-9da9-6834a2ab96e0",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -199,9 +199,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEBR+dFhu/R3ITO8oqI9m8tieEuyZRAGCuM3ZXcB2SrpUPPrBrJMDSoo5aw2A84mdDw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEPwcrHn26VqlwfWqb95t3b4rZ48KsBr1z2D8rh1tXCLDJsC5BnFI4q83upjwTOOdqg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "6eda916d-dc65-4af0-9297-992669e9716d",
+                            SecurityStamp = "268612d0-73c1-4705-88bd-616db0bbb053",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -234,6 +234,9 @@ namespace Eduverse.Model.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdBanGhiTruoc")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IdLyDo")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("IdPhan")
@@ -320,6 +323,9 @@ namespace Eduverse.Model.Migrations
                         .HasColumnType("int");
 
                     b.Property<Guid?>("IdBanGhiTruoc")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IdLyDo")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdPhan")
@@ -1459,6 +1465,9 @@ namespace Eduverse.Model.Migrations
 
                     b.Property<string>("IdHinhAnhKhoaHoc")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("IdLyDoTuChoi")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("IdNguoiDuyet")
                         .HasColumnType("uniqueidentifier");

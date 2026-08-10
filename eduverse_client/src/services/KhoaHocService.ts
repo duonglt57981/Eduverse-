@@ -414,11 +414,11 @@ export default class KhoaHocService {
   createFullKhoaHocDraft = async (
     idKhoaHoc: string,
   ): Promise<ApiResponse<KhoaHocDraftResultType>> => {
-    const response = await apiService.post<ApiResponse<KhoaHocDraftResultType>>(
+    const response = await apiService.post<KhoaHocDraftResultType>(
       `/KhoaHoc/createfullkhoahocdraft/${idKhoaHoc}`,
     );
 
-    return response.data;
+    return response;
   };
 
   async DeleteKhoaHoc(id: string): Promise<ApiResponse<boolean>> {

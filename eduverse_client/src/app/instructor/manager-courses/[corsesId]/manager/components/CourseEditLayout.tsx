@@ -1,16 +1,11 @@
 "use client";
 
 import { ReactNode, useState } from "react";
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Button,
-  CircularProgress,
-} from "@mui/material";
+import { useRouter } from "next/navigation";
+import { Box, Typography, Chip, Button, CircularProgress } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBackIosNew";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
@@ -19,10 +14,15 @@ import {
   TrangThaiKhoaHoc,
   thongTinTrangThai,
   ThongTinKhoaHocCoBan,
+  LichSuKiemDuyetDto,
+  laNgayRong,
 } from "./courseEditCore";
 import CourseStatusAction from "./CourseStatusAction";
 import type { MucThieu } from "./courseEditCore";
+import LichSuKiemDuyetDialog from "./Lichsukiemduyetdialog";
+import KhoaHocService from "@/src/services/KhoaHocService";
 
+const khoaHocService = new KhoaHocService();
 export interface MucSidebar {
   key: string;
   nhan: string;
@@ -42,6 +42,7 @@ interface Props {
   thongTinKhoaHoc: ThongTinKhoaHocCoBan;
   phans: PhanHocType[];
   lyDoTuChoi?: string | null;
+  lichSuKiemDuyet?: LichSuKiemDuyetDto | null;
   nhomSidebar?: NhomSidebar[];
   activeKey: string;
   loading?: boolean;
@@ -61,6 +62,7 @@ export default function CourseEditLayout({
   thongTinKhoaHoc,
   phans,
   lyDoTuChoi,
+  lichSuKiemDuyet = null,
   nhomSidebar = [],
   activeKey,
   loading = false,
@@ -70,9 +72,13 @@ export default function CourseEditLayout({
   onGuiPheDuyet,
   onDiChuyenDenTuValidate,
 }: Props) {
+  const router = useRouter();
+  const [moLichSuKiemDuyet, setMoLichSuKiemDuyet] = useState(false);
+  const [dangSuaTiep, setDangSuaTiep] = useState(false);
   const trangThaiHienThi = thongTinTrangThai(trangThai);
 
   const isReadOnly = trangThai !== "DangSua";
+  const coTheSuaTiep = trangThai === "DaDuyet" || trangThai === "TuChoi";
 
   // Xác định màu sắc nhãn trạng thái tinh tế hơn
   const getStatusChipStyles = (status: TrangThaiKhoaHoc) => {
@@ -86,11 +92,35 @@ export default function CourseEditLayout({
       case "DangDuyet":
         return { bgcolor: "#EFF6FF", color: "#2563EB" };
       default:
-        return { bgcolor: "var(--ev-paper-alt, #FBFAF9)", color: "var(--ev-text-secondary, #4B5563)" };
+        return {
+          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+          color: "var(--ev-text-secondary, #4B5563)",
+        };
     }
   };
 
   const statusStyles = getStatusChipStyles(trangThai);
+
+  // Màu/nhãn rút gọn cho nút lịch sử kiểm duyệt ở header, dựa theo trạng thái phê duyệt gần nhất
+  const getLichSuButtonStyles = (trangThaiPheDuyet?: string | null) => {
+    switch (trangThaiPheDuyet) {
+      case "DaDuyet":
+        return { color: "#4ADE80", nhan: "Đã duyệt" };
+      case "TuChoi":
+        return { color: "#F87171", nhan: "Từ chối" };
+      case "ChoDuyet":
+        return { color: "#FBBF24", nhan: "Chờ duyệt" };
+      case "DangDuyet":
+        return { color: "#60A5FA", nhan: "Đang duyệt" };
+      default:
+        return { color: "#ECE7E4", nhan: "Chưa có" };
+    }
+  };
+  const lichSuButtonStyles = getLichSuButtonStyles(
+    lichSuKiemDuyet?.trangThaiPheDuyet,
+  );
+  const coLichSuKiemDuyet =
+    !!lichSuKiemDuyet && !laNgayRong(lichSuKiemDuyet.ngayDuyet);
 
   // Hàm xử lý xem trước - mở trang xem trước khóa học
   const handleXemTruoc = () => {
@@ -105,6 +135,36 @@ export default function CourseEditLayout({
       `/instructor/manager-courses/draft/${courseId}/learn`,
       "_blank",
     );
+  };
+
+  const handleSuaTiep = async () => {
+    const courseId = idKhoaHoc || window.location.pathname.split("/")[4];
+    if (!courseId) {
+      console.warn("Không có ID khóa học để sửa tiếp");
+      return;
+    }
+    if (dangSuaTiep) return;
+
+    setDangSuaTiep(true);
+    try {
+      const response = await khoaHocService.createFullKhoaHocDraft(courseId);
+      const idKhoaHocMoi = response?.data?.khoaHoc?.id;
+
+      console.log("Id khóa học nháp mới:", response?.data?.khoaHoc?.id);
+
+      if (!idKhoaHocMoi) {
+        console.warn("Không nhận được id khóa học nháp mới từ API");
+        return;
+      }
+
+      router.push(
+        `/instructor/manager-courses/${idKhoaHocMoi}/manager/curriculum`,
+      );
+    } catch (error) {
+      console.error("Lỗi khi tạo bản nháp để sửa tiếp:", error);
+    } finally {
+      setDangSuaTiep(false);
+    }
   };
 
   if (loading) {
@@ -255,30 +315,72 @@ export default function CourseEditLayout({
             }}
           >
             {/* Preview Button - Luôn hoạt động */}
-            <Button
-              onClick={handleXemTruoc}
-              variant="outlined"
-              sx={{
-                color: "#ECE7E4",
-                borderColor: "rgba(255,255,255,0.3)",
-                textTransform: "none",
-                fontWeight: 700,
-                borderRadius: "8px",
-                px: 2,
-                py: 0.8,
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  bgcolor: "rgba(255,255,255,0.08)",
-                  borderColor: "rgba(255,255,255,0.5)",
-                  color: "#ffffff",
-                },
-                "&:focus-visible": {
-                  outline: `2px solid ${MAU.chinh}`,
-                },
-              }}
-            >
-              Xem trước
-            </Button>
+            {trangThai === "DangSua" && (
+              <Button
+                onClick={handleXemTruoc}
+                variant="outlined"
+                sx={{
+                  color: "#ECE7E4",
+                  borderColor: "rgba(255,255,255,0.3)",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  borderRadius: "8px",
+                  px: 2,
+                  py: 0.8,
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.08)",
+                    borderColor: "rgba(255,255,255,0.5)",
+                    color: "#ffffff",
+                  },
+                  "&:focus-visible": {
+                    outline: `2px solid ${MAU.chinh}`,
+                  },
+                }}
+              >
+                Xem trước
+              </Button>
+            )}
+
+            {/* Nút "Sửa tiếp" - chỉ hiện khi đã duyệt hoặc bị từ chối */}
+            {coTheSuaTiep && (
+              <Button
+                onClick={handleSuaTiep}
+                disabled={dangSuaTiep}
+                variant="outlined"
+                startIcon={
+                  dangSuaTiep ? (
+                    <CircularProgress size={14} sx={{ color: "#ECE7E4" }} />
+                  ) : (
+                    <EditOutlinedIcon sx={{ fontSize: 16 }} />
+                  )
+                }
+                sx={{
+                  color: "#ECE7E4",
+                  borderColor: "rgba(255,255,255,0.3)",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  borderRadius: "8px",
+                  px: 2,
+                  py: 0.8,
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.08)",
+                    borderColor: "rgba(255,255,255,0.5)",
+                    color: "#ffffff",
+                  },
+                  "&:focus-visible": {
+                    outline: `2px solid ${MAU.chinh}`,
+                  },
+                  "&.Mui-disabled": {
+                    color: "rgba(236,231,228,0.5)",
+                    borderColor: "rgba(255,255,255,0.15)",
+                  },
+                }}
+              >
+                {dangSuaTiep ? "Đang tạo bản nháp..." : "Sửa tiếp"}
+              </Button>
+            )}
 
             {/* Approval Action Component */}
             <CourseStatusAction
@@ -289,24 +391,40 @@ export default function CourseEditLayout({
               onGuiPheDuyet={onGuiPheDuyet}
               onDiChuyenDen={onDiChuyenDenTuValidate}
             />
-
-            {/* Settings button */}
-            <IconButton
-              size="small"
-              sx={{
-                color: "#ECE7E4",
-                p: 1,
-                borderRadius: "8px",
-                border: "1px solid rgba(255,255,255,0.2)",
-                "&:hover": {
-                  bgcolor: "rgba(255,255,255,0.08)",
-                  color: "#ffffff",
-                },
-              }}
-              aria-label="Cài đặt khóa học"
-            >
-              <SettingsOutlinedIcon fontSize="small" />
-            </IconButton>
+            {/* Nút lịch sử kiểm duyệt*/}
+            {(trangThai === "TuChoi" || trangThai === "DangSua") &&
+              lichSuKiemDuyet != null && (
+                <Button
+                  onClick={() => setMoLichSuKiemDuyet(true)}
+                  startIcon={
+                    <HistoryOutlinedIcon
+                      sx={{ fontSize: 17, color: lichSuButtonStyles.color }}
+                    />
+                  }
+                  size="small"
+                  sx={{
+                    color: "#ECE7E4",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    px: 1.4,
+                    py: 0.8,
+                    gap: 0.3,
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.08)",
+                      color: "#ffffff",
+                    },
+                  }}
+                  aria-label="Lịch sử kiểm duyệt khóa học"
+                  title={lichSuKiemDuyet?.lyDo || ""}
+                >
+                  {coLichSuKiemDuyet
+                    ? lichSuButtonStyles.nhan
+                    : "Lịch sử duyệt"}
+                </Button>
+              )}
           </Box>
         </Box>
       </Box>
@@ -391,7 +509,10 @@ export default function CourseEditLayout({
                           />
                         ) : (
                           <RadioButtonUncheckedIcon
-                            sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A7676)" }}
+                            sx={{
+                              fontSize: 18,
+                              color: "var(--ev-text-muted, #8A7676)",
+                            }}
                           />
                         )}
                         <Typography
@@ -413,36 +534,84 @@ export default function CourseEditLayout({
         </Box>
 
         <Box sx={{ flex: 1, px: { xs: 2.5, md: 4.5 }, py: 4, minWidth: 0 }}>
+          {/* ===== THÔNG BÁO TRẠNG THÁI & LÝ DO TỪ CHỐI ===== */}
           {isReadOnly && (
-            <Box
-              sx={{
-                mb: 3.5,
-                px: 2.5,
-                py: 1.5,
-                borderRadius: "12px",
-                bgcolor: "#FFF7ED",
-                border: "1px solid #FFEDD5",
-                display: "flex",
-                alignItems: "center",
-                gap: 1.2,
-                boxShadow: "0 2px 8px rgba(217,119,6,0.02)",
-              }}
-            >
-              <Typography
-                sx={{ fontSize: 13.5, color: "#D97706", fontWeight: 700 }}
+            <>
+              {/* Thông báo trạng thái chung */}
+              <Box
+                sx={{
+                  mb: 2.5,
+                  px: 2.5,
+                  py: 1.5,
+                  borderRadius: "12px",
+                  bgcolor: trangThai === "TuChoi" ? "#FEF2F2" : "#FFF7ED",
+                  border: `1px solid ${
+                    trangThai === "TuChoi" ? "#FEE2E2" : "#FFEDD5"
+                  }`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.2,
+                  boxShadow: "0 2px 8px rgba(217,119,6,0.02)",
+                }}
               >
-                {trangThai === "DaDuyet"
-                  ? "✅ Khóa học đã được duyệt — bạn chỉ có thể xem nội dung."
-                  : trangThai === "TuChoi"
-                    ? "❌ Khóa học bị từ chối — bạn chỉ có thể xem nội dung."
-                    : "⏳ Khóa học đang trong quá trình duyệt — bạn chỉ có thể xem nội dung."}
-              </Typography>
-            </Box>
+                <Typography
+                  sx={{
+                    fontSize: 13.5,
+                    color: trangThai === "TuChoi" ? "#DC2626" : "#D97706",
+                    fontWeight: 700,
+                  }}
+                >
+                  {trangThai === "DaDuyet"
+                    ? "✅ Khóa học đã được duyệt — bạn chỉ có thể xem nội dung."
+                    : trangThai === "TuChoi"
+                      ? "❌ Khóa học bị từ chối — bạn chỉ có thể xem nội dung."
+                      : "⏳ Khóa học đang trong quá trình duyệt — bạn chỉ có thể xem nội dung."}
+                </Typography>
+              </Box>
+
+              {/* Hiển thị lý do từ chối nếu có */}
+              {trangThai === "TuChoi" && lyDoTuChoi && (
+                <Box
+                  sx={{
+                    mb: 3.5,
+                    px: 2.5,
+                    py: 1.8,
+                    borderRadius: "12px",
+                    bgcolor: "#FEF2F2",
+                    border: "1px solid #FEE2E2",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1.5,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 13.5,
+                      color: "#B91C1C",
+                      fontWeight: 600,
+                      whiteSpace: "pre-wrap",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <Box component="span" sx={{ fontWeight: 800 }}>
+                      Lý do từ chối:
+                    </Box>{" "}
+                    {lyDoTuChoi}
+                  </Typography>
+                </Box>
+              )}
+            </>
           )}
 
           {children}
         </Box>
       </Box>
+
+      <LichSuKiemDuyetDialog
+        open={moLichSuKiemDuyet}
+        onClose={() => setMoLichSuKiemDuyet(false)}
+        lichSu={lichSuKiemDuyet}
+      />
     </Box>
   );
 }

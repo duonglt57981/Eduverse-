@@ -55,7 +55,7 @@ export interface BaiKiemTraDto {
   isSwap?: boolean;
   thuTuSapXep?: number;
   cauHois?: CauHoiDto[];
-  LyDoTuChois?: LyDoTuChoiDto;
+  lyDoTuChois?: LyDoTuChoiDto;
 }
 
 // ---------- BaiKiemTraLamBaiDto ----------

@@ -1208,7 +1208,7 @@ namespace Eduverse.Service.KhoaHocService
                 .Where(p => p.IdKhoaHoc == idKhoaHoc && !p.IsDeleted)
                 .ToListAsync();
 
-            if (phanHocs.Any()) 
+            if (phanHocs.Any())
             {
                 foreach (var ph in phanHocs)
                 {
@@ -1302,15 +1302,17 @@ namespace Eduverse.Service.KhoaHocService
                 }
             }
 
-            // Nếu không có gì cần cập nhật thì báo luôn, khỏi mở transaction cho tốn công
             if (!khoaHocToUpdate.Any() && !baiGiangToUpdate.Any() && !taiLieuToUpdate.Any()
                 && !baiKiemTraToUpdate.Any() && !cauHoiToUpdate.Any() && !dapAnToUpdate.Any())
             {
                 throw new Exception("Không có phần nào đang ở trạng thái Đang sửa để chuyển sang Chờ duyệt");
             }
 
-            using (var transaction = await _eduverseContext.Database.BeginTransactionAsync())
+            var strategy = _eduverseContext.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
             {
+                using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
                 try
                 {
                     if (khoaHocToUpdate.Any())
@@ -1318,12 +1320,11 @@ namespace Eduverse.Service.KhoaHocService
 
                     if (phanUpdate.Any())
                     {
-                        foreach(var ph in phanUpdate)
+                        foreach (var ph in phanUpdate)
                         {
                             _phanRepository.Update(ph);
                         }
                     }
-                        
 
                     if (baiGiangToUpdate.Any())
                         await _baiGiangService.UpdateAsync(baiGiangToUpdate);
@@ -1348,7 +1349,7 @@ namespace Eduverse.Service.KhoaHocService
                     await transaction.RollbackAsync();
                     throw;
                 }
-            }
+            });
 
             var approvalPayload = new NotificationPayload
             {
@@ -1370,8 +1371,10 @@ namespace Eduverse.Service.KhoaHocService
         {
             Guid.TryParse(
                 _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier),
-                out var nguoiTao);
+                out var nguoiTao
+            );
 
+            // 1. Lấy thông tin khóa học
             var khoaHoc = await GetQueryable()
                 .Where(x => x.Id == idKhoaHoc && x.CreatedId == nguoiTao)
                 .Select(x => new GetToUpdateKhoaHoc
@@ -1379,18 +1382,31 @@ namespace Eduverse.Service.KhoaHocService
                     Id = x.Id,
                     TieuDe = x.TieuDe,
                     MoTa = x.MoTa,
-                    GiaGoc = x.GiaGoc,  
+                    GiaGoc = x.GiaGoc,
                     CapDo = x.CapDo,
                     UrlHinhAnh = x.HinhAnhKhoaHoc,
                     IsBanHienTai = x.IsBanHienTai,
                     TrangThai = x.TrangThai,
-                    TrangThaiPheDuyet = x.TrangThaiPheDuyet
+                    TrangThaiPheDuyet = x.TrangThaiPheDuyet,
+                    IdLyDoTuChoi = x.IdLyDoTuChoi
                 })
                 .FirstOrDefaultAsync();
 
+            // 2. Không tìm thấy khóa học
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học hoặc bạn không có quyền.");
 
+            // 3. Lấy lý do kiểm duyệt
+            if (khoaHoc.IdLyDoTuChoi.HasValue)
+            {
+                khoaHoc.lichSuKiemDuyetKhoaHoc =
+                    await _lichSuKiemDuyetKhoaHocService
+                        .GetQueryable()
+                        .Where(x => x.IdDoiTuong == khoaHoc.IdLyDoTuChoi)
+                        .FirstOrDefaultAsync();
+            }
+
+            // 4. Lấy danh sách danh mục
             khoaHoc.DanhSachDanhMuc = await _danhMuc_KhoaHocRepository
                 .GetQueryable()
                 .Where(x => x.IdKhoaHoc == idKhoaHoc)
@@ -1410,6 +1426,7 @@ namespace Eduverse.Service.KhoaHocService
 
             if (targetVersion == null)
                 return null;
+            var LyDoKhoaHoc = await _lichSuKiemDuyetKhoaHocService.GetQueryable().Where(x => x.IdDoiTuong == targetVersion.IdLyDoTuChoi).FirstOrDefaultAsync();
 
             // 2. Lấy toàn bộ cây dữ liệu (không dùng khóa ngoại, so khớp thủ công qua Id list)
             var phans = await _phanRepository.GetQueryable()
@@ -1424,14 +1441,32 @@ namespace Eduverse.Service.KhoaHocService
                 .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
-            var baiGiangIds = baiGiangs.Select(b => b.Id).ToList();
+            var baiGiangIds = baiGiangs.Select(b => new BaiGiangDto { Id = b.Id, IdLyDo = b.IdLyDo}).ToList();
 
-            var lyDoBaiGiangs = await _lyDoTuChoiRepository.GetQueryable()
-                .Where(x => baiGiangIds.Contains(x.IdDoiTuong ?? Guid.Empty))
-                .ToListAsync();
+            var ids = baiGiangIds
+                .Select(x => x.Id)
+                .ToList();
+
+            var idLyDos = baiGiangIds
+                .Select(x => x.IdLyDo)
+                .ToList();
+
+            var lyDoBaiGiangs = new List<LyDoTuChoi>();
+
+            if (targetVersion.TrangThaiPheDuyet == "TuChoi")
+            {
+                lyDoBaiGiangs = await _lyDoTuChoiRepository.GetQueryable()
+                   .Where(x => ids.Contains(x.IdDoiTuong ?? Guid.Empty))
+                   .ToListAsync();
+            }else if (targetVersion.TrangThaiPheDuyet == "DangSua")
+            {
+                lyDoBaiGiangs = await _lyDoTuChoiRepository.GetQueryable()
+                   .Where(x => idLyDos.Contains(x.IdDoiTuong ?? Guid.Empty))
+                   .ToListAsync();
+            }
 
             var taiLieus = await _taiLieuRepository.GetQueryable()
-                .Where(x => baiGiangIds.Contains(x.IdBaiGiang))
+                .Where(x => ids.Contains(x.IdBaiGiang))
                 .ToListAsync();
 
             var baiKiemTras = await _baiKiemTraRepository.GetQueryable()
@@ -1439,14 +1474,33 @@ namespace Eduverse.Service.KhoaHocService
                 .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
-            var baiKiemTraIds = baiKiemTras.Select(b => b.Id).ToList();
+            var baiKiemTraIds = baiKiemTras.Select(b => new BaiKiemTra {Id = b.Id, IdLyDo = b.IdLyDo}).ToList();
 
-            var lyDoBaiKiemTras = await _lyDoTuChoiRepository.GetAll()
-                .Where(x => baiKiemTraIds.Contains(x.IdDoiTuong ?? Guid.Empty))
-                .ToListAsync();
+            var idbkts = baiKiemTraIds
+                .Select(x => x.Id)
+                .ToList();
+
+            var idLyDobkts = baiKiemTraIds
+                .Select(x => x.IdLyDo)
+                .ToList();
+
+            var lyDoBaiKiemTras = new List<LyDoTuChoi>();
+
+            if (targetVersion.TrangThaiPheDuyet == "TuChoi")
+            {
+                lyDoBaiKiemTras = await _lyDoTuChoiRepository.GetQueryable()
+                   .Where(x => idbkts.Contains(x.IdDoiTuong ?? Guid.Empty))
+                   .ToListAsync();
+            }
+            else if (targetVersion.TrangThaiPheDuyet == "DangSua")
+            {
+                lyDoBaiKiemTras = await _lyDoTuChoiRepository.GetQueryable()
+                   .Where(x => idLyDobkts.Contains(x.IdDoiTuong ?? Guid.Empty))
+                   .ToListAsync();
+            }
 
             var cauHois = await _cauHoiRepository.GetQueryable()
-                .Where(x => baiKiemTraIds.Contains(x.IdBaiKiemTra.Value))
+                .Where(x => idbkts.Contains(x.IdBaiKiemTra ?? Guid.Empty))
                 .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
@@ -1501,7 +1555,9 @@ namespace Eduverse.Service.KhoaHocService
                     IdPhan = b.IdPhan,
                     IsBanHienTai = b.IsBanHienTai,
                     IdBanGhiTruoc = b.IdBanGhiTruoc,
-                    LyDoTuChois = lyDoBaiGiangLookup[b.Id]
+                    LyDoTuChois = (targetVersion.TrangThaiPheDuyet == "TuChoi"
+                        ? lyDoBaiGiangLookup[b.Id]
+                        : lyDoBaiGiangLookup[b.IdLyDo])
                         .Select(l => new LyDoTuChoi { Id = l.Id, LyDo = l.LyDo })
                         .FirstOrDefault(),
 
@@ -1577,6 +1633,7 @@ namespace Eduverse.Service.KhoaHocService
                 IsBanHienTai = targetVersion.IsBanHienTai,
                 DanhMucs = tenDanhMucs,
                 DanhSachPhanHoc = phanDtos,
+                lichSuKiemDuyetKhoaHoc = LyDoKhoaHoc
             };
 
             return result;
@@ -2149,7 +2206,6 @@ namespace Eduverse.Service.KhoaHocService
         // ═══════════════════════════════════════════════════════════
         // HÀM CHÍNH: Tạo bản nháp toàn bộ khóa học
         // ═══════════════════════════════════════════════════════════
-
         public async Task<KhoaHocDraftResultDto> CreateFullKhoaHocDraft(Guid IdKhoaHoc)
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
@@ -2176,156 +2232,155 @@ namespace Eduverse.Service.KhoaHocService
                     $"Bạn KHÔNG THỂ chỉnh sửa trong khi admin đang xem xét.\n" +
                     $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
                 );
-            
-            using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
-            try
+
+            var strategy = _eduverseContext.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
             {
-                KhoaHoc khoaHocDraftEntity;
-                if (KhoaHocRoot.TrangThaiPheDuyet == "DaDuyet")
+                using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
+                try
                 {
-                    khoaHocDraftEntity = new KhoaHoc
+                    KhoaHoc khoaHocDraftEntity;
+                    if (KhoaHocRoot.TrangThaiPheDuyet == "DaDuyet")
                     {
-                        Id = Guid.NewGuid(),
-                        TieuDe = KhoaHocRoot.TieuDe,
-                        MoTa = KhoaHocRoot.MoTa,
-                        CapDo = KhoaHocRoot.CapDo,
-                        Gia = KhoaHocRoot.Gia,
-                        GiaGoc = KhoaHocRoot.GiaGoc,
-                        LoaiKhoaHoc = KhoaHocRoot.LoaiKhoaHoc,
-                        HinhAnhKhoaHoc = KhoaHocRoot.HinhAnhKhoaHoc,
-                        IdHinhAnhKhoaHoc = KhoaHocRoot.IdHinhAnhKhoaHoc,
-                        TrangThai = "DangSua",
-                        TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = true,
-                        IdBanGhiTruoc = KhoaHocRoot.Id
-                    };
-                    await CreateAsync(khoaHocDraftEntity);
-                    await SaveAsync();
-
-                }
-                else if (KhoaHocRoot.TrangThaiPheDuyet == "TuChoi")
-                {
-                    khoaHocDraftEntity = new KhoaHoc
-                    {
-                        Id = Guid.NewGuid(),
-                        TieuDe = KhoaHocRoot.TieuDe,
-                        MoTa = KhoaHocRoot.MoTa,
-                        CapDo = KhoaHocRoot.CapDo,
-                        Gia = KhoaHocRoot.Gia,
-                        GiaGoc = KhoaHocRoot.GiaGoc,
-                        LoaiKhoaHoc = KhoaHocRoot.LoaiKhoaHoc,
-                        HinhAnhKhoaHoc = KhoaHocRoot.HinhAnhKhoaHoc,
-                        IdHinhAnhKhoaHoc = KhoaHocRoot.IdHinhAnhKhoaHoc,
-                        TrangThai = "DangSua",
-                        TrangThaiPheDuyet = "DangSua",
-                        IsBanHienTai = true,
-                        IdBanGhiTruoc = KhoaHocRoot.IdBanGhiTruoc ?? null
-                    };
-
-                    await CreateAsync(khoaHocDraftEntity);
-                    await SaveAsync();
-                }
-                else
-                {
-                    throw new Exception($"Trạng thái khóa học '{KhoaHocRoot.TrangThaiPheDuyet}' không hợp lệ để tạo bản nháp");
-                }
-
-                
-                await CopyDanhMucAsync(KhoaHocRoot.Id, khoaHocDraftEntity.Id);
-
-                var khoaHocResult = _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHocDraftEntity);
-                var idKhoaHocDraftMoi = khoaHocDraftEntity.Id;
-
-                var danhSachPhanRoot = await _phanRepository.GetAll()
-                    .Where(x => x.IdKhoaHoc == IdKhoaHoc && x.IsBanHienTai == true && !x.IsDeleted)
-                    .ToListAsync();
-
-                var danhSachPhanDraft = new List<PhanDraftDto>();
-
-                foreach (var phanRoot in danhSachPhanRoot)
-                {
-                    Phan phanDraftMoi;
-
-                    if (phanRoot.TrangThaiPheDuyet == "DaDuyet")
-                    {
-                        phanDraftMoi = new Phan
+                        khoaHocDraftEntity = new KhoaHoc
                         {
                             Id = Guid.NewGuid(),
-                            IdKhoaHoc = idKhoaHocDraftMoi,
-                            TenPhan = phanRoot.TenPhan,
-                            ThuTuSapXep = phanRoot.ThuTuSapXep,
+                            TieuDe = KhoaHocRoot.TieuDe,
+                            MoTa = KhoaHocRoot.MoTa,
+                            CapDo = KhoaHocRoot.CapDo,
+                            Gia = KhoaHocRoot.Gia,
+                            GiaGoc = KhoaHocRoot.GiaGoc,
+                            LoaiKhoaHoc = KhoaHocRoot.LoaiKhoaHoc,
+                            HinhAnhKhoaHoc = KhoaHocRoot.HinhAnhKhoaHoc,
+                            IdHinhAnhKhoaHoc = KhoaHocRoot.IdHinhAnhKhoaHoc,
                             TrangThai = "DangSua",
                             TrangThaiPheDuyet = "DangSua",
                             IsBanHienTai = true,
-                            IdBanGhiTruoc = phanRoot.Id
+                            IdBanGhiTruoc = KhoaHocRoot.Id
                         };
-                        _phanRepository.Add(phanDraftMoi);
-                        await _phanRepository.SaveAsync();
+                        await CreateAsync(khoaHocDraftEntity);
+                        await SaveAsync();
                     }
-                    else if (phanRoot.TrangThaiPheDuyet == "TuChoi")
+                    else if (KhoaHocRoot.TrangThaiPheDuyet == "TuChoi")
                     {
-                        // Phần gốc bị từ chối → tạo Phần GỐC MỚI thay thế,
-                        // Id của Phần bị từ chối chuyển vào IdBanGhiTruoc của bản mới
-                        phanDraftMoi = new Phan
+                        khoaHocDraftEntity = new KhoaHoc
                         {
                             Id = Guid.NewGuid(),
-                            IdKhoaHoc = idKhoaHocDraftMoi,
-                            TenPhan = phanRoot.TenPhan,
-                            ThuTuSapXep = phanRoot.ThuTuSapXep,
+                            TieuDe = KhoaHocRoot.TieuDe,
+                            MoTa = KhoaHocRoot.MoTa,
+                            CapDo = KhoaHocRoot.CapDo,
+                            Gia = KhoaHocRoot.Gia,
+                            GiaGoc = KhoaHocRoot.GiaGoc,
+                            LoaiKhoaHoc = KhoaHocRoot.LoaiKhoaHoc,
+                            HinhAnhKhoaHoc = KhoaHocRoot.HinhAnhKhoaHoc,
+                            IdHinhAnhKhoaHoc = KhoaHocRoot.IdHinhAnhKhoaHoc,
                             TrangThai = "DangSua",
                             TrangThaiPheDuyet = "DangSua",
                             IsBanHienTai = true,
-                            IdBanGhiTruoc = phanRoot.IdBanGhiTruoc
+                            IdBanGhiTruoc = KhoaHocRoot.IdBanGhiTruoc ?? null,
+                            IdLyDoTuChoi = KhoaHocRoot.Id
                         };
-                        _phanRepository.Add(phanDraftMoi);
-                        await _phanRepository.SaveAsync();
+
+                        await CreateAsync(khoaHocDraftEntity);
+                        await SaveAsync();
                     }
                     else
                     {
-                        throw new Exception($"Trạng thái Phần '{phanRoot.TenPhan}' ({phanRoot.TrangThaiPheDuyet}) không hợp lệ để tạo bản nháp");
+                        throw new Exception($"Trạng thái khóa học '{KhoaHocRoot.TrangThaiPheDuyet}' không hợp lệ để tạo bản nháp");
                     }
 
-                    
+                    await CopyDanhMucAsync(KhoaHocRoot.Id, khoaHocDraftEntity.Id);
 
-                    var phanDraftDto = new PhanDraftDto
+                    var khoaHocResult = _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHocDraftEntity);
+                    var idKhoaHocDraftMoi = khoaHocDraftEntity.Id;
+
+                    var danhSachPhanRoot = await _phanRepository.GetAll()
+                        .Where(x => x.IdKhoaHoc == IdKhoaHoc && x.IsBanHienTai == true && !x.IsDeleted)
+                        .ToListAsync();
+
+                    var danhSachPhanDraft = new List<PhanDraftDto>();
+
+                    foreach (var phanRoot in danhSachPhanRoot)
                     {
-                        Phan = _mapper.Map<Phan, PhanHocDto>(phanDraftMoi),
-                        DanhSachBaiGiang = await CloneBaiGiangAsync(phanRoot.Id, phanDraftMoi.Id),
-                        DanhSachBaiKiemTra = await CloneBaiKiemTraAsync(phanRoot.Id, phanDraftMoi.Id)
+                        Phan phanDraftMoi;
+
+                        if (phanRoot.TrangThaiPheDuyet == "DaDuyet")
+                        {
+                            phanDraftMoi = new Phan
+                            {
+                                Id = Guid.NewGuid(),
+                                IdKhoaHoc = idKhoaHocDraftMoi,
+                                TenPhan = phanRoot.TenPhan,
+                                ThuTuSapXep = phanRoot.ThuTuSapXep,
+                                TrangThai = "DangSua",
+                                TrangThaiPheDuyet = "DangSua",
+                                IsBanHienTai = true,
+                                IdBanGhiTruoc = phanRoot.Id
+                            };
+                            _phanRepository.Add(phanDraftMoi);
+                            await _phanRepository.SaveAsync();
+                        }
+                        else if (phanRoot.TrangThaiPheDuyet == "TuChoi")
+                        {
+                            // Phần gốc bị từ chối → tạo Phần GỐC MỚI thay thế,
+                            // Id của Phần bị từ chối chuyển vào IdBanGhiTruoc của bản mới
+                            phanDraftMoi = new Phan
+                            {
+                                Id = Guid.NewGuid(),
+                                IdKhoaHoc = idKhoaHocDraftMoi,
+                                TenPhan = phanRoot.TenPhan,
+                                ThuTuSapXep = phanRoot.ThuTuSapXep,
+                                TrangThai = "DangSua",
+                                TrangThaiPheDuyet = "DangSua",
+                                IsBanHienTai = true,
+                                IdBanGhiTruoc = phanRoot.IdBanGhiTruoc
+                            };
+                            _phanRepository.Add(phanDraftMoi);
+                            await _phanRepository.SaveAsync();
+                        }
+                        else
+                        {
+                            throw new Exception($"Trạng thái Phần '{phanRoot.TenPhan}' ({phanRoot.TrangThaiPheDuyet}) không hợp lệ để tạo bản nháp");
+                        }
+
+                        var phanDraftDto = new PhanDraftDto
+                        {
+                            Phan = _mapper.Map<Phan, PhanHocDto>(phanDraftMoi),
+                            DanhSachBaiGiang = await CloneBaiGiangAsync(phanRoot.Id, phanDraftMoi.Id),
+                            DanhSachBaiKiemTra = await CloneBaiKiemTraAsync(phanRoot.Id, phanDraftMoi.Id)
+                        };
+
+                        danhSachPhanDraft.Add(phanDraftDto);
+                    }
+
+                    // Xóa sau khi tạo bản mới
+                    if (KhoaHocRoot.TrangThaiPheDuyet == "TuChoi")
+                    {
+                        KhoaHocRoot.TrangThai = "DaXoa";
+                    }
+                    else if (KhoaHocRoot.TrangThaiPheDuyet == "DaDuyet")
+                    {
+                        KhoaHocRoot.TrangThai = "NgungHoatDong";
+                    }
+                    await UpdateAsync(KhoaHocRoot);
+                    await DeleteAsync(KhoaHocRoot);
+                    await SaveAsync();
+
+                    await transaction.CommitAsync();
+
+                    return new KhoaHocDraftResultDto
+                    {
+                        KhoaHoc = khoaHocResult,
+                        DanhSachPhan = danhSachPhanDraft
                     };
-
-                    danhSachPhanDraft.Add(phanDraftDto);
                 }
-
-
-
-                await transaction.CommitAsync();
-
-
-                //Xóa sau khi tạo bản mới
-                if (KhoaHocRoot.TrangThaiPheDuyet == "TuChoi")
+                catch
                 {
-                    KhoaHocRoot.TrangThai = "DaXoa";
+                    await transaction.RollbackAsync();
+                    throw;
                 }
-                else if (KhoaHocRoot.TrangThaiPheDuyet == "DaDuyet")
-                {
-                    KhoaHocRoot.TrangThai = "NgungHoatDong";
-                }
-                await UpdateAsync(KhoaHocRoot);
-                await DeleteAsync(KhoaHocRoot);
-                await SaveAsync();
-
-                return new KhoaHocDraftResultDto
-                {
-                    KhoaHoc = khoaHocResult,
-                    DanhSachPhan = danhSachPhanDraft
-                };
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            });
         }
 
 
@@ -2362,7 +2417,7 @@ namespace Eduverse.Service.KhoaHocService
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
-                        IdBanGhiTruoc = bgRoot.Id,
+                        IdBanGhiTruoc = bgRoot.Id, 
                         LoaiBaiGiang = bgRoot.LoaiBaiGiang,
                         LaBaiGiangFree = bgRoot.LaBaiGiangFree
                     };
@@ -2384,7 +2439,8 @@ namespace Eduverse.Service.KhoaHocService
                         TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
                         IdBanGhiTruoc = bgRoot.IdBanGhiTruoc,
-                        LoaiBaiGiang = bgRoot.LoaiBaiGiang,
+                        IdLyDo = bgRoot.Id,
+                         LoaiBaiGiang = bgRoot.LoaiBaiGiang,
                         LaBaiGiangFree = bgRoot.LaBaiGiangFree
                     };
                     _baiGiangRepository.Add(bgDraft);
@@ -2503,7 +2559,8 @@ namespace Eduverse.Service.KhoaHocService
                         TrangThai = "DangSua",
                         TrangThaiPheDuyet = "DangSua",
                         IsBanHienTai = true,
-                        IdBanGhiTruoc = bktRoot.IdBanGhiTruoc
+                        IdBanGhiTruoc = bktRoot.IdBanGhiTruoc,
+                        IdLyDo = bktRoot.Id,
                     };
                     _baiKiemTraRepository.Add(bktDraft);
                     await _baiKiemTraRepository.SaveAsync();

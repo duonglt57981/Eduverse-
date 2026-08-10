@@ -160,10 +160,6 @@ function RichTextEditor({
 }) {
   const [isFocused, setIsFocused] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
-  // Đánh dấu thay đổi vừa rồi đến từ chính người dùng gõ/dán trong editor
-  // (không phải từ bên ngoài đổi prop `value`) để tránh useEffect bên dưới
-  // ghi đè lại innerHTML và làm nhảy con trỏ giữa lúc đang gõ/dán -
-  // đây chính là nguyên nhân gây mất ký tự khi gõ và nhân đôi nội dung khi dán.
   const dangTuThayDoi = useRef(false);
 
   useEffect(() => {
@@ -294,9 +290,6 @@ function RichTextEditor({
     }
 
     if (contentToInsert && editorRef.current) {
-      // Đảm bảo focus và vùng chọn nằm đúng trong editor trước khi chèn,
-      // tránh trường hợp selection bị "lạc" (ví dụ sau khi vừa xóa hết nội
-      // dung) khiến execCommand chèn sai vị trí và nội dung cũ bị nhân đôi.
       editorRef.current.focus();
       const selection = window.getSelection();
       if (
@@ -781,6 +774,7 @@ function LectureItem({
   isExpanded,
   isEditable,
   dangTai = false,
+  lyDoTuChoi,
   children,
   onToggle,
   onEdit,
@@ -793,9 +787,8 @@ function LectureItem({
   isComplete: boolean;
   isExpanded: boolean;
   isEditable: boolean;
-  // Bài giảng đang tải video lên nền (đang sửa) — không chặn thao tác khác,
-  // chỉ hiện badge nhỏ báo trạng thái ngay trên chính bài giảng này.
   dangTai?: boolean;
+  lyDoTuChoi?: any; // LyDoTuChoiDto | null
   children: React.ReactNode;
   onToggle: (id: string) => void;
   onEdit: (phanId: string, id: string) => void;
@@ -815,6 +808,8 @@ function LectureItem({
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  const hasLyDo = lyDoTuChoi?.lyDo;
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
@@ -882,6 +877,21 @@ function LectureItem({
                     />
                   </IconButton>
                 </>
+              )}
+              {/* Hiển thị icon chấm than nếu có lý do từ chối */}
+              {hasLyDo && (
+                <Tooltip title={lyDoTuChoi.lyDo} placement="top">
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    sx={{
+                      color: "#DC2626",
+                      "&:hover": { bgcolor: "#FEE2E2" },
+                    }}
+                  >
+                    <ErrorOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               )}
               <IconButton
                 {...noPropagation}
@@ -975,9 +985,6 @@ function LectureItem({
 }
 
 // ===== BÀI GIẢNG ĐANG TẢI LÊN (placeholder) =====
-// Hiển thị tạm một dòng "đang tải video" cho bài giảng vừa bấm Thêm nhưng
-// video vẫn đang upload — không nằm trong `phans` state nên không đụng tới
-// id/thứ tự thật, chỉ biến mất khi upload xong (thành công hoặc lỗi).
 function PendingLectureItem({
   tieuDe,
   soThuTuMuc,
@@ -1054,6 +1061,7 @@ function QuizItem({
   isComplete,
   isExpanded,
   isEditable,
+  lyDoTuChoi,
   children,
   onToggle,
   onEdit,
@@ -1067,6 +1075,7 @@ function QuizItem({
   isComplete: boolean;
   isExpanded: boolean;
   isEditable: boolean;
+  lyDoTuChoi?: any; // LyDoTuChoiDto | null
   children: React.ReactNode;
   onToggle: (id: string) => void;
   onEdit: (phanId: string, id: string) => void;
@@ -1086,6 +1095,8 @@ function QuizItem({
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  const hasLyDo = lyDoTuChoi?.lyDo;
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
@@ -1149,6 +1160,21 @@ function QuizItem({
                     </IconButton>
                   </Tooltip>
                 </>
+              )}
+              {/* Hiển thị icon chấm than nếu có lý do từ chối */}
+              {hasLyDo && (
+                <Tooltip title={lyDoTuChoi.lyDo} placement="top">
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    sx={{
+                      color: "#DC2626",
+                      "&:hover": { bgcolor: "#FEE2E2" },
+                    }}
+                  >
+                    <ErrorOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               )}
               <IconButton
                 {...noPropagation}
@@ -3010,11 +3036,7 @@ export default function CurriculumContent() {
 
   const [loading, setLoading] = useState(false);
 
-  // ===== Trạng thái thêm/sửa bài giảng chạy NGẦM (không chặn cả trang) =====
-  // Cho phép thêm/sửa NHIỀU bài giảng cùng lúc: mỗi bài giảng khi đang tải
-  // video lên sẽ hiện một placeholder/badge "Đang tải video..." riêng, còn
-  // các thao tác khác (thêm phần, thêm bài giảng khác, sửa bài kiểm tra...)
-  // vẫn dùng được bình thường trong lúc đó.
+  // Trạng thái thêm/sửa bài giảng chạy ngầm (không chặn cả trang)
   type BaiGiangDangCho = {
     key: string;
     tieuDe: string;
@@ -3038,10 +3060,6 @@ export default function CurriculumContent() {
       file: File | null;
       open: boolean;
     };
-  }>({});
-
-  const [tempVideoFiles, setTempVideoFiles] = useState<{
-    [baiGiangId: string]: File;
   }>({});
 
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -3193,16 +3211,22 @@ export default function CurriculumContent() {
     const newIndex = items.findIndex((item) => item.data.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
+    // Reorder combined list and assign new sequential indices
     const newItems = arrayMove(items, oldIndex, newIndex);
+    const orderedItems = newItems.map((item, idx) => ({
+      ...item,
+      thuTuSapXep: idx + 1,
+    }));
 
+    // Update both arrays with new indices
     const updatedPhan = {
       ...phan,
-      DanhSachBaiGiang: newItems
+      DanhSachBaiGiang: orderedItems
         .filter((item) => item.kind === "BaiGiang")
-        .map((item, idx) => ({ ...item.data, thuTuSapXep: idx + 1 })),
-      DanhDachBaiKiemTra: newItems
+        .map((item) => ({ ...item.data, thuTuSapXep: item.thuTuSapXep })),
+      DanhDachBaiKiemTra: orderedItems
         .filter((item) => item.kind === "BaiKiemTra")
-        .map((item, idx) => ({ ...item.data, thuTuSapXep: idx + 1 })),
+        .map((item) => ({ ...item.data, thuTuSapXep: item.thuTuSapXep })),
     };
 
     setPhans(phans.map((p) => (p.id === phanId ? updatedPhan : p)));
@@ -3806,9 +3830,6 @@ export default function CurriculumContent() {
       return;
     }
 
-    // Đóng khung sửa NGAY, không chờ video upload xong — nhờ vậy người dùng
-    // có thể mở sửa/thêm bài giảng khác trong khi video của bài này vẫn
-    // đang tải lên nền. UI chỉ hiện badge "đang tải" trên đúng bài giảng đó.
     setEditingLecture(null);
     setUpdatingLectureIds((prev) => new Set(prev).add(lectureId));
 
@@ -3823,11 +3844,6 @@ export default function CurriculumContent() {
         open: true,
         message: "Bài giảng đã được cập nhật",
         severity: "success",
-      });
-      setTempVideoFiles((prev) => {
-        const newState = { ...prev };
-        delete newState[lectureId];
-        return newState;
       });
     } catch (error: any) {
       setToast({
@@ -4018,10 +4034,6 @@ export default function CurriculumContent() {
       return;
     }
 
-    // Đóng form NGAY khi bắt đầu tải lên — không chờ video upload xong.
-    // Nhờ vậy người dùng có thể bấm "Thêm bài giảng" tiếp để tạo bài giảng
-    // khác trong khi video của bài trước vẫn đang tải lên nền, thay vì phải
-    // đợi từng bài một và bị chặn toàn bộ trang.
     setAddForm(null);
 
     const key = `pending_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -4097,39 +4109,7 @@ export default function CurriculumContent() {
           và bài kiểm tra.
         </Typography>
 
-        <Box
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 1.2,
-            px: 2.5,
-            py: 1.2,
-            borderRadius: "10px",
-            bgcolor: "#FFF7ED",
-            border: "1px solid #FFEDD5",
-            mb: 4,
-          }}
-        >
-          <ScheduleOutlined sx={{ fontSize: 18, color: "#D97706" }} />
-          <Typography
-            sx={{ fontSize: 13.5, color: "#D97706", fontWeight: 700 }}
-          >
-            Tổng thời lượng khóa học: {tongPhut} phút
-          </Typography>
-        </Box>
-
-        {!isEditable && (
-          <Alert
-            severity={trangThai === "DaDuyet" ? "success" : "info"}
-            sx={{ mb: 4, borderRadius: "12px" }}
-          >
-            {trangThai === "DaDuyet"
-              ? "Khóa học đã được duyệt. Bạn không thể chỉnh sửa chương trình giảng dạy."
-              : trangThai === "TuChoi"
-                ? "Khóa học bị từ chối. Vui lòng chỉnh sửa và gửi lại."
-                : "Khóa học đang trong quá trình duyệt. Bạn không thể chỉnh sửa chương trình giảng dạy trong giai đoạn này."}
-          </Alert>
-        )}
+        
 
         {(loading || contextLoading) && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
@@ -4315,6 +4295,8 @@ export default function CurriculumContent() {
                               const isExpanded = !!expandedLectures[itemId];
                               const isEditing =
                                 editingLecture?.lectureId === itemId;
+                              // Lấy lyDoTuChoi từ bg (nếu có)
+                              const lyDoTuChoi = (bg as any).lyDoTuChois;
 
                               return (
                                 <LectureItem
@@ -4327,6 +4309,7 @@ export default function CurriculumContent() {
                                   isExpanded={isExpanded}
                                   isEditable={isEditable}
                                   dangTai={updatingLectureIds.has(itemId)}
+                                  lyDoTuChoi={lyDoTuChoi}
                                   onToggle={toggleLecture}
                                   onEdit={handleEditLecture}
                                   onDelete={xoaBaiGiang}
@@ -5113,6 +5096,8 @@ export default function CurriculumContent() {
                               const tenHienThi =
                                 kt.tenBaiKiemTra ||
                                 `Bài kiểm tra ${soThuTuMuc}`;
+                              // Lấy lyDoTuChoi từ kt (nếu có)
+                              const lyDoTuChoi = (kt as any).lyDoTuChois;
 
                               return (
                                 <QuizItem
@@ -5125,6 +5110,7 @@ export default function CurriculumContent() {
                                   isComplete={isComplete}
                                   isExpanded={isQuizExpanded}
                                   isEditable={isEditable}
+                                  lyDoTuChoi={lyDoTuChoi}
                                   onToggle={toggleQuizItem}
                                   onEdit={handleOpenQuizUpdate}
                                   onDelete={handleDeleteQuiz}
@@ -5328,9 +5314,7 @@ export default function CurriculumContent() {
                             }
                           })}
 
-                          {/* BÀI GIẢNG ĐANG TẢI VIDEO LÊN (placeholder) —
-                              cho phép hiện nhiều bài cùng lúc, mỗi bài một
-                              dòng riêng, không chặn phần còn lại của trang */}
+                          {/* BÀI GIẢNG ĐANG TẢI VIDEO LÊN (placeholder) */}
                           {(pendingLectures[phanId] || []).map((item, idx) => (
                             <PendingLectureItem
                               key={item.key}
@@ -5767,7 +5751,7 @@ export default function CurriculumContent() {
               display: "flex",
               p: 0,
               bgcolor: "#000",
-              minHeight: 0, // để flex con co giãn đúng thay vì tràn
+              minHeight: 0,
             }}
           >
             {videoPopup.url ? (

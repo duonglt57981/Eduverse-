@@ -1,4 +1,5 @@
 import { PhanDto } from "../../khoaHoc";
+import { LichSuKiemDuyetDto } from "../../KiemDuyet/Dto/dto";
 import { PhanHocType } from "../../PhanHoc/Dto/PhanHocdto";
 
 export interface KhoaHocType {
@@ -67,6 +68,7 @@ export interface KhoaHocDetailType {
   danhSachPhanHoc?: PhanHocType[];
   danhSachDanhMuc?: string[];
   giangVien?: GiangVienType;
+  lichSuKiemDuyetKhoaHoc: LichSuKiemDuyetDto[];
 }
 
 export type KhoaHocSearch = SearchBase & {

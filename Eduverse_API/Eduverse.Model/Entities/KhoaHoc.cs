@@ -35,16 +35,13 @@ namespace Eduverse.Model.Entities
         public int? TongBaiGiang { get; set; }
 
         public DateTime? NgayTao { get; set; } = DateTime.Now;
-
         public DateTime? NgayCapNhat { get; set; }
-
         public int? SoLuongHocVien { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
         public string? TrangThai { get; set; }
-
         public Guid? IdBanGhiTruoc { get; set; }
         public bool IsBanHienTai { get; set; } = true;
-
+        public Guid? IdLyDoTuChoi { get; set; }
         public Guid? IdNguoiDuyet { get; set; }
 
     }

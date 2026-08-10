@@ -42,6 +42,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     trangThai,
     setTrangThai,
     lyDoTuChoi,
+    lichSuKiemDuyet,
     loading,
     refreshData,
     idKhoaHoc,
@@ -206,17 +207,19 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, [clearState, resetDirty, router]);
 
   const performDiChuyenDen = useCallback(
-  (diChuyenDen: MucThieu["diChuyenDen"]) => {
-    saveState();
-    if (diChuyenDen === "basics") {
-      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
-    } else if (diChuyenDen === "curriculum") {
-      router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`);
-    }
-    // instructors không có trong validate flow, chỉ navigate bình thường
-  },
-  [idKhoaHoc, router, saveState],
-);
+    (diChuyenDen: MucThieu["diChuyenDen"]) => {
+      saveState();
+      if (diChuyenDen === "basics") {
+        router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/basics`);
+      } else if (diChuyenDen === "curriculum") {
+        router.push(
+          `/instructor/manager-courses/${idKhoaHoc}/manager/curriculum`,
+        );
+      }
+      // instructors không có trong validate flow, chỉ navigate bình thường
+    },
+    [idKhoaHoc, router, saveState],
+  );
 
   const handleNavigateSidebar = useCallback(
     (key: string) => {
@@ -359,6 +362,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         thongTinKhoaHoc={thongTin}
         phans={phans}
         lyDoTuChoi={lyDoTuChoi}
+        lichSuKiemDuyet={lichSuKiemDuyet}
         nhomSidebar={nhomSidebar}
         activeKey={activeKey}
         loading={loading || dangXuLy}

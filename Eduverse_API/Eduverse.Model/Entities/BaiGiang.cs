@@ -24,8 +24,8 @@ namespace Eduverse.Model.Entities
         //thêm 
         public Guid? IdBaiGiangMoi { get; set; }
         public bool IsPendingSwap { get; set; } = false;
-
         public Guid? IdBanGhiTruoc { get; set; }
+        public Guid? IdLyDo { get; set; }
         public bool IsBanHienTai { get; set; } = true;
     }
 }

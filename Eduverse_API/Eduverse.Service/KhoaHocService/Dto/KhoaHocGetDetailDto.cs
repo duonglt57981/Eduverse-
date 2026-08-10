@@ -23,5 +23,6 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public AppUser? ThongTinGiangVien { get; set; }
         public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
         public List<string>? DanhMucs { get; set; }
+        public LichSuKiemDuyetKhoaHoc lichSuKiemDuyetKhoaHoc { get; set; }
     }
 }

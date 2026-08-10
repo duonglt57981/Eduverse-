@@ -30,6 +30,7 @@ import {
   ThongTinKhoaHocCoBan,
   TrangThaiKhoaHoc,
   extractData, // <-- import mới
+  LichSuKiemDuyetDto,
 } from "./courseEditCore";
 import PhanService from "@/src/services/PhanService";
 import BaiGiangService from "@/src/services/BaiGiangService";
@@ -78,6 +79,7 @@ interface CourseEditContextValue {
   trangThai: TrangThaiKhoaHoc;
   setTrangThai: (trangThai: TrangThaiKhoaHoc) => void;
   lyDoTuChoi?: string | null;
+  lichSuKiemDuyet: LichSuKiemDuyetDto | null;
   loading: boolean;
   isReadOnly: boolean;
   refreshData: () => Promise<void>;
@@ -226,6 +228,8 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
   const [phans, setPhans] = useState<PhanHocType[]>([]);
   const [trangThai, setTrangThai] = useState<TrangThaiKhoaHoc>("DangSua");
   const [lyDoTuChoi, setLyDoTuChoi] = useState<string | null>(null);
+  const [lichSuKiemDuyet, setLichSuKiemDuyet] =
+    useState<LichSuKiemDuyetDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [isDirty, setIsDirty] = useState(false);
@@ -290,13 +294,14 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
           thongTin,
           phans,
           lyDoTuChoi,
+          lichSuKiemDuyet,
           timestamp: Date.now(),
         });
       }
       setIsDirty(false);
       window.location.href = destination;
     },
-    [idKhoaHoc, stateKey, thongTin, phans, lyDoTuChoi],
+    [idKhoaHoc, stateKey, thongTin, phans, lyDoTuChoi, lichSuKiemDuyet],
   );
 
   const setNavigating = useCallback((value: boolean) => {
@@ -309,9 +314,10 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
       thongTin,
       phans,
       lyDoTuChoi,
+      lichSuKiemDuyet,
       timestamp: Date.now(),
     });
-  }, [idKhoaHoc, stateKey, thongTin, phans, lyDoTuChoi]);
+  }, [idKhoaHoc, stateKey, thongTin, phans, lyDoTuChoi, lichSuKiemDuyet]);
 
   const restoreState = useCallback(() => {
     if (!idKhoaHoc) return false;
@@ -320,6 +326,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
       setThongTinState(saved.thongTin || {});
       setPhans(saved.phans || []);
       setLyDoTuChoi(saved.lyDoTuChoi || null);
+      setLichSuKiemDuyet(saved.lichSuKiemDuyet || null);
       setIsDirty(false);
       return true;
     }
@@ -405,6 +412,11 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
       });
 
       setTrangThai((data.trangThaiPheDuyet as TrangThaiKhoaHoc) || "DangSua");
+
+      // ---- Lịch sử kiểm duyệt khóa học (lần duyệt/từ chối gần nhất) ----
+      const lichSuRaw = data.lichSuKiemDuyetKhoaHoc || null;
+      setLichSuKiemDuyet(lichSuRaw);
+      setLyDoTuChoi(lichSuRaw?.lyDo ?? null);
 
       // ---- Danh sách phần (kèm bài giảng, tài liệu, bài kiểm tra, câu hỏi) ----
       const phanHocList: PhanHocType[] = (data.danhSachPhanHoc || []).map(
@@ -1434,6 +1446,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     trangThai,
     setTrangThai,
     lyDoTuChoi,
+    lichSuKiemDuyet,
     loading,
     isReadOnly,
     refreshData,

@@ -736,13 +736,20 @@ export default function BasicInfoContent() {
     try {
       const payload = new FormData();
       payload.append("idKhoaHoc", idKhoaHoc);
-      payload.append("tieuDe", thongTin.tieuDe || "");
-      payload.append("moTa", thongTin.moTa || "");
-      payload.append("capDo", thongTin.capDo || "");
-      payload.append("isBanHienTai", String(isBanHienTai));
       payload.append("giaGoc", String(thongTin.giaGoc ?? 0));
-      danhSachDanhMucId.forEach((id) => payload.append("danhSachDanhMuc", id));
-      if (imageFile) payload.append("img", imageFile);
+
+      // Khóa học đã duyệt (DaDuyet): chỉ được sửa giá, nên chỉ gửi
+      // idKhoaHoc + giaGoc, không gửi lại các trường khác.
+      if (isEditable) {
+        payload.append("tieuDe", thongTin.tieuDe || "");
+        payload.append("moTa", thongTin.moTa || "");
+        payload.append("capDo", thongTin.capDo || "");
+        payload.append("isBanHienTai", String(isBanHienTai));
+        danhSachDanhMucId.forEach((id) =>
+          payload.append("danhSachDanhMuc", id),
+        );
+        if (imageFile) payload.append("img", imageFile);
+      }
 
       const response = await khoaHocService.UpdateKhoaHoc(payload as any);
       if (response.status === false) {
