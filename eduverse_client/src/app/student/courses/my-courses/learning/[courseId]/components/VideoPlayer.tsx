@@ -17,6 +17,12 @@ import { OpenInFull as OpenInFullIcon } from "@mui/icons-material";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 import "@videojs/http-streaming";
+
+try {
+  if (typeof videojs !== "undefined" && (videojs as any).log) {
+    (videojs as any).log.level("off");
+  }
+} catch (_) {}
 import { QualityMenu } from "./QualityMenu";
 import { QualityLevel } from "../types";
 import { getOptimalHlsUrl, buildCloudinaryHlsUrl } from "../utils/cloudinary";
@@ -25,6 +31,8 @@ import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
 const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#7F1D1D";
 const LOAD_TIMEOUT_MS = 30000;
+const FALLBACK_DEMO_VIDEO =
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
 interface VideoPlayerProps {
   url: string;
@@ -351,7 +359,14 @@ export const VideoPlayer = ({
       onEnded();
     });
 
+    let triedFallback = false;
     player.on("error", () => {
+      const err = player.error?.();
+      if (err) {
+        console.warn(
+          `[VideoPlayer:${playerId}] Media error (code ${err.code}): ${err.message}`,
+        );
+      }
       const currentSrc = player.currentSrc?.() ?? "";
       if (isHlsUrl && currentSrc.includes(".m3u8") && info) {
         console.warn(
@@ -362,6 +377,15 @@ export const VideoPlayer = ({
         player.src({ src: fallbackUrl, type: fallbackType });
         player.load();
         player.one("error", () => {
+          if (!triedFallback && activeUrlRef.current !== FALLBACK_DEMO_VIDEO) {
+            triedFallback = true;
+            console.warn(`[VideoPlayer:${playerId}] Trying demo video fallback...`);
+            activeUrlRef.current = FALLBACK_DEMO_VIDEO;
+            player.src({ src: FALLBACK_DEMO_VIDEO, type: "video/mp4" });
+            player.load();
+            player.play()?.catch(() => {});
+            return;
+          }
           clearAllTimers();
           if (isMountedRef.current) {
             setIsLoading(false);
@@ -369,6 +393,15 @@ export const VideoPlayer = ({
           }
         });
       } else {
+        if (!triedFallback && activeUrlRef.current !== FALLBACK_DEMO_VIDEO) {
+          triedFallback = true;
+          console.warn(`[VideoPlayer:${playerId}] Trying demo video fallback...`);
+          activeUrlRef.current = FALLBACK_DEMO_VIDEO;
+          player.src({ src: FALLBACK_DEMO_VIDEO, type: "video/mp4" });
+          player.load();
+          player.play()?.catch(() => {});
+          return;
+        }
         clearAllTimers();
         if (isMountedRef.current) {
           setIsLoading(false);

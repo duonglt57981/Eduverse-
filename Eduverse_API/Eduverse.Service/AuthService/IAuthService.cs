@@ -9,6 +9,7 @@ using ForgotPasswordRequest = Eduverse.Service.AuthService.ForgotPasswordRequest
 
 public interface IAuthService
 {
+    Task<string> SendRegisterOtpAsync(SendRegisterOtpRequest request);
     Task<string> RegisterAsync(RegisterRequest request);
     Task<AuthResponse> LoginAsync(LoginRequest request, HttpResponse httpResponse);
     Task<AuthResponse> RefreshTokenAsync(HttpRequest httpRequest, HttpResponse httpResponse);

@@ -41,6 +41,19 @@ export const externalLogin = createAsyncThunk(
   },
 );
 
+export const sendRegisterOtp = createAsyncThunk(
+  "auth/sendRegisterOtp",
+  async (data: { email: string; userName: string }, { rejectWithValue }) => {
+    try {
+      const res = await apiService.post<string>("/auth/send-register-otp", data);
+      return res.message;
+    } catch (err: unknown) {
+      const message = typeof err === "string" ? err : "Gửi mã OTP thất bại";
+      return rejectWithValue(message);
+    }
+  },
+);
+
 export const register = createAsyncThunk(
   "auth/register",
   async (data: RegisterRequest, { rejectWithValue }) => {

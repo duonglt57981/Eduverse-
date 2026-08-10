@@ -24,6 +24,15 @@ import {
   DialogActions,
   TextField,
   Chip,
+  IconButton,
+  Tooltip,
+  Avatar,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
 } from "@mui/material";
 import {
   TrendingUpRounded,
@@ -35,6 +44,10 @@ import {
   StarRounded,
   FiberManualRecordRounded,
   VisibilityRounded as VisibilityRoundedIcon,
+  CheckCircleRounded as CheckCircleRoundedIcon,
+  CancelRounded as CancelRoundedIcon,
+  DescriptionRounded as DescriptionRoundedIcon,
+  EditRounded as EditRoundedIcon,
 } from "@mui/icons-material";
 
 // Crimson palette matches the design theme
@@ -1371,182 +1384,240 @@ export default function AdminDashboardContent() {
                 : "Không có yêu cầu nào ở trạng thái này."}
             </Typography>
           ) : (
-            <Box sx={{ overflowX: "auto" }}>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontSize: "13.5px",
-                  textAlign: "left",
-                }}
-              >
-                <thead>
-                  <tr
-                    style={{
-                      borderBottom: "2px solid rgba(0,0,0,0.06)",
-                      color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                      fontWeight: 800,
-                    }}
-                  >
-                    <th style={{ padding: "12px 8px" }}>Học viên</th>
-                    <th style={{ padding: "12px 8px" }}>Chuyên môn</th>
-                    <th style={{ padding: "12px 8px" }}>Trạng thái</th>
-                    <th style={{ padding: "12px 8px", textAlign: "center" }}>
+            <TableContainer
+              component={Paper}
+              elevation={0}
+              sx={{
+                borderRadius: "16px",
+                border: "1px solid rgba(141,19,19,0.06)",
+                overflow: "hidden",
+                bgcolor: COLORS.white,
+              }}
+            >
+              <Table sx={{ minWidth: 800 }}>
+                <TableHead sx={{ bgcolor: "rgba(141,19,19,0.03)" }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 800, color: COLORS.textDark, pl: 3 }}>
+                      Người dùng
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: COLORS.textDark }}>
+                      Tài khoản
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: COLORS.textDark }}>
+                      Chuyên môn
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: COLORS.textDark }}>
+                      Trạng thái
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 800, color: COLORS.textDark, pr: 3 }}>
                       Thao tác
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRequests.map((req) => (
-                    <tr
-                      key={req.id}
-                      style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}
-                    >
-                      <td style={{ padding: "16px 8px" }}>
-                        <Typography
-                          sx={{
-                            fontSize: "14px",
-                            fontWeight: 700,
-                            color: COLORS.textDark,
-                          }}
-                        >
-                          {req.hoTen || req.userName}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: "11px",
-                            color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {req.email} • {req.phoneNumber || "Không có sđt"}
-                        </Typography>
-                      </td>
-                      <td
-                        style={{
-                          padding: "16px 8px",
-                          fontWeight: 600,
-                          maxWidth: 320,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                        title={req.chuyenMon}
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredRequests.map((req) => {
+                    const fullName = req.hoTen || req.userName || "Học viên";
+                    const initial =
+                      fullName.trim().split(" ").pop()?.substring(0, 2).toUpperCase() ||
+                      "HV";
+                    return (
+                      <TableRow
+                        key={req.id}
+                        hover
+                        sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                       >
-                        {req.chuyenMon}
-                      </td>
-                      <td style={{ padding: "16px 8px" }}>
-                        {req.status === 0 ? (
-                          <Chip
-                            label="Chờ duyệt"
-                            size="small"
+                        {/* 1. Người dùng (Avatar + Họ tên + Email) */}
+                        <TableCell sx={{ pl: 3 }}>
+                          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                            <Avatar
+                              src={req.anhDaiDien || undefined}
+                              sx={{
+                                width: 44,
+                                height: 44,
+                                bgcolor: COLORS.primary,
+                                fontWeight: 800,
+                                fontSize: 15,
+                                color: "#FFFFFF",
+                              }}
+                            >
+                              {initial}
+                            </Avatar>
+                            <Box>
+                              <Typography
+                                sx={{
+                                  fontWeight: 700,
+                                  color: COLORS.textDark,
+                                  fontSize: 14,
+                                }}
+                              >
+                                {fullName}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontSize: 12.5,
+                                  color: COLORS.textSecondary,
+                                }}
+                              >
+                                {req.email || "—"}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+
+                        {/* 2. Tài khoản */}
+                        <TableCell>
+                          <Typography
                             sx={{
-                              bgcolor: "rgba(245, 158, 11, 0.08)",
-                              color: "#D97706",
-                              fontWeight: 700,
-                            }}
-                          />
-                        ) : req.status === 1 ? (
-                          <Chip
-                            label="Đã duyệt"
-                            size="small"
-                            sx={{
-                              bgcolor: "rgba(16, 185, 129, 0.08)",
-                              color: "#059669",
-                              fontWeight: 700,
-                            }}
-                          />
-                        ) : (
-                          <Chip
-                            label="Từ chối"
-                            size="small"
-                            sx={{
-                              bgcolor: "rgba(239, 68, 68, 0.08)",
-                              color: "#DC2626",
-                              fontWeight: 700,
-                            }}
-                          />
-                        )}
-                      </td>
-                      <td style={{ padding: "16px 8px", textAlign: "center" }}>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          sx={{
-                            justifyContent: "center",
-                            alignItems: "center",
-                            flexWrap: "nowrap",
-                          }}
-                        >
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => {
-                              setDetailRequest(req);
-                              setDetailOpen(true);
-                            }}
-                            sx={{
-                              ...ACTION_BTN,
-                              color: COLORS.textSecondary,
-                              borderColor:
-                                "var(--ev-divider, rgba(0,0,0,0.14))",
-                              "&:hover": {
-                                color: COLORS.primary,
-                                borderColor: COLORS.primary,
-                                bgcolor:
-                                  "var(--ev-hover, rgba(141,19,19,0.04))",
-                              },
+                              fontWeight: 600,
+                              color: COLORS.textDark,
+                              fontSize: 13.5,
                             }}
                           >
-                            Chi tiết
-                          </Button>
-
-                          {req.status === 0 && (
-                            <>
-                              <Button
-                                variant="contained"
-                                size="small"
-                                disableElevation
-                                onClick={() => handleApprove(req.id)}
-                                sx={{
-                                  ...ACTION_BTN,
-                                  bgcolor: COLORS.green,
-                                  color: "#FFFFFF",
-                                  "&:hover": { bgcolor: "#059669" },
-                                }}
-                              >
-                                Duyệt
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={() => {
-                                  setSelectedRequest(req);
-                                  setDialogOpen(true);
-                                }}
-                                sx={{
-                                  ...ACTION_BTN,
-                                  color: COLORS.primary,
-                                  borderColor:
-                                    "var(--ev-brand-border, rgba(141,19,19,0.32))",
-                                  "&:hover": {
-                                    borderColor: COLORS.primary,
-                                    bgcolor:
-                                      "var(--ev-brand-tint, rgba(141,19,19,0.05))",
-                                  },
-                                }}
-                              >
-                                Từ chối
-                              </Button>
-                            </>
+                            {req.userName}
+                          </Typography>
+                          {req.phoneNumber && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: COLORS.textSecondary,
+                                display: "block",
+                              }}
+                            >
+                              {req.phoneNumber}
+                            </Typography>
                           )}
-                        </Stack>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Box>
+                        </TableCell>
+
+                        {/* 3. Chuyên môn */}
+                        <TableCell sx={{ maxWidth: 260 }}>
+                          <Typography
+                            sx={{
+                              fontSize: 13.5,
+                              fontWeight: 600,
+                              color: COLORS.textDark,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                            title={req.chuyenMon}
+                          >
+                            {req.chuyenMon || "—"}
+                          </Typography>
+                        </TableCell>
+
+                        {/* 4. Trạng thái */}
+                        <TableCell>
+                          {req.status === 0 ? (
+                            <Chip
+                              label="Chờ duyệt"
+                              size="small"
+                              sx={{
+                                bgcolor: "rgba(245, 158, 11, 0.1)",
+                                color: "#D97706",
+                                fontWeight: 700,
+                                fontSize: 11.5,
+                                borderRadius: "6px",
+                              }}
+                            />
+                          ) : req.status === 1 ? (
+                            <Chip
+                              label="Đã duyệt"
+                              size="small"
+                              sx={{
+                                bgcolor: "rgba(16, 185, 129, 0.1)",
+                                color: COLORS.green,
+                                fontWeight: 700,
+                                fontSize: 11.5,
+                                borderRadius: "6px",
+                              }}
+                            />
+                          ) : (
+                            <Chip
+                              label="Từ chối"
+                              size="small"
+                              sx={{
+                                bgcolor: "rgba(239, 68, 68, 0.1)",
+                                color: "#DC2626",
+                                fontWeight: 700,
+                                fontSize: 11.5,
+                                borderRadius: "6px",
+                              }}
+                            />
+                          )}
+                        </TableCell>
+
+                        {/* 5. Thao tác (Giao diện Icon y hệt trang Quản lý người dùng) */}
+                        <TableCell align="right" sx={{ pr: 3 }}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            sx={{ justifyContent: "flex-end" }}
+                          >
+                            {/* Nút Xem chi tiết (Icon mắt) */}
+                            <IconButton
+                              onClick={() => {
+                                setDetailRequest(req);
+                                setDetailOpen(true);
+                              }}
+                              size="small"
+                              sx={{
+                                color: COLORS.primary,
+                                bgcolor: "rgba(141,19,19,0.04)",
+                                "&:hover": {
+                                  bgcolor: "rgba(141,19,19,0.12)",
+                                },
+                              }}
+                              title="Chi tiết yêu cầu"
+                            >
+                              <VisibilityRoundedIcon fontSize="small" />
+                            </IconButton>
+
+                            {/* Chỉ hiển thị nút Duyệt & Từ chối khi status === 0 */}
+                            {req.status === 0 && (
+                              <>
+                                <IconButton
+                                  onClick={() => handleApprove(req.id)}
+                                  size="small"
+                                  sx={{
+                                    color: COLORS.green,
+                                    bgcolor: "rgba(16,185,129,0.04)",
+                                    "&:hover": {
+                                      bgcolor: "rgba(16,185,129,0.12)",
+                                    },
+                                  }}
+                                  title="Phê duyệt"
+                                >
+                                  <CheckCircleRoundedIcon fontSize="small" />
+                                </IconButton>
+
+                                <IconButton
+                                  onClick={() => {
+                                    setSelectedRequest(req);
+                                    setDialogOpen(true);
+                                  }}
+                                  size="small"
+                                  sx={{
+                                    color: "#DC2626",
+                                    bgcolor: "rgba(239,68,68,0.04)",
+                                    "&:hover": {
+                                      bgcolor: "rgba(239,68,68,0.12)",
+                                    },
+                                  }}
+                                  title="Từ chối"
+                                >
+                                  <CancelRoundedIcon fontSize="small" />
+                                </IconButton>
+                              </>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </Paper>
       )}
@@ -1862,9 +1933,6 @@ export default function AdminDashboardContent() {
                   fontWeight: 800,
                   borderRadius: "10px",
                   bgcolor: COLORS.green,
-                  color: "#fff",
-                  boxShadow: "none",
-                  "&:hover": { bgcolor: COLORS.green, opacity: 0.9 },
                 }}
               >
                 Duyệt yêu cầu
@@ -1873,6 +1941,15 @@ export default function AdminDashboardContent() {
           )}
         </DialogActions>
       </Dialog>
+
+      {/* Trình xem hồ sơ CV trực tiếp ngay trong trang */}
+      <CvViewerDialog
+        open={cvOpen}
+        onClose={() => setCvOpen(false)}
+        cvUrl={detailRequest?.cvUrl}
+        hoTen={detailRequest?.hoTen || detailRequest?.userName}
+        requestId={detailRequest?.id}
+      />
     </Stack>
   );
 }

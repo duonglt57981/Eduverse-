@@ -59,6 +59,7 @@ import {
   CheckRounded,
   CloudUploadRounded,
   SchoolRounded,
+  PhoneRounded,
 } from '@mui/icons-material';
 
 const TextFieldAny = TextField as any;
@@ -194,8 +195,8 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
   };
 
   const handleSubmitUpgrade = async () => {
-    if (!specialty.trim() || !experience.trim() || !bangCap.trim() || !motivation.trim()) {
-      showToast('Vui lòng điền đầy đủ các thông tin đăng ký', 'error');
+    if (!phoneNumber.trim() || !specialty.trim() || !experience.trim() || !bangCap.trim() || !motivation.trim()) {
+      showToast('Vui lòng điền đầy đủ các thông tin đăng ký bao gồm số điện thoại', 'error');
       return;
     }
 
@@ -217,6 +218,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
     try {
       setSaveLoading(true);
       const formData = new FormData();
+      formData.append('phoneNumber', phoneNumber);
       formData.append('chuyenMon', specialty);
       formData.append('kinhNghiem', experience);
       formData.append('bangCap', bangCap);
@@ -1859,6 +1861,29 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
 
                         <Grid size={{ xs: 12 }}>
                           <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
+                            <PhoneRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
+                            <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
+                              Số điện thoại liên hệ
+                            </Typography>
+                          </Stack>
+                          <TextFieldAny
+                            fullWidth
+                            value={phoneNumber}
+                            onChange={(e: any) => setPhoneNumber(e.target.value)}
+                            placeholder="Nhập số điện thoại chính chủ để ban quản trị liên hệ (ví dụ: 0912345678)"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                bgcolor: 'rgba(141,19,19,0.01)',
+                                '&:hover fieldset': { borderColor: COLORS.primaryLight },
+                                '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: '2px' },
+                              }
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
                             <MilitaryTechRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
                             <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
                               Lĩnh vực chuyên môn
@@ -2208,43 +2233,45 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
 
                               <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
-                                  2. Phân chia Doanh thu & Quy trình Thanh toán
+                                  2. Mô hình Đồng tác giả & Tỷ lệ Chia doanh thu
                                 </Typography>
                                 <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
-                                  - <strong>Tỷ lệ phân chia:</strong> Giảng viên nhận tỷ lệ doanh thu theo thỏa thuận trong từng chương trình khuyến mại hoặc bán hàng trực tiếp trên EduVerse.<br />
-                                  - <strong>Rút tiền:</strong> Yêu cầu rút tiền được xử lý định kỳ thông qua tài khoản ngân hàng chính chủ đã được liên kết và xác minh trên hệ thống.<br />
-                                  - <strong>Nghĩa vụ thuế:</strong> Giảng viên có trách nhiệm thực hiện khai báo và nộp thuế thu nhập cá nhân theo đúng quy định của pháp luật Việt Nam đối với nguồn thu nhập từ nền tảng.
+                                  - <strong>Cùng tạo khóa học:</strong> Nền tảng hỗ trợ nhiều Giảng viên cùng hợp tác xây dựng và quản lý một khóa học (bao gồm 1 Chủ sở hữu chính và các Giảng viên cộng tác / Đồng tác giả).<br />
+                                  - <strong>Phân quyền linh hoạt:</strong> Chủ sở hữu khóa học có thể cấp quyền hạn chi tiết cho từng giảng viên tham gia (Quản lý bài giảng, Xem báo cáo doanh thu, Đánh giá khóa học, Bài kiểm tra, Tài liệu và Khuyến mãi).<br />
+                                  - <strong>Tỷ lệ Hệ thống - Giảng viên:</strong> Mặc định 70% doanh thu bán khóa học thuộc về nhóm Giảng viên và 30% thuộc về Nền tảng EduVerse.<br />
+                                  - <strong>Phân chia nhóm Giảng viên:</strong> Phần 70% doanh thu dành cho Giảng viên được phân bổ tự động cho từng thành viên theo đúng <strong>Tỷ lệ chia doanh thu (%)</strong> được thiết lập khi mời/thêm giảng viên vào khóa học.<br />
+                                  - <strong>Mã giảm giá (Voucher):</strong> Nếu Giảng viên tự tạo mã giảm giá, tiền giảm được trừ vào phần 70% của nhóm Giảng viên. Nếu Hệ thống (Admin) phát hành mã giảm giá, tiền giảm được khấu trừ từ phần 30% của Hệ thống nhằm bảo vệ doanh thu Giảng viên.
                                 </Typography>
                               </Box>
 
                               <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
-                                  3. Quy chuẩn Chất lượng & Tương tác Học viên
+                                  3. Quy chuẩn Chất lượng Nội dung
                                 </Typography>
                                 <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
                                   - Video bài giảng cần đảm bảo hình ảnh rõ nét, âm thanh trong trẻo, không chứa nội dung phản cảm, kích động hoặc vi phạm pháp luật.<br />
-                                  - Giảng viên có trách nhiệm phản hồi và giải đáp các thắc mắc (Q&A) của học viên liên quan đến bài giảng trong vòng 48 giờ làm việc.<br />
                                   - Nghiêm cấm chèn liên kết lừa đảo, quảng cáo dịch vụ bên ngoài trái phép hoặc chủ động lôi kéo học viên thanh toán ngoài hệ thống EduVerse.
                                 </Typography>
                               </Box>
 
                               <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
-                                  4. Quy trình Duyệt & Quản lý Khóa học
+                                  4. Quy trình Thanh toán & Rút tiền
                                 </Typography>
                                 <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
-                                  - Tất cả khóa học mới tạo hoặc chỉnh sửa nội dung lớn sẽ trải qua quy trình duyệt bởi Ban Quản trị EduVerse trước khi phát hành.<br />
-                                  - EduVerse bảo lưu quyền tạm ẩn hoặc hạ khóa học nếu nhận được các khiếu nại xác đáng về vi phạm bản quyền, nội dung sai lệch hoặc giả mạo bằng cấp.
+                                  - <strong>Cập nhật số dư tự động:</strong> Ngay khi học viên thanh toán đơn hàng thành công, doanh thu phân chia của từng giảng viên sẽ được tự động cộng trực tiếp vào Số dư tài khoản cá nhân (`SoDuTaiKhoan`) kèm thông báo thời gian thực.<br />
+                                  - <strong>Yêu cầu Rút tiền:</strong> Giảng viên có thể gửi yêu cầu rút tiền từ số dư cá nhân về tài khoản ngân hàng chính chủ đã liên kết trên hệ thống.<br />
+                                  - <strong>Xét duyệt & Chuyển khoản:</strong> Ban quản trị EduVerse xét duyệt và xử lý lệnh chuyển khoản ngân hàng theo kỳ thanh toán.<br />
+                                  - <strong>Nghĩa vụ thuế:</strong> Giảng viên có trách nhiệm thực hiện khai báo và nộp thuế thu nhập cá nhân theo quy định của pháp luật Việt Nam.
                                 </Typography>
                               </Box>
 
                               <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
-                                  5. Bảo mật Thông tin & Hỗ trợ
+                                  5. Bảo mật Thông tin
                                 </Typography>
                                 <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
-                                  - Thông tin cá nhân, CV và hồ sơ năng lực của Giảng viên được EduVerse bảo mật nghiêm ngặt theo chính sách quyền riêng tư.<br />
-                                  - Nếu cần hỗ trợ thêm thông tin về thủ tục nâng cấp tài khoản Giảng viên, bạn có thể liên hệ trực tiếp với bộ phận Hỗ trợ Giảng viên qua email: <a href="mailto:instructor@eduverse.website" style={{ color: COLORS.primary, fontWeight: 700 }}>instructor@eduverse.website</a>.
+                                  - Thông tin cá nhân, CV và hồ sơ năng lực của Giảng viên được EduVerse bảo mật nghiêm ngặt theo chính sách quyền riêng tư.
                                 </Typography>
                               </Box>
                             </Box>
