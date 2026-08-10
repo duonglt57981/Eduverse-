@@ -33,6 +33,11 @@ export interface KhoaHocType {
 
   danhSachPhanHoc?: PhanHocType[];
   giangVien?: GiangVienType;
+  danhSachGiangVien?: {
+    id: string;
+    hoTen: string;
+    anhDaiDien?: string;
+  }[];
 }
 
 export interface KhoaHocDetailType {

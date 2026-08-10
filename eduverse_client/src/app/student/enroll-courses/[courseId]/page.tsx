@@ -23,6 +23,7 @@ import {
   IconButton,
   TextField,
   Fade,
+  Tooltip,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -51,23 +52,9 @@ import DangKiService from "@/src/services/DangKiService";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType, GiangVienKhoaHocDto } from "@/src/types/khoaHoc/Dto/dto";
 import { apiService } from "@/src/services/index";
-
-interface DanhGiaDto {
-  id: string;
-  soSao: number;
-  noiDung?: string;
-  ngayTao: string;
-  idNguoiDung?: string;
-  tenNguoiDung?: string;
-  anhDaiDien?: string;
-}
-
-interface DanhGiaKhoaHocDto {
-  tongSoDanhGia: number;
-  diemTrungBinh: number;
-  phanBoSao: Record<number, number>;
-  danhSach: DanhGiaDto[];
-}
+import danhGiaService, {
+  DanhGiaKhoaHocDto,
+} from "@/src/services/DanhGiaService";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -373,10 +360,8 @@ function CourseRegistrationContent() {
     if (!courseId) return;
     setLoadingDanhGia(true);
     try {
-      const res = await apiService.get<DanhGiaKhoaHocDto>(
-        `/danhgia/khoa-hoc/${courseId}`,
-      );
-      setDanhGia(res.data);
+      const data = await danhGiaService.GetByKhoaHoc(courseId);
+      setDanhGia(data);
     } catch {
       setDanhGia(null);
     } finally {
@@ -404,16 +389,16 @@ function CourseRegistrationContent() {
   }, [loadKhoaHoc]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadDanhGia();
+  }, [loadDanhGia]);
+
+  useEffect(() => {
     if (tab !== 2) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadKiemTraDanhGia();
+  }, [tab, loadKiemTraDanhGia]);
 
-    const load = async () => {
-      await Promise.all([loadDanhGia(), loadKiemTraDanhGia()]);
-    };
-
-    void load();
-  }, [tab, loadDanhGia, loadKiemTraDanhGia]);
-
-  // ── Fetch các khóa học khác của giảng viên (hiển thị cuối trang, kiểu Udemy) ──
   useEffect(() => {
     if (!khoaHoc) return;
 
@@ -724,43 +709,92 @@ function CourseRegistrationContent() {
               dangerouslySetInnerHTML={{ __html: khoaHoc.moTa || "" }}
             />
 
-            <Typography
-              onClick={giangVienId ? goToInstructorProfile : undefined}
-              sx={{
-                color: "#ddd",
-                fontSize: 13,
-                mb: 1.5,
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                cursor: giangVienId ? "pointer" : "default",
-                width: "fit-content",
-                "&:hover": giangVienId ? { color: "#fff" } : undefined,
-              }}
-            >
-              <SchoolIcon sx={{ fontSize: 16, color: RED }} />
-              Giảng viên:{" "}
-              <strong
-                style={{
-                  textDecoration: giangVienId ? "underline" : "none",
-                }}
-              >
-                {giangVien}
-              </strong>
-            </Typography>
-
             <Stack
               direction="row"
               spacing={1}
-              sx={{ alignItems: "center", mb: 2.5 }}
+              sx={{ alignItems: "center", mb: 1.5 }}
             >
-              <Stack direction="row">
-                {[...Array(5)].map((_, i) => (
-                  <StarIcon key={i} sx={{ fontSize: 16, color: "#e0a800" }} />
+              <SchoolIcon sx={{ fontSize: 16, color: RED }} />
+              <Typography sx={{ color: "#ddd", fontSize: 13 }}>
+                Giảng viên:
+              </Typography>
+              <Stack
+                direction="row"
+                sx={{ "& > *:not(:first-of-type)": { marginLeft: "-8px" } }}
+              >
+                {(khoaHoc.danhSachGiangVien ?? []).map((gv) => (
+                  <Tooltip key={gv.id} title={gv.hoTen} arrow>
+                    <Avatar
+                      src={gv.anhDaiDien}
+                      onClick={() =>
+                        router.push(`/instructor/profile/${gv.id}`)
+                      }
+                      sx={{
+                        width: 26,
+                        height: 26,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        bgcolor: RED,
+                        border: "2px solid #1c1d1f",
+                        cursor: "pointer",
+                        transition: "transform 0.15s ease",
+                        "&:hover": { transform: "translateY(-3px)", zIndex: 1 },
+                      }}
+                    >
+                      {gv.hoTen.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </Tooltip>
                 ))}
               </Stack>
+            </Stack>
+
+            {/* Số sao thật + số lượt đánh giá + số học viên đăng ký, tách rõ ràng */}
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                alignItems: "center",
+                mb: 2.5,
+                flexWrap: "wrap",
+                rowGap: 0.5,
+              }}
+            >
+              {danhGia && danhGia.tongSoDanhGia > 0 ? (
+                <Stack
+                  direction="row"
+                  spacing={0.75}
+                  sx={{ alignItems: "center" }}
+                >
+                  <Rating
+                    value={danhGia.diemTrungBinh}
+                    precision={0.1}
+                    readOnly
+                    size="small"
+                    sx={{
+                      "& .MuiRating-iconFilled": { color: "#e0a800" },
+                      "& .MuiRating-iconEmpty": {
+                        color: "rgba(255,255,255,0.25)",
+                      },
+                    }}
+                  />
+                  <Typography
+                    sx={{ color: "#e0a800", fontSize: 12.5, fontWeight: 700 }}
+                  >
+                    {danhGia.diemTrungBinh.toFixed(1)}
+                  </Typography>
+                  <Typography sx={{ color: "#aaa", fontSize: 12 }}>
+                    ({danhGia.tongSoDanhGia} lượt đánh giá)
+                  </Typography>
+                </Stack>
+              ) : (
+                <Typography sx={{ color: "#aaa", fontSize: 12 }}>
+                  Chưa có đánh giá
+                </Typography>
+              )}
+              <Typography sx={{ color: "#555", fontSize: 12 }}>•</Typography>
               <Typography sx={{ color: "#aaa", fontSize: 12 }}>
-                {khoaHoc.soLuongHocVien ?? 0} học viên
+                {(khoaHoc.soLuongHocVien ?? 0).toLocaleString("vi-VN")} học viên
+                đã đăng ký
               </Typography>
             </Stack>
 
@@ -1296,7 +1330,7 @@ function CourseRegistrationContent() {
                           {danhGia!.danhSach.map((dg) => (
                             <Stack key={dg.id} direction="row" spacing={2}>
                               <Avatar
-                                src={dg.anhDaiDien}
+                                src={dg.anhNguoiDung}
                                 sx={{
                                   width: 40,
                                   height: 40,
@@ -1305,7 +1339,7 @@ function CourseRegistrationContent() {
                                   flexShrink: 0,
                                 }}
                               >
-                                {(dg.tenNguoiDung ?? "?")
+                                {(dg.hoTenNguoiDung ?? "?")
                                   .charAt(0)
                                   .toUpperCase()}
                               </Avatar>
@@ -1318,7 +1352,7 @@ function CourseRegistrationContent() {
                                   <Typography
                                     sx={{ fontWeight: 700, fontSize: 13.5 }}
                                   >
-                                    {dg.tenNguoiDung ?? "Người dùng"}
+                                    {dg.hoTenNguoiDung ?? "Người dùng"}
                                   </Typography>
                                   <Rating
                                     value={dg.soSao}
@@ -1341,6 +1375,7 @@ function CourseRegistrationContent() {
                                     )}
                                   </Typography>
                                 </Stack>
+
                                 {dg.noiDung && (
                                   <Typography
                                     sx={{
@@ -1351,6 +1386,78 @@ function CourseRegistrationContent() {
                                   >
                                     {dg.noiDung}
                                   </Typography>
+                                )}
+
+                                {/* Phản hồi từ giảng viên */}
+                                {dg.phanHoi && (
+                                  <Box
+                                    sx={{
+                                      mt: 1.5,
+                                      p: 1.5,
+                                      bgcolor: RED_SOFT,
+                                      borderRadius: 2.5,
+                                      borderLeft: `3px solid ${RED}`,
+                                    }}
+                                  >
+                                    <Stack
+                                      direction="row"
+                                      spacing={1}
+                                      sx={{ alignItems: "center", mb: 0.5 }}
+                                    >
+                                      <Avatar
+                                        src={dg.phanHoi.anhGV}
+                                        sx={{
+                                          width: 22,
+                                          height: 22,
+                                          fontSize: 11,
+                                          bgcolor: RED,
+                                        }}
+                                      >
+                                        {(dg.phanHoi.hoTenGV ?? "GV")
+                                          .charAt(0)
+                                          .toUpperCase()}
+                                      </Avatar>
+                                      <Typography
+                                        sx={{
+                                          fontSize: 12.5,
+                                          fontWeight: 700,
+                                          color: RED,
+                                        }}
+                                      >
+                                        {dg.phanHoi.hoTenGV ?? "Giảng viên"}
+                                      </Typography>
+                                      <Chip
+                                        label="Giảng viên"
+                                        size="small"
+                                        sx={{
+                                          height: 18,
+                                          fontSize: 9.5,
+                                          bgcolor: RED,
+                                          color: "#fff",
+                                          fontWeight: 600,
+                                        }}
+                                      />
+                                      <Typography
+                                        sx={{
+                                          fontSize: 11,
+                                          color: "text.disabled",
+                                        }}
+                                      >
+                                        {new Date(
+                                          dg.phanHoi.ngayTao,
+                                        ).toLocaleDateString("vi-VN")}
+                                      </Typography>
+                                    </Stack>
+                                    <Typography
+                                      sx={{
+                                        fontSize: 12.5,
+                                        color: "text.secondary",
+                                        lineHeight: 1.6,
+                                      }}
+                                    >
+                                      {dg.phanHoi.noiDung}
+                                    </Typography>
+                                  </Box>
                                 )}
                               </Box>
                             </Stack>

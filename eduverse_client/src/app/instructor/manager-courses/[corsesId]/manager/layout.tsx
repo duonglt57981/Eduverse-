@@ -152,7 +152,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         ? "qna"
         : pathname?.includes("/performance")
           ? "performance"
-          : "curriculum";
+          : pathname?.includes("/reviews")
+            ? "reviews"
+            : "curriculum";
 
   const tongGiay = tinhTongThoiLuongGiay(phans);
   const tongPhut = Math.floor(tongGiay / 60);
@@ -203,6 +205,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           nhan: "Thống kê",
           hoanThanh: false,
         },
+        {
+          key: "reviews",
+          nhan: "Đánh giá",
+          hoanThanh: false,
+        },
       ],
     },
   ];
@@ -238,6 +245,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         router.push(
           `/instructor/manager-courses/${idKhoaHoc}/manager/performance`,
         );
+      } else if (diChuyenDen === "reviews") {
+        router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/reviews`);
       }
       // instructors không có trong validate flow, chỉ navigate bình thường
     },
