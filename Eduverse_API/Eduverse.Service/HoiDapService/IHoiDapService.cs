@@ -1,4 +1,5 @@
 ﻿using Eduverse.Model.Entities;
+using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.Common;
 using Eduverse.Service.HoiDapService.Dto;
 using Eduverse.Service.HoiDapService.Request;
@@ -23,5 +24,7 @@ namespace Eduverse.Service.HoiDapService
         Task XoaCauHoi(Guid idCauHoi);
         Task XoaTraLoi(Guid idTraLoi);
         Task<TraLoiDto> Reply(ReplyRequest request);
+        Task<PagedList<HoiDapDto>> GetDanhSachChoGiangVien(SearchHoiDapRequest request);
+        Task GhimTopAnswer(Guid idTraLoi, bool ghim);
     }
 }

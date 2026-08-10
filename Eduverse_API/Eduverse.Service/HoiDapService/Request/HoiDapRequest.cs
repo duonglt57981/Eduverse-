@@ -31,6 +31,9 @@ namespace Eduverse.Service.HoiDapService.Request
         public bool? ChiCuaToi { get; set; }
         // "MoiNhat" | "NhieuTraLoi" | "DaGhim"
         public string SapXep { get; set; } = "MoiNhat";
+        public bool? ChuaTraLoi { get; set; }   
+        public bool? ChuaDoc { get; set; }  
+        public bool? NhieuLike { get; set; }
     }
     public class ReplyRequest
     {

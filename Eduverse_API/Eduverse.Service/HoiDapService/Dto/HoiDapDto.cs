@@ -36,6 +36,7 @@ namespace Eduverse.Service.HoiDapService.Dto
         public string? NguoiHoiAnh { get; set; }
         public DateTime NgayTao { get; set; }
         public bool LaCuaToi { get; set; }
+        public int TongLike { get; set; }
         public List<TraLoiDto> DanhSachTraLoi { get; set; } = new();
     }
 }

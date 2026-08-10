@@ -1,4 +1,5 @@
-﻿using Eduverse.Service.Common;
+﻿using Eduverse.Service.CauHoiService.Dto;
+using Eduverse.Service.Common;
 using Eduverse.Service.HoiDapService;
 using Eduverse.Service.HoiDapService.Dto;
 using Eduverse.Service.HoiDapService.Request;
@@ -103,6 +104,27 @@ namespace Eduverse.Api.Controller
         {
             try { return DataResponse<TraLoiDto>.Success(await _service.Reply(request)); }
             catch (Exception ex) { return DataResponse<TraLoiDto>.False(ex.Message); }
+        }
+
+        [HttpGet("giang-vien/danh-sach")]
+        [Authorize(Roles = "Admin,GiaoVien")]   
+        public async Task<DataResponse<PagedList<HoiDapDto>>> GetDanhSachChoGiangVien(
+        [FromQuery] SearchHoiDapRequest request)
+        {
+            try
+            {
+                return DataResponse<PagedList<HoiDapDto>>.Success(
+                    await _service.GetDanhSachChoGiangVien(request));
+            }
+            catch (Exception ex) { return DataResponse<PagedList<HoiDapDto>>.False(ex.Message); }
+        }
+
+        [HttpPut("{idTraLoi}/top-answer")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<string>> GhimTopAnswer(Guid idTraLoi, [FromQuery] bool ghim)
+        {
+            try { await _service.GhimTopAnswer(idTraLoi, ghim); return DataResponse<string>.Success("OK"); }
+            catch (Exception ex) { return DataResponse<string>.False(ex.Message); }
         }
     }
 }

@@ -6,9 +6,11 @@ using Eduverse.Repository.HoiDapRepository;
 using Eduverse.Repository.KhoaHoc_GiangVienRepository;
 using Eduverse.Repository.LikeHoiDapRepository;
 using Eduverse.Service.AppUserService;
+using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.Common;
 using Eduverse.Service.HoiDapService.Dto;
 using Eduverse.Service.HoiDapService.Request;
+using Eduverse.Service.ThongBaoService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -30,6 +32,7 @@ namespace Eduverse.Service.HoiDapService
         private readonly IAppUserService _appUserService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly EduverseContext _context;
+        private readonly INotificationPublisher _notificationPublisher;
         public HoiDapService(
         IHoiDapRepository hoiDapRepo,
         ILikeHoiDapRepository likeRepo,
@@ -38,7 +41,9 @@ namespace Eduverse.Service.HoiDapService
         IKhoaHoc_GiangVienRepository khoaHocGVRepo,
         IAppUserService appUserService,
         IHttpContextAccessor httpContextAccessor,
-        EduverseContext context) : base(hoiDapRepo)
+        EduverseContext context,
+
+         INotificationPublisher notificationPublisher) : base(hoiDapRepo)
         {
             _hoiDapRepo = hoiDapRepo;
             _likeRepo = likeRepo;
@@ -48,6 +53,7 @@ namespace Eduverse.Service.HoiDapService
             _appUserService = appUserService;
             _httpContextAccessor = httpContextAccessor;
             _context = context;
+            _notificationPublisher = notificationPublisher;
         }
 
         private Guid LayUserId()
@@ -114,6 +120,7 @@ namespace Eduverse.Service.HoiDapService
 
             _hoiDapRepo.Add(cauHoi);
             await _hoiDapRepo.SaveAsync();
+            await ThongBaoCauHoiMoi(cauHoi, userId);
 
             return await GetChiTiet(cauHoi.Id);
         }
@@ -148,13 +155,49 @@ namespace Eduverse.Service.HoiDapService
             };
 
             _hoiDapRepo.Add(traLoi);
-
-            // Tăng đếm trả lời ở câu hỏi gốc
-            cauHoi.SoLike = cauHoi.SoLike; // không đụng field này
-                                           // Dùng subquery đếm realtime thay vì cache
             await _hoiDapRepo.SaveAsync();
 
+            // Chỉ báo cho người hỏi nếu người trả lời là giảng viên VÀ không phải tự trả lời câu hỏi của chính mình
+            if (laGV && cauHoi.IdNguoiDung.HasValue && cauHoi.IdNguoiDung.Value != userId)
+            {
+                await ThongBaoTraLoiMoi(cauHoi, traLoi);
+            }
+
             return await MapTraLoiDto(traLoi, userId);
+        }
+
+        private async Task ThongBaoTraLoiMoi(HoiDap cauHoi, HoiDap traLoi)
+        {
+            var dangKy = await _dangKyRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == cauHoi.IdKhoaHoc
+                                       && x.IdNguoiDangKi == cauHoi.IdNguoiDung
+                                       && !x.IsDeleted);
+
+            // Học sinh không còn đăng ký (hiếm) → không có chỗ để dẫn tới, bỏ qua
+            if (dangKy == null) return;
+
+            var giangVien = await _appUserService.GetQueryable()
+                .Where(x => x.Id == traLoi.IdNguoiDung)
+                .Select(x => x.HoTen)
+                .FirstOrDefaultAsync();
+
+            var query = new List<string> { "tab=qna" };
+            if (cauHoi.IdBaiGiang.HasValue)
+                query.Add($"idBaiGiang={cauHoi.IdBaiGiang.Value}");
+            query.Add($"idCauHoi={cauHoi.Id}");
+
+            var link = $"/student/courses/my-courses/learning/{dangKy.Id}?{string.Join("&", query)}";
+
+            await _notificationPublisher.NotifyUserAsync(cauHoi.IdNguoiDung!.Value, new NotificationPayload
+            {
+                TieuDe = "Câu hỏi của bạn đã được trả lời",
+                NoiDung = $"{giangVien ?? "Giảng viên"} vừa trả lời câu hỏi của bạn.",
+                LoaiThongBao = "TraLoiCauHoi",
+                Link = link,
+                FromUser = traLoi.IdNguoiDung,
+                ItemId = cauHoi.Id,
+                ItemName = cauHoi.NoiDung
+            });
         }
 
         private async Task<TraLoiDto> MapTraLoiDto(HoiDap traLoi, Guid userId)
@@ -486,8 +529,8 @@ namespace Eduverse.Service.HoiDapService
                 .FirstOrDefaultAsync(x => x.Id == idCauHoi && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy câu hỏi");
 
-            if (!await LaGiangVien(cauHoi.IdKhoaHoc!.Value, userId))
-                throw new Exception("Chỉ giảng viên mới được ghim");
+            if (!await CoQuyenQnA(cauHoi.IdKhoaHoc!.Value, userId))
+                throw new Exception("Bạn không có quyền ghim câu hỏi");
 
             cauHoi.DaGhim = ghim;
             _hoiDapRepo.Update(cauHoi);
@@ -501,8 +544,8 @@ namespace Eduverse.Service.HoiDapService
                 .FirstOrDefaultAsync(x => x.Id == idTraLoi && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy câu trả lời");
 
-            if (!await LaGiangVien(traLoi.IdKhoaHoc!.Value, userId))
-                throw new Exception("Chỉ giảng viên mới được ghim câu trả lời");
+            if (!await CoQuyenQnA(traLoi.IdKhoaHoc!.Value, userId))
+                throw new Exception("Bạn không có quyền ghim câu trả lời");
 
             traLoi.GhimTraLoi = ghim;
             _hoiDapRepo.Update(traLoi);
@@ -516,8 +559,8 @@ namespace Eduverse.Service.HoiDapService
                 .FirstOrDefaultAsync(x => x.Id == idCauHoi && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy câu hỏi");
 
-            if (!await LaGiangVien(cauHoi.IdKhoaHoc!.Value, userId))
-                throw new Exception("Chỉ giảng viên mới được đóng/mở câu hỏi");
+            if (!await CoQuyenQnA(cauHoi.IdKhoaHoc!.Value, userId))
+                throw new Exception("Bạn không có quyền đóng/mở câu hỏi");
 
             cauHoi.DaDong = dong;
             _hoiDapRepo.Update(cauHoi);
@@ -533,7 +576,7 @@ namespace Eduverse.Service.HoiDapService
 
             // Chủ câu hỏi hoặc giảng viên mới được xóa
             var coQuyen = cauHoi.IdNguoiDung == userId
-                       || await LaGiangVien(cauHoi.IdKhoaHoc!.Value, userId);
+           || await CoQuyenQnA(cauHoi.IdKhoaHoc!.Value, userId);
             if (!coQuyen) throw new Exception("Bạn không có quyền xóa câu hỏi này");
 
             // Soft-delete toàn bộ câu trả lời
@@ -554,11 +597,162 @@ namespace Eduverse.Service.HoiDapService
                 ?? throw new Exception("Không tìm thấy câu trả lời");
 
             var coQuyen = traLoi.IdNguoiDung == userId
-                       || await LaGiangVien(traLoi.IdKhoaHoc!.Value, userId);
+           || await CoQuyenQnA(traLoi.IdKhoaHoc!.Value, userId);
             if (!coQuyen) throw new Exception("Bạn không có quyền xóa câu trả lời này");
 
             _hoiDapRepo.Delete(traLoi);
             await _hoiDapRepo.SaveAsync();
+        }
+        public async Task<PagedList<HoiDapDto>> GetDanhSachChoGiangVien(SearchHoiDapRequest request)
+        {
+            var userId = LayUserId();
+
+            var coQuyen = await CoQuyenQnA(request.IdKhoaHoc, userId);
+            if (!coQuyen) throw new Exception("Bạn không có quyền xem Q&A của khóa học này");
+
+            var query = _hoiDapRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == request.IdKhoaHoc
+                         && x.IdHoiDapCha == null
+                         && !x.IsDeleted);
+
+            if (request.IdBaiGiang.HasValue)
+                query = query.Where(x => x.IdBaiGiang == request.IdBaiGiang);
+
+            if (!string.IsNullOrWhiteSpace(request.Keyword))
+                query = query.Where(x => x.NoiDung != null && x.NoiDung.Contains(request.Keyword));
+
+            if (request.ChuaTraLoi == true)
+                query = query.Where(x => !_hoiDapRepo.GetQueryable()
+                    .Any(t => t.IdHoiDapCha == x.Id && !t.IsDeleted));
+
+            if (request.ChuaDoc == true)
+                query = query.Where(x => !_hoiDapRepo.GetQueryable()
+                    .Any(t => t.IdHoiDapCha == x.Id && t.LaGiangVien && !t.IsDeleted));
+
+            if (request.NhieuLike == true)
+            {
+                query = query.OrderByDescending(x =>
+                    _hoiDapRepo.GetQueryable()
+                        .Where(t => t.IdHoiDapCha == x.Id && !t.IsDeleted)
+                        .Sum(t => t.SoLike));
+            }
+            else
+            {
+                query = query.OrderByDescending(x => x.DaGhim)
+                             .ThenByDescending(x => x.NgayTao);
+            }
+
+            // ❌ ĐÃ XÓA: var baiGiangIds = ...; var baiGiangs = await ...ToListAsync();
+            // ❌ ĐÃ XÓA: var nguoiHoiIds = ...; var users = await ...ToListAsync();
+            // → thay bằng subquery trực tiếp bên dưới để EF dịch được sang SQL
+
+            var dtoQuery = query.Select(x => new HoiDapDto
+            {
+                Id = x.Id,
+                IdBaiGiang = x.IdBaiGiang,
+                TenBaiGiang = x.IdBaiGiang.HasValue
+                    ? _baiGiangRepo.GetQueryable()
+                        .Where(b => b.Id == x.IdBaiGiang.Value)
+                        .Select(b => b.TieuDe)
+                        .FirstOrDefault()
+                    : null,
+                NoiDung = x.NoiDung ?? "",
+                DaGhim = x.DaGhim,
+                DaDong = x.DaDong,
+                SoTraLoi = _hoiDapRepo.GetQueryable()
+                                   .Count(t => t.IdHoiDapCha == x.Id && !t.IsDeleted),
+                TongLike = _hoiDapRepo.GetQueryable()
+                                   .Where(t => t.IdHoiDapCha == x.Id && !t.IsDeleted)
+                                   .Sum(t => t.SoLike),
+                NguoiHoiId = x.IdNguoiDung,
+                NguoiHoiTen = x.IdNguoiDung.HasValue
+                    ? _appUserService.GetQueryable()
+                        .Where(u => u.Id == x.IdNguoiDung.Value)
+                        .Select(u => u.HoTen)
+                        .FirstOrDefault()
+                    : null,
+                NguoiHoiAnh = x.IdNguoiDung.HasValue
+                    ? _appUserService.GetQueryable()
+                        .Where(u => u.Id == x.IdNguoiDung.Value)
+                        .Select(u => u.AnhDaiDien)
+                        .FirstOrDefault()
+                    : null,
+                NgayTao = x.NgayTao ?? x.CreatedDate,
+                LaCuaToi = x.IdNguoiDung == userId,
+            });
+
+            return await PagedList<HoiDapDto>.CreateAsync(dtoQuery, request);
+        }
+
+        public async Task GhimTopAnswer(Guid idTraLoi, bool ghim)
+        {
+            var userId = LayUserId();
+
+            var traLoi = await _hoiDapRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == idTraLoi && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy câu trả lời");
+
+            if (!await CoQuyenQnA(traLoi.IdKhoaHoc!.Value, userId))
+                throw new Exception("Bạn không có quyền đánh dấu Top Answer");
+
+            if (ghim)
+            {
+                // Bỏ ghim các top answer cũ trong cùng câu hỏi
+                var topCu = await _hoiDapRepo.GetQueryable()
+                    .Where(x => x.IdHoiDapCha == traLoi.IdHoiDapCha
+                             && x.GhimTraLoi
+                             && x.Id != idTraLoi
+                             && !x.IsDeleted)
+                    .ToListAsync();
+                foreach (var t in topCu)
+                {
+                    t.GhimTraLoi = false;
+                    _hoiDapRepo.Update(t);
+                }
+            }
+
+            traLoi.GhimTraLoi = ghim;
+            _hoiDapRepo.Update(traLoi);
+            await _hoiDapRepo.SaveAsync();
+        }
+
+        private async Task<bool> CoQuyenQnA(Guid idKhoaHoc, Guid userId)
+        {
+            var gv = await _khoaHocGVRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
+                                       && x.IdGiangVien == userId
+                                       && !x.IsDeleted);
+            if (gv == null) return false;
+            return gv.LaChuSoHuu || gv.QnA;
+        }
+        private async Task ThongBaoCauHoiMoi(HoiDap cauHoi, Guid nguoiHoiId)
+        {
+            var giangVienCoQuyen = await _khoaHocGVRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == cauHoi.IdKhoaHoc && !x.IsDeleted
+                         && (x.LaChuSoHuu || x.QnA))
+                .Select(x => x.IdGiangVien)
+                .ToListAsync();
+
+            if (!giangVienCoQuyen.Any()) return;
+
+            var nguoiHoi = await _appUserService.GetQueryable()
+                .Where(x => x.Id == nguoiHoiId)
+                .Select(x => x.HoTen)
+                .FirstOrDefaultAsync();
+
+            foreach (var idGv in giangVienCoQuyen)
+            {
+                await _notificationPublisher.NotifyUserAsync(idGv, new NotificationPayload
+                {
+                    TieuDe = "Câu hỏi mới từ học viên",
+                    NoiDung = $"{nguoiHoi ?? "Học viên"} vừa đặt câu hỏi mới trong khóa học của bạn.",
+                    LoaiThongBao = "CauHoiMoi",
+                    Link = $"/instructor/courses/{cauHoi.IdKhoaHoc}/qna?idCauHoi={cauHoi.Id}",   // ← cần bạn xác nhận route thật
+                    FromUser = nguoiHoiId,
+                    ItemId = cauHoi.Id,
+                    ItemName = cauHoi.NoiDung
+                });
+            }
         }
     }
 }
