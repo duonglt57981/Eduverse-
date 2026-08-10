@@ -51,6 +51,7 @@ namespace Eduverse.Model
         public DbSet<LoaiThongBao> loaiThongBaos { get; set; }
         public DbSet<NganHang> nganHangs { get; set; }
         public DbSet<Phan> phans { get; set; }
+        public DbSet<PhanHoiDanhGia> phanHoiDanhGias { get; set; }
         public DbSet<TaiLieu> taiLieus { get; set; }
         public DbSet<TienDoHocTap> tienDoHocTaps { get; set; }
         public DbSet<ThanhToan> thanhToans { get; set; }
