@@ -33,5 +33,6 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public bool LaCongTacVien { get; set; }
         public string? TenGiangVien { get; set; }
         public List<string>? DanhSachGiangVienHienThi { get; set; }
+        public List<GiangVienHienThiDto> DanhSachGiangVien { get; set; } = new();
     }
 }

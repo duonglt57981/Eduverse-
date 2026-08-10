@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.KhoaHocService.Dto
 {
-    internal class GiangVienHienThiDto
+    public class GiangVienHienThiDto
     {
+        public Guid Id { get; set; }
+        public string HoTen { get; set; } = null!;
+        public string? AnhDaiDien { get; set; }
     }
 }
