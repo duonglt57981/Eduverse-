@@ -44,11 +44,14 @@ export function useHoiDap({
   // ── Load danh sách ────────────────────────────────────────────────
   const load = useCallback(
     async (reset = true) => {
-      if (!idKhoaHoc) return;
+      if (!idKhoaHoc) {
+        console.log("❌ idKhoaHoc rỗng");
+        return;
+      }
       reset ? setLoading(true) : setLoadingMore(true);
-      setError(null); // ← thêm dòng này để clear lỗi cũ
+      setError(null);
       try {
-        const currentPage = reset ? 1 : page + 1; // ← dùng biến local thay vì page từ state
+        const currentPage = reset ? 1 : page + 1;
         const req: SearchHoiDapRequest = {
           idKhoaHoc,
           idBaiGiang: idBaiGiang ?? null,
@@ -58,17 +61,19 @@ export function useHoiDap({
           pageSize: 10,
         };
 
-        console.log("📤 SearchHoiDap request:", req); // debug
-
+        console.log("📤 Request:", req);
         const res = await HoiDapService.GetDanhSach(req);
+        console.log("📥 Response:", res);
+        console.log("📥 Items:", res?.items);
 
-        console.log("📥 SearchHoiDap result:", res); // debug
-
-        setCauHois(reset ? res.items : (prev) => [...prev, ...res.items]);
-        setTotalPages(res.totalPages);
+        setCauHois(
+          reset ? (res.items ?? []) : (prev) => [...prev, ...(res.items ?? [])],
+        );
+        setTotalPages(res.totalPages ?? 1);
         if (!reset) setPage((p) => p + 1);
         else setPage(1);
       } catch (err: any) {
+        console.log("❌ Lỗi:", err);
         setError(
           err.response?.data?.message || err.message || "Lỗi tải dữ liệu",
         );
@@ -76,14 +81,42 @@ export function useHoiDap({
         setLoading(false);
         setLoadingMore(false);
       }
-      // Xóa `page` khỏi dependency để tránh infinite loop
     },
     [idKhoaHoc, idBaiGiang, keyword, sapXep],
   );
 
   useEffect(() => {
+    if (!idKhoaHoc) {
+      console.log("❌ idKhoaHoc rỗng");
+      return;
+    }
+    console.log("✅ useHoiDap load:", idKhoaHoc, idBaiGiang);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    load(true);
+    setLoading(true);
+    setError(null);
+
+    const req: SearchHoiDapRequest = {
+      idKhoaHoc,
+      idBaiGiang: idBaiGiang ?? null,
+      keyword: keyword || undefined,
+      sapXep,
+      pageNumber: 1,
+      pageSize: 10,
+    };
+
+    HoiDapService.GetDanhSach(req)
+      .then((res) => {
+        console.log("✅ HoiDap response:", res);
+        setCauHois(res.items ?? []);
+        setTotalPages(res.totalPages ?? 1);
+        setPage(1);
+      })
+      .catch((err) => {
+        console.log("❌ HoiDap error:", err);
+        setError(err.message);
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idKhoaHoc, idBaiGiang, sapXep]);
 
   // ── Mở chi tiết câu hỏi ──────────────────────────────────────────

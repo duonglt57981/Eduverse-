@@ -57,6 +57,8 @@ import { Drawer, Tab, Tabs } from "@mui/material";
 import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import { QnAPanel } from "./components/QnAPanel";
 
+import { useSearchParams } from "next/navigation";
+
 const PRIMARY_RED = "#8B1313";
 const PRIMARY_RED_DARK = "#7F1D1D";
 const SIDEBAR_W = 380;
@@ -436,6 +438,8 @@ export default function KhoaHocLearningPage() {
   const courseId = (params?.courseId || params?.id) as string | undefined;
   const [idDangKyKhoaHoc, setIdDangKyKhoaHoc] = useState<string | null>(null);
 
+  const searchParams = useSearchParams();
+
   const role = pathname.split("/")[1] || "student";
   const dashboardPath = `/${role}/dashboard`;
 
@@ -549,6 +553,24 @@ export default function KhoaHocLearningPage() {
       initProgress(danhSachTatCa);
     }
   }, [danhSachTatCa, initProgress]);
+
+  useEffect(() => {
+    if (!khoaHoc || danhSachTatCa.length === 0) return;
+
+    const tab = searchParams.get("tab");
+    if (tab !== "qna") return;
+
+    const idBaiGiangParam = searchParams.get("idBaiGiang");
+
+    if (idBaiGiangParam) {
+      // Câu hỏi gắn với 1 bài giảng cụ thể → mở Drawer Q&A đúng bài đó
+      const bg = danhSachTatCa.find((b) => b.id === idBaiGiangParam);
+      if (bg) setQnaDrawerBaiGiang(bg);
+    } else {
+      // Câu hỏi chung → chuyển sang tab Q&A tổng dưới video
+      setTabDuoiVideo(1);
+    }
+  }, [khoaHoc, danhSachTatCa, searchParams]);
 
   useEffect(() => {
     if (!khoaHoc?.id) return;
@@ -1343,6 +1365,11 @@ export default function KhoaHocLearningPage() {
                         idKhoaHoc={khoaHoc.id}
                         idBaiGiang={null}
                         laGiangVien={false}
+                        idCauHoiCanMo={
+                          searchParams.get("tab") === "qna"
+                            ? searchParams.get("idCauHoi")
+                            : null
+                        }
                       />
                     </Paper>
                   )}
@@ -1544,6 +1571,11 @@ export default function KhoaHocLearningPage() {
                 idBaiGiang={qnaDrawerBaiGiang.id}
                 tenBaiGiang={qnaDrawerBaiGiang.tieuDe}
                 laGiangVien={false}
+                idCauHoiCanMo={
+                  searchParams.get("tab") === "qna"
+                    ? searchParams.get("idCauHoi")
+                    : null
+                }
               />
             </Box>
           </>

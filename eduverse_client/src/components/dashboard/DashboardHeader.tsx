@@ -8,6 +8,7 @@ import {
   SearchRounded,
   FavoriteBorderOutlined,
   ShoppingCartOutlined,
+  MailOutlineRounded,
   NotificationsNoneRounded,
   SettingsRounded,
   LogoutRounded,
@@ -79,7 +80,8 @@ export default function DashboardHeader({
     };
     window.addEventListener("avatar_updated", handleAvatarUpdate);
     handleAvatarUpdate();
-    return () => window.removeEventListener("avatar_updated", handleAvatarUpdate);
+    return () =>
+      window.removeEventListener("avatar_updated", handleAvatarUpdate);
   }, [user?.email]);
 
   const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -120,7 +122,10 @@ export default function DashboardHeader({
   const getHomeRoute = () => {
     if (
       pathname.startsWith("/personnel") ||
-      roles.some((r: string) => r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien")
+      roles.some(
+        (r: string) =>
+          r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien",
+      )
     )
       return "/personnel/approve-courses";
     if (roles.includes("Admin")) return "/admin/dashboard";
@@ -525,23 +530,36 @@ export default function DashboardHeader({
                   }}
                 >
                   {!isSearching && searchError && (
-                    <Typography sx={{ px: 2, py: 2, fontSize: 13.5, color: "error.main" }}>
+                    <Typography
+                      sx={{ px: 2, py: 2, fontSize: 13.5, color: "error.main" }}
+                    >
                       {searchError}
                     </Typography>
                   )}
 
-                  {!isSearching && !searchError && searchResults.length === 0 && (
-                    <Typography sx={{ px: 2, py: 2, fontSize: 13.5, color: "text.secondary" }}>
-                      Không tìm thấy khóa học phù hợp.
-                    </Typography>
-                  )}
+                  {!isSearching &&
+                    !searchError &&
+                    searchResults.length === 0 && (
+                      <Typography
+                        sx={{
+                          px: 2,
+                          py: 2,
+                          fontSize: 13.5,
+                          color: "text.secondary",
+                        }}
+                      >
+                        Không tìm thấy khóa học phù hợp.
+                      </Typography>
+                    )}
 
                   {searchResults.map((course) => (
                     <Box
                       key={String(course.id)}
                       component="button"
                       type="button"
-                      onClick={() => openCourse(course.id ? String(course.id) : undefined)}
+                      onClick={() =>
+                        openCourse(course.id ? String(course.id) : undefined)
+                      }
                       sx={{
                         width: "100%",
                         display: "flex",
@@ -561,7 +579,10 @@ export default function DashboardHeader({
                     >
                       <Box
                         component="img"
-                        src={course.hinhAnhKhoaHoc || "/khoahoc/1-removebg-preview.png"}
+                        src={
+                          course.hinhAnhKhoaHoc ||
+                          "/khoahoc/1-removebg-preview.png"
+                        }
                         alt=""
                         sx={{
                           width: 52,
@@ -573,12 +594,19 @@ export default function DashboardHeader({
                         }}
                       />
                       <Box sx={{ minWidth: 0, flex: 1 }}>
-                        <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 700 }}>
+                        <Typography
+                          noWrap
+                          sx={{ fontSize: 13.5, fontWeight: 700 }}
+                        >
                           {course.tieuDe || "Khóa học chưa có tên"}
                         </Typography>
-                        <Typography noWrap sx={{ fontSize: 12, color: "text.secondary" }}>
-                          {[course.loaiKhoaHoc, course.capDo].filter(Boolean).join(" • ") ||
-                            "Khóa học"}
+                        <Typography
+                          noWrap
+                          sx={{ fontSize: 12, color: "text.secondary" }}
+                        >
+                          {[course.loaiKhoaHoc, course.capDo]
+                            .filter(Boolean)
+                            .join(" • ") || "Khóa học"}
                         </Typography>
                       </Box>
                     </Box>
@@ -697,8 +725,6 @@ export default function DashboardHeader({
           {/* Admin Mode Role switch */}
           {isAdminMode && (
             <>
-
-
               <Button
                 size="small"
                 onClick={() => router.push("/student/dashboard")}
@@ -759,6 +785,20 @@ export default function DashboardHeader({
               </IconButton>
             </>
           )}
+
+          <IconButton
+            aria-label="Lời mời giảng dạy"
+            onClick={() => router.push("/instructor/invites")}
+            sx={{
+              width: 42,
+              height: 42,
+              bgcolor: "transparent",
+              color: "text.primary",
+              "&:hover": { color: "primary.main" },
+            }}
+          >
+            <MailOutlineRounded fontSize="small" />
+          </IconButton>
 
           <IconButton
             aria-label="Mở thông báo"
@@ -899,7 +939,9 @@ export default function DashboardHeader({
                 <MenuItem onClick={() => router.push("/instructor/dashboard")}>
                   Bảng điều khiển giảng viên
                 </MenuItem>
-                <MenuItem onClick={() => router.push("/instructor/manager-courses")}>
+                <MenuItem
+                  onClick={() => router.push("/instructor/manager-courses")}
+                >
                   Quản lý khóa học
                 </MenuItem>
                 <MenuItem onClick={() => router.push("/instructor/money")}>
@@ -939,7 +981,13 @@ export default function DashboardHeader({
 
             <Divider sx={{ my: 0.5 }} />
 
-            <MenuItem onClick={() => router.push(roles.includes("Admin") ? "/admin/settings" : "/settings")}>
+            <MenuItem
+              onClick={() =>
+                router.push(
+                  roles.includes("Admin") ? "/admin/settings" : "/settings",
+                )
+              }
+            >
               <ListItemIcon sx={{ minWidth: "32px !important" }}>
                 <SettingsRounded fontSize="small" />
               </ListItemIcon>

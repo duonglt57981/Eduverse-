@@ -161,8 +161,8 @@ const LessonRow = styled(Box)<{ clickable?: number }>(({ clickable }) => ({
   "&:last-child": { borderBottom: "none" },
   "&:hover": clickable
     ? {
-      backgroundColor: RED_SOFT,
-    }
+        backgroundColor: RED_SOFT,
+      }
     : undefined,
 }));
 
@@ -646,7 +646,13 @@ function CourseRegistrationContent() {
     khoaHoc.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!khoaHoc.gia || khoaHoc.gia <= 0);
 
-  const giangVien = khoaHoc.createdBy || "Không xác định";
+  const danhSachGV = (khoaHoc as any).danhSachGiangVienHienThi as
+    | string[]
+    | undefined;
+  const giangVien =
+    danhSachGV && danhSachGV.length > 0
+      ? danhSachGV.join(", ")
+      : khoaHoc.createdBy || "Không xác định";
 
   // Id giảng viên dùng để build link hồ sơ /instructor/profile/{id}
   const giangVienId = getGiangVienId(khoaHoc);
@@ -1848,9 +1854,9 @@ function CourseRegistrationContent() {
                       flexDirection: "column",
                       "&:hover": kh.id
                         ? {
-                          boxShadow: "0 10px 26px rgba(141,19,19,0.14)",
-                          transform: "translateY(-2px)",
-                        }
+                            boxShadow: "0 10px 26px rgba(141,19,19,0.14)",
+                            transform: "translateY(-2px)",
+                          }
                         : undefined,
                     }}
                   >

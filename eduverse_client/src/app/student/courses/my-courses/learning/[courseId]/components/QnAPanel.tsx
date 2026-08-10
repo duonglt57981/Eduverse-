@@ -33,7 +33,7 @@ import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlin
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useHoiDap } from "../hooks/useHoiDap";
 import { HoiDapDto, TraLoiDto } from "@/src/services/HoiDapService";
 
@@ -44,6 +44,7 @@ interface QnAPanelProps {
   idBaiGiang?: string | null;
   laGiangVien?: boolean;
   tenBaiGiang?: string;
+  idCauHoiCanMo?: string | null;
 }
 
 function thoiGianTuatoi(ngay: string) {
@@ -266,13 +267,28 @@ function TraLoiCard({
 }
 
 // ── Component chính ──────────────────────────────────────────────────────
+
 export function QnAPanel({
   idKhoaHoc,
   idBaiGiang,
   laGiangVien,
   tenBaiGiang,
+  idCauHoiCanMo,
 }: QnAPanelProps) {
+  console.log("🔍 QnAPanel render:", { idKhoaHoc, idBaiGiang });
   const hd = useHoiDap({ idKhoaHoc, idBaiGiang, laGiangVien });
+  console.log("🔍 useHoiDap state:", {
+    cauHoisLength: hd.cauHois.length,
+    loading: hd.loading,
+    error: hd.error,
+  });
+
+  useEffect(() => {
+    if (idCauHoiCanMo) {
+      hd.moChiTiet(idCauHoiCanMo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idCauHoiCanMo]);
 
   // ── Filter state ──────────────────────────────────────────────────────
   // Drawer bài giảng: "TatCa" | "ChiBaiGiangNay"
