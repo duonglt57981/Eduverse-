@@ -486,5 +486,75 @@ Chi tra ve JSON, khong them text khac.";
             return trimmed.Trim();
         }
         #endregion
+
+        #region GoiYTraLoi
+
+        /// <summary>
+        /// Gọi Gemini để sinh 1 câu trả lời nháp tự nhiên (không phải JSON kiểm duyệt).
+        /// Dùng cho tính năng "AI gợi ý" trong Q&A — chỉ trả về text thô để giảng viên chỉnh sửa.
+        /// </summary>
+        public async Task<string> GoiYTraLoiCauHoiAsync(string prompt)
+        {
+            if (string.IsNullOrWhiteSpace(prompt))
+                throw new Exception("Prompt trống, không thể gọi AI gợi ý");
+
+            try
+            {
+                var request = new
+                {
+                    contents = new[]
+                    {
+                new { parts = new[] { new { text = prompt } } }
+            },
+                    generationConfig = new
+                    {
+                        temperature = 0.4,
+                        maxOutputTokens = 500
+                        // Lưu ý: KHÔNG set responseMimeType = "application/json" ở đây,
+                        // vì đây cần trả lời tự nhiên dạng text, không phải JSON như kiểm duyệt.
+                    }
+                };
+
+                var json = JsonSerializer.Serialize(request);
+                var response = await _httpClient.PostAsync("", new StringContent(json, Encoding.UTF8, "application/json"));
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation("GoiYTraLoi Status Code: {StatusCode}", response.StatusCode);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Gemini API Error (GoiYTraLoi): {StatusCode} - {Response}", response.StatusCode, responseContent);
+                    throw new Exception("AI hiện không phản hồi được, vui lòng thử lại sau");
+                }
+
+                using var doc = JsonDocument.Parse(responseContent);
+
+                if (!doc.RootElement.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
+                {
+                    _logger.LogWarning("Khong co candidates (GoiYTraLoi): {Response}", responseContent);
+                    throw new Exception("AI không trả về nội dung gợi ý");
+                }
+
+                var finishReason = candidates[0].TryGetProperty("finishReason", out var fr) ? fr.GetString() : null;
+                if (string.Equals(finishReason, "SAFETY", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new Exception("Nội dung câu hỏi hoặc ngữ cảnh bị Gemini từ chối vì lý do an toàn");
+                }
+
+                var text = candidates[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
+
+                if (string.IsNullOrWhiteSpace(text))
+                    throw new Exception("AI không trả về nội dung gợi ý");
+
+                return text.Trim();
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Loi parse JSON (GoiYTraLoi)");
+                throw new Exception("Lỗi xử lý phản hồi từ AI");
+            }
+        }
+
+        #endregion
     }
 }

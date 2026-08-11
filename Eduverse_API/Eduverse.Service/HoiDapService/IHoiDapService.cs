@@ -26,5 +26,7 @@ namespace Eduverse.Service.HoiDapService
         Task<TraLoiDto> Reply(ReplyRequest request);
         Task<PagedList<HoiDapDto>> GetDanhSachChoGiangVien(SearchHoiDapRequest request);
         Task GhimTopAnswer(Guid idTraLoi, bool ghim);
+
+        Task<AISuggestionDto> GoiYTraLoiAsync(Guid idCauHoi, Guid? idTraLoiDuocReply = null);
     }
 }

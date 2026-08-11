@@ -39,4 +39,10 @@ namespace Eduverse.Service.HoiDapService.Dto
         public int TongLike { get; set; }
         public List<TraLoiDto> DanhSachTraLoi { get; set; } = new();
     }
+
+    public class AISuggestionDto
+    {
+        public string NoiDungGoiY { get; set; } = string.Empty;
+        public bool CoNoiDungBaiGiang { get; set; }
+    }
 }

@@ -126,5 +126,13 @@ namespace Eduverse.Api.Controller
             try { await _service.GhimTopAnswer(idTraLoi, ghim); return DataResponse<string>.Success("OK"); }
             catch (Exception ex) { return DataResponse<string>.False(ex.Message); }
         }
+
+        [HttpPost("{idCauHoi}/goi-y-tra-loi")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<AISuggestionDto>> GoiYTraLoi(Guid idCauHoi, [FromQuery] Guid? idTraLoiDuocReply)
+        {
+            try { return DataResponse<AISuggestionDto>.Success(await _service.GoiYTraLoiAsync(idCauHoi, idTraLoiDuocReply)); }
+            catch (Exception ex) { return DataResponse<AISuggestionDto>.False(ex.Message); }
+        }
     }
 }
