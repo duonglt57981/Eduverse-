@@ -144,8 +144,8 @@ export interface GiangVienKhoaHocDto {
 }
 
 export interface SearchBase {
-  pageIndex?: int | 1;
-  pageSize?: int | 20;
+  pageIndex?: number;
+  pageSize?: number;
 }
 
 export interface AppUser {

@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eduverse.Repository", "Eduv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eduverse.Service", "Eduverse.Service\Eduverse.Service.csproj", "{AEC50EE5-5D37-4A2B-B679-950DB964AA4D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eduverse.Tests", "Eduverse.Tests\Eduverse.Tests.csproj", "{AF98E81A-678F-4252-AC63-3E53538E8696}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{AEC50EE5-5D37-4A2B-B679-950DB964AA4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEC50EE5-5D37-4A2B-B679-950DB964AA4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEC50EE5-5D37-4A2B-B679-950DB964AA4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF98E81A-678F-4252-AC63-3E53538E8696}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF98E81A-678F-4252-AC63-3E53538E8696}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF98E81A-678F-4252-AC63-3E53538E8696}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF98E81A-678F-4252-AC63-3E53538E8696}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

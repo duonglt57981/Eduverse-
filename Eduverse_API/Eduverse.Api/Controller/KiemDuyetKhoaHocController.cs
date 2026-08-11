@@ -6,6 +6,7 @@ using Eduverse.Service.Dto;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto;
+using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Exceptions;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService.Request;
 using Eduverse.Service.LyDoTuChoiService;
 using Eduverse.Service.LyDoTuChoiService.Dto;
@@ -50,16 +51,22 @@ namespace Eduverse.Api.Controller
 
         [HttpGet("kiemduyet-khoahoc-getdetail/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,personnel")]
-        public async Task<DataResponse<KiemDuyetDetailDto>> GetDetailKiemDuyetKhoaHoc( Guid idKhoaHoc)
+        public async Task<IActionResult> GetDetailKiemDuyetKhoaHoc(Guid idKhoaHoc)
         {
             try
             {
                 var result = await _lichSuKiemDuyetKhoaHocService.GetDetailKiemDuyet(idKhoaHoc);
-                return DataResponse<KiemDuyetDetailDto>.Success(result);
+                if (result == null)
+                    return NotFound(DataResponse<KiemDuyetDetailDto>.False("Không tìm thấy khóa học."));
+                return Ok(DataResponse<KiemDuyetDetailDto>.Success(result));
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, DataResponse<KiemDuyetDetailDto>.False(ex.Message));
             }
             catch (Exception ex)
             {
-                return DataResponse<KiemDuyetDetailDto>.False(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, DataResponse<KiemDuyetDetailDto>.False(ex.Message));
             }
         }
 
@@ -95,34 +102,43 @@ namespace Eduverse.Api.Controller
 
 
         [HttpGet("kiemduyet-list-nhanvienkiemduyet")]
-        [Authorize(Roles = "Admin,personnel")]
-        public async Task<DataResponse<PagedList<NhanVienPheDuyetDto>>> GetNhanVienPheDuyet([FromQuery] NhanVienSearch search)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetNhanVienPheDuyet([FromQuery] NhanVienSearch search)
         {
             try
             {
                 var result = await _lichSuKiemDuyetKhoaHocService.GetNhanVienPheDuyet(search);
-                return DataResponse<PagedList<NhanVienPheDuyetDto>>.Success(result);
+                return Ok(DataResponse<PagedList<NhanVienPheDuyetDto>>.Success(result));
             }
             catch (Exception ex)
             {
-                return DataResponse<PagedList<NhanVienPheDuyetDto>>.False(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    DataResponse<PagedList<NhanVienPheDuyetDto>>.False(ex.Message));
             }
         }
 
 
         [HttpPut("kiemduyet-phankhoahoc/{idNguoiDuyet}")]
         [Authorize(Roles = "Admin")]
-        public async Task<DataResponse<List<KhoaHocDto>>> KiemDuyetKhoaHoc(Guid idNguoiDuyet,[FromBody] List<Guid> danhSachKhoaHocId)
+        public async Task<IActionResult> PhanCongKhoaHoc(Guid idNguoiDuyet, [FromBody] List<Guid>? danhSachKhoaHocId)
         {
             try
             {
                 var result = await _lichSuKiemDuyetKhoaHocService.PhanDuyetKhoaHoc(idNguoiDuyet, danhSachKhoaHocId);
-                return DataResponse< List<KhoaHocDto>>.Success(result);
+                return Ok(DataResponse<PhanCongKiemDuyetResultDto>.Success(
+                    result,
+                    $"Đã phân công {result.SoKhoaHocDaPhan} khóa học cho {result.TenNguoiDuyet}."));
 
+            }
+            catch (PhanCongKiemDuyetException ex)
+            {
+                return StatusCode(ex.StatusCode,
+                    DataResponse<PhanCongKiemDuyetResultDto>.False(ex.Message, ex.Ids));
             }
             catch (Exception ex)
             {
-                return DataResponse<List<KhoaHocDto>>.False(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    DataResponse<PhanCongKiemDuyetResultDto>.False("Không thể phân công khóa học lúc này."));
             }
         }
 
@@ -130,17 +146,21 @@ namespace Eduverse.Api.Controller
 
         [HttpPost("kiemduyet-khoahoc")]
         [Authorize(Roles = "Admin,personnel")]
-        public async Task<DataResponse<KiemDuyetKhoaHocDto>> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request)
+        public async Task<IActionResult> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request)
         {
             try
             {
                 var result = await _lichSuKiemDuyetKhoaHocService.KiemDuyetFullKhoaHoc(request);
-                return DataResponse<KiemDuyetKhoaHocDto>.Success(result);
+                return Ok(DataResponse<KiemDuyetKhoaHocDto>.Success(result));
 
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message));
             }
             catch (Exception ex)
             {
-                return DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message);
+                return BadRequest(DataResponse<KiemDuyetKhoaHocDto>.False(ex.Message));
             }
         }
 

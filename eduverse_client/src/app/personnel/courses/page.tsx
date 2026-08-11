@@ -5,7 +5,6 @@ import { Box, Typography, Card, CardActionArea } from "@mui/material";
 import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import LibraryBooksOutlinedIcon from "@mui/icons-material/LibraryBooksOutlined";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 
@@ -31,15 +30,6 @@ const options = [
       "Quản lý và theo dõi tất cả các khóa học đang phát hành trên Eduverses.",
     tag: "Dành cho quản trị viên",
     route: "/personnel/inspect-courses",
-  },
-  {
-    key: "tasks",
-    icon: AssignmentTurnedInOutlinedIcon,
-    title: "Phân khóa học kiểm duyệt",
-    description:
-      "Phân công và quản lý các khóa học cần được kiểm duyệt cho các thành viên trong nhóm.",
-    tag: "Dành cho quản trị viên",
-    route: "/personnel/tasks-course",
   },
 ];
 
@@ -117,7 +107,7 @@ export default function Step1Page() {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+                gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
                 gap: { xs: 2, sm: 2.5 },
               }}
             >

@@ -45,22 +45,22 @@ export interface DropdownOptionTree {
 //#region cũ không xài nữa
 export interface ResponsePageList<T = any> {
   items: T;
-  pageIndex?: int;
-  pageSize?: int;
-  totalCount?: int;
-  totalPage?: int;
+  pageIndex?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPage?: number;
 }
 
 export interface ResponsePageInfo {
-  pageIndex?: int;
-  pageSize?: int;
-  totalCount?: int | 0;
-  totalPage?: int | 0;
+  pageIndex?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPage?: number;
 }
 
 export interface SearchBase {
-  pageIndex?: int | 1;
-  pageSize?: int | 20;
+  pageIndex?: number;
+  pageSize?: number;
 }
 
 export interface DataImport {

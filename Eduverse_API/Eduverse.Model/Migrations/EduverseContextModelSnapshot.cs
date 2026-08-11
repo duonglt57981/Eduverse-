@@ -1501,7 +1501,7 @@ namespace Eduverse.Model.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TrangThaiPheDuyet")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("URLViewPreviewKhoaHoc")
                         .HasColumnType("nvarchar(max)");
@@ -1516,6 +1516,10 @@ namespace Eduverse.Model.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IdNguoiDuyet");
+
+                    b.HasIndex("TrangThaiPheDuyet", "IdNguoiDuyet");
 
                     b.ToTable("KhoaHocs", (string)null);
                 });
@@ -2268,6 +2272,62 @@ namespace Eduverse.Model.Migrations
                     b.ToTable("phanHoiDanhGias");
                 });
 
+            modelBuilder.Entity("Eduverse.Model.Entities.PhanCongKiemDuyetKhoaHoc", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdKhoaHoc")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdNguoiDuyet")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdNguoiPhanCong")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("NgayPhanCong")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdNguoiPhanCong");
+
+                    b.HasIndex("IdKhoaHoc", "NgayPhanCong");
+
+                    b.HasIndex("IdNguoiDuyet", "NgayPhanCong");
+
+                    b.ToTable("PhanCongKiemDuyetKhoaHocs", (string)null);
+                });
+
             modelBuilder.Entity("Eduverse.Model.Entities.RefreshToken", b =>
                 {
                     b.Property<int>("IDRefreshToken")
@@ -2936,6 +2996,35 @@ namespace Eduverse.Model.Migrations
                         .IsRequired();
 
                     b.Navigation("AppUser");
+                });
+
+            modelBuilder.Entity("Eduverse.Model.Entities.KhoaHoc", b =>
+                {
+                    b.HasOne("Eduverse.Model.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("IdNguoiDuyet")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("Eduverse.Model.Entities.PhanCongKiemDuyetKhoaHoc", b =>
+                {
+                    b.HasOne("Eduverse.Model.Entities.KhoaHoc", null)
+                        .WithMany()
+                        .HasForeignKey("IdKhoaHoc")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Eduverse.Model.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("IdNguoiDuyet")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Eduverse.Model.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("IdNguoiPhanCong")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.RefreshToken", b =>

@@ -58,6 +58,7 @@ namespace Eduverse.Model
         public DbSet<ThongBao> thongBaos { get; set; }
         public DbSet<VaiTro_NguoiDung> vaiTro_NguoiDungs { get; set; }
         public DbSet<LichSuKiemDuyetKhoaHoc> lichSuKiemDuyetKhoaHocs { get; set; }
+        public DbSet<PhanCongKiemDuyetKhoaHoc> phanCongKiemDuyetKhoaHocs { get; set; }
         public DbSet<YeuCauRutTien> yeuCauRutTiens { get; set; }
         public DbSet<LikeHoiDap> likeHoiDaps { get; set; }
 
@@ -76,6 +77,34 @@ namespace Eduverse.Model
 
             builder.Entity<KhoaHoc>()
        .ToTable("KhoaHocs");
+
+            builder.Entity<KhoaHoc>(entity =>
+            {
+                entity.HasIndex(x => new { x.TrangThaiPheDuyet, x.IdNguoiDuyet });
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.IdNguoiDuyet)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            builder.Entity<PhanCongKiemDuyetKhoaHoc>(entity =>
+            {
+                entity.ToTable("PhanCongKiemDuyetKhoaHocs");
+                entity.HasIndex(x => new { x.IdKhoaHoc, x.NgayPhanCong });
+                entity.HasIndex(x => new { x.IdNguoiDuyet, x.NgayPhanCong });
+                entity.HasOne<KhoaHoc>()
+                    .WithMany()
+                    .HasForeignKey(x => x.IdKhoaHoc)
+                    .OnDelete(DeleteBehavior.NoAction);
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.IdNguoiDuyet)
+                    .OnDelete(DeleteBehavior.NoAction);
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.IdNguoiPhanCong)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
 
             builder.Entity<RefreshToken>(entity =>
             {
