@@ -4,6 +4,9 @@ export interface KiemDuyetSearchDto extends SearchBase {
   sapXepNgay?: string;
   sapXepTen?: string;
   idNguoiDuyet?: string;
+  trangThaiPhanCong?: "ChuaPhanCong" | "DaPhanCong";
+  tuNgay?: string;
+  denNgay?: string;
   danhSachKhoaHocId?: string[];
 }
 
@@ -14,6 +17,10 @@ export interface KhoaHocKiemDuyetListDto {
   trangThai: string;
   trangThaiPheDuyet: string;
   createBy: string;
+  ngayGuiDuyet?: string | null;
+  createDate?: string | null;
+  idNguoiDuyet?: string | null;
+  tenNguoiDuyet?: string | null;
 }
 
 export interface KiemDuyetDetailDto {
@@ -59,12 +66,20 @@ export interface NhanVienPheDuyetDto {
 export interface NhanVienSearch extends SearchBase {
   keyword?: string;
   chuaCoKhoaHoc?: boolean;
-  SapXepTheoSoLuongKhoaHoc: string;
+  sapXepTheoSoLuongKhoaHoc?: "asc" | "desc";
 }
 
 export interface SearchBase {
-  pageIndex?: int | 1;
-  pageSize?: int | 20;
+  pageIndex?: number;
+  pageSize?: number;
+}
+
+export interface PhanCongKiemDuyetResultDto {
+  idNguoiDuyet: string;
+  tenNguoiDuyet: string;
+  soKhoaHocDaPhan: number;
+  danhSachKhoaHocId: string[];
+  ngayPhanCong: string;
 }
 
 export interface LyDoTuChoiDto {

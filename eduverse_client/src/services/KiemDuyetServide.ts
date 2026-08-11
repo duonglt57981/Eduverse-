@@ -1,5 +1,4 @@
 import { apiService } from ".";
-import { KhoaHocType } from "../types/khoaHoc/Dto/dto";
 import {
   KhoaHocKiemDuyetListDto,
   KiemDuyetDetailDto,
@@ -9,6 +8,7 @@ import {
   LyDoTuChoiRequest,
   NhanVienPheDuyetDto,
   NhanVienSearch,
+  PhanCongKiemDuyetResultDto,
 } from "../types/KiemDuyet/Dto/dto";
 import { KiemDuyetKhoaHocRequest } from "../types/KiemDuyet/Request/request";
 import { ApiResponse, PagedList } from "../types/types";
@@ -81,7 +81,6 @@ export default class KiemDuyetService {
   }
 
   async GetDanhSachNhanVien(
-    idKhoaHoc: string,
     search: NhanVienSearch,
   ): Promise<ApiResponse<PagedList<NhanVienPheDuyetDto>>> {
     try {
@@ -94,10 +93,10 @@ export default class KiemDuyetService {
       if (search.chuaCoKhoaHoc !== undefined && search.chuaCoKhoaHoc !== null) {
         params.append("chuaCoKhoaHoc", String(search.chuaCoKhoaHoc));
       }
-      if (search.SapXepTheoSoLuongKhoaHoc) {
+      if (search.sapXepTheoSoLuongKhoaHoc) {
         params.append(
           "SapXepTheoSoLuongKhoaHoc",
-          search.SapXepTheoSoLuongKhoaHoc,
+          search.sapXepTheoSoLuongKhoaHoc,
         );
       }
       if (search.pageIndex) {
@@ -122,9 +121,9 @@ export default class KiemDuyetService {
   async PhanKhoaHocKiemDuyet(
     khoaHocs: string[],
     userId: string,
-  ): Promise<ApiResponse<KhoaHocType[]>> {
+  ): Promise<ApiResponse<PhanCongKiemDuyetResultDto>> {
     try {
-      const response = await apiService.put<KhoaHocType[]>(
+      const response = await apiService.put<PhanCongKiemDuyetResultDto>(
         `/KiemDuyetKhoaHoc/kiemduyet-phankhoahoc/${userId}`,
         khoaHocs,
       );
