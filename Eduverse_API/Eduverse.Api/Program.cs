@@ -22,6 +22,7 @@ using Eduverse.Service.EmailService;
 using Eduverse.Service.GeminiService;
 using Eduverse.Service.LoiMoiGiangVienService;
 using Eduverse.Service.SmsService;
+using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.ThongBaoService;
 using Eduverse.Service.YeuCauRutTienService;
 using Hangfire;
@@ -155,6 +156,8 @@ namespace Eduverse.Api
                 client.DefaultRequestHeaders.Add("AccessKey", settings.ApiKey);
                 client.Timeout = TimeSpan.FromMinutes(30);
             });
+            builder.Services.AddHttpClient<ITaiLieuService, TaiLieuService>();
+
 
             builder.Services.AddSingleton(sp =>
             {

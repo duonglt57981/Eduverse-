@@ -15,6 +15,7 @@ namespace Eduverse.Service.HoiDapService.Dto
         public int SoLike { get; set; }
         public bool DaLike { get; set; } 
         public Guid? NguoiTraLoiId { get; set; }
+        public Guid? IdTraLoiDuocReply { get; set; }
         public string? NguoiTraLoiTen { get; set; }
         public string? NguoiTraLoiAnh { get; set; }
         public DateTime NgayTao { get; set; }

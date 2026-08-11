@@ -12,6 +12,7 @@ using Eduverse.Service.Common;
 using Eduverse.Service.GeminiService;
 using Eduverse.Service.HoiDapService.Dto;
 using Eduverse.Service.HoiDapService.Request;
+using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.ThongBaoService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,7 @@ namespace Eduverse.Service.HoiDapService
         private readonly INotificationPublisher _notificationPublisher;
         private readonly IKhoaHocRepository _khoaHocRepo;  
         private readonly IGeminiService _geminiService;
+        private readonly ITaiLieuService _taiLieuService;
         public HoiDapService(
         IHoiDapRepository hoiDapRepo,
         ILikeHoiDapRepository likeRepo,
@@ -48,7 +50,8 @@ namespace Eduverse.Service.HoiDapService
         EduverseContext context,
         IKhoaHocRepository khoaHocRepo,     
         IGeminiService geminiService,
-         INotificationPublisher notificationPublisher) : base(hoiDapRepo)
+        INotificationPublisher notificationPublisher,
+        ITaiLieuService taiLieuService) : base(hoiDapRepo)
         {
             _hoiDapRepo = hoiDapRepo;
             _likeRepo = likeRepo;
@@ -61,6 +64,7 @@ namespace Eduverse.Service.HoiDapService
             _notificationPublisher = notificationPublisher;
             _khoaHocRepo = khoaHocRepo;
             _geminiService = geminiService;
+            _taiLieuService = taiLieuService;
         }
 
         private Guid LayUserId()
@@ -231,7 +235,8 @@ namespace Eduverse.Service.HoiDapService
                 NguoiTraLoiTen = nguoiDung?.HoTen,
                 NguoiTraLoiAnh = nguoiDung?.AnhDaiDien,
                 NgayTao = traLoi.NgayTao ?? traLoi.CreatedDate,
-                LaCuaToi = traLoi.IdNguoiDung == userId
+                LaCuaToi = traLoi.IdNguoiDung == userId,
+                IdTraLoiDuocReply = traLoi.IdTraLoiDuocReply,
             };
         }
 
@@ -402,6 +407,7 @@ namespace Eduverse.Service.HoiDapService
                     NguoiTraLoiAnh = u?.AnhDaiDien,
                     NgayTao = t.NgayTao ?? t.CreatedDate,
                     LaCuaToi = t.IdNguoiDung == userId,
+                    IdTraLoiDuocReply = t.IdTraLoiDuocReply,
                 };
             }).ToList();
 
@@ -500,6 +506,7 @@ namespace Eduverse.Service.HoiDapService
                 IdKhoaHoc = cauHoi.IdKhoaHoc,
                 IdBaiGiang = cauHoi.IdBaiGiang,
                 IdHoiDapCha = request.IdCauHoi,  // ← luôn gán về câu hỏi GỐC HD01
+                IdTraLoiDuocReply = request.IdTraLoiDuocReply,
                 LaGiangVien = laGV,
                 NgayTao = DateTime.Now,
             };
@@ -526,6 +533,7 @@ namespace Eduverse.Service.HoiDapService
                 NgayTao = reply.NgayTao ?? DateTime.Now,
                 LaCuaToi = true,
                 DanhSachReply = new(),
+                IdTraLoiDuocReply = reply.IdTraLoiDuocReply,
             };
         }
 
@@ -737,22 +745,20 @@ namespace Eduverse.Service.HoiDapService
         {
             var userId = LayUserId();
 
-            // 1. Lấy câu hỏi gốc (dùng đúng điều kiện IdHoiDapCha == null như GetChiTiet)
             var cauHoi = await _hoiDapRepo.GetQueryable()
-                .FirstOrDefaultAsync(x => x.Id == idCauHoi
-                                       && x.IdHoiDapCha == null
-                                       && !x.IsDeleted)
+                .FirstOrDefaultAsync(x => x.Id == idCauHoi && x.IdHoiDapCha == null && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy câu hỏi");
 
-            // 2. Tái dùng đúng logic quyền QnA đã có (LaChuSoHuu || QnA)
             if (!await CoQuyenQnA(cauHoi.IdKhoaHoc!.Value, userId))
                 throw new Exception("Bạn không có quyền dùng AI gợi ý cho câu hỏi này");
 
-            // 3. Mô tả khóa học
             var khoaHoc = await _khoaHocRepo.GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == cauHoi.IdKhoaHoc && !x.IsDeleted);
 
-            // 4. Tiêu đề bài giảng (nếu có)
+            string? noiDungBaiGiang = cauHoi.IdBaiGiang.HasValue
+            ? await _taiLieuService.LayNoiDungTaiLieuTheoBaiGiangAsync(cauHoi.IdBaiGiang.Value)
+            : null;
+
             string? tieuDeBaiGiang = null;
             if (cauHoi.IdBaiGiang.HasValue)
             {
@@ -762,40 +768,49 @@ namespace Eduverse.Service.HoiDapService
                     .FirstOrDefaultAsync();
             }
 
-            var traLois = await _hoiDapRepo.GetQueryable()
-                .Where(x => x.IdHoiDapCha == idCauHoi && !x.IsDeleted)
-                .OrderBy(x => x.NgayTao)
-                .ToListAsync();
-
-            var traLoiUserIds = traLois
-                .Where(x => x.IdNguoiDung.HasValue)
-                .Select(x => x.IdNguoiDung!.Value)
-                .Distinct()
-                .ToList();
-
-            var traLoiUsers = await _appUserService.GetQueryable()
-                .Where(x => traLoiUserIds.Contains(x.Id))
-                .Select(x => new { x.Id, x.HoTen })
-                .ToListAsync();
-
-            // Danh sách "Tên: nội dung" theo đúng thứ tự để AI đọc như 1 đoạn hội thoại
-            var luongHoiThoai = traLois.Select(t =>
-            {
-                var ten = traLoiUsers.FirstOrDefault(u => u.Id == t.IdNguoiDung)?.HoTen ?? "Ẩn danh";
-                var vaiTro = t.LaGiangVien ? "Giảng viên" : "Học viên";
-                return $"{ten} ({vaiTro}): {t.NoiDung}";
-            }).ToList();
-
-            // Nếu đang bấm nút "Phản hồi" vào 1 người cụ thể, xác định người đó để AI ưu tiên nhắm tới
+            // Dựng đúng 1 nhánh dẫn từ câu hỏi gốc tới điểm đang reply
+            var luongHoiThoai = new List<string>();
             string? tenNguoiDangDuocReply = null;
+
             if (idTraLoiDuocReply.HasValue)
             {
-                var traLoiDich = traLois.FirstOrDefault(x => x.Id == idTraLoiDuocReply);
-                if (traLoiDich != null)
-                    tenNguoiDangDuocReply = traLoiUsers.FirstOrDefault(u => u.Id == traLoiDich.IdNguoiDung)?.HoTen;
+                // Lấy toàn bộ trả lời của câu hỏi này 1 lần, dùng để truy vết trong bộ nhớ (tránh N query)
+                var tatCaTraLoi = await _hoiDapRepo.GetQueryable()
+                    .Where(x => x.IdHoiDapCha == idCauHoi && !x.IsDeleted)
+                    .ToListAsync();
+
+                var userIds = tatCaTraLoi
+                    .Where(x => x.IdNguoiDung.HasValue)
+                    .Select(x => x.IdNguoiDung!.Value)
+                    .Distinct()
+                    .ToList();
+                var users = await _appUserService.GetQueryable()
+                    .Where(x => userIds.Contains(x.Id))
+                    .Select(x => new { x.Id, x.HoTen })
+                    .ToListAsync();
+
+                // Truy vết ngược từ điểm đang reply lên tới gốc, theo IdTraLoiDuocReply
+                var nhanh = new List<HoiDap>();
+                var current = tatCaTraLoi.FirstOrDefault(x => x.Id == idTraLoiDuocReply.Value)
+                    ?? throw new Exception("Không tìm thấy câu trả lời cần phản hồi");
+
+                tenNguoiDangDuocReply = users.FirstOrDefault(u => u.Id == current.IdNguoiDung)?.HoTen;
+
+                while (current != null)
+                {
+                    nhanh.Insert(0, current); // chèn đầu để giữ thứ tự gốc -> ngọn
+                    if (!current.IdTraLoiDuocReply.HasValue) break;
+                    current = tatCaTraLoi.FirstOrDefault(x => x.Id == current.IdTraLoiDuocReply.Value);
+                }
+
+                luongHoiThoai = nhanh.Select(t =>
+                {
+                    var ten = users.FirstOrDefault(u => u.Id == t.IdNguoiDung)?.HoTen ?? "Ẩn danh";
+                    var vaiTro = t.LaGiangVien ? "Giảng viên" : "Học viên";
+                    return $"{ten} ({vaiTro}): {t.NoiDung}";
+                }).ToList();
             }
 
-            // Vẫn giữ vài câu hỏi khác cùng khóa học để AI tham khảo văn phong chung (như cũ)
             var qnaGanDay = await _hoiDapRepo.GetQueryable()
                 .Where(x => x.IdKhoaHoc == cauHoi.IdKhoaHoc
                          && x.IdHoiDapCha == null
@@ -810,17 +825,21 @@ namespace Eduverse.Service.HoiDapService
                 cauHoiNoiDung: cauHoi.NoiDung ?? "",
                 tenKhoaHoc: khoaHoc?.TieuDe,
                 moTaKhoaHoc: khoaHoc?.MoTa,
+                noiDungBaiGiang: noiDungBaiGiang,
                 tieuDeBaiGiang: tieuDeBaiGiang,
                 luongHoiThoai: luongHoiThoai,
                 tenNguoiDangDuocReply: tenNguoiDangDuocReply,
                 cacCauHoiTruoc: qnaGanDay.Where(q => !string.IsNullOrWhiteSpace(q)).Select(q => q!).ToList());
+
+            Console.WriteLine("===== PROMPT GỬI GEMINI =====");
+            Console.WriteLine(prompt);
 
             var noiDungGoiY = await _geminiService.GoiYTraLoiCauHoiAsync(prompt);
 
             return new AISuggestionDto
             {
                 NoiDungGoiY = noiDungGoiY,
-                CoNoiDungBaiGiang = !string.IsNullOrWhiteSpace(tieuDeBaiGiang)
+                CoNoiDungBaiGiang = !string.IsNullOrWhiteSpace(noiDungBaiGiang)
             };
         }
 
@@ -829,6 +848,7 @@ namespace Eduverse.Service.HoiDapService
             string? tenKhoaHoc,
             string? moTaKhoaHoc,
             string? tieuDeBaiGiang,
+            string? noiDungBaiGiang,
             List<string> luongHoiThoai,
             string? tenNguoiDangDuocReply,
             List<string> cacCauHoiTruoc)
@@ -842,6 +862,13 @@ namespace Eduverse.Service.HoiDapService
             if (!string.IsNullOrWhiteSpace(tenKhoaHoc)) sb.AppendLine($"Khóa học: {tenKhoaHoc}");
             if (!string.IsNullOrWhiteSpace(moTaKhoaHoc)) sb.AppendLine($"Mô tả khóa học: {moTaKhoaHoc}");
             if (!string.IsNullOrWhiteSpace(tieuDeBaiGiang)) sb.AppendLine($"Bài giảng liên quan: {tieuDeBaiGiang}");
+
+            if (!string.IsNullOrWhiteSpace(noiDungBaiGiang))   // ✅ thêm
+            {
+                sb.AppendLine();
+                sb.AppendLine("Nội dung tài liệu bài giảng (dùng để trả lời bám sát bài học, không bịa nội dung ngoài phạm vi này):");
+                sb.AppendLine(noiDungBaiGiang);
+            }
 
             sb.AppendLine();
             sb.AppendLine($"Câu hỏi gốc của học viên: \"{cauHoiNoiDung}\"");
