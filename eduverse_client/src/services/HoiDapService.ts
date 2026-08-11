@@ -29,6 +29,7 @@ export interface TraLoiDto {
   id: string;
   noiDung: string;
   laGiangVien: boolean;
+  idTraLoiDuocReply?: string;
   ghimTraLoi: boolean;
   soLike: number;
   daLike: boolean;
@@ -68,6 +69,11 @@ export interface PagedResult<T> {
   pageNumber: number;
   pageSize: number;
   totalPages: number;
+}
+
+export interface AISuggestionDto {
+  noiDungGoiY: string;
+  coNoiDungBaiGiang: boolean;
 }
 
 class HoiDapService {
@@ -205,6 +211,23 @@ class HoiDapService {
   async XoaTraLoi(idTraLoi: string): Promise<void> {
     await apiService.delete(`/HoiDap/tra-loi/${idTraLoi}`);
   }
+
+  async GoiYTraLoi(
+    idCauHoi: string,
+    idTraLoiDuocReply?: string,
+  ): Promise<AISuggestionDto> {
+    const params = idTraLoiDuocReply
+      ? `?idTraLoiDuocReply=${idTraLoiDuocReply}`
+      : "";
+    console.log("📤 GoiYTraLoi request:", { idCauHoi, idTraLoiDuocReply }); // ✅ thêm
+    const res = await apiService.post(
+      `/HoiDap/${idCauHoi}/goi-y-tra-loi${params}`,
+    );
+    console.log("📥 GoiYTraLoi response:", res.data); // ✅ thêm
+    return (res as { data: AISuggestionDto }).data;
+  }
+
+  // Y la khoa hoc noi chung X la bai giang noi rieng
 }
 
 export default new HoiDapService();

@@ -30,6 +30,7 @@ import PushPinIcon from "@mui/icons-material/PushPin";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ReplyIcon from "@mui/icons-material/Reply";
@@ -119,6 +120,12 @@ export default function QnAManagerContent() {
   const [noiDungReply, setNoiDungReply] = useState("");
   const [dangReply, setDangReply] = useState(false);
 
+  // ── AI gợi ý ──────────────────────────────────────────────────────
+  const [dangGoiY, setDangGoiY] = useState(false);
+  const [aiCoNoiDungBaiGiang, setAiCoNoiDungBaiGiang] = useState<
+    boolean | null
+  >(null);
+
   const [error, setError] = useState<string | null>(null);
 
   // ── Load ──────────────────────────────────────────────────────────
@@ -165,6 +172,7 @@ export default function QnAManagerContent() {
     setLoadingChiTiet(true);
     setNoiDungTraLoi("");
     setReplyingTo(null);
+    setAiCoNoiDungBaiGiang(null);
     try {
       const data = await HoiDapService.GetChiTiet(cauHoi.id);
       console.log("🔎 cauHoiMo nhận được:", data);
@@ -175,6 +183,41 @@ export default function QnAManagerContent() {
       setLoadingChiTiet(false);
     }
   }, []);
+
+  // ── AI gợi ý trả lời ─────────────────────────────────────────────
+  const goiYTraLoi = useCallback(async () => {
+    if (!cauHoiMo) return;
+    setDangGoiY(true);
+    try {
+      const goiY = await HoiDapService.GoiYTraLoi(
+        cauHoiMo.id,
+        replyingTo?.idTraLoi,
+      );
+      setNoiDungTraLoi(goiY.noiDungGoiY);
+      setAiCoNoiDungBaiGiang(goiY.coNoiDungBaiGiang);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setDangGoiY(false);
+    }
+  }, [cauHoiMo]);
+
+  const goiYTraLoiReply = useCallback(async () => {
+    if (!cauHoiMo || !replyingTo) return;
+    setDangGoiY(true);
+    try {
+      const goiY = await HoiDapService.GoiYTraLoi(
+        cauHoiMo.id,
+        replyingTo.idTraLoi,
+      );
+      setNoiDungReply(goiY.noiDungGoiY);
+      setAiCoNoiDungBaiGiang(goiY.coNoiDungBaiGiang);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setDangGoiY(false);
+    }
+  }, [cauHoiMo, replyingTo]);
 
   // ── Trả lời ───────────────────────────────────────────────────────
   const traLoi = useCallback(async () => {
@@ -1048,6 +1091,7 @@ export default function QnAManagerContent() {
                         <CloseIcon sx={{ fontSize: 14 }} />
                       </IconButton>
                     </Box>
+
                     <TextField
                       fullWidth
                       multiline
@@ -1056,7 +1100,7 @@ export default function QnAManagerContent() {
                       placeholder={`Phản hồi @${replyingTo.tenNguoi}...`}
                       value={noiDungReply}
                       onChange={(e) => setNoiDungReply(e.target.value)}
-                      disabled={dangReply}
+                      disabled={dangReply || dangGoiY}
                       autoFocus
                       sx={{
                         mb: 1,
@@ -1068,48 +1112,91 @@ export default function QnAManagerContent() {
                         },
                       }}
                     />
+
+                    {aiCoNoiDungBaiGiang === false && (
+                      <Typography
+                        sx={{ fontSize: 11.5, color: "#D97706", mb: 1 }}
+                      >
+                        ⚠️ AI chưa đọc được tài liệu của bài giảng này (chưa có
+                        tài liệu hoặc chưa được duyệt), chỉ dựa vào thông tin
+                        khóa học.
+                      </Typography>
+                    )}
+
                     <Box
                       sx={{
                         display: "flex",
-                        justifyContent: "flex-end",
-                        gap: 1,
+                        justifyContent: "space-between",
+                        alignItems: "center",
                         pb: 1.5,
                       }}
                     >
                       <Button
                         size="small"
-                        onClick={() => setReplyingTo(null)}
+                        startIcon={
+                          dangGoiY ? (
+                            <CircularProgress
+                              size={14}
+                              sx={{ color: MAU.chinh }}
+                            />
+                          ) : (
+                            <AutoAwesomeIcon sx={{ fontSize: 16 }} />
+                          )
+                        }
+                        onClick={goiYTraLoiReply}
+                        disabled={dangGoiY || dangReply}
                         sx={{
-                          textTransform: "none",
-                          color: "#6B7280",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Hủy
-                      </Button>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        disabled={dangReply || !noiDungReply.trim()}
-                        onClick={reply}
-                        sx={{
-                          bgcolor: MAU.chinh,
                           textTransform: "none",
                           fontWeight: 700,
-                          borderRadius: "8px",
-                          boxShadow: "none",
-                          "&:hover": {
-                            bgcolor: MAU.chinhDam,
-                            boxShadow: "none",
-                          },
+                          fontSize: 12.5,
+                          color: MAU.chinh,
+                          "&:hover": { bgcolor: `${MAU.chinh}0A` },
                         }}
                       >
-                        {dangReply ? (
-                          <CircularProgress size={14} sx={{ color: "#fff" }} />
-                        ) : (
-                          "Gửi phản hồi"
-                        )}
+                        {dangGoiY ? "Đang tạo gợi ý..." : "AI gợi ý"}
                       </Button>
+
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Button
+                          size="small"
+                          onClick={() => setReplyingTo(null)}
+                          sx={{
+                            textTransform: "none",
+                            color: "#6B7280",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Hủy
+                        </Button>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled={
+                            dangReply || dangGoiY || !noiDungReply.trim()
+                          }
+                          onClick={reply}
+                          sx={{
+                            bgcolor: MAU.chinh,
+                            textTransform: "none",
+                            fontWeight: 700,
+                            borderRadius: "8px",
+                            boxShadow: "none",
+                            "&:hover": {
+                              bgcolor: MAU.chinhDam,
+                              boxShadow: "none",
+                            },
+                          }}
+                        >
+                          {dangReply ? (
+                            <CircularProgress
+                              size={14}
+                              sx={{ color: "#fff" }}
+                            />
+                          ) : (
+                            "Gửi phản hồi"
+                          )}
+                        </Button>
+                      </Box>
                     </Box>
                   </Box>
                 )}
@@ -1133,9 +1220,9 @@ export default function QnAManagerContent() {
                       placeholder="Viết câu trả lời với tư cách giảng viên..."
                       value={noiDungTraLoi}
                       onChange={(e) => setNoiDungTraLoi(e.target.value)}
-                      disabled={dangTraLoi}
+                      disabled={dangTraLoi || dangGoiY}
                       sx={{
-                        mb: 1.5,
+                        mb: 1,
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "10px",
                           fontSize: 14,
@@ -1144,11 +1231,56 @@ export default function QnAManagerContent() {
                         },
                       }}
                     />
-                    <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+
+                    {/* Cảnh báo nếu AI thiếu context bài giảng */}
+                    {aiCoNoiDungBaiGiang === false && (
+                      <Typography
+                        sx={{ fontSize: 11.5, color: "#D97706", mb: 1 }}
+                      >
+                        ⚠️ AI chưa đọc được tài liệu của bài giảng này (chưa có
+                        tài liệu hoặc chưa được duyệt), chỉ dựa vào thông tin
+                        khóa học.
+                      </Typography>
+                    )}
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Button
+                        size="small"
+                        startIcon={
+                          dangGoiY ? (
+                            <CircularProgress
+                              size={14}
+                              sx={{ color: MAU.chinh }}
+                            />
+                          ) : (
+                            <AutoAwesomeIcon sx={{ fontSize: 16 }} />
+                          )
+                        }
+                        onClick={goiYTraLoi}
+                        disabled={dangGoiY || dangTraLoi}
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 700,
+                          fontSize: 12.5,
+                          color: MAU.chinh,
+                          "&:hover": { bgcolor: `${MAU.chinh}0A` },
+                        }}
+                      >
+                        {dangGoiY ? "Đang tạo gợi ý..." : "AI gợi ý"}
+                      </Button>
+
                       <Button
                         variant="contained"
                         size="small"
-                        disabled={dangTraLoi || !noiDungTraLoi.trim()}
+                        disabled={
+                          dangTraLoi || dangGoiY || !noiDungTraLoi.trim()
+                        }
                         onClick={traLoi}
                         sx={{
                           bgcolor: MAU.chinh,
