@@ -1256,7 +1256,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 }
                 await _dangKyKhoaHocRepository.SaveAsync();
 
-                await CapNhatTienDoHoc(idKhoaHocMoi, mappingList);
+                await CapNhatTienDoHoc(idKhoaHocMoi,idKhoaHocCu, mappingList);
 
                 return mappingList;
             }
@@ -1267,64 +1267,101 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         }
 
 
-        private async Task<bool> CapNhatTienDoHoc(Guid idKhoaHocMoi, List<DangKyMapping> danhSachMappingDangKy)
+        private async Task<bool> CapNhatTienDoHoc(Guid idKhoaHocMoi,Guid idKhoaHocCu,List<DangKyMapping> danhSachMappingDangKy)
         {
             try
             {
-
+                // 1. Lấy mapping bài giảng cũ -> mới
+                // Đồng thời lấy IdVideo của cả 2 bài giảng để so sánh
                 var baiGiangs = await (
                     from p in _phanRepository.GetQueryable()
-                    join bg in _baiGiangRepository.GetQueryable()
-                        on p.Id equals bg.IdPhan
+                    join bgMoi in _baiGiangRepository.GetQueryable()
+                        on p.Id equals bgMoi.IdPhan
+                    join bgCu in _baiGiangRepository.GetQueryable()
+                        on bgMoi.IdBanGhiTruoc equals bgCu.Id
                     where p.IdKhoaHoc == idKhoaHocMoi
                           && !p.IsDeleted
-                          && !bg.IsDeleted
-                          && bg.IdBanGhiTruoc != null
+                          && !bgMoi.IsDeleted
+                          && !bgCu.IsDeleted
                     select new
                     {
-                        IdBaiGiangMoi = bg.Id,
-                        IdBaiGiangCu = bg.IdBanGhiTruoc.Value
+                        IdBaiGiangMoi = bgMoi.Id,
+                        IdBaiGiangCu = bgCu.Id,
+
+                        IdVideoMoi = bgMoi.IdVideoBaiGiang,
+                        IdVideoCu = bgCu.IdVideoBaiGiang
                     }
                 ).ToListAsync();
 
                 if (!baiGiangs.Any())
                     return true;
 
-                // Dictionary tra cứu nhanh: IdDangKyCu -> IdDangKyMoi
-                var mapDangKy = danhSachMappingDangKy
-                    .ToDictionary(m => m.IdDangKyCu, m => m.IdDangKyMoi);
+                // 2. Chỉ giữ những bài giảng có cùng video
+                var baiGiangMapping = baiGiangs
+                    .Where(x => x.IdVideoMoi == x.IdVideoCu)
+                    .ToList();
 
-                foreach (var bg in baiGiangs)
+                if (!baiGiangMapping.Any())
+                    return true;
+
+                // Mapping:
+                // IdBaiGiangCu -> IdBaiGiangMoi
+                var mapBaiGiang = baiGiangMapping.ToDictionary(x => x.IdBaiGiangCu,x => x.IdBaiGiangMoi);
+
+                // 3. Mapping đăng ký cũ -> mới
+                var mapDangKy = danhSachMappingDangKy.ToDictionary(x => x.IdDangKyCu,x => x.IdDangKyMoi);
+
+                // 4. Lấy toàn bộ tiến độ của các bài giảng cũ
+                var baiGiangCuIds = baiGiangMapping
+                    .Select(x => x.IdBaiGiangCu)
+                    .Distinct()
+                    .ToList();
+
+                var tienDos = await _tienDoHocTapRepository
+                    .GetQueryable()
+                    .Where(x =>x.IdBaiGiang.HasValue && baiGiangCuIds.Contains(x.IdBaiGiang.Value))
+                    .ToListAsync();
+
+                foreach (var tienDo in tienDos)
                 {
-                    var tienDos = await _tienDoHocTapRepository.GetQueryable()
-                        .Where(x => x.IdBaiGiang == bg.IdBaiGiangCu)
-                        .ToListAsync();
-
-                    foreach (var tienDo in tienDos)
+                    if (!tienDo.IdDangKi.HasValue ||
+                        !tienDo.IdBaiGiang.HasValue)
                     {
-                        // Chỉ cập nhật nếu tìm được đăng ký mới tương ứng
-                        if (mapDangKy.TryGetValue(tienDo.IdDangKi.Value, out var idDangKyMoi))
-                        {
-                            tienDo.IdDangKi = idDangKyMoi;
-                            tienDo.IdBaiGiang = bg.IdBaiGiangMoi;
-                            _tienDoHocTapRepository.Update(tienDo);
-                        }
-                        else
-                        {
-                            // Không tìm thấy đăng ký mới tương ứng -> log để kiểm tra thủ công
-                            _logger?.LogWarning(
-                                "Khong tim thay dang ky moi tuong ung cho tien do (IdTienDo={IdTienDo}, IdDangKyCu={IdDangKyCu})",
-                                tienDo.Id, tienDo.IdDangKi);
-                        }
+                        continue;
                     }
-                }
 
+                    // Tìm bài giảng mới tương ứng
+                    if (!mapBaiGiang.TryGetValue(tienDo.IdBaiGiang.Value,out var idBaiGiangMoi))
+                    {
+                        continue;
+                    }
+
+                    // Tìm đăng ký mới tương ứng
+                    if (!mapDangKy.TryGetValue(tienDo.IdDangKi.Value, out var idDangKyMoi))
+                    {
+                        _logger?.LogWarning(
+                            "Khong tim thay dang ky moi tuong ung " +
+                            "(IdTienDo={IdTienDo}, IdDangKyCu={IdDangKyCu})",
+                            tienDo.Id,
+                            tienDo.IdDangKi);
+
+                        continue;
+                    }
+
+                    // Chỉ những bài giảng có cùng IdVideo
+                    tienDo.IdDangKi = idDangKyMoi;
+                    tienDo.IdBaiGiang = idBaiGiangMoi;
+                    _tienDoHocTapRepository.Update(tienDo);
+                }
                 await _tienDoHocTapRepository.SaveAsync();
+
                 return true;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Lỗi cập nhật tiến độ học: {ex.Message}", ex);
+                throw new Exception(
+                    $"Lỗi cập nhật tiến độ học: {ex.Message}",
+                    ex);
             }
         }
         #endregion

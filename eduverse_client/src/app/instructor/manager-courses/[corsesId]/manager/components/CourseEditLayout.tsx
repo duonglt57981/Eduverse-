@@ -107,7 +107,7 @@ export default function CourseEditLayout({
       case "DaDuyet":
         return { color: "#4ADE80", nhan: "Đã duyệt" };
       case "TuChoi":
-        return { color: "#F87171", nhan: "Từ chối" };
+        return { color: "#F87171", nhan: "Lý do từ chối" };
       case "ChoDuyet":
         return { color: "#FBBF24", nhan: "Chờ duyệt" };
       case "DangDuyet":
@@ -378,7 +378,11 @@ export default function CourseEditLayout({
                   },
                 }}
               >
-                {dangSuaTiep ? "Đang tạo bản nháp..." : "Sửa tiếp"}
+                {dangSuaTiep
+                  ? "Đang tạo bản nháp..."
+                  : trangThai === "DaDuyet"
+                    ? "Sửa tiếp"
+                    : "Sửa lại"}
               </Button>
             )}
 
@@ -392,39 +396,36 @@ export default function CourseEditLayout({
               onDiChuyenDen={onDiChuyenDenTuValidate}
             />
             {/* Nút lịch sử kiểm duyệt*/}
-            {(trangThai === "TuChoi" || trangThai === "DangSua") &&
-              lichSuKiemDuyet != null && (
-                <Button
-                  onClick={() => setMoLichSuKiemDuyet(true)}
-                  startIcon={
-                    <HistoryOutlinedIcon
-                      sx={{ fontSize: 17, color: lichSuButtonStyles.color }}
-                    />
-                  }
-                  size="small"
-                  sx={{
-                    color: "#ECE7E4",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    textTransform: "none",
-                    fontWeight: 700,
-                    fontSize: 12.5,
-                    px: 1.4,
-                    py: 0.8,
-                    gap: 0.3,
-                    "&:hover": {
-                      bgcolor: "rgba(255,255,255,0.08)",
-                      color: "#ffffff",
-                    },
-                  }}
-                  aria-label="Lịch sử kiểm duyệt khóa học"
-                  title={lichSuKiemDuyet?.lyDo || ""}
-                >
-                  {coLichSuKiemDuyet
-                    ? lichSuButtonStyles.nhan
-                    : "Lịch sử duyệt"}
-                </Button>
-              )}
+            {trangThai === "DangSua" && lichSuKiemDuyet != null && (
+              <Button
+                onClick={() => setMoLichSuKiemDuyet(true)}
+                startIcon={
+                  <HistoryOutlinedIcon
+                    sx={{ fontSize: 17, color: lichSuButtonStyles.color }}
+                  />
+                }
+                size="small"
+                sx={{
+                  color: "#ECE7E4",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: 12.5,
+                  px: 1.4,
+                  py: 0.8,
+                  gap: 0.3,
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.08)",
+                    color: "#ffffff",
+                  },
+                }}
+                aria-label="Lịch sử kiểm duyệt khóa học"
+                title={lichSuKiemDuyet?.lyDo || ""}
+              >
+                {coLichSuKiemDuyet ? lichSuButtonStyles.nhan : "Lịch sử duyệt"}
+              </Button>
+            )}
           </Box>
         </Box>
       </Box>
@@ -538,7 +539,7 @@ export default function CourseEditLayout({
           {isReadOnly && (
             <>
               {/* Thông báo trạng thái chung */}
-              <Box
+              {/* <Box
                 sx={{
                   mb: 2.5,
                   px: 2.5,
@@ -567,7 +568,7 @@ export default function CourseEditLayout({
                       ? "❌ Khóa học bị từ chối — bạn chỉ có thể xem nội dung."
                       : "⏳ Khóa học đang trong quá trình duyệt — bạn chỉ có thể xem nội dung."}
                 </Typography>
-              </Box>
+              </Box> */}
 
               {/* Hiển thị lý do từ chối nếu có */}
               {trangThai === "TuChoi" && lyDoTuChoi && (

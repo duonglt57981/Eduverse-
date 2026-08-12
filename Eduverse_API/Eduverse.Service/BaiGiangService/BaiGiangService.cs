@@ -14,11 +14,13 @@ using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService.Dto;
+using Eduverse.Service.SignalRService;
 using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using static Grpc.Core.Metadata;
 
 
 namespace Eduverse.Service.BaiGiangService
@@ -35,6 +37,7 @@ namespace Eduverse.Service.BaiGiangService
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly ILyDoTuChoiRepository _lyDoTuChoiRepository;
+        private readonly ISignalRService _signalRService;
 
         public BaiGiangService(
             IBaiGiangRepository baiGiangRepository,
@@ -47,7 +50,8 @@ namespace Eduverse.Service.BaiGiangService
             IBunnyService bunnyService,
             IKhoaHoc_GiangVienRepository khoaHocGVRepository,
             IKhoaHocRepository khoaHocRepository,
-            ILyDoTuChoiRepository lyDoTuChoiRepository
+            ILyDoTuChoiRepository lyDoTuChoiRepository,
+            ISignalRService signalRService
             ) : base(baiGiangRepository)
         {
             _cloudinaryService = cloudinaryService;
@@ -58,6 +62,7 @@ namespace Eduverse.Service.BaiGiangService
             _httpContextAccessor = httpContextAccessor;
             _bunnyService = bunnyService;
             _lyDoTuChoiRepository = lyDoTuChoiRepository;
+            _signalRService = signalRService;
             _khoaHocGVRepository = khoaHocGVRepository;
             _khoaHocRepository = khoaHocRepository;
         }
@@ -179,6 +184,11 @@ namespace Eduverse.Service.BaiGiangService
             await CreateAsync(entity);
             await SaveAsync();
 
+            if (phanHoc.IdKhoaHoc.HasValue)
+            {
+                await _signalRService.NotifyLectureUpdated(phanHoc.IdKhoaHoc.Value, entity.Id);
+            }
+
             return _mapper.Map<BaiGiang, BaiGiangDto>(entity);
         }
 
@@ -228,6 +238,13 @@ namespace Eduverse.Service.BaiGiangService
             if (thuTuDaTon)
                 throw new Exception($"Thứ tự {request.ThuTuSapXep} đã tồn tại");
 
+            var courseId = await (
+                from ph in _phanRepository.GetQueryable()
+                join kh in _khoaHocRepository.GetQueryable()
+                    on ph.IdKhoaHoc equals kh.Id
+                where ph.Id == banGoc.IdPhan
+                select kh.Id
+            ).FirstOrDefaultAsync();
 
 
             string video = banGoc.URLBaiGiang;
@@ -353,7 +370,8 @@ namespace Eduverse.Service.BaiGiangService
                 await SaveAsync();
             }
 
-            
+
+            await _signalRService.NotifyLectureUpdated(courseId, banGoc.Id);
 
             return _mapper.Map<BaiGiang, BaiGiangDto>(banNhap);
         }
@@ -374,6 +392,12 @@ namespace Eduverse.Service.BaiGiangService
             if (baiGiang.TrangThaiPheDuyet == "ChoDuyet" || baiGiang.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
 
+            var courseId = await ( from bg in GetQueryable()
+                join ph in _phanRepository.GetQueryable() on bg.IdPhan equals ph.Id
+                join kh in _khoaHocRepository.GetQueryable()on ph.IdKhoaHoc equals kh.Id
+                where bg.Id == id
+                select kh.Id).FirstOrDefaultAsync();
+
             var coNguoiHoc = await (
                  from ph in _phanRepository.GetQueryable()
                  join dk in _dangkyKhoaHocRepository.GetQueryable()
@@ -382,12 +406,19 @@ namespace Eduverse.Service.BaiGiangService
                  select dk.Id
              ).AnyAsync();
 
+
+
             baiGiang.TrangThai = coNguoiHoc == false ? "DaXoa" : "NgungHoatDong";
 
             await DeleteAsync(baiGiang);
             await SaveAsync();
+
+            await _signalRService.NotifyLectureUpdated(courseId, id);
+
             return true;
         }
+
+
         // ── Helper: kiểm tra chủ sở hữu HOẶC cộng tác viên có quyền trên khóa học ──
         private async Task<bool> CoQuyenTrenKhoaHoc(Guid idKhoaHoc, Guid userId, Func<KhoaHoc_GiangVien, bool> capQuyenCuThe = null)
         {

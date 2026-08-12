@@ -21,6 +21,7 @@ using Eduverse.Service.ElasticsearchService;
 using Eduverse.Service.EmailService;
 using Eduverse.Service.GeminiService;
 using Eduverse.Service.LoiMoiGiangVienService;
+using Eduverse.Service.SignalRService;
 using Eduverse.Service.SmsService;
 using Eduverse.Service.ThongBaoService;
 using Eduverse.Service.YeuCauRutTienService;
@@ -87,7 +88,6 @@ namespace Eduverse.Api
             builder.Services.AddScoped<ILoiMoiGiangVienService, LoiMoiGiangVienService>();
             builder.Services.AddDependencyInjection();
             builder.Services.AddHttpContextAccessor();
-            builder.Services.AddSignalR();
             builder.Services.AddSwaggerGen();
             builder.Services.AddAutoMapper(cfg =>
             {
@@ -143,6 +143,10 @@ namespace Eduverse.Api
             });
 
             builder.Services.AddScoped<IBunnyService, BunnyService>();
+            builder.Services.AddSignalR()
+                .AddJsonProtocol(options => {
+                    options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+                });
 
             // ================== BUNNY STORAGE ==================
             builder.Services.Configure<BunnyStorageSettings>(
@@ -232,7 +236,7 @@ namespace Eduverse.Api
                         var path = context.HttpContext.Request.Path;
 
                         if (!string.IsNullOrEmpty(accessToken) &&
-                            path.StartsWithSegments("/notificationHub"))
+                            (path.StartsWithSegments("/courseHub") || path.StartsWithSegments("/notificationHub")))
                         {
                             context.Token = accessToken;
                         }
@@ -373,15 +377,29 @@ namespace Eduverse.Api
                     }
                 });
             });
-            app.UseCors("AllowFrontend");
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor |
+                ForwardedHeaders.XForwardedProto,
+
+                KnownProxies = { }
+            });
+
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowFrontend");
 
             app.UseAuthentication();
             app.UseAuthorization();
 
+            //====== SignalRHub =======
+            app.MapHub<SignalRHub>("/courseHub");
+            app.MapHub<NotificationHub>("/notificationHub");
+
 
             app.MapControllers();
-            app.MapHub<NotificationHub>("/notificationHub");
 
             using (var scope = app.Services.CreateScope())
             {
@@ -433,11 +451,7 @@ namespace Eduverse.Api
             // Cấu hình Xabe.FFmpeg sử dụng thư mục vừa tải
             FFmpeg.SetExecutablesPath(ffmpegPath);
 
-            app.UseForwardedHeaders(new ForwardedHeadersOptions
-            {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-            });
-
+           
             app.Run();
         }
         private static void AddDependencyInjection(this IServiceCollection services)

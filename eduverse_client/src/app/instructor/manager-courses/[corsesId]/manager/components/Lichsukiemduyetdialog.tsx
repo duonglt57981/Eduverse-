@@ -42,7 +42,7 @@ export default function LichSuKiemDuyetDialog({
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <HistoryOutlinedIcon sx={{ color: MAU.chinh, fontSize: 22 }} />
-          Lịch sử kiểm duyệt
+          Lý do từ chối
         </Box>
         <IconButton size="small" onClick={onClose}>
           <CloseIcon fontSize="small" />

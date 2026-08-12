@@ -182,7 +182,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   }, [fetchDetail]);
 
   const goBackToList = useCallback(() => {
-    router.push("/personnel/approve-courses");
+    router.push("/admin/approve-courses");
   }, [router]);
 
   // ── Hàm đệ quy tìm và cập nhật lý do từ chối trong cây dữ liệu detail ──

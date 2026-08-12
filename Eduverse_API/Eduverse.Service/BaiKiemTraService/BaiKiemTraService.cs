@@ -24,6 +24,7 @@ using Eduverse.Service.LanLamBaiKiemTraService.Dto;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService;
 using Eduverse.Service.PhanService.Dto;
+using Eduverse.Service.SignalRService;
 using Eduverse.Service.TienDoHocTapService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +51,7 @@ namespace Eduverse.Service.BaiKiemTraService
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly ILichSuKiemDuyetKhoaHocService _lichSuKiemDuyetKhoaHocService;
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
+        private readonly ISignalRService _signalRService;
 
         private const int HEARTBEAT_TIMEOUT_SECONDS = 20;
 
@@ -70,7 +72,8 @@ namespace Eduverse.Service.BaiKiemTraService
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
             IKhoaHocRepository khoaHocRepository,
             IHttpContextAccessor httpContextAccessor,
-            IKhoaHoc_GiangVienRepository khoaHocGVRepository
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository,
+            ISignalRService signalRService
             ) : base(baiKiemTraRepository)
         {
             _lanLamBaiKiemTraService = lanLamBaiKiemTraService;
@@ -89,6 +92,7 @@ namespace Eduverse.Service.BaiKiemTraService
             _eduverseContext = eduverseContext;
             _khoaHocRepository = khoaHocRepository;
             _khoaHocGVRepository = khoaHocGVRepository;
+            _signalRService = signalRService;
         }
 
         public async Task<CreateBaiKiemTraDto> CreateQuiz(CreateBaiKiemTraRequest request)
@@ -125,6 +129,11 @@ namespace Eduverse.Service.BaiKiemTraService
                 throw new Exception("Mô tả không được vượt quá 299 ký tự.");
             try
             {
+                var courseId = await _phanService.GetQueryable()
+                    .Where(p => p.Id == request.IdPhan.Value)
+                    .Select(p => p.IdKhoaHoc)
+                    .FirstOrDefaultAsync();
+
                 var newQuiz = new BaiKiemTra
                 {
                     Id = Guid.NewGuid(),
@@ -143,6 +152,12 @@ namespace Eduverse.Service.BaiKiemTraService
 
                 await CreateAsync(newQuiz);
                 await SaveAsync();
+
+                if(courseId != null)
+                {
+                    await _signalRService.NotifyQuizUpdated(courseId.Value, newQuiz.Id);
+                }
+
                 return new CreateBaiKiemTraDto
                 {
                     Id = newQuiz.Id,
@@ -196,6 +211,11 @@ namespace Eduverse.Service.BaiKiemTraService
                 throw new Exception("Mô tả không được vượt quá 299 ký tự.");
             try
             {
+                var courseId = await(from bkt in GetQueryable()
+                                     join ph in _phanService.GetQueryable() on bkt.IdPhan equals ph.Id
+                                     where bkt.Id == request.IdBaiKiemTra
+                                     select ph.IdKhoaHoc).FirstOrDefaultAsync();
+
                 entity.TenBaiKiemTra = request.TenBaiKiemTra.Trim();
                 entity.MoTa = request.MoTa?.Trim();
                 entity.TrangThai = "DangSua";
@@ -205,6 +225,11 @@ namespace Eduverse.Service.BaiKiemTraService
 
                 await UpdateAsync(entity);
                 await SaveAsync();
+
+                if (courseId != null)
+                {
+                    await _signalRService.NotifyQuizUpdated(courseId.Value, request.IdBaiKiemTra ?? Guid.Empty);
+                }
 
                 return _mapper.Map<BaiKiemTra, UpdateBaiKiemTraDto>(entity);
             }
@@ -235,6 +260,11 @@ namespace Eduverse.Service.BaiKiemTraService
             if (quiz.TrangThaiPheDuyet == "ChoDuyet" || quiz.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
 
+            var courseId = await (from bkt in GetQueryable()
+                                   join ph in _phanService.GetQueryable() on bkt.IdPhan equals ph.Id
+                                   where bkt.Id == quiz.Id
+                                   select ph.IdKhoaHoc).FirstOrDefaultAsync();
+
             // Kiểm tra đã có học viên đăng ký chưa
             var coNguoiHoc = await (
                 from ph in _phanRepository.GetQueryable()
@@ -247,6 +277,12 @@ namespace Eduverse.Service.BaiKiemTraService
             quiz.TrangThai = coNguoiHoc ? "NgungHoatDong" : "DaXoa";
             await DeleteAsync(quiz);
             await SaveAsync();
+
+            if (courseId != null)
+            {
+                await _signalRService.NotifyQuizUpdated(courseId.Value, id);
+            }
+
             return true;
         }
 

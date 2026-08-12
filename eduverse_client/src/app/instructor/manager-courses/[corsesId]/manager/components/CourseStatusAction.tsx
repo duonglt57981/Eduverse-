@@ -112,10 +112,12 @@ export default function CourseStatusAction({
   if (trangThai === "TuChoi") {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Typography sx={{ fontSize: 13, color: "#ffb4b4", maxWidth: 360 }}>
+        {/* <Typography sx={{ fontSize: 13, color: "#ffb4b4", maxWidth: 360 }}>
           Bị từ chối{lyDoTuChoi ? `: ${lyDoTuChoi}` : "."}
-        </Typography>
-        <Typography sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}>
+        </Typography> */}
+        <Typography
+          sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}
+        >
           Vui lòng chỉnh sửa và gửi lại
         </Typography>
       </Box>

@@ -566,17 +566,27 @@ function ViewerBody({
                       {idx + 1}
                     </Typography>
                   </Box>
-                  <Typography
+                  {/* Nội dung câu hỏi có thể chứa HTML (bold, italic, ảnh, danh sách...) nên render bằng dangerouslySetInnerHTML thay vì text thuần */}
+                  <Box
                     sx={{
+                      flex: 1,
                       fontWeight: 600,
                       color: COLORS.ink,
                       fontSize: 15,
                       lineHeight: 1.5,
-                      flex: 1,
+                      "& p": { m: 0 },
+                      "& img": {
+                        maxWidth: "100%",
+                        borderRadius: 1,
+                        display: "block",
+                        my: 0.5,
+                      },
+                      "& ul, & ol": { pl: 3, m: 0 },
                     }}
-                  >
-                    {ch.noiDungCauHoi ?? ch.tieuDe}
-                  </Typography>
+                    dangerouslySetInnerHTML={{
+                      __html: ch.noiDungCauHoi ?? ch.tieuDe ?? "",
+                    }}
+                  />
                 </Box>
 
                 <Box sx={{ ml: 4.5, mt: 1.5 }}>

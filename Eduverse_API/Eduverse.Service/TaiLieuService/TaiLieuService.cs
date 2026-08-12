@@ -12,11 +12,14 @@ using Eduverse.Service.Core.Mapper;
 using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhoaHocService.Request;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
+using Eduverse.Service.SignalRService;
 using Eduverse.Service.TaiLieuService.Dto;
 using Eduverse.Service.TaiLieuService.Request;
+using Elastic.Clients.Elasticsearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using static Grpc.Core.Metadata;
 
 
 namespace Eduverse.Service.TaiLieuService
@@ -32,6 +35,7 @@ namespace Eduverse.Service.TaiLieuService
         private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
         private readonly IKhoaHocRepository _khoaHocRepository; 
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
+        private readonly ISignalRService _signalRService;
         public TaiLieuService( 
             IBaiGiangRepository baiGiangRepository,
             ITaiLieuRepository taiLieuRepository,
@@ -42,7 +46,8 @@ namespace Eduverse.Service.TaiLieuService
             IPhanRepository phanRepository,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             IKhoaHocRepository khoaHocRepository, 
-        IKhoaHoc_GiangVienRepository khoaHocGVRepository
+        IKhoaHoc_GiangVienRepository khoaHocGVRepository,
+            ISignalRService signalRService
             ) : base(taiLieuRepository)
         {
             _baiGiangRepository = baiGiangRepository;
@@ -54,6 +59,7 @@ namespace Eduverse.Service.TaiLieuService
             _dangKyKhoaHocRepository = dangKyKhoaHocRepository;
             _khoaHocRepository = khoaHocRepository;
             _khoaHocGVRepository = khoaHocGVRepository;
+            _signalRService = signalRService;
         }
 
 
@@ -79,6 +85,12 @@ namespace Eduverse.Service.TaiLieuService
 
             await _lichSuKiemDuyetKhoaHocService.KiemTraVaNemExceptionAsync(request.TenTaiLieu);
 
+            var courseId = await (from bg in _baiGiangRepository.GetQueryable()
+                                  join ph in _phanRepository.GetQueryable() on bg.IdPhan equals ph.Id
+                                  join kh in _khoaHocRepository.GetQueryable() on ph.IdKhoaHoc equals kh.Id
+                                  where bg.Id == request.IdBaiGiang
+                                  select kh.Id).FirstOrDefaultAsync();
+
             var entity = new TaiLieu
             {
                 IdBaiGiang = request.IdBaiGiang,
@@ -92,6 +104,9 @@ namespace Eduverse.Service.TaiLieuService
 
             await CreateAsync(entity);
             await SaveAsync();
+
+            await _signalRService.NotifyDocumentUpdated(courseId, entity.Id);
+
             return _mapper.Map<TaiLieu, TaiLieuDto>(entity);
         }
 
@@ -184,6 +199,12 @@ namespace Eduverse.Service.TaiLieuService
             if (taiLieu.TrangThaiPheDuyet == "ChoDuyet" || taiLieu.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");
 
+            var courseId = await (from tl in GetQueryable()
+                                  join bg in _baiGiangRepository.GetQueryable() on tl.IdBaiGiang equals bg.Id
+                                  join ph in _phanRepository.GetQueryable() on bg.IdPhan equals ph.Id
+                                  join kh in _khoaHocRepository.GetQueryable() on ph.IdKhoaHoc equals kh.Id
+                                  where tl.Id == id
+                                  select kh.Id).FirstOrDefaultAsync();
             var coNguoiHoc = await (
                  from ph in _phanRepository.GetQueryable()
                  join dk in _dangKyKhoaHocRepository.GetQueryable()
@@ -199,6 +220,9 @@ namespace Eduverse.Service.TaiLieuService
 
             await DeleteAsync(taiLieu);
             await SaveAsync();
+
+            await _signalRService.NotifyDocumentUpdated(courseId, id);
+
             return true;
 
         }

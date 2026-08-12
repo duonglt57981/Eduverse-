@@ -109,6 +109,10 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
 
+// ===== Import SignalR & Next =====
+import * as signalR from "@microsoft/signalr";
+import { useParams } from "next/navigation";
+
 // ===== CSS Animation =====
 const pulseKeyframes = `
   @keyframes pulse {
@@ -878,9 +882,25 @@ function LectureItem({
                   </IconButton>
                 </>
               )}
-              {/* Hiển thị icon chấm than nếu có lý do từ chối */}
+              {/* Hiển thị từ chối bìa giảng */}
               {hasLyDo && (
-                <Tooltip title={lyDoTuChoi.lyDo} placement="top">
+                <Tooltip
+                  title={
+                    <Box
+                      sx={{
+                        fontSize: 12.5,
+                        lineHeight: 1.6,
+                        "& p": { margin: 0 },
+                        "& ul, & ol": { margin: "4px 0", paddingLeft: "18px" },
+                      }}
+                      dangerouslySetInnerHTML={{ __html: lyDoTuChoi.lyDo }}
+                    />
+                  }
+                  placement="top"
+                  slotProps={{
+                    tooltip: { sx: { maxWidth: 320 } },
+                  }}
+                >
                   <IconButton
                     {...noPropagation}
                     size="small"
@@ -1161,9 +1181,25 @@ function QuizItem({
                   </Tooltip>
                 </>
               )}
-              {/* Hiển thị icon chấm than nếu có lý do từ chối */}
+              {/* Hiển thị lý do qiuzzz*/}
               {hasLyDo && (
-                <Tooltip title={lyDoTuChoi.lyDo} placement="top">
+                <Tooltip
+                  title={
+                    <Box
+                      sx={{
+                        fontSize: 12.5,
+                        lineHeight: 1.6,
+                        "& p": { margin: 0 },
+                        "& ul, & ol": { margin: "4px 0", paddingLeft: "18px" },
+                      }}
+                      dangerouslySetInnerHTML={{ __html: lyDoTuChoi.lyDo }}
+                    />
+                  }
+                  placement="top"
+                  slotProps={{
+                    tooltip: { sx: { maxWidth: 320 } },
+                  }}
+                >
                   <IconButton
                     {...noPropagation}
                     size="small"
@@ -2984,6 +3020,10 @@ export default function CurriculumContent() {
     trangThai,
   } = useCourseEdit();
 
+  // Lấy courseId từ URL
+  const params = useParams();
+  const courseId = params?.corsesId as string;
+
   // ===== State =====
   const [expandedLectures, setExpandedLectures] = useState<
     Record<string, boolean>
@@ -3093,6 +3133,209 @@ export default function CurriculumContent() {
 
   const isEditable = trangThai === "DangSua";
 
+  // ===== SIGNALR (thay thế polling) =====
+  const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const isRefreshingRef = useRef(false);
+  const [signalRConnected, setSignalRConnected] = useState(false);
+
+  // Debounce refresh để tránh gọi nhiều lần
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debouncedRefresh = useCallback(() => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+    refreshTimeoutRef.current = setTimeout(() => {
+      if (!isRefreshingRef.current) {
+        refreshData();
+      }
+      refreshTimeoutRef.current = null;
+    }, 500);
+  }, [refreshData]);
+
+  // Kết nối SignalR
+  useEffect(() => {
+    if (!courseId || !isEditable) {
+      if (connectionRef.current) {
+        connectionRef.current.stop();
+        connectionRef.current = null;
+        setSignalRConnected(false);
+      }
+      return;
+    }
+
+    const connect = async () => {
+      // Nếu đã có connection đang tồn tại thì không tạo connection mới
+      if (connectionRef.current) {
+        return;
+      }
+
+      try {
+        const connection = new signalR.HubConnectionBuilder()
+          .withUrl("http://localhost:5002/courseHub", {
+            accessTokenFactory: () => {
+              const token = localStorage.getItem("AccessToken") || "";
+              return token;
+            },
+          })
+          .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+          .build();
+
+        console.log("🔗 SignalR connecting...");
+
+        // =========================
+        // ĐĂNG KÝ EVENT
+        // =========================
+
+        connection.on(
+          "SectionUpdated",
+          (courseIdFromEvent: string, sectionId: string) => {
+            console.log("📡 SectionUpdated", courseIdFromEvent, sectionId);
+
+            if (courseIdFromEvent === courseId) {
+              debouncedRefresh();
+            }
+          },
+        );
+
+        connection.on(
+          "LectureUpdated",
+          (courseIdFromEvent: string, lectureId: string) => {
+            console.log("📡 LectureUpdated", courseIdFromEvent, lectureId);
+
+            if (courseIdFromEvent === courseId) {
+              debouncedRefresh();
+            }
+          },
+        );
+
+        connection.on(
+          "QuizUpdated",
+          (courseIdFromEvent: string, quizId: string) => {
+            console.log("📡 QuizUpdated", courseIdFromEvent, quizId);
+
+            if (courseIdFromEvent === courseId) {
+              debouncedRefresh();
+            }
+          },
+        );
+
+        connection.on(
+          "QuestionUpdated",
+          (courseIdFromEvent: string, questionId: string) => {
+            console.log("📡 QuestionUpdated", courseIdFromEvent, questionId);
+
+            if (courseIdFromEvent === courseId) {
+              debouncedRefresh();
+            }
+          },
+        );
+
+        connection.on(
+          "DocumentUpdated",
+          (courseIdFromEvent: string, documentId: string) => {
+            console.log("📡 DocumentUpdated", courseIdFromEvent, documentId);
+
+            if (courseIdFromEvent === courseId) {
+              debouncedRefresh();
+            }
+          },
+        );
+
+        connection.on("CourseUpdated", (courseIdFromEvent: string) => {
+          console.log("📡 CourseUpdated", courseIdFromEvent);
+
+          if (courseIdFromEvent === courseId) {
+            debouncedRefresh();
+          }
+        });
+
+        // =========================
+        // SIGNALR LIFECYCLE
+        // =========================
+
+        connection.onreconnecting((error) => {
+          console.warn("⚠️ SignalR reconnecting...", error);
+
+          setSignalRConnected(false);
+        });
+
+        connection.onreconnected(async (connectionId) => {
+          console.log("🔄 SignalR reconnected:", connectionId);
+
+          try {
+            // Join lại group sau khi reconnect
+            await connection.invoke("JoinCourseGroup", courseId);
+
+            console.log(`✅ Rejoined course group: ${courseId}`);
+
+            setSignalRConnected(true);
+
+            debouncedRefresh();
+          } catch (error) {
+            console.error("❌ Failed to rejoin course group:", error);
+          }
+        });
+
+        connection.onclose((error) => {
+          console.warn("🔌 SignalR connection closed", error);
+
+          setSignalRConnected(false);
+
+          connectionRef.current = null;
+        });
+
+        // =========================
+        // START CONNECTION
+        // =========================
+
+        await connection.start();
+
+        console.log("✅ SignalR connected");
+
+        // Lưu connection ngay sau khi start thành công
+        connectionRef.current = connection;
+
+        // =========================
+        // JOIN COURSE GROUP
+        // =========================
+
+        await connection.invoke("JoinCourseGroup", courseId);
+
+        console.log(`✅ Joined course group: ${courseId}`);
+
+        setSignalRConnected(true);
+      } catch (error) {
+        console.error("❌ SignalR connection failed:", error);
+
+        setSignalRConnected(false);
+
+        connectionRef.current = null;
+
+        // Retry sau 5 giây
+        setTimeout(() => {
+          if (!connectionRef.current) {
+            connect();
+          }
+        }, 5000);
+      }
+    };
+
+    connect();
+
+    return () => {
+      if (connectionRef.current) {
+        connectionRef.current.stop();
+        connectionRef.current = null;
+        setSignalRConnected(false);
+        console.log("🔌 SignalR disconnected");
+      }
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
+    };
+  }, [courseId, isEditable, debouncedRefresh]);
+
   // ===== Sensors cho DnD =====
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -3170,6 +3413,7 @@ export default function CurriculumContent() {
 
     setPhans(newPhans);
 
+    isRefreshingRef.current = true;
     setLoading(true);
     try {
       await Promise.all(
@@ -3192,8 +3436,8 @@ export default function CurriculumContent() {
         message: error.message || "Lỗi cập nhật thứ tự phần",
         severity: "error",
       });
-      await refreshData();
     } finally {
+      isRefreshingRef.current = false;
       setLoading(false);
     }
   };
@@ -3211,14 +3455,12 @@ export default function CurriculumContent() {
     const newIndex = items.findIndex((item) => item.data.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    // Reorder combined list and assign new sequential indices
     const newItems = arrayMove(items, oldIndex, newIndex);
     const orderedItems = newItems.map((item, idx) => ({
       ...item,
       thuTuSapXep: idx + 1,
     }));
 
-    // Update both arrays with new indices
     const updatedPhan = {
       ...phan,
       DanhSachBaiGiang: orderedItems
@@ -3231,6 +3473,7 @@ export default function CurriculumContent() {
 
     setPhans(phans.map((p) => (p.id === phanId ? updatedPhan : p)));
 
+    isRefreshingRef.current = true;
     setLoading(true);
     try {
       const updatePromises: Promise<void>[] = [];
@@ -3264,13 +3507,14 @@ export default function CurriculumContent() {
         message: error.message || "Lỗi cập nhật thứ tự mục",
         severity: "error",
       });
-      await refreshData();
     } finally {
+      isRefreshingRef.current = false;
       setLoading(false);
     }
   };
 
   // ===== CÁC HÀM CRUD =====
+  // (Thay thế isPollingRef bằng isRefreshingRef trong tất cả các hàm)
 
   const moThemPhan = () => {
     if (!isEditable) return;
@@ -3309,10 +3553,16 @@ export default function CurriculumContent() {
       return;
     }
 
+    isRefreshingRef.current = true;
     setLoading(true);
     try {
       if (mode === "add") {
-        await createPhan({ tenPhan: tenPhanTrimmed, mieuTa: "" });
+        const newOrder = phans.length + 1;
+        await createPhan({
+          tenPhan: tenPhanTrimmed,
+          mieuTa: "",
+          thuTuSapXep: newOrder,
+        });
         setToast({
           open: true,
           message: "Đã thêm phần mới",
@@ -3338,6 +3588,7 @@ export default function CurriculumContent() {
         severity: "error",
       });
     } finally {
+      isRefreshingRef.current = false;
       setLoading(false);
     }
   };
@@ -3348,11 +3599,10 @@ export default function CurriculumContent() {
       open: true,
       onConfirm: async () => {
         setDeleteDialog({ open: false, onConfirm: () => {} });
+        isRefreshingRef.current = true;
         setLoading(true);
         try {
           await deletePhan(phanId);
-          const newPhans = phans.filter((p) => p.id !== phanId);
-          setPhans(newPhans);
           setToast({ open: true, message: "Đã xóa phần", severity: "success" });
         } catch (error: any) {
           setToast({
@@ -3361,6 +3611,7 @@ export default function CurriculumContent() {
             severity: "error",
           });
         } finally {
+          isRefreshingRef.current = false;
           setLoading(false);
         }
       },
@@ -3402,11 +3653,20 @@ export default function CurriculumContent() {
       return;
     }
 
+    const phan = phans.find((p) => p.id === phanId);
+    const currentItems = [
+      ...(phan?.DanhSachBaiGiang || []),
+      ...(phan?.DanhDachBaiKiemTra || []),
+    ];
+    const newOrder = currentItems.length + 1;
+
+    isRefreshingRef.current = true;
     setLoading(true);
     try {
       const result = await createBaiKiemTra(phanId, {
         tenBaiKiemTra: tenTrimmed,
         moTa: moTaTrimmed,
+        thuTuSapXep: newOrder,
       });
 
       setToast({
@@ -3425,6 +3685,7 @@ export default function CurriculumContent() {
         severity: "error",
       });
     } finally {
+      isRefreshingRef.current = false;
       setLoading(false);
     }
   };
@@ -3479,6 +3740,7 @@ export default function CurriculumContent() {
       return;
     }
 
+    isRefreshingRef.current = true;
     setLoading(true);
     try {
       await updateBaiKiemTra(quizId, {
@@ -3499,6 +3761,7 @@ export default function CurriculumContent() {
         severity: "error",
       });
     } finally {
+      isRefreshingRef.current = false;
       setLoading(false);
     }
   };
@@ -3655,6 +3918,12 @@ export default function CurriculumContent() {
       return;
     }
 
+    const phan = phans.find((p) => p.id === phanId);
+    const quiz = phan?.DanhDachBaiKiemTra?.find((q) => q.id === quizId);
+    const currentQuestions = quiz?.cauHois || [];
+    const newOrder = currentQuestions.length + 1;
+
+    isRefreshingRef.current = true;
     setLoading(true);
     try {
       if (isEditing) {
@@ -3679,6 +3948,7 @@ export default function CurriculumContent() {
           noiDungCauHoi: noiDungTrimmed,
           loaiCauHoi: question.loaiCauHoi,
           doKho: question.doKho,
+          thuTuSapXep: newOrder,
           danhSachDapAn: question.danhSachDapAn.map((d, idx) => ({
             noiDungDapAn: trimString(d.noiDungDapAn),
             laDapAnDung: d.laDapAnDung,
@@ -3700,6 +3970,7 @@ export default function CurriculumContent() {
         severity: "error",
       });
     } finally {
+      isRefreshingRef.current = false;
       setLoading(false);
     }
   };
@@ -3714,6 +3985,7 @@ export default function CurriculumContent() {
       open: true,
       onConfirm: async () => {
         setDeleteDialog({ open: false, onConfirm: () => {} });
+        isRefreshingRef.current = true;
         setLoading(true);
         try {
           await deleteCauHoi(phanId, quizId, questionId);
@@ -3729,6 +4001,7 @@ export default function CurriculumContent() {
             severity: "error",
           });
         } finally {
+          isRefreshingRef.current = false;
           setLoading(false);
         }
       },
@@ -3741,6 +4014,7 @@ export default function CurriculumContent() {
       open: true,
       onConfirm: async () => {
         setDeleteDialog({ open: false, onConfirm: () => {} });
+        isRefreshingRef.current = true;
         setLoading(true);
         try {
           await deleteBaiKiemTra(phanId, quizId);
@@ -3759,6 +4033,7 @@ export default function CurriculumContent() {
             severity: "error",
           });
         } finally {
+          isRefreshingRef.current = false;
           setLoading(false);
         }
       },
@@ -3772,6 +4047,7 @@ export default function CurriculumContent() {
       open: true,
       onConfirm: async () => {
         setDeleteDialog({ open: false, onConfirm: () => {} });
+        isRefreshingRef.current = true;
         setLoading(true);
         try {
           await deleteBaiGiang(phanId, baiGiangId);
@@ -3787,6 +4063,7 @@ export default function CurriculumContent() {
             severity: "error",
           });
         } finally {
+          isRefreshingRef.current = false;
           setLoading(false);
         }
       },
@@ -3833,6 +4110,7 @@ export default function CurriculumContent() {
     setEditingLecture(null);
     setUpdatingLectureIds((prev) => new Set(prev).add(lectureId));
 
+    isRefreshingRef.current = true;
     try {
       await updateBaiGiang(phanId, lectureId, {
         tieuDe: title.trim(),
@@ -3857,6 +4135,7 @@ export default function CurriculumContent() {
         next.delete(lectureId);
         return next;
       });
+      isRefreshingRef.current = false;
     }
   };
 
@@ -3907,6 +4186,7 @@ export default function CurriculumContent() {
       return;
     }
 
+    isRefreshingRef.current = true;
     setLoading(true);
     try {
       await createTaiLieu(phanId, baiGiangId, file, tenTrimmed);
@@ -3926,6 +4206,7 @@ export default function CurriculumContent() {
         severity: "error",
       });
     } finally {
+      isRefreshingRef.current = false;
       setLoading(false);
     }
   };
@@ -3940,6 +4221,7 @@ export default function CurriculumContent() {
       open: true,
       onConfirm: async () => {
         setDeleteDialog({ open: false, onConfirm: () => {} });
+        isRefreshingRef.current = true;
         setLoading(true);
         try {
           await deleteTaiLieu(phanId, baiGiangId, taiLieuId);
@@ -3955,6 +4237,7 @@ export default function CurriculumContent() {
             severity: "error",
           });
         } finally {
+          isRefreshingRef.current = false;
           setLoading(false);
         }
       },
@@ -4036,6 +4319,13 @@ export default function CurriculumContent() {
 
     setAddForm(null);
 
+    const phan = phans.find((p) => p.id === phanId);
+    const currentItems = [
+      ...(phan?.DanhSachBaiGiang || []),
+      ...(phan?.DanhDachBaiKiemTra || []),
+    ];
+    const newOrder = currentItems.length + 1;
+
     const key = `pending_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     setPendingLectures((prev) => ({
       ...prev,
@@ -4045,11 +4335,13 @@ export default function CurriculumContent() {
       ],
     }));
 
+    isRefreshingRef.current = true;
     try {
       await createBaiGiang(phanId, {
         tieuDe: titleTrimmed,
         file,
         isFree: isFree || false,
+        thuTuSapXep: newOrder,
       });
       setToast({
         open: true,
@@ -4067,6 +4359,7 @@ export default function CurriculumContent() {
         ...prev,
         [phanId]: (prev[phanId] || []).filter((item) => item.key !== key),
       }));
+      isRefreshingRef.current = false;
     }
   };
 
@@ -4094,6 +4387,18 @@ export default function CurriculumContent() {
           >
             Chương trình giảng dạy
           </Typography>
+          {signalRConnected && (
+            <Chip
+              size="small"
+              label="🔴 Live"
+              sx={{
+                bgcolor: "#4CAF50",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: 11,
+              }}
+            />
+          )}
         </Box>
 
         <Typography
@@ -4108,8 +4413,6 @@ export default function CurriculumContent() {
           mục tiêu học tập duy nhất. Sau đó, thêm nội dung, hoạt động thực hành
           và bài kiểm tra.
         </Typography>
-
-        
 
         {(loading || contextLoading) && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
@@ -4295,7 +4598,6 @@ export default function CurriculumContent() {
                               const isExpanded = !!expandedLectures[itemId];
                               const isEditing =
                                 editingLecture?.lectureId === itemId;
-                              // Lấy lyDoTuChoi từ bg (nếu có)
                               const lyDoTuChoi = (bg as any).lyDoTuChois;
 
                               return (
@@ -5096,7 +5398,6 @@ export default function CurriculumContent() {
                               const tenHienThi =
                                 kt.tenBaiKiemTra ||
                                 `Bài kiểm tra ${soThuTuMuc}`;
-                              // Lấy lyDoTuChoi từ kt (nếu có)
                               const lyDoTuChoi = (kt as any).lyDoTuChois;
 
                               return (

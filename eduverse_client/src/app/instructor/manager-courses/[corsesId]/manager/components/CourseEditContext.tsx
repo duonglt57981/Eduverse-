@@ -29,7 +29,7 @@ import {
   SO_DAP_AN_TOI_DA,
   ThongTinKhoaHocCoBan,
   TrangThaiKhoaHoc,
-  extractData, // <-- import mới
+  extractData,
   LichSuKiemDuyetDto,
 } from "./courseEditCore";
 import PhanService from "@/src/services/PhanService";
@@ -161,6 +161,7 @@ interface CourseEditContextValue {
       noiDungCauHoi: string;
       loaiCauHoi: "ONE" | "MULTI";
       doKho: string;
+      thuTuSapXep?: number;
       danhSachDapAn: {
         noiDungDapAn: string;
         laDapAnDung: boolean;
@@ -239,6 +240,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     phans: PhanHocType[];
   } | null>(null);
   const initialFetchDone = useRef(false);
+  const isRefreshingRef = useRef(false); // <--- THÊM REF NÀY
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
   const phanService = useMemo(() => new PhanService(), []);
@@ -479,11 +481,16 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     [idKhoaHoc, khoaHocService],
   );
 
+  // ===== SỬA refreshData: KHÔNG set loading, thêm isRefreshingRef =====
   const refreshData = useCallback(async () => {
     if (isNavigating) {
       return;
     }
-    setLoading(true);
+    if (isRefreshingRef.current) {
+      return; // đang refresh thì bỏ qua
+    }
+    isRefreshingRef.current = true;
+
     try {
       await fetchCourseDetail();
       setIsDirty(false);
@@ -495,7 +502,7 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
     } finally {
-      setLoading(false);
+      isRefreshingRef.current = false;
     }
   }, [fetchCourseDetail, saveState, thongTin, phans, isNavigating]);
 
@@ -666,10 +673,6 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         ),
       );
       saveState();
-
-      // Lưu ý: nếu server chưa kịp trả về thoiLuong (do xử lý video bất đồng bộ),
-      // hãy gọi refreshData() ở phía UI sau một khoảng thời gian để lấy dữ liệu mới nhất
-      // qua GetKhoaHocDetail, thay vì gọi API chi tiết riêng lẻ.
 
       return newBg;
     },

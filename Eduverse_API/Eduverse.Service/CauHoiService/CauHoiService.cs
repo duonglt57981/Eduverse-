@@ -16,6 +16,7 @@ using Eduverse.Service.DapAnService;
 using Eduverse.Service.DapAnService.Dto;
 using Eduverse.Service.DapAnService.Request;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
+using Eduverse.Service.SignalRService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -33,6 +34,7 @@ namespace Eduverse.Service.CauHoiService
         private readonly IPhanRepository _phanRepository; 
         private readonly IKhoaHocRepository _khoaHocRepository; 
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
+        private readonly ISignalRService _signalRService;
 
         public CauHoiService(
             IMapper mapper,
@@ -44,7 +46,8 @@ namespace Eduverse.Service.CauHoiService
             IHttpContextAccessor httpContextAccessor,
             IPhanRepository phanRepository, 
             IKhoaHocRepository khoaHocRepository, 
-            IKhoaHoc_GiangVienRepository khoaHocGVRepository
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository,
+            ISignalRService signalRService
             ) : base(repository)
         {
             _mapper = mapper;
@@ -56,6 +59,7 @@ namespace Eduverse.Service.CauHoiService
             _khoaHocRepository = khoaHocRepository; 
             _khoaHocGVRepository = khoaHocGVRepository;
             _httpContextAccessor = httpContextAccessor;
+            _signalRService = signalRService;
         }
 
         public async Task<CauHoiDto> CreateCauHoiAsync(CreateCauHoiRequest request)
@@ -95,6 +99,13 @@ namespace Eduverse.Service.CauHoiService
 
             try
             {
+
+                var courseId = await(from ch in GetQueryable()
+                                     join bkt in _baiKiemTraRepository.GetQueryable() on ch.IdBaiKiemTra equals bkt.Id
+                                     join ph in _phanRepository.GetQueryable() on bkt.IdPhan equals ph.Id
+                                     where bkt.Id == request.IdBaiKiemTra
+                                     select ph.IdKhoaHoc).FirstOrDefaultAsync();
+
                 var soDapAnDung = request.DanhSachDapAn.Count(d => d.LaDapAnDung);
 
                 var cauHoi = new CauHoi
@@ -130,6 +141,10 @@ namespace Eduverse.Service.CauHoiService
                 await _dapAnService.CreateRange(dapAns);
                 await _dapAnService.SaveAsync();
 
+                if (courseId != null)
+                {
+                    await _signalRService.NotifyQuestionUpdated(courseId ?? Guid.Empty, cauHoi.Id);
+                }
 
                 return MapToDto(cauHoi, dapAns);
             }
@@ -184,6 +199,12 @@ namespace Eduverse.Service.CauHoiService
 
             try
             {
+                var courseId = await (from ch in GetQueryable()
+                                      join bkt in _baiKiemTraRepository.GetQueryable() on ch.IdBaiKiemTra equals bkt.Id
+                                      join ph in _phanRepository.GetQueryable() on bkt.IdPhan equals ph.Id
+                                      where ch.Id == request.Id
+                                      select ph.IdKhoaHoc).FirstOrDefaultAsync();
+
                 var soDapAnDung = request.DanhSachDapAns.Count(d => d.LaDapAnDung);
 
                 cauHoi.TenCauHoi = request.TenCauHoi?.Trim();
@@ -199,6 +220,10 @@ namespace Eduverse.Service.CauHoiService
 
                 var dapAnsKetQua = await SyncDapAnAsync(cauHoi.Id, request.DanhSachDapAns);
 
+                if (courseId != null)
+                {
+                    await _signalRService.NotifyQuestionUpdated(courseId ?? Guid.Empty, cauHoi.Id);
+                }
 
                 return MapToDto(cauHoi, dapAnsKetQua);
             }
@@ -298,6 +323,12 @@ namespace Eduverse.Service.CauHoiService
                 throw new Exception("Bài kiểm tra phải có ít nhất 2 câu hỏi, không thể xóa câu hỏi này.");
             try
             {
+                var courseId = await (from ch in GetQueryable()
+                                      join bkt in _baiKiemTraRepository.GetQueryable() on ch.IdBaiKiemTra equals bkt.Id
+                                      join ph in _phanRepository.GetQueryable() on bkt.IdPhan equals ph.Id
+                                      where ch.Id == idCauHoi
+                                      select ph.IdKhoaHoc).FirstOrDefaultAsync();
+
                 cauHoi.TrangThai = "DaXoa";
                 cauHoi.IsDeleted = true;
                 await DeleteAsync(cauHoi);
@@ -315,6 +346,11 @@ namespace Eduverse.Service.CauHoiService
 
                 await SaveAsync();
                 await _dapAnService.SaveAsync();
+
+                if (courseId != null)
+                {
+                    await _signalRService.NotifyQuestionUpdated(courseId ?? Guid.Empty, cauHoi.Id);
+                }
 
                 return true;
             }

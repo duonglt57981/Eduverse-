@@ -17,6 +17,7 @@ using Eduverse.Service.KhoaHocService.Request;
 using Eduverse.Service.LichSuKiemDuyetKhoaHocService;
 using Eduverse.Service.PhanService.Dto;
 using Eduverse.Service.PhanService.Request;
+using Eduverse.Service.SignalRService;
 using Eduverse.Service.TaiLieuService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,7 @@ namespace Eduverse.Service.PhanService
         private readonly IBaiKiemTraRepository _baiKiemTraRepository;
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
         private readonly IPhanRepository _phanRepository;
+        private readonly ISignalRService _signalRService;
 
         public PhanService(
             IPhanRepository phanRepository,
@@ -54,7 +56,8 @@ namespace Eduverse.Service.PhanService
             IKhoaHocService khoaHocService,
             ILichSuKiemDuyetKhoaHocService lichSuKiemDuyetKhoaHocService,
             IBaiKiemTraRepository baiKiemTraRepository,
-            IKhoaHoc_GiangVienRepository khoaHocGVRepository
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository,
+            ISignalRService signalRService
             ) : base(phanRepository)
         {
             _mapper = mapper;
@@ -69,6 +72,7 @@ namespace Eduverse.Service.PhanService
             _khoaHocGVRepository = khoaHocGVRepository; 
             this._httpContextAccessor = httpContextAccessor;
             _phanRepository = phanRepository;
+            _signalRService = signalRService;
         }
 
         public async Task<PhanHocDto> CreatePhanHoc(CreatePhanRequest request)  
@@ -112,7 +116,9 @@ namespace Eduverse.Service.PhanService
             await CreateAsync(entity);
             await SaveAsync();
 
-            return _mapper.Map<Phan, PhanHocDto>(entity);
+            await _signalRService.NotifySectionUpdated(request.IdKhoaHoc.Value, entity.Id);
+
+            return _mapper.Map<Phan, PhanHocDto>(entity);  
         }
 
 
@@ -153,6 +159,8 @@ namespace Eduverse.Service.PhanService
             await UpdateAsync(entity);
             await SaveAsync();
 
+            await _signalRService.NotifySectionUpdated(request.IdKhoaHoc.Value, entity.Id);
+
             return _mapper.Map<Phan, PhanHocDto>(entity);
         }
 
@@ -183,6 +191,9 @@ namespace Eduverse.Service.PhanService
 
             await DeleteAsync(phan);
             await SaveAsync();
+
+            await _signalRService.NotifySectionUpdated(phan.IdKhoaHoc.Value, id);
+
             return true;
         }
 
