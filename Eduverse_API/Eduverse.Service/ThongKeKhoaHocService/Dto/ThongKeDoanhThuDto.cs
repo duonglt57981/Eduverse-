@@ -57,6 +57,7 @@ namespace Eduverse.Service.ThongKeKhoaHocService.Dto
     public class HocVienGanDayDto
     {
         public Guid IdHocVien { get; set; }
+        public Guid? IdDangKy { get; set; }
         public string? HoTen { get; set; }
         public string? AnhDaiDien { get; set; }
         public string? Email { get; set; }
@@ -65,5 +66,6 @@ namespace Eduverse.Service.ThongKeKhoaHocService.Dto
         public string? TrangThai { get; set; }
         public bool? IsDangKy { get; set; }
         public DateTime? NgayHetHan { get; set; }
+        public double PhanTramHoanThanh { get; set; }
     }
 }

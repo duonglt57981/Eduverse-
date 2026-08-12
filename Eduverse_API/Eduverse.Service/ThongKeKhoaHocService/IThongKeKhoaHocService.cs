@@ -11,5 +11,8 @@ namespace Eduverse.Service.ThongKeKhoaHocService
     {
         Task<ThongKeDoanhThuDto> GetThongKeDoanhThu(Guid idKhoaHoc);
         Task<ThongKeHocVienDto> GetThongKeHocVien(Guid idKhoaHoc, int? nam = null);
+
+        Task<List<BaiGiangEngagementDto>> GetThongKeBaiGiang(Guid idKhoaHoc);
+        Task<CourseEngagementDto> GetCourseEngagement(Guid idKhoaHoc);
     }
 }
