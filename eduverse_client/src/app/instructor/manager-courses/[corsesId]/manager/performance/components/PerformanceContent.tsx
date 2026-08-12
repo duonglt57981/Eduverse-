@@ -26,6 +26,11 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutlined";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
+import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import {
   BarChart,
   Bar,
@@ -45,6 +50,8 @@ import { MAU } from "../../components/courseEditCore";
 import ThongKeKhoaHocService, {
   ThongKeDoanhThuDto,
   ThongKeHocVienDto,
+  BaiGiangEngagementDto,
+  CourseEngagementDto,
 } from "@/src/services/ThongKeKhoaHocService";
 
 // ── Helper format tiền ──────────────────────────────────────────────────────
@@ -157,6 +164,13 @@ export default function PerformanceContent() {
   const [loadingHV, setLoadingHV] = useState(false);
   const [namChon, setNamChon] = useState<number>(new Date().getFullYear());
 
+  // Bài giảng
+  const [baiGiangList, setBaiGiangList] = useState<BaiGiangEngagementDto[]>([]);
+  const [engagement, setEngagement] = useState<CourseEngagementDto | null>(
+    null,
+  );
+  const [loadingEG, setLoadingEG] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -196,6 +210,27 @@ export default function PerformanceContent() {
       setLoadingHV(false);
     }
   }, [idKhoaHoc, namChon]);
+
+  const loadEngagement = useCallback(async () => {
+    if (!idKhoaHoc) return;
+    setLoadingEG(true);
+    try {
+      const [dsBaiGiang, tongQuan] = await Promise.all([
+        ThongKeKhoaHocService.GetBaiGiang(idKhoaHoc),
+        ThongKeKhoaHocService.GetEngagement(idKhoaHoc),
+      ]);
+      setBaiGiangList(dsBaiGiang);
+      setEngagement(tongQuan);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoadingEG(false);
+    }
+  }, [idKhoaHoc]);
+
+  useEffect(() => {
+    if (tab === 2) loadEngagement();
+  }, [tab, loadEngagement]);
 
   useEffect(() => {
     loadDoanhThu();
@@ -263,6 +298,7 @@ export default function PerformanceContent() {
         >
           <Tab label="💰 Doanh thu" />
           <Tab label="👥 Học viên" />
+          <Tab label="📊 Engagement" />
         </Tabs>
 
         {/* ── Tab 0: Doanh thu ── */}
@@ -715,6 +751,12 @@ export default function PerformanceContent() {
                         Trạng thái
                       </TableCell>
                       <TableCell
+                        align="center"
+                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                      >
+                        Tiến độ
+                      </TableCell>
+                      <TableCell
                         align="right"
                         sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
                       >
@@ -821,6 +863,49 @@ export default function PerformanceContent() {
                             }}
                           />
                         </TableCell>
+                        <TableCell align="center">
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 70,
+                                height: 6,
+                                borderRadius: 3,
+                                bgcolor: "#F1F2F5",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: `${Math.min(hv.phanTramHoanThanh ?? 0, 100)}%`,
+                                  height: "100%",
+                                  bgcolor:
+                                    (hv.phanTramHoanThanh ?? 0) >= 100
+                                      ? "#16A34A"
+                                      : (hv.phanTramHoanThanh ?? 0) >= 50
+                                        ? MAU.chinh
+                                        : "#D97706",
+                                  borderRadius: 3,
+                                }}
+                              />
+                            </Box>
+                            <Typography
+                              sx={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: "#4B5563",
+                              }}
+                            >
+                              {Math.round(hv.phanTramHoanThanh ?? 0)}%
+                            </Typography>
+                          </Box>
+                        </TableCell>
                         <TableCell align="right">
                           <Typography
                             sx={{
@@ -842,6 +927,178 @@ export default function PerformanceContent() {
             </Box>
           ))}
       </Box>
+      {/* ── Tab 2: Engagement ── */}
+      {tab === 2 &&
+        (loadingEG ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress sx={{ color: MAU.chinh }} />
+          </Box>
+        ) : !engagement ? null : (
+          <Box>
+            {/* Card tổng quan Course Engagement */}
+            <Typography
+              sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937", mb: 2 }}
+            >
+              Course Engagement
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(3, 1fr)" },
+                gap: 2,
+                mb: 4,
+              }}
+            >
+              <StatCard
+                icon={<PeopleOutlinedIcon />}
+                label="Học viên đã đăng ký"
+                value={engagement.hocVienDaDangKy}
+                color={MAU.chinh}
+              />
+              <StatCard
+                icon={<PlayCircleOutlineIcon />}
+                label="Học viên đã bắt đầu học"
+                value={engagement.hocVienDaBatDauHoc}
+                color="#2563EB"
+              />
+              <StatCard
+                icon={<AccessTimeIcon />}
+                label="Tổng thời gian học"
+                value={`${engagement.tongThoiGianHocGio.toLocaleString("vi-VN")} giờ`}
+                color="#D97706"
+              />
+              <StatCard
+                icon={<MenuBookOutlinedIcon />}
+                label="Bài giảng được xem"
+                value={engagement.luotXemBaiGiang.toLocaleString("vi-VN")}
+                color="#7C3AED"
+              />
+              <StatCard
+                icon={<TrendingUpIcon />}
+                label="Tỷ lệ hoàn thành"
+                value={`${engagement.tyLeHoanThanhTrungBinh}%`}
+                color="#16A34A"
+              />
+              <StatCard
+                icon={<LocalFireDepartmentIcon />}
+                label="Học viên đang hoạt động"
+                value={engagement.hocVienDangHoatDong}
+                color="#DC2626"
+              />
+            </Box>
+
+            {/* Bảng theo bài giảng */}
+            <Typography
+              sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937", mb: 2 }}
+            >
+              Thống kê theo bài giảng
+            </Typography>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: "14px",
+                border: "1px solid #ECE7E4",
+                overflow: "hidden",
+              }}
+            >
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "#F7F5F2" }}>
+                    <TableCell
+                      sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                    >
+                      Bài giảng
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                    >
+                      <VisibilityOutlinedIcon
+                        sx={{ fontSize: 14, verticalAlign: "middle", mr: 0.5 }}
+                      />
+                      Lượt xem
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                    >
+                      Hoàn thành
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {baiGiangList.map((bg) => (
+                    <TableRow
+                      key={bg.idBaiGiang}
+                      sx={{ "&:hover": { bgcolor: "#FAFAFA" } }}
+                    >
+                      <TableCell>
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: 14,
+                            color: "#1F2937",
+                          }}
+                        >
+                          {bg.tenBaiGiang || "Chưa có tên"}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography sx={{ fontSize: 14, color: "#4B5563" }}>
+                          {bg.luotXem.toLocaleString("vi-VN")}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-end",
+                            gap: 1,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 60,
+                              height: 6,
+                              borderRadius: 3,
+                              bgcolor: "#F1F2F5",
+                              overflow: "hidden",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: `${Math.min(bg.tyLeHoanThanh, 100)}%`,
+                                height: "100%",
+                                bgcolor:
+                                  bg.tyLeHoanThanh >= 70
+                                    ? "#16A34A"
+                                    : bg.tyLeHoanThanh >= 40
+                                      ? MAU.chinh
+                                      : "#D97706",
+                                borderRadius: 3,
+                              }}
+                            />
+                          </Box>
+                          <Typography
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: 13,
+                              color: "#1F2937",
+                              minWidth: 32,
+                            }}
+                          >
+                            {bg.tyLeHoanThanh}%
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          </Box>
+        ))}
     </AuthGuard>
   );
 }

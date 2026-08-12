@@ -35,6 +35,7 @@ export interface HocVienTheoThangDto {
 
 export interface HocVienGanDayDto {
   idHocVien: string;
+  idDangKy?: string; // MỚI
   hoTen?: string;
   anhDaiDien?: string;
   email?: string;
@@ -43,6 +44,7 @@ export interface HocVienGanDayDto {
   trangThai?: string;
   isDangKy?: boolean;
   ngayHetHan?: string;
+  phanTramHoanThanh?: number;
 }
 
 export interface ThongKeHocVienDto {
@@ -52,6 +54,23 @@ export interface ThongKeHocVienDto {
   hetHan: number;
   hocVienTheoThang: HocVienTheoThangDto[];
   danhSachHocVien: HocVienGanDayDto[];
+}
+
+export interface BaiGiangEngagementDto {
+  idBaiGiang: string;
+  tenBaiGiang?: string;
+  thuTu: number;
+  luotXem: number;
+  tyLeHoanThanh: number;
+}
+
+export interface CourseEngagementDto {
+  hocVienDaDangKy: number;
+  hocVienDaBatDauHoc: number;
+  tongThoiGianHocGio: number;
+  luotXemBaiGiang: number;
+  tyLeHoanThanhTrungBinh: number;
+  hocVienDangHoatDong: number;
 }
 
 class ThongKeKhoaHocService {
@@ -70,6 +89,16 @@ class ThongKeKhoaHocService {
       `/ThongKeKhoaHoc/${idKhoaHoc}/hoc-vien${params}`,
     );
     return res.data as ThongKeHocVienDto;
+  }
+
+  async GetBaiGiang(idKhoaHoc: string): Promise<BaiGiangEngagementDto[]> {
+    const res = await apiService.get(`/ThongKeKhoaHoc/${idKhoaHoc}/bai-giang`);
+    return res.data as BaiGiangEngagementDto[];
+  }
+
+  async GetEngagement(idKhoaHoc: string): Promise<CourseEngagementDto> {
+    const res = await apiService.get(`/ThongKeKhoaHoc/${idKhoaHoc}/engagement`);
+    return res.data as CourseEngagementDto;
   }
 }
 
