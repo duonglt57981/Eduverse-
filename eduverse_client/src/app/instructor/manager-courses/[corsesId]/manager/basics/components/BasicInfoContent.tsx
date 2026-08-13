@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -34,6 +35,7 @@ import AttachMoneyRoundedIcon from "@mui/icons-material/AttachMoneyRounded";
 import CropIcon from "@mui/icons-material/Crop";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import * as signalR from "@microsoft/signalr";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { DanhMucDto } from "@/src/types/khoaHoc";
 import { danhMucService } from "@/src/services/danhmucService";
@@ -483,6 +485,14 @@ export default function BasicInfoContent() {
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
   const [timKiemDanhMuc, setTimKiemDanhMuc] = useState("");
 
+  // ===== SignalR: cờ hiển thị trạng thái kết nối realtime (tuỳ chọn, dùng để debug/UX) =====
+  const [dangKetNoiRealtime, setDangKetNoiRealtime] = useState(false);
+  const [thongBaoRealtime, setThongBaoRealtime] = useState<string | null>(null);
+
+  // ===== State để điều khiển remount RichTextEditor =====
+  const [moTaEditorKey, setMoTaEditorKey] = useState(0);
+  const [daTuSuaMoTa, setDaTuSuaMoTa] = useState(false);
+
   const [loiTieuDe, setLoiTieuDe] = useState<string | null>(null);
   const [loiMoTa, setLoiMoTa] = useState<string | null>(null);
   const [loiHinhAnh, setLoiHinhAnh] = useState<string | null>(null);
@@ -490,6 +500,11 @@ export default function BasicInfoContent() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const oTimKiemDanhMucRef = useRef<HTMLInputElement>(null);
+
+  // Cờ đánh dấu "vừa tự lưu" để tránh việc tự refresh 2 lần khi
+  // chính A là người gửi request update (BE broadcast tới cả group,
+  // kể cả người gửi).
+  const vuaTuLuuRef = useRef(false);
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
 
@@ -506,6 +521,26 @@ export default function BasicInfoContent() {
     );
   }, [danhMucList, timKiemDanhMuc]);
 
+  // ===== Hàm fetch bổ sung: danh sách danh mục và isBanHienTai =====
+  const fetchThongTinBoSung = useCallback(async () => {
+    if (!idKhoaHoc) return;
+    try {
+      const data = await khoaHocService.GetToUpdateKhoaHoc(idKhoaHoc);
+      if (data) {
+        if (data.danhSachDanhMuc) {
+          setDanhSachDanhMucId(data.danhSachDanhMuc);
+        }
+        const isBan = (data as any).isBanHienTai;
+        if (isBan !== undefined) {
+          setIsBanHienTai(isBan);
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi lấy danh sách danh mục:", err);
+    }
+  }, [idKhoaHoc, khoaHocService]);
+
+  // Lấy danh mục ban đầu
   useEffect(() => {
     const fetchDanhMuc = async () => {
       try {
@@ -524,26 +559,110 @@ export default function BasicInfoContent() {
     fetchDanhMuc();
   }, []);
 
+  // Lấy thông tin bổ sung (danh mục, isBan) khi idKhoaHoc thay đổi
   useEffect(() => {
-    const fetchData = async () => {
-      if (!idKhoaHoc) return;
+    fetchThongTinBoSung();
+  }, [fetchThongTinBoSung]);
+
+  // ===== SignalR: kết nối, join group theo idKhoaHoc, lắng nghe CourseUpdated =====
+  useEffect(() => {
+    if (!idKhoaHoc) return;
+
+    let isMounted = true;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:5002/courseHub", {
+        accessTokenFactory: () => {
+          const token = localStorage.getItem("AccessToken") || "";
+          return token;
+        },
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .build();
+
+    console.log("🔗 SignalR connecting...");
+
+    const joinGroup = async () => {
       try {
-        const data = await khoaHocService.GetToUpdateKhoaHoc(idKhoaHoc);
-        if (data) {
-          if (data.danhSachDanhMuc) {
-            setDanhSachDanhMucId(data.danhSachDanhMuc);
-          }
-          const isBan = (data as any).isBanHienTai;
-          if (isBan !== undefined) {
-            setIsBanHienTai(isBan);
-          }
-        }
+        await connection.invoke("JoinCourseGroup", idKhoaHoc);
       } catch (err) {
-        console.error("Lỗi lấy danh sách danh mục:", err);
+        console.error("[SignalR] Lỗi join group:", err);
       }
     };
-    fetchData();
-  }, [idKhoaHoc, khoaHocService]);
+
+    const start = async () => {
+      try {
+        await connection.start();
+        if (!isMounted) return;
+        setDangKetNoiRealtime(true);
+        await joinGroup();
+      } catch (err) {
+        console.error("[SignalR] Lỗi kết nối:", err);
+        if (isMounted) setDangKetNoiRealtime(false);
+      }
+    };
+
+    connection.on("CourseUpdated", async (updatedCourseId: string) => {
+      if (!isMounted) return;
+      if (String(updatedCourseId) !== String(idKhoaHoc)) return;
+
+      // Nếu sự kiện này tới ngay sau khi chính mình vừa lưu,
+      // bỏ qua 1 lần để tránh refresh trùng lặp.
+      if (vuaTuLuuRef.current) {
+        vuaTuLuuRef.current = false;
+        return;
+      }
+
+      try {
+        // Lấy cả thông tin chính và thông tin bổ sung
+        await Promise.all([refreshData(), fetchThongTinBoSung()]);
+
+        // Nếu người dùng chưa tự sửa mô tả => đồng bộ editor bằng cách remount
+        if (!daTuSuaMoTa) {
+          setMoTaEditorKey((k) => k + 1);
+        } else {
+          setThongBaoRealtime(
+            "Người khác vừa cập nhật mô tả. Nội dung bạn đang soạn có thể không còn khớp bản mới nhất.",
+          );
+        }
+
+        setThongBaoRealtime(
+          "Nội dung khóa học vừa được cập nhật bởi người khác.",
+        );
+        setTimeout(() => setThongBaoRealtime(null), 4000);
+      } catch (err) {
+        console.error("[SignalR] Lỗi refresh khi nhận CourseUpdated:", err);
+      }
+    });
+
+    connection.onreconnected(() => {
+      if (!isMounted) return;
+      setDangKetNoiRealtime(true);
+      joinGroup();
+    });
+
+    connection.onreconnecting(() => {
+      if (!isMounted) return;
+      setDangKetNoiRealtime(false);
+    });
+
+    connection.onclose(() => {
+      if (!isMounted) return;
+      setDangKetNoiRealtime(false);
+    });
+
+    start();
+
+    return () => {
+      isMounted = false;
+      connection
+        .invoke("LeaveCourseGroup", idKhoaHoc)
+        .catch(() => {})
+        .finally(() => {
+          connection.stop();
+        });
+    };
+  }, [idKhoaHoc, refreshData, fetchThongTinBoSung, daTuSuaMoTa]);
 
   const validateForm = (): boolean => {
     let hopLe = true;
@@ -751,15 +870,25 @@ export default function BasicInfoContent() {
         if (imageFile) payload.append("img", imageFile);
       }
 
+      // Đánh dấu "vừa tự lưu" trước khi gửi request, để khi socket
+      // event CourseUpdated dội về (do chính request này gây ra),
+      // ta bỏ qua 1 lần refresh trùng lặp.
+      vuaTuLuuRef.current = true;
+
       const response = await khoaHocService.UpdateKhoaHoc(payload as any);
       if (response.status === false) {
+        vuaTuLuuRef.current = false;
         setError(response.message || "Cập nhật thất bại");
         return;
       }
       setSuccess("Cập nhật thông tin thành công!");
       await refreshData();
+      // Reset trạng thái mô tả và đồng bộ editor với dữ liệu mới
+      setDaTuSuaMoTa(false);
+      setMoTaEditorKey((k) => k + 1);
       setImageFile(null);
     } catch (err: any) {
+      vuaTuLuuRef.current = false;
       console.error(err);
       setError(err.message || "Đã xảy ra lỗi khi cập nhật");
     } finally {
@@ -767,10 +896,11 @@ export default function BasicInfoContent() {
     }
   };
 
-  // Xử lý thay đổi mô tả - KHÔNG re-render editor
+  // Xử lý thay đổi mô tả - đánh dấu người dùng đã tự sửa
   const handleMoTaChange = useCallback(
     (html: string) => {
       setThongTin({ moTa: html });
+      setDaTuSuaMoTa(true);
       if (loiMoTa) setLoiMoTa(null);
     },
     [setThongTin, loiMoTa],
@@ -847,6 +977,12 @@ export default function BasicInfoContent() {
               : trangThai === "TuChoi"
                 ? "Khóa học bị từ chối. Bạn chỉ có thể xem thông tin."
                 : "Khóa học đang trong quá trình duyệt. Bạn chỉ có thể xem thông tin."}
+          </Alert>
+        )}
+
+        {thongBaoRealtime && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {thongBaoRealtime}
           </Alert>
         )}
 
@@ -947,7 +1083,7 @@ export default function BasicInfoContent() {
                   />
                 ) : (
                   <RichTextEditor
-                    // KHÔNG dùng key để tránh re-render khi thay đổi nội dung
+                    key={`mota-${moTaEditorKey}`}
                     value={thongTin.moTa || ""}
                     onChange={handleMoTaChange}
                     placeholder="Nhập mô tả chi tiết về khóa học..."

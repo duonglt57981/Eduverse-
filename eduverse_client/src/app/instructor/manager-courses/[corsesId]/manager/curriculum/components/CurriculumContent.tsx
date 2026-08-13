@@ -3164,7 +3164,6 @@ export default function CurriculumContent() {
     }
 
     const connect = async () => {
-      // Nếu đã có connection đang tồn tại thì không tạo connection mới
       if (connectionRef.current) {
         return;
       }

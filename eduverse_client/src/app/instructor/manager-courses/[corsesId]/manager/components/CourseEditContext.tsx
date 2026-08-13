@@ -70,6 +70,16 @@ function chuanHoaId(id: unknown): string {
 
 const courseEditStore = new Map<string, any>();
 
+// Dữ liệu khóa học vừa fetch xong từ GetKhoaHocDetail, trả trực tiếp cho caller
+// thay vì bắt caller đọc lại từ state (state chưa flush ngay trong cùng 1 closure).
+interface FetchedCourseDetail {
+  thongTin: ThongTinKhoaHocCoBan;
+  phans: PhanHocType[];
+  trangThai: TrangThaiKhoaHoc;
+  lyDoTuChoi: string | null;
+  lichSuKiemDuyet: LichSuKiemDuyetDto | null;
+}
+
 interface CourseEditContextValue {
   idKhoaHoc: string;
   thongTin: ThongTinKhoaHocCoBan;
@@ -83,7 +93,10 @@ interface CourseEditContextValue {
   loading: boolean;
   isReadOnly: boolean;
   refreshData: () => Promise<void>;
-  saveState: () => void;
+  saveState: (
+    overrideThongTin?: ThongTinKhoaHocCoBan,
+    overridePhans?: PhanHocType[],
+  ) => void;
   restoreState: () => void;
   clearState: () => void;
   isDirty: boolean;
@@ -310,16 +323,25 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     setIsNavigating(value);
   }, []);
 
-  const saveState = useCallback(() => {
-    if (!idKhoaHoc) return;
-    courseEditStore.set(stateKey, {
-      thongTin,
-      phans,
-      lyDoTuChoi,
-      lichSuKiemDuyet,
-      timestamp: Date.now(),
-    });
-  }, [idKhoaHoc, stateKey, thongTin, phans, lyDoTuChoi, lichSuKiemDuyet]);
+  // ===== FIX: saveState nhận override để có thể ghi ĐÚNG dữ liệu vừa fetch,
+  // thay vì luôn phụ thuộc closure `thongTin`/`phans` (dễ bị stale ngay sau
+  // khi vừa gọi setThongTinState/setPhans, vì state chưa kịp flush). =====
+  const saveState = useCallback(
+    (
+      overrideThongTin?: ThongTinKhoaHocCoBan,
+      overridePhans?: PhanHocType[],
+    ) => {
+      if (!idKhoaHoc) return;
+      courseEditStore.set(stateKey, {
+        thongTin: overrideThongTin ?? thongTin,
+        phans: overridePhans ?? phans,
+        lyDoTuChoi,
+        lichSuKiemDuyet,
+        timestamp: Date.now(),
+      });
+    },
+    [idKhoaHoc, stateKey, thongTin, phans, lyDoTuChoi, lichSuKiemDuyet],
+  );
 
   const restoreState = useCallback(() => {
     if (!idKhoaHoc) return false;
@@ -391,46 +413,62 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     } as PhanHocType;
   }, []);
 
-  // ---- Tải toàn bộ chi tiết khóa học (thông tin + phần + bài giảng + tài liệu + bài kiểm tra + câu hỏi) chỉ bằng 1 API ----
-  const fetchCourseDetail = useCallback(async () => {
-    if (!idKhoaHoc) return;
-    try {
-      const res = await khoaHocService.GetKhoaHocDetail(idKhoaHoc);
-      const data = extractData<any>(res);
-      if (res?.status === false || !data) {
+  // ===== FIX: fetchCourseDetail giờ TRẢ VỀ dữ liệu mới fetch được,
+  // để caller (refreshData / init effect) dùng trực tiếp thay vì đọc lại
+  // từ state/closure (dễ bị stale ngay trong cùng 1 lượt async). =====
+  const fetchCourseDetail =
+    useCallback(async (): Promise<FetchedCourseDetail | null> => {
+      if (!idKhoaHoc) return null;
+      try {
+        const res = await khoaHocService.GetKhoaHocDetail(idKhoaHoc);
+        const data = extractData<any>(res);
+        if (res?.status === false || !data) {
+          setPhans([]);
+          return null;
+        }
+
+        // ---- Thông tin cơ bản của khóa học ----
+        const newThongTin: ThongTinKhoaHocCoBan = {
+          tieuDe: data.tieuDe || "",
+          moTa: data.moTa || "",
+          capDo: data.capDo || "",
+          hinhAnhKhoaHoc: data.hinhAnhKhoaHoc || "",
+          giaGoc: data.giaGoc,
+          trangThai: data.trangThai || "",
+          trangThaiPheDuyet: data.trangThaiPheDuyet || "",
+        };
+        setThongTinState(newThongTin);
+
+        const newTrangThai =
+          (data.trangThaiPheDuyet as TrangThaiKhoaHoc) || "DangSua";
+        setTrangThai(newTrangThai);
+
+        // ---- Lịch sử kiểm duyệt khóa học (lần duyệt/từ chối gần nhất) ----
+        const lichSuRaw = data.lichSuKiemDuyetKhoaHoc || null;
+        setLichSuKiemDuyet(lichSuRaw);
+        const newLyDoTuChoi = lichSuRaw?.lyDo ?? null;
+        setLyDoTuChoi(newLyDoTuChoi);
+
+        // ---- Danh sách phần (kèm bài giảng, tài liệu, bài kiểm tra, câu hỏi) ----
+        const phanHocList: PhanHocType[] = (data.danhSachPhanHoc || []).map(
+          (phanRaw: any) => mapPhanRaw(phanRaw),
+        );
+
+        setPhans(phanHocList);
+
+        return {
+          thongTin: newThongTin,
+          phans: phanHocList,
+          trangThai: newTrangThai,
+          lyDoTuChoi: newLyDoTuChoi,
+          lichSuKiemDuyet: lichSuRaw,
+        };
+      } catch (error) {
+        console.error("Lỗi lấy chi tiết khóa học:", error);
         setPhans([]);
-        return;
+        return null;
       }
-
-      // ---- Thông tin cơ bản của khóa học ----
-      setThongTinState({
-        tieuDe: data.tieuDe || "",
-        moTa: data.moTa || "",
-        capDo: data.capDo || "",
-        hinhAnhKhoaHoc: data.hinhAnhKhoaHoc || "",
-        giaGoc: data.giaGoc,
-        trangThai: data.trangThai || "",
-        trangThaiPheDuyet: data.trangThaiPheDuyet || "",
-      });
-
-      setTrangThai((data.trangThaiPheDuyet as TrangThaiKhoaHoc) || "DangSua");
-
-      // ---- Lịch sử kiểm duyệt khóa học (lần duyệt/từ chối gần nhất) ----
-      const lichSuRaw = data.lichSuKiemDuyetKhoaHoc || null;
-      setLichSuKiemDuyet(lichSuRaw);
-      setLyDoTuChoi(lichSuRaw?.lyDo ?? null);
-
-      // ---- Danh sách phần (kèm bài giảng, tài liệu, bài kiểm tra, câu hỏi) ----
-      const phanHocList: PhanHocType[] = (data.danhSachPhanHoc || []).map(
-        (phanRaw: any) => mapPhanRaw(phanRaw),
-      );
-
-      setPhans(phanHocList);
-    } catch (error) {
-      console.error("Lỗi lấy chi tiết khóa học:", error);
-      setPhans([]);
-    }
-  }, [idKhoaHoc, khoaHocService, mapPhanRaw]);
+    }, [idKhoaHoc, khoaHocService, mapPhanRaw]);
 
   // ---- Tải lại bài kiểm tra cho 1 phần (dùng chung API GetKhoaHocDetail) ----
   const loadQuizzesForSection = useCallback(
@@ -481,7 +519,11 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     [idKhoaHoc, khoaHocService],
   );
 
-  // ===== SỬA refreshData: KHÔNG set loading, thêm isRefreshingRef =====
+  // ===== FIX: refreshData dùng TRỰC TIẾP dữ liệu trả về từ fetchCourseDetail
+  // để ghi initialDataRef và courseEditStore — không còn đọc lại `thongTin`/
+  // `phans` từ closure (nguồn gốc bug: A sửa xong nhưng B đọc courseEditStore
+  // qua restoreState() lại thấy dữ liệu CŨ, vì saveState() trước đây ghi đè
+  // bằng bản chưa refresh). =====
   const refreshData = useCallback(async () => {
     if (isNavigating) {
       return;
@@ -492,19 +534,21 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     isRefreshingRef.current = true;
 
     try {
-      await fetchCourseDetail();
+      const fresh = await fetchCourseDetail();
       setIsDirty(false);
-      initialDataRef.current = {
-        thongTin: { ...thongTin },
-        phans: JSON.parse(JSON.stringify(phans)),
-      };
-      saveState();
+      if (fresh) {
+        initialDataRef.current = {
+          thongTin: { ...fresh.thongTin },
+          phans: JSON.parse(JSON.stringify(fresh.phans)),
+        };
+        saveState(fresh.thongTin, fresh.phans);
+      }
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
     } finally {
       isRefreshingRef.current = false;
     }
-  }, [fetchCourseDetail, saveState, thongTin, phans, isNavigating]);
+  }, [fetchCourseDetail, saveState, isNavigating]);
 
   // ---- CRUD Phan ----
   const createPhan = useCallback(
@@ -1409,7 +1453,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
     [taiLieuService, saveState],
   );
 
-  // ---- Khởi tạo ----
+  // ===== FIX: khởi tạo lần đầu cũng dùng trực tiếp dữ liệu trả về từ
+  // fetchCourseDetail thay vì đọc lại `thongTin`/`phans` (lúc này vẫn còn
+  // là {}/[] rỗng do state chưa flush) — tránh cache rỗng vào courseEditStore.
   useEffect(() => {
     const initializeData = async () => {
       if (!idKhoaHoc) return;
@@ -1417,9 +1463,17 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
         initialFetchDone.current = true;
         setLoading(true);
         try {
-          await fetchCourseDetail();
+          const fresh = await fetchCourseDetail();
           setIsDirty(false);
-          saveState();
+          if (fresh) {
+            initialDataRef.current = {
+              thongTin: { ...fresh.thongTin },
+              phans: JSON.parse(JSON.stringify(fresh.phans)),
+            };
+            saveState(fresh.thongTin, fresh.phans);
+          } else {
+            saveState();
+          }
         } catch (error) {
           console.error("Lỗi tải dữ liệu:", error);
         } finally {

@@ -1392,7 +1392,7 @@ namespace Eduverse.Service.KhoaHocService
                 throw new Exception("Không tìm thấy khóa học hoặc bạn không có quyền.");
 
             var khoaHoc = await GetQueryable()
-                .Where(x => x.Id == idKhoaHoc && x.CreatedId == nguoiTao)
+                .Where(x => x.Id == idKhoaHoc )
                 .Select(x => new GetToUpdateKhoaHoc
                 {
                     Id = x.Id,
@@ -1410,7 +1410,7 @@ namespace Eduverse.Service.KhoaHocService
 
             // 2. Không tìm thấy khóa học
             if (khoaHoc == null)
-                throw new Exception("Không tìm thấy khóa học hoặc bạn không có quyền.");
+                throw new Exception("Không tìm thấy khóa học");
 
             // 3. Lấy lý do kiểm duyệt
             if (khoaHoc.IdLyDoTuChoi.HasValue)
@@ -2656,7 +2656,7 @@ namespace Eduverse.Service.KhoaHocService
                 throw new Exception("Vui lòng chọn ảnh cho khóa học");
 
             if (request.MoTa == null)
-                throw new Exception("Vui lòng chọn ảnh cho khóa học");
+                throw new Exception("Vui lòng nhập mô tả cho khóa học");
 
             // ── Validation ───────────────────────────────────────
             if (string.IsNullOrWhiteSpace(request.TieuDe))
@@ -2745,7 +2745,7 @@ namespace Eduverse.Service.KhoaHocService
                 try { await _elasticsearchService.IndexCourseAsync(banGoc.Id); } catch {}  
             }
 
-            _signalRService.NotifyCourseUpdated(banGoc.Id);
+            await _signalRService.NotifyCourseUpdated(banGoc.Id);
 
             return _mapper.Map<KhoaHoc, KhoaHocDto>(banGoc);
         }
