@@ -365,43 +365,15 @@ namespace Eduverse.Service.ThanhToanService
                         .Where(x => x.IdDonHang == donHang.Id && !x.IsDeleted)
                         .ToListAsync();
 
-                    var voucherIds = donHangVouchers
-                        .Where(x => x.IdKhuyenMai.HasValue)
-                        .Select(x => x.IdKhuyenMai!.Value)
-                        .Distinct().ToList();
-
-                    var voucherMap = new Dictionary<Guid, bool>(); // voucherId → isAdmin
-                    if (voucherIds.Any())
-                    {
-                        var vouchers = await _khuyenMaiRepo.GetQueryable()
-                            .AsNoTracking()
-                            .Where(x => voucherIds.Contains(x.Id))
-                            .ToListAsync();
-
-                        foreach (var v in vouchers)
-                        {
-                            bool isAdmin = false;
-                            if (v.CreatedId.HasValue)
-                            {
-                                var creator = await _userRepository.GetByIdAsync(v.CreatedId.Value);
-                                if (creator != null)
-                                    isAdmin = await _userManager.IsInRoleAsync(creator, "Admin");
-                            }
-                            voucherMap[v.Id] = isAdmin;
-                        }
-                    }
-
-                    // courseId → (soTienGiam, isAdminVoucher)
-                    var courseDiscountInfo = new Dictionary<Guid, (double soTienGiam, bool isAdmin)>();
+                    // Không cần biết voucher do Admin hay Giảng viên tạo nữa —
+                    // chỉ cần biết mỗi khóa học được giảm bao nhiêu tiền để trừ ra
+                    // số tiền thực thu, rồi mới chia 30/70 trên số thực thu đó.
+                    var courseDiscountInfo = new Dictionary<Guid, double>();
                     foreach (var dkm in donHangVouchers)
                     {
-                        if (!dkm.IdKhoaHocDuocGiam.HasValue || !dkm.IdKhuyenMai.HasValue
-                            || !dkm.SoTienGiam.HasValue) continue;
+                        if (!dkm.IdKhoaHocDuocGiam.HasValue || !dkm.SoTienGiam.HasValue) continue;
 
-                        courseDiscountInfo[dkm.IdKhoaHocDuocGiam.Value] = (
-                            dkm.SoTienGiam.Value,
-                            voucherMap.GetValueOrDefault(dkm.IdKhuyenMai.Value, false)
-                        );
+                        courseDiscountInfo[dkm.IdKhoaHocDuocGiam.Value] = dkm.SoTienGiam.Value;
                     }
 
                     // ── Tính doanh thu giảng viên theo từng khóa học ────────────────────
@@ -414,38 +386,18 @@ namespace Eduverse.Service.ThanhToanService
                             continue;
 
                         var giaGoc = ct.GiaLucDat ?? 0;
-                        var normalGV = giaGoc * 0.7;
-                        var normalAdmin = giaGoc * 0.3;
-                        double instructorRevenue;
+                        var giam = ct.IdKhoaHoc.HasValue
+                            && courseDiscountInfo.TryGetValue(ct.IdKhoaHoc.Value, out var soTienGiam)
+                                ? soTienGiam
+                                : 0;
 
-                        if (ct.IdKhoaHoc.HasValue
-                            && courseDiscountInfo.TryGetValue(ct.IdKhoaHoc.Value, out var disc))
-                        {
-                            var giam = disc.soTienGiam;
-                            var tienThuVe = Math.Max(0, giaGoc - giam);
-
-                            if (disc.isAdmin)
-                            {
-                                // Admin tạo voucher → Admin chịu thiệt từ phần 30% của mình
-                                // Instructor vẫn cố lấy 70%, nhưng bị cap bởi tiền thực thu
-                                var adminNhan = Math.Max(0, normalAdmin - giam);
-                                instructorRevenue = Math.Max(0, Math.Min(normalGV, tienThuVe - adminNhan));
-                            }
-                            else
-                            {
-                                // GiaoVien tạo voucher → Instructor chịu thiệt từ phần 70%
-                                instructorRevenue = Math.Max(0, normalGV - giam);
-                            }
-                        }
-                        else
-                        {
-                            // Không có voucher → chia bình thường 70%
-                            instructorRevenue = normalGV;
-                        }
+                        // Áp voucher trước để ra số tiền thực thu (không quan tâm voucher
+                        // do ai tạo), rồi mới chia Admin 30% / Giảng viên 70% trên số đó
+                        var tienThucThu = Math.Max(0, giaGoc - giam);
+                        var instructorRevenue = tienThucThu * 0.7;
 
                         if (instructorRevenue <= 0) continue;
 
-                        // Lấy toàn bộ thành viên (chủ sở hữu + cộng tác viên) của khóa học này
                         var thanhVienList = await _khoaHocGVRepository.GetQueryable()
                             .AsNoTracking()
                             .Where(x => x.IdKhoaHoc == ct.IdKhoaHoc && !x.IsDeleted)
@@ -453,8 +405,6 @@ namespace Eduverse.Service.ThanhToanService
 
                         if (!thanhVienList.Any())
                         {
-                            // Fallback an toàn: phòng trường hợp khóa học chưa có dòng nào trong
-                            // KhoaHoc_GiangVien (không nên xảy ra sau khi đã backfill), đổ hết cho người tạo
                             var giangVienFallback = await _userRepository.GetQueryable()
                                 .FirstOrDefaultAsync(u => u.Id == khoaHoc.CreatedId);
 
@@ -741,6 +691,7 @@ namespace Eduverse.Service.ThanhToanService
                 SoTienSauGiam = soTienGoc - tongGiam
             };
         }
+
         public async Task<double> GetTongDoanhThuNenTangAsync()
         {
             // Tổng tiền học viên thực trả (sau discount)
@@ -748,23 +699,42 @@ namespace Eduverse.Service.ThanhToanService
                 .Where(x => !x.IsDeleted && x.TrangThai == 1)
                 .SumAsync(x => (double?)x.SoTienThanhToan ?? 0);
 
-            // Tổng đã trả cho giảng viên (70% giá gốc, không bị ảnh hưởng discount)
             var donHangDaThanhToanIds = await _donHangRepo.GetQueryable()
                 .Where(x => !x.IsDeleted && x.TrangThai == 1)
                 .Select(x => x.Id)
                 .ToListAsync();
 
-            var tongGiangVienNhan = await _donHangChiTietRepo.GetQueryable()
-                .Where(ct =>
-                    !ct.IsDeleted &&
-                    ct.IdDonHang.HasValue &&
-                    donHangDaThanhToanIds.Contains(ct.IdDonHang.Value)
-                )
-                .SumAsync(ct => (ct.GiaLucDat ?? 0) * 0.7);
+            var chiTiets = await _donHangChiTietRepo.GetQueryable()
+                .Where(ct => !ct.IsDeleted && ct.IdDonHang.HasValue
+                          && donHangDaThanhToanIds.Contains(ct.IdDonHang.Value))
+                .Select(ct => new { ct.IdDonHang, ct.IdKhoaHoc, ct.GiaLucDat })
+                .ToListAsync();
 
-            // Admin nhận = tiền thu được - tiền đã trả giảng viên
+            var giamGiaList = await _donHangKhuyenMaiRepo.GetQueryable()
+                .Where(x => !x.IsDeleted && x.IdDonHang.HasValue
+                         && donHangDaThanhToanIds.Contains(x.IdDonHang.Value)
+                         && x.IdKhoaHocDuocGiam.HasValue)
+                .Select(x => new { x.IdDonHang, x.IdKhoaHocDuocGiam, x.SoTienGiam })
+                .ToListAsync();
+
+            double tongGiangVienNhan = 0;
+
+            foreach (var ct in chiTiets)
+            {
+                var giaGoc = ct.GiaLucDat ?? 0;
+
+                var giam = giamGiaList
+                    .Where(g => g.IdDonHang == ct.IdDonHang &&
+                                g.IdKhoaHocDuocGiam == ct.IdKhoaHoc)
+                    .Sum(g => g.SoTienGiam ?? 0);
+
+                var tienThucThu = Math.Max(0, giaGoc - giam);
+
+                tongGiangVienNhan += tienThucThu * 0.7;
+            }
+
             return Math.Round(tongThanhToan - tongGiangVienNhan, 0);
-        }
+        }   
 
 
     }
