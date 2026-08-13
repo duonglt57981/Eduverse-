@@ -4386,7 +4386,7 @@ export default function CurriculumContent() {
           >
             Chương trình giảng dạy
           </Typography>
-          {signalRConnected && (
+          {/* {signalRConnected && (
             <Chip
               size="small"
               label="🔴 Live"
@@ -4397,7 +4397,7 @@ export default function CurriculumContent() {
                 fontSize: 11,
               }}
             />
-          )}
+          )} */}
         </Box>
 
         <Typography
