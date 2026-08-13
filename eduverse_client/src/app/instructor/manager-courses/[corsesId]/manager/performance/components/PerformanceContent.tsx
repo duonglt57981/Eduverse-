@@ -298,7 +298,7 @@ export default function PerformanceContent() {
         >
           <Tab label="💰 Doanh thu" />
           <Tab label="👥 Học viên" />
-          <Tab label="📊 Engagement" />
+          <Tab label="📊 Bài giảng" />
         </Tabs>
 
         {/* ── Tab 0: Doanh thu ── */}

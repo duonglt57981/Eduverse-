@@ -595,7 +595,7 @@ export default function InstructorDashboardContent() {
 
   const revenueChartData = rawMonthlyRevenue.map((m) => ({
     label: m.label,
-    raw: Math.round(m.totalAmount * 0.7), // 70%
+    raw: Math.round(m.totalAmount * 0.7), // 70%  
     value: Math.round(m.totalAmount * 0.7), // dùng để vẽ bar
   }));
 

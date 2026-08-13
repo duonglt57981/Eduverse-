@@ -170,7 +170,6 @@ function RevenueLineChart({
                 ? "Doanh thu nền tảng (30%) theo từng tháng trong quý này."
                 : "Doanh thu nền tảng (30%) theo từng tháng trong năm nay."}
           </Typography>
-
         </Box>
         <Tabs
           value={period}
@@ -1397,7 +1396,9 @@ export default function AdminDashboardContent() {
               <Table sx={{ minWidth: 800 }}>
                 <TableHead sx={{ bgcolor: "rgba(141,19,19,0.03)" }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 800, color: COLORS.textDark, pl: 3 }}>
+                    <TableCell
+                      sx={{ fontWeight: 800, color: COLORS.textDark, pl: 3 }}
+                    >
                       Người dùng
                     </TableCell>
                     <TableCell sx={{ fontWeight: 800, color: COLORS.textDark }}>
@@ -1409,7 +1410,10 @@ export default function AdminDashboardContent() {
                     <TableCell sx={{ fontWeight: 800, color: COLORS.textDark }}>
                       Trạng thái
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 800, color: COLORS.textDark, pr: 3 }}>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 800, color: COLORS.textDark, pr: 3 }}
+                    >
                       Thao tác
                     </TableCell>
                   </TableRow>
@@ -1418,17 +1422,27 @@ export default function AdminDashboardContent() {
                   {filteredRequests.map((req) => {
                     const fullName = req.hoTen || req.userName || "Học viên";
                     const initial =
-                      fullName.trim().split(" ").pop()?.substring(0, 2).toUpperCase() ||
-                      "HV";
+                      fullName
+                        .trim()
+                        .split(" ")
+                        .pop()
+                        ?.substring(0, 2)
+                        .toUpperCase() || "HV";
                     return (
                       <TableRow
                         key={req.id}
                         hover
-                        sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                        sx={{
+                          "&:last-child td, &:last-child th": { border: 0 },
+                        }}
                       >
                         {/* 1. Người dùng (Avatar + Họ tên + Email) */}
                         <TableCell sx={{ pl: 3 }}>
-                          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            sx={{ alignItems: "center" }}
+                          >
                             <Avatar
                               src={req.anhDaiDien || undefined}
                               sx={{
@@ -1806,12 +1820,18 @@ export default function AdminDashboardContent() {
                   Hồ sơ CV
                 </Typography>
                 {detailRequest.cvUrl ? (
-                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ flexWrap: "wrap", rowGap: 1 }}
+                  >
                     <Button
                       variant="contained"
                       size="small"
                       disableElevation
-                      startIcon={<VisibilityRoundedIcon sx={{ fontSize: 17 }} />}
+                      startIcon={
+                        <VisibilityRoundedIcon sx={{ fontSize: 17 }} />
+                      }
                       onClick={() => setCvOpen(true)}
                       sx={{
                         textTransform: "none",
@@ -1828,14 +1848,19 @@ export default function AdminDashboardContent() {
                       variant="outlined"
                       size="small"
                       onClick={() =>
-                        window.open(detailRequest.cvUrl, "_blank", "noopener,noreferrer")
+                        window.open(
+                          detailRequest.cvUrl,
+                          "_blank",
+                          "noopener,noreferrer",
+                        )
                       }
                       sx={{
                         textTransform: "none",
                         fontWeight: 800,
                         borderRadius: "10px",
                         color: COLORS.primary,
-                        borderColor: "var(--ev-brand-border, rgba(141,19,19,0.25))",
+                        borderColor:
+                          "var(--ev-brand-border, rgba(141,19,19,0.25))",
                       }}
                     >
                       Mở tab mới
