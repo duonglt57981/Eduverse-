@@ -362,6 +362,12 @@ export default class KhoaHocService {
         if (searchParams.keyword) {
           params.append("keyword", searchParams.keyword);
         }
+        if (searchParams.sapXepNgay) {
+          params.append("sapXepNgay", searchParams.sapXepNgay);
+        }
+        if (searchParams.sapXepTen) {
+          params.append("sapXepTen", searchParams.sapXepTen);
+        }
       }
 
       const queryString = params.toString();
@@ -423,10 +429,9 @@ export default class KhoaHocService {
 
   async DeleteKhoaHoc(id: string): Promise<ApiResponse<boolean>> {
     try {
-      const response = await apiService.delete<ApiResponse<boolean>>(
+      return await apiService.delete<boolean>(
         `/KhoaHoc/khoahoc-delete/${id}`,
       );
-      return response.data;
     } catch (error) {
       console.error("Error deleting course:", error);
       throw error;

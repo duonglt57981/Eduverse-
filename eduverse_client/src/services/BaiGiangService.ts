@@ -26,17 +26,14 @@ export default class BaiGiangService {
     request: CreateBaiGiangRequest,
   ): Promise<ApiResponse<BaiGiangType>> {
     try {
-      const response = await apiService.post<ApiResponse<BaiGiangType>>(
+      const response = await apiService.post<BaiGiangType>(
         "/BaiGiang/baigiang-create",
         request,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
           timeout: 1800000,
         },
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error creating bai giang:", error);
       throw error;
@@ -47,17 +44,14 @@ export default class BaiGiangService {
     request: UpdateBaiGiangRequest,
   ): Promise<ApiResponse<BaiGiangType>> {
     try {
-      const response = await apiService.put<ApiResponse<BaiGiangType>>(
+      const response = await apiService.put<BaiGiangType>(
         "/BaiGiang/baigiang-update",
         request,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
           timeout: 1800000, // 5 phút cho file lớn
         },
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error updating bai giang:", error);
       throw error;
@@ -66,10 +60,10 @@ export default class BaiGiangService {
 
   async DeleteBaiGiang(idBaiGiang: string): Promise<ApiResponse<boolean>> {
     try {
-      const response = await apiService.delete<ApiResponse<boolean>>(
+      const response = await apiService.delete<boolean>(
         `/BaiGiang/baigiang-delete/${idBaiGiang}`,
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error deleting bai giang:", error);
       throw error;

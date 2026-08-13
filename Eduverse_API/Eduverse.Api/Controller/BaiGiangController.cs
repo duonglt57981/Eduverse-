@@ -27,11 +27,12 @@ namespace Eduverse.Api.Controller
 
 
         [HttpPost("baigiang-create")]
+        [Consumes("multipart/form-data")]
         [RequestSizeLimit(2L * 1024 * 1024 * 1024)]
         [RequestFormLimits(MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024)]
         [DisableRequestSizeLimit]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<BaiGiangDto>> CreateBaiGiang( CreateBaiGiangRequest request)
+        public async Task<DataResponse<BaiGiangDto>> CreateBaiGiang([FromForm] CreateBaiGiangRequest request)
         {
             try
             {
@@ -50,7 +51,7 @@ namespace Eduverse.Api.Controller
         [RequestSizeLimit(2147483648)]
         [RequestFormLimits(MultipartBodyLengthLimit = 2147483648)]
         [Authorize(Roles = "Admin,GiaoVien")]
-        public async Task<DataResponse<BaiGiangDto>> UpdateBaiGiang( UpdateBaiGiangRequest request)
+        public async Task<DataResponse<BaiGiangDto>> UpdateBaiGiang([FromForm] UpdateBaiGiangRequest request)
         {
             try
             {

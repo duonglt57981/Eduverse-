@@ -18,6 +18,13 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -30,6 +37,7 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
@@ -48,9 +56,6 @@ const FILE_BASE_URL =
   "";
 
 const DEFAULT_SORT = "moi-nhat";
-
-// Trang này chỉ hiển thị các khóa học đã được DUYỆT — không còn lọc theo trạng thái
-const TRANG_THAI_CO_DINH = "DaDuyet";
 
 /**
  * MUI's `alpha()` only accepts real color values (#hex, rgb(), hsl()...).
@@ -145,6 +150,7 @@ export default function LichSuKiemDuyetPage() {
   const [keyword, setKeyword] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
   const [sortBy, setSortBy] = useState(DEFAULT_SORT);
+  const [sortInput, setSortInput] = useState(DEFAULT_SORT);
   const [page, setPage] = useState(1);
 
   const [loading, setLoading] = useState(true);
@@ -152,10 +158,15 @@ export default function LichSuKiemDuyetPage() {
   const [items, setItems] = useState<any[]>([]);
   const [totalPage, setTotalPage] = useState(1);
   const [tongDaDuyet, setTongDaDuyet] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const isFilterDirty =
     keywordInput.trim() !== "" ||
     keyword.trim() !== "" ||
+    sortInput !== DEFAULT_SORT ||
     sortBy !== DEFAULT_SORT;
 
   const searchParams = useMemo(() => {
@@ -165,27 +176,22 @@ export default function LichSuKiemDuyetPage() {
     };
     if (keyword.trim()) params.keyword = keyword.trim();
 
-    // Sắp xếp theo ngày hoặc tên
+    // API nhận hai tham số sapXepNgay / sapXepTen.
     switch (sortBy) {
       case "moi-nhat":
-        params.sortBy = "createdDate";
-        params.sortDirection = "desc";
+        params.sapXepNgay = "Moi";
         break;
       case "cu-nhat":
-        params.sortBy = "createdDate";
-        params.sortDirection = "asc";
+        params.sapXepNgay = "Cu";
         break;
       case "ten-a-z":
-        params.sortBy = "tieuDe";
-        params.sortDirection = "asc";
+        params.sapXepTen = "AZ";
         break;
       case "ten-z-a":
-        params.sortBy = "tieuDe";
-        params.sortDirection = "desc";
+        params.sapXepTen = "ZA";
         break;
       default:
-        params.sortBy = "createdDate";
-        params.sortDirection = "desc";
+        params.sapXepNgay = "Moi";
     }
     return params;
   }, [keyword, sortBy, page]);
@@ -241,17 +247,18 @@ export default function LichSuKiemDuyetPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setKeyword(keywordInput);
+    setSortBy(sortInput);
     setPage(1);
   };
 
   const handleSortChange = (e: any) => {
-    setSortBy(e.target.value);
-    setPage(1);
+    setSortInput(e.target.value);
   };
 
   const handleResetFilters = () => {
     setKeywordInput("");
     setKeyword("");
+    setSortInput(DEFAULT_SORT);
     setSortBy(DEFAULT_SORT);
     setPage(1);
   };
@@ -259,6 +266,53 @@ export default function LichSuKiemDuyetPage() {
   const handleOpenCourse = (id: string) => {
     if (!id) return;
     router.push(`/admin/inspect-courses/${id}`);
+  };
+
+  const handleOpenDelete = (item: any) => {
+    setDeleteError("");
+    setDeleteTarget(item);
+  };
+
+  const handleCloseDelete = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteError("");
+  };
+
+  const handleDeleteCourse = async () => {
+    const id = deleteTarget?.id || deleteTarget?.idKhoaHoc;
+    if (!id) return;
+
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const response = await khoaHocService.DeleteKhoaHoc(id);
+      if (response?.status === false) {
+        setDeleteError(response.message || "Không thể xóa khóa học này.");
+        return;
+      }
+
+      const title = deleteTarget?.tieuDe || "Khóa học";
+      setDeleteTarget(null);
+      setSuccessMessage(`Đã xóa khóa học "${title}".`);
+
+      if (items.length === 1 && page > 1) {
+        setPage((currentPage) => currentPage - 1);
+      } else {
+        await fetchList();
+      }
+      await fetchStats();
+    } catch (error) {
+      const message =
+        typeof error === "string"
+          ? error
+          : (error as any)?.response?.data?.message ||
+            (error as any)?.message ||
+            "Có lỗi xảy ra khi xóa khóa học.";
+      setDeleteError(message);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleGoBack = () => {
@@ -483,7 +537,7 @@ export default function LichSuKiemDuyetPage() {
 
                 <Select
                   size="small"
-                  value={sortBy}
+                  value={sortInput}
                   onChange={handleSortChange}
                   startAdornment={
                     <InputAdornment position="start">
@@ -514,6 +568,26 @@ export default function LichSuKiemDuyetPage() {
                   <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
                   <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
                 </Select>
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  startIcon={<SearchIcon />}
+                  disabled={loading}
+                  sx={{
+                    minWidth: { xs: "100%", sm: 124 },
+                    height: 40,
+                    borderRadius: 2,
+                    px: 2,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    bgcolor: COLORS.primary,
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: COLORS.primary, boxShadow: "none" },
+                  }}
+                >
+                  Tìm kiếm
+                </Button>
 
                 <Tooltip title="Đặt lại bộ lọc">
                   <span>
@@ -708,6 +782,21 @@ export default function LichSuKiemDuyetPage() {
                               <VisibilityRoundedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          <Tooltip title="Xóa khóa học">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenDelete(item);
+                              }}
+                              sx={{
+                                color: "error.main",
+                                "&:hover": { bgcolor: alpha("#D32F2F", 0.08) },
+                              }}
+                            >
+                              <DeleteOutlineRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                           <ChevronRightRoundedIcon
                             className="go-arrow"
                             sx={{
@@ -744,6 +833,62 @@ export default function LichSuKiemDuyetPage() {
               )}
             </Box>
           </Box>
+
+          <Dialog
+            open={!!deleteTarget}
+            onClose={handleCloseDelete}
+            maxWidth="xs"
+            fullWidth
+            slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+          >
+            <DialogTitle sx={{ fontWeight: 800, color: "error.main" }}>
+              Xóa khóa học
+            </DialogTitle>
+            <DialogContent>
+              <Typography sx={{ color: COLORS.inkSoft }}>
+                Bạn có chắc muốn xóa khóa học &quot;
+                <strong>{deleteTarget?.tieuDe || "Khóa học"}</strong>&quot;?
+                Hành động này không thể hoàn tác.
+              </Typography>
+              {deleteError && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {deleteError}
+                </Alert>
+              )}
+            </DialogContent>
+            <DialogActions sx={{ p: 2 }}>
+              <Button onClick={handleCloseDelete} disabled={deleting}>
+                Hủy
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDeleteCourse}
+                disabled={deleting}
+                startIcon={
+                  deleting ? <CircularProgress size={16} color="inherit" /> : undefined
+                }
+                sx={{ textTransform: "none", fontWeight: 700 }}
+              >
+                {deleting ? "Đang xóa..." : "Xóa khóa học"}
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Snackbar
+            open={!!successMessage}
+            autoHideDuration={4000}
+            onClose={() => setSuccessMessage("")}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          >
+            <Alert
+              severity="success"
+              variant="filled"
+              onClose={() => setSuccessMessage("")}
+            >
+              {successMessage}
+            </Alert>
+          </Snackbar>
         </Box>
       </DashboardShell>
     </AuthGuard>
