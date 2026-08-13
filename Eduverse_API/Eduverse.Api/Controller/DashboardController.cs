@@ -30,6 +30,7 @@ namespace Eduverse.Api.Controller
         private readonly IService<DonHang> _donHangService;
         private readonly IService<DonHangChiTiet> _donHangChiTietService;
         private readonly IService<KhoaHoc_GiangVien> _khoaHocGiangVienService;
+        private readonly IService<DonHang_KhuyenMai> _donHangKhuyenMaiService;
 
         public DashboardController(
             IService<KhoaHoc> khoaHocService,
@@ -42,6 +43,7 @@ namespace Eduverse.Api.Controller
             IService<BaiKiemTra> baiKiemTraService,
             IService<DanhMuc_KhoaHoc> danhMucKhoaHocService,
             IService<KhoaHoc_GiangVien> khoaHocGiangVienService,
+            IService<DonHang_KhuyenMai> donHangKhuyenMaiService,
             UserManager<AppUser> userManager)
         {
             _khoaHocService = khoaHocService;
@@ -55,6 +57,7 @@ namespace Eduverse.Api.Controller
             _danhMucKhoaHocService = danhMucKhoaHocService;
             _userManager = userManager;
             _khoaHocGiangVienService = khoaHocGiangVienService;
+            _donHangKhuyenMaiService = donHangKhuyenMaiService;
         }
 
         [HttpGet]
@@ -474,7 +477,6 @@ namespace Eduverse.Api.Controller
 
         }
 
-        // ===== Dashboard cho GIẢNG VIÊN (dữ liệu thật, không dữ liệu giả) =====
         private async Task<DataResponse<object>> GetInstructorDashboardDataAsync(Guid instructorId)
         {
             AppUser user = null;
@@ -483,7 +485,6 @@ namespace Eduverse.Api.Controller
             var fullName = user?.HoTen ?? "Giảng viên";
             var avatarUrl = user?.AnhDaiDien;
 
-            // Lấy tất cả bản ghi tham gia khóa học của giảng viên (chủ sở hữu HOẶC cộng tác viên)
             var myMemberships = new List<KhoaHoc_GiangVien>();
             try
             {
@@ -493,14 +494,12 @@ namespace Eduverse.Api.Controller
             }
             catch (Exception ex) { Console.WriteLine("Error fetching instructor memberships: " + ex.Message); }
 
-            // Tỷ lệ chia doanh thu của giảng viên theo từng khóa học
-            var tyLeChiaByCourseId = myMemberships
+            var myTyLeByCourseId = myMemberships
                 .GroupBy(x => x.IdKhoaHoc)
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.TyLeChiaDoanhThu));
 
             var collabCourseIds = myMemberships.Select(x => x.IdKhoaHoc).Distinct().ToList();
 
-            // Khóa học của giảng viên (do chính mình tạo HOẶC được mời làm cộng tác viên)
             var myCourses = new List<KhoaHoc>();
             try
             {
@@ -513,7 +512,19 @@ namespace Eduverse.Api.Controller
             var myCourseIds = myCourses.Select(c => c.Id).ToList();
             int totalCourses = myCourses.Count;
 
-            // Đăng ký vào các khóa của giảng viên (lọc trong bộ nhớ cho an toàn)
+            var tongTyLeByCourseId = new Dictionary<Guid, int>();
+            try
+            {
+                var allMembershipsOfMyCourses = await _khoaHocGiangVienService.GetQueryable()
+                    .Where(x => myCourseIds.Contains(x.IdKhoaHoc) && !x.IsDeleted)
+                    .ToListAsync();
+
+                tongTyLeByCourseId = allMembershipsOfMyCourses
+                    .GroupBy(x => x.IdKhoaHoc)
+                    .ToDictionary(g => g.Key, g => g.Sum(x => x.TyLeChiaDoanhThu));
+            }
+            catch (Exception ex) { Console.WriteLine("Error fetching all course memberships: " + ex.Message); }
+
             var allRegs = new List<DangKyKhoaHoc>();
             try
             {
@@ -522,20 +533,90 @@ namespace Eduverse.Api.Controller
             catch (Exception ex) { Console.WriteLine("Error fetching registrations: " + ex.Message); }
             var myRegs = allRegs.Where(r => r.IdKhoaHoc.HasValue && myCourseIds.Contains(r.IdKhoaHoc.Value)).ToList();
 
-            // Doanh thu THỰC NHẬN của giảng viên cho 1 lượt đăng ký, theo đúng % chia trên khóa học đó
-            // (nếu khóa chưa có bản ghi chia sẻ - dữ liệu cũ chưa backfill - mặc định 100%)
+            // ĐÃ SỬA (bug thật): trước đây gom SoTienGiam theo IdDonHang rồi map thẳng cho MỌI
+            // khóa học trong đơn đó => nếu 1 đơn có nhiều khóa, mỗi khóa sẽ bị trừ nhầm TOÀN BỘ
+            // tiền giảm của cả đơn (kể cả phần giảm của khóa khác). DonHang_KhuyenMai có cột
+            // IdKhoaHocDuocGiam cho biết khoản giảm đó thuộc về khóa học cụ thể nào trong đơn,
+            // nên phải gom theo cặp (IdDonHang, IdKhoaHocDuocGiam) rồi mới map sang (học viên, khóa học).
+            var giamGiaByHocVienKhoaHoc = new Dictionary<(Guid IdNguoiDung, Guid IdKhoaHoc), double>();
+            try
+            {
+                var donHangsDaThanhToan = await _donHangService.GetQueryable()
+                    .Where(d => !d.IsDeleted && d.TrangThai == 1 && d.IdNguoiDung.HasValue)
+                    .Select(d => new { d.Id, d.IdNguoiDung })
+                    .ToListAsync();
+
+                var donHangIdToUser = donHangsDaThanhToan
+                    .ToDictionary(d => d.Id, d => d.IdNguoiDung!.Value);
+                var donHangIds = donHangsDaThanhToan.Select(d => d.Id).ToList();
+
+                var chiTietsCuaGiangVien = await _donHangChiTietService.GetQueryable()
+                    .Where(ct => !ct.IsDeleted
+                              && ct.IdDonHang.HasValue
+                              && donHangIds.Contains(ct.IdDonHang.Value)
+                              && ct.IdKhoaHoc.HasValue
+                              && myCourseIds.Contains(ct.IdKhoaHoc.Value))
+                    .ToListAsync();
+
+                var donHangIdsCuaGiangVien = chiTietsCuaGiangVien
+                    .Where(ct => ct.IdDonHang.HasValue)
+                    .Select(ct => ct.IdDonHang!.Value)
+                    .Distinct()
+                    .ToList();
+
+                var vouchers = await _donHangKhuyenMaiService.GetQueryable()
+                    .Where(km => km.IdDonHang.HasValue
+                              && donHangIdsCuaGiangVien.Contains(km.IdDonHang.Value)
+                              && !km.IsDeleted)
+                    .ToListAsync();
+
+                // Gom theo (đơn hàng, khóa học được giảm) thay vì chỉ theo đơn hàng.
+                var giamTheoDonHangVaKhoaHoc = vouchers
+                    .Where(km => km.IdKhoaHocDuocGiam.HasValue)
+                    .GroupBy(km => (IdDonHang: km.IdDonHang!.Value, IdKhoaHoc: km.IdKhoaHocDuocGiam!.Value))
+                    .ToDictionary(g => g.Key, g => g.Sum(km => km.SoTienGiam ?? 0));
+
+                foreach (var ct in chiTietsCuaGiangVien)
+                {
+                    if (!ct.IdDonHang.HasValue || !ct.IdKhoaHoc.HasValue) continue;
+                    if (!donHangIdToUser.TryGetValue(ct.IdDonHang.Value, out var idNguoiDung)) continue;
+
+                    var giam = giamTheoDonHangVaKhoaHoc.GetValueOrDefault(
+                        (ct.IdDonHang.Value, ct.IdKhoaHoc.Value), 0);
+                    var key = (idNguoiDung, ct.IdKhoaHoc.Value);
+
+                    giamGiaByHocVienKhoaHoc[key] =
+                        giamGiaByHocVienKhoaHoc.GetValueOrDefault(key, 0) + giam;
+                }
+            }
+            catch (Exception ex) { Console.WriteLine("Error fetching discount data: " + ex.Message); }
+
+            // GiaDangKy là giá GỐC (chưa trừ giảm giá) -> trừ đúng phần giảm riêng của khóa học đó là đúng.
             double RevenueForReg(DangKyKhoaHoc r)
             {
-                var gia = r.GiaDangKy ?? 0;
-                if (r.IdKhoaHoc.HasValue && tyLeChiaByCourseId.TryGetValue(r.IdKhoaHoc.Value, out var tyLe))
-                    return gia * (tyLe / 100.0);
-                return gia;
+                if (!r.IdKhoaHoc.HasValue || !r.IdNguoiDangKi.HasValue)
+                    return 0;
+
+                var giaGoc = r.GiaDangKy ?? 0;
+                var giam = giamGiaByHocVienKhoaHoc.GetValueOrDefault(
+                    (r.IdNguoiDangKi.Value, r.IdKhoaHoc.Value), 0);
+                var tienThucThu = Math.Max(0, giaGoc - giam);
+                var phanGiangVien = tienThucThu * 0.7;
+
+                if (!myTyLeByCourseId.TryGetValue(r.IdKhoaHoc.Value, out var myTyLe))
+                    return 0;
+
+                var tongTyLe = tongTyLeByCourseId.GetValueOrDefault(r.IdKhoaHoc.Value, 0);
+                if (tongTyLe <= 0)
+                    return phanGiangVien; // dữ liệu cũ chưa backfill -> 100% về giảng viên
+
+                // Ép (double) TRƯỚC khi chia — bắt buộc vì cả 2 vế là int
+                return phanGiangVien * (myTyLe / (double)tongTyLe);
             }
 
             int totalStudents = myRegs.Where(r => r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
             double totalRevenue = myRegs.Sum(RevenueForReg);
 
-            // Tiến độ học tập của các đăng ký (dùng cho tỷ lệ hoàn thành + tiến độ học viên)
             var allProgress = new List<TienDoHocTap>();
             try
             {
@@ -543,7 +624,6 @@ namespace Eduverse.Api.Controller
             }
             catch (Exception ex) { Console.WriteLine("Error fetching progress: " + ex.Message); }
 
-            // Tăng trưởng học viên: tháng này so với tháng trước
             var nowDate = DateTime.Now;
             var curMonthStart = new DateTime(nowDate.Year, nowDate.Month, 1);
             var prevMonthStart = curMonthStart.AddMonths(-1);
@@ -553,7 +633,6 @@ namespace Eduverse.Api.Controller
                 ? Math.Round((double)(newThisMonth - newPrevMonth) / newPrevMonth * 100, 0)
                 : (newThisMonth > 0 ? 100 : 0);
 
-            // Học viên mới theo 7 tháng gần nhất
             var monthlyEnrollments = new List<object>();
             for (int i = 6; i >= 0; i--)
             {
@@ -582,7 +661,6 @@ namespace Eduverse.Api.Controller
                 });
             }
 
-            // Tỷ lệ hoàn thành theo khóa (từ TienDoHocTap)
             var completionByCourse = new List<object>();
             try
             {
@@ -610,7 +688,6 @@ namespace Eduverse.Api.Controller
             }
             catch (Exception ex) { Console.WriteLine("Error computing completion: " + ex.Message); }
 
-            // Học viên mới nhất
             var recentStudents = new List<object>();
             try
             {
@@ -685,7 +762,7 @@ namespace Eduverse.Api.Controller
 
             try
             {
-                // Lấy tất cả đơn hàng đã thanh toán
+                // 1. Lấy các đơn hàng đã thanh toán
                 var donHangsDaThanhToan = await _donHangService.GetQueryable()
                     .Where(d => !d.IsDeleted && d.TrangThai == 1)
                     .ToListAsync();
@@ -694,7 +771,7 @@ namespace Eduverse.Api.Controller
                     .Select(d => d.Id)
                     .ToList();
 
-                // Lấy chi tiết các đơn hàng
+                // 2. Lấy chi tiết đơn hàng
                 var chiTiets = await _donHangChiTietService.GetQueryable()
                     .Where(ct =>
                         !ct.IsDeleted &&
@@ -702,14 +779,52 @@ namespace Eduverse.Api.Controller
                         donHangIds.Contains(ct.IdDonHang.Value))
                     .ToListAsync();
 
-                // Tổng tiền học viên đã thanh toán
-                double tongThu = donHangsDaThanhToan.Sum(d => d.SoTienThanhToan ?? 0);
+                // 3. Lấy khuyến mãi của các đơn hàng
+                var vouchers = await _donHangKhuyenMaiService.GetQueryable()
+                    .Where(km =>
+                        !km.IsDeleted &&
+                        km.IdDonHang.HasValue &&
+                        donHangIds.Contains(km.IdDonHang.Value))
+                    .ToListAsync();
 
-                // Tổng tiền trả giảng viên (70% giá lúc đặt)
-                double tongTraGiangVien = chiTiets.Sum(ct => (ct.GiaLucDat ?? 0) * 0.7);
+                var giamTheoDonHang = vouchers
+                    .GroupBy(km => km.IdDonHang!.Value)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Sum(x => x.SoTienGiam ?? 0)
+                    );
 
-                // Doanh thu thực nhận của Admin
-                totalRevenue = Math.Round(tongThu - tongTraGiangVien, 0);
+                // 4. Tính doanh thu thực nhận của hệ thống
+                // Lưu ý: ở đây tính TỔNG cho cả đơn hàng (không tách theo từng khóa học),
+                // nên gộp SoTienGiam theo IdDonHang là ĐÚNG — không phải bug (khác với hàm
+                // của giảng viên, nơi cần tách giảm giá theo từng khóa học cụ thể).
+                foreach (var dh in donHangsDaThanhToan)
+                {
+                    var chiTietDonHang = chiTiets
+                        .Where(ct => ct.IdDonHang == dh.Id)
+                        .ToList();
+
+                    var tongTienTruocGiam = chiTietDonHang
+                        .Sum(ct => ct.GiaLucDat ?? 0);
+
+                    var tienGiam = giamTheoDonHang
+                        .GetValueOrDefault(dh.Id, 0);
+
+                    var tienThucThu = Math.Max(
+                        0,
+                        tongTienTruocGiam - tienGiam
+                    );
+
+                    // 70% dành cho giảng viên
+                    var phanGiangVien = tienThucThu * 0.7;
+
+                    // 30% hệ thống
+                    var phanHeThong = tienThucThu * 0.3;
+
+                    totalRevenue += phanHeThong;
+                }
+
+                totalRevenue = Math.Round(totalRevenue, 0);
             }
             catch (Exception ex)
             {
@@ -798,10 +913,13 @@ namespace Eduverse.Api.Controller
                     int soNgay = DateTime.DaysInMonth(nowDt.Year, nowDt.Month);
                     for (int ngay = 1; ngay <= soNgay; ngay++)
                     {
-                        var tong = donHangsDaThanhToan
-                            .Where(d => d.NgayTao!.Value.Day == ngay)
-                            .Sum(d => d.SoTienThanhToan ?? 0);
-                        revenueTrendList.Add(Math.Round(tong * 0.3, 0));
+                        var donHangNgay = donHangsDaThanhToan
+                        .Where(d => d.NgayTao!.Value.Day == ngay)
+                        .ToList();
+
+                        var doanhThuHeThong = await TinhDoanhThuHeThongAsync(donHangNgay);
+
+                        revenueTrendList.Add(doanhThuHeThong);
                         revenueLabels.Add(ngay.ToString());
                     }
                 }
@@ -810,48 +928,28 @@ namespace Eduverse.Api.Controller
                     for (int i = 0; i < 3; i++)
                     {
                         var thang = tuNgay.AddMonths(i);
-                        var tong = donHangsDaThanhToan
-                            .Where(d => d.NgayTao!.Value.Year == thang.Year
-                                     && d.NgayTao!.Value.Month == thang.Month)
-                            .Sum(d => d.SoTienThanhToan ?? 0);
-                        revenueTrendList.Add(Math.Round(tong * 0.3, 0));
+                        var donHangThang = donHangsDaThanhToan
+                        .Where(d => d.NgayTao!.Value.Year == thang.Year
+                                 && d.NgayTao!.Value.Month == thang.Month)
+                        .ToList();
+
+                        var doanhThuHeThong = await TinhDoanhThuHeThongAsync(donHangThang);
+
+                        revenueTrendList.Add(doanhThuHeThong);
                         revenueLabels.Add("Th" + thang.Month);
                     }
                 }
                 else
                 {
-                    var donHangIds = donHangsDaThanhToan
-                        .Select(d => d.Id)
-                        .ToList();
-
-                    var chiTiets = await _donHangChiTietService.GetQueryable()
-                        .Where(ct =>
-                            !ct.IsDeleted &&
-                            ct.IdDonHang.HasValue &&
-                            donHangIds.Contains(ct.IdDonHang.Value))
-                        .ToListAsync();
-
                     for (int m = 1; m <= 12; m++)
                     {
                         var donHangThang = donHangsDaThanhToan
                             .Where(d => d.NgayTao!.Value.Month == m)
                             .ToList();
 
-                        var idsThang = donHangThang
-                            .Select(d => d.Id)
-                            .ToHashSet();
+                        var doanhThuHeThong = await TinhDoanhThuHeThongAsync(donHangThang);
 
-                        // Tổng tiền học viên đã thanh toán
-                        double tongThu = donHangThang.Sum(d => d.SoTienThanhToan ?? 0);
-
-                        // Tổng tiền trả cho giảng viên (70%)
-                        double tongGV = chiTiets
-                            .Where(ct => ct.IdDonHang.HasValue &&
-                                         idsThang.Contains(ct.IdDonHang.Value))
-                            .Sum(ct => (ct.GiaLucDat ?? 0) * 0.7);
-
-                        // Doanh thu admin thực nhận
-                        revenueTrendList.Add(Math.Round(tongThu - tongGV, 0));
+                        revenueTrendList.Add(doanhThuHeThong);
                         revenueLabels.Add("Th" + m);
                     }
                 }
@@ -1022,10 +1120,8 @@ namespace Eduverse.Api.Controller
                         idsThis.Contains(ct.IdDonHang.Value))
                     .ToListAsync();
 
-                double thuThis = donHangThangNay.Sum(d => d.SoTienThanhToan ?? 0);
-                double traGVThis = ctThis.Sum(ct => (ct.GiaLucDat ?? 0) * 0.7);
 
-                revThisMonth = thuThis - traGVThis;
+                revThisMonth = await TinhDoanhThuHeThongAsync(donHangThangNay);
 
                 // ===== Tháng trước =====
                 var idsPrev = donHangThangTruoc.Select(d => d.Id).ToList();
@@ -1037,10 +1133,8 @@ namespace Eduverse.Api.Controller
                         idsPrev.Contains(ct.IdDonHang.Value))
                     .ToListAsync();
 
-                double thuPrev = donHangThangTruoc.Sum(d => d.SoTienThanhToan ?? 0);
-                double traGVPrev = ctPrev.Sum(ct => (ct.GiaLucDat ?? 0) * 0.7);
 
-                revPrevMonth = thuPrev - traGVPrev;
+                revPrevMonth = await TinhDoanhThuHeThongAsync(donHangThangTruoc);
             }
             catch (Exception ex)
             {
@@ -1093,6 +1187,62 @@ namespace Eduverse.Api.Controller
                     recentActivities = recentActivities
                 }
             };
+        }
+
+        private async Task<double> TinhDoanhThuHeThongAsync(
+    List<DonHang> donHangs)
+        {
+            if (!donHangs.Any())
+                return 0;
+
+            var donHangIds = donHangs
+                .Select(d => d.Id)
+                .ToList();
+
+            var chiTiets = await _donHangChiTietService.GetQueryable()
+                .Where(ct =>
+                    !ct.IsDeleted &&
+                    ct.IdDonHang.HasValue &&
+                    donHangIds.Contains(ct.IdDonHang.Value))
+                .ToListAsync();
+
+            var vouchers = await _donHangKhuyenMaiService.GetQueryable()
+                .Where(km =>
+                    !km.IsDeleted &&
+                    km.IdDonHang.HasValue &&
+                    donHangIds.Contains(km.IdDonHang.Value))
+                .ToListAsync();
+
+            var giamTheoDonHang = vouchers
+                .GroupBy(km => km.IdDonHang!.Value)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(x => x.SoTienGiam ?? 0)
+                );
+
+            double doanhThuHeThong = 0;
+
+            foreach (var dh in donHangs)
+            {
+                var chiTiet = chiTiets
+                    .Where(ct => ct.IdDonHang == dh.Id)
+                    .ToList();
+
+                var tongGia = chiTiet
+                    .Sum(ct => ct.GiaLucDat ?? 0);
+
+                var giamGia = giamTheoDonHang
+                    .GetValueOrDefault(dh.Id, 0);
+
+                var tienThucThu = Math.Max(
+                    0,
+                    tongGia - giamGia
+                );
+
+                doanhThuHeThong += tienThucThu * 0.3;
+            }
+
+            return Math.Round(doanhThuHeThong, 0);
         }
     }
 }
