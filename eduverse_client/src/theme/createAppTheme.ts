@@ -111,7 +111,16 @@ export function createAppTheme(
       MuiAppBar: {
         styleOverrides: { root: { backgroundColor: S.paper, backgroundImage: "none", color: S.textPrimary } },
       },
-      MuiBackdrop: { styleOverrides: { root: { backgroundColor: S.overlay } } },
+      MuiBackdrop: {
+        styleOverrides: {
+          root: {
+            backgroundColor: S.overlay,
+            // Select/Menu/Popover dùng Backdrop với trạng thái invisible để bắt
+            // click bên ngoài. Giữ lớp này trong suốt để trang không bị tối.
+            "&.MuiBackdrop-invisible": { backgroundColor: "transparent" },
+          },
+        },
+      },
       MuiDivider: { styleOverrides: { root: { borderColor: S.divider } } },
       MuiTableRow: {
         styleOverrides: { root: { "&:hover": { backgroundColor: S.hover } } },

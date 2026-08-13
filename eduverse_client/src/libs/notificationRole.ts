@@ -1,6 +1,6 @@
 import { ThongBao } from "@/src/types/thongbao";
 
-export type NotificationRole = "Admin" | "GiaoVien" | "HocVien";
+export type NotificationRole = "Admin" | "Personnel" | "GiaoVien" | "HocVien";
 
 const ADMIN_TYPES = new Set([
   "yeucauruttien",
@@ -10,6 +10,8 @@ const ADMIN_TYPES = new Set([
 ]);
 
 const HIDDEN_ADMIN_TYPES = new Set(["dangkykhoahoc", "taokhoahoc"]);
+
+const PERSONNEL_TYPES = new Set(["phancongkiemduyetkhoahoc"]);
 
 const INSTRUCTOR_TYPES = new Set([
   "guiyeucauruttien",
@@ -30,6 +32,7 @@ const HIDDEN_STUDENT_TYPES = new Set(["dangkykhoahocthanhcong"]);
 const roleFromLink = (link?: string): NotificationRole | null => {
   const normalized = link?.trim().toLocaleLowerCase() || "";
   if (/(^|\/)admin(\/|$|\?)/.test(normalized)) return "Admin";
+  if (/(^|\/)personnel(\/|$|\?)/.test(normalized)) return "Personnel";
   if (/(^|\/)instructor(\/|$|\?)/.test(normalized)) return "GiaoVien";
   if (/(^|\/)student(\/|$|\?)/.test(normalized)) return "HocVien";
   return null;
@@ -47,6 +50,7 @@ export const getNotificationRole = (
   if (linkedRole) return linkedRole;
 
   if (ADMIN_TYPES.has(type)) return "Admin";
+  if (PERSONNEL_TYPES.has(type)) return "Personnel";
   if (INSTRUCTOR_TYPES.has(type)) return "GiaoVien";
   if (STUDENT_TYPES.has(type)) return "HocVien";
 

@@ -55,18 +55,32 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         }
 
         // ── Helper kiểm tra tổng % ≤ 100 ─────────────────────────────────
-        private async Task KiemTraTongTyLe(Guid idKhoaHoc, int tyLeMoi, Guid? ngoaiTruId = null)
+        private async Task KiemTraTongTyLe(
+        Guid idKhoaHoc,
+        int tyLeMoi,
+        Guid? ngoaiTruCongTacVienId = null,
+        Guid? ngoaiTruLoiMoiId = null)
         {
-            var tongHienTai = await _khoaHocGVRepo.GetQueryable()
+            var tongAccepted = await _khoaHocGVRepo.GetQueryable()
                 .Where(x => x.IdKhoaHoc == idKhoaHoc
                          && !x.IsDeleted
-                         && (ngoaiTruId == null || x.Id != ngoaiTruId))
+                         && (ngoaiTruCongTacVienId == null || x.Id != ngoaiTruCongTacVienId))
                 .SumAsync(x => x.TyLeChiaDoanhThu);
 
+            var tongPending = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                         && x.TrangThai == "Pending"
+                         && !x.IsDeleted
+                         && (ngoaiTruLoiMoiId == null || x.Id != ngoaiTruLoiMoiId))
+                .SumAsync(x => x.TyLeChiaDoanhThu);
+
+            var tongHienTai = tongAccepted + tongPending;
+
             if (tongHienTai + tyLeMoi > 100)
-                throw new Exception(
-                    $"Tổng tỷ lệ chia doanh thu vượt quá 100%. " +
-                    $"Hiện tại đã dùng {tongHienTai}%, bạn chỉ còn có thể thêm tối đa {100 - tongHienTai}%.");
+            {
+                var tyLeConLai = 100 - tongHienTai;
+                throw new Exception($"Tổng tỷ lệ chia doanh thu không được vượt quá 100%. Hiện tại đã phân bổ {tongHienTai}% (bao gồm các lời mời đang chờ). Bạn chỉ có thể thiết lập tối đa thêm {tyLeConLai}%.");
+            }
         }
 
         public async Task CapNhatQuyenTheoGiangVien(Guid idKhoaHoc, Guid idGiangVien, CapNhatQuyenRequest request)
@@ -87,7 +101,11 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                                        && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy giảng viên trong khóa học");
 
-            await KiemTraTongTyLe(idKhoaHoc, request.TyLeChiaDoanhThu, congTacVien.Id);
+            KiemTraTyLeHopLe(request.TyLeChiaDoanhThu);
+            await KiemTraTongTyLe(
+                        idKhoaHoc,
+                        request.TyLeChiaDoanhThu,
+                        ngoaiTruCongTacVienId: congTacVien.Id);
 
             congTacVien.Visible = request.Visible;
             congTacVien.TyLeChiaDoanhThu = request.TyLeChiaDoanhThu;
@@ -197,7 +215,10 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 throw new Exception("Đã có lời mời đang chờ xác nhận với giảng viên này");
 
             // Kiểm tra tổng % không vượt 100
-            await KiemTraTongTyLe(request.IdKhoaHoc, request.TyLeChiaDoanhThu);
+            KiemTraTyLeHopLe(request.TyLeChiaDoanhThu);
+            await KiemTraTongTyLe(
+                    request.IdKhoaHoc,
+                    request.TyLeChiaDoanhThu);
 
             var loiMoi = new LoiMoiGiangVien
             {
@@ -256,7 +277,10 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             if (dongY)
             {
                 // Kiểm tra lại tổng % tại thời điểm accept (tránh race condition)
-                await KiemTraTongTyLe(loiMoi.IdKhoaHoc, loiMoi.TyLeChiaDoanhThu);
+                await KiemTraTongTyLe(
+                        loiMoi.IdKhoaHoc,
+                        loiMoi.TyLeChiaDoanhThu,
+                        ngoaiTruLoiMoiId: loiMoi.Id);
 
                 var congTacVien = new KhoaHoc_GiangVien
                 {
@@ -337,11 +361,32 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 .FirstOrDefaultAsync(x => x.Id == idLoiMoi && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy lời mời");
 
-            // Chỉ người mời (chủ sở hữu) mới được sửa
             if (loiMoi.IdNguoiMoi != userId)
                 throw new Exception("Bạn không có quyền cập nhật lời mời này");
 
-            // Cập nhật LoiMoi (dù Pending hay Accepted)
+            KiemTraTyLeHopLe(request.TyLeChiaDoanhThu);
+
+            KhoaHoc_GiangVien congTacVien = null;
+            if (loiMoi.TrangThai == "Accepted")
+            {
+                congTacVien = await _khoaHocGVRepo.GetQueryable()
+                    .FirstOrDefaultAsync(x => x.IdKhoaHoc == loiMoi.IdKhoaHoc
+                                           && x.IdGiangVien == loiMoi.IdNguoiDuocMoi
+                                           && !x.IsDeleted);
+                if (congTacVien != null)
+                    await KiemTraTongTyLe(
+                            loiMoi.IdKhoaHoc,
+                            request.TyLeChiaDoanhThu,
+                            congTacVien.Id);
+            }
+            else
+            {
+                await KiemTraTongTyLe(
+                            loiMoi.IdKhoaHoc,
+                            request.TyLeChiaDoanhThu,
+                            ngoaiTruLoiMoiId: loiMoi.Id);
+            }
+
             loiMoi.Visible = request.Visible;
             loiMoi.TyLeChiaDoanhThu = request.TyLeChiaDoanhThu;
             loiMoi.Manage = request.Manage;
@@ -354,28 +399,18 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             _loiMoiRepo.Update(loiMoi);
 
             // Nếu đã Accepted → sync sang KhoaHoc_GiangVien
-            if (loiMoi.TrangThai == "Accepted")
+            if (congTacVien != null)
             {
-                var congTacVien = await _khoaHocGVRepo.GetQueryable()
-                    .FirstOrDefaultAsync(x => x.IdKhoaHoc == loiMoi.IdKhoaHoc
-                                           && x.IdGiangVien == loiMoi.IdNguoiDuocMoi
-                                           && !x.IsDeleted);
-                if (congTacVien != null)
-                {
-                    // Validate tổng %, ngoại trừ row đang sửa
-                    await KiemTraTongTyLe(loiMoi.IdKhoaHoc, request.TyLeChiaDoanhThu, congTacVien.Id);
-
-                    congTacVien.Visible = request.Visible;
-                    congTacVien.TyLeChiaDoanhThu = request.TyLeChiaDoanhThu;
-                    congTacVien.Manage = request.Manage;
-                    congTacVien.Performance = request.Performance;
-                    congTacVien.QnA = request.QnA;
-                    congTacVien.Reviews = request.Reviews;
-                    congTacVien.Assignments = request.Assignments;
-                    congTacVien.Materials = request.Materials;
-                    congTacVien.Promotions = request.Promotions;
-                    _khoaHocGVRepo.Update(congTacVien);
-                }
+                congTacVien.Visible = request.Visible;
+                congTacVien.TyLeChiaDoanhThu = request.TyLeChiaDoanhThu;
+                congTacVien.Manage = request.Manage;
+                congTacVien.Performance = request.Performance;
+                congTacVien.QnA = request.QnA;
+                congTacVien.Reviews = request.Reviews;
+                congTacVien.Assignments = request.Assignments;
+                congTacVien.Materials = request.Materials;
+                congTacVien.Promotions = request.Promotions;
+                _khoaHocGVRepo.Update(congTacVien);
             }
 
             await _khoaHocGVRepo.SaveAsync();
@@ -493,6 +528,12 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 DanhSachCongTac = congTacList,
                 DanhSachDangMoi = dangMoiList,
             };
+        }
+
+        private void KiemTraTyLeHopLe(int tyLe)
+        {
+            if (tyLe < 0 || tyLe > 100)
+                throw new Exception("Tỷ lệ chia doanh thu phải trong khoảng 0-100%");
         }
     }
 }

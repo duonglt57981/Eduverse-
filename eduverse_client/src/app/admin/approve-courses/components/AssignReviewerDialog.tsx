@@ -46,7 +46,7 @@ interface AssignReviewerDialogProps {
   courseIds: string[];
   onClose: () => void;
   onAssigned: (result: PhanCongKiemDuyetResultDto) => void;
-  onConflict: () => void;
+  onConflict: (message: string) => void;
 }
 
 function getErrorMessage(error: unknown): string {
@@ -148,7 +148,7 @@ export default function AssignReviewerDialog({
       const message = getErrorMessage(submitError);
       setError(message);
       if (message.includes("vừa được") || message.includes("không còn đủ điều kiện")) {
-        onConflict();
+        onConflict(message);
       }
     } finally {
       setSubmitting(false);

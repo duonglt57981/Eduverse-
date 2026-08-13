@@ -17,6 +17,7 @@ import {
   alpha,
   Select,
   MenuItem,
+  Menu,
   Button,
   CircularProgress,
   Checkbox,
@@ -30,7 +31,10 @@ import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+import PersonAddAltRoundedIcon from "@mui/icons-material/PersonAddAltRounded";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import AssignmentTurnedInRoundedIcon from "@mui/icons-material/AssignmentTurnedInRounded";
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import PendingActionsRoundedIcon from "@mui/icons-material/PendingActionsRounded";
@@ -147,6 +151,12 @@ export default function DuyetKhoaHocPage() {
   const [reviewers, setReviewers] = useState<NhanVienPheDuyetDto[]>([]);
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [courseIdsToAssign, setCourseIdsToAssign] = useState<string[]>([]);
+  const [actionMenu, setActionMenu] = useState<{
+    anchorEl: HTMLElement;
+    course: KhoaHocKiemDuyetListDto;
+  } | null>(null);
+  const [approvingCourseId, setApprovingCourseId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -263,14 +273,6 @@ export default function DuyetKhoaHocPage() {
   }, [fetchReviewers]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setKeyword(keywordInput.trim());
-      setPage(1);
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [keywordInput]);
-
-  useEffect(() => {
     setSelectedCourseIds(new Set());
   }, [keyword, tab, assignmentStatus, reviewerId, fromDate, toDate, sortBy]);
 
@@ -281,7 +283,7 @@ export default function DuyetKhoaHocPage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setKeyword(keywordInput);
+    setKeyword(keywordInput.trim());
     setPage(1);
   };
 
@@ -326,10 +328,7 @@ export default function DuyetKhoaHocPage() {
   };
 
   const eligibleItems = useMemo(
-    () =>
-      items.filter(
-        (item) => isTrangThaiCho(item.trangThaiPheDuyet) && !item.idNguoiDuyet,
-      ),
+    () => items.filter((item) => isTrangThaiCho(item.trangThaiPheDuyet)),
     [items],
   );
   const selectedOnPage = eligibleItems.filter((item) => selectedCourseIds.has(item.idKhoaHoc)).length;
@@ -358,6 +357,7 @@ export default function DuyetKhoaHocPage() {
 
   const handleAssigned = async (result: PhanCongKiemDuyetResultDto) => {
     setAssignDialogOpen(false);
+    setCourseIdsToAssign([]);
     setSelectedCourseIds(new Set());
     setSnackbar({
       open: true,
@@ -367,15 +367,60 @@ export default function DuyetKhoaHocPage() {
     await Promise.all([fetchList(), fetchStats()]);
   };
 
-  const handleConflict = () => {
+  const handleConflict = (message: string) => {
     setAssignDialogOpen(false);
+    setCourseIdsToAssign([]);
     setSelectedCourseIds(new Set());
     setSnackbar({
       open: true,
       severity: "error",
-      message: "Một hoặc nhiều khóa học vừa được Admin khác phân công. Danh sách đang được tải lại.",
+      message,
     });
     void fetchList();
+  };
+
+  const openAssignmentDialog = (courseIds: string[]) => {
+    if (courseIds.length === 0) return;
+    setCourseIdsToAssign(courseIds);
+    setAssignDialogOpen(true);
+  };
+
+  const closeActionMenu = () => setActionMenu(null);
+
+  const handleApproveCourse = async (course: KhoaHocKiemDuyetListDto) => {
+    const courseId = course.idKhoaHoc;
+    if (!courseId || approvingCourseId) return;
+    closeActionMenu();
+    setApprovingCourseId(courseId);
+    try {
+      const response = await kiemDuyetService.KiemDuyetKhoaHoc({
+        idKhoaHoc: courseId,
+        trangThaiPheDuyet: "DaDuyet",
+      });
+      if (response.status === false) throw new Error(response.message);
+      setSelectedCourseIds((current) => {
+        const next = new Set(current);
+        next.delete(courseId);
+        return next;
+      });
+      setSnackbar({
+        open: true,
+        severity: "success",
+        message: `Đã duyệt khóa học ${course.tieuDe}.`,
+      });
+      await Promise.all([fetchList(), fetchStats()]);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        severity: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Không thể duyệt khóa học. Vui lòng thử lại.",
+      });
+    } finally {
+      setApprovingCourseId(null);
+    }
   };
 
   return (
@@ -454,11 +499,10 @@ export default function DuyetKhoaHocPage() {
               </IconButton>
             </Tooltip>
 
-            {isAdmin && (
+            {isAdmin && selectedCourseIds.size > 0 && (
               <Button
                 variant="contained"
-                disabled={selectedCourseIds.size === 0}
-                onClick={() => setAssignDialogOpen(true)}
+                onClick={() => openAssignmentDialog(Array.from(selectedCourseIds))}
                 sx={{
                   minWidth: { xs: 44, sm: 150 },
                   height: 44,
@@ -664,6 +708,24 @@ export default function DuyetKhoaHocPage() {
                       },
                     }}
                   />
+
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    startIcon={<SearchIcon />}
+                    disabled={loading}
+                    sx={{
+                      minWidth: { xs: "100%", sm: 118 },
+                      height: 42,
+                      borderRadius: "10px",
+                      bgcolor: COLORS.primary,
+                      textTransform: "none",
+                      fontWeight: 800,
+                      flexShrink: 0,
+                    }}
+                  >
+                    Tìm kiếm
+                  </Button>
 
                   <Select
                     size="small"
@@ -948,9 +1010,7 @@ export default function DuyetKhoaHocPage() {
                     const id = item.idKhoaHoc;
                     const trangThaiPheDuyet =
                       item.trangThaiPheDuyet || item.trangThai;
-                    const eligible =
-                      isTrangThaiCho(item.trangThaiPheDuyet) &&
-                      !item.idNguoiDuyet;
+                    const eligible = isTrangThaiCho(item.trangThaiPheDuyet);
                     const isSelected = selectedCourseIds.has(id);
 
                     return (
@@ -958,7 +1018,11 @@ export default function DuyetKhoaHocPage() {
                         key={id}
                         onClick={(event) => {
                           const target = event.target as HTMLElement;
-                          if (target.closest("[data-course-checkbox]")) return;
+                          if (
+                            target.closest("[data-course-checkbox]") ||
+                            target.closest("[data-course-action]")
+                          )
+                            return;
                           handleOpenCourse(id);
                         }}
                         sx={{
@@ -1097,14 +1161,19 @@ export default function DuyetKhoaHocPage() {
                         </Box>
 
                         {/* Action */}
-                        <Tooltip title="Xem chi tiết">
+                        <Tooltip title="Thao tác">
                           <IconButton
+                            data-course-action
                             className="view-btn"
                             size="small"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenCourse(id);
+                              setActionMenu({
+                                anchorEl: e.currentTarget,
+                                course: item,
+                              });
                             }}
+                            aria-label={`Thao tác với khóa học ${item.tieuDe}`}
                             sx={{
                               border: `1px solid ${COLORS.line}`,
                               borderRadius: "12px",
@@ -1115,7 +1184,7 @@ export default function DuyetKhoaHocPage() {
                               transition: "all .18s ease",
                             }}
                           >
-                            <ArrowForwardRoundedIcon sx={{ fontSize: 18 }} />
+                            <MoreVertRoundedIcon sx={{ fontSize: 20 }} />
                           </IconButton>
                         </Tooltip>
                       </Box>
@@ -1155,12 +1224,79 @@ export default function DuyetKhoaHocPage() {
           {isAdmin && (
             <AssignReviewerDialog
               open={assignDialogOpen}
-              courseIds={Array.from(selectedCourseIds)}
-              onClose={() => setAssignDialogOpen(false)}
+              courseIds={courseIdsToAssign}
+              onClose={() => {
+                setAssignDialogOpen(false);
+                setCourseIdsToAssign([]);
+              }}
               onAssigned={(result) => void handleAssigned(result)}
               onConflict={handleConflict}
             />
           )}
+          <Menu
+            anchorEl={actionMenu?.anchorEl ?? null}
+            open={Boolean(actionMenu)}
+            onClose={closeActionMenu}
+            onClick={(event) => event.stopPropagation()}
+            slotProps={{
+              paper: {
+                sx: {
+                  minWidth: 190,
+                  mt: 0.75,
+                  borderRadius: "12px",
+                  border: `1px solid ${COLORS.line}`,
+                  boxShadow: "0 12px 32px rgba(31, 41, 55, 0.14)",
+                },
+              },
+            }}
+          >
+            <MenuItem
+              onClick={() => {
+                const courseId = actionMenu?.course.idKhoaHoc;
+                closeActionMenu();
+                if (courseId) handleOpenCourse(courseId);
+              }}
+              sx={{ gap: 1.25, fontSize: 14 }}
+            >
+              <VisibilityRoundedIcon fontSize="small" />
+              Chi tiết
+            </MenuItem>
+            {isAdmin && (
+              <MenuItem
+                disabled={
+                  !actionMenu ||
+                  !isTrangThaiCho(actionMenu.course.trangThaiPheDuyet)
+                }
+                onClick={() => {
+                  const courseId = actionMenu?.course.idKhoaHoc;
+                  closeActionMenu();
+                  if (courseId) openAssignmentDialog([courseId]);
+                }}
+                sx={{ gap: 1.25, fontSize: 14 }}
+              >
+                <PersonAddAltRoundedIcon fontSize="small" />
+                Phân công lại
+              </MenuItem>
+            )}
+            <MenuItem
+              disabled={
+                !actionMenu ||
+                !isTrangThaiCho(actionMenu.course.trangThaiPheDuyet) ||
+                Boolean(approvingCourseId)
+              }
+              onClick={() => {
+                if (actionMenu) void handleApproveCourse(actionMenu.course);
+              }}
+              sx={{ gap: 1.25, fontSize: 14, color: STATUS.success }}
+            >
+              {approvingCourseId === actionMenu?.course.idKhoaHoc ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : (
+                <CheckCircleOutlineRoundedIcon fontSize="small" />
+              )}
+              Duyệt
+            </MenuItem>
+          </Menu>
           <Snackbar
             open={snackbar.open}
             autoHideDuration={5000}

@@ -90,10 +90,10 @@ namespace Eduverse.Service.ThongKeKhoaHocService
 
         public async Task<ThongKeDoanhThuDto> GetThongKeDoanhThu(Guid idKhoaHoc)
         {
+
+            var userId = LayUserId();
             await KiemTraQuyenPerformance(idKhoaHoc);
 
-            // Lấy tất cả DonHangChiTiet của khóa học này
-            // chỉ tính đơn hàng đã thanh toán thành công (TrangThai = 1)
             var chiTiets = await (
                 from ct in _chiTietRepo.GetQueryable()
                 join dh in _donHangRepo.GetQueryable()
@@ -103,7 +103,7 @@ namespace Eduverse.Service.ThongKeKhoaHocService
                 where ct.IdKhoaHoc == idKhoaHoc
                    && !ct.IsDeleted
                    && !dh.IsDeleted
-                   && dh.TrangThai == 1          // đã thanh toán
+                   && dh.TrangThai == 1 
                    && tt.TrangThaiThanhToan == "SUCCESS"
                 select new
                 {
@@ -114,20 +114,31 @@ namespace Eduverse.Service.ThongKeKhoaHocService
                 }
             ).ToListAsync();
 
-            // Khuyến mãi áp dụng cho khóa học này
             var donHangIds = chiTiets.Select(x => x.Id).Distinct().ToList();
-            var tongGiam = await _kmRepo.GetQueryable()
+            var giamTheoDonHang = await _kmRepo.GetQueryable()
                 .Where(x => donHangIds.Contains(x.IdDonHang!.Value)
                          && x.IdKhoaHocDuocGiam == idKhoaHoc
                          && !x.IsDeleted)
-                .SumAsync(x => x.SoTienGiam ?? 0);
+                .GroupBy(x => x.IdDonHang!.Value)
+                .Select(g => new { IdDonHang = g.Key, SoTienGiam = g.Sum(x => x.SoTienGiam ?? 0) })
+                .ToDictionaryAsync(x => x.IdDonHang, x => x.SoTienGiam);
+
+            var tongGiam = giamTheoDonHang.Values.Sum();
 
             double tongDoanhThu = chiTiets.Sum(x => x.GiaLucDat ?? 0);
             double doanhThuSauGiam = tongDoanhThu - tongGiam;
             double phanGiangVien = doanhThuSauGiam * 0.7;
             double phanHeTong = doanhThuSauGiam * 0.3;
 
-            // Doanh thu theo tháng
+            var giangViens = await _khoaHocGVRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .ToListAsync();
+
+            var giangVienHienTai = giangViens
+            .FirstOrDefault(x => x.IdGiangVien == userId);
+
+            var tongTyLe = giangViens.Sum(x => x.TyLeChiaDoanhThu);
+
             var doanhThuTheoThang = chiTiets
                 .Where(x => x.NgayTao.HasValue)
                 .GroupBy(x => new { x.NgayTao!.Value.Year, x.NgayTao!.Value.Month })
@@ -136,14 +147,29 @@ namespace Eduverse.Service.ThongKeKhoaHocService
                 {
                     Nam = g.Key.Year,
                     Thang = g.Key.Month,
-                    DoanhThu = g.Sum(x => x.GiaLucDat ?? 0),
+                    DoanhThu = g.Sum(x =>
+                    {
+                        var tienThucThu = Math.Max(
+                            0,
+                            (x.GiaLucDat ?? 0)
+                            - giamTheoDonHang.GetValueOrDefault(x.Id, 0)
+                        );
+
+                        var tienGiangVien = tienThucThu * 0.7;
+
+                        if (IsAdmin())
+                            return tienGiangVien;
+
+                        if (giangVienHienTai == null || tongTyLe <= 0)
+                            return 0;
+
+                        return tienGiangVien *
+                               (giangVienHienTai.TyLeChiaDoanhThu / (double)tongTyLe);
+                    }),
                     SoDon = g.Count(),
                 }).ToList();
 
-            // Phân chia cho giảng viên
-            var giangViens = await _khoaHocGVRepo.GetQueryable()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
-                .ToListAsync();
+            
 
             var gvIds = giangViens.Select(x => x.IdGiangVien).ToList();
             var users = await _appUserService.GetQueryable()
@@ -151,25 +177,74 @@ namespace Eduverse.Service.ThongKeKhoaHocService
                 .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien })
                 .ToListAsync();
 
-            var phanChia = giangViens.Select(gv =>
+            double tongPhanGiangVien = doanhThuSauGiam * 0.7;
+            List<PhanChiaGiangVienDto> phanChia;
+            if (IsAdmin())
             {
-                var u = users.FirstOrDefault(x => x.Id == gv.IdGiangVien);
-                return new PhanChiaGiangVienDto
+                phanChia = giangViens
+                    .Select(gv =>
+                    {
+                        var u = users.FirstOrDefault(x => x.Id == gv.IdGiangVien);
+
+                        var tyTrong = tongTyLe > 0
+                            ? gv.TyLeChiaDoanhThu / (double)tongTyLe
+                            : 0;
+
+                        return new PhanChiaGiangVienDto
+                        {
+                            IdGiangVien = gv.IdGiangVien,
+                            HoTen = u?.HoTen,
+                            AnhDaiDien = u?.AnhDaiDien,
+                            LaChuSoHuu = gv.LaChuSoHuu,
+                            TyLeChiaDoanhThu = gv.TyLeChiaDoanhThu,
+
+                            // Tiền thực tế giảng viên này nhận
+                            SoTienNhan = Math.Round(
+                                tongPhanGiangVien * tyTrong,
+                                0)
+                        };
+                    })
+                    .OrderByDescending(x => x.LaChuSoHuu)
+                    .ThenByDescending(x => x.TyLeChiaDoanhThu)
+                    .ToList();
+            }
+            else
+            {
+                phanChia = new List<PhanChiaGiangVienDto>();
+
+                if (giangVienHienTai != null)
                 {
-                    IdGiangVien = gv.IdGiangVien,
-                    HoTen = u?.HoTen,
-                    AnhDaiDien = u?.AnhDaiDien,
-                    LaChuSoHuu = gv.LaChuSoHuu,
-                    TyLeChiaDoanhThu = gv.TyLeChiaDoanhThu,
-                    SoTienNhan = Math.Round(phanGiangVien * gv.TyLeChiaDoanhThu / 100, 0),
-                };
-            }).OrderByDescending(x => x.LaChuSoHuu).ThenByDescending(x => x.TyLeChiaDoanhThu).ToList();
+                    var u = users.FirstOrDefault(
+                        x => x.Id == giangVienHienTai.IdGiangVien);
+
+                    var tyTrong = tongTyLe > 0
+                        ? giangVienHienTai.TyLeChiaDoanhThu / (double)tongTyLe
+                        : 0;
+
+                    var tienGiangVienHienTai = tongPhanGiangVien * tyTrong;
+
+                    phanChia.Add(new PhanChiaGiangVienDto
+                    {
+                        IdGiangVien = giangVienHienTai.IdGiangVien,
+                        HoTen = u?.HoTen,
+                        AnhDaiDien = u?.AnhDaiDien,
+                        LaChuSoHuu = giangVienHienTai.LaChuSoHuu,
+                        TyLeChiaDoanhThu = giangVienHienTai.TyLeChiaDoanhThu,
+
+                        SoTienNhan = Math.Round(
+                            tienGiangVienHienTai,
+                            0)
+                    });
+                }
+            }
 
             return new ThongKeDoanhThuDto
             {
                 TongDoanhThu = tongDoanhThu,
                 DoanhThuSauGiam = doanhThuSauGiam,
-                PhanGiangVien = phanGiangVien,
+                PhanGiangVien = IsAdmin()
+                ? tongPhanGiangVien
+                : (phanChia.FirstOrDefault()?.SoTienNhan ?? 0),
                 PhanHeTong = phanHeTong,
                 TongDonHang = chiTiets.Select(x => x.Id).Distinct().Count(),
                 TongHocVien = chiTiets.Select(x => x.IdNguoiDung).Distinct().Count(),

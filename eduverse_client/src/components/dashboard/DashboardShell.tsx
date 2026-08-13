@@ -924,9 +924,11 @@ export default function DashboardShell({
   const openNotiPopover = Boolean(notiAnchorEl);
   const notificationRole = pathname.startsWith("/admin")
     ? "Admin"
-    : pathname.startsWith("/instructor")
-      ? "GiaoVien"
-      : "HocVien";
+    : pathname.startsWith("/personnel")
+      ? "Personnel"
+      : pathname.startsWith("/instructor")
+        ? "GiaoVien"
+        : "HocVien";
 
   useEffect(() => {
     if (user) {
