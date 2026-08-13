@@ -51,9 +51,7 @@ namespace Eduverse.Service.TaiLieuService
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
             IKhoaHocRepository khoaHocRepository,
             HttpClient httpClient,
-        IKhoaHoc_GiangVienRepository khoaHocGVRepository
-            IKhoaHocRepository khoaHocRepository, 
-        IKhoaHoc_GiangVienRepository khoaHocGVRepository,
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository,
             ISignalRService signalRService
             ) : base(taiLieuRepository)
         {
