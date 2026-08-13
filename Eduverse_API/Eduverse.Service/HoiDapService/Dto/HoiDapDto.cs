@@ -15,6 +15,7 @@ namespace Eduverse.Service.HoiDapService.Dto
         public int SoLike { get; set; }
         public bool DaLike { get; set; } 
         public Guid? NguoiTraLoiId { get; set; }
+        public Guid? IdTraLoiDuocReply { get; set; }
         public string? NguoiTraLoiTen { get; set; }
         public string? NguoiTraLoiAnh { get; set; }
         public DateTime NgayTao { get; set; }
@@ -38,5 +39,11 @@ namespace Eduverse.Service.HoiDapService.Dto
         public bool LaCuaToi { get; set; }
         public int TongLike { get; set; }
         public List<TraLoiDto> DanhSachTraLoi { get; set; } = new();
+    }
+
+    public class AISuggestionDto
+    {
+        public string NoiDungGoiY { get; set; } = string.Empty;
+        public bool CoNoiDungBaiGiang { get; set; }
     }
 }

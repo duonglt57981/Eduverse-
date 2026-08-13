@@ -1,8 +1,13 @@
 ﻿using Eduverse.Model.Entities;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.DanhGiaRepository;
+using Eduverse.Repository.KhoaHoc_GiangVienRepository;
+using Eduverse.Repository.KhoaHocRepository;
+using Eduverse.Repository.PhanHoiDanhGiaRepository;
+using Eduverse.Service.AppUserService;
 using Eduverse.Service.Common;
 using Eduverse.Service.DanhGiaService.Dto;
+using Eduverse.Service.ThongBaoService;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -16,13 +21,28 @@ namespace Eduverse.Service.DanhGiaService
     {
         private readonly IDanhGiaRepository _danhGiaRepo;
         private readonly IDangKyKhoaHocRepository _dangKyRepo;
+        private readonly IPhanHoiDanhGiaRepository _phanHoiRepo;
+        private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepo;
+        private readonly IAppUserService _appUserService;
+        private readonly INotificationPublisher _notificationPublisher;
+        private readonly IKhoaHocRepository _khoaHocRepo;
         public DanhGiaService(
         IDanhGiaRepository danhGiaRepo,
-        IDangKyKhoaHocRepository dangKyRepo
+        IDangKyKhoaHocRepository dangKyRepo,
+        IPhanHoiDanhGiaRepository phanHoiRepo,
+        IKhoaHoc_GiangVienRepository khoaHocGVRepo,
+        IAppUserService appUserService,
+        INotificationPublisher notificationPublisher,
+        IKhoaHocRepository khoaHocRepository
         ) : base(danhGiaRepo)
         {
             _danhGiaRepo = danhGiaRepo;
             _dangKyRepo = dangKyRepo;
+            _phanHoiRepo = phanHoiRepo;
+            _khoaHocGVRepo = khoaHocGVRepo;
+            _appUserService = appUserService;
+            _notificationPublisher = notificationPublisher;
+            _khoaHocRepo = khoaHocRepository;
         }
         public async Task<bool> KiemTraDaMuaAsync(Guid userId, Guid idKhoaHoc)
         {
@@ -75,8 +95,39 @@ namespace Eduverse.Service.DanhGiaService
         {
             var danhSach = await _danhGiaRepo.GetQueryable()
                 .AsNoTracking()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted && x.TrangThai == "HienThi")
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                         && !x.IsDeleted
+                         && x.TrangThai == "HienThi")
                 .OrderByDescending(x => x.CreatedDate)
+                .ToListAsync();
+
+            // Lấy thông tin người đánh giá
+            var userIds = danhSach
+                .Where(x => x.CreatedId.HasValue)
+                .Select(x => x.CreatedId!.Value)
+                .Distinct().ToList();
+
+            var users = await _appUserService.GetQueryable()
+                .Where(x => userIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien })
+                .ToListAsync();
+
+            // Lấy phản hồi của tất cả đánh giá
+            var danhGiaIds = danhSach.Select(x => x.Id).ToList();
+            var phanHois = await _phanHoiRepo.GetQueryable()
+                .AsNoTracking()
+                .Where(x => danhGiaIds.Contains(x.IdDanhGia) && !x.IsDeleted)
+                .ToListAsync();
+
+            // Lấy thông tin GV phản hồi
+            var phanHoiUserIds = phanHois
+                .Where(x => x.CreatedId.HasValue)
+                .Select(x => x.CreatedId!.Value)
+                .Distinct().ToList();
+
+            var phanHoiUsers = await _appUserService.GetQueryable()
+                .Where(x => phanHoiUserIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien })
                 .ToListAsync();
 
             var tongSao = danhSach.Any() ? danhSach.Average(x => x.SoSao ?? 0) : 0;
@@ -89,15 +140,121 @@ namespace Eduverse.Service.DanhGiaService
                     s => s,
                     s => danhSach.Count(x => x.SoSao == s)
                 ),
-                DanhSach = danhSach.Select(x => new DanhGiaDto
+                DanhSach = danhSach.Select(x =>
                 {
-                    Id = x.Id,
-                    SoSao = x.SoSao ?? 0,
-                    NoiDung = x.NoiDung,
-                    NgayTao = x.CreatedDate,
-                    IdNguoiDung = x.CreatedId,
-                }).ToList()
+                    var u = users.FirstOrDefault(u => u.Id == x.CreatedId);
+                    var ph = phanHois.FirstOrDefault(p => p.IdDanhGia == x.Id);
+                    var phUser = ph != null
+                        ? phanHoiUsers.FirstOrDefault(u => u.Id == ph.CreatedId)
+                        : null;
+
+                    return new DanhGiaDto
+                    {
+                        Id = x.Id,
+                        SoSao = x.SoSao ?? 0,
+                        NoiDung = x.NoiDung,
+                        NgayTao = x.CreatedDate,
+                        IdNguoiDung = x.CreatedId,
+                        HoTenNguoiDung = u?.HoTen,
+                        AnhNguoiDung = u?.AnhDaiDien,
+                        PhanHoi = ph == null ? null : new PhanHoiDanhGiaDto
+                        {
+                            Id = ph.Id,
+                            NoiDung = ph.NoiDung,
+                            NgayTao = ph.CreatedDate,
+                            HoTenGV = phUser?.HoTen,
+                            AnhGV = phUser?.AnhDaiDien,
+                        },
+                    };
+                }).ToList(),
             };
+        }
+
+        public async Task PhanHoiDanhGia(Guid userId, TaoPhanHoiDto dto)
+        {
+            var danhGia = await _danhGiaRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == dto.IdDanhGia && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy đánh giá");
+
+            // Kiểm tra GV có quyền với khóa học này
+            var laGV = await _khoaHocGVRepo.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == danhGia.IdKhoaHoc
+                            && x.IdGiangVien == userId
+                            && !x.IsDeleted);
+            if (!laGV)
+                throw new Exception("Bạn không có quyền phản hồi đánh giá này");
+
+            // Chỉ 1 phản hồi / đánh giá
+            var daTonTai = await _phanHoiRepo.GetQueryable()
+                .AnyAsync(x => x.IdDanhGia == dto.IdDanhGia && !x.IsDeleted);
+            if (daTonTai)
+                throw new Exception("Đánh giá này đã được phản hồi");
+
+            _phanHoiRepo.Add(new PhanHoiDanhGia
+            {
+                IdDanhGia = dto.IdDanhGia,
+                NoiDung = dto.NoiDung.Trim(),
+                CreatedId = userId,
+                CreatedDate = DateTime.Now,
+                UpdatedDate = DateTime.Now,
+            });
+            await _phanHoiRepo.SaveAsync();
+
+            // ── Gửi thông báo cho người đánh giá ──────────────────────────────
+            if (danhGia.CreatedId.HasValue)
+            {
+                var giangVien = await _appUserService.GetQueryable()
+                    .Where(x => x.Id == userId)
+                    .Select(x => new { x.HoTen })
+                    .FirstOrDefaultAsync();
+
+                var khoaHocTen = await _khoaHocRepo.GetQueryable()
+                    .Where(x => x.Id == danhGia.IdKhoaHoc)
+                    .Select(x => x.TieuDe)
+                    .FirstOrDefaultAsync();
+
+                await _notificationPublisher.NotifyUserAsync(
+                    danhGia.CreatedId.Value,
+                    new NotificationPayload
+                    {
+                        TieuDe = "Giảng viên đã phản hồi đánh giá của bạn",
+                        NoiDung = $"{giangVien?.HoTen ?? "Giảng viên"} đã phản hồi đánh giá của bạn về khóa học \"{khoaHocTen}\".",
+                        LoaiThongBao = "PhanHoiDanhGia",
+                        Link = $"/khoa-hoc/{danhGia.IdKhoaHoc}",
+                        FromUser = userId,
+                        ItemId = danhGia.IdKhoaHoc,
+                        ItemName = khoaHocTen,
+                    }
+                );
+            }
+        }
+
+        public async Task SuaPhanHoi(Guid userId, Guid idPhanHoi, string noiDung)
+        {
+            var phanHoi = await _phanHoiRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == idPhanHoi && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy phản hồi");
+
+            if (phanHoi.CreatedId != userId)
+                throw new Exception("Bạn không có quyền sửa phản hồi này");
+
+            phanHoi.NoiDung = noiDung.Trim();
+            phanHoi.UpdatedDate = DateTime.Now;
+            _phanHoiRepo.Update(phanHoi);
+            await _phanHoiRepo.SaveAsync();
+        }
+
+        public async Task XoaPhanHoi(Guid userId, Guid idPhanHoi)
+        {
+            var phanHoi = await _phanHoiRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == idPhanHoi && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy phản hồi");
+
+            if (phanHoi.CreatedId != userId)
+                throw new Exception("Bạn không có quyền xóa phản hồi này");
+
+            _phanHoiRepo.Delete(phanHoi);
+            await _phanHoiRepo.SaveAsync();
         }
     }
 }

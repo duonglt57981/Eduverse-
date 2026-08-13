@@ -4,12 +4,15 @@ using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.HoiDapRepository;
 using Eduverse.Repository.KhoaHoc_GiangVienRepository;
+using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.LikeHoiDapRepository;
 using Eduverse.Service.AppUserService;
 using Eduverse.Service.CauHoiService.Dto;
 using Eduverse.Service.Common;
+using Eduverse.Service.GeminiService;
 using Eduverse.Service.HoiDapService.Dto;
 using Eduverse.Service.HoiDapService.Request;
+using Eduverse.Service.TaiLieuService;
 using Eduverse.Service.ThongBaoService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +36,9 @@ namespace Eduverse.Service.HoiDapService
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly EduverseContext _context;
         private readonly INotificationPublisher _notificationPublisher;
+        private readonly IKhoaHocRepository _khoaHocRepo;  
+        private readonly IGeminiService _geminiService;
+        private readonly ITaiLieuService _taiLieuService;
         public HoiDapService(
         IHoiDapRepository hoiDapRepo,
         ILikeHoiDapRepository likeRepo,
@@ -42,8 +48,10 @@ namespace Eduverse.Service.HoiDapService
         IAppUserService appUserService,
         IHttpContextAccessor httpContextAccessor,
         EduverseContext context,
-
-         INotificationPublisher notificationPublisher) : base(hoiDapRepo)
+        IKhoaHocRepository khoaHocRepo,     
+        IGeminiService geminiService,
+        INotificationPublisher notificationPublisher,
+        ITaiLieuService taiLieuService) : base(hoiDapRepo)
         {
             _hoiDapRepo = hoiDapRepo;
             _likeRepo = likeRepo;
@@ -54,6 +62,9 @@ namespace Eduverse.Service.HoiDapService
             _httpContextAccessor = httpContextAccessor;
             _context = context;
             _notificationPublisher = notificationPublisher;
+            _khoaHocRepo = khoaHocRepo;
+            _geminiService = geminiService;
+            _taiLieuService = taiLieuService;
         }
 
         private Guid LayUserId()
@@ -224,7 +235,8 @@ namespace Eduverse.Service.HoiDapService
                 NguoiTraLoiTen = nguoiDung?.HoTen,
                 NguoiTraLoiAnh = nguoiDung?.AnhDaiDien,
                 NgayTao = traLoi.NgayTao ?? traLoi.CreatedDate,
-                LaCuaToi = traLoi.IdNguoiDung == userId
+                LaCuaToi = traLoi.IdNguoiDung == userId,
+                IdTraLoiDuocReply = traLoi.IdTraLoiDuocReply,
             };
         }
 
@@ -395,6 +407,7 @@ namespace Eduverse.Service.HoiDapService
                     NguoiTraLoiAnh = u?.AnhDaiDien,
                     NgayTao = t.NgayTao ?? t.CreatedDate,
                     LaCuaToi = t.IdNguoiDung == userId,
+                    IdTraLoiDuocReply = t.IdTraLoiDuocReply,
                 };
             }).ToList();
 
@@ -493,6 +506,7 @@ namespace Eduverse.Service.HoiDapService
                 IdKhoaHoc = cauHoi.IdKhoaHoc,
                 IdBaiGiang = cauHoi.IdBaiGiang,
                 IdHoiDapCha = request.IdCauHoi,  // ← luôn gán về câu hỏi GỐC HD01
+                IdTraLoiDuocReply = request.IdTraLoiDuocReply,
                 LaGiangVien = laGV,
                 NgayTao = DateTime.Now,
             };
@@ -519,6 +533,7 @@ namespace Eduverse.Service.HoiDapService
                 NgayTao = reply.NgayTao ?? DateTime.Now,
                 LaCuaToi = true,
                 DanhSachReply = new(),
+                IdTraLoiDuocReply = reply.IdTraLoiDuocReply,
             };
         }
 
@@ -725,6 +740,166 @@ namespace Eduverse.Service.HoiDapService
             if (gv == null) return false;
             return gv.LaChuSoHuu || gv.QnA;
         }
+
+        public async Task<AISuggestionDto> GoiYTraLoiAsync(Guid idCauHoi, Guid? idTraLoiDuocReply = null)
+        {
+            var userId = LayUserId();
+
+            var cauHoi = await _hoiDapRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == idCauHoi && x.IdHoiDapCha == null && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy câu hỏi");
+
+            if (!await CoQuyenQnA(cauHoi.IdKhoaHoc!.Value, userId))
+                throw new Exception("Bạn không có quyền dùng AI gợi ý cho câu hỏi này");
+
+            var khoaHoc = await _khoaHocRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == cauHoi.IdKhoaHoc && !x.IsDeleted);
+
+            string? noiDungBaiGiang = cauHoi.IdBaiGiang.HasValue
+            ? await _taiLieuService.LayNoiDungTaiLieuTheoBaiGiangAsync(cauHoi.IdBaiGiang.Value)
+            : null;
+
+            string? tieuDeBaiGiang = null;
+            if (cauHoi.IdBaiGiang.HasValue)
+            {
+                tieuDeBaiGiang = await _baiGiangRepo.GetQueryable()
+                    .Where(x => x.Id == cauHoi.IdBaiGiang && !x.IsDeleted)
+                    .Select(x => x.TieuDe)
+                    .FirstOrDefaultAsync();
+            }
+
+            // Dựng đúng 1 nhánh dẫn từ câu hỏi gốc tới điểm đang reply
+            var luongHoiThoai = new List<string>();
+            string? tenNguoiDangDuocReply = null;
+
+            if (idTraLoiDuocReply.HasValue)
+            {
+                // Lấy toàn bộ trả lời của câu hỏi này 1 lần, dùng để truy vết trong bộ nhớ (tránh N query)
+                var tatCaTraLoi = await _hoiDapRepo.GetQueryable()
+                    .Where(x => x.IdHoiDapCha == idCauHoi && !x.IsDeleted)
+                    .ToListAsync();
+
+                var userIds = tatCaTraLoi
+                    .Where(x => x.IdNguoiDung.HasValue)
+                    .Select(x => x.IdNguoiDung!.Value)
+                    .Distinct()
+                    .ToList();
+                var users = await _appUserService.GetQueryable()
+                    .Where(x => userIds.Contains(x.Id))
+                    .Select(x => new { x.Id, x.HoTen })
+                    .ToListAsync();
+
+                // Truy vết ngược từ điểm đang reply lên tới gốc, theo IdTraLoiDuocReply
+                var nhanh = new List<HoiDap>();
+                var current = tatCaTraLoi.FirstOrDefault(x => x.Id == idTraLoiDuocReply.Value)
+                    ?? throw new Exception("Không tìm thấy câu trả lời cần phản hồi");
+
+                tenNguoiDangDuocReply = users.FirstOrDefault(u => u.Id == current.IdNguoiDung)?.HoTen;
+
+                while (current != null)
+                {
+                    nhanh.Insert(0, current); // chèn đầu để giữ thứ tự gốc -> ngọn
+                    if (!current.IdTraLoiDuocReply.HasValue) break;
+                    current = tatCaTraLoi.FirstOrDefault(x => x.Id == current.IdTraLoiDuocReply.Value);
+                }
+
+                luongHoiThoai = nhanh.Select(t =>
+                {
+                    var ten = users.FirstOrDefault(u => u.Id == t.IdNguoiDung)?.HoTen ?? "Ẩn danh";
+                    var vaiTro = t.LaGiangVien ? "Giảng viên" : "Học viên";
+                    return $"{ten} ({vaiTro}): {t.NoiDung}";
+                }).ToList();
+            }
+
+            var qnaGanDay = await _hoiDapRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == cauHoi.IdKhoaHoc
+                         && x.IdHoiDapCha == null
+                         && x.Id != cauHoi.Id
+                         && !x.IsDeleted)
+                .OrderByDescending(x => x.NgayTao)
+                .Take(3)
+                .Select(x => x.NoiDung)
+                .ToListAsync();
+
+            var prompt = BuildPromptGoiYTraLoi(
+                cauHoiNoiDung: cauHoi.NoiDung ?? "",
+                tenKhoaHoc: khoaHoc?.TieuDe,
+                moTaKhoaHoc: khoaHoc?.MoTa,
+                noiDungBaiGiang: noiDungBaiGiang,
+                tieuDeBaiGiang: tieuDeBaiGiang,
+                luongHoiThoai: luongHoiThoai,
+                tenNguoiDangDuocReply: tenNguoiDangDuocReply,
+                cacCauHoiTruoc: qnaGanDay.Where(q => !string.IsNullOrWhiteSpace(q)).Select(q => q!).ToList());
+
+            Console.WriteLine("===== PROMPT GỬI GEMINI =====");
+            Console.WriteLine(prompt);
+
+            var noiDungGoiY = await _geminiService.GoiYTraLoiCauHoiAsync(prompt);
+
+            return new AISuggestionDto
+            {
+                NoiDungGoiY = noiDungGoiY,
+                CoNoiDungBaiGiang = !string.IsNullOrWhiteSpace(noiDungBaiGiang)
+            };
+        }
+
+        private string BuildPromptGoiYTraLoi(
+            string cauHoiNoiDung,
+            string? tenKhoaHoc,
+            string? moTaKhoaHoc,
+            string? tieuDeBaiGiang,
+            string? noiDungBaiGiang,
+            List<string> luongHoiThoai,
+            string? tenNguoiDangDuocReply,
+            List<string> cacCauHoiTruoc)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Bạn là trợ lý hỗ trợ giảng viên trả lời câu hỏi/bình luận của học viên trên nền tảng khóa học trực tuyến Eduverse.");
+            sb.AppendLine("Hãy soạn MỘT câu trả lời nháp, ngắn gọn, đúng trọng tâm, giọng văn thân thiện và chuyên nghiệp như một giảng viên thật.");
+            sb.AppendLine("Đây chỉ là bản nháp — giảng viên sẽ đọc và chỉnh sửa trước khi đăng, nên không cần rào trước đón sau.");
+            sb.AppendLine();
+
+            if (!string.IsNullOrWhiteSpace(tenKhoaHoc)) sb.AppendLine($"Khóa học: {tenKhoaHoc}");
+            if (!string.IsNullOrWhiteSpace(moTaKhoaHoc)) sb.AppendLine($"Mô tả khóa học: {moTaKhoaHoc}");
+            if (!string.IsNullOrWhiteSpace(tieuDeBaiGiang)) sb.AppendLine($"Bài giảng liên quan: {tieuDeBaiGiang}");
+
+            if (!string.IsNullOrWhiteSpace(noiDungBaiGiang))   // ✅ thêm
+            {
+                sb.AppendLine();
+                sb.AppendLine("Nội dung tài liệu bài giảng (dùng để trả lời bám sát bài học, không bịa nội dung ngoài phạm vi này):");
+                sb.AppendLine(noiDungBaiGiang);
+            }
+
+            sb.AppendLine();
+            sb.AppendLine($"Câu hỏi gốc của học viên: \"{cauHoiNoiDung}\"");
+
+            if (luongHoiThoai.Any())
+            {
+                sb.AppendLine();
+                sb.AppendLine("Diễn biến hội thoại tiếp theo, theo đúng thứ tự thời gian (chú ý các tiền tố @Tên cho biết ai đang nói với ai):");
+                foreach (var dong in luongHoiThoai)
+                    sb.AppendLine($"- {dong}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(tenNguoiDangDuocReply))
+            {
+                sb.AppendLine();
+                sb.AppendLine($"Bạn CẦN PHẢN HỒI TRỰC TIẾP vào ý kiến của {tenNguoiDangDuocReply} trong luồng trên, không phải trả lời lại câu hỏi gốc từ đầu.");
+                sb.AppendLine("Nếu ý đó đã được người khác giải đáp đúng trong luồng, hãy bổ sung góc nhìn mới hoặc xác nhận thay vì lặp lại.");
+            }
+
+            if (cacCauHoiTruoc.Any())
+            {
+                sb.AppendLine();
+                sb.AppendLine("Một vài câu hỏi khác gần đây trong khóa học này (chỉ để tham khảo ngữ cảnh, không cần trả lời):");
+                foreach (var q in cacCauHoiTruoc) sb.AppendLine($"- {q}");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Chỉ trả về nội dung câu trả lời, không thêm tiêu đề hay giải thích gì khác.");
+            return sb.ToString();
+        }
+
         private async Task ThongBaoCauHoiMoi(HoiDap cauHoi, Guid nguoiHoiId)
         {
             var giangVienCoQuyen = await _khoaHocGVRepo.GetQueryable()

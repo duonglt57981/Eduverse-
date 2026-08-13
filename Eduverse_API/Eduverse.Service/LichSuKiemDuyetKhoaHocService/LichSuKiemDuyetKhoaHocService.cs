@@ -173,7 +173,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             // 1. Lấy thông tin user an toàn
             var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            var role = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
+            var principal = _httpContextAccessor.HttpContext?.User;
 
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
             {
@@ -182,30 +182,25 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             }
 
             // 2. Lấy danh sách Id đang duyệt của user (cho trạng thái DangDuyet)
-            var lichSuDangDuyetIds = await GetQueryable()
-                .Where(x => x.CreatedId == userId && x.TrangThaiPheDuyet == "DangDuyet")
-                .Select(x => x.IdDoiTuong)
-                .ToListAsync();
-
             // 3. Xây dựng query cơ bản - lấy các khóa học có trạng thái ChoDuyet hoặc DangDuyet
             var khoaHocQuery = _khoaHocRepository.GetQueryable()
                 .AsNoTracking()
-                .Where(x => x.TrangThaiPheDuyet == "ChoDuyet" || lichSuDangDuyetIds.Contains(x.Id));
+                .Where(x => !x.IsDeleted && x.IsBanHienTai
+                    && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet"));
 
             // 4. Lọc theo role
-            if (!string.IsNullOrEmpty(role))
+            if (principal != null)
             {
                 _count++;
                 Console.WriteLine($"GetDanhSachKiemDuyet: {_count}");
-                if (role == NHANVIEN)
+                if (principal.IsInRole(NHANVIEN) && !principal.IsInRole(ADMIN))
                 {
                     // NHANVIEN: chỉ lấy khóa học có IdNguoiDuyet = userId
                     khoaHocQuery = khoaHocQuery.Where(x => x.IdNguoiDuyet == userId);
                 }
-                else if (role == ADMIN)
+                else if (principal.IsInRole(ADMIN))
                 {
                     // ADMIN: chỉ lấy khóa học có IdNguoiDuyet = null (chưa phân công)
-                    khoaHocQuery = khoaHocQuery.Where(x => x.IdNguoiDuyet == null);
                 }
                 else
                 {
@@ -223,14 +218,37 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 }
                 else if (search.TrangThaiPheDuyet == "DangDuyet")
                 {
-                    khoaHocQuery = khoaHocQuery.Where(x => lichSuDangDuyetIds.Contains(x.Id));
+                    khoaHocQuery = khoaHocQuery.Where(x => x.TrangThaiPheDuyet == "DangDuyet");
                 }
             }
 
             // 6. Lọc theo keyword
+            if (search.TrangThaiPhanCong == "ChuaPhanCong")
+                khoaHocQuery = khoaHocQuery.Where(x => x.IdNguoiDuyet == null);
+            else if (search.TrangThaiPhanCong == "DaPhanCong")
+                khoaHocQuery = khoaHocQuery.Where(x => x.IdNguoiDuyet != null);
+
+            if (search.IdNguoiDuyet.HasValue)
+                khoaHocQuery = khoaHocQuery.Where(x => x.IdNguoiDuyet == search.IdNguoiDuyet.Value);
+
+            if (search.TuNgay.HasValue)
+            {
+                var tuNgay = search.TuNgay.Value.Date;
+                khoaHocQuery = khoaHocQuery.Where(x => x.UpdatedDate >= tuNgay);
+            }
+
+            if (search.DenNgay.HasValue)
+            {
+                var sauDenNgay = search.DenNgay.Value.Date.AddDays(1);
+                khoaHocQuery = khoaHocQuery.Where(x => x.UpdatedDate < sauDenNgay);
+            }
+
             if (!string.IsNullOrWhiteSpace(search.Keyword))
             {
-                khoaHocQuery = khoaHocQuery.Where(x => x.TieuDe.Contains(search.Keyword));
+                var keyword = search.Keyword.Trim();
+                khoaHocQuery = khoaHocQuery.Where(x =>
+                    (x.TieuDe != null && x.TieuDe.Contains(keyword))
+                    || (x.CreatedBy != null && x.CreatedBy.Contains(keyword)));
             }
 
             // 7. Sắp xếp
@@ -262,7 +280,14 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 TrangThaiPheDuyet = x.TrangThaiPheDuyet,
                 CreateBy = x.CreatedBy,
                 CreateDate = x.CreatedDate,
+                NgayGuiDuyet = x.UpdatedDate,
                 IdNguoiDuyet = x.IdNguoiDuyet,
+                TenNguoiDuyet = x.IdNguoiDuyet.HasValue
+                    ? _eduverseContext.AppUsers
+                        .Where(u => u.Id == x.IdNguoiDuyet.Value)
+                        .Select(u => u.HoTen)
+                        .FirstOrDefault()
+                    : null,
             });
 
             // 9. Phân trang
@@ -280,6 +305,16 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             if (targetVersion == null)
                 return null;
+
+            var currentUser = _httpContextAccessor?.HttpContext?.User;
+            var currentUserIdText = currentUser?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUser?.IsInRole("personnel") == true
+                && currentUser.IsInRole("Admin") == false
+                && (!Guid.TryParse(currentUserIdText, out var currentUserId)
+                    || targetVersion.IdNguoiDuyet != currentUserId))
+            {
+                throw new UnauthorizedAccessException("Bạn chỉ được truy cập khóa học được phân công cho mình.");
+            }
 
             // 2. Lấy toàn bộ cây dữ liệu (không dùng khóa ngoại, so khớp thủ công qua Id list)
             var phans = await _phanRepository.GetAll()
@@ -334,7 +369,12 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                       (dk, dm) => dm.TenDanhMuc)       
                 .ToListAsync();
 
-            if (targetVersion.TrangThaiPheDuyet == "ChoDuyet" || targetVersion.TrangThaiPheDuyet == null)
+            // Admin only previews; assigned personnel starts the review session.
+            // Admin chỉ xem trước. Chỉ personnel được phân công mới bắt đầu phiên kiểm duyệt.
+            var shouldStartReview = currentUser?.IsInRole("personnel") == true
+                && currentUser.IsInRole("Admin") == false;
+            if (shouldStartReview
+                && (targetVersion.TrangThaiPheDuyet == "ChoDuyet" || targetVersion.TrangThaiPheDuyet == null))
             {
                 var KiemDuyetKhoaHoc = new LichSuKiemDuyetKhoaHoc
                 {
@@ -356,7 +396,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             foreach (var phan in phans)
             {
-                if (phan.TrangThaiPheDuyet == "ChoDuyet" || phan.TrangThaiPheDuyet == null)
+                if (shouldStartReview
+                    && (phan.TrangThaiPheDuyet == "ChoDuyet" || phan.TrangThaiPheDuyet == null))
                 {
                     phan.TrangThaiPheDuyet = "DangDuyet";
                     phan.TrangThai = "DangDuyet";
@@ -368,7 +409,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             foreach (var item in baiGiangs)
             {
-                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                if (shouldStartReview
+                    && (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null))
                 {
                     item.TrangThaiPheDuyet = "DangDuyet";
                     item.TrangThai = "DangDuyet";
@@ -381,7 +423,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             foreach (var item in taiLieus)
             {
-                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                if (shouldStartReview
+                    && (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null))
                 {
                     item.TrangThaiPheDuyet = "DangDuyet";
                     item.TrangThai = "DangDuyet";
@@ -393,7 +436,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             foreach (var item in baiKiemTras)
             {
-                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                if (shouldStartReview
+                    && (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null))
                 {
                     item.TrangThaiPheDuyet = "DangDuyet";
                     item.TrangThai = "DangDuyet";
@@ -405,7 +449,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             foreach (var item in cauHois)
             {
-                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                if (shouldStartReview
+                    && (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null))
                 {
                     item.TrangThaiPheDuyet = "DangDuyet";
                     item.TrangThai = "DangDuyet";
@@ -418,7 +463,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             // DapAn có TrangThai/TrangThaiPheDuyet riêng theo DTO → chuyển trạng thái tương tự
             foreach (var item in dapAns)
             {
-                if (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null)
+                if (shouldStartReview
+                    && (item.TrangThaiPheDuyet == "ChoDuyet" || item.TrangThaiPheDuyet == null))
                 {
                     item.TrangThaiPheDuyet = "DangDuyet";
                     item.TrangThai = "DangDuyet";
@@ -809,16 +855,19 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
         public async Task<PagedList<NhanVienPheDuyetDto>> GetNhanVienPheDuyet(NhanVienSearch search)
         {
-            var NHANVIEN = Guid.Parse("355B73F6-7ADE-4388-DAA2-08DEF0A47EEF");
+            search.PageIndex = Math.Max(1, search.PageIndex);
+            search.PageSize = Math.Clamp(search.PageSize, 1, 50);
 
-            var danhSachUserIdNhanVien = await _eduverseContext
-                .Set<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>()
-                .Where(x => x.RoleId == NHANVIEN)
-                .Select(x => x.UserId)
-                .ToListAsync();
+            var personnelRoleIds = _eduverseContext.Set<AppRole>()
+                .Where(role => role.NormalizedName == "PERSONNEL")
+                .Select(role => role.Id);
+            var personnelUserIds = _eduverseContext.Set<IdentityUserRole<Guid>>()
+                .Where(userRole => personnelRoleIds.Contains(userRole.RoleId))
+                .Select(userRole => userRole.UserId);
 
-            var query = _appUserService.GetQueryable()
-                .Where(u => danhSachUserIdNhanVien.Contains(u.Id) && !u.IsDeleted)
+            var query = _eduverseContext.AppUsers
+                .AsNoTracking()
+                .Where(u => personnelUserIds.Contains(u.Id) && !u.IsDeleted)
                 .Select(u => new NhanVienPheDuyetDto
                 {
                     UserId = u.Id,
@@ -827,14 +876,16 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     AnhDaiDien = u.AnhDaiDien,
                     SoLuongKhoaHocDuyet = _khoaHocRepository.GetQueryable()
                         .Count(k => k.IdNguoiDuyet == u.Id
+                                 && !k.IsDeleted
+                                 && k.IsBanHienTai
                                  && (k.TrangThaiPheDuyet == "ChoDuyet" || k.TrangThaiPheDuyet == "DangDuyet"))
                 });
 
             // Từ khóa tìm theo tên (nếu có)
             if (!string.IsNullOrWhiteSpace(search.Keyword))
             {
-                var keyword = search.Keyword.Trim();
-                query = query.Where(x => x.HoTen.Contains(keyword));
+                var keyword = search.Keyword.Trim().ToLower();
+                query = query.Where(x => (x.HoTen ?? string.Empty).ToLower().Contains(keyword));
             }
 
             // Nhân viên chưa được phân khóa học nào
@@ -846,75 +897,156 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             // Sắp xếp theo số lượng khóa học
             if (!string.IsNullOrWhiteSpace(search.SapXepTheoSoLuongKhoaHoc))
             {
-                if (search.SapXepTheoSoLuongKhoaHoc.ToLower() == "asc")
+                if (search.SapXepTheoSoLuongKhoaHoc.Equals("asc", StringComparison.OrdinalIgnoreCase))
                 {
-                    query = query.OrderBy(x => x.SoLuongKhoaHocDuyet).ThenBy(x => x.HoTen);
+                    query = query.OrderBy(x => x.SoLuongKhoaHocDuyet).ThenBy(x => x.HoTen).ThenBy(x => x.UserId);
                 }
-                else if (search.SapXepTheoSoLuongKhoaHoc.ToLower() == "desc")
+                else if (search.SapXepTheoSoLuongKhoaHoc.Equals("desc", StringComparison.OrdinalIgnoreCase))
                 {
-                    query = query.OrderByDescending(x => x.SoLuongKhoaHocDuyet).ThenBy(x => x.HoTen);
+                    query = query.OrderByDescending(x => x.SoLuongKhoaHocDuyet).ThenBy(x => x.HoTen).ThenBy(x => x.UserId);
                 }
                 else
                 {
-                    // Mặc định sắp xếp theo tên nếu giá trị không hợp lệ
-                    query = query.OrderBy(x => x.HoTen);
+                    query = query.OrderBy(x => x.HoTen).ThenBy(x => x.UserId);
                 }
             }
             else
             {
-                // Mặc định sắp xếp theo tên
-                query = query.OrderBy(x => x.HoTen);
+                query = query.OrderBy(x => x.HoTen).ThenBy(x => x.UserId);
             }
 
             return await PagedList<NhanVienPheDuyetDto>.CreateAsync(query, search);
         }
 
 
-        public async Task<List<KhoaHocDto>> PhanDuyetKhoaHoc(Guid idNguoiDuyet, List<Guid> danhSachKhoaHocId)
+        public async Task<PhanCongKiemDuyetResultDto> PhanDuyetKhoaHoc(Guid idNguoiDuyet, List<Guid>? danhSachKhoaHocId)
         {
-            var NHANVIEN = Guid.Parse("355B73F6-7ADE-4388-DAA2-08DEF0A47EEF");
-            var ADMIN = Guid.Parse("BEDD6177-DDCE-4FF2-B6B5-08DEB8D145FD");
+            var principal = _httpContextAccessor?.HttpContext?.User;
+            if (principal?.Identity?.IsAuthenticated != true
+                || !Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+                throw new PhanCongKiemDuyetException(StatusCodes.Status401Unauthorized, "Bạn cần đăng nhập để phân công khóa học.");
+            if (!principal.IsInRole("Admin"))
+                throw new PhanCongKiemDuyetException(StatusCodes.Status403Forbidden, "Chỉ Admin được phân công khóa học.");
+            if (idNguoiDuyet == Guid.Empty)
+                throw new PhanCongKiemDuyetException(StatusCodes.Status400BadRequest, "ID chuyên viên không hợp lệ.");
+            var ids = PhanCongKiemDuyetValidator.NormalizeCourseIds(danhSachKhoaHocId);
+            var reviewer = await _eduverseContext.AppUsers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == idNguoiDuyet && !x.IsDeleted);
+            if (reviewer == null)
+                throw new PhanCongKiemDuyetException(StatusCodes.Status404NotFound, "Không tìm thấy chuyên viên kiểm duyệt.");
 
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
+            var reviewerIsPersonnel = await (
+                from userRole in _eduverseContext.Set<IdentityUserRole<Guid>>()
+                join role in _eduverseContext.Set<AppRole>() on userRole.RoleId equals role.Id
+                where userRole.UserId == idNguoiDuyet && role.NormalizedName == "PERSONNEL"
+                select userRole.UserId).AnyAsync();
+            if (!reviewerIsPersonnel)
+                throw new PhanCongKiemDuyetException(StatusCodes.Status400BadRequest, "Người được chọn không còn vai trò personnel.");
 
-
-            var nguoiThucHienLaAdmin = await _eduverseContext
-                .Set<IdentityUserRole<Guid>>()
-                .AnyAsync(x => x.UserId == userId && x.RoleId == ADMIN); // fix: UserId, không phải Id
-
-            if (!nguoiThucHienLaAdmin)
-                throw new Exception("Chỉ người dùng có vai trò ADMIN mới có thể phân duyệt khóa học");
-
-            var nguoiDuyetLaNhanVien = await _eduverseContext
-                .Set<IdentityUserRole<Guid>>()
-                .AnyAsync(x => x.UserId == idNguoiDuyet && x.RoleId == NHANVIEN);
-
-            if (!nguoiDuyetLaNhanVien)
-                throw new Exception("Không tìm thấy người duyệt");
-
-            var danhSachKhoaHoc = await _khoaHocRepository.GetQueryable()
-                .Where(x => danhSachKhoaHocId.Contains(x.Id) && x.TrangThaiPheDuyet == "ChoDuyet")
-                .ToListAsync();
-
-            if (!danhSachKhoaHoc.Any())
-                throw new Exception("Không tìm thấy khóa học nào");
-            foreach (var khoaHoc in danhSachKhoaHoc)
+            var assignedAt = DateTime.Now;
+            var executionStrategy = _eduverseContext.Database.CreateExecutionStrategy();
+            await executionStrategy.ExecuteAsync(async () =>
             {
-                khoaHoc.IdNguoiDuyet = idNguoiDuyet;
-                _khoaHocRepository.Update(khoaHoc);
+                foreach (var entry in _eduverseContext.ChangeTracker
+                    .Entries<PhanCongKiemDuyetKhoaHoc>()
+                    .Where(entry => entry.State == EntityState.Added && ids.Contains(entry.Entity.IdKhoaHoc)))
+                {
+                    entry.State = EntityState.Detached;
+                }
+
+                await using var transaction = await _eduverseContext.Database
+                    .BeginTransactionAsync(IsolationLevel.Serializable);
+                try
+                {
+                    var courses = await _eduverseContext.Set<KhoaHoc>()
+                        .AsNoTracking()
+                        .Where(x => ids.Contains(x.Id))
+                        .Select(x => new { x.Id, x.IsDeleted, x.IsBanHienTai, x.TrangThaiPheDuyet, x.IdNguoiDuyet })
+                        .ToListAsync();
+
+                    var foundIds = courses.Select(x => x.Id).ToHashSet();
+                    var missingIds = ids.Where(id => !foundIds.Contains(id)).ToList();
+                    if (missingIds.Count > 0)
+                        throw new PhanCongKiemDuyetException(StatusCodes.Status404NotFound,
+                            $"Không tìm thấy {missingIds.Count} khóa học.", missingIds);
+
+                    var invalidIds = courses
+                        .Where(x => x.IsDeleted || !x.IsBanHienTai
+                            || (x.TrangThaiPheDuyet != "ChoDuyet" && x.TrangThaiPheDuyet != "DangDuyet")
+                            || x.IdNguoiDuyet != null)
+                        .Select(x => x.Id)
+                        .ToList();
+                    if (invalidIds.Count > 0)
+                        throw new PhanCongKiemDuyetException(StatusCodes.Status409Conflict,
+                            "Một hoặc nhiều khóa học không còn đủ điều kiện phân công.", invalidIds);
+
+                    var updatedRows = await _eduverseContext.Set<KhoaHoc>()
+                        .Where(x => ids.Contains(x.Id) && !x.IsDeleted && x.IsBanHienTai
+                            && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet")
+                            && x.IdNguoiDuyet == null)
+                        .ExecuteUpdateAsync(setters => setters
+                            .SetProperty(x => x.IdNguoiDuyet, idNguoiDuyet)
+                            .SetProperty(x => x.UpdatedDate, assignedAt)
+                            .SetProperty(x => x.UpdatedId, userId)
+                            .SetProperty(x => x.UpdatedBy, principal.Identity!.Name));
+
+                    if (updatedRows != ids.Count)
+                        throw new PhanCongKiemDuyetException(StatusCodes.Status409Conflict,
+                            "Một hoặc nhiều khóa học vừa được Admin khác phân công. Danh sách đã được làm mới.", ids);
+
+                    var histories = ids.Select(courseId => new PhanCongKiemDuyetKhoaHoc
+                    {
+                        Id = Guid.NewGuid(),
+                        IdKhoaHoc = courseId,
+                        IdNguoiDuyet = idNguoiDuyet,
+                        IdNguoiPhanCong = userId,
+                        NgayPhanCong = assignedAt
+                    });
+                    await _eduverseContext.phanCongKiemDuyetKhoaHocs.AddRangeAsync(histories);
+                    await _eduverseContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch (PhanCongKiemDuyetException)
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+                catch (DbUpdateException exception)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogWarning(exception, "Xung đột khi phân công {CourseCount} khóa học", ids.Count);
+                    throw new PhanCongKiemDuyetException(StatusCodes.Status409Conflict,
+                        "Một hoặc nhiều khóa học vừa được Admin khác phân công. Vui lòng tải lại danh sách.", ids);
+                }
+            });
+
+            try
+            {
+                await _notificationPublisher.NotifyUserAsync(idNguoiDuyet, new NotificationPayload
+                {
+                    TieuDe = "Bạn có khóa học mới cần kiểm duyệt",
+                    NoiDung = $"Bạn vừa được phân công kiểm duyệt {ids.Count} khóa học.",
+                    LoaiThongBao = "PhanCongKiemDuyetKhoaHoc",
+                    Link = "/personnel/approve-courses",
+                    FromUser = userId,
+                    ItemName = $"{ids.Count} khóa học"
+                });
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception,
+                    "Đã phân công khóa học nhưng gửi thông báo cho chuyên viên {ReviewerId} thất bại", idNguoiDuyet);
             }
 
-            await _khoaHocRepository.SaveAsync();
-
-            return danhSachKhoaHoc.Select(k => new KhoaHocDto
+            return new PhanCongKiemDuyetResultDto
             {
-                Id = k.Id,
-                TieuDe = k.TieuDe,
-                MoTa = k.MoTa,
-                IdNguoiDuyet = k.IdNguoiDuyet,
-                TrangThaiPheDuyet = k.TrangThaiPheDuyet,
-                UpdatedDate = k.UpdatedDate,
-            }).ToList();
+                IdNguoiDuyet = idNguoiDuyet,
+                TenNguoiDuyet = reviewer.HoTen ?? reviewer.UserName ?? "Chuyên viên",
+                SoKhoaHocDaPhan = ids.Count,
+                DanhSachKhoaHocId = ids,
+                NgayPhanCong = assignedAt
+            };
         }
 
 
@@ -923,7 +1055,10 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         {
             // ── Kiểm tra quyền ──────────────────────────────────
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId);
-            var role = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
+            var approvePrincipal = _httpContextAccessor.HttpContext?.User;
+            var role = approvePrincipal?.IsInRole("Admin") == true
+                ? "Admin"
+                : approvePrincipal?.IsInRole("personnel") == true ? "personnel" : null;
             var allowedRoles = new[] { "Admin", "personnel" };
 
             if (role == null || !allowedRoles.Contains(role))
@@ -945,6 +1080,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             var khoaHoc = await _khoaHocRepository.GetByIdAsync(request.IdKhoaHoc);
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học");
+
+            if (role == "personnel" && khoaHoc.IdNguoiDuyet != userId)
+                throw new UnauthorizedAccessException("Bạn chỉ được duyệt khóa học được phân công cho mình.");
 
             if (khoaHoc.TrangThaiPheDuyet != "ChoDuyet" && khoaHoc.TrangThaiPheDuyet != "DangDuyet")
                 throw new Exception("Khóa học không ở trạng thái chờ duyệt.");

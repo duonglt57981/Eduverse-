@@ -2964,55 +2964,68 @@ namespace Eduverse.Service.KhoaHocService
                 .GroupBy(x => x.IdKhoaHoc)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
+            // Xác định danh sách Id giảng viên cần hiển thị cho từng khóa học.
+            // Đã backfill KhoaHoc_GiangVien -> theo Visible/chủ sở hữu.
+            // Chưa backfill (ds rỗng) -> fallback về CreatedId (người tạo khóa học).
+            var idsTheoKhoaHoc = new Dictionary<Guid, List<Guid>>();
             var idsCanTraTen = new HashSet<Guid>();
-            var ketQuaTheoKhoaHoc = new Dictionary<Guid, List<Guid>>();
 
             foreach (var item in items)
             {
-                if (!membersByKhoaHoc.TryGetValue(item.Id, out var ds) || ds.Count <= 1)
-                    continue; // chỉ 1 mình hoặc chưa backfill -> dùng CreatedBy sẵn có
+                List<Guid> ids;
 
-                var visibleOnes = ds.Where(x => x.Visible).Select(x => x.IdGiangVien).ToList();
+                if (membersByKhoaHoc.TryGetValue(item.Id, out var ds) && ds.Any())
+                {
+                    var visibleOnes = ds.Where(x => x.Visible).Select(x => x.IdGiangVien).ToList();
+                    ids = visibleOnes.Any()
+                        ? visibleOnes
+                        : (ds.FirstOrDefault(x => x.LaChuSoHuu) is { } owner
+                            ? new List<Guid> { owner.IdGiangVien }
+                            : new List<Guid>());
+                }
+                else
+                {
+                    ids = item.CreatedId.HasValue
+                        ? new List<Guid> { item.CreatedId.Value }
+                        : new List<Guid>();
+                }
 
-                List<Guid> idsHienThi = visibleOnes.Any()
-                    ? visibleOnes
-                    : (ds.FirstOrDefault(x => x.LaChuSoHuu) is { } owner
-                        ? new List<Guid> { owner.IdGiangVien }
-                        : new List<Guid>());
-
-                ketQuaTheoKhoaHoc[item.Id] = idsHienThi;
-                foreach (var id in idsHienThi) idsCanTraTen.Add(id);
+                idsTheoKhoaHoc[item.Id] = ids;
+                foreach (var id in ids) idsCanTraTen.Add(id);
             }
 
-            var tenById = new Dictionary<Guid, string?>();
+            var infoById = new Dictionary<Guid, GiangVienHienThiDto>();
             if (idsCanTraTen.Any())
             {
-                tenById = await _appUserService.GetQueryable()
+                infoById = await _appUserService.GetQueryable()
                     .AsNoTracking()
                     .Where(u => idsCanTraTen.Contains(u.Id))
-                    .Select(u => new { u.Id, u.HoTen, u.UserName, u.Email })
-                    .ToDictionaryAsync(
-                        u => u.Id,
-                        u => !string.IsNullOrWhiteSpace(u.HoTen) ? u.HoTen
-                           : !string.IsNullOrWhiteSpace(u.UserName) ? u.UserName
-                           : u.Email
-                    );
+                    .Select(u => new GiangVienHienThiDto
+                    {
+                        Id = u.Id,
+                        HoTen = (!string.IsNullOrWhiteSpace(u.HoTen) ? u.HoTen
+                               : !string.IsNullOrWhiteSpace(u.UserName) ? u.UserName
+                               : u.Email) ?? "",
+                        AnhDaiDien = u.AnhDaiDien
+                    })
+                    .ToDictionaryAsync(x => x.Id);
             }
 
             foreach (var item in items)
             {
-                if (ketQuaTheoKhoaHoc.TryGetValue(item.Id, out var ids))
-                {
-                    item.DanhSachGiangVienHienThi = ids
-                        .Select(id => tenById.GetValueOrDefault(id))
-                        .Where(ten => !string.IsNullOrWhiteSpace(ten))
-                        .Select(ten => ten!)
-                        .ToList();
-                }
-                else if (!string.IsNullOrWhiteSpace(item.CreatedBy))
-                {
-                    item.DanhSachGiangVienHienThi = new List<string> { item.CreatedBy };
-                }
+                var giangViens = idsTheoKhoaHoc.TryGetValue(item.Id, out var ids)
+                    ? ids.Select(id => infoById.GetValueOrDefault(id))
+                         .Where(gv => gv != null && !string.IsNullOrWhiteSpace(gv!.HoTen))
+                         .Select(gv => gv!)
+                         .ToList()
+                    : new List<GiangVienHienThiDto>();
+
+                item.DanhSachGiangVien = giangViens;
+                item.DanhSachGiangVienHienThi = giangViens.Count > 0
+                    ? giangViens.Select(gv => gv.HoTen).ToList()
+                    : (!string.IsNullOrWhiteSpace(item.CreatedBy)
+                        ? new List<string> { item.CreatedBy }
+                        : new List<string>());
             }
         }
 

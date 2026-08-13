@@ -17,5 +17,6 @@ namespace Eduverse.Model.Entities
         public string? TrangThai { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
         public Guid IdBaiGiang { get; set; }
+        public string? NoiDungTrichXuat { get; set; }
     }
 }

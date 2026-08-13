@@ -8,6 +8,7 @@ COPY Eduverse.Api/Eduverse.Api.csproj Eduverse.Api/
 COPY Eduverse.Model/Eduverse.Model.csproj Eduverse.Model/
 COPY Eduverse.Repository/Eduverse.Repository.csproj Eduverse.Repository/
 COPY Eduverse.Service/Eduverse.Service.csproj Eduverse.Service/
+COPY Eduverse.Tests/Eduverse.Tests.csproj Eduverse.Tests/
 
 # Restore dependencies
 RUN dotnet restore

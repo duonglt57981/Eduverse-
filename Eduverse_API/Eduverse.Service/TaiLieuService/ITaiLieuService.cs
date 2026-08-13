@@ -16,5 +16,7 @@ namespace Eduverse.Service.TaiLieuService
         Task<TaiLieuDto> UpdateTaiLieu(UpdateTaiLieuRequest request);
 
         Task<bool> DeleteTaiLieu(Guid id);
+
+        Task<string?> LayNoiDungTaiLieuTheoBaiGiangAsync(Guid idBaiGiang);
     }
 }

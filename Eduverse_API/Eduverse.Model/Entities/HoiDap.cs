@@ -16,6 +16,7 @@ namespace Eduverse.Model.Entities
         public Guid? IdKhoaHoc { get; set; }
         public Guid? IdHoiDapCha { get; set; }
         public Guid? IdBaiGiang { get; set; }
+        public Guid? IdTraLoiDuocReply { get; set; }
         public bool DaGhim { get; set; } 
         public bool DaDong { get; set; }
         public bool LaGiangVien { get; set; }

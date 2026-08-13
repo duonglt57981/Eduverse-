@@ -49,5 +49,29 @@ namespace Eduverse.Api.Controller
             var daMua = await _service.KiemTraDaMuaAsync(GetUserId(), idKhoaHoc);
             return Ok(DataResponse.Success(new { daDanhGia, daMua }, "Thành công"));
         }
+
+        [HttpPost("phan-hoi")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<IActionResult> PhanHoi([FromBody] TaoPhanHoiDto dto)
+        {
+            try { await _service.PhanHoiDanhGia(GetUserId(), dto); return Ok(DataResponse.Success(null, "OK")); }
+            catch (Exception ex) { return BadRequest(DataResponse.False(ex.Message)); }
+        }
+
+        [HttpPut("phan-hoi/{id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<IActionResult> SuaPhanHoi(Guid id, [FromBody] string noiDung)
+        {
+            try { await _service.SuaPhanHoi(GetUserId(), id, noiDung); return Ok(DataResponse.Success(null, "OK")); }
+            catch (Exception ex) { return BadRequest(DataResponse.False(ex.Message)); }
+        }
+
+        [HttpDelete("phan-hoi/{id}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<IActionResult> XoaPhanHoi(Guid id)
+        {
+            try { await _service.XoaPhanHoi(GetUserId(), id); return Ok(DataResponse.Success(null, "OK")); }
+            catch (Exception ex) { return BadRequest(DataResponse.False(ex.Message)); }
+        }
     }
 }

@@ -24,7 +24,7 @@ export interface DonHangDto {
   maGiaoDich?: string;
   soTienThanhToan?: number;
   soTienGiamGia?: number;
-  trangThai?: int;
+  trangThai?: number;
   trangThaiText?: string;
   ngayTao?: string;
   chiTiets?: DonHangChiTietDto[];

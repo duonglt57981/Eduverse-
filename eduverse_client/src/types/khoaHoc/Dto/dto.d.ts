@@ -34,6 +34,11 @@ export interface KhoaHocType {
 
   danhSachPhanHoc?: PhanHocType[];
   giangVien?: GiangVienType;
+  danhSachGiangVien?: {
+    id: string;
+    hoTen: string;
+    anhDaiDien?: string;
+  }[];
 }
 
 export interface KhoaHocDetailType {
@@ -141,8 +146,8 @@ export interface GiangVienKhoaHocDto {
 }
 
 export interface SearchBase {
-  pageIndex?: int | 1;
-  pageSize?: int | 20;
+  pageIndex?: number;
+  pageSize?: number;
 }
 
 export interface AppUser {

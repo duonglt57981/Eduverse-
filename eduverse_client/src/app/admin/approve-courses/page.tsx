@@ -10,8 +10,6 @@ import {
   Typography,
   TextField,
   InputAdornment,
-  Tabs,
-  Tab,
   Skeleton,
   Pagination,
   IconButton,
@@ -19,9 +17,12 @@ import {
   alpha,
   Select,
   MenuItem,
-  Paper,
   Button,
   CircularProgress,
+  Checkbox,
+  FormControlLabel,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -41,12 +42,21 @@ import {
   COLORS,
   FONTS,
   PAGE_SIZE,
+  isTrangThaiCho,
   normalizeListResponse,
 } from "./types/constants";
 import { StatusChip } from "./types";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import { STATUS } from "@/src/theme/tokens";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
+import AssignReviewerDialog from "./components/AssignReviewerDialog";
+import { useSelector } from "@/src/store/hook";
+import {
+  KhoaHocKiemDuyetListDto,
+  KiemDuyetSearchDto,
+  NhanVienPheDuyetDto,
+  PhanCongKiemDuyetResultDto,
+} from "@/src/types/KiemDuyet/Dto/dto";
 
 const kiemDuyetService = new KiemDuyetService();
 
@@ -57,6 +67,7 @@ const FILE_BASE_URL =
 
 const DEFAULT_SORT = "cu-nhat";
 const DEFAULT_TAB: "ChoDuyet" | "TatCa" | "DangDuyet" = "TatCa";
+const DEFAULT_ASSIGNMENT = "TatCa";
 
 function resolveImageUrl(path?: string | null): string | null {
   if (!path) return null;
@@ -111,6 +122,8 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
 
 export default function DuyetKhoaHocPage() {
   const router = useRouter();
+  const roles = useSelector((state) => state.auth.roles) ?? [];
+  const isAdmin = roles.includes("Admin");
 
   const [tab, setTab] = useState<"ChoDuyet" | "TatCa" | "DangDuyet">(
     DEFAULT_TAB,
@@ -118,52 +131,77 @@ export default function DuyetKhoaHocPage() {
   const [keyword, setKeyword] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
   const [sortBy, setSortBy] = useState(DEFAULT_SORT);
+  const [assignmentStatus, setAssignmentStatus] = useState<
+    "TatCa" | "ChuaPhanCong" | "DaPhanCong"
+  >(DEFAULT_ASSIGNMENT);
+  const [reviewerId, setReviewerId] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
 
   const [loading, setLoading] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<KhoaHocKiemDuyetListDto[]>([]);
   const [totalPage, setTotalPage] = useState(1);
   const [stats, setStats] = useState({ choDuyet: 0, dangDuyet: 0 });
+  const [reviewers, setReviewers] = useState<NhanVienPheDuyetDto[]>([]);
+  const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   const isFilterDirty =
     keywordInput.trim() !== "" ||
     keyword.trim() !== "" ||
     sortBy !== DEFAULT_SORT ||
+    assignmentStatus !== DEFAULT_ASSIGNMENT ||
+    reviewerId !== "" ||
+    fromDate !== "" ||
+    toDate !== "" ||
     tab !== DEFAULT_TAB;
 
   const searchParams = useMemo(() => {
-    const params: any = {
+    const params: KiemDuyetSearchDto = {
       pageIndex: page,
       pageSize: PAGE_SIZE,
     };
-    if (keyword.trim()) params.Keyword = keyword.trim();
-    if (tab !== "TatCa") params.TrangThaiPheDuyet = tab;
+    if (keyword.trim()) params.keyword = keyword.trim();
+    if (tab !== "TatCa") params.trangThaiPheDuyet = tab;
+    if (assignmentStatus !== "TatCa") {
+      params.trangThaiPhanCong = assignmentStatus;
+    }
+    if (reviewerId) params.idNguoiDuyet = reviewerId;
+    if (fromDate) params.tuNgay = fromDate;
+    if (toDate) params.denNgay = toDate;
     switch (sortBy) {
       case "moi-nhat":
-        params.SapXepNgay = "Moi";
+        params.sapXepNgay = "Moi";
         break;
       case "cu-nhat":
-        params.SapXepNgay = "Cu";
+        params.sapXepNgay = "Cu";
         break;
       case "ten-a-z":
-        params.SapXepTen = "AZ";
+        params.sapXepTen = "AZ";
         break;
       case "ten-z-a":
-        params.SapXepTen = "ZA";
+        params.sapXepTen = "ZA";
         break;
       default:
-        params.SapXepNgay = "Cu";
+        params.sapXepNgay = "Cu";
     }
     return params;
-  }, [keyword, tab, sortBy, page]);
+  }, [keyword, tab, assignmentStatus, reviewerId, fromDate, toDate, sortBy, page]);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
       const res = await kiemDuyetService.GetListKiemDuyetKhoaHoc(searchParams);
+      if (res.status === false) throw new Error(res.message);
       const { list, totalPage: tp } = normalizeListResponse(res, PAGE_SIZE);
-      setItems(list);
+      setItems(list as KhoaHocKiemDuyetListDto[]);
       setTotalPage(tp);
     } catch (error) {
       console.error("Lỗi tải danh sách:", error);
@@ -177,8 +215,9 @@ export default function DuyetKhoaHocPage() {
   const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try {
-      const params: any = { pageIndex: 1, pageSize: 20 };
+      const params: KiemDuyetSearchDto = { pageIndex: 1, pageSize: 1000 };
       const res = await kiemDuyetService.GetListKiemDuyetKhoaHoc(params);
+      if (res.status === false) throw new Error(res.message);
       const { list } = normalizeListResponse(res, 1000);
       setStats({
         choDuyet: list.filter((x: any) => x.trangThaiPheDuyet === "ChoDuyet")
@@ -193,6 +232,22 @@ export default function DuyetKhoaHocPage() {
     }
   }, []);
 
+  const fetchReviewers = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const res = await kiemDuyetService.GetDanhSachNhanVien({
+        pageIndex: 1,
+        pageSize: 50,
+      });
+      if (res.status === false) throw new Error(res.message);
+      const { list } = normalizeListResponse(res, 50);
+      setReviewers(list as NhanVienPheDuyetDto[]);
+    } catch (error) {
+      console.error("Lỗi tải danh sách chuyên viên:", error);
+      setReviewers([]);
+    }
+  }, [isAdmin]);
+
   // Fetch khi component mount
   useEffect(() => {
     fetchList();
@@ -202,6 +257,22 @@ export default function DuyetKhoaHocPage() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  useEffect(() => {
+    void fetchReviewers();
+  }, [fetchReviewers]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setKeyword(keywordInput.trim());
+      setPage(1);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [keywordInput]);
+
+  useEffect(() => {
+    setSelectedCourseIds(new Set());
+  }, [keyword, tab, assignmentStatus, reviewerId, fromDate, toDate, sortBy]);
 
   const handleTabChange = (_: any, newTab: string) => {
     setTab(newTab as any);
@@ -219,10 +290,24 @@ export default function DuyetKhoaHocPage() {
     setPage(1);
   };
 
+  const handleAssignmentStatusChange = (e: any) => {
+    const value = e.target.value as
+      | "TatCa"
+      | "ChuaPhanCong"
+      | "DaPhanCong";
+    setAssignmentStatus(value);
+    if (value === "ChuaPhanCong") setReviewerId("");
+    setPage(1);
+  };
+
   const handleResetFilters = () => {
     setKeywordInput("");
     setKeyword("");
     setSortBy(DEFAULT_SORT);
+    setAssignmentStatus(DEFAULT_ASSIGNMENT);
+    setReviewerId("");
+    setFromDate("");
+    setToDate("");
     setTab(DEFAULT_TAB);
     setPage(1);
   };
@@ -238,6 +323,59 @@ export default function DuyetKhoaHocPage() {
 
   const handleGoBack = () => {
     router.push("/admin/courses");
+  };
+
+  const eligibleItems = useMemo(
+    () =>
+      items.filter(
+        (item) => isTrangThaiCho(item.trangThaiPheDuyet) && !item.idNguoiDuyet,
+      ),
+    [items],
+  );
+  const selectedOnPage = eligibleItems.filter((item) => selectedCourseIds.has(item.idKhoaHoc)).length;
+  const allOnPageSelected = eligibleItems.length > 0 && selectedOnPage === eligibleItems.length;
+  const someOnPageSelected = selectedOnPage > 0 && !allOnPageSelected;
+
+  const toggleCourse = (courseId: string) => {
+    setSelectedCourseIds((current) => {
+      const next = new Set(current);
+      if (next.has(courseId)) next.delete(courseId);
+      else next.add(courseId);
+      return next;
+    });
+  };
+
+  const toggleCurrentPage = () => {
+    setSelectedCourseIds((current) => {
+      const next = new Set(current);
+      eligibleItems.forEach((item) => {
+        if (allOnPageSelected) next.delete(item.idKhoaHoc);
+        else next.add(item.idKhoaHoc);
+      });
+      return next;
+    });
+  };
+
+  const handleAssigned = async (result: PhanCongKiemDuyetResultDto) => {
+    setAssignDialogOpen(false);
+    setSelectedCourseIds(new Set());
+    setSnackbar({
+      open: true,
+      severity: "success",
+      message: `Đã phân công ${result.soKhoaHocDaPhan} khóa học cho ${result.tenNguoiDuyet}.`,
+    });
+    await Promise.all([fetchList(), fetchStats()]);
+  };
+
+  const handleConflict = () => {
+    setAssignDialogOpen(false);
+    setSelectedCourseIds(new Set());
+    setSnackbar({
+      open: true,
+      severity: "error",
+      message: "Một hoặc nhiều khóa học vừa được Admin khác phân công. Danh sách đang được tải lại.",
+    });
+    void fetchList();
   };
 
   return (
@@ -315,6 +453,31 @@ export default function DuyetKhoaHocPage() {
                 <HistoryRoundedIcon sx={{ fontSize: 21 }} />
               </IconButton>
             </Tooltip>
+
+            {isAdmin && (
+              <Button
+                variant="contained"
+                disabled={selectedCourseIds.size === 0}
+                onClick={() => setAssignDialogOpen(true)}
+                sx={{
+                  minWidth: { xs: 44, sm: 150 },
+                  height: 44,
+                  borderRadius: "12px",
+                  bgcolor: COLORS.primary,
+                  textTransform: "none",
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                  px: { xs: 1.5, sm: 2.25 },
+                }}
+              >
+                <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+                  Phân công ({selectedCourseIds.size})
+                </Box>
+                <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>
+                  {selectedCourseIds.size}
+                </Box>
+              </Button>
+            )}
           </Stack>
 
           {/* ═══════ STATS CARDS ═══════ */}
@@ -502,6 +665,27 @@ export default function DuyetKhoaHocPage() {
                     }}
                   />
 
+                  <Select
+                    size="small"
+                    value={tab}
+                    onChange={(e) => handleTabChange(null, e.target.value)}
+                    aria-label="Trạng thái kiểm duyệt"
+                    sx={{
+                      minWidth: { xs: "100%", sm: 170 },
+                      height: 42,
+                      borderRadius: "10px",
+                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      flexShrink: 0,
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: COLORS.line,
+                      },
+                    }}
+                  >
+                    <MenuItem value="TatCa">Tất cả trạng thái</MenuItem>
+                    <MenuItem value="ChoDuyet">Chờ duyệt</MenuItem>
+                    <MenuItem value="DangDuyet">Đang duyệt</MenuItem>
+                  </Select>
+
                   {/* Sort */}
                   <Select
                     size="small"
@@ -564,11 +748,155 @@ export default function DuyetKhoaHocPage() {
                     </Tooltip>
                   )}
                 </Stack>
+
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "repeat(2, minmax(0, 1fr))",
+                      lg: isAdmin
+                        ? "repeat(4, minmax(0, 1fr))"
+                        : "repeat(2, minmax(0, 1fr))",
+                    },
+                    gap: 1.25,
+                    mt: 1.25,
+                  }}
+                >
+                  {isAdmin && (
+                    <Select
+                      size="small"
+                      value={assignmentStatus}
+                      onChange={handleAssignmentStatusChange}
+                      aria-label="Tình trạng phân công"
+                      sx={{
+                        height: 42,
+                        borderRadius: "10px",
+                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: COLORS.line,
+                        },
+                      }}
+                    >
+                      <MenuItem value="TatCa">Tất cả phân công</MenuItem>
+                      <MenuItem value="ChuaPhanCong">Chưa phân công</MenuItem>
+                      <MenuItem value="DaPhanCong">Đã phân công</MenuItem>
+                    </Select>
+                  )}
+
+                  {isAdmin && (
+                    <Select
+                      size="small"
+                      displayEmpty
+                      value={reviewerId}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setReviewerId(value);
+                        if (value) setAssignmentStatus("DaPhanCong");
+                        setPage(1);
+                      }}
+                      aria-label="Chuyên viên kiểm duyệt"
+                      sx={{
+                        height: 42,
+                        borderRadius: "10px",
+                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: COLORS.line,
+                        },
+                      }}
+                    >
+                      <MenuItem value="">Tất cả chuyên viên</MenuItem>
+                      {reviewers.map((reviewer) => (
+                        <MenuItem
+                          key={reviewer.userId}
+                          value={reviewer.userId || ""}
+                        >
+                          {reviewer.hoTen} ({reviewer.soLuongKhoaHocDuyet})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+
+                  <TextField
+                    size="small"
+                    type="date"
+                    label="Từ ngày gửi"
+                    value={fromDate}
+                    onChange={(e) => {
+                      setFromDate(e.target.value);
+                      setPage(1);
+                    }}
+                    slotProps={{
+                      inputLabel: { shrink: true },
+                      htmlInput: { max: toDate || undefined },
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: 42,
+                        borderRadius: "10px",
+                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        "& fieldset": { borderColor: COLORS.line },
+                      },
+                    }}
+                  />
+
+                  <TextField
+                    size="small"
+                    type="date"
+                    label="Đến ngày gửi"
+                    value={toDate}
+                    onChange={(e) => {
+                      setToDate(e.target.value);
+                      setPage(1);
+                    }}
+                    slotProps={{
+                      inputLabel: { shrink: true },
+                      htmlInput: { min: fromDate || undefined },
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: 42,
+                        borderRadius: "10px",
+                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        "& fieldset": { borderColor: COLORS.line },
+                      },
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
 
             {/* ═══════ COURSE LIST ═══════ */}
             <Box sx={{ p: 2 }}>
+              {isAdmin && !loading && items.length > 0 && (
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={0.5}
+                  sx={{
+                    mb: 1.5,
+                    px: 0.5,
+                    justifyContent: "space-between",
+                    alignItems: { xs: "flex-start", sm: "center" },
+                  }}
+                >
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={allOnPageSelected}
+                        indeterminate={someOnPageSelected}
+                        onChange={toggleCurrentPage}
+                        disabled={eligibleItems.length === 0}
+                        sx={{ color: COLORS.primary, "&.Mui-checked": { color: COLORS.primary } }}
+                      />
+                    }
+                    label="Chọn tất cả trang hiện tại"
+                    sx={{ "& .MuiFormControlLabel-label": { fontSize: 13.5, fontWeight: 700, color: COLORS.ink } }}
+                  />
+                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.primary }}>
+                    Đã chọn {selectedCourseIds.size} khóa học
+                  </Typography>
+                </Stack>
+              )}
               {loading ? (
                 <Stack spacing={1.5}>
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -617,14 +945,22 @@ export default function DuyetKhoaHocPage() {
               ) : (
                 <Stack spacing={1.5}>
                   {items.map((item) => {
-                    const id = item.idKhoaHoc || item.id;
+                    const id = item.idKhoaHoc;
                     const trangThaiPheDuyet =
                       item.trangThaiPheDuyet || item.trangThai;
+                    const eligible =
+                      isTrangThaiCho(item.trangThaiPheDuyet) &&
+                      !item.idNguoiDuyet;
+                    const isSelected = selectedCourseIds.has(id);
 
                     return (
                       <Box
                         key={id}
-                        onClick={() => handleOpenCourse(id)}
+                        onClick={(event) => {
+                          const target = event.target as HTMLElement;
+                          if (target.closest("[data-course-checkbox]")) return;
+                          handleOpenCourse(id);
+                        }}
                         sx={{
                           position: "relative",
                           display: "flex",
@@ -636,7 +972,8 @@ export default function DuyetKhoaHocPage() {
                           cursor: "pointer",
                           overflow: "hidden",
                           transition: "all .2s ease",
-                          bgcolor: COLORS.paperRaised,
+                          bgcolor: isSelected ? alpha(COLORS.primary, 0.045) : COLORS.paperRaised,
+                          borderColor: isSelected ? alpha(COLORS.primary, 0.45) : COLORS.line,
                           // Vạch màu bên trái, chỉ hiện khi rê chuột
                           "&::before": {
                             content: '""',
@@ -662,6 +999,24 @@ export default function DuyetKhoaHocPage() {
                           },
                         }}
                       >
+                        {isAdmin && (
+                          <Box
+                            data-course-checkbox
+                            onClick={(event) => event.stopPropagation()}
+                            sx={{ display: "flex", flexShrink: 0 }}
+                          >
+                            <Checkbox
+                              checked={isSelected}
+                              disabled={!eligible}
+                              aria-label={`Chọn khóa học ${item.tieuDe}`}
+                              onChange={() => toggleCourse(id)}
+                              sx={{
+                                color: COLORS.primary,
+                                "&.Mui-checked": { color: COLORS.primary },
+                              }}
+                            />
+                          </Box>
+                        )}
                         {/* Thumbnail */}
                         <CourseThumbnail
                           src={item.hinhAnhKhoaHoc}
@@ -697,7 +1052,17 @@ export default function DuyetKhoaHocPage() {
                               trangThai={trangThaiPheDuyet}
                               size="small"
                             />
-                            {item.createDate && (
+                            {item.createBy && (
+                              <Typography
+                                sx={{
+                                  fontSize: 12,
+                                  color: "var(--ev-grey, #8A7676)",
+                                }}
+                              >
+                                Giảng viên: {item.createBy}
+                              </Typography>
+                            )}
+                            {(item.ngayGuiDuyet || item.createDate) && (
                               <Typography
                                 sx={{
                                   fontSize: 12,
@@ -707,10 +1072,25 @@ export default function DuyetKhoaHocPage() {
                                   gap: 0.3,
                                 }}
                               >
-                                Tạo:{" "}
-                                {new Date(item.createDate).toLocaleDateString(
-                                  "vi-VN",
-                                )}
+                                Gửi:{" "}
+                                {new Date(
+                                  item.ngayGuiDuyet || item.createDate!,
+                                ).toLocaleDateString("vi-VN")}
+                              </Typography>
+                            )}
+                            {isAdmin && (
+                              <Typography
+                                sx={{
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  color: item.idNguoiDuyet
+                                    ? STATUS.info
+                                    : COLORS.gold,
+                                }}
+                              >
+                                {item.idNguoiDuyet
+                                  ? `Phụ trách: ${item.tenNguoiDuyet || "Đã phân công"}`
+                                  : "Chưa phân công"}
                               </Typography>
                             )}
                           </Stack>
@@ -771,6 +1151,30 @@ export default function DuyetKhoaHocPage() {
               )}
             </Box>
           </Box>
+
+          {isAdmin && (
+            <AssignReviewerDialog
+              open={assignDialogOpen}
+              courseIds={Array.from(selectedCourseIds)}
+              onClose={() => setAssignDialogOpen(false)}
+              onAssigned={(result) => void handleAssigned(result)}
+              onConflict={handleConflict}
+            />
+          )}
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={5000}
+            onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          >
+            <Alert
+              severity={snackbar.severity}
+              variant="filled"
+              onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
         </Box>
       </DashboardShell>
     </AuthGuard>

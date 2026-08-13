@@ -29,5 +29,21 @@ namespace Eduverse.Api.Controller
             try { return DataResponse<ThongKeHocVienDto>.Success(await _service.GetThongKeHocVien(idKhoaHoc, nam)); }
             catch (Exception ex) { return DataResponse<ThongKeHocVienDto>.False(ex.Message); }
         }
+
+        [HttpGet("{idKhoaHoc}/bai-giang")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<BaiGiangEngagementDto>>> GetBaiGiang(Guid idKhoaHoc)
+        {
+            try { return DataResponse<List<BaiGiangEngagementDto>>.Success(await _service.GetThongKeBaiGiang(idKhoaHoc)); }
+            catch (Exception ex) { return DataResponse<List<BaiGiangEngagementDto>>.False(ex.Message); }
+        }
+
+        [HttpGet("{idKhoaHoc}/engagement")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<CourseEngagementDto>> GetEngagement(Guid idKhoaHoc)
+        {
+            try { return DataResponse<CourseEngagementDto>.Success(await _service.GetCourseEngagement(idKhoaHoc)); }
+            catch (Exception ex) { return DataResponse<CourseEngagementDto>.False(ex.Message); }
+        }
     }
 }

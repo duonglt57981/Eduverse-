@@ -20,7 +20,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
         Task<PagedList<KhoaHocKiemDuyetListDto>> GetListLichSuKiemDuyet(KhoaHocKiemDuyetSearchDto search);
         Task<KiemDuyetDetailDto> GetDetailLichSuKiemDuyet(Guid idKhoaHoc);
         Task<PagedList<NhanVienPheDuyetDto>> GetNhanVienPheDuyet(NhanVienSearch search);
-        Task<List<KhoaHocDto>> PhanDuyetKhoaHoc(Guid idNguoiDuyet, List<Guid> danhSachKhoaHocId);
+        Task<PhanCongKiemDuyetResultDto> PhanDuyetKhoaHoc(Guid idNguoiDuyet, List<Guid>? danhSachKhoaHocId);
         //Task<KiemDuyetKhoaHocDto> KiemDuyetBaiGiang(KiemDuyetKhoaHocRequest request);
         //Task<KiemDuyetKhoaHocDto> KiemDuyetKhoaHoc(KiemDuyetKhoaHocRequest request);
         Task<KiemDuyetKhoaHocDto> KiemDuyetFullKhoaHoc(KiemDuyetKhoaHocRequest request);

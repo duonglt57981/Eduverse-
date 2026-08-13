@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Packaging;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
@@ -19,6 +20,8 @@ using Elastic.Clients.Elasticsearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text;
+using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using static Grpc.Core.Metadata;
 
 
@@ -35,6 +38,7 @@ namespace Eduverse.Service.TaiLieuService
         private readonly IDangKyKhoaHocRepository _dangKyKhoaHocRepository;
         private readonly IKhoaHocRepository _khoaHocRepository; 
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
+        private readonly HttpClient _httpClient;
         private readonly ISignalRService _signalRService;
         public TaiLieuService( 
             IBaiGiangRepository baiGiangRepository,
@@ -45,6 +49,9 @@ namespace Eduverse.Service.TaiLieuService
             IHttpContextAccessor httpContextAccessor,
             IPhanRepository phanRepository,
             IDangKyKhoaHocRepository dangKyKhoaHocRepository,
+            IKhoaHocRepository khoaHocRepository,
+            HttpClient httpClient,
+        IKhoaHoc_GiangVienRepository khoaHocGVRepository
             IKhoaHocRepository khoaHocRepository, 
         IKhoaHoc_GiangVienRepository khoaHocGVRepository,
             ISignalRService signalRService
@@ -59,6 +66,7 @@ namespace Eduverse.Service.TaiLieuService
             _dangKyKhoaHocRepository = dangKyKhoaHocRepository;
             _khoaHocRepository = khoaHocRepository;
             _khoaHocGVRepository = khoaHocGVRepository;
+            _httpClient = httpClient;
             _signalRService = signalRService;
         }
 
@@ -252,6 +260,92 @@ namespace Eduverse.Service.TaiLieuService
             var baiGiang = await _baiGiangRepository.GetQueryable().FirstOrDefaultAsync(x => x.Id == idBaiGiang);
             if (baiGiang == null) return false;
             return await CoQuyenQuaPhan(baiGiang.IdPhan, userId, capQuyenCuThe);
+        }
+
+        public async Task<string?> LayNoiDungTaiLieuTheoBaiGiangAsync(Guid idBaiGiang)
+        {
+            var taiLieus = await GetAll() 
+                .Where(x => x.IdBaiGiang == idBaiGiang && !x.IsDeleted
+                         && x.TrangThaiPheDuyet == "DaDuyet") 
+                .ToListAsync();
+
+            if (!taiLieus.Any()) return null;
+
+            var phan = new List<string>();
+            var coCapNhat = false;
+
+            foreach (var tl in taiLieus)
+            {
+                if (string.IsNullOrWhiteSpace(tl.NoiDungTrichXuat))
+                {
+                    var noiDung = await TrichXuatNoiDungAsync(tl);
+                    if (!string.IsNullOrWhiteSpace(noiDung))
+                    {
+                        tl.NoiDungTrichXuat = noiDung;
+                        await UpdateAsync(tl);
+                        coCapNhat = true;
+                    }
+                }
+                if (!string.IsNullOrWhiteSpace(tl.NoiDungTrichXuat))
+                    phan.Add($"[Tài liệu: {tl.TenTaiLieu}]\n{tl.NoiDungTrichXuat}");
+            }
+
+            if (coCapNhat) await SaveAsync();
+            if (!phan.Any()) return null;
+
+            var full = string.Join("\n\n", phan);
+            const int gioiHanKyTu = 6000;
+            return full.Length > gioiHanKyTu ? full[..gioiHanKyTu] + "..." : full;
+        }
+
+        private async Task<string?> TrichXuatNoiDungAsync(TaiLieu taiLieu)
+        {
+            if (string.IsNullOrWhiteSpace(taiLieu.URL)) return null;
+
+            byte[] bytes;
+            try { bytes = await _httpClient.GetByteArrayAsync(taiLieu.URL); }
+            catch { return null; } // lỗi tải file → bỏ qua, không làm fail request AI
+
+            var loai = (taiLieu.LoaiTaiLieu ?? Path.GetExtension(taiLieu.URL).TrimStart('.'))
+                .Trim().ToUpperInvariant();
+
+            try
+            {
+                return loai switch
+                {
+                    "PDF" => TrichXuatPdf(bytes),
+                    "DOCX" => TrichXuatDocx(bytes),
+                    "PPTX" => TrichXuatPptx(bytes),
+                    _ => null, // ảnh/định dạng chưa hỗ trợ
+                };
+            }
+            catch { return null; } // file hỏng/không đọc được → bỏ qua thay vì crash
+        }
+
+        private string TrichXuatPdf(byte[] bytes)
+        {
+            using var pdf = UglyToad.PdfPig.PdfDocument.Open(bytes);
+            var sb = new StringBuilder();
+            foreach (var page in pdf.GetPages()) sb.AppendLine(ContentOrderTextExtractor.GetText(page));
+            return sb.ToString();
+        }
+
+        private string TrichXuatDocx(byte[] bytes)
+        {
+            using var ms = new MemoryStream(bytes);
+            using var doc = WordprocessingDocument.Open(ms, false);
+            return doc.MainDocumentPart?.Document?.Body?.InnerText ?? "";
+        }
+
+        private string TrichXuatPptx(byte[] bytes)
+        {
+            using var ms = new MemoryStream(bytes);
+            using var doc = PresentationDocument.Open(ms, false);
+            var sb = new StringBuilder();
+            foreach (var slide in doc.PresentationPart?.SlideParts ?? Enumerable.Empty<SlidePart>())
+                foreach (var t in slide.Slide.Descendants<DocumentFormat.OpenXml.Drawing.Text>())
+                    sb.AppendLine(t.Text);
+            return sb.ToString();
         }
     }
 }

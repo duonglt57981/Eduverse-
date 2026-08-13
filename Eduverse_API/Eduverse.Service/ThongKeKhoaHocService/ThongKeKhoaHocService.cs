@@ -1,10 +1,15 @@
-﻿using Eduverse.Repository.DangKyKhoaHocRepository;
+﻿using Eduverse.Repository.BaiGiangRepository;
+using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.DonHang_KhuyenMaiRepository;
 using Eduverse.Repository.DonHangChiTietRepository;
 using Eduverse.Repository.DonHangRepositoryRepository;
 using Eduverse.Repository.KhoaHoc_GiangVienRepository;
+using Eduverse.Repository.KhoaHocRepository;
+using Eduverse.Repository.PhanRepository;
 using Eduverse.Repository.ThanhToanRepository;
+using Eduverse.Repository.TienDoHocTapRepository;
 using Eduverse.Service.AppUserService;
+using Eduverse.Service.KhoaHocService;
 using Eduverse.Service.ThongKeKhoaHocService.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +32,10 @@ namespace Eduverse.Service.ThongKeKhoaHocService
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepo;
         private readonly IAppUserService _appUserService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IKhoaHocService _khoaHocService;
+        private readonly IPhanRepository _phanRepo; 
+        private readonly ITienDoHocTapRepository _tienDoRepo;
+        private readonly IBaiGiangRepository _baiGiangRepo;
 
         public ThongKeKhoaHocService(
         IDonHangChiTietRepository chiTietRepo,
@@ -36,7 +45,11 @@ namespace Eduverse.Service.ThongKeKhoaHocService
         IThanhToanRepository thanhToanRepo,
         IKhoaHoc_GiangVienRepository khoaHocGVRepo,
         IAppUserService appUserService,
-        IHttpContextAccessor httpContextAccessor) 
+        IHttpContextAccessor httpContextAccessor,
+        IPhanRepository phanRepo,
+        ITienDoHocTapRepository tienDoRepo,
+        IBaiGiangRepository baiGiangRepo,
+        IKhoaHocService khoaHocService) 
         {
             _chiTietRepo = chiTietRepo;
             _donHangRepo = donHangRepo;
@@ -46,6 +59,10 @@ namespace Eduverse.Service.ThongKeKhoaHocService
             _khoaHocGVRepo = khoaHocGVRepo;
             _appUserService = appUserService;
             _httpContextAccessor = httpContextAccessor;
+            _khoaHocService = khoaHocService;
+            _phanRepo = phanRepo;
+            _tienDoRepo = tienDoRepo;
+            _baiGiangRepo = baiGiangRepo;
         }
         private Guid LayUserId()
         {
@@ -195,25 +212,36 @@ namespace Eduverse.Service.ThongKeKhoaHocService
                 .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien, x.Email })
                 .ToListAsync();
 
-            var danhSach = tatCa
-                .OrderByDescending(x => x.ThoiGianDK)
-                .Take(50)  // lấy 50 gần nhất
-                .Select(dk =>
+            var danhSach = new List<HocVienGanDayDto>();
+            foreach (var dk in tatCa.OrderByDescending(x => x.ThoiGianDK).Take(50))
+            {
+                var u = users.FirstOrDefault(x => x.Id == dk.IdNguoiDangKi);
+
+                double phanTram = 0;
+                try
                 {
-                    var u = users.FirstOrDefault(x => x.Id == dk.IdNguoiDangKi);
-                    return new HocVienGanDayDto
-                    {
-                        IdHocVien = dk.IdNguoiDangKi ?? Guid.Empty,
-                        HoTen = u?.HoTen,
-                        AnhDaiDien = u?.AnhDaiDien,
-                        Email = u?.Email,
-                        GiaDangKy = dk.GiaDangKy,
-                        ThoiGianDK = dk.ThoiGianDK,
-                        TrangThai = dk.TrangThai,
-                        IsDangKy = dk.IsDangKy,
-                        NgayHetHan = dk.NgayHetHan,
-                    };
-                }).ToList();
+                    phanTram = await _khoaHocService.TinhPhanTramHoanThanh(dk.Id, dk.CreatedDate);
+                }
+                catch
+                {
+                    // giữ 0% nếu tính lỗi (VD: khóa học chưa có bài giảng)
+                }
+
+                danhSach.Add(new HocVienGanDayDto
+                {
+                    IdHocVien = dk.IdNguoiDangKi ?? Guid.Empty,
+                    IdDangKy = dk.Id,
+                    HoTen = u?.HoTen,
+                    AnhDaiDien = u?.AnhDaiDien,
+                    Email = u?.Email,
+                    GiaDangKy = dk.GiaDangKy,
+                    ThoiGianDK = dk.ThoiGianDK,
+                    TrangThai = dk.TrangThai,
+                    IsDangKy = dk.IsDangKy,
+                    NgayHetHan = dk.NgayHetHan,
+                    PhanTramHoanThanh = Math.Round(phanTram, 1),
+                });
+            }
 
             return new ThongKeHocVienDto
             {
@@ -223,6 +251,157 @@ namespace Eduverse.Service.ThongKeKhoaHocService
                 HetHan = tatCa.Count(x => x.NgayHetHan < now),
                 HocVienTheoThang = theoThang,
                 DanhSachHocVien = danhSach,
+            };
+        }
+
+
+        private async Task<(List<Guid> baiGiangHienTaiIds, Dictionary<Guid, Guid> idVeHienTai, int tongSoBaiGiang)>
+    LayMapBaiGiangHienTai(Guid idKhoaHoc)
+        {
+            var phanIds = await _phanRepo.GetQueryable()
+                .Where(p => p.IdKhoaHoc == idKhoaHoc && p.IsBanHienTai && !p.IsDeleted)
+                .Select(p => p.Id)
+                .ToListAsync();
+
+            // Lấy TẤT CẢ version của bài giảng thuộc các Phan này (không lọc IsBanHienTai)
+            var tatCaBanGhi = await _baiGiangRepo.GetQueryable()
+                .Where(bg => phanIds.Contains(bg.IdPhan) && !bg.IsDeleted)
+                .Select(bg => new { bg.Id, bg.IdBanGhiTruoc, bg.IsBanHienTai })
+                .ToListAsync();
+
+            var baiGiangHienTaiIds = tatCaBanGhi.Where(x => x.IsBanHienTai).Select(x => x.Id).ToList();
+
+            // map id cũ -> id hiện tại (chuỗi swap có thể nhiều cấp, nên lặp cho tới khi ổn định)
+            var idVeHienTai = new Dictionary<Guid, Guid>();
+            foreach (var id in baiGiangHienTaiIds) idVeHienTai[id] = id;
+
+            bool coThayDoi = true;
+            int guard = 0; // chặn vòng lặp vô hạn nếu dữ liệu lỗi (link tròn)
+            while (coThayDoi && guard++ < 20)
+            {
+                coThayDoi = false;
+                foreach (var bg in tatCaBanGhi)
+                {
+                    if (!idVeHienTai.ContainsKey(bg.Id)
+                        && bg.IdBanGhiTruoc.HasValue
+                        && idVeHienTai.TryGetValue(bg.IdBanGhiTruoc.Value, out var hienTai))
+                    {
+                        idVeHienTai[bg.Id] = hienTai;
+                        coThayDoi = true;
+                    }
+                }
+            }
+
+            // bản nào không tìm được bản hiện tại nào cả (mồ côi) -> tự quy về chính nó,
+            // để không bị lỗi KeyNotFound khi tra map (dù sẽ không match bài nào trong danh sách hiển thị)
+            foreach (var bg in tatCaBanGhi)
+                if (!idVeHienTai.ContainsKey(bg.Id))
+                    idVeHienTai[bg.Id] = bg.Id;
+
+            return (baiGiangHienTaiIds, idVeHienTai, baiGiangHienTaiIds.Count);
+        }
+
+        public async Task<List<BaiGiangEngagementDto>> GetThongKeBaiGiang(Guid idKhoaHoc)
+        {
+            await KiemTraQuyenPerformance(idKhoaHoc);
+
+            var tongDangKy = await _dangKyRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .CountAsync();
+
+            if (tongDangKy == 0)
+                return new List<BaiGiangEngagementDto>();
+
+            var (baiGiangHienTaiIds, idVeHienTai, _) = await LayMapBaiGiangHienTai(idKhoaHoc);
+
+            var baiGiangHienTai = await _baiGiangRepo.GetQueryable()
+                .Where(bg => baiGiangHienTaiIds.Contains(bg.Id) && bg.TrangThaiPheDuyet == "DaDuyet")
+                .OrderBy(bg => bg.ThuTuSapXep)
+                .Select(bg => new { bg.Id, bg.TieuDe, bg.ThuTuSapXep })
+                .ToListAsync();
+
+            var tienDos = await (
+                from td in _tienDoRepo.GetQueryable()
+                join dk in _dangKyRepo.GetQueryable() on td.IdDangKi equals dk.Id
+                where td.IdBaiGiang.HasValue
+                   && dk.IdKhoaHoc == idKhoaHoc
+                   && !dk.IsDeleted
+                   && !td.IsDeleted
+                select new { td.IdDangKi, td.IdBaiGiang, td.TrangThai }
+            ).ToListAsync();
+
+            var ketQua = baiGiangHienTai.Select(bg =>
+            {
+                var xemBai = tienDos
+                    .Where(t => idVeHienTai.TryGetValue(t.IdBaiGiang!.Value, out var quyVe) && quyVe == bg.Id)
+                    .ToList();
+
+                var soHocVienXem = xemBai.Select(x => x.IdDangKi).Distinct().Count();
+                var soHoanThanh = xemBai.Count(t => t.TrangThai == "HoanThanh");
+
+                return new BaiGiangEngagementDto
+                {
+                    IdBaiGiang = bg.Id,
+                    TenBaiGiang = bg.TieuDe,
+                    ThuTu = bg.ThuTuSapXep ?? 0,
+                    LuotXem = soHocVienXem,
+                    TyLeHoanThanh = Math.Round(soHoanThanh * 100.0 / tongDangKy, 0),
+                };
+            }).ToList();
+
+            return ketQua;
+        }
+
+        public async Task<CourseEngagementDto> GetCourseEngagement(Guid idKhoaHoc)
+        {
+            await KiemTraQuyenPerformance(idKhoaHoc);
+
+            var dangKys = await _dangKyRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .Select(x => x.Id)
+                .ToListAsync();
+
+            var tongDangKy = dangKys.Count;
+            if (tongDangKy == 0) return new CourseEngagementDto();
+
+            var (_, _, tongSoBaiGiang) = await LayMapBaiGiangHienTai(idKhoaHoc);
+
+            var tienDos = await _tienDoRepo.GetQueryable()
+                .Where(x => dangKys.Contains(x.IdDangKi!.Value) && !x.IsDeleted)
+                .Select(x => new { x.IdDangKi, x.ThoiGianXem, x.TrangThai, x.LanCuoiXem })
+                .ToListAsync();
+
+            var now = DateTime.Now;
+
+            var hocVienDaBatDau = tienDos.Select(x => x.IdDangKi).Distinct().Count();
+            var tongGio = tienDos.Sum(x => x.ThoiGianXem ?? 0) / 3600.0;
+
+            var hocVienHoatDong = tienDos
+                .Where(x => x.LanCuoiXem >= now.AddDays(-7))
+                .Select(x => x.IdDangKi).Distinct().Count();
+
+            // Tỷ lệ hoàn thành trung bình: mỗi học viên = (số bài đã hoàn thành / tổng số bài) rồi lấy trung bình toàn khóa
+            double tyLeHoanThanhTrungBinh = 0;
+            if (tongSoBaiGiang > 0)
+            {
+                var phanTramMoiHocVien = tienDos
+                    .GroupBy(x => x.IdDangKi)
+                    .Select(g => g.Count(x => x.TrangThai == "HoanThanh") * 100.0 / tongSoBaiGiang);
+
+                // học viên chưa có bản ghi tiến độ nào (chưa bắt đầu học) tính là 0%,
+                // và phải tính trên TỔNG học viên đăng ký, không chỉ học viên đã bắt đầu học
+                var tongPhanTram = phanTramMoiHocVien.Sum();
+                tyLeHoanThanhTrungBinh = tongPhanTram / tongDangKy;
+            }
+
+            return new CourseEngagementDto
+            {
+                HocVienDaDangKy = tongDangKy,
+                HocVienDaBatDauHoc = hocVienDaBatDau,
+                TongThoiGianHocGio = Math.Round(tongGio, 0),
+                LuotXemBaiGiang = tienDos.Count,
+                TyLeHoanThanhTrungBinh = Math.Round(tyLeHoanThanhTrungBinh, 0),
+                HocVienDangHoatDong = hocVienHoatDong,
             };
         }
     }

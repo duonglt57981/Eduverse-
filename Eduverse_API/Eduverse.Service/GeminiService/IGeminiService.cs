@@ -11,5 +11,7 @@ namespace Eduverse.Service.GeminiService
     {
         Task<KetQuaKiemDuyetInput> KiemDuyetInputAsync(string noiDung);
         Task<KetQuaKiemDuyetInput> KiemDuyetOuputAsync(string noiDung);
+
+        Task<string> GoiYTraLoiCauHoiAsync(string prompt);
     }
 }

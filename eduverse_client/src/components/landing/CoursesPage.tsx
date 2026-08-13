@@ -478,11 +478,20 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     durationSeconds > 0
       ? `${durationHours > 0 ? `${durationHours} giờ ` : ""}${durationMinutes} phút`.trim()
       : "Chưa cập nhật";
+  const danhSachGV: string[] | undefined = Array.isArray(
+    kh.danhSachGiangVienHienThi,
+  )
+    ? kh.danhSachGiangVienHienThi
+    : undefined;
+  const instructorDisplay =
+    danhSachGV && danhSachGV.length > 0
+      ? danhSachGV.join(", ")
+      : kh.createdBy || "Chưa cập nhật";
 
   return {
     id: kh.id,
     title: kh.tieuDe || "Khóa học không tên",
-    instructor: kh.tenGiangVien || kh.createdBy || "Chưa cập nhật",
+    instructor: instructorDisplay,
     rating,
     students: studentCount,
     studentCount,
@@ -824,7 +833,8 @@ export default function CoursesPage({
                 boxShadow: "0 4px 14px rgba(139, 19, 19, 0.25)",
                 transition: "all 200ms ease",
                 "&:hover": {
-                  background: "linear-gradient(135deg, #7F1D1D 0%, #5B0B0B 100%)",
+                  background:
+                    "linear-gradient(135deg, #7F1D1D 0%, #5B0B0B 100%)",
                   boxShadow: "0 6px 20px rgba(139, 19, 19, 0.38)",
                   transform: "translateY(-1px)",
                 },
@@ -1354,7 +1364,9 @@ export default function CoursesPage({
                       textTransform: "none",
                       boxShadow: "none",
                       "&:hover": {
-                        bgcolor: active ? BRAND_COLORS.primaryHover : "rgba(139,19,19,0.06)",
+                        bgcolor: active
+                          ? BRAND_COLORS.primaryHover
+                          : "rgba(139,19,19,0.06)",
                       },
                     }}
                   >
