@@ -694,46 +694,11 @@ namespace Eduverse.Service.ThanhToanService
 
         public async Task<double> GetTongDoanhThuNenTangAsync()
         {
-            // Tổng tiền học viên thực trả (sau discount)
             var tongThanhToan = await _donHangRepo.GetQueryable()
-                .Where(x => !x.IsDeleted && x.TrangThai == 1)
-                .SumAsync(x => (double?)x.SoTienThanhToan ?? 0);
+             .Where(x => !x.IsDeleted && x.TrangThai == 1)
+             .SumAsync(x => (double?)x.SoTienThanhToan ?? 0);
 
-            var donHangDaThanhToanIds = await _donHangRepo.GetQueryable()
-                .Where(x => !x.IsDeleted && x.TrangThai == 1)
-                .Select(x => x.Id)
-                .ToListAsync();
-
-            var chiTiets = await _donHangChiTietRepo.GetQueryable()
-                .Where(ct => !ct.IsDeleted && ct.IdDonHang.HasValue
-                          && donHangDaThanhToanIds.Contains(ct.IdDonHang.Value))
-                .Select(ct => new { ct.IdDonHang, ct.IdKhoaHoc, ct.GiaLucDat })
-                .ToListAsync();
-
-            var giamGiaList = await _donHangKhuyenMaiRepo.GetQueryable()
-                .Where(x => !x.IsDeleted && x.IdDonHang.HasValue
-                         && donHangDaThanhToanIds.Contains(x.IdDonHang.Value)
-                         && x.IdKhoaHocDuocGiam.HasValue)
-                .Select(x => new { x.IdDonHang, x.IdKhoaHocDuocGiam, x.SoTienGiam })
-                .ToListAsync();
-
-            double tongGiangVienNhan = 0;
-
-            foreach (var ct in chiTiets)
-            {
-                var giaGoc = ct.GiaLucDat ?? 0;
-
-                var giam = giamGiaList
-                    .Where(g => g.IdDonHang == ct.IdDonHang &&
-                                g.IdKhoaHocDuocGiam == ct.IdKhoaHoc)
-                    .Sum(g => g.SoTienGiam ?? 0);
-
-                var tienThucThu = Math.Max(0, giaGoc - giam);
-
-                tongGiangVienNhan += tienThucThu * 0.7;
-            }
-
-            return Math.Round(tongThanhToan - tongGiangVienNhan, 0);
+            return Math.Round(tongThanhToan * 0.3, 0);
         }   
 
 
