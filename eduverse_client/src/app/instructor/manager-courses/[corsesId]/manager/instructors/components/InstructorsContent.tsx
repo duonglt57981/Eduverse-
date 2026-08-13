@@ -464,7 +464,7 @@ export default function InstructorsContent() {
               </Typography>
             </Box>
 
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Chip
                 label={`${tongTyLe}% / 100%`}
                 size="small"
