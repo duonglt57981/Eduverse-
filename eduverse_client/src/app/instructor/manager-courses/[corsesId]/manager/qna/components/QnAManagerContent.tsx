@@ -42,6 +42,7 @@ import { vi } from "date-fns/locale";
 import AuthGuard from "@/src/components/AuthGuard";
 import { useCourseEdit } from "../../components/CourseEditContext";
 import { MAU } from "../../components/courseEditCore";
+import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
 import HoiDapService, {
   HoiDapDto,
   TraLoiDto,
@@ -85,7 +86,8 @@ function UserAvatar({
 }
 
 export default function QnAManagerContent() {
-  const { idKhoaHoc } = useCourseEdit();
+  const { idKhoaHoc, trangThai } = useCourseEdit();
+  const { coQuyen, loading: loadingQuyen } = useQuyenCuaToi(idKhoaHoc);
   const searchParams = useSearchParams();
 
   // ── Filter state ──────────────────────────────────────────────────
@@ -132,6 +134,7 @@ export default function QnAManagerContent() {
   const load = useCallback(
     async (reset = true) => {
       if (!idKhoaHoc) return;
+
       reset ? setLoading(true) : setLoadingMore(true);
       try {
         const req: SearchHoiDapRequest = {
@@ -363,6 +366,34 @@ export default function QnAManagerContent() {
 
     return () => clearTimeout(timer);
   }, [searchParams, moChiTiet]);
+
+  if (loadingQuyen) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress sx={{ color: MAU.chinh }} />
+      </Box>
+    );
+  }
+
+  if (trangThai !== "DaDuyet") {
+    return (
+      <Box sx={{ textAlign: "center", py: 10 }}>
+        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+          Hỏi đáp chỉ khả dụng sau khi khóa học được duyệt.
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!coQuyen("qnA")) {
+    return (
+      <Box sx={{ textAlign: "center", py: 10 }}>
+        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+          Bạn không có quyền truy cập mục Hỏi đáp.
+        </Typography>
+      </Box>
+    );
+  }
 
   // ── Render ────────────────────────────────────────────────────────
   return (

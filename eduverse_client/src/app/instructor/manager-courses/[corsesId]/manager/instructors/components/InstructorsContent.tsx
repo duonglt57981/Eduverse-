@@ -47,6 +47,7 @@ import { useState, useEffect, useCallback } from "react";
 import AuthGuard from "@/src/components/AuthGuard";
 import { useCourseEdit } from "../../components/CourseEditContext";
 import { MAU } from "../../components/courseEditCore";
+import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
 import LoiMoiGiangVienService, {
   GiangVienCongTacDto,
   GuiLoiMoiRequest,
@@ -135,6 +136,8 @@ const DEFAULT_QUYEN: GuiLoiMoiRequest = {
 export default function InstructorsContent() {
   const { idKhoaHoc, trangThai } = useCourseEdit();
   const isEditable = trangThai === "DangSua";
+  const { quyen: quyenCuaToi, loading: loadingQuyen } =
+    useQuyenCuaToi(idKhoaHoc);
 
   const [rows, setRows] = useState<RowState[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,8 +214,9 @@ export default function InstructorsContent() {
   const hasDirty = rows.some((r) => r._dirty);
 
   const vuot100 = tongTyLe > 100;
+  const chuaDu100 = tongTyLe < 100;
   const coSoAm = rows.some((r) => r.tyLeChiaDoanhThu < 0);
-  const coLoi = vuot100 || coSoAm;
+  const coLoi = vuot100 || chuaDu100 || coSoAm;
 
   // ── Sửa 1 cell trên bảng ─────────────────────────────────────────────────
   const setCell = (
@@ -247,29 +251,34 @@ export default function InstructorsContent() {
       });
       return;
     }
+    if (tongTyLe < 100) {
+      setToast({
+        open: true,
+        message: `Tổng tỷ lệ doanh thu mới đạt ${tongTyLe}%, cần đủ 100% mới được lưu.`,
+        severity: "error",
+      });
+      return;
+    }
 
     setDangLuu(true);
     try {
-      const dirtyRows = rows.filter((r) => r._dirty && !r.laChuSoHuu);
-      await Promise.all(
-        dirtyRows.map((r) =>
-          LoiMoiGiangVienService.CapNhatQuyenTheoGiangVien(
-            idKhoaHoc,
-            r.idGiangVien,
-            {
-              visible: r.visible,
-              tyLeChiaDoanhThu: r.tyLeChiaDoanhThu,
-              manage: r.manage,
-              performance: r.performance,
-              qnA: r.qnA,
-              reviews: r.reviews,
-              assignments: r.assignments,
-              materials: r.materials,
-              promotions: r.promotions,
-            },
-          ),
-        ),
-      );
+      const dirtyRows = rows.filter((r) => r._dirty);
+
+      await LoiMoiGiangVienService.CapNhatQuyenHangLoat(idKhoaHoc, {
+        danhSach: dirtyRows.map((r) => ({
+          idGiangVien: r.idGiangVien,
+          visible: r.visible,
+          tyLeChiaDoanhThu: r.tyLeChiaDoanhThu,
+          manage: r.manage,
+          performance: r.performance,
+          qnA: r.qnA,
+          reviews: r.reviews,
+          assignments: r.assignments,
+          materials: r.materials,
+          promotions: r.promotions,
+        })),
+      });
+
       setRows((prev) => prev.map((r) => ({ ...r, _dirty: false })));
       setToast({
         open: true,
@@ -346,6 +355,24 @@ export default function InstructorsContent() {
     }
   };
 
+  if (loadingQuyen) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress sx={{ color: MAU.chinh }} />
+      </Box>
+    );
+  }
+
+  if (!quyenCuaToi?.laChuSoHuu) {
+    return (
+      <Box sx={{ textAlign: "center", py: 10 }}>
+        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+          Chỉ chủ sở hữu khóa học mới được quản lý giảng viên.
+        </Typography>
+      </Box>
+    );
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
@@ -388,7 +415,8 @@ export default function InstructorsContent() {
             <Typography
               sx={{ fontSize: 13, color: "#64748B", mt: 0.5, fontWeight: 500 }}
             >
-              Phân quyền chi tiết & tỷ lệ chia sẻ doanh thu cho đội ngũ giảng viên cộng tác
+              Phân quyền chi tiết & tỷ lệ chia sẻ doanh thu cho đội ngũ giảng
+              viên cộng tác
             </Typography>
           </Box>
 
@@ -459,7 +487,9 @@ export default function InstructorsContent() {
               >
                 <PercentRoundedIcon sx={{ fontSize: 19 }} />
               </Box>
-              <Typography sx={{ fontWeight: 700, fontSize: 14.5, color: "#1E293B" }}>
+              <Typography
+                sx={{ fontWeight: 700, fontSize: 14.5, color: "#1E293B" }}
+              >
                 Tổng tỷ lệ chia sẻ doanh thu giảng viên
               </Typography>
             </Box>
@@ -480,12 +510,16 @@ export default function InstructorsContent() {
                 }}
               />
               {100 - tongTyLe > 0 && !vuot100 && (
-                <Typography sx={{ fontSize: 12, color: "#10B981", fontWeight: 600 }}>
+                <Typography
+                  sx={{ fontSize: 12, color: "#10B981", fontWeight: 600 }}
+                >
                   (Còn khả dụng {100 - tongTyLe}%)
                 </Typography>
               )}
               {vuot100 && (
-                <Typography sx={{ fontSize: 12, color: "#DC2626", fontWeight: 700 }}>
+                <Typography
+                  sx={{ fontSize: 12, color: "#DC2626", fontWeight: 700 }}
+                >
                   ⚠️ Vượt {tongTyLe - 100}%
                 </Typography>
               )}
@@ -506,15 +540,48 @@ export default function InstructorsContent() {
               sx={{
                 height: "100%",
                 width: `${Math.min(tongTyLe, 100)}%`,
-                background: vuot100
-                  ? "linear-gradient(90deg, #EF4444 0%, #DC2626 100%)"
-                  : `linear-gradient(90deg, ${MAU.chinh} 0%, #E11D48 100%)`,
+                bgcolor: vuot100
+                  ? "#DC2626"
+                  : tongTyLe === 100
+                    ? "#16A34A"
+                    : "#D97706",
                 borderRadius: 99,
                 transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
               }}
             />
           </Box>
+          <Typography
+            sx={{
+              fontSize: 13,
+              fontWeight: 700,
+              flexShrink: 0,
+              mt: 1,
+              color: vuot100
+                ? "#DC2626"
+                : tongTyLe === 100
+                  ? "#16A34A"
+                  : "#D97706",
+            }}
+          >
+            {tongTyLe}% / 100% doanh thu giảng viên
+            {vuot100 && (
+              <Box
+                component="span"
+                sx={{ ml: 1, fontSize: 11, fontWeight: 600 }}
+              >
+                (vượt {tongTyLe - 100}%)
+              </Box>
+            )}
+            {chuaDu100 && (
+              <Box
+                component="span"
+                sx={{ ml: 1, fontSize: 11, fontWeight: 600 }}
+              >
+                (thiếu {100 - tongTyLe}%)
+              </Box>
+            )}
+          </Typography>
         </Paper>
 
         {loading ? (
@@ -571,7 +638,12 @@ export default function InstructorsContent() {
               {COT_QUYEN.map((c) => {
                 const info = QUYEN_MO_TA[c.key];
                 return (
-                  <Tooltip key={c.key} title={info?.desc || c.nhan} arrow placement="top">
+                  <Tooltip
+                    key={c.key}
+                    title={info?.desc || c.nhan}
+                    arrow
+                    placement="top"
+                  >
                     <Typography
                       sx={{
                         fontWeight: 700,
@@ -768,13 +840,21 @@ export default function InstructorsContent() {
                         key={c.key}
                         sx={{ display: "flex", justifyContent: "center" }}
                       >
-                        <Tooltip title={info?.desc || c.nhan} arrow placement="top">
+                        <Tooltip
+                          title={info?.desc || c.nhan}
+                          arrow
+                          placement="top"
+                        >
                           <span>
                             <Checkbox
                               checked={isChecked}
                               disabled={!isEditable || row.laChuSoHuu}
                               onChange={(e) =>
-                                setCell(row.idGiangVien, c.key, e.target.checked)
+                                setCell(
+                                  row.idGiangVien,
+                                  c.key,
+                                  e.target.checked,
+                                )
                               }
                               size="small"
                               sx={{
@@ -811,7 +891,9 @@ export default function InstructorsContent() {
                   </Box>
                 </Box>
 
-                {idx < rows.length - 1 && <Divider sx={{ borderColor: "#F1F5F9" }} />}
+                {idx < rows.length - 1 && (
+                  <Divider sx={{ borderColor: "#F1F5F9" }} />
+                )}
               </Box>
             ))}
           </Paper>
@@ -858,6 +940,21 @@ export default function InstructorsContent() {
               >
                 ⚠ Tổng tỷ lệ đang là {tongTyLe}%, vượt quá 100%. Vui lòng điều
                 chỉnh lại.
+              </Typography>
+            )}
+            {chuaDu100 && (
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: "#D97706",
+                  mt: 0.5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                }}
+              >
+                ⚠ Tổng tỷ lệ mới đạt {tongTyLe}%, cần đủ 100% mới được lưu (còn
+                thiếu {100 - tongTyLe}%).
               </Typography>
             )}
             {coSoAm && (
@@ -1171,7 +1268,10 @@ export default function InstructorsContent() {
                     "&.Mui-focused": {
                       bgcolor: "#FFFFFF",
                       boxShadow: "0 0 0 4px rgba(139,19,19,0.08)",
-                      "& fieldset": { borderColor: MAU.chinh, borderWidth: 1.5 },
+                      "& fieldset": {
+                        borderColor: MAU.chinh,
+                        borderWidth: 1.5,
+                      },
                     },
                   },
                 }}
@@ -1223,7 +1323,14 @@ export default function InstructorsContent() {
                 />
               </Stack>
 
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  mb: 1.5,
+                }}
+              >
                 <TextField
                   type="number"
                   size="small"
@@ -1259,7 +1366,11 @@ export default function InstructorsContent() {
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "12px",
                       bgcolor: "#FFFFFF",
-                      "& input": { textAlign: "center", fontWeight: 800, fontSize: 16 },
+                      "& input": {
+                        textAlign: "center",
+                        fontWeight: 800,
+                        fontSize: 16,
+                      },
                       "& fieldset": { borderColor: "#CBD5E1" },
                       "&.Mui-focused fieldset": { borderColor: MAU.chinh },
                     },
@@ -1267,7 +1378,11 @@ export default function InstructorsContent() {
                 />
 
                 {/* Preset Chips */}
-                <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.5 }}>
+                <Stack
+                  direction="row"
+                  spacing={0.75}
+                  sx={{ flexWrap: "wrap", gap: 0.5 }}
+                >
                   {[0, 10, 20, 30, 50].map((val) => (
                     <Chip
                       key={val}
@@ -1314,15 +1429,21 @@ export default function InstructorsContent() {
                   mb: 1.5,
                 }}
               >
-                <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}
+                >
                   Phân quyền truy cập
                 </Typography>
-                <Typography sx={{ fontSize: 12, color: "#6B7280", fontWeight: 600 }}>
+                <Typography
+                  sx={{ fontSize: 12, color: "#6B7280", fontWeight: 600 }}
+                >
                   Đã chọn:{" "}
                   <strong style={{ color: MAU.chinh }}>
-                    {COT_QUYEN.filter(
-                      (c) => !!formMoi[c.key as keyof GuiLoiMoiRequest],
-                    ).length}
+                    {
+                      COT_QUYEN.filter(
+                        (c) => !!formMoi[c.key as keyof GuiLoiMoiRequest],
+                      ).length
+                    }
                     /8
                   </strong>
                 </Typography>
@@ -1366,7 +1487,11 @@ export default function InstructorsContent() {
                           },
                         }}
                       >
-                        <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", minWidth: 0 }}>
+                        <Stack
+                          direction="row"
+                          spacing={1.25}
+                          sx={{ alignItems: "center", minWidth: 0 }}
+                        >
                           <Box
                             sx={{
                               width: 34,

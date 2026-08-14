@@ -53,6 +53,7 @@ import ThongKeKhoaHocService, {
   BaiGiangEngagementDto,
   CourseEngagementDto,
 } from "@/src/services/ThongKeKhoaHocService";
+import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
 
 // ── Helper format tiền ──────────────────────────────────────────────────────
 function formatTien(so: number) {
@@ -152,7 +153,8 @@ function StatCard({
 
 // ── Component chính ─────────────────────────────────────────────────────────
 export default function PerformanceContent() {
-  const { idKhoaHoc } = useCourseEdit();
+  const { idKhoaHoc, trangThai } = useCourseEdit();
+  const { coQuyen, loading: loadingQuyen } = useQuyenCuaToi(idKhoaHoc);
   const [tab, setTab] = useState(0);
 
   // Doanh thu
@@ -263,6 +265,34 @@ export default function PerformanceContent() {
     { length: 5 },
     (_, i) => new Date().getFullYear() - i,
   );
+
+  if (loadingQuyen) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress sx={{ color: MAU.chinh }} />
+      </Box>
+    );
+  }
+
+  if (trangThai !== "DaDuyet") {
+    return (
+      <Box sx={{ textAlign: "center", py: 10 }}>
+        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+          Thống kê chỉ khả dụng sau khi khóa học được duyệt.
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!coQuyen("performance")) {
+    return (
+      <Box sx={{ textAlign: "center", py: 10 }}>
+        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+          Bạn không có quyền truy cập mục Thống kê.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
