@@ -32,6 +32,7 @@ import { MAU } from "./components/courseEditCore";
 import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import type { ThongBao } from "@/src/types/thongbao";
+import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -51,7 +52,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     isDirty,
     resetDirty,
   } = useCourseEdit();
-
+  const { quyen: quyenCuaToi, coQuyen } = useQuyenCuaToi(idKhoaHoc);
   const [dangXuLy, setDangXuLy] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(
     null,
@@ -177,47 +178,50 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     (p.DanhSachBaiGiang ?? []).some((bg) => bg.urlBaiGiang),
   );
 
+  const daDuyet = trangThai === "DaDuyet";
+
+  const mucKhoaHoc = [
+    { key: "basics", nhan: "Thông tin cơ bản", hoanThanh: basicsHoanThanh },
+    {
+      key: "curriculum",
+      nhan: "Chương trình giảng dạy",
+      hoanThanh: curriculumHoanThanh,
+    },
+  ];
+
+  // Chỉ chủ sở hữu mới thấy "Quản lý giảng viên" — bất kể trạng thái khóa học
+  if (quyenCuaToi?.laChuSoHuu) {
+    mucKhoaHoc.push({
+      key: "instructors",
+      nhan: "Quản lý giảng viên",
+      hoanThanh: false,
+    });
+  }
+
+  // Hỏi đáp / Thống kê / Đánh giá: ẩn hết khi khóa học chưa được duyệt.
+  // Sau khi duyệt mới xét quyền cụ thể của từng giảng viên.
+  if (daDuyet) {
+    if (coQuyen("qnA"))
+      mucKhoaHoc.push({ key: "qna", nhan: "Hỏi đáp", hoanThanh: false });
+    if (coQuyen("performance"))
+      mucKhoaHoc.push({
+        key: "performance",
+        nhan: "Thống kê",
+        hoanThanh: false,
+      });
+    if (coQuyen("reviews"))
+      mucKhoaHoc.push({ key: "reviews", nhan: "Đánh giá", hoanThanh: false });
+  }
+
   const nhomSidebar = [
     {
       tieuDe: "Khóa học",
-      muc: [
-        {
-          key: "basics",
-          nhan: "Thông tin cơ bản",
-          hoanThanh: basicsHoanThanh,
-        },
-        {
-          key: "curriculum",
-          nhan: "Chương trình giảng dạy",
-          hoanThanh: curriculumHoanThanh,
-        },
-        {
-          key: "instructors", // ← thêm mới
-          nhan: "Quản lý giảng viên",
-          hoanThanh: false, // không cần check hoàn thành
-        },
-        {
-          key: "qna",
-          nhan: "Hỏi đáp",
-          hoanThanh: false,
-        },
-        {
-          key: "performance",
-          nhan: "Thống kê",
-          hoanThanh: false,
-        },
-        {
-          key: "reviews",
-          nhan: "Đánh giá",
-          hoanThanh: false,
-        },
-      ],
+      muc: mucKhoaHoc,
     },
   ];
 
   const performNavigation = useCallback(
     (key: string) => {
-      // LƯU DỮ LIỆU TRƯỚC KHI CHUYỂN TRANG
       saveState();
       router.push(`/instructor/manager-courses/${idKhoaHoc}/manager/${key}`);
     },
