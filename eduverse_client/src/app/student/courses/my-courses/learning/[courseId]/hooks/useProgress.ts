@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { useParams } from "next/navigation";
 import TienDoHocTapService from "@/src/services/TienDoHocTapService";
 import { UpdateTienDoBaiGiangRequest } from "@/src/types/tienDoHocTap/Request/UpdateTienDoBaiGiangRequest";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
@@ -29,9 +30,17 @@ interface UseProgressReturn {
   ) => Promise<void>;
   isBaiHoanThanh: (bgId: string) => boolean;
   initProgress: (danhSachTatCa: BaiGiangType[]) => void;
+  // id đăng ký lấy trực tiếp từ route param [courseId], khác với courseId
+  // truyền tay vào sendProgress
+  idDangKy: string;
 }
 
 export const useProgress = (): UseProgressReturn => {
+  // Lấy id đăng ký từ route param [courseId] (tên param giữ nguyên trên URL,
+  // nhưng bản chất giá trị là id đăng ký khóa học)
+  const params = useParams();
+  const idDangKy = (params?.courseId as string) || "";
+
   // State cho tiến độ của từng bài giảng
   const [progressMap, setProgressMap] = useState<Map<string, ProgressData>>(
     new Map(),
@@ -73,6 +82,8 @@ export const useProgress = (): UseProgressReturn => {
   }, []);
 
   // --- Gửi tiến độ lên server ---
+  // courseId ở đây vẫn giữ nguyên như cũ: được truyền tay từ nơi gọi,
+  // KHÔNG lấy từ idDangKy (route param) ở trên.
   const sendProgress = useCallback(
     async (baiGiangId: string, thoiGianXem: number, courseId: string) => {
       if (!courseId || !baiGiangId) return;
@@ -109,7 +120,7 @@ export const useProgress = (): UseProgressReturn => {
 
       try {
         const request: UpdateTienDoBaiGiangRequest = {
-          idDangKyKhoaHoc: courseId,
+          idDangKyKhoaHoc: idDangKy,
           idBaiGiang: baiGiangId,
           thoiGianXem: Math.floor(thoiGianXem),
           LanCuoiXem: new Date(),
@@ -150,5 +161,6 @@ export const useProgress = (): UseProgressReturn => {
     sendProgress,
     isBaiHoanThanh,
     initProgress,
+    idDangKy,
   };
 };

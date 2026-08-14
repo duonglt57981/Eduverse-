@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -24,11 +25,12 @@ import {
   Grid,
   Paper,
   alpha,
+  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
-  Stack,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -45,7 +47,8 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import UndoIcon from "@mui/icons-material/Undo";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import AuthGuard from "@/src/components/AuthGuard";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType, KhoaHocManagerSearch } from "@/src/types/khoaHoc/Dto/dto";
@@ -67,11 +70,12 @@ const duongDanChiTietKhoaHoc = (id: string) =>
 const duongDanTaoKhoaHocMoi = "/instructor/manager-courses/create/1";
 const SO_LUONG_MOI_TRANG = 10;
 const SO_LUONG_MOI_TRANG_STATS = 1000;
+const SO_GIAY_HOAN_TAC = 10;
 
 // Các trạng thái được phép xóa khóa học
 const TRANG_THAI_CHO_PHEP_XOA = ["DangSua", "DaDuyet", "TuChoi"];
 
-// Thông tin hiển thị (nhãn + màu chữ + màu nền) cho từng trạng thái phê duyệt.
+// Thông tin hiển thị cho trạng thái
 function thongTinTrangThaiPheDuyet(trangThai?: string): {
   nhan: string;
   mau: string;
@@ -329,6 +333,7 @@ function TheTrangThai({
   );
 }
 
+// ===== Component chính =====
 function KhoaHocContent() {
   const router = useRouter();
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
@@ -364,12 +369,21 @@ function KhoaHocContent() {
     null,
   );
 
-  // State xóa khóa học
-  const [xacNhanXoa, setXacNhanXoa] = useState<KhoaHocType | null>(null);
-  const [dangXoa, setDangXoa] = useState(false);
-  const [loiXoa, setLoiXoa] = useState<string | null>(null);
+  // ===== State cho dialog xác nhận xóa =====
+  const [khoaHocChoXacNhanXoa, setKhoaHocChoXacNhanXoa] =
+    useState<KhoaHocType | null>(null);
 
-  // Hàm reset tất cả bộ lọc về trạng thái ban đầu
+  // ===== State cho xóa + hoàn tác =====
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const [undoInfo, setUndoInfo] = useState<{
+    id: string;
+    ten: string;
+    thoiGian: number;
+  } | null>(null);
+  const deleteTimers = useRef<{ [id: string]: NodeJS.Timeout }>({});
+  const countdownTimers = useRef<{ [id: string]: NodeJS.Timeout }>({});
+
+  // Hàm reset bộ lọc
   const resetAllFilters = useCallback(() => {
     setTuKhoaTimKiem("");
     setTrangThaiLoc("TatCa");
@@ -391,16 +405,21 @@ function KhoaHocContent() {
           const items = response.data.items || [];
           const stats: ThongKeState = {
             tong: items.length,
-            daDuyet: items.filter((x) => x.trangThaiPheDuyet === "DaDuyet")
-              .length,
-            choDuyet: items.filter((x) => x.trangThaiPheDuyet === "ChoDuyet")
-              .length,
-            dangDuyet: items.filter((x) => x.trangThaiPheDuyet === "DangDuyet")
-              .length,
-            tuChoi: items.filter((x) => x.trangThaiPheDuyet === "TuChoi")
-              .length,
-            dangSua: items.filter((x) => x.trangThaiPheDuyet === "DangSua")
-              .length,
+            daDuyet: items.filter(
+              (x: KhoaHocType) => x.trangThaiPheDuyet === "DaDuyet",
+            ).length,
+            choDuyet: items.filter(
+              (x: KhoaHocType) => x.trangThaiPheDuyet === "ChoDuyet",
+            ).length,
+            dangDuyet: items.filter(
+              (x: KhoaHocType) => x.trangThaiPheDuyet === "DangDuyet",
+            ).length,
+            tuChoi: items.filter(
+              (x: KhoaHocType) => x.trangThaiPheDuyet === "TuChoi",
+            ).length,
+            dangSua: items.filter(
+              (x: KhoaHocType) => x.trangThaiPheDuyet === "DangSua",
+            ).length,
           };
           setThongKe(stats);
           setDaTaiThongKeLanDau(true);
@@ -414,7 +433,7 @@ function KhoaHocContent() {
     [khoaHocService, daTaiThongKeLanDau],
   );
 
-  // Hàm lấy danh sách khóa học
+  // Hàm lấy danh sách khóa học - lọc bỏ hiddenIds
   const layDanhSachKhoaHoc = useCallback(
     async (signal?: AbortSignal) => {
       setDangTai(true);
@@ -458,8 +477,7 @@ function KhoaHocContent() {
         const data: any = response.data;
         let items = data.items || [];
 
-        let tongSoBanGhiTuBackend = trichXuatTongSoBanGhi(data);
-
+        // Lọc theo trạng thái nếu backend chưa lọc
         if (searchParams.trangThai && searchParams.trangThai !== "TatCa") {
           const filtered = items.filter(
             (item: KhoaHocType) =>
@@ -470,11 +488,16 @@ function KhoaHocContent() {
               "⚠️ Backend chưa lọc theo trangThaiPheDuyet, lọc bổ sung ở client.",
             );
             items = filtered;
-            tongSoBanGhiTuBackend = undefined;
           }
         }
 
-        const tongSoBanGhi: number = tongSoBanGhiTuBackend ?? items.length;
+        // Loại bỏ các khóa học đang chờ xóa (hiddenIds)
+        items = items.filter(
+          (item: KhoaHocType) => !hiddenIds.includes(item.id),
+        );
+
+        const tongSoBanGhi: number =
+          trichXuatTongSoBanGhi(data) ?? items.length;
 
         setDanhSachKhoaHoc(items);
         setTotalCount(tongSoBanGhi);
@@ -492,18 +515,36 @@ function KhoaHocContent() {
         if (!signal?.aborted) setDangTai(false);
       }
     },
-    [tuKhoaTimKiem, trangThaiLoc, sapXep, trangHienTai, khoaHocService],
+    [
+      tuKhoaTimKiem,
+      trangThaiLoc,
+      sapXep,
+      trangHienTai,
+      khoaHocService,
+      hiddenIds,
+    ],
   );
 
   useEffect(() => {
     const abortController = new AbortController();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data khi mount/filter đổi, pattern hợp lệ
     layDanhSachKhoaHoc(abortController.signal);
     fetchThongKe();
     return () => abortController.abort();
   }, [layDanhSachKhoaHoc, fetchThongKe]);
 
-  // Handler
+  // Cleanup timers khi unmount
+  useEffect(() => {
+    return () => {
+      Object.values(deleteTimers.current).forEach((timer) =>
+        clearTimeout(timer),
+      );
+      Object.values(countdownTimers.current).forEach((timer) =>
+        clearInterval(timer),
+      );
+    };
+  }, []);
+
+  // ===== Các handler =====
   const handleViewDetail = (khoaHoc: KhoaHocType) => {
     if (khoaHoc.id) router.push(duongDanChiTietKhoaHoc(khoaHoc.id));
   };
@@ -580,19 +621,13 @@ function KhoaHocContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Hàm tải lại dữ liệu với bộ lọc hiện tại (không reset)
   const handleReload = () => {
     fetchThongKe(true);
   };
 
-  // Hàm làm mới danh sách: reset tất cả bộ lọc về mặc định và tải lại dữ liệu
   const handleRefresh = () => {
     resetAllFilters();
     fetchThongKe(true);
-  };
-
-  const handleGoBack = () => {
-    router.back();
   };
 
   const handleChonTrangThai = (giaTri: string) => {
@@ -600,50 +635,129 @@ function KhoaHocContent() {
     setTrangThaiLoc(giaTri);
   };
 
-  // Mở dialog xác nhận xóa
-  const moXacNhanXoa = (khoaHoc: KhoaHocType) => {
-    setLoiXoa(null);
-    setXacNhanXoa(khoaHoc);
-  };
-
-  const dongXacNhanXoa = () => {
-    if (dangXoa) return;
-    setXacNhanXoa(null);
-    setLoiXoa(null);
-  };
-
-  // Xử lý xóa khóa học
-  const handleXoaKhoaHoc = async () => {
-    if (!xacNhanXoa?.id) return;
-    setDangXoa(true);
-    setLoiXoa(null);
-    try {
-      const response = await khoaHocService.DeleteKhoaHoc(xacNhanXoa.id);
-      if (!laThanhCong(response)) {
-        setLoiXoa(response?.message || "Không thể xóa khóa học này.");
-        return;
-      }
-      setThongBaoThanhCong(
-        `Đã xóa khóa học "${xacNhanXoa.tieuDe ?? ""}" thành công.`,
+  // ===== Dialog xác nhận xóa =====
+  const mopDialogXoa = (khoaHoc: KhoaHocType) => {
+    if (!khoaHoc.id) return;
+    // Kiểm tra trạng thái có cho phép xóa không
+    if (!TRANG_THAI_CHO_PHEP_XOA.includes(khoaHoc.trangThaiPheDuyet ?? "")) {
+      setThongBaoLoiThaoTac(
+        "Khóa học này không thể xóa ở trạng thái hiện tại.",
       );
-      setXacNhanXoa(null);
-
-      const seLaTrangTrong = danhSachKhoaHoc.length === 1 && trangHienTai > 1;
-      if (seLaTrangTrong) {
-        setTrangHienTai((trang) => trang - 1);
-      } else {
-        await layDanhSachKhoaHoc();
-      }
-      await fetchThongKe(true);
-    } catch (error) {
-      console.error("Lỗi xóa khóa học:", error);
-      setLoiXoa(trichXuatThongBaoLoi(error, "Có lỗi xảy ra khi xóa khóa học."));
-    } finally {
-      setDangXoa(false);
+      return;
     }
+    setKhoaHocChoXacNhanXoa(khoaHoc);
   };
 
-  // Render
+  const dongDialogXoa = () => {
+    setKhoaHocChoXacNhanXoa(null);
+  };
+
+  const xacNhanXoaTuDialog = () => {
+    if (!khoaHocChoXacNhanXoa) return;
+    const khoaHoc = khoaHocChoXacNhanXoa;
+    setKhoaHocChoXacNhanXoa(null);
+    batDauXoa(khoaHoc);
+  };
+
+  // ===== Xóa + hoàn tác (chạy sau khi đã xác nhận trong dialog) =====
+  const batDauXoa = (khoaHoc: KhoaHocType) => {
+    if (!khoaHoc.id) return;
+    const id = khoaHoc.id;
+
+    // Ẩn khóa học ngay lập tức (optimistic UI)
+    setHiddenIds((prev) => [...prev, id]);
+
+    // Hiển thị thông báo hoàn tác
+    setUndoInfo({
+      id,
+      ten: khoaHoc.tieuDe || "Khóa học",
+      thoiGian: SO_GIAY_HOAN_TAC,
+    });
+
+    // Xóa timer cũ nếu có (đề phòng bấm xóa lại trong lúc chờ)
+    if (deleteTimers.current[id]) {
+      clearTimeout(deleteTimers.current[id]);
+      delete deleteTimers.current[id];
+    }
+    if (countdownTimers.current[id]) {
+      clearInterval(countdownTimers.current[id]);
+      delete countdownTimers.current[id];
+    }
+
+    // Đếm ngược hiển thị mỗi giây
+    const countdownTimer = setInterval(() => {
+      setUndoInfo((prev) => {
+        if (!prev || prev.id !== id) return prev;
+        const conLai = prev.thoiGian - 1;
+        if (conLai <= 0) {
+          clearInterval(countdownTimers.current[id]);
+          delete countdownTimers.current[id];
+          return { ...prev, thoiGian: 0 };
+        }
+        return { ...prev, thoiGian: conLai };
+      });
+    }, 1000);
+    countdownTimers.current[id] = countdownTimer;
+
+    // Bắt đầu đếm ngược 10 giây rồi xóa thật
+    const timer = setTimeout(async () => {
+      try {
+        const response = await khoaHocService.DeleteKhoaHoc(id);
+        if (laThanhCong(response)) {
+          // Xóa thành công: loại bỏ khỏi danh sách thật
+          setDanhSachKhoaHoc((prev) => prev.filter((c) => c.id !== id));
+          setThongBaoThanhCong(
+            `Đã xóa khóa học "${khoaHoc.tieuDe}" thành công.`,
+          );
+          // Cập nhật thống kê
+          await fetchThongKe(true);
+        } else {
+          // Xóa thất bại: hiển thị lại khóa học
+          setHiddenIds((prev) => prev.filter((itemId) => itemId !== id));
+          setThongBaoLoiThaoTac(
+            response?.message || "Không thể xóa khóa học. Vui lòng thử lại.",
+          );
+        }
+      } catch (error) {
+        console.error("Lỗi xóa khóa học:", error);
+        // Xóa thất bại: hiển thị lại
+        setHiddenIds((prev) => prev.filter((itemId) => itemId !== id));
+        setThongBaoLoiThaoTac(
+          trichXuatThongBaoLoi(error, "Có lỗi xảy ra khi xóa khóa học."),
+        );
+      } finally {
+        // Xóa thông báo hoàn tác + dọn dẹp timer đếm ngược
+        setUndoInfo((prev) => (prev?.id === id ? null : prev));
+        if (countdownTimers.current[id]) {
+          clearInterval(countdownTimers.current[id]);
+          delete countdownTimers.current[id];
+        }
+        delete deleteTimers.current[id];
+      }
+    }, SO_GIAY_HOAN_TAC * 1000);
+
+    deleteTimers.current[id] = timer;
+  };
+
+  const hoanTacXoa = () => {
+    if (!undoInfo) return;
+    const { id } = undoInfo;
+    // Hủy timer xóa
+    if (deleteTimers.current[id]) {
+      clearTimeout(deleteTimers.current[id]);
+      delete deleteTimers.current[id];
+    }
+    // Hủy timer đếm ngược
+    if (countdownTimers.current[id]) {
+      clearInterval(countdownTimers.current[id]);
+      delete countdownTimers.current[id];
+    }
+    // Hiện lại khóa học
+    setHiddenIds((prev) => prev.filter((item) => item !== id));
+    setUndoInfo(null);
+  };
+
+  // ===== Render =====
   return (
     <Box>
       {/* Header */}
@@ -826,7 +940,6 @@ function KhoaHocContent() {
           <MenuItem value="hoc-vien-nhieu-nhat">Nhiều học viên nhất</MenuItem>
         </Select>
 
-        {/* Nút tải lại dữ liệu với bộ lọc hiện tại */}
         <Tooltip title="Tải lại dữ liệu với bộ lọc hiện tại">
           <IconButton
             onClick={handleReload}
@@ -855,7 +968,6 @@ function KhoaHocContent() {
           </IconButton>
         </Tooltip>
 
-        {/* Nút reset bộ lọc và tải lại */}
         <Tooltip title="Đặt lại bộ lọc & làm mới">
           <IconButton
             onClick={handleRefresh}
@@ -1239,7 +1351,7 @@ function KhoaHocContent() {
                               size="medium"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                moXacNhanXoa(khoaHoc);
+                                mopDialogXoa(khoaHoc);
                               }}
                               disabled={dangXuLyItemNay}
                               sx={{
@@ -1307,61 +1419,121 @@ function KhoaHocContent() {
         </Box>
       )}
 
-      {/* Dialog xác nhận xóa khóa học */}
+      {/* Dialog xác nhận xóa */}
       <Dialog
-        open={!!xacNhanXoa}
-        onClose={dongXacNhanXoa}
+        open={!!khoaHocChoXacNhanXoa}
+        onClose={dongDialogXoa}
         maxWidth="xs"
         fullWidth
-        sx={{
-          "& .MuiDialog-paper": {
-            borderRadius: "16px",
-          },
+        slotProps={{
+          paper: { sx: { borderRadius: "16px" } },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 800, color: "#c62828" }}>
-          Xóa khóa học
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.25,
+            fontWeight: 800,
+            fontSize: 18,
+            color: MAU.chuDen,
+          }}
+        >
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: "10px",
+              bgcolor: "#FEF2F2",
+              color: "#DC2626",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <WarningAmberRoundedIcon fontSize="small" />
+          </Box>
+          Xóa khóa học?
         </DialogTitle>
         <DialogContent>
-          <Typography sx={{ color: MAU.chuXam, mb: loiXoa ? 1.5 : 0 }}>
-            Bạn chắc chắn muốn xóa khóa học &quot;
-            <strong>{xacNhanXoa?.tieuDe ?? ""}</strong>&quot;? Hành động này
-            không thể hoàn tác.
-          </Typography>
-          {loiXoa && (
-            <Alert severity="error" sx={{ mt: 1 }}>
-              {loiXoa}
-            </Alert>
-          )}
+          <DialogContentText sx={{ color: MAU.chuXam, fontSize: 14.5 }}>
+            Bạn có chắc chắn muốn xóa khóa học{" "}
+            <Box component="span" sx={{ fontWeight: 700, color: MAU.chuDen }}>
+              &quot;{khoaHocChoXacNhanXoa?.tieuDe || "Khóa học"}&quot;
+            </Box>{" "}
+            không? Sau khi xác nhận, bạn sẽ có {SO_GIAY_HOAN_TAC} giây để hoàn
+            tác trước khi khóa học bị xóa vĩnh viễn.
+          </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button
-            onClick={dongXacNhanXoa}
-            disabled={dangXoa}
-            sx={{ textTransform: "none", color: MAU.chuXam }}
+            onClick={dongDialogXoa}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              color: MAU.chuXam,
+              borderRadius: "10px",
+            }}
           >
             Hủy
           </Button>
           <Button
+            onClick={xacNhanXoaTuDialog}
             variant="contained"
-            onClick={handleXoaKhoaHoc}
-            disabled={dangXoa}
             sx={{
-              bgcolor: "#c62828",
               textTransform: "none",
               fontWeight: 700,
-              boxShadow: "none",
-              "&:hover": { bgcolor: "#a02020", boxShadow: "none" },
+              bgcolor: "#DC2626",
+              borderRadius: "10px",
+              "&:hover": { bgcolor: "#B91C1C" },
             }}
           >
-            {dangXoa ? (
-              <CircularProgress size={18} sx={{ color: "#fff" }} />
-            ) : (
-              "Xác nhận xóa"
-            )}
+            Xóa
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar thông báo hoàn tác - gọn hơn */}
+      <Snackbar
+        open={!!undoInfo}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        autoHideDuration={null} // không tự đóng
+        sx={{ mb: 2 }}
+      >
+        <Alert
+          severity="warning"
+          icon={<UndoIcon />}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={hoanTacXoa}
+              sx={{
+                fontWeight: 700,
+                borderLeft: "1px solid rgba(0,0,0,0.1)",
+                pl: 1.5,
+                ml: 1,
+              }}
+            >
+              Hoàn tác ({undoInfo?.thoiGian ?? 0}s)
+            </Button>
+          }
+          sx={{
+            borderRadius: "12px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+            alignItems: "center",
+            bgcolor: "#FFF3E0",
+            color: "#E65100",
+            "& .MuiAlert-icon": { color: "#E65100" },
+            "& .MuiAlert-message": {
+              fontWeight: 500,
+            },
+          }}
+        >
+          Đã xóa &quot;{undoInfo?.ten}&quot;
+        </Alert>
+      </Snackbar>
 
       {/* Snackbar lỗi thao tác chung */}
       <Snackbar

@@ -12,7 +12,6 @@ export interface KhoaHocType {
   hinhAnhKhoaHoc?: string;
   urlViewPreviewKhoaHoc?: string;
   capDo?: string;
-  tongThoiLuong?: number;
   tongBaiGiang?: number;
   ngayTao?: Date;
   ngayCapNhat?: Date;
@@ -31,6 +30,10 @@ export interface KhoaHocType {
   danhSachPhanHoc?: PhanHocType[];
   createdBy?: string;
   createdId?: string;
+  tongThoiLuong?: number;
+  soLuongBaiGiang?: number;
+  soLuongDanhGia?: number;
+  diemDanhGiaTrungBinh?: number;
 
   danhSachPhanHoc?: PhanHocType[];
   giangVien?: GiangVienType;

@@ -37,6 +37,19 @@ export const formatSoLuong = (soLuong?: number): string => {
 };
 
 /**
+ * Định dạng điểm đánh giá trung bình -> "4.8" (1 chữ số thập phân).
+ * Trả về null nếu chưa có đánh giá nào, để component tự quyết định ẩn/hiện.
+ */
+export const formatDiemDanhGia = (
+  diem?: number,
+  soLuong?: number,
+): string | null => {
+  if (!soLuong || soLuong <= 0 || diem === undefined || diem === null)
+    return null;
+  return diem.toFixed(1);
+};
+
+/**
  * Trích xuất tên hiển thị an toàn, fallback về userName rồi email
  */
 export const trichXuatTenHienThi = (giangVien?: AppUser): string => {

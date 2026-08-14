@@ -24,9 +24,11 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public int TongTaiLieu { get; set; }
         public bool hasDraft { get; set; }
         public Guid? CreatedId { get; set; }
+        public int? SoLuongBaiGiang { get; set; }
+        public int? SoLuongDanhGia { get; set; }
+        public double? DiemDanhGiaTrungBinh { get; set; }
 
         public AppUser? ThongTinGiangVien { get; set; }
-        //thêm list 
         public List<PhanHocDto>? DanhSachPhanHoc { get; set; }
         public List<DanhMuc_KhoaHocDto>? DanhMucs { get; set; }
         public int SoGiangVien { get; set; }
