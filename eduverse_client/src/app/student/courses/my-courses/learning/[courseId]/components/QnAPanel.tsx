@@ -741,9 +741,9 @@ export function QnAPanel({
           sx={{
             flex: 1,
             "& .MuiOutlinedInput-root": {
-              height: "38px",
+              height: "44px",
               borderRadius: "8px",
-              fontSize: 13,
+              fontSize: 14,
               "& fieldset": { borderColor: "#ECE7E4" },
               "&.Mui-focused fieldset": { borderColor: PRIMARY },
             },
@@ -752,7 +752,7 @@ export function QnAPanel({
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 16, color: "#9CA3AF" }} />
+                  <SearchIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />
                 </InputAdornment>
               ),
             },
@@ -763,8 +763,8 @@ export function QnAPanel({
           value={hd.sapXep}
           onChange={(e) => hd.setSapXep(e.target.value as any)}
           sx={{
-            height: "38px",
-            fontSize: 13,
+            height: "44px",
+            fontSize: 14,
             borderRadius: "8px",
             minWidth: 120,
             "& .MuiSelect-select": {

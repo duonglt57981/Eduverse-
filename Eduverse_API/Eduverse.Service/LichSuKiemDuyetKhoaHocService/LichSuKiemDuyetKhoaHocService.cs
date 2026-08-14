@@ -373,8 +373,14 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             // Admin chỉ xem trước. Chỉ personnel được phân công mới bắt đầu phiên kiểm duyệt.
             var shouldStartReview = currentUser?.IsInRole("personnel") == true
                 && currentUser.IsInRole("Admin") == false;
+            var hasCurrentReview = Guid.TryParse(currentUserIdText, out var reviewUserId)
+                && await GetQueryable().AnyAsync(x =>
+                    x.IdDoiTuong == targetVersion.Id && x.CreatedId == reviewUserId);
             if (shouldStartReview
-                && (targetVersion.TrangThaiPheDuyet == "ChoDuyet" || targetVersion.TrangThaiPheDuyet == null))
+                && !hasCurrentReview
+                && (targetVersion.TrangThaiPheDuyet == "ChoDuyet"
+                    || targetVersion.TrangThaiPheDuyet == "DangDuyet"
+                    || targetVersion.TrangThaiPheDuyet == null))
             {
                 var KiemDuyetKhoaHoc = new LichSuKiemDuyetKhoaHoc
                 {
@@ -973,8 +979,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                     var invalidIds = courses
                         .Where(x => x.IsDeleted || !x.IsBanHienTai
-                            || (x.TrangThaiPheDuyet != "ChoDuyet" && x.TrangThaiPheDuyet != "DangDuyet")
-                            || x.IdNguoiDuyet != null)
+                            || (x.TrangThaiPheDuyet != "ChoDuyet" && x.TrangThaiPheDuyet != "DangDuyet"))
                         .Select(x => x.Id)
                         .ToList();
                     if (invalidIds.Count > 0)
@@ -983,8 +988,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                     var updatedRows = await _eduverseContext.Set<KhoaHoc>()
                         .Where(x => ids.Contains(x.Id) && !x.IsDeleted && x.IsBanHienTai
-                            && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet")
-                            && x.IdNguoiDuyet == null)
+                            && (x.TrangThaiPheDuyet == "ChoDuyet" || x.TrangThaiPheDuyet == "DangDuyet"))
                         .ExecuteUpdateAsync(setters => setters
                             .SetProperty(x => x.IdNguoiDuyet, idNguoiDuyet)
                             .SetProperty(x => x.UpdatedDate, assignedAt)
@@ -993,7 +997,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
                     if (updatedRows != ids.Count)
                         throw new PhanCongKiemDuyetException(StatusCodes.Status409Conflict,
-                            "Một hoặc nhiều khóa học vừa được Admin khác phân công. Danh sách đã được làm mới.", ids);
+                            "Một hoặc nhiều khóa học không còn đủ điều kiện phân công. Danh sách đã được làm mới.", ids);
 
                     var histories = ids.Select(courseId => new PhanCongKiemDuyetKhoaHoc
                     {
@@ -1064,8 +1068,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             if (role == null || !allowedRoles.Contains(role))
                 throw new UnauthorizedAccessException("Chỉ Admin hoặc nhân viên kiểm duyệt mới có quyền truy cập");
 
-            var GetKiemDuyetByKhoaHoc = await GetQueryable().Where(x => x.IdDoiTuong == request.IdKhoaHoc && x.CreatedId == userId).FirstOrDefaultAsync();
-            if (GetKiemDuyetByKhoaHoc == null)
+            var currentReview = await GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdDoiTuong == request.IdKhoaHoc && x.CreatedId == userId);
+            if (role == "personnel" && currentReview == null)
                 throw new Exception("Khóa học này đã có người khác đang duyệt!");
 
             if (request.TrangThaiPheDuyet == null)
@@ -1086,6 +1091,19 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             if (khoaHoc.TrangThaiPheDuyet != "ChoDuyet" && khoaHoc.TrangThaiPheDuyet != "DangDuyet")
                 throw new Exception("Khóa học không ở trạng thái chờ duyệt.");
+
+            if (currentReview == null)
+            {
+                currentReview = new LichSuKiemDuyetKhoaHoc
+                {
+                    IdDoiTuong = khoaHoc.Id,
+                    IdNguoiDuyet = userId,
+                    LoaiDoiTuong = "KhoaHoc",
+                    TrangThaiPheDuyet = "DangDuyet"
+                };
+                await CreateAsync(currentReview);
+                await SaveAsync();
+            }
 
             
 
@@ -1127,7 +1145,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 .Where(x => idCauHois.Contains(x.IdCauHoi.Value))
                 .ToListAsync();
 
-            var GetLichSuKiemDuyetKhoaHoc = await GetQueryable().Where(x => x.IdDoiTuong == khoaHoc.Id).FirstOrDefaultAsync();
+            var GetLichSuKiemDuyetKhoaHoc = currentReview;
 
             // ── TuChoi ──────────────────────────────────────────
             if (request.TrangThaiPheDuyet == "TuChoi")

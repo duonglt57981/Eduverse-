@@ -1322,11 +1322,10 @@ namespace Eduverse.Service.KhoaHocService
                 throw new Exception("Không có phần nào đang ở trạng thái Đang sửa để chuyển sang Chờ duyệt");
             }
 
-            var strategy = _eduverseContext.Database.CreateExecutionStrategy();
-
-            await strategy.ExecuteAsync(async () =>
+            var executionStrategy = _eduverseContext.Database.CreateExecutionStrategy();
+            await executionStrategy.ExecuteAsync(async () =>
             {
-                using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
+                await using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
                 try
                 {
                     if (khoaHocToUpdate.Any())
@@ -2792,13 +2791,14 @@ namespace Eduverse.Service.KhoaHocService
 
         public async Task<bool> DeleteKhoaHoc(Guid idKhoaHoc)
         {
-            Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
+            var currentUser = _httpContextAccessor.HttpContext?.User;
+            Guid.TryParse(currentUser?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTao);
             var khoaHoc = await GetByIdAsync(idKhoaHoc);
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khoa học");
 
-            if (khoaHoc.CreatedId != nguoiTao)
-                throw new Exception("Ban kh có quyền hạn để xóa khóa học này!");
+            if (currentUser?.IsInRole("Admin") != true && khoaHoc.CreatedId != nguoiTao)
+                throw new Exception("Bạn không có quyền xóa khóa học này!");
 
             if (khoaHoc.TrangThaiPheDuyet == "ChoDuyet" || khoaHoc.TrangThaiPheDuyet == "DangDuyet")
                 throw new Exception("Đang gửi duyệt không thể xóa");

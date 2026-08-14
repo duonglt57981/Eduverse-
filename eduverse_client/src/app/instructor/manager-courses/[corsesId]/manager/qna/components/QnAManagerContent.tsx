@@ -439,8 +439,9 @@ export default function QnAManagerContent() {
               sx={{
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
+                  height: "44px",
                   borderRadius: "10px",
-                  fontSize: 13,
+                  fontSize: 14,
                   "& fieldset": { borderColor: "#ECE7E4" },
                   "&.Mui-focused fieldset": { borderColor: MAU.chinh },
                 },
@@ -449,7 +450,7 @@ export default function QnAManagerContent() {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon sx={{ fontSize: 16, color: "#9CA3AF" }} />
+                      <SearchIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />
                     </InputAdornment>
                   ),
                 },
