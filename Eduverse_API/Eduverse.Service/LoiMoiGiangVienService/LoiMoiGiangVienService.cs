@@ -54,6 +54,32 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             return userId;
         }
 
+        public async Task<QuyenCuaToiDto> GetQuyenCuaToi(Guid idKhoaHoc)
+        {
+            var userId = LayUserId();
+
+            var ctv = await _khoaHocGVRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
+                                       && x.IdGiangVien == userId
+                                       && !x.IsDeleted);
+
+            if (ctv == null)
+                throw new Exception("Bạn không thuộc khóa học này");
+
+            return new QuyenCuaToiDto
+            {
+                LaChuSoHuu = ctv.LaChuSoHuu,
+                Visible = ctv.Visible,
+                Manage = ctv.Manage,
+                Performance = ctv.Performance,
+                QnA = ctv.QnA,
+                Reviews = ctv.Reviews,
+                Assignments = ctv.Assignments,
+                Materials = ctv.Materials,
+                Promotions = ctv.Promotions,
+            };
+        }
+
         // ── Helper kiểm tra tổng % ≤ 100 ─────────────────────────────────
         private async Task KiemTraTongTyLe(
         Guid idKhoaHoc,
@@ -416,6 +442,108 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             await _khoaHocGVRepo.SaveAsync();
         }
 
+        public async Task CapNhatQuyenHangLoat(Guid idKhoaHoc, CapNhatQuyenHangLoatRequest request)
+        {
+            var userId = LayUserId();
+
+            // Chỉ chủ sở hữu mới được sửa
+            var laChu = await _khoaHocGVRepo.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                            && x.IdGiangVien == userId
+                            && x.LaChuSoHuu
+                            && !x.IsDeleted);
+            if (!laChu) throw new Exception("Chỉ chủ sở hữu mới được cập nhật quyền");
+
+            if (request.DanhSach == null || !request.DanhSach.Any())
+                throw new Exception("Danh sách cập nhật trống");
+
+            // Không cho trùng idGiangVien trong cùng 1 lần gửi
+            if (request.DanhSach.Select(x => x.IdGiangVien).Distinct().Count() != request.DanhSach.Count)
+                throw new Exception("Danh sách có giảng viên bị trùng lặp");
+
+            foreach (var item in request.DanhSach)
+                KiemTraTyLeHopLe(item.TyLeChiaDoanhThu);
+
+            var idGiangViensCanSua = request.DanhSach.Select(x => x.IdGiangVien).ToList();
+
+            // ── Validate tổng % TOÀN BỘ khóa học trong 1 lần, không cộng dồn với DB cũ của các bản ghi sắp bị ghi đè ──
+            var tongCongTacVienKhongDoi = await _khoaHocGVRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                         && !x.IsDeleted
+                         && !idGiangViensCanSua.Contains(x.IdGiangVien))
+                .SumAsync(x => x.TyLeChiaDoanhThu);
+
+            var tongPendingKhongDoi = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                         && x.TrangThai == "Pending"
+                         && !x.IsDeleted)
+                .SumAsync(x => x.TyLeChiaDoanhThu);
+
+            var tongMoiTrongBatch = request.DanhSach.Sum(x => x.TyLeChiaDoanhThu);
+
+            var tongSauKhiSua = tongCongTacVienKhongDoi + tongPendingKhongDoi + tongMoiTrongBatch;
+            if (tongSauKhiSua > 100)
+                throw new Exception(
+                    $"Tổng tỷ lệ chia doanh thu không được vượt quá 100%. " +
+                    $"Các giảng viên khác (không nằm trong lần sửa này) đang chiếm {tongCongTacVienKhongDoi + tongPendingKhongDoi}%, " +
+                    $"bạn chỉ có thể phân bổ tối đa {100 - tongCongTacVienKhongDoi - tongPendingKhongDoi}% cho {request.DanhSach.Count} giảng viên đang sửa.");
+
+            // ── Ghi đè 1 lần, không có trạng thái trung gian ──
+            var congTacViens = await _khoaHocGVRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                         && idGiangViensCanSua.Contains(x.IdGiangVien)
+                         && !x.IsDeleted)
+                .ToListAsync();
+
+            foreach (var item in request.DanhSach)
+            {
+                var ctv = congTacViens.FirstOrDefault(x => x.IdGiangVien == item.IdGiangVien);
+                if (ctv == null)
+                    throw new Exception($"Không tìm thấy giảng viên {item.IdGiangVien} trong khóa học");
+
+                if (ctv.LaChuSoHuu)
+                {
+                    ctv.TyLeChiaDoanhThu = item.TyLeChiaDoanhThu;
+                    _khoaHocGVRepo.Update(ctv);
+                    continue;
+                }
+
+                ctv.Visible = item.Visible;
+                ctv.TyLeChiaDoanhThu = item.TyLeChiaDoanhThu;
+                ctv.Manage = item.Manage;
+                ctv.Performance = item.Performance;
+                ctv.QnA = item.QnA;
+                ctv.Reviews = item.Reviews;
+                ctv.Assignments = item.Assignments;
+                ctv.Materials = item.Materials;
+                ctv.Promotions = item.Promotions;
+
+                _khoaHocGVRepo.Update(ctv);
+
+                // Sync lại lời mời gốc nếu còn tồn tại (giữ đồng bộ như hàm CapNhatQuyenTheoGiangVien cũ)
+                var loiMoi = await _loiMoiRepo.GetQueryable()
+                    .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
+                                           && x.IdNguoiDuocMoi == item.IdGiangVien
+                                           && !x.IsDeleted);
+                if (loiMoi != null)
+                {
+                    loiMoi.Visible = item.Visible;
+                    loiMoi.TyLeChiaDoanhThu = item.TyLeChiaDoanhThu;
+                    loiMoi.Manage = item.Manage;
+                    loiMoi.Performance = item.Performance;
+                    loiMoi.QnA = item.QnA;
+                    loiMoi.Reviews = item.Reviews;
+                    loiMoi.Assignments = item.Assignments;
+                    loiMoi.Materials = item.Materials;
+                    loiMoi.Promotions = item.Promotions;
+                    _loiMoiRepo.Update(loiMoi);
+                }
+            }
+
+            await _khoaHocGVRepo.SaveAsync(); // 1 transaction duy nhất
+        }
+
+
         public async Task HuyLoiMoi(Guid idLoiMoi)
         {
             var userId = LayUserId();
@@ -448,12 +576,13 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         {
             var userId = LayUserId();
 
-            var laCongTacVien = await _khoaHocGVRepo.GetQueryable()
-                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
-                            && x.IdGiangVien == userId
-                            && !x.IsDeleted);
-            if (!laCongTacVien)
-                throw new Exception("Bạn không thuộc khóa học này");
+            var laChu = await _khoaHocGVRepo.GetQueryable()
+        .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                    && x.IdGiangVien == userId
+                    && x.LaChuSoHuu
+                    && !x.IsDeleted);
+            if (!laChu)
+                throw new Exception("Chỉ chủ sở hữu mới được xem danh sách giảng viên");
 
             // ── Danh sách đã accepted ────────────────────────────────────────
             var danhSach = await _khoaHocGVRepo.GetQueryable()

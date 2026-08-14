@@ -75,7 +75,7 @@ namespace Eduverse.Service.TaiLieuService
             if (baiGiang == null) throw new Exception("Không tìm thấy bài giảng");
 
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiTaoTaiLieu);
-            var coQuyen = await CoQuyenQuaBaiGiang(request.IdBaiGiang, nguoiTaoTaiLieu, gv => gv.Materials);
+            var coQuyen = await CoQuyenQuaBaiGiang(request.IdBaiGiang, nguoiTaoTaiLieu, gv => gv.Materials && gv.Manage);
             if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để thêm tài liệu vào bài giảng này!");
 
@@ -139,7 +139,7 @@ namespace Eduverse.Service.TaiLieuService
                        $"Vui lòng chờ admin duyệt xong hoặc liên hệ admin để hủy kiểm duyệt."
                 );
 
-            var coQuyen = await CoQuyenQuaBaiGiang(banGoc.IdBaiGiang, nguoiTao, gv => gv.Materials);
+            var coQuyen = await CoQuyenQuaBaiGiang(banGoc.IdBaiGiang, nguoiTao, gv => gv.Materials && gv.Manage);
             if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để sửa khóa học này");
 
@@ -198,7 +198,7 @@ namespace Eduverse.Service.TaiLieuService
                 throw new Exception("Không tìm thấy bài giảng");
 
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var nguoiXoaTaiLieu);
-            var coQuyen = await CoQuyenQuaBaiGiang(taiLieu.IdBaiGiang, nguoiXoaTaiLieu, gv => gv.Materials);
+            var coQuyen = await CoQuyenQuaBaiGiang(taiLieu.IdBaiGiang, nguoiXoaTaiLieu, gv => gv.Materials && gv.Manage);
             if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để xóa tài liệu này!");
 
