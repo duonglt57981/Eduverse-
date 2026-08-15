@@ -32,13 +32,54 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           API_ENV: |
-            Email__Host=smtp.gmail.com
-            Email__Port=587
-            Email__From=your-email@gmail.com
-            Email__Username=your-email@gmail.com
-            Email__Password=your-smtp-app-password
+            ConnectionStrings__DefaultConnection=Server=110.172.29.244,1433;Database=Eduverse;User Id=sa;Password=YourStr0ng!Password;TrustServerCertificate=True;Encrypt=False;
+            Elasticsearch__Url=http://110.172.29.244:9200
+            Elasticsearch__SyncOnStartup=true
+            AllowedOrigins__0=http://localhost:3000
+            AllowedOrigins__1=http://110.172.29.244:3000
+            AllowedOrigins__2=https://eduverse.website
+            Jwt__Key=EduverseSecretKey_MustBe32CharsMin!!
+            Jwt__Issuer=EduverseApi
+            Jwt__Audience=EduverseFrontend
             Authentication__Google__ClientId=400320263690-pjr1vmnu3h8p2k305f5bqscqo0rtidls.apps.googleusercontent.com
             Auth__CookieSecure=true
+            Cloudinary__CloudName=emdtaabp
+            Cloudinary__ApiKey=925931338936637
+            Cloudinary__ApiSecret=14uApB9OJ6gngtiWzH2v4q-RCwc
+            Sms__Provider=eSMS
+            Sms__ApiKey=
+            Sms__SecretKey=
+            Sms__Brandname=EduVerse
+            Sms__SmsType=8
+            Sms__Sandbox=0
+            Email__Host=smtp.gmail.com
+            Email__Port=587
+            Email__From=eduverse2006@gmail.com
+            Email__Username=eduverse2006@gmail.com
+            Email__Password=twfq pcrf ahoe xugx
+            PayOS__ClientId=5b556450-0666-44af-b64c-23712817c52d
+            PayOS__ApiKey=a8239051-c4cf-40d9-bb58-4b9311a26e80
+            PayOS__ChecksumKey=03b832adf71b758cd24901721a99e64955b62cee29d9b0afbf6a755f94fbda92
+            PayOSPayout__ClientId=393a68bc-e6ef-4b86-b9bf-7b30f028f37c
+            PayOSPayout__ApiKey=05b6a217-b67b-4ac2-9128-e7f4d672e712
+            PayOSPayout__ChecksumKey=163e76fbcad2476602b02f8fbccfbad7f7121b790c0782e4ce961ae5489e3579
+            Gemini__ApiKey=AIzaSyDymTumO5Q6sQI6eKHPHa6qgds69J173_I
+            Gemini__modelVersion=gemini-2.5-flash
+            BunnyStream__LibraryId=724741
+            BunnyStream__ApiKey=1d7feecc-5e77-4eb2-a2623c82321c-899a-409c
+            BunnyStream__CDNHostname=vz-0fdb641e-ede.b-cdn.net
+            BunnyStream__EnabledResolutions=480p,720p,1080p
+            BunnyStream__OutputCodecs=x264
+            BunnyStream__JitEncoding=true
+            BunnyStream__EnableMP4Fallback=false
+            BunnyStream__MinResolutionHeight=480
+            BunnyStorage__StorageZoneName=eduverses
+            BunnyStorage__ApiKey=e20791ef-9f6e-4a57-a5494f30f780-5bdc-4a57
+            BunnyStorage__Region=de
+            BunnyStorage__BaseUrl=https://de-s3.storage.bunnycdn.com
+            BunnyStorage__PullZoneUrl=
+            FrontendUrl=https://eduverse.website
+            BackendUrl=https://chapleted-unautographed-asia.ngrok-free.dev
           CLIENT_ENV: |
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=400320263690-pjr1vmnu3h8p2k305f5bqscqo0rtidls.apps.googleusercontent.com
             NEXT_PUBLIC_API_URL=https://110.172.29.244:5002
