@@ -1576,6 +1576,9 @@ namespace Eduverse.Service.KhoaHocService
                 IdKhoaHoc = p.IdKhoaHoc,
                 IdBanGhiTruoc = p.IdBanGhiTruoc,
                 IsBanHienTai = p.IsBanHienTai,
+                CreatedBy = p.CreatedBy,
+                UpdatedBy = p.UpdatedBy,
+                UpdatedDate = p.UpdatedDate,
 
                 DanhSachBaiGiang = baiGiangLookup[p.Id].Select(b => new BaiGiangDto
                 {
@@ -1590,6 +1593,9 @@ namespace Eduverse.Service.KhoaHocService
                     IdPhan = b.IdPhan,
                     IsBanHienTai = b.IsBanHienTai,
                     IdBanGhiTruoc = b.IdBanGhiTruoc,
+                    CreatedBy = b.CreatedBy,
+                    UpdatedBy = b.UpdatedBy,
+                    UpdatedDate = b.UpdatedDate,
                     LyDoTuChois = (targetVersion.TrangThaiPheDuyet == "TuChoi"
                         ? lyDoBaiGiangLookup[b.Id]
                         : lyDoBaiGiangLookup[b.IdLyDo])
@@ -1603,9 +1609,12 @@ namespace Eduverse.Service.KhoaHocService
                         TenTaiLieu = t.TenTaiLieu,
                         URL = t.URL,
                         IdDocument = t.IdDocument,
-                        TrangThai = t.TrangThai,    
+                        TrangThai = t.TrangThai,
                         TrangThaiPheDuyet = t.TrangThaiPheDuyet,
-                        IdBaiGiang = t.IdBaiGiang
+                        IdBaiGiang = t.IdBaiGiang,
+                        CreatedBy = t.CreatedBy,
+                        UpdatedBy = t.UpdatedBy,
+                        UpdatedDate = t.UpdatedDate,
                     }).ToList()
                 }).ToList(),
 
@@ -1623,6 +1632,9 @@ namespace Eduverse.Service.KhoaHocService
                     IdBanGhiTruoc = bkt.IdBanGhiTruoc,
                     TrangThai = bkt.TrangThai,
                     TrangThaiPheDuyet = bkt.TrangThaiPheDuyet,
+                    CreatedBy = bkt.CreatedBy,
+                    UpdatedBy = bkt.UpdatedBy,
+                    UpdatedDate = bkt.UpdatedDate,
                     LyDoTuChois = lyDoBaiKiemTraLookup[bkt.Id]
                         .Select(l => new LyDoTuChoiDto { Id = l.Id, LyDo = l.LyDo })
                         .FirstOrDefault(),
@@ -1635,6 +1647,9 @@ namespace Eduverse.Service.KhoaHocService
                         DoKho = c.DoKho,
                         LoaiCauHoi = c.LoaiCauHoi,
                         ThuTuSapXep = c.ThuTuSapXep,
+                        CreatedBy = c.CreatedBy,
+                        UpdatedBy = c.UpdatedBy,
+                        UpdatedDate = c.UpdatedDate,
 
                         DanhSachDapAns = dapAnLookup[c.Id].Select(d => new DapAnDto
                         {
@@ -2936,7 +2951,8 @@ namespace Eduverse.Service.KhoaHocService
             var list = await GetAll()
                 .Where(x => x.CreatedId == userId
                          && x.TrangThaiPheDuyet == "DaDuyet"
-                         && x.IsBanHienTai == true)
+                         && x.IsBanHienTai == true
+                         && !x.IsDeleted)              // ← thêm dòng này
                 .OrderByDescending(x => x.CreatedDate)
                 .Select(x => new KhoaHocMiniDto
                 {

@@ -27,6 +27,9 @@ namespace Eduverse.Service.BaiKiemTraService.Dto
         public string? TrangThaiPheDuyet { get; set; }
         public bool IsSwap { get; set; }
         public int? ThuTuSapXep { get; set; }
+        public string? CreatedBy { get; set; }
+        public string? UpdatedBy { get; set; }
+        public DateTime UpdatedDate { get; set; }
         public LyDoTuChoiDto? LyDoTuChois { get; set; }
         public List<CauHoiDto> DanhSachCauHois { get; set; }
     }

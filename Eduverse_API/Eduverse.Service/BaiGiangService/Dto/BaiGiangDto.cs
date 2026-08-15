@@ -30,6 +30,9 @@ namespace Eduverse.Service.BaiGiangService.Dto
         public DateTime CreatedDate { get; set; }
         public bool DaHoanThanh { get; set; }
         public int ThoiGianXem { get; set; }
+        public string? CreatedBy { get; set; }
+        public string? UpdatedBy { get; set; }
+        public DateTime UpdatedDate { get; set; }
         public Guid? IdLyDo { get; set; }
         public LyDoTuChoi? LyDoTuChois { get; set; }
         public List<TaiLieuDto>? DanhSachTaiLieu { get; set; }
