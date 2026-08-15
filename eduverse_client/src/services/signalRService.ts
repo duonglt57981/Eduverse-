@@ -63,7 +63,6 @@ export function createHubConnection(hubPath: string): signalR.HubConnection {
       // Đảm bảo gửi token qua query string cho cả WebSocket và LongPolling
       // (SignalR tự động xử lý)
     })
-    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
     .build();
 }
 
