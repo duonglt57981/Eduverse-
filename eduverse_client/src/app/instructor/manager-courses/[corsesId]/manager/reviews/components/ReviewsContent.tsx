@@ -32,6 +32,7 @@ import DanhGiaService, {
   DanhGiaDto,
   DanhGiaKhoaHocDto,
 } from "@/src/services/DanhGiaService";
+import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
 
 function thoiGian(ngay: string) {
   try {
@@ -354,7 +355,8 @@ function DanhGiaCard({
 
 // ── Component chính ──────────────────────────────────────────────────────────
 export default function ReviewsContent() {
-  const { idKhoaHoc } = useCourseEdit();
+  const { idKhoaHoc, trangThai } = useCourseEdit();
+  const { coQuyen, loading: loadingQuyen } = useQuyenCuaToi(idKhoaHoc);
 
   const [data, setData] = useState<DanhGiaKhoaHocDto | null>(null);
   const [loading, setLoading] = useState(false);
@@ -365,9 +367,12 @@ export default function ReviewsContent() {
   const [noiDungPhanHoi, setNoiDungPhanHoi] = useState("");
   const [dangGui, setDangGui] = useState(false);
 
+  const coTheXem = trangThai === "DaDuyet" && coQuyen("reviews");
+
   // Load
   useEffect(() => {
     if (!idKhoaHoc) return;
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     DanhGiaService.GetByKhoaHoc(idKhoaHoc)
@@ -430,6 +435,35 @@ export default function ReviewsContent() {
       setError(err.message);
     }
   }, []);
+  if (loadingQuyen) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress sx={{ color: MAU.chinh }} />
+      </Box>
+    );
+  }
+
+  // ── Guard render: chưa duyệt ──
+  if (trangThai !== "DaDuyet") {
+    return (
+      <Box sx={{ textAlign: "center", py: 10 }}>
+        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+          Đánh giá chỉ khả dụng sau khi khóa học được duyệt.
+        </Typography>
+      </Box>
+    );
+  }
+
+  // ── Guard render: không có quyền ──
+  if (!coQuyen("reviews")) {
+    return (
+      <Box sx={{ textAlign: "center", py: 10 }}>
+        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+          Bạn không có quyền truy cập mục Đánh giá.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>

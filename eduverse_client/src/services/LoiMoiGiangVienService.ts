@@ -97,9 +97,29 @@ export interface LoiMoiDangChoDto {
   ngayMoi: string;
 }
 
+export interface QuyenCuaToiDto {
+  laChuSoHuu: boolean;
+  visible: boolean;
+  manage: boolean;
+  performance: boolean;
+  qnA: boolean;
+  reviews: boolean;
+  assignments: boolean;
+  materials: boolean;
+  promotions: boolean;
+}
+
 export interface DanhSachGiangVienDto {
   danhSachCongTac: GiangVienCongTacDto[];
   danhSachDangMoi: LoiMoiDangChoDto[];
+}
+
+export interface CapNhatQuyenHangLoatItem extends CapNhatQuyenRequest {
+  idGiangVien: string;
+}
+
+export interface CapNhatQuyenHangLoatRequest {
+  danhSach: CapNhatQuyenHangLoatItem[];
 }
 
 class LoiMoiGiangVienService {
@@ -157,6 +177,24 @@ class LoiMoiGiangVienService {
   async HuyTheoGiangVien(idKhoaHoc: string, idGiangVien: string) {
     const res = await apiService.delete(
       `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/giang-vien/${idGiangVien}/huy`,
+    );
+    return res.data;
+  }
+
+  async CapNhatQuyenHangLoat(
+    idKhoaHoc: string,
+    request: CapNhatQuyenHangLoatRequest,
+  ) {
+    const res = await apiService.put(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/cap-nhat-quyen-hang-loat`,
+      request,
+    );
+    return res.data;
+  }
+
+  async GetQuyenCuaToi(idKhoaHoc: string): Promise<QuyenCuaToiDto> {
+    const res = await apiService.get<QuyenCuaToiDto>(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/quyen-cua-toi`,
     );
     return res.data;
   }

@@ -40,12 +40,14 @@ import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
 import FolderRoundedIcon from "@mui/icons-material/FolderRounded";
 import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
 import PercentRoundedIcon from "@mui/icons-material/PercentRounded";
+import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
 import Stack from "@mui/material/Stack";
 import Grid from "@mui/material/Grid";
 import { useState, useEffect, useCallback } from "react";
 import AuthGuard from "@/src/components/AuthGuard";
 import { useCourseEdit } from "../../components/CourseEditContext";
 import { MAU } from "../../components/courseEditCore";
+import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
 import LoiMoiGiangVienService, {
   GiangVienCongTacDto,
   GuiLoiMoiRequest,
@@ -55,14 +57,14 @@ import LoiMoiGiangVienService, {
 
 // ── Các cột quyền hiển thị trên bảng ────────────────────────────────────────
 const COT_QUYEN: { key: keyof CapNhatQuyenRequest; nhan: string }[] = [
-  { key: "visible", nhan: "Visible" },
-  { key: "manage", nhan: "Manage" },
-  { key: "performance", nhan: "Performance" },
-  { key: "qnA", nhan: "Q&A" },
-  { key: "reviews", nhan: "Reviews" },
-  { key: "assignments", nhan: "Assignments" },
-  { key: "materials", nhan: "Materials" },
-  { key: "promotions", nhan: "Promotions" },
+  { key: "visible", nhan: "Hiển thị" },
+  { key: "manage", nhan: "Quản lý" },
+  { key: "performance", nhan: "Hiệu suất" },
+  { key: "qnA", nhan: "Hỏi đáp" },
+  { key: "reviews", nhan: "Đánh giá" },
+  { key: "assignments", nhan: "Bài tập" },
+  { key: "materials", nhan: "Tài liệu" },
+  { key: "promotions", nhan: "Khuyến mãi" },
 ];
 
 const QUYEN_MO_TA: Record<
@@ -70,42 +72,42 @@ const QUYEN_MO_TA: Record<
   { label: string; desc: string; icon: React.ReactNode }
 > = {
   visible: {
-    label: "Visible",
+    label: "Hiển thị",
     desc: "Hiển thị tên công khai trên khóa học",
     icon: <VisibilityRoundedIcon sx={{ fontSize: 18 }} />,
   },
   manage: {
-    label: "Manage",
+    label: "Quản lý",
     desc: "Quản lý bài giảng & nội dung khóa học",
     icon: <TuneRoundedIcon sx={{ fontSize: 18 }} />,
   },
   performance: {
-    label: "Performance",
+    label: "Hiệu suất",
     desc: "Xem báo cáo hiệu suất & học viên",
     icon: <InsightsRoundedIcon sx={{ fontSize: 18 }} />,
   },
   qnA: {
-    label: "Q&A",
+    label: "Hỏi đáp",
     desc: "Trả lời câu hỏi & tương tác học viên",
     icon: <ForumRoundedIcon sx={{ fontSize: 18 }} />,
   },
   reviews: {
-    label: "Reviews",
+    label: "Đánh giá",
     desc: "Quản lý & phản hồi đánh giá khóa học",
     icon: <RateReviewRoundedIcon sx={{ fontSize: 18 }} />,
   },
   assignments: {
-    label: "Assignments",
+    label: "Bài tập",
     desc: "Tạo và chấm bài tập cho học viên",
     icon: <AssignmentRoundedIcon sx={{ fontSize: 18 }} />,
   },
   materials: {
-    label: "Materials",
+    label: "Tài liệu",
     desc: "Tải lên & quản lý tài liệu đính kèm",
     icon: <FolderRoundedIcon sx={{ fontSize: 18 }} />,
   },
   promotions: {
-    label: "Promotions",
+    label: "Khuyến mãi",
     desc: "Tạo mã giảm giá & chương trình ưu đãi",
     icon: <LocalOfferRoundedIcon sx={{ fontSize: 18 }} />,
   },
@@ -134,6 +136,8 @@ const DEFAULT_QUYEN: GuiLoiMoiRequest = {
 export default function InstructorsContent() {
   const { idKhoaHoc, trangThai } = useCourseEdit();
   const isEditable = trangThai === "DangSua";
+  const { quyen: quyenCuaToi, loading: loadingQuyen } =
+    useQuyenCuaToi(idKhoaHoc);
 
   const [rows, setRows] = useState<RowState[]>([]);
   const [loading, setLoading] = useState(true);
@@ -210,8 +214,9 @@ export default function InstructorsContent() {
   const hasDirty = rows.some((r) => r._dirty);
 
   const vuot100 = tongTyLe > 100;
+  const chuaDu100 = tongTyLe < 100;
   const coSoAm = rows.some((r) => r.tyLeChiaDoanhThu < 0);
-  const coLoi = vuot100 || coSoAm;
+  const coLoi = vuot100 || chuaDu100 || coSoAm;
 
   // ── Sửa 1 cell trên bảng ─────────────────────────────────────────────────
   const setCell = (
@@ -246,29 +251,34 @@ export default function InstructorsContent() {
       });
       return;
     }
+    if (tongTyLe < 100) {
+      setToast({
+        open: true,
+        message: `Tổng tỷ lệ doanh thu mới đạt ${tongTyLe}%, cần đủ 100% mới được lưu.`,
+        severity: "error",
+      });
+      return;
+    }
 
     setDangLuu(true);
     try {
-      const dirtyRows = rows.filter((r) => r._dirty && !r.laChuSoHuu);
-      await Promise.all(
-        dirtyRows.map((r) =>
-          LoiMoiGiangVienService.CapNhatQuyenTheoGiangVien(
-            idKhoaHoc,
-            r.idGiangVien,
-            {
-              visible: r.visible,
-              tyLeChiaDoanhThu: r.tyLeChiaDoanhThu,
-              manage: r.manage,
-              performance: r.performance,
-              qnA: r.qnA,
-              reviews: r.reviews,
-              assignments: r.assignments,
-              materials: r.materials,
-              promotions: r.promotions,
-            },
-          ),
-        ),
-      );
+      const dirtyRows = rows.filter((r) => r._dirty);
+
+      await LoiMoiGiangVienService.CapNhatQuyenHangLoat(idKhoaHoc, {
+        danhSach: dirtyRows.map((r) => ({
+          idGiangVien: r.idGiangVien,
+          visible: r.visible,
+          tyLeChiaDoanhThu: r.tyLeChiaDoanhThu,
+          manage: r.manage,
+          performance: r.performance,
+          qnA: r.qnA,
+          reviews: r.reviews,
+          assignments: r.assignments,
+          materials: r.materials,
+          promotions: r.promotions,
+        })),
+      });
+
       setRows((prev) => prev.map((r) => ({ ...r, _dirty: false })));
       setToast({
         open: true,
@@ -345,6 +355,24 @@ export default function InstructorsContent() {
     }
   };
 
+  if (loadingQuyen) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress sx={{ color: MAU.chinh }} />
+      </Box>
+    );
+  }
+
+  if (!quyenCuaToi?.laChuSoHuu) {
+    return (
+      <Box sx={{ textAlign: "center", py: 10 }}>
+        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+          Chỉ chủ sở hữu khóa học mới được quản lý giảng viên.
+        </Typography>
+      </Box>
+    );
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
@@ -356,23 +384,46 @@ export default function InstructorsContent() {
             alignItems: "center",
             justifyContent: "space-between",
             mb: 3,
+            flexWrap: "wrap",
+            gap: 2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: 24,
+                  color: "#0F172A",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Quản lý quyền giảng viên
+              </Typography>
+              <Tooltip title="Quản lý quyền hạn và tỷ lệ chia sẻ doanh thu cho từng giảng viên trong khóa học này.">
+                <InfoOutlinedIcon
+                  sx={{
+                    fontSize: 19,
+                    color: "#64748B",
+                    cursor: "pointer",
+                    transition: "color 0.2s",
+                    "&:hover": { color: MAU.chinh },
+                  }}
+                />
+              </Tooltip>
+            </Box>
             <Typography
-              sx={{ fontWeight: 900, fontSize: 22, color: "#1E293B" }}
+              sx={{ fontSize: 13, color: "#64748B", mt: 0.5, fontWeight: 500 }}
             >
-              Manage instructor permissions
+              Phân quyền chi tiết & tỷ lệ chia sẻ doanh thu cho đội ngũ giảng
+              viên cộng tác
             </Typography>
-            <Tooltip title="Quản lý quyền hạn và tỷ lệ doanh thu cho từng giảng viên trong khóa học này.">
-              <InfoOutlinedIcon
-                sx={{ fontSize: 18, color: "#8A7676", cursor: "pointer" }}
-              />
-            </Tooltip>
           </Box>
+
           {isEditable && (
             <Button
-              startIcon={<AddIcon />}
+              variant="contained"
+              startIcon={<AddIcon sx={{ fontSize: 20 }} />}
               onClick={() => {
                 setShowMoiDialog(true);
                 setLoiMoiDialog(null);
@@ -381,33 +432,122 @@ export default function InstructorsContent() {
               sx={{
                 textTransform: "none",
                 fontWeight: 700,
-                color: MAU.chinh,
-                "&:hover": { bgcolor: `${MAU.chinh}0F` },
+                fontSize: 14,
+                bgcolor: MAU.chinh,
+                color: "#FFFFFF",
+                borderRadius: "12px",
+                px: 2.75,
+                py: 1.1,
+                boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: MAU.chinhDam || "#6b0f0f",
+                  boxShadow: "0 6px 20px rgba(139,19,19,0.35)",
+                  transform: "translateY(-1px)",
+                },
               }}
             >
-              + Add instructor
+              Thêm giảng viên
             </Button>
           )}
         </Box>
 
-        {/* Thanh % tổng */}
-        <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+        {/* Card Tỷ lệ chia doanh thu */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            mb: 3.5,
+            borderRadius: "16px",
+            bgcolor: "#FFFFFF",
+            border: "1px solid #E2E8F0",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)",
+          }}
+        >
           <Box
             sx={{
-              flex: 1,
-              height: 6,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1.5,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+              <Box
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: "10px",
+                  bgcolor: `${MAU.chinh}12`,
+                  color: MAU.chinh,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <PercentRoundedIcon sx={{ fontSize: 19 }} />
+              </Box>
+              <Typography
+                sx={{ fontWeight: 700, fontSize: 14.5, color: "#1E293B" }}
+              >
+                Tổng tỷ lệ chia sẻ doanh thu giảng viên
+              </Typography>
+            </Box>
+
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <Chip
+                label={`${tongTyLe}% / 100%`}
+                size="small"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  bgcolor: vuot100 ? "#FEE2E2" : `${MAU.chinh}12`,
+                  color: vuot100 ? "#DC2626" : MAU.chinh,
+                  border: `1px solid ${vuot100 ? "#FCA5A5" : `${MAU.chinh}30`}`,
+                  borderRadius: "8px",
+                  px: 0.75,
+                  py: 0.25,
+                }}
+              />
+              {100 - tongTyLe > 0 && !vuot100 && (
+                <Typography
+                  sx={{ fontSize: 12, color: "#10B981", fontWeight: 600 }}
+                >
+                  (Còn khả dụng {100 - tongTyLe}%)
+                </Typography>
+              )}
+              {vuot100 && (
+                <Typography
+                  sx={{ fontSize: 12, color: "#DC2626", fontWeight: 700 }}
+                >
+                  ⚠️ Vượt {tongTyLe - 100}%
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+
+          <Box
+            sx={{
+              height: 10,
               borderRadius: 99,
-              bgcolor: "#F1F2F5",
+              bgcolor: "#F1F5F9",
               overflow: "hidden",
+              p: "2px",
+              border: "1px solid #E2E8F0",
             }}
           >
             <Box
               sx={{
                 height: "100%",
                 width: `${Math.min(tongTyLe, 100)}%`,
-                bgcolor: vuot100 ? "#DC2626" : MAU.chinh,
+                bgcolor: vuot100
+                  ? "#DC2626"
+                  : tongTyLe === 100
+                    ? "#16A34A"
+                    : "#D97706",
                 borderRadius: 99,
-                transition: "width 0.3s ease",
+                transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
               }}
             />
           </Box>
@@ -416,7 +556,12 @@ export default function InstructorsContent() {
               fontSize: 13,
               fontWeight: 700,
               flexShrink: 0,
-              color: vuot100 ? "#DC2626" : "#4B5563",
+              mt: 1,
+              color: vuot100
+                ? "#DC2626"
+                : tongTyLe === 100
+                  ? "#16A34A"
+                  : "#D97706",
             }}
           >
             {tongTyLe}% / 100% doanh thu giảng viên
@@ -428,8 +573,16 @@ export default function InstructorsContent() {
                 (vượt {tongTyLe - 100}%)
               </Box>
             )}
+            {chuaDu100 && (
+              <Box
+                component="span"
+                sx={{ ml: 1, fontSize: 11, fontWeight: 600 }}
+              >
+                (thiếu {100 - tongTyLe}%)
+              </Box>
+            )}
           </Typography>
-        </Box>
+        </Paper>
 
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -439,51 +592,74 @@ export default function InstructorsContent() {
           <Paper
             elevation={0}
             sx={{
-              borderRadius: "14px",
-              border: "1px solid var(--ev-divider, #ECE7E4)",
-              overflow: "auto",
+              borderRadius: "16px",
+              border: "1px solid #E2E8F0",
+              overflow: "hidden",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.04)",
+              bgcolor: "#FFFFFF",
             }}
           >
             {/* ── Header bảng ── */}
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: `240px 90px repeat(${COT_QUYEN.length}, 1fr) 80px`,
-                px: 2.5,
-                py: 1.5,
-                bgcolor: "var(--ev-paper-alt, #F7F5F2)",
-                borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
-                minWidth: 900,
+                gridTemplateColumns: `260px 110px repeat(${COT_QUYEN.length}, 1fr) 70px`,
+                px: 3,
+                py: 2,
+                bgcolor: "#F8FAFC",
+                borderBottom: "1px solid #E2E8F0",
+                minWidth: 950,
+                alignItems: "center",
               }}
             >
               <Typography
-                sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                sx={{
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  color: "#475569",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
               >
-                Instructor
+                Giảng viên
               </Typography>
               <Typography
                 sx={{
-                  fontWeight: 700,
-                  fontSize: 13,
-                  color: "#4B5563",
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  color: "#475569",
                   textAlign: "center",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
                 }}
               >
-                Revenue share
+                Doanh thu
               </Typography>
-              {COT_QUYEN.map((c) => (
-                <Typography
-                  key={c.key}
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: 12,
-                    color: "#4B5563",
-                    textAlign: "center",
-                  }}
-                >
-                  {c.nhan}
-                </Typography>
-              ))}
+              {COT_QUYEN.map((c) => {
+                const info = QUYEN_MO_TA[c.key];
+                return (
+                  <Tooltip
+                    key={c.key}
+                    title={info?.desc || c.nhan}
+                    arrow
+                    placement="top"
+                  >
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 12,
+                        color: "#475569",
+                        textAlign: "center",
+                        cursor: "help",
+                        transition: "color 0.2s",
+                        "&:hover": { color: MAU.chinh },
+                      }}
+                    >
+                      {c.nhan}
+                    </Typography>
+                  </Tooltip>
+                );
+              })}
               <Box /> {/* cột action */}
             </Box>
 
@@ -493,12 +669,14 @@ export default function InstructorsContent() {
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: `240px 90px repeat(${COT_QUYEN.length}, 1fr) 80px`,
-                    px: 2.5,
-                    py: 2,
+                    gridTemplateColumns: `260px 110px repeat(${COT_QUYEN.length}, 1fr) 70px`,
+                    px: 3,
+                    py: 2.25,
                     alignItems: "center",
-                    bgcolor: row._dirty ? `${MAU.chinh}05` : "transparent",
-                    transition: "background-color 0.15s ease",
+                    bgcolor: row._dirty ? `${MAU.chinh}04` : "transparent",
+                    transition: "all 0.15s ease",
+                    minWidth: 950,
+                    "&:hover": { bgcolor: "#F8FAFC" },
                   }}
                 >
                   {/* Instructor info */}
@@ -506,7 +684,7 @@ export default function InstructorsContent() {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1.5,
+                      gap: 1.75,
                       minWidth: 0,
                       overflow: "hidden",
                     }}
@@ -514,25 +692,27 @@ export default function InstructorsContent() {
                     <Avatar
                       src={row.anhDaiDien || ""}
                       sx={{
-                        width: 36,
-                        height: 36,
+                        width: 42,
+                        height: 42,
                         flexShrink: 0,
-                        bgcolor: `${MAU.chinh}22`,
+                        bgcolor: `${MAU.chinh}15`,
                         color: MAU.chinh,
-                        fontSize: 14,
-                        fontWeight: 700,
+                        fontSize: 15,
+                        fontWeight: 800,
+                        border: "2px solid #FFFFFF",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                       }}
                     >
                       {row.hoTen?.[0] || (
-                        <PersonOutlineIcon sx={{ fontSize: 18 }} />
+                        <PersonOutlineIcon sx={{ fontSize: 20 }} />
                       )}
                     </Avatar>
                     <Box sx={{ minWidth: 0 }}>
                       <Typography
                         sx={{
                           fontWeight: 700,
-                          fontSize: 14,
-                          color: "#1F2937",
+                          fontSize: 14.5,
+                          color: "#0F172A",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -542,25 +722,36 @@ export default function InstructorsContent() {
                       </Typography>
                       {row.laChuSoHuu ? (
                         <Chip
-                          label="Owner"
+                          icon={
+                            <WorkspacePremiumRoundedIcon
+                              sx={{
+                                fontSize: "14px !important",
+                                color: "#F59E0B !important",
+                              }}
+                            />
+                          }
+                          label="Chủ sở hữu"
                           size="small"
                           sx={{
-                            fontSize: 10,
-                            fontWeight: 700,
-                            height: 18,
-                            bgcolor: "#1F2937",
-                            color: "#fff",
-                            borderRadius: "4px",
+                            fontSize: 11,
+                            fontWeight: 800,
+                            height: 22,
+                            bgcolor: "#0F172A",
+                            color: "#FFFFFF",
+                            borderRadius: "6px",
+                            mt: 0.25,
+                            px: 0.5,
                           }}
                         />
                       ) : (
                         <Typography
                           sx={{
                             fontSize: 12,
-                            color: "#8A7676",
+                            color: "#64748B",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
+                            mt: 0.25,
                           }}
                         >
                           {row.email}
@@ -575,7 +766,7 @@ export default function InstructorsContent() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      gap: 0.5,
+                      gap: 0.75,
                     }}
                   >
                     <TextField
@@ -592,92 +783,117 @@ export default function InstructorsContent() {
                       }}
                       slotProps={{ htmlInput: { min: 0, max: 100, step: 5 } }}
                       sx={{
-                        width: 64,
+                        width: 70,
                         "& .MuiOutlinedInput-root": {
-                          borderRadius: "8px",
-                          height: 34,
+                          borderRadius: "10px",
+                          height: 36,
+                          bgcolor: "#F8FAFC",
+                          transition: "all 0.2s ease",
                           "& input": {
                             textAlign: "center",
-                            fontWeight: 700,
+                            fontWeight: 800,
                             fontSize: 14,
-                            p: "0 8px",
+                            p: "0 6px",
+                            color: "#0F172A",
                           },
                           "& fieldset": {
                             borderColor:
                               row.tyLeChiaDoanhThu < 0 ||
                               (tongTyLe > 100 && row._dirty)
-                                ? "#DC2626"
-                                : "#ECE7E4",
+                                ? "#EF4444"
+                                : "#E2E8F0",
                           },
                           "&:hover fieldset": {
                             borderColor:
                               row.tyLeChiaDoanhThu < 0 ||
                               (tongTyLe > 100 && row._dirty)
-                                ? "#DC2626"
+                                ? "#EF4444"
                                 : "#CBD5E1",
                           },
-                          "&.Mui-focused fieldset": {
-                            borderColor:
-                              row.tyLeChiaDoanhThu < 0 ||
-                              (tongTyLe > 100 && row._dirty)
-                                ? "#DC2626"
-                                : MAU.chinh,
+                          "&.Mui-focused": {
+                            bgcolor: "#FFFFFF",
+                            boxShadow: "0 0 0 3px rgba(139,19,19,0.1)",
+                            "& fieldset": {
+                              borderColor:
+                                row.tyLeChiaDoanhThu < 0 ||
+                                (tongTyLe > 100 && row._dirty)
+                                  ? "#EF4444"
+                                  : MAU.chinh,
+                            },
                           },
                         },
                       }}
                     />
                     <Typography
-                      sx={{ fontSize: 13, color: "#8A7676", fontWeight: 600 }}
+                      sx={{ fontSize: 13, color: "#64748B", fontWeight: 700 }}
                     >
                       %
                     </Typography>
                   </Box>
 
                   {/* Checkboxes quyền */}
-                  {COT_QUYEN.map((c) => (
-                    <Box
-                      key={c.key}
-                      sx={{ display: "flex", justifyContent: "center" }}
-                    >
-                      <Checkbox
-                        checked={!!row[c.key as keyof GiangVienCongTacDto]}
-                        disabled={!isEditable || row.laChuSoHuu}
-                        onChange={(e) =>
-                          setCell(row.idGiangVien, c.key, e.target.checked)
-                        }
-                        size="small"
-                        sx={{
-                          p: 0.5,
-                          color: "#C7CCD6",
-                          "&.Mui-checked": { color: MAU.chinh },
-                        }}
-                      />
-                    </Box>
-                  ))}
+                  {COT_QUYEN.map((c) => {
+                    const isChecked = !!row[c.key as keyof GiangVienCongTacDto];
+                    const info = QUYEN_MO_TA[c.key];
+                    return (
+                      <Box
+                        key={c.key}
+                        sx={{ display: "flex", justifyContent: "center" }}
+                      >
+                        <Tooltip
+                          title={info?.desc || c.nhan}
+                          arrow
+                          placement="top"
+                        >
+                          <span>
+                            <Checkbox
+                              checked={isChecked}
+                              disabled={!isEditable || row.laChuSoHuu}
+                              onChange={(e) =>
+                                setCell(
+                                  row.idGiangVien,
+                                  c.key,
+                                  e.target.checked,
+                                )
+                              }
+                              size="small"
+                              sx={{
+                                p: 0.5,
+                                color: "#CBD5E1",
+                                "&.Mui-checked": { color: MAU.chinh },
+                                "&:hover": { bgcolor: `${MAU.chinh}0A` },
+                              }}
+                            />
+                          </span>
+                        </Tooltip>
+                      </Box>
+                    );
+                  })}
 
                   {/* Action */}
                   <Box sx={{ display: "flex", justifyContent: "center" }}>
                     {!row.laChuSoHuu && isEditable && (
-                      <Button
+                      <IconButton
                         size="small"
                         onClick={() => setRemoveTarget(row)}
                         sx={{
-                          textTransform: "none",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: "#DC2626",
-                          p: "2px 8px",
-                          minWidth: 0,
-                          "&:hover": { bgcolor: "#FEE2E2" },
+                          color: "#94A3B8",
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            color: "#EF4444",
+                            bgcolor: "#FEE2E2",
+                          },
                         }}
                       >
-                        Remove
-                      </Button>
+                        <DeleteOutlineIcon sx={{ fontSize: 19 }} />
+                      </IconButton>
                     )}
                   </Box>
                 </Box>
 
-                {idx < rows.length - 1 && <Divider sx={{ mx: 2.5 }} />}
+                {idx < rows.length - 1 && (
+                  <Divider sx={{ borderColor: "#F1F5F9" }} />
+                )}
               </Box>
             ))}
           </Paper>
@@ -706,7 +922,7 @@ export default function InstructorsContent() {
               {dangLuu ? (
                 <CircularProgress size={20} sx={{ color: "#fff" }} />
               ) : (
-                "Save"
+                "Lưu thay đổi"
               )}
             </Button>
 
@@ -724,6 +940,21 @@ export default function InstructorsContent() {
               >
                 ⚠ Tổng tỷ lệ đang là {tongTyLe}%, vượt quá 100%. Vui lòng điều
                 chỉnh lại.
+              </Typography>
+            )}
+            {chuaDu100 && (
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: "#D97706",
+                  mt: 0.5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                }}
+              >
+                ⚠ Tổng tỷ lệ mới đạt {tongTyLe}%, cần đủ 100% mới được lưu (còn
+                thiếu {100 - tongTyLe}%).
               </Typography>
             )}
             {coSoAm && (
@@ -1037,7 +1268,10 @@ export default function InstructorsContent() {
                     "&.Mui-focused": {
                       bgcolor: "#FFFFFF",
                       boxShadow: "0 0 0 4px rgba(139,19,19,0.08)",
-                      "& fieldset": { borderColor: MAU.chinh, borderWidth: 1.5 },
+                      "& fieldset": {
+                        borderColor: MAU.chinh,
+                        borderWidth: 1.5,
+                      },
                     },
                   },
                 }}
@@ -1089,7 +1323,14 @@ export default function InstructorsContent() {
                 />
               </Stack>
 
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  mb: 1.5,
+                }}
+              >
                 <TextField
                   type="number"
                   size="small"
@@ -1125,7 +1366,11 @@ export default function InstructorsContent() {
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "12px",
                       bgcolor: "#FFFFFF",
-                      "& input": { textAlign: "center", fontWeight: 800, fontSize: 16 },
+                      "& input": {
+                        textAlign: "center",
+                        fontWeight: 800,
+                        fontSize: 16,
+                      },
                       "& fieldset": { borderColor: "#CBD5E1" },
                       "&.Mui-focused fieldset": { borderColor: MAU.chinh },
                     },
@@ -1133,7 +1378,11 @@ export default function InstructorsContent() {
                 />
 
                 {/* Preset Chips */}
-                <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.5 }}>
+                <Stack
+                  direction="row"
+                  spacing={0.75}
+                  sx={{ flexWrap: "wrap", gap: 0.5 }}
+                >
                   {[0, 10, 20, 30, 50].map((val) => (
                     <Chip
                       key={val}
@@ -1180,15 +1429,21 @@ export default function InstructorsContent() {
                   mb: 1.5,
                 }}
               >
-                <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}>
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: 13.5, color: "#1F2937" }}
+                >
                   Phân quyền truy cập
                 </Typography>
-                <Typography sx={{ fontSize: 12, color: "#6B7280", fontWeight: 600 }}>
+                <Typography
+                  sx={{ fontSize: 12, color: "#6B7280", fontWeight: 600 }}
+                >
                   Đã chọn:{" "}
                   <strong style={{ color: MAU.chinh }}>
-                    {COT_QUYEN.filter(
-                      (c) => !!formMoi[c.key as keyof GuiLoiMoiRequest],
-                    ).length}
+                    {
+                      COT_QUYEN.filter(
+                        (c) => !!formMoi[c.key as keyof GuiLoiMoiRequest],
+                      ).length
+                    }
                     /8
                   </strong>
                 </Typography>
@@ -1232,7 +1487,11 @@ export default function InstructorsContent() {
                           },
                         }}
                       >
-                        <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", minWidth: 0 }}>
+                        <Stack
+                          direction="row"
+                          spacing={1.25}
+                          sx={{ alignItems: "center", minWidth: 0 }}
+                        >
                           <Box
                             sx={{
                               width: 34,

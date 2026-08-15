@@ -30,5 +30,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         // Hủy/kick theo idGiangVien + idKhoaHoc
         Task HuyTheoGiangVien(Guid idKhoaHoc, Guid idGiangVien);
         Task<List<LoiMoiChoXacNhanDto>> GetLoiMoiCuaToi();
+
+        Task CapNhatQuyenHangLoat(Guid idKhoaHoc, CapNhatQuyenHangLoatRequest request);
+        Task<QuyenCuaToiDto> GetQuyenCuaToi(Guid idKhoaHoc);
     }
 }

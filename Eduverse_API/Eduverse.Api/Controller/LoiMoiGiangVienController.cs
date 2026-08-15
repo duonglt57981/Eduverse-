@@ -96,6 +96,21 @@ namespace Eduverse.Api.Controller
             catch (Exception ex) { return DataResponse<DanhSachGiangVienDto>.False(ex.Message); }
         }
 
+        [HttpPut("khoa-hoc/{idKhoaHoc}/cap-nhat-quyen-hang-loat")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<string>> CapNhatQuyenHangLoat(
+        Guid idKhoaHoc, [FromBody] CapNhatQuyenHangLoatRequest request)
+        {
+            try { await _service.CapNhatQuyenHangLoat(idKhoaHoc, request); return DataResponse<string>.Success("OK"); }
+            catch (Exception ex) { return DataResponse<string>.False(ex.Message); }
+        }
 
+        [HttpGet("khoa-hoc/{idKhoaHoc}/quyen-cua-toi")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<QuyenCuaToiDto>> GetQuyenCuaToi(Guid idKhoaHoc)
+        {
+            try { return DataResponse<QuyenCuaToiDto>.Success(await _service.GetQuyenCuaToi(idKhoaHoc)); }
+            catch (Exception ex) { return DataResponse<QuyenCuaToiDto>.False(ex.Message); }
+        }
     }
 }

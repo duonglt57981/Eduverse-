@@ -85,4 +85,17 @@ namespace Eduverse.Service.LoiMoiGiangVienService.Dto
         public List<GiangVienCongTacDto> DanhSachCongTac { get; set; } = new();
         public List<LoiMoiDangChoDto> DanhSachDangMoi { get; set; } = new();
     }
+
+    public class QuyenCuaToiDto
+    {
+        public bool LaChuSoHuu { get; set; }
+        public bool Visible { get; set; }
+        public bool Manage { get; set; }
+        public bool Performance { get; set; }
+        public bool QnA { get; set; }
+        public bool Reviews { get; set; }
+        public bool Assignments { get; set; }
+        public bool Materials { get; set; }
+        public bool Promotions { get; set; }
+    }
 }

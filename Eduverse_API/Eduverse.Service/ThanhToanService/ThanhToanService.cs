@@ -246,6 +246,17 @@ namespace Eduverse.Service.ThanhToanService
                                            && x.IsDeleted == false);
                 if (donHang == null) return false;
 
+                var daThanhToan = await _thanhToanRepo.GetQueryable()
+                .AnyAsync(x =>
+                    x.IdDonHang == donHang.Id &&
+                    x.TrangThaiThanhToan == "SUCCESS");
+
+                if (daThanhToan)
+                {
+                    Console.WriteLine($"[WEBHOOK] Đơn hàng {donHang.Id} đã thanh toán, bỏ qua webhook trùng.");
+                    return true;
+                }
+
 
                 if (webhookData.Code == "00")
                 {
