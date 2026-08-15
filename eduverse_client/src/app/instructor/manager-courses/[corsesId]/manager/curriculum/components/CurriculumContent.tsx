@@ -3171,9 +3171,6 @@ export default function CurriculumContent() {
 
       try {
         const connection = createCourseHubConnection();
-
-        console.log("🔗 SignalR connecting...");
-
         // =========================
         // ĐĂNG KÝ EVENT
         // =========================
