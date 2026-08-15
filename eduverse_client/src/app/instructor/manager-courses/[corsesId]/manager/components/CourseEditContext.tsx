@@ -391,6 +391,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
           loaiCauHoi: q.loaiCauHoi || "ONE",
           doKho: q.doKho || "TrungBinh",
           thuTuSapXep: q.thuTuSapXep,
+          createdBy: q.createdBy,
+          updatedBy: q.updatedBy,
+          updatedDate: q.updatedDate,
           danhSachDapAn: (q.danhSachDapAns || []).map((d: any) => ({
             id: chuanHoaId(d.id),
             noiDungDapAn: d.noiDungDapAn || "",
@@ -497,6 +500,9 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
             noiDungCauHoi: q.noiDungCauHoi || q.tenCauHoi || "",
             loaiCauHoi: q.loaiCauHoi || "ONE",
             doKho: q.doKho || "TrungBinh",
+            createdBy: q.createdBy,
+            updatedBy: q.updatedBy,
+            updatedDate: q.updatedDate,
             danhSachDapAn: (q.danhSachDapAns || []).map((d: any) => ({
               id: chuanHoaId(d.id),
               noiDungDapAn: d.noiDungDapAn || "",

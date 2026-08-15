@@ -9,6 +9,9 @@ export interface PhanHocType {
   thuTuSapXep?: number;
   ngayTao?: Date;
   idKhoaHoc?: Guid;
+  createdBy?: string;
+  updatedBy?: string;
+  updatedDate?: string;
   DanhSachBaiGiang?: BaiGiangDto[];
   DanhDachBaiKiemTra?: BaiKiemTraDto[];
 }

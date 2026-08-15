@@ -5,5 +5,8 @@ export interface TaiLieuType {
   url?: string;
   ngayTao?: Datetime;
   trangThai?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  updatedDate?: string;
   idBaiGiang?: Guid;
 }

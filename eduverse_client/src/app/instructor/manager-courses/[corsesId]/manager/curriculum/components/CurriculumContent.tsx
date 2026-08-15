@@ -80,6 +80,7 @@ import {
   SO_DAP_AN_TOI_THIEU,
   SO_DAP_AN_TOI_DA,
 } from "../../components/courseEditCore";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutlined";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import {
@@ -723,6 +724,11 @@ function SectionItem({
             >
               {phan.tenPhan || "Phần mới"}
             </Typography>
+            <NguoiThucHienLabel
+              createdBy={(phan as any).createdBy}
+              updatedBy={(phan as any).updatedBy}
+              updatedDate={(phan as any).updatedDate}
+            />
             {isEditable && (
               <>
                 <IconButton
@@ -991,6 +997,12 @@ function LectureItem({
                         : "#8A7676",
                     flexShrink: 0,
                   }}
+                />
+                <NguoiThucHienLabel
+                  createdBy={(bg as any).createdBy}
+                  updatedBy={(bg as any).updatedBy}
+                  updatedDate={(bg as any).updatedDate}
+                  sx={{ ml: "auto" }}
                 />
               </Box>
             }
@@ -1276,6 +1288,12 @@ function QuizItem({
                     color: isComplete ? MAU.chinhDam : "#8A7676",
                     flexShrink: 0,
                   }}
+                />
+                <NguoiThucHienLabel
+                  createdBy={(kt as any).createdBy}
+                  updatedBy={(kt as any).updatedBy}
+                  updatedDate={(kt as any).updatedDate}
+                  sx={{ ml: "auto" }}
                 />
               </Box>
             }
@@ -1604,6 +1622,85 @@ const CHU_CAI = [
   "N",
   "O",
 ];
+
+function dinhDangNgayGio(ngay?: string | null): string {
+  if (!ngay) return "";
+  try {
+    const d = new Date(ngay);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
+function NguoiThucHienLabel({
+  createdBy,
+  updatedBy,
+  updatedDate,
+  sx,
+}: {
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  updatedDate?: string | null;
+  sx?: object;
+}) {
+  const tao = createdBy?.trim();
+  const suaGanNhat = updatedBy?.trim();
+  const tenHienThi = suaGanNhat || tao;
+  if (!tenHienThi) return null;
+
+  const coNguoiSuaKhac = !!suaGanNhat && suaGanNhat !== tao;
+  const ngayHienThi = dinhDangNgayGio(updatedDate);
+
+  return (
+    <Tooltip
+      title={
+        <Box sx={{ fontSize: 12 }}>
+          {coNguoiSuaKhac ? (
+            <>
+              <Box>Tạo bởi: {tao}</Box>
+              <Box>Sửa gần nhất bởi: {suaGanNhat}</Box>
+            </>
+          ) : (
+            <Box>Tạo bởi: {tenHienThi}</Box>
+          )}
+          {ngayHienThi && <Box sx={{ opacity: 0.8 }}>Lúc: {ngayHienThi}</Box>}
+        </Box>
+      }
+    >
+      <Box
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.4,
+          flexShrink: 0,
+          cursor: "default",
+          ...sx, // + cho phép override từ ngoài (ml: "auto", v.v.)
+        }}
+      >
+        <PersonOutlineIcon sx={{ fontSize: 13, color: "#9AA2B1" }} />
+        <Typography
+          component="span"
+          sx={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: "#9AA2B1",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {tenHienThi}
+        </Typography>
+      </Box>
+    </Tooltip>
+  );
+}
 
 function QuestionDetailForm({
   question,
@@ -2233,6 +2330,12 @@ function QuestionListView({
                     >
                       {q.danhSachDapAn?.length ?? 0} đáp án
                     </Typography>
+                    <NguoiThucHienLabel
+                      createdBy={q.createdBy}
+                      updatedBy={q.updatedBy}
+                      updatedDate={(q as any).updatedDate}
+                      sx={{ ml: "auto" }}
+                    />
                   </Box>
                 </Box>
 
@@ -2506,6 +2609,11 @@ function LectureInfoView({
                     </Typography>
                   )}
                 </Box>
+                <NguoiThucHienLabel
+                  createdBy={(tl as any).createdBy}
+                  updatedBy={(tl as any).updatedBy}
+                  updatedDate={(tl as any).updatedDate}
+                />
                 {isEditable && (
                   <IconButton
                     {...noPropagation}

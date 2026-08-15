@@ -19,6 +19,7 @@ import {
   DialogActions,
   InputAdornment,
   Stack,
+  Tooltip,
 } from "@mui/material";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import AddIcon from "@mui/icons-material/Add";
@@ -29,10 +30,7 @@ import { useCallback, useEffect, useState } from "react";
 import KhuyenMaiService, {
   KhuyenMaiDto,
 } from "@/src/services/KhuyenMaiService";
-import KhoaHocService, {
-  KhoaHocMiniDto,
-} from "@/src/services/KhoaHocService";
-
+import KhoaHocService, { KhoaHocMiniDto } from "@/src/services/KhoaHocService";
 
 function conHieuLuc(km: KhuyenMaiDto): boolean {
   if (!km.ngayKetThuc) return true;
@@ -260,7 +258,13 @@ function QuanLyKhuyenMaiContent() {
         }}
       >
         <Box>
-          <Typography sx={{ fontWeight: 900, fontSize: 26, color: "var(--ev-text-primary, #1F2937)" }}>
+          <Typography
+            sx={{
+              fontWeight: 900,
+              fontSize: 26,
+              color: "var(--ev-text-primary, #1F2937)",
+            }}
+          >
             Quản lý khuyến mãi
           </Typography>
           <Typography sx={{ fontSize: 13.5, color: MAU.chuXam, mt: 0.5 }}>
@@ -336,7 +340,11 @@ function QuanLyKhuyenMaiContent() {
                       sx={{ fontSize: 18, color: MAU.chinh }}
                     />
                     <Typography
-                      sx={{ fontWeight: 800, fontSize: 16, color: "var(--ev-text-primary, #1F2937)" }}
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: 16,
+                        color: "var(--ev-text-primary, #1F2937)",
+                      }}
                     >
                       {km.maGiamGia}
                     </Typography>
@@ -354,7 +362,11 @@ function QuanLyKhuyenMaiContent() {
                       <Chip
                         label="Đã hết hạn"
                         size="small"
-                        sx={{ height: 22, bgcolor: "#FDECEC", color: "#C62828" }}
+                        sx={{
+                          height: 22,
+                          bgcolor: "#FDECEC",
+                          color: "#C62828",
+                        }}
                       />
                     )}
                     {km.soLuongHieuLuc != null && (
@@ -378,25 +390,30 @@ function QuanLyKhuyenMaiContent() {
                     </Typography>
                   )}
 
-                  <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.5 }}>
+                  <Stack
+                    direction="row"
+                    spacing={0.75}
+                    sx={{ flexWrap: "wrap", gap: 0.5 }}
+                  >
                     {(km.danhSachKhoaHoc ?? []).length === 0 ? (
                       <Typography sx={{ fontSize: 12, color: "#bbb" }}>
                         Chưa áp dụng cho khóa học nào
                       </Typography>
                     ) : (
                       km.danhSachKhoaHoc!.map((c) => (
-                        <Chip
-                          key={c.id}
-                          label={c.tieuDe}
-                          size="small"
-                          sx={{
-                            height: 24,
-                            fontSize: "0.72rem",
-                            bgcolor: MAU.chinhNhat,
-                            color: MAU.chinh,
-                            maxWidth: 240,
-                          }}
-                        />
+                        <Tooltip key={c.id} title={c.tieuDe} arrow>
+                          <Chip
+                            label={c.tieuDe}
+                            size="small"
+                            sx={{
+                              height: 24,
+                              fontSize: "0.72rem",
+                              bgcolor: MAU.chinhNhat,
+                              color: MAU.chinh,
+                              maxWidth: 240,
+                            }}
+                          />
+                        </Tooltip>
                       ))
                     )}
                   </Stack>
@@ -404,7 +421,10 @@ function QuanLyKhuyenMaiContent() {
 
                 <Stack direction="row" spacing={0.5}>
                   <IconButton size="small" onClick={() => moSua(km)}>
-                    <EditOutlinedIcon fontSize="small" sx={{ color: MAU.chuXam }} />
+                    <EditOutlinedIcon
+                      fontSize="small"
+                      sx={{ color: MAU.chuXam }}
+                    />
                   </IconButton>
                   <IconButton size="small" onClick={() => setXacNhanXoa(km)}>
                     <DeleteIcon fontSize="small" sx={{ color: MAU.chuXam }} />
@@ -458,7 +478,14 @@ function QuanLyKhuyenMaiContent() {
             }}
           >
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  mb: 0.5,
+                  color: "var(--ev-text-primary, #1F2937)",
+                }}
+              >
                 Mã giảm giá *
               </Typography>
               <TextField
@@ -466,14 +493,24 @@ function QuanLyKhuyenMaiContent() {
                 size="small"
                 value={form.maGiamGia}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, maGiamGia: e.target.value.toUpperCase() }))
+                  setForm((p) => ({
+                    ...p,
+                    maGiamGia: e.target.value.toUpperCase(),
+                  }))
                 }
                 placeholder="VD: HE2026"
               />
             </Box>
 
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  mb: 0.5,
+                  color: "var(--ev-text-primary, #1F2937)",
+                }}
+              >
                 Phần trăm giảm (%) *
               </Typography>
               <TextField
@@ -486,14 +523,25 @@ function QuanLyKhuyenMaiContent() {
                 }
                 placeholder="VD: 20"
                 slotProps={{
-                  input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">%</InputAdornment>
+                    ),
+                  },
                 }}
               />
             </Box>
 
             <Stack direction="row" spacing={1.5}>
               <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    mb: 0.5,
+                    color: "var(--ev-text-primary, #1F2937)",
+                  }}
+                >
                   Ngày bắt đầu
                 </Typography>
                 <TextField
@@ -508,7 +556,14 @@ function QuanLyKhuyenMaiContent() {
               </Box>
 
               <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    mb: 0.5,
+                    color: "var(--ev-text-primary, #1F2937)",
+                  }}
+                >
                   Ngày kết thúc
                 </Typography>
                 <TextField
@@ -524,7 +579,14 @@ function QuanLyKhuyenMaiContent() {
             </Stack>
 
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5, color: "var(--ev-text-primary, #1F2937)" }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  mb: 0.5,
+                  color: "var(--ev-text-primary, #1F2937)",
+                }}
+              >
                 Số lượng hiệu lực (để trống = không giới hạn)
               </Typography>
               <TextField
@@ -540,7 +602,14 @@ function QuanLyKhuyenMaiContent() {
             </Box>
 
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 1, color: "var(--ev-text-primary, #1F2937)" }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  mb: 1,
+                  color: "var(--ev-text-primary, #1F2937)",
+                }}
+              >
                 Áp dụng cho khóa học đã duyệt *
               </Typography>
               {dangTaiKhoaHoc ? (
@@ -552,24 +621,33 @@ function QuanLyKhuyenMaiContent() {
                   Bạn chưa có khóa học nào được duyệt.
                 </Typography>
               ) : (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, maxHeight: 220, overflowY: "auto" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    maxHeight: 220,
+                    overflowY: "auto",
+                  }}
+                >
                   {khoaHocDaDuyet.map((c) => {
                     const active = form.idsKhoaHoc.includes(c.id);
                     return (
-                      <Chip
-                        key={c.id}
-                        label={c.tieuDe}
-                        onClick={() => toggleKhoaHoc(c.id)}
-                        sx={{
-                          borderRadius: "999px",
-                          fontWeight: 600,
-                          maxWidth: 260,
-                          border: `1.5px solid ${active ? MAU.chinh : "#ECE7E4"}`,
-                          bgcolor: active ? MAU.chinhNhat : "transparent",
-                          color: active ? MAU.chinh : "#4B5563",
-                          "&:hover": { bgcolor: MAU.chinhNhat },
-                        }}
-                      />
+                      <Tooltip key={c.id} title={c.tieuDe} arrow>
+                        <Chip
+                          label={c.tieuDe}
+                          onClick={() => toggleKhoaHoc(c.id)}
+                          sx={{
+                            borderRadius: "999px",
+                            fontWeight: 600,
+                            maxWidth: 260,
+                            border: `1.5px solid ${active ? MAU.chinh : "#ECE7E4"}`,
+                            bgcolor: active ? MAU.chinhNhat : "transparent",
+                            color: active ? MAU.chinh : "#4B5563",
+                            "&:hover": { bgcolor: MAU.chinhNhat },
+                          }}
+                        />
+                      </Tooltip>
                     );
                   })}
                 </Box>
@@ -578,7 +656,11 @@ function QuanLyKhuyenMaiContent() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button onClick={dongForm} disabled={dangLuu} sx={{ textTransform: "none", color: MAU.chuXam }}>
+          <Button
+            onClick={dongForm}
+            disabled={dangLuu}
+            sx={{ textTransform: "none", color: MAU.chuXam }}
+          >
             Hủy
           </Button>
           <Button
@@ -593,13 +675,22 @@ function QuanLyKhuyenMaiContent() {
               "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
             }}
           >
-            {dangLuu ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Lưu"}
+            {dangLuu ? (
+              <CircularProgress size={18} sx={{ color: "#fff" }} />
+            ) : (
+              "Lưu"
+            )}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Dialog xác nhận xoá */}
-      <Dialog open={!!xacNhanXoa} onClose={() => setXacNhanXoa(null)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={!!xacNhanXoa}
+        onClose={() => setXacNhanXoa(null)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700, color: MAU.chinh }}>
           Xoá mã giảm giá
         </DialogTitle>
@@ -609,16 +700,28 @@ function QuanLyKhuyenMaiContent() {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button onClick={() => setXacNhanXoa(null)} sx={{ textTransform: "none", color: MAU.chuXam }}>
+          <Button
+            onClick={() => setXacNhanXoa(null)}
+            sx={{ textTransform: "none", color: MAU.chuXam }}
+          >
             Hủy
           </Button>
           <Button
             variant="contained"
             onClick={xoaKhuyenMai}
             disabled={dangXoa}
-            sx={{ bgcolor: "#C62828", textTransform: "none", fontWeight: 700, "&:hover": { bgcolor: "#a02020" } }}
+            sx={{
+              bgcolor: "#C62828",
+              textTransform: "none",
+              fontWeight: 700,
+              "&:hover": { bgcolor: "#a02020" },
+            }}
           >
-            {dangXoa ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Xác nhận xoá"}
+            {dangXoa ? (
+              <CircularProgress size={18} sx={{ color: "#fff" }} />
+            ) : (
+              "Xác nhận xoá"
+            )}
           </Button>
         </DialogActions>
       </Dialog>
