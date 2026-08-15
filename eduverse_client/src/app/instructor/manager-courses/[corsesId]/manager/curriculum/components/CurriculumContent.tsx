@@ -112,6 +112,7 @@ import { v4 as uuidv4 } from "uuid";
 // ===== Import SignalR & Next =====
 import * as signalR from "@microsoft/signalr";
 import { useParams } from "next/navigation";
+import { createCourseHubConnection } from "@/src/services/signalRService";
 
 // ===== CSS Animation =====
 const pulseKeyframes = `
@@ -3169,15 +3170,7 @@ export default function CurriculumContent() {
       }
 
       try {
-        const connection = new signalR.HubConnectionBuilder()
-          .withUrl("http://localhost:5002/courseHub", {
-            accessTokenFactory: () => {
-              const token = localStorage.getItem("AccessToken") || "";
-              return token;
-            },
-          })
-          .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-          .build();
+        const connection = createCourseHubConnection();
 
         console.log("🔗 SignalR connecting...");
 
