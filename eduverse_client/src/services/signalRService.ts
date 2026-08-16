@@ -50,7 +50,6 @@ function buildHubUrl(hubPath: string): string {
 export function createHubConnection(hubPath: string): signalR.HubConnection {
   const url = buildHubUrl(hubPath);
 
-  // Kiểm tra nếu đang ở production nhưng URL vẫn là localhost -> cảnh báo
   if (process.env.NODE_ENV === "production" && url.includes("localhost")) {
     console.error(
       "[SignalR] Production environment but URL points to localhost!",
@@ -60,9 +59,8 @@ export function createHubConnection(hubPath: string): signalR.HubConnection {
   return new signalR.HubConnectionBuilder()
     .withUrl(url, {
       accessTokenFactory: getAccessToken,
-      // Đảm bảo gửi token qua query string cho cả WebSocket và LongPolling
-      // (SignalR tự động xử lý)
     })
+    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000]) // thêm dòng này
     .build();
 }
 
