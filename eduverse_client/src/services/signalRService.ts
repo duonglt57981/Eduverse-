@@ -32,14 +32,14 @@ function buildHubUrl(hubPath: string): string {
     );
   }
 
-  // Kiểm tra nếu BASE_URL đã chứa /api thì không thêm nữa
-  const hasApiPrefix = base.includes("/api");
-  const prefix = hasApiPrefix ? "" : "/api";
+  // SignalR Hub được map trực tiếp ở root (vd: /courseHub), KHÔNG nằm dưới /api
+  // như các REST Controller. Nên phải loại bỏ /api khỏi base trước khi ghép.
+  base = base.replace(/\/api\/?$/, "");
 
   // Đảm bảo hubPath bắt đầu bằng /
   const path = hubPath.startsWith("/") ? hubPath : "/" + hubPath;
 
-  const fullUrl = `${base}${prefix}${path}`;
+  const fullUrl = `${base}${path}`;
   console.log("[SignalR] Built URL:", fullUrl);
   return fullUrl;
 }

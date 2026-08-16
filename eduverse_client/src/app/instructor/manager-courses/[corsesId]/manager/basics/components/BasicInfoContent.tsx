@@ -43,6 +43,7 @@ import RichTextEditor from "../../../../create/context/Richtexteditor";
 import AuthGuard from "@/src/components/AuthGuard";
 import { MAU } from "../../components/courseEditCore";
 import { useCourseEdit } from "../../components/CourseEditContext";
+import { createCourseHubConnection } from "@/src/services/signalRService";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -570,15 +571,7 @@ export default function BasicInfoContent() {
 
     let isMounted = true;
 
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5002/courseHub", {
-        accessTokenFactory: () => {
-          const token = localStorage.getItem("AccessToken") || "";
-          return token;
-        },
-      })
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-      .build();
+    const connection = createCourseHubConnection();
 
     console.log("🔗 SignalR connecting...");
 
