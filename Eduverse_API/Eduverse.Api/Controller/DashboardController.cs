@@ -615,7 +615,7 @@ namespace Eduverse.Api.Controller
             }
 
             int totalStudents = myRegs.Where(r => r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
-            double totalRevenue = myRegs.Sum(RevenueForReg);
+            double totalRevenue = Math.Round(myRegs.Sum(RevenueForReg), 0);
 
             var allProgress = new List<TienDoHocTap>();
             try
@@ -657,7 +657,7 @@ namespace Eduverse.Api.Controller
                 monthlyRevenue.Add(new
                 {
                     label = "Th" + mStart.Month,
-                    totalAmount = totalAmount
+                    totalAmount = Math.Round(totalAmount, 0)
                 });
             }
 

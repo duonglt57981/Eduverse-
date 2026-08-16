@@ -159,7 +159,7 @@ namespace Eduverse.Service.PhanService
             await UpdateAsync(entity);
             await SaveAsync();
 
-            await _signalRService.NotifySectionUpdated(request.IdKhoaHoc.Value, entity.Id);
+            await _signalRService.NotifySectionUpdated(entity.IdKhoaHoc.Value, entity.Id);
 
             return _mapper.Map<Phan, PhanHocDto>(entity);
         }

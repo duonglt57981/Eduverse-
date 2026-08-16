@@ -2936,7 +2936,7 @@ namespace Eduverse.Service.KhoaHocService
                 Console.WriteLine($"Elasticsearch deletion failed: {ex.Message}");
             }
 
-            _signalRService.NotifyCourseUpdated(idKhoaHoc);
+            await _signalRService.NotifyCourseUpdated(idKhoaHoc);
 
             return true;
         }
