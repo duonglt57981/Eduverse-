@@ -73,15 +73,10 @@ function getRawToken(): string | null {
   return null;
 }
 
+import { parseJwtPayload } from "@/src/utils/jwt";
+
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
+  return parseJwtPayload(token);
 }
 
 function getUserIdFromToken(): string | null {

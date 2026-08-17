@@ -90,6 +90,8 @@ interface KhoaHocDto {
   duration?: string;
   progress?: number;
   rating?: number;
+  diemDanhGiaTrungBinh?: number;
+  soLuongDanhGia?: number;
   studentsCount?: number;
   level?: string;
   instructor?: string;
@@ -602,7 +604,7 @@ function HoverPanel({
               onClick={(e) => {
                 e.stopPropagation();
                 router.push(
-                  `/student/courses/my-courses/learning/${course.id}`,
+                  `/student/courses/my-courses/learning/${course.idDangKiKhoaHoc || course.id}`,
                 );
               }}
               sx={{
@@ -714,9 +716,12 @@ function CourseCard({
     ((course as unknown as Record<string, unknown>).giagoc as number) ??
     0;
   const title = course.tieuDe || course.title || "";
-  // Chỉ hiển thị đánh giá khi có dữ liệu thật (không dùng giá trị bịa)
-  const rating = course.rating ?? null;
+  const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh ?? 5.0;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
+  const instructorName =
+    course.danhSachGiangVienHienThi && course.danhSachGiangVienHienThi.length > 0
+      ? course.danhSachGiangVienHienThi.join(", ")
+      : course.tenGiangVien || course.instructor || "Giảng viên EduVerse";
 
   const handleCardEnter = () => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -893,22 +898,21 @@ function CourseCard({
           >
             {title}
           </Typography>
-          {course.danhSachGiangVienHienThi &&
-            course.danhSachGiangVienHienThi.length > 0 && (
-              <Typography
-                sx={{
-                  fontSize: 11.5,
-                  color: C.textMuted,
-                  fontWeight: 600,
-                  mb: 0.75,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {course.danhSachGiangVienHienThi.join(", ")}
-              </Typography>
-            )}
+
+          <Typography
+            sx={{
+              fontSize: 11.5,
+              color: C.textMuted,
+              fontWeight: 600,
+              mb: 0.75,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {instructorName}
+          </Typography>
+
           <Stack
             direction="row"
             spacing={1.5}
@@ -959,10 +963,22 @@ function CourseCard({
                 </Typography>
               )}
             </Box>
-            {students > 0 ? (
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Stack
                 direction="row"
-                spacing={0.4}
+                spacing={0.3}
+                sx={{ alignItems: "center" }}
+              >
+                <StarRounded sx={{ fontSize: 14, color: "#F59E0B" }} />
+                <Typography
+                  sx={{ fontSize: 11.5, fontWeight: 800, color: C.textDark }}
+                >
+                  {ratingVal.toFixed(1)}
+                </Typography>
+              </Stack>
+              <Stack
+                direction="row"
+                spacing={0.3}
                 sx={{ alignItems: "center" }}
               >
                 <PeopleAltRounded sx={{ fontSize: 13, color: C.textMuted }} />
@@ -972,20 +988,7 @@ function CourseCard({
                   {students.toLocaleString()}
                 </Typography>
               </Stack>
-            ) : rating != null && rating > 0 ? (
-              <Stack
-                direction="row"
-                spacing={0.4}
-                sx={{ alignItems: "center" }}
-              >
-                <StarRounded sx={{ fontSize: 14, color: C.warn }} />
-                <Typography
-                  sx={{ fontSize: 11.5, fontWeight: 700, color: C.textDark }}
-                >
-                  {rating}
-                </Typography>
-              </Stack>
-            ) : null}
+            </Stack>
           </Stack>
         </Box>
       </Paper>
@@ -1492,9 +1495,19 @@ export default function StudentHomeContent() {
 
   const handleOpenCourse = useCallback(
     (course: KhoaHocDto) => {
-      const id = course.id || course.idDangKiKhoaHoc;
+      const id = course.idDangKiKhoaHoc || course.id;
       if (!id) return;
-      router.push(`/student/enroll-courses/${id}`);
+      if (
+        course.daDangKy ||
+        course.idDangKiKhoaHoc ||
+        (course as any).progress !== undefined
+      ) {
+        router.push(
+          `/student/courses/my-courses/learning/${course.idDangKiKhoaHoc || course.id}`,
+        );
+      } else {
+        router.push(`/student/enroll-courses/${id}`);
+      }
     },
     [router],
   );

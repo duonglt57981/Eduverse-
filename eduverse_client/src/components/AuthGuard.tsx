@@ -3,25 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '@/src/store/hook';
-import { logout } from '@/src/store/auth/AuthSlice';
+import { logout, updateAccessToken } from '@/src/store/auth/AuthSlice';
+import { isTokenExpired } from '@/src/utils/jwt';
 import { Box, Paper, Typography } from '@mui/material';
 
 interface AuthGuardProps {
   children: React.ReactNode;
   /** Roles allowed to access this page. If empty, any authenticated user can access. */
   allowedRoles?: string[];
-}
-
-function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return true;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-    if (typeof payload.exp !== "number") return false;
-    return payload.exp < Math.floor(Date.now() / 1000);
-  } catch {
-    return true;
-  }
 }
 
 /**
@@ -51,18 +40,27 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
   };
 
   useEffect(() => {
+    const localToken = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
+    const activeToken = localToken || user?.accessToken;
+
     // 1. Not logged in → redirect to login
-    if (!user || !user.accessToken) {
+    if (!user || !activeToken) {
       router.replace('/auth/login');
       return;
     }
 
     // 2. Check token expiration
-    if (isTokenExpired(user.accessToken)) {
+    if (isTokenExpired(activeToken)) {
+      console.log("is Expired");
       localStorage.removeItem("AccessToken");
       dispatch(logout());
       router.replace('/auth/login');
       return;
+    }
+
+    // Sync Redux if localStorage has refreshed token
+    if (localToken && user?.accessToken !== localToken) {
+      dispatch(updateAccessToken(localToken));
     }
 
     // 3. Check role permission

@@ -251,6 +251,8 @@ namespace Eduverse.Api.Controller
                     continueCourses.Add(new
                     {
                         id = course.Id.ToString(),
+                        idDangKiKhoaHoc = reg.Id.ToString(),
+                        daDangKy = true,
                         title = course.TieuDe,
                         hinhAnhKhoaHoc = course.HinhAnhKhoaHoc,
                         subtitle = "Video bài giảng",
