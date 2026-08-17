@@ -12,6 +12,9 @@ export interface BaiGiangType {
 
   daHoanThanh?: boolean;
   thoiGianXem?: number;
+  createdBy?: string;
+  updatedBy?: string;
+  updatedDate?: string;
 
   danhSachTaiLieu?: TaiLieuType[];
   tienDoHocTap?: TienDoHocTapType;

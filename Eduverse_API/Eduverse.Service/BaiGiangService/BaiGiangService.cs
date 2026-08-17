@@ -301,6 +301,8 @@ namespace Eduverse.Service.BaiGiangService
 
                 await UpdateAsync(banGoc);
                 await SaveAsync();
+
+                await _signalRService.NotifyLectureUpdated(courseId, banGoc.Id);
                 return _mapper.Map<BaiGiang, BaiGiangDto>(banGoc);
             }
 

@@ -186,6 +186,14 @@ namespace Eduverse.Service.TaiLieuService
                 await CreateAsync(banGoc);
                 await SaveAsync();
             }
+            var courseId = await (from bg in _baiGiangRepository.GetQueryable()
+                                  join ph in _phanRepository.GetQueryable() on bg.IdPhan equals ph.Id
+                                  join kh in _khoaHocRepository.GetQueryable() on ph.IdKhoaHoc equals kh.Id
+                                  where bg.Id == banGoc.IdBaiGiang
+                                  select kh.Id).FirstOrDefaultAsync();
+
+            await _signalRService.NotifyDocumentUpdated(courseId, banGoc.Id);
+
             return _mapper.Map<TaiLieu, TaiLieuDto>(banGoc);
         }
 

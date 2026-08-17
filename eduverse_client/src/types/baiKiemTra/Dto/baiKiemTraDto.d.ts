@@ -18,6 +18,9 @@ export interface CauHoiDto {
   id: string;
   noiDung: string;
   thuTuSapXep?: number;
+  createdBy?: string;
+  updatedBy?: string;
+  updatedDate?: string;
   dapAns: DapAnDto[];
 }
 
@@ -54,6 +57,9 @@ export interface BaiKiemTraDto {
   trangThaiPheDuyet?: string;
   isSwap?: boolean;
   thuTuSapXep?: number;
+  createdBy?: string;
+  updatedBy?: string;
+  updatedDate?: string;
   cauHois?: CauHoiDto[];
   lyDoTuChois?: LyDoTuChoiDto;
 }

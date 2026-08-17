@@ -20,6 +20,9 @@ namespace Eduverse.Service.CauHoiService.Dto
         public int? ThuTuSapXep { get; set; }
         public string? TrangThai { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
+        public string? CreatedBy { get; set; }
+        public string? UpdatedBy { get; set; }
+        public DateTime UpdatedDate { get; set; }
 
         public List<DapAnDto> DanhSachDapAns { get; set; }
     }
