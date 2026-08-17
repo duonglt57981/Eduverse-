@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useDispatch } from "../../store/hook";
 import { externalLogin } from "../../store/auth/AuthSlice";
+import { getRoleHomePath } from "../../utils/roleHome";
 
 /**
  * GoogleAuthButton — Đăng nhập / Đăng ký bằng Google qua Google Identity Services (GIS).
@@ -180,16 +181,7 @@ export default function GoogleAuthButton({
           externalLogin({ provider: "Google", token: idToken }),
         );
         if (externalLogin.fulfilled.match(result)) {
-          const roles: string[] = result.payload.roles || [];
-          if (roles.includes("Admin")) {
-            router.push("/admin/dashboard");
-          } else if (roles.includes("GiaoVien")) {
-            router.push("/instructor/dashboard");
-          } else if (roles.includes("personnel")) {
-            router.push("/personnel/approve-courses");
-          } else {
-            router.push("/student/dashboard");
-          }
+          router.push(getRoleHomePath(result.payload.roles));
         }
         // Trường hợp thất bại: thunk đã set state.auth.error → trang cha tự hiển thị.
       } finally {

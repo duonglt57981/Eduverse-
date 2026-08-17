@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '@/src/store/hook';
 import { logout, updateAccessToken } from '@/src/store/auth/AuthSlice';
 import { isTokenExpired } from '@/src/utils/jwt';
+import { getRoleHomePath } from '@/src/utils/roleHome';
 import { Box, Paper, Typography } from '@mui/material';
 
 interface AuthGuardProps {
@@ -33,11 +34,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
   const [checked, setChecked] = useState(false);
   const [forbidden, setForbidden] = useState(false);
 
-  const getHomeRoute = () => {
-    if (roles.includes('Admin')) return '/admin/dashboard';
-    if (roles.includes('GiaoVien')) return '/instructor/dashboard';
-    return '/student/dashboard';
-  };
+  const getHomeRoute = () => getRoleHomePath(roles);
 
   useEffect(() => {
     const localToken = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowForwardRounded,
   PlayArrowRounded,
@@ -19,6 +20,9 @@ import {
 } from '@mui/material';
 import KhoaHocService from '@/src/services/KhoaHocService';
 import { danhMucService } from '@/src/services/danhmucService';
+import { useSelector } from '@/src/store/hook';
+import { isTokenExpired } from '@/src/utils/jwt';
+import { getRoleHomePath } from '@/src/utils/roleHome';
 import {
   benefits,
   mentorHighlights,
@@ -56,6 +60,18 @@ export default function LandingPage() {
   const [featured, setFeatured] = useState<LandingCourse[]>([]);
   const [realStats, setRealStats] = useState<LandingStat[]>([]);
   const courseService = useMemo(() => new KhoaHocService(), []);
+  const router = useRouter();
+  const user = useSelector((s) => s.auth.user);
+  const roles = useSelector((s) => s.auth.roles);
+
+  // Người dùng đã đăng nhập trước đó (đóng web rồi quay lại "/") → đưa thẳng
+  // vào trang tương ứng với vai trò thay vì hiện lại trang giới thiệu.
+  useEffect(() => {
+    const token = user?.accessToken;
+    if (token && !isTokenExpired(token)) {
+      router.replace(getRoleHomePath(roles));
+    }
+  }, [user, roles, router]);
 
   useEffect(() => {
     let active = true;
