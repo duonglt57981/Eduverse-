@@ -19,12 +19,6 @@ import {
   MenuItem,
   CircularProgress,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Alert,
-  Snackbar,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -37,7 +31,6 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
@@ -57,17 +50,6 @@ const FILE_BASE_URL =
 
 const DEFAULT_SORT = "moi-nhat";
 
-/**
- * MUI's `alpha()` only accepts real color values (#hex, rgb(), hsl()...).
- * Several tokens in COLORS (ink, inkSoft, primary, ...) are CSS custom
- * properties like `var(--ev-text-primary, #1F2937)`, which `alpha()`
- * cannot parse and throws on at runtime.
- *
- * `mix()` uses native CSS `color-mix()` instead, which works with CSS
- * variables directly (and stays correct if the variable changes at
- * runtime, e.g. theme switching) — a drop-in replacement for
- * `alpha(color, opacity)` wherever `color` may be a CSS variable.
- */
 function mix(cssColor: string, opacity: number) {
   const pct = Math.round(Math.max(0, Math.min(1, opacity)) * 100);
   return `color-mix(in srgb, ${cssColor} ${pct}%, transparent)`;
@@ -81,19 +63,27 @@ function resolveImageUrl(path?: string | null): string | null {
   return base ? `${base}${rel}` : path;
 }
 
-function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
+function CourseThumbnail({
+  src,
+  alt,
+  width = 160,
+}: {
+  src?: string | null;
+  alt: string;
+  width?: number;
+}) {
   const [errored, setErrored] = useState(false);
   const resolved = resolveImageUrl(src);
   const showFallback = !resolved || errored;
 
   return (
-    <Box sx={{ position: "relative", flexShrink: 0 }}>
+    <Box sx={{ position: "relative", flexShrink: 0, width }}>
       {showFallback ? (
         <Box
           sx={{
-            width: 88,
-            height: 88,
-            borderRadius: 2,
+            width: "100%",
+            aspectRatio: "16/9",
+            borderRadius: 1.25,
             bgcolor: COLORS.paper,
             border: `1px solid ${COLORS.line}`,
             display: "flex",
@@ -110,8 +100,8 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
           alt={alt}
           onError={() => setErrored(true)}
           sx={{
-            width: 88,
-            height: 88,
+            width: "100%",
+            aspectRatio: "16/9",
             borderRadius: 2,
             objectFit: "cover",
             bgcolor: COLORS.line,
@@ -120,7 +110,7 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
         />
       )}
 
-      {/* Huy hiệu đã duyệt — gắn trực tiếp lên ảnh, thay cho chip trạng thái rời rạc */}
+      {/* Huy hiệu đã duyệt — gắn trực tiếp lên ảnh */}
       <Tooltip title="Khóa học đã được duyệt">
         <Box
           sx={{
@@ -158,10 +148,6 @@ export default function LichSuKiemDuyetPage() {
   const [items, setItems] = useState<any[]>([]);
   const [totalPage, setTotalPage] = useState(1);
   const [tongDaDuyet, setTongDaDuyet] = useState(0);
-  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const isFilterDirty =
     keywordInput.trim() !== "" ||
@@ -268,53 +254,6 @@ export default function LichSuKiemDuyetPage() {
     router.push(`/admin/inspect-courses/${id}`);
   };
 
-  const handleOpenDelete = (item: any) => {
-    setDeleteError("");
-    setDeleteTarget(item);
-  };
-
-  const handleCloseDelete = () => {
-    if (deleting) return;
-    setDeleteTarget(null);
-    setDeleteError("");
-  };
-
-  const handleDeleteCourse = async () => {
-    const id = deleteTarget?.id || deleteTarget?.idKhoaHoc;
-    if (!id) return;
-
-    setDeleting(true);
-    setDeleteError("");
-    try {
-      const response = await khoaHocService.DeleteKhoaHoc(id);
-      if (response?.status === false) {
-        setDeleteError(response.message || "Không thể xóa khóa học này.");
-        return;
-      }
-
-      const title = deleteTarget?.tieuDe || "Khóa học";
-      setDeleteTarget(null);
-      setSuccessMessage(`Đã xóa khóa học "${title}".`);
-
-      if (items.length === 1 && page > 1) {
-        setPage((currentPage) => currentPage - 1);
-      } else {
-        await fetchList();
-      }
-      await fetchStats();
-    } catch (error) {
-      const message =
-        typeof error === "string"
-          ? error
-          : (error as any)?.response?.data?.message ||
-            (error as any)?.message ||
-            "Có lỗi xảy ra khi xóa khóa học.";
-      setDeleteError(message);
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   const handleGoBack = () => {
     router.push("/admin/courses");
   };
@@ -322,7 +261,13 @@ export default function LichSuKiemDuyetPage() {
   return (
     <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
-        <Box sx={{ p: { xs: 2.5, sm: 3.5 }, width: "100%", fontFamily: FONTS.display }}>
+        <Box
+          sx={{
+            p: { xs: 2.5, sm: 3.5 },
+            width: "100%",
+            fontFamily: FONTS.display,
+          }}
+        >
           {/* Hero — tiêu đề, quay lại và số liệu gộp thành một dải duy nhất */}
           <Box
             sx={{
@@ -782,21 +727,6 @@ export default function LichSuKiemDuyetPage() {
                               <VisibilityRoundedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Xóa khóa học">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenDelete(item);
-                              }}
-                              sx={{
-                                color: "error.main",
-                                "&:hover": { bgcolor: alpha("#D32F2F", 0.08) },
-                              }}
-                            >
-                              <DeleteOutlineRoundedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
                           <ChevronRightRoundedIcon
                             className="go-arrow"
                             sx={{
@@ -833,62 +763,6 @@ export default function LichSuKiemDuyetPage() {
               )}
             </Box>
           </Box>
-
-          <Dialog
-            open={!!deleteTarget}
-            onClose={handleCloseDelete}
-            maxWidth="xs"
-            fullWidth
-            slotProps={{ paper: { sx: { borderRadius: 3 } } }}
-          >
-            <DialogTitle sx={{ fontWeight: 800, color: "error.main" }}>
-              Xóa khóa học
-            </DialogTitle>
-            <DialogContent>
-              <Typography sx={{ color: COLORS.inkSoft }}>
-                Bạn có chắc muốn xóa khóa học &quot;
-                <strong>{deleteTarget?.tieuDe || "Khóa học"}</strong>&quot;?
-                Hành động này không thể hoàn tác.
-              </Typography>
-              {deleteError && (
-                <Alert severity="error" sx={{ mt: 2 }}>
-                  {deleteError}
-                </Alert>
-              )}
-            </DialogContent>
-            <DialogActions sx={{ p: 2 }}>
-              <Button onClick={handleCloseDelete} disabled={deleting}>
-                Hủy
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDeleteCourse}
-                disabled={deleting}
-                startIcon={
-                  deleting ? <CircularProgress size={16} color="inherit" /> : undefined
-                }
-                sx={{ textTransform: "none", fontWeight: 700 }}
-              >
-                {deleting ? "Đang xóa..." : "Xóa khóa học"}
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Snackbar
-            open={!!successMessage}
-            autoHideDuration={4000}
-            onClose={() => setSuccessMessage("")}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          >
-            <Alert
-              severity="success"
-              variant="filled"
-              onClose={() => setSuccessMessage("")}
-            >
-              {successMessage}
-            </Alert>
-          </Snackbar>
         </Box>
       </DashboardShell>
     </AuthGuard>

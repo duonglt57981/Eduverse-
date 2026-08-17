@@ -31,6 +31,7 @@ import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
@@ -40,7 +41,6 @@ import {
   boxSx,
   PAGE_SIZE,
 } from "@/src/app/admin/approve-courses/types/constants";
-import { StatusChip } from "@/src/app/admin/approve-courses/types/index";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
 
@@ -53,6 +53,55 @@ const FILE_BASE_URL =
 
 const DEFAULT_SORT = "moi-nhat";
 const DEFAULT_TAB: "TatCa" | "DaDuyet" | "TuChoi" = "TatCa";
+
+// Cấu hình hiển thị cho từng trạng thái phê duyệt (đặt cấp module, dùng chung, không phải component)
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    color: string;
+    bg: string;
+    border: string;
+    icon: React.ReactNode;
+  }
+> = {
+  DaDuyet: {
+    label: "Đã duyệt",
+    color: "#059669",
+    bg: "linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0.05) 100%)",
+    border: "rgba(16,185,129,0.3)",
+    icon: <CheckCircleRoundedIcon sx={{ fontSize: 14 }} />,
+  },
+  TuChoi: {
+    label: "Từ chối",
+    color: "#DC2626",
+    bg: "linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.05) 100%)",
+    border: "rgba(239,68,68,0.3)",
+    icon: <CancelRoundedIcon sx={{ fontSize: 14 }} />,
+  },
+  ChoDuyet: {
+    label: "Chờ duyệt",
+    color: "#D97706",
+    bg: "linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.05) 100%)",
+    border: "rgba(245,158,11,0.3)",
+    icon: <HourglassTopRoundedIcon sx={{ fontSize: 14 }} />,
+  },
+};
+
+const DEFAULT_STATUS_CONFIG = {
+  label: "Không rõ",
+  color: "#6B7280",
+  bg: "rgba(107,114,128,0.08)",
+  border: "rgba(107,114,128,0.25)",
+  icon: null as React.ReactNode,
+};
+
+function getStatusConfig(trangThai?: string | null) {
+  if (!trangThai) return DEFAULT_STATUS_CONFIG;
+  return (
+    STATUS_CONFIG[trangThai] ?? { ...DEFAULT_STATUS_CONFIG, label: trangThai }
+  );
+}
 
 function resolveImageUrl(path?: string | null): string | null {
   if (!path) return null;
@@ -70,9 +119,9 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
     return (
       <Box
         sx={{
-          width: 96,
-          height: 64,
-          borderRadius: 1.5,
+          width: { xs: 112, sm: 160 },
+          height: { xs: 63, sm: 90 },
+          borderRadius: 1.25,
           flexShrink: 0,
           bgcolor: COLORS.paper,
           border: `1px dashed ${COLORS.line}`,
@@ -81,7 +130,9 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
           justifyContent: "center",
         }}
       >
-        <ImageRoundedIcon sx={{ color: alpha(COLORS.primary, 0.25) }} />
+        <ImageRoundedIcon
+          sx={{ color: alpha(COLORS.primary, 0.25), fontSize: 32 }}
+        />
       </Box>
     );
   }
@@ -93,9 +144,9 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
       alt={alt}
       onError={() => setErrored(true)}
       sx={{
-        width: 96,
-        height: 64,
-        borderRadius: 1.5,
+        width: { xs: 112, sm: 160 },
+        height: { xs: 63, sm: 90 },
+        borderRadius: 1.25,
         objectFit: "cover",
         flexShrink: 0,
         bgcolor: COLORS.line,
@@ -175,23 +226,27 @@ export default function LichSuKiemDuyetPage() {
   const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try {
-      const params: any = {
-        pageIndex: 1,
-        pageSize: 20,
-      };
-      const res = await kiemDuyetService.GetListLichSuKiemDuyet(params);
+      // Gọi song song để lấy số lượng của từng trạng thái
+      const [daDuyetRes, tuChoiRes] = await Promise.all([
+        kiemDuyetService.GetListLichSuKiemDuyet({
+          pageIndex: 1,
+          pageSize: 1,
+          trangThaiPheDuyet: "DaDuyet",
+        }),
+        kiemDuyetService.GetListLichSuKiemDuyet({
+          pageIndex: 1,
+          pageSize: 1,
+          trangThaiPheDuyet: "TuChoi",
+        }),
+      ]);
 
-      let list: any[] = [];
-      if (res?.data) {
-        list = res.data.items || [];
-      }
+      const daDuyet = daDuyetRes?.data?.totalCount || 0;
+      const tuChoi = tuChoiRes?.data?.totalCount || 0;
 
       setStats({
-        daDuyet: list.filter((x: any) => x.trangThaiPheDuyet === "DaDuyet")
-          .length,
-        tuChoi: list.filter((x: any) => x.trangThaiPheDuyet === "TuChoi")
-          .length,
-        tong: list.length,
+        daDuyet,
+        tuChoi,
+        tong: daDuyet + tuChoi, // tổng số đã xử lý
       });
     } catch (e) {
       console.error("Lỗi tải thống kê:", e);
@@ -607,11 +662,12 @@ export default function LichSuKiemDuyetPage() {
                   </Typography>
                 </Box>
               ) : (
-                <Stack spacing={1.25}>
+                <Stack spacing={1.75}>
                   {items.map((item) => {
                     const id = item.idKhoaHoc || item.id;
                     const trangThaiPheDuyet =
                       item.trangThaiPheDuyet || item.trangThai;
+                    const statusCfg = getStatusConfig(trangThaiPheDuyet);
 
                     return (
                       <Box
@@ -620,17 +676,17 @@ export default function LichSuKiemDuyetPage() {
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 2,
-                          p: 1.25,
+                          gap: { xs: 1.5, sm: 2.5 },
+                          p: { xs: 1.5, sm: 2 },
                           border: `1px solid ${COLORS.line}`,
-                          borderRadius: 2.5,
+                          borderRadius: 2,
                           cursor: "pointer",
                           transition: "all .15s ease",
                           bgcolor: "var(--ev-paper, #FFFFFF)",
                           "&:hover": {
-                            boxShadow: `0 2px 10px ${alpha(
+                            boxShadow: `0 4px 16px ${alpha(
                               COLORS.primary,
-                              0.12,
+                              0.14,
                             )}`,
                             borderColor: COLORS.primary,
                           },
@@ -645,30 +701,51 @@ export default function LichSuKiemDuyetPage() {
                           <Typography
                             sx={{
                               fontWeight: 700,
-                              fontSize: 14.5,
+                              fontSize: { xs: 15, sm: 16.5 },
                               color: COLORS.ink,
                               overflow: "hidden",
                               textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              mb: 0.5,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              lineHeight: 1.35,
+                              mb: 1,
                             }}
                           >
                             {item.tieuDe}
                           </Typography>
                           <Stack
                             direction="row"
-                            spacing={1}
+                            spacing={1.25}
                             useFlexGap
                             sx={{ alignItems: "center", flexWrap: "wrap" }}
                           >
-                            <StatusChip
-                              trangThai={trangThaiPheDuyet}
-                              size="small"
-                            />
+                            {/* Trạng thái phê duyệt - dạng pill có icon, thay cho StatusChip cũ */}
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 0.6,
+                                px: 1.4,
+                                py: 0.6,
+                                borderRadius: "999px",
+                                background: statusCfg.bg,
+                                border: `1px solid ${statusCfg.border}`,
+                                color: statusCfg.color,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                letterSpacing: 0.2,
+                                lineHeight: 1,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {statusCfg.icon}
+                              {statusCfg.label}
+                            </Box>
+
                             {item.createDate && (
                               <Typography
-                                variant="caption"
-                                sx={{ color: COLORS.inkSoft }}
+                                sx={{ color: COLORS.inkSoft, fontSize: 13 }}
                               >
                                 Ngày tạo:{" "}
                                 {new Date(item.createDate).toLocaleDateString(
@@ -678,8 +755,7 @@ export default function LichSuKiemDuyetPage() {
                             )}
                             {item.createBy && (
                               <Typography
-                                variant="caption"
-                                sx={{ color: COLORS.inkSoft }}
+                                sx={{ color: COLORS.inkSoft, fontSize: 13 }}
                               >
                                 Người tạo: {item.createBy}
                               </Typography>
@@ -688,12 +764,23 @@ export default function LichSuKiemDuyetPage() {
                         </Box>
 
                         <IconButton
-                          size="small"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOpenCourse(id);
                           }}
-                          sx={{ color: "rgba(31, 41, 55, 0.5)" }}
+                          sx={{
+                            color: "rgba(31, 41, 55, 0.5)",
+                            border: `1px solid ${COLORS.line}`,
+                            borderRadius: "12px",
+                            width: 40,
+                            height: 40,
+                            flexShrink: 0,
+                            "&:hover": {
+                              borderColor: COLORS.primary,
+                              color: COLORS.primary,
+                              bgcolor: alpha(COLORS.primary, 0.06),
+                            },
+                          }}
                         >
                           <VisibilityRoundedIcon fontSize="small" />
                         </IconButton>

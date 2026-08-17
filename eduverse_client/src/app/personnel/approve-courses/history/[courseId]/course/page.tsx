@@ -2,7 +2,13 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Box,
@@ -16,7 +22,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  alpha,
   Snackbar,
   Alert,
   Chip,
@@ -58,6 +63,7 @@ import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
@@ -91,6 +97,45 @@ const FONTS = {
   body: FONT_FAMILY,
 };
 
+function mix(color: string, weight: number): string {
+  const w = Math.min(1, Math.max(0, weight));
+
+  const varMatch = color.match(/^var\(\s*(--[\w-]+)\s*(?:,\s*(.+))?\)$/i);
+  if (varMatch) {
+    const [, varName, fallback] = varMatch;
+    if (fallback) {
+      return `color-mix(in srgb, var(${varName}, ${fallback}) ${
+        w * 100
+      }%, transparent)`;
+    }
+    return `color-mix(in srgb, var(${varName}) ${w * 100}%, transparent)`;
+  }
+
+  const rgbMatch = color.match(
+    /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i,
+  );
+  if (rgbMatch) {
+    const [, r, g, b] = rgbMatch;
+    return `rgba(${r}, ${g}, ${b}, ${w})`;
+  }
+
+  let hex = color.replace("#", "");
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${w})`;
+  }
+
+  return color;
+}
+
 const boxSx = {
   border: `1px solid ${COLORS.line}`,
   borderRadius: 2.5,
@@ -113,11 +158,11 @@ const scrollbarSx = {
   "&::-webkit-scrollbar": { width: 6 },
   "&::-webkit-scrollbar-track": { background: "transparent" },
   "&::-webkit-scrollbar-thumb": {
-    background: alpha(COLORS.primary, 0.25),
+    background: mix(COLORS.primary, 0.25),
     borderRadius: 8,
   },
   "&::-webkit-scrollbar-thumb:hover": {
-    background: alpha(COLORS.primary, 0.4),
+    background: mix(COLORS.primary, 0.4),
   },
 };
 
@@ -584,6 +629,50 @@ function StatusChip({
   );
 }
 
+// ======================== REJECTION REASON ICON ========================
+function RejectionReasonIcon({ lyDo }: { lyDo?: string | null }) {
+  const [open, setOpen] = useState(false);
+  if (!lyDo) return null;
+  return (
+    <>
+      <Tooltip title="Lý do từ chối">
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          sx={{
+            color: COLORS.danger,
+            "&:hover": { bgcolor: mix(COLORS.danger, 0.08) },
+          }}
+        >
+          <WarningAmberRoundedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <WarningAmberRoundedIcon color="error" />
+          Lý do từ chối
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {lyDo}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Đóng</Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
+
 // ======================== MO TA KHOA HOC COMPONENT ========================
 function MoTaKhoaHoc({ html }: { html: string }) {
   const [expanded, setExpanded] = useState(false);
@@ -618,7 +707,7 @@ function MoTaKhoaHoc({ html }: { html: string }) {
               left: 0,
               right: 0,
               height: 40,
-              background: `linear-gradient(to bottom, ${alpha("#ffffff", 0)}, #ffffff)`,
+              background: `linear-gradient(to bottom, ${mix("#ffffff", 0)}, #ffffff)`,
             },
           }),
         }}
@@ -656,7 +745,7 @@ function LichSuKiemDuyet({ lichSu }: { lichSu?: LichSuKiemDuyetDto | null }) {
       sx={{
         ...boxSx,
         p: 2.5,
-        bgcolor: alpha(COLORS.paper, 0.6),
+        bgcolor: mix(COLORS.paper, 0.6),
       }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 2 }}>
@@ -694,7 +783,7 @@ function LichSuKiemDuyet({ lichSu }: { lichSu?: LichSuKiemDuyetDto | null }) {
           <Chip
             label={statusLabel}
             sx={{
-              bgcolor: alpha(statusColor, 0.1),
+              bgcolor: mix(statusColor, 0.1),
               color: statusColor,
               fontWeight: 600,
               borderRadius: 1,
@@ -793,8 +882,8 @@ function LichSuKiemDuyet({ lichSu }: { lichSu?: LichSuKiemDuyetDto | null }) {
               elevation={0}
               sx={{
                 p: 1.5,
-                bgcolor: alpha(COLORS.danger, 0.04),
-                border: `1px solid ${alpha(COLORS.danger, 0.15)}`,
+                bgcolor: mix(COLORS.danger, 0.04),
+                border: `1px solid ${mix(COLORS.danger, 0.15)}`,
                 borderRadius: 1.5,
               }}
             >
@@ -884,6 +973,21 @@ function KhoiTenKhoaHoc({ detail }: { detail: KiemDuyetDetailDto }) {
               )}
             </Stack>
           )}
+
+          {/* 👇 THÊM DÒNG DANH MỤC (xuống dòng) */}
+          {detail?.danhMucs && detail.danhMucs.length > 0 && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: COLORS.inkSoft,
+                display: "block",
+                width: "100%",
+                mt: 0.5,
+              }}
+            >
+              Danh mục: {detail.danhMucs.join(", ")}
+            </Typography>
+          )}
         </Box>
       </Stack>
     </Box>
@@ -901,7 +1005,7 @@ function KhoiTuChoiForm({
   return (
     <Box
       sx={{
-        border: `1px solid ${alpha(COLORS.danger, 0.3)}`,
+        border: `1px solid ${mix(COLORS.danger, 0.3)}`,
         borderRadius: 2,
         bgcolor: COLORS.dangerSoft,
         p: 2,
@@ -946,7 +1050,7 @@ function KhoiTuChoiForm({
   );
 }
 
-// ======================== CAU HOI ROW COMPONENT ========================
+// ======================== CAU HOI ROW COMPONENT (đã sửa hiển thị HTML) ========================
 function CauHoiRow({ cauHoi }: { cauHoi: any }) {
   const [expanded, setExpanded] = useState(false);
   const dapAns: any[] = cauHoi.dapAns ?? [];
@@ -971,13 +1075,20 @@ function CauHoiRow({ cauHoi }: { cauHoi: any }) {
         }}
       >
         <HelpOutlineRoundedIcon sx={{ color: COLORS.inkSoft, fontSize: 14 }} />
-        <Typography
-          variant="body2"
-          sx={{ flex: 1, color: COLORS.ink, fontSize: 13 }}
-          noWrap
-        >
-          {cauHoi.noiDungCauHoi ?? cauHoi.tenCauHoi ?? cauHoi.tieuDe}
-        </Typography>
+        <Box
+          sx={{
+            flex: 1,
+            color: COLORS.ink,
+            fontSize: 13,
+            wordBreak: "break-word",
+            "& strong": { fontWeight: 700 },
+            "& p": { m: 0 },
+          }}
+          dangerouslySetInnerHTML={{
+            __html:
+              cauHoi.noiDungCauHoi ?? cauHoi.tenCauHoi ?? cauHoi.tieuDe ?? "",
+          }}
+        />
         {dapAns.length > 0 && (
           <ExpandMoreIcon
             sx={{
@@ -1031,595 +1142,8 @@ function CauHoiRow({ cauHoi }: { cauHoi: any }) {
   );
 }
 
-// ======================== SIDEBAR COMPONENT ========================
-function KiemDuyetSidebar({
-  detail,
-  selected,
-  onSelectContent,
-}: {
-  detail: any;
-  selected: any;
-  onSelectContent: (
-    loai: "baiGiang" | "taiLieu" | "baiKiemTra",
-    item: any,
-  ) => void;
-}) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [openPhan, setOpenPhan] = useState<Record<string, boolean>>({});
-  const [openTaiLieu, setOpenTaiLieu] = useState<Record<string, boolean>>({});
-  const [openBaiKiemTra, setOpenBaiKiemTra] = useState<Record<string, boolean>>(
-    {},
-  );
-
-  const togglePhan = (id: string) =>
-    setOpenPhan((p) => ({ ...p, [id]: p[id] === false ? true : !p[id] }));
-  const toggleTaiLieu = (id: string) =>
-    setOpenTaiLieu((p) => ({ ...p, [id]: !p[id] }));
-  const toggleBaiKiemTra = (id: string) =>
-    setOpenBaiKiemTra((p) => ({ ...p, [id]: !p[id] }));
-
-  const isActive = (loai: "baiGiang" | "taiLieu" | "baiKiemTra", item: any) => {
-    if (!selected || selected.loai !== loai) return false;
-    const key =
-      loai === "baiGiang"
-        ? "idBaiGiang"
-        : loai === "taiLieu"
-          ? "idTaiLieu"
-          : "idBaiKiemTra";
-    return (selected.item[key] ?? selected.item.id) === (item[key] ?? item.id);
-  };
-
-  const phans: any[] = detail?.phans ?? detail?.phanHocs ?? [];
-  const flatBaiGiang: any[] =
-    detail?.baiGiangs ?? detail?.baiGiangChoDuyet ?? [];
-  const flatTaiLieu: any[] = detail?.taiLieus ?? detail?.taiLieuChoDuyet ?? [];
-  const flatBaiKiemTra: any[] =
-    detail?.baiKiemTras ?? detail?.baiKiemTraChoDuyet ?? [];
-
-  const taiLieuOfBaiGiang = useCallback(
-    (bg: any) => {
-      if (Array.isArray(bg.taiLieus) && bg.taiLieus.length > 0)
-        return sortPending(bg.taiLieus);
-      return sortPending(
-        flatTaiLieu.filter((tl) => tl.idBaiGiang === bg.idBaiGiang),
-      );
-    },
-    [flatTaiLieu],
-  );
-
-  const baiKiemTraOfPhan = useCallback(
-    (phan: any, phanId: any) => {
-      if (Array.isArray(phan.baiKiemTras) && phan.baiKiemTras.length > 0)
-        return sortPending(phan.baiKiemTras);
-      return sortPending(flatBaiKiemTra.filter((bkt) => bkt.idPhan === phanId));
-    },
-    [flatBaiKiemTra],
-  );
-
-  const filteredPhans = useMemo(() => {
-    if (!searchTerm.trim()) return phans;
-    const lower = searchTerm.toLowerCase();
-    const match = (s?: string) => (s ?? "").toLowerCase().includes(lower);
-    return phans
-      .map((phan, idx) => {
-        const id = phan.id ?? phan.idPhan ?? `phan-${idx}`;
-        const baiGiangs = (
-          Array.isArray(phan.baiGiangs)
-            ? phan.baiGiangs
-            : flatBaiGiang.filter((bg) => bg.idPhan === id)
-        ).filter(
-          (bg: any) =>
-            match(bg.tenBaiGiang) ||
-            match(bg.tieuDe) ||
-            taiLieuOfBaiGiang(bg).some(
-              (tl: any) => match(tl.tenTaiLieu) || match(tl.tieuDe),
-            ),
-        );
-        const baiKiemTras = baiKiemTraOfPhan(phan, id).filter(
-          (bkt: any) => match(bkt.tenBaiKiemTra) || match(bkt.tieuDe),
-        );
-        if (
-          match(phan.tenPhan) ||
-          baiGiangs.length > 0 ||
-          baiKiemTras.length > 0
-        ) {
-          return { ...phan, baiGiangs, baiKiemTras };
-        }
-        return null;
-      })
-      .filter(Boolean) as any[];
-  }, [phans, searchTerm, flatBaiGiang, taiLieuOfBaiGiang, baiKiemTraOfPhan]);
-
-  const { tongSo, tongSoCho } = useMemo(() => {
-    let tong = 0;
-    let cho = 0;
-    const countBg = (bg: any) => {
-      tong += 1;
-      if (isTrangThaiCho(bg.trangThaiPheDuyet)) cho += 1;
-      taiLieuOfBaiGiang(bg).forEach((tl: any) => {
-        tong += 1;
-        if (isTrangThaiCho(tl.trangThaiPheDuyet)) cho += 1;
-      });
-    };
-    if (phans.length > 0) {
-      phans.forEach((phan: any, idx: number) => {
-        const id = phan.id ?? phan.idPhan ?? `phan-${idx}`;
-        const baiGiangs = Array.isArray(phan.baiGiangs)
-          ? phan.baiGiangs
-          : flatBaiGiang.filter((bg) => bg.idPhan === id);
-        baiGiangs.forEach(countBg);
-        baiKiemTraOfPhan(phan, id).forEach((bkt: any) => {
-          tong += 1;
-          if (isTrangThaiCho(bkt.trangThaiPheDuyet)) cho += 1;
-        });
-      });
-    } else {
-      flatBaiGiang.forEach(countBg);
-      flatBaiKiemTra.forEach((bkt: any) => {
-        tong += 1;
-        if (isTrangThaiCho(bkt.trangThaiPheDuyet)) cho += 1;
-      });
-    }
-    return { tongSo: tong, tongSoCho: cho };
-  }, [
-    phans,
-    flatBaiGiang,
-    flatBaiKiemTra,
-    taiLieuOfBaiGiang,
-    baiKiemTraOfPhan,
-  ]);
-
-  const phanTram =
-    tongSo > 0 ? Math.round(((tongSo - tongSoCho) / tongSo) * 100) : 100;
-
-  const renderTaiLieu = (bg: any) => {
-    const taiLieus = taiLieuOfBaiGiang(bg);
-    if (taiLieus.length === 0) return null;
-    const bgId = bg.idBaiGiang ?? bg.id;
-    const open = openTaiLieu[bgId] ?? false;
-    const soCho = demCho(taiLieus);
-    return (
-      <Box sx={{ borderTop: `1px solid ${COLORS.line}` }}>
-        <ListItemButton
-          onClick={() => toggleTaiLieu(bgId)}
-          sx={{ pl: 4, py: 0.75 }}
-        >
-          <AttachFileIcon
-            sx={{ fontSize: 14, color: COLORS.primary, mr: 0.75 }}
-          />
-          <Typography
-            variant="caption"
-            sx={{ flex: 1, fontWeight: 500, color: COLORS.inkSoft }}
-          >
-            {taiLieus.length} tài liệu
-          </Typography>
-          {soCho > 0 && (
-            <Chip
-              label={`${soCho} chờ duyệt`}
-              size="small"
-              sx={{
-                height: 18,
-                fontSize: 10,
-                fontWeight: 700,
-                bgcolor: COLORS.gold,
-                color: "#fff",
-                mr: 0.5,
-              }}
-            />
-          )}
-          {open ? (
-            <ExpandLessIcon sx={{ fontSize: 16 }} />
-          ) : (
-            <ExpandMoreIcon sx={{ fontSize: 16 }} />
-          )}
-        </ListItemButton>
-        <Collapse in={open}>
-          <Stack sx={{ pl: 4, pr: 1.5, pb: 1, gap: 0.5 }}>
-            {taiLieus.map((tl: any, idx: number) => {
-              const active = isActive("taiLieu", tl);
-              const pending = isTrangThaiCho(tl.trangThaiPheDuyet);
-              return (
-                <Box
-                  key={tl.idTaiLieu ?? tl.id ?? idx}
-                  onClick={() => onSelectContent("taiLieu", tl)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    cursor: "pointer",
-                    transition: "background-color .15s, border-color .15s",
-                    border: `1px solid ${active ? COLORS.primary : pending ? COLORS.gold : COLORS.line}`,
-                    bgcolor: active
-                      ? alpha(COLORS.primary, 0.08)
-                      : pending
-                        ? COLORS.goldSoft
-                        : "transparent",
-                  }}
-                >
-                  <AttachFileIcon
-                    sx={{
-                      fontSize: 14,
-                      color: pending ? COLORS.gold : COLORS.primary,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      flex: 1,
-                      fontWeight: active || pending ? 600 : 400,
-                      color: COLORS.ink,
-                    }}
-                    noWrap
-                  >
-                    {tl.tenTaiLieu ?? tl.tieuDe}
-                  </Typography>
-                  <StatusChip trangThai={tl.trangThaiPheDuyet} size="small" hidePending />
-                </Box>
-              );
-            })}
-          </Stack>
-        </Collapse>
-      </Box>
-    );
-  };
-
-  const renderBaiGiang = (bg: any) => {
-    const active = isActive("baiGiang", bg);
-    const pending = isTrangThaiCho(bg.trangThaiPheDuyet);
-    const bgId = bg.idBaiGiang ?? bg.id;
-    return (
-      <Box key={bgId}>
-        <ListItemButton
-          selected={active}
-          onClick={() => onSelectContent("baiGiang", bg)}
-          sx={{
-            pl: 3.5,
-            pr: 2.5,
-            py: 1.1,
-            borderLeft: `3px solid ${active ? COLORS.primary : pending ? COLORS.gold : "transparent"}`,
-            bgcolor: active
-              ? alpha(COLORS.primary, 0.08)
-              : pending
-                ? COLORS.goldSoft
-                : "transparent",
-            transition: "all 0.2s",
-            "&:hover": { bgcolor: alpha(COLORS.primary, 0.05) },
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 30 }}>
-            <PlayArrowIcon
-              sx={{
-                color: active
-                  ? COLORS.primary
-                  : pending
-                    ? COLORS.gold
-                    : COLORS.inkSoft,
-                fontSize: 18,
-              }}
-            />
-          </ListItemIcon>
-          <ListItemText
-            primary={
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: active || pending ? 600 : 400,
-                  lineHeight: 1.4,
-                  color: active ? COLORS.primary : COLORS.ink,
-                }}
-                noWrap
-              >
-                {bg.tenBaiGiang ?? bg.tieuDe}
-              </Typography>
-            }
-          />
-          <StatusChip trangThai={bg.trangThaiPheDuyet} size="small" hidePending />
-        </ListItemButton>
-        {renderTaiLieu(bg)}
-      </Box>
-    );
-  };
-
-  const renderBaiKiemTra = (bkt: any) => {
-    const active = isActive("baiKiemTra", bkt);
-    const pending = isTrangThaiCho(bkt.trangThaiPheDuyet);
-    const bktId = bkt.idBaiKiemTra ?? bkt.id;
-    const open = openBaiKiemTra[bktId] ?? false;
-    const cauHois: any[] = bkt.cauHois ?? [];
-    return (
-      <Box key={bktId}>
-        <ListItemButton
-          selected={active}
-          sx={{
-            pl: 3,
-            py: 1,
-            borderLeft: `3px solid ${active ? COLORS.primary : pending ? COLORS.gold : "transparent"}`,
-            bgcolor: active
-              ? alpha(COLORS.primary, 0.08)
-              : pending
-                ? COLORS.goldSoft
-                : "transparent",
-          }}
-        >
-          <ListItemIcon
-            sx={{ minWidth: 30 }}
-            onClick={() => onSelectContent("baiKiemTra", bkt)}
-          >
-            <QuizIcon
-              sx={{
-                color: active
-                  ? COLORS.primary
-                  : pending
-                    ? COLORS.gold
-                    : COLORS.inkSoft,
-                fontSize: 18,
-              }}
-            />
-          </ListItemIcon>
-          <ListItemText
-            onClick={() => onSelectContent("baiKiemTra", bkt)}
-            primary={
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: active || pending ? 600 : 400,
-                  lineHeight: 1.4,
-                  color: active ? COLORS.primary : COLORS.ink,
-                }}
-                noWrap
-              >
-                {bkt.tenBaiKiemTra ?? bkt.tieuDe}
-              </Typography>
-            }
-            secondary={
-              cauHois.length > 0 ? (
-                <Typography variant="caption" sx={{ color: COLORS.inkSoft }}>
-                  {cauHois.length} câu hỏi
-                </Typography>
-              ) : undefined
-            }
-          />
-          <StatusChip trangThai={bkt.trangThaiPheDuyet} size="small" hidePending />
-          {cauHois.length > 0 && (
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleBaiKiemTra(bktId);
-              }}
-            >
-              {open ? (
-                <ExpandLessIcon sx={{ fontSize: 16 }} />
-              ) : (
-                <ExpandMoreIcon sx={{ fontSize: 16 }} />
-              )}
-            </IconButton>
-          )}
-        </ListItemButton>
-        {cauHois.length > 0 && (
-          <Collapse in={open}>
-            <Stack spacing={0.75} sx={{ pl: 4.5, pr: 1.5, py: 1 }}>
-              {cauHois.map((ch: any, chIndex: number) => (
-                <CauHoiRow key={ch.idCauHoi ?? ch.id ?? chIndex} cauHoi={ch} />
-              ))}
-            </Stack>
-          </Collapse>
-        )}
-      </Box>
-    );
-  };
-
-  const noiDungRong =
-    phans.length === 0 &&
-    flatBaiGiang.length === 0 &&
-    flatTaiLieu.length === 0 &&
-    flatBaiKiemTra.length === 0;
-
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        height: "100%",
-      }}
-    >
-      <Box
-        sx={{
-          p: 2,
-          borderBottom: `1px solid ${COLORS.line}`,
-          bgcolor: COLORS.paperRaised,
-          flexShrink: 0,
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: COLORS.inkSoft,
-            fontFamily: FONTS.body,
-            mb: 1.25,
-          }}
-        >
-          Nội dung khóa học
-        </Typography>
-
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Tìm bài giảng, tài liệu..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{
-            mb: 1.5,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 1.5,
-              "& fieldset": { borderColor: COLORS.line },
-              "&:hover fieldset": { borderColor: COLORS.primary },
-              "&.Mui-focused fieldset": { borderColor: COLORS.primary },
-            },
-          }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, color: COLORS.inkSoft }} />
-                </InputAdornment>
-              ),
-              endAdornment: searchTerm ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearchTerm("")}>
-                    <CloseIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : undefined,
-            },
-          }}
-        />
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 0.5,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 600, color: COLORS.ink }}
-          >
-            Tiến độ kiểm duyệt
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 700,
-              color: tongSoCho > 0 ? COLORS.gold : COLORS.success,
-            }}
-          >
-            {phanTram}%
-          </Typography>
-        </Box>
-        <LinearProgress
-          variant="determinate"
-          value={phanTram}
-          sx={{
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: alpha(COLORS.gold, 0.15),
-            "& .MuiLinearProgress-bar": {
-              backgroundColor: tongSoCho > 0 ? COLORS.gold : COLORS.success,
-              borderRadius: 3,
-            },
-            mb: 0.75,
-          }}
-        />
-        <Typography
-          variant="caption"
-          sx={{ display: "block", textAlign: "right", color: COLORS.inkSoft }}
-        >
-          {tongSoCho} / {tongSo} mục đang chờ duyệt
-        </Typography>
-      </Box>
-
-      <Box sx={{ overflowY: "auto", flex: 1, pb: 2 }}>
-        {noiDungRong ? (
-          <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
-              Khóa học chưa có nội dung.
-            </Typography>
-          </Box>
-        ) : phans.length > 0 ? (
-          <>
-            {filteredPhans.map((phan: any, phanIndex: number) => {
-              const id = phan.id ?? phan.idPhan ?? `phan-${phanIndex}`;
-              const baiGiangs = sortPending(
-                Array.isArray(phan.baiGiangs) ? phan.baiGiangs : [],
-              );
-              const baiKiemTras = sortPending(
-                Array.isArray(phan.baiKiemTras) ? phan.baiKiemTras : [],
-              );
-              const soCho = demCho(baiGiangs) + demCho(baiKiemTras);
-              const isOpen = openPhan[id] !== false;
-
-              return (
-                <Box key={id}>
-                  <ListItemButton
-                    onClick={() => togglePhan(id)}
-                    sx={{
-                      bgcolor: soCho > 0 ? COLORS.goldSoft : "transparent",
-                      borderLeft: `3px solid ${soCho > 0 ? COLORS.gold : "transparent"}`,
-                      py: 1.5,
-                      px: 2.5,
-                      transition: "background-color 0.2s",
-                      "&:hover": { bgcolor: alpha(COLORS.primary, 0.05) },
-                    }}
-                  >
-                    <FolderRoundedIcon
-                      sx={{ color: COLORS.gold, fontSize: 18, mr: 1.25 }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 700, color: COLORS.ink }}
-                        noWrap
-                      >
-                        {phanIndex + 1}. {phan.tenPhan}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: COLORS.inkSoft }}
-                      >
-                        {baiGiangs.length + baiKiemTras.length} mục
-                        {soCho > 0 ? ` · ${soCho} chờ duyệt` : ""}
-                      </Typography>
-                    </Box>
-                    {isOpen ? (
-                      <ExpandLessIcon sx={{ fontSize: 20 }} />
-                    ) : (
-                      <ExpandMoreIcon sx={{ fontSize: 20 }} />
-                    )}
-                  </ListItemButton>
-                  <Collapse in={isOpen}>
-                    <List disablePadding>
-                      {baiGiangs.map((bg: any) => renderBaiGiang(bg))}
-                      {baiKiemTras.map((bkt: any) => renderBaiKiemTra(bkt))}
-                    </List>
-                  </Collapse>
-                </Box>
-              );
-            })}
-            {filteredPhans.length === 0 && (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
-                  Không tìm thấy nội dung phù hợp.
-                </Typography>
-              </Box>
-            )}
-          </>
-        ) : (
-          <List disablePadding>
-            {sortPending(flatBaiGiang).map((bg: any) => renderBaiGiang(bg))}
-            {sortPending(flatBaiKiemTra).map((bkt: any) =>
-              renderBaiKiemTra(bkt),
-            )}
-          </List>
-        )}
-      </Box>
-    </Box>
-  );
-}
-
-// ======================== VIDEO PLAYER COMPONENT ========================
-function VideoPlayer({
+// ======================== VIDEO PLAYER COMPONENT (đã sửa fallback) ========================
+const VideoPlayer = React.memo(function VideoPlayer({
   url,
   minHeight,
   maxHeight,
@@ -1634,19 +1158,28 @@ function VideoPlayer({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const handleFallback = useCallback(() => {
     setUseFallback(true);
   }, []);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { masterUrl } = getOptimalHlsUrl(url);
-  const isHls = masterUrl.includes(".m3u8");
+  const { masterUrl } = useMemo(() => getOptimalHlsUrl(url), [url]);
+  const isHls = useMemo(() => masterUrl.includes(".m3u8"), [masterUrl]);
+
+  useEffect(() => {
+    setHasError(false);
+    setIsLoading(true);
+    setLoadTimedOut(false);
+    setRetryCount(0);
+  }, [url]);
 
   useEffect(() => {
     if (useFallback && !isHls) {
       const video = videoRef.current;
       if (!video) return;
+
       setIsLoading(true);
       setHasError(false);
       setLoadTimedOut(false);
@@ -1662,20 +1195,70 @@ function VideoPlayer({
         setIsLoading(false);
         setLoadTimedOut(false);
       };
-      video.addEventListener("canplay", onCanPlay);
-      video.addEventListener("loadeddata", onCanPlay);
-      video.addEventListener("error", () => {
+
+      const onError = () => {
         clearTimeout(timeout);
         setIsLoading(false);
         setHasError(true);
-      });
+      };
+
+      video.addEventListener("canplay", onCanPlay);
+      video.addEventListener("loadeddata", onCanPlay);
+      video.addEventListener("error", onError);
+
       return () => {
         clearTimeout(timeout);
         video.removeEventListener("canplay", onCanPlay);
         video.removeEventListener("loadeddata", onCanPlay);
+        video.removeEventListener("error", onError);
       };
     }
   }, [useFallback, isHls, masterUrl]);
+
+  const handleRetry = useCallback(() => {
+    if (retryCount >= 3) {
+      setHasError(true);
+      return;
+    }
+    setRetryCount((prev) => prev + 1);
+    setHasError(false);
+    setLoadTimedOut(false);
+    setIsLoading(true);
+
+    const video = videoRef.current;
+    if (video) {
+      video.load();
+    }
+  }, [retryCount]);
+
+  const containerSx = useMemo(
+    () => ({
+      width: "100%",
+      aspectRatio: "16/9",
+      bgcolor: "#000",
+      position: "relative" as const,
+      isolation: "isolate" as const,
+      overflow: "hidden" as const,
+      borderRadius: 2,
+      flexShrink: 0,
+    }),
+    [],
+  );
+
+  const overlaySx = useMemo(
+    () => ({
+      position: "absolute" as const,
+      inset: 0,
+      zIndex: 1,
+      display: "flex",
+      flexDirection: "column" as const,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 1.5,
+      bgcolor: "#000",
+    }),
+    [],
+  );
 
   if (!useFallback) {
     return (
@@ -1691,84 +1274,39 @@ function VideoPlayer({
 
   if (isHls) {
     return (
-      <Box
-        sx={{
-          width: "100%",
-          aspectRatio: "16/9",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "#000",
-          p: 3,
-          position: "relative",
-          isolation: "isolate",
-          overflow: "hidden",
-          borderRadius: 2,
-          flexShrink: 0,
-        }}
-      >
-        <Typography sx={{ color: "#fff", textAlign: "center" }}>
-          Video ở định dạng HLS (streaming) không thể phát với trình duyệt hiện
-          tại.
-          <br />
-          Vui lòng sử dụng trình duyệt hỗ trợ (Chrome, Edge, Firefox mới).
-        </Typography>
-        <Button
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="outlined"
-          sx={{ mt: 2, color: "#fff", borderColor: "#fff" }}
-        >
-          Mở video trực tiếp
-        </Button>
+      <Box sx={containerSx}>
+        <Box sx={overlaySx}>
+          <Typography sx={{ color: "#fff", textAlign: "center", px: 2 }}>
+            Video ở định dạng HLS (streaming) không thể phát với trình duyệt
+            hiện tại.
+            <br />
+            Vui lòng sử dụng trình duyệt hỗ trợ (Chrome, Edge, Firefox mới).
+          </Typography>
+          <Button
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="outlined"
+            sx={{ mt: 2, color: "#fff", borderColor: "#fff" }}
+          >
+            Mở video trực tiếp
+          </Button>
+        </Box>
       </Box>
     );
   }
 
-  const getVideoType = (src: string): string => {
-    if (src.includes(".m3u8")) return "application/x-mpegURL";
-    if (src.endsWith(".webm")) return "video/webm";
-    if (src.endsWith(".ogg")) return "video/ogg";
-    if (src.endsWith(".mov")) return "video/quicktime";
-    if (src.endsWith(".avi")) return "video/x-msvideo";
-    return "video/mp4";
-  };
-
+  // Fallback HTML5 video với bắt lỗi
   return (
-    <Box
-      sx={{
-        width: "100%",
-        aspectRatio: "16/9",
-        bgcolor: "#000",
-        position: "relative",
-        isolation: "isolate",
-        overflow: "hidden",
-        borderRadius: 2,
-        flexShrink: 0,
-      }}
-    >
+    <Box sx={containerSx}>
       {isLoading && !hasError && !loadTimedOut && (
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1.5,
-            bgcolor: "#000",
-          }}
-        >
+        <Box sx={overlaySx}>
           <Box
             sx={{
               width: 44,
               height: 44,
               borderRadius: "50%",
-              border: `4px solid ${alpha(COLORS.primary, 0.25)}`,
+              border: `4px solid ${mix(COLORS.primary, 0.25)}`,
               borderTopColor: COLORS.primary,
               animation: "spin 0.85s linear infinite",
               "@keyframes spin": {
@@ -1781,48 +1319,55 @@ function VideoPlayer({
           </Typography>
         </Box>
       )}
+
       {(hasError || loadTimedOut) && (
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1.25,
-            bgcolor: "#000",
-            px: 3,
-          }}
-        >
-          <Typography sx={{ color: "#fff", textAlign: "center" }}>
+        <Box sx={overlaySx}>
+          <Typography sx={{ color: "#fff", textAlign: "center", px: 2 }}>
             {loadTimedOut
               ? "Tải video quá lâu. Vui lòng thử lại."
-              : "Không thể phát video."}
+              : retryCount >= 3
+                ? "Không thể phát video. Vui lòng tải xuống để xem."
+                : "Không thể phát video. Vui lòng thử lại."}
           </Typography>
           <Button
             variant="contained"
             size="small"
-            onClick={() => {
-              setHasError(false);
-              setLoadTimedOut(false);
-              setIsLoading(true);
-              const video = videoRef.current;
-              if (video) {
-                video.load();
-              }
-            }}
+            onClick={handleRetry}
+            disabled={retryCount >= 3}
             sx={{
               textTransform: "none",
               bgcolor: COLORS.primary,
               "&:hover": { bgcolor: COLORS.primaryDark },
+              "&:disabled": {
+                bgcolor: COLORS.inkSoft,
+              },
             }}
           >
-            Thử lại
+            {retryCount >= 3 ? "Tải xuống video" : "Thử lại"}
           </Button>
+          {retryCount >= 3 && (
+            <Button
+              variant="outlined"
+              size="small"
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                textTransform: "none",
+                color: "#fff",
+                borderColor: "#fff",
+                "&:hover": {
+                  borderColor: COLORS.primary,
+                  color: COLORS.primary,
+                },
+              }}
+            >
+              Tải xuống
+            </Button>
+          )}
         </Box>
       )}
+
       <video
         ref={videoRef}
         controls
@@ -1836,15 +1381,23 @@ function VideoPlayer({
           visibility:
             isLoading || hasError || loadTimedOut ? "hidden" : "visible",
         }}
+        onError={() => {
+          if (!hasError && !loadTimedOut) {
+            setHasError(true);
+            setIsLoading(false);
+          }
+        }}
       >
-        <source src={masterUrl} type={getVideoType(masterUrl)} />
-        <Typography sx={{ color: "#fff", p: 2 }}>
+        <source src={masterUrl} type="video/mp4" />
+        <p style={{ color: "#fff", padding: 16 }}>
           Trình duyệt của bạn không hỗ trợ phát video.
-        </Typography>
+        </p>
       </video>
     </Box>
   );
-}
+});
+
+VideoPlayer.displayName = "VideoPlayer";
 
 // ======================== VIDEO.JS PLAYER ========================
 function VideoJsPlayer({
@@ -1865,11 +1418,13 @@ function VideoJsPlayer({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoSelectedRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
   const [loadElapsed, setLoadElapsed] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
 
   const [qualityLevels, setQualityLevels] = useState<any[]>([]);
   const [selectedQuality, setSelectedQuality] = useState<number | "auto">(
@@ -1880,17 +1435,17 @@ function VideoJsPlayer({
   >(null);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
-  const { masterUrl } = getOptimalHlsUrl(url);
-  const isHls = masterUrl.includes(".m3u8");
+  const { masterUrl } = useMemo(() => getOptimalHlsUrl(url), [url]);
+  const isHls = useMemo(() => masterUrl.includes(".m3u8"), [masterUrl]);
 
-  const getVideoType = (src: string): string => {
+  const getVideoType = useCallback((src: string): string => {
     if (src.includes(".m3u8")) return "application/x-mpegURL";
     if (src.endsWith(".webm")) return "video/webm";
     if (src.endsWith(".ogg")) return "video/ogg";
     if (src.endsWith(".mov")) return "video/quicktime";
     if (src.endsWith(".avi")) return "video/x-msvideo";
     return "video/mp4";
-  };
+  }, []);
 
   useEffect(() => {
     if (!document.getElementById("vjs-kiemduyet-styles")) {
@@ -1899,6 +1454,10 @@ function VideoJsPlayer({
       s.textContent = VIDEO_JS_STYLES;
       document.head.appendChild(s);
     }
+
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const clearAllTimers = useCallback(() => {
@@ -1914,12 +1473,21 @@ function VideoJsPlayer({
 
   const startLoadTimeout = useCallback(() => {
     clearAllTimers();
+    if (!mountedRef.current) return;
+
     setLoadElapsed(0);
-    intervalRef.current = setInterval(() => setLoadElapsed((e) => e + 1), 1000);
+    intervalRef.current = setInterval(() => {
+      if (mountedRef.current) {
+        setLoadElapsed((e) => e + 1);
+      }
+    }, 1000);
+
     timeoutRef.current = setTimeout(() => {
       clearAllTimers();
-      setLoadTimedOut(true);
-      setIsLoading(false);
+      if (mountedRef.current) {
+        setLoadTimedOut(true);
+        setIsLoading(false);
+      }
     }, LOAD_TIMEOUT_MS);
   }, [clearAllTimers]);
 
@@ -1933,6 +1501,32 @@ function VideoJsPlayer({
     setSelectedQuality(q);
     setMenuAnchor(null);
   }, []);
+
+  const handleRetry = useCallback(() => {
+    if (retryCount >= 3) {
+      onFallback();
+      return;
+    }
+
+    setRetryCount((prev) => prev + 1);
+    setHasError(false);
+    setLoadTimedOut(false);
+    setIsLoading(true);
+    setLoadElapsed(0);
+    startLoadTimeout();
+
+    const p = playerRef.current;
+    if (p && typeof p.load === "function") {
+      try {
+        p.load();
+      } catch (err) {
+        console.error("Error reloading video:", err);
+        onFallback();
+      }
+    } else {
+      onFallback();
+    }
+  }, [retryCount, startLoadTimeout, onFallback]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -1948,135 +1542,184 @@ function VideoJsPlayer({
     autoSelectedRef.current = false;
     startLoadTimeout();
 
-    const videoEl = document.createElement("video");
-    videoEl.className = "video-js vjs-big-play-centered";
-    container.appendChild(videoEl);
-
-    try {
-      import("video.js").then((videojsModule) => {
-        const videojs = videojsModule.default;
-        const player = videojs(videoEl, {
-          controls: true,
-          autoplay: false,
-          preload: "auto",
-          fluid: true,
-          fill: true,
-          responsive: true,
-          aspectRatio: "16:9",
-          html5: {
-            vhs: isHls
-              ? {
-                  overrideNative: true,
-                  useNetworkInformationApi: true,
-                  enableLowInitialPlaylist: false,
-                  smoothQualityChange: true,
-                  handlePartialData: true,
-                  bandwidth: 8_000_000,
-                }
-              : undefined,
-            nativeVideoTracks: false,
-            nativeAudioTracks: false,
-            nativeTextTracks: false,
-          },
-          controlBar: {
-            volumePanel: { inline: false },
-            pictureInPictureToggle: false,
-            chaptersButton: false,
-            subtitlesButton: false,
-            captionsButton: false,
-            audioTrackButton: false,
-            descriptionsButton: false,
-          },
-          sources: [
-            {
-              src: masterUrl,
-              type: getVideoType(masterUrl),
-              crossOrigin: "anonymous",
-            },
-          ],
-        });
-
-        playerRef.current = player;
-
-        const markReady = () => {
-          clearAllTimers();
-          setIsLoading(false);
-          setLoadTimedOut(false);
-        };
-
-        player.on("loadedmetadata", () => {
-          markReady();
-
-          if (isHls) {
-            const ql = (player as any).qualityLevels?.();
-            if (ql) {
-              const buildLevels = () => {
-                const levels: any[] = [];
-                for (let i = 0; i < ql.length; i++) {
-                  const lv = ql[i];
-                  const h: number = lv.height ?? 0;
-                  const bitrate: number = lv.bitrate ?? 0;
-                  let label: string;
-                  if (h >= 2160) label = "4K (2160p)";
-                  else if (h >= 1440) label = "1440p";
-                  else if (h >= 1080) label = "1080p HD";
-                  else if (h >= 720) label = "720p HD";
-                  else if (h >= 480) label = "480p";
-                  else if (h >= 360) label = "360p";
-                  else if (h >= 240) label = "240p";
-                  else if (h > 0) label = `${h}p`;
-                  else label = `${Math.round(bitrate / 1000)} kbps`;
-                  levels.push({ index: i, label, bitrate, height: h });
-                }
-                levels.sort((a, b) => b.bitrate - a.bitrate);
-                const seen = new Set<string>();
-                const unique = levels.filter((l) => {
-                  if (seen.has(l.label)) return false;
-                  seen.add(l.label);
-                  return true;
-                });
-                if (unique.length > 0) {
-                  setQualityLevels(unique);
-                  if (!autoSelectedRef.current) {
-                    autoSelectedRef.current = true;
-                    applyQuality(unique[0].index);
-                  }
-                }
-              };
-              buildLevels();
-              ql.on("addqualitylevel", buildLevels);
-              ql.on("removequalitylevel", buildLevels);
-            }
-          }
-        });
-
-        player.on("playing", markReady);
-        player.on("canplay", markReady);
-
-        player.on("timeupdate", () => {
-          if (!isHls) return;
-          const tech = player.tech(true);
-          const vhs = (tech as any)?.vhs;
-          if (vhs?.stats?.bandwidth) {
-            setCurrentBandwidthKbps(Math.round(vhs.stats.bandwidth / 1000));
-          }
-        });
-
-        player.on("error", () => {
-          clearAllTimers();
-          setIsLoading(false);
-          setHasError(true);
-        });
-      });
-    } catch (err) {
-      console.error("Video.js init error:", err);
-      onFallback();
+    if (playerRef.current) {
+      try {
+        playerRef.current.dispose();
+      } catch {
+        // ignore
+      }
+      playerRef.current = null;
     }
 
+    const oldVideo = container.querySelector("video");
+    if (oldVideo) {
+      container.removeChild(oldVideo);
+    }
+
+    const videoEl = document.createElement("video");
+    videoEl.className = "video-js vjs-big-play-centered";
+    videoEl.setAttribute("playsinline", "true");
+    container.appendChild(videoEl);
+
+    let isMounted = true;
+
+    import("video.js")
+      .then((videojsModule) => {
+        if (!isMounted) return;
+
+        const videojs = videojsModule.default;
+
+        try {
+          const player = videojs(videoEl, {
+            controls: true,
+            autoplay: false,
+            preload: "auto",
+            fluid: true,
+            fill: true,
+            responsive: true,
+            aspectRatio: "16:9",
+            html5: {
+              vhs: isHls
+                ? {
+                    overrideNative: true,
+                    useNetworkInformationApi: true,
+                    enableLowInitialPlaylist: false,
+                    smoothQualityChange: true,
+                    handlePartialData: true,
+                    bandwidth: 8_000_000,
+                  }
+                : undefined,
+              nativeVideoTracks: false,
+              nativeAudioTracks: false,
+              nativeTextTracks: false,
+            },
+            controlBar: {
+              volumePanel: { inline: false },
+              pictureInPictureToggle: false,
+              chaptersButton: false,
+              subtitlesButton: false,
+              captionsButton: false,
+              audioTrackButton: false,
+              descriptionsButton: false,
+            },
+            sources: [
+              {
+                src: masterUrl,
+                type: getVideoType(masterUrl),
+              },
+            ],
+          });
+
+          if (!isMounted) {
+            try {
+              player.dispose();
+            } catch {
+              /* ignore */
+            }
+            return;
+          }
+
+          playerRef.current = player;
+
+          const markReady = () => {
+            if (!isMounted) return;
+            clearAllTimers();
+            setIsLoading(false);
+            setLoadTimedOut(false);
+          };
+
+          player.on("loadedmetadata", () => {
+            markReady();
+
+            if (isHls) {
+              const ql = (player as any).qualityLevels?.();
+              if (ql) {
+                const buildLevels = () => {
+                  if (!isMounted) return;
+                  const levels: any[] = [];
+                  for (let i = 0; i < ql.length; i++) {
+                    const lv = ql[i];
+                    const h: number = lv.height ?? 0;
+                    const bitrate: number = lv.bitrate ?? 0;
+                    let label: string;
+                    if (h >= 2160) label = "4K (2160p)";
+                    else if (h >= 1440) label = "1440p";
+                    else if (h >= 1080) label = "1080p HD";
+                    else if (h >= 720) label = "720p HD";
+                    else if (h >= 480) label = "480p";
+                    else if (h >= 360) label = "360p";
+                    else if (h >= 240) label = "240p";
+                    else if (h > 0) label = `${h}p`;
+                    else label = `${Math.round(bitrate / 1000)} kbps`;
+                    levels.push({ index: i, label, bitrate, height: h });
+                  }
+                  levels.sort((a, b) => b.bitrate - a.bitrate);
+                  const seen = new Set<string>();
+                  const unique = levels.filter((l) => {
+                    if (seen.has(l.label)) return false;
+                    seen.add(l.label);
+                    return true;
+                  });
+                  if (unique.length > 0) {
+                    setQualityLevels(unique);
+                    if (!autoSelectedRef.current) {
+                      autoSelectedRef.current = true;
+                      applyQuality(unique[0].index);
+                    }
+                  }
+                };
+                buildLevels();
+                ql.on("addqualitylevel", buildLevels);
+                ql.on("removequalitylevel", buildLevels);
+              }
+            }
+          });
+
+          player.on("playing", markReady);
+          player.on("canplay", markReady);
+
+          player.on("timeupdate", () => {
+            if (!isHls) return;
+            const tech = player.tech(true);
+            const vhs = (tech as any)?.vhs;
+            if (vhs?.stats?.bandwidth) {
+              setCurrentBandwidthKbps(Math.round(vhs.stats.bandwidth / 1000));
+            }
+          });
+
+          player.on("error", (err: any) => {
+            console.error("Video.js error:", err);
+            clearAllTimers();
+            if (isMounted) {
+              setIsLoading(false);
+              setHasError(true);
+            }
+          });
+
+          player.on("dispose", () => {
+            clearAllTimers();
+          });
+        } catch (err) {
+          console.error("Video.js init error:", err);
+          if (isMounted) {
+            onFallback();
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load video.js:", err);
+        if (isMounted) {
+          onFallback();
+        }
+      });
+
     return () => {
+      isMounted = false;
       clearAllTimers();
-      const p: any = playerRef.current;
+
+      const p = playerRef.current;
       playerRef.current = null;
+
       try {
         if (p && typeof p.isDisposed === "function" && !p.isDisposed()) {
           p.dispose();
@@ -2084,27 +1727,29 @@ function VideoJsPlayer({
       } catch {
         // ignore
       }
+
       if (container && videoEl.parentNode === container) {
-        container.removeChild(videoEl);
+        try {
+          container.removeChild(videoEl);
+        } catch {
+          // ignore
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [masterUrl, isHls, startLoadTimeout, onFallback]);
+  }, [
+    masterUrl,
+    isHls,
+    getVideoType,
+    onFallback,
+    applyQuality,
+    clearAllTimers,
+    startLoadTimeout,
+  ]);
 
-  const handleRetry = useCallback(() => {
-    setHasError(false);
-    setLoadTimedOut(false);
-    setIsLoading(true);
-    setLoadElapsed(0);
-    startLoadTimeout();
-    const p = playerRef.current;
-    if (p && typeof p.load === "function") {
-      p.load();
-    }
-  }, [startLoadTimeout]);
-
-  const containerStyle = isFullscreen
-    ? {
+  const containerStyle = useMemo(() => {
+    if (isFullscreen) {
+      return {
         width: "100%",
         height: "100%",
         minHeight: minHeight,
@@ -2117,16 +1762,20 @@ function VideoJsPlayer({
         overflow: "hidden" as const,
         borderRadius: 2,
         flexShrink: 0,
-      }
-    : {
-        width: "100%",
-        aspectRatio: "16/9",
-        position: "relative" as const,
-        isolation: "isolate" as const,
-        overflow: "hidden" as const,
-        borderRadius: 2,
-        flexShrink: 0,
+        bgcolor: "#000",
       };
+    }
+    return {
+      width: "100%",
+      aspectRatio: "16/9",
+      position: "relative" as const,
+      isolation: "isolate" as const,
+      overflow: "hidden" as const,
+      borderRadius: 2,
+      flexShrink: 0,
+      bgcolor: "#000",
+    };
+  }, [isFullscreen, minHeight, maxHeight]);
 
   return (
     <Box sx={containerStyle}>
@@ -2144,65 +1793,101 @@ function VideoJsPlayer({
         }}
       />
 
-      {!isLoading && !hasError && !loadTimedOut && isHls && (
-        <>
-          <Tooltip title="Chất lượng video">
-            <IconButton
-              size="small"
-              onClick={(e) => setMenuAnchor(e.currentTarget)}
-              sx={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                zIndex: 2,
-                bgcolor: alpha("#000", 0.55),
-                color: "#fff",
-                "&:hover": { bgcolor: alpha("#000", 0.75) },
+      {!isLoading &&
+        !hasError &&
+        !loadTimedOut &&
+        isHls &&
+        qualityLevels.length > 0 && (
+          <>
+            <Tooltip title="Chất lượng video">
+              <IconButton
+                size="small"
+                onClick={(e) => setMenuAnchor(e.currentTarget)}
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  zIndex: 2,
+                  bgcolor: "rgba(0,0,0,0.55)",
+                  color: "#fff",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.75)" },
+                }}
+              >
+                <HighQualityRoundedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={menuAnchor}
+              open={!!menuAnchor}
+              onClose={() => setMenuAnchor(null)}
+              slotProps={{
+                paper: {
+                  sx: {
+                    bgcolor: "rgba(28,28,28,0.95)",
+                    color: "#fff",
+                    borderRadius: 2,
+                    minWidth: 180,
+                  },
+                },
               }}
             >
-              <HighQualityRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Menu
-            anchorEl={menuAnchor}
-            open={!!menuAnchor}
-            onClose={() => setMenuAnchor(null)}
-          >
-            <MenuItem
-              selected={selectedQuality === "auto"}
-              onClick={() => applyQuality("auto")}
-            >
-              <ListItemText
-                primary="Tự động"
-                secondary={
-                  currentBandwidthKbps
-                    ? `${Math.round(currentBandwidthKbps / 1000)} Mbps`
-                    : undefined
-                }
-              />
-            </MenuItem>
-            {qualityLevels.map((lv) => (
               <MenuItem
-                key={lv.index}
-                selected={selectedQuality === lv.index}
-                onClick={() => applyQuality(lv.index)}
+                selected={selectedQuality === "auto"}
+                onClick={() => applyQuality("auto")}
+                sx={{
+                  "&.Mui-selected": {
+                    bgcolor: "rgba(255,255,255,0.1)",
+                  },
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.08)",
+                  },
+                }}
               >
-                {lv.index === qualityLevels[0]?.index && (
-                  <ListItemIcon sx={{ minWidth: 28 }}>
-                    <HighQualityRoundedIcon
-                      fontSize="small"
-                      sx={{ color: COLORS.primary }}
-                    />
-                  </ListItemIcon>
-                )}
-                <ListItemText inset={lv.index !== qualityLevels[0]?.index}>
-                  {lv.label}
-                </ListItemText>
+                <ListItemText
+                  primary="Tự động"
+                  secondary={
+                    currentBandwidthKbps
+                      ? `${(currentBandwidthKbps / 1000).toFixed(1)} Mbps`
+                      : undefined
+                  }
+                  slotProps={{
+                    secondary: {
+                      sx: { color: "rgba(255,255,255,0.5)" },
+                    },
+                  }}
+                />
               </MenuItem>
-            ))}
-          </Menu>
-        </>
-      )}
+              {qualityLevels.map((lv) => (
+                <MenuItem
+                  key={lv.index}
+                  selected={selectedQuality === lv.index}
+                  onClick={() => applyQuality(lv.index)}
+                  sx={{
+                    "&.Mui-selected": {
+                      bgcolor: "rgba(255,255,255,0.1)",
+                    },
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.08)",
+                    },
+                  }}
+                >
+                  {lv.index === qualityLevels[0]?.index && (
+                    <ListItemIcon sx={{ minWidth: 28 }}>
+                      <HighQualityRoundedIcon
+                        fontSize="small"
+                        sx={{ color: COLORS.primary }}
+                      />
+                    </ListItemIcon>
+                  )}
+                  <ListItemText
+                    inset={lv.index !== qualityLevels[0]?.index}
+                    primary={lv.label}
+                  />
+                </MenuItem>
+              ))}
+            </Menu>
+          </>
+        )}
 
       {isLoading && !hasError && !loadTimedOut && (
         <Box
@@ -2218,20 +1903,14 @@ function VideoJsPlayer({
             bgcolor: "#000",
           }}
         >
-          <Box
+          <CircularProgress
+            size={44}
+            thickness={4}
             sx={{
-              width: 44,
-              height: 44,
-              borderRadius: "50%",
-              border: `4px solid ${alpha(COLORS.primary, 0.25)}`,
-              borderTopColor: COLORS.primary,
-              animation: "vjs-kiemduyet-spin 0.85s linear infinite",
-              "@keyframes vjs-kiemduyet-spin": {
-                to: { transform: "rotate(360deg)" },
-              },
+              color: COLORS.primary,
             }}
           />
-          <Typography variant="caption" sx={{ color: "#fff" }}>
+          <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)" }}>
             Đang tải video{loadElapsed >= 5 ? ` (${loadElapsed}s)…` : "…"}
           </Typography>
         </Box>
@@ -2255,20 +1934,48 @@ function VideoJsPlayer({
           <Typography sx={{ color: "#fff", textAlign: "center" }}>
             {loadTimedOut
               ? "Tải video quá lâu. Vui lòng kiểm tra kết nối và thử lại."
-              : "Không thể phát video. Vui lòng thử lại."}
+              : retryCount >= 3
+                ? "Không thể phát video. Vui lòng tải xuống để xem."
+                : "Không thể phát video. Vui lòng thử lại."}
           </Typography>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleRetry}
-            sx={{
-              textTransform: "none",
-              bgcolor: COLORS.primary,
-              "&:hover": { bgcolor: COLORS.primaryDark },
-            }}
-          >
-            Thử lại
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleRetry}
+              disabled={retryCount >= 3}
+              sx={{
+                textTransform: "none",
+                bgcolor: COLORS.primary,
+                "&:hover": { bgcolor: COLORS.primaryDark },
+                "&:disabled": {
+                  bgcolor: COLORS.inkSoft,
+                },
+              }}
+            >
+              {retryCount >= 3 ? "Tải xuống" : "Thử lại"}
+            </Button>
+            {retryCount >= 3 && (
+              <Button
+                variant="outlined"
+                size="small"
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  textTransform: "none",
+                  color: "#fff",
+                  borderColor: "rgba(255,255,255,0.3)",
+                  "&:hover": {
+                    borderColor: COLORS.primary,
+                    color: COLORS.primary,
+                  },
+                }}
+              >
+                Mở trực tiếp
+              </Button>
+            )}
+          </Stack>
         </Box>
       )}
     </Box>
@@ -2441,7 +2148,7 @@ function TaiLieuPreview({
           color: COLORS.primary,
           "&:hover": {
             borderColor: COLORS.primaryDark,
-            bgcolor: alpha(COLORS.primary, 0.04),
+            bgcolor: mix(COLORS.primary, 0.04),
           },
         }}
       >
@@ -2451,7 +2158,7 @@ function TaiLieuPreview({
   );
 }
 
-// ======================== NOI DUNG VIEWER COMPONENT ========================
+// ======================== NOI DUNG VIEWER COMPONENT (đã sửa hiển thị HTML câu hỏi) ========================
 function NoiDungViewer({ selected }: { selected: any }) {
   const [openFull, setOpenFull] = useState(false);
 
@@ -2467,7 +2174,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
         }}
       >
         <SchoolRoundedIcon
-          sx={{ fontSize: 40, color: alpha(COLORS.primary, 0.2), mb: 1.5 }}
+          sx={{ fontSize: 40, color: mix(COLORS.primary, 0.2), mb: 1.5 }}
         />
         <Typography sx={{ color: COLORS.inkSoft, fontFamily: FONTS.body }}>
           Chọn một bài giảng hoặc tài liệu bên phải để xem nội dung
@@ -2519,7 +2226,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
               backgroundColor: "transparent",
             },
             "&::-webkit-scrollbar-thumb": {
-              backgroundColor: alpha(COLORS.primary, 0.2),
+              backgroundColor: mix(COLORS.primary, 0.2),
               borderRadius: "8px",
             },
           }}
@@ -2584,7 +2291,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
                         minWidth: 28,
                         height: 28,
                         borderRadius: "50%",
-                        backgroundColor: alpha(COLORS.primary, 0.1),
+                        backgroundColor: mix(COLORS.primary, 0.1),
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -2602,17 +2309,22 @@ function NoiDungViewer({ selected }: { selected: any }) {
                         {idx + 1}
                       </Typography>
                     </Box>
-                    <Typography
+                    {/* Hiển thị HTML cho câu hỏi */}
+                    <Box
                       sx={{
                         fontWeight: 600,
                         color: COLORS.ink,
                         fontSize: 15,
                         lineHeight: 1.5,
                         flex: 1,
+                        wordBreak: "break-word",
+                        "& strong": { fontWeight: 700 },
+                        "& p": { m: 0 },
                       }}
-                    >
-                      {ch.noiDungCauHoi ?? ch.tieuDe}
-                    </Typography>
+                      dangerouslySetInnerHTML={{
+                        __html: ch.noiDungCauHoi ?? ch.tieuDe ?? "",
+                      }}
+                    />
                   </Box>
 
                   <Box sx={{ ml: 4.5, mt: 1.5 }}>
@@ -2630,7 +2342,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
                               p: 0.75,
                               borderRadius: 1,
                               backgroundColor: isCorrect
-                                ? alpha(COLORS.success, 0.08)
+                                ? mix(COLORS.success, 0.08)
                                 : "transparent",
                               transition: "background-color 0.15s",
                             }}
@@ -2670,7 +2382,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
                                   fontSize: 11,
                                   fontWeight: 600,
                                   color: COLORS.success,
-                                  backgroundColor: alpha(COLORS.success, 0.12),
+                                  backgroundColor: mix(COLORS.success, 0.12),
                                   px: 1,
                                   py: 0.25,
                                   borderRadius: 1,
@@ -2767,7 +2479,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
         >
           {title}
         </Typography>
-        <StatusChip trangThai={item.trangThaiPheDuyet} />
+        {/* KHÔNG HIỂN THỊ StatusChip Ở ĐÂY (theo yêu cầu) */}
         {url && !isTest && (
           <Tooltip title="Xem toàn màn hình">
             <IconButton
@@ -2853,6 +2565,604 @@ function NoiDungViewer({ selected }: { selected: any }) {
           </Box>
         </Dialog>
       )}
+    </Box>
+  );
+}
+
+// ======================== SIDEBAR COMPONENT ========================
+function KiemDuyetSidebar({
+  detail,
+  selected,
+  onSelectContent,
+}: {
+  detail: any;
+  selected: any;
+  onSelectContent: (
+    loai: "baiGiang" | "taiLieu" | "baiKiemTra",
+    item: any,
+  ) => void;
+}) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openPhan, setOpenPhan] = useState<Record<string, boolean>>({});
+  const [openTaiLieu, setOpenTaiLieu] = useState<Record<string, boolean>>({});
+  const [openBaiKiemTra, setOpenBaiKiemTra] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  // Sử dụng useMemo cho các dữ liệu phụ thuộc vào detail
+  const phans = useMemo(
+    () => detail?.phans ?? detail?.phanHocs ?? [],
+    [detail],
+  );
+  const flatBaiGiang = useMemo(
+    () => detail?.baiGiangs ?? detail?.baiGiangChoDuyet ?? [],
+    [detail],
+  );
+  const flatTaiLieu = useMemo(
+    () => detail?.taiLieus ?? detail?.taiLieuChoDuyet ?? [],
+    [detail],
+  );
+  const flatBaiKiemTra = useMemo(
+    () => detail?.baiKiemTras ?? detail?.baiKiemTraChoDuyet ?? [],
+    [detail],
+  );
+
+  const togglePhan = (id: string) =>
+    setOpenPhan((p) => ({ ...p, [id]: p[id] === false ? true : !p[id] }));
+  const toggleTaiLieu = (id: string) =>
+    setOpenTaiLieu((p) => ({ ...p, [id]: !p[id] }));
+  const toggleBaiKiemTra = (id: string) =>
+    setOpenBaiKiemTra((p) => ({ ...p, [id]: !p[id] }));
+
+  const isActive = (loai: "baiGiang" | "taiLieu" | "baiKiemTra", item: any) => {
+    if (!selected || selected.loai !== loai) return false;
+    const key =
+      loai === "baiGiang"
+        ? "idBaiGiang"
+        : loai === "taiLieu"
+          ? "idTaiLieu"
+          : "idBaiKiemTra";
+    return (selected.item[key] ?? selected.item.id) === (item[key] ?? item.id);
+  };
+
+  const taiLieuOfBaiGiang = useCallback(
+    (bg: any) => {
+      if (Array.isArray(bg.taiLieus) && bg.taiLieus.length > 0)
+        return sortPending(bg.taiLieus);
+      return sortPending(
+        flatTaiLieu.filter((tl: any) => tl.idBaiGiang === bg.idBaiGiang),
+      );
+    },
+    [flatTaiLieu],
+  );
+
+  const baiKiemTraOfPhan = useCallback(
+    (phan: any, phanId: any) => {
+      if (Array.isArray(phan.baiKiemTras) && phan.baiKiemTras.length > 0)
+        return sortPending(phan.baiKiemTras);
+      return sortPending(
+        flatBaiKiemTra.filter((bkt: any) => bkt.idPhan === phanId),
+      );
+    },
+    [flatBaiKiemTra],
+  );
+
+  const filteredPhans = useMemo(() => {
+    if (!searchTerm.trim()) return phans;
+    const lower = searchTerm.toLowerCase();
+    const match = (s?: string) => (s ?? "").toLowerCase().includes(lower);
+    return phans
+      .map((phan: any, idx: number) => {
+        const id = phan.id ?? phan.idPhan ?? `phan-${idx}`;
+        const baiGiangs = (
+          Array.isArray(phan.baiGiangs)
+            ? phan.baiGiangs
+            : flatBaiGiang.filter((bg: any) => bg.idPhan === id)
+        ).filter(
+          (bg: any) =>
+            match(bg.tenBaiGiang) ||
+            match(bg.tieuDe) ||
+            taiLieuOfBaiGiang(bg).some(
+              (tl: any) => match(tl.tenTaiLieu) || match(tl.tieuDe),
+            ),
+        );
+        const baiKiemTras = baiKiemTraOfPhan(phan, id).filter(
+          (bkt: any) => match(bkt.tenBaiKiemTra) || match(bkt.tieuDe),
+        );
+        if (
+          match(phan.tenPhan) ||
+          baiGiangs.length > 0 ||
+          baiKiemTras.length > 0
+        ) {
+          return { ...phan, baiGiangs, baiKiemTras };
+        }
+        return null;
+      })
+      .filter(Boolean) as any[];
+  }, [phans, searchTerm, flatBaiGiang, taiLieuOfBaiGiang, baiKiemTraOfPhan]);
+
+  const { tongSo, tongSoCho } = useMemo(() => {
+    let tong = 0;
+    let cho = 0;
+    const countBg = (bg: any) => {
+      tong += 1;
+      if (isTrangThaiCho(bg.trangThaiPheDuyet)) cho += 1;
+      taiLieuOfBaiGiang(bg).forEach((tl: any) => {
+        tong += 1;
+        if (isTrangThaiCho(tl.trangThaiPheDuyet)) cho += 1;
+      });
+    };
+    if (phans.length > 0) {
+      phans.forEach((phan: any, idx: number) => {
+        const id = phan.id ?? phan.idPhan ?? `phan-${idx}`;
+        const baiGiangs = Array.isArray(phan.baiGiangs)
+          ? phan.baiGiangs
+          : flatBaiGiang.filter((bg: any) => bg.idPhan === id);
+        baiGiangs.forEach(countBg);
+        baiKiemTraOfPhan(phan, id).forEach((bkt: any) => {
+          tong += 1;
+          if (isTrangThaiCho(bkt.trangThaiPheDuyet)) cho += 1;
+        });
+      });
+    } else {
+      flatBaiGiang.forEach((bg: any) => countBg(bg));
+      flatBaiKiemTra.forEach((bkt: any) => {
+        tong += 1;
+        if (isTrangThaiCho(bkt.trangThaiPheDuyet)) cho += 1;
+      });
+    }
+    return { tongSo: tong, tongSoCho: cho };
+  }, [
+    phans,
+    flatBaiGiang,
+    flatBaiKiemTra,
+    taiLieuOfBaiGiang,
+    baiKiemTraOfPhan,
+  ]);
+
+  const phanTram =
+    tongSo > 0 ? Math.round(((tongSo - tongSoCho) / tongSo) * 100) : 100;
+
+  // ---------- RENDER TAI LIEU (đã xóa StatusChip, thêm RejectionReasonIcon) ----------
+  const renderTaiLieu = (bg: any) => {
+    const taiLieus = taiLieuOfBaiGiang(bg);
+    if (taiLieus.length === 0) return null;
+    const bgId = bg.idBaiGiang ?? bg.id;
+    const open = openTaiLieu[bgId] ?? false;
+    const soCho = demCho(taiLieus);
+    return (
+      <Box sx={{ borderTop: `1px solid ${COLORS.line}` }}>
+        <ListItemButton
+          onClick={() => toggleTaiLieu(bgId)}
+          sx={{ pl: 4, py: 0.75 }}
+        >
+          <AttachFileIcon
+            sx={{ fontSize: 14, color: COLORS.primary, mr: 0.75 }}
+          />
+          <Typography
+            variant="caption"
+            sx={{ flex: 1, fontWeight: 500, color: COLORS.inkSoft }}
+          >
+            {taiLieus.length} tài liệu
+          </Typography>
+          {soCho > 0 && (
+            <Chip
+              label={`${soCho} chờ duyệt`}
+              size="small"
+              sx={{
+                height: 18,
+                fontSize: 10,
+                fontWeight: 700,
+                bgcolor: COLORS.gold,
+                color: "#fff",
+                mr: 0.5,
+              }}
+            />
+          )}
+          {open ? (
+            <ExpandLessIcon sx={{ fontSize: 16 }} />
+          ) : (
+            <ExpandMoreIcon sx={{ fontSize: 16 }} />
+          )}
+        </ListItemButton>
+        <Collapse in={open}>
+          <Stack sx={{ pl: 4, pr: 1.5, pb: 1, gap: 0.5 }}>
+            {taiLieus.map((tl: any, idx: number) => {
+              const active = isActive("taiLieu", tl);
+              const pending = isTrangThaiCho(tl.trangThaiPheDuyet);
+              return (
+                <Box
+                  key={tl.idTaiLieu ?? tl.id ?? idx}
+                  onClick={() => onSelectContent("taiLieu", tl)}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                    cursor: "pointer",
+                    transition: "background-color .15s, border-color .15s",
+                    border: `1px solid ${
+                      active
+                        ? COLORS.primary
+                        : pending
+                          ? COLORS.gold
+                          : COLORS.line
+                    }`,
+                    bgcolor: active
+                      ? mix(COLORS.primary, 0.08)
+                      : pending
+                        ? COLORS.goldSoft
+                        : "transparent",
+                  }}
+                >
+                  <AttachFileIcon
+                    sx={{
+                      fontSize: 14,
+                      color: pending ? COLORS.gold : COLORS.primary,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      flex: 1,
+                      fontWeight: active || pending ? 600 : 400,
+                      color: COLORS.ink,
+                    }}
+                    noWrap
+                  >
+                    {tl.tenTaiLieu ?? tl.tieuDe}
+                  </Typography>
+                  {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
+                  {detail.trangThaiPheDuyet === "TuChoi" && (
+                    <RejectionReasonIcon lyDo={tl.lyDoTuChois} />
+                  )}
+                </Box>
+              );
+            })}
+          </Stack>
+        </Collapse>
+      </Box>
+    );
+  };
+
+  // ---------- RENDER BAI GIANG (đã xóa StatusChip, thêm RejectionReasonIcon) ----------
+  const renderBaiGiang = (bg: any) => {
+    const active = isActive("baiGiang", bg);
+    const pending = isTrangThaiCho(bg.trangThaiPheDuyet);
+    const bgId = bg.idBaiGiang ?? bg.id;
+    return (
+      <Box key={bgId}>
+        <ListItemButton
+          selected={active}
+          onClick={() => onSelectContent("baiGiang", bg)}
+          sx={{
+            pl: 3.5,
+            pr: 2.5,
+            py: 1.1,
+            borderLeft: `3px solid ${
+              active ? COLORS.primary : pending ? COLORS.gold : "transparent"
+            }`,
+            bgcolor: active
+              ? mix(COLORS.primary, 0.08)
+              : pending
+                ? COLORS.goldSoft
+                : "transparent",
+            transition: "all 0.2s",
+            "&:hover": { bgcolor: mix(COLORS.primary, 0.05) },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 30 }}>
+            <PlayArrowIcon
+              sx={{
+                color: active
+                  ? COLORS.primary
+                  : pending
+                    ? COLORS.gold
+                    : COLORS.inkSoft,
+                fontSize: 18,
+              }}
+            />
+          </ListItemIcon>
+          <ListItemText
+            primary={
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: active || pending ? 600 : 400,
+                  lineHeight: 1.4,
+                  color: active ? COLORS.primary : COLORS.ink,
+                }}
+                noWrap
+              >
+                {bg.tenBaiGiang ?? bg.tieuDe}
+              </Typography>
+            }
+          />
+          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
+          {detail.trangThaiPheDuyet === "TuChoi" && (
+            <RejectionReasonIcon lyDo={bg.lyDoTuChois} />
+          )}
+        </ListItemButton>
+        {renderTaiLieu(bg)}
+      </Box>
+    );
+  };
+
+  // ---------- RENDER BAI KIEM TRA ----------
+  const renderBaiKiemTra = (bkt: any) => {
+    const active = isActive("baiKiemTra", bkt);
+    const pending = isTrangThaiCho(bkt.trangThaiPheDuyet);
+    const bktId = bkt.idBaiKiemTra ?? bkt.id;
+    const cauHois: any[] = bkt.cauHois ?? [];
+    return (
+      <Box key={bktId}>
+        <ListItemButton
+          selected={active}
+          onClick={() => onSelectContent("baiKiemTra", bkt)}
+          sx={{
+            pl: 3,
+            py: 1,
+            borderLeft: `3px solid ${
+              active ? COLORS.primary : pending ? COLORS.gold : "transparent"
+            }`,
+            bgcolor: active
+              ? mix(COLORS.primary, 0.08)
+              : pending
+                ? COLORS.goldSoft
+                : "transparent",
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 30 }}>
+            <QuizIcon
+              sx={{
+                color: active
+                  ? COLORS.primary
+                  : pending
+                    ? COLORS.gold
+                    : COLORS.inkSoft,
+                fontSize: 18,
+              }}
+            />
+          </ListItemIcon>
+          <ListItemText
+            primary={
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: active || pending ? 600 : 400,
+                  lineHeight: 1.4,
+                  color: active ? COLORS.primary : COLORS.ink,
+                }}
+                noWrap
+              >
+                {bkt.tenBaiKiemTra ?? bkt.tieuDe}
+              </Typography>
+            }
+            secondary={
+              cauHois.length > 0 ? (
+                <Typography variant="caption" sx={{ color: COLORS.inkSoft }}>
+                  {cauHois.length} câu hỏi
+                </Typography>
+              ) : undefined
+            }
+          />
+          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
+          {detail.trangThaiPheDuyet === "TuChoi" && (
+            <RejectionReasonIcon lyDo={bkt.lyDoTuChois} />
+          )}
+          {/* ĐÃ XÓA IconButton mở rộng và Collapse bên dưới */}
+        </ListItemButton>
+        {/* KHÔNG CÒN Collapse chứa câu hỏi */}
+      </Box>
+    );
+  };
+
+  const noiDungRong =
+    phans.length === 0 &&
+    flatBaiGiang.length === 0 &&
+    flatTaiLieu.length === 0 &&
+    flatBaiKiemTra.length === 0;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        height: "100%",
+      }}
+    >
+      <Box
+        sx={{
+          p: 2,
+          borderBottom: `1px solid ${COLORS.line}`,
+          bgcolor: COLORS.paperRaised,
+          flexShrink: 0,
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: COLORS.inkSoft,
+            fontFamily: FONTS.body,
+            mb: 1.25,
+          }}
+        >
+          Nội dung khóa học
+        </Typography>
+
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="Tìm bài giảng, tài liệu..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{
+            mb: 1.5,
+            bgcolor: "var(--ev-paper, #FFFFFF)",
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 1.5,
+              "& fieldset": { borderColor: COLORS.line },
+              "&:hover fieldset": { borderColor: COLORS.primary },
+              "&.Mui-focused fieldset": { borderColor: COLORS.primary },
+            },
+          }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 18, color: COLORS.inkSoft }} />
+                </InputAdornment>
+              ),
+              endAdornment: searchTerm ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchTerm("")}>
+                    <CloseIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : undefined,
+            },
+          }}
+        />
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 0.5,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 600, color: COLORS.ink }}
+          >
+            Tiến độ kiểm duyệt
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 700,
+              color: tongSoCho > 0 ? COLORS.gold : COLORS.success,
+            }}
+          >
+            {phanTram}%
+          </Typography>
+        </Box>
+        <LinearProgress
+          variant="determinate"
+          value={phanTram}
+          sx={{
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: mix(COLORS.gold, 0.15),
+            "& .MuiLinearProgress-bar": {
+              backgroundColor: tongSoCho > 0 ? COLORS.gold : COLORS.success,
+              borderRadius: 3,
+            },
+            mb: 0.75,
+          }}
+        />
+        <Typography
+          variant="caption"
+          sx={{ display: "block", textAlign: "right", color: COLORS.inkSoft }}
+        >
+          {tongSoCho} / {tongSo} mục đang chờ duyệt
+        </Typography>
+      </Box>
+
+      <Box sx={{ overflowY: "auto", flex: 1, pb: 2 }}>
+        {noiDungRong ? (
+          <Box sx={{ p: 4, textAlign: "center" }}>
+            <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
+              Khóa học chưa có nội dung.
+            </Typography>
+          </Box>
+        ) : phans.length > 0 ? (
+          <>
+            {filteredPhans.map((phan: any, phanIndex: number) => {
+              const id = phan.id ?? phan.idPhan ?? `phan-${phanIndex}`;
+              const baiGiangs = sortPending(
+                Array.isArray(phan.baiGiangs) ? phan.baiGiangs : [],
+              );
+              const baiKiemTras = sortPending(
+                Array.isArray(phan.baiKiemTras) ? phan.baiKiemTras : [],
+              );
+              const soCho = demCho(baiGiangs) + demCho(baiKiemTras);
+              const isOpen = openPhan[id] !== false;
+
+              return (
+                <Box key={id}>
+                  <ListItemButton
+                    onClick={() => togglePhan(id)}
+                    sx={{
+                      bgcolor: soCho > 0 ? COLORS.goldSoft : "transparent",
+                      borderLeft: `3px solid ${
+                        soCho > 0 ? COLORS.gold : "transparent"
+                      }`,
+                      py: 1.5,
+                      px: 2.5,
+                      transition: "background-color 0.2s",
+                      "&:hover": { bgcolor: mix(COLORS.primary, 0.05) },
+                    }}
+                  >
+                    <FolderRoundedIcon
+                      sx={{ color: COLORS.gold, fontSize: 18, mr: 1.25 }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, color: COLORS.ink }}
+                        noWrap
+                      >
+                        {phanIndex + 1}. {phan.tenPhan}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: COLORS.inkSoft }}
+                      >
+                        {baiGiangs.length + baiKiemTras.length} mục
+                        {soCho > 0 ? ` · ${soCho} chờ duyệt` : ""}
+                      </Typography>
+                    </Box>
+                    {isOpen ? (
+                      <ExpandLessIcon sx={{ fontSize: 20 }} />
+                    ) : (
+                      <ExpandMoreIcon sx={{ fontSize: 20 }} />
+                    )}
+                  </ListItemButton>
+                  <Collapse in={isOpen}>
+                    <List disablePadding>
+                      {baiGiangs.map((bg: any) => renderBaiGiang(bg))}
+                      {baiKiemTras.map((bkt: any) => renderBaiKiemTra(bkt))}
+                    </List>
+                  </Collapse>
+                </Box>
+              );
+            })}
+            {filteredPhans.length === 0 && (
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
+                  Không tìm thấy nội dung phù hợp.
+                </Typography>
+              </Box>
+            )}
+          </>
+        ) : (
+          <List disablePadding>
+            {sortPending(flatBaiGiang).map((bg: any) => renderBaiGiang(bg))}
+            {sortPending(flatBaiKiemTra).map((bkt: any) =>
+              renderBaiKiemTra(bkt),
+            )}
+          </List>
+        )}
+      </Box>
     </Box>
   );
 }
@@ -3051,7 +3361,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           overflow: "hidden",
           p: 3,
           bgcolor: COLORS.paper,
-          backgroundImage: `radial-gradient(${alpha(
+          backgroundImage: `radial-gradient(${mix(
             COLORS.gold,
             0.08,
           )} 1px, transparent 1px)`,
@@ -3075,7 +3385,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               "&:hover": {
                 borderColor: COLORS.primary,
                 color: COLORS.primary,
-                bgcolor: alpha(COLORS.primary, 0.05),
+                bgcolor: mix(COLORS.primary, 0.05),
               },
             }}
             size="small"
@@ -3092,7 +3402,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 lineHeight: 1.15,
               }}
             >
-              Kiểm duyệt khóa học
+              Chi tiết kiểm duyệt khóa học
             </Typography>
             <Typography
               sx={{
@@ -3137,10 +3447,10 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                   fontWeight: 600,
                   bgcolor: COLORS.primary,
                   borderRadius: 1.5,
-                  boxShadow: `0 4px 14px -6px ${alpha(COLORS.primary, 0.6)}`,
+                  boxShadow: `0 4px 14px -6px ${mix(COLORS.primary, 0.6)}`,
                   "&:hover": {
                     bgcolor: COLORS.primaryDark,
-                    boxShadow: `0 6px 16px -6px ${alpha(COLORS.primary, 0.7)}`,
+                    boxShadow: `0 6px 16px -6px ${mix(COLORS.primary, 0.7)}`,
                   },
                 }}
               >
@@ -3318,7 +3628,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 <SchoolRoundedIcon
                   sx={{
                     fontSize: 40,
-                    color: alpha(COLORS.primary, 0.2),
+                    color: mix(COLORS.primary, 0.2),
                     mb: 1.5,
                   }}
                 />

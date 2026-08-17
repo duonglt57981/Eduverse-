@@ -126,7 +126,7 @@ export default function LyDoTuChoiInput({
         variant="subtitle2"
         sx={{ fontWeight: 600, mb: 1, color: COLORS.ink }}
       >
-        Lý do từ chối (nếu có)
+        Ghi chú
       </Typography>
 
       <Box

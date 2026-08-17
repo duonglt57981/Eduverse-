@@ -33,6 +33,7 @@ namespace Eduverse.Api.Controller
             _lyDoTuChoiService = lyDoTuChoiService;
         }
 
+
         [HttpGet("kiemduyet-khoahoc-getdanhsach")]
         [Authorize(Roles = "Admin,personnel")]
         public async Task<DataResponse<PagedList<KhoaHocKiemDuyetListDto>>> GetListKiemDuyetKhoaHoc([FromQuery] KhoaHocKiemDuyetSearchDto search)
@@ -76,7 +77,8 @@ namespace Eduverse.Api.Controller
         {
             try
             {
-                var result = await _lichSuKiemDuyetKhoaHocService.GetListLichSuKiemDuyet(search);
+                var role = Roles?.FirstOrDefault();
+                var result = await _lichSuKiemDuyetKhoaHocService.GetListLichSuKiemDuyet(search, role);
                 return DataResponse< PagedList<KhoaHocKiemDuyetListDto>>.Success(result);
             }
             catch (Exception ex)

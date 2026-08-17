@@ -21,6 +21,7 @@ import {
   MenuItem,
   Paper,
   CircularProgress,
+  Chip, // thêm Chip
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -40,7 +41,7 @@ import {
   boxSx,
   PAGE_SIZE,
 } from "@/src/app/admin/approve-courses/types/constants";
-import { StatusChip } from "@/src/app/admin/approve-courses/types/index";
+// import { StatusChip } from "@/src/app/admin/approve-courses/types/index"; // bỏ import cũ
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
 
@@ -99,6 +100,47 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
         objectFit: "cover",
         flexShrink: 0,
         bgcolor: COLORS.line,
+      }}
+    />
+  );
+}
+
+// Component trạng thái mới - đẹp hơn
+function StatusBadge({ status }: { status: string }) {
+  const isApproved = status === "DaDuyet";
+  const label = isApproved ? "Đã duyệt" : "Từ chối";
+  const Icon = isApproved ? CheckCircleRoundedIcon : CancelRoundedIcon;
+  const color = isApproved ? "#059669" : "#DC2626";
+  const bgColor = isApproved ? alpha("#10B981", 0.12) : alpha("#EF4444", 0.12);
+  const borderColor = isApproved
+    ? alpha("#10B981", 0.3)
+    : alpha("#EF4444", 0.3);
+
+  return (
+    <Chip
+      label={label}
+      icon={<Icon />}
+      size="small"
+      sx={{
+        bgcolor: bgColor,
+        color: color,
+        fontWeight: 600,
+        borderRadius: "16px",
+        border: `1px solid ${borderColor}`,
+        "& .MuiChip-icon": {
+          fontSize: 16,
+          color: "inherit",
+          ml: 0.5,
+        },
+        "& .MuiChip-label": {
+          px: 1,
+          fontSize: 12.5,
+        },
+        transition: "all 0.15s ease",
+        "&:hover": {
+          transform: "scale(1.04)",
+          boxShadow: `0 2px 8px ${isApproved ? alpha("#10B981", 0.2) : alpha("#EF4444", 0.2)}`,
+        },
       }}
     />
   );
@@ -175,23 +217,27 @@ export default function LichSuKiemDuyetPage() {
   const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try {
-      const params: any = {
-        pageIndex: 1,
-        pageSize: 20,
-      };
-      const res = await kiemDuyetService.GetListLichSuKiemDuyet(params);
+      // Gọi riêng cho từng trạng thái để lấy tổng số chính xác
+      const [daDuyetRes, tuChoiRes] = await Promise.all([
+        kiemDuyetService.GetListLichSuKiemDuyet({
+          pageIndex: 1,
+          pageSize: 1,
+          trangThaiPheDuyet: "DaDuyet",
+        }),
+        kiemDuyetService.GetListLichSuKiemDuyet({
+          pageIndex: 1,
+          pageSize: 1,
+          trangThaiPheDuyet: "TuChoi",
+        }),
+      ]);
 
-      let list: any[] = [];
-      if (res?.data) {
-        list = res.data.items || [];
-      }
+      const daDuyet = daDuyetRes?.data?.totalCount || 0;
+      const tuChoi = tuChoiRes?.data?.totalCount || 0;
 
       setStats({
-        daDuyet: list.filter((x: any) => x.trangThaiPheDuyet === "DaDuyet")
-          .length,
-        tuChoi: list.filter((x: any) => x.trangThaiPheDuyet === "TuChoi")
-          .length,
-        tong: list.length,
+        daDuyet,
+        tuChoi,
+        tong: daDuyet + tuChoi,
       });
     } catch (e) {
       console.error("Lỗi tải thống kê:", e);
@@ -238,7 +284,6 @@ export default function LichSuKiemDuyetPage() {
     router.push(`/personnel/approve-courses/history/${id}/course`);
   };
 
-  // Sửa: Điều hướng về trang admin/approve-courses
   const handleGoBack = () => {
     router.push("/personnel/approve-courses");
   };
@@ -661,10 +706,9 @@ export default function LichSuKiemDuyetPage() {
                             useFlexGap
                             sx={{ alignItems: "center", flexWrap: "wrap" }}
                           >
-                            <StatusChip
-                              trangThai={trangThaiPheDuyet}
-                              size="small"
-                            />
+                            {/* Sử dụng StatusBadge thay cho StatusChip */}
+                            <StatusBadge status={trangThaiPheDuyet} />
+
                             {item.createDate && (
                               <Typography
                                 variant="caption"

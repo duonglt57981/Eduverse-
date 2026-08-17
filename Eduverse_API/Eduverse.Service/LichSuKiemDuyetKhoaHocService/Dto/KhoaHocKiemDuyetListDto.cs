@@ -18,5 +18,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public string CreateBy { get; set; }
         public Guid? IdNguoiDuyet { get; set; }
         public string? TenNguoiDuyet { get; set; }
+
+
     }
 }

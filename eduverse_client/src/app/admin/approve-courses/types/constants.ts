@@ -21,7 +21,8 @@ export const COLORS = {
 
 // Toàn hệ thống dùng chung một bộ chữ Be Vietnam Pro.
 export const FONTS = {
-  display: "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))",
+  display:
+    "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))",
   body: "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))",
 };
 
@@ -77,7 +78,7 @@ export const TABS = [
   { value: "TuChoi", label: "Từ chối" },
 ];
 
-export const PAGE_SIZE = 10;
+export const PAGE_SIZE = 30;
 
 export type TrangThaiKiemDuyet =
   | "DangSua"

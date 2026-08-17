@@ -63,6 +63,7 @@ import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
@@ -628,6 +629,50 @@ function StatusChip({
   );
 }
 
+// ======================== REJECTION REASON ICON ========================
+function RejectionReasonIcon({ lyDo }: { lyDo?: string | null }) {
+  const [open, setOpen] = useState(false);
+  if (!lyDo) return null;
+  return (
+    <>
+      <Tooltip title="Lý do từ chối">
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          sx={{
+            color: COLORS.danger,
+            "&:hover": { bgcolor: mix(COLORS.danger, 0.08) },
+          }}
+        >
+          <WarningAmberRoundedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <WarningAmberRoundedIcon color="error" />
+          Lý do từ chối
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {lyDo}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Đóng</Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
+
 // ======================== MO TA KHOA HOC COMPONENT ========================
 function MoTaKhoaHoc({ html }: { html: string }) {
   const [expanded, setExpanded] = useState(false);
@@ -928,6 +973,21 @@ function KhoiTenKhoaHoc({ detail }: { detail: KiemDuyetDetailDto }) {
               )}
             </Stack>
           )}
+
+          {/* 👇 THÊM DÒNG DANH MỤC (xuống dòng) */}
+          {detail?.danhMucs && detail.danhMucs.length > 0 && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: COLORS.inkSoft,
+                display: "block",
+                width: "100%",
+                mt: 0.5,
+              }}
+            >
+              Danh mục: {detail.danhMucs.join(", ")}
+            </Typography>
+          )}
         </Box>
       </Stack>
     </Box>
@@ -990,7 +1050,7 @@ function KhoiTuChoiForm({
   );
 }
 
-// ======================== CAU HOI ROW COMPONENT ========================
+// ======================== CAU HOI ROW COMPONENT (đã sửa hiển thị HTML) ========================
 function CauHoiRow({ cauHoi }: { cauHoi: any }) {
   const [expanded, setExpanded] = useState(false);
   const dapAns: any[] = cauHoi.dapAns ?? [];
@@ -1015,13 +1075,20 @@ function CauHoiRow({ cauHoi }: { cauHoi: any }) {
         }}
       >
         <HelpOutlineRoundedIcon sx={{ color: COLORS.inkSoft, fontSize: 14 }} />
-        <Typography
-          variant="body2"
-          sx={{ flex: 1, color: COLORS.ink, fontSize: 13 }}
-          noWrap
-        >
-          {cauHoi.noiDungCauHoi ?? cauHoi.tenCauHoi ?? cauHoi.tieuDe}
-        </Typography>
+        <Box
+          sx={{
+            flex: 1,
+            color: COLORS.ink,
+            fontSize: 13,
+            wordBreak: "break-word",
+            "& strong": { fontWeight: 700 },
+            "& p": { m: 0 },
+          }}
+          dangerouslySetInnerHTML={{
+            __html:
+              cauHoi.noiDungCauHoi ?? cauHoi.tenCauHoi ?? cauHoi.tieuDe ?? "",
+          }}
+        />
         {dapAns.length > 0 && (
           <ExpandMoreIcon
             sx={{
@@ -1075,7 +1142,7 @@ function CauHoiRow({ cauHoi }: { cauHoi: any }) {
   );
 }
 
-// ======================== VIDEO PLAYER COMPONENT ========================
+// ======================== VIDEO PLAYER COMPONENT (đã sửa fallback) ========================
 const VideoPlayer = React.memo(function VideoPlayer({
   url,
   minHeight,
@@ -1229,6 +1296,7 @@ const VideoPlayer = React.memo(function VideoPlayer({
     );
   }
 
+  // Fallback HTML5 video với bắt lỗi
   return (
     <Box sx={containerSx}>
       {isLoading && !hasError && !loadTimedOut && (
@@ -1312,6 +1380,12 @@ const VideoPlayer = React.memo(function VideoPlayer({
           objectFit: "contain",
           visibility:
             isLoading || hasError || loadTimedOut ? "hidden" : "visible",
+        }}
+        onError={() => {
+          if (!hasError && !loadTimedOut) {
+            setHasError(true);
+            setIsLoading(false);
+          }
         }}
       >
         <source src={masterUrl} type="video/mp4" />
@@ -2084,7 +2158,7 @@ function TaiLieuPreview({
   );
 }
 
-// ======================== NOI DUNG VIEWER COMPONENT ========================
+// ======================== NOI DUNG VIEWER COMPONENT (đã sửa hiển thị HTML câu hỏi) ========================
 function NoiDungViewer({ selected }: { selected: any }) {
   const [openFull, setOpenFull] = useState(false);
 
@@ -2235,17 +2309,22 @@ function NoiDungViewer({ selected }: { selected: any }) {
                         {idx + 1}
                       </Typography>
                     </Box>
-                    <Typography
+                    {/* Hiển thị HTML cho câu hỏi */}
+                    <Box
                       sx={{
                         fontWeight: 600,
                         color: COLORS.ink,
                         fontSize: 15,
                         lineHeight: 1.5,
                         flex: 1,
+                        wordBreak: "break-word",
+                        "& strong": { fontWeight: 700 },
+                        "& p": { m: 0 },
                       }}
-                    >
-                      {ch.noiDungCauHoi ?? ch.tieuDe}
-                    </Typography>
+                      dangerouslySetInnerHTML={{
+                        __html: ch.noiDungCauHoi ?? ch.tieuDe ?? "",
+                      }}
+                    />
                   </Box>
 
                   <Box sx={{ ml: 4.5, mt: 1.5 }}>
@@ -2400,7 +2479,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
         >
           {title}
         </Typography>
-        <StatusChip trangThai={item.trangThaiPheDuyet} />
+        {/* KHÔNG HIỂN THỊ StatusChip Ở ĐÂY (theo yêu cầu) */}
         {url && !isTest && (
           <Tooltip title="Xem toàn màn hình">
             <IconButton
@@ -2644,7 +2723,7 @@ function KiemDuyetSidebar({
   const phanTram =
     tongSo > 0 ? Math.round(((tongSo - tongSoCho) / tongSo) * 100) : 100;
 
-  // Các hàm render bên trong sidebar...
+  // ---------- RENDER TAI LIEU (đã xóa StatusChip, thêm RejectionReasonIcon) ----------
   const renderTaiLieu = (bg: any) => {
     const taiLieus = taiLieuOfBaiGiang(bg);
     if (taiLieus.length === 0) return null;
@@ -2736,7 +2815,10 @@ function KiemDuyetSidebar({
                   >
                     {tl.tenTaiLieu ?? tl.tieuDe}
                   </Typography>
-                  <StatusChip trangThai={tl.trangThaiPheDuyet} size="small" />
+                  {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
+                  {detail.trangThaiPheDuyet === "TuChoi" && (
+                    <RejectionReasonIcon lyDo={tl.lyDoTuChois} />
+                  )}
                 </Box>
               );
             })}
@@ -2746,6 +2828,7 @@ function KiemDuyetSidebar({
     );
   };
 
+  // ---------- RENDER BAI GIANG (đã xóa StatusChip, thêm RejectionReasonIcon) ----------
   const renderBaiGiang = (bg: any) => {
     const active = isActive("baiGiang", bg);
     const pending = isTrangThaiCho(bg.trangThaiPheDuyet);
@@ -2798,23 +2881,27 @@ function KiemDuyetSidebar({
               </Typography>
             }
           />
-          <StatusChip trangThai={bg.trangThaiPheDuyet} size="small" />
+          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
+          {detail.trangThaiPheDuyet === "TuChoi" && (
+            <RejectionReasonIcon lyDo={bg.lyDoTuChois} />
+          )}
         </ListItemButton>
         {renderTaiLieu(bg)}
       </Box>
     );
   };
 
+  // ---------- RENDER BAI KIEM TRA ----------
   const renderBaiKiemTra = (bkt: any) => {
     const active = isActive("baiKiemTra", bkt);
     const pending = isTrangThaiCho(bkt.trangThaiPheDuyet);
     const bktId = bkt.idBaiKiemTra ?? bkt.id;
-    const open = openBaiKiemTra[bktId] ?? false;
     const cauHois: any[] = bkt.cauHois ?? [];
     return (
       <Box key={bktId}>
         <ListItemButton
           selected={active}
+          onClick={() => onSelectContent("baiKiemTra", bkt)}
           sx={{
             pl: 3,
             py: 1,
@@ -2828,10 +2915,7 @@ function KiemDuyetSidebar({
                 : "transparent",
           }}
         >
-          <ListItemIcon
-            sx={{ minWidth: 30 }}
-            onClick={() => onSelectContent("baiKiemTra", bkt)}
-          >
+          <ListItemIcon sx={{ minWidth: 30 }}>
             <QuizIcon
               sx={{
                 color: active
@@ -2844,7 +2928,6 @@ function KiemDuyetSidebar({
             />
           </ListItemIcon>
           <ListItemText
-            onClick={() => onSelectContent("baiKiemTra", bkt)}
             primary={
               <Typography
                 variant="body2"
@@ -2866,32 +2949,13 @@ function KiemDuyetSidebar({
               ) : undefined
             }
           />
-          <StatusChip trangThai={bkt.trangThaiPheDuyet} size="small" />
-          {cauHois.length > 0 && (
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleBaiKiemTra(bktId);
-              }}
-            >
-              {open ? (
-                <ExpandLessIcon sx={{ fontSize: 16 }} />
-              ) : (
-                <ExpandMoreIcon sx={{ fontSize: 16 }} />
-              )}
-            </IconButton>
+          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
+          {detail.trangThaiPheDuyet === "TuChoi" && (
+            <RejectionReasonIcon lyDo={bkt.lyDoTuChois} />
           )}
+          {/* ĐÃ XÓA IconButton mở rộng và Collapse bên dưới */}
         </ListItemButton>
-        {cauHois.length > 0 && (
-          <Collapse in={open}>
-            <Stack spacing={0.75} sx={{ pl: 4.5, pr: 1.5, py: 1 }}>
-              {cauHois.map((ch: any, chIndex: number) => (
-                <CauHoiRow key={ch.idCauHoi ?? ch.id ?? chIndex} cauHoi={ch} />
-              ))}
-            </Stack>
-          </Collapse>
-        )}
+        {/* KHÔNG CÒN Collapse chứa câu hỏi */}
       </Box>
     );
   };
@@ -3338,7 +3402,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 lineHeight: 1.15,
               }}
             >
-              Kiểm duyệt khóa học
+              Chi tiết kiểm duyệt khóa học
             </Typography>
             <Typography
               sx={{

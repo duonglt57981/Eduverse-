@@ -25,7 +25,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
 
         public DateTime? DenNgay { get; set; }
 
-        public Guid? idNguoiDuyet { get; set; }
+        public Guid? idGiangVien { get; set; }
 
         public List<Guid>? danhSachKhoaHocId { get; set; }
     }

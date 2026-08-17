@@ -784,6 +784,7 @@ function LectureItem({
   onToggle,
   onEdit,
   onDelete,
+  onShowLyDo, // thêm prop
 }: {
   bg: BaiGiangType;
   itemId: string;
@@ -798,6 +799,7 @@ function LectureItem({
   onToggle: (id: string) => void;
   onEdit: (phanId: string, id: string) => void;
   onDelete: (phanId: string, id: string) => void;
+  onShowLyDo: (lyDo: string) => void; // thêm prop
 }) {
   const {
     attributes,
@@ -883,36 +885,22 @@ function LectureItem({
                   </IconButton>
                 </>
               )}
-              {/* Hiển thị từ chối bìa giảng */}
+              {/* Hiển thị từ chối bìa giảng - khi bấm vào mở popup */}
               {hasLyDo && (
-                <Tooltip
-                  title={
-                    <Box
-                      sx={{
-                        fontSize: 12.5,
-                        lineHeight: 1.6,
-                        "& p": { margin: 0 },
-                        "& ul, & ol": { margin: "4px 0", paddingLeft: "18px" },
-                      }}
-                      dangerouslySetInnerHTML={{ __html: lyDoTuChoi.lyDo }}
-                    />
-                  }
-                  placement="top"
-                  slotProps={{
-                    tooltip: { sx: { maxWidth: 320 } },
+                <IconButton
+                  {...noPropagation}
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShowLyDo(lyDoTuChoi.lyDo);
+                  }}
+                  sx={{
+                    color: "#DC2626",
+                    "&:hover": { bgcolor: "#FEE2E2" },
                   }}
                 >
-                  <IconButton
-                    {...noPropagation}
-                    size="small"
-                    sx={{
-                      color: "#DC2626",
-                      "&:hover": { bgcolor: "#FEE2E2" },
-                    }}
-                  >
-                    <ErrorOutlined fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                  <ErrorOutlined fontSize="small" />
+                </IconButton>
               )}
               <IconButton
                 {...noPropagation}
@@ -998,7 +986,41 @@ function LectureItem({
         </ListItem>
 
         <Collapse in={isExpanded}>
-          <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+          <Box sx={{ px: 2, pb: 2 }}>
+            {children}
+
+            {/* Hiển thị lý do từ chối ở cuối phần mở rộng */}
+            {hasLyDo && (
+              <Box
+                sx={{
+                  mt: 1.5,
+                  p: 1.5,
+                  bgcolor: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: "8px",
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#991B1B",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1,
+                  }}
+                >
+                  <ErrorOutlined sx={{ fontSize: 16, mt: 0.2 }} />
+                  <Box
+                    dangerouslySetInnerHTML={{ __html: lyDoTuChoi.lyDo }}
+                    sx={{
+                      "& p": { margin: 0 },
+                      "& ul, & ol": { margin: "4px 0", paddingLeft: "18px" },
+                    }}
+                  />
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </Collapse>
       </Paper>
     </div>
@@ -1087,6 +1109,7 @@ function QuizItem({
   onToggle,
   onEdit,
   onDelete,
+  onShowLyDo, // thêm prop
 }: {
   kt: BaiKiemTraDto;
   itemId: string;
@@ -1101,6 +1124,7 @@ function QuizItem({
   onToggle: (id: string) => void;
   onEdit: (phanId: string, id: string) => void;
   onDelete: (phanId: string, id: string) => void;
+  onShowLyDo: (lyDo: string) => void; // thêm prop
 }) {
   const {
     attributes,
@@ -1182,36 +1206,22 @@ function QuizItem({
                   </Tooltip>
                 </>
               )}
-              {/* Hiển thị lý do qiuzzz*/}
+              {/* Hiển thị lý do qiuzzz - khi bấm vào mở popup */}
               {hasLyDo && (
-                <Tooltip
-                  title={
-                    <Box
-                      sx={{
-                        fontSize: 12.5,
-                        lineHeight: 1.6,
-                        "& p": { margin: 0 },
-                        "& ul, & ol": { margin: "4px 0", paddingLeft: "18px" },
-                      }}
-                      dangerouslySetInnerHTML={{ __html: lyDoTuChoi.lyDo }}
-                    />
-                  }
-                  placement="top"
-                  slotProps={{
-                    tooltip: { sx: { maxWidth: 320 } },
+                <IconButton
+                  {...noPropagation}
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShowLyDo(lyDoTuChoi.lyDo);
+                  }}
+                  sx={{
+                    color: "#DC2626",
+                    "&:hover": { bgcolor: "#FEE2E2" },
                   }}
                 >
-                  <IconButton
-                    {...noPropagation}
-                    size="small"
-                    sx={{
-                      color: "#DC2626",
-                      "&:hover": { bgcolor: "#FEE2E2" },
-                    }}
-                  >
-                    <ErrorOutlined fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                  <ErrorOutlined fontSize="small" />
+                </IconButton>
               )}
               <IconButton
                 {...noPropagation}
@@ -1283,7 +1293,41 @@ function QuizItem({
         </ListItem>
 
         <Collapse in={isExpanded}>
-          <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+          <Box sx={{ px: 2, pb: 2 }}>
+            {children}
+
+            {/* Hiển thị lý do từ chối ở cuối phần mở rộng */}
+            {hasLyDo && (
+              <Box
+                sx={{
+                  mt: 1.5,
+                  p: 1.5,
+                  bgcolor: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: "8px",
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#991B1B",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1,
+                  }}
+                >
+                  <ErrorOutlined sx={{ fontSize: 16, mt: 0.2 }} />
+                  <Box
+                    dangerouslySetInnerHTML={{ __html: lyDoTuChoi.lyDo }}
+                    sx={{
+                      "& p": { margin: 0 },
+                      "& ul, & ol": { margin: "4px 0", paddingLeft: "18px" },
+                    }}
+                  />
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </Collapse>
       </Paper>
     </div>
@@ -2045,6 +2089,8 @@ function QuestionListView({
   onAddNew,
   isEditable,
   showAddButton = true,
+  expandedQuestions,
+  onToggleQuestion,
 }: {
   questions: any[];
   onEdit: (question: any) => void;
@@ -2052,7 +2098,17 @@ function QuestionListView({
   onAddNew: () => void;
   isEditable: boolean;
   showAddButton?: boolean;
+  expandedQuestions: Record<string, boolean>;
+  onToggleQuestion: (id: string) => void;
 }) {
+  // Hàm stripHtml để lấy text thuần cho hiển thị tóm tắt
+  const stripHtml = (html: string) => {
+    if (!html) return "";
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  };
+
   return (
     <Box>
       <Box
@@ -2124,19 +2180,7 @@ function QuestionListView({
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
           {questions.map((q, index) => {
-            const loaiHienThi =
-              q.loaiCauHoi === "ONE" ? "Trắc nghiệm" : "Lựa chọn nhiều";
-            const doKhoMau: Record<string, string> = {
-              De: "#2E7D32",
-              TrungBinh: "#D97706",
-              Kho: "#C62828",
-            };
-            const doKhoNhan: Record<string, string> = {
-              De: "Dễ",
-              TrungBinh: "Trung bình",
-              Kho: "Khó",
-            };
-
+            const isExpanded = expandedQuestions[q.id] || false;
             const plainText = stripHtml(
               q.noiDungCauHoi || "Câu hỏi chưa có nội dung",
             );
@@ -2146,11 +2190,6 @@ function QuestionListView({
                 key={q.id}
                 elevation={0}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.25,
-                  px: 1.5,
-                  py: 1,
                   border: "1px solid #EDEFF3",
                   borderRadius: "10px",
                   bgcolor: "var(--ev-paper, #FFFFFF)",
@@ -2159,122 +2198,225 @@ function QuestionListView({
                     borderColor: MAU.chinh,
                     boxShadow: "0 1px 6px rgba(17,24,39,0.06)",
                   },
-                  "&:hover .question-actions": { opacity: 1 },
+                  overflow: "hidden",
                 }}
               >
+                {/* Header – có thể bấm để mở rộng */}
                 <Box
                   sx={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: "50%",
-                    bgcolor: `${MAU.chinh}14`,
-                    color: MAU.chinhDam,
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    flexShrink: 0,
+                    gap: 1.25,
+                    px: 1.5,
+                    py: 1,
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
                   }}
+                  onClick={() => onToggleQuestion(q.id)}
                 >
-                  {index + 1}
-                </Box>
-
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    sx={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--ev-text-primary, #1F2937)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {plainText}
-                  </Typography>
                   <Box
                     sx={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: "50%",
+                      bgcolor: `${MAU.chinh}14`,
+                      color: MAU.chinhDam,
                       display: "flex",
                       alignItems: "center",
-                      gap: 0.75,
-                      mt: 0.25,
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      flexShrink: 0,
                     }}
                   >
-                    <Chip
-                      size="small"
-                      label={loaiHienThi}
+                    {index + 1}
+                  </Box>
+
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
                       sx={{
-                        fontSize: 10,
+                        fontSize: 14,
                         fontWeight: 600,
-                        bgcolor: `${MAU.chinh}14`,
-                        color: MAU.chinhDam,
-                        height: 18,
+                        color: "var(--ev-text-primary, #1F2937)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
-                    />
-                    {q.doKho && (
+                    >
+                      {plainText}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.75,
+                        mt: 0.25,
+                      }}
+                    >
                       <Chip
                         size="small"
-                        label={doKhoNhan[q.doKho] || q.doKho}
+                        label={
+                          q.loaiCauHoi === "ONE"
+                            ? "Trắc nghiệm"
+                            : "Lựa chọn nhiều"
+                        }
                         sx={{
                           fontSize: 10,
                           fontWeight: 600,
-                          bgcolor: `${doKhoMau[q.doKho] || "#8A7676"}14`,
-                          color: doKhoMau[q.doKho] || "#8A7676",
+                          bgcolor: `${MAU.chinh}14`,
+                          color: MAU.chinhDam,
                           height: 18,
                         }}
                       />
-                    )}
-                    <Typography
-                      sx={{
-                        fontSize: 11,
-                        color: "var(--ev-text-muted, #8A7676)",
-                      }}
-                    >
-                      {q.danhSachDapAn?.length ?? 0} đáp án
-                    </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 11,
+                          color: "var(--ev-text-muted, #8A7676)",
+                        }}
+                      >
+                        {q.danhSachDapAn?.length ?? 0} đáp án
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
 
-                {isEditable && showAddButton && (
-                  <Box
-                    className="question-actions"
-                    sx={{
-                      display: "flex",
-                      gap: 0.25,
-                      flexShrink: 0,
-                      opacity: { xs: 1, sm: 0.6 },
-                      transition: "opacity 0.15s ease",
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleQuestion(q.id);
                     }}
                   >
-                    <Tooltip title="Sửa câu hỏi">
-                      <IconButton
-                        {...noPropagation}
-                        size="small"
-                        onClick={() => onEdit(q)}
-                        sx={{
-                          color: "var(--ev-text-muted, #9AA2B1)",
-                          "&:hover": { color: MAU.chinh },
-                        }}
-                      >
-                        <EditOutlined fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Xóa câu hỏi">
-                      <IconButton
-                        {...noPropagation}
-                        size="small"
-                        onClick={() => onDelete(q.id)}
-                        sx={{
-                          color: "var(--ev-text-muted, #9AA2B1)",
-                          "&:hover": { color: "#C62828" },
-                        }}
-                      >
-                        <DeleteOutlined fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                    {isExpanded ? (
+                      <ExpandLess fontSize="small" />
+                    ) : (
+                      <ExpandMore fontSize="small" />
+                    )}
+                  </IconButton>
+
+                  {isEditable && showAddButton && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 0.25,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Tooltip title="Sửa câu hỏi">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(q);
+                          }}
+                          sx={{
+                            color: "var(--ev-text-muted, #9AA2B1)",
+                            "&:hover": { color: MAU.chinh },
+                          }}
+                        >
+                          <EditOutlined fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Xóa câu hỏi">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(q.id);
+                          }}
+                          sx={{
+                            color: "var(--ev-text-muted, #9AA2B1)",
+                            "&:hover": { color: "#C62828" },
+                          }}
+                        >
+                          <DeleteOutlined fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Phần mở rộng hiển thị chi tiết câu hỏi và đáp án */}
+                <Collapse in={isExpanded}>
+                  <Box sx={{ px: 2, pb: 2 }}>
+                    {/* Nội dung câu hỏi (hỗ trợ HTML) */}
+                    <Box
+                      dangerouslySetInnerHTML={{
+                        __html: q.noiDungCauHoi || "",
+                      }}
+                      sx={{
+                        mb: 1.5,
+                        "& p": { margin: "0 0 0.5em 0" },
+                        "& ul, & ol": { margin: "4px 0", paddingLeft: "18px" },
+                      }}
+                    />
+                    {/* Danh sách đáp án */}
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 13,
+                        color: "var(--ev-text-muted, #8A7676)",
+                        mb: 0.5,
+                      }}
+                    >
+                      Đáp án:
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0.5,
+                      }}
+                    >
+                      {(q.danhSachDapAn || []).map((d: any, idx: number) => (
+                        <Box
+                          key={d.id}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            px: 1.5,
+                            py: 0.75,
+                            borderRadius: "6px",
+                            bgcolor: d.laDapAnDung
+                              ? `${MAU.chinh}0A`
+                              : "transparent",
+                            border: d.laDapAnDung
+                              ? `1px solid ${MAU.chinh}44`
+                              : "1px solid transparent",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: 13,
+                              color: "var(--ev-text-muted, #8A7676)",
+                              minWidth: 24,
+                            }}
+                          >
+                            {String.fromCharCode(65 + idx)}.
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 13,
+                              color: "var(--ev-text-primary, #1F2937)",
+                            }}
+                          >
+                            {d.noiDungDapAn || "(Trống)"}
+                          </Typography>
+                          {d.laDapAnDung && (
+                            <CheckCircle
+                              sx={{
+                                fontSize: 16,
+                                color: MAU.chinh,
+                                ml: "auto",
+                              }}
+                            />
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
                   </Box>
-                )}
+                </Collapse>
               </Paper>
             );
           })}
@@ -3130,6 +3272,12 @@ export default function CurriculumContent() {
     open: false,
     url: "",
     name: "",
+  });
+
+  // State cho popup lý do
+  const [lyDoPopup, setLyDoPopup] = useState<{ open: boolean; lyDo: string }>({
+    open: false,
+    lyDo: "",
   });
 
   const isEditable = trangThai === "DangSua";
@@ -4243,11 +4391,22 @@ export default function CurriculumContent() {
 
   const toggleQuizItem = (quizId: string) => {
     setExpandedQuizzes((prev) => ({ ...prev, [quizId]: !prev[quizId] }));
+
     if (!expandedQuizzes[quizId] && quizUpdateForm?.quizId === quizId) {
       setQuizUpdateForm(null);
     }
   };
 
+  const [expandedQuestions, setExpandedQuestions] = useState<
+    Record<string, boolean>
+  >({});
+
+  const toggleQuestion = (questionId: string) => {
+    setExpandedQuestions((prev) => ({
+      ...prev,
+      [questionId]: !prev[questionId],
+    }));
+  };
   const tongThoiLuong = tinhTongThoiLuongGiay(phans);
   const tongPhut = Math.floor(tongThoiLuong / 60);
 
@@ -4353,6 +4512,11 @@ export default function CurriculumContent() {
       }));
       isRefreshingRef.current = false;
     }
+  };
+
+  // Hàm show lý do
+  const showLyDo = (lyDo: string) => {
+    setLyDoPopup({ open: true, lyDo });
   };
 
   // ===== RENDER =====
@@ -4607,6 +4771,7 @@ export default function CurriculumContent() {
                                   onToggle={toggleLecture}
                                   onEdit={handleEditLecture}
                                   onDelete={xoaBaiGiang}
+                                  onShowLyDo={showLyDo}
                                 >
                                   {isEditing ? (
                                     <Box
@@ -5407,6 +5572,7 @@ export default function CurriculumContent() {
                                   onToggle={toggleQuizItem}
                                   onEdit={handleOpenQuizUpdate}
                                   onDelete={handleDeleteQuiz}
+                                  onShowLyDo={showLyDo}
                                 >
                                   {isQuizUpdating ? (
                                     <QuizUpdateForm
@@ -5599,7 +5765,9 @@ export default function CurriculumContent() {
                                         )
                                       }
                                       isEditable={isEditable}
-                                      showAddButton={true}
+                                      showAddButton={isEditable} // Chỉ hiện nút thêm khi đang sửa
+                                      expandedQuestions={expandedQuestions}
+                                      onToggleQuestion={toggleQuestion}
                                     />
                                   )}
                                 </QuizItem>
@@ -6195,6 +6363,42 @@ export default function CurriculumContent() {
               }}
             >
               Xóa
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog hiển thị lý do */}
+        <Dialog
+          open={lyDoPopup.open}
+          onClose={() => setLyDoPopup({ open: false, lyDo: "" })}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700, color: MAU.chuDen }}>
+            Lý do từ chối
+            <IconButton
+              aria-label="close"
+              onClick={() => setLyDoPopup({ open: false, lyDo: "" })}
+              sx={{ position: "absolute", right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box
+              dangerouslySetInnerHTML={{ __html: lyDoPopup.lyDo }}
+              sx={{
+                "& p": { margin: "0 0 0.5em 0" },
+                "& ul, & ol": { margin: "4px 0", paddingLeft: "18px" },
+              }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setLyDoPopup({ open: false, lyDo: "" })}
+              sx={{ textTransform: "none", fontWeight: 600 }}
+            >
+              Đóng
             </Button>
           </DialogActions>
         </Dialog>
