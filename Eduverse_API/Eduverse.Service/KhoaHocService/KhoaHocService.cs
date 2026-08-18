@@ -1383,6 +1383,212 @@ namespace Eduverse.Service.KhoaHocService
             return _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
         }
 
+        public async Task<KhoaHocDto> ChuyenTrangThaiDangSua(Guid idKhoaHoc)
+        {
+            var userIdStr = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                throw new UnauthorizedAccessException("Không xác định được người dùng");
+
+            var khoaHoc = await GetQueryable()
+                .Where(x => x.Id == idKhoaHoc && !x.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            if (khoaHoc == null)
+                throw new Exception("Không tìm thấy khóa học nào");
+
+            var coQuyenGuiDuyet = await CoQuyenTrenKhoaHoc(khoaHoc.Id, userId, gv => gv.Manage);
+            if (!coQuyenGuiDuyet)
+                throw new Exception($"Bạn không có quyền hạn để sửa khóa học: {khoaHoc.Id}");
+
+            var khoaHocNhap = await GetQueryable()
+                .Where(kh => kh.IdBanGhiTruoc == khoaHoc.Id && !kh.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            var khoaHocToUpdate = new List<KhoaHoc>();
+            var phanUpdate = new List<Phan>();
+            var baiGiangToUpdate = new List<BaiGiang>();
+            var taiLieuToUpdate = new List<TaiLieu>();
+            var baiKiemTraToUpdate = new List<BaiKiemTra>();
+            var cauHoiToUpdate = new List<CauHoi>();
+            var dapAnToUpdate = new List<DapAn>();
+
+            // 1. Nếu khóa học đang DangSua thì chuyển ChoDuyet
+            if (khoaHoc.TrangThaiPheDuyet == "ChoDuyet")
+            {
+                khoaHoc.TrangThaiPheDuyet = "DangSua";
+                khoaHoc.TrangThai = "DangSua";
+                khoaHocToUpdate.Add(khoaHoc);
+            }
+
+            if (khoaHocNhap != null && khoaHocNhap.TrangThaiPheDuyet == "ChoDuyet")
+            {
+                khoaHocNhap.TrangThaiPheDuyet = "DangSua";
+                khoaHocNhap.TrangThai = "DangSua";
+                khoaHocToUpdate.Add(khoaHocNhap);
+            }
+
+            // 2. Lấy tất cả phần học thuộc khóa học này
+            var phanHocs = await _phanRepository.GetQueryable()
+                .Where(p => p.IdKhoaHoc == idKhoaHoc && !p.IsDeleted)
+                .ToListAsync();
+
+            if (phanHocs.Any())
+            {
+                foreach (var ph in phanHocs)
+                {
+                    ph.TrangThaiPheDuyet = "DangSua";
+                    ph.TrangThai = "DangSua";
+                    phanUpdate.Add(ph);
+                }
+
+                var phanHocIds = phanHocs.Select(p => p.Id).ToList();
+
+                // Bài giảng đang DangSua
+                var baiGiangs = await _baiGiangRepository.GetQueryable()
+                    .Where(b => phanHocIds.Contains(b.IdPhan) && !b.IsDeleted && b.TrangThaiPheDuyet == "DangSua")
+                    .ToListAsync();
+
+                foreach (var bg in baiGiangs)
+                {
+                    bg.TrangThaiPheDuyet = "DangSua";
+                    bg.TrangThai = "DangSua";
+                    baiGiangToUpdate.Add(bg);
+                }
+
+                // Tài liệu thuộc bài giảng hiện tại (bản hiện hành)
+                var baiGiangHienTaiIds = await _baiGiangRepository.GetQueryable()
+                    .Where(b => phanHocIds.Contains(b.IdPhan) && !b.IsDeleted && b.IsBanHienTai == true)
+                    .Select(b => b.Id)
+                    .ToListAsync();
+
+                if (baiGiangHienTaiIds.Any())
+                {
+                    var taiLieus = await _taiLieuRepository.GetQueryable()
+                        .Where(t => baiGiangHienTaiIds.Contains(t.IdBaiGiang) && !t.IsDeleted && t.TrangThaiPheDuyet == "ChoDuyet")
+                        .ToListAsync();
+
+                    foreach (var tl in taiLieus)
+                    {
+                        tl.TrangThaiPheDuyet = "DangSua";
+                        tl.TrangThai = "DangSua";
+                        tl.UpdatedDate = DateTime.UtcNow;
+                        taiLieuToUpdate.Add(tl);
+                    }
+                }
+
+                // Bài kiểm tra đang DangSua
+                var baiKiemTras = await _baiKiemTraRepository.GetQueryable()
+                    .Where(b => b.IdPhan.HasValue && phanHocIds.Contains(b.IdPhan.Value) && !b.IsDeleted && b.TrangThaiPheDuyet == "ChoDuyet")
+                    .ToListAsync();
+
+                foreach (var bkt in baiKiemTras)
+                {
+                    bkt.TrangThaiPheDuyet = "DangSua";
+                    bkt.TrangThai = "DangSua";
+                    baiKiemTraToUpdate.Add(bkt);
+                }
+                var allBaiKiemTraIds = await _baiKiemTraRepository.GetQueryable()
+                    .Where(b => b.IdPhan.HasValue && phanHocIds.Contains(b.IdPhan.Value) && !b.IsDeleted)
+                    .Select(b => b.Id)
+                    .ToListAsync();
+
+                if (allBaiKiemTraIds.Any())
+                {
+                    var cauHois = await _cauHoiService.GetQueryable()
+                        .Where(c => c.IdBaiKiemTra.HasValue && allBaiKiemTraIds.Contains(c.IdBaiKiemTra.Value) && !c.IsDeleted && c.TrangThaiPheDuyet == "ChoDuyet")
+                        .ToListAsync();
+
+                    foreach (var ch in cauHois)
+                    {
+                        ch.TrangThaiPheDuyet = "DangSua";
+                        ch.TrangThai = "DangSua";
+                        cauHoiToUpdate.Add(ch);
+                    }
+
+                    var allCauHoiIds = await _cauHoiService.GetQueryable()
+                        .Where(c => c.IdBaiKiemTra.HasValue && allBaiKiemTraIds.Contains(c.IdBaiKiemTra.Value) && !c.IsDeleted)
+                        .Select(c => c.Id)
+                        .ToListAsync();
+
+                    if (allCauHoiIds.Any())
+                    {
+                        var dapAns = await _dapAnService.GetQueryable()
+                            .Where(d => d.IdCauHoi.HasValue && allCauHoiIds.Contains(d.IdCauHoi.Value) && !d.IsDeleted && d.TrangThaiPheDuyet == "ChoDuyet")
+                            .ToListAsync();
+
+                        foreach (var da in dapAns)
+                        {
+                            da.TrangThaiPheDuyet = "DangSua";
+                            da.TrangThai = "DangSua";
+                            dapAnToUpdate.Add(da);
+                        }
+                    }
+                }
+            }
+
+            if (!khoaHocToUpdate.Any() && !baiGiangToUpdate.Any() && !taiLieuToUpdate.Any()
+                && !baiKiemTraToUpdate.Any() && !cauHoiToUpdate.Any() && !dapAnToUpdate.Any())
+            {
+                throw new Exception("Không có phần nào đang ở trạng thái Đang sửa để chuyển sang Chờ duyệt");
+            }
+
+            var executionStrategy = _eduverseContext.Database.CreateExecutionStrategy();
+            await executionStrategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
+                try
+                {
+                    if (khoaHocToUpdate.Any())
+                        await UpdateAsync(khoaHocToUpdate);
+
+                    if (phanUpdate.Any())
+                    {
+                        foreach (var ph in phanUpdate)
+                        {
+                            _phanRepository.Update(ph);
+                        }
+                    }
+
+                    if (baiGiangToUpdate.Any())
+                        await _baiGiangService.UpdateAsync(baiGiangToUpdate);
+
+                    if (taiLieuToUpdate.Any())
+                        await _taiLieuService.UpdateAsync(taiLieuToUpdate);
+
+                    foreach (var item in baiKiemTraToUpdate)
+                        _baiKiemTraRepository.Update(item);
+
+                    if (cauHoiToUpdate.Any())
+                        await _cauHoiService.UpdateAsync(cauHoiToUpdate);
+
+                    if (dapAnToUpdate.Any())
+                        await _dapAnService.UpdateAsync(dapAnToUpdate);
+
+                    await _eduverseContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+
+            var approvalPayload = new NotificationPayload
+            {
+                TieuDe = "Khóa học mới chờ phê duyệt",
+                NoiDung = $"Giảng viên đã gửi khóa học '{khoaHoc.TieuDe}' để phê duyệt.",
+                LoaiThongBao = "KhoaHocChoDuyet",
+                Link = $"/admin/approve-courses/{khoaHoc.Id}",
+                FromUser = userId,
+                ItemId = khoaHoc.Id,
+                ItemName = khoaHoc.TieuDe
+            };
+            await _notificationPublisher.NotifyRoleAsync("Admin", approvalPayload, new[] { userId });
+
+            return _mapper.Map<KhoaHoc, KhoaHocDto>(khoaHoc);
+        }
+
         public async Task<GetToUpdateKhoaHoc> GetToUpdateKhoaHoc(Guid idKhoaHoc)
         {
             Guid.TryParse(

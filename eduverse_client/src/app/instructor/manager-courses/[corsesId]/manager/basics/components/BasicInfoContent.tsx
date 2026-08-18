@@ -81,6 +81,20 @@ function layDuoiFile(tenFile: string): string {
   return idx === -1 ? "" : tenFile.slice(idx).toLowerCase();
 }
 
+function layTenFileTuUrl(url?: string): string {
+  if (!url) return "";
+  try {
+    const cleanUrl = url.split("?")[0].split("#")[0];
+    const parts = cleanUrl.split("/").filter(Boolean);
+    if (parts.length > 0) {
+      return decodeURIComponent(parts[parts.length - 1]);
+    }
+  } catch {
+    // fallback
+  }
+  return "hinh-anh-khoa-hoc.jpg";
+}
+
 // ===== VALIDATE IMAGE FILE =====
 function validateImageFile(
   file: File,
@@ -937,6 +951,11 @@ export default function BasicInfoContent() {
   const anhDangHienThi = imageFile
     ? URL.createObjectURL(imageFile)
     : thongTin.hinhAnhKhoaHoc || "";
+  const tenFileAnhHienThi = imageFile
+    ? imageFile.name
+    : thongTin.hinhAnhKhoaHoc
+      ? layTenFileTuUrl(thongTin.hinhAnhKhoaHoc)
+      : "Chưa có tệp nào được chọn";
 
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
@@ -1319,7 +1338,11 @@ export default function BasicInfoContent() {
                 icon={<ImageRoundedIcon fontSize="small" />}
                 title="Hình ảnh khóa học"
               />
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={3}
+                sx={{ alignItems: { sm: "flex-start" } }}
+              >
                 <Box
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -1330,8 +1353,8 @@ export default function BasicInfoContent() {
                   sx={{
                     position: "relative",
                     flexShrink: 0,
-                    width: { xs: "100%", sm: 260 },
-                    height: 170,
+                    width: { xs: "100%", sm: 280, md: 300 },
+                    aspectRatio: "16/9",
                     borderRadius: "12px",
                     border: isDragging
                       ? `2px dashed ${MAU.chinh}`
@@ -1348,10 +1371,16 @@ export default function BasicInfoContent() {
                 >
                   {anhDangHienThi ? (
                     <>
-                      <Avatar
+                      <Box
+                        component="img"
                         src={anhDangHienThi}
-                        sx={{ width: "100%", height: "100%", borderRadius: 0 }}
-                        variant="square"
+                        alt="Hình ảnh khóa học"
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
                       />
                       {isEditable && (
                         <>
@@ -1374,6 +1403,7 @@ export default function BasicInfoContent() {
                                 bgcolor: "var(--ev-paper, #FFFFFF)",
                               },
                             }}
+                            title="Xóa ảnh"
                           >
                             <CloseRoundedIcon sx={{ fontSize: 16 }} />
                           </IconButton>
@@ -1417,7 +1447,15 @@ export default function BasicInfoContent() {
                   )}
                 </Box>
 
-                <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    minWidth: 0,
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box
                     sx={{
                       display: "flex",
@@ -1480,13 +1518,14 @@ export default function BasicInfoContent() {
                     </Typography>
                   )}
 
-                  <Stack direction="row" spacing={1.5} sx={{ mt: "auto" }}>
+                  <Stack direction="row" spacing={1.5} sx={{ mt: "auto", pt: 1 }}>
                     <Box
                       sx={{
                         flex: 1,
                         display: "flex",
                         alignItems: "center",
                         px: 1.5,
+                        py: 0.8,
                         borderRadius: "10px",
                         border: "1px solid var(--ev-divider, #ECE7E4)",
                         bgcolor: "var(--ev-paper-alt, #F7F5F2)",
@@ -1497,14 +1536,18 @@ export default function BasicInfoContent() {
                     >
                       <Typography
                         noWrap
+                        title={tenFileAnhHienThi}
                         sx={{
                           fontSize: 13.5,
-                          color: "var(--ev-text-secondary, #64748B)",
+                          color:
+                            imageFile || thongTin.hinhAnhKhoaHoc
+                              ? "var(--ev-text-primary, #1F2937)"
+                              : "var(--ev-text-secondary, #64748B)",
+                          fontWeight:
+                            imageFile || thongTin.hinhAnhKhoaHoc ? 500 : 400,
                         }}
                       >
-                        {imageFile
-                          ? imageFile.name
-                          : "Chưa có tệp nào được chọn"}
+                        {tenFileAnhHienThi}
                       </Typography>
                     </Box>
 
@@ -1527,13 +1570,14 @@ export default function BasicInfoContent() {
                         borderColor: "#8B1313",
                         color: "#8B1313",
                         fontWeight: 700,
+                        px: 2.5,
                         "&:hover": {
                           borderColor: "#7F1D1D",
                           bgcolor: "rgba(153,27,27,0.04)",
                         },
                       }}
                     >
-                      Tải lên tệp
+                      {anhDangHienThi ? "Thay đổi" : "Tải lên tệp"}
                     </Button>
                   </Stack>
                 </Box>

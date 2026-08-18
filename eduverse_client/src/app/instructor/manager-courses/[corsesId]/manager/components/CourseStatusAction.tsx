@@ -21,6 +21,8 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import UndoIcon from "@mui/icons-material/Undo";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 import {
   MAU,
@@ -37,6 +39,7 @@ interface Props {
   phans: PhanHocType[];
   lyDoTuChoi?: string | null;
   onGuiPheDuyet: () => Promise<void>;
+  onHuyPheDuyet?: () => Promise<void>;
   onDiChuyenDen: (diChuyenDen: MucThieu["diChuyenDen"]) => void;
 }
 
@@ -46,11 +49,25 @@ export default function CourseStatusAction({
   phans,
   lyDoTuChoi,
   onGuiPheDuyet,
+  onHuyPheDuyet,
   onDiChuyenDen,
 }: Props) {
   const [dangXuLy, setDangXuLy] = useState(false);
   const [moPopupThieu, setMoPopupThieu] = useState(false);
   const [danhSachThieu, setDanhSachThieu] = useState<MucThieu[]>([]);
+  const [moDialogHuyDuyet, setMoDialogHuyDuyet] = useState(false);
+  const [dangHuyDuyet, setDangHuyDuyet] = useState(false);
+
+  const xuLyXacNhanHuyDuyet = async () => {
+    if (!onHuyPheDuyet) return;
+    try {
+      setDangHuyDuyet(true);
+      await onHuyPheDuyet();
+      setMoDialogHuyDuyet(false);
+    } finally {
+      setDangHuyDuyet(false);
+    }
+  };
 
   const { coDangSua, chiTiet } = useMemo(() => {
     return kiemTraCoBanGhiDangSua(thongTinKhoaHoc, phans);
@@ -100,12 +117,117 @@ export default function CourseStatusAction({
 
   if (trangThai === "ChoDuyet") {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <LockOutlinedIcon sx={{ fontSize: 18, color: "#FFB74D" }} />
-        <Typography sx={{ fontSize: 13, color: "#FFB74D" }}>
-          ⏳ Đang chờ phê duyệt — không thể chỉnh sửa
-        </Typography>
-      </Box>
+      <>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
+            <LockOutlinedIcon sx={{ fontSize: 18, color: "#FFB74D" }} />
+            <Typography
+              sx={{ fontSize: 13, color: "#FFB74D", fontWeight: 600 }}
+            >
+              Đang chờ phê duyệt
+            </Typography>
+          </Box>
+          {onHuyPheDuyet && (
+            <Button
+              variant="contained"
+              onClick={() => setMoDialogHuyDuyet(true)}
+              startIcon={<UndoIcon sx={{ fontSize: 16 }} />}
+              sx={{
+                bgcolor: "#D97706",
+                color: "#ffffff",
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: 13,
+                px: 2,
+                py: 0.7,
+                borderRadius: "8px",
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: "#B45309",
+                  boxShadow: "none",
+                },
+              }}
+            >
+              Hủy duyệt
+            </Button>
+          )}
+        </Box>
+
+        {/* Dialog xác nhận hủy duyệt */}
+        <Dialog
+          open={moDialogHuyDuyet}
+          onClose={() => !dangHuyDuyet && setMoDialogHuyDuyet(false)}
+          maxWidth="xs"
+          fullWidth
+          slotProps={{
+            paper: { sx: { borderRadius: "14px" } },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+              fontWeight: 800,
+              fontSize: 17,
+              color: MAU.chuDen,
+            }}
+          >
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: "8px",
+                bgcolor: "#FEF3C7",
+                color: "#D97706",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <WarningAmberRoundedIcon fontSize="small" />
+            </Box>
+            Hủy yêu cầu phê duyệt?
+          </DialogTitle>
+          <DialogContent>
+            <Typography sx={{ color: MAU.chuXam, fontSize: 14 }}>
+              Bạn có chắc chắn muốn hủy yêu cầu phê duyệt khóa học này không?
+              Khóa học sẽ được chuyển về trạng thái &quot;Đang sửa&quot;.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <Button
+              onClick={() => setMoDialogHuyDuyet(false)}
+              disabled={dangHuyDuyet}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                color: MAU.chuXam,
+              }}
+            >
+              Đóng
+            </Button>
+            <Button
+              onClick={xuLyXacNhanHuyDuyet}
+              variant="contained"
+              disabled={dangHuyDuyet}
+              sx={{
+                bgcolor: "#D97706",
+                textTransform: "none",
+                fontWeight: 700,
+                "&:hover": { bgcolor: "#B45309" },
+              }}
+            >
+              {dangHuyDuyet ? (
+                <CircularProgress size={16} sx={{ color: "#fff" }} />
+              ) : (
+                "Xác nhận hủy"
+              )}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 

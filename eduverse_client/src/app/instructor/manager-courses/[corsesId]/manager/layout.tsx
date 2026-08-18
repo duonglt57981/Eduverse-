@@ -371,6 +371,44 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty, phans]);
 
+  const handleHuyPheDuyet = useCallback(async () => {
+    setDangXuLy(true);
+    try {
+      const res = await khoaHocService.ChuyenTTDangSuaBatch(idKhoaHoc);
+
+      if (
+        res?.status === true ||
+        (res as any)?.success === true ||
+        (res as any)?.isSuccess === true
+      ) {
+        setTrangThai("DangSua");
+        await refreshData();
+        resetDirty();
+        setToast({
+          open: true,
+          message:
+            "Đã hủy yêu cầu phê duyệt thành công! Khóa học đã chuyển sang trạng thái Đang sửa.",
+          severity: "success",
+        });
+      } else {
+        setToast({
+          open: true,
+          message: res?.message || "Hủy yêu cầu phê duyệt thất bại",
+          severity: "error",
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
+      setToast({
+        open: true,
+        message: error?.message || "Đã xảy ra lỗi khi hủy yêu cầu phê duyệt",
+        severity: "error",
+      });
+    } finally {
+      setDangXuLy(false);
+    }
+  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty]);
+
   const dialogContent = useMemo(() => {
     if (pendingNavigation === "back") {
       return {
@@ -407,6 +445,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         onBack={handleBack}
         onNavigateSidebar={handleNavigateSidebar}
         onGuiPheDuyet={handleGuiPheDuyet}
+        onHuyPheDuyet={handleHuyPheDuyet}
         onDiChuyenDenTuValidate={handleDiChuyenDenTuValidate}
         onRefreshData={refreshData}
       >

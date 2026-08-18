@@ -38,7 +38,6 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -373,6 +372,10 @@ function KhoaHocContent() {
   const [khoaHocChoXacNhanXoa, setKhoaHocChoXacNhanXoa] =
     useState<KhoaHocType | null>(null);
 
+  // ===== State cho dialog xác nhận hủy duyệt =====
+  const [khoaHocChoHuyDuyet, setKhoaHocChoHuyDuyet] =
+    useState<KhoaHocType | null>(null);
+
   // ===== State cho xóa + hoàn tác =====
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [undoInfo, setUndoInfo] = useState<{
@@ -545,10 +548,6 @@ function KhoaHocContent() {
   }, []);
 
   // ===== Các handler =====
-  const handleViewDetail = (khoaHoc: KhoaHocType) => {
-    if (khoaHoc.id) router.push(duongDanChiTietKhoaHoc(khoaHoc.id));
-  };
-
   const handleEdit = async (khoaHoc: KhoaHocType) => {
     if (!khoaHoc.id || dangXuLyId) return;
     if (khoaHoc.trangThaiPheDuyet === "DangSua") {
@@ -582,31 +581,25 @@ function KhoaHocContent() {
 
   const getAvailableActions = (trangThaiPheDuyet?: string) => {
     let showEdit: boolean;
-    let showView: boolean;
     switch (trangThaiPheDuyet) {
       case "DaDuyet":
       case "TuChoi":
-        showEdit = true;
-        showView = true;
-        break;
       case "DangSua":
         showEdit = true;
-        showView = false;
         break;
       case "ChoDuyet":
       case "DangDuyet":
         showEdit = false;
-        showView = true;
         break;
       default:
         showEdit = true;
-        showView = true;
         break;
     }
     const showDelete = TRANG_THAI_CHO_PHEP_XOA.includes(
       trangThaiPheDuyet ?? "",
     );
-    return { showEdit, showView, showDelete };
+    const showCancelApproval = trangThaiPheDuyet === "ChoDuyet";
+    return { showEdit, showDelete, showCancelApproval };
   };
 
   const xuLyBamKhoaHoc = (id?: string) => {
@@ -633,6 +626,35 @@ function KhoaHocContent() {
   const handleChonTrangThai = (giaTri: string) => {
     setTrangHienTai(1);
     setTrangThaiLoc(giaTri);
+  };
+
+  // ===== Xử lý hủy duyệt khóa học =====
+  const handleHuyDuyet = async (khoaHoc: KhoaHocType) => {
+    if (!khoaHoc.id || dangXuLyId) return;
+    setDangXuLyId(khoaHoc.id);
+    setThongBaoLoiThaoTac(null);
+    try {
+      const response = await khoaHocService.ChuyenTTDangSuaBatch(khoaHoc.id);
+      if (laThanhCong(response)) {
+        setThongBaoThanhCong(
+          `Đã hủy duyệt khóa học "${khoaHoc.tieuDe || "Khóa học"}" thành công. Trạng thái đã chuyển sang "Đang sửa".`,
+        );
+        setKhoaHocChoHuyDuyet(null);
+        layDanhSachKhoaHoc();
+        await fetchThongKe(true);
+      } else {
+        setThongBaoLoiThaoTac(
+          response?.message || "Không thể hủy duyệt khóa học. Vui lòng thử lại.",
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi hủy duyệt khóa học:", error);
+      setThongBaoLoiThaoTac(
+        trichXuatThongBaoLoi(error, "Có lỗi xảy ra khi hủy duyệt khóa học."),
+      );
+    } finally {
+      setDangXuLyId(null);
+    }
   };
 
   // ===== Dialog xác nhận xóa =====
@@ -1111,6 +1133,7 @@ function KhoaHocContent() {
               <Grid key={khoaHoc.id} size={{ xs: 12 }}>
                 <Paper
                   elevation={0}
+                  onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
                   sx={{
                     display: "flex",
                     flexDirection: { xs: "column", sm: "row" },
@@ -1119,6 +1142,7 @@ function KhoaHocContent() {
                     bgcolor: "var(--ev-paper, #FFFFFF)",
                     overflow: "hidden",
                     position: "relative",
+                    cursor: "pointer",
                     transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                     "&:hover": {
                       boxShadow: "0 12px 24px rgba(0, 0, 0, 0.04)",
@@ -1279,6 +1303,7 @@ function KhoaHocContent() {
 
                     {/* Actions Group on the right */}
                     <Box
+                      onClick={(e) => e.stopPropagation()}
                       sx={{
                         display: "flex",
                         alignItems: "center",
@@ -1288,29 +1313,6 @@ function KhoaHocContent() {
                         pt: { xs: 1.5, md: 0 },
                       }}
                     >
-                      {actions.showView && (
-                        <Tooltip title="Chi tiết">
-                          <IconButton
-                            size="medium"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewDetail(khoaHoc);
-                            }}
-                            sx={{
-                              color: MAU.chinh,
-                              bgcolor: MAU.chinhNhat,
-                              borderRadius: "10px",
-                              "&:hover": {
-                                bgcolor: MAU.chinhDam,
-                                color: "#fff",
-                              },
-                              transition: "all 0.2s",
-                            }}
-                          >
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
                       {actions.showEdit && (
                         <Tooltip title="Chỉnh sửa">
                           <span>
@@ -1339,6 +1341,39 @@ function KhoaHocContent() {
                                 />
                               ) : (
                                 <EditIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
+                      {actions.showCancelApproval && (
+                        <Tooltip title="Hủy duyệt">
+                          <span>
+                            <IconButton
+                              size="medium"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setKhoaHocChoHuyDuyet(khoaHoc);
+                              }}
+                              disabled={dangXuLyItemNay}
+                              sx={{
+                                color: "#D97706",
+                                bgcolor: "#FEF3C7",
+                                borderRadius: "10px",
+                                "&:hover": {
+                                  bgcolor: "#D97706",
+                                  color: "#fff",
+                                },
+                                transition: "all 0.2s",
+                              }}
+                            >
+                              {dangXuLyItemNay ? (
+                                <CircularProgress
+                                  size={18}
+                                  sx={{ color: "#D97706" }}
+                                />
+                              ) : (
+                                <UndoIcon fontSize="small" />
                               )}
                             </IconButton>
                           </span>
@@ -1490,6 +1525,88 @@ function KhoaHocContent() {
             }}
           >
             Xóa
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog xác nhận hủy duyệt */}
+      <Dialog
+        open={!!khoaHocChoHuyDuyet}
+        onClose={() => !dangXuLyId && setKhoaHocChoHuyDuyet(null)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{
+          paper: { sx: { borderRadius: "16px" } },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.25,
+            fontWeight: 800,
+            fontSize: 18,
+            color: MAU.chuDen,
+          }}
+        >
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: "10px",
+              bgcolor: "#FEF3C7",
+              color: "#D97706",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <WarningAmberRoundedIcon fontSize="small" />
+          </Box>
+          Hủy yêu cầu duyệt?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: MAU.chuXam, fontSize: 14.5 }}>
+            Bạn có chắc chắn muốn hủy yêu cầu duyệt cho khóa học{" "}
+            <Box component="span" sx={{ fontWeight: 700, color: MAU.chuDen }}>
+              &quot;{khoaHocChoHuyDuyet?.tieuDe || "Khóa học"}&quot;
+            </Box>{" "}
+            không? Khóa học sẽ được chuyển về trạng thái &quot;Đang sửa&quot;.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={() => setKhoaHocChoHuyDuyet(null)}
+            disabled={!!dangXuLyId}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              color: MAU.chuXam,
+              borderRadius: "10px",
+            }}
+          >
+            Đóng
+          </Button>
+          <Button
+            onClick={() =>
+              khoaHocChoHuyDuyet && handleHuyDuyet(khoaHocChoHuyDuyet)
+            }
+            variant="contained"
+            disabled={!!dangXuLyId}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              bgcolor: "#D97706",
+              borderRadius: "10px",
+              "&:hover": { bgcolor: "#B45309" },
+            }}
+          >
+            {dangXuLyId ? (
+              <CircularProgress size={18} sx={{ color: "#fff" }} />
+            ) : (
+              "Xác nhận hủy"
+            )}
           </Button>
         </DialogActions>
       </Dialog>

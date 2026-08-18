@@ -188,14 +188,11 @@ export default class KhoaHocService {
   }
 
   async ChuyenTTDangSuaBatch(
-    ids: string[],
+    idKhoaHoc: string,
   ): Promise<ApiResponse<KhoaHocType[]>> {
     try {
       const response = await apiService.post<KhoaHocType[]>(
-        `/KhoaHoc/khoahoc-chuyentrangthai-dangsua-batch`,
-        {
-          ids,
-        },
+        `/KhoaHoc/khoahoc-chuyentrangthai-dangsua/${idKhoaHoc}`,
       );
       return response;
     } catch (error) {
@@ -429,9 +426,7 @@ export default class KhoaHocService {
 
   async DeleteKhoaHoc(id: string): Promise<ApiResponse<boolean>> {
     try {
-      return await apiService.delete<boolean>(
-        `/KhoaHoc/khoahoc-delete/${id}`,
-      );
+      return await apiService.delete<boolean>(`/KhoaHoc/khoahoc-delete/${id}`);
     } catch (error) {
       console.error("Error deleting course:", error);
       throw error;

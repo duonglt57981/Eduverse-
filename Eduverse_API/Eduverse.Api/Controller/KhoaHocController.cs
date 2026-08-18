@@ -133,6 +133,21 @@ namespace Eduverse.Api.Controller
             }
         }
 
+        [HttpPost("khoahoc-chuyentrangthai-dangsua/{idKhoaHoc}")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<KhoaHocDto>> ChuyenTrangThaiDangSua(Guid idKhoaHoc)
+        {
+            try
+            {
+                var result = await _khoaHocService.ChuyenTrangThaiDangSua(idKhoaHoc);
+                return DataResponse<KhoaHocDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<KhoaHocDto>.False(ex.Message);
+            }
+        }
+
 
         [HttpGet("khoahoc-get-toupdatekhoahoc/{idKhoaHoc}")]
         [Authorize(Roles = "Admin,GiaoVien")]

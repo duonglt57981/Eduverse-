@@ -695,6 +695,7 @@ function SectionItem({
             sx={{
               display: "flex",
               alignItems: "center",
+              justifyContent: "space-between",
               gap: 1,
               mb: 1.5,
               cursor: isEditable ? "grab" : "default",
@@ -702,71 +703,92 @@ function SectionItem({
               userSelect: "none",
             }}
           >
-            <Typography
+            <Box
               sx={{
-                fontWeight: 800,
-                color: "var(--ev-text-primary, #1F2937)",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  color: "var(--ev-text-primary, #1F2937)",
+                  flexShrink: 0,
+                }}
+              >
+                Phần {idx + 1}:
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: 15,
+                  color: "var(--ev-text-primary, #1F2937)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                {phan.tenPhan || "Phần mới"}
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
                 flexShrink: 0,
               }}
             >
-              Phần {idx + 1}:
-            </Typography>
-            <Typography
-              sx={{
-                fontWeight: 700,
-                fontSize: 15,
-                color: "var(--ev-text-primary, #1F2937)",
-                flex: 1,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {phan.tenPhan || "Phần mới"}
-            </Typography>
-            <NguoiThucHienLabel
-              createdBy={(phan as any).createdBy}
-              updatedBy={(phan as any).updatedBy}
-              updatedDate={(phan as any).updatedDate}
-            />
-            {isEditable && (
-              <>
-                <IconButton
-                  {...noPropagation}
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(id);
-                  }}
-                >
-                  <EditOutlined
-                    fontSize="small"
-                    sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
-                  />
-                </IconButton>
-                <Tooltip title="Xóa phần">
+              <NguoiThucHienLabel
+                createdBy={(phan as any).createdBy}
+                updatedBy={(phan as any).updatedBy}
+                updatedDate={(phan as any).updatedDate}
+                sx={{ mr: 0.5 }}
+              />
+              {isEditable && (
+                <>
                   <IconButton
                     {...noPropagation}
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDelete(id);
+                      onEdit(id);
                     }}
                   >
-                    <DeleteOutlined
+                    <EditOutlined
                       fontSize="small"
                       sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
                     />
                   </IconButton>
-                </Tooltip>
-              </>
-            )}
-            <DragIndicator
-              sx={{
-                fontSize: 20,
-                color: "var(--ev-grey, #C7CCD6)",
-              }}
-            />
+                  <Tooltip title="Xóa phần">
+                    <IconButton
+                      {...noPropagation}
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(id);
+                      }}
+                    >
+                      <DeleteOutlined
+                        fontSize="small"
+                        sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+              <DragIndicator
+                sx={{
+                  fontSize: 20,
+                  color: "var(--ev-grey, #C7CCD6)",
+                }}
+              />
+            </Box>
           </Box>
           {children}
         </Box>
@@ -842,159 +864,176 @@ function LectureItem({
           sx={{
             px: 1.5,
             py: 0.75,
-            pr: 14,
             bgcolor: "transparent",
             cursor: isEditable ? "grab" : "default",
             touchAction: "none",
             userSelect: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1.5,
             "&:hover": {
               bgcolor: "rgba(0,0,0,0.02)",
             },
           }}
-          secondaryAction={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              {dangTai && (
-                <CircularProgress
-                  size={16}
-                  sx={{ color: MAU.chinh, mr: 0.5 }}
+          onClick={() => onToggle(itemId)}
+        >
+          {/* Vùng bên trái: Icon + Tiêu đề + Chip trạng thái video */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              minWidth: 0,
+              flex: "1 1 auto",
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 28, flexShrink: 0 }}>
+              {isComplete ? (
+                <CheckCircle sx={{ fontSize: 18, color: MAU.chinh }} />
+              ) : (
+                <RadioButtonUnchecked
+                  sx={{ fontSize: 18, color: "var(--ev-grey, #C7CCD6)" }}
                 />
               )}
-              {isEditable && (
-                <>
-                  <IconButton
-                    {...noPropagation}
-                    size="small"
-                    disabled={dangTai}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(phanId, itemId);
-                    }}
-                  >
-                    <EditOutlined
-                      fontSize="small"
-                      sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
-                    />
-                  </IconButton>
-                  <IconButton
-                    {...noPropagation}
-                    size="small"
-                    disabled={dangTai}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(phanId, itemId);
-                    }}
-                  >
-                    <DeleteOutlined
-                      fontSize="small"
-                      sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
-                    />
-                  </IconButton>
-                </>
-              )}
-              {/* Hiển thị từ chối bìa giảng - khi bấm vào mở popup */}
-              {hasLyDo && (
+            </ListItemIcon>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 500,
+                  fontSize: 14,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                <Box component="span" sx={{ fontWeight: 800 }}>
+                  {`Bài giảng ${soThuTuMuc}: `}
+                </Box>
+                {bg.tieuDe || "Chưa đặt tên"}
+              </Typography>
+              <Chip
+                size="small"
+                label={
+                  dangTai
+                    ? "Đang tải video..."
+                    : bg.urlBaiGiang
+                      ? "Có video"
+                      : "Chưa có video"
+                }
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  bgcolor: dangTai
+                    ? "#FFF7ED"
+                    : bg.urlBaiGiang
+                      ? `${MAU.chinh}1A`
+                      : "#F1F2F5",
+                  color: dangTai
+                    ? "#D97706"
+                    : bg.urlBaiGiang
+                      ? MAU.chinhDam
+                      : "#8A7676",
+                  flexShrink: 0,
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Vùng bên phải: Tên người thực hiện + Các nút thao tác */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              flexShrink: 0,
+            }}
+          >
+            <NguoiThucHienLabel
+              createdBy={(bg as any).createdBy}
+              updatedBy={(bg as any).updatedBy}
+              updatedDate={(bg as any).updatedDate}
+              sx={{ mr: 0.5 }}
+            />
+            {dangTai && (
+              <CircularProgress
+                size={16}
+                sx={{ color: MAU.chinh, mr: 0.5 }}
+              />
+            )}
+            {isEditable && (
+              <>
                 <IconButton
                   {...noPropagation}
                   size="small"
+                  disabled={dangTai}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onShowLyDo(lyDoTuChoi.lyDo);
-                  }}
-                  sx={{
-                    color: "#DC2626",
-                    "&:hover": { bgcolor: "#FEE2E2" },
+                    onEdit(phanId, itemId);
                   }}
                 >
-                  <ErrorOutlined fontSize="small" />
+                  <EditOutlined
+                    fontSize="small"
+                    sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
+                  />
                 </IconButton>
-              )}
+                <IconButton
+                  {...noPropagation}
+                  size="small"
+                  disabled={dangTai}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(phanId, itemId);
+                  }}
+                >
+                  <DeleteOutlined
+                    fontSize="small"
+                    sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
+                  />
+                </IconButton>
+              </>
+            )}
+            {/* Hiển thị từ chối bài giảng - khi bấm vào mở popup */}
+            {hasLyDo && (
               <IconButton
                 {...noPropagation}
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggle(itemId);
+                  onShowLyDo(lyDoTuChoi.lyDo);
                 }}
-              >
-                {isExpanded ? (
-                  <ExpandLess fontSize="small" />
-                ) : (
-                  <ExpandMore fontSize="small" />
-                )}
-              </IconButton>
-            </Box>
-          }
-        >
-          <ListItemIcon sx={{ minWidth: 28 }}>
-            {isComplete ? (
-              <CheckCircle sx={{ fontSize: 18, color: MAU.chinh }} />
-            ) : (
-              <RadioButtonUnchecked
-                sx={{ fontSize: 18, color: "var(--ev-grey, #C7CCD6)" }}
-              />
-            )}
-          </ListItemIcon>
-          <ListItemText
-            sx={{ minWidth: 0 }}
-            primary={
-              <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  minWidth: 0,
+                  color: "#DC2626",
+                  "&:hover": { bgcolor: "#FEE2E2" },
                 }}
               >
-                <Box
-                  component="span"
-                  sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    minWidth: 0,
-                  }}
-                >
-                  <Box component="span" sx={{ fontWeight: 800 }}>
-                    {`Bài giảng ${soThuTuMuc}: `}
-                  </Box>
-                  {bg.tieuDe || "Chưa đặt tên"}
-                </Box>
-                <Chip
-                  size="small"
-                  label={
-                    dangTai
-                      ? "Đang tải video..."
-                      : bg.urlBaiGiang
-                        ? "Có video"
-                        : "Chưa có video"
-                  }
-                  sx={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    bgcolor: dangTai
-                      ? "#FFF7ED"
-                      : bg.urlBaiGiang
-                        ? `${MAU.chinh}1A`
-                        : "#F1F2F5",
-                    color: dangTai
-                      ? "#D97706"
-                      : bg.urlBaiGiang
-                        ? MAU.chinhDam
-                        : "#8A7676",
-                    flexShrink: 0,
-                  }}
-                />
-                <NguoiThucHienLabel
-                  createdBy={(bg as any).createdBy}
-                  updatedBy={(bg as any).updatedBy}
-                  updatedDate={(bg as any).updatedDate}
-                  sx={{ ml: "auto" }}
-                />
-              </Box>
-            }
-          />
+                <ErrorOutlined fontSize="small" />
+              </IconButton>
+            )}
+            <IconButton
+              {...noPropagation}
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle(itemId);
+              }}
+            >
+              {isExpanded ? (
+                <ExpandLess fontSize="small" />
+              ) : (
+                <ExpandMore fontSize="small" />
+              )}
+            </IconButton>
+          </Box>
         </ListItem>
 
         <Collapse in={isExpanded}>
@@ -1173,141 +1212,158 @@ function QuizItem({
           sx={{
             px: 1.5,
             py: 0.75,
-            pr: 14,
             bgcolor: isExpanded ? "#F5F6F8" : "transparent",
             cursor: isEditable ? "grab" : "default",
             touchAction: "none",
             userSelect: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1.5,
             "&:hover": {
               bgcolor: "rgba(0,0,0,0.02)",
             },
           }}
-          secondaryAction={
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              {isEditable && (
-                <>
-                  <Tooltip title="Sửa bài kiểm tra">
-                    <IconButton
-                      {...noPropagation}
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(phanId, itemId);
-                      }}
-                    >
-                      <EditOutlined
-                        fontSize="small"
-                        sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
-                      />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Xóa bài kiểm tra">
-                    <IconButton
-                      {...noPropagation}
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(phanId, itemId);
-                      }}
-                    >
-                      <DeleteOutlined
-                        fontSize="small"
-                        sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
-                      />
-                    </IconButton>
-                  </Tooltip>
-                </>
+          onClick={() => onToggle(itemId)}
+        >
+          {/* Vùng bên trái: Icon + Tiêu đề + Chip số câu hỏi */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              minWidth: 0,
+              flex: "1 1 auto",
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 28, flexShrink: 0 }}>
+              {isComplete ? (
+                <CheckCircle sx={{ fontSize: 18, color: MAU.chinh }} />
+              ) : (
+                <RadioButtonUnchecked
+                  sx={{ fontSize: 18, color: "var(--ev-grey, #C7CCD6)" }}
+                />
               )}
-              {/* Hiển thị lý do qiuzzz - khi bấm vào mở popup */}
-              {hasLyDo && (
-                <IconButton
-                  {...noPropagation}
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onShowLyDo(lyDoTuChoi.lyDo);
-                  }}
-                  sx={{
-                    color: "#DC2626",
-                    "&:hover": { bgcolor: "#FEE2E2" },
-                  }}
-                >
-                  <ErrorOutlined fontSize="small" />
-                </IconButton>
-              )}
+            </ListItemIcon>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 500,
+                  fontSize: 14,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                <Box component="span" sx={{ fontWeight: 800 }}>
+                  {`Bài kiểm tra ${soThuTuMuc}: `}
+                </Box>
+                {tenHienThi}
+              </Typography>
+              <Chip
+                size="small"
+                label={`${kt.soCauHoi ?? 0} câu hỏi`}
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  bgcolor: isComplete ? `${MAU.chinh}1A` : "#F1F2F5",
+                  color: isComplete ? MAU.chinhDam : "#8A7676",
+                  flexShrink: 0,
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Vùng bên phải: Tên người thực hiện + Các nút thao tác */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              flexShrink: 0,
+            }}
+          >
+            <NguoiThucHienLabel
+              createdBy={(kt as any).createdBy}
+              updatedBy={(kt as any).updatedBy}
+              updatedDate={(kt as any).updatedDate}
+              sx={{ mr: 0.5 }}
+            />
+            {isEditable && (
+              <>
+                <Tooltip title="Sửa bài kiểm tra">
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(phanId, itemId);
+                    }}
+                  >
+                    <EditOutlined
+                      fontSize="small"
+                      sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
+                    />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Xóa bài kiểm tra">
+                  <IconButton
+                    {...noPropagation}
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(phanId, itemId);
+                    }}
+                  >
+                    <DeleteOutlined
+                      fontSize="small"
+                      sx={{ color: "var(--ev-text-muted, #9AA2B1)" }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+            {/* Hiển thị lý do qiuzzz - khi bấm vào mở popup */}
+            {hasLyDo && (
               <IconButton
                 {...noPropagation}
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggle(itemId);
+                  onShowLyDo(lyDoTuChoi.lyDo);
                 }}
-              >
-                {isExpanded ? (
-                  <ExpandLess fontSize="small" />
-                ) : (
-                  <ExpandMore fontSize="small" />
-                )}
-              </IconButton>
-            </Box>
-          }
-        >
-          <ListItemIcon sx={{ minWidth: 28 }}>
-            {isComplete ? (
-              <CheckCircle sx={{ fontSize: 18, color: MAU.chinh }} />
-            ) : (
-              <RadioButtonUnchecked
-                sx={{ fontSize: 18, color: "var(--ev-grey, #C7CCD6)" }}
-              />
-            )}
-          </ListItemIcon>
-          <ListItemText
-            sx={{ minWidth: 0 }}
-            primary={
-              <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  minWidth: 0,
+                  color: "#DC2626",
+                  "&:hover": { bgcolor: "#FEE2E2" },
                 }}
               >
-                <Box
-                  component="span"
-                  sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    minWidth: 0,
-                  }}
-                >
-                  <Box component="span" sx={{ fontWeight: 800 }}>
-                    {`Bài kiểm tra ${soThuTuMuc}: `}
-                  </Box>
-                  {tenHienThi}
-                </Box>
-                <Chip
-                  size="small"
-                  label={`${kt.soCauHoi ?? 0} câu hỏi`}
-                  sx={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    bgcolor: isComplete ? `${MAU.chinh}1A` : "#F1F2F5",
-                    color: isComplete ? MAU.chinhDam : "#8A7676",
-                    flexShrink: 0,
-                  }}
-                />
-                <NguoiThucHienLabel
-                  createdBy={(kt as any).createdBy}
-                  updatedBy={(kt as any).updatedBy}
-                  updatedDate={(kt as any).updatedDate}
-                  sx={{ ml: "auto" }}
-                />
-              </Box>
-            }
-          />
+                <ErrorOutlined fontSize="small" />
+              </IconButton>
+            )}
+            <IconButton
+              {...noPropagation}
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle(itemId);
+              }}
+            >
+              {isExpanded ? (
+                <ExpandLess fontSize="small" />
+              ) : (
+                <ExpandMore fontSize="small" />
+              )}
+            </IconButton>
+          </Box>
         </ListItem>
 
         <Collapse in={isExpanded}>
@@ -1726,10 +1782,13 @@ function NguoiThucHienLabel({
           gap: 0.4,
           flexShrink: 0,
           cursor: "default",
-          ...sx, // + cho phép override từ ngoài (ml: "auto", v.v.)
+          maxWidth: { xs: 110, sm: 150, md: 200 },
+          ...sx,
         }}
       >
-        <PersonOutlineIcon sx={{ fontSize: 13, color: "#9AA2B1" }} />
+        <PersonOutlineIcon
+          sx={{ fontSize: 13, color: "#9AA2B1", flexShrink: 0 }}
+        />
         <Typography
           component="span"
           sx={{
@@ -1737,6 +1796,8 @@ function NguoiThucHienLabel({
             fontWeight: 500,
             color: "#9AA2B1",
             whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {tenHienThi}

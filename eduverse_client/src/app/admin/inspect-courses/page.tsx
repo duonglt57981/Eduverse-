@@ -19,6 +19,12 @@ import {
   MenuItem,
   CircularProgress,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -31,6 +37,7 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import BlockRoundedIcon from "@mui/icons-material/BlockRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
@@ -40,8 +47,10 @@ import {
 } from "@/src/app/admin/approve-courses/types/constants";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KhoaHocService from "@/src/services/KhoaHocService";
+import KiemDuyetService from "@/src/services/KiemDuyetServide";
 
 const khoaHocService = new KhoaHocService();
+const kiemDuyetService = new KiemDuyetService();
 
 const FILE_BASE_URL =
   process.env.NEXT_PUBLIC_FILE_BASE_URL ??
@@ -149,6 +158,19 @@ export default function LichSuKiemDuyetPage() {
   const [totalPage, setTotalPage] = useState(1);
   const [tongDaDuyet, setTongDaDuyet] = useState(0);
 
+  // Dialog state for stopping course
+  const [stopDialogOpen, setStopDialogOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [stopReason, setStopReason] = useState("");
+  const [submittingStop, setSubmittingStop] = useState(false);
+
+  // Snackbar feedback
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
+
   const isFilterDirty =
     keywordInput.trim() !== "" ||
     keyword.trim() !== "" ||
@@ -185,7 +207,6 @@ export default function LichSuKiemDuyetPage() {
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
-      // Sử dụng GetListKhoaHocPhatHanh thay vì GetListLichSuKiemDuyet
       const res = await khoaHocService.GetListKhoaHocPhatHanh(searchParams);
       if (res?.data) {
         setItems(res.data.items || []);
@@ -206,7 +227,6 @@ export default function LichSuKiemDuyetPage() {
   const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try {
-      // Lấy tổng số khóa học đã phát hành
       const res = await khoaHocService.GetListKhoaHocPhatHanh({
         pageIndex: 1,
         pageSize: 1,
@@ -258,6 +278,53 @@ export default function LichSuKiemDuyetPage() {
     router.push("/admin/courses");
   };
 
+  // Stop course handlers
+  const handleOpenStopDialog = (id: string) => {
+    setSelectedCourseId(id);
+    setStopReason("");
+    setStopDialogOpen(true);
+  };
+
+  const handleCloseStopDialog = () => {
+    setStopDialogOpen(false);
+    setSelectedCourseId(null);
+    setStopReason("");
+  };
+
+  const handleConfirmStop = async () => {
+    if (!selectedCourseId) return;
+    setSubmittingStop(true);
+    try {
+      await kiemDuyetService.KiemDuyetKhoaHoc({
+        idKhoaHoc: selectedCourseId,
+        trangThaiPheDuyet: "TuChoi",
+        lyDo: stopReason.trim() || undefined,
+      });
+      setSnackbar({
+        open: true,
+        message: "Đã ngưng hoạt động khóa học thành công.",
+        severity: "success",
+      });
+      // Refresh data
+      await fetchList();
+      await fetchStats();
+      handleCloseStopDialog();
+    } catch (error: any) {
+      console.error("Lỗi khi ngưng hoạt động:", error);
+      setSnackbar({
+        open: true,
+        message: error?.message || "Có lỗi xảy ra, vui lòng thử lại.",
+        severity: "error",
+      });
+    } finally {
+      setSubmittingStop(false);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   return (
     <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
@@ -281,7 +348,6 @@ export default function LichSuKiemDuyetPage() {
               boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
             }}
           >
-            {/* Watermark trang trí — gắn với chủ đề "khóa học" */}
             <SchoolRoundedIcon
               sx={{
                 position: "absolute",
@@ -615,7 +681,6 @@ export default function LichSuKiemDuyetPage() {
                     return (
                       <Box
                         key={id}
-                        onClick={() => handleOpenCourse(id)}
                         sx={{
                           display: "flex",
                           alignItems: "center",
@@ -623,7 +688,6 @@ export default function LichSuKiemDuyetPage() {
                           p: 1.5,
                           border: `1px solid ${COLORS.line}`,
                           borderRadius: 2.5,
-                          cursor: "pointer",
                           bgcolor: "#fff",
                           transition: "all .18s ease",
                           "&:hover": {
@@ -645,7 +709,10 @@ export default function LichSuKiemDuyetPage() {
                           alt={item.tieuDe || "Khóa học"}
                         />
 
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box
+                          sx={{ flex: 1, minWidth: 0, cursor: "pointer" }}
+                          onClick={() => handleOpenCourse(id)}
+                        >
                           <Typography
                             sx={{
                               fontWeight: 700,
@@ -715,16 +782,17 @@ export default function LichSuKiemDuyetPage() {
                           spacing={0.25}
                           sx={{ alignItems: "center", flexShrink: 0 }}
                         >
-                          <Tooltip title="Xem chi tiết">
+                          {/* Replace view button with stop button */}
+                          <Tooltip title="Ngưng hoạt động khóa học">
                             <IconButton
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleOpenCourse(id);
+                                handleOpenStopDialog(id);
                               }}
                               sx={{ color: mix(COLORS.ink, 0.5) }}
                             >
-                              <VisibilityRoundedIcon fontSize="small" />
+                              <BlockRoundedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <ChevronRightRoundedIcon
@@ -764,6 +832,70 @@ export default function LichSuKiemDuyetPage() {
             </Box>
           </Box>
         </Box>
+
+        {/* Dialog xác nhận ngưng hoạt động */}
+        <Dialog
+          open={stopDialogOpen}
+          onClose={handleCloseStopDialog}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700, color: COLORS.ink }}>
+            Ngưng hoạt động khóa học
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Lý do ngưng hoạt động"
+              fullWidth
+              multiline
+              rows={3}
+              value={stopReason}
+              onChange={(e) => setStopReason(e.target.value)}
+              placeholder="Nhập lý do (bắt buộc)..."
+              variant="outlined"
+              size="small"
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <Button
+              onClick={handleCloseStopDialog}
+              disabled={submittingStop}
+              sx={{ color: COLORS.inkSoft, textTransform: "none" }}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              onClick={handleConfirmStop}
+              variant="contained"
+              disabled={submittingStop}
+              sx={{
+                bgcolor: "error.main",
+                textTransform: "none",
+                "&:hover": { bgcolor: "error.dark" },
+              }}
+            >
+              {submittingStop ? <CircularProgress size={20} /> : "Xác nhận"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar thông báo */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={5000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </DashboardShell>
     </AuthGuard>
   );
