@@ -190,7 +190,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "7b7fa60e-f8b7-43e5-aa6e-28538c38928b",
+                            ConcurrencyStamp = "401a7b71-fdd9-419c-b3a7-bab750950180",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -199,9 +199,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAENo26/BU4WGDa16PXH93DrtQOCva8OLFEbIdCfeXTc8TvX1hTmRDDNiYehVAHdDLbg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEEt3hhMBjDRi+HHuskXe6tK+lGokbsMIR+MQN1YDnTdXx7TulyX90y1x1tkmj4xoag==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "29f0ea82-5877-40c9-848d-3f97bab04b65",
+                            SecurityStamp = "01531abe-e3e1-408a-98af-3d9a138213af",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -1075,6 +1075,74 @@ namespace Eduverse.Model.Migrations
                     b.HasIndex("IdKhoaHoc");
 
                     b.ToTable("donHangChiTiets");
+                });
+
+            modelBuilder.Entity("Eduverse.Model.Entities.DonHang_GiangVien", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<double>("GiaLucDat")
+                        .HasColumnType("float");
+
+                    b.Property<Guid>("IdDonHang")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IdDonHangChiTiet")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdGiangVien")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdKhoaHoc")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("LaChuSoHuu")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("NgayGhiNhan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("SoTienGiam")
+                        .HasColumnType("float");
+
+                    b.Property<double>("SoTienNhan")
+                        .HasColumnType("float");
+
+                    b.Property<int>("TyLeChiaDoanhThu")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("donHang_GiangViens");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.DonHang_KhuyenMai", b =>
@@ -2236,51 +2304,6 @@ namespace Eduverse.Model.Migrations
                     b.ToTable("phans");
                 });
 
-            modelBuilder.Entity("Eduverse.Model.Entities.PhanHoiDanhGia", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeletedId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("IdDanhGia")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("NoiDung")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("phanHoiDanhGias");
-                });
-
             modelBuilder.Entity("Eduverse.Model.Entities.PhanCongKiemDuyetKhoaHoc", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2335,6 +2358,51 @@ namespace Eduverse.Model.Migrations
                     b.HasIndex("IdNguoiDuyet", "NgayPhanCong");
 
                     b.ToTable("PhanCongKiemDuyetKhoaHocs", (string)null);
+                });
+
+            modelBuilder.Entity("Eduverse.Model.Entities.PhanHoiDanhGia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdDanhGia")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NoiDung")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("phanHoiDanhGias");
                 });
 
             modelBuilder.Entity("Eduverse.Model.Entities.RefreshToken", b =>

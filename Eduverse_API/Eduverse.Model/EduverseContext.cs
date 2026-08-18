@@ -47,6 +47,7 @@ namespace Eduverse.Model
         public DbSet<LanLamBaiKiemTra> lanLamBaiKiemTras { get; set; }
         public DbSet<LienKet> lienKets { get; set; }
         public DbSet<LoiMoiGiangVien> loiMoiGiangViens { get; set; }
+        public DbSet<DonHang_GiangVien> donHang_GiangViens { get; set; }
         public DbSet<DonHang_KhuyenMai> DonHang_KhuyenMais { get; set; }
         public DbSet<LoaiThongBao> loaiThongBaos { get; set; }
         public DbSet<NganHang> nganHangs { get; set; }

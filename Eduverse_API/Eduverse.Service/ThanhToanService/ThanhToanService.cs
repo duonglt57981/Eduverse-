@@ -232,8 +232,7 @@ namespace Eduverse.Service.ThanhToanService
                 WebhookData webhookData;
                 try
                 {
-                    //webhookData = await _payOS.Webhooks.VerifyAsync(webhook);
-                    webhookData = webhook.Data;
+                    webhookData = await _payOS.Webhooks.VerifyAsync(webhook);
                 }
                 catch (Exception)
                 {
