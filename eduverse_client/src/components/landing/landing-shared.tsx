@@ -44,19 +44,7 @@ export function LandingThemeProvider({
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
 }
 
-function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return true;
-    const payload = JSON.parse(
-      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
-    );
-    if (typeof payload.exp !== "number") return false;
-    return payload.exp < Math.floor(Date.now() / 1000);
-  } catch {
-    return true;
-  }
-}
+import { isTokenExpired } from "@/src/utils/jwt";
 
 export function LandingNavbar({ activePath = "/" }: { activePath?: string }) {
   if (activePath.startsWith("/personnel")) {

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "../../../store/hook";
 import { login, clearError, clearSuccess } from "../../../store/auth/AuthSlice";
 import GoogleAuthButton from "../../../components/auth/GoogleAuthButton";
+import { getRoleHomePath } from "../../../utils/roleHome";
 import {
   Box,
   CssBaseline,
@@ -68,17 +69,7 @@ export default function LoginPage() {
         login({ userName: userName.trim(), password }),
       );
       if (login.fulfilled.match(result)) {
-       
-        const roles: string[] = result.payload.roles || [];
-        if (roles.includes("Admin")) {
-          router.push("/admin/dashboard");
-        } else if (roles.includes("GiaoVien")) {
-          router.push("/instructor/dashboard");
-        } else if (roles.includes("personnel")) {
-          router.push("/personnel/approve-courses");
-        } else {
-          router.push("/student/dashboard");
-        }
+        router.push(getRoleHomePath(result.payload.roles));
       } else {
         setErrorMsg(
           (result.payload as string) ||

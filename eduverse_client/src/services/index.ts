@@ -103,6 +103,13 @@ export class ApiService {
             const res = await this.api.post("/auth/refresh-token");
             const newToken = res.data.data.accessToken;
             localStorage.setItem("AccessToken", newToken);
+            try {
+              const { store } = await import("../store/store");
+              const { updateAccessToken } = await import("../store/auth/AuthSlice");
+              store.dispatch(updateAccessToken(newToken));
+            } catch (e) {
+              console.error("Failed to update token in Redux store", e);
+            }
             original.headers = {
               ...original.headers,
               Authorization: `Bearer ${newToken}`,

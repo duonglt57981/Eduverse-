@@ -859,7 +859,7 @@ namespace Eduverse.Service.KhoaHocService
 
                 var dangKy = await _dangKyKhoaHocRepository.GetQueryable()
                     .AsNoTracking()
-                    .Where(x => x.Id == idDangKy && !x.IsDeleted && x.  IdNguoiDangKi == nguoiDangKi)
+                    .Where(x => (x.Id == idDangKy || x.IdKhoaHoc == idDangKy) && !x.IsDeleted && x.IdNguoiDangKi == nguoiDangKi)
                     .Select(x => new { x.Id, x.IdKhoaHoc, x.IdNguoiDangKi, x.CreatedDate })
                     .FirstOrDefaultAsync();
 

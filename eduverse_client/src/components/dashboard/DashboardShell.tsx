@@ -2537,6 +2537,13 @@ export default function DashboardShell({
                                 <Button
                                   fullWidth
                                   variant="outlined"
+                                  onClick={() =>
+                                    router.push(
+                                      `/student/courses/my-courses/learning/${
+                                        item.idDangKiKhoaHoc || item.id
+                                      }`,
+                                    )
+                                  }
                                   endIcon={
                                     <ArrowForwardRounded fontSize="small" />
                                   }

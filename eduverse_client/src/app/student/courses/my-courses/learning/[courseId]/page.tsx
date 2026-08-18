@@ -84,17 +84,15 @@ interface ThongTinGiangVien {
   email?: string;
 }
 
-// 🚀 Hàm lấy userId từ Token để truyền vào QuizSession
+import { parseJwtPayload } from "@/src/utils/jwt";
+
 function getUserIdFromToken(): string | undefined {
   if (typeof window === "undefined") return undefined;
   const token = localStorage.getItem("AccessToken");
   if (!token) return undefined;
   try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return undefined;
-    const payload = JSON.parse(
-      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
-    );
+    const payload = parseJwtPayload(token);
+    if (!payload) return undefined;
     const keys = [
       "sub",
       "id",
