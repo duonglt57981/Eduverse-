@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Safe JWT Payload parser for UTF-8 strings (such as Vietnamese names) and unpadded Base64URL.
  */

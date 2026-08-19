@@ -132,10 +132,16 @@ const DEFAULT_QUYEN: GuiLoiMoiRequest = {
   materials: true,
   promotions: false,
 };
+const TRANG_THAI_CHO_SUA_QUYEN = [
+  "DangSua",
+  "ChoDuyet",
+  "DangDuyet",
+  "DaDuyet",
+];
 
 export default function InstructorsContent() {
   const { idKhoaHoc, trangThai } = useCourseEdit();
-  const isEditable = trangThai === "DangSua";
+  const isEditable = TRANG_THAI_CHO_SUA_QUYEN.includes(trangThai);
   const { quyen: quyenCuaToi, loading: loadingQuyen } =
     useQuyenCuaToi(idKhoaHoc);
 
@@ -337,9 +343,36 @@ export default function InstructorsContent() {
         idKhoaHoc,
         removeTarget.idGiangVien,
       );
+
+      // Đẩy tỷ lệ doanh thu của giảng viên vừa xóa về cho chủ sở hữu, tự động lưu
+      const chuSoHuu = rows.find((r) => r.laChuSoHuu);
+      const tyLeXoa = removeTarget.tyLeChiaDoanhThu || 0;
+
+      if (chuSoHuu && tyLeXoa > 0) {
+        await LoiMoiGiangVienService.CapNhatQuyenHangLoat(idKhoaHoc, {
+          danhSach: [
+            {
+              idGiangVien: chuSoHuu.idGiangVien,
+              visible: chuSoHuu.visible,
+              tyLeChiaDoanhThu: chuSoHuu.tyLeChiaDoanhThu + tyLeXoa,
+              manage: chuSoHuu.manage,
+              performance: chuSoHuu.performance,
+              qnA: chuSoHuu.qnA,
+              reviews: chuSoHuu.reviews,
+              assignments: chuSoHuu.assignments,
+              materials: chuSoHuu.materials,
+              promotions: chuSoHuu.promotions,
+            },
+          ],
+        });
+      }
+
       setToast({
         open: true,
-        message: "Đã xóa giảng viên",
+        message:
+          chuSoHuu && tyLeXoa > 0
+            ? `Đã xóa giảng viên, cộng ${tyLeXoa}% doanh thu về chủ sở hữu`
+            : "Đã xóa giảng viên",
         severity: "success",
       });
       setRemoveTarget(null);
