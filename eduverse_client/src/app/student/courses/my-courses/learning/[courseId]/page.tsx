@@ -252,22 +252,21 @@ function VideoArea({
 // ─────────────────────────────────────────────────────────
 interface InstructorInfoProps {
   thongTinGiangVien?: ThongTinGiangVien | null;
+  danhSachGiangVien?: ThongTinGiangVien[];
 }
 
-function InstructorInfo({ thongTinGiangVien }: InstructorInfoProps) {
-  if (!thongTinGiangVien || !thongTinGiangVien.hoTen) {
-    return null;
-  }
+function InstructorInfo({
+  thongTinGiangVien,
+  danhSachGiangVien,
+}: InstructorInfoProps) {
+  const list =
+    danhSachGiangVien && danhSachGiangVien.length > 0
+      ? danhSachGiangVien
+      : thongTinGiangVien?.hoTen
+        ? [thongTinGiangVien]
+        : [];
 
-  const { hoTen, anhDaiDien, tieuSu, gioiThieu, id, chucVu } =
-    thongTinGiangVien;
-  const bioHtml = tieuSu || gioiThieu || "";
-
-  const handleClick = () => {
-    if (id) {
-      window.location.href = `/instructor/profile/${id}`;
-    }
-  };
+  if (list.length === 0) return null;
 
   return (
     <Paper
@@ -285,145 +284,124 @@ function InstructorInfo({ thongTinGiangVien }: InstructorInfoProps) {
         variant="subtitle1"
         sx={{ fontWeight: 800, mb: 2.5, color: "text.primary" }}
       >
-        Giảng viên
+        {list.length > 1 ? "Giảng viên" : "Giảng viên"}
       </Typography>
 
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
-        {/* Avatar */}
-        <Avatar
-          src={anhDaiDien}
-          alt={hoTen}
-          sx={{
-            width: 72,
-            height: 72,
-            bgcolor: PRIMARY_RED,
-            fontSize: 28,
-            fontWeight: 700,
-            flexShrink: 0,
-            border: `3px solid ${alpha(PRIMARY_RED, 0.15)}`,
-          }}
-        >
-          {hoTen.charAt(0).toUpperCase()}
-        </Avatar>
+      <Stack spacing={3}>
+        {list.map((gv, idx) => {
+          const { hoTen, anhDaiDien, tieuSu, gioiThieu, id, chucVu } = gv;
+          const bioHtml = tieuSu || gioiThieu || "";
+          const handleClick = () => {
+            if (id) window.location.href = `/instructor/profile/${id}`;
+          };
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          {/* Tên giảng viên */}
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 800,
-              color: "var(--ev-text-primary, #1F2937)",
-              cursor: id ? "pointer" : "default",
-              "&:hover": id
-                ? {
-                    color: PRIMARY_RED,
-                    textDecoration: "underline",
-                  }
-                : {},
-              transition: "color 0.2s",
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-            }}
-            onClick={handleClick}
-          >
-            {hoTen}
-            {id && (
-              <ChevronRightIcon
-                sx={{
-                  fontSize: 18,
-                  color: PRIMARY_RED,
-                  opacity: 0.6,
-                }}
-              />
-            )}
-          </Typography>
-
-          {/* Chức vụ */}
-          {chucVu && (
-            <Typography
-              sx={{
-                fontSize: "0.8rem",
-                fontWeight: 500,
-                color: "text.secondary",
-                mt: 0.25,
-              }}
-            >
-              {chucVu}
-            </Typography>
-          )}
-
-          {/* Tiểu sử - hiển thị HTML, không thu gọn */}
-          {bioHtml && (
+          return (
             <Box
-              sx={{
-                mt: 1.5,
-                fontSize: "0.875rem",
-                lineHeight: 1.8,
-                color: "text.secondary",
-                "& p": { margin: "0 0 0.75em 0" },
-                "& ul, & ol": {
-                  paddingLeft: "1.5em",
-                  margin: "0.5em 0 0.75em 0",
-                },
-                "& li": { marginBottom: "0.25em" },
-                "& h1, & h2, & h3, & h4, & h5, & h6": {
-                  margin: "0.75em 0 0.25em 0",
-                  fontWeight: 700,
-                  color: "text.primary",
-                },
-                "& img": {
-                  maxWidth: "100%",
-                  height: "auto",
-                  borderRadius: 1,
-                  margin: "0.5em 0",
-                },
-                "& a": {
-                  color: PRIMARY_RED,
-                  textDecoration: "underline",
-                  "&:hover": { color: PRIMARY_RED_DARK },
-                },
-                "& blockquote": {
-                  borderLeft: `4px solid ${PRIMARY_RED}`,
-                  paddingLeft: "1.5em",
-                  margin: "0.75em 0",
-                  color: "text.secondary",
-                  fontStyle: "italic",
-                },
-              }}
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(bioHtml),
-              }}
-            />
-          )}
-
-          {/* Badge giảng viên */}
-          <Box
-            sx={{
-              mt: 1.5,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 0.75,
-              px: 1.5,
-              py: 0.5,
-              borderRadius: "20px",
-              bgcolor: alpha(PRIMARY_RED, 0.08),
-              color: PRIMARY_RED,
-            }}
-          >
-            <SchoolIcon sx={{ fontSize: 14 }} />
-            <Typography
-              sx={{
-                fontSize: "0.7rem",
-                fontWeight: 700,
-                letterSpacing: "0.03em",
-              }}
+              key={id ?? idx}
+              sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}
             >
-              GIẢNG VIÊN
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+              <Avatar
+                src={anhDaiDien}
+                alt={hoTen}
+                sx={{
+                  width: 72,
+                  height: 72,
+                  bgcolor: PRIMARY_RED,
+                  fontSize: 28,
+                  fontWeight: 700,
+                  flexShrink: 0,
+                  border: `3px solid ${alpha(PRIMARY_RED, 0.15)}`,
+                }}
+              >
+                {hoTen?.charAt(0).toUpperCase()}
+              </Avatar>
+
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    color: "var(--ev-text-primary, #1F2937)",
+                    cursor: id ? "pointer" : "default",
+                    "&:hover": id
+                      ? { color: PRIMARY_RED, textDecoration: "underline" }
+                      : {},
+                    transition: "color 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                  onClick={handleClick}
+                >
+                  {hoTen}
+                  {id && (
+                    <ChevronRightIcon
+                      sx={{ fontSize: 18, color: PRIMARY_RED, opacity: 0.6 }}
+                    />
+                  )}
+                </Typography>
+
+                {chucVu && (
+                  <Typography
+                    sx={{
+                      fontSize: "0.8rem",
+                      fontWeight: 500,
+                      color: "text.secondary",
+                      mt: 0.25,
+                    }}
+                  >
+                    {chucVu}
+                  </Typography>
+                )}
+
+                {bioHtml && (
+                  <Box
+                    sx={{
+                      mt: 1.5,
+                      fontSize: "0.875rem",
+                      lineHeight: 1.8,
+                      color: "text.secondary",
+                      "& p": { margin: "0 0 0.75em 0" },
+                      "& a": {
+                        color: PRIMARY_RED,
+                        textDecoration: "underline",
+                      },
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(bioHtml),
+                    }}
+                  />
+                )}
+
+                <Box
+                  sx={{
+                    mt: 1.5,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: "20px",
+                    bgcolor: alpha(PRIMARY_RED, 0.08),
+                    color: PRIMARY_RED,
+                  }}
+                >
+                  <SchoolIcon sx={{ fontSize: 14 }} />
+                  <Typography
+                    sx={{
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    GIẢNG VIÊN
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          );
+        })}
+      </Stack>
     </Paper>
   );
 }
@@ -487,6 +465,14 @@ export default function KhoaHocLearningPage() {
     return (
       ((khoaHoc as any).thongTinGiangVien as ThongTinGiangVien | undefined) ||
       null
+    );
+  }, [khoaHoc]);
+
+  const danhSachGiangVien = useMemo(() => {
+    if (!khoaHoc) return [];
+    return (
+      ((khoaHoc as any).danhSachGiangVien as ThongTinGiangVien[] | undefined) ??
+      []
     );
   }, [khoaHoc]);
 
@@ -1374,7 +1360,10 @@ export default function KhoaHocLearningPage() {
                 </Box>
 
                 {/* Thông tin giảng viên */}
-                <InstructorInfo thongTinGiangVien={thongTinGiangVien} />
+                <InstructorInfo
+                  thongTinGiangVien={thongTinGiangVien}
+                  danhSachGiangVien={danhSachGiangVien}
+                />
               </Box>
             </>
           )}

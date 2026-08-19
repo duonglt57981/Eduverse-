@@ -101,7 +101,7 @@ function QuanLyKhuyenMaiContent() {
   const taiKhoaHocDaDuyet = useCallback(async () => {
     setDangTaiKhoaHoc(true);
     try {
-      const res = await khoaHocSvc.GetApprovedListForSelect();
+      const res = await khuyenMaiSvc.GetAllApprovedKhoaHoc(); // đổi chỗ này
       if (res.status === false) {
         setLoi(res.message || "Không tải được danh sách khóa học đã duyệt");
         return;
@@ -121,7 +121,7 @@ function QuanLyKhuyenMaiContent() {
     } finally {
       setDangTaiKhoaHoc(false);
     }
-  }, [khoaHocSvc]);
+  }, [khuyenMaiSvc]);
 
   const moTaoMoi = () => {
     setDangSua(null);

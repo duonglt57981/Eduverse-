@@ -420,34 +420,48 @@ export default function PerformanceContent() {
                   mb: 4,
                 }}
               >
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={chartDataDT}
-                    margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F2F5" />
-                    <XAxis
-                      dataKey="thang"
-                      tick={{ fontSize: 12, fill: "#6B7280" }}
+                {doanhThu.doanhThuTheoThang.length === 0 ? (
+                  <Box sx={{ textAlign: "center", py: 6 }}>
+                    <AttachMoneyIcon
+                      sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }}
                     />
-                    <YAxis
-                      tickFormatter={formatTienNgan}
-                      tick={{ fontSize: 12, fill: "#6B7280" }}
-                    />
-                    <Tooltip
-                      formatter={(val) => [
-                        formatTien(Number(val ?? 0)),
-                        "Doanh thu",
-                      ]}
-                      labelFormatter={(l) => `Tháng ${l}`}
-                    />
-                    <Bar
-                      dataKey="doanhThu"
-                      fill={MAU.chinh}
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                    <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+                      Chưa có doanh thu ghi nhận theo giảng viên cho khóa học
+                      này.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart
+                      data={chartDataDT}
+                      margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F2F5" />
+                      <XAxis
+                        dataKey="thang"
+                        tick={{ fontSize: 12, fill: "#6B7280" }}
+                      />
+                      <YAxis
+                        domain={[0, "auto"]}
+                        allowDecimals={false}
+                        tickFormatter={formatTienNgan}
+                        tick={{ fontSize: 12, fill: "#6B7280" }}
+                      />
+                      <Tooltip
+                        formatter={(val) => [
+                          formatTien(Number(val ?? 0)),
+                          "Doanh thu",
+                        ]}
+                        labelFormatter={(l) => `Tháng ${l}`}
+                      />
+                      <Bar
+                        dataKey="doanhThu"
+                        fill={MAU.chinh}
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </Paper>
 
               {/* Phân chia doanh thu giảng viên */}

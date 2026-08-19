@@ -83,4 +83,15 @@ export default class KhuyenMaiService {
       throw error;
     }
   }
+
+  async GetAllApprovedKhoaHoc(): Promise<ApiResponse<KhoaHocMiniDto[]>> {
+    try {
+      return await apiService.get<KhoaHocMiniDto[]>(
+        "/KhuyenMai/khuyenmai-getall-khoahoc-daduyet",
+      );
+    } catch (error) {
+      console.error("Error fetching approved courses:", error);
+      throw error;
+    }
+  }
 }
