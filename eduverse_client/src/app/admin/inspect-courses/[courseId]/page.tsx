@@ -62,6 +62,25 @@ const scrollbarSx = {
   },
 };
 
+// Ánh xạ "loai" (dùng ở FE cho selectedContent / NoiDungViewer) sang khoá id
+// tương ứng trên từng entity và sang "loaiDoiTuong" mà API LyDoTuChoi mong đợi.
+// Gom về 1 nơi để tránh lặp lại if/else rải rác và bỏ sót "taiLieu".
+const DOI_TUONG_ID_KEY: Record<"baiGiang" | "baiKiemTra" | "taiLieu", string> =
+  {
+    baiGiang: "idBaiGiang",
+    baiKiemTra: "idBaiKiemTra",
+    taiLieu: "idTaiLieu",
+  };
+
+const LOAI_DOI_TUONG: Record<
+  "baiGiang" | "baiKiemTra" | "taiLieu",
+  "BaiGiang" | "BaiKiemTra" | "TaiLieu"
+> = {
+  baiGiang: "BaiGiang",
+  baiKiemTra: "BaiKiemTra",
+  taiLieu: "TaiLieu",
+};
+
 export default function ChiTietKiemDuyetKhoaHocPage() {
   const params = useParams();
   const router = useRouter();
@@ -101,35 +120,16 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     return null;
   }, []);
 
-  // ── Hàm tải chi tiết (trả về dữ liệu) ──
-  const fetchDetail = useCallback(async () => {
-    if (!idKhoaHoc) {
-      setDetailLoading(false);
-      return null;
-    }
-    setDetailLoading(true);
-    try {
-      const res = await kiemDuyetService.GetDetailKiemDuyetKhoaHoc(idKhoaHoc);
-      const normalizedData = normalizeDetailResponse(res);
-      setDetail(normalizedData);
-      return normalizedData;
-    } catch (error) {
-      console.error("Lỗi tải chi tiết:", error);
-      setDetail(null);
-      return null;
-    } finally {
-      setDetailLoading(false);
-    }
-  }, [idKhoaHoc]);
-
   // ── Chọn nội dung ──
   const handleSelectContent = useCallback(
     (loai: "baiGiang" | "taiLieu" | "baiKiemTra", item: any) => {
       setSelectedContent({ loai, item });
 
-      if (loai === "baiGiang" || loai === "baiKiemTra") {
-        const doiTuongId =
-          loai === "baiGiang" ? item?.idBaiGiang : item?.idBaiKiemTra;
+      // Bài giảng, bài kiểm tra VÀ tài liệu đều có thể đã có sẵn lý do từ
+      // chối (để Update thay vì Create) — trước đây chỉ xử lý baiGiang/
+      // baiKiemTra nên tài liệu luôn bị Create lại (trùng bản ghi lý do).
+      if (loai === "baiGiang" || loai === "baiKiemTra" || loai === "taiLieu") {
+        const doiTuongId = item?.[DOI_TUONG_ID_KEY[loai]];
         let existingLyDoId: string | null = null;
         const lyDoData = item?.lyDoTuChois;
 
@@ -173,6 +173,27 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     findFirstContent,
     handleSelectContent,
   ]);
+
+  // ── Hàm tải chi tiết (trả về dữ liệu) ──
+  const fetchDetail = useCallback(async () => {
+    if (!idKhoaHoc) {
+      setDetailLoading(false);
+      return null;
+    }
+    setDetailLoading(true);
+    try {
+      const res = await kiemDuyetService.GetDetailKiemDuyetKhoaHoc(idKhoaHoc);
+      const normalizedData = normalizeDetailResponse(res);
+      setDetail(normalizedData);
+      return normalizedData;
+    } catch (error) {
+      console.error("Lỗi tải chi tiết:", error);
+      setDetail(null);
+      return null;
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [idKhoaHoc]);
 
   // ── Fetch khi component mount ──
   useEffect(() => {
@@ -225,7 +246,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   // ── Lưu lý do từ chối (Create hoặc Update) và cập nhật UI ──
   const handleSaveLyDo = useCallback(
     async (
-      loai: "baiGiang" | "baiKiemTra",
+      loai: "baiGiang" | "baiKiemTra" | "taiLieu",
       id: string | number,
       lyDo: string,
     ) => {
@@ -236,7 +257,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         const request: LyDoTuChoiRequest = {
           ...(existingId ? { id: existingId } : {}),
           idDoiTuong: String(id),
-          loaiDoiTuong: loai === "baiGiang" ? "BaiGiang" : "BaiKiemTra",
+          loaiDoiTuong: LOAI_DOI_TUONG[loai],
           lyDo,
         };
 
@@ -254,7 +275,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         // ⭐ Cập nhật local state thay vì fetch lại toàn bộ
         setDetail((prevDetail: any) => {
           if (!prevDetail) return prevDetail;
-          const matchKey = loai === "baiGiang" ? "idBaiGiang" : "idBaiKiemTra";
+          const matchKey = DOI_TUONG_ID_KEY[loai];
           const newDetail = { ...prevDetail };
           const found = patchLyDoInTree(newDetail, matchKey, String(id), lyDo);
           if (found) {
@@ -415,7 +436,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               flex: 1,
             }}
           >
-            Kiểm duyệt khóa học
+            Xem xét khóa học
           </Typography>
 
           {!detailLoading && detail && (

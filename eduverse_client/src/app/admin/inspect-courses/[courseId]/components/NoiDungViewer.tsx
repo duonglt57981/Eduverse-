@@ -216,7 +216,7 @@ export default function NoiDungViewer({
 }: {
   selected: any;
   onSaveLyDo?: (
-    loai: "baiGiang" | "baiKiemTra",
+    loai: "baiGiang" | "baiKiemTra" | "taiLieu",
     id: string | number,
     lyDo: string,
   ) => Promise<void>;
@@ -264,11 +264,11 @@ export default function NoiDungViewer({
   const isTest = loai === "baiKiemTra";
 
   // ----- Xác định id và lý do hiện tại cho form -----
-  // Lưu ý: chỉ bài giảng và bài kiểm tra hỗ trợ lưu lý do từ chối riêng
-  // (khớp với handleSaveLyDo ở page.tsx). Tài liệu chưa hỗ trợ nên không
-  // gán loaiDoiTuong cho "taiLieu" để tránh lệch kiểu dữ liệu.
+  // Bài giảng, bài kiểm tra VÀ tài liệu (thuộc bài giảng) đều hỗ trợ lưu lý
+  // do từ chối riêng. Khớp với handleSaveLyDo ở page.tsx, cần nhận thêm
+  // loai "taiLieu" (=> loaiDoiTuong "TaiLieu").
   let idDoiTuong: string | number | null = null;
-  let loaiDoiTuong: "BaiGiang" | "BaiKiemTra" | null = null;
+  let loaiDoiTuong: "BaiGiang" | "BaiKiemTra" | "TaiLieu" | null = null;
 
   if (loai === "baiGiang") {
     idDoiTuong = item.idBaiGiang ?? item.id ?? null;
@@ -276,6 +276,9 @@ export default function NoiDungViewer({
   } else if (loai === "baiKiemTra") {
     idDoiTuong = item.idBaiKiemTra ?? item.id ?? null;
     loaiDoiTuong = "BaiKiemTra";
+  } else if (loai === "taiLieu") {
+    idDoiTuong = item.idTaiLieu ?? item.id ?? null;
+    loaiDoiTuong = "TaiLieu";
   }
 
   // Dùng normalizeTrangThai để đồng nhất với StatusChip: giá trị null/undefined/lạ
@@ -295,7 +298,7 @@ export default function NoiDungViewer({
   // Hiển thị form ở cả 4 trạng thái: Chờ duyệt / Đã duyệt / Đang sửa (cho sửa)
   // và Từ chối (chỉ xem)
   const showLyDoForm =
-    (loai === "baiGiang" || loai === "baiKiemTra") &&
+    (loai === "baiGiang" || loai === "baiKiemTra" || loai === "taiLieu") &&
     (isPending || isTuChoi || isDaDuyet || isDangSua) &&
     typeof onSaveLyDo === "function" &&
     idDoiTuong != null &&
@@ -398,7 +401,7 @@ export default function NoiDungViewer({
           initialValue={currentLyDo}
           onSave={(lyDo) =>
             onSaveLyDo!(
-              loai as "baiGiang" | "baiKiemTra",
+              loai as "baiGiang" | "baiKiemTra" | "taiLieu",
               idDoiTuong as string | number,
               lyDo,
             )
@@ -413,9 +416,17 @@ export default function NoiDungViewer({
           onClose={() => setOpenFull(false)}
           fullWidth
           maxWidth="lg"
+          fullScreen={loai === "taiLieu"}
           slotProps={{
             paper: {
-              sx: { borderRadius: 2, bgcolor: COLORS.paperRaised ?? "#fff" },
+              sx: {
+                borderRadius: loai === "taiLieu" ? 0 : 2,
+                bgcolor: COLORS.paperRaised ?? "#fff",
+                ...(loai === "taiLieu" && {
+                  display: "flex",
+                  flexDirection: "column",
+                }),
+              },
             },
           }}
         >
@@ -427,6 +438,7 @@ export default function NoiDungViewer({
               px: 2,
               py: 1.25,
               borderBottom: `1px solid ${COLORS.line}`,
+              flexShrink: 0,
             }}
           >
             {loai === "baiGiang" ? (
@@ -450,13 +462,23 @@ export default function NoiDungViewer({
               <CloseRoundedIcon fontSize="small" />
             </IconButton>
           </Stack>
-          <Box sx={{ p: 2 }}>
+          <Box
+            sx={{
+              p: 2,
+              ...(loai === "taiLieu" && {
+                flex: 1,
+                minHeight: 0,
+                display: "flex",
+                flexDirection: "column",
+              }),
+            }}
+          >
             <ViewerBody
               loai={loai}
               url={url}
               item={item}
               minHeight={VIEW_MIN_HEIGHT}
-              maxHeight={FULL_HEIGHT}
+              maxHeight={loai === "taiLieu" ? "100%" : FULL_HEIGHT}
               isFullscreen
             />
           </Box>
@@ -737,6 +759,7 @@ function ViewerBody({
       tenTaiLieu={item.tenTaiLieu || item.tieuDe || "Tài liệu"}
       minHeight={minHeight}
       maxHeight={maxHeight}
+      isFullscreen={isFullscreen}
     />
   );
 }
@@ -1400,14 +1423,25 @@ function TaiLieuPreview({
   tenTaiLieu,
   minHeight,
   maxHeight,
+  isFullscreen = false,
 }: {
   url: string;
   tenTaiLieu: string;
   minHeight: string | number;
   maxHeight: string | number;
+  isFullscreen?: boolean;
 }) {
   const kind = getFileKind(url);
   const fileName = getFileName(url, tenTaiLieu);
+
+  // Ở chế độ xem toàn màn hình, khung xem cần cao đúng bằng toàn bộ chiều
+  // cao khả dụng của popup. minHeight/maxHeight thôi là chưa đủ vì nội dung
+  // bên trong (iframe/ảnh) được định vị "absolute" nên không tự đẩy chiều
+  // cao của khung cha lên — phải khai báo "height" tường minh thì khung mới
+  // thực sự giãn hết cỡ thay vì co lại theo minHeight.
+  const fillSx = isFullscreen
+    ? { height: "100%", flex: 1 }
+    : { minHeight, maxHeight };
 
   const frameBox = (children: React.ReactNode) => (
     <Box
@@ -1416,8 +1450,7 @@ function TaiLieuPreview({
         maxWidth: "100%",
         boxSizing: "border-box",
         border: `1px solid ${COLORS.line}`,
-        minHeight: minHeight,
-        maxHeight: maxHeight,
+        ...fillSx,
         position: "relative",
         isolation: "isolate",
         overflow: "hidden",
@@ -1477,8 +1510,7 @@ function TaiLieuPreview({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: minHeight,
-          maxHeight: maxHeight,
+          ...fillSx,
           position: "relative",
           isolation: "isolate",
           overflow: "hidden",
@@ -1534,8 +1566,7 @@ function TaiLieuPreview({
         boxSizing: "border-box",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: minHeight,
-        maxHeight: maxHeight,
+        ...fillSx,
         border: `1px dashed ${COLORS.line}`,
         bgcolor: COLORS.paper,
         position: "relative",

@@ -34,8 +34,9 @@ namespace Eduverse.Api.Controller
             ));
         }
 
-        [Authorize]
+        
         [HttpPost("{khoaHocId}")]
+
         public async Task<IActionResult> ThemVao(Guid khoaHocId)
         {
             try

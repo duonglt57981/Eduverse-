@@ -88,7 +88,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpGet("khoahoc-preview/{idKhoaHoc}")]
-        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        [AllowAnonymous]
         public async Task<DataResponse<KhoaHocDto>> GetKhoaHocPreview( Guid idKhoaHoc)
         {
             try
@@ -198,7 +198,7 @@ namespace Eduverse.Api.Controller
 
 
         [HttpGet("khoahoc-list-bygiangvien/{UserId}")]
-        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        [AllowAnonymous]
         public async Task<DataResponse<GiangVienKhoaHocDto>> GetListByGiangVien([FromQuery] GetListSearch search, Guid UserId)
         {
             try

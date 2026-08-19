@@ -396,7 +396,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                 targetVersion.TrangThai = "DangDuyet";
 
                 _khoaHocRepository.Update(targetVersion);
-                _khoaHocRepository.SaveAsync();
+                //_khoaHocRepository.SaveAsync();
                 
             }
 
@@ -409,7 +409,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     phan.TrangThai = "DangDuyet";
 
                      _phanRepository.Update(phan);
-                    await _phanRepository.SaveAsync();
+                    //await _phanRepository.SaveAsync();
                 }
             }
 
@@ -422,7 +422,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     item.TrangThai = "DangDuyet";
 
                     _baiGiangRepository.Update(item);
-                    await _taiLieuRepository.SaveAsync();
+                    //await _taiLieuRepository.SaveAsync();
 
                 }
             }
@@ -436,7 +436,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     item.TrangThai = "DangDuyet";
 
                      _taiLieuRepository.Update(item);
-                    await _taiLieuRepository.SaveAsync();
+                    //await _taiLieuRepository.SaveAsync();
                 }
             }
 
@@ -449,7 +449,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     item.TrangThai = "DangDuyet";
 
                      _baiKiemTraRepository.Update(item);
-                    await _baiKiemTraRepository.SaveAsync();
+                    //await _baiKiemTraRepository.SaveAsync();
                 }
             }
 
@@ -462,7 +462,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     item.TrangThai = "DangDuyet";
 
                     _cauHoiRepository.Update(item);
-                    await _cauHoiRepository.SaveAsync();
+                    //await _cauHoiRepository.SaveAsync();
                 }
             }
 
@@ -476,7 +476,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     item.TrangThai = "DangDuyet";
 
                     _dapAnRepository.Update(item);
-                    await _dapAnRepository.SaveAsync();
+                    //await _dapAnRepository.SaveAsync();
                 }
             }
 
@@ -1200,7 +1200,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     phan.TrangThaiPheDuyet = "TuChoi";
                     phan.TrangThai = "DaXoa";
                     _phanRepository.Update(phan);
-                    await _phanRepository.SaveAsync();
+                    //await _phanRepository.SaveAsync();
                 }
 
                 foreach (var bg in baiGiangs)
@@ -1208,7 +1208,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     bg.TrangThaiPheDuyet = "TuChoi";
                     bg.TrangThai = "DaXoa";
                     _baiGiangRepository.Update(bg);
-                    await _baiGiangRepository.SaveAsync();
+                    //await _baiGiangRepository.SaveAsync();
                 }
 
                 foreach (var tl in taiLieus)
@@ -1216,7 +1216,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     tl.TrangThaiPheDuyet = "TuChoi";
                     tl.TrangThai = "DaXoa";
                     _taiLieuRepository.Update(tl);
-                    await _taiLieuRepository.SaveAsync();
+                    //await _taiLieuRepository.SaveAsync();
                 }
 
                 foreach (var bkt in baiKiemTras)
@@ -1224,7 +1224,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     bkt.TrangThaiPheDuyet = "TuChoi";
                     bkt.TrangThai = "DaXoa";
                     _baiKiemTraRepository.Update(bkt);
-                    await _baiKiemTraRepository.SaveAsync();
+                    //await _baiKiemTraRepository.SaveAsync();
                 }
 
                 foreach (var ch in cauHois)
@@ -1232,7 +1232,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     ch.TrangThaiPheDuyet = "TuChoi";
                     ch.TrangThai = "DaXoa";
                     _cauHoiRepository.Update(ch);
-                    await _cauHoiRepository.SaveAsync();
+                    //await _cauHoiRepository.SaveAsync();
                 }
 
                 foreach (var da in dapAns)
@@ -1240,7 +1240,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     da.TrangThaiPheDuyet = "TuChoi";
                     da.TrangThai = "DaXoa";
                     _dapAnRepository.Update(da);
-                    await _dapAnRepository.SaveAsync();
+                    //await _dapAnRepository.SaveAsync();
                 }
 
                 var currentReview = new LichSuKiemDuyetKhoaHoc
@@ -1259,7 +1259,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
            
                     await _notificationPublisher.NotifyUserAsync(khoaHoc.CreatedId.Value, new NotificationPayload
                     {
-                        TieuDe = "Khóa học của bạn đã được chúng tôi xem xét lại và đã kh đạt yêu cầu",
+                        TieuDe = "Khóa học của bạn đã được chúng tôi xem xét lại và đã không đạt yêu cầu",
                         NoiDung = $"Khóa học {khoaHoc.TieuDe} đã được chúng tôi xem xét lại và đã có những vi phạm. Nhấp vào để biết chi tiết hơn ",
                         LoaiThongBao =   "XemXetLaiKhoaHoc" ,
                         Link = $"/instructor/manager-courses/{khoaHoc.Id}/manager",
@@ -1277,7 +1277,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     khoaHoc.TrangThaiPheDuyet = "TuChoi";
                     khoaHoc.TrangThai = "DaXoa";
                     _khoaHocRepository.Update(khoaHoc);
-                    await _khoaHocRepository.SaveAsync();
+                    //await _khoaHocRepository.SaveAsync();
 
                     foreach (var phan in phans)
                     {
@@ -1292,7 +1292,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         bg.TrangThaiPheDuyet = "TuChoi";
                         bg.TrangThai = "DaXoa";
                         _baiGiangRepository.Update(bg);
-                        await _baiGiangRepository.SaveAsync();
+                        //await _baiGiangRepository.SaveAsync();
                     }
 
                     foreach (var tl in taiLieus)
@@ -1300,7 +1300,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         tl.TrangThaiPheDuyet = "TuChoi";
                         tl.TrangThai = "DaXoa";
                         _taiLieuRepository.Update(tl);
-                        await _taiLieuRepository.SaveAsync();
+                        //await _taiLieuRepository.SaveAsync();
                     }
 
                     foreach (var bkt in baiKiemTras)
@@ -1308,7 +1308,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         bkt.TrangThaiPheDuyet = "TuChoi";
                         bkt.TrangThai = "DaXoa";
                         _baiKiemTraRepository.Update(bkt);
-                        await _baiKiemTraRepository.SaveAsync();
+                        //await _baiKiemTraRepository.SaveAsync();
                     }
 
                     foreach (var ch in cauHois)
@@ -1316,7 +1316,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         ch.TrangThaiPheDuyet = "TuChoi";
                         ch.TrangThai = "DaXoa";
                         _cauHoiRepository.Update(ch);
-                        await _cauHoiRepository.SaveAsync();
+                        //await _cauHoiRepository.SaveAsync();
                     }
 
                     foreach (var da in dapAns)
@@ -1324,8 +1324,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         da.TrangThaiPheDuyet = "TuChoi";
                         da.TrangThai = "DaXoa";
                         _dapAnRepository.Update(da);
-                        await _dapAnRepository.SaveAsync();
+                        //await _dapAnRepository.SaveAsync();
                     }
+               
 
                     //var currentReview = new LichSuKiemDuyetKhoaHoc
                     //{
@@ -1356,24 +1357,22 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     khoaHoc.TrangThaiPheDuyet = "DaDuyet";
                     khoaHoc.TrangThai = "HoatDong";
                     _khoaHocRepository.Update(khoaHoc);
-                    await _khoaHocRepository.SaveAsync();
+                    //await _khoaHocRepository.SaveAsync();
 
                     foreach (var phan in phans)
                     {
                         phan.TrangThaiPheDuyet = "DaDuyet";
                         phan.TrangThai = "HoatDong";
                         _phanRepository.Update(phan);
-                        await _phanRepository.SaveAsync();
+                        //await _phanRepository.SaveAsync();
                     }
 
                     foreach (var bg in baiGiangs)
                     {
                         bg.TrangThaiPheDuyet = "DaDuyet";
                         bg.TrangThai = "HoatDong";
-                        await _phanRepository.SaveAsync();
-
                         _baiGiangRepository.Update(bg);
-                        await _baiGiangRepository.SaveAsync();
+                        //await _baiGiangRepository.SaveAsync();
                     }
 
                     foreach (var tl in taiLieus)
@@ -1381,7 +1380,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         tl.TrangThaiPheDuyet = "DaDuyet";
                         tl.TrangThai = "HoatDong";
                         _taiLieuRepository.Update(tl);
-                        await _taiLieuRepository.SaveAsync();
+                        //await _taiLieuRepository.SaveAsync();
                     }
 
                     foreach (var bkt in baiKiemTras)
@@ -1390,7 +1389,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         bkt.TrangThai = "HoatDong";
 
                         _baiKiemTraRepository.Update(bkt);
-                        await _baiKiemTraRepository.SaveAsync();
+                        //await _baiKiemTraRepository.SaveAsync();
                     }
 
                     foreach (var ch in cauHois)
@@ -1398,7 +1397,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         ch.TrangThaiPheDuyet = "DaDuyet";
                         ch.TrangThai = "HoatDong";
                         _cauHoiRepository.Update(ch);
-                        await _cauHoiRepository.SaveAsync();
+                        //await _cauHoiRepository.SaveAsync();
                     }
 
                     foreach (var da in dapAns)
@@ -1406,7 +1405,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                         da.TrangThaiPheDuyet = "DaDuyet";
                         da.TrangThai = "HoatDong";
                         _dapAnRepository.Update(da);
-                        await _dapAnRepository.SaveAsync();
+                        //await _dapAnRepository.SaveAsync();
                     }
 
                     //if (GetLichSuKiemDuyetKhoaHoc != null)
@@ -1421,8 +1420,8 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     //}
 
                     //update đăng kí khóa học 
-                    var dangkikhoahoc = await _dangKyKhoaHocRepository.GetQueryable().FirstOrDefaultAsync(x => x.IdKhoaHoc == khoaHoc.IdBanGhiTruoc);
-                    if (dangkikhoahoc != null)
+                    var dangkikhoahoc = await _dangKyKhoaHocRepository.GetQueryable().Where(x => x.IdKhoaHoc == khoaHoc.IdBanGhiTruoc).ToListAsync();
+                    if (dangkikhoahoc.Any())
                     {
                         await CapNhatDangKyKhoaHoc(khoaHoc.Id, khoaHoc.IdBanGhiTruoc.Value);
                     }

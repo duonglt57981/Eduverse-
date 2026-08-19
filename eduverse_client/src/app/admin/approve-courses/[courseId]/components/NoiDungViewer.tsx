@@ -133,9 +133,7 @@ function getOptimalHlsUrl(originalUrl: string): {
 }
 
 // ======================== VIDEO.JS STYLES ========================
-// Thay thế toàn bộ phần VIDEO_JS_STYLES bằng nội dung dưới đây
 const VIDEO_JS_STYLES = (PRIMARY_RED: string) => `
-  /* Nút play tam giác, không nền, không poster */
   .video-js .vjs-big-play-button {
     background-color: transparent !important;
     border: none !important;
@@ -171,11 +169,9 @@ const VIDEO_JS_STYLES = (PRIMARY_RED: string) => `
     opacity: 1 !important;
     transform: translate(-50%, -50%) scale(1.05) !important;
   }
-  /* Khi đang phát, ẩn nút tam giác */
   .video-js.vjs-playing .vjs-big-play-button {
     display: none !important;
   }
-  /* Giữ màu primary cho thanh tiến trình */
   .video-js .vjs-play-progress {
     background-color: ${PRIMARY_RED} !important;
   }
@@ -185,7 +181,6 @@ const VIDEO_JS_STYLES = (PRIMARY_RED: string) => `
   .video-js .vjs-load-progress {
     background-color: rgba(255,255,255,0.4) !important;
   }
-  /* Ẩn poster (ảnh đại diện) */
   .video-js .vjs-poster {
     display: none !important;
   }
@@ -194,7 +189,6 @@ const VIDEO_JS_STYLES = (PRIMARY_RED: string) => `
 // ======================== CONSTANTS ========================
 const VIEW_MIN_HEIGHT = 300;
 const VIEW_MAX_HEIGHT = 600;
-const FULL_HEIGHT = "calc(100vh - 132px)";
 const TOOLBAR_CROP_PX = 48;
 const LOAD_TIMEOUT_MS = 30000;
 
@@ -248,7 +242,7 @@ export default function NoiDungViewer({
     );
   }
 
-  const { loai, item } = selected;
+  const { loai, item, lyDoTarget } = selected;
   const title =
     loai === "baiGiang"
       ? item.tenBaiGiang || item.tieuDe || "Bài giảng"
@@ -267,24 +261,24 @@ export default function NoiDungViewer({
 
   const isTest = loai === "baiKiemTra";
 
-  // ----- Xác định id và lý do hiện tại cho form -----
-  const idDoiTuong =
-    loai === "baiGiang"
-      ? item.idBaiGiang
-      : loai === "baiKiemTra"
-        ? item.idBaiKiemTra
-        : null;
-  const isPending = isTrangThaiCho(item.trangThaiPheDuyet);
+  // Xác định target (bài giảng hoặc bài kiểm tra) để hiển thị form lý do
+  const target = lyDoTarget || { loai, item };
+  const targetLoai = target.loai;
+  const targetItem = target.item;
+  const targetId =
+    targetLoai === "baiGiang"
+      ? (targetItem?.idBaiGiang ?? targetItem?.id)
+      : (targetItem?.idBaiKiemTra ?? targetItem?.id);
+  const isPendingTarget = isTrangThaiCho(targetItem?.trangThaiPheDuyet);
   const showLyDoForm =
-    (loai === "baiGiang" || loai === "baiKiemTra") &&
-    isPending &&
+    (targetLoai === "baiGiang" || targetLoai === "baiKiemTra") &&
+    isPendingTarget &&
     typeof onSaveLyDo === "function" &&
-    idDoiTuong;
+    targetId;
 
-  // ---- LẤY LÝ DO TỪ CHỐI (hỗ trợ object và array) ----
+  // Lấy lý do hiện tại của target
   let currentLyDo = "";
-  const lyDoData = item.lyDoTuChois;
-
+  const lyDoData = targetItem?.lyDoTuChois;
   if (lyDoData) {
     if (Array.isArray(lyDoData) && lyDoData.length > 0) {
       currentLyDo = lyDoData
@@ -297,15 +291,25 @@ export default function NoiDungViewer({
       currentLyDo = lyDoData;
     }
   }
+  if (!currentLyDo && typeof targetItem?.lyDoTuChoi === "string") {
+    currentLyDo = targetItem.lyDoTuChoi;
+  }
+  if (!currentLyDo && Array.isArray(targetItem?.lyDoTuChoi)) {
+    currentLyDo = targetItem.lyDoTuChoi.filter(Boolean).join(", ");
+  }
 
-  // Fallback cho trường cũ (nếu có)
-  if (!currentLyDo && typeof item.lyDoTuChoi === "string") {
-    currentLyDo = item.lyDoTuChoi;
-  }
-  if (!currentLyDo && Array.isArray(item.lyDoTuChoi)) {
-    currentLyDo = item.lyDoTuChoi.filter(Boolean).join(", ");
-  }
-  // ------------------------------------
+  // Ghi chú (từ chối) của bài giảng được dùng chung cho cả tài liệu con của
+  // nó, vì tài liệu con không có ô ghi chú riêng. Hiển thị lời nhắc để admin
+  // biết rõ phạm vi áp dụng khi đang xem bài giảng có tài liệu đính kèm,
+  // hoặc khi đang xem trực tiếp một tài liệu con.
+  const targetTaiLieus: any[] = Array.isArray(targetItem?.taiLieus)
+    ? targetItem.taiLieus
+    : [];
+  const scopeNote =
+    targetLoai === "baiGiang" &&
+    (loai === "taiLieu" || targetTaiLieus.length > 0)
+      ? "Áp dụng chung cho bài giảng này và tất cả tài liệu đính kèm bên dưới."
+      : undefined;
 
   return (
     <Box
@@ -369,14 +373,14 @@ export default function NoiDungViewer({
         />
       </Box>
 
-      {/* ---- HIỂN THỊ FORM LÝ DO TỪ CHỐI NẾU CÓ ---- */}
       {showLyDoForm && (
         <LyDoTuChoiInput
-          key={`${loai}-${idDoiTuong}`}
-          idDoiTuong={idDoiTuong}
-          loaiDoiTuong={loai === "baiGiang" ? "BaiGiang" : "BaiKiemTra"}
+          key={`${targetLoai}-${targetId}`}
+          idDoiTuong={targetId}
+          loaiDoiTuong={targetLoai === "baiGiang" ? "BaiGiang" : "BaiKiemTra"}
           initialValue={currentLyDo}
-          onSave={(lyDo) => onSaveLyDo(loai, idDoiTuong, lyDo)}
+          scopeNote={scopeNote}
+          onSave={(lyDo) => onSaveLyDo(targetLoai, targetId, lyDo)}
         />
       )}
 
@@ -388,7 +392,14 @@ export default function NoiDungViewer({
           maxWidth="lg"
           slotProps={{
             paper: {
-              sx: { borderRadius: 2, bgcolor: COLORS.paperRaised ?? "#fff" },
+              sx: {
+                borderRadius: 2,
+                bgcolor: COLORS.paperRaised ?? "#fff",
+                height: "90vh",
+                maxHeight: "90vh",
+                display: "flex",
+                flexDirection: "column",
+              },
             },
           }}
         >
@@ -400,6 +411,7 @@ export default function NoiDungViewer({
               px: 2,
               py: 1.25,
               borderBottom: `1px solid ${COLORS.line}`,
+              flexShrink: 0,
             }}
           >
             {loai === "baiGiang" ? (
@@ -423,13 +435,21 @@ export default function NoiDungViewer({
               <CloseRoundedIcon fontSize="small" />
             </IconButton>
           </Stack>
-          <Box sx={{ p: 2 }}>
+          <Box
+            sx={{
+              p: 2,
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <ViewerBody
               loai={loai}
               url={url}
               item={item}
-              minHeight={VIEW_MIN_HEIGHT}
-              maxHeight={FULL_HEIGHT}
+              minHeight={0}
+              maxHeight="100%"
               isFullscreen
             />
           </Box>
@@ -566,7 +586,6 @@ function ViewerBody({
                       {idx + 1}
                     </Typography>
                   </Box>
-                  {/* Nội dung câu hỏi có thể chứa HTML (bold, italic, ảnh, danh sách...) nên render bằng dangerouslySetInnerHTML thay vì text thuần */}
                   <Box
                     sx={{
                       flex: 1,
@@ -711,6 +730,7 @@ function ViewerBody({
       tenTaiLieu={item.tenTaiLieu || item.tieuDe || "Tài liệu"}
       minHeight={minHeight}
       maxHeight={maxHeight}
+      isFullscreen={isFullscreen}
     />
   );
 }
@@ -1374,14 +1394,25 @@ function TaiLieuPreview({
   tenTaiLieu,
   minHeight,
   maxHeight,
+  isFullscreen = false,
 }: {
   url: string;
   tenTaiLieu: string;
   minHeight: string | number;
   maxHeight: string | number;
+  isFullscreen?: boolean;
 }) {
   const kind = getFileKind(url);
   const fileName = getFileName(url, tenTaiLieu);
+
+  // Ở chế độ xem toàn màn hình, khung xem cần cao đúng bằng toàn bộ chiều
+  // cao khả dụng của popup. minHeight/maxHeight thôi là chưa đủ vì nội dung
+  // bên trong (iframe/ảnh) được định vị "absolute" nên không tự đẩy chiều
+  // cao của khung cha lên — phải khai báo "height" tường minh thì khung mới
+  // thực sự giãn hết cỡ thay vì co lại theo minHeight.
+  const fillSx = isFullscreen
+    ? { height: "100%", flex: 1 }
+    : { minHeight, maxHeight };
 
   const frameBox = (children: React.ReactNode) => (
     <Box
@@ -1390,8 +1421,7 @@ function TaiLieuPreview({
         maxWidth: "100%",
         boxSizing: "border-box",
         border: `1px solid ${COLORS.line}`,
-        minHeight: minHeight,
-        maxHeight: maxHeight,
+        ...fillSx,
         position: "relative",
         isolation: "isolate",
         overflow: "hidden",
@@ -1451,8 +1481,7 @@ function TaiLieuPreview({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: minHeight,
-          maxHeight: maxHeight,
+          ...fillSx,
           position: "relative",
           isolation: "isolate",
           overflow: "hidden",
@@ -1508,8 +1537,7 @@ function TaiLieuPreview({
         boxSizing: "border-box",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: minHeight,
-        maxHeight: maxHeight,
+        ...fillSx,
         border: `1px dashed ${COLORS.line}`,
         bgcolor: COLORS.paper,
         position: "relative",

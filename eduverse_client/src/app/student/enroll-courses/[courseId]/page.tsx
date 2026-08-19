@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSelector } from "@/src/store/hook";
 import {
   Box,
   Typography,
@@ -251,6 +252,20 @@ function CourseRegistrationContent() {
   const router = useRouter();
   const params = useParams<{ courseId: string }>();
   const courseId = params?.courseId ?? "";
+  const user = useSelector((s) => s.auth.user);
+
+  // Kiểm tra đăng nhập khi bấm nút — nếu chưa đăng nhập, chuyển đến trang login
+  const checkAuth = (): boolean => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("AccessToken")
+        : null;
+    if (!user && !token) {
+      router.push(`/auth/login?redirect=/student/enroll-courses/${courseId}`);
+      return false;
+    }
+    return true;
+  };
 
   const [tab, setTab] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -1570,7 +1585,10 @@ function CourseRegistrationContent() {
                     fullWidth
                     variant="contained"
                     startIcon={<SchoolIcon />}
-                    onClick={() => setModalOpen(true)}
+                    onClick={() => {
+                      if (!checkAuth()) return;
+                      setModalOpen(true);
+                    }}
                     sx={{
                       bgcolor: "#2d7a35",
                       "&:hover": { bgcolor: "#245f2a" },
@@ -1591,6 +1609,7 @@ function CourseRegistrationContent() {
                     variant="contained"
                     startIcon={<ShoppingCartIcon />}
                     onClick={async () => {
+                      if (!checkAuth()) return;
                       try {
                         await apiService.post(`/GioHang/${khoaHoc.id}`);
                         router.push("/student/cart");
@@ -2307,23 +2326,21 @@ function CourseRegistrationContent() {
 
 export default function CourseRegistrationPage() {
   return (
-    <AuthGuard allowedRoles={["HocVien", "GiaoVien"]}>
-      <StudentDashboardShell>
-        <Box sx={{ mt: 0, pb: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2.5, md: 4.5 },
-              borderRadius: "28px",
-              border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
-              boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
-            }}
-          >
-            <CourseRegistrationContent />
-          </Paper>
-        </Box>
-      </StudentDashboardShell>
-    </AuthGuard>
+    <StudentDashboardShell>
+      <Box sx={{ mt: 0, pb: 3 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 4.5 },
+            borderRadius: "28px",
+            border: "1px solid rgba(141,19,19,0.06)",
+            bgcolor: "var(--ev-paper, #FFFFFF)",
+            boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+          }}
+        >
+          <CourseRegistrationContent />
+        </Paper>
+      </Box>
+    </StudentDashboardShell>
   );
 }

@@ -20,7 +20,7 @@ import { COLORS } from "@/src/app/admin/approve-courses/types/constants";
 
 interface LyDoTuChoiInputProps {
   idDoiTuong: string | number;
-  loaiDoiTuong: "BaiGiang" | "BaiKiemTra";
+  loaiDoiTuong: "BaiGiang" | "BaiKiemTra" | "TaiLieu";
   initialValue?: string;
   onSave: (lyDo: string) => Promise<void>;
   disabled?: boolean;

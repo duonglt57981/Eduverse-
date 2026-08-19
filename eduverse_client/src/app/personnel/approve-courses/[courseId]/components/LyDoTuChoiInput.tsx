@@ -24,6 +24,9 @@ interface LyDoTuChoiInputProps {
   initialValue?: string;
   onSave: (lyDo: string) => Promise<void>;
   disabled?: boolean;
+  /** Ghi chú phụ hiển thị dưới tiêu đề, dùng để báo cho người duyệt biết
+   * ô này đang dùng chung cho bài giảng và các tài liệu con của nó. */
+  scopeNote?: string;
 }
 
 const FORMAT_BUTTONS: {
@@ -61,6 +64,7 @@ export default function LyDoTuChoiInput({
   initialValue = "",
   onSave,
   disabled = false,
+  scopeNote,
 }: LyDoTuChoiInputProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [lyDo, setLyDo] = useState(initialValue);
@@ -124,10 +128,24 @@ export default function LyDoTuChoiInput({
     >
       <Typography
         variant="subtitle2"
-        sx={{ fontWeight: 600, mb: 1, color: COLORS.ink }}
+        sx={{ fontWeight: 600, mb: scopeNote ? 0.25 : 1, color: COLORS.ink }}
       >
         Ghi chú
       </Typography>
+
+      {scopeNote && (
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            mb: 1,
+            color: COLORS.inkSoft,
+            fontStyle: "italic",
+          }}
+        >
+          {scopeNote}
+        </Typography>
+      )}
 
       <Box
         sx={{

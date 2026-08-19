@@ -55,92 +55,121 @@ export default function KhoiTenKhoaHoc({
             </Typography>
           </Stack>
           {detail && (
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              sx={{ mt: 1.5, flexWrap: "wrap", alignItems: "center" }}
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "var(--ev-text-muted, #8A7676)",
-                  fontWeight: 600,
-                  mr: 1,
-                }}
+            <>
+              {/* Dòng thông tin chính */}
+              <Stack
+                direction="row"
+                spacing={1}
+                useFlexGap
+                sx={{ mt: 1.5, flexWrap: "wrap", alignItems: "center" }}
               >
-                Giảng viên:{" "}
-                <span
-                  style={{
-                    color: "var(--ev-text-primary, #1F2937)",
-                    fontWeight: 700,
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "var(--ev-text-muted, #8A7676)",
+                    fontWeight: 600,
+                    mr: 1,
                   }}
                 >
-                  {detail.createBy || "Không xác định"}
-                </span>
-              </Typography>
+                  Giảng viên:{" "}
+                  <span
+                    style={{
+                      color: "var(--ev-text-primary, #1F2937)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {detail.createBy || "Không xác định"}
+                  </span>
+                </Typography>
 
-              {detail.loaiKhoaHoc && (
-                <Chip
-                  label={detail.loaiKhoaHoc}
-                  size="small"
-                  sx={{
-                    bgcolor: "transparent",
-                    color: "var(--ev-text-secondary, #4B5563)",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    borderRadius: "8px",
-                    border: "1px solid var(--ev-divider, #ECE7E4)",
-                  }}
-                />
+                {detail.loaiKhoaHoc && (
+                  <Chip
+                    label={detail.loaiKhoaHoc}
+                    size="small"
+                    sx={{
+                      bgcolor: "transparent",
+                      color: "var(--ev-text-secondary, #4B5563)",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      borderRadius: "8px",
+                      border: "1px solid var(--ev-divider, #ECE7E4)",
+                    }}
+                  />
+                )}
+
+                {detail.capDo && (
+                  <Chip
+                    label={`Cấp độ: ${detail.capDo}`}
+                    size="small"
+                    sx={{
+                      bgcolor: "transparent",
+                      color: "var(--ev-text-secondary, #4B5563)",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      borderRadius: "8px",
+                      border: "1px solid var(--ev-divider, #ECE7E4)",
+                    }}
+                  />
+                )}
+
+                {detail.giaGoc != null && (
+                  <Chip
+                    label={`Giá: ${detail.giaGoc.toLocaleString()} VND`}
+                    size="small"
+                    sx={{
+                      bgcolor: COLORS.successSoft,
+                      color: COLORS.success,
+                      fontWeight: 800,
+                      fontSize: 12,
+                      borderRadius: "8px",
+                    }}
+                  />
+                )}
+              </Stack>
+
+              {/* 👇 Dòng danh mục riêng, xuống dòng */}
+              {detail.danhMucs && detail.danhMucs.length > 0 && (
+                <Box sx={{ mt: 1.5 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 600,
+                      color: "var(--ev-text-muted, #8A7676)",
+                      mr: 1,
+                    }}
+                  >
+                    Danh mục:
+                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
+                    sx={{
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      display: "inline-flex",
+                    }}
+                  >
+                    {detail.danhMucs.map((cat: string, index: number) => (
+                      <Chip
+                        key={index}
+                        label={cat}
+                        size="small"
+                        sx={{
+                          bgcolor: "transparent",
+                          color: "var(--ev-text-secondary, #4B5563)",
+                          fontWeight: 700,
+                          fontSize: 12,
+                          borderRadius: "8px",
+                          border: "1px solid var(--ev-divider, #ECE7E4)",
+                          mt: 0.5, // tạo khoảng cách nhỏ nếu wrap
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
               )}
-
-              {detail.capDo && (
-                <Chip
-                  label={`Cấp độ: ${detail.capDo}`}
-                  size="small"
-                  sx={{
-                    bgcolor: "transparent",
-                    color: "var(--ev-text-secondary, #4B5563)",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    borderRadius: "8px",
-                    border: "1px solid var(--ev-divider, #ECE7E4)",
-                  }}
-                />
-              )}
-
-              {detail.giaGoc != null && (
-                <Chip
-                  label={`Giá: ${detail.giaGoc.toLocaleString()} VND`}
-                  size="small"
-                  sx={{
-                    bgcolor: COLORS.successSoft,
-                    color: COLORS.success,
-                    fontWeight: 800,
-                    fontSize: 12,
-                    borderRadius: "8px",
-                  }}
-                />
-              )}
-
-              {/* 👇 Hiển thị danh sách danh mục */}
-              {detail.danhMucs?.map((cat: string, index: number) => (
-                <Chip
-                  key={index}
-                  label={cat}
-                  size="small"
-                  sx={{
-                    bgcolor: "transparent",
-                    color: "var(--ev-text-secondary, #4B5563)",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    borderRadius: "8px",
-                    border: "1px solid var(--ev-divider, #ECE7E4)",
-                  }}
-                />
-              ))}
-            </Stack>
+            </>
           )}
         </Box>
       </Stack>

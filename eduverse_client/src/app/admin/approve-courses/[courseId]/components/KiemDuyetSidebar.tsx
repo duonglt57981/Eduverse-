@@ -40,7 +40,7 @@ interface SelectedContent {
 interface KiemDuyetSidebarProps {
   detail: any;
   selected: SelectedContent | null;
-  onSelectContent: (loai: LoaiNoiDung, item: any) => void;
+  onSelectContent: (loai: LoaiNoiDung, item: any, parentBaiGiang?: any) => void;
   isMobile?: boolean;
   onCloseMobile?: () => void;
 }
@@ -178,7 +178,7 @@ export default function KiemDuyetSidebar({
               return (
                 <Box
                   key={tl.idTaiLieu ?? tl.id ?? idx}
-                  onClick={() => onSelectContent("taiLieu", tl)}
+                  onClick={() => onSelectContent("taiLieu", tl, bg)}
                   sx={{
                     display: "flex",
                     alignItems: "center",

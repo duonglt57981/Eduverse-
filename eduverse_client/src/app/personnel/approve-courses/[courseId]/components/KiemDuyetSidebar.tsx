@@ -14,7 +14,6 @@ import {
   ListItemIcon,
   ListItemText,
   Collapse,
-  Chip,
   alpha,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -25,9 +24,6 @@ import FolderRoundedIcon from "@mui/icons-material/FolderRounded";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import QuizIcon from "@mui/icons-material/Quiz";
-import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import {
   COLORS,
   FONTS,
@@ -44,7 +40,7 @@ interface SelectedContent {
 interface KiemDuyetSidebarProps {
   detail: any;
   selected: SelectedContent | null;
-  onSelectContent: (loai: LoaiNoiDung, item: any) => void;
+  onSelectContent: (loai: LoaiNoiDung, item: any, parentBaiGiang?: any) => void;
   isMobile?: boolean;
   onCloseMobile?: () => void;
 }
@@ -70,16 +66,11 @@ export default function KiemDuyetSidebar({
   const [searchTerm, setSearchTerm] = useState("");
   const [openPhan, setOpenPhan] = useState<Record<string, boolean>>({});
   const [openTaiLieu, setOpenTaiLieu] = useState<Record<string, boolean>>({});
-  const [openBaiKiemTra, setOpenBaiKiemTra] = useState<Record<string, boolean>>(
-    {},
-  );
 
   const togglePhan = (id: string) =>
     setOpenPhan((p) => ({ ...p, [id]: p[id] === false ? true : !p[id] }));
   const toggleTaiLieu = (id: string) =>
     setOpenTaiLieu((p) => ({ ...p, [id]: !p[id] }));
-  const toggleBaiKiemTra = (id: string) =>
-    setOpenBaiKiemTra((p) => ({ ...p, [id]: !p[id] }));
 
   const isActive = (loai: LoaiNoiDung, item: any) => {
     if (!selected || selected.loai !== loai) return false;
@@ -187,7 +178,7 @@ export default function KiemDuyetSidebar({
               return (
                 <Box
                   key={tl.idTaiLieu ?? tl.id ?? idx}
-                  onClick={() => onSelectContent("taiLieu", tl)}
+                  onClick={() => onSelectContent("taiLieu", tl, bg)}
                   sx={{
                     display: "flex",
                     alignItems: "center",
@@ -304,16 +295,18 @@ export default function KiemDuyetSidebar({
     );
   };
 
+  // Đã bỏ phần xổ xuống (danh sách câu hỏi) của bài kiểm tra —
+  // giờ đây bài kiểm tra chỉ là một mục có thể click để chọn, không mở rộng nữa.
   const renderBaiKiemTra = (bkt: any) => {
     const active = isActive("baiKiemTra", bkt);
     const pending = isTrangThaiCho(bkt.trangThaiPheDuyet);
     const bktId = bkt.idBaiKiemTra ?? bkt.id;
-    const open = openBaiKiemTra[bktId] ?? false;
     const cauHois: any[] = bkt.cauHois ?? [];
     return (
       <Box key={bktId}>
         <ListItemButton
           selected={active}
+          onClick={() => onSelectContent("baiKiemTra", bkt)}
           sx={{
             pl: 2,
             pr: 2,
@@ -335,10 +328,7 @@ export default function KiemDuyetSidebar({
             },
           }}
         >
-          <ListItemIcon
-            sx={{ minWidth: 28 }}
-            onClick={() => onSelectContent("baiKiemTra", bkt)}
-          >
+          <ListItemIcon sx={{ minWidth: 28 }}>
             <QuizIcon
               sx={{
                 color: active
@@ -351,7 +341,6 @@ export default function KiemDuyetSidebar({
             />
           </ListItemIcon>
           <ListItemText
-            onClick={() => onSelectContent("baiKiemTra", bkt)}
             primary={
               <Typography
                 variant="body2"
@@ -379,32 +368,7 @@ export default function KiemDuyetSidebar({
               ) : undefined
             }
           />
-          {cauHois.length > 0 && (
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleBaiKiemTra(bktId);
-              }}
-              sx={{ ml: 0.5, color: "var(--ev-text-muted, #8A7676)" }}
-            >
-              {open ? (
-                <ExpandLessIcon sx={{ fontSize: 16 }} />
-              ) : (
-                <ExpandMoreIcon sx={{ fontSize: 16 }} />
-              )}
-            </IconButton>
-          )}
         </ListItemButton>
-        {cauHois.length > 0 && (
-          <Collapse in={open}>
-            <Stack spacing={0.75} sx={{ pl: 6.5, pr: 2, py: 1 }}>
-              {cauHois.map((ch: any, chIndex: number) => (
-                <CauHoiRow key={ch.idCauHoi ?? ch.id ?? chIndex} cauHoi={ch} />
-              ))}
-            </Stack>
-          </Collapse>
-        )}
       </Box>
     );
   };
@@ -611,91 +575,6 @@ export default function KiemDuyetSidebar({
           </List>
         )}
       </Box>
-    </Box>
-  );
-}
-
-// --- Câu hỏi (nested trong bài kiểm tra) ---
-function CauHoiRow({ cauHoi }: { cauHoi: any }) {
-  const [expanded, setExpanded] = useState(false);
-  const dapAns: any[] = cauHoi.dapAns ?? [];
-
-  return (
-    <Box
-      sx={{
-        px: 1.25,
-        py: 0.75,
-        borderRadius: 1.5,
-        border: `1px solid ${COLORS.line}`,
-        bgcolor: COLORS.paper,
-      }}
-    >
-      <Stack
-        direction="row"
-        spacing={1}
-        onClick={() => setExpanded((v) => !v)}
-        sx={{
-          alignItems: "center",
-          cursor: dapAns.length > 0 ? "pointer" : "default",
-        }}
-      >
-        <HelpOutlineRoundedIcon sx={{ color: COLORS.inkSoft, fontSize: 14 }} />
-        <Typography
-          variant="body2"
-          sx={{ flex: 1, color: COLORS.ink, fontSize: 13 }}
-          noWrap
-        >
-          {cauHoi.noiDungCauHoi ?? cauHoi.tenCauHoi ?? cauHoi.tieuDe}
-        </Typography>
-        {dapAns.length > 0 && (
-          <ExpandMoreIcon
-            sx={{
-              fontSize: 16,
-              color: COLORS.inkSoft,
-              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform .15s",
-            }}
-          />
-        )}
-      </Stack>
-      {dapAns.length > 0 && (
-        <Collapse in={expanded}>
-          <Stack spacing={0.5} sx={{ mt: 0.75, ml: 2.25 }}>
-            {dapAns.map((da: any, daIndex: number) => (
-              <Stack
-                key={da.idDapAn ?? da.id ?? daIndex}
-                direction="row"
-                spacing={0.75}
-                sx={{ alignItems: "center" }}
-              >
-                {da.dapAnDung || da.isDung || da.laDapAnDung ? (
-                  <CheckCircleIcon
-                    sx={{ color: COLORS.primary, fontSize: 14 }}
-                  />
-                ) : (
-                  <RadioButtonUncheckedIcon
-                    sx={{ color: COLORS.inkSoft, fontSize: 14 }}
-                  />
-                )}
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color:
-                      da.dapAnDung || da.isDung || da.laDapAnDung
-                        ? COLORS.ink
-                        : COLORS.inkSoft,
-                    fontWeight:
-                      da.dapAnDung || da.isDung || da.laDapAnDung ? 600 : 400,
-                  }}
-                  noWrap
-                >
-                  {da.noiDungDapAn ?? da.tieuDe}
-                </Typography>
-              </Stack>
-            ))}
-          </Stack>
-        </Collapse>
-      )}
     </Box>
   );
 }

@@ -19,13 +19,9 @@ export default function StudentDashboardShell({
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    const token = window.localStorage.getItem("AccessToken");
-    if (!token) {
-      window.localStorage.setItem("AccessToken", "mock-token-eduverse");
-    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAuthChecked(true);
-  }, [router]);
+  }, []);
 
   const headerOffset = "86px";
 

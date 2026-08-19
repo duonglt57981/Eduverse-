@@ -115,57 +115,81 @@ function TaiLieuRow({ taiLieu, active, onClick, nested = false }: any) {
   );
 }
 
+// --- Bài kiểm tra row (có thể mở rộng để xem câu hỏi/đáp án) ---
 function BaiKiemTraRow({ baiKiemTra, active, onClick }: any) {
+  const [expanded, setExpanded] = useState(false);
   const isPending = isTrangThaiCho(baiKiemTra.trangThaiPheDuyet);
   const cauHois: any[] = baiKiemTra.cauHois ?? [];
 
   return (
-    <Box
-      sx={{
-        px: 1.5,
-        py: 1,
-        borderRadius: 1.5,
-        border: `1.5px solid ${active ? COLORS.primary : isPending ? COLORS.gold : COLORS.line}`,
-        bgcolor: active
-          ? COLORS.primarySoft
-          : isPending
-            ? COLORS.goldSoft
-            : COLORS.paperRaised,
-        cursor: "pointer",
-        transition: "border-color .12s ease, background-color .12s ease",
-        "&:hover": { borderColor: COLORS.primary },
-      }}
-      onClick={onClick}
-    >
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <QuizRoundedIcon
-          sx={{
-            color: isPending ? COLORS.gold : COLORS.primary,
-            fontSize: 17,
-          }}
-        />
-        <Typography
-          variant="body2"
-          sx={{
-            flex: 1,
-            color: COLORS.ink,
-            fontWeight: active || isPending ? 600 : 400,
-          }}
-          noWrap
-        >
-          {baiKiemTra.tenBaiKiemTra || baiKiemTra.tieuDe}
-        </Typography>
-        <StatusChip
-          trangThai={baiKiemTra.trangThaiPheDuyet}
-          size="small"
-          hidePending
-        />
-        {cauHois.length > 0 && (
-          <Typography variant="caption" sx={{ color: COLORS.inkSoft, ml: 0.5 }}>
-            ({cauHois.length} câu hỏi)
+    <Box>
+      <Box
+        sx={{
+          px: 1.5,
+          py: 1,
+          borderRadius: 1.5,
+          border: `1.5px solid ${active ? COLORS.primary : isPending ? COLORS.gold : COLORS.line}`,
+          bgcolor: active
+            ? COLORS.primarySoft
+            : isPending
+              ? COLORS.goldSoft
+              : COLORS.paperRaised,
+          cursor: "pointer",
+          transition: "border-color .12s ease, background-color .12s ease",
+          "&:hover": { borderColor: COLORS.primary },
+        }}
+      >
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <QuizRoundedIcon
+            sx={{
+              color: isPending ? COLORS.gold : COLORS.primary,
+              fontSize: 17,
+            }}
+            onClick={onClick}
+          />
+          <Typography
+            variant="body2"
+            onClick={onClick}
+            sx={{
+              flex: 1,
+              color: COLORS.ink,
+              fontWeight: active || isPending ? 600 : 400,
+            }}
+            noWrap
+          >
+            {baiKiemTra.tenBaiKiemTra || baiKiemTra.tieuDe}
           </Typography>
-        )}
-      </Stack>
+          <StatusChip
+            trangThai={baiKiemTra.trangThaiPheDuyet}
+            size="small"
+            hidePending
+          />
+          {cauHois.length > 0 && (
+            <ExpandMoreIcon
+              onClick={(e: any) => {
+                e.stopPropagation();
+                setExpanded((v) => !v);
+              }}
+              sx={{
+                fontSize: 18,
+                color: COLORS.inkSoft,
+                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform .15s",
+                cursor: "pointer",
+              }}
+            />
+          )}
+        </Stack>
+      </Box>
+      {cauHois.length > 0 && (
+        <Collapse in={expanded}>
+          <Stack spacing={0.75} sx={{ mt: 0.75, ml: 2.5 }}>
+            {cauHois.map((ch: any, chIndex: number) => (
+              <CauHoiRow key={ch.idCauHoi ?? `ch-${chIndex}`} cauHoi={ch} />
+            ))}
+          </Stack>
+        </Collapse>
+      )}
     </Box>
   );
 }
@@ -325,28 +349,8 @@ export default function KhoaHocAccordionItem({
           }}
         />
       </Stack>
-      <Collapse in={isExpanded} sx={{ maxHeight: "calc(100vh - 220px)" }}>
-        <Box
-          sx={{
-            borderTop: `1px solid ${COLORS.line}`,
-            maxHeight: "calc(100vh - 220px)",
-            overflowY: "auto",
-            // custom scrollbar - mỏng, đồng bộ màu với theme
-            "&::-webkit-scrollbar": {
-              width: 6,
-            },
-            "&::-webkit-scrollbar-track": {
-              bgcolor: "transparent",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: alpha(COLORS.primary, 0.25),
-              borderRadius: 3,
-            },
-            "&::-webkit-scrollbar-thumb:hover": {
-              backgroundColor: alpha(COLORS.primary, 0.4),
-            },
-          }}
-        >
+      <Collapse in={isExpanded}>
+        <Box sx={{ borderTop: `1px solid ${COLORS.line}` }}>
           {detailLoading ? (
             <Stack spacing={1} sx={{ p: 1.5 }}>
               <Skeleton variant="rounded" height={32} />
@@ -433,7 +437,7 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
                 key={tl.idTaiLieu}
                 taiLieu={tl}
                 active={isActive("taiLieu", tl)}
-                onClick={() => onSelectContent("taiLieu", tl)}
+                onClick={() => onSelectContent("taiLieu", tl, bg)}
                 nested
               />
             ))}

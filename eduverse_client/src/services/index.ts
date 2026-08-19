@@ -45,21 +45,53 @@ export class ApiService {
         const original = error.config as AxiosRequestConfig & {
           _retry?: boolean;
         };
-        const area = typeof window !== "undefined" ? window.__APP_AREA || "dashboard" : "dashboard";
+        const area =
+          typeof window !== "undefined"
+            ? window.__APP_AREA || "dashboard"
+            : "dashboard";
 
-        const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+        const pathname =
+          typeof window !== "undefined" ? window.location.pathname : "";
         const isPublicPage = !(
-          pathname.startsWith("/admin/") || pathname === "/admin" ||
-          pathname.startsWith("/instructor/") || pathname === "/instructor" ||
-          pathname.startsWith("/student/") || pathname === "/student" ||
-          pathname.startsWith("/dashboard/") || pathname === "/dashboard" ||
-          pathname.startsWith("/auth/") || pathname === "/auth" ||
+          pathname.startsWith("/admin/") ||
+          pathname === "/admin" ||
+          pathname.startsWith("/instructor/") ||
+          pathname === "/instructor" ||
+          (pathname.startsWith("/student/") &&
+            !pathname.startsWith("/student/enroll-courses/")) ||
+          pathname === "/student" ||
+          pathname.startsWith("/dashboard/") ||
+          pathname === "/dashboard" ||
+          pathname.startsWith("/auth/") ||
+          pathname === "/auth" ||
           pathname === "/learning-paths" ||
           pathname === "/settings"
         );
 
+        // Auth endpoints that must never be retried (prevent infinite loops)
+        const authEndpoints = [
+          "/auth/login",
+          "/auth/register",
+          "/auth/refresh-token",
+          "/auth/logout",
+          "/auth/verify-email",
+          "/auth/forgot-password",
+          "/auth/reset-password",
+        ];
+        const isAuthEndpoint = authEndpoints.some((ep) =>
+          original.url?.includes(ep),
+        );
+
         if (error.response?.status === 401 && !original._retry) {
           original._retry = true;
+
+          // Auth endpoints → never retry regardless of page type
+          if (isAuthEndpoint) {
+            localStorage.removeItem("AccessToken");
+            if (!isPublicPage && area === "dashboard")
+              window.location.href = "/auth/login";
+            return Promise.reject(error);
+          }
 
           if (isPublicPage) {
             localStorage.removeItem("AccessToken");
@@ -76,27 +108,7 @@ export class ApiService {
             return this.api(original);
           }
 
-          // ← Không retry nếu đang gọi các endpoint auth
-          const authEndpoints = [
-            "/auth/login",
-            "/auth/register",
-            "/auth/refresh-token",
-            "/auth/logout",
-            "/auth/verify-email",
-            "/auth/forgot-password",
-            "/auth/reset-password",
-          ];
-
-          const isAuthEndpoint = authEndpoints.some((ep) =>
-            original.url?.includes(ep),
-          );
-
-          // Nếu là auth endpoint → không retry, redirect login luôn
-          if (isAuthEndpoint) {
-            localStorage.removeItem("AccessToken");
-            if (area === "dashboard") window.location.href = "/auth/login";
-            return Promise.reject(error);
-          }
+          // ← Không retry nếu đang gọi các endpoint auth (đã được xử lý ở trên)
 
           // Các API khác mới retry refresh token
           try {
@@ -105,7 +117,8 @@ export class ApiService {
             localStorage.setItem("AccessToken", newToken);
             try {
               const { store } = await import("../store/store");
-              const { updateAccessToken } = await import("../store/auth/AuthSlice");
+              const { updateAccessToken } =
+                await import("../store/auth/AuthSlice");
               store.dispatch(updateAccessToken(newToken));
             } catch (e) {
               console.error("Failed to update token in Redux store", e);
@@ -129,7 +142,9 @@ export class ApiService {
               return;
             }
           }
-          return Promise.reject(error.response?.data?.message || "Không có quyền truy cập");
+          return Promise.reject(
+            error.response?.data?.message || "Không có quyền truy cập",
+          );
         }
 
         // Backend trả lỗi nghiệp vụ dạng { status, message }.

@@ -401,8 +401,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
         {/* Action Buttons */}
         <Stack direction="row" spacing={1} sx={{ width: "100%", mt: "auto" }}>
           <Button
-            component={Link}
-            href={`/student/enroll-courses/${course.id}`}
+            onClick={() => router.push(`/student/enroll-courses/${course.id}`)}
             variant="outlined"
             sx={{
               flex: 1,

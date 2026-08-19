@@ -5,7 +5,14 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { Box, Container, Typography, Alert, Divider, Chip } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  Alert,
+  Divider,
+  Chip,
+} from "@mui/material";
 import { useRouter, useParams } from "next/navigation";
 import InstructorCourseList from "./components/Instructorcourselist";
 import InstructorHeroSection from "./components/Instructorherosection";
@@ -53,7 +60,8 @@ export default function InstructorProfilePage() {
         ]);
 
         const res = gvRes.status === "fulfilled" ? gvRes.value : null;
-        const publicRes = publicListRes.status === "fulfilled" ? publicListRes.value : null;
+        const publicRes =
+          publicListRes.status === "fulfilled" ? publicListRes.value : null;
 
         const ketQua = trichXuatGiangVienKhoaHoc(res);
 
@@ -64,7 +72,8 @@ export default function InstructorProfilePage() {
         }
 
         // Build a lookup map of public courses to enrich duration, lessons count & student count accurately
-        const publicCourseItems = (publicRes?.data as any)?.items || (publicRes as any)?.items || [];
+        const publicCourseItems =
+          (publicRes?.data as any)?.items || (publicRes as any)?.items || [];
         const publicCourseMap = new Map<string, any>();
         if (Array.isArray(publicCourseItems)) {
           publicCourseItems.forEach((kh: any) => {
@@ -171,88 +180,94 @@ export default function InstructorProfilePage() {
   }
 
   return (
-    <AuthGuard allowedRoles={["HocVien", "GiaoVien", "Admin"]}>
-      <StudentDashboardShell>
-        <Box
-          sx={{
-            minHeight: "100vh",
-            bgcolor: "var(--ev-bg, #F7F5F2)",
-            "& *": {
-              fontFamily:
-                "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif)) !important",
-            },
-          }}
+    <StudentDashboardShell>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "var(--ev-bg, #F7F5F2)",
+          "& *": {
+            fontFamily:
+              "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif)) !important",
+          },
+        }}
+      >
+        <Container
+          maxWidth="lg"
+          sx={{ mt: 2, px: { xs: 2, md: 2.5 }, pt: 0, pb: { xs: 1, md: 2 } }}
         >
-          <Container maxWidth="lg" sx={{ mt: 2, px: { xs: 2, md: 2.5 }, pt: 0, pb: { xs: 1, md: 2 } }}>
-            {duLieu?.thongTinGiangVien ? (
-              <InstructorHeroSection
-                giangVien={duLieu.thongTinGiangVien}
-                danhSachKhoaHoc={danhSachKhoaHoc}
-                tongSoKhoaHoc={
-                  (duLieu.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length
-                }
-                tongHocVienDangHoc={(duLieu as any)?.tongHocVienDangHoc}
-                tongHocVienDangKy={(duLieu as any)?.tongHocVienDangKy}
-              />
-            ) : (
-              <Box sx={{ bgcolor: "#0D0505", height: 220, borderRadius: "24px" }} />
-            )}
-          </Container>
-
-          <Container maxWidth="lg" sx={{ px: { xs: 2, md: 2.5 }, py: { xs: 3, md: 4 } }}>
+          {duLieu?.thongTinGiangVien ? (
+            <InstructorHeroSection
+              giangVien={duLieu.thongTinGiangVien}
+              danhSachKhoaHoc={danhSachKhoaHoc}
+              tongSoKhoaHoc={
+                (duLieu.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length
+              }
+              tongHocVienDangHoc={(duLieu as any)?.tongHocVienDangHoc}
+              tongHocVienDangKy={(duLieu as any)?.tongHocVienDangKy}
+            />
+          ) : (
             <Box
+              sx={{ bgcolor: "#0D0505", height: 220, borderRadius: "24px" }}
+            />
+          )}
+        </Container>
+
+        <Container
+          maxWidth="lg"
+          sx={{ px: { xs: 2, md: 2.5 }, py: { xs: 3, md: 4 } }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 2,
+              mb: 2,
+            }}
+          >
+            <Typography
+              variant="h5"
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 2,
-                mb: 2,
+                fontWeight: 900,
+                fontSize: { xs: 20, md: 24 },
+                color: "var(--ev-text-primary, #1F2937)",
+                letterSpacing: "-0.01em",
               }}
             >
-              <Typography
-                variant="h5"
+              {duLieu?.thongTinGiangVien
+                ? `Khóa học của ${trichXuatTenHienThi(duLieu.thongTinGiangVien)}`
+                : "Danh sách khóa học"}
+            </Typography>
+
+            {danhSachKhoaHoc.length > 0 && (
+              <Chip
+                label={`${(duLieu?.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length} khóa học`}
+                size="medium"
                 sx={{
-                  fontWeight: 900,
-                  fontSize: { xs: 20, md: 24 },
-                  color: "var(--ev-text-primary, #1F2937)",
-                  letterSpacing: "-0.01em",
+                  bgcolor: "rgba(139,19,19,0.06)",
+                  border: "1px solid rgba(139,19,19,0.18)",
+                  color: "#8B1313",
+                  fontWeight: 800,
+                  fontSize: 13,
+                  height: 32,
+                  borderRadius: "10px",
                 }}
-              >
-                {duLieu?.thongTinGiangVien
-                  ? `Khóa học của ${trichXuatTenHienThi(duLieu.thongTinGiangVien)}`
-                  : "Danh sách khóa học"}
-              </Typography>
+              />
+            )}
+          </Box>
+          <Divider sx={{ mb: 4, borderColor: "var(--ev-divider, #ECE7E4)" }} />
 
-              {danhSachKhoaHoc.length > 0 && (
-                <Chip
-                  label={`${(duLieu?.khoaHocs as any)?.totalCount ?? danhSachKhoaHoc.length} khóa học`}
-                  size="medium"
-                  sx={{
-                    bgcolor: "rgba(139,19,19,0.06)",
-                    border: "1px solid rgba(139,19,19,0.18)",
-                    color: "#8B1313",
-                    fontWeight: 800,
-                    fontSize: 13,
-                    height: 32,
-                    borderRadius: "10px",
-                  }}
-                />
-              )}
-            </Box>
-            <Divider sx={{ mb: 4, borderColor: "var(--ev-divider, #ECE7E4)" }} />
-
-            <InstructorCourseList
-              danhSachKhoaHoc={danhSachKhoaHoc}
-              dangTai={dangTai}
-              pageIndex={pageIndex}
-              tongSoTrang={tongSoTrang}
-              onDoiTrang={handleDoiTrang}
-              onChonKhoaHoc={handleChonKhoaHoc}
-            />
-          </Container>
-        </Box>
-      </StudentDashboardShell>
-    </AuthGuard>
+          <InstructorCourseList
+            danhSachKhoaHoc={danhSachKhoaHoc}
+            dangTai={dangTai}
+            pageIndex={pageIndex}
+            tongSoTrang={tongSoTrang}
+            onDoiTrang={handleDoiTrang}
+            onChonKhoaHoc={handleChonKhoaHoc}
+          />
+        </Container>
+      </Box>
+    </StudentDashboardShell>
   );
 }

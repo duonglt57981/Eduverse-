@@ -59,7 +59,11 @@ function BaiGiangRow({ baiGiang, active, onClick }: any) {
         >
           {baiGiang.tenBaiGiang || baiGiang.tieuDe}
         </Typography>
-        <StatusChip trangThai={baiGiang.trangThaiPheDuyet} size="small" hidePending />
+        <StatusChip
+          trangThai={baiGiang.trangThaiPheDuyet}
+          size="small"
+          hidePending
+        />
       </Stack>
     </Box>
   );
@@ -101,7 +105,11 @@ function TaiLieuRow({ taiLieu, active, onClick, nested = false }: any) {
         >
           {taiLieu.tenTaiLieu || taiLieu.tieuDe}
         </Typography>
-        <StatusChip trangThai={taiLieu.trangThaiPheDuyet} size="small" hidePending />
+        <StatusChip
+          trangThai={taiLieu.trangThaiPheDuyet}
+          size="small"
+          hidePending
+        />
       </Stack>
     </Box>
   );
@@ -151,7 +159,11 @@ function BaiKiemTraRow({ baiKiemTra, active, onClick }: any) {
           >
             {baiKiemTra.tenBaiKiemTra || baiKiemTra.tieuDe}
           </Typography>
-          <StatusChip trangThai={baiKiemTra.trangThaiPheDuyet} size="small" hidePending />
+          <StatusChip
+            trangThai={baiKiemTra.trangThaiPheDuyet}
+            size="small"
+            hidePending
+          />
           {cauHois.length > 0 && (
             <ExpandMoreIcon
               onClick={(e: any) => {
@@ -425,7 +437,7 @@ function KhoaHocNoiDungList({ detail, selected, onSelectContent }: any) {
                 key={tl.idTaiLieu}
                 taiLieu={tl}
                 active={isActive("taiLieu", tl)}
-                onClick={() => onSelectContent("taiLieu", tl)}
+                onClick={() => onSelectContent("taiLieu", tl, bg)}
                 nested
               />
             ))}
