@@ -45,5 +45,7 @@ namespace Eduverse.Api.Controller
             try { return DataResponse<CourseEngagementDto>.Success(await _service.GetCourseEngagement(idKhoaHoc)); }
             catch (Exception ex) { return DataResponse<CourseEngagementDto>.False(ex.Message); }
         }
+
+
     }
 }

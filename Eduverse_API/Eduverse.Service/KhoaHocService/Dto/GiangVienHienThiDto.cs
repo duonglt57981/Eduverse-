@@ -11,5 +11,6 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public Guid Id { get; set; }
         public string HoTen { get; set; } = null!;
         public string? AnhDaiDien { get; set; }
+        public string? TieuSu { get; set; }
     }
 }

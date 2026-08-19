@@ -912,17 +912,19 @@ namespace Eduverse.Service.KhoaHocService
                 .FirstOrDefaultAsync();
 
 
-            var giangVien = await _appUserService.GetQueryable().FirstOrDefaultAsync(x => x.Id == result.CreatedId);
+            result.DanhSachGiangVien = await LayThongTinGiangVienHienThi(idKhoaHoc.Value, result.CreatedId);
 
-            if(giangVien != null)
+            // Giữ ThongTinGiangVien để không phá vỡ các chỗ khác đang dùng field cũ
+            // (nếu có) — gán bằng người đầu tiên trong danh sách hiển thị
+            if (result.DanhSachGiangVien.Any())
             {
+                var first = result.DanhSachGiangVien[0];
                 result.ThongTinGiangVien = new AppUser
                 {
-                    Id = giangVien.Id,
-                    AnhDaiDien = giangVien.AnhDaiDien,
-                    HoTen = giangVien.HoTen,
-                    TieuSu = giangVien.TieuSu
-
+                    Id = first.Id,
+                    AnhDaiDien = first.AnhDaiDien,
+                    HoTen = first.HoTen,
+                    TieuSu = first.TieuSu
                 };
             }
 
@@ -3064,6 +3066,52 @@ namespace Eduverse.Service.KhoaHocService
                     item.CreatedBy = null;
             }
         }
+        private async Task<List<Guid>> LayDanhSachIdGiangVienHienThi(Guid idKhoaHoc, Guid? createdId)
+        {
+            var members = await _khoaHoc_GiangVienRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .Select(x => new { x.IdGiangVien, x.LaChuSoHuu, x.Visible })
+                .ToListAsync();
+
+            if (members.Count <= 1)
+            {
+                if (members.Count == 1) return new List<Guid> { members[0].IdGiangVien };
+                return createdId.HasValue ? new List<Guid> { createdId.Value } : new List<Guid>();
+            }
+
+            var visibleOnes = members.Where(x => x.Visible).Select(x => x.IdGiangVien).ToList();
+            if (visibleOnes.Any()) return visibleOnes;
+
+            var owner = members.FirstOrDefault(x => x.LaChuSoHuu);
+            return owner != null ? new List<Guid> { owner.IdGiangVien } : new List<Guid>();
+        }
+
+        // Lấy đầy đủ thông tin (tên, ảnh, tiểu sử) của những giảng viên cần hiển thị
+        private async Task<List<GiangVienHienThiDto>> LayThongTinGiangVienHienThi(Guid idKhoaHoc, Guid? createdId)
+        {
+            var ids = await LayDanhSachIdGiangVienHienThi(idKhoaHoc, createdId);
+            if (!ids.Any()) return new List<GiangVienHienThiDto>();
+
+            var users = await _appUserService.GetQueryable()
+                .AsNoTracking()
+                .Where(u => ids.Contains(u.Id))
+                .Select(u => new { u.Id, u.HoTen, u.AnhDaiDien, u.TieuSu })
+                .ToListAsync();
+
+            return ids
+                .Select(id => users.FirstOrDefault(u => u.Id == id))
+                .Where(u => u != null)
+                .Select(u => new GiangVienHienThiDto
+                {
+                    Id = u!.Id,
+                    HoTen = u.HoTen,
+                    AnhDaiDien = u.AnhDaiDien,
+                    TieuSu = u.TieuSu
+                })
+                .ToList();
+        }
+
 
         private async Task GanDanhSachGiangVienHienThi(IEnumerable<KhoaHocDto> items)
         {
