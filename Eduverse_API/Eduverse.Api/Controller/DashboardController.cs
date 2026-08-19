@@ -31,7 +31,7 @@ namespace Eduverse.Api.Controller
         private readonly IService<DonHangChiTiet> _donHangChiTietService;
         private readonly IService<KhoaHoc_GiangVien> _khoaHocGiangVienService;
         private readonly IService<DonHang_KhuyenMai> _donHangKhuyenMaiService;
-
+        private readonly IService<DonHang_GiangVien> _donHangGiangVienService;
         public DashboardController(
             IService<KhoaHoc> khoaHocService,
             IService<DanhMuc> danhMucService,
@@ -44,6 +44,7 @@ namespace Eduverse.Api.Controller
             IService<DanhMuc_KhoaHoc> danhMucKhoaHocService,
             IService<KhoaHoc_GiangVien> khoaHocGiangVienService,
             IService<DonHang_KhuyenMai> donHangKhuyenMaiService,
+            IService<DonHang_GiangVien> donHangGiangVienService,
             UserManager<AppUser> userManager)
         {
             _khoaHocService = khoaHocService;
@@ -58,6 +59,7 @@ namespace Eduverse.Api.Controller
             _userManager = userManager;
             _khoaHocGiangVienService = khoaHocGiangVienService;
             _donHangKhuyenMaiService = donHangKhuyenMaiService;
+            _donHangGiangVienService = donHangGiangVienService;
         }
 
         [HttpGet]
@@ -535,89 +537,28 @@ namespace Eduverse.Api.Controller
             catch (Exception ex) { Console.WriteLine("Error fetching registrations: " + ex.Message); }
             var myRegs = allRegs.Where(r => r.IdKhoaHoc.HasValue && myCourseIds.Contains(r.IdKhoaHoc.Value)).ToList();
 
-            // ĐÃ SỬA (bug thật): trước đây gom SoTienGiam theo IdDonHang rồi map thẳng cho MỌI
-            // khóa học trong đơn đó => nếu 1 đơn có nhiều khóa, mỗi khóa sẽ bị trừ nhầm TOÀN BỘ
-            // tiền giảm của cả đơn (kể cả phần giảm của khóa khác). DonHang_KhuyenMai có cột
-            // IdKhoaHocDuocGiam cho biết khoản giảm đó thuộc về khóa học cụ thể nào trong đơn,
-            // nên phải gom theo cặp (IdDonHang, IdKhoaHocDuocGiam) rồi mới map sang (học viên, khóa học).
-            var giamGiaByHocVienKhoaHoc = new Dictionary<(Guid IdNguoiDung, Guid IdKhoaHoc), double>();
+            var myRevenueRecords = new List<DonHang_GiangVien>();
+
             try
             {
-                var donHangsDaThanhToan = await _donHangService.GetQueryable()
-                    .Where(d => !d.IsDeleted && d.TrangThai == 1 && d.IdNguoiDung.HasValue)
-                    .Select(d => new { d.Id, d.IdNguoiDung })
+                myRevenueRecords = await _donHangGiangVienService.GetQueryable()
+                    .Where(x =>
+                        x.IdGiangVien == instructorId &&
+                        myCourseIds.Contains(x.IdKhoaHoc) &&
+                        !x.IsDeleted)
                     .ToListAsync();
-
-                var donHangIdToUser = donHangsDaThanhToan
-                    .ToDictionary(d => d.Id, d => d.IdNguoiDung!.Value);
-                var donHangIds = donHangsDaThanhToan.Select(d => d.Id).ToList();
-
-                var chiTietsCuaGiangVien = await _donHangChiTietService.GetQueryable()
-                    .Where(ct => !ct.IsDeleted
-                              && ct.IdDonHang.HasValue
-                              && donHangIds.Contains(ct.IdDonHang.Value)
-                              && ct.IdKhoaHoc.HasValue
-                              && myCourseIds.Contains(ct.IdKhoaHoc.Value))
-                    .ToListAsync();
-
-                var donHangIdsCuaGiangVien = chiTietsCuaGiangVien
-                    .Where(ct => ct.IdDonHang.HasValue)
-                    .Select(ct => ct.IdDonHang!.Value)
-                    .Distinct()
-                    .ToList();
-
-                var vouchers = await _donHangKhuyenMaiService.GetQueryable()
-                    .Where(km => km.IdDonHang.HasValue
-                              && donHangIdsCuaGiangVien.Contains(km.IdDonHang.Value)
-                              && !km.IsDeleted)
-                    .ToListAsync();
-
-                // Gom theo (đơn hàng, khóa học được giảm) thay vì chỉ theo đơn hàng.
-                var giamTheoDonHangVaKhoaHoc = vouchers
-                    .Where(km => km.IdKhoaHocDuocGiam.HasValue)
-                    .GroupBy(km => (IdDonHang: km.IdDonHang!.Value, IdKhoaHoc: km.IdKhoaHocDuocGiam!.Value))
-                    .ToDictionary(g => g.Key, g => g.Sum(km => km.SoTienGiam ?? 0));
-
-                foreach (var ct in chiTietsCuaGiangVien)
-                {
-                    if (!ct.IdDonHang.HasValue || !ct.IdKhoaHoc.HasValue) continue;
-                    if (!donHangIdToUser.TryGetValue(ct.IdDonHang.Value, out var idNguoiDung)) continue;
-
-                    var giam = giamTheoDonHangVaKhoaHoc.GetValueOrDefault(
-                        (ct.IdDonHang.Value, ct.IdKhoaHoc.Value), 0);
-                    var key = (idNguoiDung, ct.IdKhoaHoc.Value);
-
-                    giamGiaByHocVienKhoaHoc[key] =
-                        giamGiaByHocVienKhoaHoc.GetValueOrDefault(key, 0) + giam;
-                }
             }
-            catch (Exception ex) { Console.WriteLine("Error fetching discount data: " + ex.Message); }
-
-            // GiaDangKy là giá GỐC (chưa trừ giảm giá) -> trừ đúng phần giảm riêng của khóa học đó là đúng.
-            double RevenueForReg(DangKyKhoaHoc r)
+            catch (Exception ex)
             {
-                if (!r.IdKhoaHoc.HasValue || !r.IdNguoiDangKi.HasValue)
-                    return 0;
-
-                var giaGoc = r.GiaDangKy ?? 0;
-                var giam = giamGiaByHocVienKhoaHoc.GetValueOrDefault(
-                    (r.IdNguoiDangKi.Value, r.IdKhoaHoc.Value), 0);
-                var tienThucThu = Math.Max(0, giaGoc - giam);
-                var phanGiangVien = tienThucThu * 0.7;
-
-                if (!myTyLeByCourseId.TryGetValue(r.IdKhoaHoc.Value, out var myTyLe))
-                    return 0;
-
-                var tongTyLe = tongTyLeByCourseId.GetValueOrDefault(r.IdKhoaHoc.Value, 0);
-                if (tongTyLe <= 0)
-                    return phanGiangVien; // dữ liệu cũ chưa backfill -> 100% về giảng viên
-
-                // Ép (double) TRƯỚC khi chia — bắt buộc vì cả 2 vế là int
-                return phanGiangVien * (myTyLe / (double)tongTyLe);
+                Console.WriteLine("Error fetching instructor revenue records: " + ex.Message);
             }
+
+            double totalRevenue = Math.Round(
+                myRevenueRecords.Sum(x => x.SoTienNhan),
+                0
+            );
 
             int totalStudents = myRegs.Where(r => r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
-            double totalRevenue = Math.Round(myRegs.Sum(RevenueForReg), 0);
 
             var allProgress = new List<TienDoHocTap>();
             try
@@ -645,16 +586,17 @@ namespace Eduverse.Api.Controller
             }
 
             var monthlyRevenue = new List<object>();
+
             for (int i = 6; i >= 0; i--)
             {
                 var mStart = curMonthStart.AddMonths(-i);
                 var mEnd = mStart.AddMonths(1);
 
-                double totalAmount = myRegs
-                    .Where(r => r.ThoiGianDK.HasValue
-                             && r.ThoiGianDK.Value >= mStart
-                             && r.ThoiGianDK.Value < mEnd)
-                    .Sum(RevenueForReg);
+                double totalAmount = myRevenueRecords
+                    .Where(r =>
+                        r.NgayGhiNhan >= mStart &&
+                        r.NgayGhiNhan < mEnd)
+                    .Sum(r => r.SoTienNhan);
 
                 monthlyRevenue.Add(new
                 {
@@ -1115,25 +1057,11 @@ namespace Eduverse.Api.Controller
                 // ===== Tháng này =====
                 var idsThis = donHangThangNay.Select(d => d.Id).ToList();
 
-                var ctThis = await _donHangChiTietService.GetQueryable()
-                    .Where(ct =>
-                        !ct.IsDeleted &&
-                        ct.IdDonHang.HasValue &&
-                        idsThis.Contains(ct.IdDonHang.Value))
-                    .ToListAsync();
-
 
                 revThisMonth = await TinhDoanhThuHeThongAsync(donHangThangNay);
 
                 // ===== Tháng trước =====
                 var idsPrev = donHangThangTruoc.Select(d => d.Id).ToList();
-
-                var ctPrev = await _donHangChiTietService.GetQueryable()
-                    .Where(ct =>
-                        !ct.IsDeleted &&
-                        ct.IdDonHang.HasValue &&
-                        idsPrev.Contains(ct.IdDonHang.Value))
-                    .ToListAsync();
 
 
                 revPrevMonth = await TinhDoanhThuHeThongAsync(donHangThangTruoc);

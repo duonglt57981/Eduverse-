@@ -33,5 +33,6 @@ namespace Eduverse.Service.LoiMoiGiangVienService
 
         Task CapNhatQuyenHangLoat(Guid idKhoaHoc, CapNhatQuyenHangLoatRequest request);
         Task<QuyenCuaToiDto> GetQuyenCuaToi(Guid idKhoaHoc);
+        Task<int> BackfillDonHangGiangVienAsync();
     }
 }

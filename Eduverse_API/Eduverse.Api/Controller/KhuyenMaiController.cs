@@ -103,7 +103,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpGet("khuyenmai-getall-khoahoc-daduyet")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,GiaoVien")]
         public async Task<DataResponse<List<KhoaHocMiniDto>>> GetAllApprovedKhoaHoc()
         {
             try

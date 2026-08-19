@@ -112,5 +112,19 @@ namespace Eduverse.Api.Controller
             try { return DataResponse<QuyenCuaToiDto>.Success(await _service.GetQuyenCuaToi(idKhoaHoc)); }
             catch (Exception ex) { return DataResponse<QuyenCuaToiDto>.False(ex.Message); }
         }
+
+        [HttpPost("backfill-don-hang-giang-vien")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Backfill()
+        {
+            var count = await _service.BackfillDonHangGiangVienAsync();
+
+            return Ok(new
+            {
+                success = true,
+                message = $"Đã backfill {count} bản ghi",
+                count
+            });
+        }
     }
 }

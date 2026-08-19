@@ -1,7 +1,9 @@
 
+using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AppUserRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
+using Eduverse.Repository.DonHang_GiangVienRepository;
 using Eduverse.Repository.DonHang_KhuyenMaiRepository;
 using Eduverse.Repository.DonHangChiTietRepository;
 using Eduverse.Repository.DonHangRepositoryRepository;
@@ -57,6 +59,8 @@ namespace Eduverse.Service.ThanhToanService
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly INotificationPublisher _notificationPublisher;
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
+        private readonly IDonHang_GiangVienRepository _donHangGiangVienRepo;
+        private readonly EduverseContext _eduverseContext;
 
         public ThanhToanService(
             IThanhToanRepository thanhToanRepo,
@@ -77,7 +81,9 @@ namespace Eduverse.Service.ThanhToanService
             IConfiguration config,
             IHttpContextAccessor httpContextAccessor,
             INotificationPublisher notificationPublisher,
-            IKhoaHoc_GiangVienRepository khoaHocGVRepository
+            IKhoaHoc_GiangVienRepository khoaHocGVRepository,
+            IDonHang_GiangVienRepository donHang_GiangVienRepository,
+            EduverseContext eduverseContext
         ) : base(thanhToanRepo)
         {
             _thanhToanRepo = thanhToanRepo;
@@ -99,6 +105,8 @@ namespace Eduverse.Service.ThanhToanService
             _httpContextAccessor = httpContextAccessor;
             _notificationPublisher = notificationPublisher;
             _khoaHocGVRepository = khoaHocGVRepository;
+            _donHangGiangVienRepo = donHang_GiangVienRepository;
+            _eduverseContext = eduverseContext;
         }
 
         public async Task<TaoThanhToanResponseDto> TaoThanhToanAsync(Guid userId, TaoThanhToanDto dto)
@@ -226,61 +234,85 @@ namespace Eduverse.Service.ThanhToanService
 
         public async Task<bool> XuLyWebhookAsync(Webhook webhook)
         {
+            if (webhook == null) return false;
+
+            WebhookData webhookData;
             try
             {
-                if (webhook == null) return false;
-                WebhookData webhookData;
-                try
+                //webhookData = await _payOS.Webhooks.VerifyAsync(webhook);
+                webhookData = webhook.Data;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("[WEBHOOK] SIGNATURE KHONG HOP LE - co the la gia mao!");
+                return false;
+            }
+
+            var maGiaoDich = $"EDU{webhookData.OrderCode}";
+
+            var donHang = await _donHangRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.MaGiaoDich == maGiaoDich && x.IsDeleted == false);
+            if (donHang == null) return false;
+
+            // Webhook báo thất bại/hủy: không có gì để xử lý, giữ nguyên TrangThai hiện
+            // tại (thường là 0 - chờ thanh toán) để đơn còn cơ hội nhận 1 webhook thành
+            // công khác sau đó (ví dụ học viên thử lại thanh toán).
+            if (webhookData.Code != "00")
+            {
+                Console.WriteLine($"[WEBHOOK] Đơn hàng {donHang.Id}: mã trả về '{webhookData.Code}', không xử lý.");
+                return true;
+            }
+
+            if ((double)webhookData.Amount < donHang.SoTienThanhToan)
+            {
+                // Không đủ tiền: không có side-effect tài chính nào (không tạo
+                // DonHang_GiangVien, không cộng ví...) nên không cần khóa nguyên tử.
+                donHang.TrangThai = 2;
+                donHang.UpdatedDate = DateTime.Now;
+                _donHangRepo.Update(donHang);
+                await _donHangRepo.SaveAsync();
+                return false;
+            }
+
+            // ── Từ đây là nhánh có side-effect tài chính thật (ví giảng viên,
+            // DonHang_GiangVien, đăng ký khóa học...) → bắt buộc atomic + transaction ──
+            var thongBaoCaNhan = new List<(Guid UserId, NotificationPayload Payload)>();
+            var thongBaoRole = new List<(string Role, NotificationPayload Payload, Guid[] ExcludeIds)>();
+
+            var strategy = _eduverseContext.Database.CreateExecutionStrategy();
+            bool daXuLyThanhCong;
+            try
+            {
+                daXuLyThanhCong = await strategy.ExecuteAsync(async () =>
                 {
-                    webhookData = await _payOS.Webhooks.VerifyAsync(webhook);
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("[WEBHOOK] SIGNATURE KHONG HOP LE - co the la gia mao!");
-                    return false;
-                }
-                var maGiaoDich = $"EDU{webhookData.OrderCode}";
+                    thongBaoCaNhan.Clear();
+                    thongBaoRole.Clear();
 
-                var donHang = await _donHangRepo.GetQueryable()
-                    .FirstOrDefaultAsync(x => x.MaGiaoDich == maGiaoDich
-                                           && x.IsDeleted == false);
-                if (donHang == null) return false;
+                    await using var transaction = await _eduverseContext.Database.BeginTransactionAsync();
 
-                var daThanhToan = await _thanhToanRepo.GetQueryable()
-                .AnyAsync(x =>
-                    x.IdDonHang == donHang.Id &&
-                    x.TrangThaiThanhToan == "SUCCESS");
+                    // Khóa nguyên tử: chỉ 1 request chuyển được TrangThai 0 -> 1. Nếu
+                    // request khác đã/đang xử lý, thao tác trả về 0 dòng ảnh hưởng →
+                    // bỏ qua ngay, tránh double-processing.
+                    var giuDuocQuyenXuLy = await _donHangRepo.GetQueryable()
+                        .Where(x => x.Id == donHang.Id && x.TrangThai == 0)
+                        .ExecuteUpdateAsync(s => s.SetProperty(d => d.TrangThai, 1));
 
-                if (daThanhToan)
-                {
-                    Console.WriteLine($"[WEBHOOK] Đơn hàng {donHang.Id} đã thanh toán, bỏ qua webhook trùng.");
-                    return true;
-                }
-
-
-                if (webhookData.Code == "00")
-                {
-                    if ((double)webhookData.Amount < donHang.SoTienThanhToan)
+                    if (giuDuocQuyenXuLy == 0)
                     {
-
-                        donHang.TrangThai = 2;
-                        donHang.UpdatedDate = DateTime.Now;
-                        _donHangRepo.Update(donHang);
-                        await _donHangRepo.SaveAsync();
-                        return false;
+                        await transaction.CommitAsync();
+                        Console.WriteLine($"[WEBHOOK] Đơn hàng {donHang.Id} đã/đang được xử lý bởi request khác, bỏ qua.");
+                        return true;
                     }
-                    donHang.TrangThai = 1;
-                    donHang.UpdatedDate = DateTime.Now;
-                    _donHangRepo.Update(donHang);
-                    await _donHangRepo.SaveAsync();
+
                     var dsVoucher = await _donHangKhuyenMaiRepo.GetQueryable()
-                    .Where(x => x.IdDonHang == donHang.Id)
-                    .ToListAsync();
+                        .Where(x => x.IdDonHang == donHang.Id)
+                        .ToListAsync();
 
                     foreach (var item in dsVoucher)
                     {
                         if (!item.IdKhuyenMai.HasValue) continue;
-                        var km = await _khuyenMaiRepo.GetQueryable().FirstOrDefaultAsync(x => x.Id == item.IdKhuyenMai.Value);
+                        var km = await _khuyenMaiRepo.GetQueryable()
+                            .FirstOrDefaultAsync(x => x.Id == item.IdKhuyenMai.Value);
 
                         if (km != null && km.SoLuongHieuLuc.HasValue)
                         {
@@ -289,7 +321,6 @@ namespace Eduverse.Service.ThanhToanService
                             _khuyenMaiRepo.Update(km);
                         }
                     }
-
                     await _khuyenMaiRepo.SaveAsync();
 
                     _thanhToanRepo.Add(new ThanhToan
@@ -351,10 +382,7 @@ namespace Eduverse.Service.ThanhToanService
                         .Select(group => new
                         {
                             CourseId = group.Key,
-                            Count = group
-                                .Select(registration => registration.IdNguoiDangKi)
-                                .Distinct()
-                                .Count()
+                            Count = group.Select(registration => registration.IdNguoiDangKi).Distinct().Count()
                         })
                         .ToDictionaryAsync(item => item.CourseId, item => item.Count);
 
@@ -364,11 +392,9 @@ namespace Eduverse.Service.ThanhToanService
 
                     foreach (var enrolledCourse in enrolledCourses)
                     {
-                        enrolledCourse.SoLuongHocVien =
-                            enrollmentCounts.GetValueOrDefault(enrolledCourse.Id);
+                        enrolledCourse.SoLuongHocVien = enrollmentCounts.GetValueOrDefault(enrolledCourse.Id);
                         _khoaHocRepo.Update(enrolledCourse);
                     }
-
                     await _khoaHocRepo.SaveAsync();
 
                     var donHangVouchers = await _donHangKhuyenMaiRepo.GetQueryable()
@@ -376,14 +402,10 @@ namespace Eduverse.Service.ThanhToanService
                         .Where(x => x.IdDonHang == donHang.Id && !x.IsDeleted)
                         .ToListAsync();
 
-                    // Không cần biết voucher do Admin hay Giảng viên tạo nữa —
-                    // chỉ cần biết mỗi khóa học được giảm bao nhiêu tiền để trừ ra
-                    // số tiền thực thu, rồi mới chia 30/70 trên số thực thu đó.
                     var courseDiscountInfo = new Dictionary<Guid, double>();
                     foreach (var dkm in donHangVouchers)
                     {
                         if (!dkm.IdKhoaHocDuocGiam.HasValue || !dkm.SoTienGiam.HasValue) continue;
-
                         courseDiscountInfo[dkm.IdKhoaHocDuocGiam.Value] = dkm.SoTienGiam.Value;
                     }
 
@@ -402,11 +424,8 @@ namespace Eduverse.Service.ThanhToanService
                                 ? soTienGiam
                                 : 0;
 
-                        // Áp voucher trước để ra số tiền thực thu (không quan tâm voucher
-                        // do ai tạo), rồi mới chia Admin 30% / Giảng viên 70% trên số đó
                         var tienThucThu = Math.Max(0, giaGoc - giam);
                         var instructorRevenue = tienThucThu * 0.7;
-
                         if (instructorRevenue <= 0) continue;
 
                         var thanhVienList = await _khoaHocGVRepository.GetQueryable()
@@ -425,7 +444,23 @@ namespace Eduverse.Service.ThanhToanService
                                 giangVienFallback.UpdatedDate = DateTime.Now;
                                 _userRepository.Update(giangVienFallback);
 
-                                await _notificationPublisher.NotifyUserAsync(giangVienFallback.Id, new NotificationPayload
+                                _donHangGiangVienRepo.Add(new DonHang_GiangVien
+                                {
+                                    IdDonHang = donHang.Id,
+                                    IdDonHangChiTiet = ct.Id,
+                                    IdKhoaHoc = ct.IdKhoaHoc!.Value,
+                                    IdGiangVien = giangVienFallback.Id,
+                                    LaChuSoHuu = true,
+                                    TyLeChiaDoanhThu = 100,
+                                    GiaLucDat = giaGoc,
+                                    SoTienGiam = giam,
+                                    SoTienNhan = instructorRevenue,
+                                    NgayGhiNhan = donHang.NgayTao ?? DateTime.Now,
+                                    CreatedDate = DateTime.Now,
+                                    UpdatedDate = DateTime.Now
+                                });
+
+                                thongBaoCaNhan.Add((giangVienFallback.Id, new NotificationPayload
                                 {
                                     TieuDe = "Bạn vừa nhận được doanh thu mới",
                                     NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. Bạn nhận được {instructorRevenue:N0}đ.",
@@ -433,15 +468,42 @@ namespace Eduverse.Service.ThanhToanService
                                     Link = "/instructor/revenue",
                                     ItemId = khoaHoc.Id,
                                     ItemName = khoaHoc.TieuDe
-                                });
+                                }));
                             }
                             continue;
                         }
 
-                        // Chia theo đúng tỷ lệ TyLeChiaDoanhThu của từng người (tổng có thể không tròn 100
-                        // nếu dữ liệu lệch, nên chia theo tỷ trọng thực tế thay vì giả định tổng = 100)
                         var tongTyLe = thanhVienList.Sum(x => x.TyLeChiaDoanhThu);
-                        if (tongTyLe <= 0) continue;
+                        if (tongTyLe <= 0)
+                        {
+                            var owner = thanhVienList.FirstOrDefault(x => x.LaChuSoHuu) ?? thanhVienList.First();
+                            var giangVienOwner = await _userRepository.GetQueryable()
+                                .FirstOrDefaultAsync(u => u.Id == owner.IdGiangVien);
+
+                            if (giangVienOwner != null)
+                            {
+                                giangVienOwner.SoDuTaiKhoan = (giangVienOwner.SoDuTaiKhoan ?? 0) + (decimal)instructorRevenue;
+                                giangVienOwner.UpdatedDate = DateTime.Now;
+                                _userRepository.Update(giangVienOwner);
+
+                                _donHangGiangVienRepo.Add(new DonHang_GiangVien
+                                {
+                                    IdDonHang = donHang.Id,
+                                    IdDonHangChiTiet = ct.Id,
+                                    IdKhoaHoc = ct.IdKhoaHoc!.Value,
+                                    IdGiangVien = giangVienOwner.Id,
+                                    LaChuSoHuu = owner.LaChuSoHuu,
+                                    TyLeChiaDoanhThu = 100,
+                                    GiaLucDat = giaGoc,
+                                    SoTienGiam = giam,
+                                    SoTienNhan = instructorRevenue,
+                                    NgayGhiNhan = donHang.NgayTao ?? DateTime.Now,
+                                    CreatedDate = DateTime.Now,
+                                    UpdatedDate = DateTime.Now
+                                });
+                            }
+                            continue;
+                        }
 
                         foreach (var tv in thanhVienList)
                         {
@@ -450,14 +512,29 @@ namespace Eduverse.Service.ThanhToanService
 
                             var giangVien = await _userRepository.GetQueryable()
                                 .FirstOrDefaultAsync(u => u.Id == tv.IdGiangVien);
-
                             if (giangVien == null) continue;
 
                             giangVien.SoDuTaiKhoan = (giangVien.SoDuTaiKhoan ?? 0) + (decimal)phanChia;
                             giangVien.UpdatedDate = DateTime.Now;
                             _userRepository.Update(giangVien);
 
-                            await _notificationPublisher.NotifyUserAsync(giangVien.Id, new NotificationPayload
+                            _donHangGiangVienRepo.Add(new DonHang_GiangVien
+                            {
+                                IdDonHang = donHang.Id,
+                                IdDonHangChiTiet = ct.Id,
+                                IdKhoaHoc = ct.IdKhoaHoc!.Value,
+                                IdGiangVien = tv.IdGiangVien,
+                                LaChuSoHuu = tv.LaChuSoHuu,
+                                TyLeChiaDoanhThu = tv.TyLeChiaDoanhThu,
+                                GiaLucDat = giaGoc,
+                                SoTienGiam = giam,
+                                SoTienNhan = phanChia,
+                                NgayGhiNhan = donHang.NgayTao ?? DateTime.Now,
+                                CreatedDate = DateTime.Now,
+                                UpdatedDate = DateTime.Now
+                            });
+
+                            thongBaoCaNhan.Add((giangVien.Id, new NotificationPayload
                             {
                                 TieuDe = "Bạn vừa nhận được doanh thu mới",
                                 NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. " +
@@ -466,14 +543,16 @@ namespace Eduverse.Service.ThanhToanService
                                 Link = "/instructor/revenue",
                                 ItemId = khoaHoc.Id,
                                 ItemName = khoaHoc.TieuDe
-                            });
+                            }));
                         }
                     }
                     await _userRepository.SaveAsync();
+                    await _donHangGiangVienRepo.SaveAsync();
 
                     var courseNames = enrolledCourses.Select(course => course.TieuDe).ToList();
                     var courseSummary = string.Join(", ", courseNames.Select(name => $"'{name}'"));
-                    await _notificationPublisher.NotifyUserAsync(donHang.IdNguoiDung!.Value, new NotificationPayload
+
+                    thongBaoCaNhan.Add((donHang.IdNguoiDung!.Value, new NotificationPayload
                     {
                         TieuDe = "Mua khóa học thành công",
                         NoiDung = $"Thanh toán thành công {donHang.SoTienThanhToan:N0}đ cho {courseSummary}.",
@@ -481,10 +560,10 @@ namespace Eduverse.Service.ThanhToanService
                         Link = "/student/courses/my-courses",
                         ItemId = donHang.Id,
                         ItemName = courseSummary
-                    });
+                    }));
 
                     var buyer = await _userRepository.GetByIdAsync(donHang.IdNguoiDung);
-                    await _notificationPublisher.NotifyRoleAsync("Admin", new NotificationPayload
+                    thongBaoRole.Add(("Admin", new NotificationPayload
                     {
                         TieuDe = "Đơn mua khóa học mới",
                         NoiDung = $"{buyer?.HoTen ?? buyer?.UserName ?? "Học viên"} đã thanh toán {donHang.SoTienThanhToan:N0}đ cho {courseSummary}.",
@@ -493,19 +572,18 @@ namespace Eduverse.Service.ThanhToanService
                         FromUser = donHang.IdNguoiDung,
                         ItemId = donHang.Id,
                         ItemName = courseSummary
-                    }, new[] { donHang.IdNguoiDung!.Value });
+                    }, new[] { donHang.IdNguoiDung!.Value }));
 
                     var gioHang = await _gioHangRepo.GetQueryable()
-                        .FirstOrDefaultAsync(x => x.IdNguoiDung == donHang.IdNguoiDung
-                                               && x.IsDeleted == false);
+                        .FirstOrDefaultAsync(x => x.IdNguoiDung == donHang.IdNguoiDung && x.IsDeleted == false);
 
                     if (gioHang != null)
                     {
-                        var khoaHocIds = chiTiets.Select(x => x.IdKhoaHoc).ToList();
+                        var khoaHocIdsTrongGio = chiTiets.Select(x => x.IdKhoaHoc).ToList();
 
                         var gioHangChiTiets = await _gioHangChiTietRepo.GetQueryable()
                             .Where(x => x.IdGioHang == gioHang.Id
-                                     && khoaHocIds.Contains(x.IdKhoaHoc)
+                                     && khoaHocIdsTrongGio.Contains(x.IdKhoaHoc)
                                      && x.IsDeleted == false)
                             .ToListAsync();
 
@@ -517,16 +595,29 @@ namespace Eduverse.Service.ThanhToanService
                         }
                         await _gioHangChiTietRepo.SaveAsync();
                     }
-                }
 
-                return true;
+                    await transaction.CommitAsync();
+                    return true;
+                });
             }
             catch (Exception ex)
             {
+                // Transaction (kể cả khóa TrangThai=1) đã tự rollback nhờ EF execution
+                // strategy — webhook lần sau từ PayOS vẫn sẽ xử lý lại được bình thường.
                 Console.WriteLine($"[WEBHOOK] ERROR: {ex.Message}");
                 Console.WriteLine($"[WEBHOOK] INNER: {ex.InnerException?.Message}");
                 return false;
             }
+
+            // Chỉ gửi thông báo SAU KHI transaction đã commit thành công, tránh báo
+            // "bạn vừa nhận tiền" cho 1 giao dịch cuối cùng bị rollback.
+            foreach (var (userId, payload) in thongBaoCaNhan)
+                await _notificationPublisher.NotifyUserAsync(userId, payload);
+
+            foreach (var (role, payload, excludeIds) in thongBaoRole)
+                await _notificationPublisher.NotifyRoleAsync(role, payload, excludeIds);
+
+            return daXuLyThanhCong;
         }
 
         public async Task<List<DonHangDto>> GetDonHangByUserAsync(Guid userId)

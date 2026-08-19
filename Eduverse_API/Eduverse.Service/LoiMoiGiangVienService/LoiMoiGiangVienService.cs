@@ -1,8 +1,14 @@
 ﻿using Eduverse.Model;
 using Eduverse.Model.Entities;
+using Eduverse.Repository.DonHang_GiangVienRepository;
+using Eduverse.Repository.DonHang_KhuyenMaiRepository;
+using Eduverse.Repository.DonHangChiTietRepository;
+using Eduverse.Repository.DonHangRepositoryRepository;
 using Eduverse.Repository.KhoaHoc_GiangVienRepository;
 using Eduverse.Repository.KhoaHocRepository;
+using Eduverse.Repository.KhuyenMaiRepository;
 using Eduverse.Repository.LoiMoiGiangVienRepository;
+using Eduverse.Repository.ThanhToanRepository;
 using Eduverse.Service.AppUserService;
 using Eduverse.Service.Common;
 using Eduverse.Service.LoiMoiGiangVienService.Dto;
@@ -28,11 +34,21 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         private readonly IAppUserService _appUserService;
         private readonly INotificationPublisher _notificationPublisher;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public LoiMoiGiangVienService (ILoiMoiGiangVienRepository loiMoiGiangVienRepository,
+        private readonly IDonHang_GiangVienRepository _donHangGiangVienRepo;
+        private readonly IDonHangRepository _donHangRepo;
+        private readonly IDonHangChiTietRepository _chiTietRepo;
+        private readonly IThanhToanRepository _thanhToanRepo;
+        private readonly IDonHang_KhuyenMaiRepository _kmRepo;
+        public LoiMoiGiangVienService(ILoiMoiGiangVienRepository loiMoiGiangVienRepository,
             IKhoaHoc_GiangVienRepository khoaHoc_GiangVienRepository,
             IKhoaHocRepository khoaHocRepo,
             IAppUserService appUserService,
             INotificationPublisher notificationPublisher,
+            IDonHang_GiangVienRepository donHangGiangVienRepo,
+            IDonHangRepository donHangRepo,
+            IDonHangChiTietRepository donHangChiTietRepository,
+            IThanhToanRepository thanhToanRepository,
+            IDonHang_KhuyenMaiRepository khuyenMaiRepository,
             IHttpContextAccessor httpContextAccessor) : base(loiMoiGiangVienRepository)
         {
             _loiMoiRepo = loiMoiGiangVienRepository;
@@ -41,6 +57,11 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             _appUserService = appUserService;
             _notificationPublisher = notificationPublisher;
             _httpContextAccessor = httpContextAccessor;
+            _donHangGiangVienRepo = donHangGiangVienRepo;
+            _donHangRepo = donHangRepo;
+            _chiTietRepo = donHangChiTietRepository;
+            _thanhToanRepo = thanhToanRepository;
+            _kmRepo = khuyenMaiRepository;
         }
 
         // constructor inject đủ các dependency trên
@@ -186,7 +207,10 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             if (congTacVien.LaChuSoHuu)
                 throw new Exception("Không thể xóa chủ sở hữu khóa học");
 
-             _khoaHocGVRepo.Delete(congTacVien);
+            var khoaHoc = await _khoaHocRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
+
+            _khoaHocGVRepo.Delete(congTacVien);
 
             var loiMoi = await _loiMoiRepo.GetQueryable()
                 .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
@@ -195,6 +219,17 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             if (loiMoi != null) _loiMoiRepo.Delete(loiMoi);
 
             await _khoaHocGVRepo.SaveAsync();
+
+            await _notificationPublisher.NotifyUserAsync(idGiangVien, new NotificationPayload
+            {
+                TieuDe = "Bạn đã bị xóa khỏi khóa học",
+                NoiDung = $"Bạn không còn là giảng viên cộng tác của khóa học \"{khoaHoc?.TieuDe}\".",
+                LoaiThongBao = "XoaKhoiKhoaHoc",
+                Link = "/instructor/courses",
+                FromUser = userId,
+                ItemId = idKhoaHoc,
+                ItemName = khoaHoc?.TieuDe
+            });
         }
 
         public async Task<LoiMoiGiangVienDto> GuiLoiMoi(GuiLoiMoiRequest request)
@@ -663,6 +698,87 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         {
             if (tyLe < 0 || tyLe > 100)
                 throw new Exception("Tỷ lệ chia doanh thu phải trong khoảng 0-100%");
+        }
+        public async Task<int> BackfillDonHangGiangVienAsync()
+        {
+            var donHangDaXuLyIds = await _donHangGiangVienRepo.GetQueryable()
+                .Where(x => !x.IsDeleted)
+                .Select(x => x.IdDonHang)
+                .Distinct()
+                .ToListAsync();
+
+            var chiTiets = await (
+                from ct in _chiTietRepo.GetQueryable()
+                join dh in _donHangRepo.GetQueryable() on ct.IdDonHang equals dh.Id
+                join tt in _thanhToanRepo.GetQueryable() on dh.Id equals tt.IdDonHang
+                where !ct.IsDeleted && !dh.IsDeleted
+                   && dh.TrangThai == 1
+                   && tt.TrangThaiThanhToan == "SUCCESS"
+                   && !donHangDaXuLyIds.Contains(dh.Id)
+                select new { ct.Id, ct.IdDonHang, ct.IdKhoaHoc, ct.GiaLucDat, dh.NgayTao }
+            ).ToListAsync();
+
+            if (!chiTiets.Any()) return 0;
+
+            var khoaHocIds = chiTiets.Select(x => x.IdKhoaHoc).Distinct().ToList();
+            var donHangIds = chiTiets.Select(x => x.IdDonHang!.Value).Distinct().ToList();
+
+            var vouchers = await _kmRepo.GetQueryable()
+                .Where(x => donHangIds.Contains(x.IdDonHang!.Value) && !x.IsDeleted)
+                .ToListAsync();
+
+            // ⚠️ Không có log tỷ lệ theo thời gian trước đây, nên buộc phải xấp xỉ
+            // bằng tỷ lệ HIỆN TẠI trong KhoaHoc_GiangVien — chấp nhận sai số với các
+            // khóa học đã từng đổi % chia doanh thu qua nhiều lần.
+            var thanhViens = await _khoaHocGVRepo.GetQueryable()
+                .Where(x => khoaHocIds.Contains(x.IdKhoaHoc) && !x.IsDeleted)
+                .ToListAsync();
+
+            var banGhiMoi = new List<DonHang_GiangVien>();
+            foreach (var ct in chiTiets)
+            {
+                if (!ct.IdKhoaHoc.HasValue)
+                    continue;
+
+                var idKhoaHoc = ct.IdKhoaHoc.Value;
+
+                var giamGia = vouchers
+                    .Where(v =>
+                        v.IdDonHang == ct.IdDonHang &&
+                        v.IdKhoaHocDuocGiam == idKhoaHoc)
+                    .Sum(v => v.SoTienGiam ?? 0);
+
+                var tienThucThu = Math.Max(
+                    0,
+                    (ct.GiaLucDat ?? 0) - giamGia
+                );
+
+                var phanGiangVien70 = tienThucThu * 0.7;
+
+                foreach (var gv in thanhViens.Where(t => t.IdKhoaHoc == idKhoaHoc))
+                {
+                    banGhiMoi.Add(new DonHang_GiangVien
+                    {
+                        IdDonHang = ct.IdDonHang!.Value,
+                        IdDonHangChiTiet = ct.Id,
+                        IdKhoaHoc = idKhoaHoc,
+                        IdGiangVien = gv.IdGiangVien,
+                        LaChuSoHuu = gv.LaChuSoHuu,
+                        TyLeChiaDoanhThu = gv.TyLeChiaDoanhThu,
+                        GiaLucDat = ct.GiaLucDat ?? 0,
+                        SoTienGiam = giamGia,
+                        SoTienNhan = Math.Round(
+                            phanGiangVien70 * gv.TyLeChiaDoanhThu / 100.0,
+                            0
+                        ),
+                        NgayGhiNhan = ct.NgayTao ?? DateTime.UtcNow,
+                    });
+                }
+            }
+
+            foreach (var item in banGhiMoi) _donHangGiangVienRepo.Add(item);
+            await _donHangGiangVienRepo.SaveAsync();
+            return banGhiMoi.Count;
         }
     }
 }
