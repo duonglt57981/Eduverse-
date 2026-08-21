@@ -396,7 +396,7 @@ namespace Eduverse.Service.KhoaHocService
                 from dk in _dangKyKhoaHocRepository.GetQueryable().AsNoTracking()
                 join kh in GetAll()
                    on dk.IdKhoaHoc equals kh.Id
-                where dk.IdNguoiDangKi == userId
+                where dk.IdNguoiDangKi == userId 
                 select new
                 {
                     DangKyId = dk.Id,
@@ -911,8 +911,12 @@ namespace Eduverse.Service.KhoaHocService
                 .Select(x => new { x.Id, x.TieuDe, x.TrangThai, x.TrangThaiPheDuyet, x.IsBanHienTai, x.IsDeleted })
                 .FirstOrDefaultAsync();
 
-
-            result.DanhSachGiangVien = await LayThongTinGiangVienHienThi(idKhoaHoc.Value, result.CreatedId);
+            var danhSachGiangVien = await LayThongTinGiangVienHienThi(idKhoaHoc ?? Guid.Empty, result.CreatedId ?? Guid.Empty);
+            if (danhSachGiangVien.Any())
+            {
+                result.DanhSachGiangVien = danhSachGiangVien;
+            }
+            
 
             // Giữ ThongTinGiangVien để không phá vỡ các chỗ khác đang dùng field cũ
             // (nếu có) — gán bằng người đầu tiên trong danh sách hiển thị
@@ -1843,7 +1847,9 @@ namespace Eduverse.Service.KhoaHocService
                     CreatedBy = bkt.CreatedBy,
                     UpdatedBy = bkt.UpdatedBy,
                     UpdatedDate = bkt.UpdatedDate,
-                    LyDoTuChois = lyDoBaiKiemTraLookup[bkt.Id]
+                    LyDoTuChois = (targetVersion.TrangThaiPheDuyet == "TuChoi"
+                        ? lyDoBaiKiemTraLookup[bkt.Id]
+                        : lyDoBaiKiemTraLookup[bkt.IdLyDo])
                         .Select(l => new LyDoTuChoiDto { Id = l.Id, LyDo = l.LyDo })
                         .FirstOrDefault(),
                     DanhSachCauHois = cauHoiLookup[bkt.Id].Select(c => new CauHoiDto

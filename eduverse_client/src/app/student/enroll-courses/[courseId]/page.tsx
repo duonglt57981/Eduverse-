@@ -1753,7 +1753,7 @@ function CourseRegistrationContent() {
                   },
                   {
                     icon: <AllInclusiveIcon sx={{ fontSize: 17 }} />,
-                    label: "Truy cập trọn đời",
+                    label: "Gia hạn 6 tháng",
                   },
                 ].map((item, i) => (
                   <Stack

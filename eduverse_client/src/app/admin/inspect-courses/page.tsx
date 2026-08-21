@@ -43,8 +43,9 @@ import AuthGuard from "@/src/components/AuthGuard";
 import {
   COLORS,
   FONTS,
-  PAGE_SIZE,
 } from "@/src/app/admin/approve-courses/types/constants";
+
+const PAGE_SIZE = 10;
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
@@ -162,6 +163,7 @@ export default function LichSuKiemDuyetPage() {
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [stopReason, setStopReason] = useState("");
+  const [stopReasonError, setStopReasonError] = useState("");
   const [submittingStop, setSubmittingStop] = useState(false);
 
   // Snackbar feedback
@@ -282,6 +284,7 @@ export default function LichSuKiemDuyetPage() {
   const handleOpenStopDialog = (id: string) => {
     setSelectedCourseId(id);
     setStopReason("");
+    setStopReasonError("");
     setStopDialogOpen(true);
   };
 
@@ -289,16 +292,21 @@ export default function LichSuKiemDuyetPage() {
     setStopDialogOpen(false);
     setSelectedCourseId(null);
     setStopReason("");
+    setStopReasonError("");
   };
 
   const handleConfirmStop = async () => {
     if (!selectedCourseId) return;
+    if (!stopReason.trim()) {
+      setStopReasonError("Vui lòng nhập lý do ngưng hoạt động.");
+      return;
+    }
     setSubmittingStop(true);
     try {
       await kiemDuyetService.KiemDuyetKhoaHoc({
         idKhoaHoc: selectedCourseId,
         trangThaiPheDuyet: "TuChoi",
-        lyDo: stopReason.trim() || undefined,
+        lyDo: stopReason.trim(),
       });
       setSnackbar({
         open: true,
@@ -851,11 +859,20 @@ export default function LichSuKiemDuyetPage() {
               fullWidth
               multiline
               rows={3}
+              required
+              error={Boolean(stopReasonError)}
+              helperText={stopReasonError}
               value={stopReason}
-              onChange={(e) => setStopReason(e.target.value)}
-              placeholder="Nhập lý do (bắt buộc)..."
+              onChange={(e) => {
+                setStopReason(e.target.value);
+                if (stopReasonError && e.target.value.trim()) {
+                  setStopReasonError("");
+                }
+              }}
+              placeholder="Nhập lý do ngưng hoạt động (bắt buộc)..."
               variant="outlined"
               size="small"
+              sx={{ mt: 1 }}
             />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2.5 }}>
@@ -869,7 +886,7 @@ export default function LichSuKiemDuyetPage() {
             <Button
               onClick={handleConfirmStop}
               variant="contained"
-              disabled={submittingStop}
+              disabled={submittingStop || !stopReason.trim()}
               sx={{
                 bgcolor: "error.main",
                 textTransform: "none",

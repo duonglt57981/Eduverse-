@@ -181,6 +181,12 @@ function isValidImage(url?: string): boolean {
   return t.startsWith("http") || t.startsWith("/") || t.startsWith(".");
 }
 
+const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
+
+function isValidGuid(id?: string | null): boolean {
+  return Boolean(id && id !== EMPTY_GUID && id.trim() !== "");
+}
+
 function initialsOf(name?: string) {
   if (!name || name === "học viên") return "HV";
   const cleanName = name.trim();
@@ -603,8 +609,11 @@ function HoverPanel({
               startIcon={<PlayCircleFilledRounded />}
               onClick={(e) => {
                 e.stopPropagation();
+                const learningId = isValidGuid(course.idDangKiKhoaHoc)
+                  ? course.idDangKiKhoaHoc
+                  : course.id;
                 router.push(
-                  `/student/courses/my-courses/learning/${course.idDangKiKhoaHoc || course.id}`,
+                  `/student/courses/my-courses/learning/${learningId}`,
                 );
               }}
               sx={{
@@ -1385,8 +1394,8 @@ export default function StudentHomeContent() {
     const enrolledIds = new Set<string>();
     if (data?.continueLearning?.courses) {
       data.continueLearning.courses.forEach((item) => {
-        if (item.id) enrolledIds.add(String(item.id));
-        if (item.idDangKiKhoaHoc) enrolledIds.add(String(item.idDangKiKhoaHoc));
+        if (isValidGuid(item.id)) enrolledIds.add(String(item.id));
+        if (isValidGuid(item.idDangKiKhoaHoc)) enrolledIds.add(String(item.idDangKiKhoaHoc));
       });
     }
 
@@ -1396,8 +1405,9 @@ export default function StudentHomeContent() {
     return latestCourses.filter((c: any) => {
       // Loại bỏ nếu người dùng đã đăng ký / sở hữu khóa học
       if (c.daDangKy) return false;
-      const courseId = String(c.id || c.idDangKiKhoaHoc || "");
-      if (courseId && enrolledIds.has(courseId)) return false;
+      const courseId = String(c.id || c.idKhoaHoc || "");
+      if (isValidGuid(courseId) && enrolledIds.has(courseId)) return false;
+      if (isValidGuid(c.idDangKiKhoaHoc) && enrolledIds.has(String(c.idDangKiKhoaHoc))) return false;
 
       // Loại bỏ khóa học cũ hơn 1 tháng
       const rawDate =
@@ -1495,25 +1505,27 @@ export default function StudentHomeContent() {
 
   const handleOpenCourse = useCallback(
     (course: KhoaHocDto) => {
-      const id = course.idDangKiKhoaHoc || course.id;
-      if (!id) return;
-      if (
-        course.daDangKy ||
-        course.idDangKiKhoaHoc ||
-        (course as any).progress !== undefined
-      ) {
-        router.push(
-          `/student/courses/my-courses/learning/${course.idDangKiKhoaHoc || course.id}`,
-        );
+      const courseId = course.id || (course as any).idKhoaHoc;
+      if (!isValidGuid(courseId)) return;
+
+      const hasValidDangKiId = isValidGuid(course.idDangKiKhoaHoc);
+      const isEnrolled =
+        course.daDangKy === true ||
+        (hasValidDangKiId && (course as any).progress !== undefined);
+
+      if (isEnrolled) {
+        const learningId = hasValidDangKiId ? course.idDangKiKhoaHoc : courseId;
+        router.push(`/student/courses/my-courses/learning/${learningId}`);
       } else {
-        router.push(`/student/enroll-courses/${id}`);
+        router.push(`/student/enroll-courses/${courseId}`);
       }
     },
     [router],
   );
 
   const handleAddCart = useCallback(async (course: KhoaHocDto) => {
-    const id = course.id || course.idDangKiKhoaHoc || "";
+    const id = isValidGuid(course.id) ? course.id : (course as any).idKhoaHoc || "";
+    if (!isValidGuid(id)) return;
     try {
       await apiService.post(`/GioHang/${id}`);
     } catch {

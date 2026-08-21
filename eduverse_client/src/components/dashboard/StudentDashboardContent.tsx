@@ -177,6 +177,12 @@ function isValidImage(url?: string): boolean {
   return t.startsWith("http") || t.startsWith("/") || t.startsWith(".");
 }
 
+const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
+
+function isValidGuid(id?: string | null): boolean {
+  return Boolean(id && id !== EMPTY_GUID && id.trim() !== "");
+}
+
 // ─── Carousel Row ─────────────────────────────────────────────────────────────
 function CarouselRow({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1123,18 +1129,19 @@ export default function StudentDashboardContent() {
   // Điều hướng sang trang bài giảng (nếu đã đăng ký) hoặc trang chi tiết/preview khóa học
   const handleOpenCourse = useCallback(
     (course: KhoaHocDto) => {
-      const id = course.idDangKiKhoaHoc || course.id;
-      if (!id) return;
-      if (
-        course.daDangKy ||
-        course.idDangKiKhoaHoc ||
-        (course as any).progress !== undefined
-      ) {
-        router.push(
-          `/student/courses/my-courses/learning/${course.idDangKiKhoaHoc || course.id}`,
-        );
+      const courseId = course.id || (course as any).idKhoaHoc;
+      if (!isValidGuid(courseId)) return;
+
+      const hasValidDangKiId = isValidGuid(course.idDangKiKhoaHoc);
+      const isEnrolled =
+        course.daDangKy === true ||
+        (hasValidDangKiId && (course as any).progress !== undefined);
+
+      if (isEnrolled) {
+        const learningId = hasValidDangKiId ? course.idDangKiKhoaHoc : courseId;
+        router.push(`/student/courses/my-courses/learning/${learningId}`);
       } else {
-        router.push(`/student/enroll-courses/${id}`);
+        router.push(`/student/enroll-courses/${courseId}`);
       }
     },
     [router],
@@ -1142,7 +1149,8 @@ export default function StudentDashboardContent() {
 
   // Add to cart
   const handleAddCart = useCallback(async (course: KhoaHocDto) => {
-    const id = course.id || course.idDangKiKhoaHoc || "";
+    const id = isValidGuid(course.id) ? course.id : (course as any).idKhoaHoc || "";
+    if (!isValidGuid(id)) return;
     try {
       await apiService.post(`/GioHang/${id}`);
     } catch {

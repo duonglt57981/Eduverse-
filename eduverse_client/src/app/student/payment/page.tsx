@@ -65,7 +65,7 @@ function ThanhToanContent() {
   const daChonItems = gioHang?.items.filter((i) => i.daChon) ?? [];
   const tongTien = gioHang?.tongTienDaChon ?? 0;
 
-  const THOI_GIAN_QR = 5*60; // 5 phút (giây)
+  const THOI_GIAN_QR = 5 * 60; // 5 phút (giây)
   const [countdown, setCountdown] = useState(THOI_GIAN_QR);
   const [hetHan, setHetHan] = useState(false);
 
@@ -218,7 +218,12 @@ function ThanhToanContent() {
         >
           Thanh toán
         </Typography>
-        <Typography sx={{ color: "var(--ev-text-secondary, rgba(31,41,55,0.55))", fontSize: 14 }}>
+        <Typography
+          sx={{
+            color: "var(--ev-text-secondary, rgba(31,41,55,0.55))",
+            fontSize: 14,
+          }}
+        >
           Xác nhận đơn hàng và hoàn tất thanh toán
         </Typography>
       </Box>
@@ -510,7 +515,7 @@ function ThanhToanContent() {
                 },
                 {
                   icon: <SchoolIcon fontSize="small" />,
-                  text: "Truy cập trọn đời sau khi mua",
+                  text: "Gia hạn 6 tháng",
                 },
               ].map((item, i) => (
                 <Box

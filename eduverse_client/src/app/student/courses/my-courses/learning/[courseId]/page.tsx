@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/student/courses/my-courses/learning/[courseId]/page.tsx
@@ -122,6 +123,8 @@ interface VideoAreaProps {
   onEnded: () => void;
   lastSavedTimeRef: { current: number };
   setCurrentSavedTime: (t: number | undefined) => void;
+  onPlayStateChange?: (isPlaying: boolean) => void;
+  autoPlay?: boolean;
 }
 
 function VideoArea({
@@ -136,6 +139,8 @@ function VideoArea({
   onEnded,
   lastSavedTimeRef,
   setCurrentSavedTime,
+  onPlayStateChange,
+  autoPlay = true,
 }: VideoAreaProps) {
   if (loading) {
     return <CourseSkeleton />;
@@ -219,7 +224,8 @@ function VideoArea({
           onTimeUpdate={onTimeUpdate}
           onEnded={onEnded}
           mini={false}
-          autoPlay={true}
+          autoPlay={autoPlay}
+          onPlayStateChange={onPlayStateChange}
           onUnmount={(time) => {
             lastSavedTimeRef.current = time;
             setCurrentSavedTime(time);
@@ -412,7 +418,6 @@ export default function KhoaHocLearningPage() {
   const params = useParams();
   const pathname = usePathname();
   const courseId = (params?.courseId || params?.id) as string | undefined;
-  const [idDangKyKhoaHoc, setIdDangKyKhoaHoc] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
 
@@ -447,6 +452,10 @@ export default function KhoaHocLearningPage() {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [searchTerm, setSearchTerm] = useState("");
   const [showMini, setShowMini] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const isVideoPlayingRef = useRef(false);
+  const isMiniDismissedRef = useRef(false);
+
   const [quizDangChon, setQuizDangChon] = useState<BaiKiemTraDto | null>(null);
   const [isVideoFullMounted, setIsVideoFullMounted] = useState(true);
   const [currentSavedTime, setCurrentSavedTime] = useState<number | undefined>(
@@ -457,7 +466,44 @@ export default function KhoaHocLearningPage() {
   const videoSectionRef = useRef<HTMLDivElement>(null);
   const [showDanhGia, setShowDanhGia] = useState(false);
   const [daDanhGia, setDaDanhGia] = useState(false);
-  const danhGiaTriggeredRef = useRef(false);
+
+  // ── Update current saved time ──
+  const updateCurrentSavedTime = useCallback(() => {
+    if (!baiGiang?.id) {
+      setCurrentSavedTime(undefined);
+      return;
+    }
+
+    if (lastSavedTimeRef.current > 0) {
+      setCurrentSavedTime(lastSavedTimeRef.current);
+      return;
+    }
+
+    const progress = progressMap.get(baiGiang.id);
+    if (progress?.thoiGianXem && progress.thoiGianXem > 0) {
+      setCurrentSavedTime(progress.thoiGianXem);
+      return;
+    }
+
+    setCurrentSavedTime(baiGiang.thoiGianXem);
+  }, [baiGiang, progressMap, lastSavedTimeRef]);
+
+  const handlePlayStateChange = useCallback((isPlaying: boolean) => {
+    isVideoPlayingRef.current = isPlaying;
+    setIsVideoPlaying(isPlaying);
+    if (isPlaying) {
+      isMiniDismissedRef.current = false;
+    }
+  }, []);
+
+  const handleCloseMini = useCallback(() => {
+    isMiniDismissedRef.current = true;
+    isVideoPlayingRef.current = false;
+    setIsVideoPlaying(false);
+    setShowMini(false);
+    setIsVideoFullMounted(true);
+    updateCurrentSavedTime();
+  }, [updateCurrentSavedTime]);
 
   // ── Lấy thông tin giảng viên từ khoaHoc ──
   const thongTinGiangVien = useMemo(() => {
@@ -505,27 +551,6 @@ export default function KhoaHocLearningPage() {
     });
     return map;
   }, [getPhanHocApi]);
-
-  // ── Update current saved time ──
-  const updateCurrentSavedTime = useCallback(() => {
-    if (!baiGiang?.id) {
-      setCurrentSavedTime(undefined);
-      return;
-    }
-
-    if (lastSavedTimeRef.current > 0) {
-      setCurrentSavedTime(lastSavedTimeRef.current);
-      return;
-    }
-
-    const progress = progressMap.get(baiGiang.id);
-    if (progress?.thoiGianXem && progress.thoiGianXem > 0) {
-      setCurrentSavedTime(progress.thoiGianXem);
-      return;
-    }
-
-    setCurrentSavedTime(baiGiang.thoiGianXem);
-  }, [baiGiang, progressMap, lastSavedTimeRef]);
 
   // ── Init progress ──
   useEffect(() => {
@@ -592,19 +617,33 @@ export default function KhoaHocLearningPage() {
         return;
       }
       const rect = videoSectionRef.current.getBoundingClientRect();
-      const shouldShow = rect.bottom < HEADER_H;
+      const isPastVideo = rect.bottom < HEADER_H;
+
+      if (!isPastVideo) {
+        isMiniDismissedRef.current = false;
+        if (showMini) {
+          setIsVideoFullMounted(true);
+          setShowMini(false);
+          updateCurrentSavedTime();
+        }
+        return;
+      }
+
+      // Chỉ hiển thị mini nếu video ĐANG PHÁT và chưa bị người dùng đóng
+      const shouldShow =
+        isPastVideo && isVideoPlayingRef.current && !isMiniDismissedRef.current;
 
       if (shouldShow && !showMini) {
         const currentTime = currentTimeRef.current;
         lastSavedTimeRef.current = currentTime;
         setCurrentSavedTime(currentTime);
         setIsVideoFullMounted(false);
-      } else if (!shouldShow && showMini) {
+        setShowMini(true);
+      } else if (!shouldShow && showMini && !isPastVideo) {
         setIsVideoFullMounted(true);
+        setShowMini(false);
         updateCurrentSavedTime();
       }
-
-      setShowMini(shouldShow);
     };
 
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -639,12 +678,11 @@ export default function KhoaHocLearningPage() {
     },
     [handleTimeUpdate, sendProgress, khoaHocId],
   );
-  const idKhoaHoc = khoaHoc?.id;
   const handleVideoEnded = useCallback(async () => {
     if (!baiGiang?.id || !khoaHoc?.id) return;
     const thoiLuong = baiGiang.thoiLuong ?? 0;
     await sendProgress(baiGiang.id, thoiLuong, khoaHoc.id);
-    const idx = danhSachTatCa.findIndex((b) => b.id === idKhoaHoc);
+    const idx = danhSachTatCa.findIndex((b) => b.id === baiGiang.id);
     if (idx !== -1 && idx + 1 < danhSachTatCa.length) {
       lastSavedTimeRef.current = 0;
       currentTimeRef.current = 0;
@@ -669,6 +707,9 @@ export default function KhoaHocLearningPage() {
       setCurrentSavedTime(undefined);
       setIsVideoFullMounted(true);
       setShowMini(false);
+      isMiniDismissedRef.current = false;
+      isVideoPlayingRef.current = true;
+      setIsVideoPlaying(true);
       chonBaiGiang(bg, danhSachTatCa);
     },
     [chonBaiGiang, danhSachTatCa, lastSavedTimeRef, currentTimeRef],
@@ -714,6 +755,9 @@ export default function KhoaHocLearningPage() {
       setCurrentSavedTime(undefined);
       setIsVideoFullMounted(true);
       setShowMini(false);
+      isMiniDismissedRef.current = false;
+      isVideoPlayingRef.current = true;
+      setIsVideoPlaying(true);
       chonBaiGiang(danhSachTatCa[n], danhSachTatCa);
     }
   }, [
@@ -1091,6 +1135,8 @@ export default function KhoaHocLearningPage() {
                   onEnded={handleVideoEnded}
                   lastSavedTimeRef={lastSavedTimeRef}
                   setCurrentSavedTime={setCurrentSavedTime}
+                  onPlayStateChange={handlePlayStateChange}
+                  autoPlay={isVideoPlaying}
                 />
               </Box>
 
@@ -1485,6 +1531,8 @@ export default function KhoaHocLearningPage() {
           onTimeUpdate={handleTimeUpdateWrapper}
           onEnded={handleVideoEnded}
           onExpand={scrollToVideo}
+          onClose={handleCloseMini}
+          onPlayStateChange={handlePlayStateChange}
           autoPlay={true}
           onUnmount={handleMiniUnmount}
         />

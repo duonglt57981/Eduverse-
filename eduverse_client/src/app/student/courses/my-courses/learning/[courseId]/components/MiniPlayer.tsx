@@ -11,6 +11,8 @@ interface MiniPlayerProps {
   onTimeUpdate: (t: number) => void;
   onEnded: () => void;
   onExpand: () => void;
+  onClose: () => void;
+  onPlayStateChange?: (isPlaying: boolean) => void;
   playerId?: string;
   autoPlay?: boolean;
   onUnmount?: (time: number) => void;
@@ -34,6 +36,8 @@ export const MiniPlayer = ({
   onTimeUpdate,
   onEnded,
   onExpand,
+  onClose,
+  onPlayStateChange,
   playerId = "mini",
   autoPlay = true,
   onUnmount,
@@ -49,6 +53,8 @@ export const MiniPlayer = ({
       autoPlay={autoPlay}
       mini={true}
       onExpandClick={onExpand}
+      onCloseClick={onClose}
+      onPlayStateChange={onPlayStateChange}
       onUnmount={onUnmount}
     />
   );

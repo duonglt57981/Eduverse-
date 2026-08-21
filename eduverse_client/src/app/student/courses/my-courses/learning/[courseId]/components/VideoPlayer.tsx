@@ -13,7 +13,7 @@ import {
   alpha,
 } from "@mui/material";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
-import { OpenInFull as OpenInFullIcon } from "@mui/icons-material";
+import { OpenInFull as OpenInFullIcon, Close as CloseIcon } from "@mui/icons-material";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 import "@videojs/http-streaming";
@@ -44,6 +44,8 @@ interface VideoPlayerProps {
   autoPlay?: boolean;
   mini?: boolean;
   onExpandClick?: () => void;
+  onCloseClick?: () => void;
+  onPlayStateChange?: (isPlaying: boolean) => void;
   /** Gọi khi component bị unmount để lưu thời gian cuối */
   onUnmount?: (time: number) => void;
 }
@@ -66,6 +68,8 @@ export const VideoPlayer = ({
   autoPlay = true,
   mini = false,
   onExpandClick,
+  onCloseClick,
+  onPlayStateChange,
   onUnmount,
 }: VideoPlayerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -324,8 +328,14 @@ export const VideoPlayer = ({
       }
     });
 
+    player.on("play", () => {
+      isPlayingRef.current = true;
+      onPlayStateChange?.(true);
+    });
+
     player.on("playing", () => {
       isPlayingRef.current = true;
+      onPlayStateChange?.(true);
       clearAllTimers();
       if (isMountedRef.current) {
         setIsLoading(false);
@@ -334,7 +344,16 @@ export const VideoPlayer = ({
     });
 
     player.on("pause", () => {
+      // Bỏ qua sự kiện pause tạm thời do người dùng đang kéo thanh tua (scrubbing)
+      if (typeof player.scrubbing === "function" && player.scrubbing()) {
+        return;
+      }
       isPlayingRef.current = false;
+      onPlayStateChange?.(false);
+    });
+
+    player.on("seeked", () => {
+      markReady();
     });
 
     let lastSent = 0;
@@ -356,6 +375,8 @@ export const VideoPlayer = ({
     });
 
     player.on("ended", () => {
+      isPlayingRef.current = false;
+      onPlayStateChange?.(false);
       onEnded();
     });
 
@@ -440,7 +461,7 @@ export const VideoPlayer = ({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, playerId, autoPlay]);
+  }, [url, playerId]);
 
   // Xử lý khi mini thay đổi - chỉ trigger resize, không dispose
   useEffect(() => {
@@ -683,24 +704,57 @@ export const VideoPlayer = ({
           />
         )}
       </Box>
-      {mini && onExpandClick && (
-        <Tooltip title="Mở rộng">
-          <IconButton
-            size="small"
-            onClick={onExpandClick}
-            sx={{
-              position: "absolute",
-              top: 6,
-              right: 6,
-              zIndex: 21,
-              bgcolor: "rgba(0,0,0,0.6)",
-              color: "#fff",
-              "&:hover": { bgcolor: PRIMARY_RED },
-            }}
-          >
-            <OpenInFullIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+      {mini && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 21,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.75,
+          }}
+        >
+          {onExpandClick && (
+            <Tooltip title="Mở rộng">
+              <IconButton
+                size="small"
+                onClick={onExpandClick}
+                sx={{
+                  bgcolor: "rgba(0,0,0,0.65)",
+                  color: "#fff",
+                  width: 30,
+                  height: 30,
+                  backdropFilter: "blur(4px)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  "&:hover": { bgcolor: PRIMARY_RED },
+                }}
+              >
+                <OpenInFullIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onCloseClick && (
+            <Tooltip title="Đóng & Tạm dừng">
+              <IconButton
+                size="small"
+                onClick={onCloseClick}
+                sx={{
+                  bgcolor: "rgba(0,0,0,0.65)",
+                  color: "#fff",
+                  width: 30,
+                  height: 30,
+                  backdropFilter: "blur(4px)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  "&:hover": { bgcolor: PRIMARY_RED },
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
       )}
     </Box>
   );
