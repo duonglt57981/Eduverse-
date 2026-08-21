@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Autocomplete,
   Box,
   Stack,
   Typography,
@@ -15,7 +15,6 @@ import {
   IconButton,
   Tooltip,
   alpha,
-  Select,
   MenuItem,
   CircularProgress,
   Button,
@@ -25,19 +24,20 @@ import {
   DialogActions,
   Snackbar,
   Alert,
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
-import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded";
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import BlockRoundedIcon from "@mui/icons-material/BlockRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import {
@@ -49,7 +49,8 @@ const PAGE_SIZE = 10;
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
-import { CSSVAR } from "@/src/theme/tokens";
+import type { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { CSSVAR, RADIUS, SHADOWS } from "@/src/theme/tokens";
 
 const khoaHocService = new KhoaHocService();
 const kiemDuyetService = new KiemDuyetService();
@@ -60,6 +61,64 @@ const FILE_BASE_URL =
   "";
 
 const DEFAULT_SORT = "moi-nhat";
+
+type SortOption = "moi-nhat" | "cu-nhat";
+
+interface CourseFilters {
+  keyword: string;
+  creatorKey: string;
+  fromDate: string;
+  toDate: string;
+  sort: SortOption;
+}
+
+interface CreatorOption {
+  key: string;
+  id?: string;
+  label: string;
+}
+
+type PublishedCourse = KhoaHocType & {
+  idKhoaHoc?: string;
+  anhBia?: string | null;
+  createdDate?: string | Date;
+};
+
+const DEFAULT_FILTERS: CourseFilters = {
+  keyword: "",
+  creatorKey: "",
+  fromDate: "",
+  toDate: "",
+  sort: DEFAULT_SORT,
+};
+
+/**
+ * Normalize text for Vietnamese accent-insensitive search
+ */
+function normalizeText(value: string = ""): string {
+  return value
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function getCourseTimestamp(course: PublishedCourse): number | null {
+  if (!course.createdDate) return null;
+  const timestamp = new Date(course.createdDate).getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function filtersEqual(left: CourseFilters, right: CourseFilters): boolean {
+  return (
+    left.keyword === right.keyword &&
+    left.creatorKey === right.creatorKey &&
+    left.fromDate === right.fromDate &&
+    left.toDate === right.toDate &&
+    left.sort === right.sort
+  );
+}
 
 function mix(cssColor: string, opacity: number) {
   const pct = Math.round(Math.max(0, Math.min(1, opacity)) * 100);
@@ -148,17 +207,15 @@ function CourseThumbnail({
 export default function LichSuKiemDuyetPage() {
   const router = useRouter();
 
-  const [keyword, setKeyword] = useState("");
-  const [keywordInput, setKeywordInput] = useState("");
-  const [sortBy, setSortBy] = useState(DEFAULT_SORT);
-  const [sortInput, setSortInput] = useState(DEFAULT_SORT);
+  const [draftFilters, setDraftFilters] =
+    useState<CourseFilters>(DEFAULT_FILTERS);
+  const [appliedFilters, setAppliedFilters] =
+    useState<CourseFilters>(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
 
+  // ── Data state ──
   const [loading, setLoading] = useState(true);
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [items, setItems] = useState<any[]>([]);
-  const [totalPage, setTotalPage] = useState(1);
-  const [tongDaDuyet, setTongDaDuyet] = useState(0);
+  const [items, setItems] = useState<PublishedCourse[]>([]);
 
   // Dialog state for stopping course
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
@@ -174,74 +231,33 @@ export default function LichSuKiemDuyetPage() {
     severity: "success" | "error";
   }>({ open: false, message: "", severity: "success" });
 
+  const hasAppliedFilters = !filtersEqual(appliedFilters, DEFAULT_FILTERS);
+  const hasUnappliedChanges = !filtersEqual(draftFilters, appliedFilters);
   const isFilterDirty =
-    keywordInput.trim() !== "" ||
-    keyword.trim() !== "" ||
-    sortInput !== DEFAULT_SORT ||
-    sortBy !== DEFAULT_SORT;
-
-  const searchParams = useMemo(() => {
-    const params: any = {
-      pageIndex: page,
-      pageSize: PAGE_SIZE,
-    };
-    if (keyword.trim()) params.keyword = keyword.trim();
-
-    // API nhận hai tham số sapXepNgay / sapXepTen.
-    switch (sortBy) {
-      case "moi-nhat":
-        params.sapXepNgay = "Moi";
-        break;
-      case "cu-nhat":
-        params.sapXepNgay = "Cu";
-        break;
-      case "ten-a-z":
-        params.sapXepTen = "AZ";
-        break;
-      case "ten-z-a":
-        params.sapXepTen = "ZA";
-        break;
-      default:
-        params.sapXepNgay = "Moi";
-    }
-    return params;
-  }, [keyword, sortBy, page]);
+    !filtersEqual(draftFilters, DEFAULT_FILTERS) || hasAppliedFilters;
+  const isDateRangeInvalid = Boolean(
+    draftFilters.fromDate &&
+      draftFilters.toDate &&
+      draftFilters.fromDate > draftFilters.toDate,
+  );
 
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await khoaHocService.GetListKhoaHocPhatHanh(searchParams);
+      const res = await khoaHocService.GetListKhoaHocPhatHanh({
+        pageIndex: 1,
+        pageSize: -1,
+      });
       if (res?.data) {
         setItems(res.data.items || []);
-        setTotalPage(res.data.totalPage || 1);
       } else {
         setItems([]);
-        setTotalPage(1);
       }
     } catch (error) {
       console.error("Lỗi tải danh sách khóa học đã phát hành:", error);
       setItems([]);
-      setTotalPage(1);
     } finally {
       setLoading(false);
-    }
-  }, [searchParams]);
-
-  const fetchStats = useCallback(async () => {
-    setLoadingStats(true);
-    try {
-      const res = await khoaHocService.GetListKhoaHocPhatHanh({
-        pageIndex: 1,
-        pageSize: 1,
-      } as any);
-
-      const total = res?.data?.totalCount ?? 0;
-      setTongDaDuyet(total);
-    } catch (e) {
-      console.error("Lỗi tải thống kê:", e);
-      setTongDaDuyet(0);
-    } finally {
-      setLoadingStats(false);
     }
   }, []);
 
@@ -249,26 +265,19 @@ export default function LichSuKiemDuyetPage() {
     fetchList();
   }, [fetchList]);
 
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setKeyword(keywordInput);
-    setSortBy(sortInput);
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (isDateRangeInvalid) return;
+    setAppliedFilters({
+      ...draftFilters,
+      keyword: draftFilters.keyword.trim(),
+    });
     setPage(1);
   };
 
-  const handleSortChange = (e: any) => {
-    setSortInput(e.target.value);
-  };
-
   const handleResetFilters = () => {
-    setKeywordInput("");
-    setKeyword("");
-    setSortInput(DEFAULT_SORT);
-    setSortBy(DEFAULT_SORT);
+    setDraftFilters(DEFAULT_FILTERS);
+    setAppliedFilters(DEFAULT_FILTERS);
     setPage(1);
   };
 
@@ -316,13 +325,15 @@ export default function LichSuKiemDuyetPage() {
       });
       // Refresh data
       await fetchList();
-      await fetchStats();
       handleCloseStopDialog();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Lỗi khi ngưng hoạt động:", error);
       setSnackbar({
         open: true,
-        message: error?.message || "Có lỗi xảy ra, vui lòng thử lại.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Có lỗi xảy ra, vui lòng thử lại.",
         severity: "error",
       });
     } finally {
@@ -333,6 +344,120 @@ export default function LichSuKiemDuyetPage() {
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
+
+  const creatorOptions = useMemo<CreatorOption[]>(() => {
+    const creators = new Map<string, CreatorOption>();
+    items.forEach((course) => {
+      const label = course.createdBy?.trim();
+      if (!label) return;
+      const id = course.createdId?.trim();
+      const key = id ? `id:${id}` : `name:${normalizeText(label)}`;
+      if (!creators.has(key)) creators.set(key, { key, id, label });
+    });
+    return Array.from(creators.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, "vi"),
+    );
+  }, [items]);
+
+  const creatorAutocompleteOptions = useMemo<CreatorOption[]>(
+    () => [{ key: "", label: "Tất cả người tạo" }, ...creatorOptions],
+    [creatorOptions],
+  );
+
+  const selectedCreator =
+    creatorAutocompleteOptions.find(
+      (option) => option.key === draftFilters.creatorKey,
+    ) ?? creatorAutocompleteOptions[0];
+
+  const filteredItems = useMemo(() => {
+    const normalizedKeyword = normalizeText(appliedFilters.keyword);
+    const creator = creatorOptions.find(
+      (option) => option.key === appliedFilters.creatorKey,
+    );
+    const fromTimestamp = appliedFilters.fromDate
+      ? new Date(`${appliedFilters.fromDate}T00:00:00.000`).getTime()
+      : null;
+    const toTimestamp = appliedFilters.toDate
+      ? new Date(`${appliedFilters.toDate}T23:59:59.999`).getTime()
+      : null;
+
+    const filtered = items.filter((course) => {
+      if (
+        normalizedKeyword &&
+        !normalizeText(course.tieuDe ?? "").includes(normalizedKeyword)
+      ) {
+        return false;
+      }
+
+      if (creator) {
+        const matchesCreator = creator.id
+          ? course.createdId === creator.id
+          : normalizeText(course.createdBy ?? "") === normalizeText(creator.label);
+        if (!matchesCreator) return false;
+      }
+
+      if (fromTimestamp !== null || toTimestamp !== null) {
+        const courseTimestamp = getCourseTimestamp(course);
+        if (courseTimestamp === null) return false;
+        if (fromTimestamp !== null && courseTimestamp < fromTimestamp) return false;
+        if (toTimestamp !== null && courseTimestamp > toTimestamp) return false;
+      }
+
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aTime = getCourseTimestamp(a);
+      const bTime = getCourseTimestamp(b);
+      if (aTime === null && bTime === null) return 0;
+      if (aTime === null) return 1;
+      if (bTime === null) return -1;
+      return appliedFilters.sort === "cu-nhat" ? aTime - bTime : bTime - aTime;
+    });
+  }, [items, appliedFilters, creatorOptions]);
+
+  const totalPage = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const paginatedItems = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredItems.slice(start, start + PAGE_SIZE);
+  }, [filteredItems, page]);
+
+  // Result label
+  const resultLabel = useMemo(() => {
+    const count = filteredItems.length;
+    const hasFilter =
+      appliedFilters.keyword !== "" ||
+      appliedFilters.creatorKey !== "" ||
+      appliedFilters.fromDate !== "" ||
+      appliedFilters.toDate !== "";
+
+    if (loading) return null;
+    if (hasFilter) {
+      return `${count} khóa học được tìm thấy`;
+    }
+    return `${items.length} khóa học`;
+  }, [filteredItems.length, items.length, loading, appliedFilters]);
+
+  const tongDaDuyet = items.length;
+  const loadingStats = loading;
+  const filterControlSx = {
+    width: "100%",
+    minWidth: 0,
+    "& .MuiOutlinedInput-root": {
+      minHeight: 44,
+      borderRadius: `${RADIUS.base}px`,
+      bgcolor: COLORS.paperRaised,
+      transition: "border-color 120ms ease, box-shadow 120ms ease",
+      "& fieldset": { borderColor: COLORS.line },
+      "&:hover fieldset": { borderColor: mix(COLORS.primary, 0.65) },
+      "&.Mui-focused": { boxShadow: SHADOWS.focus },
+      "&.Mui-focused fieldset": {
+        borderColor: COLORS.primary,
+        borderWidth: 1.5,
+      },
+    },
+    "& .MuiInputLabel-root": { fontSize: 14 },
+  } as const;
 
   return (
     <AuthGuard allowedRoles={["Admin"]}>
@@ -488,7 +613,7 @@ export default function LichSuKiemDuyetPage() {
             </Stack>
           </Box>
 
-          {/* Bộ lọc */}
+          {/* ── Main Content Card ── */}
           <Box
             sx={{
               borderRadius: 3,
@@ -497,52 +622,104 @@ export default function LichSuKiemDuyetPage() {
               overflow: "hidden",
             }}
           >
+            {/* ── Filter Bar ── */}
             <Box
               component="form"
               onSubmit={handleSearchSubmit}
               sx={{
-                p: 2,
+                p: { xs: 2, sm: 2.5 },
                 borderBottom: `1px solid ${COLORS.line}`,
+                bgcolor: COLORS.paper,
               }}
             >
-              <Typography
-                sx={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: mix(COLORS.ink, 0.45),
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                  mb: 1.25,
-                }}
-              >
-                Tìm kiếm & sắp xếp
-              </Typography>
-
               <Stack
                 direction={{ xs: "column", sm: "row" }}
-                spacing={1.25}
-                sx={{ alignItems: { sm: "center" } }}
+                spacing={{ xs: 0.75, sm: 1.5 }}
+                sx={{
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}
               >
+                <Box>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+                    <FilterListRoundedIcon
+                      aria-hidden="true"
+                      sx={{ fontSize: 18, color: COLORS.primary }}
+                    />
+                    <Typography
+                      component="h2"
+                      sx={{ fontSize: 14, fontWeight: 800, color: COLORS.ink }}
+                    >
+                      Tìm kiếm &amp; bộ lọc
+                    </Typography>
+                  </Stack>
+                  <Typography
+                    sx={{
+                      mt: 0.5,
+                      fontSize: 12.5,
+                      lineHeight: 1.45,
+                      color: COLORS.inkSoft,
+                    }}
+                  >
+                    Chọn điều kiện, sau đó bấm Tìm kiếm để áp dụng.
+                  </Typography>
+                </Box>
+
+                {(hasAppliedFilters || hasUnappliedChanges) && (
+                  <Chip
+                    label={hasUnappliedChanges ? "Chưa áp dụng" : "Đang lọc"}
+                    size="small"
+                    sx={{
+                      height: 26,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      bgcolor: hasUnappliedChanges
+                        ? mix(COLORS.gold, 0.12)
+                        : mix(COLORS.primary, 0.1),
+                      color: hasUnappliedChanges ? COLORS.gold : COLORS.primary,
+                      border: `1px solid ${
+                        hasUnappliedChanges
+                          ? mix(COLORS.gold, 0.24)
+                          : mix(COLORS.primary, 0.18)
+                      }`,
+                    }}
+                  />
+                )}
+              </Stack>
+
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "minmax(0, 1fr)",
+                    sm: "repeat(2, minmax(0, 1fr))",
+                    md: "repeat(3, minmax(0, 1fr))",
+                    lg: "minmax(240px, 2fr) minmax(200px, 1.35fr) repeat(3, minmax(145px, 1fr)) minmax(184px, auto)",
+                  },
+                  gap: { xs: 1.5, sm: 1.75 },
+                  alignItems: "start",
+                }}
+              >
+                {/* Draft values only. Results change after submit. */}
                 <TextField
                   size="small"
                   fullWidth
-                  placeholder="Tìm theo tên khóa học..."
-                  value={keywordInput}
-                  onChange={(e) => setKeywordInput(e.target.value)}
+                  label="Tên khóa học"
+                  placeholder="Ví dụ: AWS, React..."
+                  value={draftFilters.keyword}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      keyword: event.target.value,
+                    }))
+                  }
                   sx={{
-                    "& .MuiOutlinedInput-root": {
-                      height: 40,
-                      borderRadius: 2,
-                      bgcolor: COLORS.paper,
-                      "& fieldset": { borderColor: "transparent" },
-                      "&:hover fieldset": { borderColor: COLORS.line },
-                      "&.Mui-focused": { bgcolor: "#fff" },
-                      "&.Mui-focused fieldset": {
-                        borderColor: COLORS.primary,
-                      },
-                    },
+                    ...filterControlSx,
+                    gridColumn: { xs: "span 1", sm: "1 / -1", md: "span 2", lg: "span 1" },
                   }}
                   slotProps={{
+                    htmlInput: { "aria-label": "Tìm kiếm khóa học" },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
@@ -555,88 +732,238 @@ export default function LichSuKiemDuyetPage() {
                   }}
                 />
 
-                <Select
+                <Autocomplete
                   size="small"
-                  value={sortInput}
-                  onChange={handleSortChange}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <SwapVertRoundedIcon
-                        sx={{ fontSize: 18, color: COLORS.inkSoft }}
-                      />
-                    </InputAdornment>
+                  openOnFocus
+                  autoHighlight
+                  clearOnEscape
+                  options={creatorAutocompleteOptions}
+                  value={selectedCreator}
+                  onChange={(_, option) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      creatorKey: option?.key ?? "",
+                    }))
                   }
+                  getOptionLabel={(option) => option.label}
+                  isOptionEqualToValue={(option, value) => option.key === value.key}
+                  filterOptions={(options, state) => {
+                    const keyword = normalizeText(state.inputValue);
+                    if (!keyword) return options;
+                    return options.filter(
+                      (option) =>
+                        option.key !== "" &&
+                        normalizeText(option.label).includes(keyword),
+                    );
+                  }}
+                  noOptionsText="Không tìm thấy người tạo phù hợp"
                   sx={{
-                    minWidth: { xs: "100%", sm: 170 },
-                    height: 40,
-                    borderRadius: 2,
-                    bgcolor: COLORS.paper,
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "transparent",
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: COLORS.line,
-                    },
-                    "&.Mui-focused": { bgcolor: "#fff" },
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                      borderColor: COLORS.primary,
+                    ...filterControlSx,
+                    "& .MuiOutlinedInput-root": {
+                      ...filterControlSx["& .MuiOutlinedInput-root"],
+                      height: 44,
+                      py: 0,
                     },
                   }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Người tạo"
+                      placeholder="Tìm người tạo..."
+                      slotProps={{
+                        inputLabel: params.slotProps.inputLabel,
+                        htmlInput: params.slotProps.htmlInput,
+                        input: {
+                          ...params.slotProps.input,
+                          startAdornment: (
+                            <>
+                              <InputAdornment position="start">
+                                <PersonRoundedIcon
+                                  sx={{ fontSize: 17, color: COLORS.inkSoft }}
+                                />
+                              </InputAdornment>
+                              {params.slotProps.input.startAdornment}
+                            </>
+                          ),
+                        },
+                      }}
+                    />
+                  )}
+                />
+
+                <TextField
+                  size="small"
+                  type="date"
+                  label="Từ ngày"
+                  value={draftFilters.fromDate}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      fromDate: event.target.value,
+                    }))
+                  }
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: {
+                      max: draftFilters.toDate || undefined,
+                      "aria-describedby": isDateRangeInvalid
+                        ? "course-date-range-error"
+                        : undefined,
+                    },
+                  }}
+                  error={isDateRangeInvalid}
+                  sx={filterControlSx}
+                />
+
+                <TextField
+                  size="small"
+                  type="date"
+                  label="Đến ngày"
+                  value={draftFilters.toDate}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      toDate: event.target.value,
+                    }))
+                  }
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: {
+                      min: draftFilters.fromDate || undefined,
+                      "aria-describedby": isDateRangeInvalid
+                        ? "course-date-range-error"
+                        : undefined,
+                    },
+                  }}
+                  error={isDateRangeInvalid}
+                  sx={filterControlSx}
+                />
+
+                {/* Sort dropdown */}
+                <TextField
+                  select
+                  size="small"
+                  label="Sắp xếp"
+                  value={draftFilters.sort}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      sort: event.target.value as SortOption,
+                    }))
+                  }
+                  slotProps={{
+                    select: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SwapVertRoundedIcon
+                            aria-hidden="true"
+                            sx={{ fontSize: 18, color: COLORS.inkSoft }}
+                          />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                  sx={filterControlSx}
                 >
                   <MenuItem value="moi-nhat">Mới nhất</MenuItem>
                   <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
-                  <MenuItem value="ten-a-z">Tên A→Z</MenuItem>
-                  <MenuItem value="ten-z-a">Tên Z→A</MenuItem>
-                </Select>
+                </TextField>
 
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={<SearchIcon />}
-                  disabled={loading}
+                <Box
                   sx={{
-                    minWidth: { xs: "100%", sm: 124 },
-                    height: 40,
-                    borderRadius: 2,
-                    px: 2,
-                    textTransform: "none",
-                    fontWeight: 700,
-                    bgcolor: COLORS.primary,
-                    boxShadow: "none",
-                    "&:hover": { bgcolor: COLORS.primary, boxShadow: "none" },
+                    display: "flex",
+                    gap: 1,
+                    minWidth: 0,
+                    gridColumn: { xs: "span 1", sm: "1 / -1", md: "1 / -1", lg: "span 1" },
+                    justifyContent: { md: "flex-end", lg: "stretch" },
                   }}
                 >
-                  Tìm kiếm
-                </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={isDateRangeInvalid}
+                    startIcon={<SearchIcon aria-hidden="true" />}
+                    sx={{
+                      flex: 1,
+                      minWidth: { xs: 0, sm: 132 },
+                      height: 44,
+                      borderRadius: `${RADIUS.base}px`,
+                      bgcolor: COLORS.primary,
+                      boxShadow: "none",
+                      "&:hover": {
+                        bgcolor: COLORS.primaryDark,
+                        boxShadow: SHADOWS.sm,
+                      },
+                      "&.Mui-focusVisible": { boxShadow: SHADOWS.focus },
+                    }}
+                  >
+                    Tìm kiếm
+                  </Button>
 
-                <Tooltip title="Đặt lại bộ lọc">
-                  <span>
-                    <IconButton
-                      onClick={handleResetFilters}
-                      disabled={!isFilterDirty}
-                      sx={{
-                        border: `1px solid ${COLORS.line}`,
-                        borderRadius: 2,
-                        width: 40,
-                        height: 40,
-                        flexShrink: 0,
-                        color: isFilterDirty
-                          ? COLORS.primary
-                          : mix(COLORS.inkSoft, 0.4),
-                        "&:hover": {
-                          borderColor: COLORS.primary,
-                          bgcolor: mix(COLORS.primary, 0.06),
-                        },
-                      }}
-                    >
-                      <RestartAltRoundedIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              </Stack>
+                  {isFilterDirty && (
+                    <Tooltip title="Đặt lại tất cả bộ lọc">
+                      <Button
+                        variant="outlined"
+                        onClick={handleResetFilters}
+                        startIcon={<RestartAltRoundedIcon aria-hidden="true" />}
+                        sx={{
+                          flex: { xs: 1, sm: "0 0 auto" },
+                          minWidth: { xs: 0, sm: 112 },
+                          height: 44,
+                          borderRadius: `${RADIUS.base}px`,
+                          borderColor: COLORS.line,
+                          color: COLORS.inkSoft,
+                          bgcolor: COLORS.paperRaised,
+                          "&:hover": {
+                            borderColor: COLORS.primary,
+                            color: COLORS.primary,
+                            bgcolor: mix(COLORS.primary, 0.05),
+                          },
+                          "&.Mui-focusVisible": { boxShadow: SHADOWS.focus },
+                        }}
+                      >
+                        Đặt lại
+                      </Button>
+                    </Tooltip>
+                  )}
+                </Box>
+              </Box>
+
+              {isDateRangeInvalid && (
+                <Typography
+                  id="course-date-range-error"
+                  role="alert"
+                  sx={{ mt: 1, fontSize: 12.5, fontWeight: 600, color: "error.main" }}
+                >
+                  Từ ngày không được sau Đến ngày.
+                </Typography>
+              )}
             </Box>
 
-            {/* Danh sách */}
+            {/* ── Result count bar ── */}
+            <Box
+              sx={{
+                px: 2,
+                py: 1,
+                borderBottom: `1px solid ${COLORS.line}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                minHeight: 38,
+              }}
+            >
+              {loading ? (
+                <Skeleton width={120} height={16} />
+              ) : (
+                <Typography
+                  sx={{ fontSize: 13, color: COLORS.inkSoft, fontWeight: 500 }}
+                >
+                  {resultLabel}
+                </Typography>
+              )}
+            </Box>
+
+            {/* ── Course list ── */}
             <Box sx={{ p: 2 }}>
               {loading ? (
                 <Stack spacing={1.5}>
@@ -649,43 +976,64 @@ export default function LichSuKiemDuyetPage() {
                     />
                   ))}
                 </Stack>
-              ) : items.length === 0 ? (
+              ) : filteredItems.length === 0 ? (
+                /* ── Empty state ── */
                 <Box sx={{ py: 7, textAlign: "center" }}>
                   <Box
                     sx={{
-                      width: 56,
-                      height: 56,
+                      width: 64,
+                      height: 64,
                       borderRadius: "50%",
                       bgcolor: COLORS.paper,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       mx: "auto",
-                      mb: 1.5,
+                      mb: 2,
                     }}
                   >
-                    <SchoolRoundedIcon
-                      sx={{ fontSize: 26, color: mix(COLORS.primary, 0.35) }}
+                    <SearchOffRoundedIcon
+                      sx={{ fontSize: 30, color: mix(COLORS.primary, 0.35) }}
                     />
                   </Box>
                   <Typography
-                    sx={{ color: COLORS.ink, fontSize: 14, fontWeight: 600 }}
+                    sx={{ color: COLORS.ink, fontSize: 15, fontWeight: 700, mb: 0.5 }}
                   >
-                    Không tìm thấy khóa học nào
+                    Không tìm thấy khóa học phù hợp.
                   </Typography>
                   <Typography
                     variant="caption"
                     color={COLORS.inkSoft}
-                    sx={{ display: "block", mt: 0.25 }}
+                    sx={{ display: "block", mb: 2.5, maxWidth: 360, mx: "auto" }}
                   >
-                    Hiện chưa có khóa học nào được phát hành phù hợp với bộ lọc
-                    hiện tại.
+                    Thử thay đổi từ khóa hoặc bộ lọc để xem kết quả khác.
                   </Typography>
+                  {isFilterDirty && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={handleResetFilters}
+                      startIcon={<RestartAltRoundedIcon fontSize="small" />}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        borderColor: COLORS.line,
+                        color: COLORS.inkSoft,
+                        "&:hover": {
+                          borderColor: COLORS.primary,
+                          color: COLORS.primary,
+                        },
+                      }}
+                    >
+                      Xóa bộ lọc
+                    </Button>
+                  )}
                 </Box>
               ) : (
                 <Stack spacing={1.25}>
-                  {items.map((item) => {
-                    const id = item.id || item.idKhoaHoc;
+                  {paginatedItems.map((item) => {
+                    const id = String(item.id || item.idKhoaHoc || "");
 
                     return (
                       <Box
@@ -706,10 +1054,6 @@ export default function LichSuKiemDuyetPage() {
                               0.12,
                             )}`,
                             borderColor: mix(COLORS.primary, 0.4),
-                          },
-                          "&:hover .go-arrow": {
-                            transform: "translateX(2px)",
-                            color: COLORS.primary,
                           },
                         }}
                       >
@@ -790,6 +1134,7 @@ export default function LichSuKiemDuyetPage() {
                           direction="row"
                           spacing={0.25}
                           sx={{ alignItems: "center", flexShrink: 0 }}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           {/* Replace view button with stop button */}
                           <Tooltip title="Ngưng hoạt động khóa học">
@@ -804,13 +1149,6 @@ export default function LichSuKiemDuyetPage() {
                               <BlockRoundedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <ChevronRightRoundedIcon
-                            className="go-arrow"
-                            sx={{
-                              color: mix(COLORS.ink, 0.25),
-                              transition: "all .18s ease",
-                            }}
-                          />
                         </Stack>
                       </Box>
                     );
@@ -818,7 +1156,7 @@ export default function LichSuKiemDuyetPage() {
                 </Stack>
               )}
 
-              {!loading && items.length > 0 && totalPage > 1 && (
+              {!loading && filteredItems.length > 0 && totalPage > 1 && (
                 <Stack
                   direction="row"
                   sx={{ justifyContent: "center", pt: 2.5 }}
