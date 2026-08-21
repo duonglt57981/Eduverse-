@@ -39,6 +39,22 @@ namespace Eduverse.Api.Controller
             catch (Exception ex) { return DataResponse<string>.False(ex.Message); }
         }
 
+        [HttpGet("khoa-hoc/{idKhoaHoc}/giang-vien/{idGiangVien}/lich-su-don-hang")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<LichSuNhanTheoDonDto>>> GetLichSuDonHang(Guid idKhoaHoc, Guid idGiangVien)
+        {
+            try { return DataResponse<List<LichSuNhanTheoDonDto>>.Success(await _service.GetLichSuDonHang(idKhoaHoc, idGiangVien)); }
+            catch (Exception ex) { return DataResponse<List<LichSuNhanTheoDonDto>>.False(ex.Message); }
+        }
+
+        [HttpGet("khoa-hoc/{idKhoaHoc}/giang-vien/{idGiangVien}/lich-su-ty-le")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<LichSuThayDoiTyLeDto>>> GetLichSuTyLe(Guid idKhoaHoc, Guid idGiangVien)
+        {
+            try { return DataResponse<List<LichSuThayDoiTyLeDto>>.Success(await _service.GetLichSuThayDoiTyLe(idKhoaHoc, idGiangVien)); }
+            catch (Exception ex) { return DataResponse<List<LichSuThayDoiTyLeDto>>.False(ex.Message); }
+        }
+
 
         // Hủy/kick theo idGiangVien
         [HttpDelete("khoa-hoc/{idKhoaHoc}/giang-vien/{idGiangVien}/huy")]

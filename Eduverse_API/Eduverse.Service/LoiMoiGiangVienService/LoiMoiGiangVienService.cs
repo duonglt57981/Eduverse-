@@ -693,6 +693,65 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 DanhSachDangMoi = dangMoiList,
             };
         }
+        // ── Lịch sử doanh thu theo giảng viên 
+        public async Task<List<LichSuNhanTheoDonDto>> GetLichSuDonHang(Guid idKhoaHoc, Guid idGiangVien)
+        {
+            var userId = LayUserId();
+            var coQuyenXem = await _khoaHocGVRepo.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == userId && !x.IsDeleted
+                            && (x.LaChuSoHuu || x.Performance));
+            if (!coQuyenXem) throw new Exception("Bạn không có quyền xem lịch sử doanh thu của khóa học này");
+
+            var ds = await _donHangGiangVienRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == idGiangVien && !x.IsDeleted)
+                .OrderByDescending(x => x.NgayGhiNhan)
+                .ToListAsync();
+
+            return ds.Select(x => new LichSuNhanTheoDonDto
+            {
+                IdDonHang = x.IdDonHang,
+                TyLeChiaDoanhThu = x.TyLeChiaDoanhThu,
+                GiaLucDat = x.GiaLucDat,
+                SoTienGiam = x.SoTienGiam,
+                SoTienNhan = x.SoTienNhan,
+                NgayGhiNhan = x.NgayGhiNhan,
+            }).ToList();
+        }
+
+        public async Task<List<LichSuThayDoiTyLeDto>> GetLichSuThayDoiTyLe(Guid idKhoaHoc, Guid idGiangVien)
+        {
+            var userId = LayUserId();
+            var coQuyenXem = await _khoaHocGVRepo.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == userId && !x.IsDeleted
+                            && (x.LaChuSoHuu || x.Performance));
+            if (!coQuyenXem) throw new Exception("Bạn không có quyền xem lịch sử doanh thu của khóa học này");
+
+            var donHangs = await _donHangGiangVienRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == idGiangVien && !x.IsDeleted)
+                .OrderBy(x => x.NgayGhiNhan)
+                .ToListAsync();
+
+            var ketQua = new List<LichSuThayDoiTyLeDto>();
+            int? tyLeTruoc = null;
+
+            foreach (var dh in donHangs)
+            {
+                if (tyLeTruoc.HasValue && tyLeTruoc.Value != dh.TyLeChiaDoanhThu)
+                {
+                    ketQua.Add(new LichSuThayDoiTyLeDto
+                    {
+                        TyLeCu = tyLeTruoc.Value,
+                        TyLeMoi = dh.TyLeChiaDoanhThu,
+                        NgayThayDoi = dh.NgayGhiNhan,
+                    });
+                }
+                tyLeTruoc = dh.TyLeChiaDoanhThu;
+            }
+
+            ketQua.Reverse();
+            return ketQua;
+        }
+
 
         private void KiemTraTyLeHopLe(int tyLe)
         {
