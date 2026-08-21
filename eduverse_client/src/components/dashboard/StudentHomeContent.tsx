@@ -181,6 +181,12 @@ function isValidImage(url?: string): boolean {
   return t.startsWith("http") || t.startsWith("/") || t.startsWith(".");
 }
 
+const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
+
+function isValidGuid(id?: string | null): id is string {
+  return !!id && id !== EMPTY_GUID;
+}
+
 function initialsOf(name?: string) {
   if (!name || name === "học viên") return "HV";
   const cleanName = name.trim();
@@ -603,9 +609,10 @@ function HoverPanel({
               startIcon={<PlayCircleFilledRounded />}
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(
-                  `/student/courses/my-courses/learning/${course.idDangKiKhoaHoc || course.id}`,
-                );
+                const target = isValidGuid(course.idDangKiKhoaHoc)
+                  ? course.idDangKiKhoaHoc
+                  : course.id;
+                router.push(`/student/courses/my-courses/learning/${target}`);
               }}
               sx={{
                 borderRadius: "12px",
@@ -719,7 +726,8 @@ function CourseCard({
   const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh ?? 5.0;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
   const instructorName =
-    course.danhSachGiangVienHienThi && course.danhSachGiangVienHienThi.length > 0
+    course.danhSachGiangVienHienThi &&
+    course.danhSachGiangVienHienThi.length > 0
       ? course.danhSachGiangVienHienThi.join(", ")
       : course.tenGiangVien || course.instructor || "Giảng viên EduVerse";
 
@@ -1270,7 +1278,8 @@ function ContinueLearningCard({
               sx={{
                 fontSize: 12.5,
                 fontWeight: 900,
-                color: pct === 100 ? "#10B981" : pct > 0 ? C.primary : C.textMuted,
+                color:
+                  pct === 100 ? "#10B981" : pct > 0 ? C.primary : C.textMuted,
               }}
             >
               {pct}%
@@ -1495,19 +1504,21 @@ export default function StudentHomeContent() {
 
   const handleOpenCourse = useCallback(
     (course: KhoaHocDto) => {
-      const id = course.idDangKiKhoaHoc || course.id;
-      if (!id) return;
-      if (
-        course.daDangKy ||
-        course.idDangKiKhoaHoc ||
-        (course as any).progress !== undefined
-      ) {
-        router.push(
-          `/student/courses/my-courses/learning/${course.idDangKiKhoaHoc || course.id}`,
-        );
-      } else {
-        router.push(`/student/enroll-courses/${id}`);
+      if (!course.id) return;
+      const isEnrolled =
+        course.daDangKy === true ||
+        isValidGuid(course.idDangKiKhoaHoc) ||
+        (course as any).progress !== undefined;
+
+      if (isEnrolled) {
+        const target = isValidGuid(course.idDangKiKhoaHoc)
+          ? course.idDangKiKhoaHoc
+          : course.id;
+        router.push(`/student/courses/my-courses/learning/${target}`);
+        return;
       }
+
+      router.push(`/student/enroll-courses/${course.id}`);
     },
     [router],
   );

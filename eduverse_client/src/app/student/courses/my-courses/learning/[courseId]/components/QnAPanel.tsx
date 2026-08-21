@@ -15,8 +15,6 @@ import {
   MenuItem,
   Select,
   InputAdornment,
-  ToggleButtonGroup,
-  ToggleButton,
 } from "@mui/material";
 import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
@@ -31,6 +29,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import ReplyIcon from "@mui/icons-material/Reply";
 import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useMemo, useState, useEffect } from "react";
@@ -70,6 +69,7 @@ function UserAvatar({
       sx={{
         width: size,
         height: size,
+        flexShrink: 0,
         bgcolor: `${PRIMARY}22`,
         color: PRIMARY,
         fontWeight: 700,
@@ -81,9 +81,59 @@ function UserAvatar({
   );
 }
 
+// ── Cây trả lời (build từ idTraLoiDuocReply) ─────────────────────────────
+interface TraLoiNode {
+  traLoi: TraLoiDto;
+  con: TraLoiNode[];
+}
+
+function xayDungCayTraLoi(danhSach: TraLoiDto[]): TraLoiNode[] {
+  const mapNode = new Map<string, TraLoiNode>();
+  danhSach.forEach((tl) => mapNode.set(tl.id, { traLoi: tl, con: [] }));
+
+  const goc: TraLoiNode[] = [];
+
+  danhSach.forEach((tl) => {
+    const node = mapNode.get(tl.id)!;
+    const idCha = tl.idTraLoiDuocReply;
+    // Chỉ coi là "con" nếu tìm thấy cha thật sự trong danh sách hiện có.
+    // Nếu cha không còn tồn tại (đã bị xóa) thì fallback về gốc, tránh mất trả lời.
+    if (idCha && mapNode.has(idCha)) {
+      mapNode.get(idCha)!.con.push(node);
+    } else {
+      goc.push(node);
+    }
+  });
+
+  // Sắp theo thời gian tạo (cũ → mới) ở mọi cấp
+  const sapXep = (nodes: TraLoiNode[]) => {
+    nodes.sort(
+      (a, b) =>
+        new Date(a.traLoi.ngayTao).getTime() -
+        new Date(b.traLoi.ngayTao).getTime(),
+    );
+    nodes.forEach((n) => sapXep(n.con));
+  };
+  sapXep(goc);
+
+  return goc;
+}
+
+function demTongSoNode(nodes: TraLoiNode[]): number {
+  return nodes.reduce((sum, n) => sum + 1 + demTongSoNode(n.con), 0);
+}
+
 // ── Card câu trả lời ─────────────────────────────────────────────────────
+// Ghi chú: KHÔNG dùng position:absolute + top/left tính cứng theo px nữa,
+// vì chiều cao mỗi card thay đổi theo độ dài nội dung → dễ lệch, răng cưa.
+// Thay vào đó: đường dọc là border-left của cả CỤM CON (xem TraLoiThread),
+// tự co giãn theo chiều cao thật; ở đây chỉ vẽ 1 đường ngang ngắn nối
+// vào tâm avatar bằng flex + margin âm, luôn canh giữa avatar (36px).
 function TraLoiCard({
   traLoi,
+  tenNguoiDuocReply,
+  depth,
+  laCuoiNhom,
   laGiangVien,
   onLike,
   onGhim,
@@ -91,6 +141,9 @@ function TraLoiCard({
   onReply,
 }: {
   traLoi: TraLoiDto;
+  tenNguoiDuocReply?: string;
+  depth: number;
+  laCuoiNhom: boolean;
   laGiangVien?: boolean;
   onLike: () => void;
   onGhim: () => void;
@@ -101,13 +154,42 @@ function TraLoiCard({
     <Box
       sx={{
         display: "flex",
+        alignItems: "flex-start",
         gap: 1.5,
-        py: 2,
+        pt: 1.5,
+        // Card cuối cùng của một nhóm anh em KHÔNG có padding-bottom, vì
+        // padding này nằm bên trong đường borderLeft của khối cha (xem
+        // TraLoiChildren) — nếu để pb ở đây, đường kẻ dọc sẽ bị "thừa"
+        // một đoạn trống phía dưới avatar cuối cùng thay vì dừng khít lại.
+        // LƯU Ý: không dùng margin-bottom thay thế — trong flex container,
+        // margin của phần tử con vẫn nằm trong phạm vi mà border-left của
+        // cha kéo dài qua (không bị "đẩy ra ngoài" như block layout có thể
+        // collapse), nên margin cũng sẽ kéo dài đường kẻ y hệt padding.
+        // Khoảng cách với phần tử tiếp theo (nút "Xem thêm", card cha kế
+        // tiếp) phải đặt ở ngoài TraLoiChildren, không đặt ở card con.
+        pb: laCuoiNhom ? 0 : 1.5,
         ...(traLoi.ghimTraLoi
           ? { bgcolor: `${PRIMARY}05`, mx: -2, px: 2, borderRadius: "10px" }
           : {}),
       }}
     >
+      {/* Đường ngang nối từ đường dọc (border-left của khối bọc, xem
+          TraLoiThread) vào tâm avatar. Khối bọc có pl: 17px nên đường ngang
+          dài đúng 17px và kéo ngược bằng margin âm để chạm vào border đó —
+          không đoán số theo chiều cao card, nên không phụ thuộc nội dung dài/ngắn. */}
+      {depth > 0 && (
+        <Box
+          sx={{
+            width: "17px",
+            height: "2px",
+            bgcolor: `${PRIMARY}22`,
+            flexShrink: 0,
+            mt: "15px", // canh vào tâm avatar 32px (pt:1.5 = 12px, +16px nửa avatar, -1px nửa đường kẻ)
+            ml: "-17px",
+          }}
+        />
+      )}
+
       <UserAvatar
         anh={traLoi.nguoiTraLoiAnh}
         ten={traLoi.nguoiTraLoiTen}
@@ -158,7 +240,30 @@ function TraLoiCard({
           </Typography>
         </Box>
 
-        {/* Nội dung — @mention highlight */}
+        {/* Nhãn "Trả lời @Ten" — lấy từ id thật (idTraLoiDuocReply), không đoán từ text nữa */}
+        {tenNguoiDuocReply && (
+          <Box
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.4,
+              mb: 0.5,
+              px: 0.75,
+              py: 0.25,
+              borderRadius: "6px",
+              bgcolor: `${PRIMARY}0A`,
+            }}
+          >
+            <SubdirectoryArrowRightIcon
+              sx={{ fontSize: 12, color: PRIMARY, opacity: 0.7 }}
+            />
+            <Typography sx={{ fontSize: 11, fontWeight: 600, color: PRIMARY }}>
+              Trả lời {tenNguoiDuocReply}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Nội dung */}
         <Typography
           sx={{
             fontSize: 14,
@@ -167,16 +272,7 @@ function TraLoiCard({
             whiteSpace: "pre-wrap",
           }}
         >
-          {traLoi.noiDung.startsWith("@") ? (
-            <>
-              <Box component="span" sx={{ color: PRIMARY, fontWeight: 700 }}>
-                {traLoi.noiDung.split(" ")[0]}
-              </Box>
-              {" " + traLoi.noiDung.split(" ").slice(1).join(" ")}
-            </>
-          ) : (
-            traLoi.noiDung
-          )}
+          {traLoi.noiDung}
         </Typography>
 
         {/* Actions */}
@@ -266,6 +362,162 @@ function TraLoiCard({
   );
 }
 
+// ── Nhóm trả lời con — mặc định chỉ hiện vài cái đầu, có nút "Xem thêm" ──
+const SO_LUONG_HIEN_MAC_DINH = 2;
+
+function TraLoiChildren({
+  nodes,
+  depth,
+  tenTheoId,
+  laGiangVien,
+  onLike,
+  onGhim,
+  onXoa,
+  onReply,
+  soLuongHienMacDinh = SO_LUONG_HIEN_MAC_DINH,
+  coDuongDoc = true,
+}: {
+  nodes: TraLoiNode[];
+  depth: number;
+  tenTheoId: Map<string, string>;
+  laGiangVien?: boolean;
+  onLike: (id: string) => void;
+  onGhim: (id: string, ghim: boolean) => void;
+  onXoa: (id: string) => void;
+  onReply: (idTraLoi: string, tenNguoi: string) => void;
+  soLuongHienMacDinh?: number;
+  coDuongDoc?: boolean;
+}) {
+  const [daMoRong, setDaMoRong] = useState(false);
+
+  const coTheAn = nodes.length > soLuongHienMacDinh;
+  const nodesHienThi =
+    coTheAn && !daMoRong ? nodes.slice(0, soLuongHienMacDinh) : nodes;
+  const soLuongAn = nodes.length - soLuongHienMacDinh;
+
+  return (
+    <Box
+      sx={
+        coDuongDoc
+          ? {
+              ml: "15px", // canh đúng tâm avatar 32px của card cha (16px - 1px border)
+              pl: "17px", // khoảng cách từ đường dọc tới avatar con
+              borderLeft: `2px solid ${PRIMARY}22`,
+            }
+          : {}
+      }
+    >
+      <TraLoiThread
+        nodes={nodesHienThi}
+        depth={depth}
+        tenTheoId={tenTheoId}
+        laGiangVien={laGiangVien}
+        onLike={onLike}
+        onGhim={onGhim}
+        onXoa={onXoa}
+        onReply={onReply}
+      />
+
+      {coTheAn && (
+        <Button
+          size="small"
+          onClick={() => setDaMoRong((v) => !v)}
+          startIcon={
+            <SubdirectoryArrowRightIcon
+              sx={{
+                fontSize: 13,
+                transform: daMoRong ? "scaleY(-1)" : "none",
+              }}
+            />
+          }
+          sx={{
+            textTransform: "none",
+            fontSize: 12.5,
+            fontWeight: 700,
+            color: PRIMARY,
+            p: "4px 8px",
+            minWidth: 0,
+            "&:hover": { bgcolor: `${PRIMARY}08` },
+          }}
+        >
+          {daMoRong ? "Ẩn bớt phản hồi" : `Xem thêm ${soLuongAn} phản hồi`}
+        </Button>
+      )}
+    </Box>
+  );
+}
+
+// ── Render đệ quy cây trả lời (thread) ───────────────────────────────────
+function TraLoiThread({
+  nodes,
+  depth,
+  tenTheoId,
+  laGiangVien,
+  onLike,
+  onGhim,
+  onXoa,
+  onReply,
+}: {
+  nodes: TraLoiNode[];
+  depth: number;
+  tenTheoId: Map<string, string>;
+  laGiangVien?: boolean;
+  onLike: (id: string) => void;
+  onGhim: (id: string, ghim: boolean) => void;
+  onXoa: (id: string) => void;
+  onReply: (idTraLoi: string, tenNguoi: string) => void;
+}) {
+  return (
+    <Box>
+      {nodes.map((node, idx) => {
+        const { traLoi, con } = node;
+        const idCha = traLoi.idTraLoiDuocReply;
+        const tenCha = idCha ? tenTheoId.get(idCha) : undefined;
+        const laCuoiNhom = idx === nodes.length - 1 && con.length === 0;
+
+        return (
+          <Box key={traLoi.id}>
+            <TraLoiCard
+              traLoi={traLoi}
+              tenNguoiDuocReply={depth > 0 ? tenCha : undefined}
+              depth={depth}
+              laCuoiNhom={laCuoiNhom}
+              laGiangVien={laGiangVien}
+              onLike={() => onLike(traLoi.id)}
+              onGhim={() => onGhim(traLoi.id, !traLoi.ghimTraLoi)}
+              onXoa={() => onXoa(traLoi.id)}
+              onReply={onReply}
+            />
+            {con.length > 0 && (
+              // Đường dọc = borderLeft của khối bọc quanh toàn bộ nhóm con.
+              // Vì đây là border thật trên 1 khối duy nhất (không phải nhiều
+              // box absolute rời rạc), nó luôn chạy liền mạch và tự co giãn
+              // đúng theo chiều cao thật của nội dung — không thể bị lệch.
+              // Bọc thêm qua TraLoiChildren để có nút "Xem thêm" khi nhóm
+              // con quá dài, tránh cả panel bị kéo dài vô hạn.
+              <TraLoiChildren
+                nodes={con}
+                depth={depth + 1}
+                tenTheoId={tenTheoId}
+                laGiangVien={laGiangVien}
+                onLike={onLike}
+                onGhim={onGhim}
+                onXoa={onXoa}
+                onReply={onReply}
+              />
+            )}
+            {depth === 0 && idx < nodes.length - 1 && (
+              <Box sx={{ pt: 0.5, pb: 0.5 }}>
+                <Divider />
+              </Box>
+            )}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
 // ── Component chính ──────────────────────────────────────────────────────
 
 export function QnAPanel({
@@ -275,13 +527,7 @@ export function QnAPanel({
   tenBaiGiang,
   idCauHoiCanMo,
 }: QnAPanelProps) {
-  console.log("🔍 QnAPanel render:", { idKhoaHoc, idBaiGiang });
   const hd = useHoiDap({ idKhoaHoc, idBaiGiang, laGiangVien });
-  console.log("🔍 useHoiDap state:", {
-    cauHoisLength: hd.cauHois.length,
-    loading: hd.loading,
-    error: hd.error,
-  });
 
   useEffect(() => {
     if (idCauHoiCanMo) {
@@ -291,13 +537,10 @@ export function QnAPanel({
   }, [idCauHoiCanMo]);
 
   // ── Filter state ──────────────────────────────────────────────────────
-  // Drawer bài giảng: "TatCa" | "ChiBaiGiangNay"
-  // Tab tổng:         "TatCa" | "ChiChung"
   const [filterLoai, setFilterLoai] = useState<"TatCa" | "ChiBaiGiangNay">(
     "TatCa",
   );
 
-  // Danh sách sau khi filter — xử lý ở FE, không cần gọi lại API
   const cauHoisHienThi = useMemo(() => {
     if (!idBaiGiang) {
       return hd.cauHois.filter((c) => !c.idBaiGiang);
@@ -308,8 +551,23 @@ export function QnAPanel({
     return hd.cauHois;
   }, [hd.cauHois, filterLoai, idBaiGiang]);
 
+  // ── Cây trả lời + map id→tên cho câu hỏi đang mở ────────────────────────
+  const cayTraLoi = useMemo(() => {
+    if (!hd.cauHoiMo) return [];
+    return xayDungCayTraLoi(hd.cauHoiMo.danhSachTraLoi);
+  }, [hd.cauHoiMo]);
+
+  const tenTheoId = useMemo(() => {
+    const m = new Map<string, string>();
+    if (hd.cauHoiMo) {
+      hd.cauHoiMo.danhSachTraLoi.forEach((tl) =>
+        m.set(tl.id, tl.nguoiTraLoiTen || "Ẩn danh"),
+      );
+    }
+    return m;
+  }, [hd.cauHoiMo]);
+
   // ── View chi tiết câu hỏi ─────────────────────────────────────────────
-  console.log("cauHoiMo hiện tại:", hd.cauHoiMo);
   if (hd.cauHoiMo) {
     const cauHoi = hd.cauHoiMo;
     return (
@@ -432,13 +690,13 @@ export function QnAPanel({
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* Danh sách trả lời */}
+        {/* Danh sách trả lời — dạng thread có dây nối */}
         <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5 }}>
           {hd.loadingChiTiet ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress size={24} sx={{ color: PRIMARY }} />
             </Box>
-          ) : cauHoi.danhSachTraLoi.length === 0 ? (
+          ) : cayTraLoi.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 4 }}>
               <QuestionAnswerOutlinedIcon
                 sx={{ fontSize: 36, color: "#D1D5DB", mb: 1 }}
@@ -448,22 +706,21 @@ export function QnAPanel({
               </Typography>
             </Box>
           ) : (
-            cauHoi.danhSachTraLoi.map((tl, idx) => (
-              <Box key={tl.id}>
-                <TraLoiCard
-                  traLoi={tl}
-                  laGiangVien={laGiangVien}
-                  onLike={() => hd.toggleLike(tl.id)}
-                  onGhim={() => hd.ghimTraLoi(tl.id, !tl.ghimTraLoi)}
-                  onXoa={() => hd.xoaTraLoi(tl.id)}
-                  onReply={(idTraLoi, tenNguoi) => {
-                    hd.setReplyingTo({ idTraLoi, tenNguoi });
-                    hd.setNoiDungReply("");
-                  }}
-                />
-                {idx < cauHoi.danhSachTraLoi.length - 1 && <Divider />}
-              </Box>
-            ))
+            <TraLoiChildren
+              nodes={cayTraLoi}
+              depth={0}
+              tenTheoId={tenTheoId}
+              laGiangVien={laGiangVien}
+              soLuongHienMacDinh={5}
+              coDuongDoc={false}
+              onLike={(id) => hd.toggleLike(id)}
+              onGhim={(id, ghim) => hd.ghimTraLoi(id, ghim)}
+              onXoa={(id) => hd.xoaTraLoi(id)}
+              onReply={(idTraLoi, tenNguoi) => {
+                hd.setReplyingTo({ idTraLoi, tenNguoi });
+                hd.setNoiDungReply("");
+              }}
+            />
           )}
         </Box>
 
@@ -814,10 +1071,7 @@ export function QnAPanel({
               .map((cauHoi) => (
                 <Box
                   key={cauHoi.id}
-                  onClick={() => {
-                    console.log("🖱️ CLICKED cauHoi:", cauHoi.id); // ← thêm dòng này
-                    hd.moChiTiet(cauHoi.id);
-                  }}
+                  onClick={() => hd.moChiTiet(cauHoi.id)}
                   sx={{
                     p: 2,
                     borderRadius: "12px",

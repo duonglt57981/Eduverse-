@@ -10,21 +10,15 @@ import {
   Button,
   IconButton,
   TextField,
-  MenuItem,
-  Select,
   CircularProgress,
   Divider,
-  Drawer,
   Tooltip,
   InputAdornment,
-  ToggleButtonGroup,
-  ToggleButton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
@@ -32,10 +26,10 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ReplyIcon from "@mui/icons-material/Reply";
 import CloseIcon from "@mui/icons-material/Close";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -74,6 +68,7 @@ function UserAvatar({
       sx={{
         width: size,
         height: size,
+        flexShrink: 0,
         bgcolor: `${MAU.chinh}22`,
         color: MAU.chinh,
         fontWeight: 700,
@@ -82,6 +77,412 @@ function UserAvatar({
     >
       {ten?.[0] || "?"}
     </Avatar>
+  );
+}
+
+// ── Cây trả lời (build từ idTraLoiDuocReply) ─────────────────────────────
+// Giống hệt logic trong QnAPanel.tsx (view học viên) — xem file đó để biết
+// chi tiết lý do. Ở đây giữ song song vì 2 view độc lập, khác đủ nhiều thứ
+// (Top Answer, AI gợi ý, không có laCuaToi) nên không tách chung component.
+interface TraLoiNode {
+  traLoi: TraLoiDto;
+  con: TraLoiNode[];
+}
+
+function xayDungCayTraLoi(danhSach: TraLoiDto[]): TraLoiNode[] {
+  const mapNode = new Map<string, TraLoiNode>();
+  danhSach.forEach((tl) => mapNode.set(tl.id, { traLoi: tl, con: [] }));
+
+  const goc: TraLoiNode[] = [];
+
+  danhSach.forEach((tl) => {
+    const node = mapNode.get(tl.id)!;
+    const idCha = tl.idTraLoiDuocReply;
+    // Chỉ coi là "con" nếu tìm thấy cha thật sự trong danh sách hiện có.
+    // Nếu cha không còn tồn tại (đã bị xóa) thì fallback về gốc, tránh mất trả lời.
+    if (idCha && mapNode.has(idCha)) {
+      mapNode.get(idCha)!.con.push(node);
+    } else {
+      goc.push(node);
+    }
+  });
+
+  // Sắp theo thời gian tạo (cũ → mới) ở mọi cấp
+  const sapXep = (nodes: TraLoiNode[]) => {
+    nodes.sort(
+      (a, b) =>
+        new Date(a.traLoi.ngayTao).getTime() -
+        new Date(b.traLoi.ngayTao).getTime(),
+    );
+    nodes.forEach((n) => sapXep(n.con));
+  };
+  sapXep(goc);
+
+  return goc;
+}
+
+// ── Card câu trả lời ─────────────────────────────────────────────────────
+// Ghi chú (giống QnAPanel.tsx): KHÔNG dùng position:absolute + top/left
+// tính cứng theo px, vì chiều cao mỗi card thay đổi theo độ dài nội dung
+// → dễ lệch. Đường dọc là border-left của cả CỤM CON (xem TraLoiChildren),
+// tự co giãn theo chiều cao thật; ở đây chỉ vẽ 1 đường ngang ngắn nối vào
+// tâm avatar bằng flex + margin âm.
+function TraLoiCard({
+  traLoi,
+  tenNguoiDuocReply,
+  depth,
+  laCuoiNhom,
+  onLike,
+  onToggleTopAnswer,
+  onXoa,
+  onReply,
+}: {
+  traLoi: TraLoiDto;
+  tenNguoiDuocReply?: string;
+  depth: number;
+  laCuoiNhom: boolean;
+  onLike: () => void;
+  onToggleTopAnswer: () => void;
+  onXoa: () => void;
+  onReply: (idTraLoi: string, tenNguoi: string) => void;
+}) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 1.5,
+        pt: 2,
+        // Card cuối cùng của một nhóm anh em KHÔNG có padding-bottom, vì
+        // padding này nằm bên trong đường borderLeft của khối cha (xem
+        // TraLoiChildren) — nếu để pb ở đây, đường kẻ dọc sẽ bị "thừa" một
+        // đoạn trống phía dưới avatar cuối cùng thay vì dừng khít lại.
+        // KHÔNG dùng margin thay thế: trong flex container, margin của
+        // phần tử con vẫn nằm trong phạm vi mà border-left của cha kéo dài
+        // qua, nên margin cũng kéo dài đường kẻ y hệt padding.
+        pb: laCuoiNhom ? 0 : 2,
+        ...(traLoi.ghimTraLoi
+          ? {
+              bgcolor: "#FFFBEB",
+              border: "1px solid #FDE68A",
+              borderRadius: "12px",
+              px: 2,
+              mx: -2,
+              mb: laCuoiNhom ? 0 : 1,
+            }
+          : {}),
+      }}
+    >
+      {/* Đường ngang nối từ đường dọc (border-left của khối bọc, xem
+          TraLoiChildren) vào tâm avatar. */}
+      {depth > 0 && (
+        <Box
+          sx={{
+            width: "17px",
+            height: "2px",
+            bgcolor: `${MAU.chinh}22`,
+            flexShrink: 0,
+            mt: "19px", // canh vào tâm avatar 32px (pt:2 = 16px, +16px nửa avatar, -1px nửa đường kẻ)
+            ml: "-17px",
+          }}
+        />
+      )}
+
+      <UserAvatar
+        anh={traLoi.nguoiTraLoiAnh}
+        ten={traLoi.nguoiTraLoiTen}
+        size={32}
+      />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        {/* Header trả lời */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            mb: 0.5,
+            flexWrap: "wrap",
+          }}
+        >
+          <Typography sx={{ fontWeight: 700, fontSize: 13, color: "#1F2937" }}>
+            {traLoi.nguoiTraLoiTen || "Ẩn danh"}
+          </Typography>
+          {traLoi.laGiangVien && (
+            <Chip
+              icon={<SchoolOutlinedIcon sx={{ fontSize: 12 }} />}
+              label="Giảng viên"
+              size="small"
+              sx={{
+                fontSize: 10,
+                fontWeight: 700,
+                height: 18,
+                bgcolor: `${MAU.chinh}14`,
+                color: MAU.chinh,
+              }}
+            />
+          )}
+          {traLoi.ghimTraLoi && (
+            <Chip
+              icon={<StarIcon sx={{ fontSize: 12 }} />}
+              label="Top Answer"
+              size="small"
+              sx={{
+                fontSize: 10,
+                fontWeight: 700,
+                height: 18,
+                bgcolor: "#FEF3C7",
+                color: "#D97706",
+              }}
+            />
+          )}
+          <Typography sx={{ fontSize: 11, color: "#9CA3AF", ml: "auto" }}>
+            {thoiGianTuatoi(traLoi.ngayTao)}
+          </Typography>
+        </Box>
+
+        {/* Nhãn "Trả lời @Ten" — lấy từ id thật (idTraLoiDuocReply) */}
+        {tenNguoiDuocReply && (
+          <Box
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.4,
+              mb: 0.5,
+              px: 0.75,
+              py: 0.25,
+              borderRadius: "6px",
+              bgcolor: `${MAU.chinh}0A`,
+            }}
+          >
+            <SubdirectoryArrowRightIcon
+              sx={{ fontSize: 12, color: MAU.chinh, opacity: 0.7 }}
+            />
+            <Typography
+              sx={{ fontSize: 11, fontWeight: 600, color: MAU.chinh }}
+            >
+              Trả lời {tenNguoiDuocReply}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Nội dung */}
+        <Typography
+          sx={{
+            fontSize: 14,
+            color: "#374151",
+            lineHeight: 1.6,
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {traLoi.noiDung}
+        </Typography>
+
+        {/* Actions */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <ThumbUpOutlinedIcon sx={{ fontSize: 13, color: "#9CA3AF" }} />
+            <Typography sx={{ fontSize: 12, color: "#6B7280" }}>
+              {traLoi.soLike}
+            </Typography>
+          </Box>
+
+          <Button
+            size="small"
+            startIcon={<ReplyIcon sx={{ fontSize: 13 }} />}
+            onClick={() =>
+              onReply(traLoi.id, traLoi.nguoiTraLoiTen || "Ẩn danh")
+            }
+            sx={{
+              textTransform: "none",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#6B7280",
+              p: "2px 8px",
+              minWidth: 0,
+              "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}08` },
+            }}
+          >
+            Phản hồi
+          </Button>
+
+          {/* Nút Top Answer */}
+          <Tooltip
+            title={traLoi.ghimTraLoi ? "Bỏ Top Answer" : "Đánh dấu Top Answer"}
+          >
+            <IconButton
+              size="small"
+              onClick={onToggleTopAnswer}
+              sx={{
+                p: 0.5,
+                color: traLoi.ghimTraLoi ? "#D97706" : "#9CA3AF",
+                "&:hover": { color: "#D97706" },
+              }}
+            >
+              {traLoi.ghimTraLoi ? (
+                <StarIcon sx={{ fontSize: 16 }} />
+              ) : (
+                <StarBorderIcon sx={{ fontSize: 16 }} />
+              )}
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Xóa">
+            <IconButton
+              size="small"
+              onClick={onXoa}
+              sx={{ p: 0.5, color: "#9CA3AF", "&:hover": { color: "#DC2626" } }}
+            >
+              <DeleteOutlineIcon sx={{ fontSize: 15 }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+// ── Nhóm trả lời con — mặc định chỉ hiện vài cái đầu, có nút "Xem thêm" ──
+const SO_LUONG_HIEN_MAC_DINH = 2;
+
+function TraLoiChildren({
+  nodes,
+  depth,
+  tenTheoId,
+  onLike,
+  onToggleTopAnswer,
+  onXoa,
+  onReply,
+  soLuongHienMacDinh = SO_LUONG_HIEN_MAC_DINH,
+  coDuongDoc = true,
+}: {
+  nodes: TraLoiNode[];
+  depth: number;
+  tenTheoId: Map<string, string>;
+  onLike: (id: string) => void;
+  onToggleTopAnswer: (id: string, ghimHienTai: boolean) => void;
+  onXoa: (id: string) => void;
+  onReply: (idTraLoi: string, tenNguoi: string) => void;
+  soLuongHienMacDinh?: number;
+  coDuongDoc?: boolean;
+}) {
+  const [daMoRong, setDaMoRong] = useState(false);
+
+  const coTheAn = nodes.length > soLuongHienMacDinh;
+  const nodesHienThi =
+    coTheAn && !daMoRong ? nodes.slice(0, soLuongHienMacDinh) : nodes;
+  const soLuongAn = nodes.length - soLuongHienMacDinh;
+
+  return (
+    <Box
+      sx={
+        coDuongDoc
+          ? {
+              ml: "15px", // canh đúng tâm avatar 32px của card cha
+              pl: "17px", // khoảng cách từ đường dọc tới avatar con
+              borderLeft: `2px solid ${MAU.chinh}22`,
+            }
+          : {}
+      }
+    >
+      <TraLoiThread
+        nodes={nodesHienThi}
+        depth={depth}
+        tenTheoId={tenTheoId}
+        onLike={onLike}
+        onToggleTopAnswer={onToggleTopAnswer}
+        onXoa={onXoa}
+        onReply={onReply}
+      />
+
+      {coTheAn && (
+        <Button
+          size="small"
+          onClick={() => setDaMoRong((v) => !v)}
+          startIcon={
+            <SubdirectoryArrowRightIcon
+              sx={{ fontSize: 13, transform: daMoRong ? "scaleY(-1)" : "none" }}
+            />
+          }
+          sx={{
+            textTransform: "none",
+            fontSize: 12.5,
+            fontWeight: 700,
+            color: MAU.chinh,
+            p: "4px 8px",
+            minWidth: 0,
+            "&:hover": { bgcolor: `${MAU.chinh}08` },
+          }}
+        >
+          {daMoRong ? "Ẩn bớt phản hồi" : `Xem thêm ${soLuongAn} phản hồi`}
+        </Button>
+      )}
+    </Box>
+  );
+}
+
+// ── Render đệ quy cây trả lời (thread) ───────────────────────────────────
+function TraLoiThread({
+  nodes,
+  depth,
+  tenTheoId,
+  onLike,
+  onToggleTopAnswer,
+  onXoa,
+  onReply,
+}: {
+  nodes: TraLoiNode[];
+  depth: number;
+  tenTheoId: Map<string, string>;
+  onLike: (id: string) => void;
+  onToggleTopAnswer: (id: string, ghimHienTai: boolean) => void;
+  onXoa: (id: string) => void;
+  onReply: (idTraLoi: string, tenNguoi: string) => void;
+}) {
+  return (
+    <Box>
+      {nodes.map((node, idx) => {
+        const { traLoi, con } = node;
+        const idCha = traLoi.idTraLoiDuocReply;
+        const tenCha = idCha ? tenTheoId.get(idCha) : undefined;
+        const laCuoiNhom = idx === nodes.length - 1 && con.length === 0;
+
+        return (
+          <Box key={traLoi.id}>
+            <TraLoiCard
+              traLoi={traLoi}
+              tenNguoiDuocReply={depth > 0 ? tenCha : undefined}
+              depth={depth}
+              laCuoiNhom={laCuoiNhom}
+              onLike={() => onLike(traLoi.id)}
+              onToggleTopAnswer={() =>
+                onToggleTopAnswer(traLoi.id, traLoi.ghimTraLoi)
+              }
+              onXoa={() => onXoa(traLoi.id)}
+              onReply={onReply}
+            />
+            {con.length > 0 && (
+              // Đường dọc = borderLeft của khối bọc quanh toàn bộ nhóm con —
+              // border thật trên 1 khối duy nhất nên luôn chạy liền mạch và
+              // tự co giãn đúng theo chiều cao thật của nội dung.
+              <TraLoiChildren
+                nodes={con}
+                depth={depth + 1}
+                tenTheoId={tenTheoId}
+                onLike={onLike}
+                onToggleTopAnswer={onToggleTopAnswer}
+                onXoa={onXoa}
+                onReply={onReply}
+              />
+            )}
+            {depth === 0 && idx < nodes.length - 1 && (
+              <Box sx={{ pt: 0.5, pb: 0.5 }}>
+                <Divider />
+              </Box>
+            )}
+          </Box>
+        );
+      })}
+    </Box>
   );
 }
 
@@ -147,15 +548,12 @@ export default function QnAManagerContent() {
           pageNumber: reset ? 1 : page + 1,
           pageSize: 15,
         };
-        console.log("📤 QnAManagerContent load request:", req);
         const res = await HoiDapService.GetDanhSachChoGiangVien(req);
-        console.log("📥 QnAManagerContent load result:", res);
         setCauHois(reset ? res.items : (prev) => [...prev, ...res.items]);
         setTotalPages(res.totalPages);
         if (!reset) setPage((p) => p + 1);
         else setPage(1);
       } catch (err: any) {
-        console.log("❌ QnAManagerContent load error:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -178,7 +576,6 @@ export default function QnAManagerContent() {
     setAiCoNoiDungBaiGiang(null);
     try {
       const data = await HoiDapService.GetChiTiet(cauHoi.id);
-      console.log("🔎 cauHoiMo nhận được:", data);
       setCauHoiMo(data);
     } catch (err: any) {
       setError(err.message);
@@ -366,6 +763,27 @@ export default function QnAManagerContent() {
 
     return () => clearTimeout(timer);
   }, [searchParams, moChiTiet]);
+
+  // ── Cây trả lời + map id→tên cho câu hỏi đang mở ────────────────────────
+  // Top answer (ghim) vẫn ưu tiên lên đầu ở cấp gốc — giữ đúng hành vi cũ,
+  // chỉ áp dụng khi build danh sách gốc, các cấp con vẫn sort theo thời gian.
+  const cayTraLoi = useMemo(() => {
+    if (!cauHoiMo) return [];
+    const cay = xayDungCayTraLoi(cauHoiMo.danhSachTraLoi);
+    return [...cay].sort(
+      (a, b) => (b.traLoi.ghimTraLoi ? 1 : 0) - (a.traLoi.ghimTraLoi ? 1 : 0),
+    );
+  }, [cauHoiMo]);
+
+  const tenTheoId = useMemo(() => {
+    const m = new Map<string, string>();
+    if (cauHoiMo) {
+      cauHoiMo.danhSachTraLoi.forEach((tl) =>
+        m.set(tl.id, tl.nguoiTraLoiTen || "Ẩn danh"),
+      );
+    }
+    return m;
+  }, [cauHoiMo]);
 
   if (loadingQuyen) {
     return (
@@ -853,7 +1271,7 @@ export default function QnAManagerContent() {
                   </Box>
                 </Box>
 
-                {/* Danh sách trả lời */}
+                {/* Danh sách trả lời — dạng thread có dây nối */}
                 <Box sx={{ flex: 1, overflowY: "auto", p: 2.5 }}>
                   {cauHoiMo.danhSachTraLoi.length === 0 ? (
                     <Box sx={{ textAlign: "center", py: 6 }}>
@@ -865,226 +1283,22 @@ export default function QnAManagerContent() {
                       </Typography>
                     </Box>
                   ) : (
-                    // Sort: top answer lên đầu, sau đó theo thứ tự
-                    [...cauHoiMo.danhSachTraLoi]
-                      .sort(
-                        (a, b) =>
-                          (b.ghimTraLoi ? 1 : 0) - (a.ghimTraLoi ? 1 : 0),
-                      )
-                      .map((tl, idx, arr) => (
-                        <Box key={tl.id}>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              gap: 1.5,
-                              py: 2,
-                              ...(tl.ghimTraLoi
-                                ? {
-                                    bgcolor: "#FFFBEB",
-                                    border: "1px solid #FDE68A",
-                                    borderRadius: "12px",
-                                    px: 2,
-                                    mx: -2,
-                                    mb: 1,
-                                  }
-                                : {}),
-                            }}
-                          >
-                            <UserAvatar
-                              anh={tl.nguoiTraLoiAnh}
-                              ten={tl.nguoiTraLoiTen}
-                              size={32}
-                            />
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              {/* Header trả lời */}
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                  mb: 0.5,
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                <Typography
-                                  sx={{
-                                    fontWeight: 700,
-                                    fontSize: 13,
-                                    color: "#1F2937",
-                                  }}
-                                >
-                                  {tl.nguoiTraLoiTen || "Ẩn danh"}
-                                </Typography>
-                                {tl.laGiangVien && (
-                                  <Chip
-                                    icon={
-                                      <SchoolOutlinedIcon
-                                        sx={{ fontSize: 12 }}
-                                      />
-                                    }
-                                    label="Giảng viên"
-                                    size="small"
-                                    sx={{
-                                      fontSize: 10,
-                                      fontWeight: 700,
-                                      height: 18,
-                                      bgcolor: `${MAU.chinh}14`,
-                                      color: MAU.chinh,
-                                    }}
-                                  />
-                                )}
-                                {tl.ghimTraLoi && (
-                                  <Chip
-                                    icon={<StarIcon sx={{ fontSize: 12 }} />}
-                                    label="Top Answer"
-                                    size="small"
-                                    sx={{
-                                      fontSize: 10,
-                                      fontWeight: 700,
-                                      height: 18,
-                                      bgcolor: "#FEF3C7",
-                                      color: "#D97706",
-                                    }}
-                                  />
-                                )}
-                                <Typography
-                                  sx={{
-                                    fontSize: 11,
-                                    color: "#9CA3AF",
-                                    ml: "auto",
-                                  }}
-                                >
-                                  {thoiGianTuatoi(tl.ngayTao)}
-                                </Typography>
-                              </Box>
-
-                              {/* Nội dung — @mention highlight */}
-                              <Typography
-                                sx={{
-                                  fontSize: 14,
-                                  color: "#374151",
-                                  lineHeight: 1.6,
-                                  whiteSpace: "pre-wrap",
-                                }}
-                              >
-                                {tl.noiDung.startsWith("@") ? (
-                                  <>
-                                    <Box
-                                      component="span"
-                                      sx={{ color: MAU.chinh, fontWeight: 700 }}
-                                    >
-                                      {tl.noiDung.split(" ")[0]}
-                                    </Box>
-                                    {" " +
-                                      tl.noiDung.split(" ").slice(1).join(" ")}
-                                  </>
-                                ) : (
-                                  tl.noiDung
-                                )}
-                              </Typography>
-
-                              {/* Actions */}
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1.5,
-                                  mt: 1,
-                                }}
-                              >
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 0.5,
-                                  }}
-                                >
-                                  <ThumbUpOutlinedIcon
-                                    sx={{ fontSize: 13, color: "#9CA3AF" }}
-                                  />
-                                  <Typography
-                                    sx={{ fontSize: 12, color: "#6B7280" }}
-                                  >
-                                    {tl.soLike}
-                                  </Typography>
-                                </Box>
-
-                                <Button
-                                  size="small"
-                                  startIcon={
-                                    <ReplyIcon sx={{ fontSize: 13 }} />
-                                  }
-                                  onClick={() => {
-                                    setReplyingTo({
-                                      idTraLoi: tl.id,
-                                      tenNguoi: tl.nguoiTraLoiTen || "Ẩn danh",
-                                    });
-                                    setNoiDungReply("");
-                                  }}
-                                  sx={{
-                                    textTransform: "none",
-                                    fontSize: 12,
-                                    fontWeight: 600,
-                                    color: "#6B7280",
-                                    p: "2px 8px",
-                                    minWidth: 0,
-                                    "&:hover": {
-                                      color: MAU.chinh,
-                                      bgcolor: `${MAU.chinh}08`,
-                                    },
-                                  }}
-                                >
-                                  Phản hồi
-                                </Button>
-
-                                {/* Nút Top Answer */}
-                                <Tooltip
-                                  title={
-                                    tl.ghimTraLoi
-                                      ? "Bỏ Top Answer"
-                                      : "Đánh dấu Top Answer"
-                                  }
-                                >
-                                  <IconButton
-                                    size="small"
-                                    onClick={() =>
-                                      toggleTopAnswer(tl.id, tl.ghimTraLoi)
-                                    }
-                                    sx={{
-                                      p: 0.5,
-                                      color: tl.ghimTraLoi
-                                        ? "#D97706"
-                                        : "#9CA3AF",
-                                      "&:hover": { color: "#D97706" },
-                                    }}
-                                  >
-                                    {tl.ghimTraLoi ? (
-                                      <StarIcon sx={{ fontSize: 16 }} />
-                                    ) : (
-                                      <StarBorderIcon sx={{ fontSize: 16 }} />
-                                    )}
-                                  </IconButton>
-                                </Tooltip>
-
-                                <Tooltip title="Xóa">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => xoaTraLoi(tl.id)}
-                                    sx={{
-                                      p: 0.5,
-                                      color: "#9CA3AF",
-                                      "&:hover": { color: "#DC2626" },
-                                    }}
-                                  >
-                                    <DeleteOutlineIcon sx={{ fontSize: 15 }} />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </Box>
-                          </Box>
-                          {idx < arr.length - 1 && <Divider sx={{ my: 0.5 }} />}
-                        </Box>
-                      ))
+                    <TraLoiChildren
+                      nodes={cayTraLoi}
+                      depth={0}
+                      tenTheoId={tenTheoId}
+                      soLuongHienMacDinh={5}
+                      coDuongDoc={false}
+                      onLike={() => {
+                        /* like ở view giảng viên chưa dùng, giữ no-op để khớp signature */
+                      }}
+                      onToggleTopAnswer={toggleTopAnswer}
+                      onXoa={xoaTraLoi}
+                      onReply={(idTraLoi, tenNguoi) => {
+                        setReplyingTo({ idTraLoi, tenNguoi });
+                        setNoiDungReply("");
+                      }}
+                    />
                   )}
                 </Box>
 
