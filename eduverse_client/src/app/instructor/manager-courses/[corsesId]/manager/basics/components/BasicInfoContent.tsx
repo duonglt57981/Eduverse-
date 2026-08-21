@@ -46,6 +46,7 @@ import { useCourseEdit } from "../../components/CourseEditContext";
 import { createCourseHubConnection } from "@/src/services/signalRService";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 // ===== Ràng buộc (theo chuẩn Udemy) =====
 const DO_DAI_TIEU_DE_TOI_THIEU = 3;
@@ -232,7 +233,7 @@ function SectionHeader({
           sx={{
             fontWeight: 700,
             fontSize: 15,
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
           }}
         >
           {title}
@@ -435,7 +436,7 @@ function ImageCropper({
               mt: 1.5,
               textAlign: "center",
               fontSize: 12.5,
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
             }}
           >
             Kích thước sau khi cắt:{" "}
@@ -450,7 +451,7 @@ function ImageCropper({
           onClick={onCancel}
           sx={{
             textTransform: "none",
-            color: "var(--ev-text-muted, #8A7676)",
+            color: CSSVAR.textMuted,
             fontWeight: 600,
             "&:hover": {
               bgcolor: "var(--ev-paper-alt, #F5F6F8)",
@@ -916,23 +917,23 @@ export default function BasicInfoContent() {
   const cardSx = {
     p: 3.5,
     mb: 4,
-    bgcolor: "var(--ev-paper, #FFFFFF)",
-    border: `1px solid #ECE7E4`,
+    bgcolor: CSSVAR.paper,
+    border: `1px solid ${CSSVAR.divider}`,
     borderRadius: "16px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.015)",
     transition: "box-shadow 0.25s ease, border-color 0.25s ease",
     "&:hover": {
-      borderColor: "#8B1313",
+      borderColor: BRAND.main,
       boxShadow: "0 6px 24px rgba(0, 0, 0, 0.03)",
     },
   } as const;
 
   const selectSx = {
     borderRadius: "12px",
-    bgcolor: "var(--ev-paper, #FFFFFF)",
+    bgcolor: CSSVAR.paper,
     "& .MuiSelect-select": {
-      color: "var(--ev-text-primary, #1F2937) !important",
-      WebkitTextFillColor: "var(--ev-text-primary, #1F2937) !important",
+      color: `${CSSVAR.textPrimary} !important`,
+      WebkitTextFillColor: `${CSSVAR.textPrimary} !important`,
     },
     "& .MuiOutlinedInput-notchedOutline": {
       borderColor: "var(--ev-divider, #E2E8F0)",
@@ -941,7 +942,7 @@ export default function BasicInfoContent() {
       borderColor: "#991B1B80",
     },
     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#8B1313",
+      borderColor: BRAND.main,
     },
   } as const;
 
@@ -972,7 +973,7 @@ export default function BasicInfoContent() {
             Trang đích của khóa học
           </Typography>
           <Typography
-            sx={{ fontSize: 14, color: "var(--ev-text-secondary, #4B5563)" }}
+            sx={{ fontSize: 14, color: CSSVAR.textSecondary }}
           >
             Đây là những gì học viên sẽ thấy đầu tiên — hãy làm cho nó thật rõ
             ràng và hấp dẫn.
@@ -1035,12 +1036,12 @@ export default function BasicInfoContent() {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
                     height: "52px",
-                    "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+                    "& fieldset": { borderColor: CSSVAR.divider },
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
-                    "&.Mui-focused fieldset": { borderColor: "#8B1313" },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.main },
                   },
                   "& .MuiInputBase-input": {
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     fontWeight: 500,
                   },
                 }}
@@ -1048,7 +1049,7 @@ export default function BasicInfoContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: loiTieuDe ? "#DC2626" : "#4B5563",
+                  color: loiTieuDe ? STATUS.error : CSSVAR.textSecondary,
                   mt: 0.75,
                   textAlign: "right",
                   fontWeight: 500,
@@ -1070,14 +1071,14 @@ export default function BasicInfoContent() {
                 sx={{
                   borderRadius: "12px",
                   overflow: "hidden",
-                  border: loiMoTa ? "1px solid #DC2626" : "1px solid #ECE7E4",
+                  border: loiMoTa ? `1px solid ${STATUS.error}` : `1px solid ${CSSVAR.divider}`,
                   transition: "all 0.2s ease",
                   "&:hover": {
-                    borderColor: loiMoTa ? "#DC2626" : "#CBD5E1",
+                    borderColor: loiMoTa ? STATUS.error : "#CBD5E1",
                   },
                   "&:focus-within": {
-                    borderColor: "#8B1313",
-                    boxShadow: "0 0 0 1px #8B1313",
+                    borderColor: BRAND.main,
+                    boxShadow: `0 0 0 1px ${BRAND.main}`,
                   },
                 }}
               >
@@ -1086,7 +1087,7 @@ export default function BasicInfoContent() {
                     sx={{
                       p: 2.5,
                       minHeight: 200,
-                      bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                      bgcolor: CSSVAR.bg,
                       borderRadius: "12px",
                       "& img": { maxWidth: "100%" },
                       "& *": { maxWidth: "100%" },
@@ -1106,7 +1107,7 @@ export default function BasicInfoContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: loiMoTa ? "#D32F2F" : "#8A7676",
+                  color: loiMoTa ? "#D32F2F" : CSSVAR.textMuted,
                   mt: 0.75,
                 }}
               >
@@ -1135,9 +1136,9 @@ export default function BasicInfoContent() {
                         slotProps: {
                           paper: {
                             sx: {
-                              bgcolor: "var(--ev-paper, #FFFFFF)",
+                              bgcolor: CSSVAR.paper,
                               "& .MuiMenuItem-root": {
-                                color: "var(--ev-text-primary, #1F2937)",
+                                color: CSSVAR.textPrimary,
                               },
                             },
                           },
@@ -1195,10 +1196,10 @@ export default function BasicInfoContent() {
                         slotProps: {
                           paper: {
                             sx: {
-                              bgcolor: "var(--ev-paper, #FFFFFF)",
+                              bgcolor: CSSVAR.paper,
                               maxHeight: 360,
                               "& .MuiMenuItem-root": {
-                                color: "var(--ev-text-primary, #1F2937)",
+                                color: CSSVAR.textPrimary,
                               },
                             },
                           },
@@ -1211,7 +1212,7 @@ export default function BasicInfoContent() {
                           py: 1,
                           position: "sticky",
                           top: 0,
-                          bgcolor: "var(--ev-paper, #FFFFFF)",
+                          bgcolor: CSSVAR.paper,
                           zIndex: 1,
                           borderBottom: "1px solid #EDEFF3",
                         }}
@@ -1311,12 +1312,12 @@ export default function BasicInfoContent() {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px",
                     height: "52px",
-                    "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+                    "& fieldset": { borderColor: CSSVAR.divider },
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
-                    "&.Mui-focused fieldset": { borderColor: "#8B1313" },
+                    "&.Mui-focused fieldset": { borderColor: BRAND.main },
                   },
                   "& .MuiInputBase-input": {
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     fontWeight: 500,
                   },
                 }}
@@ -1324,7 +1325,7 @@ export default function BasicInfoContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   mt: 0.75,
                   fontWeight: 500,
                 }}
@@ -1400,7 +1401,7 @@ export default function BasicInfoContent() {
                               width: 26,
                               height: 26,
                               "&:hover": {
-                                bgcolor: "var(--ev-paper, #FFFFFF)",
+                                bgcolor: CSSVAR.paper,
                               },
                             }}
                             title="Xóa ảnh"
@@ -1419,7 +1420,7 @@ export default function BasicInfoContent() {
                               width: 26,
                               height: 26,
                               "&:hover": {
-                                bgcolor: "var(--ev-paper, #FFFFFF)",
+                                bgcolor: CSSVAR.paper,
                               },
                             }}
                             title="Thay đổi ảnh"
@@ -1468,7 +1469,7 @@ export default function BasicInfoContent() {
                     <Typography
                       sx={{
                         fontSize: 13,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                       }}
                     >
                       • <strong>Định dạng:</strong> {DUOI_ANH_HOP_LE.join(", ")}
@@ -1476,7 +1477,7 @@ export default function BasicInfoContent() {
                     <Typography
                       sx={{
                         fontSize: 13,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                       }}
                     >
                       • <strong>Tỷ lệ:</strong> 16:9
@@ -1484,7 +1485,7 @@ export default function BasicInfoContent() {
                     <Typography
                       sx={{
                         fontSize: 13,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                       }}
                     >
                       • <strong>Độ phân giải tối thiểu:</strong>{" "}
@@ -1494,7 +1495,7 @@ export default function BasicInfoContent() {
                     <Typography
                       sx={{
                         fontSize: 13,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                       }}
                     >
                       • <strong>Khuyến nghị:</strong> 1920x1080px (Full HD)
@@ -1502,7 +1503,7 @@ export default function BasicInfoContent() {
                     <Typography
                       sx={{
                         fontSize: 13,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                       }}
                     >
                       • <strong>Dung lượng tối đa:</strong>{" "}
@@ -1527,9 +1528,9 @@ export default function BasicInfoContent() {
                         px: 1.5,
                         py: 0.8,
                         borderRadius: "10px",
-                        border: "1px solid var(--ev-divider, #ECE7E4)",
-                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        border: `1px solid ${CSSVAR.divider}`,
+                        bgcolor: CSSVAR.bg,
+                        color: CSSVAR.textSecondary,
                         fontSize: 13.5,
                         minWidth: 0,
                       }}
@@ -1541,7 +1542,7 @@ export default function BasicInfoContent() {
                           fontSize: 13.5,
                           color:
                             imageFile || thongTin.hinhAnhKhoaHoc
-                              ? "var(--ev-text-primary, #1F2937)"
+                              ? CSSVAR.textPrimary
                               : "var(--ev-text-secondary, #64748B)",
                           fontWeight:
                             imageFile || thongTin.hinhAnhKhoaHoc ? 500 : 400,
@@ -1567,8 +1568,8 @@ export default function BasicInfoContent() {
                         flexShrink: 0,
                         textTransform: "none",
                         borderRadius: "10px",
-                        borderColor: "#8B1313",
-                        color: "#8B1313",
+                        borderColor: BRAND.main,
+                        color: BRAND.main,
                         fontWeight: 700,
                         px: 2.5,
                         "&:hover": {

@@ -38,6 +38,7 @@ import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -98,8 +99,8 @@ export default function DashboardHeader({
       text: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#8B1313",
-      cancelButtonColor: "#8A7676",
+      confirmButtonColor: BRAND.main,
+      cancelButtonColor: CSSVAR.textMuted,
       confirmButtonText: "Đăng xuất",
       cancelButtonText: "Hủy",
       reverseButtons: true,
@@ -699,7 +700,7 @@ export default function DashboardHeader({
                 borderRadius: "999px",
                 bgcolor: "rgba(139, 19, 19, 0.06)",
                 border: "1px solid rgba(139, 19, 19, 0.16)",
-                color: "#8B1313",
+                color: BRAND.main,
                 px: 2,
                 py: 0.75,
                 fontSize: 13,
@@ -711,8 +712,8 @@ export default function DashboardHeader({
                 transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
                   bgcolor: "rgba(139, 19, 19, 0.12)",
-                  borderColor: "#8B1313",
-                  color: "#6D0F0F",
+                  borderColor: BRAND.main,
+                  color: BRAND.dark,
                   boxShadow: "0 4px 12px rgba(139, 19, 19, 0.12)",
                   transform: "translateY(-1px)",
                 },
@@ -732,7 +733,7 @@ export default function DashboardHeader({
                   borderRadius: "999px",
                   bgcolor: "rgba(139, 19, 19, 0.06)",
                   border: "1px solid rgba(139, 19, 19, 0.16)",
-                  color: "#8B1313",
+                  color: BRAND.main,
                   px: 2,
                   py: 0.75,
                   fontSize: 13,
@@ -744,8 +745,8 @@ export default function DashboardHeader({
                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                   "&:hover": {
                     bgcolor: "rgba(139, 19, 19, 0.12)",
-                    borderColor: "#8B1313",
-                    color: "#6D0F0F",
+                    borderColor: BRAND.main,
+                    color: BRAND.dark,
                     boxShadow: "0 4px 12px rgba(139, 19, 19, 0.12)",
                     transform: "translateY(-1px)",
                   },
@@ -823,7 +824,7 @@ export default function DashboardHeader({
             sx={{
               width: 38,
               height: 38,
-              bgcolor: "#8B1313",
+              bgcolor: BRAND.main,
               color: "#fff",
               fontSize: 14,
               fontWeight: 700,
@@ -861,10 +862,10 @@ export default function DashboardHeader({
                     py: 1.1,
                     fontSize: 14,
                     fontWeight: 500,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     "&:hover": {
                       bgcolor: "rgba(141,19,19,0.04)",
-                      color: "#8B1313",
+                      color: BRAND.main,
                     },
                   },
                 },
@@ -901,7 +902,7 @@ export default function DashboardHeader({
                   sx={{
                     fontWeight: 800,
                     fontSize: 14.5,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                   }}
                 >
                   {hoTen}

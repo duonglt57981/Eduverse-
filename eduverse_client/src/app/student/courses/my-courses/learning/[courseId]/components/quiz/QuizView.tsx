@@ -23,15 +23,16 @@ import {
 } from "@mui/icons-material";
 import { useState } from "react";
 import type { CauHoiLamBaiDto } from "../../hooks/useQuiz";
+import { BRAND, STATUS } from "@/src/theme/tokens";
 
 // ── Design tokens ──
-const RED = "#8B1313";
+const RED = BRAND.main;
 const RED_DARK = "#6B1414";
 const RED_TINT = "rgba(139,19,19,0.04)";
 const INK = "#1c1d1f";
 const SUB = "#6a6f73";
 const BORDER = "#e2e5e8";
-const GREEN = "#10B981";
+const GREEN = STATUS.success;
 const RADIUS = "4px";
 const LABELS = ["A", "B", "C", "D", "E", "F"];
 
@@ -206,7 +207,7 @@ export function QuizView({
                   : canhoHetGio
                     ? "rgba(245,158,11,0.08)"
                     : "#f7f9fa",
-                color: sapHetGio ? "#DC2626" : canhoHetGio ? "#92400e" : SUB,
+                color: sapHetGio ? STATUS.error : canhoHetGio ? "#92400e" : SUB,
                 animation: sapHetGio ? "blink 1s step-end infinite" : "none",
                 "@keyframes blink": {
                   "0%,100%": { opacity: 1 },
@@ -558,7 +559,7 @@ export function QuizView({
               }}
             >
               <Typography
-                sx={{ fontSize: 13, color: "#DC2626", fontWeight: 600 }}
+                sx={{ fontSize: 13, color: STATUS.error, fontWeight: 600 }}
               >
                 ⚠️ Bạn cần trả lời tất cả {tongCau} câu hỏi trước khi nộp bài.
                 Còn {tongCau - soDaTraLoi} câu chưa trả lời.
@@ -574,7 +575,7 @@ export function QuizView({
               }}
             >
               <Typography
-                sx={{ fontSize: 13, color: "#10B981", fontWeight: 500 }}
+                sx={{ fontSize: 13, color: STATUS.success, fontWeight: 500 }}
               >
                 ✅ Bạn đã trả lời tất cả câu hỏi.
               </Typography>

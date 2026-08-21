@@ -52,7 +52,7 @@ import AuthGuard from "@/src/components/AuthGuard";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType, KhoaHocManagerSearch } from "@/src/types/khoaHoc/Dto/dto";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
-import { BRAND, NEUTRAL } from "@/src/theme/tokens";
+import { BRAND, NEUTRAL, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 const MAU = {
   chinh: BRAND.main,
@@ -82,17 +82,17 @@ function thongTinTrangThaiPheDuyet(trangThai?: string): {
 } {
   switch (trangThai) {
     case "ChoDuyet":
-      return { nhan: "Chờ duyệt", mau: "#F59E0B", nen: "#FEF3C7" };
+      return { nhan: "Chờ duyệt", mau: STATUS.warning, nen: "#FEF3C7" };
     case "DaDuyet":
-      return { nhan: "Đã duyệt", mau: "#10B981", nen: "#E6F4EA" };
+      return { nhan: "Đã duyệt", mau: STATUS.success, nen: "#E6F4EA" };
     case "DangDuyet":
       return { nhan: "Đang duyệt", mau: "#3B82F6", nen: "#DBEAFE" };
     case "TuChoi":
-      return { nhan: "Từ chối", mau: "#DC2626", nen: "#FEE2E2" };
+      return { nhan: "Từ chối", mau: STATUS.error, nen: "#FEE2E2" };
     case "DangSua":
       return { nhan: "Đang sửa", mau: "#8B5CF6", nen: "#F5F3FF" };
     default:
-      return { nhan: trangThai ?? "Không rõ", mau: MAU.chuXam, nen: "#FBFAF9" };
+      return { nhan: trangThai ?? "Không rõ", mau: MAU.chuXam, nen: CSSVAR.paperAlt };
   }
 }
 
@@ -183,7 +183,7 @@ const CAU_HINH_TRANG_THAI: CauHinhTrangThai[] = [
     khoaThongKe: "tong",
     nhan: "Tất cả",
     icon: <SchoolOutlinedIcon fontSize="small" />,
-    mau: "#8B1313",
+    mau: BRAND.main,
     nen: "#FEF2F2",
   },
   {
@@ -191,7 +191,7 @@ const CAU_HINH_TRANG_THAI: CauHinhTrangThai[] = [
     khoaThongKe: "daDuyet",
     nhan: "Đã duyệt",
     icon: <CheckCircleIcon fontSize="small" />,
-    mau: "#10B981",
+    mau: STATUS.success,
     nen: "#E6F4EA",
   },
   {
@@ -199,7 +199,7 @@ const CAU_HINH_TRANG_THAI: CauHinhTrangThai[] = [
     khoaThongKe: "choDuyet",
     nhan: "Chờ duyệt",
     icon: <PendingIcon fontSize="small" />,
-    mau: "#F59E0B",
+    mau: STATUS.warning,
     nen: "#FEF3C7",
   },
   {
@@ -215,7 +215,7 @@ const CAU_HINH_TRANG_THAI: CauHinhTrangThai[] = [
     khoaThongKe: "tuChoi",
     nhan: "Từ chối",
     icon: <CancelIcon fontSize="small" />,
-    mau: "#DC2626",
+    mau: STATUS.error,
     nen: "#FEE2E2",
   },
   {
@@ -284,7 +284,7 @@ function TheTrangThai({
         height: "100%",
         boxShadow: dangChon ? `0 4px 12px ${alpha(MAU.chinh, 0.08)}` : "none",
         "&:hover": {
-          borderColor: dangChon ? MAU.chinh : "#ECE7E4",
+          borderColor: dangChon ? MAU.chinh : NEUTRAL.divider,
           boxShadow: `0 4px 12px rgba(0, 0, 0, 0.04)`,
         },
       }}
@@ -880,7 +880,7 @@ function KhoaHocContent() {
           mb: 3,
           borderRadius: "12px",
           border: `1px solid ${MAU.vien}`,
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          bgcolor: CSSVAR.paper,
         }}
       >
         <TextField
@@ -897,12 +897,12 @@ function KhoaHocContent() {
             "& .MuiOutlinedInput-root": {
               height: "42px",
               borderRadius: "10px",
-              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+              bgcolor: CSSVAR.paperAlt,
               "& fieldset": { borderColor: MAU.vien },
-              "&:hover fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+              "&:hover fieldset": { borderColor: CSSVAR.divider },
               "&.Mui-focused fieldset": { borderColor: MAU.chinh },
               "&.Mui-focused": {
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
                 boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
               },
             },
@@ -942,16 +942,16 @@ function KhoaHocContent() {
             color: MAU.chuDen,
             fontSize: 14,
             fontWeight: 600,
-            bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+            bgcolor: CSSVAR.paperAlt,
             "& .MuiOutlinedInput-notchedOutline": { borderColor: MAU.vien },
             "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderColor: "var(--ev-divider, #ECE7E4)",
+              borderColor: CSSVAR.divider,
             },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: MAU.chinh,
             },
             "&.Mui-focused": {
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
             },
           }}
@@ -968,7 +968,7 @@ function KhoaHocContent() {
             disabled={dangTai}
             sx={{
               color: MAU.chinh,
-              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+              bgcolor: CSSVAR.paperAlt,
               border: `1px solid ${MAU.vien}`,
               borderRadius: "10px",
               width: "42px",
@@ -995,7 +995,7 @@ function KhoaHocContent() {
             onClick={handleRefresh}
             sx={{
               color: MAU.chinh,
-              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+              bgcolor: CSSVAR.paperAlt,
               border: `1px solid ${MAU.vien}`,
               borderRadius: "10px",
               width: "42px",
@@ -1046,7 +1046,7 @@ function KhoaHocContent() {
             px: 4,
             borderRadius: "12px",
             border: `1px solid ${MAU.vien}`,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
           }}
         >
           <Typography
@@ -1082,7 +1082,7 @@ function KhoaHocContent() {
             px: 4,
             borderRadius: "12px",
             border: `1px dashed ${MAU.vien}`,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
           }}
         >
           <SchoolOutlinedIcon
@@ -1139,7 +1139,7 @@ function KhoaHocContent() {
                     flexDirection: { xs: "column", sm: "row" },
                     borderRadius: "16px",
                     border: `1px solid ${isDraft ? "#FECACA" : MAU.vien}`,
-                    bgcolor: "var(--ev-paper, #FFFFFF)",
+                    bgcolor: CSSVAR.paper,
                     overflow: "hidden",
                     position: "relative",
                     cursor: "pointer",
@@ -1160,7 +1160,7 @@ function KhoaHocContent() {
                       minHeight: { sm: "146px" },
                       flexShrink: 0,
                       cursor: "pointer",
-                      bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                      bgcolor: CSSVAR.paperAlt,
                       overflow: "hidden",
                       borderRight: { sm: `1px solid ${MAU.vien}` },
                       borderBottom: { xs: `1px solid ${MAU.vien}`, sm: "none" },
@@ -1357,11 +1357,11 @@ function KhoaHocContent() {
                               }}
                               disabled={dangXuLyItemNay}
                               sx={{
-                                color: "#D97706",
+                                color: STATUS.warningDark,
                                 bgcolor: "#FEF3C7",
                                 borderRadius: "10px",
                                 "&:hover": {
-                                  bgcolor: "#D97706",
+                                  bgcolor: STATUS.warningDark,
                                   color: "#fff",
                                 },
                                 transition: "all 0.2s",
@@ -1370,7 +1370,7 @@ function KhoaHocContent() {
                               {dangXuLyItemNay ? (
                                 <CircularProgress
                                   size={18}
-                                  sx={{ color: "#D97706" }}
+                                  sx={{ color: STATUS.warningDark }}
                                 />
                               ) : (
                                 <UndoIcon fontSize="small" />
@@ -1390,11 +1390,11 @@ function KhoaHocContent() {
                               }}
                               disabled={dangXuLyItemNay}
                               sx={{
-                                color: "#DC2626",
+                                color: STATUS.error,
                                 bgcolor: "#FEF2F2",
                                 borderRadius: "10px",
                                 "&:hover": {
-                                  bgcolor: "#DC2626",
+                                  bgcolor: STATUS.error,
                                   color: "#fff",
                                 },
                                 transition: "all 0.2s",
@@ -1480,7 +1480,7 @@ function KhoaHocContent() {
               height: 36,
               borderRadius: "10px",
               bgcolor: "#FEF2F2",
-              color: "#DC2626",
+              color: STATUS.error,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -1519,9 +1519,9 @@ function KhoaHocContent() {
             sx={{
               textTransform: "none",
               fontWeight: 700,
-              bgcolor: "#DC2626",
+              bgcolor: STATUS.error,
               borderRadius: "10px",
-              "&:hover": { bgcolor: "#B91C1C" },
+              "&:hover": { bgcolor: STATUS.errorDark },
             }}
           >
             Xóa
@@ -1555,7 +1555,7 @@ function KhoaHocContent() {
               height: 36,
               borderRadius: "10px",
               bgcolor: "#FEF3C7",
-              color: "#D97706",
+              color: STATUS.warningDark,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -1597,7 +1597,7 @@ function KhoaHocContent() {
             sx={{
               textTransform: "none",
               fontWeight: 700,
-              bgcolor: "#D97706",
+              bgcolor: STATUS.warningDark,
               borderRadius: "10px",
               "&:hover": { bgcolor: "#B45309" },
             }}
@@ -1697,7 +1697,7 @@ export default function InstructorCoursesPage() {
           sx={{
             p: { xs: 2, md: 4 },
             minHeight: "100vh",
-            bgcolor: "var(--ev-bg, #F7F5F2)",
+            bgcolor: CSSVAR.bg,
           }}
         >
           <KhoaHocContent />

@@ -1,5 +1,5 @@
 "use client";
-import { LAYOUT_SPACING, MAU } from "@/src/theme/tokens";
+import { LAYOUT_SPACING, MAU, CSSVAR } from "@/src/theme/tokens";
 
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
@@ -234,7 +234,7 @@ function QuanLyKhuyenMaiContent() {
   const cardSx = {
     p: LAYOUT_SPACING.cardPadding,
     mb: 2,
-    bgcolor: "var(--ev-paper, #FFFFFF)",
+    bgcolor: CSSVAR.paper,
     border: `1px solid #EDEFF3`,
     borderRadius: 3,
     boxShadow: "0 1px 2px rgba(16,24,40,0.02)",
@@ -262,7 +262,7 @@ function QuanLyKhuyenMaiContent() {
             sx={{
               fontWeight: 900,
               fontSize: 26,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
             }}
           >
             Quản lý khuyến mãi
@@ -343,7 +343,7 @@ function QuanLyKhuyenMaiContent() {
                       sx={{
                         fontWeight: 800,
                         fontSize: 16,
-                        color: "var(--ev-text-primary, #1F2937)",
+                        color: CSSVAR.textPrimary,
                       }}
                     >
                       {km.maGiamGia}
@@ -459,12 +459,12 @@ function QuanLyKhuyenMaiContent() {
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
                 minHeight: "44px",
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
                 "& fieldset": {
-                  borderColor: "var(--ev-divider, #ECE7E4)",
+                  borderColor: CSSVAR.divider,
                 },
                 "&:hover fieldset": {
-                  borderColor: "#8A7676",
+                  borderColor: CSSVAR.textMuted,
                 },
                 "&.Mui-focused fieldset": {
                   borderColor: MAU.chinh,
@@ -483,7 +483,7 @@ function QuanLyKhuyenMaiContent() {
                   fontSize: 13,
                   fontWeight: 700,
                   mb: 0.5,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                 }}
               >
                 Mã giảm giá *
@@ -508,7 +508,7 @@ function QuanLyKhuyenMaiContent() {
                   fontSize: 13,
                   fontWeight: 700,
                   mb: 0.5,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                 }}
               >
                 Phần trăm giảm (%) *
@@ -539,7 +539,7 @@ function QuanLyKhuyenMaiContent() {
                     fontSize: 13,
                     fontWeight: 700,
                     mb: 0.5,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                   }}
                 >
                   Ngày bắt đầu
@@ -561,7 +561,7 @@ function QuanLyKhuyenMaiContent() {
                     fontSize: 13,
                     fontWeight: 700,
                     mb: 0.5,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                   }}
                 >
                   Ngày kết thúc
@@ -584,7 +584,7 @@ function QuanLyKhuyenMaiContent() {
                   fontSize: 13,
                   fontWeight: 700,
                   mb: 0.5,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                 }}
               >
                 Số lượng hiệu lực (để trống = không giới hạn)
@@ -607,7 +607,7 @@ function QuanLyKhuyenMaiContent() {
                   fontSize: 13,
                   fontWeight: 700,
                   mb: 1,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                 }}
               >
                 Áp dụng cho khóa học đã duyệt *
@@ -641,9 +641,9 @@ function QuanLyKhuyenMaiContent() {
                             borderRadius: "999px",
                             fontWeight: 600,
                             maxWidth: 260,
-                            border: `1.5px solid ${active ? MAU.chinh : "#ECE7E4"}`,
+                            border: `1.5px solid ${active ? MAU.chinh : CSSVAR.divider}`,
                             bgcolor: active ? MAU.chinhNhat : "transparent",
-                            color: active ? MAU.chinh : "#4B5563",
+                            color: active ? MAU.chinh : CSSVAR.textSecondary,
                             "&:hover": { bgcolor: MAU.chinhNhat },
                           }}
                         />
@@ -738,7 +738,7 @@ export default function ManagerPromotionsPage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

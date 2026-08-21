@@ -19,6 +19,7 @@ import StepConnector, {
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import { CourseCreateProvider } from "./context/CourseCreateContext";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 // ✅ 3 Bước
 const STEPS = ["Chọn loại", "Thông tin", "Danh mục"];
@@ -32,16 +33,16 @@ const QontoConnector = styled(StepConnector)(() => ({
   },
   [`&.${stepConnectorClasses.active}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      borderColor: "#8B1313",
+      borderColor: BRAND.main,
     },
   },
   [`&.${stepConnectorClasses.completed}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      borderColor: "#8B1313",
+      borderColor: BRAND.main,
     },
   },
   [`& .${stepConnectorClasses.line}`]: {
-    borderColor: "var(--ev-divider, #ECE7E4)",
+    borderColor: CSSVAR.divider,
     borderTopWidth: 2,
     borderRadius: 1,
     transition: "border-color 0.2s ease",
@@ -72,7 +73,7 @@ function QontoStepIcon(props: {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            bgcolor: "#8B1313",
+            bgcolor: BRAND.main,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -88,12 +89,12 @@ function QontoStepIcon(props: {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            border: `2px solid ${active ? "#8B1313" : "#ECE7E4"}`,
+            border: `2px solid ${active ? BRAND.main : CSSVAR.divider}`,
             bgcolor: active ? "#fff" : "#fff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: active ? "#8B1313" : "#8A7676",
+            color: active ? BRAND.main : CSSVAR.textMuted,
             fontSize: 13,
             fontWeight: 700,
             boxShadow: active ? "0 2px 8px rgba(122,31,43,0.15)" : "none",
@@ -129,8 +130,8 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
         <Box
           component="header"
           sx={{
-            bgcolor: "var(--ev-paper, #FFFFFF)",
-            borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
+            bgcolor: CSSVAR.paper,
+            borderBottom: `1px solid ${CSSVAR.divider}`,
             boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
             position: "sticky",
             top: 0,
@@ -162,13 +163,13 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                 style={{ objectFit: "contain" }}
                 priority
               />
-              <Box sx={{ width: "1px", height: 20, bgcolor: "#ECE7E4" }} />
+              <Box sx={{ width: "1px", height: 20, bgcolor: CSSVAR.divider }} />
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography
                   sx={{
                     fontSize: { xs: 13, sm: 15 },
                     fontWeight: 600,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     display: { xs: "none", sm: "block" },
                   }}
                 >
@@ -177,7 +178,7 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                 <Typography
                   sx={{
                     fontSize: { xs: 13, sm: 15 },
-                    color: "var(--ev-text-muted, #8A7676)",
+                    color: CSSVAR.textMuted,
                     display: { xs: "block", sm: "block" },
                   }}
                 >
@@ -209,10 +210,10 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                 borderRadius: "8px",
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                  bgcolor: CSSVAR.paperAlt,
                 },
                 "&:focus-visible": {
-                  outline: "2px solid #8B1313",
+                  outline: `2px solid ${BRAND.main}`,
                 },
               }}
             >
@@ -220,12 +221,12 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                 sx={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                 }}
               >
                 Thoát
               </Typography>
-              <CloseIcon sx={{ fontSize: 18, color: "var(--ev-text-secondary, #4B5563)" }} />
+              <CloseIcon sx={{ fontSize: 18, color: CSSVAR.textSecondary }} />
             </Box>
           </Box>
         </Box>
@@ -233,8 +234,8 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
         {/* Stepper Section */}
         <Box
           sx={{
-            bgcolor: "var(--ev-paper, #FFFFFF)",
-            borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
+            bgcolor: CSSVAR.paper,
+            borderBottom: `1px solid ${CSSVAR.divider}`,
             pt: 3,
             pb: 2.5,
           }}
@@ -253,16 +254,16 @@ export default function CreateLayout({ children }: { children: ReactNode }) {
                       "& .MuiStepLabel-label": {
                         fontSize: { xs: 11, sm: 13 },
                         fontWeight: 500,
-                        color: "var(--ev-grey, #8A7676)",
+                        color: CSSVAR.textMuted,
                         mt: 0.8,
                         transition: "color 0.2s ease",
                       },
                       "& .MuiStepLabel-label.Mui-active": {
-                        color: "#8B1313",
+                        color: BRAND.main,
                         fontWeight: 600,
                       },
                       "& .MuiStepLabel-label.Mui-completed": {
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                         fontWeight: 600,
                       },
                     }}

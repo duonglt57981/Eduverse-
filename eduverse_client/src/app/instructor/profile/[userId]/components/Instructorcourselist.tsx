@@ -13,6 +13,7 @@ import {
 import SentimentDissatisfiedOutlinedIcon from "@mui/icons-material/SentimentDissatisfiedOutlined";
 import InstructorCourseCard from "./Instructorcoursecard";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 interface InstructorCourseListProps {
   danhSachKhoaHoc: KhoaHocType[];
@@ -58,8 +59,8 @@ export default function InstructorCourseList({
         }}
         spacing={1.5}
       >
-        <SentimentDissatisfiedOutlinedIcon sx={{ fontSize: 48, color: "var(--ev-text-muted, #9CA3AF)" }} />
-        <Typography variant="body1" sx={{ fontWeight: 600, color: "var(--ev-text-secondary, #4B5563)" }}>
+        <SentimentDissatisfiedOutlinedIcon sx={{ fontSize: 48, color: CSSVAR.grey }} />
+        <Typography variant="body1" sx={{ fontWeight: 600, color: CSSVAR.textSecondary }}>
           Giảng viên này chưa có khóa học nào được công bố.
         </Typography>
       </Stack>
@@ -94,7 +95,7 @@ export default function InstructorCourseList({
                 borderRadius: "8px",
               },
               "& .MuiPaginationItem-root.Mui-selected": {
-                bgcolor: "#8B1313 !important",
+                bgcolor: `${BRAND.main} !important`,
                 color: "#FFFFFF !important",
               },
             }}

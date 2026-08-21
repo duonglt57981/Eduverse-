@@ -19,8 +19,9 @@ import {
   Download as DownloadIcon,
 } from "@mui/icons-material";
 import { TaiLieuType } from "@/src/types/TaiLieu/Dto/TaiLieuDto";
+import { BRAND } from "@/src/theme/tokens";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = BRAND.main;
 
 interface TaiLieuDropdownProps {
   danhSachTaiLieu: TaiLieuType[];

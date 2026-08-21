@@ -7,6 +7,7 @@ import OndemandVideoOutlinedIcon from "@mui/icons-material/OndemandVideoOutlined
 import CheckIcon from "@mui/icons-material/Check";
 import StepWrapper from "../context/StepWrapper";
 import AuthGuard from "@/src/components/AuthGuard";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 export default function Step1Page() {
   const router = useRouter();
@@ -38,9 +39,9 @@ export default function Step1Page() {
           {/* Main Card Container */}
           <Box
             sx={{
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               borderRadius: "20px",
-              border: "1px solid var(--ev-divider, #ECE7E4)",
+              border: `1px solid ${CSSVAR.divider}`,
               boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
               p: { xs: 3, sm: 6 },
               width: "100%",
@@ -59,7 +60,7 @@ export default function Step1Page() {
                 fontWeight: 700,
                 fontSize: { xs: "1.25rem", sm: "1.6rem" },
                 mb: 1.5,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
               }}
             >
               Bạn muốn tạo nội dung học tập nào?
@@ -68,7 +69,7 @@ export default function Step1Page() {
             <Typography
               sx={{
                 fontSize: { xs: 13, sm: 15 },
-                color: "var(--ev-text-muted, #8A7676)",
+                color: CSSVAR.textMuted,
                 mb: 4,
                 maxWidth: 480,
                 lineHeight: 1.5,
@@ -84,7 +85,7 @@ export default function Step1Page() {
                 width: "100%",
                 maxWidth: 380,
                 borderRadius: "16px",
-                borderColor: selected ? "#8B1313" : "#ECE7E4",
+                borderColor: selected ? BRAND.main : CSSVAR.divider,
                 borderWidth: selected ? 2 : 1,
                 bgcolor: selected ? "#FFF1F2" : "#ffffff",
                 boxShadow: selected
@@ -95,10 +96,10 @@ export default function Step1Page() {
                 cursor: "pointer",
                 "&:hover": {
                   boxShadow: "0 8px 24px rgba(122, 31, 43, 0.08)",
-                  borderColor: "#8B1313",
+                  borderColor: BRAND.main,
                 },
                 "&:focus-within": {
-                  outline: "2px solid #8B1313",
+                  outline: `2px solid ${BRAND.main}`,
                   outlineOffset: "2px",
                 },
               }}
@@ -123,7 +124,7 @@ export default function Step1Page() {
                       width: 22,
                       height: 22,
                       borderRadius: "50%",
-                      bgcolor: "#8B1313",
+                      bgcolor: BRAND.main,
                       color: "#ffffff",
                       display: "flex",
                       alignItems: "center",
@@ -137,8 +138,8 @@ export default function Step1Page() {
 
                 <Box
                   sx={{
-                    color: selected ? "#8B1313" : "#4B5563",
-                    bgcolor: selected ? "#FEE2E2" : "#FBFAF9",
+                    color: selected ? BRAND.main : CSSVAR.textSecondary,
+                    bgcolor: selected ? "#FEE2E2" : CSSVAR.paperAlt,
                     borderRadius: "12px",
                     p: 2,
                     display: "flex",
@@ -156,7 +157,7 @@ export default function Step1Page() {
                     fontWeight: 700,
                     fontSize: 18,
                     mb: 1.5,
-                    color: selected ? "#8B1313" : "#1F2937",
+                    color: selected ? BRAND.main : CSSVAR.textPrimary,
                   }}
                 >
                   Khóa học
@@ -165,7 +166,7 @@ export default function Step1Page() {
                 <Typography
                   sx={{
                     fontSize: 14,
-                    color: "var(--ev-text-secondary, #4B5563)",
+                    color: CSSVAR.textSecondary,
                     lineHeight: 1.6,
                     textAlign: "center",
                   }}
@@ -181,7 +182,7 @@ export default function Step1Page() {
               sx={{
                 mt: 4,
                 fontSize: 13,
-                color: "var(--ev-grey, #8A7676)",
+                color: CSSVAR.textMuted,
               }}
             >
               Bạn vẫn có thể cập nhật nội dung chi tiết sau khi khóa học được khởi tạo.

@@ -21,8 +21,9 @@ import {
   HistoryRounded,
 } from "@mui/icons-material";
 import type { BaiKiemTraInfoDto, LichSuLamBaiDto } from "../../hooks/useQuiz";
+import { BRAND, COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
 
-const RED = "#8B1313";
+const RED = BRAND.main;
 
 interface QuizEntryProps {
   info: BaiKiemTraInfoDto;
@@ -62,7 +63,7 @@ export function QuizEntry({
             width: 68,
             height: 68,
             borderRadius: "18px",
-            background: `linear-gradient(135deg, ${RED}, #7C3AED)`,
+            background: `linear-gradient(135deg, ${RED}, ${COLORS.purpleAI})`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -77,7 +78,7 @@ export function QuizEntry({
           sx={{
             fontSize: 20,
             fontWeight: 900,
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
             mb: 0.5,
           }}
         >
@@ -139,7 +140,7 @@ export function QuizEntry({
               sx={{
                 fontSize: 14,
                 fontWeight: 800,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
               }}
             >
               {s.value}
@@ -165,7 +166,7 @@ export function QuizEntry({
           action={
             <Button
               size="small"
-              sx={{ fontWeight: 800, color: "#D97706" }}
+              sx={{ fontWeight: 800, color: STATUS.warningDark }}
               onClick={() => onTiepTuc(lanLamDoDang.idLanLamBaiKiemTra)}
             >
               Tiếp tục
@@ -193,7 +194,7 @@ export function QuizEntry({
             sx={{ alignItems: "center", mb: 1.5 }}
           >
             {daDat ? (
-              <CheckCircleRounded sx={{ color: "#10B981" }} />
+              <CheckCircleRounded sx={{ color: STATUS.success }} />
             ) : (
               <EmojiEventsRounded sx={{ color: RED }} />
             )}
@@ -201,7 +202,7 @@ export function QuizEntry({
               sx={{
                 fontWeight: 800,
                 fontSize: 14,
-                color: daDat ? "#10B981" : RED,
+                color: daDat ? STATUS.success : RED,
               }}
             >
               {daDat
@@ -228,7 +229,7 @@ export function QuizEntry({
                 sx={{
                   fontSize: 17,
                   fontWeight: 900,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                 }}
               >
                 {soLanDaLam} lần
@@ -249,7 +250,7 @@ export function QuizEntry({
                   sx={{
                     fontSize: 17,
                     fontWeight: 900,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                   }}
                 >
                   {diemCaoNhat.toFixed(1)}
@@ -266,7 +267,7 @@ export function QuizEntry({
                 borderRadius: 3,
                 bgcolor: "rgba(0,0,0,0.06)",
                 "& .MuiLinearProgress-bar": {
-                  bgcolor: daDat ? "#10B981" : RED,
+                  bgcolor: daDat ? STATUS.success : RED,
                   borderRadius: 3,
                 },
               }}
@@ -376,7 +377,7 @@ export function QuizEntry({
               borderRadius: "12px",
               fontWeight: 900,
               fontSize: 15,
-              background: `linear-gradient(135deg, ${RED}, #7C3AED)`,
+              background: `linear-gradient(135deg, ${RED}, ${COLORS.purpleAI})`,
               boxShadow: `0 8px 20px rgba(141,19,19,0.2)`,
             }}
           >
@@ -427,7 +428,7 @@ export function QuizEntry({
                       borderRadius: "10px",
                       cursor: "pointer",
                       border: "1px solid rgba(0,0,0,0.07)",
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      bgcolor: CSSVAR.paper,
                       "&:hover": {
                         borderColor: RED,
                         bgcolor: "rgba(141,19,19,0.02)",
@@ -472,7 +473,7 @@ export function QuizEntry({
                         sx={{
                           fontSize: 13,
                           fontWeight: 800,
-                          color: l.dat ? "#10B981" : RED,
+                          color: l.dat ? STATUS.success : RED,
                         }}
                       >
                         {l.tongDiem?.toFixed(1) ?? "—"}đ

@@ -27,8 +27,9 @@ import { QualityMenu } from "./QualityMenu";
 import { QualityLevel } from "../types";
 import { getOptimalHlsUrl, buildCloudinaryHlsUrl } from "../utils/cloudinary";
 import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
+import { BRAND } from "@/src/theme/tokens";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = BRAND.main;
 const PRIMARY_RED_DARK = "#7F1D1D";
 const LOAD_TIMEOUT_MS = 30000;
 const FALLBACK_DEMO_VIDEO =

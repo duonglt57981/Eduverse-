@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { CSSVAR, STATUS } from "@/src/theme/tokens";
 import {
   Box,
   Typography,
@@ -535,7 +536,7 @@ export default function InstructorsContent() {
                   fontWeight: 800,
                   fontSize: 12.5,
                   bgcolor: vuot100 ? "#FEE2E2" : `${MAU.chinh}12`,
-                  color: vuot100 ? "#DC2626" : MAU.chinh,
+                  color: vuot100 ? STATUS.error : MAU.chinh,
                   border: `1px solid ${vuot100 ? "#FCA5A5" : `${MAU.chinh}30`}`,
                   borderRadius: "8px",
                   px: 0.75,
@@ -544,14 +545,14 @@ export default function InstructorsContent() {
               />
               {100 - tongTyLe > 0 && !vuot100 && (
                 <Typography
-                  sx={{ fontSize: 12, color: "#10B981", fontWeight: 600 }}
+                  sx={{ fontSize: 12, color: STATUS.success, fontWeight: 600 }}
                 >
                   (Còn khả dụng {100 - tongTyLe}%)
                 </Typography>
               )}
               {vuot100 && (
                 <Typography
-                  sx={{ fontSize: 12, color: "#DC2626", fontWeight: 700 }}
+                  sx={{ fontSize: 12, color: STATUS.error, fontWeight: 700 }}
                 >
                   ⚠️ Vượt {tongTyLe - 100}%
                 </Typography>
@@ -574,10 +575,10 @@ export default function InstructorsContent() {
                 height: "100%",
                 width: `${Math.min(tongTyLe, 100)}%`,
                 bgcolor: vuot100
-                  ? "#DC2626"
+                  ? STATUS.error
                   : tongTyLe === 100
                     ? "#16A34A"
-                    : "#D97706",
+                    : STATUS.warningDark,
                 borderRadius: 99,
                 transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
@@ -591,10 +592,10 @@ export default function InstructorsContent() {
               flexShrink: 0,
               mt: 1,
               color: vuot100
-                ? "#DC2626"
+                ? STATUS.error
                 : tongTyLe === 100
                   ? "#16A34A"
-                  : "#D97706",
+                  : STATUS.warningDark,
             }}
           >
             {tongTyLe}% / 100% doanh thu giảng viên
@@ -759,7 +760,7 @@ export default function InstructorsContent() {
                             <WorkspacePremiumRoundedIcon
                               sx={{
                                 fontSize: "14px !important",
-                                color: "#F59E0B !important",
+                                color: `${STATUS.warning} !important`,
                               }}
                             />
                           }
@@ -964,7 +965,7 @@ export default function InstructorsContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: "#DC2626",
+                  color: STATUS.error,
                   mt: 1,
                   display: "flex",
                   alignItems: "center",
@@ -979,7 +980,7 @@ export default function InstructorsContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: "#D97706",
+                  color: STATUS.warningDark,
                   mt: 0.5,
                   display: "flex",
                   alignItems: "center",
@@ -994,7 +995,7 @@ export default function InstructorsContent() {
               <Typography
                 sx={{
                   fontSize: 12,
-                  color: "#DC2626",
+                  color: STATUS.error,
                   mt: 0.5,
                   display: "flex",
                   alignItems: "center",
@@ -1041,7 +1042,7 @@ export default function InstructorsContent() {
                         width: 36,
                         height: 36,
                         bgcolor: "#FEF3C7",
-                        color: "#D97706",
+                        color: STATUS.warningDark,
                         fontSize: 14,
                         fontWeight: 700,
                       }}
@@ -1072,7 +1073,7 @@ export default function InstructorsContent() {
                         fontWeight: 700,
                         fontSize: 11,
                         bgcolor: "#FEF3C7",
-                        color: "#D97706",
+                        color: STATUS.warningDark,
                       }}
                     />
 
@@ -1118,7 +1119,7 @@ export default function InstructorsContent() {
                           fontWeight: 700,
                           fontSize: 11,
                           bgcolor: "#FEF3C7",
-                          color: "#D97706",
+                          color: STATUS.warningDark,
                           border: "1px solid #FDE68A",
                         }}
                       />
@@ -1131,7 +1132,7 @@ export default function InstructorsContent() {
                             textTransform: "none",
                             fontSize: 12,
                             fontWeight: 700,
-                            color: "#DC2626",
+                            color: STATUS.error,
                             p: "2px 10px",
                             minWidth: 0,
                             border: "1px solid #FECACA",
@@ -1139,14 +1140,14 @@ export default function InstructorsContent() {
                             bgcolor: "#FFF",
                             "&:hover": {
                               bgcolor: "#FEE2E2",
-                              borderColor: "#DC2626",
+                              borderColor: STATUS.error,
                             },
                           }}
                         >
                           {dangHuyLoiMoi === lm.idLoiMoi ? (
                             <CircularProgress
                               size={14}
-                              sx={{ color: "#DC2626" }}
+                              sx={{ color: STATUS.error }}
                             />
                           ) : (
                             "Hủy lời mời"
@@ -1175,7 +1176,7 @@ export default function InstructorsContent() {
                 borderRadius: "24px",
                 boxShadow: "0 24px 48px rgba(0, 0, 0, 0.16)",
                 overflow: "hidden",
-                border: "1px solid var(--ev-divider, #ECE7E4)",
+                border: `1px solid ${CSSVAR.divider}`,
               },
             },
           }}
@@ -1269,7 +1270,7 @@ export default function InstructorsContent() {
                   gap: 0.75,
                 }}
               >
-                Email giảng viên <span style={{ color: "#DC2626" }}>*</span>
+                Email giảng viên <span style={{ color: STATUS.error }}>*</span>
               </Typography>
               <TextField
                 fullWidth
@@ -1350,7 +1351,7 @@ export default function InstructorsContent() {
                     fontWeight: 700,
                     fontSize: 11.5,
                     bgcolor: 100 - tongTyLe > 0 ? "#ECFDF5" : "#FEF2F2",
-                    color: 100 - tongTyLe > 0 ? "#059669" : "#DC2626",
+                    color: 100 - tongTyLe > 0 ? "#059669" : STATUS.error,
                     border: `1px solid ${100 - tongTyLe > 0 ? "#A7F3D0" : "#FCA5A5"}`,
                   }}
                 />
@@ -1695,7 +1696,7 @@ export default function InstructorsContent() {
           fullWidth
           slotProps={{ paper: { sx: { borderRadius: "14px" } } }}
         >
-          <DialogTitle sx={{ fontWeight: 700, color: "#DC2626" }}>
+          <DialogTitle sx={{ fontWeight: 700, color: STATUS.error }}>
             Xóa giảng viên
           </DialogTitle>
           <DialogContent>
@@ -1718,10 +1719,10 @@ export default function InstructorsContent() {
               onClick={handleRemove}
               disabled={dangXoa}
               sx={{
-                bgcolor: "#DC2626",
+                bgcolor: STATUS.error,
                 textTransform: "none",
                 fontWeight: 700,
-                "&:hover": { bgcolor: "#B91C1C" },
+                "&:hover": { bgcolor: STATUS.errorDark },
               }}
             >
               {dangXoa ? (

@@ -49,7 +49,7 @@ import {
   FilterListRounded,
   ClearRounded,
 } from "@mui/icons-material";
-import { BRAND, NEUTRAL, STATUS } from "@/src/theme/tokens";
+import { BRAND, NEUTRAL, STATUS, CSSVAR } from "@/src/theme/tokens";
 
 // Cohesive Crimson color palette matching the Eduverse platform
 const COLORS = {
@@ -266,7 +266,7 @@ export default function AdminCategoriesPage() {
   const handleDelete = async (cat: CategoryItem) => {
     const result = await Swal.fire({
       title: "Xác nhận xóa",
-      html: `Bạn có chắc muốn xóa danh mục <b>"${cat.tenDanhMuc}"</b>?<br/><span style="color:#4B5563;font-size:13px;">Các khóa học thuộc danh mục này có thể bị ảnh hưởng.</span>`,
+      html: `Bạn có chắc muốn xóa danh mục <b>"${cat.tenDanhMuc}"</b>?<br/><span style="color:${CSSVAR.textSecondary};font-size:13px;">Các khóa học thuộc danh mục này có thể bị ảnh hưởng.</span>`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: COLORS.red,
@@ -340,7 +340,7 @@ export default function AdminCategoriesPage() {
 
   // Category prefix chip colors
   const prefixColors = [
-    { bg: "#FEE2E2", color: "#8B1313" },
+    { bg: "#FEE2E2", color: BRAND.main },
     { bg: "#DBEAFE", color: "#1E40AF" },
     { bg: "#D1FAE5", color: "#065F46" },
     { bg: "#EDE9FE", color: "#5B21B6" },
@@ -372,7 +372,7 @@ export default function AdminCategoriesPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   mb: 0.5,
                 }}
               >
@@ -645,7 +645,7 @@ export default function AdminCategoriesPage() {
             }}
           >
             {/* Card Header with Search & Filters */}
-            <Box sx={{ p: 3, borderBottom: "1px solid #FBFAF9" }}>
+            <Box sx={{ p: 3, borderBottom: `1px solid ${CSSVAR.paperAlt}` }}>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={2}
@@ -682,9 +682,9 @@ export default function AdminCategoriesPage() {
                         width: 240,
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "14px",
-                          bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                          bgcolor: CSSVAR.bg,
                           height: 42,
-                          "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+                          "& fieldset": { borderColor: CSSVAR.divider },
                           "&:hover fieldset": { borderColor: COLORS.primary },
                           "&.Mui-focused fieldset": {
                             borderColor: COLORS.primary,
@@ -739,12 +739,12 @@ export default function AdminCategoriesPage() {
                       displayEmpty
                       sx={{
                         borderRadius: "14px",
-                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                        bgcolor: CSSVAR.bg,
                         height: 42,
                         fontSize: 13.5,
                         fontWeight: 600,
                         "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "var(--ev-divider, #ECE7E4)",
+                          borderColor: CSSVAR.divider,
                         },
                         "&:hover .MuiOutlinedInput-notchedOutline": {
                           borderColor: COLORS.primary,
@@ -779,7 +779,7 @@ export default function AdminCategoriesPage() {
                         fetchStats();
                       }}
                       sx={{
-                        border: "1px solid var(--ev-divider, #ECE7E4)",
+                        border: `1px solid ${CSSVAR.divider}`,
                         borderRadius: "14px",
                         width: 42,
                         height: 42,
@@ -798,7 +798,7 @@ export default function AdminCategoriesPage() {
             {/* Table */}
             <TableContainer>
               <Table>
-                <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F7F5F2)" }}>
+                <TableHead sx={{ bgcolor: CSSVAR.bg }}>
                   <TableRow>
                     <TableCell
                       sx={{
@@ -912,7 +912,7 @@ export default function AdminCategoriesPage() {
                           Chưa có danh mục nào
                         </Typography>
                         <Typography
-                          sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 13, mt: 0.5 }}
+                          sx={{ color: CSSVAR.textMuted, fontSize: 13, mt: 0.5 }}
                         >
                           Nhấn &quot;Thêm danh mục&quot; để tạo danh mục đầu
                           tiên.
@@ -1149,7 +1149,7 @@ export default function AdminCategoriesPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   p: 3,
-                  borderTop: "1px solid #FBFAF9",
+                  borderTop: `1px solid ${CSSVAR.paperAlt}`,
                 }}
               >
                 <Typography
@@ -1239,7 +1239,7 @@ export default function AdminCategoriesPage() {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "14px",
                     height: 48,
-                    "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+                    "& fieldset": { borderColor: CSSVAR.divider },
                     "&:hover fieldset": { borderColor: COLORS.primary },
                     "&.Mui-focused fieldset": {
                       borderColor: COLORS.primary,
@@ -1277,7 +1277,7 @@ export default function AdminCategoriesPage() {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "14px",
                     height: 48,
-                    "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+                    "& fieldset": { borderColor: CSSVAR.divider },
                     "&:hover fieldset": { borderColor: COLORS.primary },
                     "&.Mui-focused fieldset": {
                       borderColor: COLORS.primary,
@@ -1309,7 +1309,7 @@ export default function AdminCategoriesPage() {
                     fontSize: 14,
                     fontWeight: 500,
                     "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "var(--ev-divider, #ECE7E4)",
+                      borderColor: CSSVAR.divider,
                     },
                     "&:hover .MuiOutlinedInput-notchedOutline": {
                       borderColor: COLORS.primary,
@@ -1339,7 +1339,7 @@ export default function AdminCategoriesPage() {
                   color: COLORS.textSecondary,
                   fontWeight: 700,
                   textTransform: "none",
-                  "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
+                  "&:hover": { bgcolor: CSSVAR.paperAlt },
                 }}
               >
                 Hủy bỏ
@@ -1357,7 +1357,7 @@ export default function AdminCategoriesPage() {
                   textTransform: "none",
                   boxShadow: "0 4px 16px rgba(141,19,19,0.3)",
                   "&:hover": { bgcolor: COLORS.primaryDark },
-                  "&.Mui-disabled": { bgcolor: "#ECE7E4" },
+                  "&.Mui-disabled": { bgcolor: CSSVAR.divider },
                 }}
               >
                 {loading ? (
@@ -1580,7 +1580,7 @@ export default function AdminCategoriesPage() {
                   color: COLORS.textSecondary,
                   fontWeight: 700,
                   textTransform: "none",
-                  "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
+                  "&:hover": { bgcolor: CSSVAR.paperAlt },
                 }}
               >
                 Đóng

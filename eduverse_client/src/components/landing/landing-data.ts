@@ -9,6 +9,7 @@ import {
   WorkspacePremiumRounded,
 } from '@mui/icons-material';
 import type { SvgIconComponent } from '@mui/icons-material';
+import { BRAND, STATUS, CSSVAR } from "@/src/theme/tokens";
 
 export type LandingNavItem = {
   label: string;
@@ -325,7 +326,7 @@ export const courseCatalog: CourseCatalogItem[] = [
     level: 'Người mới bắt đầu',
     isFree: false,
     tags: ['React', 'Frontend', 'JavaScript'],
-    palette: ['#1F2937', '#2563eb', '#1F2937'],
+    palette: [CSSVAR.textPrimary, '#2563eb', CSSVAR.textPrimary],
   },
   {
     id: 'aspnetcore',
@@ -373,7 +374,7 @@ export const courseCatalog: CourseCatalogItem[] = [
     level: 'Người mới bắt đầu',
     isFree: false,
     tags: ['Flutter', 'Dart', 'Mobile'],
-    palette: ['#1F2937', '#0284c7', '#1F2937'],
+    palette: [CSSVAR.textPrimary, STATUS.info, CSSVAR.textPrimary],
   },
   {
     id: 'docker',
@@ -437,7 +438,7 @@ export const courseCatalog: CourseCatalogItem[] = [
     level: 'Trung cấp',
     isFree: false,
     tags: ['SQL Server', 'Database', 'T-SQL'],
-    palette: ['#1a0f0f', '#8B1313', '#200d0d'],
+    palette: ['#1a0f0f', BRAND.main, '#200d0d'],
   },
 ];
 
@@ -462,7 +463,7 @@ export const instructorCatalog: InstructorItem[] = [
     experience: '8 năm',
     category: 'design',
     featured: true,
-    palette: ['#1f0f12', '#8B1313', '#251013'],
+    palette: ['#1f0f12', BRAND.main, '#251013'],
     socials: [
       { label: 'LinkedIn', href: '#' },
       { label: 'Email', href: '#' },

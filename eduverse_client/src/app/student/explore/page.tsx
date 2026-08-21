@@ -6,6 +6,7 @@ import { Box, CircularProgress } from '@mui/material';
 import AuthGuard from '@/src/components/AuthGuard';
 import StudentDashboardShell from '@/src/components/dashboard/StudentDashboardShell';
 import CoursesPage from '@/src/components/landing/CoursesPage';
+import { BRAND } from "@/src/theme/tokens";
 
 function ExploreContent() {
   const searchParams = useSearchParams();
@@ -31,7 +32,7 @@ function ExploreLoading() {
         placeItems: 'center',
       }}
     >
-      <CircularProgress sx={{ color: '#8B1313' }} />
+      <CircularProgress sx={{ color: BRAND.main }} />
     </Box>
   );
 }

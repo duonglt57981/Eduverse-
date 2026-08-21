@@ -7,8 +7,9 @@ import LibraryBooksOutlinedIcon from "@mui/icons-material/LibraryBooksOutlined";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
+import { CSSVAR, BRAND as BRAND_TOKEN } from "@/src/theme/tokens";
 
-const BRAND = "#8B1313";
+const BRAND = BRAND_TOKEN.main;
 const BRAND_SOFT = "rgba(139,19,19,0.08)";
 const FONT = "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))";
 
@@ -22,7 +23,7 @@ const options = [
       "Xem xét và phê duyệt các khóa học đang chờ được kiểm duyệt trước khi xuất bản.",
     tag: "Dành cho quản trị viên",
     route: "/admin/approve-courses",
-    accent: "#8B1313",
+    accent: BRAND,
     accentSoft: "rgba(139,19,19,0.08)",
   },
   {
@@ -100,7 +101,7 @@ export default function Step1Page() {
                 sx={{
                   fontWeight: 800,
                   fontSize: { xs: "1.5rem", sm: "2rem" },
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   mb: 1.25,
                   letterSpacing: "-0.015em",
                   fontFamily: FONT,
@@ -112,7 +113,7 @@ export default function Step1Page() {
               <Typography
                 sx={{
                   fontSize: { xs: 13.5, sm: 15 },
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   maxWidth: 460,
                   mx: "auto",
                   lineHeight: 1.6,
@@ -140,8 +141,8 @@ export default function Step1Page() {
                       position: "relative",
                       overflow: "hidden",
                       borderRadius: "20px",
-                      borderColor: "var(--ev-divider, #ECE7E4)",
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      borderColor: CSSVAR.divider,
+                      bgcolor: CSSVAR.paper,
                       boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
                       transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                       "&::before": {
@@ -213,7 +214,7 @@ export default function Step1Page() {
                           sx={{
                             fontSize: 22,
                             fontWeight: 800,
-                            color: "var(--ev-divider, #ECE7E4)",
+                            color: CSSVAR.divider,
                             lineHeight: 1,
                             fontFamily: FONT,
                             letterSpacing: "-0.02em",
@@ -242,7 +243,7 @@ export default function Step1Page() {
                           fontWeight: 700,
                           fontSize: 17,
                           mb: 0.75,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                           fontFamily: FONT,
                           letterSpacing: "-0.01em",
                         }}
@@ -253,7 +254,7 @@ export default function Step1Page() {
                       <Typography
                         sx={{
                           fontSize: 13.5,
-                          color: "var(--ev-text-secondary, #4B5563)",
+                          color: CSSVAR.textSecondary,
                           lineHeight: 1.6,
                           mb: 2.5,
                           flex: 1,
@@ -268,7 +269,7 @@ export default function Step1Page() {
                           mt: "auto",
                           width: "100%",
                           pt: 1.5,
-                          borderTop: "1px solid var(--ev-divider, #ECE7E4)",
+                          borderTop: `1px solid ${CSSVAR.divider}`,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
@@ -298,7 +299,7 @@ export default function Step1Page() {
               sx={{
                 mt: 3,
                 fontSize: 12.5,
-                color: "var(--ev-text-secondary, #4B5563)",
+                color: CSSVAR.textSecondary,
                 textAlign: "center",
                 fontFamily: FONT,
               }}

@@ -514,7 +514,7 @@ export default function AdminRolesPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   mb: 0.5,
                 }}
               >
@@ -562,7 +562,7 @@ export default function AdminRolesPage() {
                   p: 3,
                   borderRadius: "16px",
                   bgcolor: COLORS.white,
-                  border: "1.5px solid #FBFAF9",
+                  border: `1.5px solid ${CSSVAR.paperAlt}`,
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
@@ -612,7 +612,7 @@ export default function AdminRolesPage() {
                   p: 3,
                   borderRadius: "16px",
                   bgcolor: COLORS.white,
-                  border: "1.5px solid #FBFAF9",
+                  border: `1.5px solid ${CSSVAR.paperAlt}`,
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
@@ -660,7 +660,7 @@ export default function AdminRolesPage() {
                   p: 3,
                   borderRadius: "16px",
                   bgcolor: COLORS.white,
-                  border: "1.5px solid #FBFAF9",
+                  border: `1.5px solid ${CSSVAR.paperAlt}`,
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
@@ -708,7 +708,7 @@ export default function AdminRolesPage() {
                   p: 3,
                   borderRadius: "16px",
                   bgcolor: COLORS.white,
-                  border: "1.5px solid #FBFAF9",
+                  border: `1.5px solid ${CSSVAR.paperAlt}`,
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
@@ -756,7 +756,7 @@ export default function AdminRolesPage() {
             elevation={0}
             sx={{
               borderRadius: "16px",
-              border: "1.5px solid var(--ev-divider, #ECE7E4)",
+              border: `1.5px solid ${CSSVAR.divider}`,
               overflow: "hidden",
               bgcolor: COLORS.white,
               mb: 4,
@@ -769,7 +769,7 @@ export default function AdminRolesPage() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 p: 3,
-                borderBottom: "1.5px solid #FBFAF9",
+                borderBottom: `1.5px solid ${CSSVAR.paperAlt}`,
               }}
             >
               <Typography
@@ -798,7 +798,7 @@ export default function AdminRolesPage() {
                 </form>
                 <IconButton
                   sx={{
-                    border: "1.5px solid var(--ev-divider, #ECE7E4)",
+                    border: `1.5px solid ${CSSVAR.divider}`,
                     borderRadius: "8px",
                     width: "38px",
                     height: "38px",
@@ -812,7 +812,7 @@ export default function AdminRolesPage() {
                 <IconButton
                   onClick={handleRefresh}
                   sx={{
-                    border: "1.5px solid var(--ev-divider, #ECE7E4)",
+                    border: `1.5px solid ${CSSVAR.divider}`,
                     borderRadius: "8px",
                     width: "38px",
                     height: "38px",
@@ -847,7 +847,7 @@ export default function AdminRolesPage() {
             ) : (
               <TableContainer>
                 <Table>
-                  <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F7F5F2)" }}>
+                  <TableHead sx={{ bgcolor: CSSVAR.bg }}>
                     <TableRow>
                       <TableCell
                         sx={{
@@ -1095,7 +1095,7 @@ export default function AdminRolesPage() {
               elevation={0}
               sx={{
                 borderRadius: "16px",
-                border: "1.5px solid var(--ev-divider, #ECE7E4)",
+                border: `1.5px solid ${CSSVAR.divider}`,
                 bgcolor: COLORS.white,
                 overflow: "hidden",
               }}
@@ -1104,7 +1104,7 @@ export default function AdminRolesPage() {
               <Box
                 sx={{
                   p: 3,
-                  bgcolor: "#8B1313",
+                  bgcolor: BRAND.main,
                   color: COLORS.white,
                   display: "flex",
                   justifyContent: "space-between",
@@ -1305,7 +1305,7 @@ export default function AdminRolesPage() {
               sx={{
                 fontWeight: 800,
                 color: COLORS.textDark,
-                borderBottom: "1.5px solid #FBFAF9",
+                borderBottom: `1.5px solid ${CSSVAR.paperAlt}`,
                 pb: 2,
               }}
             >
@@ -1352,7 +1352,7 @@ export default function AdminRolesPage() {
                 </Grid>
               </DialogContent>
               <DialogActions
-                sx={{ p: 3, borderTop: "1.5px solid #FBFAF9", gap: 1.5 }}
+                sx={{ p: 3, borderTop: `1.5px solid ${CSSVAR.paperAlt}`, gap: 1.5 }}
               >
                 <Button
                   onClick={() => setDialogOpen(false)}

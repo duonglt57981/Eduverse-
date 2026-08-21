@@ -65,7 +65,7 @@ import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { createAppTheme } from "@/src/theme/createAppTheme";
-import { COLORS, LAYOUT_SPACING, PAGE_SPACING } from "@/src/theme/tokens";
+import { COLORS, LAYOUT_SPACING, PAGE_SPACING, BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 import DashboardHeader from "./DashboardHeader";
 import {
   getSidebarItemsByRole,
@@ -140,14 +140,14 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
             border: "1px solid rgba(0,0,0,0.06)",
             width: { xs: 36, md: 42 },
             height: { xs: 36, md: 42 },
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
             "&:hover": {
-              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+              bgcolor: CSSVAR.paperAlt,
               boxShadow: "0 6px 20px rgba(0,0,0,0.16)",
             },
             display: "inline-flex",
@@ -167,14 +167,14 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
             border: "1px solid rgba(0,0,0,0.06)",
             width: { xs: 36, md: 42 },
             height: { xs: 36, md: 42 },
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
             "&:hover": {
-              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+              bgcolor: CSSVAR.paperAlt,
               boxShadow: "0 6px 20px rgba(0,0,0,0.16)",
             },
             display: "inline-flex",
@@ -354,7 +354,7 @@ function SidebarContent({
     if (activeRoles.includes("Admin"))
       return {
         label: "Admin",
-        color: "#DC2626",
+        color: STATUS.error,
         bg: "rgba(220, 38, 38, 0.08)",
       };
     if (activeRoles.includes("personnel"))
@@ -366,7 +366,7 @@ function SidebarContent({
     if (activeRoles.includes("GiaoVien"))
       return {
         label: "Giảng viên",
-        color: "#7C3AED",
+        color: COLORS.purpleAI,
         bg: "rgba(124, 58, 237, 0.08)",
       };
     return null;
@@ -484,7 +484,9 @@ function SidebarContent({
     >
       <Box sx={{ px: 2, py: 3, flex: 1 }}>
         {/* Instructor CTA */}
-        {!roles.includes("Admin") && !pathname.startsWith("/instructor") && (
+        {!roles.includes("Admin") &&
+          !pathname.startsWith("/instructor") &&
+          !pathname.startsWith("/personnel") && (
           <Box sx={{ px: 0, mb: 2.5 }}>
             {roles.includes("GiaoVien") ? (
               <Button
@@ -531,7 +533,7 @@ function SidebarContent({
                   p: 2,
                   borderRadius: "16px",
                   background:
-                    "linear-gradient(135deg, #4A0E0E 0%, #8B1313 100%)",
+                    `linear-gradient(135deg, #4A0E0E 0%, ${BRAND.main} 100%)`,
                   color: "#FFFFFF",
                   cursor: "pointer",
                   transition: "transform 200ms ease, box-shadow 200ms ease",
@@ -571,10 +573,10 @@ function SidebarContent({
                   py: isAdmin ? 1 : 1.25,
                   color: isActive
                     ? isAdmin
-                      ? "#8B1313"
+                      ? BRAND.main
                       : COLORS.primary
                     : isAdmin
-                      ? "#4B5563"
+                      ? CSSVAR.textSecondary
                       : "rgba(31,41,55,0.72)",
                   bgcolor: isActive
                     ? isAdmin
@@ -583,7 +585,7 @@ function SidebarContent({
                     : "transparent",
                   borderLeft: isActive
                     ? isAdmin
-                      ? "3px solid #8B1313"
+                      ? `3px solid ${BRAND.main}`
                       : `4px solid ${COLORS.primary}`
                     : isAdmin
                       ? "3px solid transparent"
@@ -599,10 +601,10 @@ function SidebarContent({
                         : "rgba(141,19,19,0.03)",
                     color: isActive
                       ? isAdmin
-                        ? "#8B1313"
+                        ? BRAND.main
                         : COLORS.primary
                       : isAdmin
-                        ? "#1F2937"
+                        ? CSSVAR.textPrimary
                         : "rgba(31,41,55,0.85)",
                   },
                 }}
@@ -624,7 +626,7 @@ function SidebarContent({
           sx={{
             my: 2,
             opacity: 0.6,
-            borderColor: pathname.startsWith("/admin") ? "#ECE7E4" : "divider",
+            borderColor: pathname.startsWith("/admin") ? CSSVAR.divider : "divider",
           }}
         />
 
@@ -641,7 +643,7 @@ function SidebarContent({
                   px: 2,
                   py: isAdmin ? 1 : 1.25,
                   color: isAdmin
-                    ? "var(--ev-text-secondary, #4B5563)"
+                    ? CSSVAR.textSecondary
                     : "rgba(31,41,55,0.72)",
                   transition: "all 150ms ease",
                   "&:hover": {
@@ -649,7 +651,7 @@ function SidebarContent({
                       ? "var(--ev-paper-alt, #FAFAFA)"
                       : "rgba(141,19,19,0.03)",
                     color: isAdmin
-                      ? "var(--ev-text-primary, #1F2937)"
+                      ? CSSVAR.textPrimary
                       : "rgba(31,41,55,0.85)",
                   },
                 }}
@@ -787,7 +789,7 @@ function CourseCard({ course }: { course: CourseCardItem }) {
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
           }}
         >
           {course.title}
@@ -813,12 +815,12 @@ function CourseCard({ course }: { course: CourseCardItem }) {
           }}
         >
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-            <StarRounded sx={{ color: "#F59E0B", fontSize: 18 }} />
+            <StarRounded sx={{ color: STATUS.warning, fontSize: 18 }} />
             <Typography
               sx={{
                 fontSize: 13,
                 fontWeight: 700,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
               }}
             >
               {course.rating}
@@ -1034,8 +1036,8 @@ export default function DashboardShell({
       text: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#8B1313",
-      cancelButtonColor: "#8A7676",
+      confirmButtonColor: BRAND.main,
+      cancelButtonColor: CSSVAR.textMuted,
       confirmButtonText: "Đăng xuất",
       cancelButtonText: "Hủy",
       reverseButtons: true,
@@ -1200,7 +1202,7 @@ export default function DashboardShell({
   );
 
   const sidebarWidth = pathname.startsWith("/admin") ? 250 : 280;
-  const headerHeight = pathname.startsWith("/admin") ? "72px" : "76px";
+  const headerHeight = "86px";
 
   const continueItems = useMemo(() => {
     if (!dashboardData?.continueLearning) return [];
@@ -1329,9 +1331,9 @@ export default function DashboardShell({
               right: 0,
               height: headerHeight,
               zIndex: 1200,
-              px: { xs: 2, md: 4 },
-              borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              px: { xs: 2, md: 3.5 },
+              borderBottom: `1px solid ${CSSVAR.divider}`,
+              bgcolor: CSSVAR.paper,
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -1342,15 +1344,17 @@ export default function DashboardShell({
               spacing={2}
               sx={{ alignItems: "center", flexShrink: 0 }}
             >
-              <IconButton
-                onClick={() => setMobileOpen(true)}
-                sx={{
-                  display: { xs: "inline-flex", lg: "none" },
-                  color: "#8B1313",
-                }}
-              >
-                <MenuRounded />
-              </IconButton>
+              {!pathname.startsWith("/personnel") && (
+                <IconButton
+                  onClick={() => setMobileOpen(true)}
+                  sx={{
+                    display: { xs: "inline-flex", lg: "none" },
+                    color: BRAND.main,
+                  }}
+                >
+                  <MenuRounded />
+                </IconButton>
+              )}
 
               {/* Logo */}
               <Box
@@ -1369,8 +1373,8 @@ export default function DashboardShell({
                 <Image
                   src="/auth/img/logo_nentrang.png"
                   alt="EduVerse"
-                  width={140}
-                  height={42}
+                  width={150}
+                  height={46}
                   priority
                   style={{ width: "100%", height: "auto", display: "block" }}
                 />
@@ -1391,13 +1395,13 @@ export default function DashboardShell({
                   px: 2.5,
                   py: 0.75,
                   borderRadius: "10px",
-                  bgcolor: "var(--ev-paper-alt, #F7F5F2)",
-                  border: "1px solid var(--ev-divider, #ECE7E4)",
+                  bgcolor: CSSVAR.bg,
+                  border: `1px solid ${CSSVAR.divider}`,
                   transition: "all 150ms ease",
                   "&:focus-within": {
-                    borderColor: "#8B1313",
+                    borderColor: BRAND.main,
                     boxShadow: "0 0 0 3px rgba(153, 27, 27, 0.05)",
-                    bgcolor: "var(--ev-paper, #FFFFFF)",
+                    bgcolor: CSSVAR.paper,
                   },
                 }}
               >
@@ -1444,7 +1448,7 @@ export default function DashboardShell({
                       sx={{
                         borderRadius: "10px",
                         borderColor: "rgba(0,0,0,0.12)",
-                        color: "var(--ev-text-primary, #1F2937)",
+                        color: CSSVAR.textPrimary,
                         px: 1.5,
                         py: 0.6,
                         fontSize: 12.5,
@@ -1471,7 +1475,7 @@ export default function DashboardShell({
                     sx={{
                       borderRadius: "10px",
                       borderColor: "rgba(0,0,0,0.12)",
-                      color: "var(--ev-text-primary, #1F2937)",
+                      color: CSSVAR.textPrimary,
                       px: 1.5,
                       py: 0.6,
                       fontSize: 12.5,
@@ -1557,7 +1561,7 @@ export default function DashboardShell({
                     sx={{
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "var(--ev-text-primary, #1F2937)",
+                      color: CSSVAR.textPrimary,
                       lineHeight: 1.3,
                     }}
                   >
@@ -1576,7 +1580,7 @@ export default function DashboardShell({
                       color:
                         pathname.startsWith("/admin") ||
                           pathname.startsWith("/personnel")
-                          ? "#8B1313"
+                          ? BRAND.main
                           : COLORS.primary,
                       letterSpacing: "0.2px",
                       textTransform: "uppercase",
@@ -1604,10 +1608,10 @@ export default function DashboardShell({
                     height: pathname.startsWith("/admin") ? 36 : 38,
                     fontSize: 14,
                     fontWeight: 700,
-                    bgcolor: "#8B1313",
+                    bgcolor: BRAND.main,
                     color: "#fff",
                     border: pathname.startsWith("/admin")
-                      ? "1px solid #ECE7E4"
+                      ? `1px solid ${CSSVAR.divider}`
                       : "2px solid #fff",
                     boxShadow: pathname.startsWith("/admin")
                       ? "none"
@@ -1657,11 +1661,11 @@ export default function DashboardShell({
                           py: 1.1,
                           fontSize: 14,
                           fontWeight: 500,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                           fontFamily: '"Be Vietnam Pro", sans-serif',
                           "&:hover": {
                             bgcolor: "rgba(141,19,19,0.04)",
-                            color: "#8B1313",
+                            color: BRAND.main,
                           },
                         },
                       },
@@ -1713,7 +1717,7 @@ export default function DashboardShell({
                         sx={{
                           fontWeight: 800,
                           fontSize: 14.5,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                           textOverflow: "ellipsis",
                           overflow: "hidden",
                         }}
@@ -1767,7 +1771,7 @@ export default function DashboardShell({
                         </Typography>
                         <Box
                           sx={{
-                            bgcolor: "#7C3AED",
+                            bgcolor: COLORS.purpleAI,
                             color: "#FFFFFF",
                             borderRadius: "50%",
                             width: 20,
@@ -1926,10 +1930,10 @@ export default function DashboardShell({
                   <MenuItem
                     onClick={handleLogout}
                     sx={{
-                      color: "#DC2626",
+                      color: STATUS.error,
                       "&:hover": {
                         bgcolor: "rgba(220,38,38,0.04)",
-                        color: "#B91C1C",
+                        color: STATUS.errorDark,
                       },
                     }}
                   >
@@ -1951,26 +1955,27 @@ export default function DashboardShell({
         {/* ========================================================= */}
         {/* SIDEBAR DRAWER (COLLAPSED FOR MOBILE/TABLET)              */}
         {/* ========================================================= */}
-        {!pathname.startsWith("/instructor") && (
-          <Drawer
-            open={mobileOpen}
-            onClose={() => setMobileOpen(false)}
-            ModalProps={{ keepMounted: true }}
-            sx={{
-              display: { xs: "block", lg: "none" },
-              "& .MuiDrawer-paper": {
-                width: sidebarWidth,
-                boxSizing: "border-box",
-                mt: headerHeight,
-                height: `calc(100% - ${headerHeight})`,
-                boxShadow: "12px 0 24px rgba(0,0,0,0.03)",
-                borderRight: "1px solid rgba(0,0,0,0.06)",
-              },
-            }}
-          >
-            <SidebarContent onLogout={handleLogout} roles={roles} />
-          </Drawer>
-        )}
+        {!pathname.startsWith("/instructor") &&
+          !pathname.startsWith("/personnel") && (
+            <Drawer
+              open={mobileOpen}
+              onClose={() => setMobileOpen(false)}
+              ModalProps={{ keepMounted: true }}
+              sx={{
+                display: { xs: "block", lg: "none" },
+                "& .MuiDrawer-paper": {
+                  width: sidebarWidth,
+                  boxSizing: "border-box",
+                  mt: headerHeight,
+                  height: `calc(100% - ${headerHeight})`,
+                  boxShadow: "12px 0 24px rgba(0,0,0,0.03)",
+                  borderRight: "1px solid rgba(0,0,0,0.06)",
+                },
+              }}
+            >
+              <SidebarContent onLogout={handleLogout} roles={roles} />
+            </Drawer>
+          )}
 
         {/* ========================================================= */}
         {/* MAIN LAYOUT STRUCTURE                                     */}
@@ -1979,22 +1984,23 @@ export default function DashboardShell({
           sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
         >
           {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
-          {!pathname.startsWith("/instructor") && (
-            <Box
-              sx={{
-                width: sidebarWidth,
-                flexShrink: 0,
-                display: { xs: "none", lg: "block" },
-                borderRight: pathname.startsWith("/admin")
-                  ? "1px solid #ECE7E4"
-                  : "1px solid rgba(0,0,0,0.06)",
-                height: "100%",
-                bgcolor: COLORS.white,
-              }}
-            >
-              <SidebarContent onLogout={handleLogout} roles={roles} />
-            </Box>
-          )}
+          {!pathname.startsWith("/instructor") &&
+            !pathname.startsWith("/personnel") && (
+              <Box
+                sx={{
+                  width: sidebarWidth,
+                  flexShrink: 0,
+                  display: { xs: "none", lg: "block" },
+                  borderRight: pathname.startsWith("/admin")
+                    ? `1px solid ${CSSVAR.divider}`
+                    : "1px solid rgba(0,0,0,0.06)",
+                  height: "100%",
+                  bgcolor: COLORS.white,
+                }}
+              >
+                <SidebarContent onLogout={handleLogout} roles={roles} />
+              </Box>
+            )}
           {/* 2. MAIN CONTENT SCROLL AREA (Expanded Single Column Layout) */}
           <Box
             sx={{
@@ -2121,7 +2127,7 @@ export default function DashboardShell({
                               sx={{
                                 fontSize: { xs: 24, md: 28 },
                                 fontWeight: 900,
-                                color: "var(--ev-text-primary, #1F2937)",
+                                color: CSSVAR.textPrimary,
                               }}
                             >
                               Chào mừng trở lại,{" "}
@@ -2328,7 +2334,7 @@ export default function DashboardShell({
                                 color:
                                   banner.type === "ai_recommend"
                                     ? COLORS.primary
-                                    : "#0284C7",
+                                    : STATUS.info,
                                 fontWeight: 800,
                                 borderRadius: "50px",
                                 px: 3,
@@ -2356,7 +2362,7 @@ export default function DashboardShell({
                           fontSize: 21,
                           fontWeight: 900,
                           mb: 2,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                         }}
                       >
                         Hoàn thành nốt phần bạn đang làm dở
@@ -2471,7 +2477,7 @@ export default function DashboardShell({
                                     display: "-webkit-box",
                                     WebkitLineClamp: 2,
                                     WebkitBoxOrient: "vertical",
-                                    color: "var(--ev-text-primary, #1F2937)",
+                                    color: CSSVAR.textPrimary,
                                   }}
                                 >
                                   {item.title}
@@ -2588,7 +2594,7 @@ export default function DashboardShell({
                             sx={{
                               fontSize: 20,
                               fontWeight: 900,
-                              color: "var(--ev-text-primary, #1F2937)",
+                              color: CSSVAR.textPrimary,
                             }}
                           >
                             Chưa có khóa học nào được chỉ định
@@ -2670,7 +2676,7 @@ export default function DashboardShell({
                                   mt: 1.5,
                                   fontSize: 16,
                                   fontWeight: 800,
-                                  color: "var(--ev-text-primary, #1F2937)",
+                                  color: CSSVAR.textPrimary,
                                   lineHeight: 1.4,
                                 }}
                               >
@@ -2740,7 +2746,7 @@ export default function DashboardShell({
                                   mt: 1.5,
                                   fontSize: 16,
                                   fontWeight: 800,
-                                  color: "var(--ev-text-primary, #1F2937)",
+                                  color: CSSVAR.textPrimary,
                                   lineHeight: 1.4,
                                 }}
                               >
@@ -2816,7 +2822,7 @@ export default function DashboardShell({
                                       mt: 1.5,
                                       fontSize: 16,
                                       fontWeight: 800,
-                                      color: "var(--ev-text-primary, #1F2937)",
+                                      color: CSSVAR.textPrimary,
                                       lineHeight: 1.4,
                                     }}
                                   >
@@ -2875,7 +2881,7 @@ export default function DashboardShell({
                         sx={{
                           fontSize: 21,
                           fontWeight: 900,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                         }}
                       >
                         Lĩnh vực nên học tiếp theo
@@ -2946,7 +2952,7 @@ export default function DashboardShell({
                                   fontSize: 16,
                                   fontWeight: 900,
                                   mb: 1.5,
-                                  color: "var(--ev-text-primary, #1F2937)",
+                                  color: CSSVAR.textPrimary,
                                 }}
                               >
                                 {sec.title}
@@ -2995,7 +3001,7 @@ export default function DashboardShell({
                           fontSize: 21,
                           fontWeight: 900,
                           mb: 2,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                         }}
                       >
                         Dựa trên kỹ năng bạn quan tâm
@@ -3020,7 +3026,7 @@ export default function DashboardShell({
                                     ? COLORS.primary
                                     : "rgba(0,0,0,0.03)",
                                   color: isActive
-                                    ? "var(--ev-paper, #FFFFFF)"
+                                    ? CSSVAR.paper
                                     : "rgba(31,41,55,0.65)",
                                   fontWeight: 700,
                                   fontSize: 13.5,
@@ -3036,7 +3042,7 @@ export default function DashboardShell({
                                       ? COLORS.primary
                                       : "rgba(141, 19, 19, 0.05)",
                                     color: isActive
-                                      ? "var(--ev-paper, #FFFFFF)"
+                                      ? CSSVAR.paper
                                       : COLORS.primary,
                                   },
                                   transition: "all 150ms ease",
@@ -3064,7 +3070,7 @@ export default function DashboardShell({
                           fontSize: 21,
                           fontWeight: 900,
                           mb: 2.5,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                         }}
                       >
                         Các khóa học hàng đầu chúng tôi chọn cho bạn
@@ -3167,7 +3173,7 @@ export default function DashboardShell({
                                 fontWeight: 900,
                                 lineHeight: 1.35,
                                 mb: 1.5,
-                                color: "var(--ev-text-primary, #1F2937)",
+                                color: CSSVAR.textPrimary,
                               }}
                             >
                               {dashboardData?.premiumSelection?.title}
@@ -3189,7 +3195,7 @@ export default function DashboardShell({
                                 sx={{
                                   fontSize: 13.5,
                                   fontWeight: 700,
-                                  color: "var(--ev-text-primary, #1F2937)",
+                                  color: CSSVAR.textPrimary,
                                 }}
                               >
                                 Giảng viên:{" "}
@@ -3214,13 +3220,13 @@ export default function DashboardShell({
                                   sx={{ alignItems: "center" }}
                                 >
                                   <StarRounded
-                                    sx={{ color: "#F59E0B", fontSize: 18 }}
+                                    sx={{ color: STATUS.warning, fontSize: 18 }}
                                   />
                                   <Typography
                                     sx={{
                                       fontSize: 13,
                                       fontWeight: 700,
-                                      color: "var(--ev-text-primary, #1F2937)",
+                                      color: CSSVAR.textPrimary,
                                     }}
                                   >
                                     {dashboardData?.premiumSelection?.rating}
@@ -3299,7 +3305,7 @@ export default function DashboardShell({
                           fontSize: 21,
                           fontWeight: 900,
                           mb: 0.5,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                         }}
                       >
                         Vì bạn đã học &quot;
@@ -3402,7 +3408,7 @@ export default function DashboardShell({
               sx={{
                 fontWeight: 800,
                 fontSize: 16,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
               }}
             >
               Thông báo
@@ -3474,7 +3480,7 @@ export default function DashboardShell({
                       sx={{
                         fontWeight: noti.daDoc ? 600 : 800,
                         fontSize: 13.5,
-                        color: "var(--ev-text-primary, #1F2937)",
+                        color: CSSVAR.textPrimary,
                       }}
                     >
                       {noti.tieuDe || noti.type || "Thông báo"}

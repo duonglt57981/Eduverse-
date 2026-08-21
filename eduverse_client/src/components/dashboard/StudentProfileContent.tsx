@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { COLORS } from "@/src/theme/tokens";
+import { COLORS, BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { apiService } from '@/src/services/index';
@@ -575,7 +575,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             px: 3,
             py: 1.5,
             borderRadius: '12px',
-            bgcolor: toast.severity === 'success' ? COLORS.green : '#B91C1C',
+            bgcolor: toast.severity === 'success' ? COLORS.green : STATUS.errorDark,
             color: '#fff',
             display: 'flex',
             alignItems: 'center',
@@ -599,7 +599,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
           position: 'relative',
           height: { xs: 140, md: 180 },
           borderRadius: '24px',
-          bgcolor: 'var(--ev-divider, #ECE7E4)',
+          bgcolor: CSSVAR.divider,
           backgroundImage: profile.anhBia ? `url(${profile.anhBia})` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -629,7 +629,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             py: 0.8,
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             textTransform: 'none',
-            '&:hover': { bgcolor: 'var(--ev-paper-alt, #FBFAF9)' },
+            '&:hover': { bgcolor: CSSVAR.paperAlt },
           }}
         >
           Đổi ảnh bìa
@@ -860,11 +860,24 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                       label="Ngày sinh"
                       type="date"
                       value={dateOfBirth}
-                      onChange={(e: any) => setDateOfBirth(e.target.value)}
+                      onChange={(e: any) => {
+                        const val = e.target.value;
+                        const todayStr = new Date().toISOString().split("T")[0];
+                        if (val && val > todayStr) {
+                          showToast("Ngày sinh không được chọn ngày trong tương lai", "error");
+                          return;
+                        }
+                        setDateOfBirth(val);
+                      }}
                       error={!!errors.dateOfBirth}
                       helperText={errors.dateOfBirth}
                       InputLabelProps={{ shrink: true }}
-                      slotProps={{ inputLabel: { shrink: true } }}
+                      slotProps={{
+                        htmlInput: {
+                          max: new Date().toISOString().split("T")[0],
+                        },
+                        inputLabel: { shrink: true },
+                      }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12 }}>
@@ -1219,8 +1232,8 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                                       ? passwordStrength === 4
                                         ? COLORS.green
                                         : passwordStrength >= 2
-                                        ? '#F59E0B'
-                                        : '#DC2626'
+                                        ? STATUS.warning
+                                        : STATUS.error
                                       : 'rgba(0,0,0,0.06)',
                                 }}
                               />
@@ -1549,7 +1562,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                             flexShrink: 0,
                           }}
                         >
-                          <EmojiEventsRounded sx={{ color: '#F59E0B', fontSize: 32 }} />
+                          <EmojiEventsRounded sx={{ color: STATUS.warning, fontSize: 32 }} />
                         </Box>
                         <Box sx={{ minWidth: 0 }}>
                           <Typography
@@ -1645,7 +1658,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                     sx={{
                       p: { xs: 4, md: 5 },
                       borderRadius: '20px',
-                      background: 'linear-gradient(135deg, #3A0B0B 0%, #8B1313 100%)',
+                      background: `linear-gradient(135deg, #3A0B0B 0%, ${BRAND.main} 100%)`,
                       color: '#ffffff',
                       height: '100%',
                       display: 'flex',
@@ -1801,12 +1814,12 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           p: 4,
                           borderRadius: '16px',
                           bgcolor: 'rgba(245, 158, 11, 0.05)',
-                          border: '1px dashed #F59E0B',
+                          border: `1px dashed ${STATUS.warning}`,
                           textAlign: 'center',
                           my: 3,
                         }}
                       >
-                        <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: '#D97706', mb: 1 }}>
+                        <Typography variant="h6" sx={{ fontSize: 16.5, fontWeight: 900, color: STATUS.warningDark, mb: 1 }}>
                           ⏳ Đang chờ phê duyệt
                         </Typography>
                         <Typography sx={{ fontSize: 13.5, color: '#B45309', lineHeight: 1.6 }}>
@@ -1820,7 +1833,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           p: 4,
                           borderRadius: '16px',
                           bgcolor: 'rgba(16, 185, 129, 0.05)',
-                          border: '1px dashed #10B981',
+                          border: `1px dashed ${STATUS.success}`,
                           textAlign: 'center',
                           my: 3,
                         }}
@@ -1846,10 +1859,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                                 mb: 2,
                               }}
                             >
-                              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#DC2626', mb: 0.5 }}>
+                              <Typography sx={{ fontSize: 14, fontWeight: 800, color: STATUS.error, mb: 0.5 }}>
                                 ❌ Yêu cầu trước đó bị từ chối
                               </Typography>
-                              <Typography sx={{ fontSize: 13, color: '#B91C1C', lineHeight: 1.5 }}>
+                              <Typography sx={{ fontSize: 13, color: STATUS.errorDark, lineHeight: 1.5 }}>
                                 Lý do phản hồi từ Admin: {instructorRequest.adminNotes || 'Không có ghi chú.'}
                               </Typography>
                               <Typography sx={{ fontSize: 12, color: 'rgba(185,28,28,0.7)', mt: 1, fontWeight: 600 }}>
@@ -2075,7 +2088,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                                     height: 46,
                                     borderRadius: '12px',
                                     bgcolor: 'rgba(16, 185, 129, 0.1)',
-                                    color: '#10B981',
+                                    color: STATUS.success,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -2120,7 +2133,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                                   onClick={() => setCvFile(null)}
                                   sx={{
                                     color: COLORS.textSecondary,
-                                    '&:hover': { color: '#DC2626', bgcolor: 'rgba(220,38,38,0.08)' },
+                                    '&:hover': { color: STATUS.error, bgcolor: 'rgba(220,38,38,0.08)' },
                                   }}
                                 >
                                   <CloseRounded sx={{ fontSize: 18 }} />
@@ -2210,7 +2223,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           }}
                         >
                           <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Typography component="span" sx={{ fontWeight: 900, color: 'var(--ev-text-primary, #1F2937)', fontSize: { xs: 18, sm: 22 } }}>
+                            <Typography component="span" sx={{ fontWeight: 900, color: CSSVAR.textPrimary, fontSize: { xs: 18, sm: 22 } }}>
                               Điều khoản & Quy định Hợp tác Giảng viên
                             </Typography>
                             <IconButton onClick={() => setOpenTermsDialog(false)}>
@@ -2221,10 +2234,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           <DialogContent sx={{ py: 3 }}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, color: 'var(--ev-text-secondary, #334155)' }}>
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: CSSVAR.textPrimary, mb: 1, fontSize: 16.5 }}>
                                   1. Quyền Sở hữu Trí tuệ & Bản quyền Nội dung
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: CSSVAR.textSecondary }}>
                                   - Giảng viên luôn giữ trọn vẹn quyền sở hữu trí tuệ đối với tài liệu, bài giảng và nội dung khóa học do mình tự biên soạn.<br />
                                   - Bằng việc cấp phép phân phối khóa học trên EduVerse, Giảng viên đồng ý cấp cho EduVerse quyền không độc quyền (non-exclusive) để tiếp thị, quảng bá và phân phối khóa học tới học viên trên toàn cầu.<br />
                                   - Giảng viên cam kết nội dung tải lên là chính chủ, không sao chép trái phép hoặc vi phạm bản quyền của bất kỳ cá nhân hay tổ chức nào khác.
@@ -2232,10 +2245,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: CSSVAR.textPrimary, mb: 1, fontSize: 16.5 }}>
                                   2. Mô hình Đồng tác giả & Tỷ lệ Chia doanh thu
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: CSSVAR.textSecondary }}>
                                   - <strong>Cùng tạo khóa học:</strong> Nền tảng hỗ trợ nhiều Giảng viên cùng hợp tác xây dựng và quản lý một khóa học (bao gồm 1 Chủ sở hữu chính và các Giảng viên cộng tác / Đồng tác giả).<br />
                                   - <strong>Phân quyền linh hoạt:</strong> Chủ sở hữu khóa học có thể cấp quyền hạn chi tiết cho từng giảng viên tham gia (Quản lý bài giảng, Xem báo cáo doanh thu, Đánh giá khóa học, Bài kiểm tra, Tài liệu và Khuyến mãi).<br />
                                   - <strong>Tỷ lệ Hệ thống - Giảng viên:</strong> Mặc định 70% doanh thu bán khóa học thuộc về nhóm Giảng viên và 30% thuộc về Nền tảng EduVerse.<br />
@@ -2245,20 +2258,20 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: CSSVAR.textPrimary, mb: 1, fontSize: 16.5 }}>
                                   3. Quy chuẩn Chất lượng Nội dung
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: CSSVAR.textSecondary }}>
                                   - Video bài giảng cần đảm bảo hình ảnh rõ nét, âm thanh trong trẻo, không chứa nội dung phản cảm, kích động hoặc vi phạm pháp luật.<br />
                                   - Nghiêm cấm chèn liên kết lừa đảo, quảng cáo dịch vụ bên ngoài trái phép hoặc chủ động lôi kéo học viên thanh toán ngoài hệ thống EduVerse.
                                 </Typography>
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: CSSVAR.textPrimary, mb: 1, fontSize: 16.5 }}>
                                   4. Quy trình Thanh toán & Rút tiền
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: CSSVAR.textSecondary }}>
                                   - <strong>Cập nhật số dư tự động:</strong> Ngay khi học viên thanh toán đơn hàng thành công, doanh thu phân chia của từng giảng viên sẽ được tự động cộng trực tiếp vào Số dư tài khoản cá nhân (`SoDuTaiKhoan`) kèm thông báo thời gian thực.<br />
                                   - <strong>Yêu cầu Rút tiền:</strong> Giảng viên có thể gửi yêu cầu rút tiền từ số dư cá nhân về tài khoản ngân hàng chính chủ đã liên kết trên hệ thống.<br />
                                   - <strong>Xét duyệt & Chuyển khoản:</strong> Ban quản trị EduVerse xét duyệt và xử lý lệnh chuyển khoản ngân hàng theo kỳ thanh toán.<br />
@@ -2267,10 +2280,10 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               </Box>
 
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--ev-text-primary, #1F2937)', mb: 1, fontSize: 16.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: CSSVAR.textPrimary, mb: 1, fontSize: 16.5 }}>
                                   5. Bảo mật Thông tin
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ev-text-secondary, #4B5563)' }}>
+                                <Typography variant="body2" sx={{ fontSize: 14, lineHeight: 1.7, color: CSSVAR.textSecondary }}>
                                   - Thông tin cá nhân, CV và hồ sơ năng lực của Giảng viên được EduVerse bảo mật nghiêm ngặt theo chính sách quyền riêng tư.
                                 </Typography>
                               </Box>
@@ -2312,7 +2325,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
             <CloseRounded />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ display: 'grid', placeItems: 'center', bgcolor: 'var(--ev-paper-alt, #FBFAF9)', py: 4 }}>
+        <DialogContent dividers sx={{ display: 'grid', placeItems: 'center', bgcolor: CSSVAR.paperAlt, py: 4 }}>
           {/* Canvas crop box */}
           <Box sx={{ border: '2px dashed rgba(0,0,0,0.1)', borderRadius: cropType === 'avatar' ? '20px' : '8px', overflow: 'hidden', bgcolor: 'var(--ev-paper, #fff)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <canvas ref={canvasRef} style={{ display: 'block', maxWidth: '100%' }} />

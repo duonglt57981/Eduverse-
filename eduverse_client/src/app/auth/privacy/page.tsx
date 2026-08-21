@@ -14,7 +14,7 @@ import {
 import { ThemeProvider } from '@mui/material/styles';
 import { ArrowBackRounded } from '@mui/icons-material';
 import { createAppTheme } from '@/src/theme/createAppTheme';
-import { LAYOUT_SPACING } from '@/src/theme/tokens';
+import { LAYOUT_SPACING, BRAND, CSSVAR } from '@/src/theme/tokens';
 
 const privacySections = [
   {
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
       <Box
         sx={{
           minHeight: '100vh',
-          bgcolor: 'var(--ev-bg, #F7F5F2)',
+          bgcolor: CSSVAR.bg,
           py: LAYOUT_SPACING.pagePy,
           px: LAYOUT_SPACING.pagePx,
         }}
@@ -100,12 +100,12 @@ export default function PrivacyPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 1,
-                  color: 'var(--ev-text-secondary, #4B5563)',
+                  color: CSSVAR.textSecondary,
                   fontSize: 14,
                   fontWeight: 600,
                   transition: 'color 200ms ease',
                   '&:hover': {
-                    color: '#8B1313',
+                    color: BRAND.main,
                   },
                 }}
               >
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
               border: '1px solid rgba(17, 17, 17, 0.08)',
               boxShadow: '0 12px 36px rgba(0, 0, 0, 0.03)',
               p: { xs: 3.5, sm: 6 },
-              bgcolor: 'var(--ev-paper, #ffffff)',
+              bgcolor: CSSVAR.paper,
             }}
           >
             {/* Logo & Document Title */}
@@ -146,7 +146,7 @@ export default function PrivacyPage() {
                 variant="h4"
                 sx={{
                   fontWeight: 850,
-                  color: 'var(--ev-text-primary, #1F2937)',
+                  color: CSSVAR.textPrimary,
                   fontSize: { xs: 26, sm: 32 },
                   letterSpacing: '-0.6px',
                   mb: 1,
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
                     variant="h6"
                     sx={{
                       fontWeight: 800,
-                      color: 'var(--ev-text-primary, #1F2937)',
+                      color: CSSVAR.textPrimary,
                       fontSize: 17,
                       mb: 1,
                     }}
@@ -206,7 +206,7 @@ export default function PrivacyPage() {
                           sx={{
                             fontSize: 14,
                             lineHeight: 1.7,
-                            color: 'var(--ev-text-secondary, #4B5563)',
+                            color: CSSVAR.textSecondary,
                             mb: 0.75,
                           }}
                         >

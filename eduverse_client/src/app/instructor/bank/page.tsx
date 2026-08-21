@@ -15,8 +15,9 @@ import QrCode2Icon from "@mui/icons-material/QrCode2";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { getNganHangs, xoaNganHang } from "@/src/store/rutTien/RutTienSlice";
 import { apiService } from '@/src/services';
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
-const PRIMARY = "#8B1313";
+const PRIMARY = BRAND.main;
 
 const NGAN_HANG_LIST = [
   { ten: "Vietcombank", bin: "970436" },
@@ -112,7 +113,7 @@ function NganHangContent() {
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
         <Box>
-          <Typography sx={{ fontSize: 26, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}>
+          <Typography sx={{ fontSize: 26, fontWeight: 900, color: CSSVAR.textPrimary, mb: 0.5 }}>
             Tài khoản ngân hàng
           </Typography>
           <Typography sx={{ fontSize: 14, color: "var(--ev-text-secondary, rgba(31,41,55,0.55))" }}>
@@ -168,7 +169,7 @@ function NganHangContent() {
 
                       {n.hinhAnhQR && (
                         <Box sx={{ mt: 1.5, p: 1, border: "1px solid rgba(141,19,19,0.15)",
-                          borderRadius: "10px", display: "inline-block", bgcolor: "var(--ev-paper, #FFFFFF)" }}>
+                          borderRadius: "10px", display: "inline-block", bgcolor: CSSVAR.paper }}>
                           <img src={n.hinhAnhQR} alt="QR"
                             style={{ width: 120, height: 120, objectFit: "contain", display: "block" }} />
                           <Typography sx={{ fontSize: 10, color: "text.secondary", textAlign: "center", mt: 0.5 }}>
@@ -304,7 +305,7 @@ export default function InstructorBankPage() {
     <AuthGuard allowedRoles={['GiaoVien']}>
       <DashboardShell>
         <Box sx={{ p: { xs: 2, md: 4 }, borderRadius: '24px', border: '1px solid rgba(141,19,19,0.06)',
-          bgcolor: 'var(--ev-paper, #ffffff)', boxShadow: '0 10px 30px rgba(141,19,19,0.015)' }}>
+          bgcolor: CSSVAR.paper, boxShadow: '0 10px 30px rgba(141,19,19,0.015)' }}>
           <NganHangContent />
         </Box>
       </DashboardShell>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { COLORS } from "@/src/theme/tokens";
+import { COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 import { useEffect, useState, useTransition } from 'react';
 import AuthGuard from '@/src/components/AuthGuard';
@@ -430,7 +430,7 @@ export default function AdminUsersPage() {
       case 'personnel':
       case 'Personnel':
       case 'NhanVien':
-        return { bg: 'rgba(124,58,237,0.1)', text: '#7C3AED', label: 'Nhân viên' };
+        return { bg: 'rgba(124,58,237,0.1)', text: COLORS.purpleAI, label: 'Nhân viên' };
       default:
         return { bg: 'rgba(107,114,128,0.1)', text: COLORS.textSecondary, label: role };
     }
@@ -451,7 +451,7 @@ export default function AdminUsersPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   mb: 0.5,
                 }}
               >
@@ -851,7 +851,7 @@ export default function AdminUsersPage() {
                             size="small"
                             sx={{
                               bgcolor: 'rgba(239,68,68,0.1)',
-                              color: '#DC2626',
+                              color: STATUS.error,
                               fontWeight: 700,
                               fontSize: 11.5,
                             }}
@@ -889,7 +889,7 @@ export default function AdminUsersPage() {
                             onClick={() => handleToggleLock(user)}
                             size="small"
                             sx={{
-                              color: user.isLocked ? COLORS.green : '#DC2626',
+                              color: user.isLocked ? COLORS.green : STATUS.error,
                               bgcolor: user.isLocked ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)',
                               '&:hover': {
                                 bgcolor: user.isLocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',

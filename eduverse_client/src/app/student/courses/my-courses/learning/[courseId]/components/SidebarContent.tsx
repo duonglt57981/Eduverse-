@@ -33,8 +33,9 @@ import { TaiLieuDropdown } from "./TaiLieuDropdown";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = BRAND.main;
 
 // Interface khớp với response thực tế từ BE (camelCase)
 interface PhanHocApi {
@@ -160,15 +161,15 @@ export const SidebarContent = ({
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        bgcolor: "var(--ev-paper, #FFFFFF)",
+        bgcolor: CSSVAR.paper,
       }}
     >
       {/* Header - luôn hiển thị */}
       <Box
         sx={{
           p: 3,
-          borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          borderBottom: `1px solid ${CSSVAR.divider}`,
+          bgcolor: CSSVAR.paper,
           flexShrink: 0,
         }}
       >
@@ -178,7 +179,7 @@ export const SidebarContent = ({
         >
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 900, color: "var(--ev-text-primary, #1F2937)" }}
+            sx={{ fontWeight: 900, color: CSSVAR.textPrimary }}
           >
             Nội dung khóa học
           </Typography>
@@ -201,26 +202,26 @@ export const SidebarContent = ({
               "& .MuiOutlinedInput-root": {
                 height: "42px",
                 borderRadius: "10px",
-                bgcolor: "var(--ev-bg, #F7F5F2)",
-                border: "1px solid var(--ev-divider, #ECE7E4)",
+                bgcolor: CSSVAR.bg,
+                border: `1px solid ${CSSVAR.divider}`,
                 transition: "all 0.2s ease",
                 "& fieldset": { border: "none" },
                 "&:hover": {
                   borderColor: "#CBD5E1",
-                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                  bgcolor: CSSVAR.paperAlt,
                 },
                 "&.Mui-focused": {
                   borderColor: PRIMARY_RED,
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   boxShadow: `0 0 0 4px ${alpha(PRIMARY_RED, 0.08)}`,
                 },
               },
               "& .MuiInputBase-input": {
                 fontSize: "14px",
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 padding: "8px 12px",
                 "&::placeholder": {
-                  color: "var(--ev-text-muted, #8A7676)",
+                  color: CSSVAR.textMuted,
                   fontWeight: 400,
                 },
               },
@@ -232,7 +233,7 @@ export const SidebarContent = ({
                     <SearchIcon
                       sx={{
                         fontSize: 18,
-                        color: "var(--ev-text-muted, #8A7676)",
+                        color: CSSVAR.textMuted,
                       }}
                     />
                   </InputAdornment>
@@ -259,7 +260,7 @@ export const SidebarContent = ({
                       <CloseIcon
                         sx={{
                           fontSize: 16,
-                          color: "var(--ev-text-muted, #8A7676)",
+                          color: CSSVAR.textMuted,
                         }}
                       />
                     </IconButton>
@@ -281,7 +282,7 @@ export const SidebarContent = ({
         >
           <Typography
             variant="caption"
-            sx={{ fontWeight: 700, color: "var(--ev-text-secondary, #4B5563)" }}
+            sx={{ fontWeight: 700, color: CSSVAR.textSecondary }}
           >
             Tiến độ học tập
           </Typography>
@@ -298,7 +299,7 @@ export const SidebarContent = ({
           sx={{
             height: 6,
             borderRadius: 3,
-            backgroundColor: "var(--ev-paper-alt, #FBFAF9)",
+            backgroundColor: CSSVAR.paperAlt,
             "& .MuiLinearProgress-bar": {
               backgroundColor: PRIMARY_RED,
               borderRadius: 3,
@@ -312,7 +313,7 @@ export const SidebarContent = ({
             display: "block",
             textAlign: "right",
             fontWeight: 600,
-            color: "var(--ev-text-secondary, #4B5563)",
+            color: CSSVAR.textSecondary,
           }}
         >
           Đã hoàn thành {soBaiHoanThanh}/{tongBai} bài học
@@ -342,8 +343,8 @@ export const SidebarContent = ({
                 <ListItemButton
                   onClick={() => onTogglePhan(phan.id!, idPhanPlay)}
                   sx={{
-                    bgcolor: isOpen ? "#F7F5F2" : "#ffffff",
-                    borderBottom: "1px solid #FBFAF9",
+                    bgcolor: isOpen ? CSSVAR.bg : CSSVAR.paper,
+                    borderBottom: `1px solid ${CSSVAR.paperAlt}`,
                     borderLeft: `3px solid ${
                       isPlaying ? PRIMARY_RED : "transparent"
                     }`,
@@ -351,7 +352,7 @@ export const SidebarContent = ({
                     px: 3,
                     transition: "background-color 0.2s",
                     "&:hover": {
-                      bgcolor: "var(--ev-bg, #F7F5F2)",
+                      bgcolor: CSSVAR.bg,
                     },
                   }}
                 >
@@ -360,7 +361,7 @@ export const SidebarContent = ({
                       variant="body2"
                       sx={{
                         fontWeight: 800,
-                        color: isPlaying ? PRIMARY_RED : "#1F2937",
+                        color: isPlaying ? PRIMARY_RED : CSSVAR.textPrimary,
                       }}
                       noWrap
                     >
@@ -370,7 +371,7 @@ export const SidebarContent = ({
                       variant="caption"
                       sx={{
                         fontWeight: 600,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                         mt: 0.5,
                         display: "block",
                       }}
@@ -384,14 +385,14 @@ export const SidebarContent = ({
                     <ExpandLessIcon
                       sx={{
                         fontSize: 20,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                       }}
                     />
                   ) : (
                     <ExpandMoreIcon
                       sx={{
                         fontSize: 20,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                       }}
                     />
                   )}
@@ -421,7 +422,7 @@ export const SidebarContent = ({
                                 : "transparent",
                               transition: "all 0.15s ease",
                               "&:hover": {
-                                bgcolor: "var(--ev-bg, #F7F5F2)",
+                                bgcolor: CSSVAR.bg,
                               },
                             }}
                           >
@@ -433,7 +434,7 @@ export const SidebarContent = ({
                               ) : (
                                 <PlayArrowIcon
                                   sx={{
-                                    color: isSelected ? PRIMARY_RED : "#8A7676",
+                                    color: isSelected ? PRIMARY_RED : CSSVAR.textMuted,
                                     fontSize: 18,
                                   }}
                                 />
@@ -452,7 +453,7 @@ export const SidebarContent = ({
                                     WebkitBoxOrient: "vertical",
                                     overflow: "hidden",
                                   }}
-                                  color={isSelected ? PRIMARY_RED : "#1F2937"}
+                                  color={isSelected ? PRIMARY_RED : CSSVAR.textPrimary}
                                 >
                                   {bg.tieuDe}
                                 </Typography>
@@ -461,7 +462,7 @@ export const SidebarContent = ({
                                 <Typography
                                   variant="caption"
                                   sx={{
-                                    color: "var(--ev-text-secondary, #4B5563)",
+                                    color: CSSVAR.textSecondary,
                                     fontWeight: 500,
                                     mt: 0.5,
                                     display: "block",
@@ -499,9 +500,9 @@ export const SidebarContent = ({
                                   px: 1.25,
                                   py: 0.4,
                                   borderRadius: "6px",
-                                  border: "1px solid #ECE7E4",
+                                  border: `1px solid ${CSSVAR.divider}`,
                                   cursor: "pointer",
-                                  color: "#4B5563",
+                                  color: CSSVAR.textSecondary,
                                   fontSize: 11.5,
                                   fontWeight: 600,
                                   transition: "all 0.15s ease",
@@ -543,14 +544,14 @@ export const SidebarContent = ({
                               : "transparent",
                             transition: "all 0.15s ease",
                             "&:hover": {
-                              bgcolor: "var(--ev-bg, #F7F5F2)",
+                              bgcolor: CSSVAR.bg,
                             },
                           }}
                         >
                           <ListItemIcon sx={{ minWidth: 28 }}>
                             <QuizIcon
                               sx={{
-                                color: isQuizSelected ? PRIMARY_RED : "#8A7676",
+                                color: isQuizSelected ? PRIMARY_RED : CSSVAR.textMuted,
                                 fontSize: 18,
                               }}
                             />
@@ -568,7 +569,7 @@ export const SidebarContent = ({
                                   WebkitBoxOrient: "vertical",
                                   overflow: "hidden",
                                 }}
-                                color={isQuizSelected ? PRIMARY_RED : "#1F2937"}
+                                color={isQuizSelected ? PRIMARY_RED : CSSVAR.textPrimary}
                               >
                                 {quiz.tenBaiKiemTra ?? "Bài kiểm tra"}
                               </Typography>
@@ -577,7 +578,7 @@ export const SidebarContent = ({
                               <Typography
                                 variant="caption"
                                 sx={{
-                                  color: "var(--ev-text-secondary, #4B5563)",
+                                  color: CSSVAR.textSecondary,
                                   fontWeight: 500,
                                   mt: 0.5,
                                   display: "block",
@@ -607,7 +608,7 @@ export const SidebarContent = ({
                   variant="body1"
                   sx={{
                     fontWeight: 700,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     mb: 1,
                   }}
                 >

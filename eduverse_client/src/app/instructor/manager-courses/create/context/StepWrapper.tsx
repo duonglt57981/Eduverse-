@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { Box, Button } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
-import { BRAND } from "@/src/theme/tokens";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 interface Props {
   children: ReactNode;
@@ -67,20 +67,20 @@ export default function StepWrapper({
               sx={{
                 textTransform: "none",
                 fontWeight: 600,
-                color: "var(--ev-text-secondary, #4B5563)",
-                borderColor: "var(--ev-divider, #ECE7E4)",
+                color: CSSVAR.textSecondary,
+                borderColor: CSSVAR.divider,
                 px: { xs: 2.5, sm: 3 },
                 py: 1.2,
                 borderRadius: "10px",
                 fontSize: 14,
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-                  borderColor: "#8A7676",
-                  color: "var(--ev-text-primary, #1F2937)",
+                  bgcolor: CSSVAR.paperAlt,
+                  borderColor: CSSVAR.textMuted,
+                  color: CSSVAR.textPrimary,
                 },
                 "&:focus-visible": {
-                  outline: "2px solid #8B1313",
+                  outline: `2px solid ${BRAND.main}`,
                 },
               }}
             >
@@ -111,12 +111,12 @@ export default function StepWrapper({
                 transform: "translateY(-1px)",
               },
               "&.Mui-disabled": {
-                bgcolor: "#ECE7E4",
-                color: "var(--ev-grey, #8A7676)",
+                bgcolor: CSSVAR.divider,
+                color: CSSVAR.textMuted,
                 boxShadow: "none",
               },
               "&:focus-visible": {
-                outline: "2px solid #8B1313",
+                outline: `2px solid ${BRAND.main}`,
               },
             }}
           >

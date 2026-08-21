@@ -1,4 +1,5 @@
 // QuizReview.tsx
+import { BRAND, STATUS } from "@/src/theme/tokens";
 import {
   Box,
   Typography,
@@ -22,9 +23,9 @@ import type {
 } from "../../hooks/useQuiz";
 
 // ── Design tokens — đồng bộ với QuizContainer / QuizView / QuizResult ──
-const RED = "#8B1313";
+const RED = BRAND.main;
 const RED_DARK = "#6B1414";
-const GREEN = "#10B981";
+const GREEN = STATUS.success;
 const INK = "#1c1d1f";
 const SUB = "#6a6f73";
 const RADIUS = "4px";
@@ -228,8 +229,8 @@ function CauHoiReviewItem({
               px: 2,
               py: 1,
               borderRadius: RADIUS,
-              bgcolor: alpha("#f59e0b", 0.06),
-              border: `1px solid ${alpha("#f59e0b", 0.14)}`,
+              bgcolor: alpha(STATUS.warning, 0.06),
+              border: `1px solid ${alpha(STATUS.warning, 0.14)}`,
             }}
           >
             <Typography

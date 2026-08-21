@@ -38,6 +38,7 @@ import { useDispatch } from "@/src/store/hook";
 import { useSelector } from "@/src/store/hook";
 import { themVaoGioHang } from "@/src/store/gioHang/GioHangSlice";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
@@ -53,14 +54,14 @@ type PriceFilter = "all" | "free" | "paid";
 const RATING_MARKS = [0, 1, 2, 3, 4, 4.5, 5] as const;
 
 const BRAND_COLORS = {
-  primary: "#8B1313", // Đỏ đô
+  primary: BRAND.main, // Đỏ đô
   primaryHover: "#7F1D1D",
   primarySoft: "#FEF2F2",
   primaryBorder: "#FECACA",
-  textTitle: "var(--ev-text-primary, #1F2937)",
-  textBody: "var(--ev-text-secondary, #4B5563)",
-  textMuted: "var(--ev-text-muted, #8A7676)",
-  borderLight: "var(--ev-divider, #ECE7E4)",
+  textTitle: CSSVAR.textPrimary,
+  textBody: CSSVAR.textSecondary,
+  textMuted: CSSVAR.textMuted,
+  borderLight: CSSVAR.divider,
 };
 
 function FilterGroup({
@@ -118,7 +119,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
         p: 2,
         borderRadius: "18px",
         border: `1px solid ${BRAND_COLORS.borderLight}`,
-        bgcolor: "var(--ev-paper, #FFFFFF)",
+        bgcolor: CSSVAR.paper,
         display: "flex",
         flexDirection: "column",
         height: "100%",
@@ -138,7 +139,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
           pt: "56.25%", // 16:9 Aspect Ratio
           overflow: "hidden",
           borderRadius: "12px",
-          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+          bgcolor: CSSVAR.paperAlt,
         }}
       >
         {imageUrl ? (
@@ -171,7 +172,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              color: "var(--ev-grey, #8A7676)",
+              color: CSSVAR.textMuted,
               gap: 1,
             }}
           >
@@ -237,11 +238,11 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             backdropFilter: "blur(8px)",
             color: favorited
               ? BRAND_COLORS.primary
-              : "var(--ev-text-secondary, #4B5563)",
+              : CSSVAR.textSecondary,
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             transition: "all 0.2s ease",
             "&:hover": {
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               color: BRAND_COLORS.primary,
               transform: "scale(1.08)",
             },
@@ -271,7 +272,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
                 height: 22,
                 fontSize: 11,
                 fontWeight: 600,
-                bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                bgcolor: CSSVAR.paperAlt,
                 color: BRAND_COLORS.textBody,
                 borderRadius: "4px",
               }}
@@ -335,7 +336,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
           <Typography
             sx={{
               fontSize: 13.5,
-              color: "#F59E0B",
+              color: STATUS.warning,
               fontWeight: 800,
               display: "flex",
               alignItems: "center",
@@ -349,7 +350,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
           </Typography>
         </Stack>
 
-        <Divider sx={{ my: 1.5, borderColor: "#FBFAF9" }} />
+        <Divider sx={{ my: 1.5, borderColor: CSSVAR.paperAlt }} />
 
         {/* Price & Duration info */}
         <Stack
@@ -361,7 +362,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
               <Typography
                 sx={{
                   fontSize: 13,
-                  color: "var(--ev-grey, #8A7676)",
+                  color: CSSVAR.textMuted,
                   textDecoration: "line-through",
                 }}
               >
@@ -391,7 +392,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
               }}
             >
               <TimerRounded
-                sx={{ fontSize: 15, color: "var(--ev-grey, #8A7676)" }}
+                sx={{ fontSize: 15, color: CSSVAR.textMuted }}
               />
               {course.duration}
             </Typography>
@@ -410,10 +411,10 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
               fontWeight: 600,
               borderRadius: "10px",
               textTransform: "none",
-              borderColor: "var(--ev-divider, #ECE7E4)",
+              borderColor: CSSVAR.divider,
               color: BRAND_COLORS.textBody,
               "&:hover": {
-                bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                bgcolor: CSSVAR.paperAlt,
                 borderColor: BRAND_COLORS.textMuted,
                 color: BRAND_COLORS.textTitle,
               },
@@ -510,7 +511,7 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
     category: kh.loaiKhoaHoc || "Khác",
     badge: isFree ? "Miễn phí" : "Trả phí",
     tags: [kh.capDo || "Tự chọn", isFree ? "Free" : "Pro"],
-    palette: ["#8B1313", "#c2410c", "#fff7f4"],
+    palette: [BRAND.main, "#c2410c", "#fff7f4"],
     hinhAnhKhoaHoc:
       kh.hinhAnhKhoaHoc || kh.urlHinhAnh || kh.hinhAnh || kh.hinhAnhBia,
     isFree,
@@ -710,8 +711,8 @@ export default function CoursesPage({
           py: { xs: 4, sm: 5, md: 5.5 },
           px: { xs: 2.5, sm: 4, md: 5 },
           borderRadius: "24px",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
-          border: "1px solid var(--ev-divider, #ECE7E4)",
+          bgcolor: CSSVAR.paper,
+          border: `1px solid ${CSSVAR.divider}`,
           boxShadow: "0 8px 30px rgba(139, 19, 19, 0.04)",
           display: "grid",
           gridTemplateColumns: { xs: "1fr", lg: "1.1fr 0.9fr" },
@@ -788,7 +789,7 @@ export default function CoursesPage({
                   startAdornment: (
                     <InputAdornment position="start">
                       <SearchRounded
-                        sx={{ color: "var(--ev-grey, #8A7676)" }}
+                        sx={{ color: CSSVAR.textMuted }}
                       />
                     </InputAdornment>
                   ),
@@ -797,7 +798,7 @@ export default function CoursesPage({
               sx={{
                 "& .MuiOutlinedInput-root": {
                   height: 52,
-                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                  bgcolor: CSSVAR.paperAlt,
                   borderRadius: "12px",
                   fontSize: 14.5,
                   transition: "all 200ms ease",
@@ -807,7 +808,7 @@ export default function CoursesPage({
                     borderColor: BRAND_COLORS.primary,
                     borderWidth: 1.5,
                   },
-                  "&.Mui-focused": { bgcolor: "var(--ev-paper, #FFFFFF)" },
+                  "&.Mui-focused": { bgcolor: CSSVAR.paper },
                 },
               }}
             />
@@ -823,7 +824,7 @@ export default function CoursesPage({
                 px: 4,
                 height: 52,
                 borderRadius: "12px",
-                background: "linear-gradient(135deg, #8B1313 0%, #6D0F0F 100%)",
+                background: `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
                 color: "#FFFFFF",
                 fontWeight: 800,
                 fontSize: 14.5,
@@ -928,7 +929,7 @@ export default function CoursesPage({
             p: 3,
             borderRadius: "16px",
             border: `1px solid ${BRAND_COLORS.borderLight}`,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             position: { lg: "sticky" },
             top: { lg: 100 },
             maxHeight: { lg: "calc(100vh - 140px)" },
@@ -940,11 +941,11 @@ export default function CoursesPage({
               background: "transparent",
             },
             "&::-webkit-scrollbar-thumb": {
-              background: "#ECE7E4",
+              background: CSSVAR.divider,
               borderRadius: "999px",
             },
             "&::-webkit-scrollbar-thumb:hover": {
-              background: "#ECE7E4",
+              background: CSSVAR.divider,
             },
           }}
         >
@@ -976,7 +977,7 @@ export default function CoursesPage({
                 minWidth: 0,
                 p: 0,
                 "&.Mui-disabled": {
-                  color: "var(--ev-grey, #8A7676)",
+                  color: CSSVAR.textMuted,
                 },
                 "&:hover": {
                   bgcolor: "transparent",
@@ -1003,7 +1004,7 @@ export default function CoursesPage({
                     background: "transparent",
                   },
                   "&::-webkit-scrollbar-thumb": {
-                    background: "#ECE7E4",
+                    background: CSSVAR.divider,
                     borderRadius: "2px",
                   },
                 }}
@@ -1028,7 +1029,7 @@ export default function CoursesPage({
                           }}
                           size="small"
                           sx={{
-                            color: "#ECE7E4",
+                            color: CSSVAR.divider,
                             p: 0,
                             mr: 1.2,
                             "&.Mui-checked": {
@@ -1049,7 +1050,7 @@ export default function CoursesPage({
                         cursor: "pointer",
                         transition: "background-color 150ms ease",
                         "&:hover": {
-                          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                          bgcolor: CSSVAR.paperAlt,
                         },
                         "& .MuiFormControlLabel-label": {
                           fontSize: 13.5,
@@ -1120,7 +1121,7 @@ export default function CoursesPage({
                         }}
                         size="small"
                         sx={{
-                          color: "#ECE7E4",
+                          color: CSSVAR.divider,
                           p: 0,
                           mr: 1.2,
                           "&.Mui-checked": { color: BRAND_COLORS.primary },
@@ -1138,7 +1139,7 @@ export default function CoursesPage({
                       borderRadius: "8px",
                       cursor: "pointer",
                       transition: "background-color 150ms ease",
-                      "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
+                      "&:hover": { bgcolor: CSSVAR.paperAlt },
                       "& .MuiFormControlLabel-label": {
                         fontSize: 13.5,
                         fontWeight: selected ? 700 : 500,
@@ -1175,7 +1176,7 @@ export default function CoursesPage({
                         onChange={() => toggleLevel(level)}
                         size="small"
                         sx={{
-                          color: "#ECE7E4",
+                          color: CSSVAR.divider,
                           p: 0,
                           mr: 1.2,
                           "&.Mui-checked": { color: BRAND_COLORS.primary },
@@ -1193,7 +1194,7 @@ export default function CoursesPage({
                       borderRadius: "8px",
                       cursor: "pointer",
                       transition: "background-color 150ms ease",
-                      "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
+                      "&:hover": { bgcolor: CSSVAR.paperAlt },
                       "& .MuiFormControlLabel-label": {
                         fontSize: 13.5,
                         fontWeight: selected ? 700 : 500,
@@ -1230,7 +1231,7 @@ export default function CoursesPage({
                     height: 40,
                     borderRadius: "9px",
                     fontSize: 13,
-                    bgcolor: "var(--ev-paper, #FFFFFF)",
+                    bgcolor: CSSVAR.paper,
                     "& fieldset": { borderColor: BRAND_COLORS.borderLight },
                   }}
                 >
@@ -1257,7 +1258,7 @@ export default function CoursesPage({
                     height: 40,
                     borderRadius: "9px",
                     fontSize: 13,
-                    bgcolor: "var(--ev-paper, #FFFFFF)",
+                    bgcolor: CSSVAR.paper,
                     "& fieldset": { borderColor: BRAND_COLORS.borderLight },
                   }}
                 >
@@ -1277,8 +1278,8 @@ export default function CoursesPage({
                   value={ratingFrom || ratingTo}
                   sx={{
                     fontSize: 21,
-                    color: "#F59E0B",
-                    "& .MuiRating-iconEmpty": { color: "#ECE7E4" },
+                    color: STATUS.warning,
+                    "& .MuiRating-iconEmpty": { color: CSSVAR.divider },
                   }}
                 />
                 <Typography
@@ -1322,7 +1323,7 @@ export default function CoursesPage({
                 gap: 1,
                 p: 1,
                 borderRadius: "10px",
-                bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                bgcolor: CSSVAR.paperAlt,
                 border: `1px solid ${BRAND_COLORS.borderLight}`,
               }}
             >
@@ -1396,7 +1397,7 @@ export default function CoursesPage({
                   minWidth: 180,
                   height: 38,
                   borderRadius: "4px",
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   fontSize: 13.5,
                   color: BRAND_COLORS.textBody,
                   "& fieldset": { borderColor: "transparent" },
@@ -1424,7 +1425,7 @@ export default function CoursesPage({
                 p: 4,
                 borderRadius: "16px",
                 border: `1px solid ${BRAND_COLORS.borderLight}`,
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
               }}
             >
               <Stack
@@ -1481,11 +1482,11 @@ export default function CoursesPage({
                 borderRadius: "16px",
                 border: `1px dashed ${BRAND_COLORS.primaryBorder}`,
                 textAlign: "center",
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
               }}
             >
               <QueryStatsRounded
-                sx={{ fontSize: 44, color: "var(--ev-grey, #8A7676)", mb: 2 }}
+                sx={{ fontSize: 44, color: CSSVAR.textMuted, mb: 2 }}
               />
               <Typography
                 sx={{

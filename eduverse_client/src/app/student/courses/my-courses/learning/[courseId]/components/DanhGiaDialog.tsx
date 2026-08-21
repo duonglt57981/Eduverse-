@@ -19,8 +19,9 @@ import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import { apiService } from "@/src/services/index";
+import { BRAND, STATUS } from "@/src/theme/tokens";
 
-const PRIMARY = "#8B1313";
+const PRIMARY = BRAND.main;
 
 interface DanhGiaDialogProps {
   open: boolean;
@@ -139,7 +140,7 @@ export function DanhGiaDialog({
           <Box sx={{ textAlign: "center", py: 3 }}>
             <Typography sx={{ fontSize: 40, mb: 1 }}>🎉</Typography>
             <Typography
-              sx={{ fontWeight: 800, fontSize: 18, color: "#10B981", mb: 0.5 }}
+              sx={{ fontWeight: 800, fontSize: 18, color: STATUS.success, mb: 0.5 }}
             >
               Cảm ơn bạn đã đánh giá!
             </Typography>
@@ -188,7 +189,7 @@ export function DanhGiaDialog({
                         sx={{
                           fontSize: 44,
                           color:
-                            star <= (hoverSao || soSao) ? "#F59E0B" : "#FCD34D",
+                            star <= (hoverSao || soSao) ? STATUS.warning : "#FCD34D",
                           filter: "drop-shadow(0 2px 4px rgba(245,158,11,0.3))",
                         }}
                       />
@@ -206,9 +207,9 @@ export function DanhGiaDialog({
                     fontWeight: 700,
                     color:
                       activeStar >= 4
-                        ? "#10B981"
+                        ? STATUS.success
                         : activeStar >= 3
-                          ? "#F59E0B"
+                          ? STATUS.warning
                           : "#EF4444",
                   }}
                 >

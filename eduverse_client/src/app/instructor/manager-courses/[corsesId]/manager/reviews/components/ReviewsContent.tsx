@@ -33,6 +33,7 @@ import DanhGiaService, {
   DanhGiaKhoaHocDto,
 } from "@/src/services/DanhGiaService";
 import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
+import { CSSVAR, STATUS } from "@/src/theme/tokens";
 
 function thoiGian(ngay: string) {
   try {
@@ -82,10 +83,10 @@ function SaoBar({ sao, so, tong }: { sao: number; so: number; tong: number }) {
           flexShrink: 0,
         }}
       >
-        <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#4B5563" }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 600, color: CSSVAR.textSecondary }}>
           {sao}
         </Typography>
-        <StarIcon sx={{ fontSize: 14, color: "#F59E0B" }} />
+        <StarIcon sx={{ fontSize: 14, color: STATUS.warning }} />
       </Box>
       <LinearProgress
         variant="determinate"
@@ -95,7 +96,7 @@ function SaoBar({ sao, so, tong }: { sao: number; so: number; tong: number }) {
           height: 8,
           borderRadius: 99,
           bgcolor: "#F1F2F5",
-          "& .MuiLinearProgress-bar": { bgcolor: "#F59E0B", borderRadius: 99 },
+          "& .MuiLinearProgress-bar": { bgcolor: STATUS.warning, borderRadius: 99 },
         }}
       />
       <Typography
@@ -149,7 +150,7 @@ function DanhGiaCard({
       sx={{
         p: 3,
         borderRadius: "14px",
-        border: "1px solid var(--ev-divider, #ECE7E4)",
+        border: `1px solid ${CSSVAR.divider}`,
         bgcolor: "var(--ev-paper, #fff)",
       }}
     >
@@ -166,7 +167,7 @@ function DanhGiaCard({
             }}
           >
             <Typography
-              sx={{ fontWeight: 700, fontSize: 14, color: "#1F2937" }}
+              sx={{ fontWeight: 700, fontSize: 14, color: CSSVAR.textPrimary }}
             >
               {dg.hoTenNguoiDung || "Ẩn danh"}
             </Typography>
@@ -174,9 +175,9 @@ function DanhGiaCard({
               value={dg.soSao}
               readOnly
               size="small"
-              sx={{ "& .MuiRating-iconFilled": { color: "#F59E0B" } }}
+              sx={{ "& .MuiRating-iconFilled": { color: STATUS.warning } }}
             />
-            <Typography sx={{ fontSize: 11, color: "#9CA3AF", ml: "auto" }}>
+            <Typography sx={{ fontSize: 11, color: CSSVAR.grey, ml: "auto" }}>
               {thoiGian(dg.ngayTao)}
             </Typography>
           </Box>
@@ -211,7 +212,7 @@ function DanhGiaCard({
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography
-                  sx={{ fontWeight: 700, fontSize: 13, color: "#1F2937" }}
+                  sx={{ fontWeight: 700, fontSize: 13, color: CSSVAR.textPrimary }}
                 >
                   {dg.phanHoi.hoTenGV || "Giảng viên"}
                 </Typography>
@@ -226,7 +227,7 @@ function DanhGiaCard({
                     fontWeight: 700,
                   }}
                 />
-                <Typography sx={{ fontSize: 11, color: "#9CA3AF", ml: "auto" }}>
+                <Typography sx={{ fontSize: 11, color: CSSVAR.grey, ml: "auto" }}>
                   {thoiGian(dg.phanHoi.ngayTao)}
                 </Typography>
               </Box>
@@ -240,7 +241,7 @@ function DanhGiaCard({
                       setEditMode(true);
                       setNoiDungEdit(dg.phanHoi!.noiDung);
                     }}
-                    sx={{ color: "#9CA3AF", "&:hover": { color: MAU.chinh } }}
+                    sx={{ color: CSSVAR.grey, "&:hover": { color: MAU.chinh } }}
                   >
                     <EditOutlinedIcon sx={{ fontSize: 15 }} />
                   </IconButton>
@@ -249,7 +250,7 @@ function DanhGiaCard({
                   <IconButton
                     size="small"
                     onClick={() => onXoaPhanHoi(dg.phanHoi!.id)}
-                    sx={{ color: "#9CA3AF", "&:hover": { color: "#DC2626" } }}
+                    sx={{ color: CSSVAR.grey, "&:hover": { color: STATUS.error } }}
                   >
                     <DeleteOutlineIcon sx={{ fontSize: 15 }} />
                   </IconButton>
@@ -274,7 +275,7 @@ function DanhGiaCard({
                     borderRadius: "8px",
                     fontSize: 13,
                     bgcolor: "#fff",
-                    "& fieldset": { borderColor: "#ECE7E4" },
+                    "& fieldset": { borderColor: CSSVAR.divider },
                     "&.Mui-focused fieldset": { borderColor: MAU.chinh },
                   },
                 }}
@@ -447,7 +448,7 @@ export default function ReviewsContent() {
   if (trangThai !== "DaDuyet") {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
-        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+        <Typography sx={{ fontWeight: 700, color: CSSVAR.grey }}>
           Đánh giá chỉ khả dụng sau khi khóa học được duyệt.
         </Typography>
       </Box>
@@ -458,7 +459,7 @@ export default function ReviewsContent() {
   if (!coQuyen("reviews")) {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
-        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+        <Typography sx={{ fontWeight: 700, color: CSSVAR.grey }}>
           Bạn không có quyền truy cập mục Đánh giá.
         </Typography>
       </Box>
@@ -470,10 +471,10 @@ export default function ReviewsContent() {
       <Box sx={{ maxWidth: 900, mx: "auto", pb: 8 }}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
-          <Typography sx={{ fontWeight: 900, fontSize: 24, color: "#1F2937" }}>
+          <Typography sx={{ fontWeight: 900, fontSize: 24, color: CSSVAR.textPrimary }}>
             Đánh giá khóa học
           </Typography>
-          <Typography sx={{ fontSize: 14, color: "#4B5563", mt: 0.5 }}>
+          <Typography sx={{ fontSize: 14, color: CSSVAR.textSecondary, mt: 0.5 }}>
             Xem và phản hồi đánh giá từ học viên
           </Typography>
         </Box>
@@ -490,7 +491,7 @@ export default function ReviewsContent() {
               sx={{
                 p: 3,
                 borderRadius: "16px",
-                border: "1px solid var(--ev-divider, #ECE7E4)",
+                border: `1px solid ${CSSVAR.divider}`,
                 mb: 4,
                 display: "flex",
                 gap: 4,
@@ -503,7 +504,7 @@ export default function ReviewsContent() {
                   sx={{
                     fontSize: 56,
                     fontWeight: 900,
-                    color: "#1F2937",
+                    color: CSSVAR.textPrimary,
                     lineHeight: 1,
                   }}
                 >
@@ -515,7 +516,7 @@ export default function ReviewsContent() {
                   precision={0.1}
                   sx={{
                     mt: 1,
-                    "& .MuiRating-iconFilled": { color: "#F59E0B" },
+                    "& .MuiRating-iconFilled": { color: STATUS.warning },
                   }}
                 />
                 <Typography sx={{ fontSize: 13, color: "#6B7280", mt: 0.5 }}>
@@ -542,7 +543,7 @@ export default function ReviewsContent() {
             {data.danhSach.length === 0 ? (
               <Box sx={{ textAlign: "center", py: 8 }}>
                 <StarIcon sx={{ fontSize: 48, color: "#D1D5DB", mb: 1 }} />
-                <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+                <Typography sx={{ fontWeight: 700, color: CSSVAR.grey }}>
                   Chưa có đánh giá nào
                 </Typography>
               </Box>
@@ -570,7 +571,7 @@ export default function ReviewsContent() {
                           p: 2,
                           borderRadius: "10px",
                           bgcolor: "#F9FAFB",
-                          border: "1px dashed #ECE7E4",
+                          border: "1px dashed ${CSSVAR.divider}",
                         }}
                       >
                         <Typography
@@ -599,7 +600,7 @@ export default function ReviewsContent() {
                               borderRadius: "10px",
                               fontSize: 14,
                               bgcolor: "#fff",
-                              "& fieldset": { borderColor: "#ECE7E4" },
+                              "& fieldset": { borderColor: CSSVAR.divider },
                               "&.Mui-focused fieldset": {
                                 borderColor: MAU.chinh,
                               },

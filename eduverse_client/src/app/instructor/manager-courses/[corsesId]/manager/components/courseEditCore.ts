@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 // ===== Type cho thông tin khóa học cơ bản =====
 export type ThongTinKhoaHocCoBan = {
@@ -14,12 +15,12 @@ export type ThongTinKhoaHocCoBan = {
 };
 
 export const MAU = {
-  chinh: "#8B1313",
-  chinhDam: "#6D0F0F",
+  chinh: BRAND.main,
+  chinhDam: BRAND.dark,
   chinhNhat: "#FDF2F3",
-  vien: "#ECE7E4",
+  vien: CSSVAR.divider,
   chuDen: "#1A1A1A",
-  chuXam: "#8A7676",
+  chuXam: CSSVAR.textMuted,
   canhBaoNen: "#FFF4E5",
   canhBaoChu: "#B26A00",
   loiNen: "#FDECEC",

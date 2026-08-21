@@ -21,7 +21,7 @@ import {
   MenuItem,
   Paper,
   CircularProgress,
-  Chip, // thêm Chip
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -41,9 +41,9 @@ import {
   boxSx,
   PAGE_SIZE,
 } from "@/src/app/admin/approve-courses/types/constants";
-// import { StatusChip } from "@/src/app/admin/approve-courses/types/index"; // bỏ import cũ
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 const kiemDuyetService = new KiemDuyetService();
 
@@ -105,15 +105,14 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
   );
 }
 
-// Component trạng thái mới - đẹp hơn
 function StatusBadge({ status }: { status: string }) {
   const isApproved = status === "DaDuyet";
   const label = isApproved ? "Đã duyệt" : "Từ chối";
   const Icon = isApproved ? CheckCircleRoundedIcon : CancelRoundedIcon;
-  const color = isApproved ? "#059669" : "#DC2626";
-  const bgColor = isApproved ? alpha("#10B981", 0.12) : alpha("#EF4444", 0.12);
+  const color = isApproved ? "#059669" : STATUS.error;
+  const bgColor = isApproved ? alpha(STATUS.success, 0.12) : alpha("#EF4444", 0.12);
   const borderColor = isApproved
-    ? alpha("#10B981", 0.3)
+    ? alpha(STATUS.success, 0.3)
     : alpha("#EF4444", 0.3);
 
   return (
@@ -139,7 +138,9 @@ function StatusBadge({ status }: { status: string }) {
         transition: "all 0.15s ease",
         "&:hover": {
           transform: "scale(1.04)",
-          boxShadow: `0 2px 8px ${isApproved ? alpha("#10B981", 0.2) : alpha("#EF4444", 0.2)}`,
+          boxShadow: isApproved
+            ? `0 2px 8px ${alpha(STATUS.success, 0.2)}`
+            : `0 2px 8px ${alpha("#EF4444", 0.2)}`,
         },
       }}
     />
@@ -305,7 +306,7 @@ export default function LichSuKiemDuyetPage() {
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 2,
                   color: COLORS.ink,
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   "&:hover": {
                     borderColor: COLORS.primary,
                     color: COLORS.primary,
@@ -355,7 +356,7 @@ export default function LichSuKiemDuyetPage() {
                 cardBg:
                   "linear-gradient(135deg, rgba(139,19,19,0.04) 0%, rgba(139,19,19,0.01) 100%)",
                 borderColor: "rgba(139,19,19,0.14)",
-                iconBg: "linear-gradient(135deg, #8B1313 0%, #6D0F0F 100%)",
+                iconBg: `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
                 iconShadow: "0 4px 12px rgba(139,19,19,0.22)",
                 icon: <SchoolRoundedIcon sx={{ fontSize: 20 }} />,
               },
@@ -366,18 +367,18 @@ export default function LichSuKiemDuyetPage() {
                 cardBg:
                   "linear-gradient(135deg, rgba(16,185,129,0.04) 0%, rgba(16,185,129,0.01) 100%)",
                 borderColor: "rgba(16,185,129,0.16)",
-                iconBg: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                iconBg: `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`,
                 iconShadow: "0 4px 12px rgba(16,185,129,0.22)",
                 icon: <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />,
               },
               {
                 label: "Từ chối",
                 value: stats.tuChoi,
-                color: "#DC2626",
+                color: STATUS.error,
                 cardBg:
                   "linear-gradient(135deg, rgba(239,68,68,0.04) 0%, rgba(239,68,68,0.01) 100%)",
                 borderColor: "rgba(239,68,68,0.16)",
-                iconBg: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
+                iconBg: `linear-gradient(135deg, #EF4444 0%, ${STATUS.error} 100%)`,
                 iconShadow: "0 4px 12px rgba(239,68,68,0.22)",
                 icon: <CancelRoundedIcon sx={{ fontSize: 20 }} />,
               },
@@ -439,7 +440,7 @@ export default function LichSuKiemDuyetPage() {
                     <Typography
                       sx={{
                         fontSize: 12.5,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                         fontWeight: 600,
                         mt: 0.4,
                       }}
@@ -496,7 +497,7 @@ export default function LichSuKiemDuyetPage() {
                     value={keywordInput}
                     onChange={(e) => setKeywordInput(e.target.value)}
                     sx={{
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      bgcolor: CSSVAR.paper,
                       "& .MuiOutlinedInput-root": {
                         height: 40,
                         borderRadius: "12px",
@@ -534,7 +535,7 @@ export default function LichSuKiemDuyetPage() {
                     sx={{
                       height: 40,
                       minWidth: { xs: "100%", sm: 170 },
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      bgcolor: CSSVAR.paper,
                       borderRadius: "12px",
                       "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: COLORS.line,
@@ -559,7 +560,7 @@ export default function LichSuKiemDuyetPage() {
                         onClick={handleResetFilters}
                         disabled={!isFilterDirty}
                         sx={{
-                          bgcolor: "var(--ev-paper, #FFFFFF)",
+                          bgcolor: CSSVAR.paper,
                           border: `1px solid ${COLORS.line}`,
                           borderRadius: "12px",
                           width: 40,
@@ -589,7 +590,7 @@ export default function LichSuKiemDuyetPage() {
                 sx={{
                   mt: 1.5,
                   minHeight: 34,
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 2,
                   px: 0.5,
@@ -671,7 +672,7 @@ export default function LichSuKiemDuyetPage() {
                           borderRadius: 2.5,
                           cursor: "pointer",
                           transition: "all .15s ease",
-                          bgcolor: "var(--ev-paper, #FFFFFF)",
+                          bgcolor: CSSVAR.paper,
                           "&:hover": {
                             boxShadow: `0 2px 10px ${alpha(
                               COLORS.primary,
@@ -706,7 +707,6 @@ export default function LichSuKiemDuyetPage() {
                             useFlexGap
                             sx={{ alignItems: "center", flexWrap: "wrap" }}
                           >
-                            {/* Sử dụng StatusBadge thay cho StatusChip */}
                             <StatusBadge status={trangThaiPheDuyet} />
 
                             {item.createDate && (

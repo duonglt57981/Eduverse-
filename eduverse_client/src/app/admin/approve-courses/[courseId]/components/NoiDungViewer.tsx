@@ -45,6 +45,7 @@ import {
 } from "../../types/constants";
 import StatusChip from "./StatusChip";
 import LyDoTuChoiInput from "./LyDoTuChoiInput";
+import { COLORS as TOKEN_COLORS, CSSVAR } from "@/src/theme/tokens";
 
 // ======================== CLOUDINARY HELPERS ========================
 interface CloudinaryUrlInfo {
@@ -327,7 +328,7 @@ export default function NoiDungViewer({
         ) : loai === "taiLieu" ? (
           <AttachFileIcon sx={{ color: COLORS.gold, fontSize: 22 }} />
         ) : (
-          <QuizRoundedIcon sx={{ color: "#7C3AED", fontSize: 22 }} />
+          <QuizRoundedIcon sx={{ color: TOKEN_COLORS.purpleAI, fontSize: 22 }} />
         )}
         <Typography
           sx={{
@@ -335,7 +336,7 @@ export default function NoiDungViewer({
             fontFamily: FONTS.display,
             fontWeight: 800,
             fontSize: 18,
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
           }}
           noWrap
         >
@@ -488,7 +489,7 @@ function ViewerBody({
           position: "relative",
           isolation: "isolate",
           contain: "layout paint",
-          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+          bgcolor: CSSVAR.paperAlt,
           border: `1px solid ${COLORS.line}`,
           p: 2,
           borderRadius: 2,
@@ -548,7 +549,7 @@ function ViewerBody({
                 sx={{
                   p: 2,
                   border: `1px solid ${COLORS.line}`,
-                  backgroundColor: "var(--ev-paper, #FFFFFF)",
+                  backgroundColor: CSSVAR.paper,
                   transition: "box-shadow 0.2s",
                   "&:hover": {
                     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
@@ -1477,7 +1478,7 @@ function TaiLieuPreview({
           maxWidth: "100%",
           boxSizing: "border-box",
           border: `1px solid ${COLORS.line}`,
-          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+          bgcolor: CSSVAR.paperAlt,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",

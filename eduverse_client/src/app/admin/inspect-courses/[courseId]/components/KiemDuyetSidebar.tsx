@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 import { useState, useMemo } from "react";
 import {
   Box,
@@ -154,7 +155,7 @@ export default function KiemDuyetSidebar({
             pl: 7,
             pr: 2.5,
             py: 0.5,
-            color: "var(--ev-text-secondary, #4B5563)",
+            color: CSSVAR.textSecondary,
             "&:hover": { bgcolor: "transparent", color: COLORS.primary },
           }}
         >
@@ -187,7 +188,7 @@ export default function KiemDuyetSidebar({
                     py: 0.75,
                     borderRadius: "6px",
                     cursor: "pointer",
-                    border: `1px solid ${active ? COLORS.primary : "var(--ev-divider, #ECE7E4)"}`,
+                    border: `1px solid ${active ? COLORS.primary : "${CSSVAR.divider}"}`,
                     bgcolor: active ? "rgba(139, 19, 19, 0.05)" : "transparent",
                     transition: "all 0.15s ease",
                     "&:hover": {
@@ -202,7 +203,7 @@ export default function KiemDuyetSidebar({
                       fontSize: 14,
                       color: active
                         ? COLORS.primary
-                        : "var(--ev-text-muted, #8A7676)",
+                        : CSSVAR.textMuted,
                       flexShrink: 0,
                     }}
                   />
@@ -214,7 +215,7 @@ export default function KiemDuyetSidebar({
                       fontSize: 12.5,
                       color: active
                         ? COLORS.primary
-                        : "var(--ev-text-primary, #1F2937)",
+                        : CSSVAR.textPrimary,
                     }}
                     noWrap
                   >
@@ -266,7 +267,7 @@ export default function KiemDuyetSidebar({
                   ? COLORS.primary
                   : pending
                     ? COLORS.gold
-                    : "var(--ev-text-muted, #8A7676)",
+                    : CSSVAR.textMuted,
                 fontSize: 18,
               }}
             />
@@ -281,7 +282,7 @@ export default function KiemDuyetSidebar({
                   lineHeight: 1.4,
                   color: active
                     ? COLORS.primary
-                    : "var(--ev-text-primary, #1F2937)",
+                    : CSSVAR.textPrimary,
                 }}
                 noWrap
               >
@@ -335,7 +336,7 @@ export default function KiemDuyetSidebar({
                   ? COLORS.primary
                   : pending
                     ? COLORS.gold
-                    : "var(--ev-text-muted, #8A7676)",
+                    : CSSVAR.textMuted,
                 fontSize: 18,
               }}
             />
@@ -350,7 +351,7 @@ export default function KiemDuyetSidebar({
                   lineHeight: 1.4,
                   color: active
                     ? COLORS.primary
-                    : "var(--ev-text-primary, #1F2937)",
+                    : CSSVAR.textPrimary,
                 }}
                 noWrap
               >
@@ -361,7 +362,7 @@ export default function KiemDuyetSidebar({
               cauHois.length > 0 ? (
                 <Typography
                   variant="caption"
-                  sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 11 }}
+                  sx={{ color: CSSVAR.textMuted, fontSize: 11 }}
                 >
                   {cauHois.length} câu hỏi
                 </Typography>
@@ -392,8 +393,8 @@ export default function KiemDuyetSidebar({
       <Box
         sx={{
           p: 2.5,
-          borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
-          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+          borderBottom: `1px solid ${CSSVAR.divider}`,
+          bgcolor: CSSVAR.paperAlt,
           flexShrink: 0,
         }}
       >
@@ -411,7 +412,7 @@ export default function KiemDuyetSidebar({
               fontWeight: 800,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
               fontFamily: FONTS.body,
             }}
           >
@@ -431,14 +432,14 @@ export default function KiemDuyetSidebar({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             "& .MuiOutlinedInput-root": {
               borderRadius: "10px",
               fontSize: 13,
-              "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+              "& fieldset": { borderColor: CSSVAR.divider },
               "&:hover fieldset": { borderColor: "rgba(139,19,19,0.3)" },
               "&.Mui-focused fieldset": {
-                borderColor: "#8B1313",
+                borderColor: BRAND.main,
                 borderWidth: 1.5,
               },
             },
@@ -450,7 +451,7 @@ export default function KiemDuyetSidebar({
                   <SearchIcon
                     sx={{
                       fontSize: 18,
-                      color: "var(--ev-text-muted, #8A7676)",
+                      color: CSSVAR.textMuted,
                     }}
                   />
                 </InputAdornment>
@@ -491,7 +492,7 @@ export default function KiemDuyetSidebar({
               return (
                 <Box
                   key={id}
-                  sx={{ borderBottom: "1px solid var(--ev-divider, #ECE7E4)" }}
+                  sx={{ borderBottom: `1px solid ${CSSVAR.divider}` }}
                 >
                   <ListItemButton
                     onClick={() => togglePhan(id)}
@@ -516,7 +517,7 @@ export default function KiemDuyetSidebar({
                         sx={{
                           fontWeight: 800,
                           fontSize: 13.5,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                           fontFamily: FONTS.body,
                         }}
                         noWrap
@@ -526,7 +527,7 @@ export default function KiemDuyetSidebar({
                       <Typography
                         variant="caption"
                         sx={{
-                          color: "var(--ev-text-muted, #8A7676)",
+                          color: CSSVAR.textMuted,
                           fontWeight: 600,
                           fontSize: 11,
                         }}
@@ -539,14 +540,14 @@ export default function KiemDuyetSidebar({
                       <ExpandLessIcon
                         sx={{
                           fontSize: 20,
-                          color: "var(--ev-text-muted, #8A7676)",
+                          color: CSSVAR.textMuted,
                         }}
                       />
                     ) : (
                       <ExpandMoreIcon
                         sx={{
                           fontSize: 20,
-                          color: "var(--ev-text-muted, #8A7676)",
+                          color: CSSVAR.textMuted,
                         }}
                       />
                     )}

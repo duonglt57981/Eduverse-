@@ -1,4 +1,5 @@
 'use client';
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '../../../store/hook';
@@ -31,8 +32,8 @@ import {
   LockResetRounded,
 } from '@mui/icons-material';
 
-const MAROON = '#8B1313';
-const GREEN = '#0a5a3a';
+const MAROON = BRAND.main;
+const GREEN = STATUS.successDark;
 
 // Style dùng chung cho các ô nhập liệu
 const inputSx = {
@@ -63,10 +64,10 @@ const primaryButtonSx = {
   fontWeight: 800,
   fontSize: 15,
   textTransform: 'none',
-  background: 'linear-gradient(90deg, #8B1313 0%, #8B1313 55%, #6b1414 100%)',
+  background: `linear-gradient(90deg, ${BRAND.main} 0%, ${BRAND.main} 55%, #6b1414 100%)`,
   boxShadow: '0 10px 25px rgba(139,19,19,0.2)',
   '&:hover': {
-    background: 'linear-gradient(90deg, #8B1313 0%, #6b1414 60%, #5c1111 100%)',
+    background: `linear-gradient(90deg, ${BRAND.main} 0%, #6b1414 60%, #5c1111 100%)`,
     boxShadow: '0 12px 28px rgba(139,19,19,0.25)',
   },
   '&.Mui-disabled': {
@@ -262,7 +263,7 @@ export default function ForgotPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'var(--ev-bg, #F7F5F2)',
+        bgcolor: CSSVAR.bg,
         px: 2,
         py: 4,
         background: 'radial-gradient(circle at 50% 50%, #fefefe 0%, #f5f3f0 100%)',

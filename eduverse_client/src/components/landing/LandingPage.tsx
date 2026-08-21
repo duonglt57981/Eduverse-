@@ -1,5 +1,6 @@
 'use client';
 
+import { BRAND, GRADIENTS } from "@/src/theme/tokens";
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -50,7 +51,7 @@ function mapFeatured(kh: any): LandingCourse {
     title: kh?.tieuDe || 'Khóa học',
     subtitle: `${kh?.capDo || 'Mọi cấp độ'} • ${kh?.tongBaiGiang ?? 0} bài giảng`,
     price: isFree ? 'Miễn phí' : `${(kh?.gia ?? 0).toLocaleString('vi-VN')}đ`,
-    palette: ['#8B1313', '#c2410c', '#fff7f4'],
+    palette: [BRAND.main, '#c2410c', '#fff7f4'],
     hinhAnhKhoaHoc: kh?.hinhAnhKhoaHoc || kh?.urlHinhAnh || kh?.hinhAnh || kh?.hinhAnhBia,
   };
 }
@@ -175,7 +176,7 @@ export default function LandingPage() {
                     px: 2.8,
                     py: 1.4,
                     borderRadius: 2.8,
-                    background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
+                    background: GRADIENTS.crimson,
                   }}
                 >
                   Bắt đầu học ngay
@@ -299,7 +300,7 @@ export default function LandingPage() {
                   bgcolor: 'rgba(255,255,255,0.76)',
                 }}
               >
-                <Typography sx={{ fontSize: { xs: 26, md: 34 }, fontWeight: 900, color: '#8B1313' }}>
+                <Typography sx={{ fontSize: { xs: 26, md: 34 }, fontWeight: 900, color: BRAND.main }}>
                   {item.value}
                 </Typography>
                 <Typography sx={{ mt: 0.75, fontSize: 12.5, fontWeight: 800, color: 'rgba(24,24,27,0.56)', textTransform: 'uppercase' }}>
@@ -382,7 +383,7 @@ export default function LandingPage() {
                 component={Link}
                 href="/courses"
                 endIcon={<ArrowForwardRounded />} 
-                sx={{ color: '#8B1313' }}
+                sx={{ color: BRAND.main }}
               >
                 Xem toàn bộ khóa học
               </Button>
@@ -430,7 +431,7 @@ export default function LandingPage() {
                         display: 'grid',
                         placeItems: 'center',
                         bgcolor: 'rgba(127,29,29,0.08)',
-                        color: '#8B1313',
+                        color: BRAND.main,
                         mb: 1.5,
                       }}
                     >
@@ -488,7 +489,7 @@ export default function LandingPage() {
                       fontWeight: 900,
                       background:
                         index % 2 === 0
-                          ? 'linear-gradient(135deg, #321212, #8B1313)'
+                          ? `linear-gradient(135deg, #321212, ${BRAND.main})`
                           : 'linear-gradient(135deg, #2d313d, #5f6677)',
                     }}
                   >
