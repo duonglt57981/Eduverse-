@@ -233,7 +233,12 @@ function GioHangContent() {
         >
           Giỏ hàng của tôi
         </Typography>
-        <Typography sx={{ color: "var(--ev-text-secondary, rgba(31,41,55,0.55))", fontSize: 14 }}>
+        <Typography
+          sx={{
+            color: "var(--ev-text-secondary, rgba(31,41,55,0.55))",
+            fontSize: 14,
+          }}
+        >
           {items.length} khóa học trong giỏ hàng
           {mienphi.length > 0 && (
             <Box
@@ -371,7 +376,10 @@ function GioHangContent() {
                       <Typography
                         sx={{ fontSize: 12, color: "text.secondary", mb: 0.5 }}
                       >
-                        {item.tenTacGia ?? "Giảng viên"}
+                        {item.danhSachGiangVien &&
+                        item.danhSachGiangVien.length > 0
+                          ? item.danhSachGiangVien.join(", ")
+                          : (item.tenTacGia ?? "Giảng viên")}
                       </Typography>
                       <Box
                         sx={{
@@ -466,7 +474,9 @@ function GioHangContent() {
                           >
                             {formatGia(item.gia)}
                           </Typography>
-                          {Boolean(item.giaGoc && item.giaGoc > (item.gia ?? 0)) && (
+                          {Boolean(
+                            item.giaGoc && item.giaGoc > (item.gia ?? 0),
+                          ) && (
                             <Typography
                               sx={{
                                 fontSize: 12,
@@ -813,9 +823,11 @@ function GioHangContent() {
                     {item.tenKhoaHoc}
                   </Typography>
                   <Typography
-                    sx={{ fontSize: 12, color: "text.secondary", mb: 1 }}
+                    sx={{ fontSize: 12, color: "text.secondary", mb: 0.5 }}
                   >
-                    {item.tenTacGia ?? "Giảng viên"}
+                    {item.danhSachGiangVien && item.danhSachGiangVien.length > 0
+                      ? item.danhSachGiangVien.join(", ")
+                      : (item.tenTacGia ?? "Giảng viên")}
                   </Typography>
                   <Box sx={{ display: "flex", gap: 2 }}>
                     <Button
@@ -866,7 +878,9 @@ function GioHangContent() {
                       >
                         {formatGia(item.gia)}
                       </Typography>
-                      {Boolean(item.giaGoc && item.giaGoc > (item.gia ?? 0)) && (
+                      {Boolean(
+                        item.giaGoc && item.giaGoc > (item.gia ?? 0),
+                      ) && (
                         <Typography
                           sx={{
                             fontSize: 12,

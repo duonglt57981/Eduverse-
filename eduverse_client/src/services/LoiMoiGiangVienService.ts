@@ -109,6 +109,21 @@ export interface QuyenCuaToiDto {
   promotions: boolean;
 }
 
+export interface LichSuNhanTheoDonDto {
+  idDonHang: string;
+  tyLeChiaDoanhThu: number;
+  giaLucDat: number;
+  soTienGiam: number;
+  soTienNhan: number;
+  ngayGhiNhan: string;
+}
+
+export interface LichSuThayDoiTyLeDto {
+  tyLeCu: number;
+  tyLeMoi: number;
+  ngayThayDoi: string;
+}
+
 export interface DanhSachGiangVienDto {
   danhSachCongTac: GiangVienCongTacDto[];
   danhSachDangMoi: LoiMoiDangChoDto[];
@@ -188,6 +203,26 @@ class LoiMoiGiangVienService {
     const res = await apiService.put(
       `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/cap-nhat-quyen-hang-loat`,
       request,
+    );
+    return res.data;
+  }
+
+  async GetLichSuDonHang(
+    idKhoaHoc: string,
+    idGiangVien: string,
+  ): Promise<LichSuNhanTheoDonDto[]> {
+    const res = await apiService.get<LichSuNhanTheoDonDto[]>(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/giang-vien/${idGiangVien}/lich-su-don-hang`,
+    );
+    return res.data;
+  }
+
+  async GetLichSuTyLe(
+    idKhoaHoc: string,
+    idGiangVien: string,
+  ): Promise<LichSuThayDoiTyLeDto[]> {
+    const res = await apiService.get<LichSuThayDoiTyLeDto[]>(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/giang-vien/${idGiangVien}/lich-su-ty-le`,
     );
     return res.data;
   }

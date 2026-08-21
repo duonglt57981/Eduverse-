@@ -8,4 +8,5 @@ export interface DanhSachMuonMuaSauDto {
   tenTacGia?: string;
   tongThoiLuong?: number;
   tongBaiGiang?: number;
+  danhSachGiangVien?: string[]
 }

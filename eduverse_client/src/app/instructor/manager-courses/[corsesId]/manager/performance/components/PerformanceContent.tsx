@@ -31,6 +31,12 @@ import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutlined";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
+import IconButton from "@mui/material/IconButton";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import Divider from "@mui/material/Divider";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import {
   BarChart,
   Bar,
@@ -53,6 +59,11 @@ import ThongKeKhoaHocService, {
   BaiGiangEngagementDto,
   CourseEngagementDto,
 } from "@/src/services/ThongKeKhoaHocService";
+import LoiMoiGiangVienService, {
+  LichSuThayDoiTyLeDto,
+  LichSuNhanTheoDonDto,
+} from "@/src/services/LoiMoiGiangVienService";
+
 import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
 
 // ── Helper format tiền ──────────────────────────────────────────────────────
@@ -174,6 +185,35 @@ export default function PerformanceContent() {
   const [loadingEG, setLoadingEG] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
+
+  // Lịch sử doanh thu theo giảng viên (dialog)
+  const [lichSuTarget, setLichSuTarget] = useState<{
+    id: string;
+    ten: string;
+  } | null>(null);
+  const [lichSuTyLe, setLichSuTyLe] = useState<LichSuThayDoiTyLeDto[]>([]);
+  const [lichSuDonHang, setLichSuDonHang] = useState<LichSuNhanTheoDonDto[]>(
+    [],
+  );
+  const [loadingLichSu, setLoadingLichSu] = useState(false);
+
+  const moLichSu = async (idGiangVien: string, ten: string) => {
+    setLichSuTarget({ id: idGiangVien, ten });
+    setLoadingLichSu(true);
+    try {
+      const [tyLe, donHang] = await Promise.all([
+        LoiMoiGiangVienService.GetLichSuTyLe(idKhoaHoc, idGiangVien),
+        LoiMoiGiangVienService.GetLichSuDonHang(idKhoaHoc, idGiangVien),
+      ]);
+      setLichSuTyLe(tyLe);
+      setLichSuDonHang(donHang);
+    } catch {
+      setLichSuTyLe([]);
+      setLichSuDonHang([]);
+    } finally {
+      setLoadingLichSu(false);
+    }
+  };
 
   useEffect(() => {
     console.log("doanhThu state:", doanhThu);
@@ -561,6 +601,12 @@ export default function PerformanceContent() {
                       >
                         Nhận được
                       </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                      >
+                        Lịch sử
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -638,6 +684,23 @@ export default function PerformanceContent() {
                             {formatTien(gv.soTienNhan)}
                           </Typography>
                         </TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              moLichSu(gv.idGiangVien, gv.hoTen || "Giảng viên")
+                            }
+                            sx={{
+                              color: "#94A3B8",
+                              "&:hover": {
+                                color: MAU.chinh,
+                                bgcolor: `${MAU.chinh}10`,
+                              },
+                            }}
+                          >
+                            <HistoryRoundedIcon sx={{ fontSize: 19 }} />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -645,6 +708,113 @@ export default function PerformanceContent() {
               </Paper>
             </Box>
           ))}
+
+        {/* ── Dialog: Lịch sử doanh thu theo giảng viên ── */}
+        {/* Đứng độc lập (sibling), KHÔNG bao bất kỳ khối Tab nào bên trong,
+            vì MUI Dialog không mount children khi open=false. */}
+        <Dialog
+          open={!!lichSuTarget}
+          onClose={() => setLichSuTarget(null)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 800 }}>
+            Lịch sử doanh thu — {lichSuTarget?.ten}
+          </DialogTitle>
+          <DialogContent sx={{ maxHeight: "70vh" }}>
+            {loadingLichSu ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress sx={{ color: MAU.chinh }} />
+              </Box>
+            ) : (
+              <Box>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>
+                  Thay đổi tỷ lệ
+                </Typography>
+                {lichSuTyLe.length === 0 ? (
+                  <Typography sx={{ fontSize: 13, color: "#9CA3AF", mb: 2 }}>
+                    Chưa có thay đổi nào.
+                  </Typography>
+                ) : (
+                  lichSuTyLe.map((ls, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        py: 0.75,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
+                        {new Date(ls.ngayThayDoi).toLocaleDateString("vi-VN")}
+                      </Typography>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+                        {ls.tyLeCu}% → {ls.tyLeMoi}%
+                      </Typography>
+                    </Box>
+                  ))
+                )}
+
+                <Divider sx={{ my: 2 }} />
+
+                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>
+                  Theo đơn hàng
+                </Typography>
+                {lichSuDonHang.length === 0 ? (
+                  <Typography sx={{ fontSize: 13, color: "#9CA3AF" }}>
+                    Chưa có đơn hàng nào ghi nhận.
+                  </Typography>
+                ) : (
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontSize: 12, fontWeight: 700 }}>
+                          Ngày
+                        </TableCell>
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: 12, fontWeight: 700 }}
+                        >
+                          Tỷ lệ
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ fontSize: 12, fontWeight: 700 }}
+                        >
+                          Nhận được
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {lichSuDonHang.map((dh) => (
+                        <TableRow key={dh.idDonHang}>
+                          <TableCell sx={{ fontSize: 13 }}>
+                            {new Date(dh.ngayGhiNhan).toLocaleDateString(
+                              "vi-VN",
+                            )}
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontSize: 13 }}>
+                            {dh.tyLeChiaDoanhThu}%
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: "#16A34A",
+                            }}
+                          >
+                            {formatTien(dh.soTienNhan)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </Box>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* ── Tab 1: Học viên ── */}
         {tab === 1 &&

@@ -303,7 +303,9 @@ function CourseRegistrationContent() {
   } | null>(null);
   const [giangVienKhoaHocs, setGiangVienKhoaHocs] = useState<any[]>([]);
   const [loadingGiangVien, setLoadingGiangVien] = useState(false);
-  const [bioExpanded, setBioExpanded] = useState(false);
+  const [bioExpandedMap, setBioExpandedMap] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const dangKiService = new DangKiService();
   const khoaHocService = new KhoaHocService();
@@ -646,34 +648,30 @@ function CourseRegistrationContent() {
     khoaHoc.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!khoaHoc.gia || khoaHoc.gia <= 0);
 
-  const danhSachGV = (khoaHoc as any).danhSachGiangVienHienThi as
-    | string[]
-    | undefined;
-  const giangVien =
-    danhSachGV && danhSachGV.length > 0
-      ? danhSachGV.join(", ")
-      : khoaHoc.createdBy || "Không xác định";
+  const danhSachGiangVienDetail: {
+    id?: string;
+    hoTen: string;
+    anhDaiDien?: string;
+    tieuSu?: string;
+  }[] =
+    (khoaHoc as any).danhSachGiangVien &&
+    (khoaHoc as any).danhSachGiangVien.length > 0
+      ? (khoaHoc as any).danhSachGiangVien
+      : [
+          {
+            id: getGiangVienId(khoaHoc) ?? undefined,
+            hoTen: khoaHoc.createdBy || "Không xác định",
+          },
+        ];
 
-  // Id giảng viên dùng để build link hồ sơ /instructor/profile/{id}
+  // Id giảng viên "chính" (chủ sở hữu) — dùng để tải "Khóa học khác của..."
   const giangVienId = getGiangVienId(khoaHoc);
+  const giangVienChinh = danhSachGiangVienDetail[0];
+  const tenGiangVienChinh =
+    giangVienInfo?.ten || giangVienChinh?.hoTen || "Không xác định";
 
-  // Thông tin giảng viên hiển thị cuối trang: ưu tiên dữ liệu đã có sẵn từ
-  // khoaHoc.giangVien (trả kèm ngay trong GetKhoaHocPreview), sau đó bổ sung
-  // thêm tongKhoaHoc/tongHocVien từ giangVienInfo (API khoahoc-list-bygiangvien)
-  // nếu tải được — nhờ vậy khối này luôn hiển thị kể cả khi API thứ 2 lỗi
-  // hoặc không xác định được id giảng viên.
-  const gvGoc = (khoaHoc as any).giangVien;
-  const giangVienDisplay = {
-    ten: giangVienInfo?.ten || gvGoc?.hoTen || giangVien,
-    avatar: giangVienInfo?.avatar ?? gvGoc?.avatar,
-    moTa: giangVienInfo?.moTa ?? gvGoc?.tieuSu,
-    chucDanh: giangVienInfo?.chucDanh,
-    tongKhoaHoc: giangVienInfo?.tongKhoaHoc,
-    tongHocVien: giangVienInfo?.tongHocVien,
-  };
-
-  const goToInstructorProfile = () => {
-    if (giangVienId) router.push(`/instructor/profile/${giangVienId}`);
+  const goToInstructorProfile = (id?: string) => {
+    if (id) router.push(`/instructor/profile/${id}`);
   };
 
   return (
@@ -1803,139 +1801,183 @@ function CourseRegistrationContent() {
           Giảng viên
         </Typography>
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2.5}
-          sx={{ alignItems: { xs: "flex-start", sm: "flex-start" }, mb: 2.5 }}
-        >
-          <Box
-            onClick={giangVienId ? goToInstructorProfile : undefined}
-            sx={{ cursor: giangVienId ? "pointer" : "default", flexShrink: 0 }}
-          >
-            {giangVienDisplay.avatar ? (
-              <Box
-                component="img"
-                src={giangVienDisplay.avatar}
-                sx={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: `2px solid ${RED_SOFT}`,
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: "50%",
-                  bgcolor: RED,
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 32,
-                  fontWeight: 700,
-                }}
-              >
-                {giangVienDisplay.ten.charAt(0).toUpperCase()}
+        <Stack spacing={3} sx={{ mb: 2.75 }}>
+          {danhSachGiangVienDetail.map((gv, idx) => {
+            const key = gv.id ?? `gv-${idx}`;
+            const isExpanded = !!bioExpandedMap[key];
+            const bioHtml =
+              gv.tieuSu || (idx === 0 ? giangVienInfo?.moTa : undefined);
+
+            return (
+              <Box key={key}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2.5}
+                  sx={{ alignItems: "flex-start" }}
+                >
+                  <Box
+                    onClick={() => goToInstructorProfile(gv.id)}
+                    sx={{
+                      cursor: gv.id ? "pointer" : "default",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {gv.anhDaiDien ? (
+                      <Box
+                        component="img"
+                        src={gv.anhDaiDien}
+                        sx={{
+                          width: 84,
+                          height: 84,
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          border: `2px solid ${RED_SOFT}`,
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 84,
+                          height: 84,
+                          borderRadius: "50%",
+                          bgcolor: RED,
+                          color: "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 28,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {gv.hoTen.charAt(0).toUpperCase()}
+                      </Box>
+                    )}
+                  </Box>
+
+                  <Box sx={{ flex: 1, minWidth: 0, pt: 0.5 }}>
+                    <Typography
+                      onClick={() => goToInstructorProfile(gv.id)}
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 18,
+                        color: RED,
+                        mb: 0.25,
+                        width: "fit-content",
+                        cursor: gv.id ? "pointer" : "default",
+                        "&:hover": gv.id
+                          ? { textDecoration: "underline" }
+                          : undefined,
+                      }}
+                    >
+                      {gv.hoTen}
+                    </Typography>
+
+                    {idx === 0 && giangVienInfo?.chucDanh && (
+                      <Typography
+                        sx={{
+                          fontSize: 13.5,
+                          color: "text.secondary",
+                          mb: 0.5,
+                        }}
+                      >
+                        {giangVienInfo.chucDanh}
+                      </Typography>
+                    )}
+
+                    {idx === 0 && (
+                      <Stack spacing={0.5} sx={{ mt: 1, mb: 1 }}>
+                        <Stack
+                          direction="row"
+                          spacing={1.25}
+                          sx={{ alignItems: "center" }}
+                        >
+                          <PlayCircleIcon sx={{ fontSize: 17, color: RED }} />
+                          <Typography
+                            sx={{ fontSize: 13, color: "text.secondary" }}
+                          >
+                            <strong>
+                              {giangVienInfo?.tongKhoaHoc ??
+                                giangVienKhoaHocs.length + 1}
+                            </strong>{" "}
+                            khóa học
+                          </Typography>
+                        </Stack>
+                        {typeof giangVienInfo?.tongHocVien === "number" && (
+                          <Stack
+                            direction="row"
+                            spacing={1.25}
+                            sx={{ alignItems: "center" }}
+                          >
+                            <PeopleAltIcon sx={{ fontSize: 17, color: RED }} />
+                            <Typography
+                              sx={{ fontSize: 13, color: "text.secondary" }}
+                            >
+                              <strong>
+                                {giangVienInfo.tongHocVien.toLocaleString(
+                                  "vi-VN",
+                                )}
+                              </strong>{" "}
+                              học viên
+                            </Typography>
+                          </Stack>
+                        )}
+                      </Stack>
+                    )}
+
+                    {bioHtml && (
+                      <Box sx={{ mt: 1 }}>
+                        <Box
+                          sx={{
+                            fontSize: 13.5,
+                            color: "text.secondary",
+                            lineHeight: 1.85,
+                            "& p": { mb: 1 },
+                            "& p:last-child": { mb: 0 },
+                            "& ul, & ol": { pl: 2.5, mb: 1 },
+                            "& a": { color: RED },
+                            "& img": { maxWidth: "100%", borderRadius: 8 },
+                            "& strong, & b": { color: "text.primary" },
+                            ...(!isExpanded && {
+                              display: "-webkit-box",
+                              WebkitLineClamp: 4,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }),
+                          }}
+                          dangerouslySetInnerHTML={{ __html: bioHtml }}
+                        />
+                        <Button
+                          onClick={() =>
+                            setBioExpandedMap((m) => ({ ...m, [key]: !m[key] }))
+                          }
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 700,
+                            fontSize: 13,
+                            color: RED,
+                            px: 0,
+                            mt: 0.75,
+                            minWidth: 0,
+                            "&:hover": {
+                              bgcolor: "transparent",
+                              textDecoration: "underline",
+                            },
+                          }}
+                        >
+                          {isExpanded ? "Ẩn bớt" : "Hiển thị thêm"}
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                </Stack>
+
+                {idx < danhSachGiangVienDetail.length - 1 && (
+                  <Divider sx={{ mt: 2.5, borderColor: "#f6e9e9" }} />
+                )}
               </Box>
-            )}
-          </Box>
-
-          <Box sx={{ flex: 1, minWidth: 0, pt: 0.5 }}>
-            <Typography
-              onClick={giangVienId ? goToInstructorProfile : undefined}
-              sx={{
-                fontWeight: 700,
-                fontSize: 19,
-                color: RED,
-                mb: 0.25,
-                width: "fit-content",
-                cursor: giangVienId ? "pointer" : "default",
-                "&:hover": giangVienId
-                  ? { textDecoration: "underline" }
-                  : undefined,
-              }}
-            >
-              {giangVienDisplay.ten}
-            </Typography>
-            {giangVienDisplay.chucDanh && (
-              <Typography sx={{ fontSize: 13.5, color: "text.secondary" }}>
-                {giangVienDisplay.chucDanh}
-              </Typography>
-            )}
-          </Box>
+            );
+          })}
         </Stack>
-
-        {/* Thống kê giảng viên — mỗi chỉ số một dòng, kiểu Udemy */}
-        <Stack spacing={1} sx={{ mb: 2.75, maxWidth: 340 }}>
-          <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
-            <PlayCircleIcon sx={{ fontSize: 18, color: RED }} />
-            <Typography sx={{ fontSize: 13.5, color: "text.secondary" }}>
-              <strong>
-                {giangVienDisplay.tongKhoaHoc ?? giangVienKhoaHocs.length + 1}
-              </strong>{" "}
-              khóa học
-            </Typography>
-          </Stack>
-          {typeof giangVienDisplay.tongHocVien === "number" && (
-            <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
-              <PeopleAltIcon sx={{ fontSize: 18, color: RED }} />
-              <Typography sx={{ fontSize: 13.5, color: "text.secondary" }}>
-                <strong>
-                  {giangVienDisplay.tongHocVien.toLocaleString("vi-VN")}
-                </strong>{" "}
-                học viên
-              </Typography>
-            </Stack>
-          )}
-        </Stack>
-
-        {/* Tiểu sử giảng viên — render HTML vì nội dung được soạn từ rich-text editor */}
-        {giangVienDisplay.moTa && (
-          <Box sx={{ mb: 1 }}>
-            <Box
-              sx={{
-                fontSize: 13.5,
-                color: "text.secondary",
-                lineHeight: 1.85,
-                "& p": { mb: 1 },
-                "& p:last-child": { mb: 0 },
-                "& ul, & ol": { pl: 2.5, mb: 1 },
-                "& a": { color: RED },
-                "& img": { maxWidth: "100%", borderRadius: 8 },
-                "& strong, & b": { color: "text.primary" },
-                ...(!bioExpanded && {
-                  display: "-webkit-box",
-                  WebkitLineClamp: 4,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }),
-              }}
-              dangerouslySetInnerHTML={{ __html: giangVienDisplay.moTa }}
-            />
-            <Button
-              onClick={() => setBioExpanded((v) => !v)}
-              sx={{
-                textTransform: "none",
-                fontWeight: 700,
-                fontSize: 13,
-                color: RED,
-                px: 0,
-                mt: 0.75,
-                minWidth: 0,
-                "&:hover": {
-                  bgcolor: "transparent",
-                  textDecoration: "underline",
-                },
-              }}
-            >
-              {bioExpanded ? "Ẩn bớt" : "Hiển thị thêm"}
-            </Button>
-          </Box>
-        )}
 
         <Divider sx={{ my: 2.75, borderColor: "#f3d9d9" }} />
 
@@ -1944,7 +1986,7 @@ function CourseRegistrationContent() {
           sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}
         >
           <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
-            Khóa học khác của {giangVienDisplay.ten}
+            Khóa học khác của {tenGiangVienChinh}
           </Typography>
         </Stack>
 
@@ -2036,7 +2078,7 @@ function CourseRegistrationContent() {
 
         {giangVienId && (
           <Button
-            onClick={goToInstructorProfile}
+            onClick={() => goToInstructorProfile(giangVienId)}
             endIcon={<ArrowForwardIcon sx={{ fontSize: 16 }} />}
             sx={{
               textTransform: "none",
@@ -2050,7 +2092,7 @@ function CourseRegistrationContent() {
               },
             }}
           >
-            Xem thêm khóa học của {giangVienDisplay.ten}
+            Xem thêm khóa học của {tenGiangVienChinh}
           </Button>
         )}
       </SectionCard>

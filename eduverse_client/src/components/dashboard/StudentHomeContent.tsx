@@ -728,7 +728,8 @@ function CourseCard({
   const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh ?? 5.0;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
   const instructorName =
-    course.danhSachGiangVienHienThi && course.danhSachGiangVienHienThi.length > 0
+    course.danhSachGiangVienHienThi &&
+    course.danhSachGiangVienHienThi.length > 0
       ? course.danhSachGiangVienHienThi.join(", ")
       : course.tenGiangVien || course.instructor || "Giảng viên EduVerse";
 
@@ -1279,7 +1280,8 @@ function ContinueLearningCard({
               sx={{
                 fontSize: 12.5,
                 fontWeight: 900,
-                color: pct === 100 ? "#10B981" : pct > 0 ? C.primary : C.textMuted,
+                color:
+                  pct === 100 ? "#10B981" : pct > 0 ? C.primary : C.textMuted,
               }}
             >
               {pct}%
@@ -1519,6 +1521,8 @@ export default function StudentHomeContent() {
       } else {
         router.push(`/student/enroll-courses/${courseId}`);
       }
+
+      router.push(`/student/enroll-courses/${course.id}`);
     },
     [router],
   );

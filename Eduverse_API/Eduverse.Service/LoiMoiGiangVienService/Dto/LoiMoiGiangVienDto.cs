@@ -98,4 +98,21 @@ namespace Eduverse.Service.LoiMoiGiangVienService.Dto
         public bool Materials { get; set; }
         public bool Promotions { get; set; }
     }
+
+    public class LichSuNhanTheoDonDto
+    {
+        public Guid IdDonHang { get; set; }
+        public int TyLeChiaDoanhThu { get; set; }
+        public double GiaLucDat { get; set; }
+        public double SoTienGiam { get; set; }
+        public double SoTienNhan { get; set; }
+        public DateTime NgayGhiNhan { get; set; }
+    }
+
+    public class LichSuThayDoiTyLeDto
+    {
+        public int TyLeCu { get; set; }
+        public int TyLeMoi { get; set; }
+        public DateTime NgayThayDoi { get; set; }
+    }
 }

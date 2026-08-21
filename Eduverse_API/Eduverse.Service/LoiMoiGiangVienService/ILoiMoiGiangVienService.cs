@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Eduverse.Service.LoiMoiGiangVienService
 {
-    public interface ILoiMoiGiangVienService
+    public interface    ILoiMoiGiangVienService
     {
         // Người tạo khóa học gửi lời mời
         Task<LoiMoiGiangVienDto> GuiLoiMoi(GuiLoiMoiRequest request);
@@ -24,6 +24,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
 
         // Lấy danh sách giảng viên của 1 khóa học (cho trang Quản lý giảng viên)
         Task<DanhSachGiangVienDto> GetDanhSachGiangVien(Guid idKhoaHoc);
+        Task<List<LichSuNhanTheoDonDto>> GetLichSuDonHang(Guid idKhoaHoc, Guid idGiangVien);
+        Task<List<LichSuThayDoiTyLeDto>> GetLichSuThayDoiTyLe(Guid idKhoaHoc, Guid idGiangVien);
 
         Task CapNhatQuyenTheoGiangVien(Guid idKhoaHoc, Guid idGiangVien, CapNhatQuyenRequest request);
 

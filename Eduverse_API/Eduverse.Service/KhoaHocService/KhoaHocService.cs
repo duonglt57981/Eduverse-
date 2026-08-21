@@ -1976,15 +1976,26 @@ namespace Eduverse.Service.KhoaHocService
         {
             Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var hocvien);
 
-            var khoaHocIds = await GetQueryable()
+            // ── Lấy toàn bộ khóa học mà UserId tham gia: là người tạo (CreatedId)
+            // HOẶC là thành viên (co-instructor) trong KhoaHoc_GiangVien ──────────
+            var khoaHocIdsFromOwner = await GetQueryable()
                 .Where(x => x.CreatedId == UserId)
                 .Select(x => x.Id)
                 .ToListAsync();
 
+            var khoaHocIdsFromMember = await _khoaHoc_GiangVienRepository.GetQueryable()
+                .Where(x => x.IdGiangVien == UserId && !x.IsDeleted)
+                .Select(x => x.IdKhoaHoc)
+                .ToListAsync();
+
+            var khoaHocIds = khoaHocIdsFromOwner
+                .Union(khoaHocIdsFromMember)
+                .Distinct()
+                .ToList();
+
             var tongHocVienDangHoc = 0;
             var tongHocVienDangKy = 0;
             var soSaoDanhGia = 0;
-
 
             if (khoaHocIds.Any())
             {
@@ -2072,7 +2083,7 @@ namespace Eduverse.Service.KhoaHocService
 
             var query = GetQueryable()
                 .AsNoTracking()
-                .Where(x => x.CreatedId == UserId
+                .Where(x => khoaHocIds.Contains(x.Id)
                         && x.TrangThai == "HoatDong"
                         && x.TrangThaiPheDuyet == "DaDuyet")
                 .Select(x => new KhoaHocDto
@@ -2088,7 +2099,7 @@ namespace Eduverse.Service.KhoaHocService
                     TrangThai = x.TrangThai,
                     TrangThaiPheDuyet = x.TrangThaiPheDuyet,
                     NgayTao = x.CreatedDate,
-                 });
+                });
 
             var pagedResult = await PagedList<KhoaHocDto>.CreateAsync(query, search);
 

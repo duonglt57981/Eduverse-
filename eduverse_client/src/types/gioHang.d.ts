@@ -7,9 +7,10 @@ export interface GioHangChiTietDto {
   giaGoc?: number;
   daChon?: boolean;
   thoiGianThem?: string;
-  tenTacGia?: string;    
-  tongThoiLuong?: number; 
-  tongBaiGiang?: number;  
+  tenTacGia?: string;
+  tongThoiLuong?: number;
+  tongBaiGiang?: number;
+  danhSachGiangVien?: string[];
 }
 
 export interface GioHangDto {

@@ -18,5 +18,6 @@ namespace Eduverse.Service.DanhSachMuonMuaSauService.Dto
         public string? TenTacGia { get; set; }
         public int? TongThoiLuong { get; set; }
         public int? TongBaiGiang { get; set; }
+        public List<string> DanhSachGiangVien { get; set; } = new();
     }
 }
