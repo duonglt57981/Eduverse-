@@ -1,5 +1,6 @@
 'use client';
 
+import { BRAND } from "@/src/theme/tokens";
 import Link from 'next/link';
 import {
   ArrowForwardRounded,
@@ -51,7 +52,7 @@ function ContactField({
             borderColor: 'rgba(139,19,19,0.3)',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#8B1313',
+            borderColor: BRAND.main,
           },
           '&.Mui-focused': {
             bgcolor: 'var(--ev-paper, #fff)',
@@ -172,11 +173,11 @@ export default function ContactPage() {
                   px: 2.8,
                   py: 1.25,
                   borderRadius: 2.8,
-                  background: 'linear-gradient(90deg, #9f1717 0%, #8B1313 100%)',
+                  background: `linear-gradient(90deg, #9f1717 0%, ${BRAND.main} 100%)`,
                   boxShadow: '0 10px 24px rgba(139,19,19,0.18)',
                   transition: 'background 160ms ease, box-shadow 160ms ease',
                   '&:hover': {
-                    background: 'linear-gradient(90deg, #8B1313 0%, #6b1414 100%)',
+                    background: `linear-gradient(90deg, ${BRAND.main} 0%, #6b1414 100%)`,
                     boxShadow: '0 12px 28px rgba(139,19,19,0.24)',
                   },
                 }}
@@ -208,7 +209,7 @@ export default function ContactPage() {
                           display: 'grid',
                           placeItems: 'center',
                           bgcolor: 'rgba(141,19,19,0.08)',
-                          color: '#8B1313',
+                          color: BRAND.main,
                           flexShrink: 0,
                         }}
                       >

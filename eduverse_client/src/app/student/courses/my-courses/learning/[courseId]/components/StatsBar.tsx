@@ -7,8 +7,9 @@ import {
   People as PeopleIcon,
 } from "@mui/icons-material";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = BRAND.main;
 
 interface StatsBarProps {
   khoaHoc: KhoaHocType;
@@ -54,8 +55,8 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
             gap: 2,
             p: 2.25,
             borderRadius: "16px",
-            backgroundColor: "var(--ev-paper, #FFFFFF)",
-            border: "1px solid var(--ev-divider, #ECE7E4)",
+            backgroundColor: CSSVAR.paper,
+            border: `1px solid ${CSSVAR.divider}`,
             boxShadow: "0 4px 12px rgba(0,0,0,0.015)",
             transition: "all 0.2s ease-in-out",
             "&:hover": {
@@ -81,13 +82,13 @@ export const StatsBar = ({ khoaHoc }: StatsBarProps) => {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="caption"
-              sx={{ display: "block", mb: 0.5, fontWeight: 700, color: "var(--ev-text-secondary, #4B5563)" }}
+              sx={{ display: "block", mb: 0.5, fontWeight: 700, color: CSSVAR.textSecondary }}
             >
               {item.title}
             </Typography>
             <Typography
               variant="subtitle1"
-              sx={{ fontWeight: 800, lineHeight: 1.2, color: "var(--ev-text-primary, #1F2937)" }}
+              sx={{ fontWeight: 800, lineHeight: 1.2, color: CSSVAR.textPrimary }}
             >
               {item.label}
             </Typography>

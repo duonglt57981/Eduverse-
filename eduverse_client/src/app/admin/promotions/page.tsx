@@ -40,6 +40,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { apiService } from "@/src/services/index";
 import { useSelector } from "react-redux";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface KhoaHocMiniDto {
@@ -77,7 +78,7 @@ const EMPTY_FORM: FormState = {
   idsKhoaHoc: [],
 };
 
-const PRIMARY = "#8B1313";
+const PRIMARY = BRAND.main;
 const PRIMARY_SOFT = "#FEF2F2";
 const PRIMARY_BORDER = "#FECACA";
 
@@ -99,8 +100,8 @@ function StatusChip({
         label="Không xác định"
         size="small"
         sx={{
-          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-          color: "var(--ev-text-muted, #8A7676)",
+          bgcolor: CSSVAR.paperAlt,
+          color: CSSVAR.textMuted,
         }}
       />
     );
@@ -118,8 +119,8 @@ function StatusChip({
         label="Hết hạn"
         size="small"
         sx={{
-          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-          color: "var(--ev-text-muted, #8A7676)",
+          bgcolor: CSSVAR.paperAlt,
+          color: CSSVAR.textMuted,
           fontWeight: 700,
         }}
       />
@@ -364,7 +365,7 @@ function PromotionsContent() {
             sx={{
               fontSize: 26,
               fontWeight: 900,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
               mb: 0.5,
             }}
           >
@@ -435,7 +436,7 @@ function PromotionsContent() {
         elevation={0}
         sx={{
           borderRadius: "20px",
-          border: "1px solid var(--ev-divider, #ECE7E4)",
+          border: `1px solid ${CSSVAR.divider}`,
           overflow: "hidden",
         }}
       >
@@ -445,12 +446,12 @@ function PromotionsContent() {
           </Box>
         ) : list.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 10 }}>
-            <LocalOfferIcon sx={{ fontSize: 56, color: "#ECE7E4", mb: 2 }} />
+            <LocalOfferIcon sx={{ fontSize: 56, color: CSSVAR.divider, mb: 2 }} />
             <Typography
               sx={{
                 fontWeight: 700,
                 fontSize: 16,
-                color: "var(--ev-text-secondary, #4B5563)",
+                color: CSSVAR.textSecondary,
                 mb: 0.5,
               }}
             >
@@ -458,7 +459,7 @@ function PromotionsContent() {
             </Typography>
             <Typography
               sx={{
-                color: "var(--ev-text-muted, #8A7676)",
+                color: CSSVAR.textMuted,
                 fontSize: 14,
                 mb: 3,
               }}
@@ -483,7 +484,7 @@ function PromotionsContent() {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: "var(--ev-paper-alt, #FBFAF9)" }}>
+                <TableRow sx={{ bgcolor: CSSVAR.paperAlt }}>
                   {[
                     "Mã giảm giá",
                     "Giảm giá",
@@ -498,9 +499,9 @@ function PromotionsContent() {
                       sx={{
                         fontWeight: 700,
                         fontSize: 13,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                         py: 1.5,
-                        borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
+                        borderBottom: `1px solid ${CSSVAR.divider}`,
                       }}
                     >
                       {h}
@@ -543,7 +544,7 @@ function PromotionsContent() {
                       <Typography
                         sx={{
                           fontSize: 13,
-                          color: "var(--ev-text-secondary, #4B5563)",
+                          color: CSSVAR.textSecondary,
                         }}
                       >
                         {formatDate(km.ngayBatDau)} →{" "}
@@ -554,7 +555,7 @@ function PromotionsContent() {
                       <Typography
                         sx={{
                           fontSize: 13,
-                          color: "var(--ev-text-secondary, #4B5563)",
+                          color: CSSVAR.textSecondary,
                         }}
                       >
                         {km.soLuongHieuLuc ?? "∞"}
@@ -588,8 +589,8 @@ function PromotionsContent() {
                               width: 28,
                               height: 28,
                               fontSize: 11,
-                              bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-                              color: "var(--ev-text-muted, #8A7676)",
+                              bgcolor: CSSVAR.paperAlt,
+                              color: CSSVAR.textMuted,
                             }}
                           >
                             +{(km.danhSachKhoaHoc?.length ?? 0) - 2}
@@ -614,7 +615,7 @@ function PromotionsContent() {
                             size="small"
                             onClick={() => handleOpenEdit(km)}
                             sx={{
-                              color: "var(--ev-text-muted, #8A7676)",
+                              color: CSSVAR.textMuted,
                               "&:hover": {
                                 color: PRIMARY,
                                 bgcolor: PRIMARY_SOFT,
@@ -630,9 +631,9 @@ function PromotionsContent() {
                             onClick={() => setConfirmDelete(km)}
                             disabled={deleting === km.id}
                             sx={{
-                              color: "var(--ev-text-muted, #8A7676)",
+                              color: CSSVAR.textMuted,
                               "&:hover": {
-                                color: "#DC2626",
+                                color: STATUS.error,
                                 bgcolor: "#FEF2F2",
                               },
                             }}
@@ -706,7 +707,7 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   mb: 0.8,
                 }}
               >
@@ -738,7 +739,7 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   mb: 0.8,
                 }}
               >
@@ -771,14 +772,14 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   mb: 0.8,
                 }}
               >
                 Số lượt dùng{" "}
                 <span
                   style={{
-                    color: "var(--ev-text-muted, #8A7676)",
+                    color: CSSVAR.textMuted,
                     fontWeight: 400,
                   }}
                 >
@@ -812,7 +813,7 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   mb: 0.8,
                 }}
               >
@@ -841,7 +842,7 @@ function PromotionsContent() {
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   mb: 0.8,
                 }}
               >
@@ -872,7 +873,7 @@ function PromotionsContent() {
             sx={{
               fontSize: 13,
               fontWeight: 700,
-              color: "var(--ev-text-secondary, #4B5563)",
+              color: CSSVAR.textSecondary,
               mb: 1.5,
             }}
           >
@@ -904,7 +905,7 @@ function PromotionsContent() {
                   <InputAdornment position="start">
                     <SearchIcon
                       sx={{
-                        color: "var(--ev-text-muted, #8A7676)",
+                        color: CSSVAR.textMuted,
                         fontSize: 18,
                       }}
                     />
@@ -927,7 +928,7 @@ function PromotionsContent() {
             sx={{
               maxHeight: 260,
               overflowY: "auto",
-              border: "1px solid var(--ev-divider, #ECE7E4)",
+              border: `1px solid ${CSSVAR.divider}`,
               borderRadius: "12px",
               p: 1,
             }}
@@ -941,7 +942,7 @@ function PromotionsContent() {
                 sx={{
                   textAlign: "center",
                   py: 4,
-                  color: "var(--ev-text-muted, #8A7676)",
+                  color: CSSVAR.textMuted,
                   fontSize: 14,
                 }}
               >
@@ -967,7 +968,7 @@ function PromotionsContent() {
                         : "1px solid transparent",
                       mb: 0.5,
                       "&:hover": {
-                        bgcolor: checked ? PRIMARY_SOFT : "#FBFAF9",
+                        bgcolor: checked ? PRIMARY_SOFT : CSSVAR.paperAlt,
                       },
                       transition: "all 150ms ease",
                     }}
@@ -977,7 +978,7 @@ function PromotionsContent() {
                       size="small"
                       sx={{
                         p: 0,
-                        color: "#ECE7E4",
+                        color: CSSVAR.divider,
                         "&.Mui-checked": { color: PRIMARY },
                       }}
                     />
@@ -992,7 +993,7 @@ function PromotionsContent() {
                       sx={{
                         fontSize: 13,
                         fontWeight: checked ? 700 : 500,
-                        color: checked ? PRIMARY : "#4B5563",
+                        color: checked ? PRIMARY : CSSVAR.textSecondary,
                         flex: 1,
                       }}
                     >
@@ -1032,7 +1033,7 @@ function PromotionsContent() {
           sx={{
             px: 3,
             py: 2.5,
-            borderTop: "1px solid var(--ev-divider, #ECE7E4)",
+            borderTop: `1px solid ${CSSVAR.divider}`,
             gap: 1,
           }}
         >
@@ -1040,11 +1041,11 @@ function PromotionsContent() {
             onClick={() => setOpenDialog(false)}
             variant="outlined"
             sx={{
-              borderColor: "var(--ev-divider, #ECE7E4)",
-              color: "var(--ev-text-secondary, #4B5563)",
+              borderColor: CSSVAR.divider,
+              color: CSSVAR.textSecondary,
               borderRadius: "10px",
               fontWeight: 600,
-              "&:hover": { borderColor: "#8A7676" },
+              "&:hover": { borderColor: CSSVAR.textMuted },
             }}
           >
             Huỷ
@@ -1085,14 +1086,14 @@ function PromotionsContent() {
           sx={{
             fontWeight: 800,
             fontSize: 17,
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
           }}
         >
           Xoá khuyến mãi?
         </DialogTitle>
         <DialogContent>
           <Typography
-            sx={{ fontSize: 14, color: "var(--ev-text-muted, #8A7676)" }}
+            sx={{ fontSize: 14, color: CSSVAR.textMuted }}
           >
             Bạn có chắc muốn xoá mã{" "}
             <strong style={{ color: PRIMARY }}>
@@ -1106,8 +1107,8 @@ function PromotionsContent() {
             onClick={() => setConfirmDelete(null)}
             variant="outlined"
             sx={{
-              borderColor: "var(--ev-divider, #ECE7E4)",
-              color: "var(--ev-text-secondary, #4B5563)",
+              borderColor: CSSVAR.divider,
+              color: CSSVAR.textSecondary,
               borderRadius: "10px",
               fontWeight: 600,
             }}
@@ -1119,8 +1120,8 @@ function PromotionsContent() {
             variant="contained"
             disabled={!!deleting}
             sx={{
-              bgcolor: "#DC2626",
-              "&:hover": { bgcolor: "#B91C1C" },
+              bgcolor: STATUS.error,
+              "&:hover": { bgcolor: STATUS.errorDark },
               borderRadius: "10px",
               fontWeight: 700,
             }}

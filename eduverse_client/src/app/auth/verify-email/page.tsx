@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import { createAppTheme } from '@/src/theme/createAppTheme';
 import { apiService } from '@/src/services/index';
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 function VerifyEmailForm() {
   const params = useSearchParams();
@@ -59,7 +60,7 @@ function VerifyEmailForm() {
       <Box
         sx={{
           minHeight: '100vh',
-          bgcolor: 'var(--ev-bg, #F7F5F2)',
+          bgcolor: CSSVAR.bg,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -76,23 +77,23 @@ function VerifyEmailForm() {
             border: '1px solid rgba(17, 17, 17, 0.08)',
             boxShadow: '0 16px 40px rgba(0, 0, 0, 0.04)',
             textAlign: 'center',
-            bgcolor: 'var(--ev-paper, #ffffff)',
+            bgcolor: CSSVAR.paper,
           }}
         >
           <Stack spacing={2.5} sx={{ alignItems: 'center' }}>
             {ok === null ? (
-              <CircularProgress size={48} sx={{ color: '#8B1313', mb: 1 }} />
+              <CircularProgress size={48} sx={{ color: BRAND.main, mb: 1 }} />
             ) : ok ? (
-              <CheckCircleOutlineRounded sx={{ fontSize: 56, color: '#10B981', mb: 0.5 }} />
+              <CheckCircleOutlineRounded sx={{ fontSize: 56, color: STATUS.success, mb: 0.5 }} />
             ) : (
-              <ErrorOutlineRounded sx={{ fontSize: 56, color: '#DC2626', mb: 0.5 }} />
+              <ErrorOutlineRounded sx={{ fontSize: 56, color: STATUS.error, mb: 0.5 }} />
             )}
 
             <Typography
               variant="h5"
               sx={{
                 fontWeight: 850,
-                color: 'var(--ev-text-primary, #1F2937)',
+                color: CSSVAR.textPrimary,
                 letterSpacing: '-0.5px',
               }}
             >
@@ -101,7 +102,7 @@ function VerifyEmailForm() {
 
             <Typography
               variant="body2"
-              sx={{ color: 'var(--ev-text-secondary, #4B5563)', lineHeight: 1.6 }}
+              sx={{ color: CSSVAR.textSecondary, lineHeight: 1.6 }}
             >
               {ok === null
                 ? 'Vui lòng chờ hệ thống xác nhận thông tin của bạn...'
@@ -120,8 +121,8 @@ function VerifyEmailForm() {
                 px: 3,
                 py: 1.25,
                 fontWeight: 700,
-                bgcolor: '#8B1313',
-                '&:hover': { bgcolor: '#6D0F0F' },
+                bgcolor: BRAND.main,
+                '&:hover': { bgcolor: BRAND.dark },
               }}
             >
               Về trang Đăng nhập
@@ -140,13 +141,13 @@ export default function VerifyEmailPage() {
         <Box
           sx={{
             minHeight: '100vh',
-            bgcolor: '#F7F5F2',
+            bgcolor: CSSVAR.bg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <CircularProgress sx={{ color: '#8B1313' }} />
+          <CircularProgress sx={{ color: BRAND.main }} />
         </Box>
       }
     >

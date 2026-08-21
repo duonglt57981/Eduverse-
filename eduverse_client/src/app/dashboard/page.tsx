@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from '@/src/store/hook';
 import { Box, CircularProgress } from '@mui/material';
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -30,10 +31,10 @@ export default function DashboardPage() {
         minHeight: '100vh',
         display: 'grid',
         placeItems: 'center',
-        bgcolor: 'var(--ev-bg, #F7F5F2)',
+        bgcolor: CSSVAR.bg,
       }}
     >
-      <CircularProgress sx={{ color: '#8B1313' }} />
+      <CircularProgress sx={{ color: BRAND.main }} />
     </Box>
   );
 }

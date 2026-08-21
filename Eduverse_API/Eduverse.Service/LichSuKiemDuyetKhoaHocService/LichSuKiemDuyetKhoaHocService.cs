@@ -616,18 +616,17 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             var khoaHocQuery = _khoaHocRepository.GetAll()
                  .Where(x =>
                     (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"));
-               
 
-            if (role == "admin")
+            if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase))
             {
                 khoaHocQuery = khoaHocQuery;
             }
-            else if (role == "personnel")
+            else if (string.Equals(role, "personnel", StringComparison.OrdinalIgnoreCase))
             {
                 khoaHocQuery = khoaHocQuery.Where(x =>
                     (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi")
-                    && GetQueryable()
-                        .Any(h => h.CreatedId == userId && h.IdDoiTuong == x.Id));
+                    && (x.IdNguoiDuyet == userId || GetQueryable()
+                        .Any(h => h.CreatedId == userId && h.IdDoiTuong == x.Id)));
             }
 
             // Lọc thêm theo trạng thái nếu có chỉ định
@@ -671,6 +670,9 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             }
 
             if (search.IdNguoiDuyet.HasValue)
+                khoaHocQuery = khoaHocQuery.Where(x => x.IdNguoiDuyet == search.IdNguoiDuyet.Value);
+
+            if (search.idGiangVien.HasValue)
                 khoaHocQuery = khoaHocQuery.Where(x => x.CreatedId == search.idGiangVien.Value);
 
             if (search.TuNgay.HasValue)

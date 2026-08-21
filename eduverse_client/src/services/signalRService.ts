@@ -60,7 +60,8 @@ export function createHubConnection(hubPath: string): signalR.HubConnection {
     .withUrl(url, {
       accessTokenFactory: getAccessToken,
     })
-    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000]) // thêm dòng này
+    .configureLogging(signalR.LogLevel.Warning)
+    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
     .build();
 }
 

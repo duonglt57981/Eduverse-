@@ -1,5 +1,6 @@
 "use client";
 
+import { CSSVAR, STATUS } from "@/src/theme/tokens";
 import { useState, useMemo } from "react";
 import {
   Box,
@@ -133,7 +134,7 @@ export default function CourseStatusAction({
               onClick={() => setMoDialogHuyDuyet(true)}
               startIcon={<UndoIcon sx={{ fontSize: 16 }} />}
               sx={{
-                bgcolor: "#D97706",
+                bgcolor: STATUS.warningDark,
                 color: "#ffffff",
                 textTransform: "none",
                 fontWeight: 700,
@@ -179,7 +180,7 @@ export default function CourseStatusAction({
                 height: 32,
                 borderRadius: "8px",
                 bgcolor: "#FEF3C7",
-                color: "#D97706",
+                color: STATUS.warningDark,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -213,7 +214,7 @@ export default function CourseStatusAction({
               variant="contained"
               disabled={dangHuyDuyet}
               sx={{
-                bgcolor: "#D97706",
+                bgcolor: STATUS.warningDark,
                 textTransform: "none",
                 fontWeight: 700,
                 "&:hover": { bgcolor: "#B45309" },
@@ -238,7 +239,7 @@ export default function CourseStatusAction({
           Bị từ chối{lyDoTuChoi ? `: ${lyDoTuChoi}` : "."}
         </Typography> */}
         <Typography
-          sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}
+          sx={{ fontSize: 13, color: CSSVAR.textMuted }}
         >
           Vui lòng chỉnh sửa và gửi lại
         </Typography>

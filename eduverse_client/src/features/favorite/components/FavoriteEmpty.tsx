@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { FavoriteRounded } from '@mui/icons-material';
+import { BRAND, GRADIENTS } from "@/src/theme/tokens";
 
 export default function FavoriteEmpty() {
   return (
@@ -33,7 +34,7 @@ export default function FavoriteEmpty() {
           display: 'grid',
           placeItems: 'center',
           mb: 3,
-          color: '#8B1313',
+          color: BRAND.main,
           animation: 'pulse 2s infinite ease-in-out',
           '@keyframes pulse': {
             '0%': { transform: 'scale(1)' },
@@ -77,7 +78,7 @@ export default function FavoriteEmpty() {
           px: 4,
           py: 1.5,
           borderRadius: 2.8,
-          background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
+          background: GRADIENTS.crimson,
           boxShadow: '0 8px 20px rgba(159,23,23,0.2)',
           fontSize: 15,
           fontWeight: 800,

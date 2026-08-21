@@ -1,5 +1,6 @@
 'use client';
 
+import { BRAND, CSSVAR, GRADIENTS } from "@/src/theme/tokens";
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowForwardRounded, CheckCircleRounded, StarRounded } from '@mui/icons-material';
@@ -83,7 +84,7 @@ export default function AboutUsPage() {
                     px: 2.8,
                     py: 1.25,
                     borderRadius: 2.8,
-                    background: 'linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)',
+                    background: GRADIENTS.crimson,
                   }}
                 >
                   Khám phá EduVerse
@@ -237,7 +238,7 @@ export default function AboutUsPage() {
                         display: 'grid',
                         placeItems: 'center',
                         bgcolor: 'rgba(127,29,29,0.08)',
-                        color: '#8B1313',
+                        color: BRAND.main,
                         mb: 1.5,
                       }}
                     >
@@ -300,7 +301,7 @@ export default function AboutUsPage() {
                           bgcolor: 'var(--ev-paper, #fff)',
                         }}
                       >
-                        <Typography sx={{ fontSize: 14, fontWeight: 900, color: '#8B1313' }}>
+                        <Typography sx={{ fontSize: 14, fontWeight: 900, color: BRAND.main }}>
                           {item.year}
                         </Typography>
                         <Typography sx={{ mt: 0.7, fontSize: 20, fontWeight: 900 }}>
@@ -323,8 +324,8 @@ export default function AboutUsPage() {
                           width: 18,
                           height: 18,
                           borderRadius: '50%',
-                          bgcolor: '#8B1313',
-                          border: '4px solid #F7F5F2',
+                          bgcolor: BRAND.main,
+                          border: `4px solid ${CSSVAR.bg}`,
                           boxShadow: '0 0 0 4px rgba(141,19,19,0.12)',
                         }}
                       />
@@ -377,7 +378,7 @@ export default function AboutUsPage() {
                     {getInitials(member.name)}
                   </Avatar>
                   <Typography sx={{ fontSize: 18, fontWeight: 900 }}>{member.name}</Typography>
-                  <Typography sx={{ mt: 0.6, fontSize: 13, color: '#8B1313', fontWeight: 800 }}>
+                  <Typography sx={{ mt: 0.6, fontSize: 13, color: BRAND.main, fontWeight: 800 }}>
                     {member.specialization}
                   </Typography>
                   <Typography sx={{ mt: 0.8, fontSize: 13, color: 'rgba(24,24,27,0.56)' }}>
@@ -410,7 +411,7 @@ export default function AboutUsPage() {
                 justifyContent: 'center',
               }}
             >
-              <Typography sx={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', color: '#8B1313', textTransform: 'uppercase' }}>
+              <Typography sx={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', color: BRAND.main, textTransform: 'uppercase' }}>
                 Vì sao chọn EduVerse
               </Typography>
               <Typography sx={{ mt: 1.2, fontSize: 34, lineHeight: 1.08, fontWeight: 900 }}>
@@ -424,7 +425,7 @@ export default function AboutUsPage() {
                   'Chứng chỉ giá trị, cộng đồng học viên tích cực',
                 ].map((item) => (
                   <Stack key={item} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
-                    <CheckCircleRounded sx={{ mt: 0.2, color: '#8B1313', fontSize: 18 }} />
+                    <CheckCircleRounded sx={{ mt: 0.2, color: BRAND.main, fontSize: 18 }} />
                     <Typography sx={{ fontSize: 14, lineHeight: 1.8, color: 'var(--ev-text-muted, rgba(24,24,27,0.68))' }}>
                       {item}
                     </Typography>
@@ -513,7 +514,7 @@ export default function AboutUsPage() {
                   component={Link}
                   href="/auth/login"
                   variant="contained"
-                  sx={{ px: 2.8, py: 1.25, borderRadius: 2.8, bgcolor: 'var(--ev-paper, #fff)', color: '#7f1d1d' }}
+                  sx={{ px: 2.8, py: 1.25, borderRadius: 2.8, bgcolor: CSSVAR.paper, color: '#7f1d1d' }}
                 >
                   Bắt đầu ngay
                 </Button>

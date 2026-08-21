@@ -47,10 +47,10 @@ import KhoaHocService from "@/src/services/KhoaHocService";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const RED = "#8B1313";
+const RED = BRAND.main;
 const RED_HOVER = "#7F1D1D";
-const TEXT_MAIN = "#1F2937";
-const TEXT_MUTED = "#4B5563";
+const TEXT_MAIN = CSSVAR.textPrimary;
+const TEXT_MUTED = CSSVAR.textSecondary;
 const PAGE_SIZE = 9;
 
 // ─── token helpers ────────────────────────────────────────────────────────────
@@ -74,6 +74,7 @@ function getRawToken(): string | null {
 }
 
 import { parseJwtPayload } from "@/src/utils/jwt";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   return parseJwtPayload(token);
@@ -259,14 +260,14 @@ const waveLine = keyframes`
 const CourseCard = styled(Card)(() => ({
   cursor: "pointer",
   borderRadius: 20,
-  border: "1px solid var(--ev-divider, #ECE7E4)",
+  border: `1px solid ${CSSVAR.divider}`,
   height: "100%",
   display: "flex",
   flexDirection: "column",
   transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
   boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
   overflow: "hidden",
-  backgroundColor: "var(--ev-paper, #FFFFFF)",
+  backgroundColor: CSSVAR.paper,
   position: "relative",
   "&:hover": {
     boxShadow:
@@ -282,7 +283,7 @@ const ThumbBox = styled(Box)({
   position: "relative",
   paddingTop: "56.25%",
   overflow: "hidden",
-  backgroundColor: "var(--ev-paper-alt, #FBFAF9)",
+  backgroundColor: CSSVAR.paperAlt,
 });
 
 const ThumbImg = styled("img")({
@@ -298,12 +299,12 @@ const ThumbImg = styled("img")({
 const StatCard = styled(Paper)(() => ({
   padding: "1.5rem 1.25rem",
   borderRadius: 16,
-  border: "1px solid var(--ev-divider, #ECE7E4)",
+  border: `1px solid ${CSSVAR.divider}`,
   boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
   display: "flex",
   alignItems: "center",
   gap: 16,
-  backgroundColor: "var(--ev-paper, #FFFFFF)",
+  backgroundColor: CSSVAR.paper,
   transition: "all 0.2s ease-in-out",
   "&:hover": {
     boxShadow:
@@ -314,7 +315,7 @@ const StatCard = styled(Paper)(() => ({
 
 const CourseProgress = styled(LinearProgress)(() => ({
   height: 3,
-  backgroundColor: "var(--ev-divider, #ECE7E4)",
+  backgroundColor: CSSVAR.divider,
   "& .MuiLinearProgress-bar": {
     backgroundColor: RED,
   },
@@ -389,7 +390,7 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
         variant="h5"
         sx={{
           fontWeight: 800,
-          color: "var(--ev-text-primary, #1F2937)",
+          color: CSSVAR.textPrimary,
           mb: 1.5,
         }}
       >
@@ -398,7 +399,7 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
       <Typography
         variant="body2"
         sx={{
-          color: "var(--ev-text-secondary, #4B5563)",
+          color: CSSVAR.textSecondary,
           maxWidth: 320,
           mx: "auto",
           fontSize: 14.5,
@@ -415,8 +416,8 @@ const ConnectionLostAnimation = ({ type }: { type: "backend" | "network" }) => {
 
 const ThumbPlaceholder = ({ title }: { title?: string }) => {
   const palettes: [string, string][] = [
-    ["#F7F5F2", "#4B5563"],
-    ["#FBFAF9", "#4B5563"],
+    [CSSVAR.bg, CSSVAR.textSecondary],
+    [CSSVAR.paperAlt, CSSVAR.textSecondary],
     ["#EEF2F6", "#334155"],
   ];
   const idx = (title?.charCodeAt(0) ?? 0) % palettes.length;
@@ -703,7 +704,7 @@ function MyCoursesContent() {
         val: stats.inProgress,
         lbl: "Đang học",
         bg: "rgba(217, 119, 6, 0.06)",
-        color: "#D97706",
+        color: STATUS.warningDark,
       },
       {
         icon: <CheckCircleIcon sx={{ fontSize: 22 }} />,
@@ -747,7 +748,7 @@ function MyCoursesContent() {
                     fontSize: 22,
                     fontWeight: 800,
                     lineHeight: 1.1,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                   }}
                 >
                   {s.val}
@@ -755,7 +756,7 @@ function MyCoursesContent() {
                 <Typography
                   sx={{
                     fontSize: 13,
-                    color: "var(--ev-text-secondary, #4B5563)",
+                    color: CSSVAR.textSecondary,
                     fontWeight: 500,
                     mt: 0.5,
                   }}
@@ -906,14 +907,14 @@ function MyCoursesContent() {
             sx={{
               fontWeight: 800,
               mb: 1.5,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
             }}
           >
             Chưa có khóa học nào
           </Typography>
           <Typography
             sx={{
-              color: "var(--ev-text-secondary, #4B5563)",
+              color: CSSVAR.textSecondary,
               mb: 4,
               fontSize: 15,
             }}
@@ -987,21 +988,21 @@ function MyCoursesContent() {
                     onClick={() => handleCourseClick(registrationId)}
                     sx={{
                       borderRadius: "18px",
-                      border: "1px solid var(--ev-divider, #ECE7E4)",
+                      border: `1px solid ${CSSVAR.divider}`,
                       height: "100%",
                       display: "flex",
                       flexDirection: "column",
                       transition: "all 280ms cubic-bezier(0.4, 0, 0.2, 1)",
                       boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
                       overflow: "hidden",
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      bgcolor: CSSVAR.paper,
                       "&:hover": {
                         boxShadow: "0 12px 28px -8px rgba(139, 19, 19, 0.12)",
                         borderColor: "rgba(139, 19, 19, 0.3)",
                         "& .play-glass-btn": {
                           transform: "translate(-50%, -50%) scale(1.15)",
                           background:
-                            "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
+                            `linear-gradient(135deg, ${BRAND.main} 0%, ${STATUS.errorDark} 100%)`,
                           color: "#ffffff",
                           boxShadow: "0 10px 24px rgba(139,19,19,0.45)",
                         },
@@ -1018,7 +1019,7 @@ function MyCoursesContent() {
                         overflow: "hidden",
                         background: hasImg
                           ? `linear-gradient(to top, rgba(15, 23, 42, 0.6) 0%, transparent 60%), url(${course.hinhAnhKhoaHoc}) center/cover no-repeat`
-                          : "var(--ev-paper-alt, #FBFAF9)",
+                          : CSSVAR.paperAlt,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1074,7 +1075,7 @@ function MyCoursesContent() {
                             bottom: 8,
                             right: 8,
                             background:
-                              "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
+                              `linear-gradient(135deg, ${BRAND.main} 0%, ${STATUS.errorDark} 100%)`,
                             color: "#fff",
                             fontWeight: 800,
                             fontSize: "0.72rem",
@@ -1095,7 +1096,7 @@ function MyCoursesContent() {
                             bottom: 8,
                             right: 8,
                             background:
-                              "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                              `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`,
                             color: "#fff",
                             fontWeight: 800,
                             fontSize: "0.72rem",
@@ -1144,7 +1145,7 @@ function MyCoursesContent() {
                           fontWeight: 800,
                           fontSize: 14,
                           lineHeight: 1.35,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: "vertical",
@@ -1167,13 +1168,13 @@ function MyCoursesContent() {
                           <MenuBookIcon
                             sx={{
                               fontSize: 14,
-                              color: "var(--ev-text-muted, #8A7676)",
+                              color: CSSVAR.textMuted,
                             }}
                           />
                           <Typography
                             variant="caption"
                             sx={{
-                              color: "var(--ev-text-secondary, #4B5563)",
+                              color: CSSVAR.textSecondary,
                               fontWeight: 600,
                               fontSize: 11.5,
                             }}
@@ -1192,13 +1193,13 @@ function MyCoursesContent() {
                             <AccessTimeIcon
                               sx={{
                                 fontSize: 14,
-                                color: "var(--ev-text-muted, #8A7676)",
+                                color: CSSVAR.textMuted,
                               }}
                             />
                             <Typography
                               variant="caption"
                               sx={{
-                                color: "var(--ev-text-secondary, #4B5563)",
+                                color: CSSVAR.textSecondary,
                                 fontWeight: 600,
                                 fontSize: 11.5,
                               }}
@@ -1220,7 +1221,7 @@ function MyCoursesContent() {
                           <Typography
                             variant="caption"
                             sx={{
-                              color: "var(--ev-text-secondary, #4B5563)",
+                              color: CSSVAR.textSecondary,
                               fontWeight: 600,
                               fontSize: 11,
                             }}
@@ -1249,8 +1250,8 @@ function MyCoursesContent() {
                             "& .MuiLinearProgress-bar": {
                               borderRadius: 99,
                               background: isCompleted
-                                ? "linear-gradient(90deg, #34D399 0%, #10B981 100%)"
-                                : "linear-gradient(90deg, #F43F5E 0%, #8B1313 100%)",
+                                ? `linear-gradient(90deg, #34D399 0%, ${STATUS.success} 100%)`
+                                : `linear-gradient(90deg, #F43F5E 0%, ${BRAND.main} 100%)`,
                               boxShadow: isCompleted
                                 ? "0 2px 8px rgba(16,185,129,0.35)"
                                 : "0 2px 8px rgba(139,19,19,0.3)",
@@ -1295,8 +1296,8 @@ function MyCoursesContent() {
                           transition: "all 240ms ease",
                           "&:hover": {
                             background: isCompleted
-                              ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
-                              : "linear-gradient(135deg, #8B1313 0%, #6D0F0F 100%)",
+                              ? `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`
+                              : `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
                             color: "#ffffff",
                             borderColor: "transparent",
                             boxShadow: isCompleted
@@ -1327,7 +1328,7 @@ function MyCoursesContent() {
               justifyContent: "center",
               mt: 4,
               pt: 2,
-              borderTop: "1px solid var(--ev-divider, #ECE7E4)",
+              borderTop: `1px solid ${CSSVAR.divider}`,
             }}
           >
             <Pagination
@@ -1456,8 +1457,8 @@ function MyCoursesContent() {
             "& .MuiOutlinedInput-root": {
               height: 40,
               borderRadius: "12px",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
-              "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+              bgcolor: CSSVAR.paper,
+              "& fieldset": { borderColor: CSSVAR.divider },
               "&:hover fieldset": { borderColor: "#CBD5E1" },
               "&.Mui-focused fieldset": { borderColor: RED },
             },
@@ -1467,7 +1468,7 @@ function MyCoursesContent() {
               startAdornment: (
                 <SearchIcon
                   sx={{
-                    color: "var(--ev-text-muted, #8A7676)",
+                    color: CSSVAR.textMuted,
                     mr: 1,
                     fontSize: 20,
                   }}
@@ -1501,9 +1502,9 @@ function MyCoursesContent() {
             sx={{
               height: 40,
               borderRadius: "12px",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               "&.MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
+                "& fieldset": { borderColor: CSSVAR.divider },
                 "&:hover fieldset": { borderColor: "#CBD5E1" },
                 "&.Mui-focused fieldset": { borderColor: RED },
               },

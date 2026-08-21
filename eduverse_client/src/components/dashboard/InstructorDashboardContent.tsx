@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { COLORS } from "@/src/theme/tokens";
+import { COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 import { useEffect, useState } from "react";
 import { apiService } from "@/src/services/index";
@@ -40,12 +40,12 @@ const loaiIconMap: Record<
   YeuCauRutTien: {
     icon: PaymentRounded,
     iconBg: "rgba(245,158,11,0.08)",
-    iconColor: "#F59E0B",
+    iconColor: STATUS.warning,
   },
   guiyeucauruttien: {
     icon: PaymentRounded,
     iconBg: "rgba(245,158,11,0.08)",
-    iconColor: "#F59E0B",
+    iconColor: STATUS.warning,
   },
   DoanhThu: {
     icon: AttachMoneyRounded,
@@ -70,22 +70,22 @@ const loaiIconMap: Record<
   RutTienTuChoi: {
     icon: PaymentRounded,
     iconBg: "rgba(220,38,38,0.08)",
-    iconColor: "#DC2626",
+    iconColor: STATUS.error,
   },
   ruttientuchoi: {
     icon: PaymentRounded,
     iconBg: "rgba(220,38,38,0.08)",
-    iconColor: "#DC2626",
+    iconColor: STATUS.error,
   },
   KhoaHocDaDuyet: {
     icon: CheckCircleOutlineRounded,
     iconBg: "rgba(16,185,129,0.08)",
-    iconColor: "#10B981",
+    iconColor: STATUS.success,
   },
   khoahocdaduyet: {
     icon: CheckCircleOutlineRounded,
     iconBg: "rgba(16,185,129,0.08)",
-    iconColor: "#10B981",
+    iconColor: STATUS.success,
   },
   HocVienDangKy: {
     icon: PersonAddRounded,
@@ -195,12 +195,12 @@ function EnrollmentBarChart({
           }}
         >
           <PeopleAltRounded
-            sx={{ fontSize: 32, color: "var(--ev-text-muted, #8A7676)", mb: 1 }}
+            sx={{ fontSize: 32, color: CSSVAR.textMuted, mb: 1 }}
           />
           <Typography
             sx={{
               fontSize: 13.5,
-              color: "var(--ev-text-secondary, #4B5563)",
+              color: CSSVAR.textSecondary,
               fontWeight: 600,
             }}
           >
@@ -247,7 +247,7 @@ function EnrollmentBarChart({
                   sx={{
                     position: "absolute",
                     bottom: barHeight + 34,
-                    bgcolor: "var(--ev-text-primary, #1F2937)",
+                    bgcolor: CSSVAR.textPrimary,
                     color: "#FFFFFF",
                     fontSize: 11.5,
                     fontWeight: 700,
@@ -271,7 +271,7 @@ function EnrollmentBarChart({
                       height: 0,
                       borderLeft: "4px solid transparent",
                       borderRight: "4px solid transparent",
-                      borderTop: "4px solid #1F2937",
+                      borderTop: `4px solid ${CSSVAR.textPrimary}`,
                     }}
                   />
                 </Box>
@@ -291,7 +291,7 @@ function EnrollmentBarChart({
                     bgcolor: isHighlight
                       ? COLORS.primary
                       : "rgba(31, 41, 55, 0.06)",
-                    color: isHighlight ? "#FFFFFF" : "#4B5563",
+                    color: isHighlight ? CSSVAR.paper : CSSVAR.textSecondary,
                     boxShadow: isHighlight
                       ? "0 2px 8px rgba(139,19,19,0.25)"
                       : "none",
@@ -359,7 +359,7 @@ function EnrollmentBarChart({
                     fontWeight: isHighlight ? 850 : 600,
                     color: isHighlight
                       ? COLORS.primary
-                      : "var(--ev-text-secondary, #4B5563)",
+                      : CSSVAR.textSecondary,
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -407,12 +407,12 @@ function RevenueBarChart({
           }}
         >
           <AttachMoneyRounded
-            sx={{ fontSize: 32, color: "var(--ev-text-muted, #8A7676)", mb: 1 }}
+            sx={{ fontSize: 32, color: CSSVAR.textMuted, mb: 1 }}
           />
           <Typography
             sx={{
               fontSize: 13.5,
-              color: "var(--ev-text-secondary, #4B5563)",
+              color: CSSVAR.textSecondary,
               fontWeight: 600,
             }}
           >
@@ -459,7 +459,7 @@ function RevenueBarChart({
                   sx={{
                     position: "absolute",
                     bottom: barHeight + 34,
-                    bgcolor: "var(--ev-text-primary, #1F2937)",
+                    bgcolor: CSSVAR.textPrimary,
                     color: "#FFFFFF",
                     fontSize: 11.5,
                     fontWeight: 700,
@@ -482,7 +482,7 @@ function RevenueBarChart({
                       height: 0,
                       borderLeft: "4px solid transparent",
                       borderRight: "4px solid transparent",
-                      borderTop: "4px solid #1F2937",
+                      borderTop: `4px solid ${CSSVAR.textPrimary}`,
                     }}
                   />
                 </Box>
@@ -500,7 +500,7 @@ function RevenueBarChart({
                     py: 0.25,
                     borderRadius: "10px",
                     bgcolor: isHighlight ? "#15803D" : "rgba(31, 41, 55, 0.06)",
-                    color: isHighlight ? "#FFFFFF" : "#4B5563",
+                    color: isHighlight ? CSSVAR.paper : CSSVAR.textSecondary,
                     boxShadow: isHighlight
                       ? "0 2px 8px rgba(21,128,61,0.25)"
                       : "none",
@@ -536,7 +536,7 @@ function RevenueBarChart({
                     background: allZero
                       ? "#F3F4F6"
                       : isHighlight
-                        ? "linear-gradient(180deg, #10B981 0%, #047857 100%)"
+                        ? `linear-gradient(180deg, ${STATUS.success} 0%, #047857 100%)`
                         : isHovered
                           ? "linear-gradient(180deg, rgba(16,185,129,0.7) 0%, rgba(5,150,105,0.45) 100%)"
                           : "linear-gradient(180deg, rgba(16,185,129,0.4) 0%, rgba(5,150,105,0.18) 100%)",
@@ -568,7 +568,7 @@ function RevenueBarChart({
                     fontWeight: isHighlight ? 850 : 600,
                     color: isHighlight
                       ? "#15803D"
-                      : "var(--ev-text-secondary, #4B5563)",
+                      : CSSVAR.textSecondary,
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -722,7 +722,7 @@ export default function InstructorDashboardContent() {
             borderRadius: "24px",
             p: { xs: 3.5, md: 4.5 },
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
           }}
         >
           <Skeleton variant="text" width="40%" height={20} sx={{ mb: 1 }} />
@@ -753,7 +753,7 @@ export default function InstructorDashboardContent() {
                 p: 2.5,
                 borderRadius: "20px",
                 border: "1px solid rgba(141,19,19,0.06)",
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
                 display: "flex",
                 alignItems: "center",
                 gap: 2,
@@ -815,7 +815,7 @@ export default function InstructorDashboardContent() {
           borderRadius: "24px",
           p: { xs: 3.5, md: 4.5 },
           border: "1px solid rgba(141,19,19,0.06)",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          bgcolor: CSSVAR.paper,
           boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           position: "relative",
           overflow: "hidden",
@@ -848,7 +848,7 @@ export default function InstructorDashboardContent() {
               sx={{
                 fontSize: { xs: 26, md: 32 },
                 fontWeight: 900,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 mb: 1.5,
                 lineHeight: 1.2,
               }}
@@ -858,7 +858,7 @@ export default function InstructorDashboardContent() {
             <Typography
               sx={{
                 fontSize: 14.5,
-                color: "var(--ev-text-secondary, #4B5563)",
+                color: CSSVAR.textSecondary,
                 maxWidth: 480,
                 lineHeight: 1.6,
                 mb: 3,
@@ -983,15 +983,14 @@ export default function InstructorDashboardContent() {
                 p: 2.5,
                 borderRadius: "20px",
                 border: "1px solid rgba(141,19,19,0.06)",
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
                 display: "flex",
                 alignItems: "center",
                 gap: 2,
                 cursor: stat.onClick ? "pointer" : "default",
-                transition: "transform 200ms ease, box-shadow 200ms ease",
+                transition: "box-shadow 200ms ease",
                 "&:hover": {
-                  transform: "translateY(-3px)",
-                  boxShadow: "0 10px 24px rgba(141,19,19,0.06)",
+                  boxShadow: "0 6px 18px rgba(141,19,19,0.06)",
                 },
               }}
             >
@@ -1014,7 +1013,7 @@ export default function InstructorDashboardContent() {
                   sx={{
                     fontSize: 12,
                     fontWeight: 700,
-                    color: "var(--ev-text-secondary, #4B5563)",
+                    color: CSSVAR.textSecondary,
                     mb: 0.5,
                     textTransform: "uppercase",
                     letterSpacing: "0.5px",
@@ -1027,7 +1026,7 @@ export default function InstructorDashboardContent() {
                   sx={{
                     fontSize: 20,
                     fontWeight: 900,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     lineHeight: 1.2,
                   }}
                 >
@@ -1056,7 +1055,7 @@ export default function InstructorDashboardContent() {
               p: 3,
               borderRadius: "20px",
               border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               height: 310,
               display: "flex",
               flexDirection: "column",
@@ -1076,7 +1075,7 @@ export default function InstructorDashboardContent() {
                   sx={{
                     fontSize: 16.5,
                     fontWeight: 800,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                   }}
                 >
                   Học viên đăng ký theo tháng
@@ -1084,7 +1083,7 @@ export default function InstructorDashboardContent() {
                 <Typography
                   sx={{
                     fontSize: 12.5,
-                    color: "var(--ev-text-secondary, #4B5563)",
+                    color: CSSVAR.textSecondary,
                     mt: 0.3,
                   }}
                 >
@@ -1117,7 +1116,7 @@ export default function InstructorDashboardContent() {
               p: 3,
               borderRadius: "20px",
               border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               height: 310,
               display: "flex",
               flexDirection: "column",
@@ -1137,7 +1136,7 @@ export default function InstructorDashboardContent() {
                   sx={{
                     fontSize: 16.5,
                     fontWeight: 800,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                   }}
                 >
                   Doanh thu theo tháng
@@ -1145,7 +1144,7 @@ export default function InstructorDashboardContent() {
                 <Typography
                   sx={{
                     fontSize: 12.5,
-                    color: "var(--ev-text-secondary, #4B5563)",
+                    color: CSSVAR.textSecondary,
                     mt: 0.3,
                   }}
                 >
@@ -1156,7 +1155,7 @@ export default function InstructorDashboardContent() {
                 <Typography
                   sx={{
                     fontSize: 11,
-                    color: "var(--ev-text-secondary, #4B5563)",
+                    color: CSSVAR.textSecondary,
                     fontWeight: 600,
                   }}
                 >
@@ -1187,7 +1186,7 @@ export default function InstructorDashboardContent() {
               p: 2.5,
               borderRadius: "20px",
               border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               height: 145,
               display: "flex",
               flexDirection: "column",
@@ -1198,7 +1197,7 @@ export default function InstructorDashboardContent() {
               sx={{
                 fontSize: 14,
                 fontWeight: 800,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 mb: 1.5,
               }}
             >
@@ -1210,7 +1209,7 @@ export default function InstructorDashboardContent() {
                   width: 56,
                   height: 56,
                   borderRadius: "50%",
-                  background: `conic-gradient(#10B981 0% ${growthPct > 0 ? growthPct : 0}%, #FBFAF9 ${growthPct > 0 ? growthPct : 0}% 100%)`,
+                  background: `conic-gradient(${STATUS.success} 0% ${growthPct > 0 ? growthPct : 0}%, ${CSSVAR.paperAlt} ${growthPct > 0 ? growthPct : 0}% 100%)`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1223,7 +1222,7 @@ export default function InstructorDashboardContent() {
                     width: 42,
                     height: 42,
                     borderRadius: "50%",
-                    bgcolor: "var(--ev-paper, #FFFFFF)",
+                    bgcolor: CSSVAR.paper,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1234,7 +1233,7 @@ export default function InstructorDashboardContent() {
                     sx={{
                       fontSize: 11.5,
                       fontWeight: 800,
-                      color: growthPct >= 0 ? "#10B981" : "#DC2626",
+                      color: growthPct >= 0 ? STATUS.success : STATUS.error,
                     }}
                   >
                     {growthPct >= 0 ? "+" : ""}
@@ -1247,7 +1246,7 @@ export default function InstructorDashboardContent() {
                   sx={{
                     fontSize: 26,
                     fontWeight: 900,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     lineHeight: 1,
                     mb: 0.3,
                   }}
@@ -1257,7 +1256,7 @@ export default function InstructorDashboardContent() {
                 <Typography
                   sx={{
                     fontSize: 12,
-                    color: "var(--ev-text-secondary, #4B5563)",
+                    color: CSSVAR.textSecondary,
                     fontWeight: 600,
                   }}
                 >
@@ -1274,7 +1273,7 @@ export default function InstructorDashboardContent() {
               p: 2.5,
               borderRadius: "20px",
               border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               height: 145,
               display: "flex",
               flexDirection: "column",
@@ -1285,7 +1284,7 @@ export default function InstructorDashboardContent() {
               sx={{
                 fontSize: 14,
                 fontWeight: 800,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 mb: 1.5,
               }}
             >
@@ -1296,7 +1295,7 @@ export default function InstructorDashboardContent() {
                 <Typography
                   sx={{
                     fontSize: 12.5,
-                    color: "var(--ev-text-secondary, #4B5563)",
+                    color: CSSVAR.textSecondary,
                     fontWeight: 500,
                   }}
                 >
@@ -1316,7 +1315,7 @@ export default function InstructorDashboardContent() {
                         sx={{
                           fontSize: 12.5,
                           fontWeight: 700,
-                          color: "var(--ev-text-secondary, #4B5563)",
+                          color: CSSVAR.textSecondary,
                           maxWidth: "80%",
                         }}
                       >
@@ -1338,7 +1337,7 @@ export default function InstructorDashboardContent() {
                       sx={{
                         height: 7,
                         borderRadius: 4,
-                        bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                        bgcolor: CSSVAR.paperAlt,
                         "& .MuiLinearProgress-bar": {
                           borderRadius: 4,
                           bgcolor: COLORS.primary,
@@ -1358,7 +1357,7 @@ export default function InstructorDashboardContent() {
               p: 2.5,
               borderRadius: "20px",
               border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               height: 310,
               display: "flex",
               flexDirection: "column",
@@ -1369,7 +1368,7 @@ export default function InstructorDashboardContent() {
               sx={{
                 fontSize: 15,
                 fontWeight: 800,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 mb: 1.5,
               }}
             >
@@ -1435,7 +1434,7 @@ export default function InstructorDashboardContent() {
                             sx={{
                               fontSize: 12.5,
                               fontWeight: !notif.daDoc ? 800 : 700,
-                              color: "var(--ev-text-primary, #1F2937)",
+                              color: CSSVAR.textPrimary,
                               mb: 0.2,
                             }}
                           >
@@ -1490,7 +1489,7 @@ export default function InstructorDashboardContent() {
                 mt: 1.5,
                 borderRadius: "12px",
                 borderColor: "rgba(141,19,19,0.15)",
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 fontWeight: 700,
                 fontSize: 12.5,
                 textTransform: "none",

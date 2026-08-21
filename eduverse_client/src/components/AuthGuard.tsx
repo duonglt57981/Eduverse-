@@ -7,6 +7,7 @@ import { logout, updateAccessToken } from '@/src/store/auth/AuthSlice';
 import { isTokenExpired } from '@/src/utils/jwt';
 import { getRoleHomePath } from '@/src/utils/roleHome';
 import { Box, Paper, Typography } from '@mui/material';
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -87,7 +88,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
           minHeight: '100vh',
           display: 'grid',
           placeItems: 'center',
-          bgcolor: 'var(--ev-bg, #F7F5F2)',
+          bgcolor: CSSVAR.bg,
         }}
       >
         <Paper
@@ -105,7 +106,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
             sx={{
               fontSize: 64,
               fontWeight: 900,
-              background: 'linear-gradient(135deg, #DC2626 0%, #7F1D1D 100%)',
+              background: `linear-gradient(135deg, ${STATUS.error} 0%, #7F1D1D 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               lineHeight: 1,
@@ -118,7 +119,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
               mt: 2,
               fontSize: 20,
               fontWeight: 800,
-              color: 'var(--ev-text-primary, #1F2937)',
+              color: CSSVAR.textPrimary,
             }}
           >
             Không có quyền truy cập
@@ -127,7 +128,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
             sx={{
               mt: 1,
               fontSize: 14,
-              color: 'var(--ev-text-muted, #8A7676)',
+              color: CSSVAR.textMuted,
               lineHeight: 1.6,
             }}
           >
@@ -143,7 +144,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
               py: 1.5,
               borderRadius: '50px',
               border: 'none',
-              background: 'linear-gradient(90deg, #8B1313 0%, #7f1d1d 55%, #6b1414 100%)',
+              background: `linear-gradient(90deg, ${BRAND.main} 0%, #7f1d1d 55%, #6b1414 100%)`,
               color: '#fff',
               fontSize: 14,
               fontWeight: 700,

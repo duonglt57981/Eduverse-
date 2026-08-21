@@ -45,6 +45,7 @@ export function LandingThemeProvider({
 }
 
 import { isTokenExpired } from "@/src/utils/jwt";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 export function LandingNavbar({ activePath = "/" }: { activePath?: string }) {
   if (activePath.startsWith("/personnel")) {
@@ -80,7 +81,7 @@ export function LandingNavbar({ activePath = "/" }: { activePath?: string }) {
           zIndex: 1100,
           px: { xs: 2, sm: 3, md: 4 },
           py: { xs: 1.5, md: 1.75 },
-          bgcolor: "var(--ev-paper, #ffffff)",
+          bgcolor: CSSVAR.paper,
           borderBottom: "1px solid rgba(17,17,17,0.06)",
           boxShadow: "0 8px 24px rgba(24,18,20,0.04)",
         }}
@@ -218,7 +219,7 @@ export function LandingFooter() {
         mt: { xs: 5, md: 8 },
         mx: { xs: -2, sm: -3, md: -4 },
         mb: { xs: -2, md: -3 },
-        bgcolor: "#6d0f0f",
+        bgcolor: BRAND.dark,
         borderRadius: 0,
       }}
     >
@@ -390,7 +391,7 @@ export function CourseVisual({
         borderRadius: 2.8,
         overflow: "hidden",
         background: hasImage
-          ? "var(--ev-paper-alt, #FBFAF9)"
+          ? CSSVAR.paperAlt
           : `linear-gradient(135deg, ${palette[0]} 0%, ${palette[1]} 55%, ${palette[2]} 100%)`,
       }}
     >

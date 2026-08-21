@@ -48,6 +48,7 @@ import {
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
+import { CSSVAR } from "@/src/theme/tokens";
 
 const khoaHocService = new KhoaHocService();
 const kiemDuyetService = new KiemDuyetService();
@@ -342,7 +343,7 @@ export default function LichSuKiemDuyetPage() {
               overflow: "hidden",
               borderRadius: "20px",
               border: `1px solid ${COLORS.line}`,
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               p: { xs: 2.5, sm: 3.5 },
               mb: 2.5,
               boxShadow: "0 4px 20px rgba(0,0,0,0.03)",

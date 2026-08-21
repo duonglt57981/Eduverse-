@@ -26,7 +26,7 @@ import {
 } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { createAppTheme } from '@/src/theme/createAppTheme';
-import { LAYOUT_SPACING } from '@/src/theme/tokens';
+import { LAYOUT_SPACING, BRAND, CSSVAR, STATUS } from '@/src/theme/tokens';
 import {
   ArrowBackRounded,
   BadgeRounded,
@@ -98,7 +98,7 @@ export default function RegisterPage() {
   const strength = useMemo(() => getStrength(form.password), [form.password]);
   const strengthLabel = ['', 'Yếu', 'Trung bình', 'Mạnh'][strength.score] || '';
   const strengthTone =
-    ['rgba(17,17,17,0.14)', '#b42318', '#b54708', '#0a5a3a'][strength.score] ||
+    ['rgba(17,17,17,0.14)', '#b42318', '#b54708', STATUS.successDark][strength.score] ||
     '#b42318';
 
   const confirmMismatch =
@@ -262,7 +262,7 @@ export default function RegisterPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #F7F5F2 0%, #FFF1F1 50%, #F7F5F2 100%)',
+          background: `linear-gradient(135deg, ${CSSVAR.bg} 0%, #FFF1F1 50%, ${CSSVAR.bg} 100%)`,
           px: LAYOUT_SPACING.pagePx,
           py: LAYOUT_SPACING.pagePy,
           position: 'relative',
@@ -284,13 +284,13 @@ export default function RegisterPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                color: 'var(--ev-text-secondary, #4B5563)',
+                color: CSSVAR.textSecondary,
                 fontWeight: 600,
                 fontSize: 14.5,
                 transition: 'color 200ms ease',
                 cursor: 'pointer',
                 '&:hover': {
-                  color: '#8B1313',
+                  color: BRAND.main,
                 },
               }}
             >
@@ -320,7 +320,7 @@ export default function RegisterPage() {
             borderRadius: '24px',
             border: '1px solid rgba(139, 19, 19, 0.06)',
             boxShadow: '0 24px 70px rgba(139, 19, 19, 0.04), 0 10px 30px rgba(0, 0, 0, 0.02)',
-            backgroundColor: 'var(--ev-paper, #ffffff)',
+            backgroundColor: CSSVAR.paper,
             p: { xs: 4, sm: 5.5 },
             display: 'flex',
             flexDirection: 'column',
@@ -352,7 +352,7 @@ export default function RegisterPage() {
                   fontSize: 27,
                   letterSpacing: '-0.5px',
                   mb: 1.5,
-                  background: 'linear-gradient(135deg, #1F2937 30%, #8B1313 100%)',
+                  background: `linear-gradient(135deg, ${CSSVAR.textPrimary} 30%, ${BRAND.main} 100%)`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
@@ -361,7 +361,7 @@ export default function RegisterPage() {
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ color: 'var(--ev-text-secondary, #4B5563)', fontSize: 15, lineHeight: 1.6 }}
+                sx={{ color: CSSVAR.textSecondary, fontSize: 15, lineHeight: 1.6 }}
               >
                 {step === 1
                   ? 'Chào mừng bạn! Hãy điền thông tin để bắt đầu hành trình học tập.'
@@ -381,7 +381,7 @@ export default function RegisterPage() {
                 borderRadius: '14px',
                 border: '1px solid #FECACA',
                 background: '#FEF2F2',
-                color: '#8B1313',
+                color: BRAND.main,
                 fontSize: 14,
                 fontWeight: 500,
                 textAlign: 'center',
@@ -401,7 +401,7 @@ export default function RegisterPage() {
                 borderRadius: '14px',
                 border: '1px solid rgba(10,90,58,0.25)',
                 background: 'rgba(10,90,58,0.06)',
-                color: '#0a5a3a',
+                color: STATUS.successDark,
                 fontSize: 14,
                 fontWeight: 700,
                 textAlign: 'center',
@@ -565,7 +565,7 @@ export default function RegisterPage() {
                         ].map((r) => (
                           <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             {r.ok ? (
-                              <CheckCircleRounded sx={{ fontSize: 13, color: '#0a5a3a' }} />
+                              <CheckCircleRounded sx={{ fontSize: 13, color: STATUS.successDark }} />
                             ) : (
                               <CircleOutlined sx={{ fontSize: 13, color: 'var(--ev-text-muted, rgba(17,17,17,0.35))' }} />
                             )}
@@ -591,20 +591,20 @@ export default function RegisterPage() {
                             py: 0.25,
                             pl: 0.5,
                             color: 'var(--ev-text-muted, rgba(17,17,17,0.35))',
-                            '&.Mui-checked': { color: '#8B1313' },
+                            '&.Mui-checked': { color: BRAND.main },
                           }}
                         />
                       }
                       label={
                         <Typography sx={{ mt: 0.2, fontSize: 11.5, color: 'rgba(17,17,17,0.65)' }}>
                           Tôi đồng ý với{' '}
-                          <Link href="/auth/terms" style={{ color: '#8B1313', fontWeight: 800, textDecoration: 'none' }}>
+                          <Link href="/auth/terms" style={{ color: BRAND.main, fontWeight: 800, textDecoration: 'none' }}>
                             <Box component="span" sx={{ '&:hover': { textDecoration: 'underline' } }}>
                               Điều khoản dịch vụ
                             </Box>
                           </Link>{' '}
                           và{' '}
-                          <Link href="/auth/privacy" style={{ color: '#8B1313', fontWeight: 800, textDecoration: 'none' }}>
+                          <Link href="/auth/privacy" style={{ color: BRAND.main, fontWeight: 800, textDecoration: 'none' }}>
                             <Box component="span" sx={{ '&:hover': { textDecoration: 'underline' } }}>
                               Chính sách bảo mật
                             </Box>
@@ -652,7 +652,7 @@ export default function RegisterPage() {
                       fontSize: 15,
                       textTransform: 'none',
                       background:
-                        'linear-gradient(135deg, #8B1313 0%, #6b1414 100%)',
+                        `linear-gradient(135deg, ${BRAND.main} 0%, #6b1414 100%)`,
                       boxShadow: '0 8px 20px rgba(139,19,19,0.15)',
                       transition: 'background 200ms ease, box-shadow 200ms ease',
                       '&:hover': {
@@ -687,8 +687,8 @@ export default function RegisterPage() {
                     border: '1px solid rgba(139, 19, 19, 0.12)',
                   }}
                 >
-                  <EmailRounded sx={{ fontSize: 18, color: '#8B1313' }} />
-                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#8B1313' }}>
+                  <EmailRounded sx={{ fontSize: 18, color: BRAND.main }} />
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: BRAND.main }}>
                     {form.email}
                   </Typography>
                 </Box>
@@ -701,7 +701,7 @@ export default function RegisterPage() {
                       display: 'block',
                       textAlign: 'center',
                       fontWeight: 800,
-                      color: 'var(--ev-text-secondary, #4B5563)',
+                      color: CSSVAR.textSecondary,
                       mb: 1.75,
                       textTransform: 'uppercase',
                       letterSpacing: '0.8px',
@@ -761,7 +761,7 @@ export default function RegisterPage() {
                               fontWeight: 800,
                               padding: 0,
                               fontFamily: 'monospace',
-                              color: '#1F2937',
+                              color: CSSVAR.textPrimary,
                             },
                           }}
                           sx={{
@@ -782,7 +782,7 @@ export default function RegisterPage() {
                               boxShadow: '0 0 0 4px rgba(139, 19, 19, 0.12)',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#8B1313',
+                              borderColor: BRAND.main,
                               borderWidth: '2px',
                             },
                           }}
@@ -806,7 +806,7 @@ export default function RegisterPage() {
                     fontSize: 15,
                     textTransform: 'none',
                     background:
-                      'linear-gradient(135deg, #8B1313 0%, #6b1414 100%)',
+                      `linear-gradient(135deg, ${BRAND.main} 0%, #6b1414 100%)`,
                     boxShadow: '0 10px 24px rgba(139,19,19,0.18)',
                     transition: 'all 200ms ease',
                     '&:hover': {
@@ -831,7 +831,7 @@ export default function RegisterPage() {
                     onClick={handleResendOtp}
                     startIcon={sendingOtp ? <CircularProgress size={16} /> : <RefreshRounded />}
                     sx={{
-                      color: resendCooldown > 0 ? 'text.disabled' : '#8B1313',
+                      color: resendCooldown > 0 ? 'text.disabled' : BRAND.main,
                       fontWeight: 700,
                       fontSize: 13.5,
                       textTransform: 'none',
@@ -851,12 +851,12 @@ export default function RegisterPage() {
                   onClick={() => setStep(1)}
                   startIcon={<ArrowBackRounded />}
                   sx={{
-                    color: 'var(--ev-text-secondary, #4B5563)',
+                    color: CSSVAR.textSecondary,
                     fontWeight: 600,
                     fontSize: 13.5,
                     textTransform: 'none',
                     '&:hover': {
-                      color: '#8B1313',
+                      color: BRAND.main,
                       bgcolor: 'rgba(139, 19, 19, 0.04)',
                     },
                   }}

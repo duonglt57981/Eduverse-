@@ -92,6 +92,8 @@ namespace Eduverse.Api.Controller
             }
 
             var roles = await _userManager.GetRolesAsync(user);
+            var userLogins = await _userManager.GetLoginsAsync(user);
+            bool isGoogleAccount = string.IsNullOrEmpty(user.PasswordHash) || userLogins.Any(l => l.LoginProvider.Equals("Google", StringComparison.OrdinalIgnoreCase));
 
             return new DataResponse<object>
             {
@@ -114,6 +116,7 @@ namespace Eduverse.Api.Controller
                     chucVu = user.ChucVu ?? "Học viên",
                     roles = roles,
                     twoFactorEnabled = user.TwoFactorEnabled,
+                    isGoogleAccount = isGoogleAccount,
                     stats = new
                     {
                         courses = registeredCoursesCount,
@@ -142,22 +145,24 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<object> { Status = false, Message = "Người dùng không tồn tại" };
             }
 
-            // Check duplicate email
-            if (!string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
+            var userLogins = await _userManager.GetLoginsAsync(user);
+            bool isGoogleAccount = string.IsNullOrEmpty(user.PasswordHash) || userLogins.Any(l => l.LoginProvider.Equals("Google", StringComparison.OrdinalIgnoreCase));
+
+            // Cho phép đổi tên đăng nhập nếu là tài khoản đăng ký qua Google
+            if (isGoogleAccount && !string.IsNullOrWhiteSpace(request.UserName) && !string.Equals(user.UserName, request.UserName, StringComparison.OrdinalIgnoreCase))
             {
-                var emailExists = await _userManager.FindByEmailAsync(request.Email);
-                if (emailExists != null)
+                var existingUsername = await _userManager.FindByNameAsync(request.UserName.Trim());
+                if (existingUsername != null && existingUsername.Id != user.Id)
                 {
-                    return new DataResponse<object> { Status = false, Message = "Email này đã được sử dụng bởi tài khoản khác" };
+                    return new DataResponse<object> { Status = false, Message = "Tên đăng nhập này đã được sử dụng bởi tài khoản khác" };
                 }
+                user.UserName = request.UserName.Trim();
+                user.NormalizedUserName = request.UserName.Trim().ToUpper();
             }
 
             user.HoTen = request.HoTen;
-            user.Email = request.Email;
-            user.NormalizedEmail = request.Email.ToUpper();
-            // Đổi số điện thoại thì phải xác minh lại từ đầu.
-            // Nếu không huỷ cờ này, người dùng có thể gán số của người khác
-            // mà vẫn giữ trạng thái "đã xác minh" và dùng nó để khôi phục mật khẩu.
+            // Email không được phép chỉnh sửa sau khi đã đăng ký
+
             if (!string.Equals(user.PhoneNumber, request.PhoneNumber, StringComparison.Ordinal))
             {
                 user.PhoneNumberConfirmed = false;
@@ -191,6 +196,7 @@ namespace Eduverse.Api.Controller
                 Message = "Thông tin đã được cập nhật thành công",
                 Data = new
                 {
+                    userName = user.UserName,
                     hoTen = user.HoTen,
                     email = user.Email,
                     phoneNumber = user.PhoneNumber,
@@ -790,6 +796,7 @@ namespace Eduverse.Api.Controller
     // --- REQUEST MODELS ---
     public class UpdateProfileRequest
     {
+        public string UserName { get; set; }
         public string HoTen { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }

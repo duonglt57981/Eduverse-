@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Paper, Stack, Typography, CircularProgress } from '@mui/material';
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 /**
  * Luồng đặt lại mật khẩu qua liên kết (userId + token trên URL) đã được thay thế
@@ -25,7 +26,7 @@ export default function ResetPasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'var(--ev-bg, #F7F5F2)',
+        bgcolor: CSSVAR.bg,
         px: 2,
       }}
     >
@@ -42,7 +43,7 @@ export default function ResetPasswordPage() {
         }}
       >
         <Stack spacing={2.5} sx={{ alignItems: 'center' }}>
-          <CircularProgress size={28} sx={{ color: '#8B1313' }} />
+          <CircularProgress size={28} sx={{ color: BRAND.main }} />
           <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>
             Đang chuyển hướng...
           </Typography>
@@ -54,7 +55,7 @@ export default function ResetPasswordPage() {
             component="a"
             href="/auth/forgot-password"
             sx={{
-              color: '#8B1313',
+              color: BRAND.main,
               fontWeight: 700,
               fontSize: 14,
               textDecoration: 'none',

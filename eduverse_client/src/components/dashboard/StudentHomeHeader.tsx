@@ -43,8 +43,9 @@ import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 import { isNotificationForRole } from "@/src/libs/notificationRole";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
-const RED = "#8B1313"; // Đỏ đô
+const RED = BRAND.main; // Đỏ đô
 const HEADER_H = 74;
 
 export default function StudentHomeHeader() {
@@ -124,7 +125,7 @@ export default function StudentHomeHeader() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: RED,
-      cancelButtonColor: "#8A7676",
+      cancelButtonColor: CSSVAR.textMuted,
       confirmButtonText: "Đăng xuất",
       cancelButtonText: "Hủy",
       reverseButtons: true,
@@ -503,6 +504,7 @@ export default function StudentHomeHeader() {
           anchorEl={anchorEl}
           open={openMenu}
           onClose={() => setAnchorEl(null)}
+          disableScrollLock
           transformOrigin={{ horizontal: "right", vertical: "top" }}
           anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           slotProps={{
@@ -588,6 +590,7 @@ export default function StudentHomeHeader() {
           anchorEl={notiAnchorEl}
           open={Boolean(notiAnchorEl)}
           onClose={() => setNotiAnchorEl(null)}
+          disableScrollLock
           sx={{
             "& .MuiBackdrop-root": {
               backgroundColor: "transparent !important",

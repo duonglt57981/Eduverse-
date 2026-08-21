@@ -17,8 +17,9 @@ import { useDispatch, useSelector } from "../../../store/hook";
 import { getDonHang } from "../../../store/thanhToan/ThanhToanSlice";
 import AuthGuard from "@/src/components/AuthGuard";
 import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
-const PRIMARY = "#8B1313";
+const PRIMARY = BRAND.main;
 
 function PaymentResultContent() {
   const searchParams = useSearchParams();
@@ -99,7 +100,7 @@ function PaymentResultContent() {
                   mb: 3,
                   border: "1px solid rgba(141,19,19,0.06)",
                   borderLeft: `4px solid ${PRIMARY}`,
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
                 }}
               >

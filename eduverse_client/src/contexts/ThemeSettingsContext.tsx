@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
 import { createAppTheme } from '@/src/theme/createAppTheme';
 import Swal from 'sweetalert2';
+import { BRAND } from "@/src/theme/tokens";
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type AccentColor = 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'pink';
@@ -16,7 +17,7 @@ export interface ColorOption {
 }
 
 export const accentColors: ColorOption[] = [
-  { id: 'red', name: 'Đỏ', value: '#8B1313', hoverColor: '#6D0F0F' },
+  { id: 'red', name: 'Đỏ', value: BRAND.main, hoverColor: BRAND.dark },
   { id: 'blue', name: 'Xanh dương', value: '#1976d2', hoverColor: '#115293' },
   { id: 'green', name: 'Xanh lá', value: '#2e7d32', hoverColor: '#1b5e20' },
   { id: 'purple', name: 'Tím', value: '#7b1fa2', hoverColor: '#4a148c' },

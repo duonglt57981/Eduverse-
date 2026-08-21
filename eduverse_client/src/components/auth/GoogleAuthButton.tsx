@@ -6,6 +6,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { useDispatch } from "../../store/hook";
 import { externalLogin } from "../../store/auth/AuthSlice";
 import { getRoleHomePath } from "../../utils/roleHome";
+import { BRAND } from "@/src/theme/tokens";
 
 /**
  * GoogleAuthButton — Đăng nhập / Đăng ký bằng Google qua Google Identity Services (GIS).
@@ -188,9 +189,14 @@ export default function GoogleAuthButton({
         processingRef.current = false;
         setProcessing(false);
       }
-    },  
+    },
     [dispatch, router, onError],
   );
+
+  const handleCredentialRef = useRef(handleCredential);
+  useEffect(() => {
+    handleCredentialRef.current = handleCredential;
+  }, [handleCredential]);
 
   useEffect(() => {
     if (!clientId) return;
@@ -203,7 +209,7 @@ export default function GoogleAuthButton({
 
         window.google.accounts.id.initialize({
           client_id: clientId,
-          callback: handleCredential,
+          callback: (res: GoogleCredentialResponse) => handleCredentialRef.current(res),
           auto_select: false,
           cancel_on_tap_outside: true,
           ux_mode: "popup",
@@ -232,7 +238,7 @@ export default function GoogleAuthButton({
     return () => {
       cancelled = true;
     };
-  }, [clientId, text, theme, btnWidth, handleCredential, onError]);
+  }, [clientId, text, theme, btnWidth]);
 
   // Chưa cấu hình Client ID → hiện nút vô hiệu hoá kèm thông báo tiếng Việt
   if (!clientId) {
@@ -292,7 +298,7 @@ export default function GoogleAuthButton({
           gap: 1.5,
           bgcolor: "#FFF5F5", // Soft crimson red/pink background to match logo
           border: "1px solid #E6B8B8", // Subtle crimson border
-          color: "#8B1313", // Deep crimson text
+          color: BRAND.main, // Deep crimson text
           fontWeight: 700,
           fontSize: 15,
           cursor: "pointer",
@@ -369,7 +375,7 @@ export default function GoogleAuthButton({
               zIndex: 2,
             }}
           >
-            <CircularProgress size={20} sx={{ color: "#8B1313" }} />
+            <CircularProgress size={20} sx={{ color: BRAND.main }} />
           </Box>
         )}
       </Box>

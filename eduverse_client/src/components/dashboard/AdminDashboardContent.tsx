@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { COLORS } from "@/src/theme/tokens";
+import { COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -322,7 +322,7 @@ function RevenueLineChart({
                       height={tooltipH}
                       rx={10}
                       ry={10}
-                      fill="var(--ev-text-primary, #1F2937)"
+                      fill={CSSVAR.textPrimary}
                       style={{
                         filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))",
                       }}
@@ -332,13 +332,13 @@ function RevenueLineChart({
                       // Tooltip ở dưới điểm → mũi tên chỉ lên
                       <polygon
                         points={`${p.x - 7},${ty} ${p.x + 7},${ty} ${p.x},${ty - 8}`}
-                        fill="var(--ev-text-primary, #1F2937)"
+                        fill={CSSVAR.textPrimary}
                       />
                     ) : (
                       // Tooltip ở trên điểm → mũi tên chỉ xuống
                       <polygon
                         points={`${p.x - 7},${ty + tooltipH} ${p.x + 7},${ty + tooltipH} ${p.x},${ty + tooltipH + 8}`}
-                        fill="var(--ev-text-primary, #1F2937)"
+                        fill={CSSVAR.textPrimary}
                       />
                     )}
                     {/* Label tháng */}
@@ -362,7 +362,7 @@ function RevenueLineChart({
                       x={tx + tooltipW / 2}
                       y={ty + 38}
                       textAnchor="middle"
-                      fill="var(--ev-paper, #FFFFFF)"
+                      fill={CSSVAR.paper}
                       style={{
                         fontSize: 14,
                         fontWeight: 800,
@@ -493,7 +493,7 @@ function StudentGrowthChart({ data }: { data: number[] }) {
                     bottom: `calc(${pct}% + 36px)`,
                     left: "50%",
                     transform: "translateX(-50%)",
-                    bgcolor: "var(--ev-text-primary, #1F2937)",
+                    bgcolor: CSSVAR.textPrimary,
                     color: "#FFFFFF",
                     borderRadius: "10px",
                     px: 1.5,
@@ -513,7 +513,7 @@ function StudentGrowthChart({ data }: { data: number[] }) {
                       transform: "translateX(-50%)",
                       borderWidth: "6px 6px 0",
                       borderStyle: "solid",
-                      borderColor: "#1F2937 transparent transparent",
+                      borderColor: `${CSSVAR.textPrimary} transparent transparent`,
                     },
                   }}
                 >
@@ -528,7 +528,7 @@ function StudentGrowthChart({ data }: { data: number[] }) {
                   height: `${Math.max(pct, 2)}%`,
                   borderRadius: "8px 8px 4px 4px",
                   background: isHovered
-                    ? `linear-gradient(180deg, #DC2626 0%, ${COLORS.primary} 100%)`
+                    ? `linear-gradient(180deg, ${STATUS.error} 0%, ${COLORS.primary} 100%)`
                     : isLatest
                       ? `linear-gradient(180deg, ${COLORS.primaryLight} 0%, ${COLORS.primary} 100%)`
                       : "rgba(141,19,19,0.10)",
@@ -963,7 +963,7 @@ export default function AdminDashboardContent() {
       value: (welcomeStats.totalStudents || 0).toLocaleString(),
       trend: fmtTrend(welcomeStats.studentsTrendPct),
       isUp: trendUp(welcomeStats.studentsTrendPct),
-      icon: <PeopleRounded sx={{ color: "#7C3AED", fontSize: 22 }} />,
+      icon: <PeopleRounded sx={{ color: COLORS.purpleAI, fontSize: 22 }} />,
       iconBg: "rgba(124,58,237,0.05)",
     },
     {
@@ -980,7 +980,7 @@ export default function AdminDashboardContent() {
       trend: fmtTrend(welcomeStats.completionTrendPct),
       isUp: trendUp(welcomeStats.completionTrendPct),
       icon: (
-        <AssignmentTurnedInRounded sx={{ color: "#10B981", fontSize: 22 }} />
+        <AssignmentTurnedInRounded sx={{ color: STATUS.success, fontSize: 22 }} />
       ),
       iconBg: "rgba(16,185,129,0.05)",
     },
@@ -1147,7 +1147,7 @@ export default function AdminDashboardContent() {
 
                 <Stack spacing={3}>
                   {bestSellingCourses.map((course: any, idx: number) => {
-                    const colors = [COLORS.primary, "#7C3AED", "#0EA5E9"];
+                    const colors = [COLORS.primary, COLORS.purpleAI, "#0EA5E9"];
                     return (
                       <Stack key={idx} spacing={1}>
                         <Stack
@@ -1174,7 +1174,7 @@ export default function AdminDashboardContent() {
                               }}
                             >
                               <StarRounded
-                                sx={{ color: "#F59E0B", fontSize: 16 }}
+                                sx={{ color: STATUS.warning, fontSize: 16 }}
                               />
                             </Box>
                             <Typography
@@ -1246,7 +1246,7 @@ export default function AdminDashboardContent() {
                     const getIconColor = () => {
                       if (act.type === "registration") return COLORS.green;
                       if (act.type === "quiz") return "#3B82F6";
-                      return "#F59E0B";
+                      return STATUS.warning;
                     };
                     return (
                       <Stack
@@ -1528,7 +1528,7 @@ export default function AdminDashboardContent() {
                               size="small"
                               sx={{
                                 bgcolor: "rgba(245, 158, 11, 0.1)",
-                                color: "#D97706",
+                                color: STATUS.warningDark,
                                 fontWeight: 700,
                                 fontSize: 11.5,
                                 borderRadius: "6px",
@@ -1552,7 +1552,7 @@ export default function AdminDashboardContent() {
                               size="small"
                               sx={{
                                 bgcolor: "rgba(239, 68, 68, 0.1)",
-                                color: "#DC2626",
+                                color: STATUS.error,
                                 fontWeight: 700,
                                 fontSize: 11.5,
                                 borderRadius: "6px",
@@ -1612,7 +1612,7 @@ export default function AdminDashboardContent() {
                                   }}
                                   size="small"
                                   sx={{
-                                    color: "#DC2626",
+                                    color: STATUS.error,
                                     bgcolor: "rgba(239,68,68,0.04)",
                                     "&:hover": {
                                       bgcolor: "rgba(239,68,68,0.12)",
@@ -2062,7 +2062,7 @@ function ChipTrend({ value, isUp }: { value: string; isUp: boolean | null }) {
       spacing={0.5}
       sx={{
         bgcolor: isUp ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
-        color: isUp ? COLORS.green : "#DC2626",
+        color: isUp ? COLORS.green : STATUS.error,
         borderRadius: "50px",
         px: 1,
         py: 0.4,

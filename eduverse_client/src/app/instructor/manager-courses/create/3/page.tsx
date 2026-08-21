@@ -24,6 +24,7 @@ import { danhMucService } from "@/src/services/danhmucService";
 import { DanhMucDto } from "@/src/types/khoaHoc";
 import AuthGuard from "@/src/components/AuthGuard";
 import { CreateKhoaHocRequest } from "@/src/types/khoaHoc/Request/request";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 // Trạng thái danh mục mặc định được phép hiển thị khi tạo khóa học
 const TRANG_THAI_DANH_MUC_MAC_DINH = "HoatDong";
@@ -116,9 +117,9 @@ export default function Step5Page() {
       >
         <Box
           sx={{
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             borderRadius: "20px",
-            border: "1px solid var(--ev-divider, #ECE7E4)",
+            border: `1px solid ${CSSVAR.divider}`,
             boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
             p: { xs: 3, sm: 5 },
             width: "100%",
@@ -137,7 +138,7 @@ export default function Step5Page() {
               fontWeight: 700,
               textAlign: "center",
               mb: 1.5,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
               fontSize: { xs: "1.25rem", sm: "1.6rem" },
             }}
           >
@@ -148,7 +149,7 @@ export default function Step5Page() {
           <Typography
             sx={{
               textAlign: "center",
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
               fontSize: 14,
               mb: 4,
               maxWidth: 480,
@@ -179,16 +180,16 @@ export default function Step5Page() {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "10px",
                   height: "44px",
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   fontSize: 14,
                   "& fieldset": {
-                    borderColor: "var(--ev-divider, #ECE7E4)",
+                    borderColor: CSSVAR.divider,
                   },
                   "&:hover fieldset": {
-                    borderColor: "#8B1313",
+                    borderColor: BRAND.main,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: "#8B1313",
+                    borderColor: BRAND.main,
                     borderWidth: 2,
                   },
                 },
@@ -197,7 +198,7 @@ export default function Step5Page() {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon fontSize="small" sx={{ color: "var(--ev-grey, #8A7676)" }} />
+                      <SearchIcon fontSize="small" sx={{ color: CSSVAR.textMuted }} />
                     </InputAdornment>
                   ),
                   endAdornment: searchKeyword ? (
@@ -206,7 +207,7 @@ export default function Step5Page() {
                         size="small"
                         onClick={() => setSearchKeyword("")}
                         aria-label="Xóa từ khóa tìm kiếm"
-                        sx={{ color: "var(--ev-grey, #8A7676)" }}
+                        sx={{ color: CSSVAR.textMuted }}
                       >
                         <CloseIcon fontSize="small" />
                       </IconButton>
@@ -227,11 +228,11 @@ export default function Step5Page() {
                 justifyContent: "center",
                 gap: 1.2,
                 flexWrap: "wrap",
-                borderBottom: "1px dashed var(--ev-divider, #ECE7E4)",
+                borderBottom: `1px dashed ${CSSVAR.divider}`,
                 pb: 2.5,
               }}
             >
-              <Typography variant="body2" sx={{ color: "var(--ev-text-secondary, #4B5563)", fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ color: CSSVAR.textSecondary, fontWeight: 600 }}>
                 Đã chọn:
               </Typography>
               {selected.map((id) => {
@@ -244,14 +245,14 @@ export default function Step5Page() {
                     onDelete={() => toggleCategory(id)}
                     sx={{
                       bgcolor: "#FFF1F2",
-                      color: "#8B1313",
+                      color: BRAND.main,
                       fontWeight: 600,
                       fontSize: 13,
                       borderRadius: "8px",
                       border: "1px solid #FCA5A5",
                       "& .MuiChip-deleteIcon": {
-                        color: "#8B1313",
-                        "&:hover": { color: "#6D0F0F" },
+                        color: BRAND.main,
+                        "&:hover": { color: BRAND.dark },
                       },
                     }}
                   />
@@ -283,7 +284,7 @@ export default function Step5Page() {
                   sx={{
                     height: 72,
                     borderRadius: "12px",
-                    bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                    bgcolor: CSSVAR.paperAlt,
                     animation: "pulse 1.5s infinite ease-in-out",
                     "@keyframes pulse": {
                       "0%": { opacity: 0.6 },
@@ -301,7 +302,7 @@ export default function Step5Page() {
                 <Typography
                   sx={{
                     textAlign: "center",
-                    color: "var(--ev-grey, #8A7676)",
+                    color: CSSVAR.textMuted,
                     py: 6,
                     fontSize: 15,
                     fontWeight: 500,
@@ -336,11 +337,11 @@ export default function Step5Page() {
                       background: "transparent",
                     },
                     "&::-webkit-scrollbar-thumb": {
-                      background: "#ECE7E4",
+                      background: CSSVAR.divider,
                       borderRadius: "10px",
                     },
                     "&::-webkit-scrollbar-thumb:hover": {
-                      background: "#ECE7E4",
+                      background: CSSVAR.divider,
                     },
                   }}
                 >
@@ -353,7 +354,7 @@ export default function Step5Page() {
                         sx={{
                           height: 72,
                           borderRadius: "12px",
-                          borderColor: isSelected ? "#8B1313" : "#ECE7E4",
+                          borderColor: isSelected ? BRAND.main : CSSVAR.divider,
                           borderWidth: isSelected ? 2 : 1,
                           cursor: "pointer",
                           position: "relative",
@@ -363,13 +364,13 @@ export default function Step5Page() {
                             ? "0 4px 12px rgba(122,31,43,0.06)"
                             : "none",
                           "&:hover": {
-                            borderColor: "#8B1313",
-                            bgcolor: isSelected ? "#FFF1F2" : "#FBFAF9",
+                            borderColor: BRAND.main,
+                            bgcolor: isSelected ? "#FFF1F2" : CSSVAR.paperAlt,
                             transform: "translateY(-2px)",
                             boxShadow: "0 6px 16px rgba(0,0,0,0.04)",
                           },
                           "&:focus-within": {
-                            outline: "2px solid #8B1313",
+                            outline: `2px solid ${BRAND.main}`,
                             outlineOffset: "2px",
                           },
                         }}
@@ -394,7 +395,7 @@ export default function Step5Page() {
                                 width: 16,
                                 height: 16,
                                 borderRadius: "50%",
-                                bgcolor: "#8B1313",
+                                bgcolor: BRAND.main,
                                 color: "#ffffff",
                                 display: "flex",
                                 alignItems: "center",
@@ -410,7 +411,7 @@ export default function Step5Page() {
                             sx={{
                               fontWeight: isSelected ? 700 : 500,
                               fontSize: 14,
-                              color: isSelected ? "#8B1313" : "#4B5563",
+                              color: isSelected ? BRAND.main : CSSVAR.textSecondary,
                               textAlign: "center",
                               lineHeight: 1.3,
                               display: "-webkit-box",
@@ -440,7 +441,7 @@ export default function Step5Page() {
           {/* Loading khi đang tạo khóa học */}
           {loading && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-              <CircularProgress sx={{ color: "#8B1313" }} />
+              <CircularProgress sx={{ color: BRAND.main }} />
             </Box>
           )}
         </Box>

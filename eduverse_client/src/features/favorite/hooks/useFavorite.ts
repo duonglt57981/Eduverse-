@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useFavoriteStore } from "../store/favorite.store";
 import Swal from "sweetalert2";
+import { BRAND } from "@/src/theme/tokens";
 
 // Toast Mixin matching the premium styling of Eduverse
 const Toast = Swal.mixin({
@@ -55,7 +56,7 @@ export function useFavorite() {
         text: `Bạn có chắc chắn muốn bỏ khóa học "${courseTitle}" khỏi danh sách yêu thích?`,
         icon: "warning",
         showCancelButton: true,
-        confirmButtonColor: "#8B1313",
+        confirmButtonColor: BRAND.main,
         cancelButtonColor: "rgba(24, 24, 27, 0.4)",
         confirmButtonText: "Bỏ yêu thích",
         cancelButtonText: "Hủy",

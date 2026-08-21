@@ -6,6 +6,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Link from "next/link";
 import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
 import PhoneEnabledRoundedIcon from "@mui/icons-material/PhoneEnabledRounded";
+import { CSSVAR } from "@/src/theme/tokens";
 
 export default function StudentFooter() {
   const currentYear = new Date().getFullYear();
@@ -64,7 +65,7 @@ export default function StudentFooter() {
         width: "auto",
         mx: { xs: -2, sm: -3, md: -4 },
         mb: { xs: -2, md: -3 },
-        bgcolor: (theme) => theme.palette.mode === "dark" ? "background.paper" : "#FBFAF9",
+        bgcolor: (theme) => theme.palette.mode === "dark" ? "background.paper" : CSSVAR.paperAlt,
         borderTop: "1px solid",
         borderColor: "divider",
         py: { xs: 4, md: 5 },

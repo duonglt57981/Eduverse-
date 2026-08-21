@@ -34,6 +34,7 @@ import {
 import { getKhoaHocPaged } from "@/src/store/khoaHoc/KhoaHocSlice";
 import { apiService } from "@/src/services/index";
 import { useRouter } from "next/navigation";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 interface KetQuaApDungMa {
   maGiamGia: string;
@@ -51,7 +52,7 @@ interface ApDungNhieuMaResponse {
   soTienSauGiam: number;
 }
 
-const PRIMARY = "#8B1313";
+const PRIMARY = BRAND.main;
 
 const formatThoiLuong = (phut?: number) => {
   if (!phut) return null;
@@ -480,7 +481,7 @@ function GioHangContent() {
                             <Typography
                               sx={{
                                 fontSize: 12,
-                                color: "var(--ev-text-muted, #8A7676)",
+                                color: CSSVAR.textMuted,
                                 textDecoration: "line-through",
                               }}
                             >
@@ -681,7 +682,7 @@ function GioHangContent() {
                   </Box>
                 )}
 
-                <Box sx={{ display: "flex", gap: 1 }}>
+                <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", height: 40 }}>
                   <TextField
                     size="small"
                     fullWidth
@@ -692,10 +693,12 @@ function GioHangContent() {
                       if (e.key === "Enter") handleThemMa();
                     }}
                     sx={{
+                      height: "100%",
                       "& .MuiOutlinedInput-root": {
+                        height: "100%",
                         borderRadius: "8px",
                         fontSize: 13,
-                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        bgcolor: CSSVAR.paper,
                         "&.Mui-focused fieldset": { borderColor: PRIMARY },
                       },
                     }}
@@ -706,6 +709,7 @@ function GioHangContent() {
                     disabled={apDungLoading || !maDangNhap.trim()}
                     onClick={handleThemMa}
                     sx={{
+                      height: "100%",
                       borderColor: PRIMARY,
                       color: PRIMARY,
                       borderRadius: "8px",
@@ -884,7 +888,7 @@ function GioHangContent() {
                         <Typography
                           sx={{
                             fontSize: 12,
-                            color: "var(--ev-text-muted, #8A7676)",
+                            color: CSSVAR.textMuted,
                             textDecoration: "line-through",
                           }}
                         >
@@ -1016,7 +1020,7 @@ function GioHangContent() {
                             <Typography
                               sx={{
                                 fontSize: 12,
-                                color: "var(--ev-text-muted, #8A7676)",
+                                color: CSSVAR.textMuted,
                                 textDecoration: "line-through",
                                 mb: 0.5,
                               }}
@@ -1119,7 +1123,7 @@ export default function StudentCartPage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

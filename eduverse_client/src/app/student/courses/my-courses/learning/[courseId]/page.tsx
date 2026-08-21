@@ -59,7 +59,7 @@ import { QnAPanel } from "./components/QnAPanel";
 
 import { useSearchParams } from "next/navigation";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = BRAND.main;
 const PRIMARY_RED_DARK = "#7F1D1D";
 const SIDEBAR_W = 380;
 const HEADER_H = 68;
@@ -85,6 +85,7 @@ interface ThongTinGiangVien {
 }
 
 import { parseJwtPayload } from "@/src/utils/jwt";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 function getUserIdFromToken(): string | undefined {
   if (typeof window === "undefined") return undefined;
@@ -275,7 +276,7 @@ function InstructorInfo({
         p: { xs: 3, md: 4 },
         mt: 4,
         borderRadius: "16px",
-        border: "1px solid var(--ev-divider, #ECE7E4)",
+        border: `1px solid ${CSSVAR.divider}`,
         boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
         backgroundColor: "background.paper",
       }}
@@ -321,7 +322,7 @@ function InstructorInfo({
                   variant="h6"
                   sx={{
                     fontWeight: 800,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     cursor: id ? "pointer" : "default",
                     "&:hover": id
                       ? { color: PRIMARY_RED, textDecoration: "underline" }
@@ -873,7 +874,7 @@ export default function KhoaHocLearningPage() {
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "var(--ev-bg, #F7F5F2)",
+        bgcolor: CSSVAR.bg,
         overflow: "hidden",
       }}
     >
@@ -883,8 +884,8 @@ export default function KhoaHocLearningPage() {
         color="default"
         elevation={0}
         sx={{
-          borderBottom: "1px solid var(--ev-divider, #ECE7E4)",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          borderBottom: `1px solid ${CSSVAR.divider}`,
+          bgcolor: CSSVAR.paper,
           boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
           flexShrink: 0,
         }}
@@ -923,7 +924,7 @@ export default function KhoaHocLearningPage() {
             <IconButton
               onClick={() => setSidebarOpen(true)}
               sx={{
-                border: `1px solid ${sidebarOpen ? PRIMARY_RED : "#ECE7E4"}`,
+                border: `1px solid ${sidebarOpen ? PRIMARY_RED : CSSVAR.divider}`,
                 bgcolor: sidebarOpen ? alpha(PRIMARY_RED, 0.05) : "transparent",
                 borderRadius: "10px",
                 p: 1,
@@ -931,7 +932,7 @@ export default function KhoaHocLearningPage() {
             >
               <MenuBookIcon
                 sx={{
-                  color: sidebarOpen ? PRIMARY_RED : "#4B5563",
+                  color: sidebarOpen ? PRIMARY_RED : CSSVAR.textSecondary,
                   fontSize: 20,
                 }}
               />
@@ -944,7 +945,7 @@ export default function KhoaHocLearningPage() {
               sx={{
                 fontWeight: 800,
                 fontSize: { xs: "14px", sm: "16px" },
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
               }}
             >
               {khoaHoc.tieuDe}
@@ -966,8 +967,8 @@ export default function KhoaHocLearningPage() {
               sx={{
                 alignItems: "center",
                 display: { xs: "none", sm: "flex" },
-                bgcolor: "var(--ev-paper-alt, #F7F5F2)",
-                border: "1px solid var(--ev-divider, #ECE7E4)",
+                bgcolor: CSSVAR.bg,
+                border: `1px solid ${CSSVAR.divider}`,
                 px: 2,
                 py: 0.75,
                 borderRadius: "10px",
@@ -986,7 +987,7 @@ export default function KhoaHocLearningPage() {
                   sx={{
                     height: 5,
                     borderRadius: 3,
-                    backgroundColor: "var(--ev-divider, #ECE7E4)",
+                    backgroundColor: CSSVAR.divider,
                     "& .MuiLinearProgress-bar": {
                       backgroundColor: PRIMARY_RED,
                       borderRadius: 3,
@@ -998,7 +999,7 @@ export default function KhoaHocLearningPage() {
                 variant="caption"
                 sx={{
                   fontWeight: 600,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   fontSize: "12px",
                 }}
               >
@@ -1113,7 +1114,7 @@ export default function KhoaHocLearningPage() {
                       variant="body2"
                       sx={{
                         fontWeight: 600,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                       }}
                     >
                       {(
@@ -1123,7 +1124,7 @@ export default function KhoaHocLearningPage() {
                     <ChevronRightIcon
                       sx={{
                         fontSize: 16,
-                        color: "var(--ev-text-muted, #8A7676)",
+                        color: CSSVAR.textMuted,
                       }}
                     />
                     <Typography
@@ -1150,7 +1151,7 @@ export default function KhoaHocLearningPage() {
                       sx={{
                         fontWeight: 900,
                         mb: 1.5,
-                        color: "var(--ev-text-primary, #1F2937)",
+                        color: CSSVAR.textPrimary,
                         fontSize: { xs: "20px", sm: "24px" },
                       }}
                     >
@@ -1166,7 +1167,7 @@ export default function KhoaHocLearningPage() {
                           variant="caption"
                           sx={{
                             fontWeight: 600,
-                            color: "var(--ev-text-secondary, #4B5563)",
+                            color: CSSVAR.textSecondary,
                           }}
                         >
                           Bài {currentIdx + 1}/{danhSachTatCa.length} ·{" "}
@@ -1233,13 +1234,13 @@ export default function KhoaHocLearningPage() {
                     value={tabDuoiVideo}
                     onChange={(_, v) => setTabDuoiVideo(v)}
                     sx={{
-                      borderBottom: "1px solid #ECE7E4",
+                      borderBottom: `1px solid ${CSSVAR.divider}`,
                       mb: 3,
                       "& .MuiTab-root": {
                         textTransform: "none",
                         fontWeight: 700,
                         fontSize: 14,
-                        color: "#4B5563",
+                        color: CSSVAR.textSecondary,
                         minHeight: 44,
                         px: 0,
                         mr: 4,
@@ -1274,7 +1275,7 @@ export default function KhoaHocLearningPage() {
                           sx={{
                             p: { xs: 2.5, md: 4 },
                             borderRadius: "16px",
-                            border: "1px solid var(--ev-divider, #ECE7E4)",
+                            border: `1px solid ${CSSVAR.divider}`,
                             boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
                             backgroundColor: "background.paper",
                           }}
@@ -1341,7 +1342,7 @@ export default function KhoaHocLearningPage() {
                       sx={{
                         p: { xs: 2.5, md: 3 },
                         borderRadius: "16px",
-                        border: "1px solid var(--ev-divider, #ECE7E4)",
+                        border: `1px solid ${CSSVAR.divider}`,
                         minHeight: 500,
                       }}
                     >
@@ -1512,19 +1513,19 @@ export default function KhoaHocLearningPage() {
                 justifyContent: "space-between",
                 mb: 3,
                 pb: 2,
-                borderBottom: "1px solid #ECE7E4",
+                borderBottom: `1px solid ${CSSVAR.divider}`,
               }}
             >
               <Box>
                 <Typography
-                  sx={{ fontWeight: 900, fontSize: 17, color: "#1F2937" }}
+                  sx={{ fontWeight: 900, fontSize: 17, color: CSSVAR.textPrimary }}
                 >
                   Hỏi đáp bài giảng
                 </Typography>
                 <Typography
                   sx={{
                     fontSize: 13,
-                    color: "#8A7676",
+                    color: CSSVAR.textMuted,
                     mt: 0.5,
                     overflow: "hidden",
                     textOverflow: "ellipsis",

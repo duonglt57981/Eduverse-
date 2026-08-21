@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSelector } from "@/src/store/hook";
@@ -59,7 +60,7 @@ import danhGiaService, {
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const RED = "#8B1313";
+const RED = BRAND.main;
 const RED_HOVER = "#6B1010";
 const RED_SOFT = "#fdf2f2";
 const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
@@ -2376,7 +2377,7 @@ export default function CourseRegistrationPage() {
             p: { xs: 2.5, md: 4.5 },
             borderRadius: "28px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

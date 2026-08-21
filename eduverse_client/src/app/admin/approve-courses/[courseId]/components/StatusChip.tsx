@@ -9,6 +9,7 @@ import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
+import { CSSVAR } from "@/src/theme/tokens";
 
 // Define the config type with optional stamp
 type TrangThaiConfig = {
@@ -23,7 +24,7 @@ const TRANG_THAI_CONFIG: Record<string, TrangThaiConfig> = {
   DangSua: {
     label: "Đang sửa",
     color: COLORS.inkSoft,
-    bg: "var(--ev-paper-alt, #FBFAF9)",
+    bg: CSSVAR.paperAlt,
     icon: <EditNoteRoundedIcon sx={{ fontSize: 15 }} />,
   },
   ChoDuyet: {

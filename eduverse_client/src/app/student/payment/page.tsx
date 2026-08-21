@@ -34,6 +34,7 @@ import { useRouter } from "next/navigation";
 import { apiService } from "@/src/services/index";
 import { DonHangDto } from "@/src/types/thanhToan";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 // ✅ Thay MaGiamGiaResponse (1 mã) bằng shape nhiều mã
 interface KetQuaApDungMa {
@@ -50,7 +51,7 @@ interface ApDungNhieuMaResponse {
   soTienSauGiam: number;
 }
 
-const PRIMARY = "#8B1313";
+const PRIMARY = BRAND.main;
 const steps = ["Giỏ hàng", "Thanh toán", "Hoàn tất"];
 
 function ThanhToanContent() {
@@ -569,7 +570,7 @@ function ThanhToanContent() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
               }}
             >
               {paymentResponse?.qrCode ? (
@@ -627,7 +628,7 @@ function ThanhToanContent() {
                           countdown <= 60
                             ? "error.main"
                             : countdown <= 180
-                              ? "#d97706"
+                              ? STATUS.warningDark
                               : "text.secondary",
                       }}
                     />
@@ -640,7 +641,7 @@ function ThanhToanContent() {
                           countdown <= 60
                             ? "error.main"
                             : countdown <= 180
-                              ? "#d97706"
+                              ? STATUS.warningDark
                               : "text.primary",
                         animation:
                           countdown <= 30
@@ -661,7 +662,7 @@ function ThanhToanContent() {
                           countdown <= 60
                             ? "error.main"
                             : countdown <= 180
-                              ? "#d97706"
+                              ? STATUS.warningDark
                               : "text.secondary",
                       }}
                     >
@@ -688,7 +689,7 @@ function ThanhToanContent() {
                           countdown <= 60
                             ? "error.main"
                             : countdown <= 180
-                              ? "#d97706"
+                              ? STATUS.warningDark
                               : PRIMARY,
                         borderRadius: 2,
                         transition: "width 1s linear, background-color 0.3s",
@@ -784,7 +785,7 @@ export default function StudentCheckoutPage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

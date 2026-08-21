@@ -46,7 +46,7 @@ import {
   FolderOpenRounded,
   CheckCircleRounded,
 } from "@mui/icons-material";
-import { BRAND, NEUTRAL, STATUS } from "@/src/theme/tokens";
+import { BRAND, NEUTRAL, STATUS, CSSVAR } from "@/src/theme/tokens";
 import { isNotificationForRole } from "@/src/libs/notificationRole";
 import { useSignalR } from "@/src/hook/useSignalR";
 
@@ -378,7 +378,7 @@ export default function AdminThongBaoPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   mb: 0.5,
                 }}
               >
@@ -533,7 +533,7 @@ export default function AdminThongBaoPage() {
                         width: { xs: "100%", sm: 240 },
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "10px",
-                          bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                          bgcolor: CSSVAR.bg,
                           height: 42,
                           "& fieldset": { borderColor: COLORS.borderMain },
                           "&:hover fieldset": { borderColor: COLORS.primary },
@@ -574,7 +574,7 @@ export default function AdminThongBaoPage() {
                       onChange={(e) => setFilterRead(e.target.value)}
                       sx={{
                         borderRadius: "10px",
-                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                        bgcolor: CSSVAR.bg,
                         height: 42,
                         fontSize: 13.5,
                         fontWeight: 500,
@@ -606,7 +606,7 @@ export default function AdminThongBaoPage() {
                         borderRadius: "10px",
                         width: 42,
                         height: 42,
-                        bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+                        bgcolor: CSSVAR.bg,
                         color: COLORS.textSecondary,
                         transition: "all 150ms ease",
                         "&:hover": {
@@ -626,7 +626,7 @@ export default function AdminThongBaoPage() {
             {/* Table layout */}
             <TableContainer>
               <Table>
-                <TableHead sx={{ bgcolor: "var(--ev-paper-alt, #F7F5F2)" }}>
+                <TableHead sx={{ bgcolor: CSSVAR.bg }}>
                   <TableRow sx={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                     <TableCell
                       sx={{
@@ -848,7 +848,7 @@ export default function AdminThongBaoPage() {
                         "&:hover": { bgcolor: COLORS.primaryHover },
                       },
                       "&:hover": {
-                        bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                        bgcolor: CSSVAR.paperAlt,
                       },
                     },
                   }}
@@ -879,10 +879,10 @@ export default function AdminThongBaoPage() {
                 {/* Tiêu đề */}
                 <Stack spacing={0.75}>
                   <Typography
-                    sx={{ fontWeight: 700, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)" }}
+                    sx={{ fontWeight: 700, fontSize: 13.5, color: CSSVAR.textPrimary }}
                   >
                     Tiêu đề thông báo{" "}
-                    <span style={{ color: "#DC2626" }}>*</span>
+                    <span style={{ color: STATUS.error }}>*</span>
                   </Typography>
                   <TextField
                     fullWidth
@@ -907,10 +907,10 @@ export default function AdminThongBaoPage() {
                 {/* Nội dung */}
                 <Stack spacing={0.75}>
                   <Typography
-                    sx={{ fontWeight: 700, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)" }}
+                    sx={{ fontWeight: 700, fontSize: 13.5, color: CSSVAR.textPrimary }}
                   >
                     Nội dung thông báo{" "}
-                    <span style={{ color: "#DC2626" }}>*</span>
+                    <span style={{ color: STATUS.error }}>*</span>
                   </Typography>
                   <TextField
                     fullWidth
@@ -942,7 +942,7 @@ export default function AdminThongBaoPage() {
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2.5}>
                   <Stack spacing={0.75} sx={{ flex: 1 }}>
                     <Typography
-                      sx={{ fontWeight: 700, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)" }}
+                      sx={{ fontWeight: 700, fontSize: 13.5, color: CSSVAR.textPrimary }}
                     >
                       Phân loại
                     </Typography>
@@ -976,7 +976,7 @@ export default function AdminThongBaoPage() {
 
                   <Stack spacing={0.75} sx={{ flex: 1 }}>
                     <Typography
-                      sx={{ fontWeight: 700, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)" }}
+                      sx={{ fontWeight: 700, fontSize: 13.5, color: CSSVAR.textPrimary }}
                     >
                       Loại thông báo (type)
                     </Typography>
@@ -1003,7 +1003,7 @@ export default function AdminThongBaoPage() {
                 {/* Đường dẫn */}
                 <Stack spacing={0.75}>
                   <Typography
-                    sx={{ fontWeight: 700, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)" }}
+                    sx={{ fontWeight: 700, fontSize: 13.5, color: CSSVAR.textPrimary }}
                   >
                     Đường dẫn liên kết (Link)
                   </Typography>
@@ -1029,7 +1029,7 @@ export default function AdminThongBaoPage() {
                 {/* Người nhận */}
                 <Stack spacing={0.75}>
                   <Typography
-                    sx={{ fontWeight: 700, fontSize: 13.5, color: "var(--ev-text-primary, #1F2937)" }}
+                    sx={{ fontWeight: 700, fontSize: 13.5, color: CSSVAR.textPrimary }}
                   >
                     ID người nhận (idNguoiDung)
                   </Typography>

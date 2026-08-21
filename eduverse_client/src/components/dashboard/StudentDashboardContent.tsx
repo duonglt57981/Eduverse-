@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { BRAND, COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { apiService } from "@/src/services/index";
@@ -50,24 +51,24 @@ import {
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
 const C = {
-  primary: "#8B1313",
-  primaryLight: "#B91C1C",
+  primary: BRAND.main,
+  primaryLight: STATUS.errorDark,
   primaryDark: "#7F1D1D",
-  white: "var(--ev-paper, #FFFFFF)",
-  textDark: "var(--ev-text-primary, #1F2937)",
-  textSecondary: "var(--ev-text-secondary, #4B5563)",
-  gradientAI: "linear-gradient(135deg, #8B1313 0%, #7C3AED 100%)",
+  white: CSSVAR.paper,
+  textDark: CSSVAR.textPrimary,
+  textSecondary: CSSVAR.textSecondary,
+  gradientAI: `linear-gradient(135deg, ${BRAND.main} 0%, ${COLORS.purpleAI} 100%)`,
   gradientTeal: "linear-gradient(135deg, #0D9488 0%, #005F55 100%)",
-  gradientCrimson: "linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)",
-  purpleAI: "#7C3AED",
+  gradientCrimson: COLORS.gradientCrimson,
+  purpleAI: COLORS.purpleAI,
 };
 
 // ─── Level gradient map ───────────────────────────────────────────────────────
 const LEVEL_GRADIENT: Record<string, string> = {
-  "Cơ bản": "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+  "Cơ bản": `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`,
   "Trung cấp": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)",
-  "Nâng cao": "linear-gradient(135deg, #8B1313 0%, #7C3AED 100%)",
-  "Cao cấp": "linear-gradient(135deg, #8B1313 0%, #7C3AED 100%)",
+  "Nâng cao": `linear-gradient(135deg, ${BRAND.main} 0%, ${COLORS.purpleAI} 100%)`,
+  "Cao cấp": `linear-gradient(135deg, ${BRAND.main} 0%, ${COLORS.purpleAI} 100%)`,
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -159,7 +160,7 @@ function fmtDuration(seconds?: number) {
 }
 
 function getGradient(course: KhoaHocDto) {
-  return "#FBFAF9";
+  return CSSVAR.paperAlt;
 }
 
 function isValidImage(url?: string): boolean {
@@ -223,12 +224,12 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
             border: "1px solid rgba(0,0,0,0.06)",
             width: 38,
             height: 38,
-            "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
+            "&:hover": { bgcolor: CSSVAR.paperAlt },
           }}
         >
           <ChevronLeftRounded />
@@ -243,12 +244,12 @@ function CarouselRow({ children }: { children: React.ReactNode }) {
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 10,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
             border: "1px solid rgba(0,0,0,0.06)",
             width: 38,
             height: 38,
-            "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
+            "&:hover": { bgcolor: CSSVAR.paperAlt },
           }}
         >
           <ChevronRightRounded />
@@ -353,7 +354,7 @@ function HoverPanel({
         left: pos.left,
         width: 310,
         zIndex: 1500,
-        bgcolor: "var(--ev-paper, #FFFFFF)",
+        bgcolor: CSSVAR.paper,
         backdropFilter: "none",
         borderRadius: "16px",
         boxShadow: "0 16px 48px rgba(0,0,0,0.18)",
@@ -494,7 +495,7 @@ function HoverPanel({
             sx={{
               fontSize: 18,
               fontWeight: 900,
-              color: isFree ? "#10B981" : C.primary,
+              color: isFree ? STATUS.success : C.primary,
             }}
           >
             {fmtPrice(course.gia ?? 0)}
@@ -527,9 +528,9 @@ function HoverPanel({
                 py: 1.1,
                 fontWeight: 800,
                 fontSize: 13.5,
-                bgcolor: "#10B981",
+                bgcolor: STATUS.success,
                 "&.Mui-disabled": {
-                  bgcolor: "#10B981",
+                  bgcolor: STATUS.success,
                   color: "#FFFFFF",
                   opacity: 0.85,
                 },
@@ -556,7 +557,7 @@ function HoverPanel({
                 boxShadow: "none",
                 "&:hover": {
                   background:
-                    "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
+                    COLORS.gradientCrimsonHover,
                   boxShadow: "none",
                 },
               }}
@@ -573,7 +574,7 @@ function HoverPanel({
             }}
             startIcon={
               isFavorited(course.id) ? (
-                <FavoriteRounded sx={{ color: "#8B1313" }} />
+                <FavoriteRounded sx={{ color: BRAND.main }} />
               ) : (
                 <FavoriteBorderRounded />
               )
@@ -700,7 +701,7 @@ function CourseCard({
             height: 136,
             background: isValidImage(course.hinhAnhKhoaHoc)
               ? `url(${course.hinhAnhKhoaHoc}) center/cover no-repeat`
-              : "#FBFAF9",
+              : CSSVAR.paperAlt,
             position: "relative",
             display: "flex",
             alignItems: "center",
@@ -710,11 +711,11 @@ function CourseCard({
           {!isValidImage(course.hinhAnhKhoaHoc) && (
             <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
               <SchoolRounded
-                sx={{ color: "var(--ev-text-muted, #8A7676)", fontSize: 32 }}
+                sx={{ color: CSSVAR.textMuted, fontSize: 32 }}
               />
               <Typography
                 sx={{
-                  color: "var(--ev-text-muted, #8A7676)",
+                  color: CSSVAR.textMuted,
                   fontSize: 11,
                   fontWeight: 700,
                   mt: 0.75,
@@ -755,20 +756,20 @@ function CourseCard({
               width: 26,
               height: 26,
               bgcolor: "rgba(255, 255, 255, 0.95)",
-              color: favorited ? "#8B1313" : "rgba(31, 41, 55, 0.4)",
+              color: favorited ? BRAND.main : "rgba(31, 41, 55, 0.4)",
               boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
               zIndex: 5,
               transition: "all 150ms ease",
               p: 0,
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 1)",
-                color: "#8B1313",
+                color: BRAND.main,
                 transform: "scale(1.08)",
               },
             }}
           >
             {favorited ? (
-              <FavoriteRounded sx={{ fontSize: 16, color: "#8B1313" }} />
+              <FavoriteRounded sx={{ fontSize: 16, color: BRAND.main }} />
             ) : (
               <FavoriteBorderRounded sx={{ fontSize: 16 }} />
             )}
@@ -782,7 +783,7 @@ function CourseCard({
                 position: "absolute",
                 top: 8,
                 left: 8,
-                bgcolor: "#10B981",
+                bgcolor: STATUS.success,
                 color: "#FFFFFF",
                 fontWeight: 800,
                 fontSize: 10,
@@ -803,7 +804,7 @@ function CourseCard({
                 position: "absolute",
                 bottom: 8,
                 left: 8,
-                bgcolor: (course.gia ?? 0) === 0 ? "#10B981" : "#8B1313",
+                bgcolor: (course.gia ?? 0) === 0 ? STATUS.success : BRAND.main,
                 color: "#FFFFFF",
                 fontWeight: 900,
                 fontSize: 9.5,
@@ -923,7 +924,7 @@ function CourseCard({
                 sx={{
                   fontSize: 14.5,
                   fontWeight: 900,
-                  color: isFree ? "#10B981" : C.primary,
+                  color: isFree ? STATUS.success : C.primary,
                 }}
               >
                 {isFree ? "Miễn phí" : fmtPrice(displayPrice)}
@@ -947,7 +948,7 @@ function CourseCard({
                 spacing={0.3}
                 sx={{ alignItems: "center" }}
               >
-                <StarRounded sx={{ fontSize: 14, color: "#F59E0B" }} />
+                <StarRounded sx={{ fontSize: 14, color: STATUS.warning }} />
                 <Typography
                   sx={{ fontSize: 11.5, fontWeight: 800, color: C.textDark }}
                 >
@@ -1217,7 +1218,7 @@ export default function StudentDashboardContent() {
           bgcolor: "#FFF5F5",
         }}
       >
-        <Typography sx={{ color: "#B91C1C", fontWeight: 700 }}>
+        <Typography sx={{ color: STATUS.errorDark, fontWeight: 700 }}>
           {error ?? "Có lỗi xảy ra khi tải dữ liệu."}
         </Typography>
       </Paper>
@@ -1476,7 +1477,7 @@ export default function StudentDashboardContent() {
                 variant="contained"
                 onClick={() => router.push("/student/explore")}
                 sx={{
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   color: C.primary,
                   fontWeight: 800,
                   borderRadius: "50px",
@@ -1556,7 +1557,7 @@ export default function StudentDashboardContent() {
               <Button
                 variant="contained"
                 sx={{
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   color: "#005F55",
                   fontWeight: 800,
                   borderRadius: "50px",
@@ -1923,7 +1924,7 @@ export default function StudentDashboardContent() {
                   boxShadow: "none",
                   "&:hover": {
                     background:
-                      "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
+                      COLORS.gradientCrimsonHover,
                     boxShadow: "none",
                   },
                 }}
@@ -1976,7 +1977,7 @@ export default function StudentDashboardContent() {
                 boxShadow: "none",
                 "&:hover": {
                   background:
-                    "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
+                    COLORS.gradientCrimsonHover,
                   boxShadow: "none",
                 },
               }}
@@ -2225,7 +2226,7 @@ export default function StudentDashboardContent() {
                     sx={{
                       bgcolor: isActive ? C.primary : "rgba(0,0,0,0.03)",
                       color: isActive
-                        ? "var(--ev-paper, #FFFFFF)"
+                        ? CSSVAR.paper
                         : "rgba(31,41,55,0.65)",
                       fontWeight: 800,
                       fontSize: 13,
@@ -2239,7 +2240,7 @@ export default function StudentDashboardContent() {
                       "&:hover": {
                         bgcolor: isActive ? C.primary : "rgba(141,19,19,0.05)",
                         color: isActive
-                          ? "var(--ev-paper, #FFFFFF)"
+                          ? CSSVAR.paper
                           : C.primary,
                       },
                       transition: "all 150ms ease",
@@ -2413,7 +2414,7 @@ export default function StudentDashboardContent() {
                         spacing={0.5}
                         sx={{ alignItems: "center" }}
                       >
-                        <StarRounded sx={{ color: "#F59E0B", fontSize: 16 }} />
+                        <StarRounded sx={{ color: STATUS.warning, fontSize: 16 }} />
                         <Typography
                           sx={{
                             fontSize: 13,
@@ -2452,7 +2453,7 @@ export default function StudentDashboardContent() {
                       boxShadow: "none",
                       "&:hover": {
                         background:
-                          "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
+                          COLORS.gradientCrimsonHover,
                         boxShadow: "none",
                       },
                     }}
@@ -2549,7 +2550,7 @@ export default function StudentDashboardContent() {
               boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             }}
           >
-            <CheckCircleRounded sx={{ fontSize: 18, color: "#10B981" }} />
+            <CheckCircleRounded sx={{ fontSize: 18, color: STATUS.success }} />
             <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>
               Đã thêm vào giỏ hàng
             </Typography>
