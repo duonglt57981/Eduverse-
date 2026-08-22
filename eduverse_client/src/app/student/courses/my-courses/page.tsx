@@ -434,7 +434,8 @@ const ThumbPlaceholder = ({ title }: { title?: string }) => {
       sx={{
         position: "absolute",
         inset: 0,
-        background: `linear-gradient(135deg, ${bg}, ${alpha(fg, 0.08)})`,
+        // Dùng color-mix() thay vì alpha() vì fg có thể là CSS var(--...)
+        background: `linear-gradient(135deg, ${bg}, color-mix(in srgb, ${fg} 8%, transparent))`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -1001,8 +1002,7 @@ function MyCoursesContent() {
                         borderColor: "rgba(139, 19, 19, 0.3)",
                         "& .play-glass-btn": {
                           transform: "translate(-50%, -50%) scale(1.15)",
-                          background:
-                            `linear-gradient(135deg, ${BRAND.main} 0%, ${STATUS.errorDark} 100%)`,
+                          background: `linear-gradient(135deg, ${BRAND.main} 0%, ${STATUS.errorDark} 100%)`,
                           color: "#ffffff",
                           boxShadow: "0 10px 24px rgba(139,19,19,0.45)",
                         },
@@ -1074,8 +1074,7 @@ function MyCoursesContent() {
                             position: "absolute",
                             bottom: 8,
                             right: 8,
-                            background:
-                              `linear-gradient(135deg, ${BRAND.main} 0%, ${STATUS.errorDark} 100%)`,
+                            background: `linear-gradient(135deg, ${BRAND.main} 0%, ${STATUS.errorDark} 100%)`,
                             color: "#fff",
                             fontWeight: 800,
                             fontSize: "0.72rem",
@@ -1095,8 +1094,7 @@ function MyCoursesContent() {
                             position: "absolute",
                             bottom: 8,
                             right: 8,
-                            background:
-                              `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`,
+                            background: `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`,
                             color: "#fff",
                             fontWeight: 800,
                             fontSize: "0.72rem",

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiService } from ".";
 import {
   KhoaHocKiemDuyetListDto,
@@ -115,7 +116,10 @@ export default class KiemDuyetService {
     } catch (error: any) {
       return {
         status: false,
-        message: error?.response?.data?.message || error?.message || "Không có quyền truy cập",
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Không có quyền truy cập",
         data: null,
       } as any;
     }

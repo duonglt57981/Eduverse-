@@ -225,7 +225,11 @@ function TieuSuToolbar({ editor }: { editor: Editor | null }) {
         </IconButton>
       </Tooltip>
 
-      <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5, borderColor: "divider" }} />
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ mx: 0.5, my: 0.5, borderColor: "divider" }}
+      />
 
       <Tooltip title="Danh sách gạch đầu dòng">
         <IconButton
@@ -255,7 +259,11 @@ function TieuSuToolbar({ editor }: { editor: Editor | null }) {
         </IconButton>
       </Tooltip>
 
-      <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5, borderColor: "divider" }} />
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ mx: 0.5, my: 0.5, borderColor: "divider" }}
+      />
 
       <Tooltip title="Chèn liên kết">
         <IconButton
@@ -286,10 +294,10 @@ export default function AccountSettings() {
 
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyStep, setVerifyStep] = useState<1 | 2>(1);
-  const [verifyOtp, setVerifyOtp] = useState('');
+  const [verifyOtp, setVerifyOtp] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
-  const [verifyError, setVerifyError] = useState('');
-  const [verifyInfo, setVerifyInfo] = useState('');
+  const [verifyError, setVerifyError] = useState("");
+  const [verifyInfo, setVerifyInfo] = useState("");
 
   const [profile, setProfile] = useState<ProfileData>({
     userName: "",
@@ -344,7 +352,10 @@ export default function AccountSettings() {
           phoneNumber: data.phoneNumber || "",
           phoneNumberConfirmed: Boolean(data.phoneNumberConfirmed),
           ngaySinh: data.ngaySinh || "",
-          gioiTinh: data.gioiTinh !== undefined && data.gioiTinh !== null ? data.gioiTinh : 0,
+          gioiTinh:
+            data.gioiTinh !== undefined && data.gioiTinh !== null
+              ? data.gioiTinh
+              : 0,
           diaChi: data.diaChi || "",
           tieuSu: data.tieuSu || "",
           anhDaiDien: data.anhDaiDien || "",
@@ -367,6 +378,7 @@ export default function AccountSettings() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProfile();
   }, [fetchProfile]);
 
@@ -401,37 +413,45 @@ export default function AccountSettings() {
   };
 
   const handleSendPhoneOtp = async () => {
-    setVerifyError('');
-    setVerifyInfo('');
+    setVerifyError("");
+    setVerifyInfo("");
     setVerifyLoading(true);
     try {
-      const res = await apiService.post<{ message?: string }>('/auth/send-phone-otp', {
-        phoneNumber: profile.phoneNumber,
-      });
-      setVerifyInfo(res.message || 'Đã gửi mã xác minh.');
+      const res = await apiService.post<{ message?: string }>(
+        "/auth/send-phone-otp",
+        {
+          phoneNumber: profile.phoneNumber,
+        },
+      );
+      setVerifyInfo(res.message || "Đã gửi mã xác minh.");
       setVerifyStep(2);
     } catch (err: unknown) {
-      setVerifyError(typeof err === 'string' ? err : 'Không gửi được mã xác minh.');
+      setVerifyError(
+        typeof err === "string" ? err : "Không gửi được mã xác minh.",
+      );
     } finally {
       setVerifyLoading(false);
     }
   };
 
   const handleConfirmPhoneOtp = async () => {
-    setVerifyError('');
+    setVerifyError("");
     setVerifyLoading(true);
     try {
-      const res = await apiService.post<{ message?: string }>('/auth/confirm-phone-otp', {
-        phoneNumber: profile.phoneNumber,
-        otp: verifyOtp.trim(),
-      });
+      const res = await apiService.post<{ message?: string }>(
+        "/auth/confirm-phone-otp",
+        {
+          phoneNumber: profile.phoneNumber,
+          otp: verifyOtp.trim(),
+        },
+      );
       setProfile((prev) => ({ ...prev, phoneNumberConfirmed: true }));
-      setSnackbarMessage(res.message || 'Xác minh số điện thoại thành công.');
-      setSnackbarSeverity('success');
+      setSnackbarMessage(res.message || "Xác minh số điện thoại thành công.");
+      setSnackbarSeverity("success");
       setShowSnackbar(true);
       closeVerifyDialog();
     } catch (err: unknown) {
-      setVerifyError(typeof err === 'string' ? err : 'Xác minh thất bại.');
+      setVerifyError(typeof err === "string" ? err : "Xác minh thất bại.");
     } finally {
       setVerifyLoading(false);
     }
@@ -439,17 +459,17 @@ export default function AccountSettings() {
 
   const openVerifyDialog = () => {
     setVerifyStep(1);
-    setVerifyOtp('');
-    setVerifyError('');
-    setVerifyInfo('');
+    setVerifyOtp("");
+    setVerifyError("");
+    setVerifyInfo("");
     setVerifyOpen(true);
   };
 
   const closeVerifyDialog = () => {
     setVerifyOpen(false);
-    setVerifyOtp('');
-    setVerifyError('');
-    setVerifyInfo('');
+    setVerifyOtp("");
+    setVerifyError("");
+    setVerifyInfo("");
   };
 
   const handleChange = (
@@ -518,7 +538,10 @@ export default function AccountSettings() {
       const today = new Date();
       today.setHours(23, 59, 59, 999);
       if (selectedDate > today) {
-        showNotification("Ngày sinh không được là ngày trong tương lai", "error");
+        showNotification(
+          "Ngày sinh không được là ngày trong tương lai",
+          "error",
+        );
         return;
       }
     }
@@ -533,7 +556,9 @@ export default function AccountSettings() {
     setLoading(true);
     try {
       const payload = {
-        userName: tempProfile.isGoogleAccount ? tempProfile.userName : profile.userName,
+        userName: tempProfile.isGoogleAccount
+          ? tempProfile.userName
+          : profile.userName,
         hoTen: tempProfile.hoTen,
         email: profile.email,
         phoneNumber: tempProfile.phoneNumber,
@@ -646,19 +671,23 @@ export default function AccountSettings() {
         onClose={closeVerifyDialog}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: '20px' } } }}
+        slotProps={{ paper: { sx: { borderRadius: "20px" } } }}
       >
         <DialogTitle sx={{ pb: 1 }}>
-          <Typography sx={{ fontSize: 16.5, fontWeight: 900, color: 'text.primary' }}>
+          <Typography
+            sx={{ fontSize: 16.5, fontWeight: 900, color: "text.primary" }}
+          >
             Xác minh số điện thoại
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
-            <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+            <Typography
+              sx={{ fontSize: 13, color: "text.secondary", lineHeight: 1.6 }}
+            >
               {verifyStep === 1
                 ? `Hệ thống sẽ gửi một mã gồm 6 chữ số tới số ${profile.phoneNumber}. Sau khi xác minh, bạn có thể dùng số này để khôi phục mật khẩu.`
-                : 'Nhập mã gồm 6 chữ số vừa nhận được. Mã có hiệu lực trong 5 phút.'}
+                : "Nhập mã gồm 6 chữ số vừa nhận được. Mã có hiệu lực trong 5 phút."}
             </Typography>
 
             {verifyInfo ? (
@@ -678,13 +707,20 @@ export default function AccountSettings() {
                 autoFocus
                 label="Mã xác minh"
                 value={verifyOtp}
-                onChange={(e) => setVerifyOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={(e) =>
+                  setVerifyOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
                 placeholder="000000"
                 slotProps={{
                   htmlInput: {
-                    inputMode: 'numeric',
+                    inputMode: "numeric",
                     maxLength: 6,
-                    style: { letterSpacing: 8, fontWeight: 800, fontSize: 20, textAlign: 'center' },
+                    style: {
+                      letterSpacing: 8,
+                      fontWeight: 800,
+                      fontSize: 20,
+                      textAlign: "center",
+                    },
                   },
                 }}
               />
@@ -694,7 +730,11 @@ export default function AccountSettings() {
         <DialogActions sx={{ p: 2.5 }}>
           <Button
             onClick={closeVerifyDialog}
-            sx={{ color: 'text.secondary', fontWeight: 800, textTransform: 'none' }}
+            sx={{
+              color: "text.secondary",
+              fontWeight: 800,
+              textTransform: "none",
+            }}
           >
             Hủy
           </Button>
@@ -704,9 +744,13 @@ export default function AccountSettings() {
               disableElevation
               disabled={verifyLoading || !profile.phoneNumber}
               onClick={handleSendPhoneOtp}
-              sx={{ textTransform: 'none', fontWeight: 800, borderRadius: '10px' }}
+              sx={{
+                textTransform: "none",
+                fontWeight: 800,
+                borderRadius: "10px",
+              }}
             >
-              {verifyLoading ? 'Đang gửi...' : 'Gửi mã xác minh'}
+              {verifyLoading ? "Đang gửi..." : "Gửi mã xác minh"}
             </Button>
           ) : (
             <Button
@@ -714,9 +758,13 @@ export default function AccountSettings() {
               disableElevation
               disabled={verifyLoading || verifyOtp.length < 6}
               onClick={handleConfirmPhoneOtp}
-              sx={{ textTransform: 'none', fontWeight: 800, borderRadius: '10px' }}
+              sx={{
+                textTransform: "none",
+                fontWeight: 800,
+                borderRadius: "10px",
+              }}
             >
-              {verifyLoading ? 'Đang xác minh...' : 'Xác nhận'}
+              {verifyLoading ? "Đang xác minh..." : "Xác nhận"}
             </Button>
           )}
         </DialogActions>
@@ -807,14 +855,24 @@ export default function AccountSettings() {
               >
                 {profile.hoTen || "Học viên EduVerse"}
               </Typography>
-              <Typography sx={{ color: "text.secondary", fontSize: 14, fontWeight: 700 }}>
-                {profile.roles?.some(r => r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien")
+              <Typography
+                sx={{ color: "text.secondary", fontSize: 14, fontWeight: 700 }}
+              >
+                {profile.roles?.some(
+                  (r) =>
+                    r.toLowerCase() === "personnel" ||
+                    r.toLowerCase() === "nhanvien",
+                )
                   ? "Nhân viên kiểm duyệt"
-                  : profile.roles?.some(r => r.toLowerCase() === "admin")
-                  ? "Quản trị viên"
-                  : profile.roles?.some(r => r.toLowerCase() === "giaovien" || r.toLowerCase() === "instructor")
-                  ? "Giảng viên EduVerse"
-                  : profile.chucVu || "Học viên EduVerse"}
+                  : profile.roles?.some((r) => r.toLowerCase() === "admin")
+                    ? "Quản trị viên"
+                    : profile.roles?.some(
+                          (r) =>
+                            r.toLowerCase() === "giaovien" ||
+                            r.toLowerCase() === "instructor",
+                        )
+                      ? "Giảng viên EduVerse"
+                      : profile.chucVu || "Học viên EduVerse"}
               </Typography>
             </Stack>
 
@@ -976,16 +1034,17 @@ export default function AccountSettings() {
                     !profile.isGoogleAccount
                       ? "Cố định khi đăng ký bằng tài khoản/mật khẩu"
                       : isEditing
-                      ? "Bạn có thể đổi tên đăng nhập (tài khoản Google)"
-                      : ""
+                        ? "Bạn có thể đổi tên đăng nhập (tài khoản Google)"
+                        : ""
                   }
                   slotProps={{
                     input: {
                       sx: {
                         borderRadius: 2.8,
-                        bgcolor: !isEditing || !profile.isGoogleAccount
-                          ? "action.hover"
-                          : "background.paper",
+                        bgcolor:
+                          !isEditing || !profile.isGoogleAccount
+                            ? "action.hover"
+                            : "background.paper",
                         transition: "all 160ms ease",
                       },
                     },
@@ -1062,7 +1121,15 @@ export default function AccountSettings() {
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={0.75}>
-                <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", height: 24 }}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    height: 24,
+                  }}
+                >
                   <Typography
                     sx={{
                       fontSize: 13,
@@ -1082,7 +1149,11 @@ export default function AccountSettings() {
                   {profile.phoneNumber ? (
                     profile.phoneNumberConfirmed ? (
                       <Chip
-                        icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />}
+                        icon={
+                          <VerifiedRounded
+                            sx={{ fontSize: "14px !important" }}
+                          />
+                        }
                         label="Đã xác minh"
                         size="small"
                         sx={{
@@ -1097,7 +1168,11 @@ export default function AccountSettings() {
                       />
                     ) : (
                       <Chip
-                        icon={<ErrorOutlineRounded sx={{ fontSize: "14px !important" }} />}
+                        icon={
+                          <ErrorOutlineRounded
+                            sx={{ fontSize: "14px !important" }}
+                          />
+                        }
                         label="Chưa xác minh"
                         size="small"
                         onClick={openVerifyDialog}
@@ -1118,7 +1193,9 @@ export default function AccountSettings() {
                 <TextField
                   fullWidth
                   name="phoneNumber"
-                  value={isEditing ? tempProfile.phoneNumber : profile.phoneNumber}
+                  value={
+                    isEditing ? tempProfile.phoneNumber : profile.phoneNumber
+                  }
                   onChange={handleChange}
                   disabled={!isEditing}
                   placeholder="Nhập số điện thoại"
@@ -1232,9 +1309,7 @@ export default function AccountSettings() {
                     sx={{
                       height: 46,
                       borderRadius: 2.8,
-                      bgcolor: !isEditing
-                        ? "action.hover"
-                        : "background.paper",
+                      bgcolor: !isEditing ? "action.hover" : "background.paper",
                       "& fieldset": {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
@@ -1248,8 +1323,6 @@ export default function AccountSettings() {
               </Stack>
             </Grid>
 
-
-
             {/* Row 4: Tiểu sử (Chỉ hiển thị cho Giảng viên và Học viên) */}
             {!(
               pathname.startsWith("/admin") ||
@@ -1259,144 +1332,152 @@ export default function AccountSettings() {
               )
             ) && (
               <Grid size={{ xs: 12 }}>
-                  <Stack spacing={0.75}>
-                    <Stack
-                      direction="row"
-                      sx={{ height: 24, justifyContent: "space-between", alignItems: "center" }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: "text.primary",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                        }}
-                      >
-                        <DescriptionRounded
-                          fontSize="inherit"
-                          sx={{ color: "rgba(25,23,28,0.4)" }}
-                        />{" "}
-                        Tiểu sử
-                      </Typography>
-                      {isEditing && (
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={
-                            tieuSuWordCount > 0 && tieuSuWordCount < TIEU_SU_MIN_WORDS
-                              ? `${tieuSuWordCount} / ${TIEU_SU_MAX_WORDS} từ (cần ≥${TIEU_SU_MIN_WORDS})`
-                              : `${tieuSuWordCount} / ${TIEU_SU_MAX_WORDS} từ`
-                          }
-                          sx={{
-                            height: 20,
-                            fontSize: 11,
-                            fontWeight: 700,
-                            borderColor: tieuSuError
-                              ? STATUS.error
-                              : tieuSuWordCount > 0
-                              ? "primary.main"
-                              : "divider",
-                            color: tieuSuError
-                              ? STATUS.error
-                              : tieuSuWordCount > 0
-                              ? "primary.main"
-                              : "text.secondary",
-                            bgcolor: tieuSuError
-                              ? "rgba(220,38,38,0.06)"
-                              : tieuSuWordCount > 0
-                              ? "rgba(139,19,19,0.04)"
-                              : "transparent",
-                          }}
-                        />
-                      )}
-                    </Stack>
-
-                    <Box
+                <Stack spacing={0.75}>
+                  <Stack
+                    direction="row"
+                    sx={{
+                      height: 24,
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography
                       sx={{
-                        borderRadius: 2.8,
-                        border: "1px solid",
-                        borderColor: tieuSuError
-                          ? STATUS.error
-                          : isEditing
-                          ? "primary.main"
-                          : "rgba(17,17,17,0.08)",
-                        bgcolor: !isEditing
-                          ? "action.hover"
-                          : "background.paper",
-                        transition: "all 160ms ease",
-                        overflow: "hidden",
-                        "& .ProseMirror": {
-                          p: 2,
-                          minHeight: 120,
-                          outline: "none",
-                          fontSize: 14,
-                          lineHeight: 1.6,
-                          color: "text.primary",
-                          fontFamily: "inherit",
-                          "& p.is-editor-empty:first-child::before": {
-                            color: "text.secondary",
-                            content: "attr(data-placeholder)",
-                            float: "left",
-                            height: 0,
-                            pointerEvents: "none",
-                            fontStyle: "italic",
-                            opacity: 0.75,
-                          },
-                          "& blockquote": {
-                            borderLeft: "3px solid",
-                            borderColor: "primary.main",
-                            pl: 1.5,
-                            ml: 0,
-                            my: 1,
-                            fontStyle: "italic",
-                            color: "text.secondary",
-                            bgcolor: "rgba(139,19,19,0.03)",
-                            py: 1,
-                            borderRadius: "0 8px 8px 0",
-                          },
-                          "& ul, & ol": { pl: 2.5, my: 0.5 },
-                          "& a": {
-                            color: "primary.main",
-                            fontWeight: 700,
-                            textDecoration: "underline",
-                          },
-                        },
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "text.primary",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
                       }}
                     >
-                      {isEditing && <TieuSuToolbar editor={tieuSuEditor} />}
-                      {isEditing ? (
-                        <EditorContent editor={tieuSuEditor} />
-                      ) : (
-                        <Box
-                          sx={{
-                            p: 2,
-                            minHeight: 46,
-                            fontSize: 14,
-                            lineHeight: 1.6,
-                            color: "rgba(25, 23, 28, 0.45)", // Style xám mờ đồng bộ với các field disabled khác
-                            "& p": { m: 0 },
-                          }}
-                          dangerouslySetInnerHTML={{
-                            __html:
-                              sanitizeHtml(profile.tieuSu) ||
-                              "<p style='font-style: italic;'>Chưa có tiểu sử</p>",
-                          }}
-                        />
-                      )}
-                    </Box>
-
-                    {tieuSuError && (
-                      <Typography
-                        variant="caption"
-                        sx={{ color: STATUS.error, fontSize: 11.5, fontWeight: 700, pl: 0.5 }}
-                      >
-                        {tieuSuError}
-                      </Typography>
+                      <DescriptionRounded
+                        fontSize="inherit"
+                        sx={{ color: "rgba(25,23,28,0.4)" }}
+                      />{" "}
+                      Tiểu sử
+                    </Typography>
+                    {isEditing && (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={
+                          tieuSuWordCount > 0 &&
+                          tieuSuWordCount < TIEU_SU_MIN_WORDS
+                            ? `${tieuSuWordCount} / ${TIEU_SU_MAX_WORDS} từ (cần ≥${TIEU_SU_MIN_WORDS})`
+                            : `${tieuSuWordCount} / ${TIEU_SU_MAX_WORDS} từ`
+                        }
+                        sx={{
+                          height: 20,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          borderColor: tieuSuError
+                            ? STATUS.error
+                            : tieuSuWordCount > 0
+                              ? "primary.main"
+                              : "divider",
+                          color: tieuSuError
+                            ? STATUS.error
+                            : tieuSuWordCount > 0
+                              ? "primary.main"
+                              : "text.secondary",
+                          bgcolor: tieuSuError
+                            ? "rgba(220,38,38,0.06)"
+                            : tieuSuWordCount > 0
+                              ? "rgba(139,19,19,0.04)"
+                              : "transparent",
+                        }}
+                      />
                     )}
                   </Stack>
-                </Grid>
+
+                  <Box
+                    sx={{
+                      borderRadius: 2.8,
+                      border: "1px solid",
+                      borderColor: tieuSuError
+                        ? STATUS.error
+                        : isEditing
+                          ? "primary.main"
+                          : "rgba(17,17,17,0.08)",
+                      bgcolor: !isEditing ? "action.hover" : "background.paper",
+                      transition: "all 160ms ease",
+                      overflow: "hidden",
+                      "& .ProseMirror": {
+                        p: 2,
+                        minHeight: 120,
+                        outline: "none",
+                        fontSize: 14,
+                        lineHeight: 1.6,
+                        color: "text.primary",
+                        fontFamily: "inherit",
+                        "& p.is-editor-empty:first-child::before": {
+                          color: "text.secondary",
+                          content: "attr(data-placeholder)",
+                          float: "left",
+                          height: 0,
+                          pointerEvents: "none",
+                          fontStyle: "italic",
+                          opacity: 0.75,
+                        },
+                        "& blockquote": {
+                          borderLeft: "3px solid",
+                          borderColor: "primary.main",
+                          pl: 1.5,
+                          ml: 0,
+                          my: 1,
+                          fontStyle: "italic",
+                          color: "text.secondary",
+                          bgcolor: "rgba(139,19,19,0.03)",
+                          py: 1,
+                          borderRadius: "0 8px 8px 0",
+                        },
+                        "& ul, & ol": { pl: 2.5, my: 0.5 },
+                        "& a": {
+                          color: "primary.main",
+                          fontWeight: 700,
+                          textDecoration: "underline",
+                        },
+                      },
+                    }}
+                  >
+                    {isEditing && <TieuSuToolbar editor={tieuSuEditor} />}
+                    {isEditing ? (
+                      <EditorContent editor={tieuSuEditor} />
+                    ) : (
+                      <Box
+                        sx={{
+                          p: 2,
+                          minHeight: 46,
+                          fontSize: 14,
+                          lineHeight: 1.6,
+                          color: "rgba(25, 23, 28, 0.45)", // Style xám mờ đồng bộ với các field disabled khác
+                          "& p": { m: 0 },
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            sanitizeHtml(profile.tieuSu) ||
+                            "<p style='font-style: italic;'>Chưa có tiểu sử</p>",
+                        }}
+                      />
+                    )}
+                  </Box>
+
+                  {tieuSuError && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: STATUS.error,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        pl: 0.5,
+                      }}
+                    >
+                      {tieuSuError}
+                    </Typography>
+                  )}
+                </Stack>
+              </Grid>
             )}
           </Grid>
         </CardContent>
