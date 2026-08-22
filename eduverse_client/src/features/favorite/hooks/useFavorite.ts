@@ -30,13 +30,9 @@ export function useFavorite() {
     return favorites.some((item) => item.khoaHocId === courseId);
   };
 
-  const addFavorite = async (courseId: string, courseTitle: string) => {
+  const addFavorite = async (courseId: string) => {
     try {
       await storeAddFavorite(courseId);
-      Toast.fire({
-        icon: "success",
-        title: `Đã thêm "${courseTitle}" vào yêu thích`,
-      });
     } catch (error: any) {
       Toast.fire({
         icon: "error",
@@ -70,10 +66,6 @@ export function useFavorite() {
 
     try {
       await storeRemoveFavorite(courseId);
-      Toast.fire({
-        icon: "success",
-        title: `Đã xóa "${courseTitle}" khỏi danh sách yêu thích`,
-      });
     } catch (error: any) {
       Toast.fire({
         icon: "error",
@@ -88,7 +80,7 @@ export function useFavorite() {
       // Toggle from courses page directly removes it without popup
       await removeFavorite(courseId, courseTitle, false);
     } else {
-      await addFavorite(courseId, courseTitle);
+      await addFavorite(courseId);
     }
   };
 

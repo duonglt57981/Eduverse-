@@ -40,14 +40,13 @@ import {
   AutoAwesomeRounded,
   QuizRounded,
   ShoppingCartRounded,
-  FavoriteBorderRounded,
-  FavoriteRounded,
   CheckCircleRounded,
   AccessTimeRounded,
   MenuBookRounded,
   ArrowForwardRounded,
   WorkspacePremiumRounded,
 } from "@mui/icons-material";
+import FavoriteHeartIcon from "@/src/features/favorite/components/FavoriteHeartIcon";
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
 const C = {
@@ -579,11 +578,11 @@ function HoverPanel({
               toggleFavorite(course.id, course.tieuDe || course.title || "");
             }}
             startIcon={
-              isFavorited(course.id) ? (
-                <FavoriteRounded sx={{ color: BRAND.main }} />
-              ) : (
-                <FavoriteBorderRounded />
-              )
+              <FavoriteHeartIcon
+                active={isFavorited(course.id)}
+                color={BRAND.main}
+                size={24}
+              />
             }
             sx={{
               borderRadius: "12px",
@@ -750,6 +749,8 @@ function CourseCard({
             />
           )}
           <IconButton
+            aria-label={favorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+            aria-pressed={favorited}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
@@ -774,11 +775,7 @@ function CourseCard({
               },
             }}
           >
-            {favorited ? (
-              <FavoriteRounded sx={{ fontSize: 16, color: BRAND.main }} />
-            ) : (
-              <FavoriteBorderRounded sx={{ fontSize: 16 }} />
-            )}
+            <FavoriteHeartIcon active={favorited} color={BRAND.main} />
           </IconButton>
           {course.daDangKy && (
             <Chip

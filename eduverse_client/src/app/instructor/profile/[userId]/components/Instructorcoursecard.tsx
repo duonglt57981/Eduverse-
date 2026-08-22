@@ -17,13 +17,12 @@ import {
 import {
   StarRounded,
   PeopleAltRounded,
-  FavoriteBorderRounded,
-  FavoriteRounded,
   PlayArrowRounded,
   SchoolRounded,
 } from "@mui/icons-material";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
+import FavoriteHeartIcon from "@/src/features/favorite/components/FavoriteHeartIcon";
 import {
   formatGiaTien,
   formatThoiLuong,
@@ -176,6 +175,8 @@ export default function InstructorCourseCard({
 
         {/* Heart Icon Button - Top Right */}
         <IconButton
+          aria-label={favorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+          aria-pressed={favorited}
           onClick={(e) => {
             e.stopPropagation();
             toggleFavorite(khoaHoc.id, khoaHoc.tieuDe || "");
@@ -199,11 +200,7 @@ export default function InstructorCourseCard({
             },
           }}
         >
-          {favorited ? (
-            <FavoriteRounded sx={{ fontSize: 16, color: BRAND.main }} />
-          ) : (
-            <FavoriteBorderRounded sx={{ fontSize: 16 }} />
-          )}
+          <FavoriteHeartIcon active={favorited} color={BRAND.main} />
         </IconButton>
 
         {/* Free Badge - Bottom Left */}

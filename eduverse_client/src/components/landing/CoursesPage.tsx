@@ -7,8 +7,6 @@ import KhoaHocService from "@/src/services/KhoaHocService";
 import { danhMucService } from "@/src/services/danhmucService";
 import {
   ArrowForwardRounded,
-  FavoriteBorderRounded,
-  FavoriteRounded,
   QueryStatsRounded,
   SchoolRounded,
   SearchRounded,
@@ -38,6 +36,7 @@ import { useDispatch } from "@/src/store/hook";
 import { useSelector } from "@/src/store/hook";
 import { themVaoGioHang } from "@/src/store/gioHang/GioHangSlice";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
+import FavoriteHeartIcon from "@/src/features/favorite/components/FavoriteHeartIcon";
 import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -212,6 +211,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
 
         {/* Favorite icon */}
         <IconButton
+          aria-pressed={favorited}
           aria-label={
             favorited
               ? "Bỏ khỏi danh sách yêu thích"
@@ -248,11 +248,10 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             },
           }}
         >
-          {favorited ? (
-            <FavoriteRounded sx={{ fontSize: 16 }} />
-          ) : (
-            <FavoriteBorderRounded sx={{ fontSize: 16 }} />
-          )}
+          <FavoriteHeartIcon
+            active={favorited}
+            color={BRAND_COLORS.primary}
+          />
         </IconButton>
       </Box>
 
