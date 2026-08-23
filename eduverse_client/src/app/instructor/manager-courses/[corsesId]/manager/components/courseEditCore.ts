@@ -33,9 +33,19 @@ export type TrangThaiKhoaHoc =
   | "ChoDuyet"
   | "DangDuyet"
   | "DaDuyet"
-  | "TuChoi";
+  | "TuChoi"
+  | "XemXet";
 
-export function thongTinTrangThai(trangThai: TrangThaiKhoaHoc): {
+export function chuanHoaTrangThaiKhoaHoc(
+  trangThai?: string | null,
+): TrangThaiKhoaHoc {
+  if (!trangThai) return "DangSua";
+  if (trangThai === "XemXet" || trangThai.toLowerCase() === "xemxet")
+    return "TuChoi";
+  return (trangThai as TrangThaiKhoaHoc) || "DangSua";
+}
+
+export function thongTinTrangThai(trangThai: TrangThaiKhoaHoc | string): {
   nhan: string;
   mau: "default" | "warning" | "success" | "error" | "info";
 } {
@@ -50,6 +60,8 @@ export function thongTinTrangThai(trangThai: TrangThaiKhoaHoc): {
       return { nhan: "Đã duyệt", mau: "success" };
     case "TuChoi":
       return { nhan: "Từ chối", mau: "error" };
+    case "XemXet":
+      return { nhan: "Vi phạm", mau: "error" };
     default:
       return { nhan: trangThai, mau: "default" };
   }

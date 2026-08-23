@@ -887,7 +887,7 @@ namespace Eduverse.Service.KhoaHocService
         var result = await GetAll()
             .AsNoTracking()
             .Where(x => x.Id == idKhoaHoc
-                    && (x.TrangThaiPheDuyet == "DaDuyet")
+                    && (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi" || x.TrangThaiPheDuyet == "XemXet")
                     && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
                     && x.IsBanHienTai == true)
                         .Select(x => new KhoaHocDto
@@ -948,8 +948,8 @@ namespace Eduverse.Service.KhoaHocService
                     var list = await _phanRepository.GetAll()
                         .AsNoTracking()
                         .Where(x => x.IdKhoaHoc == idKhoaHoc
-                             && x.TrangThai == "HoatDong"
-                             && x.TrangThaiPheDuyet == "DaDuyet"
+                             && (x.TrangThaiPheDuyet == "DaDuyet")
+                             && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
                              && x.IsDeleted == false  // ← thay thế
                              && x.IsBanHienTai == true)
                         .OrderBy(x => x.ThuTuSapXep)
@@ -988,8 +988,8 @@ namespace Eduverse.Service.KhoaHocService
                     .AsNoTracking()
                     .Where(x => phanIds.Contains(x.IdPhan)
                              && x.IsDeleted == false  // ← thay thế
-                             && x.TrangThai == "HoatDong"
-                             && x.TrangThaiPheDuyet == "DaDuyet"
+                             && (x.TrangThaiPheDuyet == "DaDuyet")
+                            && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong")
                              && x.IsBanHienTai == true)
                     .OrderBy(x => x.ThuTuSapXep)
                     .Select(x => new BaiGiangDto
@@ -1043,7 +1043,8 @@ namespace Eduverse.Service.KhoaHocService
                     .AsNoTracking()
                     .Where(x => phanIds.Contains(x.IdPhan.Value)
                              && !x.IsDeleted
-                             && x.TrangThai == "HoatDong")
+                             && (x.TrangThaiPheDuyet == "DaDuyet")
+                            && (x.TrangThai == "HoatDong" || x.TrangThai == "NgungHoatDong"))
                     .Select(x => new
                     {
                         x.Id,
@@ -1669,10 +1670,10 @@ namespace Eduverse.Service.KhoaHocService
 
             if (targetVersion.TrangThaiPheDuyet == "DangSua")
             {
-                LyDoKhoaHoc = await _lichSuKiemDuyetKhoaHocService.GetQueryable().Where(x => x.IdDoiTuong == targetVersion.IdLyDoTuChoi).FirstOrDefaultAsync();
-            }else if (targetVersion.TrangThaiPheDuyet == "TuChoi")
+                LyDoKhoaHoc = await _lichSuKiemDuyetKhoaHocService.GetQueryable().OrderByDescending(x => x.CreatedDate).Where(x => x.IdDoiTuong == targetVersion.IdLyDoTuChoi).FirstOrDefaultAsync();
+            }else if (targetVersion.TrangThaiPheDuyet == "TuChoi" || targetVersion.TrangThaiPheDuyet == "XemXet")
             {
-                LyDoKhoaHoc = await _lichSuKiemDuyetKhoaHocService.GetQueryable().Where(x => x.IdDoiTuong == targetVersion.Id).FirstOrDefaultAsync();
+                LyDoKhoaHoc = await _lichSuKiemDuyetKhoaHocService.GetQueryable().OrderByDescending(x => x.CreatedDate).Where(x => x.IdDoiTuong == targetVersion.Id).FirstOrDefaultAsync();
             }
 
             // 2. Lấy toàn bộ cây dữ liệu (không dùng khóa ngoại, so khớp thủ công qua Id list)
@@ -1700,14 +1701,16 @@ namespace Eduverse.Service.KhoaHocService
 
             var lyDoBaiGiangs = new List<LyDoTuChoi>();
 
-            if (targetVersion.TrangThaiPheDuyet == "TuChoi")
+            if (targetVersion.TrangThaiPheDuyet == "TuChoi" || targetVersion.TrangThaiPheDuyet == "XemXet")
             {
                 lyDoBaiGiangs = await _lyDoTuChoiRepository.GetQueryable()
+                   .OrderByDescending(x => x.CreatedDate)
                    .Where(x => ids.Contains(x.IdDoiTuong ?? Guid.Empty))
                    .ToListAsync();
-            }else if (targetVersion.TrangThaiPheDuyet == "DangSua")
+            }else if (targetVersion.TrangThaiPheDuyet == "DangSua" || targetVersion.TrangThaiPheDuyet == "XemXet")
             {
                 lyDoBaiGiangs = await _lyDoTuChoiRepository.GetQueryable()
+                    .OrderByDescending(x => x.CreatedDate)
                    .Where(x => idLyDos.Contains(x.IdDoiTuong ?? Guid.Empty))
                    .ToListAsync();
             }
@@ -1733,15 +1736,17 @@ namespace Eduverse.Service.KhoaHocService
 
             var lyDoBaiKiemTras = new List<LyDoTuChoi>();
 
-            if (targetVersion.TrangThaiPheDuyet == "TuChoi")
+            if (targetVersion.TrangThaiPheDuyet == "TuChoi" || targetVersion.TrangThaiPheDuyet == "XemXet")
             {
                 lyDoBaiKiemTras = await _lyDoTuChoiRepository.GetQueryable()
+                    .OrderByDescending(x => x.CreatedDate)
                    .Where(x => idbkts.Contains(x.IdDoiTuong ?? Guid.Empty))
                    .ToListAsync();
             }
-            else if (targetVersion.TrangThaiPheDuyet == "DangSua")
+            else if (targetVersion.TrangThaiPheDuyet == "DangSua" || targetVersion.TrangThaiPheDuyet == "XemXet")
             {
                 lyDoBaiKiemTras = await _lyDoTuChoiRepository.GetQueryable()
+                    .OrderByDescending(x => x.CreatedDate)
                    .Where(x => idLyDobkts.Contains(x.IdDoiTuong ?? Guid.Empty))
                    .ToListAsync();
             }
@@ -1808,9 +1813,9 @@ namespace Eduverse.Service.KhoaHocService
                     CreatedBy = b.CreatedBy,
                     UpdatedBy = b.UpdatedBy,
                     UpdatedDate = b.UpdatedDate,
-                    LyDoTuChois = (targetVersion.TrangThaiPheDuyet == "TuChoi"
-                        ? lyDoBaiGiangLookup[b.Id]
-                        : lyDoBaiGiangLookup[b.IdLyDo])
+                    LyDoTuChois = (targetVersion.TrangThaiPheDuyet == "DangSua"
+                        ? lyDoBaiGiangLookup[b.IdLyDo]
+                        : lyDoBaiGiangLookup[b.Id])
                         .Select(l => new LyDoTuChoi { Id = l.Id, LyDo = l.LyDo })
                         .FirstOrDefault(),
 
@@ -1847,9 +1852,9 @@ namespace Eduverse.Service.KhoaHocService
                     CreatedBy = bkt.CreatedBy,
                     UpdatedBy = bkt.UpdatedBy,
                     UpdatedDate = bkt.UpdatedDate,
-                    LyDoTuChois = (targetVersion.TrangThaiPheDuyet == "TuChoi"
-                        ? lyDoBaiKiemTraLookup[bkt.Id]
-                        : lyDoBaiKiemTraLookup[bkt.IdLyDo])
+                    LyDoTuChois = (targetVersion.TrangThaiPheDuyet == "DangSua"
+                        ? lyDoBaiKiemTraLookup[bkt.IdLyDo]
+                        : lyDoBaiKiemTraLookup[bkt.Id])
                         .Select(l => new LyDoTuChoiDto { Id = l.Id, LyDo = l.LyDo })
                         .FirstOrDefault(),
                     DanhSachCauHois = cauHoiLookup[bkt.Id].Select(c => new CauHoiDto
@@ -2336,7 +2341,7 @@ namespace Eduverse.Service.KhoaHocService
                 try
                 {
                     KhoaHoc khoaHocDraftEntity;
-                    if (KhoaHocRoot.TrangThaiPheDuyet == "DaDuyet")
+                    if (KhoaHocRoot.TrangThaiPheDuyet == "DaDuyet" || KhoaHocRoot.TrangThaiPheDuyet == "XemXet")
                     {
                         khoaHocDraftEntity = new KhoaHoc
                         {

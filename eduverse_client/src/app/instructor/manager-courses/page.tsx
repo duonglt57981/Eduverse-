@@ -48,6 +48,7 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import UndoIcon from "@mui/icons-material/Undo";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import AuthGuard from "@/src/components/AuthGuard";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType, KhoaHocManagerSearch } from "@/src/types/khoaHoc/Dto/dto";
@@ -83,6 +84,8 @@ function thongTinTrangThaiPheDuyet(trangThai?: string): {
   switch (trangThai) {
     case "ChoDuyet":
       return { nhan: "Chờ duyệt", mau: "#F59E0B", nen: "#FEF3C7" };
+    case "XemXet":
+      return { nhan: "Xem xét", mau: "#0891B2", nen: "#CFFAFE" };
     case "DaDuyet":
       return { nhan: "Đã duyệt", mau: "#10B981", nen: "#E6F4EA" };
     case "DangDuyet":
@@ -164,6 +167,7 @@ type KhoaThongKe =
   | "tong"
   | "daDuyet"
   | "choDuyet"
+  | "xemXet"
   | "dangDuyet"
   | "tuChoi"
   | "dangSua";
@@ -203,6 +207,14 @@ const CAU_HINH_TRANG_THAI: CauHinhTrangThai[] = [
     nen: "#FEF3C7",
   },
   {
+    giaTri: "XemXet",
+    khoaThongKe: "xemXet",
+    nhan: "Xem xét",
+    icon: <VisibilityOutlinedIcon fontSize="small" />,
+    mau: "#0891B2",
+    nen: "#CFFAFE",
+  },
+  {
     giaTri: "DangDuyet",
     khoaThongKe: "dangDuyet",
     nhan: "Đang duyệt",
@@ -232,6 +244,7 @@ interface ThongKeState {
   tong: number;
   daDuyet: number;
   choDuyet: number;
+  xemXet: number;
   dangDuyet: number;
   tuChoi: number;
   dangSua: number;
@@ -353,6 +366,7 @@ function KhoaHocContent() {
     tong: 0,
     daDuyet: 0,
     choDuyet: 0,
+    xemXet: 0,
     dangDuyet: 0,
     tuChoi: 0,
     dangSua: 0,
@@ -413,6 +427,9 @@ function KhoaHocContent() {
             ).length,
             choDuyet: items.filter(
               (x: KhoaHocType) => x.trangThaiPheDuyet === "ChoDuyet",
+            ).length,
+            xemXet: items.filter(
+              (x: KhoaHocType) => x.trangThaiPheDuyet === "XemXet",
             ).length,
             dangDuyet: items.filter(
               (x: KhoaHocType) => x.trangThaiPheDuyet === "DangDuyet",
@@ -588,6 +605,7 @@ function KhoaHocContent() {
         showEdit = true;
         break;
       case "ChoDuyet":
+      case "XemXet":
       case "DangDuyet":
         showEdit = false;
         break;
@@ -644,7 +662,8 @@ function KhoaHocContent() {
         await fetchThongKe(true);
       } else {
         setThongBaoLoiThaoTac(
-          response?.message || "Không thể hủy duyệt khóa học. Vui lòng thử lại.",
+          response?.message ||
+            "Không thể hủy duyệt khóa học. Vui lòng thử lại.",
         );
       }
     } catch (error) {

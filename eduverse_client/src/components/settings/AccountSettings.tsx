@@ -52,6 +52,8 @@ import {
   FormatQuoteRounded,
   WcRounded,
   BadgeRounded,
+  ExpandMoreRounded,
+  ExpandLessRounded,
 } from "@mui/icons-material";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -113,10 +115,10 @@ function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html || "", SANITIZE_CONFIG);
 }
 
-const TIEU_SU_MIN_WORDS = 50;
-const TIEU_SU_MAX_WORDS = 1500;
+const TIEU_SU_MIN_CHARS = 200;
+const TIEU_SU_MAX_CHARS = 9999;
 
-// Lấy text thuần từ HTML để đếm số từ (bỏ thẻ HTML, khoảng trắng thừa)
+// Lấy text thuần từ HTML để đếm số ký tự (bỏ thẻ HTML)
 function getPlainTextFromHtml(html: string) {
   if (typeof window === "undefined" || !html) return "";
   const el = document.createElement("div");
@@ -124,22 +126,21 @@ function getPlainTextFromHtml(html: string) {
   return (el.textContent || el.innerText || "").trim();
 }
 
-function countWords(html: string) {
+function countChars(html: string) {
   const plain = getPlainTextFromHtml(html);
-  if (!plain) return 0;
-  return plain.split(/\s+/).filter(Boolean).length;
+  return plain.length;
 }
 
-// Tiểu sử không bắt buộc, nhưng nếu đã nhập thì phải từ 50 đến 1500 từ.
+// Tiểu sử không bắt buộc, nhưng nếu đã nhập thì phải từ 200 đến 9999 ký tự (không tính thẻ HTML).
 // Trả về null nếu hợp lệ, ngược lại trả về thông báo lỗi.
 function validateTieuSu(html: string): string | null {
-  const wordCount = countWords(html);
-  if (wordCount === 0) return null; // để trống -> hợp lệ
-  if (wordCount < TIEU_SU_MIN_WORDS) {
-    return `Tiểu sử cần ít nhất ${TIEU_SU_MIN_WORDS} từ (hiện tại: ${wordCount} từ)`;
+  const charCount = countChars(html);
+  if (charCount === 0) return null; // để trống -> hợp lệ
+  if (charCount < TIEU_SU_MIN_CHARS) {
+    return `Tiểu sử cần tối thiểu ${TIEU_SU_MIN_CHARS} ký tự (hiện tại: ${charCount}/${TIEU_SU_MAX_CHARS} ký tự)`;
   }
-  if (wordCount > TIEU_SU_MAX_WORDS) {
-    return `Tiểu sử tối đa ${TIEU_SU_MAX_WORDS} từ (hiện tại: ${wordCount} từ)`;
+  if (charCount > TIEU_SU_MAX_CHARS) {
+    return `Tiểu sử tối đa ${TIEU_SU_MAX_CHARS} ký tự (hiện tại: ${charCount}/${TIEU_SU_MAX_CHARS} ký tự)`;
   }
   return null;
 }
@@ -283,7 +284,8 @@ export default function AccountSettings() {
 
   const [tempProfile, setTempProfile] = useState<ProfileData>({ ...profile });
   const [tieuSuError, setTieuSuError] = useState<string | null>(null);
-  const [tieuSuWordCount, setTieuSuWordCount] = useState(0);
+  const [tieuSuCharCount, setTieuSuCharCount] = useState(0);
+  const [tieuSuExpanded, setTieuSuExpanded] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   // Tiptap editor cho trường "Tiểu sử" (nội dung HTML)
@@ -306,7 +308,7 @@ export default function AccountSettings() {
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       setTempProfile((prev) => ({ ...prev, tieuSu: html }));
-      setTieuSuWordCount(countWords(html));
+      setTieuSuCharCount(countChars(html));
       setTieuSuError(validateTieuSu(html));
     },
   });
@@ -341,9 +343,8 @@ export default function AccountSettings() {
         };
         setProfile(profileData);
         setTempProfile(profileData);
-        // Đồng bộ số từ / lỗi validate cho Tiểu sử ngay khi dữ liệu vừa tải xong,
-        // để nếu người dùng bấm "Chỉnh sửa" ngay sau đó, state đã sẵn sàng chính xác.
-        setTieuSuWordCount(countWords(profileData.tieuSu));
+        // Đồng bộ số ký tự / lỗi validate cho Tiểu sử ngay khi dữ liệu vừa tải xong
+        setTieuSuCharCount(countChars(profileData.tieuSu));
         setTieuSuError(null);
         setIsFirstLoad(false);
       }
@@ -364,8 +365,6 @@ export default function AccountSettings() {
 
   // Đồng bộ nội dung editor (hệ thống ngoài React) mỗi khi profile được nạp/lưu.
   // Effect này CHỈ đồng bộ Tiptap editor, không setState nào khác được gọi ở đây
-  // (word count / error đã được cập nhật sẵn ở nơi profile thực sự thay đổi:
-  // fetchProfile khi tải dữ liệu, và onUpdate/handleEditToggle khi chỉnh sửa/hủy).
   useEffect(() => {
     if (!tieuSuEditor || isFirstLoad) return;
     if (!isEditing) {
@@ -393,7 +392,7 @@ export default function AccountSettings() {
         emitUpdate: false,
       });
     }
-    setTieuSuWordCount(countWords(profile.tieuSu || ""));
+    setTieuSuCharCount(countChars(profile.tieuSu || ""));
     setTieuSuError(null);
     setIsEditing(!isEditing);
   };
@@ -1210,6 +1209,225 @@ export default function AccountSettings() {
                     <MenuItem value={3}>Khác</MenuItem>
                   </Select>
                 </FormControl>
+              </Stack>
+            </Grid>
+
+            {/* Row 4: Địa chỉ */}
+            <Grid size={{ xs: 12 }}>
+              <Stack spacing={0.75}>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "text.primary",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    height: 24,
+                  }}
+                >
+                  <LocationOnRounded
+                    fontSize="inherit"
+                    sx={{ color: "rgba(25,23,28,0.4)" }}
+                  />{" "}
+                  Địa chỉ
+                </Typography>
+                <TextField
+                  fullWidth
+                  name="diaChi"
+                  value={isEditing ? tempProfile.diaChi : profile.diaChi}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  placeholder="Nhập địa chỉ cư trú"
+                  slotProps={{
+                    input: {
+                      sx: {
+                        borderRadius: 2.8,
+                        bgcolor: !isEditing
+                          ? "action.hover"
+                          : "background.paper",
+                        transition: "all 160ms ease",
+                      },
+                    },
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: 46,
+                      borderRadius: 2.8,
+                      "& fieldset": {
+                        borderColor: "rgba(17,17,17,0.08)",
+                      },
+                    },
+                  }}
+                />
+              </Stack>
+            </Grid>
+
+            {/* Row 5: Tiểu sử (HTML Editor) */}
+            <Grid size={{ xs: 12 }}>
+              <Stack spacing={0.75}>
+                <Stack
+                  direction="row"
+                  sx={{
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
+                    height: 24,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: "text.primary",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <DescriptionRounded
+                      fontSize="inherit"
+                      sx={{ color: "rgba(25,23,28,0.4)" }}
+                    />{" "}
+                    Tiểu sử
+                  </Typography>
+
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                    {isEditing ? (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: tieuSuError
+                            ? "error.main"
+                            : tieuSuCharCount > 0 && tieuSuCharCount < TIEU_SU_MIN_CHARS
+                            ? "warning.main"
+                            : "text.secondary",
+                          fontWeight: tieuSuError ? 600 : 500,
+                        }}
+                      >
+                        {tieuSuCharCount}/{TIEU_SU_MAX_CHARS} ký tự (tối thiểu {TIEU_SU_MIN_CHARS} khi nhập)
+                        {tieuSuError && ` — ${tieuSuError}`}
+                      </Typography>
+                    ) : (
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        {tieuSuCharCount} ký tự
+                      </Typography>
+                    )}
+
+                    {(tieuSuCharCount > 150 || isEditing) && (
+                      <Button
+                        size="small"
+                        onClick={() => setTieuSuExpanded((prev) => !prev)}
+                        endIcon={
+                          tieuSuExpanded ? (
+                            <ExpandLessRounded sx={{ fontSize: 16 }} />
+                          ) : (
+                            <ExpandMoreRounded sx={{ fontSize: 16 }} />
+                          )
+                        }
+                        sx={{
+                          p: 0,
+                          minWidth: 0,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          textTransform: "none",
+                          color: "primary.main",
+                          "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+                        }}
+                      >
+                        {tieuSuExpanded ? "Thu gọn" : "Mở rộng"}
+                      </Button>
+                    )}
+                  </Stack>
+                </Stack>
+
+                <Box
+                  sx={{
+                    position: "relative",
+                    border: "1px solid",
+                    borderColor: tieuSuError
+                      ? "error.main"
+                      : isEditing
+                      ? "primary.main"
+                      : "rgba(17,17,17,0.08)",
+                    borderRadius: 2.8,
+                    bgcolor: !isEditing ? "action.hover" : "background.paper",
+                    overflow: "hidden",
+                    maxHeight: !tieuSuExpanded && !isEditing ? 150 : !tieuSuExpanded && isEditing ? 260 : "none",
+                    transition: "max-height 250ms ease, border-color 160ms ease",
+                    "& .ProseMirror": {
+                      minHeight: 120,
+                      p: 2,
+                      outline: "none",
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                      color: "text.primary",
+                      fontFamily: "inherit",
+                      "& p": { m: 0, mb: 1 },
+                      "& p:last-child": { mb: 0 },
+                      "& p.is-editor-empty:first-child::before": {
+                        content: 'attr(data-placeholder)',
+                        float: "left",
+                        color: "text.disabled",
+                        pointerEvents: "none",
+                        height: 0,
+                      },
+                      "& ul, & ol": { pl: 2.5, m: 0, mb: 1 },
+                      "& blockquote": {
+                        borderLeft: "3px solid",
+                        borderColor: "primary.main",
+                        pl: 1.5,
+                        py: 0.5,
+                        m: 0,
+                        mb: 1,
+                        color: "text.secondary",
+                        fontStyle: "italic",
+                      },
+                      "& a": {
+                        color: "primary.main",
+                        textDecoration: "underline",
+                      },
+                    },
+                  }}
+                >
+                  {isEditing && <TieuSuToolbar editor={tieuSuEditor} />}
+                  <EditorContent editor={tieuSuEditor} />
+
+                  {!tieuSuExpanded && !isEditing && tieuSuCharCount > 150 && (
+                    <Box
+                      onClick={() => setTieuSuExpanded(true)}
+                      sx={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 48,
+                        background: "linear-gradient(to top, rgba(250,248,246,0.95), transparent)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "flex-end",
+                        justifyContent: "center",
+                        pb: 0.5,
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 700,
+                          color: "primary.main",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        Xem thêm <ExpandMoreRounded fontSize="small" />
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
               </Stack>
             </Grid>
 

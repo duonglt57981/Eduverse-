@@ -29,6 +29,7 @@ import {
   SO_DAP_AN_TOI_DA,
   ThongTinKhoaHocCoBan,
   TrangThaiKhoaHoc,
+  chuanHoaTrangThaiKhoaHoc,
   extractData,
   LichSuKiemDuyetDto,
 } from "./courseEditCore";

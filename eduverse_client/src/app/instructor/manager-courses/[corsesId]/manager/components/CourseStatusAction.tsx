@@ -246,6 +246,22 @@ export default function CourseStatusAction({
     );
   }
 
+  if (trangThai === "XemXet") {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <WarningAmberRoundedIcon sx={{ fontSize: 18, color: "#9D174D" }} />
+        <Typography sx={{ fontSize: 13, color: "#9D174D", fontWeight: 600 }}>
+          Vi phạm
+        </Typography>
+        <Typography
+          sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}
+        >
+          — Vui lòng chỉnh sửa và gửi lại
+        </Typography>
+      </Box>
+    );
+  }
+
   if (trangThai === "DaDuyet") {
     return (
       <Typography sx={{ fontSize: 13, color: "#8be0a6" }}>

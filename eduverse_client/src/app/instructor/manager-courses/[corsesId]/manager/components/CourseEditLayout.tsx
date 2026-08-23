@@ -80,7 +80,8 @@ export default function CourseEditLayout({
   const trangThaiHienThi = thongTinTrangThai(trangThai);
 
   const isReadOnly = trangThai !== "DangSua";
-  const coTheSuaTiep = trangThai === "DaDuyet" || trangThai === "TuChoi";
+  const coTheSuaTiep =
+    trangThai === "DaDuyet" || trangThai === "TuChoi" || trangThai === "XemXet";
 
   // Xác định màu sắc nhãn trạng thái tinh tế hơn
   const getStatusChipStyles = (status: TrangThaiKhoaHoc) => {
@@ -89,6 +90,8 @@ export default function CourseEditLayout({
         return { bgcolor: "#DCFCE7", color: "#16A34A" };
       case "TuChoi":
         return { bgcolor: "#FEE2E2", color: "#DC2626" };
+      case "XemXet":
+        return { bgcolor: "#FCE7F3", color: "#9D174D" };
       case "ChoDuyet":
         return { bgcolor: "#FEF3C7", color: "#D97706" };
       case "DangDuyet":
@@ -110,6 +113,8 @@ export default function CourseEditLayout({
         return { color: "#4ADE80", nhan: "Đã duyệt" };
       case "TuChoi":
         return { color: "#F87171", nhan: "Lý do từ chối" };
+      case "XemXet":
+        return { color: "#F472B6", nhan: "Lý do vi phạm" };
       case "ChoDuyet":
         return { color: "#FBBF24", nhan: "Chờ duyệt" };
       case "DangDuyet":
@@ -573,37 +578,43 @@ export default function CourseEditLayout({
                 </Typography>
               </Box> */}
 
-              {/* Hiển thị lý do từ chối nếu có */}
-              {trangThai === "TuChoi" && lyDoTuChoi && (
-                <Box
-                  sx={{
-                    mb: 3.5,
-                    px: 2.5,
-                    py: 1.8,
-                    borderRadius: "12px",
-                    bgcolor: "#FEF2F2",
-                    border: "1px solid #FEE2E2",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 1.5,
-                  }}
-                >
-                  <Typography
+              {/* Hiển thị lý do từ chối / vi phạm nếu có (áp dụng cho cả TuChoi và XemXet) */}
+              {(trangThai === "TuChoi" || trangThai === "XemXet") &&
+                lyDoTuChoi && (
+                  <Box
                     sx={{
-                      fontSize: 13.5,
-                      color: "#B91C1C",
-                      fontWeight: 600,
-                      whiteSpace: "pre-wrap",
-                      lineHeight: 1.6,
+                      mb: 3.5,
+                      px: 2.5,
+                      py: 1.8,
+                      borderRadius: "12px",
+                      bgcolor: trangThai === "XemXet" ? "#FDF2F8" : "#FEF2F2",
+                      border:
+                        trangThai === "XemXet"
+                          ? "1px solid #FBCFE8"
+                          : "1px solid #FEE2E2",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 1.5,
                     }}
                   >
-                    <Box component="span" sx={{ fontWeight: 800 }}>
-                      Lý do từ chối:
-                    </Box>{" "}
-                    {lyDoTuChoi}
-                  </Typography>
-                </Box>
-              )}
+                    <Typography
+                      sx={{
+                        fontSize: 13.5,
+                        color: trangThai === "XemXet" ? "#9D174D" : "#B91C1C",
+                        fontWeight: 600,
+                        whiteSpace: "pre-wrap",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      <Box component="span" sx={{ fontWeight: 800 }}>
+                        {trangThai === "XemXet"
+                          ? "Lý do vi phạm:"
+                          : "Lý do từ chối:"}
+                      </Box>{" "}
+                      {lyDoTuChoi}
+                    </Typography>
+                  </Box>
+                )}
             </>
           )}
 

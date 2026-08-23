@@ -47,6 +47,9 @@ import {
   LaptopMacRounded,
   ErrorOutlineRounded,
   PersonRounded,
+  DescriptionRounded,
+  ExpandMoreRounded,
+  ExpandLessRounded,
 } from "@mui/icons-material";
 import { useSelector } from "@/src/store/hook";
 import { apiService } from "@/src/services/index";
@@ -54,11 +57,39 @@ import Swal from "sweetalert2";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AccountSettings from "@/src/components/settings/AccountSettings";
+import RichTextEditor from "@/src/app/instructor/manager-courses/create/context/Richtexteditor";
+
+const TIEU_SU_MIN_CHARS = 200;
+const TIEU_SU_MAX_CHARS = 9999;
+
+function getPlainTextFromHtml(html: string) {
+  if (typeof window === "undefined" || !html) return "";
+  const el = document.createElement("div");
+  el.innerHTML = html;
+  return (el.textContent || el.innerText || "").trim();
+}
+
+function countChars(html: string) {
+  return getPlainTextFromHtml(html).length;
+}
+
+function validateTieuSu(html: string): string | null {
+  const count = countChars(html);
+  if (count === 0) return null;
+  if (count < TIEU_SU_MIN_CHARS) {
+    return `Tiểu sử cần tối thiểu ${TIEU_SU_MIN_CHARS} ký tự (hiện tại: ${count}/${TIEU_SU_MAX_CHARS} ký tự)`;
+  }
+  if (count > TIEU_SU_MAX_CHARS) {
+    return `Tiểu sử tối đa ${TIEU_SU_MAX_CHARS} ký tự (hiện tại: ${count}/${TIEU_SU_MAX_CHARS} ký tự)`;
+  }
+  return null;
+}
 
 export default function AdminSettingsPage() {
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [tieuSuExpanded, setTieuSuExpanded] = useState(false);
 
   // Load user info from Redux store as baseline
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -371,6 +402,16 @@ export default function AdminSettingsPage() {
         icon: "error",
         title: "Số điện thoại hợp lệ",
         text: "Vui lòng nhập đúng định dạng số điện thoại Việt Nam.",
+      });
+      return;
+    }
+
+    const tieuSuError = validateTieuSu(profile.tieuSu || "");
+    if (tieuSuError) {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi nhập liệu",
+        text: tieuSuError,
       });
       return;
     }
@@ -1049,6 +1090,112 @@ export default function AdminSettingsPage() {
                                   },
                                 }}
                               />
+                            </Grid>
+                            <Grid size={{ xs: 12 }}>
+                              <Stack spacing={1}>
+                                <Stack
+                                  direction="row"
+                                  sx={{
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      fontWeight: 700,
+                                      fontSize: 13.5,
+                                      color: "var(--ev-text-primary, #1F2937)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 1,
+                                    }}
+                                  >
+                                    <DescriptionRounded
+                                      sx={{
+                                        color: "var(--ev-text-secondary, #4B5563)",
+                                        fontSize: 18,
+                                      }}
+                                    />
+                                    Tiểu sử
+                                  </Typography>
+
+                                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          countChars(profile.tieuSu || "") > 0 &&
+                                          countChars(profile.tieuSu || "") < TIEU_SU_MIN_CHARS
+                                            ? "error.main"
+                                            : countChars(profile.tieuSu || "") > TIEU_SU_MAX_CHARS
+                                            ? "error.main"
+                                            : "text.secondary",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      {countChars(profile.tieuSu || "")}/{TIEU_SU_MAX_CHARS} ký tự (tối thiểu {TIEU_SU_MIN_CHARS} khi nhập)
+                                    </Typography>
+
+                                    <Button
+                                      size="small"
+                                      onClick={() => setTieuSuExpanded((prev) => !prev)}
+                                      endIcon={
+                                        tieuSuExpanded ? (
+                                          <ExpandLessRounded sx={{ fontSize: 16 }} />
+                                        ) : (
+                                          <ExpandMoreRounded sx={{ fontSize: 16 }} />
+                                        )
+                                      }
+                                      sx={{
+                                        p: 0,
+                                        minWidth: 0,
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        textTransform: "none",
+                                        color: "primary.main",
+                                        "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+                                      }}
+                                    >
+                                      {tieuSuExpanded ? "Thu gọn" : "Mở rộng"}
+                                    </Button>
+                                  </Stack>
+                                </Stack>
+                                <Box
+                                  sx={{
+                                    border: "1px solid",
+                                    borderColor:
+                                      validateTieuSu(profile.tieuSu || "")
+                                        ? "#EF4444"
+                                        : "rgba(0,0,0,0.12)",
+                                    borderRadius: "12px",
+                                    overflow: "hidden",
+                                    bgcolor: "var(--ev-paper, #ffffff)",
+                                    maxHeight: tieuSuExpanded ? "none" : 260,
+                                    transition: "max-height 250ms ease",
+                                  }}
+                                >
+                                  <RichTextEditor
+                                    value={profile.tieuSu}
+                                    onChange={(html) =>
+                                      setProfile((prev) => ({
+                                        ...prev,
+                                        tieuSu: html,
+                                      }))
+                                    }
+                                    placeholder="Nhập tiểu sử giới thiệu (hỗ trợ định dạng HTML, tối thiểu 200 ký tự)..."
+                                    minHeight={160}
+                                  />
+                                </Box>
+                                {validateTieuSu(profile.tieuSu || "") && (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ color: "error.main", fontWeight: 600 }}
+                                  >
+                                    {validateTieuSu(profile.tieuSu || "")}
+                                  </Typography>
+                                )}
+                              </Stack>
                             </Grid>
                           </Grid>
 

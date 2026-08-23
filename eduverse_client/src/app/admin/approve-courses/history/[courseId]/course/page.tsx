@@ -630,9 +630,31 @@ function StatusChip({
 }
 
 // ======================== REJECTION REASON ICON ========================
-function RejectionReasonIcon({ lyDo }: { lyDo?: string | null }) {
+function RejectionReasonIcon({ lyDo }: { lyDo?: any }) {
   const [open, setOpen] = useState(false);
-  if (!lyDo) return null;
+
+  const getReasonString = (val: any): string => {
+    if (!val) return "";
+    if (typeof val === "string") return val;
+    if (Array.isArray(val)) {
+      return val
+        .map((item) =>
+          typeof item === "string"
+            ? item
+            : item?.lyDo || item?.ghiChu || item?.noiDung || "",
+        )
+        .filter(Boolean)
+        .join("\n");
+    }
+    if (typeof val === "object") {
+      return val.lyDo || val.ghiChu || val.noiDung || val.message || "";
+    }
+    return String(val);
+  };
+
+  const reasonText = getReasonString(lyDo);
+  if (!reasonText || !reasonText.trim()) return null;
+
   return (
     <>
       <Tooltip title="Lý do từ chối">
@@ -655,15 +677,25 @@ function RejectionReasonIcon({ lyDo }: { lyDo?: string | null }) {
         onClose={() => setOpen(false)}
         maxWidth="sm"
         fullWidth
+        onClick={(e) => e.stopPropagation()}
       >
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <WarningAmberRoundedIcon color="error" />
           Lý do từ chối
         </DialogTitle>
         <DialogContent>
-          <Typography sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-            {lyDo}
-          </Typography>
+          <Box
+            sx={{
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              fontSize: "14px",
+              lineHeight: 1.6,
+              color: COLORS.ink,
+              "& p": { m: 0, mb: 1 },
+              "& ul, & ol": { pl: 2.5, m: 0, mb: 1 },
+            }}
+            dangerouslySetInnerHTML={{ __html: reasonText }}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Đóng</Button>
@@ -2815,10 +2847,10 @@ function KiemDuyetSidebar({
                   >
                     {tl.tenTaiLieu ?? tl.tieuDe}
                   </Typography>
-                  {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
-                  {detail.trangThaiPheDuyet === "TuChoi" && (
-                    <RejectionReasonIcon lyDo={tl.lyDoTuChois} />
-                  )}
+                  {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU CÓ LÝ DO */}
+                  <RejectionReasonIcon
+                    lyDo={tl.lyDoTuChois ?? tl.lyDoTuChoi ?? tl.ghiChuTuChoi}
+                  />
                 </Box>
               );
             })}
@@ -2881,10 +2913,10 @@ function KiemDuyetSidebar({
               </Typography>
             }
           />
-          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
-          {detail.trangThaiPheDuyet === "TuChoi" && (
-            <RejectionReasonIcon lyDo={bg.lyDoTuChois} />
-          )}
+          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU CÓ LÝ DO */}
+          <RejectionReasonIcon
+            lyDo={bg.lyDoTuChois ?? bg.lyDoTuChoi ?? bg.ghiChuTuChoi}
+          />
         </ListItemButton>
         {renderTaiLieu(bg)}
       </Box>
@@ -2949,10 +2981,10 @@ function KiemDuyetSidebar({
               ) : undefined
             }
           />
-          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU KHÓA HỌC BỊ TỪ CHỐI VÀ CÓ LÝ DO */}
-          {detail.trangThaiPheDuyet === "TuChoi" && (
-            <RejectionReasonIcon lyDo={bkt.lyDoTuChois} />
-          )}
+          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU CÓ LÝ DO */}
+          <RejectionReasonIcon
+            lyDo={bkt.lyDoTuChois ?? bkt.lyDoTuChoi ?? bkt.ghiChuTuChoi}
+          />
           {/* ĐÃ XÓA IconButton mở rộng và Collapse bên dưới */}
         </ListItemButton>
         {/* KHÔNG CÒN Collapse chứa câu hỏi */}
