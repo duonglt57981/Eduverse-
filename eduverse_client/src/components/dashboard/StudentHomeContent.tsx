@@ -651,8 +651,7 @@ function HoverPanel({
                 color: "#fff",
                 boxShadow: "none",
                 "&:hover": {
-                  background:
-                    GRADIENTS.crimsonHover,
+                  background: GRADIENTS.crimsonHover,
                   boxShadow: "none",
                 },
               }}
@@ -725,7 +724,8 @@ function CourseCard({
     ((course as unknown as Record<string, unknown>).giagoc as number) ??
     0;
   const title = course.tieuDe || course.title || "";
-  const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh ?? 5.0;
+  const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh ?? null;
+  const hasRating = ratingVal !== null && ratingVal > 0;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
   const instructorName =
     course.danhSachGiangVienHienThi &&
@@ -977,11 +977,20 @@ function CourseCard({
                 spacing={0.3}
                 sx={{ alignItems: "center" }}
               >
-                <StarRounded sx={{ fontSize: 14, color: STATUS.warning }} />
+                <StarRounded
+                  sx={{
+                    fontSize: 14,
+                    color: hasRating ? STATUS.warning : C.textMuted,
+                  }}
+                />
                 <Typography
-                  sx={{ fontSize: 11.5, fontWeight: 800, color: C.textDark }}
+                  sx={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    color: hasRating ? C.textDark : C.textMuted,
+                  }}
                 >
-                  {ratingVal.toFixed(1)}
+                  {hasRating ? ratingVal.toFixed(1) : "Chưa có đánh giá"}
                 </Typography>
               </Stack>
               <Stack
@@ -1279,7 +1288,11 @@ function ContinueLearningCard({
                 fontSize: 12.5,
                 fontWeight: 900,
                 color:
-                  pct === 100 ? STATUS.success : pct > 0 ? C.primary : C.textMuted,
+                  pct === 100
+                    ? STATUS.success
+                    : pct > 0
+                      ? C.primary
+                      : C.textMuted,
               }}
             >
               {pct}%
@@ -1395,7 +1408,8 @@ export default function StudentHomeContent() {
     if (data?.continueLearning?.courses) {
       data.continueLearning.courses.forEach((item) => {
         if (isValidGuid(item.id)) enrolledIds.add(String(item.id));
-        if (isValidGuid(item.idDangKiKhoaHoc)) enrolledIds.add(String(item.idDangKiKhoaHoc));
+        if (isValidGuid(item.idDangKiKhoaHoc))
+          enrolledIds.add(String(item.idDangKiKhoaHoc));
       });
     }
 
@@ -1407,7 +1421,11 @@ export default function StudentHomeContent() {
       if (c.daDangKy) return false;
       const courseId = String(c.id || c.idKhoaHoc || "");
       if (isValidGuid(courseId) && enrolledIds.has(courseId)) return false;
-      if (isValidGuid(c.idDangKiKhoaHoc) && enrolledIds.has(String(c.idDangKiKhoaHoc))) return false;
+      if (
+        isValidGuid(c.idDangKiKhoaHoc) &&
+        enrolledIds.has(String(c.idDangKiKhoaHoc))
+      )
+        return false;
 
       // Loại bỏ khóa học cũ hơn 1 tháng
       const rawDate =
@@ -1526,7 +1544,9 @@ export default function StudentHomeContent() {
   );
 
   const handleAddCart = useCallback(async (course: KhoaHocDto) => {
-    const id = isValidGuid(course.id) ? course.id : (course as any).idKhoaHoc || "";
+    const id = isValidGuid(course.id)
+      ? course.id
+      : (course as any).idKhoaHoc || "";
     if (!isValidGuid(id)) return;
     try {
       await apiService.post(`/GioHang/${id}`);
@@ -1814,7 +1834,9 @@ export default function StudentHomeContent() {
               },
             }}
           >
-            <AccessTimeRounded sx={{ color: STATUS.info, fontSize: 24, mb: 1 }} />
+            <AccessTimeRounded
+              sx={{ color: STATUS.info, fontSize: 24, mb: 1 }}
+            />
             <Typography
               sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
             >

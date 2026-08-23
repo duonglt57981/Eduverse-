@@ -236,9 +236,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             height: 32,
             bgcolor: "rgba(255,255,255,0.75)",
             backdropFilter: "blur(8px)",
-            color: favorited
-              ? BRAND_COLORS.primary
-              : CSSVAR.textSecondary,
+            color: favorited ? BRAND_COLORS.primary : CSSVAR.textSecondary,
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             transition: "all 0.2s ease",
             "&:hover": {
@@ -248,10 +246,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
             },
           }}
         >
-          <FavoriteHeartIcon
-            active={favorited}
-            color={BRAND_COLORS.primary}
-          />
+          <FavoriteHeartIcon active={favorited} color={BRAND_COLORS.primary} />
         </IconButton>
       </Box>
 
@@ -332,21 +327,35 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
           spacing={0.5}
           sx={{ alignItems: "center", mb: 1.5 }}
         >
-          <Typography
-            sx={{
-              fontSize: 13.5,
-              color: STATUS.warning,
-              fontWeight: 800,
-              display: "flex",
-              alignItems: "center",
-              gap: 0.25,
-            }}
-          >
-            ★ {course.rating.toFixed(1)}
-          </Typography>
-          <Typography sx={{ fontSize: 13, color: BRAND_COLORS.textMuted }}>
-            · ({course.students.toLocaleString()} học viên)
-          </Typography>
+          {course.rating !== null ? (
+            <>
+              <Typography
+                sx={{
+                  fontSize: 13.5,
+                  color: STATUS.warning,
+                  fontWeight: 800,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.25,
+                }}
+              >
+                ★ {course.rating.toFixed(1)}
+              </Typography>
+              <Typography sx={{ fontSize: 13, color: BRAND_COLORS.textMuted }}>
+                · ({course.students.toLocaleString()} học viên)
+              </Typography>
+            </>
+          ) : (
+            <Typography
+              sx={{
+                fontSize: 13,
+                color: BRAND_COLORS.textMuted,
+                fontStyle: "italic",
+              }}
+            >
+              Chưa có đánh giá · {course.students.toLocaleString()} học viên
+            </Typography>
+          )}
         </Stack>
 
         <Divider sx={{ my: 1.5, borderColor: CSSVAR.paperAlt }} />
@@ -390,9 +399,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
                 gap: 0.5,
               }}
             >
-              <TimerRounded
-                sx={{ fontSize: 15, color: CSSVAR.textMuted }}
-              />
+              <TimerRounded sx={{ fontSize: 15, color: CSSVAR.textMuted }} />
               {course.duration}
             </Typography>
           )}
@@ -457,15 +464,12 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mapToCatalogItem = (kh: any): CourseCatalogItem => {
   // Stable hash based on course ID to generate a consistent rating between 4.0 and 5.0
-  const charCodeSum = (kh.id || "")
-    .split("")
-    .reduce((sum: number, char: string) => sum + char.charCodeAt(0), 0);
-  const mockRating = 4.0 + (charCodeSum % 11) * 0.1; // yields: 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0
-  const apiRating = Number(kh.diemDanhGia ?? kh.rating);
+  const apiRating = kh.diemDanhGiaTrungBinh;
   const rating =
-    Number.isFinite(apiRating) && apiRating >= 0 && apiRating <= 5
+    typeof apiRating === "number" && apiRating >= 0 && apiRating <= 5
       ? apiRating
-      : mockRating;
+      : null;
+  const soLuongDanhGia = Number(kh.soLuongDanhGia || 0);
   const isFree = kh.loaiKhoaHoc === "Khóa học miễn phí";
   const priceValue = Number(kh.gia || 0);
   const studentCount = Number(kh.soLuongHocVien || 0);
@@ -490,8 +494,9 @@ const mapToCatalogItem = (kh: any): CourseCatalogItem => {
   return {
     id: kh.id,
     title: kh.tieuDe || "Khóa học không tên",
+    soLuongDanhGia: soLuongDanhGia,
+    rating,   
     instructor: instructorDisplay,
-    rating,
     students: studentCount,
     studentCount,
     price: isFree
@@ -610,10 +615,10 @@ export default function CoursesPage({
           : await courseService.GetList(searchParams, controller.signal);
         if (response?.status && response.data) {
           const mapped = (response.data.items || []).map(mapToCatalogItem);
-          const filtered = mapped.filter(
-            (course) =>
-              course.rating >= ratingFrom && course.rating <= ratingTo,
-          );
+          const filtered = mapped.filter((course) => {
+            if (course.rating === null) return ratingFrom === 0; // chỉ hiện khi người dùng không lọc theo sao tối thiểu
+            return course.rating >= ratingFrom && course.rating <= ratingTo;
+          });
 
           const sorted = [...filtered];
           if (sortBy === "newest") {
@@ -787,9 +792,7 @@ export default function CoursesPage({
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchRounded
-                        sx={{ color: CSSVAR.textMuted }}
-                      />
+                      <SearchRounded sx={{ color: CSSVAR.textMuted }} />
                     </InputAdornment>
                   ),
                 },

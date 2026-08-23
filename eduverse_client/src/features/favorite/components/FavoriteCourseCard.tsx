@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Card,
@@ -11,17 +11,16 @@ import {
   Chip,
   Divider,
   Tooltip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   StarRounded,
   PeopleAltRounded,
   FavoriteRounded,
   ArrowForwardRounded,
   SchoolRounded,
-} from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
-import { FavoriteCourse } from '../types/favorite.type';
-import { courseCatalog } from '@/src/components/landing/landing-data';
+} from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { FavoriteCourse } from "../types/favorite.type";
 import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 interface FavoriteCourseCardProps {
@@ -29,14 +28,14 @@ interface FavoriteCourseCardProps {
   onRemove: () => void;
 }
 
-export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseCardProps) {
+export default function FavoriteCourseCard({
+  course,
+  onRemove,
+}: FavoriteCourseCardProps) {
   const router = useRouter();
 
-  // Look up additional details from catalog if available
-  const catalogItem = courseCatalog.find((c) => c.id === course.khoaHocId);
-
-  let badge = 'Khóa học';
-  let imageUrl = '';
+  let badge = "Khóa học";
+  let imageUrl = "";
 
   try {
     const parsed = JSON.parse(course.hinhAnh);
@@ -45,36 +44,37 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
   } catch {
     if (
       course.hinhAnh &&
-      (course.hinhAnh.startsWith('http') ||
-        course.hinhAnh.startsWith('/') ||
-        course.hinhAnh.startsWith('.'))
+      (course.hinhAnh.startsWith("http") ||
+        course.hinhAnh.startsWith("/") ||
+        course.hinhAnh.startsWith("."))
     ) {
       imageUrl = course.hinhAnh;
     }
   }
 
-  const level = catalogItem?.level || badge || 'Trung cấp';
-  const rating = catalogItem?.rating || 5.0;
-  const students = catalogItem?.students || '1';
+  const level = course.capDo || badge || "Trung cấp";
+  const rating = course.diemDanhGiaTrungBinh ?? null;
+  const students = course.soLuongHocVien ?? 0;
 
   return (
     <Card
       elevation={0}
       onClick={() => router.push(`/student/enroll-courses/${course.khoaHocId}`)}
       sx={{
-        borderRadius: '18px',
-        border: '1px solid rgba(0,0,0,0.07)',
-        bgcolor: 'var(--ev-paper, #fff)',
-        transition: 'transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
-        position: 'relative',
-        cursor: 'pointer',
-        '&:hover': {
-          boxShadow: '0 8px 24px rgba(139,19,19,0.08)',
-          borderColor: 'rgba(139,19,19,0.18)',
+        borderRadius: "18px",
+        border: "1px solid rgba(0,0,0,0.07)",
+        bgcolor: "var(--ev-paper, #fff)",
+        transition:
+          "transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        overflow: "hidden",
+        position: "relative",
+        cursor: "pointer",
+        "&:hover": {
+          boxShadow: "0 8px 24px rgba(139,19,19,0.08)",
+          borderColor: "rgba(139,19,19,0.18)",
         },
       }}
     >
@@ -82,27 +82,27 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
       <Box
         sx={{
           height: 145,
-          position: 'relative',
-          overflow: 'hidden',
+          position: "relative",
+          overflow: "hidden",
           background: imageUrl
             ? `url(${imageUrl}) center/cover no-repeat`
-            : 'var(--dashboard-surface-muted, #f3f4f6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+            : "var(--dashboard-surface-muted, #f3f4f6)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         {!imageUrl && (
-          <Stack sx={{ alignItems: 'center', justifyContent: 'center' }}>
-            <SchoolRounded sx={{ color: 'rgba(31,41,55,0.3)', fontSize: 36 }} />
+          <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
+            <SchoolRounded sx={{ color: "rgba(31,41,55,0.3)", fontSize: 36 }} />
             <Typography
               sx={{
-                color: 'rgba(31,41,55,0.35)',
+                color: "rgba(31,41,55,0.35)",
                 fontSize: 10,
                 fontWeight: 800,
                 mt: 0.5,
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
+                letterSpacing: "1px",
+                textTransform: "uppercase",
               }}
             >
               EDUVERSE
@@ -115,10 +115,10 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
           label={level}
           size="small"
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 10,
             left: 10,
-            bgcolor: 'rgba(255,255,255,0.92)',
+            bgcolor: "rgba(255,255,255,0.92)",
             color: BRAND.main,
             fontWeight: 800,
             fontSize: 10,
@@ -134,23 +134,23 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
               onRemove();
             }}
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: 8,
               right: 10,
               width: 28,
               height: 28,
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
+              bgcolor: "rgba(255, 255, 255, 0.95)",
               color: BRAND.main,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
               zIndex: 5,
-              transition: 'all 150ms ease',
+              transition: "all 150ms ease",
               p: 0,
-              '&:hover': {
+              "&:hover": {
                 bgcolor: BRAND.main,
-                color: '#ffffff',
-                transform: 'scale(1.08)',
-                '& .MuiSvgIcon-root': {
-                  color: '#ffffff',
+                color: "#ffffff",
+                transform: "scale(1.08)",
+                "& .MuiSvgIcon-root": {
+                  color: "#ffffff",
                 },
               },
             }}
@@ -165,11 +165,11 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
             label="MIỄN PHÍ"
             size="small"
             sx={{
-              position: 'absolute',
+              position: "absolute",
               bottom: 8,
               left: 10,
               bgcolor: STATUS.success,
-              color: '#fff',
+              color: "#fff",
               fontWeight: 900,
               fontSize: 9.5,
               height: 18,
@@ -183,8 +183,8 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
         sx={{
           p: 2,
           flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {/* Title */}
@@ -196,10 +196,10 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
             color: CSSVAR.textPrimary,
             mb: 0.5,
             height: 39,
-            overflow: 'hidden',
-            display: '-webkit-box',
+            overflow: "hidden",
+            display: "-webkit-box",
             WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
+            WebkitBoxOrient: "vertical",
           }}
         >
           {course.tieuDe}
@@ -212,12 +212,12 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
             color: CSSVAR.textMuted,
             fontWeight: 600,
             mb: 1.25,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          {course.giangVien || 'Giảng viên EduVerse'}
+          {course.giangVien || "Giảng viên EduVerse"}
         </Typography>
 
         <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
@@ -226,10 +226,10 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
         <Stack
           direction="row"
           sx={{
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            justifyContent: "space-between",
+            alignItems: "center",
             mb: 2,
-            mt: 'auto',
+            mt: "auto",
           }}
         >
           <Box>
@@ -240,21 +240,53 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
                 color: course.giaTien === 0 ? STATUS.success : BRAND.main,
               }}
             >
-              {course.giaTien === 0 ? 'Miễn phí' : `${course.giaTien.toLocaleString('vi-VN')}đ`}
+              {course.giaTien === 0
+                ? "Miễn phí"
+                : `${course.giaTien.toLocaleString("vi-VN")}đ`}
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1.2} sx={{ alignItems: 'center' }}>
-            <Stack direction="row" spacing={0.3} sx={{ alignItems: 'center' }}>
-              <StarRounded sx={{ fontSize: 14, color: STATUS.warning }} />
-              <Typography sx={{ fontSize: 11.5, fontWeight: 800, color: CSSVAR.textPrimary }}>
-                {rating}
+          <Stack direction="row" spacing={1.2} sx={{ alignItems: "center" }}>
+            {rating !== null ? (
+              <Stack
+                direction="row"
+                spacing={0.3}
+                sx={{ alignItems: "center" }}
+              >
+                <StarRounded sx={{ fontSize: 14, color: STATUS.warning }} />
+                <Typography
+                  sx={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    color: CSSVAR.textPrimary,
+                  }}
+                >
+                  {rating.toFixed(1)}
+                </Typography>
+              </Stack>
+            ) : (
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  color: CSSVAR.textMuted,
+                  fontStyle: "italic",
+                }}
+              >
+                Chưa có đánh giá
               </Typography>
-            </Stack>
-            <Stack direction="row" spacing={0.3} sx={{ alignItems: 'center' }}>
-              <PeopleAltRounded sx={{ fontSize: 13, color: 'rgba(31,41,55,0.45)' }} />
-              <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(31,41,55,0.6)' }}>
-                {students}
+            )}
+            <Stack direction="row" spacing={0.3} sx={{ alignItems: "center" }}>
+              <PeopleAltRounded
+                sx={{ fontSize: 13, color: "rgba(31,41,55,0.45)" }}
+              />
+              <Typography
+                sx={{
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: "rgba(31,41,55,0.6)",
+                }}
+              >
+                {students.toLocaleString()}
               </Typography>
             </Stack>
           </Stack>
@@ -270,15 +302,15 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
             variant="outlined"
             fullWidth
             sx={{
-              borderRadius: '11px',
+              borderRadius: "11px",
               py: 0.9,
               fontWeight: 700,
               fontSize: 12.5,
-              borderColor: 'rgba(139,19,19,0.2)',
+              borderColor: "rgba(139,19,19,0.2)",
               color: BRAND.main,
-              textTransform: 'none',
-              '&:hover': {
-                bgcolor: 'rgba(139,19,19,0.04)',
+              textTransform: "none",
+              "&:hover": {
+                bgcolor: "rgba(139,19,19,0.04)",
                 borderColor: BRAND.main,
               },
             }}
@@ -295,17 +327,17 @@ export default function FavoriteCourseCard({ course, onRemove }: FavoriteCourseC
             endIcon={<ArrowForwardRounded sx={{ fontSize: 15 }} />}
             fullWidth
             sx={{
-              borderRadius: '11px',
+              borderRadius: "11px",
               py: 0.9,
               fontWeight: 800,
               fontSize: 12.5,
               bgcolor: BRAND.main,
-              color: '#fff',
-              boxShadow: 'none',
-              textTransform: 'none',
-              '&:hover': {
-                bgcolor: '#7F1D1D',
-                boxShadow: 'none',
+              color: "#fff",
+              boxShadow: "none",
+              textTransform: "none",
+              "&:hover": {
+                bgcolor: "#7F1D1D",
+                boxShadow: "none",
               },
             }}
           >
