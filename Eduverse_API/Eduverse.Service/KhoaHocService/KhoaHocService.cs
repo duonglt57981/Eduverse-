@@ -418,6 +418,137 @@ namespace Eduverse.Service.KhoaHocService
             return paged;
         }
 
+        public async Task<List<GiangVienNoiBatDto>> GetGiangVienNoiBat(int soLuong = 3)
+        {
+            // 1. Lấy toàn bộ khóa học đã duyệt, đang hoạt động
+            var activeCourses = await GetQueryable()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted
+                         && x.TrangThai == "HoatDong"
+                         && x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.IsBanHienTai == true)
+                .Select(x => new { x.Id, x.CreatedId })
+                .ToListAsync();
+
+            if (!activeCourses.Any())
+                return new List<GiangVienNoiBatDto>();
+
+            var activeCourseIds = activeCourses.Select(c => c.Id).ToList();
+
+            // 2. Chủ sở hữu + cộng tác viên hiển thị công khai (Visible = true) trên các khóa học đó
+            var members = await _khoaHoc_GiangVienRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => activeCourseIds.Contains(x.IdKhoaHoc) && !x.IsDeleted)
+                .Select(x => new { x.IdKhoaHoc, x.IdGiangVien, x.LaChuSoHuu, x.Visible })
+                .ToListAsync();
+
+            // Với mỗi khóa học, xác định giảng viên nào được tính "sở hữu" khóa học đó
+            // (ưu tiên Visible = true; nếu không ai Visible thì lấy chủ sở hữu)
+            var courseOwnerMap = new Dictionary<Guid, Guid>(); // IdKhoaHoc -> IdGiangVien
+            foreach (var courseId in activeCourseIds)
+            {
+                var ds = members.Where(m => m.IdKhoaHoc == courseId).ToList();
+                if (!ds.Any())
+                {
+                    var fallbackOwner = activeCourses.First(c => c.Id == courseId).CreatedId;
+                    if (fallbackOwner.HasValue) courseOwnerMap[courseId] = fallbackOwner.Value;
+                    continue;
+                }
+                var visible = ds.FirstOrDefault(m => m.Visible && m.LaChuSoHuu) ?? ds.FirstOrDefault(m => m.LaChuSoHuu);
+                if (visible != null) courseOwnerMap[courseId] = visible.IdGiangVien;
+            }
+
+            // 3. Đếm số khóa học theo từng giảng viên
+            var courseCountByGv = courseOwnerMap.Values
+                .GroupBy(gv => gv)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // 4. Tổng số học viên UNIQUE theo từng giảng viên (cộng dồn qua tất cả khóa học của họ)
+            var gvCourseIds = courseOwnerMap
+                .GroupBy(kv => kv.Value)
+                .ToDictionary(g => g.Key, g => g.Select(kv => kv.Key).ToList());
+
+            var allRegs = await _dangKyKhoaHocRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(r => !r.IsDeleted && r.IdKhoaHoc.HasValue && r.IdNguoiDangKi.HasValue
+                         && activeCourseIds.Contains(r.IdKhoaHoc.Value))
+                .Select(r => new { r.IdKhoaHoc, r.IdNguoiDangKi })
+                .ToListAsync();
+
+            var studentCountByGv = new Dictionary<Guid, int>();
+            foreach (var kv in gvCourseIds)
+            {
+                var courseIdsOfGv = kv.Value.ToHashSet();
+                var uniqueStudents = allRegs
+                    .Where(r => courseIdsOfGv.Contains(r.IdKhoaHoc!.Value))
+                    .Select(r => r.IdNguoiDangKi!.Value)
+                    .Distinct()
+                    .Count();
+                studentCountByGv[kv.Key] = uniqueStudents;
+            }
+
+            // 5. Rating trung bình theo giảng viên (gộp mọi đánh giá trên các khóa học của họ)
+            var danhGiaList = await _danhGiaRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(d => d.IdKhoaHoc.HasValue
+                         && activeCourseIds.Contains(d.IdKhoaHoc.Value)
+                         && !d.IsDeleted
+                         && d.TrangThai == "HienThi")
+                .Select(d => new { d.IdKhoaHoc, d.SoSao })
+                .ToListAsync();
+
+            var ratingByGv = new Dictionary<Guid, (double TrungBinh, int SoLuong)>();
+            foreach (var kv in gvCourseIds)
+            {
+                var courseIdsOfGv = kv.Value.ToHashSet();
+                var ratingsOfGv = danhGiaList
+                    .Where(d => courseIdsOfGv.Contains(d.IdKhoaHoc!.Value))
+                    .Select(d => d.SoSao ?? 0)
+                    .ToList();
+                if (ratingsOfGv.Any())
+                    ratingByGv[kv.Key] = (Math.Round(ratingsOfGv.Average(), 1), ratingsOfGv.Count);
+            }
+
+            // 6. Sắp xếp theo số học viên giảm dần, lấy top N
+            var topGvIds = studentCountByGv
+                .OrderByDescending(kv => kv.Value)
+                .Take(soLuong)
+                .Select(kv => kv.Key)
+                .ToList();
+
+            if (!topGvIds.Any())
+                return new List<GiangVienNoiBatDto>();
+
+            // 7. Lấy thông tin hiển thị (tên, ảnh, tiểu sử)
+            var users = await _appUserService.GetQueryable()
+                .AsNoTracking()
+                .Where(u => topGvIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.HoTen, u.AnhDaiDien, u.TieuSu })
+                .ToListAsync();
+
+            var result = topGvIds
+                .Select(id =>
+                {
+                    var user = users.FirstOrDefault(u => u.Id == id);
+                    var rating = ratingByGv.GetValueOrDefault(id);
+                    return new GiangVienNoiBatDto
+                    {
+                        Id = id,
+                        HoTen = user?.HoTen,
+                        AnhDaiDien = user?.AnhDaiDien,
+                        TieuSu = user?.TieuSu,
+                        SoKhoaHoc = courseCountByGv.GetValueOrDefault(id, 0),
+                        SoHocVien = studentCountByGv.GetValueOrDefault(id, 0),
+                        DiemDanhGiaTrungBinh = rating.SoLuong > 0 ? rating.TrungBinh : (double?)null,
+                        SoLuongDanhGia = rating.SoLuong
+                    };
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.HoTen)) // bỏ user không tồn tại
+                .ToList();
+
+            return result;
+        }
+
         #region GetListDangKi
         public async Task<PagedList<GetDangKiKhoaHocDto>> GetListDangKi(KhoaHocDangKiSearch search)
         {

@@ -362,5 +362,20 @@ namespace Eduverse.Api.Controller
             var soLuong = await _khoaHocService.BackfillChuSoHuuGiangVien();
             return Ok(new { message = $"Đã thêm {soLuong} chủ sở hữu vào KhoaHoc_GiangVien" });
         }
+
+        [HttpGet("giangvien-noibat")]
+        [AllowAnonymous]
+        public async Task<DataResponse<List<GiangVienNoiBatDto>>> GetGiangVienNoiBat([FromQuery] int soLuong = 3)
+        {
+            try
+            {
+                var result = await _khoaHocService.GetGiangVienNoiBat(soLuong);
+                return DataResponse<List<GiangVienNoiBatDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<GiangVienNoiBatDto>>.False(ex.Message);
+            }
+        }
     }
 }

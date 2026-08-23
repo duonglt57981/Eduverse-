@@ -37,4 +37,16 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public List<string>? DanhSachGiangVienHienThi { get; set; }
         public List<GiangVienHienThiDto> DanhSachGiangVien { get; set; } = new();
     }
+
+    public class GiangVienNoiBatDto
+    {
+        public Guid Id { get; set; }
+        public string? HoTen { get; set; }
+        public string? AnhDaiDien { get; set; }
+        public string? TieuSu { get; set; }
+        public int SoKhoaHoc { get; set; }
+        public int SoHocVien { get; set; }
+        public double? DiemDanhGiaTrungBinh { get; set; }
+        public int SoLuongDanhGia { get; set; }
+    }
 }
