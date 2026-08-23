@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+import { STATUS } from "@/src/theme/tokens";
 
 /**
  * Hiển thị hộp thoại xác nhận đăng xuất chuẩn phong cách Chuyên nghiệp / Enterprise (Linear / Vercel design).
@@ -8,7 +9,7 @@ export const handleConfirmLogout = async (onConfirm: () => void | Promise<void>)
     html: `
       <div style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 4px 4px 0 4px;">
         <div style="width: 56px; height: 56px; border-radius: 16px; background-color: #FEF2F2; border: 1px solid #FEE2E2; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.08);">
-          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="${STATUS.error}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>

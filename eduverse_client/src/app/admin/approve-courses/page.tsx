@@ -51,7 +51,7 @@ import {
 } from "./types/constants";
 import { StatusChip } from "./types";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
-import { STATUS } from "@/src/theme/tokens";
+import { STATUS, BRAND, CSSVAR } from "@/src/theme/tokens";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
 import AssignReviewerDialog from "./components/AssignReviewerDialog";
 import { useSelector } from "@/src/store/hook";
@@ -93,14 +93,14 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
           height: 84,
           borderRadius: "14px",
           flexShrink: 0,
-          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-          border: "1px dashed var(--ev-divider, #ECE7E4)",
+          bgcolor: CSSVAR.paperAlt,
+          border: `1px dashed ${CSSVAR.divider}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <ImageRoundedIcon sx={{ color: "var(--ev-grey, #8A7676)", fontSize: 30 }} />
+        <ImageRoundedIcon sx={{ color: CSSVAR.textMuted, fontSize: 30 }} />
       </Box>
     );
   }
@@ -117,8 +117,8 @@ function CourseThumbnail({ src, alt }: { src?: string | null; alt: string }) {
         borderRadius: "14px",
         objectFit: "cover",
         flexShrink: 0,
-        bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-        border: "1px solid var(--ev-divider, #ECE7E4)",
+        bgcolor: CSSVAR.paperAlt,
+        border: `1px solid ${CSSVAR.divider}`,
       }}
     />
   );
@@ -685,7 +685,7 @@ export default function DuyetKhoaHocPage() {
                     value={keywordInput}
                     onChange={(e) => setKeywordInput(e.target.value)}
                     sx={{
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      bgcolor: CSSVAR.paper,
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "10px",
                         height: 42,
@@ -736,7 +736,7 @@ export default function DuyetKhoaHocPage() {
                       minWidth: { xs: "100%", sm: 170 },
                       height: 42,
                       borderRadius: "10px",
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      bgcolor: CSSVAR.paper,
                       flexShrink: 0,
                       "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: COLORS.line,
@@ -756,7 +756,7 @@ export default function DuyetKhoaHocPage() {
                     startAdornment={
                       <InputAdornment position="start">
                         <SwapVertRoundedIcon
-                          sx={{ fontSize: 18, color: "var(--ev-text-muted, #8A7676)" }}
+                          sx={{ fontSize: 18, color: CSSVAR.textMuted }}
                         />
                       </InputAdornment>
                     }
@@ -764,16 +764,16 @@ export default function DuyetKhoaHocPage() {
                       minWidth: { xs: "100%", sm: 165 },
                       borderRadius: "10px",
                       height: 42,
-                      bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                      bgcolor: CSSVAR.paperAlt,
                       flexShrink: 0,
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "var(--ev-divider, #ECE7E4)",
+                        borderColor: CSSVAR.divider,
                       },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
                         borderColor: COLORS.primary,
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#8B1313",
+                        borderColor: BRAND.main,
                         borderWidth: 1.5,
                       },
                     }}
@@ -790,18 +790,18 @@ export default function DuyetKhoaHocPage() {
                       <IconButton
                         onClick={handleResetFilters}
                         sx={{
-                          bgcolor: alpha("#8B1313", 0.06),
+                          bgcolor: alpha(BRAND.main, 0.06),
                           border: "1px solid",
-                          borderColor: alpha("#8B1313", 0.15),
+                          borderColor: alpha(BRAND.main, 0.15),
                           borderRadius: "10px",
                           width: 42,
                           height: 42,
                           flexShrink: 0,
-                          color: "#8B1313",
+                          color: BRAND.main,
                           transition: "all .18s ease",
                           "&:hover": {
-                            bgcolor: alpha("#8B1313", 0.12),
-                            borderColor: "#8B1313",
+                            bgcolor: alpha(BRAND.main, 0.12),
+                            borderColor: BRAND.main,
                           },
                         }}
                       >
@@ -834,7 +834,7 @@ export default function DuyetKhoaHocPage() {
                       sx={{
                         height: 42,
                         borderRadius: "10px",
-                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        bgcolor: CSSVAR.paper,
                         "& .MuiOutlinedInput-notchedOutline": {
                           borderColor: COLORS.line,
                         },
@@ -861,7 +861,7 @@ export default function DuyetKhoaHocPage() {
                       sx={{
                         height: 42,
                         borderRadius: "10px",
-                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        bgcolor: CSSVAR.paper,
                         "& .MuiOutlinedInput-notchedOutline": {
                           borderColor: COLORS.line,
                         },
@@ -896,7 +896,7 @@ export default function DuyetKhoaHocPage() {
                       "& .MuiOutlinedInput-root": {
                         height: 42,
                         borderRadius: "10px",
-                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        bgcolor: CSSVAR.paper,
                         "& fieldset": { borderColor: COLORS.line },
                       },
                     }}
@@ -919,7 +919,7 @@ export default function DuyetKhoaHocPage() {
                       "& .MuiOutlinedInput-root": {
                         height: 42,
                         borderRadius: "10px",
-                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        bgcolor: CSSVAR.paper,
                         "& fieldset": { borderColor: COLORS.line },
                       },
                     }}
@@ -989,8 +989,8 @@ export default function DuyetKhoaHocPage() {
                         textTransform: "none",
                         fontWeight: 600,
                         fontSize: 13,
-                        borderColor: "var(--ev-divider, #ECE7E4)",
-                        color: "var(--ev-text-muted, #8A7676)",
+                        borderColor: CSSVAR.divider,
+                        color: CSSVAR.textMuted,
                         borderRadius: 2.5,
                         px: 2.5,
                         "&:hover": {
@@ -1120,7 +1120,7 @@ export default function DuyetKhoaHocPage() {
                               <Typography
                                 sx={{
                                   fontSize: 12,
-                                  color: "var(--ev-grey, #8A7676)",
+                                  color: CSSVAR.textMuted,
                                 }}
                               >
                                 Giảng viên: {item.createBy}
@@ -1130,7 +1130,7 @@ export default function DuyetKhoaHocPage() {
                               <Typography
                                 sx={{
                                   fontSize: 12,
-                                  color: "var(--ev-grey, #8A7676)",
+                                  color: CSSVAR.textMuted,
                                   display: "flex",
                                   alignItems: "center",
                                   gap: 0.3,
@@ -1177,7 +1177,7 @@ export default function DuyetKhoaHocPage() {
                             sx={{
                               border: `1px solid ${COLORS.line}`,
                               borderRadius: "12px",
-                              color: "var(--ev-grey, #8A7676)",
+                              color: CSSVAR.textMuted,
                               width: 40,
                               height: 40,
                               flexShrink: 0,

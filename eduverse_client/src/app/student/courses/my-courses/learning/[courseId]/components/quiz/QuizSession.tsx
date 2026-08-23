@@ -6,6 +6,7 @@ import { QuizContainer } from "./QuizContainer";
 import { QuizView } from "./QuizView";
 import { QuizResult } from "./QuizResult";
 import { QuizReview } from "./QuizReview";
+import { BRAND } from "@/src/theme/tokens";
 
 interface QuizSessionProps {
   idBaiKiemTra: string;
@@ -61,7 +62,7 @@ export function QuizSession({
             gap: 2,
           }}
         >
-          <CircularProgress sx={{ color: "#8B1313" }} />
+          <CircularProgress sx={{ color: BRAND.main }} />
           <Typography color="text.secondary">Đang tải bài kiểm tra…</Typography>
         </Box>
       );

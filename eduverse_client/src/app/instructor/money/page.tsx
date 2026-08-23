@@ -36,8 +36,9 @@ import {
   huyYeuCau,
 } from "@/src/store/rutTien/RutTienSlice";
 import { apiService } from "@/src/services/index";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
-const PRIMARY = "#8B1313";
+const PRIMARY = BRAND.main;
 
 const getStatusChip = (trangThai?: string) => {
   const status = trangThai ?? "";
@@ -258,7 +259,7 @@ function DoanhThuContent() {
       {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Typography
-          sx={{ fontSize: 26, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)", mb: 0.5 }}
+          sx={{ fontSize: 26, fontWeight: 900, color: CSSVAR.textPrimary, mb: 0.5 }}
         >
           Doanh thu & Rút tiền
         </Typography>
@@ -327,7 +328,7 @@ function DoanhThuContent() {
               onClick={() => setOpenRut(true)}
               disabled={soDu < 50000 || nganHangs.length === 0}
               sx={{
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
                 color: PRIMARY,
                 fontWeight: 800,
                 borderRadius: "10px",
@@ -602,14 +603,14 @@ function DoanhThuContent() {
                   <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
                     Mã hết hạn sau{" "}
                     <strong
-                      style={{ color: otpCountdown < 60 ? "#DC2626" : PRIMARY }}
+                      style={{ color: otpCountdown < 60 ? STATUS.error : PRIMARY }}
                     >
                       {formatCountdown(otpCountdown)}
                     </strong>
                   </Typography>
                 ) : (
                   <Typography
-                    sx={{ fontSize: 13, color: "#DC2626", fontWeight: 600 }}
+                    sx={{ fontSize: 13, color: STATUS.error, fontWeight: 600 }}
                   >
                     Mã OTP đã hết hạn
                   </Typography>
@@ -724,7 +725,7 @@ export default function InstructorRevenuePage() {
             p: { xs: 2, md: 4 },
             borderRadius: "24px",
             border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
           }}
         >

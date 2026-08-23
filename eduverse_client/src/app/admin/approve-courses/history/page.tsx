@@ -43,6 +43,7 @@ import {
 } from "@/src/app/admin/approve-courses/types/constants";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 const kiemDuyetService = new KiemDuyetService();
 
@@ -74,14 +75,14 @@ const STATUS_CONFIG: Record<
   },
   TuChoi: {
     label: "Từ chối",
-    color: "#DC2626",
+    color: STATUS.error,
     bg: "linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.05) 100%)",
     border: "rgba(239,68,68,0.3)",
     icon: <CancelRoundedIcon sx={{ fontSize: 14 }} />,
   },
   ChoDuyet: {
     label: "Chờ duyệt",
-    color: "#D97706",
+    color: STATUS.warningDark,
     bg: "linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.05) 100%)",
     border: "rgba(245,158,11,0.3)",
     icon: <HourglassTopRoundedIcon sx={{ fontSize: 14 }} />,
@@ -315,7 +316,7 @@ export default function LichSuKiemDuyetPage() {
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 2,
                   color: COLORS.ink,
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   "&:hover": {
                     borderColor: COLORS.primary,
                     color: COLORS.primary,
@@ -365,7 +366,7 @@ export default function LichSuKiemDuyetPage() {
                 cardBg:
                   "linear-gradient(135deg, rgba(139,19,19,0.04) 0%, rgba(139,19,19,0.01) 100%)",
                 borderColor: "rgba(139,19,19,0.14)",
-                iconBg: "linear-gradient(135deg, #8B1313 0%, #6D0F0F 100%)",
+                iconBg: `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
                 iconShadow: "0 4px 12px rgba(139,19,19,0.22)",
                 icon: <SchoolRoundedIcon sx={{ fontSize: 20 }} />,
               },
@@ -376,18 +377,18 @@ export default function LichSuKiemDuyetPage() {
                 cardBg:
                   "linear-gradient(135deg, rgba(16,185,129,0.04) 0%, rgba(16,185,129,0.01) 100%)",
                 borderColor: "rgba(16,185,129,0.16)",
-                iconBg: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                iconBg: `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`,
                 iconShadow: "0 4px 12px rgba(16,185,129,0.22)",
                 icon: <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />,
               },
               {
                 label: "Từ chối",
                 value: stats.tuChoi,
-                color: "#DC2626",
+                color: STATUS.error,
                 cardBg:
                   "linear-gradient(135deg, rgba(239,68,68,0.04) 0%, rgba(239,68,68,0.01) 100%)",
                 borderColor: "rgba(239,68,68,0.16)",
-                iconBg: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
+                iconBg: `linear-gradient(135deg, #EF4444 0%, ${STATUS.error} 100%)`,
                 iconShadow: "0 4px 12px rgba(239,68,68,0.22)",
                 icon: <CancelRoundedIcon sx={{ fontSize: 20 }} />,
               },
@@ -449,7 +450,7 @@ export default function LichSuKiemDuyetPage() {
                     <Typography
                       sx={{
                         fontSize: 12.5,
-                        color: "var(--ev-text-secondary, #4B5563)",
+                        color: CSSVAR.textSecondary,
                         fontWeight: 600,
                         mt: 0.4,
                       }}
@@ -506,7 +507,7 @@ export default function LichSuKiemDuyetPage() {
                     value={keywordInput}
                     onChange={(e) => setKeywordInput(e.target.value)}
                     sx={{
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      bgcolor: CSSVAR.paper,
                       "& .MuiOutlinedInput-root": {
                         height: 40,
                         borderRadius: "12px",
@@ -544,7 +545,7 @@ export default function LichSuKiemDuyetPage() {
                     sx={{
                       height: 40,
                       minWidth: { xs: "100%", sm: 170 },
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      bgcolor: CSSVAR.paper,
                       borderRadius: "12px",
                       "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: COLORS.line,
@@ -569,7 +570,7 @@ export default function LichSuKiemDuyetPage() {
                         onClick={handleResetFilters}
                         disabled={!isFilterDirty}
                         sx={{
-                          bgcolor: "var(--ev-paper, #FFFFFF)",
+                          bgcolor: CSSVAR.paper,
                           border: `1px solid ${COLORS.line}`,
                           borderRadius: "12px",
                           width: 40,
@@ -599,7 +600,7 @@ export default function LichSuKiemDuyetPage() {
                 sx={{
                   mt: 1.5,
                   minHeight: 34,
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 2,
                   px: 0.5,
@@ -682,7 +683,7 @@ export default function LichSuKiemDuyetPage() {
                           borderRadius: 2,
                           cursor: "pointer",
                           transition: "all .15s ease",
-                          bgcolor: "var(--ev-paper, #FFFFFF)",
+                          bgcolor: CSSVAR.paper,
                           "&:hover": {
                             boxShadow: `0 4px 16px ${alpha(
                               COLORS.primary,

@@ -44,6 +44,7 @@ import KiemDuyetService from "@/src/services/KiemDuyetServide";
 import KiemDuyetSidebar from "./components/KiemDuyetSidebar";
 import { ApiResponse } from "@/src/types/types";
 import { LyDoTuChoiRequest } from "@/src/types/KiemDuyet/Dto/dto";
+import { CSSVAR } from "@/src/theme/tokens";
 
 const kiemDuyetService = new KiemDuyetService();
 
@@ -607,14 +608,14 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           <IconButton
             onClick={goBackToList}
             sx={{
-              border: "1px solid var(--ev-divider, #ECE7E4)",
+              border: `1px solid ${CSSVAR.divider}`,
               borderRadius: "12px",
-              color: "var(--ev-text-primary, #1F2937)",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              color: CSSVAR.textPrimary,
+              bgcolor: CSSVAR.paper,
               transition: "all 0.2s ease",
               "&:hover": {
-                bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-                borderColor: "var(--ev-text-muted, #8A7676)",
+                bgcolor: CSSVAR.paperAlt,
+                borderColor: CSSVAR.textMuted,
                 transform: "translateX(-2px)",
               },
             }}
@@ -627,7 +628,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               fontSize: 26,
               fontWeight: 900,
               fontFamily: FONTS.display,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
               flex: 1,
             }}
           >

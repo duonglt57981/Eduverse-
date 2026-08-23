@@ -30,7 +30,7 @@ import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import LoiMoiGiangVienService, {
   LoiMoiChoXacNhanDto,
 } from "@/src/services/LoiMoiGiangVienService";
-import { BRAND, NEUTRAL } from "@/src/theme/tokens";
+import { BRAND, NEUTRAL, STATUS } from "@/src/theme/tokens";
 
 const MAU = {
   chinh: BRAND.main,
@@ -51,9 +51,9 @@ const DANH_SACH_QUYEN_HIEN_THI = [
 
 function TrangThaiChip({ trangThai }: { trangThai: string }) {
   const map: Record<string, { nhan: string; mau: string; nen: string; vieng: string }> = {
-    Pending: { nhan: "Chờ xác nhận", mau: "#D97706", nen: "#FEF3C7", vieng: "#FDE68A" },
+    Pending: { nhan: "Chờ xác nhận", mau: STATUS.warningDark, nen: "#FEF3C7", vieng: "#FDE68A" },
     Accepted: { nhan: "Đã chấp nhận", mau: "#16A34A", nen: "#DCFCE7", vieng: "#BBF7D0" },
-    Rejected: { nhan: "Đã từ chối", mau: "#DC2626", nen: "#FEE2E2", vieng: "#FECACA" },
+    Rejected: { nhan: "Đã từ chối", mau: STATUS.error, nen: "#FEE2E2", vieng: "#FECACA" },
   };
   const cfg = map[trangThai] ?? {
     nhan: trangThai,
@@ -196,7 +196,7 @@ export default function InvitesPage() {
 
             {pendingList.length > 0 && (
               <Chip
-                icon={<AutoAwesomeIcon sx={{ fontSize: "16px !important", color: "#D97706 !important" }} />}
+                icon={<AutoAwesomeIcon sx={{ fontSize: "16px !important", color: `${STATUS.warningDark} !important` }} />}
                 label={`${pendingList.length} lời mời cần xử lý`}
                 sx={{
                   fontWeight: 700,
@@ -786,7 +786,7 @@ function LoiMoiCard({
               px: 3,
               py: 1,
               borderColor: "#FECACA",
-              color: "#DC2626",
+              color: STATUS.error,
               bgcolor: "#FFFFFF",
               "&:hover": {
                 bgcolor: "#FEE2E2",

@@ -44,6 +44,7 @@ import HoiDapService, {
 } from "@/src/services/HoiDapService";
 import { useSearchParams } from "next/navigation";
 import { Alert } from "@mui/material";
+import { STATUS, NEUTRAL } from "@/src/theme/tokens";
 
 function thoiGianTuatoi(ngay: string) {
   try {
@@ -204,7 +205,7 @@ function TraLoiCard({
             flexWrap: "wrap",
           }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: 13, color: "#1F2937" }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textPrimary }}>
             {traLoi.nguoiTraLoiTen || "Ẩn danh"}
           </Typography>
           {traLoi.laGiangVien && (
@@ -231,11 +232,11 @@ function TraLoiCard({
                 fontWeight: 700,
                 height: 18,
                 bgcolor: "#FEF3C7",
-                color: "#D97706",
+                color: STATUS.warningDark,
               }}
             />
           )}
-          <Typography sx={{ fontSize: 11, color: "#9CA3AF", ml: "auto" }}>
+          <Typography sx={{ fontSize: 11, color: NEUTRAL.grey, ml: "auto" }}>
             {thoiGianTuatoi(traLoi.ngayTao)}
           </Typography>
         </Box>
@@ -280,7 +281,7 @@ function TraLoiCard({
         {/* Actions */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <ThumbUpOutlinedIcon sx={{ fontSize: 13, color: "#9CA3AF" }} />
+            <ThumbUpOutlinedIcon sx={{ fontSize: 13, color: NEUTRAL.grey }} />
             <Typography sx={{ fontSize: 12, color: "#6B7280" }}>
               {traLoi.soLike}
             </Typography>
@@ -314,8 +315,8 @@ function TraLoiCard({
               onClick={onToggleTopAnswer}
               sx={{
                 p: 0.5,
-                color: traLoi.ghimTraLoi ? "#D97706" : "#9CA3AF",
-                "&:hover": { color: "#D97706" },
+                color: traLoi.ghimTraLoi ? STATUS.warningDark : NEUTRAL.grey,
+                "&:hover": { color: STATUS.warningDark },
               }}
             >
               {traLoi.ghimTraLoi ? (
@@ -330,7 +331,7 @@ function TraLoiCard({
             <IconButton
               size="small"
               onClick={onXoa}
-              sx={{ p: 0.5, color: "#9CA3AF", "&:hover": { color: "#DC2626" } }}
+              sx={{ p: 0.5, color: NEUTRAL.grey, "&:hover": { color: STATUS.error } }}
             >
               <DeleteOutlineIcon sx={{ fontSize: 15 }} />
             </IconButton>
@@ -796,7 +797,7 @@ export default function QnAManagerContent() {
   if (trangThai !== "DaDuyet") {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
-        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+        <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
           Hỏi đáp chỉ khả dụng sau khi khóa học được duyệt.
         </Typography>
       </Box>
@@ -806,7 +807,7 @@ export default function QnAManagerContent() {
   if (!coQuyen("qnA")) {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
-        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+        <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
           Bạn không có quyền truy cập mục Hỏi đáp.
         </Typography>
       </Box>
@@ -831,7 +832,7 @@ export default function QnAManagerContent() {
           sx={{
             width: cauHoiMo ? 380 : "100%",
             flexShrink: 0,
-            borderRight: cauHoiMo ? "1px solid #ECE7E4" : "none",
+            borderRight: cauHoiMo ? `1px solid ${NEUTRAL.divider}` : "none",
             display: "flex",
             flexDirection: "column",
             transition: "width 0.2s ease",
@@ -839,9 +840,9 @@ export default function QnAManagerContent() {
           }}
         >
           {/* Header */}
-          <Box sx={{ p: 3, borderBottom: "1px solid #ECE7E4", flexShrink: 0 }}>
+          <Box sx={{ p: 3, borderBottom: `1px solid ${NEUTRAL.divider}`, flexShrink: 0 }}>
             <Typography
-              sx={{ fontWeight: 900, fontSize: 20, color: "#1F2937", mb: 2 }}
+              sx={{ fontWeight: 900, fontSize: 20, color: NEUTRAL.textPrimary, mb: 2 }}
             >
               Q&A Dashboard
             </Typography>
@@ -860,7 +861,7 @@ export default function QnAManagerContent() {
                   height: "44px",
                   borderRadius: "10px",
                   fontSize: 14,
-                  "& fieldset": { borderColor: "#ECE7E4" },
+                  "& fieldset": { borderColor: NEUTRAL.divider },
                   "&.Mui-focused fieldset": { borderColor: MAU.chinh },
                 },
               }}
@@ -868,7 +869,7 @@ export default function QnAManagerContent() {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />
+                      <SearchIcon sx={{ fontSize: 18, color: NEUTRAL.grey }} />
                     </InputAdornment>
                   ),
                 },
@@ -897,7 +898,7 @@ export default function QnAManagerContent() {
                     height: 26,
                     bgcolor: filterLoai === f.val ? MAU.chinh : "transparent",
                     color: filterLoai === f.val ? "#fff" : "#6B7280",
-                    border: `1px solid ${filterLoai === f.val ? MAU.chinh : "#ECE7E4"}`,
+                    border: `1px solid ${filterLoai === f.val ? MAU.chinh : NEUTRAL.divider}`,
                     "&:hover": {
                       bgcolor:
                         filterLoai === f.val ? MAU.chinhDam : `${MAU.chinh}08`,
@@ -920,7 +921,7 @@ export default function QnAManagerContent() {
                 <QuestionAnswerOutlinedIcon
                   sx={{ fontSize: 48, color: "#D1D5DB", mb: 1 }}
                 />
-                <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+                <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
                   Không có câu hỏi nào
                 </Typography>
               </Box>
@@ -940,7 +941,7 @@ export default function QnAManagerContent() {
                           ? `${MAU.chinh}66`
                           : cauHoi.daGhim
                             ? "#FDE68A"
-                            : "#ECE7E4"
+                            : NEUTRAL.divider
                       }`,
                       bgcolor:
                         cauHoiMo?.id === cauHoi.id
@@ -962,7 +963,7 @@ export default function QnAManagerContent() {
                       sx={{
                         fontWeight: 700,
                         fontSize: 14,
-                        color: "#1F2937",
+                        color: NEUTRAL.textPrimary,
                         mb: 1,
                         lineHeight: 1.5,
                         overflow: "hidden",
@@ -978,7 +979,7 @@ export default function QnAManagerContent() {
                     {/* Bài giảng */}
                     {cauHoi.tenBaiGiang && (
                       <Typography
-                        sx={{ fontSize: 11.5, color: "#8A7676", mb: 1 }}
+                        sx={{ fontSize: 11.5, color: NEUTRAL.textMuted, mb: 1 }}
                       >
                         📹 {cauHoi.tenBaiGiang}
                       </Typography>
@@ -1005,7 +1006,7 @@ export default function QnAManagerContent() {
                           sx={{
                             fontSize: 12,
                             fontWeight: 600,
-                            color: "#4B5563",
+                            color: NEUTRAL.textSecondary,
                           }}
                         >
                           {cauHoi.nguoiHoiTen || "Ẩn danh"}
@@ -1016,7 +1017,7 @@ export default function QnAManagerContent() {
                         sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
                         <ThumbUpOutlinedIcon
-                          sx={{ fontSize: 12, color: "#9CA3AF" }}
+                          sx={{ fontSize: 12, color: NEUTRAL.grey }}
                         />
                         <Typography sx={{ fontSize: 12, color: "#6B7280" }}>
                           {cauHoi.tongLike ?? 0}
@@ -1027,7 +1028,7 @@ export default function QnAManagerContent() {
                         sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
                         <QuestionAnswerOutlinedIcon
-                          sx={{ fontSize: 12, color: "#9CA3AF" }}
+                          sx={{ fontSize: 12, color: NEUTRAL.grey }}
                         />
                         <Typography
                           sx={{
@@ -1048,7 +1049,7 @@ export default function QnAManagerContent() {
                             fontSize: 10,
                             height: 18,
                             bgcolor: "#FEF3C7",
-                            color: "#D97706",
+                            color: STATUS.warningDark,
                             fontWeight: 700,
                           }}
                         />
@@ -1061,7 +1062,7 @@ export default function QnAManagerContent() {
                             fontSize: 10,
                             height: 18,
                             bgcolor: "#FEF3C7",
-                            color: "#D97706",
+                            color: STATUS.warningDark,
                           }}
                         />
                       )}
@@ -1073,13 +1074,13 @@ export default function QnAManagerContent() {
                             fontSize: 10,
                             height: 18,
                             bgcolor: "#FEE2E2",
-                            color: "#DC2626",
+                            color: STATUS.error,
                           }}
                         />
                       )}
 
                       <Typography
-                        sx={{ fontSize: 11, color: "#9CA3AF", ml: "auto" }}
+                        sx={{ fontSize: 11, color: NEUTRAL.grey, ml: "auto" }}
                       >
                         {thoiGianTuatoi(cauHoi.ngayTao)}
                       </Typography>
@@ -1097,7 +1098,7 @@ export default function QnAManagerContent() {
                       mt: 1,
                       textTransform: "none",
                       borderRadius: "10px",
-                      borderColor: "#ECE7E4",
+                      borderColor: NEUTRAL.divider,
                       color: "#6B7280",
                       "&:hover": { borderColor: MAU.chinh, color: MAU.chinh },
                     }}
@@ -1134,7 +1135,7 @@ export default function QnAManagerContent() {
                 <Box
                   sx={{
                     p: 2.5,
-                    borderBottom: "1px solid #ECE7E4",
+                    borderBottom: `1px solid ${NEUTRAL.divider}`,
                     flexShrink: 0,
                     display: "flex",
                     alignItems: "flex-start",
@@ -1159,7 +1160,7 @@ export default function QnAManagerContent() {
                             fontSize: 10,
                             height: 18,
                             bgcolor: "#FEF3C7",
-                            color: "#D97706",
+                            color: STATUS.warningDark,
                           }}
                         />
                       )}
@@ -1171,7 +1172,7 @@ export default function QnAManagerContent() {
                             fontSize: 10,
                             height: 18,
                             bgcolor: "#FEE2E2",
-                            color: "#DC2626",
+                            color: STATUS.error,
                           }}
                         />
                       )}
@@ -1180,7 +1181,7 @@ export default function QnAManagerContent() {
                       sx={{
                         fontWeight: 700,
                         fontSize: 15,
-                        color: "#1F2937",
+                        color: NEUTRAL.textPrimary,
                         lineHeight: 1.5,
                       }}
                     >
@@ -1188,7 +1189,7 @@ export default function QnAManagerContent() {
                     </Typography>
                     {cauHoiMo.tenBaiGiang && (
                       <Typography
-                        sx={{ fontSize: 12, color: "#8A7676", mt: 0.5 }}
+                        sx={{ fontSize: 12, color: NEUTRAL.textMuted, mt: 0.5 }}
                       >
                         📹 {cauHoiMo.tenBaiGiang}
                       </Typography>
@@ -1207,11 +1208,11 @@ export default function QnAManagerContent() {
                         size={22}
                       />
                       <Typography
-                        sx={{ fontSize: 12, color: "#4B5563", fontWeight: 600 }}
+                        sx={{ fontSize: 12, color: NEUTRAL.textSecondary, fontWeight: 600 }}
                       >
                         {cauHoiMo.nguoiHoiTen}
                       </Typography>
-                      <Typography sx={{ fontSize: 11, color: "#9CA3AF" }}>
+                      <Typography sx={{ fontSize: 11, color: NEUTRAL.grey }}>
                         {thoiGianTuatoi(cauHoiMo.ngayTao)}
                       </Typography>
                     </Box>
@@ -1227,7 +1228,7 @@ export default function QnAManagerContent() {
                         onClick={() =>
                           ghimCauHoi(cauHoiMo.id, !cauHoiMo.daGhim)
                         }
-                        sx={{ color: cauHoiMo.daGhim ? "#D97706" : "#9CA3AF" }}
+                        sx={{ color: cauHoiMo.daGhim ? STATUS.warningDark : NEUTRAL.grey }}
                       >
                         {cauHoiMo.daGhim ? (
                           <PushPinIcon fontSize="small" />
@@ -1244,7 +1245,7 @@ export default function QnAManagerContent() {
                         onClick={() =>
                           dongCauHoi(cauHoiMo.id, !cauHoiMo.daDong)
                         }
-                        sx={{ color: cauHoiMo.daDong ? "#DC2626" : "#9CA3AF" }}
+                        sx={{ color: cauHoiMo.daDong ? STATUS.error : NEUTRAL.grey }}
                       >
                         {cauHoiMo.daDong ? (
                           <LockOutlinedIcon fontSize="small" />
@@ -1258,8 +1259,8 @@ export default function QnAManagerContent() {
                         size="small"
                         onClick={() => xoaCauHoi(cauHoiMo.id)}
                         sx={{
-                          color: "#9CA3AF",
-                          "&:hover": { color: "#DC2626" },
+                          color: NEUTRAL.grey,
+                          "&:hover": { color: STATUS.error },
                         }}
                       >
                         <DeleteOutlineIcon fontSize="small" />
@@ -1278,7 +1279,7 @@ export default function QnAManagerContent() {
                       <QuestionAnswerOutlinedIcon
                         sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }}
                       />
-                      <Typography sx={{ fontSize: 13, color: "#9CA3AF" }}>
+                      <Typography sx={{ fontSize: 13, color: NEUTRAL.grey }}>
                         Chưa có câu trả lời nào
                       </Typography>
                     </Box>
@@ -1308,7 +1309,7 @@ export default function QnAManagerContent() {
                     sx={{
                       px: 2.5,
                       pt: 1.5,
-                      borderTop: "1px solid #ECE7E4",
+                      borderTop: `1px solid ${NEUTRAL.divider}`,
                       flexShrink: 0,
                     }}
                   >
@@ -1353,7 +1354,7 @@ export default function QnAManagerContent() {
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "10px",
                           fontSize: 14,
-                          "& fieldset": { borderColor: "#ECE7E4" },
+                          "& fieldset": { borderColor: NEUTRAL.divider },
                           "&.Mui-focused fieldset": { borderColor: MAU.chinh },
                         },
                       }}
@@ -1361,7 +1362,7 @@ export default function QnAManagerContent() {
 
                     {aiCoNoiDungBaiGiang === false && (
                       <Typography
-                        sx={{ fontSize: 11.5, color: "#D97706", mb: 1 }}
+                        sx={{ fontSize: 11.5, color: STATUS.warningDark, mb: 1 }}
                       >
                         ⚠️ AI chưa đọc được tài liệu của bài giảng này (chưa có
                         tài liệu hoặc chưa được duyệt), chỉ dựa vào thông tin
@@ -1454,7 +1455,7 @@ export default function QnAManagerContent() {
                       px: 2.5,
                       pt: 1.5,
                       pb: 2,
-                      borderTop: "1px solid #ECE7E4",
+                      borderTop: `1px solid ${NEUTRAL.divider}`,
                       flexShrink: 0,
                     }}
                   >
@@ -1472,7 +1473,7 @@ export default function QnAManagerContent() {
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "10px",
                           fontSize: 14,
-                          "& fieldset": { borderColor: "#ECE7E4" },
+                          "& fieldset": { borderColor: NEUTRAL.divider },
                           "&.Mui-focused fieldset": { borderColor: MAU.chinh },
                         },
                       }}
@@ -1481,7 +1482,7 @@ export default function QnAManagerContent() {
                     {/* Cảnh báo nếu AI thiếu context bài giảng */}
                     {aiCoNoiDungBaiGiang === false && (
                       <Typography
-                        sx={{ fontSize: 11.5, color: "#D97706", mb: 1 }}
+                        sx={{ fontSize: 11.5, color: STATUS.warningDark, mb: 1 }}
                       >
                         ⚠️ AI chưa đọc được tài liệu của bài giảng này (chưa có
                         tài liệu hoặc chưa được duyệt), chỉ dựa vào thông tin
@@ -1562,7 +1563,7 @@ export default function QnAManagerContent() {
                     }}
                   >
                     <Typography
-                      sx={{ fontSize: 13, color: "#DC2626", fontWeight: 600 }}
+                      sx={{ fontSize: 13, color: STATUS.error, fontWeight: 600 }}
                     >
                       🔒 Câu hỏi này đã bị đóng
                     </Typography>

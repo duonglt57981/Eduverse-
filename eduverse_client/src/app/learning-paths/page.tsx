@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { COLORS } from "@/src/theme/tokens";
+import { COLORS, CSSVAR } from "@/src/theme/tokens";
 import { createAppTheme } from "@/src/theme/createAppTheme";
 
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -303,7 +303,7 @@ export default function LearningPathsPage() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: COLORS.primary,
-      cancelButtonColor: "#8A7676",
+      cancelButtonColor: CSSVAR.textMuted,
       confirmButtonText: "Đăng xuất",
       cancelButtonText: "Hủy",
       reverseButtons: true,
@@ -416,7 +416,7 @@ export default function LearningPathsPage() {
             zIndex: 1200,
             px: { xs: 2, md: 4 },
             borderBottom: "1px solid rgba(0,0,0,0.06)",
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -791,7 +791,7 @@ export default function LearningPathsPage() {
                   >
                     <Box>
                       <Typography
-                        sx={{ fontSize: 22, fontWeight: 900, color: "var(--ev-text-primary, #1F2937)" }}
+                        sx={{ fontSize: 22, fontWeight: 900, color: CSSVAR.textPrimary }}
                       >
                         {selectedCategory}
                       </Typography>
@@ -855,7 +855,7 @@ export default function LearningPathsPage() {
                         border: "1px solid rgba(0,0,0,0.12)",
                         borderRadius: "10px",
                         width: { xs: "100%", sm: 260 },
-                        bgcolor: "var(--ev-paper, #FFFFFF)",
+                        bgcolor: CSSVAR.paper,
                       }}
                     >
                       <InputBase
@@ -967,7 +967,7 @@ export default function LearningPathsPage() {
                                 sx={{
                                   fontSize: 15.5,
                                   fontWeight: 800,
-                                  color: "var(--ev-text-primary, #1F2937)",
+                                  color: CSSVAR.textPrimary,
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                 }}
@@ -983,7 +983,7 @@ export default function LearningPathsPage() {
                               >
                                 Tác giả:{" "}
                                 <span
-                                  style={{ fontWeight: 600, color: "var(--ev-text-secondary, #4B5563)" }}
+                                  style={{ fontWeight: 600, color: CSSVAR.textSecondary }}
                                 >
                                   {path.author}
                                 </span>

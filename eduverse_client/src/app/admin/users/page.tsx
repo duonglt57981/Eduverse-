@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
-import { COLORS } from "@/src/theme/tokens";
+import { COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
 
-import { useEffect, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import AuthGuard from '@/src/components/AuthGuard';
 import DashboardShell from '@/src/components/dashboard/DashboardShell';
 import { apiService } from '@/src/services/index';
@@ -35,21 +36,17 @@ import {
   Chip,
   Avatar,
   FormControl,
-  InputLabel,
-  OutlinedInput,
   Checkbox,
   ListItemText,
 } from '@mui/material';
 import {
   SearchRounded,
-  AddRounded,
   EditRounded,
   DeleteRounded,
   LockRounded,
   LockOpenRounded,
   RefreshRounded,
   PeopleAltRounded,
-  AdminPanelSettingsRounded,
   GppGoodRounded,
   DonutLargeRounded,
 } from '@mui/icons-material';
@@ -73,17 +70,29 @@ interface UserItem {
   roles: string[];
 }
 
+interface UserListResponse {
+  items: UserItem[];
+  totalItems: number;
+  totalPages: number;
+  totalUsersCount: number;
+  activeUsersCount: number;
+  lockedUsersCount: number;
+  roleGroupsCount: number;
+  availableRoles?: string[];
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [pageIndex, setPageIndex] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = 10;
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [availableRoles, setAvailableRoles] = useState<string[]>(['Admin', 'GiaoVien', 'HocVien', 'personnel']);
   const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const latestRequestRef = useRef(0);
 
   // Statistics states
   const [totalUsersCount, setTotalUsersCount] = useState(0);
@@ -98,7 +107,6 @@ export default function AdminUsersPage() {
 
   // Form states
   const [userName, setUserName] = useState('');
-  const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [hoTen, setHoTen] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -108,21 +116,23 @@ export default function AdminUsersPage() {
   const [ngaySinh, setNgaySinh] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<string[]>(['HocVien']);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
+    const requestId = ++latestRequestRef.current;
     setLoading(true);
     try {
-      const response = await apiService.get<any>('/users', {
+      const response = await apiService.get<UserListResponse>('/users', {
         params: {
-          search: search || undefined,
+          search: appliedSearch || undefined,
           role: roleFilter || undefined,
           pageIndex,
           pageSize,
         },
       });
 
+      if (requestId !== latestRequestRef.current) return;
+
       if (response.status && response.data) {
         setUsers(response.data.items || []);
-        setTotalItems(response.data.totalItems || 0);
         setTotalPages(response.data.totalPages || 1);
         
         // Dynamic dashboard stats from backend
@@ -138,6 +148,7 @@ export default function AdminUsersPage() {
         setUsers([]);
       }
     } catch (err: any) {
+      if (requestId !== latestRequestRef.current) return;
       console.error(err);
       Swal.fire({
         icon: 'error',
@@ -146,49 +157,37 @@ export default function AdminUsersPage() {
         confirmButtonColor: COLORS.primary,
       });
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestRef.current) setLoading(false);
     }
-  };
+  }, [appliedSearch, pageIndex, pageSize, roleFilter]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
-  }, [pageIndex, pageSize, roleFilter]);
+  }, [fetchUsers, refreshKey]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const nextSearch = search.trim();
+    if (pageIndex === 1 && appliedSearch === nextSearch) {
+      fetchUsers();
+      return;
+    }
+    setAppliedSearch(nextSearch);
     setPageIndex(1);
-    fetchUsers();
   };
 
   const handleRefresh = () => {
     setSearch('');
+    setAppliedSearch('');
     setRoleFilter('');
     setPageIndex(1);
-    fetchUsers();
-  };
-
-  const openAddDialog = () => {
-    setDialogMode('add');
-    setEditingUserId(null);
-    setUserName('');
-    setPassword('');
-    setEmail('');
-    setHoTen('');
-    setPhoneNumber('');
-    setDiaChi('');
-    setChucVu('');
-    setGioiTinh(1);
-    setNgaySinh('');
-    setSelectedRoles(['HocVien']);
-    setDialogOpen(true);
+    setRefreshKey((current) => current + 1);
   };
 
   const openEditDialog = (user: UserItem) => {
     setDialogMode('edit');
     setEditingUserId(user.id);
     setUserName(user.userName);
-    setPassword(''); // keep blank unless resetting
     setEmail(user.email || '');
     setHoTen(user.hoTen || '');
     setPhoneNumber(user.phoneNumber || '');
@@ -430,7 +429,7 @@ export default function AdminUsersPage() {
       case 'personnel':
       case 'Personnel':
       case 'NhanVien':
-        return { bg: 'rgba(124,58,237,0.1)', text: '#7C3AED', label: 'Nhân viên' };
+        return { bg: 'rgba(124,58,237,0.1)', text: COLORS.purpleAI, label: 'Nhân viên' };
       default:
         return { bg: 'rgba(107,114,128,0.1)', text: COLORS.textSecondary, label: role };
     }
@@ -451,7 +450,7 @@ export default function AdminUsersPage() {
                 sx={{
                   fontSize: 28,
                   fontWeight: 900,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   mb: 0.5,
                 }}
               >
@@ -637,6 +636,7 @@ export default function AdminUsersPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                       slotProps={{
+                        htmlInput: { 'aria-label': 'Tìm kiếm người dùng' },
                         input: {
                           startAdornment: (
                             <InputAdornment position="start">
@@ -660,7 +660,10 @@ export default function AdminUsersPage() {
                   <FormControl fullWidth>
                     <Select
                       value={roleFilter}
-                      onChange={(e) => setRoleFilter(e.target.value)}
+                      onChange={(e) => {
+                        setRoleFilter(e.target.value);
+                        setPageIndex(1);
+                      }}
                       displayEmpty
                       sx={{
                         height: '50px',
@@ -685,6 +688,7 @@ export default function AdminUsersPage() {
                       fullWidth
                       type="submit"
                       variant="outlined"
+                      disabled={loading}
                       sx={{
                         height: '50px',
                         borderRadius: '12px',
@@ -698,10 +702,13 @@ export default function AdminUsersPage() {
                         },
                       }}
                     >
-                      Tìm kiếm
+                      {loading ? 'Đang tìm...' : 'Tìm kiếm'}
                     </Button>
                     <IconButton
                       onClick={handleRefresh}
+                      disabled={loading}
+                      aria-label="Đặt lại tìm kiếm và bộ lọc"
+                      title="Đặt lại tìm kiếm và bộ lọc"
                       sx={{
                         height: '50px',
                         width: '50px',
@@ -758,7 +765,11 @@ export default function AdminUsersPage() {
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                       <Typography variant="body1" sx={{ color: COLORS.textSecondary, fontWeight: 700 }}>
-                        Không tìm thấy người dùng nào
+                        {roleFilter === 'HocVien'
+                          ? 'Không tìm thấy học viên phù hợp.'
+                          : roleFilter === 'GiaoVien'
+                            ? 'Không tìm thấy giảng viên phù hợp.'
+                            : 'Không tìm thấy người dùng phù hợp.'}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -851,7 +862,7 @@ export default function AdminUsersPage() {
                             size="small"
                             sx={{
                               bgcolor: 'rgba(239,68,68,0.1)',
-                              color: '#DC2626',
+                              color: STATUS.error,
                               fontWeight: 700,
                               fontSize: 11.5,
                             }}
@@ -889,7 +900,7 @@ export default function AdminUsersPage() {
                             onClick={() => handleToggleLock(user)}
                             size="small"
                             sx={{
-                              color: user.isLocked ? COLORS.green : '#DC2626',
+                              color: user.isLocked ? COLORS.green : STATUS.error,
                               bgcolor: user.isLocked ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)',
                               '&:hover': {
                                 bgcolor: user.isLocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',

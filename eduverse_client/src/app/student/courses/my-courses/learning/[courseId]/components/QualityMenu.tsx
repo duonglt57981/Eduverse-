@@ -7,8 +7,9 @@ import HdIcon from "@mui/icons-material/Hd";
 import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
 import { QualityLevel, CLOUDINARY_PROFILES } from "../types";
 import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
+import { BRAND } from "@/src/theme/tokens";
 
-const PRIMARY_RED = "#8B1313";
+const PRIMARY_RED = BRAND.main;
 const PRIMARY_RED_DARK = "#6B1414";
 
 interface QualityMenuProps {

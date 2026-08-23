@@ -114,6 +114,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as signalR from "@microsoft/signalr";
 import { useParams } from "next/navigation";
 import { createCourseHubConnection } from "@/src/services/signalRService";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 // ===== CSS Animation =====
 const pulseKeyframes = `
@@ -329,7 +330,7 @@ function RichTextEditor({
         border: `1px solid ${isFocused ? MAU.chinh : "#E3E6EB"}`,
         borderRadius: "10px",
         overflow: "hidden",
-        bgcolor: "var(--ev-paper, #FFFFFF)",
+        bgcolor: CSSVAR.paper,
         transition: "border-color 0.15s ease",
         "&:focus-within": {
           borderColor: MAU.chinh,
@@ -470,11 +471,11 @@ function RichTextEditor({
           padding: "12px 16px",
           fontSize: "14px",
           lineHeight: 1.7,
-          color: "var(--ev-text-primary, #1F2937)",
+          color: CSSVAR.textPrimary,
           minHeight: `${minHeight}px`,
           outline: "none",
           cursor: disabled ? "default" : "text",
-          backgroundColor: "var(--ev-paper, #FFFFFF)",
+          backgroundColor: CSSVAR.paper,
           borderRadius: "0 0 10px 10px",
         }}
         className="rich-text-editor"
@@ -518,7 +519,7 @@ function RichTextEditor({
           border-left: 3px solid ${MAU.chinh};
           padding-left: 1em;
           margin: 0.5em 0;
-          color: #8a7676;
+          color: ${CSSVAR.textMuted};
         }
         .rich-text-editor img {
           max-width: 100%;
@@ -715,7 +716,7 @@ function SectionItem({
               <Typography
                 sx={{
                   fontWeight: 800,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   flexShrink: 0,
                 }}
               >
@@ -725,7 +726,7 @@ function SectionItem({
                 sx={{
                   fontWeight: 700,
                   fontSize: 15,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -854,9 +855,9 @@ function LectureItem({
           border: "1px solid #EDEFF3",
           borderRadius: "8px",
           overflow: "hidden",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          bgcolor: CSSVAR.paper,
           transition: "all 0.2s ease",
-          "&:hover": { borderColor: "var(--ev-divider, #ECE7E4)" },
+          "&:hover": { borderColor: CSSVAR.divider },
         }}
       >
         <ListItem
@@ -939,10 +940,10 @@ function LectureItem({
                       ? `${MAU.chinh}1A`
                       : "#F1F2F5",
                   color: dangTai
-                    ? "#D97706"
+                    ? STATUS.warningDark
                     : bg.urlBaiGiang
                       ? MAU.chinhDam
-                      : "#8A7676",
+                      : CSSVAR.textMuted,
                   flexShrink: 0,
                 }}
               />
@@ -1012,7 +1013,7 @@ function LectureItem({
                   onShowLyDo(lyDoTuChoi.lyDo);
                 }}
                 sx={{
-                  color: "#DC2626",
+                  color: STATUS.error,
                   "&:hover": { bgcolor: "#FEE2E2" },
                 }}
               >
@@ -1133,7 +1134,7 @@ function PendingLectureItem({
                   fontSize: 10,
                   fontWeight: 700,
                   bgcolor: "#FFF7ED",
-                  color: "#D97706",
+                  color: STATUS.warningDark,
                   flexShrink: 0,
                 }}
               />
@@ -1202,9 +1203,9 @@ function QuizItem({
           border: "1px solid #EDEFF3",
           borderRadius: "8px",
           overflow: "hidden",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          bgcolor: CSSVAR.paper,
           transition: "all 0.2s ease",
-          "&:hover": { borderColor: "var(--ev-divider, #ECE7E4)" },
+          "&:hover": { borderColor: CSSVAR.divider },
         }}
       >
         <ListItem
@@ -1276,7 +1277,7 @@ function QuizItem({
                   fontSize: 10,
                   fontWeight: 700,
                   bgcolor: isComplete ? `${MAU.chinh}1A` : "#F1F2F5",
-                  color: isComplete ? MAU.chinhDam : "#8A7676",
+                  color: isComplete ? MAU.chinhDam : CSSVAR.textMuted,
                   flexShrink: 0,
                 }}
               />
@@ -1342,7 +1343,7 @@ function QuizItem({
                   onShowLyDo(lyDoTuChoi.lyDo);
                 }}
                 sx={{
-                  color: "#DC2626",
+                  color: STATUS.error,
                   "&:hover": { bgcolor: "#FEE2E2" },
                 }}
               >
@@ -1448,14 +1449,14 @@ function QuizCreateForm({
         p: 2.5,
         border: "1.5px dashed #C7CCD6",
         borderRadius: "14px",
-        bgcolor: "var(--ev-paper, #FFFFFF)",
+        bgcolor: CSSVAR.paper,
       }}
     >
       <Typography
         sx={{
           fontWeight: 700,
           fontSize: 16,
-          color: "var(--ev-text-primary, #1F2937)",
+          color: CSSVAR.textPrimary,
         }}
       >
         Bài kiểm tra mới: Nhập tiêu đề
@@ -1478,7 +1479,7 @@ function QuizCreateForm({
           slotProps={{
             input: {
               sx: {
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
                 borderRadius: "10px",
                 fontSize: 14.5,
                 "& fieldset": { borderColor: "#E3E6EB" },
@@ -1507,7 +1508,7 @@ function QuizCreateForm({
           sx={{
             fontWeight: 700,
             fontSize: 12.5,
-            color: "var(--ev-text-muted, #8A7676)",
+            color: CSSVAR.textMuted,
             mb: 0.5,
           }}
         >
@@ -1529,7 +1530,7 @@ function QuizCreateForm({
           disabled={loading}
           sx={{
             textTransform: "none",
-            color: "var(--ev-text-muted, #8A7676)",
+            color: CSSVAR.textMuted,
             fontWeight: 600,
             borderRadius: "8px",
             px: 2,
@@ -1544,22 +1545,22 @@ function QuizCreateForm({
           onClick={onSubmit}
           disabled={loading || !data.tenBaiKiemTra?.trim()}
           sx={{
-            bgcolor: "#ECE7E4",
-            color: "var(--ev-grey, #8A7676)",
+            bgcolor: CSSVAR.divider,
+            color: CSSVAR.textMuted,
             textTransform: "none",
             fontWeight: 700,
             px: 3,
             borderRadius: "8px",
             boxShadow: "none",
             "&:hover": {
-              bgcolor: data.tenBaiKiemTra?.trim() ? MAU.chinhDam : "#ECE7E4",
+              bgcolor: data.tenBaiKiemTra?.trim() ? MAU.chinhDam : CSSVAR.divider,
               boxShadow: "none",
             },
             ...(data.tenBaiKiemTra?.trim() && {
               bgcolor: MAU.chinh,
               color: "#fff",
             }),
-            "&.Mui-disabled": { bgcolor: "#ECE7E4", color: "#A1A6B0" },
+            "&.Mui-disabled": { bgcolor: CSSVAR.divider, color: "#A1A6B0" },
           }}
         >
           {loading ? (
@@ -1595,7 +1596,7 @@ function QuizUpdateForm({
         sx={{
           fontWeight: 700,
           fontSize: 16,
-          color: "var(--ev-text-primary, #1F2937)",
+          color: CSSVAR.textPrimary,
         }}
       >
         Sửa bài kiểm tra
@@ -1619,7 +1620,7 @@ function QuizUpdateForm({
           slotProps={{
             input: {
               sx: {
-                bgcolor: "var(--ev-paper, #FFFFFF)",
+                bgcolor: CSSVAR.paper,
                 fontWeight: 600,
                 "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                   borderColor: MAU.chinh,
@@ -1632,7 +1633,7 @@ function QuizUpdateForm({
         <Typography
           sx={{
             fontSize: 12,
-            color: soKyTuConLai <= 10 ? "#C62828" : "#8A7676",
+            color: soKyTuConLai <= 10 ? "#C62828" : CSSVAR.textMuted,
             textAlign: "right",
           }}
         >
@@ -1645,7 +1646,7 @@ function QuizUpdateForm({
           sx={{
             fontWeight: 700,
             fontSize: 12.5,
-            color: "var(--ev-text-muted, #8A7676)",
+            color: CSSVAR.textMuted,
             mb: 0.5,
           }}
         >
@@ -1669,7 +1670,7 @@ function QuizUpdateForm({
           disabled={loading}
           sx={{
             textTransform: "none",
-            color: "var(--ev-text-muted, #8A7676)",
+            color: CSSVAR.textMuted,
             fontWeight: 600,
             borderRadius: "8px",
             "&:hover": { bgcolor: "var(--ev-paper-alt, #F5F6F8)" },
@@ -1690,7 +1691,7 @@ function QuizUpdateForm({
             borderRadius: "8px",
             boxShadow: "none",
             "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
-            "&.Mui-disabled": { bgcolor: "#ECE7E4", color: "#A1A6B0" },
+            "&.Mui-disabled": { bgcolor: CSSVAR.divider, color: "#A1A6B0" },
           }}
         >
           {loading ? (
@@ -1873,7 +1874,7 @@ function QuestionDetailForm({
             sx={{
               fontWeight: 700,
               fontSize: 16,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
             }}
           >
             {isEditing ? "Sửa câu hỏi" : "Thêm câu hỏi trắc nghiệm"}
@@ -1887,7 +1888,7 @@ function QuestionDetailForm({
               fontSize: 11,
               fontWeight: 600,
               bgcolor: "var(--ev-paper-alt, #F5F6F8)",
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
               maxWidth: 220,
             }}
           />
@@ -1904,7 +1905,7 @@ function QuestionDetailForm({
             onChange={(e) => onQuestionChange("loaiCauHoi", e.target.value)}
             disabled={loading}
             sx={{
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                 borderColor: MAU.chinh,
               },
@@ -1921,7 +1922,7 @@ function QuestionDetailForm({
           sx={{
             fontWeight: 700,
             fontSize: 14,
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
             mb: 1,
           }}
         >
@@ -1949,13 +1950,13 @@ function QuestionDetailForm({
             sx={{
               fontWeight: 700,
               fontSize: 14,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
             }}
           >
             Đáp án
           </Typography>
           <Typography
-            sx={{ fontSize: 12, color: "var(--ev-text-muted, #8A7676)" }}
+            sx={{ fontSize: 12, color: CSSVAR.textMuted }}
           >
             {soDapAn}/15 đáp án
           </Typography>
@@ -1995,7 +1996,7 @@ function QuestionDetailForm({
                       height: 26,
                       borderRadius: "50%",
                       bgcolor: d.laDapAnDung ? MAU.chinh : "#F1F2F5",
-                      color: d.laDapAnDung ? "#fff" : "#8A7676",
+                      color: d.laDapAnDung ? "#fff" : CSSVAR.textMuted,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -2076,9 +2077,9 @@ function QuestionDetailForm({
                       disabled={loading || soDapAn <= SO_DAP_AN_TOI_THIEU}
                       sx={{
                         flexShrink: 0,
-                        color: "var(--ev-text-muted, #8A7676)",
+                        color: CSSVAR.textMuted,
                         "&:hover": {
-                          color: "#DC2626",
+                          color: STATUS.error,
                           bgcolor: "#FEE2E2",
                         },
                       }}
@@ -2200,7 +2201,7 @@ function QuestionDetailForm({
           disabled={loading}
           sx={{
             textTransform: "none",
-            color: "var(--ev-text-muted, #8A7676)",
+            color: CSSVAR.textMuted,
             fontWeight: 600,
             borderRadius: "8px",
             "&:hover": { bgcolor: "var(--ev-paper-alt, #F5F6F8)" },
@@ -2225,7 +2226,7 @@ function QuestionDetailForm({
             borderRadius: "8px",
             boxShadow: "none",
             "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
-            "&.Mui-disabled": { bgcolor: "#ECE7E4", color: "#A1A6B0" },
+            "&.Mui-disabled": { bgcolor: CSSVAR.divider, color: "#A1A6B0" },
           }}
         >
           {loading ? (
@@ -2281,7 +2282,7 @@ function QuestionListView({
           sx={{
             fontWeight: 700,
             fontSize: 14.5,
-            color: "var(--ev-text-primary, #1F2937)",
+            color: CSSVAR.textPrimary,
           }}
         >
           Câu hỏi{" "}
@@ -2290,7 +2291,7 @@ function QuestionListView({
             sx={{
               fontWeight: 600,
               fontSize: 12.5,
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
               ml: 0.5,
             }}
           >
@@ -2330,7 +2331,7 @@ function QuestionListView({
             sx={{ fontSize: 28, color: "var(--ev-grey, #C7CCD6)", mb: 0.5 }}
           />
           <Typography
-            sx={{ fontSize: 13, color: "var(--ev-text-muted, #8A7676)" }}
+            sx={{ fontSize: 13, color: CSSVAR.textMuted }}
           >
             Chưa có câu hỏi nào trong bài kiểm tra này.
           </Typography>
@@ -2350,7 +2351,7 @@ function QuestionListView({
                 sx={{
                   border: "1px solid #EDEFF3",
                   borderRadius: "10px",
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   transition: "all 0.15s ease",
                   "&:hover": {
                     borderColor: MAU.chinh,
@@ -2395,7 +2396,7 @@ function QuestionListView({
                       sx={{
                         fontSize: 14,
                         fontWeight: 600,
-                        color: "var(--ev-text-primary, #1F2937)",
+                        color: CSSVAR.textPrimary,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -2429,7 +2430,7 @@ function QuestionListView({
                       <Typography
                         sx={{
                           fontSize: 11,
-                          color: "var(--ev-text-muted, #8A7676)",
+                          color: CSSVAR.textMuted,
                         }}
                       >
                         {q.danhSachDapAn?.length ?? 0} đáp án
@@ -2512,7 +2513,7 @@ function QuestionListView({
                       sx={{
                         fontWeight: 700,
                         fontSize: 13,
-                        color: "var(--ev-text-muted, #8A7676)",
+                        color: CSSVAR.textMuted,
                         mb: 0.5,
                       }}
                     >
@@ -2547,7 +2548,7 @@ function QuestionListView({
                             sx={{
                               fontWeight: 700,
                               fontSize: 13,
-                              color: "var(--ev-text-muted, #8A7676)",
+                              color: CSSVAR.textMuted,
                               minWidth: 24,
                             }}
                           >
@@ -2556,7 +2557,7 @@ function QuestionListView({
                           <Typography
                             sx={{
                               fontSize: 13,
-                              color: "var(--ev-text-primary, #1F2937)",
+                              color: CSSVAR.textPrimary,
                             }}
                           >
                             {d.noiDungDapAn || "(Trống)"}
@@ -2621,7 +2622,7 @@ function LectureInfoView({
             height: 68,
             borderRadius: "10px",
             flexShrink: 0,
-            bgcolor: bg.urlBaiGiang ? "#1F2937" : "#ECE7E4",
+            bgcolor: bg.urlBaiGiang ? CSSVAR.textPrimary : CSSVAR.divider,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -2659,7 +2660,7 @@ function LectureInfoView({
             sx={{
               fontSize: 13.5,
               fontWeight: 700,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -2688,9 +2689,9 @@ function LectureInfoView({
                 fontWeight: 600,
                 height: 22,
                 bgcolor: "#F1F2F5",
-                color: "var(--ev-text-secondary, #4B5563)",
+                color: CSSVAR.textSecondary,
                 "& .MuiChip-icon": {
-                  color: "var(--ev-text-muted, #8A7676)",
+                  color: CSSVAR.textMuted,
                   ml: "6px",
                 },
               }}
@@ -2710,9 +2711,9 @@ function LectureInfoView({
                 fontWeight: 600,
                 height: 22,
                 bgcolor: bg.laBaiGiangFree ? `${MAU.chinh}14` : "#F1F2F5",
-                color: bg.laBaiGiangFree ? MAU.chinhDam : "#8A7676",
+                color: bg.laBaiGiangFree ? MAU.chinhDam : CSSVAR.textMuted,
                 "& .MuiChip-icon": {
-                  color: bg.laBaiGiangFree ? MAU.chinhDam : "#8A7676",
+                  color: bg.laBaiGiangFree ? MAU.chinhDam : CSSVAR.textMuted,
                   ml: "6px",
                 },
               }}
@@ -2739,7 +2740,7 @@ function LectureInfoView({
           sx={{
             fontWeight: 700,
             fontSize: 12.5,
-            color: "var(--ev-text-muted, #8A7676)",
+            color: CSSVAR.textMuted,
             mb: 0.75,
             textTransform: "uppercase",
             letterSpacing: 0.3,
@@ -2774,7 +2775,7 @@ function LectureInfoView({
                   border: "1px solid #EDEFF3",
                   borderRadius: "8px",
                   cursor: "pointer",
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   "&:hover": {
                     borderColor: MAU.chinh,
                     bgcolor: `${MAU.chinh}08`,
@@ -2787,7 +2788,7 @@ function LectureInfoView({
                     sx={{
                       fontSize: 12.5,
                       fontWeight: 600,
-                      color: "var(--ev-text-primary, #1F2937)",
+                      color: CSSVAR.textPrimary,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -2891,7 +2892,7 @@ function LectureCreateForm({
         borderRadius: "18px",
         overflow: "hidden",
         border: "1px solid #E7E9F0",
-        bgcolor: "var(--ev-paper, #FFFFFF)",
+        bgcolor: CSSVAR.paper,
         boxShadow: "0 4px 24px rgba(17,24,39,0.06)",
       }}
     >
@@ -2945,7 +2946,7 @@ function LectureCreateForm({
             sx={{
               fontWeight: 700,
               fontSize: 12.5,
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
               mb: 0.75,
               display: "flex",
               alignItems: "center",
@@ -2973,15 +2974,15 @@ function LectureCreateForm({
             slotProps={{
               input: {
                 sx: {
-                  bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                  bgcolor: CSSVAR.paperAlt,
                   borderRadius: "10px",
                   fontWeight: 600,
                   fontSize: 14.5,
                   height: "50px",
                   transition: "background-color 0.15s ease",
-                  "& fieldset": { borderColor: "var(--ev-divider, #ECE7E4)" },
-                  "&:hover": { bgcolor: "var(--ev-paper-alt, #FBFAF9)" },
-                  "&.Mui-focused": { bgcolor: "var(--ev-paper, #FFFFFF)" },
+                  "& fieldset": { borderColor: CSSVAR.divider },
+                  "&:hover": { bgcolor: CSSVAR.paperAlt },
+                  "&.Mui-focused": { bgcolor: CSSVAR.paper },
                   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                     borderColor: MAU.chinh,
                     borderWidth: 2,
@@ -3007,7 +3008,7 @@ function LectureCreateForm({
             sx={{
               fontWeight: 700,
               fontSize: 12.5,
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
               mb: 0.75,
             }}
           >
@@ -3062,7 +3063,7 @@ function LectureCreateForm({
                 sx={{
                   fontSize: 14,
                   fontWeight: 700,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                 }}
               >
                 Kéo thả hoặc bấm để chọn video
@@ -3119,7 +3120,7 @@ function LectureCreateForm({
                   sx={{
                     fontSize: 13,
                     fontWeight: 700,
-                    color: "var(--ev-text-primary, #1F2937)",
+                    color: CSSVAR.textPrimary,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
@@ -3154,7 +3155,7 @@ function LectureCreateForm({
                   fontWeight: 700,
                   fontSize: 12.5,
                   color: MAU.chinh,
-                  bgcolor: "var(--ev-paper, #FFFFFF)",
+                  bgcolor: CSSVAR.paper,
                   border: `1px solid ${MAU.chinh}44`,
                   borderRadius: "9px",
                   px: 1.5,
@@ -3186,8 +3187,8 @@ function LectureCreateForm({
             px: 1.75,
             py: 1.25,
             borderRadius: "12px",
-            bgcolor: data.isFree ? `${MAU.chinh}0A` : "#FBFAF9",
-            border: `1px solid ${data.isFree ? `${MAU.chinh}33` : "#ECE7E4"}`,
+            bgcolor: data.isFree ? `${MAU.chinh}0A` : CSSVAR.paperAlt,
+            border: `1px solid ${data.isFree ? `${MAU.chinh}33` : CSSVAR.divider}`,
             transition: "all 0.15s ease",
           }}
         >
@@ -3197,7 +3198,7 @@ function LectureCreateForm({
                 width: 32,
                 height: 32,
                 borderRadius: "9px",
-                bgcolor: data.isFree ? MAU.chinh : "#ECE7E4",
+                bgcolor: data.isFree ? MAU.chinh : CSSVAR.divider,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -3217,13 +3218,13 @@ function LectureCreateForm({
                 sx={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                 }}
               >
                 Xem thử miễn phí
               </Typography>
               <Typography
-                sx={{ fontSize: 11, color: "var(--ev-text-muted, #8A7676)" }}
+                sx={{ fontSize: 11, color: CSSVAR.textMuted }}
               >
                 Cho phép học viên xem trước khi đăng ký
               </Typography>
@@ -3258,7 +3259,7 @@ function LectureCreateForm({
             disabled={loading}
             sx={{
               textTransform: "none",
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
               fontWeight: 700,
               borderRadius: "10px",
               px: 2,
@@ -3284,7 +3285,7 @@ function LectureCreateForm({
                 boxShadow: `0 4px 14px ${MAU.chinh}55`,
               },
               "&.Mui-disabled": {
-                bgcolor: "#ECE7E4",
+                bgcolor: CSSVAR.divider,
                 color: "#A1A6B0",
                 boxShadow: "none",
               },
@@ -3665,7 +3666,7 @@ export default function CurriculumContent() {
       options: [
         {
           type: "BaiKiemTra",
-          icon: <QuizOutlined sx={{ fontSize: 22, color: "#D97706" }} />,
+          icon: <QuizOutlined sx={{ fontSize: 22, color: STATUS.warningDark }} />,
           iconBg: "#FEF3E2",
           title: "Bài kiểm tra",
           description: "Tạo bài kiểm tra với nhiều câu hỏi trắc nghiệm.",
@@ -4698,7 +4699,7 @@ export default function CurriculumContent() {
             sx={{
               fontWeight: 900,
               fontSize: 26,
-              color: "var(--ev-text-primary, #1F2937)",
+              color: CSSVAR.textPrimary,
             }}
           >
             Chương trình giảng dạy
@@ -4720,7 +4721,7 @@ export default function CurriculumContent() {
         <Typography
           sx={{
             fontSize: 14,
-            color: "var(--ev-text-secondary, #4B5563)",
+            color: CSSVAR.textSecondary,
             mb: 2.5,
             lineHeight: 1.7,
           }}
@@ -4804,7 +4805,7 @@ export default function CurriculumContent() {
                           sx={{
                             fontWeight: 700,
                             fontSize: 15,
-                            color: "var(--ev-text-primary, #1F2937)",
+                            color: CSSVAR.textPrimary,
                             mb: 1.5,
                             opacity: loading ? 0.5 : 1,
                             pointerEvents: loading ? "none" : "auto",
@@ -4846,12 +4847,12 @@ export default function CurriculumContent() {
                             sx={{
                               textTransform: "none",
                               fontWeight: 600,
-                              color: "var(--ev-text-secondary, #4B5563)",
+                              color: CSSVAR.textSecondary,
                               py: 0.75,
                               px: 2.5,
                               borderRadius: "8px",
                               "&:hover": {
-                                bgcolor: "var(--ev-paper-alt, #FBFAF9)",
+                                bgcolor: CSSVAR.paperAlt,
                               },
                             }}
                           >
@@ -4875,8 +4876,8 @@ export default function CurriculumContent() {
                                 boxShadow: "0 4px 12px rgba(122,31,43,0.25)",
                               },
                               "&.Mui-disabled": {
-                                bgcolor: "#ECE7E4",
-                                color: "var(--ev-text-muted, #8A7676)",
+                                bgcolor: CSSVAR.divider,
+                                color: CSSVAR.textMuted,
                                 boxShadow: "none",
                               },
                             }}
@@ -4989,7 +4990,7 @@ export default function CurriculumContent() {
                                             fontWeight: 700,
                                             fontSize: 14.5,
                                             color:
-                                              "var(--ev-text-primary, #1F2937)",
+                                              CSSVAR.textPrimary,
                                           }}
                                         >
                                           Chỉnh sửa bài giảng
@@ -5009,7 +5010,7 @@ export default function CurriculumContent() {
                                             fontWeight: 700,
                                             fontSize: 12.5,
                                             color:
-                                              "var(--ev-text-muted, #8A7676)",
+                                              CSSVAR.textMuted,
                                             mb: 0.5,
                                           }}
                                         >
@@ -5037,7 +5038,7 @@ export default function CurriculumContent() {
                                             input: {
                                               sx: {
                                                 bgcolor:
-                                                  "var(--ev-paper, #FFFFFF)",
+                                                  CSSVAR.paper,
                                                 borderRadius: "10px",
                                                 fontWeight: 600,
                                                 height: "50px",
@@ -5060,7 +5061,7 @@ export default function CurriculumContent() {
                                             py: 3.5,
                                             border: `1.5px dashed ${MAU.chinh}66`,
                                             borderRadius: "12px",
-                                            bgcolor: "var(--ev-paper, #FFFFFF)",
+                                            bgcolor: CSSVAR.paper,
                                             cursor: loading
                                               ? "default"
                                               : "pointer",
@@ -5091,7 +5092,7 @@ export default function CurriculumContent() {
                                               fontSize: 13.5,
                                               fontWeight: 700,
                                               color:
-                                                "var(--ev-text-primary, #1F2937)",
+                                                CSSVAR.textPrimary,
                                             }}
                                           >
                                             Chọn video bài giảng
@@ -5100,7 +5101,7 @@ export default function CurriculumContent() {
                                             sx={{
                                               fontSize: 11.5,
                                               color:
-                                                "var(--ev-text-muted, #8A7676)",
+                                                CSSVAR.textMuted,
                                             }}
                                           >
                                             Dung lượng tối đa 100MB, độ phân
@@ -5141,7 +5142,7 @@ export default function CurriculumContent() {
                                             p: 1.5,
                                             border: "1px solid #E3E6EB",
                                             borderRadius: "12px",
-                                            bgcolor: "var(--ev-paper, #FFFFFF)",
+                                            bgcolor: CSSVAR.paper,
                                             opacity: loading ? 0.5 : 1,
                                             pointerEvents: loading
                                               ? "none"
@@ -5155,7 +5156,7 @@ export default function CurriculumContent() {
                                               borderRadius: "8px",
                                               bgcolor: editingLecture.file
                                                 ? `${MAU.chinh}14`
-                                                : "#1F2937",
+                                                : CSSVAR.textPrimary,
                                               display: "flex",
                                               alignItems: "center",
                                               justifyContent: "center",
@@ -5205,7 +5206,7 @@ export default function CurriculumContent() {
                                                   sx={{
                                                     fontSize: 11.5,
                                                     color:
-                                                      "var(--ev-text-muted, #8A7676)",
+                                                      CSSVAR.textMuted,
                                                   }}
                                                 >
                                                   Video mới đã chọn
@@ -5224,7 +5225,7 @@ export default function CurriculumContent() {
                                                     fontSize: 13,
                                                     fontWeight: 700,
                                                     color:
-                                                      "var(--ev-text-primary, #1F2937)",
+                                                      CSSVAR.textPrimary,
                                                   }}
                                                 >
                                                   {dinhDangThoiLuong(
@@ -5235,7 +5236,7 @@ export default function CurriculumContent() {
                                                   sx={{
                                                     fontSize: 11.5,
                                                     color:
-                                                      "var(--ev-text-muted, #8A7676)",
+                                                      CSSVAR.textMuted,
                                                   }}
                                                 >
                                                   Video hiện tại
@@ -5308,7 +5309,7 @@ export default function CurriculumContent() {
                                           py: 1,
                                           border: "1px solid #E3E6EB",
                                           borderRadius: "10px",
-                                          bgcolor: "var(--ev-paper, #FFFFFF)",
+                                          bgcolor: CSSVAR.paper,
                                           opacity: loading ? 0.5 : 1,
                                           pointerEvents: loading
                                             ? "none"
@@ -5344,7 +5345,7 @@ export default function CurriculumContent() {
                                                 fontSize: 13,
                                                 fontWeight: 700,
                                                 color:
-                                                  "var(--ev-text-primary, #1F2937)",
+                                                  CSSVAR.textPrimary,
                                               }}
                                             >
                                               Xem thử miễn phí
@@ -5353,7 +5354,7 @@ export default function CurriculumContent() {
                                               sx={{
                                                 fontSize: 11,
                                                 color:
-                                                  "var(--ev-text-muted, #8A7676)",
+                                                  CSSVAR.textMuted,
                                               }}
                                             >
                                               Cho phép học viên xem trước khi
@@ -5401,7 +5402,7 @@ export default function CurriculumContent() {
                                             sx={{
                                               textTransform: "none",
                                               color:
-                                                "var(--ev-text-muted, #8A7676)",
+                                                CSSVAR.textMuted,
                                               fontWeight: 600,
                                               borderRadius: "8px",
                                             }}
@@ -5565,7 +5566,7 @@ export default function CurriculumContent() {
                                                     variant="body2"
                                                     sx={{
                                                       color:
-                                                        "var(--ev-text-muted, #8A7676)",
+                                                        CSSVAR.textMuted,
                                                       fontSize: 12.5,
                                                     }}
                                                   >
@@ -5580,7 +5581,7 @@ export default function CurriculumContent() {
                                                 variant="caption"
                                                 sx={{
                                                   color:
-                                                    "var(--ev-text-muted, #8A7676)",
+                                                    CSSVAR.textMuted,
                                                   display: "block",
                                                 }}
                                               >
@@ -5612,7 +5613,7 @@ export default function CurriculumContent() {
                                                   sx={{
                                                     textTransform: "none",
                                                     color:
-                                                      "var(--ev-text-muted, #8A7676)",
+                                                      CSSVAR.textMuted,
                                                   }}
                                                 >
                                                   Hủy bỏ
@@ -6023,7 +6024,7 @@ export default function CurriculumContent() {
                           borderRadius: "10px",
                           px: 2,
                           mt: 1,
-                          bgcolor: "var(--ev-paper, #FFFFFF)",
+                          bgcolor: CSSVAR.paper,
                           "&:hover": { bgcolor: `${MAU.chinh}0F` },
                         }}
                       >
@@ -6059,7 +6060,7 @@ export default function CurriculumContent() {
                         <Typography
                           sx={{
                             fontSize: 13,
-                            color: "var(--ev-text-secondary, #4B5563)",
+                            color: CSSVAR.textSecondary,
                             fontWeight: 500,
                           }}
                         >
@@ -6093,7 +6094,7 @@ export default function CurriculumContent() {
               borderRadius: "10px",
               px: 3,
               py: 1,
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               boxShadow: "0 2px 8px rgba(122,31,43,0.05)",
               transition: "all 0.2s ease",
               "&:hover": {
@@ -6113,9 +6114,9 @@ export default function CurriculumContent() {
             sx={{
               mt: 3.5,
               p: 3.5,
-              border: "1px solid var(--ev-divider, #ECE7E4)",
+              border: `1px solid ${CSSVAR.divider}`,
               borderRadius: "16px",
-              bgcolor: "var(--ev-paper, #FFFFFF)",
+              bgcolor: CSSVAR.paper,
               boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
               position: "relative",
             }}
@@ -6142,7 +6143,7 @@ export default function CurriculumContent() {
               sx={{
                 fontWeight: 700,
                 fontSize: 16,
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 mb: 2,
                 opacity: loading ? 0.5 : 1,
                 pointerEvents: loading ? "none" : "auto",
@@ -6181,13 +6182,13 @@ export default function CurriculumContent() {
                 sx={{
                   textTransform: "none",
                   fontWeight: 700,
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   py: 1.2,
                   px: 3,
                   borderRadius: "10px",
                   "&:hover": {
-                    bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-                    color: "var(--ev-text-primary, #1F2937)",
+                    bgcolor: CSSVAR.paperAlt,
+                    color: CSSVAR.textPrimary,
                   },
                 }}
               >
@@ -6199,7 +6200,7 @@ export default function CurriculumContent() {
                 onClick={submitPhanForm}
                 disabled={loading || !phanForm.tenPhan?.trim()}
                 sx={{
-                  bgcolor: "#8B1313",
+                  bgcolor: BRAND.main,
                   textTransform: "none",
                   fontWeight: 800,
                   py: 1.2,
@@ -6211,8 +6212,8 @@ export default function CurriculumContent() {
                     boxShadow: "none",
                   },
                   "&.Mui-disabled": {
-                    bgcolor: "var(--ev-divider, #ECE7E4)",
-                    color: "var(--ev-text-muted, #8A7676)",
+                    bgcolor: CSSVAR.divider,
+                    color: CSSVAR.textMuted,
                     boxShadow: "none",
                   },
                 }}
@@ -6252,7 +6253,7 @@ export default function CurriculumContent() {
                 sx={{
                   fontSize: 12.5,
                   fontWeight: 700,
-                  color: "var(--ev-text-muted, #8A7676)",
+                  color: CSSVAR.textMuted,
                   px: 2,
                   pt: nhomIdx === 0 ? 0.5 : 1.5,
                   pb: 0.75,
@@ -6304,7 +6305,7 @@ export default function CurriculumContent() {
                       sx={{
                         fontWeight: 700,
                         fontSize: 14.5,
-                        color: "var(--ev-text-primary, #1F2937)",
+                        color: CSSVAR.textPrimary,
                         lineHeight: 1.4,
                         whiteSpace: "normal",
                         wordBreak: "break-word",
@@ -6316,7 +6317,7 @@ export default function CurriculumContent() {
                       <Typography
                         sx={{
                           fontSize: 12.5,
-                          color: "var(--ev-text-muted, #8A7676)",
+                          color: CSSVAR.textMuted,
                           lineHeight: 1.5,
                           whiteSpace: "normal",
                           wordBreak: "break-word",

@@ -1,21 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BRAND, NEUTRAL, STATUS, FONT_FAMILY } from "@/src/theme/tokens";
+import { BRAND, NEUTRAL, STATUS, FONT_FAMILY, CSSVAR } from "@/src/theme/tokens";
 // Giữ nguyên tên khoá để không phải sửa các component đang dùng,
 // chỉ trỏ GIÁ TRỊ về design system chung trong src/theme/tokens.ts.
 export const COLORS = {
-  primary: "#8B1313",
+  primary: BRAND.main,
   primaryDark: "#6B0E0E",
   primarySoft: "rgba(139,19,19,0.08)",
-  ink: "var(--ev-text-primary, #1F2937)",
-  inkSoft: "var(--ev-text-secondary, #4B5563)",
-  paper: "var(--ev-bg, #F7F5F2)",
-  paperRaised: "var(--ev-paper, #FFFFFF)",
-  line: "var(--ev-divider, #ECE7E4)",
-  gold: "#D97706",
+  ink: CSSVAR.textPrimary,
+  inkSoft: CSSVAR.textSecondary,
+  paper: CSSVAR.bg,
+  paperRaised: CSSVAR.paper,
+  line: CSSVAR.divider,
+  gold: STATUS.warningDark,
   goldSoft: "#FEF3C7",
   success: "#16A34A",
   successSoft: "#DCFCE7",
-  danger: "#DC2626",
+  danger: STATUS.error,
   dangerSoft: "#FEE2E2",
 };
 

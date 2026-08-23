@@ -7,8 +7,9 @@ import LibraryBooksOutlinedIcon from "@mui/icons-material/LibraryBooksOutlined";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
+import { CSSVAR, BRAND as BRAND_TOKEN } from "@/src/theme/tokens";
 
-const BRAND = "#8B1313";
+const BRAND = BRAND_TOKEN.main;
 const BRAND_SOFT = "rgba(139,19,19,0.08)";
 const FONT = "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))";
 
@@ -49,7 +50,7 @@ export default function Step1Page() {
             minHeight: { xs: "auto", sm: "calc(100vh - 64px)" },
             py: { xs: 4, sm: 5 },
             px: { xs: 2, sm: 3 },
-            bgcolor: "var(--ev-bg, #F7F5F2)",
+            bgcolor: CSSVAR.bg,
             fontFamily: FONT,
           }}
         >
@@ -80,7 +81,7 @@ export default function Step1Page() {
                 sx={{
                   fontWeight: 800,
                   fontSize: { xs: "1.35rem", sm: "1.75rem" },
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   mb: 1,
                   letterSpacing: "-0.01em",
                   fontFamily: FONT,
@@ -92,7 +93,7 @@ export default function Step1Page() {
               <Typography
                 sx={{
                   fontSize: { xs: 13.5, sm: 15 },
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   maxWidth: 440,
                   mx: "auto",
                   lineHeight: 1.5,
@@ -118,8 +119,8 @@ export default function Step1Page() {
                     variant="outlined"
                     sx={{
                       borderRadius: "20px",
-                      borderColor: "var(--ev-divider, #ECE7E4)",
-                      bgcolor: "var(--ev-paper, #FFFFFF)",
+                      borderColor: CSSVAR.divider,
+                      bgcolor: CSSVAR.paper,
                       boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
                       transition: "all 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
                       "&:hover": {
@@ -169,7 +170,7 @@ export default function Step1Page() {
                           fontWeight: 700,
                           letterSpacing: "0.05em",
                           textTransform: "uppercase",
-                          color: "var(--ev-text-secondary, #4B5563)",
+                          color: CSSVAR.textSecondary,
                           mb: 0.75,
                           fontFamily: FONT,
                         }}
@@ -182,7 +183,7 @@ export default function Step1Page() {
                           fontWeight: 700,
                           fontSize: 17,
                           mb: 0.75,
-                          color: "var(--ev-text-primary, #1F2937)",
+                          color: CSSVAR.textPrimary,
                           fontFamily: FONT,
                         }}
                       >
@@ -192,7 +193,7 @@ export default function Step1Page() {
                       <Typography
                         sx={{
                           fontSize: 13.5,
-                          color: "var(--ev-text-secondary, #4B5563)",
+                          color: CSSVAR.textSecondary,
                           lineHeight: 1.55,
                           mb: 2,
                           flex: 1,
@@ -234,7 +235,7 @@ export default function Step1Page() {
               sx={{
                 mt: 3,
                 fontSize: 12.5,
-                color: "var(--ev-text-secondary, #4B5563)",
+                color: CSSVAR.textSecondary,
                 textAlign: "center",
                 fontFamily: FONT,
               }}

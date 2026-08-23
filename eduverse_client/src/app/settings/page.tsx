@@ -5,206 +5,142 @@ import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardSh
 import {
   Box,
   Typography,
-  Grid,
   Stack,
-  Tab,
-  Tabs,
   Paper,
-  useMediaQuery,
-  useTheme as useMuiTheme,
-  alpha,
+  Button,
 } from '@mui/material';
 import {
   PersonRounded,
   SecurityRounded,
-  NotificationsActiveRounded,
-  ShieldRounded,
-  LinkRounded,
 } from '@mui/icons-material';
 
 // Import Settings Components
 import AccountSettings from '@/src/components/settings/AccountSettings';
 import SecuritySettings from '@/src/components/settings/SecuritySettings';
-import NotificationSettings from '@/src/components/settings/NotificationSettings';
-import PrivacySettings from '@/src/components/settings/PrivacySettings';
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState(0);
-  const muiTheme = useMuiTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const [activeTab, setActiveTab] = useState<number>(0);
 
-  const tabList = [
-    { label: 'Tài khoản', icon: <PersonRounded fontSize="small" />, component: <AccountSettings /> },
-    { label: 'Bảo mật', icon: <SecurityRounded fontSize="small" />, component: <SecuritySettings /> },
-    { label: 'Thông báo', icon: <NotificationsActiveRounded fontSize="small" />, component: <NotificationSettings /> },
-    { label: 'Quyền riêng tư', icon: <ShieldRounded fontSize="small" />, component: <PrivacySettings /> },
+  const tabs = [
+    {
+      id: 0,
+      label: 'Hồ sơ tài khoản',
+      icon: <PersonRounded sx={{ fontSize: 20 }} />,
+      component: <AccountSettings />,
+    },
+    {
+      id: 1,
+      label: 'Bảo mật & Đăng nhập',
+      icon: <SecurityRounded sx={{ fontSize: 20 }} />,
+      component: <SecuritySettings />,
+    },
   ];
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
 
   return (
     <StudentDashboardShell>
-      <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 3, md: 5 } }}>
-        {/* Tiêu đề trang */}
-        <Box sx={{ mb: 4 }}>
+      <Box
+        sx={{
+          px: { xs: 2, sm: 3, md: 5 },
+          py: { xs: 3, md: 4.5 },
+          maxWidth: 1200,
+          mx: 'auto',
+        }}
+      >
+        {/* Header Title Section */}
+        <Box sx={{ mb: 3.5 }}>
           <Typography
             variant="h4"
             sx={{
               fontWeight: 900,
-              color: 'text.primary',
-              letterSpacing: '-0.7px',
-              mb: 1,
+              color: CSSVAR.textPrimary,
+              letterSpacing: '-0.6px',
+              fontSize: { xs: 26, sm: 32 },
+              mb: 0.75,
             }}
           >
             Cài đặt hệ thống
           </Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: 14.5 }}>
-            Quản lý hồ sơ cá nhân, bảo mật tài khoản, thông báo và quyền riêng tư của bạn.
+          <Typography
+            sx={{
+              color: CSSVAR.textSecondary,
+              fontSize: 14.5,
+              fontWeight: 500,
+            }}
+          >
+            Quản lý hồ sơ cá nhân và bảo mật tài khoản của bạn.
           </Typography>
         </Box>
 
-        {isMobile ? (
-          /* Giao diện Mobile: Tabs Nằm ngang, cuộn được */
-          <Stack spacing={3}>
-            <Paper
-              elevation={0}
-              sx={{
-                borderRadius: 2.8,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                overflow: 'hidden',
-              }}
-            >
-              <Tabs
-                value={activeTab}
-                onChange={handleTabChange}
-                variant="scrollable"
-                scrollButtons="auto"
-                allowScrollButtonsMobile
-                sx={{
-                  '& .MuiTabs-indicator': {
-                    bgcolor: 'primary.main',
-                    height: 3,
-                  },
-                  '& .MuiTab-root': {
-                    fontWeight: 700,
+        {/* Modern Segmented Navigation Bar */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 0.75,
+            mb: 4,
+            borderRadius: '16px',
+            border: '1px solid rgba(139,19,19,0.08)',
+            bgcolor: CSSVAR.paper,
+            display: 'inline-flex',
+            width: { xs: '100%', sm: 'auto' },
+            boxShadow: '0 4px 20px rgba(139,19,19,0.02)',
+          }}
+        >
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            sx={{ width: '100%' }}
+          >
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <Button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  startIcon={tab.icon}
+                  disableRipple
+                  sx={{
+                    px: 3.5,
+                    py: 1.25,
+                    borderRadius: '12px',
+                    fontWeight: 800,
                     fontSize: 14,
                     textTransform: 'none',
-                    py: 2,
-                    color: 'text.secondary',
-                    minHeight: 48,
-                    '&.Mui-selected': {
-                      color: 'primary.main',
+                    transition: 'all 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+                    bgcolor: isActive ? BRAND.main : 'transparent',
+                    color: isActive ? '#FFFFFF' : CSSVAR.textSecondary,
+                    boxShadow: isActive
+                      ? '0 6px 18px rgba(139,19,19,0.22)'
+                      : 'none',
+                    '&:hover': {
+                      bgcolor: isActive ? '#7F1D1D' : 'rgba(139,19,19,0.04)',
+                      color: isActive ? '#FFFFFF' : BRAND.main,
                     },
-                  },
-                }}
-              >
-                {tabList.map((tab, index) => (
-                  <Tab
-                    key={index}
-                    label={tab.label}
-                    icon={tab.icon}
-                    iconPosition="start"
-                  />
-                ))}
-              </Tabs>
-            </Paper>
-
-            <Box
-              sx={{
-                animation: 'fadeIn 200ms ease',
-                '@keyframes fadeIn': {
-                  from: { opacity: 0, transform: 'translateY(6px)' },
-                  to: { opacity: 1, transform: 'translateY(0)' },
-                },
-              }}
-            >
-              {tabList[activeTab]?.component || tabList[0]?.component}
-            </Box>
-          </Stack>
-        ) : (
-          /* Giao diện Desktop: Cột bên trái là danh sách Tab dọc, cột phải là Content */
-          <Grid container spacing={4} sx={{ alignItems: 'flex-start' }}>
-            <Grid size={{ xs: 12, md: 3.5, lg: 3 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  borderRadius: 2.8,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'background.paper',
-                  p: 1.5,
-                  position: 'sticky',
-                  top: '110px',
-                }}
-              >
-                <Tabs
-                  orientation="vertical"
-                  value={activeTab}
-                  onChange={handleTabChange}
-                  sx={{
-                    '& .MuiTabs-indicator': {
-                      left: 0,
-                      right: 'auto',
-                      bgcolor: 'primary.main',
-                      width: 3,
-                      borderRadius: 1.5,
-                    },
-                    '& .MuiTab-root': {
-                      alignItems: 'center',
-                      justifyContent: 'flex-start',
-                      textAlign: 'left',
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      fontSize: 14.5,
-                      py: 1.5,
-                      px: 2,
-                      minHeight: 48,
-                      borderRadius: 2,
-                      color: 'text.secondary',
-                      mb: 0.5,
-                      transition: 'all 160ms ease',
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                        color: 'text.primary',
-                      },
-                      '&.Mui-selected': {
-                        color: 'primary.main',
-                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
-                      },
+                    '& .MuiButton-startIcon': {
+                      color: isActive ? '#FFFFFF' : BRAND.main,
                     },
                   }}
                 >
-                  {tabList.map((tab, index) => (
-                    <Tab
-                      key={index}
-                      label={tab.label}
-                      icon={tab.icon}
-                      iconPosition="start"
-                    />
-                  ))}
-                </Tabs>
-              </Paper>
-            </Grid>
+                  {tab.label}
+                </Button>
+              );
+            })}
+          </Stack>
+        </Paper>
 
-            <Grid size={{ xs: 12, md: 8.5, lg: 9 }}>
-              <Box
-                sx={{
-                  animation: 'fadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-                  '@keyframes fadeIn': {
-                    from: { opacity: 0, transform: 'translateY(12px)' },
-                    to: { opacity: 1, transform: 'translateY(0)' },
-                  },
-                }}
-              >
-                {tabList[activeTab]?.component || tabList[0]?.component}
-              </Box>
-            </Grid>
-          </Grid>
-        )}
+        {/* Settings Content Area */}
+        <Box
+          key={activeTab}
+          sx={{
+            animation: 'fadeIn 240ms cubic-bezier(0.4, 0, 0.2, 1)',
+            '@keyframes fadeIn': {
+              from: { opacity: 0, transform: 'translateY(8px)' },
+              to: { opacity: 1, transform: 'translateY(0)' },
+            },
+          }}
+        >
+          {tabs[activeTab].component}
+        </Box>
       </Box>
     </StudentDashboardShell>
   );

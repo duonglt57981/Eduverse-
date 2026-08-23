@@ -16,6 +16,7 @@ import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import { formatSoLuong, trichXuatTenHienThi } from "./types/Constants";
 import { AppUser, KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import SafeHTML from "./common/SafeHTML";
+import { BRAND } from "@/src/theme/tokens";
 
 interface InstructorHeroSectionProps {
   giangVien: AppUser;
@@ -103,7 +104,7 @@ export default function InstructorHeroSection({
               p: "4px",
               borderRadius: "50%",
               background:
-                "linear-gradient(135deg, #8B1313 0%, rgba(255,255,255,0.25) 100%)",
+                `linear-gradient(135deg, ${BRAND.main} 0%, rgba(255,255,255,0.25) 100%)`,
               boxShadow: "0 16px 40px rgba(0, 0, 0, 0.45)",
               flexShrink: 0,
             }}
@@ -115,7 +116,7 @@ export default function InstructorHeroSection({
                 width: { xs: 115, md: 145 },
                 height: { xs: 115, md: 145 },
                 fontSize: { xs: 44, md: 56 },
-                bgcolor: "#8B1313",
+                bgcolor: BRAND.main,
                 color: "#FFFFFF",
                 fontWeight: 900,
                 border: "4px solid #1C0909",

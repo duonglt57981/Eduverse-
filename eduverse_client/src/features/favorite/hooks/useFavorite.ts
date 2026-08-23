@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useFavoriteStore } from "../store/favorite.store";
 import Swal from "sweetalert2";
+import { BRAND } from "@/src/theme/tokens";
 
 // Toast Mixin matching the premium styling of Eduverse
 const Toast = Swal.mixin({
@@ -29,13 +30,9 @@ export function useFavorite() {
     return favorites.some((item) => item.khoaHocId === courseId);
   };
 
-  const addFavorite = async (courseId: string, courseTitle: string) => {
+  const addFavorite = async (courseId: string) => {
     try {
       await storeAddFavorite(courseId);
-      Toast.fire({
-        icon: "success",
-        title: `Đã thêm "${courseTitle}" vào yêu thích`,
-      });
     } catch (error: any) {
       Toast.fire({
         icon: "error",
@@ -55,7 +52,7 @@ export function useFavorite() {
         text: `Bạn có chắc chắn muốn bỏ khóa học "${courseTitle}" khỏi danh sách yêu thích?`,
         icon: "warning",
         showCancelButton: true,
-        confirmButtonColor: "#8B1313",
+        confirmButtonColor: BRAND.main,
         cancelButtonColor: "rgba(24, 24, 27, 0.4)",
         confirmButtonText: "Bỏ yêu thích",
         cancelButtonText: "Hủy",
@@ -69,10 +66,6 @@ export function useFavorite() {
 
     try {
       await storeRemoveFavorite(courseId);
-      Toast.fire({
-        icon: "success",
-        title: `Đã xóa "${courseTitle}" khỏi danh sách yêu thích`,
-      });
     } catch (error: any) {
       Toast.fire({
         icon: "error",
@@ -87,7 +80,7 @@ export function useFavorite() {
       // Toggle from courses page directly removes it without popup
       await removeFavorite(courseId, courseTitle, false);
     } else {
-      await addFavorite(courseId, courseTitle);
+      await addFavorite(courseId);
     }
   };
 

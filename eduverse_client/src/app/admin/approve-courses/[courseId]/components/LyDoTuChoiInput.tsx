@@ -17,6 +17,7 @@ import FormatItalicRoundedIcon from "@mui/icons-material/FormatItalicRounded";
 import FormatUnderlinedRoundedIcon from "@mui/icons-material/FormatUnderlinedRounded";
 import FormatListBulletedRoundedIcon from "@mui/icons-material/FormatListBulletedRounded";
 import { COLORS } from "@/src/app/admin/approve-courses/types/constants";
+import { CSSVAR } from "@/src/theme/tokens";
 
 interface LyDoTuChoiInputProps {
   idDoiTuong: string | number;
@@ -155,7 +156,7 @@ export default function LyDoTuChoiInput({
           mb: 0.75,
           p: 0.5,
           borderRadius: 1.5,
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          bgcolor: CSSVAR.paper,
           border: `1px solid ${safeAlpha(COLORS.primary, 0.15)}`,
           width: "fit-content",
         }}
@@ -203,7 +204,7 @@ export default function LyDoTuChoiInput({
           fontSize: 14,
           lineHeight: 1.6,
           color: COLORS.ink,
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          bgcolor: CSSVAR.paper,
           border: `1px solid ${safeAlpha(COLORS.primary, 0.25)}`,
           borderRadius: 1.5,
           outline: "none",

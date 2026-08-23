@@ -4,93 +4,93 @@ import React from "react";
 import { Box, Typography, Stack, Grid, Divider, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Link from "next/link";
-import { BRAND } from "@/src/theme/tokens";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 interface AuthenticatedFooterProps {
   role: "HocVien" | "GiaoVien" | "Admin" | string;
 }
 
 export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) {
-  const currentYear = new Date().getFullYear();
+  const currentYear = 2026;
   const isAdmin = role === "Admin";
 
   const COLORS = {
-    bg: BRAND.main, // Đỏ đô thương hiệu cho giảng viên / admin
-    textMain: "var(--ev-paper, #FFFFFF)",
+    bg: BRAND.main,
+    textMain: CSSVAR.paper,
     textMuted: "rgba(255, 255, 255, 0.72)",
     border: "rgba(255, 255, 255, 0.12)",
-    hoverColor: "var(--ev-paper, #FFFFFF)",
+    hoverColor: CSSVAR.paper,
   };
 
-  // Định nghĩa links cho Giảng viên
-  const instructorLinks = [
+  const instructorLinkGroups = [
     {
-      title: "Giảng dạy",
+      title: "Tài nguyên Giảng dạy",
       links: [
+        { label: "Trung tâm Giảng viên", href: "/instructor/dashboard" },
         { label: "Quản lý khóa học", href: "/instructor/manager-courses" },
-        { label: "Tạo khóa học mới", href: "/instructor/manager-courses" },
-        { label: "Doanh thu", href: "/instructor/money" },
-        { label: "Tài khoản ngân hàng", href: "/instructor/bank" },
-      ]
-    },
-    {
-      title: "Tài chính",
-      links: [
+        { label: "Khuyến mãi & Ưu đãi", href: "/instructor/manager-promotions" },
         { label: "Doanh thu & Rút tiền", href: "/instructor/money" },
-        { label: "Cài đặt ngân hàng", href: "/instructor/bank" },
-        { label: "Khuyến mãi", href: "/instructor/manager-promotions" },
-      ]
+      ],
     },
     {
-      title: "Hỗ trợ giảng viên",
+      title: "Hỗ trợ & Cộng đồng",
       links: [
-        { label: "Cài đặt tài khoản", href: "/settings" },
-        { label: "Trung tâm hỗ trợ", href: "/contact" },
-        { label: "Điều khoản giảng viên", href: "/auth/instructor-terms" },
-        { label: "Chính sách bảo mật", href: "/auth/privacy" },
-      ]
-    }
+        { label: "Cộng đồng Giảng viên", href: "/instructor/dashboard" },
+        { label: "Hướng dẫn tạo khóa học", href: "/instructor/manager-courses" },
+        { label: "Hỗ trợ kỹ thuật", href: "/instructor/dashboard" },
+        { label: "Điều khoản Giảng viên", href: "/instructor/dashboard" },
+      ],
+    },
+    {
+      title: "EduVerse Enterprise",
+      links: [
+        { label: "EduVerse Business", href: "/instructor/dashboard" },
+        { label: "Giới thiệu EduVerse", href: "/instructor/dashboard" },
+        { label: "Tải ứng dụng mobile", href: "/instructor/dashboard" },
+        { label: "Liên hệ hợp tác", href: "/instructor/dashboard" },
+      ],
+    },
   ];
 
-  // Định nghĩa links cho Quản trị viên
-  const adminLinks = [
+  const adminLinkGroups = [
     {
-      title: "Quản trị hệ thống",
+      title: "Quản trị Hệ thống",
       links: [
         { label: "Bảng điều khiển", href: "/admin/dashboard" },
-        { label: "Quản lý khóa học", href: "/admin/courses" },
         { label: "Duyệt khóa học", href: "/admin/approve-courses" },
-        { label: "Duyệt rút tiền", href: "/admin/withdrawals" },
-      ]
+        { label: "Quản lý người dùng", href: "/admin/users" },
+        { label: "Cài đặt hệ thống", href: "/admin/settings" },
+      ],
     },
     {
-      title: "Người dùng & Báo cáo",
+      title: "Báo cáo & Giám sát",
       links: [
-        { label: "Quản lý học viên", href: "/admin/students" },
-        { label: "Quản lý giảng viên", href: "/admin/instructors" },
-        { label: "Thống kê doanh thu", href: "/admin/revenue" },
-      ]
+        { label: "Báo cáo doanh thu", href: "/admin/dashboard" },
+        { label: "Nhật ký hoạt động", href: "/admin/dashboard" },
+        { label: "Yêu cầu rút tiền", href: "/admin/withdrawal-request" },
+        { label: "Quản lý danh mục", href: "/admin/categories" },
+      ],
     },
     {
-      title: "Hỗ trợ kỹ thuật",
+      title: "Vận hành EduVerse",
       links: [
-        { label: "Hồ sơ cá nhân", href: "/settings" },
-        { label: "Trung tâm trợ giúp", href: "/contact" },
-      ]
-    }
+        { label: "Trạng thái máy chủ", href: "/admin/dashboard" },
+        { label: "Chính sách & Bảo mật", href: "/admin/dashboard" },
+        { label: "Hỗ trợ kỹ thuật", href: "/admin/dashboard" },
+        { label: "Tài liệu API", href: "/admin/dashboard" },
+      ],
+    },
   ];
 
-  const linkGroups = isAdmin ? adminLinks : instructorLinks;
-
+  const linkGroups = isAdmin ? adminLinkGroups : instructorLinkGroups;
   const description = isAdmin
-    ? "Hệ thống quản trị và kiểm duyệt nội dung dành cho Quản trị viên EduVerse."
-    : "Công cụ hỗ trợ bạn xây dựng khóa học và phát triển hoạt động giảng dạy.";
+    ? "Hệ thống quản trị và kiểm duyệt khóa học EduVerse. Đảm bảo chất lượng đào tạo và trải nghiệm học tập tối ưu."
+    : "Nền tảng giảng dạy trực tuyến EduVerse. Giúp bạn truyền tải kiến thức đến hàng triệu học viên trên toàn quốc.";
 
   const linkSx = {
     fontSize: 13.5,
     color: COLORS.textMuted,
     textDecoration: "none",
-    fontWeight: 500,
     transition: "color 150ms ease",
     "&:hover": {
       color: COLORS.hoverColor,
@@ -112,10 +112,8 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
         px: { xs: 5, sm: 6, md: 10 },
       }}
     >
-      {/* Wrapper dàn đều nội dung */}
       <Box sx={{ width: "100%" }}>
-        
-        {/* Grid Layout cho Desktop và Tablet */}
+        {/* Grid Layout Cho Desktop/Tablet */}
         <Box sx={{ display: { xs: "none", sm: "block" } }}>
           <Grid container spacing={4} sx={{ justifyContent: "space-between" }}>
             <Grid size={{ xs: 12, sm: 3, md: 3 }}>
@@ -129,7 +127,6 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
               </Stack>
             </Grid>
 
-            {/* Link Groups */}
             {linkGroups.map((group) => (
               <Grid size={{ xs: 12, sm: 3, md: 3 }} key={group.title}>
                 <Typography sx={{ fontSize: 14.5, fontWeight: 700, color: COLORS.textMain, mb: 1.5 }}>
@@ -137,14 +134,9 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
                 </Typography>
                 <Stack spacing={1}>
                   {group.links.map((link) => (
-                    <Typography
-                      key={link.label}
-                      component={Link}
-                      href={link.href}
-                      sx={linkSx}
-                    >
-                      {link.label}
-                    </Typography>
+                    <Link key={link.label} href={link.href} style={{ textDecoration: "none" }}>
+                      <Typography sx={linkSx}>{link.label}</Typography>
+                    </Link>
                   ))}
                 </Stack>
               </Grid>
@@ -152,7 +144,7 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
           </Grid>
         </Box>
 
-        {/* Accordion Layout cho Mobile */}
+        {/* Mobile Layout */}
         <Box sx={{ display: { xs: "block", sm: "none" } }}>
           <Stack spacing={2} sx={{ mb: 3 }}>
             <Box sx={{ px: 1 }}>
@@ -172,28 +164,23 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
                     borderBottom: `1px solid ${COLORS.border}`,
                     "&:before": { display: "none" },
                     bgcolor: "transparent",
-                    color: COLORS.textMain
+                    color: COLORS.textMain,
                   }}
                 >
                   <AccordionSummary
                     expandIcon={<ExpandMoreIcon sx={{ fontSize: 18, color: COLORS.textMain }} />}
                     sx={{ px: 1, py: 0.5 }}
                   >
-                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: COLORS.textMain }}>
+                    <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
                       {group.title}
                     </Typography>
                   </AccordionSummary>
                   <AccordionDetails sx={{ px: 1, pt: 0, pb: 1.5 }}>
-                    <Stack spacing={1.5}>
+                    <Stack spacing={0.75}>
                       {group.links.map((link) => (
-                        <Typography
-                          key={link.label}
-                          component={Link}
-                          href={link.href}
-                          sx={{ ...linkSx, py: 1, minHeight: 44, display: "flex", alignItems: "center" }}
-                        >
-                          {link.label}
-                        </Typography>
+                        <Link key={link.label} href={link.href} style={{ textDecoration: "none" }}>
+                          <Typography sx={linkSx}>{link.label}</Typography>
+                        </Link>
                       ))}
                     </Stack>
                   </AccordionDetails>
@@ -203,40 +190,38 @@ export default function AuthenticatedFooter({ role }: AuthenticatedFooterProps) 
           </Stack>
         </Box>
 
-        <Divider sx={{ my: 3.5, borderColor: COLORS.border }} />
+        <Divider sx={{ my: 3, borderColor: COLORS.border }} />
 
-        {/* Copyright area */}
-        <Box
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
             justifyContent: "space-between",
-            alignItems: { xs: "center", sm: "center" },
-            gap: 1.5,
-            px: { xs: 1, sm: 0 }
+            alignItems: "center",
+            textAlign: { xs: "center", sm: "left" },
           }}
         >
-          <Typography sx={{ fontSize: 12.5, color: COLORS.textMuted, fontWeight: 500, textAlign: { xs: "center", sm: "left" } }}>
-            © {currentYear} EduVerse. All rights reserved.
+          <Typography sx={{ fontSize: 12.5, color: COLORS.textMuted }}>
+            © {currentYear} EduVerse. Tất cả quyền được bảo lưu.
           </Typography>
-          <Stack direction="row" spacing={3} sx={{ justifyContent: "center" }}>
-            <Typography
-              component={Link}
-              href="/auth/privacy"
-              sx={{ fontSize: 12.5, color: COLORS.textMuted, textDecoration: "none", fontWeight: 500, "&:hover": { color: COLORS.hoverColor } }}
-            >
-              Chính sách bảo mật
-            </Typography>
-            <Typography
-              component={Link}
-              href="/auth/terms"
-              sx={{ fontSize: 12.5, color: COLORS.textMuted, textDecoration: "none", fontWeight: 500, "&:hover": { color: COLORS.hoverColor } }}
-            >
-              Điều khoản sử dụng
-            </Typography>
+          <Stack direction="row" spacing={3}>
+            <Link href="/student/dashboard" style={{ textDecoration: "none" }}>
+              <Typography sx={{ fontSize: 12.5, color: COLORS.textMuted, "&:hover": { color: COLORS.hoverColor } }}>
+                Quyền riêng tư
+              </Typography>
+            </Link>
+            <Link href="/student/dashboard" style={{ textDecoration: "none" }}>
+              <Typography sx={{ fontSize: 12.5, color: COLORS.textMuted, "&:hover": { color: COLORS.hoverColor } }}>
+                Điều khoản dịch vụ
+              </Typography>
+            </Link>
+            <Link href="/student/dashboard" style={{ textDecoration: "none" }}>
+              <Typography sx={{ fontSize: 12.5, color: COLORS.textMuted, "&:hover": { color: COLORS.hoverColor } }}>
+                Cài đặt Cookie
+              </Typography>
+            </Link>
           </Stack>
-        </Box>
-
+        </Stack>
       </Box>
     </Box>
   );

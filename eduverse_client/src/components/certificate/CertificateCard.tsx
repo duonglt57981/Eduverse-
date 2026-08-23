@@ -23,6 +23,7 @@ import {
 import { Certificate } from "@/src/types/certificate";
 import CertificateViewerModal from "./CertificateViewerModal";
 import Swal from "sweetalert2";
+import { CSSVAR } from "@/src/theme/tokens";
 
 interface CertificateCardProps {
   certificate: Certificate;
@@ -105,7 +106,7 @@ export default function CertificateCard({ certificate }: CertificateCardProps) {
           flexDirection: "column",
           borderRadius: 2.8,
           border: "1px solid rgba(17,17,17,0.08)",
-          bgcolor: "var(--ev-paper, #FFFFFF)",
+          bgcolor: CSSVAR.paper,
           overflow: "hidden",
           transition:
             "transform 240ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 240ms cubic-bezier(0.4, 0, 0.2, 1)",

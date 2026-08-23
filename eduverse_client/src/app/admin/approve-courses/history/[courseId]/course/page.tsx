@@ -72,7 +72,7 @@ import {
   LichSuKiemDuyetDto,
 } from "@/src/types/KiemDuyet/Dto/dto";
 import { ApiResponse } from "@/src/types/types";
-import { BRAND, NEUTRAL, STATUS, FONT_FAMILY } from "@/src/theme/tokens";
+import { BRAND, NEUTRAL, STATUS, FONT_FAMILY, CSSVAR } from "@/src/theme/tokens";
 
 // ======================== CONSTANTS ========================
 const COLORS = {
@@ -1053,7 +1053,7 @@ function KhoiTuChoiForm({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Nhập lý do để giảng viên chỉnh sửa lại..."
         size="small"
-        sx={{ bgcolor: "var(--ev-paper, #FFFFFF)", borderRadius: 1 }}
+        sx={{ bgcolor: CSSVAR.paper, borderRadius: 1 }}
       />
       <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
         <Button
@@ -2303,7 +2303,7 @@ function NoiDungViewer({ selected }: { selected: any }) {
                   sx={{
                     p: 2,
                     border: `1px solid ${COLORS.line}`,
-                    backgroundColor: "var(--ev-paper, #FFFFFF)",
+                    backgroundColor: CSSVAR.paper,
                     transition: "box-shadow 0.2s",
                     "&:hover": {
                       boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
@@ -3037,7 +3037,7 @@ function KiemDuyetSidebar({
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
             mb: 1.5,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
+            bgcolor: CSSVAR.paper,
             "& .MuiOutlinedInput-root": {
               borderRadius: 1.5,
               "& fieldset": { borderColor: COLORS.line },

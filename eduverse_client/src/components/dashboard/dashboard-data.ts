@@ -42,6 +42,7 @@ import {
   AccountBalanceWalletRounded,
 } from '@mui/icons-material';
 import type { SvgIconComponent } from '@mui/icons-material';
+import { COLORS, STATUS } from "@/src/theme/tokens";
 
 // --- TYPES ---
 
@@ -224,7 +225,7 @@ export const aiRecommendationBanners: AIRecommendationBanner[] = [
     title: 'AI đề xuất khóa học phù hợp',
     description: 'Dựa trên lịch sử học tập, AI đề xuất các kỹ năng và khóa học giúp bạn phát triển nhanh hơn.',
     buttonText: 'Khám phá ngay',
-    bgGradient: 'linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)',
+    bgGradient: `linear-gradient(135deg, #8B1E3F 0%, ${COLORS.purpleAI} 100%)`,
     illustrationType: 'ai',
   },
   {
@@ -233,7 +234,7 @@ export const aiRecommendationBanners: AIRecommendationBanner[] = [
     title: 'Kiểm tra năng lực của bạn',
     description: 'Thực hiện bài đánh giá để AI xây dựng lộ trình học tập tối ưu.',
     buttonText: 'Bắt đầu đánh giá',
-    bgGradient: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
+    bgGradient: `linear-gradient(135deg, #0EA5E9 0%, ${STATUS.info} 100%)`,
     illustrationType: 'tech',
   },
 ];
@@ -262,7 +263,7 @@ export const continueLearningTabsData: ContinueLearningData = {
       contentType: 'Video bài giảng',
       duration: 'Còn 1.5 giờ học',
       progress: 85,
-      thumbnailGradient: 'linear-gradient(135deg, #10B981 0%, #3B82F6 100%)',
+      thumbnailGradient: `linear-gradient(135deg, ${STATUS.success} 0%, #3B82F6 100%)`,
     },
   ],
   paths: [
@@ -298,7 +299,7 @@ export const continueLearningTabsData: ContinueLearningData = {
       contentType: 'Bài thi lý thuyết & Thực hành',
       duration: 'Còn 1 bài thi',
       progress: 80,
-      thumbnailGradient: 'linear-gradient(135deg, #F59E0B 0%, #DC2626 100%)',
+      thumbnailGradient: `linear-gradient(135deg, ${STATUS.warning} 0%, ${STATUS.error} 100%)`,
     },
   ],
   assessments: [
@@ -316,7 +317,7 @@ export const continueLearningTabsData: ContinueLearningData = {
       contentType: 'Nghe & Đọc',
       duration: '90 phút',
       progress: 0,
-      thumbnailGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      thumbnailGradient: `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`,
     },
   ],
 };
@@ -336,7 +337,7 @@ export const nextSectorsData: NextSectorItem[] = [
     iconName: 'ai',
     subfields: ['Prompt Engineering', 'AI Agents'],
     bgLight: 'rgba(124, 58, 237, 0.05)',
-    iconColor: '#7C3AED',
+    iconColor: COLORS.purpleAI,
   },
   {
     id: 'sec-3',
@@ -352,7 +353,7 @@ export const nextSectorsData: NextSectorItem[] = [
     iconName: 'marketing',
     subfields: ['SEO', 'Content Marketing'],
     bgLight: 'rgba(16, 185, 129, 0.05)',
-    iconColor: '#10B981',
+    iconColor: STATUS.success,
   },
 ];
 
@@ -366,7 +367,7 @@ export const skillsCoursesData: CourseCardItem[] = [
     rating: 4.9,
     studentsCount: 1540,
     level: 'Nâng cao',
-    thumbnailGradient: 'linear-gradient(135deg, #7C3AED 0%, #C74A67 100%)',
+    thumbnailGradient: `linear-gradient(135deg, ${COLORS.purpleAI} 0%, #C74A67 100%)`,
   },
   {
     id: 'sc-2',
@@ -375,7 +376,7 @@ export const skillsCoursesData: CourseCardItem[] = [
     rating: 4.8,
     studentsCount: 3200,
     level: 'Trung cấp',
-    thumbnailGradient: 'linear-gradient(135deg, #0EA5E9 0%, #7C3AED 100%)',
+    thumbnailGradient: `linear-gradient(135deg, #0EA5E9 0%, ${COLORS.purpleAI} 100%)`,
   },
   {
     id: 'sc-3',
@@ -431,7 +432,7 @@ export const premiumSelectionData: PremiumFeaturedCourse = {
       rating: 4.9,
       studentsCount: 750,
       level: 'Nâng cao',
-      thumbnailGradient: 'linear-gradient(135deg, #DC2626 0%, #7F1D1D 100%)',
+      thumbnailGradient: `linear-gradient(135deg, ${STATUS.error} 0%, #7F1D1D 100%)`,
     },
   ],
 };
@@ -484,7 +485,7 @@ export const trendingCoursesData: TrendingCourseItem[] = [
     title: 'Phát triển Đại lý AI (AI Agents) thế hệ mới',
     tag: 'Xu hướng',
     tagColor: '#FFFFFF',
-    tagBg: 'linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)',
+    tagBg: `linear-gradient(135deg, #8B1E3F 0%, ${COLORS.purpleAI} 100%)`,
     studentsCount: 2450,
     rating: 4.95,
   },
@@ -502,7 +503,7 @@ export const trendingCoursesData: TrendingCourseItem[] = [
     title: 'AWS Certified Solutions Architect (SAA-C03)',
     tag: 'Được yêu thích',
     tagColor: '#FFFFFF',
-    tagBg: '#7C3AED',
+    tagBg: COLORS.purpleAI,
     studentsCount: 1850,
     rating: 4.9,
   },
@@ -520,7 +521,7 @@ export const trendingCoursesData: TrendingCourseItem[] = [
     title: 'An ninh mạng & Phòng chống tấn công (Cyber Security)',
     tag: 'Xu hướng',
     tagColor: '#FFFFFF',
-    tagBg: 'linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)',
+    tagBg: `linear-gradient(135deg, #8B1E3F 0%, ${COLORS.purpleAI} 100%)`,
     studentsCount: 1250,
     rating: 4.8,
   },

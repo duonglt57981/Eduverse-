@@ -14,6 +14,7 @@ import {
 import { useSelector } from "@/src/store/hook";
 import AuthenticatedFooter from "../components/footer/AuthenticatedFooter";
 import StudentFooter from "../components/footer/StudentFooter";
+import { SURFACE_LIGHT, SURFACE_DARK } from "@/src/theme/tokens";
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -101,12 +102,12 @@ const THEME_INIT_SCRIPT = `
     }
     var d = m === 'dark';
     var v = d
-      ? {bg:'#0F1216',paper:'#171B21',alt:'#1E232B',tp:'#F2F5F9',ts:'#B4BCC8',tm:'#8B95A3',
-         g:'#6B7583',dv:'rgba(255,255,255,0.10)',bt:'rgba(139,19,19,0.18)',
-         bb:'rgba(196,74,74,0.32)',hv:'rgba(255,255,255,0.06)',sl:'rgba(196,74,74,0.16)'}
-      : {bg:'#F7F5F2',paper:'#FFFFFF',alt:'#FBFAF9',tp:'#1F2937',ts:'#4B5563',tm:'#8A7676',
-         g:'#9CA3AF',dv:'#ECE7E4',bt:'#FBEFEF',bb:'#F0DEDE',hv:'rgba(24,18,20,0.04)',
-         sl:'rgba(139,19,19,0.08)'};
+      ? {bg:'${SURFACE_DARK.bg}',paper:'${SURFACE_DARK.paper}',alt:'${SURFACE_DARK.paperAlt}',tp:'${SURFACE_DARK.textPrimary}',ts:'${SURFACE_DARK.textSecondary}',tm:'${SURFACE_DARK.textMuted}',
+         g:'${SURFACE_DARK.grey}',dv:'${SURFACE_DARK.divider}',bt:'${SURFACE_DARK.brandTint}',
+         bb:'${SURFACE_DARK.brandBorder}',hv:'${SURFACE_DARK.hover}',sl:'${SURFACE_DARK.selected}'}
+      : {bg:'${SURFACE_LIGHT.bg}',paper:'${SURFACE_LIGHT.paper}',alt:'${SURFACE_LIGHT.paperAlt}',tp:'${SURFACE_LIGHT.textPrimary}',ts:'${SURFACE_LIGHT.textSecondary}',tm:'${SURFACE_LIGHT.textMuted}',
+         g:'${SURFACE_LIGHT.grey}',dv:'${SURFACE_LIGHT.divider}',bt:'${SURFACE_LIGHT.brandTint}',bb:'${SURFACE_LIGHT.brandBorder}',hv:'${SURFACE_LIGHT.hover}',
+         sl:'${SURFACE_LIGHT.selected}'};
     var r = document.documentElement;
     r.style.setProperty('--ev-bg',v.bg);
     r.style.setProperty('--ev-paper',v.paper);

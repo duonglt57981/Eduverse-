@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { boxSx, COLORS, FONTS } from "../../types/constants";
 import StatusChip from "./StatusChip";
+import { CSSVAR } from "@/src/theme/tokens";
 
 export default function KhoiTenKhoaHoc({
   detail,
@@ -30,7 +31,7 @@ export default function KhoiTenKhoaHoc({
               width: 190,
               height: 114,
               borderRadius: "16px",
-              border: "1px solid var(--ev-divider, #ECE7E4)",
+              border: `1px solid ${CSSVAR.divider}`,
               boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
             }}
           />
@@ -46,7 +47,7 @@ export default function KhoiTenKhoaHoc({
                 fontWeight: 900,
                 fontSize: 22,
                 letterSpacing: "-0.4px",
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 flex: 1,
                 minWidth: 200,
               }}
@@ -66,7 +67,7 @@ export default function KhoiTenKhoaHoc({
                 <Typography
                   variant="caption"
                   sx={{
-                    color: "var(--ev-text-muted, #8A7676)",
+                    color: CSSVAR.textMuted,
                     fontWeight: 600,
                     mr: 1,
                   }}
@@ -74,7 +75,7 @@ export default function KhoiTenKhoaHoc({
                   Giảng viên:{" "}
                   <span
                     style={{
-                      color: "var(--ev-text-primary, #1F2937)",
+                      color: CSSVAR.textPrimary,
                       fontWeight: 700,
                     }}
                   >
@@ -88,11 +89,11 @@ export default function KhoiTenKhoaHoc({
                     size="small"
                     sx={{
                       bgcolor: "transparent",
-                      color: "var(--ev-text-secondary, #4B5563)",
+                      color: CSSVAR.textSecondary,
                       fontWeight: 700,
                       fontSize: 12,
                       borderRadius: "8px",
-                      border: "1px solid var(--ev-divider, #ECE7E4)",
+                      border: `1px solid ${CSSVAR.divider}`,
                     }}
                   />
                 )}
@@ -103,11 +104,11 @@ export default function KhoiTenKhoaHoc({
                     size="small"
                     sx={{
                       bgcolor: "transparent",
-                      color: "var(--ev-text-secondary, #4B5563)",
+                      color: CSSVAR.textSecondary,
                       fontWeight: 700,
                       fontSize: 12,
                       borderRadius: "8px",
-                      border: "1px solid var(--ev-divider, #ECE7E4)",
+                      border: `1px solid ${CSSVAR.divider}`,
                     }}
                   />
                 )}
@@ -134,7 +135,7 @@ export default function KhoiTenKhoaHoc({
                     variant="caption"
                     sx={{
                       fontWeight: 600,
-                      color: "var(--ev-text-muted, #8A7676)",
+                      color: CSSVAR.textMuted,
                       mr: 1,
                     }}
                   >
@@ -157,11 +158,11 @@ export default function KhoiTenKhoaHoc({
                         size="small"
                         sx={{
                           bgcolor: "transparent",
-                          color: "var(--ev-text-secondary, #4B5563)",
+                          color: CSSVAR.textSecondary,
                           fontWeight: 700,
                           fontSize: 12,
                           borderRadius: "8px",
-                          border: "1px solid var(--ev-divider, #ECE7E4)",
+                          border: `1px solid ${CSSVAR.divider}`,
                           mt: 0.5, // tạo khoảng cách nhỏ nếu wrap
                         }}
                       />

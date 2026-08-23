@@ -8,4 +8,8 @@ export interface FavoriteCourse {
   giaTien: number;
   createdDate: string;
   isFavorite: boolean;
+  diemDanhGiaTrungBinh?: number | null;   
+  soLuongDanhGia?: number;              
+  soLuongHocVien?: number;               
+  capDo?: string;  
 }

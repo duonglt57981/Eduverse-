@@ -20,13 +20,14 @@ import {
   Lock as LockIcon,
 } from "@mui/icons-material";
 import type { ReviewQizzDto } from "../../hooks/useQuiz";
+import { BRAND, STATUS } from "@/src/theme/tokens";
 
 // ── Design tokens — đồng bộ với QuizContainer / QuizView / QuizReview ──
-const RED = "#8B1313";
+const RED = BRAND.main;
 const RED_DARK = "#6B1414";
-const GREEN = "#10B981";
-const AMBER = "#D97706";
-const CRIMSON = "#DC2626";
+const GREEN = STATUS.success;
+const AMBER = STATUS.warningDark;
+const CRIMSON = STATUS.error;
 const INK = "#1c1d1f";
 const SUB = "#6a6f73";
 const RADIUS = "4px";

@@ -29,7 +29,6 @@ import {
   MenuItem,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import type { Theme } from "@mui/material/styles";
 import {
   EditRounded,
   SaveRounded,
@@ -39,7 +38,6 @@ import {
   EmailRounded,
   PhoneRounded,
   CakeRounded,
-  LocationOnRounded,
   VerifiedRounded,
   ErrorOutlineRounded,
   DescriptionRounded,
@@ -52,17 +50,15 @@ import {
   FormatQuoteRounded,
   WcRounded,
   BadgeRounded,
-  ExpandMoreRounded,
-  ExpandLessRounded,
 } from "@mui/icons-material";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
 import DOMPurify from "dompurify";
+import { usePathname } from "next/navigation";
 import { apiService } from "@/src/services/index";
+import { STATUS } from "@/src/theme/tokens";
 
 interface ProfileData {
   userName?: string;
@@ -78,6 +74,7 @@ interface ProfileData {
   chucVu: string;
   roles?: string[];
   twoFactorEnabled: boolean;
+  isGoogleAccount?: boolean;
 }
 
 interface UploadAvatarResponse {
@@ -86,7 +83,6 @@ interface UploadAvatarResponse {
 
 type SanitizeConfig = NonNullable<Parameters<typeof DOMPurify.sanitize>[1]>;
 
-// Cấu hình cho phép của DOMPurify khi hiển thị nội dung Tiểu sử (HTML do Tiptap sinh ra)
 const SANITIZE_CONFIG: SanitizeConfig = {
   ALLOWED_TAGS: [
     "p",
@@ -118,7 +114,6 @@ function sanitizeHtml(html: string): string {
 const TIEU_SU_MIN_CHARS = 200;
 const TIEU_SU_MAX_CHARS = 9999;
 
-// Lấy text thuần từ HTML để đếm số ký tự (bỏ thẻ HTML)
 function getPlainTextFromHtml(html: string) {
   if (typeof window === "undefined" || !html) return "";
   const el = document.createElement("div");
@@ -131,13 +126,11 @@ function countChars(html: string) {
   return plain.length;
 }
 
-// Tiểu sử không bắt buộc, nhưng nếu đã nhập thì phải từ 200 đến 9999 ký tự (không tính thẻ HTML).
-// Trả về null nếu hợp lệ, ngược lại trả về thông báo lỗi.
 function validateTieuSu(html: string): string | null {
   const charCount = countChars(html);
-  if (charCount === 0) return null; // để trống -> hợp lệ
+  if (charCount === 0) return null;
   if (charCount < TIEU_SU_MIN_CHARS) {
-    return `Tiểu sử cần tối thiểu ${TIEU_SU_MIN_CHARS} ký tự (hiện tại: ${charCount}/${TIEU_SU_MAX_CHARS} ký tự)`;
+    return `Tiểu sử cần ít nhất ${TIEU_SU_MIN_CHARS} ký tự (hiện tại: ${charCount}/${TIEU_SU_MIN_CHARS} ký tự)`;
   }
   if (charCount > TIEU_SU_MAX_CHARS) {
     return `Tiểu sử tối đa ${TIEU_SU_MAX_CHARS} ký tự (hiện tại: ${charCount}/${TIEU_SU_MAX_CHARS} ký tự)`;
@@ -145,15 +138,32 @@ function validateTieuSu(html: string): string | null {
   return null;
 }
 
-// Toolbar đơn giản cho Tiptap
+const TIEU_SU_EXTENSIONS = [
+  StarterKit.configure({
+    link: {
+      openOnClick: false,
+      HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
+    },
+  }),
+  TextAlign.configure({ types: ["heading", "paragraph"] }),
+  Placeholder.configure({
+    placeholder: "Giới thiệu ngắn gọn về bản thân...",
+  }),
+];
+
 function TieuSuToolbar({ editor }: { editor: Editor | null }) {
   if (!editor) return null;
 
   const btnSx = (active: boolean) => ({
-    color: active ? "primary.main" : "text.secondary",
-    bgcolor: active
-      ? (theme: Theme) => alpha(theme.palette.primary.main, 0.1)
-      : "transparent",
+    color: active ? "#FFFFFF" : "text.secondary",
+    bgcolor: active ? "primary.main" : "transparent",
+    borderRadius: "8px",
+    p: "6px",
+    transition: "all 180ms ease",
+    "&:hover": {
+      bgcolor: active ? "primary.dark" : "rgba(139,19,19,0.08)",
+      color: active ? "#FFFFFF" : "primary.main",
+    },
   });
 
   const setLink = () => {
@@ -168,60 +178,72 @@ function TieuSuToolbar({ editor }: { editor: Editor | null }) {
   };
 
   return (
-    <Stack
-      direction="row"
-      spacing={0.5}
+    <Box
       sx={{
-        p: 0.5,
+        px: 1.5,
+        py: 1,
         borderBottom: "1px solid",
         borderColor: "divider",
+        bgcolor: (theme) =>
+          theme.palette.mode === "dark"
+            ? "rgba(255,255,255,0.03)"
+            : "rgba(139,19,19,0.025)",
+        display: "flex",
+        alignItems: "center",
         flexWrap: "wrap",
+        gap: 0.75,
       }}
     >
-      <Tooltip title="Đậm">
+      <Tooltip title="In đậm (Ctrl+B)">
         <IconButton
           size="small"
           onClick={() => editor.chain().focus().toggleBold().run()}
           sx={btnSx(editor.isActive("bold"))}
         >
-          <FormatBoldRounded fontSize="small" />
+          <FormatBoldRounded sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Nghiêng">
+      <Tooltip title="In nghiêng (Ctrl+I)">
         <IconButton
           size="small"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           sx={btnSx(editor.isActive("italic"))}
         >
-          <FormatItalicRounded fontSize="small" />
+          <FormatItalicRounded sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Gạch chân">
+      <Tooltip title="Gạch chân (Ctrl+U)">
         <IconButton
           size="small"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           sx={btnSx(editor.isActive("underline"))}
         >
-          <FormatUnderlinedRounded fontSize="small" />
+          <FormatUnderlinedRounded sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
-      <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ mx: 0.5, my: 0.5, borderColor: "divider" }}
+      />
+
       <Tooltip title="Danh sách gạch đầu dòng">
         <IconButton
           size="small"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           sx={btnSx(editor.isActive("bulletList"))}
         >
-          <FormatListBulletedRounded fontSize="small" />
+          <FormatListBulletedRounded sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Danh sách đánh số">
+      <Tooltip title="Danh sách số">
         <IconButton
           size="small"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           sx={btnSx(editor.isActive("orderedList"))}
         >
-          <FormatListNumberedRounded fontSize="small" />
+          <FormatListNumberedRounded sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
       <Tooltip title="Trích dẫn">
@@ -230,25 +252,32 @@ function TieuSuToolbar({ editor }: { editor: Editor | null }) {
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           sx={btnSx(editor.isActive("blockquote"))}
         >
-          <FormatQuoteRounded fontSize="small" />
+          <FormatQuoteRounded sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
-      <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 0.5 }} />
+
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ mx: 0.5, my: 0.5, borderColor: "divider" }}
+      />
+
       <Tooltip title="Chèn liên kết">
         <IconButton
           size="small"
           onClick={setLink}
           sx={btnSx(editor.isActive("link"))}
         >
-          <LinkRounded fontSize="small" />
+          <LinkRounded sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
-    </Stack>
+    </Box>
   );
 }
 
 export default function AccountSettings() {
   const theme = useTheme();
+  const pathname = usePathname();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -260,15 +289,15 @@ export default function AccountSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
-  // ── Xác minh số điện thoại ──
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyStep, setVerifyStep] = useState<1 | 2>(1);
-  const [verifyOtp, setVerifyOtp] = useState('');
+  const [verifyOtp, setVerifyOtp] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
-  const [verifyError, setVerifyError] = useState('');
-  const [verifyInfo, setVerifyInfo] = useState('');
+  const [verifyError, setVerifyError] = useState("");
+  const [verifyInfo, setVerifyInfo] = useState("");
 
   const [profile, setProfile] = useState<ProfileData>({
+    userName: "",
     hoTen: "",
     email: "",
     phoneNumber: "",
@@ -280,28 +309,16 @@ export default function AccountSettings() {
     anhDaiDien: "",
     chucVu: "",
     twoFactorEnabled: false,
+    isGoogleAccount: false,
   });
 
   const [tempProfile, setTempProfile] = useState<ProfileData>({ ...profile });
   const [tieuSuError, setTieuSuError] = useState<string | null>(null);
   const [tieuSuCharCount, setTieuSuCharCount] = useState(0);
-  const [tieuSuExpanded, setTieuSuExpanded] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
-  // Tiptap editor cho trường "Tiểu sử" (nội dung HTML)
   const tieuSuEditor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
-      }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Placeholder.configure({
-        placeholder: "Giới thiệu ngắn gọn về bản thân...",
-      }),
-    ],
+    extensions: TIEU_SU_EXTENSIONS,
     content: "",
     editable: false,
     immediatelyRender: false,
@@ -319,7 +336,6 @@ export default function AccountSettings() {
     setShowSnackbar(true);
   };
 
-  // Fetch profile from API on mount
   const fetchProfile = useCallback(async () => {
     try {
       setFetchLoading(true);
@@ -333,17 +349,20 @@ export default function AccountSettings() {
           phoneNumber: data.phoneNumber || "",
           phoneNumberConfirmed: Boolean(data.phoneNumberConfirmed),
           ngaySinh: data.ngaySinh || "",
-          gioiTinh: data.gioiTinh !== undefined && data.gioiTinh !== null ? data.gioiTinh : 0,
+          gioiTinh:
+            data.gioiTinh !== undefined && data.gioiTinh !== null
+              ? data.gioiTinh
+              : 0,
           diaChi: data.diaChi || "",
           tieuSu: data.tieuSu || "",
           anhDaiDien: data.anhDaiDien || "",
           chucVu: data.chucVu || "",
           roles: Array.isArray(data.roles) ? data.roles : [],
           twoFactorEnabled: data.twoFactorEnabled || false,
+          isGoogleAccount: Boolean(data.isGoogleAccount),
         };
         setProfile(profileData);
         setTempProfile(profileData);
-        // Đồng bộ số ký tự / lỗi validate cho Tiểu sử ngay khi dữ liệu vừa tải xong
         setTieuSuCharCount(countChars(profileData.tieuSu));
         setTieuSuError(null);
         setIsFirstLoad(false);
@@ -356,15 +375,12 @@ export default function AccountSettings() {
   }, []);
 
   useEffect(() => {
-    // fetchProfile() gọi setState (setFetchLoading, setProfile, ...) ngay khi effect
-    // chạy lúc mount - đây là pattern data-fetching-on-mount chuẩn, không phải cascade
-    // render ngoài ý muốn, nên tắt cảnh báo của rule set-state-in-effect ở đây.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProfile();
   }, [fetchProfile]);
-
-  // Đồng bộ nội dung editor (hệ thống ngoài React) mỗi khi profile được nạp/lưu.
   // Effect này CHỈ đồng bộ Tiptap editor, không setState nào khác được gọi ở đây
+  // (char count / error đã được cập nhật sẵn ở nơi profile thực sự thay đổi:
+  // fetchProfile khi tải dữ liệu, và onUpdate/handleEditToggle khi chỉnh sửa/hủy).
   useEffect(() => {
     if (!tieuSuEditor || isFirstLoad) return;
     if (!isEditing) {
@@ -374,7 +390,6 @@ export default function AccountSettings() {
     }
   }, [profile.tieuSu, tieuSuEditor, isEditing, isFirstLoad]);
 
-  // Bật/tắt khả năng chỉnh sửa của editor theo trạng thái isEditing
   useEffect(() => {
     if (!tieuSuEditor) return;
     tieuSuEditor.setEditable(isEditing);
@@ -387,7 +402,6 @@ export default function AccountSettings() {
         emitUpdate: false,
       });
     } else {
-      // Hủy chỉnh sửa: khôi phục lại nội dung gốc
       tieuSuEditor?.commands.setContent(profile.tieuSu || "", {
         emitUpdate: false,
       });
@@ -397,40 +411,46 @@ export default function AccountSettings() {
     setIsEditing(!isEditing);
   };
 
-  // Gửi mã OTP tới số điện thoại đang lưu trong hồ sơ
   const handleSendPhoneOtp = async () => {
-    setVerifyError('');
-    setVerifyInfo('');
+    setVerifyError("");
+    setVerifyInfo("");
     setVerifyLoading(true);
     try {
-      const res = await apiService.post<{ message?: string }>('/auth/send-phone-otp', {
-        phoneNumber: profile.phoneNumber,
-      });
-      setVerifyInfo(res.message || 'Đã gửi mã xác minh.');
+      const res = await apiService.post<{ message?: string }>(
+        "/auth/send-phone-otp",
+        {
+          phoneNumber: profile.phoneNumber,
+        },
+      );
+      setVerifyInfo(res.message || "Đã gửi mã xác minh.");
       setVerifyStep(2);
     } catch (err: unknown) {
-      setVerifyError(typeof err === 'string' ? err : 'Không gửi được mã xác minh.');
+      setVerifyError(
+        typeof err === "string" ? err : "Không gửi được mã xác minh.",
+      );
     } finally {
       setVerifyLoading(false);
     }
   };
 
-  // Xác nhận mã OTP và đánh dấu số điện thoại đã xác minh
   const handleConfirmPhoneOtp = async () => {
-    setVerifyError('');
+    setVerifyError("");
     setVerifyLoading(true);
     try {
-      const res = await apiService.post<{ message?: string }>('/auth/confirm-phone-otp', {
-        phoneNumber: profile.phoneNumber,
-        otp: verifyOtp.trim(),
-      });
+      const res = await apiService.post<{ message?: string }>(
+        "/auth/confirm-phone-otp",
+        {
+          phoneNumber: profile.phoneNumber,
+          otp: verifyOtp.trim(),
+        },
+      );
       setProfile((prev) => ({ ...prev, phoneNumberConfirmed: true }));
-      setSnackbarMessage(res.message || 'Xác minh số điện thoại thành công.');
-      setSnackbarSeverity('success');
+      setSnackbarMessage(res.message || "Xác minh số điện thoại thành công.");
+      setSnackbarSeverity("success");
       setShowSnackbar(true);
       closeVerifyDialog();
     } catch (err: unknown) {
-      setVerifyError(typeof err === 'string' ? err : 'Xác minh thất bại.');
+      setVerifyError(typeof err === "string" ? err : "Xác minh thất bại.");
     } finally {
       setVerifyLoading(false);
     }
@@ -438,17 +458,17 @@ export default function AccountSettings() {
 
   const openVerifyDialog = () => {
     setVerifyStep(1);
-    setVerifyOtp('');
-    setVerifyError('');
-    setVerifyInfo('');
+    setVerifyOtp("");
+    setVerifyError("");
+    setVerifyInfo("");
     setVerifyOpen(true);
   };
 
   const closeVerifyDialog = () => {
     setVerifyOpen(false);
-    setVerifyOtp('');
-    setVerifyError('');
-    setVerifyInfo('');
+    setVerifyOtp("");
+    setVerifyError("");
+    setVerifyInfo("");
   };
 
   const handleChange = (
@@ -461,12 +481,10 @@ export default function AccountSettings() {
     }));
   };
 
-  // Upload avatar to backend (POST /api/profile/avatar)
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       showNotification("Ảnh tải lên không được vượt quá 5MB", "error");
       return;
@@ -496,7 +514,6 @@ export default function AccountSettings() {
         showNotification(res.message || "Không thể tải ảnh lên", "error");
       }
     } catch {
-      // Fallback to local preview if API fails
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
@@ -514,9 +531,20 @@ export default function AccountSettings() {
     }
   };
 
-  // Save profile to backend (PUT /api/profile)
   const handleSave = async () => {
-    // Validate Tiểu sử: không bắt buộc, nhưng nếu nhập thì phải 50-1500 từ
+    if (tempProfile.ngaySinh) {
+      const selectedDate = new Date(tempProfile.ngaySinh);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (selectedDate > today) {
+        showNotification(
+          "Ngày sinh không được là ngày trong tương lai",
+          "error",
+        );
+        return;
+      }
+    }
+
     const tieuSuValidationError = validateTieuSu(tempProfile.tieuSu);
     if (tieuSuValidationError) {
       setTieuSuError(tieuSuValidationError);
@@ -527,8 +555,11 @@ export default function AccountSettings() {
     setLoading(true);
     try {
       const payload = {
+        userName: tempProfile.isGoogleAccount
+          ? tempProfile.userName
+          : profile.userName,
         hoTen: tempProfile.hoTen,
-        email: tempProfile.email,
+        email: profile.email,
         phoneNumber: tempProfile.phoneNumber,
         diaChi: tempProfile.diaChi,
         ngaySinh: tempProfile.ngaySinh,
@@ -561,7 +592,6 @@ export default function AccountSettings() {
       .toUpperCase();
   };
 
-  // Loading skeleton
   if (fetchLoading) {
     return (
       <Card
@@ -635,25 +665,28 @@ export default function AccountSettings() {
         </Alert>
       </Snackbar>
 
-      {/* ── Hộp thoại xác minh số điện thoại ── */}
       <Dialog
         open={verifyOpen}
         onClose={closeVerifyDialog}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: '20px' } } }}
+        slotProps={{ paper: { sx: { borderRadius: "20px" } } }}
       >
         <DialogTitle sx={{ pb: 1 }}>
-          <Typography sx={{ fontSize: 16.5, fontWeight: 900, color: 'text.primary' }}>
+          <Typography
+            sx={{ fontSize: 16.5, fontWeight: 900, color: "text.primary" }}
+          >
             Xác minh số điện thoại
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
-            <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+            <Typography
+              sx={{ fontSize: 13, color: "text.secondary", lineHeight: 1.6 }}
+            >
               {verifyStep === 1
                 ? `Hệ thống sẽ gửi một mã gồm 6 chữ số tới số ${profile.phoneNumber}. Sau khi xác minh, bạn có thể dùng số này để khôi phục mật khẩu.`
-                : 'Nhập mã gồm 6 chữ số vừa nhận được. Mã có hiệu lực trong 5 phút.'}
+                : "Nhập mã gồm 6 chữ số vừa nhận được. Mã có hiệu lực trong 5 phút."}
             </Typography>
 
             {verifyInfo ? (
@@ -673,13 +706,20 @@ export default function AccountSettings() {
                 autoFocus
                 label="Mã xác minh"
                 value={verifyOtp}
-                onChange={(e) => setVerifyOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={(e) =>
+                  setVerifyOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
                 placeholder="000000"
                 slotProps={{
                   htmlInput: {
-                    inputMode: 'numeric',
+                    inputMode: "numeric",
                     maxLength: 6,
-                    style: { letterSpacing: 8, fontWeight: 800, fontSize: 20, textAlign: 'center' },
+                    style: {
+                      letterSpacing: 8,
+                      fontWeight: 800,
+                      fontSize: 20,
+                      textAlign: "center",
+                    },
                   },
                 }}
               />
@@ -689,7 +729,11 @@ export default function AccountSettings() {
         <DialogActions sx={{ p: 2.5 }}>
           <Button
             onClick={closeVerifyDialog}
-            sx={{ color: 'text.secondary', fontWeight: 800, textTransform: 'none' }}
+            sx={{
+              color: "text.secondary",
+              fontWeight: 800,
+              textTransform: "none",
+            }}
           >
             Hủy
           </Button>
@@ -699,9 +743,13 @@ export default function AccountSettings() {
               disableElevation
               disabled={verifyLoading || !profile.phoneNumber}
               onClick={handleSendPhoneOtp}
-              sx={{ textTransform: 'none', fontWeight: 800, borderRadius: '10px' }}
+              sx={{
+                textTransform: "none",
+                fontWeight: 800,
+                borderRadius: "10px",
+              }}
             >
-              {verifyLoading ? 'Đang gửi...' : 'Gửi mã xác minh'}
+              {verifyLoading ? "Đang gửi..." : "Gửi mã xác minh"}
             </Button>
           ) : (
             <Button
@@ -709,9 +757,13 @@ export default function AccountSettings() {
               disableElevation
               disabled={verifyLoading || verifyOtp.length < 6}
               onClick={handleConfirmPhoneOtp}
-              sx={{ textTransform: 'none', fontWeight: 800, borderRadius: '10px' }}
+              sx={{
+                textTransform: "none",
+                fontWeight: 800,
+                borderRadius: "10px",
+              }}
             >
-              {verifyLoading ? 'Đang xác minh...' : 'Xác nhận'}
+              {verifyLoading ? "Đang xác minh..." : "Xác nhận"}
             </Button>
           )}
         </DialogActions>
@@ -802,14 +854,24 @@ export default function AccountSettings() {
               >
                 {profile.hoTen || "Học viên EduVerse"}
               </Typography>
-              <Typography sx={{ color: "text.secondary", fontSize: 14, fontWeight: 700 }}>
-                {profile.roles?.some(r => r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien")
+              <Typography
+                sx={{ color: "text.secondary", fontSize: 14, fontWeight: 700 }}
+              >
+                {profile.roles?.some(
+                  (r) =>
+                    r.toLowerCase() === "personnel" ||
+                    r.toLowerCase() === "nhanvien",
+                )
                   ? "Nhân viên kiểm duyệt"
-                  : profile.roles?.some(r => r.toLowerCase() === "admin")
-                  ? "Quản trị viên"
-                  : profile.roles?.some(r => r.toLowerCase() === "giaovien" || r.toLowerCase() === "instructor")
-                  ? "Giảng viên EduVerse"
-                  : profile.chucVu || "Học viên EduVerse"}
+                  : profile.roles?.some((r) => r.toLowerCase() === "admin")
+                    ? "Quản trị viên"
+                    : profile.roles?.some(
+                          (r) =>
+                            r.toLowerCase() === "giaovien" ||
+                            r.toLowerCase() === "instructor",
+                        )
+                      ? "Giảng viên EduVerse"
+                      : profile.chucVu || "Học viên EduVerse"}
               </Typography>
             </Stack>
 
@@ -963,14 +1025,25 @@ export default function AccountSettings() {
                 <TextField
                   fullWidth
                   name="userName"
-                  value={profile.userName}
-                  disabled
+                  value={isEditing ? tempProfile.userName : profile.userName}
+                  onChange={handleChange}
+                  disabled={!isEditing || !profile.isGoogleAccount}
                   placeholder="Tên đăng nhập hệ thống"
+                  helperText={
+                    !profile.isGoogleAccount
+                      ? "Cố định khi đăng ký bằng tài khoản/mật khẩu"
+                      : isEditing
+                        ? "Bạn có thể đổi tên đăng nhập (tài khoản Google)"
+                        : ""
+                  }
                   slotProps={{
                     input: {
                       sx: {
                         borderRadius: 2.8,
-                        bgcolor: "action.hover",
+                        bgcolor:
+                          !isEditing || !profile.isGoogleAccount
+                            ? "action.hover"
+                            : "background.paper",
                         transition: "all 160ms ease",
                       },
                     },
@@ -982,6 +1055,10 @@ export default function AccountSettings() {
                       "& fieldset": {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
+                    },
+                    "& .MuiFormHelperText-root": {
+                      fontSize: 11,
+                      mt: 0.5,
                     },
                   }}
                 />
@@ -1011,17 +1088,15 @@ export default function AccountSettings() {
                 <TextField
                   fullWidth
                   name="email"
-                  value={isEditing ? tempProfile.email : profile.email}
-                  onChange={handleChange}
-                  disabled={!isEditing}
+                  value={profile.email}
+                  disabled
                   placeholder="example@gmail.com"
+                  helperText="Email không thể thay đổi sau khi đăng ký tài khoản"
                   slotProps={{
                     input: {
                       sx: {
                         borderRadius: 2.8,
-                        bgcolor: !isEditing
-                          ? "action.hover"
-                          : "background.paper",
+                        bgcolor: "action.hover",
                         transition: "all 160ms ease",
                       },
                     },
@@ -1034,6 +1109,10 @@ export default function AccountSettings() {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
                     },
+                    "& .MuiFormHelperText-root": {
+                      fontSize: 11,
+                      mt: 0.5,
+                    },
                   }}
                 />
               </Stack>
@@ -1041,45 +1120,72 @@ export default function AccountSettings() {
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={0.75}>
-                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, height: 24 }}>
-                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PhoneRounded fontSize="inherit" sx={{ color: 'rgba(25,23,28,0.4)' }} /> Số điện thoại
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    height: 24,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: "text.primary",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <PhoneRounded
+                      fontSize="inherit"
+                      sx={{ color: "rgba(25,23,28,0.4)" }}
+                    />{" "}
+                    Số điện thoại
                   </Typography>
                   {profile.phoneNumber ? (
                     profile.phoneNumberConfirmed ? (
                       <Chip
-                        size="small"
-                        icon={<VerifiedRounded sx={{ fontSize: 15 }} />}
+                        icon={
+                          <VerifiedRounded
+                            sx={{ fontSize: "14px !important" }}
+                          />
+                        }
                         label="Đã xác minh"
+                        size="small"
                         sx={{
-                          height: 22,
+                          height: 20,
                           fontSize: 11,
                           fontWeight: 800,
-                          color: '#059669',
-                          bgcolor: 'rgba(16,185,129,0.10)',
-                          '& .MuiChip-icon': { color: '#059669' },
+                          bgcolor: alpha("#059669", 0.12),
+                          color: "#059669",
+                          border: `1px solid ${alpha("#059669", 0.25)}`,
+                          "& .MuiChip-icon": { color: "#059669" },
                         }}
                       />
                     ) : (
-                      <Button
+                      <Chip
+                        icon={
+                          <ErrorOutlineRounded
+                            sx={{ fontSize: "14px !important" }}
+                          />
+                        }
+                        label="Chưa xác minh"
                         size="small"
                         onClick={openVerifyDialog}
-                        startIcon={<ErrorOutlineRounded sx={{ fontSize: 15 }} />}
                         sx={{
-                          minWidth: 0,
-                          px: 1,
-                          py: 0.2,
-                          fontSize: 11.5,
+                          height: 20,
+                          fontSize: 11,
                           fontWeight: 800,
-                          textTransform: 'none',
-                          borderRadius: '8px',
-                          color: '#D97706',
-                          bgcolor: 'rgba(245,158,11,0.10)',
-                          '&:hover': { bgcolor: 'rgba(245,158,11,0.18)' },
+                          cursor: "pointer",
+                          bgcolor: alpha("#F59E0B", 0.14),
+                          color: "#B45309",
+                          border: `1px solid ${alpha("#F59E0B", 0.3)}`,
+                          "& .MuiChip-icon": { color: "#B45309" },
                         }}
-                      >
-                        Chưa xác minh — Xác minh ngay
-                      </Button>
+                      />
                     )
                   ) : null}
                 </Stack>
@@ -1144,7 +1250,9 @@ export default function AccountSettings() {
                   onChange={handleChange}
                   disabled={!isEditing}
                   slotProps={{
-                    inputLabel: { shrink: true },
+                    htmlInput: {
+                      max: new Date().toISOString().split("T")[0],
+                    },
                     input: {
                       sx: {
                         borderRadius: 2.8,
@@ -1191,246 +1299,185 @@ export default function AccountSettings() {
                   <Select
                     name="gioiTinh"
                     value={isEditing ? tempProfile.gioiTinh : profile.gioiTinh}
-                    onChange={(e) => setTempProfile(prev => ({ ...prev, gioiTinh: Number(e.target.value) }))}
+                    onChange={(e) =>
+                      setTempProfile((prev) => ({
+                        ...prev,
+                        gioiTinh: Number(e.target.value),
+                      }))
+                    }
                     sx={{
                       height: 46,
                       borderRadius: 2.8,
-                      bgcolor: !isEditing
-                        ? "action.hover"
-                        : "background.paper",
-                      '& fieldset': {
+                      bgcolor: !isEditing ? "action.hover" : "background.paper",
+                      "& fieldset": {
                         borderColor: "rgba(17,17,17,0.08)",
                       },
                     }}
                   >
-                    <MenuItem value={0}>Chưa cập nhật</MenuItem>
+                    <MenuItem value={0}>Nữ</MenuItem>
                     <MenuItem value={1}>Nam</MenuItem>
-                    <MenuItem value={2}>Nữ</MenuItem>
-                    <MenuItem value={3}>Khác</MenuItem>
+                    <MenuItem value={2}>Khác</MenuItem>
                   </Select>
                 </FormControl>
               </Stack>
             </Grid>
 
-            {/* Row 4: Địa chỉ */}
-            <Grid size={{ xs: 12 }}>
-              <Stack spacing={0.75}>
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "text.primary",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    height: 24,
-                  }}
-                >
-                  <LocationOnRounded
-                    fontSize="inherit"
-                    sx={{ color: "rgba(25,23,28,0.4)" }}
-                  />{" "}
-                  Địa chỉ
-                </Typography>
-                <TextField
-                  fullWidth
-                  name="diaChi"
-                  value={isEditing ? tempProfile.diaChi : profile.diaChi}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  placeholder="Nhập địa chỉ cư trú"
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: 2.8,
-                        bgcolor: !isEditing
-                          ? "action.hover"
-                          : "background.paper",
-                        transition: "all 160ms ease",
-                      },
-                    },
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      height: 46,
-                      borderRadius: 2.8,
-                      "& fieldset": {
-                        borderColor: "rgba(17,17,17,0.08)",
-                      },
-                    },
-                  }}
-                />
-              </Stack>
-            </Grid>
-
-            {/* Row 5: Tiểu sử (HTML Editor) */}
-            <Grid size={{ xs: 12 }}>
-              <Stack spacing={0.75}>
-                <Stack
-                  direction="row"
-                  sx={{
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 1,
-                    height: 24,
-                  }}
-                >
-                  <Typography
+            {/* Row 4: Tiểu sử (Chỉ hiển thị cho Giảng viên và Học viên) */}
+            {!(
+              pathname.startsWith("/admin") ||
+              pathname.startsWith("/personnel") ||
+              profile.roles?.some((r) =>
+                ["admin", "personnel", "nhanvien"].includes(r.toLowerCase()),
+              )
+            ) && (
+              <Grid size={{ xs: 12 }}>
+                <Stack spacing={0.75}>
+                  <Stack
+                    direction="row"
                     sx={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: "text.primary",
-                      display: "flex",
+                      height: 24,
+                      justifyContent: "space-between",
                       alignItems: "center",
-                      gap: 1,
                     }}
                   >
-                    <DescriptionRounded
-                      fontSize="inherit"
-                      sx={{ color: "rgba(25,23,28,0.4)" }}
-                    />{" "}
-                    Tiểu sử
-                  </Typography>
-
-                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                    {isEditing ? (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: tieuSuError
-                            ? "error.main"
-                            : tieuSuCharCount > 0 && tieuSuCharCount < TIEU_SU_MIN_CHARS
-                            ? "warning.main"
-                            : "text.secondary",
-                          fontWeight: tieuSuError ? 600 : 500,
-                        }}
-                      >
-                        {tieuSuCharCount}/{TIEU_SU_MAX_CHARS} ký tự (tối thiểu {TIEU_SU_MIN_CHARS} khi nhập)
-                        {tieuSuError && ` — ${tieuSuError}`}
-                      </Typography>
-                    ) : (
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "text.secondary" }}
-                      >
-                        {tieuSuCharCount} ký tự
-                      </Typography>
-                    )}
-
-                    {(tieuSuCharCount > 150 || isEditing) && (
-                      <Button
-                        size="small"
-                        onClick={() => setTieuSuExpanded((prev) => !prev)}
-                        endIcon={
-                          tieuSuExpanded ? (
-                            <ExpandLessRounded sx={{ fontSize: 16 }} />
-                          ) : (
-                            <ExpandMoreRounded sx={{ fontSize: 16 }} />
-                          )
-                        }
-                        sx={{
-                          p: 0,
-                          minWidth: 0,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          textTransform: "none",
-                          color: "primary.main",
-                          "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
-                        }}
-                      >
-                        {tieuSuExpanded ? "Thu gọn" : "Mở rộng"}
-                      </Button>
-                    )}
-                  </Stack>
-                </Stack>
-
-                <Box
-                  sx={{
-                    position: "relative",
-                    border: "1px solid",
-                    borderColor: tieuSuError
-                      ? "error.main"
-                      : isEditing
-                      ? "primary.main"
-                      : "rgba(17,17,17,0.08)",
-                    borderRadius: 2.8,
-                    bgcolor: !isEditing ? "action.hover" : "background.paper",
-                    overflow: "hidden",
-                    maxHeight: !tieuSuExpanded && !isEditing ? 150 : !tieuSuExpanded && isEditing ? 260 : "none",
-                    transition: "max-height 250ms ease, border-color 160ms ease",
-                    "& .ProseMirror": {
-                      minHeight: 120,
-                      p: 2,
-                      outline: "none",
-                      fontSize: 14,
-                      lineHeight: 1.6,
-                      color: "text.primary",
-                      fontFamily: "inherit",
-                      "& p": { m: 0, mb: 1 },
-                      "& p:last-child": { mb: 0 },
-                      "& p.is-editor-empty:first-child::before": {
-                        content: 'attr(data-placeholder)',
-                        float: "left",
-                        color: "text.disabled",
-                        pointerEvents: "none",
-                        height: 0,
-                      },
-                      "& ul, & ol": { pl: 2.5, m: 0, mb: 1 },
-                      "& blockquote": {
-                        borderLeft: "3px solid",
-                        borderColor: "primary.main",
-                        pl: 1.5,
-                        py: 0.5,
-                        m: 0,
-                        mb: 1,
-                        color: "text.secondary",
-                        fontStyle: "italic",
-                      },
-                      "& a": {
-                        color: "primary.main",
-                        textDecoration: "underline",
-                      },
-                    },
-                  }}
-                >
-                  {isEditing && <TieuSuToolbar editor={tieuSuEditor} />}
-                  <EditorContent editor={tieuSuEditor} />
-
-                  {!tieuSuExpanded && !isEditing && tieuSuCharCount > 150 && (
-                    <Box
-                      onClick={() => setTieuSuExpanded(true)}
+                    <Typography
                       sx={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: 48,
-                        background: "linear-gradient(to top, rgba(250,248,246,0.95), transparent)",
-                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "text.primary",
                         display: "flex",
-                        alignItems: "flex-end",
-                        justifyContent: "center",
-                        pb: 0.5,
+                        alignItems: "center",
+                        gap: 1,
                       }}
                     >
-                      <Typography
-                        variant="caption"
+                      <DescriptionRounded
+                        fontSize="inherit"
+                        sx={{ color: "rgba(25,23,28,0.4)" }}
+                      />{" "}
+                      Tiểu sử
+                    </Typography>
+                    {isEditing && (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={
+                          tieuSuCharCount > 0 &&
+                          tieuSuCharCount < TIEU_SU_MIN_CHARS
+                            ? `${tieuSuCharCount} / ${TIEU_SU_MAX_CHARS} ký tự (cần ≥${TIEU_SU_MIN_CHARS})`
+                            : `${tieuSuCharCount} / ${TIEU_SU_MAX_CHARS} ký tự`
+                        }
                         sx={{
+                          height: 20,
+                          fontSize: 11,
                           fontWeight: 700,
-                          color: "primary.main",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
+                          borderColor: tieuSuError
+                            ? STATUS.error
+                            : tieuSuCharCount > 0
+                              ? "primary.main"
+                              : "divider",
+                          color: tieuSuError
+                            ? STATUS.error
+                            : tieuSuCharCount > 0
+                              ? "primary.main"
+                              : "text.secondary",
+                          bgcolor: tieuSuError
+                            ? "rgba(220,38,38,0.06)"
+                            : tieuSuCharCount > 0
+                              ? "rgba(139,19,19,0.04)"
+                              : "transparent",
                         }}
-                      >
-                        Xem thêm <ExpandMoreRounded fontSize="small" />
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </Stack>
-            </Grid>
+                      />
+                    )}
+                  </Stack>
 
+                  <Box
+                    sx={{
+                      borderRadius: 2.8,
+                      border: "1px solid",
+                      borderColor: tieuSuError
+                        ? STATUS.error
+                        : isEditing
+                          ? "primary.main"
+                          : "rgba(17,17,17,0.08)",
+                      bgcolor: !isEditing ? "action.hover" : "background.paper",
+                      transition: "all 160ms ease",
+                      overflow: "hidden",
+                      "& .ProseMirror": {
+                        p: 2,
+                        minHeight: 120,
+                        outline: "none",
+                        fontSize: 14,
+                        lineHeight: 1.6,
+                        color: "text.primary",
+                        fontFamily: "inherit",
+                        "& p.is-editor-empty:first-child::before": {
+                          color: "text.secondary",
+                          content: "attr(data-placeholder)",
+                          float: "left",
+                          height: 0,
+                          pointerEvents: "none",
+                          fontStyle: "italic",
+                          opacity: 0.75,
+                        },
+                        "& blockquote": {
+                          borderLeft: "3px solid",
+                          borderColor: "primary.main",
+                          pl: 1.5,
+                          ml: 0,
+                          my: 1,
+                          fontStyle: "italic",
+                          color: "text.secondary",
+                          bgcolor: "rgba(139,19,19,0.03)",
+                          py: 1,
+                          borderRadius: "0 8px 8px 0",
+                        },
+                        "& ul, & ol": { pl: 2.5, my: 0.5 },
+                        "& a": {
+                          color: "primary.main",
+                          fontWeight: 700,
+                          textDecoration: "underline",
+                        },
+                      },
+                    }}
+                  >
+                    {isEditing && <TieuSuToolbar editor={tieuSuEditor} />}
+                    {isEditing ? (
+                      <EditorContent editor={tieuSuEditor} />
+                    ) : (
+                      <Box
+                        sx={{
+                          p: 2,
+                          minHeight: 46,
+                          fontSize: 14,
+                          lineHeight: 1.6,
+                          color: "rgba(25, 23, 28, 0.45)", // Style xám mờ đồng bộ với các field disabled khác
+                          "& p": { m: 0 },
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            sanitizeHtml(profile.tieuSu) ||
+                            "<p style='font-style: italic;'>Chưa có tiểu sử</p>",
+                        }}
+                      />
+                    )}
+                  </Box>
+
+                  {tieuSuError && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: STATUS.error,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        pl: 0.5,
+                      }}
+                    >
+                      {tieuSuError}
+                    </Typography>
+                  )}
+                </Stack>
+              </Grid>
+            )}
           </Grid>
         </CardContent>
       </Card>

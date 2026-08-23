@@ -21,6 +21,7 @@ import CourseStatusAction from "./CourseStatusAction";
 import type { MucThieu } from "./courseEditCore";
 import LichSuKiemDuyetDialog from "./Lichsukiemduyetdialog";
 import KhoaHocService from "@/src/services/KhoaHocService";
+import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 const khoaHocService = new KhoaHocService();
 export interface MucSidebar {
@@ -93,13 +94,13 @@ export default function CourseEditLayout({
       case "XemXet":
         return { bgcolor: "#FCE7F3", color: "#9D174D" };
       case "ChoDuyet":
-        return { bgcolor: "#FEF3C7", color: "#D97706" };
+        return { bgcolor: "#FEF3C7", color: STATUS.warningDark };
       case "DangDuyet":
         return { bgcolor: "#EFF6FF", color: "#2563EB" };
       default:
         return {
-          bgcolor: "var(--ev-paper-alt, #FBFAF9)",
-          color: "var(--ev-text-secondary, #4B5563)",
+          bgcolor: CSSVAR.paperAlt,
+          color: CSSVAR.textSecondary,
         };
     }
   };
@@ -120,7 +121,7 @@ export default function CourseEditLayout({
       case "DangDuyet":
         return { color: "#60A5FA", nhan: "Đang duyệt" };
       default:
-        return { color: "#ECE7E4", nhan: "Chưa có" };
+        return { color: CSSVAR.divider, nhan: "Chưa có" };
     }
   };
   const lichSuButtonStyles = getLichSuButtonStyles(
@@ -191,7 +192,7 @@ export default function CourseEditLayout({
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "var(--ev-bg, #F7F5F2)" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: CSSVAR.bg }}>
       {/* Header Panel */}
       <Box
         sx={{
@@ -236,7 +237,7 @@ export default function CourseEditLayout({
                 alignItems: "center",
                 gap: 1,
                 cursor: "pointer",
-                color: "#ECE7E4",
+                color: CSSVAR.divider,
                 py: 0.8,
                 px: 1.2,
                 borderRadius: "8px",
@@ -302,7 +303,7 @@ export default function CourseEditLayout({
             <Typography
               sx={{
                 fontSize: 13,
-                color: "var(--ev-text-muted, #8A7676)",
+                color: CSSVAR.textMuted,
                 display: { xs: "none", md: "block" },
                 flexShrink: 0,
                 fontWeight: 500,
@@ -327,7 +328,7 @@ export default function CourseEditLayout({
                 onClick={handleXemTruoc}
                 variant="outlined"
                 sx={{
-                  color: "#ECE7E4",
+                  color: CSSVAR.divider,
                   borderColor: "rgba(255,255,255,0.3)",
                   textTransform: "none",
                   fontWeight: 700,
@@ -357,13 +358,13 @@ export default function CourseEditLayout({
                 variant="outlined"
                 startIcon={
                   dangSuaTiep ? (
-                    <CircularProgress size={14} sx={{ color: "#ECE7E4" }} />
+                    <CircularProgress size={14} sx={{ color: CSSVAR.divider }} />
                   ) : (
                     <EditOutlinedIcon sx={{ fontSize: 16 }} />
                   )
                 }
                 sx={{
-                  color: "#ECE7E4",
+                  color: CSSVAR.divider,
                   borderColor: "rgba(255,255,255,0.3)",
                   textTransform: "none",
                   fontWeight: 700,
@@ -414,7 +415,7 @@ export default function CourseEditLayout({
                 }
                 size="small"
                 sx={{
-                  color: "#ECE7E4",
+                  color: CSSVAR.divider,
                   borderRadius: "8px",
                   border: "1px solid rgba(255,255,255,0.2)",
                   textTransform: "none",
@@ -442,7 +443,7 @@ export default function CourseEditLayout({
         sx={{
           display: "flex",
           alignItems: "flex-start",
-          bgcolor: "var(--ev-bg, #F7F5F2)",
+          bgcolor: CSSVAR.bg,
           minHeight: "calc(100vh - 72px)",
         }}
       >
@@ -453,8 +454,8 @@ export default function CourseEditLayout({
             flexShrink: 0,
             px: 2.5,
             py: 4,
-            bgcolor: "var(--ev-paper, #FFFFFF)",
-            borderRight: "1px solid var(--ev-divider, #ECE7E4)",
+            bgcolor: CSSVAR.paper,
+            borderRight: `1px solid ${CSSVAR.divider}`,
             minHeight: "calc(100vh - 72px)",
             position: "sticky",
             top: 72,
@@ -471,7 +472,7 @@ export default function CourseEditLayout({
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     mb: 2,
-                    color: "var(--ev-text-muted, #8A7676)",
+                    color: CSSVAR.textMuted,
                   }}
                 >
                   {nhom.tieuDe}
@@ -498,14 +499,14 @@ export default function CourseEditLayout({
                           py: 1.2,
                           pl: dangChon ? 1.5 : 2,
                           borderLeft: dangChon
-                            ? `3.5px solid #8B1313`
+                            ? `3.5px solid ${BRAND.main}`
                             : "3.5px solid transparent",
                           cursor: "pointer",
                           borderRadius: dangChon ? "0 8px 8px 0" : "8px",
                           bgcolor: dangChon ? "#FEF2F2" : "transparent",
                           transition: "all 0.2s ease",
                           "&:hover": {
-                            bgcolor: dangChon ? "#FEF2F2" : "#FBFAF9",
+                            bgcolor: dangChon ? "#FEF2F2" : CSSVAR.paperAlt,
                           },
                           "&:focus-visible": {
                             outline: `2px solid ${MAU.chinh}`,
@@ -520,7 +521,7 @@ export default function CourseEditLayout({
                           <RadioButtonUncheckedIcon
                             sx={{
                               fontSize: 18,
-                              color: "var(--ev-text-muted, #8A7676)",
+                              color: CSSVAR.textMuted,
                             }}
                           />
                         )}
@@ -528,7 +529,7 @@ export default function CourseEditLayout({
                           sx={{
                             fontSize: 14,
                             fontWeight: dangChon ? 800 : 500,
-                            color: dangChon ? "#8B1313" : "#4B5563",
+                            color: dangChon ? BRAND.main : CSSVAR.textSecondary,
                             transition: "color 0.2s ease",
                           }}
                         >
@@ -566,7 +567,7 @@ export default function CourseEditLayout({
                 <Typography
                   sx={{
                     fontSize: 13.5,
-                    color: trangThai === "TuChoi" ? "#DC2626" : "#D97706",
+                    color: trangThai === "TuChoi" ? STATUS.error : STATUS.warningDark,
                     fontWeight: 700,
                   }}
                 >

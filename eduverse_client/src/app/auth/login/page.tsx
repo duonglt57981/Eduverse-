@@ -29,7 +29,7 @@ import {
 } from "@mui/icons-material";
 import { ThemeProvider } from "@mui/material/styles";
 import { createAppTheme } from "@/src/theme/createAppTheme";
-import { LAYOUT_SPACING } from "@/src/theme/tokens";
+import { LAYOUT_SPACING, BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -109,7 +109,7 @@ export default function LoginPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: "var(--ev-paper-alt, #F7F5F2)",
+          bgcolor: CSSVAR.bg,
           px: LAYOUT_SPACING.pagePx,
           py: LAYOUT_SPACING.pagePy,
           position: "relative",
@@ -130,13 +130,13 @@ export default function LoginPage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                color: "var(--ev-text-secondary, #4B5563)",
+                color: CSSVAR.textSecondary,
                 fontWeight: 600,
                 fontSize: 14.5,
                 transition: "color 200ms ease",
                 cursor: "pointer",
                 "&:hover": {
-                  color: "#8B1313",
+                  color: BRAND.main,
                 },
               }}
             >
@@ -166,7 +166,7 @@ export default function LoginPage() {
             borderRadius: "28px",
             border: "1px solid rgba(0, 0, 0, 0.08)",
             boxShadow: "0 16px 40px rgba(30, 41, 59, 0.06)",
-            backgroundColor: "var(--ev-paper, #ffffff)",
+            backgroundColor: CSSVAR.paper,
             p: { xs: 4, sm: 5.5 },
             display: "flex",
             flexDirection: "column",
@@ -214,7 +214,7 @@ export default function LoginPage() {
                 variant="h5"
                 sx={{
                   fontWeight: 800,
-                  color: "var(--ev-text-primary, #1F2937)",
+                  color: CSSVAR.textPrimary,
                   fontSize: 26,
                   letterSpacing: "-0.5px",
                   mb: 1.5,
@@ -225,7 +225,7 @@ export default function LoginPage() {
               <Typography
                 variant="body2"
                 sx={{
-                  color: "var(--ev-text-secondary, #4B5563)",
+                  color: CSSVAR.textSecondary,
                   fontSize: 15,
                   lineHeight: 1.6,
                 }}
@@ -246,7 +246,7 @@ export default function LoginPage() {
                 borderRadius: "14px",
                 border: "1px solid #FECACA",
                 background: "#FEF2F2",
-                color: "#8B1313",
+                color: BRAND.main,
                 fontSize: 14,
                 fontWeight: 500,
                 textAlign: "center",
@@ -267,7 +267,7 @@ export default function LoginPage() {
                 borderRadius: "14px",
                 border: "1px solid rgba(10,90,58,0.25)",
                 background: "rgba(10,90,58,0.06)",
-                color: "#0a5a3a",
+                color: STATUS.successDark,
                 fontSize: 14,
                 fontWeight: 700,
                 textAlign: "center",
@@ -385,11 +385,11 @@ export default function LoginPage() {
                 fontSize: 15,
                 textTransform: "none",
                 background:
-                  "linear-gradient(90deg, #8B1313 0%, #8B1313 55%, #6b1414 100%)",
+                  `linear-gradient(90deg, ${BRAND.main} 0%, ${BRAND.main} 55%, #6b1414 100%)`,
                 boxShadow: "0 10px 24px rgba(139,19,19,0.2)",
                 "&:hover": {
                   background:
-                    "linear-gradient(90deg, #8B1313 0%, #6b1414 60%, #5c1111 100%)",
+                    `linear-gradient(90deg, ${BRAND.main} 0%, #6b1414 60%, #5c1111 100%)`,
                 },
               }}
             >
@@ -460,7 +460,7 @@ export default function LoginPage() {
             sx={{
               textAlign: "center",
               fontSize: 12.5,
-              color: "var(--ev-text-muted, #8A7676)",
+              color: CSSVAR.textMuted,
               lineHeight: 1.6,
               position: "relative",
               zIndex: 999,

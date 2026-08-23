@@ -3,6 +3,7 @@
 import AuthGuard from '@/src/components/AuthGuard';
 import DashboardShell from '@/src/components/dashboard/DashboardShell';
 import { Typography, Paper } from '@mui/material';
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 export default function AdminPaymentsPage() {
   return (
@@ -14,11 +15,11 @@ export default function AdminPaymentsPage() {
             p: 4.5, 
             borderRadius: '24px', 
             border: '1px solid rgba(141,19,19,0.06)',
-            bgcolor: 'var(--ev-paper, #ffffff)',
+            bgcolor: CSSVAR.paper,
             boxShadow: '0 10px 30px rgba(141,19,19,0.015)'
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 900, color: '#8B1313', mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 900, color: BRAND.main, mb: 2 }}>
             Quản lý thanh toán
           </Typography>
           <Typography sx={{ color: 'var(--ev-text-secondary, rgba(31,41,55,0.6))', lineHeight: 1.6 }}>

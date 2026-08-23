@@ -19,15 +19,16 @@ import {
   ChevronRightRounded,
 } from "@mui/icons-material";
 import type { BaiKiemTraInfoDto, LichSuLamBaiDto } from "../../hooks/useQuiz";
+import { BRAND, STATUS, CSSVAR } from "@/src/theme/tokens";
 
 // ── Design tokens — dùng chung tông đỏ với QuizView / QuizResult / QuizReview ──
-const RED = "#8B1313";
+const RED = BRAND.main;
 const RED_DARK = "#6B1414";
 const RED_TINT = "rgba(139,19,19,0.04)";
 const INK = "#1c1d1f";
 const SUB = "#6a6f73";
 const BORDER = "#d1d7dc";
-const GREEN = "#10B981";
+const GREEN = STATUS.success;
 const RADIUS = "10px";
 const RADIUS_SM = "6px";
 const FONT = "Inter, sans-serif";
@@ -229,7 +230,7 @@ export function QuizContainer({
               fontSize: 15,
               textTransform: "none",
               bgcolor: "#E5E7EB",
-              color: "#9CA3AF",
+              color: CSSVAR.grey,
               boxShadow: "none",
             }}
           >
@@ -270,7 +271,7 @@ export function QuizContainer({
               },
               "&:disabled": {
                 bgcolor: "#E5E7EB",
-                color: "#9CA3AF",
+                color: CSSVAR.grey,
                 boxShadow: "none",
               },
             }}

@@ -24,6 +24,7 @@ import KhoaHocService from "@/src/services/KhoaHocService";
 import { GiangVienKhoaHocDto, KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import AuthGuard from "@/src/components/AuthGuard";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 const PAGE_SIZE = 12;
 
@@ -83,10 +84,31 @@ export default function InstructorProfilePage() {
 
         // Enrich items list
         const rawItems = (ketQua.khoaHocs as any)?.items || [];
+        const instructorFullName = ketQua.thongTinGiangVien
+          ? trichXuatTenHienThi(ketQua.thongTinGiangVien)
+          : undefined;
+
         const enrichedItems = rawItems.map((kh: any) => {
           const matched = publicCourseMap.get(String(kh.id || ""));
+          const gvName =
+            (Array.isArray(kh.danhSachGiangVienHienThi) && kh.danhSachGiangVienHienThi.length > 0)
+              ? kh.danhSachGiangVienHienThi.join(", ")
+              : kh.tenGiangVien ||
+                kh.giangVien ||
+                kh.instructor ||
+                (Array.isArray(matched?.danhSachGiangVienHienThi) && matched.danhSachGiangVienHienThi.length > 0
+                  ? matched.danhSachGiangVienHienThi.join(", ")
+                  : undefined) ||
+                matched?.tenGiangVien ||
+                matched?.giangVien ||
+                instructorFullName ||
+                "Giảng viên EduVerse";
+
           return {
             ...kh,
+            tenGiangVien: gvName,
+            giangVien: gvName,
+            instructor: gvName,
             tongThoiLuong:
               kh.tongThoiLuong ||
               kh.thoiLuong ||
@@ -184,7 +206,7 @@ export default function InstructorProfilePage() {
       <Box
         sx={{
           minHeight: "100vh",
-          bgcolor: "var(--ev-bg, #F7F5F2)",
+          bgcolor: CSSVAR.bg,
           "& *": {
             fontFamily:
               "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif)) !important",
@@ -231,7 +253,7 @@ export default function InstructorProfilePage() {
               sx={{
                 fontWeight: 900,
                 fontSize: { xs: 20, md: 24 },
-                color: "var(--ev-text-primary, #1F2937)",
+                color: CSSVAR.textPrimary,
                 letterSpacing: "-0.01em",
               }}
             >
@@ -247,7 +269,7 @@ export default function InstructorProfilePage() {
                 sx={{
                   bgcolor: "rgba(139,19,19,0.06)",
                   border: "1px solid rgba(139,19,19,0.18)",
-                  color: "#8B1313",
+                  color: BRAND.main,
                   fontWeight: 800,
                   fontSize: 13,
                   height: 32,
@@ -256,7 +278,7 @@ export default function InstructorProfilePage() {
               />
             )}
           </Box>
-          <Divider sx={{ mb: 4, borderColor: "var(--ev-divider, #ECE7E4)" }} />
+          <Divider sx={{ mb: 4, borderColor: CSSVAR.divider }} />
 
           <InstructorCourseList
             danhSachKhoaHoc={danhSachKhoaHoc}

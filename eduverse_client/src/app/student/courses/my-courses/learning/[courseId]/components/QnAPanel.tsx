@@ -35,8 +35,9 @@ import { vi } from "date-fns/locale";
 import { useMemo, useState, useEffect } from "react";
 import { useHoiDap } from "../hooks/useHoiDap";
 import { HoiDapDto, TraLoiDto } from "@/src/services/HoiDapService";
+import { BRAND, STATUS, NEUTRAL } from "@/src/theme/tokens";
 
-const PRIMARY = "#8B1313";
+const PRIMARY = BRAND.main;
 
 interface QnAPanelProps {
   idKhoaHoc: string; // ← id thật của khóa học, KHÔNG phải idDangKyKhoaHoc
@@ -206,7 +207,7 @@ function TraLoiCard({
             mb: 0.5,
           }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: 13, color: "#1F2937" }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textPrimary }}>
             {traLoi.nguoiTraLoiTen || "Ẩn danh"}
           </Typography>
           {traLoi.laGiangVien && (
@@ -231,11 +232,11 @@ function TraLoiCard({
                 fontSize: 10,
                 height: 18,
                 bgcolor: "#FEF3C7",
-                color: "#D97706",
+                color: STATUS.warningDark,
               }}
             />
           )}
-          <Typography sx={{ fontSize: 11, color: "#9CA3AF", ml: "auto" }}>
+          <Typography sx={{ fontSize: 11, color: NEUTRAL.grey, ml: "auto" }}>
             {thoiGianTuatoi(traLoi.ngayTao)}
           </Typography>
         </Box>
@@ -284,7 +285,7 @@ function TraLoiCard({
               onClick={onLike}
               sx={{
                 p: 0.5,
-                color: traLoi.daLike ? PRIMARY : "#9CA3AF",
+                color: traLoi.daLike ? PRIMARY : NEUTRAL.grey,
                 "&:hover": { color: PRIMARY },
               }}
             >
@@ -328,8 +329,8 @@ function TraLoiCard({
                 onClick={onGhim}
                 sx={{
                   p: 0.5,
-                  color: traLoi.ghimTraLoi ? "#D97706" : "#9CA3AF",
-                  "&:hover": { color: "#D97706" },
+                  color: traLoi.ghimTraLoi ? STATUS.warningDark : NEUTRAL.grey,
+                  "&:hover": { color: STATUS.warningDark },
                 }}
               >
                 {traLoi.ghimTraLoi ? (
@@ -348,8 +349,8 @@ function TraLoiCard({
                 onClick={onXoa}
                 sx={{
                   p: 0.5,
-                  color: "#9CA3AF",
-                  "&:hover": { color: "#DC2626" },
+                  color: NEUTRAL.grey,
+                  "&:hover": { color: STATUS.error },
                 }}
               >
                 <DeleteOutlineIcon sx={{ fontSize: 15 }} />
@@ -581,7 +582,7 @@ export function QnAPanel({
           >
             <ArrowBackIcon fontSize="small" />
           </IconButton>
-          <Typography sx={{ fontWeight: 700, fontSize: 15, color: "#1F2937" }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 15, color: NEUTRAL.textPrimary }}>
             Câu hỏi
           </Typography>
           {laGiangVien && (
@@ -592,7 +593,7 @@ export function QnAPanel({
                 <IconButton
                   size="small"
                   onClick={() => hd.ghimCauHoi(cauHoi.id, !cauHoi.daGhim)}
-                  sx={{ color: cauHoi.daGhim ? "#D97706" : "#9CA3AF" }}
+                  sx={{ color: cauHoi.daGhim ? STATUS.warningDark : NEUTRAL.grey }}
                 >
                   {cauHoi.daGhim ? (
                     <PushPinIcon fontSize="small" />
@@ -607,7 +608,7 @@ export function QnAPanel({
                 <IconButton
                   size="small"
                   onClick={() => hd.dongCauHoi(cauHoi.id, !cauHoi.daDong)}
-                  sx={{ color: cauHoi.daDong ? "#DC2626" : "#9CA3AF" }}
+                  sx={{ color: cauHoi.daDong ? STATUS.error : NEUTRAL.grey }}
                 >
                   {cauHoi.daDong ? (
                     <LockOutlinedIcon fontSize="small" />
@@ -621,7 +622,7 @@ export function QnAPanel({
                   <IconButton
                     size="small"
                     onClick={() => hd.xoaCauHoi(cauHoi.id)}
-                    sx={{ color: "#9CA3AF", "&:hover": { color: "#DC2626" } }}
+                    sx={{ color: NEUTRAL.grey, "&:hover": { color: STATUS.error } }}
                   >
                     <DeleteOutlineIcon fontSize="small" />
                   </IconButton>
@@ -649,7 +650,7 @@ export function QnAPanel({
                     fontSize: 10,
                     height: 18,
                     bgcolor: "#FEF3C7",
-                    color: "#D97706",
+                    color: STATUS.warningDark,
                   }}
                 />
               )}
@@ -661,18 +662,18 @@ export function QnAPanel({
                     fontSize: 10,
                     height: 18,
                     bgcolor: "#FEE2E2",
-                    color: "#DC2626",
+                    color: STATUS.error,
                   }}
                 />
               )}
-              <Typography sx={{ fontSize: 11, color: "#9CA3AF", ml: "auto" }}>
+              <Typography sx={{ fontSize: 11, color: NEUTRAL.grey, ml: "auto" }}>
                 {thoiGianTuatoi(cauHoi.ngayTao)}
               </Typography>
             </Box>
             <Typography
               sx={{
                 fontSize: 14,
-                color: "#1F2937",
+                color: NEUTRAL.textPrimary,
                 fontWeight: 600,
                 lineHeight: 1.6,
                 whiteSpace: "pre-wrap",
@@ -681,7 +682,7 @@ export function QnAPanel({
               {cauHoi.noiDung}
             </Typography>
             {cauHoi.tenBaiGiang && (
-              <Typography sx={{ fontSize: 11, color: "#8A7676", mt: 0.5 }}>
+              <Typography sx={{ fontSize: 11, color: NEUTRAL.textMuted, mt: 0.5 }}>
                 📹 {cauHoi.tenBaiGiang}
               </Typography>
             )}
@@ -701,7 +702,7 @@ export function QnAPanel({
               <QuestionAnswerOutlinedIcon
                 sx={{ fontSize: 36, color: "#D1D5DB", mb: 1 }}
               />
-              <Typography sx={{ fontSize: 13, color: "#9CA3AF" }}>
+              <Typography sx={{ fontSize: 13, color: NEUTRAL.grey }}>
                 Chưa có câu trả lời nào. Hãy là người đầu tiên!
               </Typography>
             </Box>
@@ -730,7 +731,7 @@ export function QnAPanel({
             sx={{
               mt: 2,
               pt: 2,
-              borderTop: "1px solid #ECE7E4",
+              borderTop: `1px solid ${NEUTRAL.divider}`,
             }}
           >
             <Box
@@ -770,7 +771,7 @@ export function QnAPanel({
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "10px",
                   fontSize: 14,
-                  "& fieldset": { borderColor: "#ECE7E4" },
+                  "& fieldset": { borderColor: NEUTRAL.divider },
                   "&.Mui-focused fieldset": { borderColor: PRIMARY },
                 },
               }}
@@ -813,7 +814,7 @@ export function QnAPanel({
 
         {/* Form trả lời chính — ẩn khi đang reply */}
         {!cauHoi.daDong && !hd.replyingTo && (
-          <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #ECE7E4" }}>
+          <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${NEUTRAL.divider}` }}>
             <TextField
               fullWidth
               multiline
@@ -828,7 +829,7 @@ export function QnAPanel({
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "10px",
                   fontSize: 14,
-                  "& fieldset": { borderColor: "#ECE7E4" },
+                  "& fieldset": { borderColor: NEUTRAL.divider },
                   "&.Mui-focused fieldset": { borderColor: PRIMARY },
                 },
               }}
@@ -869,7 +870,7 @@ export function QnAPanel({
             }}
           >
             <Typography
-              sx={{ fontSize: 13, color: "#DC2626", fontWeight: 600 }}
+              sx={{ fontSize: 13, color: STATUS.error, fontWeight: 600 }}
             >
               🔒 Câu hỏi này đã bị đóng
             </Typography>
@@ -887,7 +888,7 @@ export function QnAPanel({
       {/* Header */}
       <Box>
         <Typography
-          sx={{ fontWeight: 800, fontSize: 17, color: "#1F2937", mb: 0.5 }}
+          sx={{ fontWeight: 800, fontSize: 17, color: NEUTRAL.textPrimary, mb: 0.5 }}
         >
           {idBaiGiang
             ? `Q&A — ${tenBaiGiang || "Bài giảng"}`
@@ -913,7 +914,7 @@ export function QnAPanel({
                 height: 28,
                 bgcolor: filterLoai === val ? PRIMARY : "transparent",
                 color: filterLoai === val ? "#fff" : "#6B7280",
-                border: `1px solid ${filterLoai === val ? PRIMARY : "#ECE7E4"}`,
+                border: `1px solid ${filterLoai === val ? PRIMARY : NEUTRAL.divider}`,
                 "&:hover": {
                   bgcolor: filterLoai === val ? PRIMARY : `${PRIMARY}08`,
                   color: filterLoai === val ? "#fff" : PRIMARY,
@@ -953,13 +954,13 @@ export function QnAPanel({
               borderRadius: "10px",
               fontSize: 14,
               bgcolor: "#fff",
-              "& fieldset": { borderColor: "#ECE7E4" },
+              "& fieldset": { borderColor: NEUTRAL.divider },
               "&.Mui-focused fieldset": { borderColor: PRIMARY },
             },
           }}
         />
         {hd.error && (
-          <Typography sx={{ fontSize: 12, color: "#DC2626", mb: 1 }}>
+          <Typography sx={{ fontSize: 12, color: STATUS.error, mb: 1 }}>
             {hd.error}
           </Typography>
         )}
@@ -1001,7 +1002,7 @@ export function QnAPanel({
               height: "44px",
               borderRadius: "8px",
               fontSize: 14,
-              "& fieldset": { borderColor: "#ECE7E4" },
+              "& fieldset": { borderColor: NEUTRAL.divider },
               "&.Mui-focused fieldset": { borderColor: PRIMARY },
             },
           }}
@@ -1009,7 +1010,7 @@ export function QnAPanel({
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, color: "#9CA3AF" }} />
+                  <SearchIcon sx={{ fontSize: 18, color: NEUTRAL.grey }} />
                 </InputAdornment>
               ),
             },
@@ -1028,7 +1029,7 @@ export function QnAPanel({
               display: "flex",
               alignItems: "center",
             },
-            "& .MuiOutlinedInput-notchedOutline": { borderColor: "#ECE7E4" },
+            "& .MuiOutlinedInput-notchedOutline": { borderColor: NEUTRAL.divider },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: PRIMARY,
             },
@@ -1052,7 +1053,7 @@ export function QnAPanel({
               sx={{ fontSize: 48, color: "#D1D5DB", mb: 1 }}
             />
             <Typography
-              sx={{ fontWeight: 700, fontSize: 15, color: "#9CA3AF" }}
+              sx={{ fontWeight: 700, fontSize: 15, color: NEUTRAL.grey }}
             >
               Chưa có câu hỏi nào
             </Typography>
@@ -1076,7 +1077,7 @@ export function QnAPanel({
                     p: 2,
                     borderRadius: "12px",
                     cursor: "pointer",
-                    border: `1px solid ${cauHoi.daGhim ? "#FDE68A" : "#ECE7E4"}`,
+                    border: `1px solid ${cauHoi.daGhim ? "#FDE68A" : NEUTRAL.divider}`,
                     bgcolor: cauHoi.daGhim
                       ? "#FFFBEB"
                       : "var(--ev-paper, #fff)",
@@ -1122,7 +1123,7 @@ export function QnAPanel({
                               fontSize: 10,
                               height: 16,
                               bgcolor: "#FEF3C7",
-                              color: "#D97706",
+                              color: STATUS.warningDark,
                             }}
                           />
                         )}
@@ -1134,12 +1135,12 @@ export function QnAPanel({
                               fontSize: 10,
                               height: 16,
                               bgcolor: "#FEE2E2",
-                              color: "#DC2626",
+                              color: STATUS.error,
                             }}
                           />
                         )}
                         <Typography
-                          sx={{ fontSize: 11, color: "#9CA3AF", ml: "auto" }}
+                          sx={{ fontSize: 11, color: NEUTRAL.grey, ml: "auto" }}
                         >
                           {thoiGianTuatoi(cauHoi.ngayTao)}
                         </Typography>
@@ -1148,7 +1149,7 @@ export function QnAPanel({
                       <Typography
                         sx={{
                           fontSize: 13.5,
-                          color: "#1F2937",
+                          color: NEUTRAL.textPrimary,
                           fontWeight: 600,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -1171,7 +1172,7 @@ export function QnAPanel({
                       >
                         {/* Hiện tên bài giảng nếu đang ở tab tổng */}
                         {cauHoi.tenBaiGiang && !idBaiGiang && (
-                          <Typography sx={{ fontSize: 11, color: "#8A7676" }}>
+                          <Typography sx={{ fontSize: 11, color: NEUTRAL.textMuted }}>
                             📹 {cauHoi.tenBaiGiang}
                           </Typography>
                         )}
@@ -1197,7 +1198,7 @@ export function QnAPanel({
                           }}
                         >
                           <QuestionAnswerOutlinedIcon
-                            sx={{ fontSize: 13, color: "#9CA3AF" }}
+                            sx={{ fontSize: 13, color: NEUTRAL.grey }}
                           />
                           <Typography
                             sx={{
@@ -1226,7 +1227,7 @@ export function QnAPanel({
                   mt: 1,
                   textTransform: "none",
                   borderRadius: "10px",
-                  borderColor: "#ECE7E4",
+                  borderColor: NEUTRAL.divider,
                   color: "#6B7280",
                   "&:hover": { borderColor: PRIMARY, color: PRIMARY },
                 }}

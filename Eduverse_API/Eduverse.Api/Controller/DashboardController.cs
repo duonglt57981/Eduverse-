@@ -32,6 +32,7 @@ namespace Eduverse.Api.Controller
         private readonly IService<KhoaHoc_GiangVien> _khoaHocGiangVienService;
         private readonly IService<DonHang_KhuyenMai> _donHangKhuyenMaiService;
         private readonly IService<DonHang_GiangVien> _donHangGiangVienService;
+        private readonly IService<DanhGia> _danhGiaService;
         public DashboardController(
             IService<KhoaHoc> khoaHocService,
             IService<DanhMuc> danhMucService,
@@ -45,6 +46,7 @@ namespace Eduverse.Api.Controller
             IService<KhoaHoc_GiangVien> khoaHocGiangVienService,
             IService<DonHang_KhuyenMai> donHangKhuyenMaiService,
             IService<DonHang_GiangVien> donHangGiangVienService,
+            IService<DanhGia> danhGiaService,
             UserManager<AppUser> userManager)
         {
             _khoaHocService = khoaHocService;
@@ -60,6 +62,7 @@ namespace Eduverse.Api.Controller
             _khoaHocGiangVienService = khoaHocGiangVienService;
             _donHangKhuyenMaiService = donHangKhuyenMaiService;
             _donHangGiangVienService = donHangGiangVienService;
+            _danhGiaService = danhGiaService;
         }
 
         [HttpGet]
@@ -128,6 +131,7 @@ namespace Eduverse.Api.Controller
             var fullName = user?.HoTen ?? "Học viên EduVerse";
             var avatarUrl = user?.AnhDaiDien;
 
+
             // Fetch user's registered courses
             var userRegistrations = new List<DangKyKhoaHoc>();
             try
@@ -162,6 +166,9 @@ namespace Eduverse.Api.Controller
 
 
             var registeredCourses = courses.Where(c => registeredCourseIds.Contains(c.Id)).ToList();
+
+            var allCourseIds = courses.Select(c => c.Id).ToList();
+            var ratingMap = await GetRatingMapAsync(allCourseIds);
 
             // Calculate progress for each registration
             var registrationIds = userRegistrations.Select(r => r.Id).ToList();
@@ -359,12 +366,12 @@ namespace Eduverse.Api.Controller
                 instructor = c.CreatedBy,
                 studentsCount = c.SoLuongHocVien ?? 0,
                 level = c.CapDo ?? "Trung cấp",
-
+                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var r1) ? r1.DiemTrungBinh : (double?)null,
+                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var r1b) ? r1b.SoLuong : 0,
                 gia = c.Gia,
                 giaGoc = c.GiaGoc,
                 loaiKhoaHoc = c.LoaiKhoaHoc,
                 categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
-
                 daDangKy = registeredCourseIds.Contains(c.Id),
                 thumbnailGradient = GetGradient(i + 2)
             }).ToList();
@@ -379,7 +386,8 @@ namespace Eduverse.Api.Controller
                 hinhAnhKhoaHoc = premiumCourse?.HinhAnhKhoaHoc,
                 description = premiumCourse?.MoTa ?? "Học cách thiết kế hệ thống có tính sẵn sàng cao, chịu tải hàng triệu người dùng từ các chuyên gia đầu ngành.",
                 instructor = premiumCourse?.CreatedBy?? "An Danh",
-                rating = 0, // KhoaHoc chưa có hệ thống đánh giá
+                rating = premiumCourse != null && ratingMap.TryGetValue(premiumCourse.Id, out var rp) ? rp.DiemTrungBinh : (double?)null,
+                soLuongDanhGia = premiumCourse != null && ratingMap.TryGetValue(premiumCourse.Id, out var rpb) ? rpb.SoLuong : 0,
                 studentsCount = premiumCourse?.SoLuongHocVien ?? 0,
                 level = premiumCourse?.CapDo ?? "Nâng cao",
                 gia = premiumCourse?.Gia ?? 0,
@@ -393,7 +401,8 @@ namespace Eduverse.Api.Controller
                     title = c.TieuDe,
                     hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
                     instructor = c.CreatedBy ?? "An Danh",
-                    rating = 0, // KhoaHoc chưa có hệ thống đánh giá
+                    rating = ratingMap.TryGetValue(c.Id, out var rr) ? rr.DiemTrungBinh : (double?)null,
+                    soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rrb) ? rrb.SoLuong : 0,
                     studentsCount = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Cơ bản",
                     gia = c.Gia,
@@ -414,7 +423,8 @@ namespace Eduverse.Api.Controller
                     title = c.TieuDe,
                     hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
                     instructor = c.CreatedBy ?? "An Danh",
-                    rating = 0, // KhoaHoc chưa có hệ thống đánh giá
+                    rating = ratingMap.TryGetValue(c.Id, out var rh) ? rh.DiemTrungBinh : (double?)null,
+                    soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rhb) ? rhb.SoLuong : 0,
                     studentsCount = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Trung cấp",
                     gia = c.Gia,
@@ -453,6 +463,35 @@ namespace Eduverse.Api.Controller
                 "linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%)"
             };
             return gradients[index % gradients.Length];
+        }
+
+        private async Task<Dictionary<Guid, (double DiemTrungBinh, int SoLuong)>> GetRatingMapAsync(List<Guid> courseIds)
+        {
+            var result = new Dictionary<Guid, (double, int)>();
+            if (courseIds == null || !courseIds.Any()) return result;
+
+            try
+            {
+                var danhGias = await _danhGiaService.GetQueryable()
+                    .Where(d => !d.IsDeleted
+                             && d.TrangThai == "HienThi"
+                             && d.IdKhoaHoc.HasValue
+                             && courseIds.Contains(d.IdKhoaHoc.Value))
+                    .ToListAsync();
+
+                result = danhGias
+                    .GroupBy(d => d.IdKhoaHoc!.Value)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => (Math.Round(g.Average(x => x.SoSao ?? 0), 1), g.Count())
+                    );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error fetching ratings: " + ex.Message);
+            }
+
+            return result;
         }
 
         private List<string> GetSubfields(string categoryName)

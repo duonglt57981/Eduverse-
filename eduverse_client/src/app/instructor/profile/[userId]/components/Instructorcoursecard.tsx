@@ -1,30 +1,32 @@
 // src/app/instructor/profile/[userId]/components/InstructorCourseCard.tsx
 "use client";
 
+import { BRAND, STATUS } from "@/src/theme/tokens";
 import React from "react";
 import { useRouter } from "next/navigation";
 import {
-  Card,
-  CardActionArea,
-  CardContent,
-  CardMedia,
+  Paper,
   Typography,
   Stack,
   Chip,
   Box,
   Button,
-} from "@mui/material"; // thêm Button
-import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
-import PlayLessonOutlinedIcon from "@mui/icons-material/PlayLessonOutlined";
-import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
-import StarRoundedIcon from "@mui/icons-material/StarRounded";
+  Divider,
+  IconButton,
+} from "@mui/material";
+import {
+  StarRounded,
+  PeopleAltRounded,
+  PlayArrowRounded,
+  SchoolRounded,
+} from "@mui/icons-material";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
+import FavoriteHeartIcon from "@/src/features/favorite/components/FavoriteHeartIcon";
 import {
   formatGiaTien,
-  formatSoLuong,
   formatThoiLuong,
 } from "./types/Constants";
-import SafeHTML from "./common/SafeHTML";
 
 interface InstructorCourseCardProps {
   khoaHoc: KhoaHocType;
@@ -36,6 +38,7 @@ export default function InstructorCourseCard({
   onClick,
 }: InstructorCourseCardProps) {
   const router = useRouter();
+  const { isFavorited, toggleFavorite } = useFavorite();
 
   const khAny = khoaHoc as unknown as Record<string, unknown>;
 
@@ -62,36 +65,24 @@ export default function InstructorCourseCard({
     (khAny.tongHocVien as number) ||
     (khAny.soHocVien as number) ||
     0;
-  const soLuongDanhGia =
-    khoaHoc.soLuongDanhGia ||
-    (khAny.soLuongDanhGia as number) ||
-    (khAny.tongDanhGia as number) ||
-    0;
   const diemDanhGiaTrungBinh =
     khoaHoc.diemDanhGiaTrungBinh ||
     (khAny.diemDanhGia as number) ||
-    (khAny.diemDanhGia as number) ||
-    0;
+    (khAny.rating as number) ||
+    5.0;
 
-  // Lấy thông tin đăng ký
   const daDangKy = (khAny.daDangKy as boolean) ?? false;
   const idDangKiKhoaHoc = khAny.idDangKiKhoaHoc as string | undefined;
 
-  const cleanMoTa = (khoaHoc.moTa || "")
-    .replace(/<p>\s*<strong>\s*Mô tả khóa học\s*<\/strong>\s*<\/p>/gi, "")
-    .replace(/Mô tả khóa học/gi, "")
-    .trim();
+  const instructorName =
+    (khAny.tenGiangVien as string) ||
+    (khAny.instructor as string) ||
+    (khAny.giangVien as string) ||
+    "Giảng viên EduVerse";
 
-  const soSaoDay = Math.min(5, Math.max(0, Math.round(diemDanhGiaTrungBinh)));
-  const diemHienThi = diemDanhGiaTrungBinh.toFixed(1);
+  const favorited = isFavorited(khoaHoc.id);
+  const ratingVal = diemDanhGiaTrungBinh > 0 ? diemDanhGiaTrungBinh : 5.0;
 
-  const thongKe = [
-    { icon: AccessTimeOutlinedIcon, label: formatThoiLuong(thoiLuong) },
-    { icon: PlayLessonOutlinedIcon, label: `${tongBaiGiang} bài` },
-    { icon: GroupsOutlinedIcon, label: `${formatSoLuong(soHocVien)} học viên` },
-  ];
-
-  // Xử lý click vào card: nếu đã đăng ký thì điều hướng học, ngược lại gọi onClick
   const handleCardClick = () => {
     if (daDangKy && idDangKiKhoaHoc) {
       router.push(`/student/courses/my-courses/learning/${idDangKiKhoaHoc}`);
@@ -100,284 +91,305 @@ export default function InstructorCourseCard({
     }
   };
 
-  // Xử lý click nút "Tiếp tục học" (có thể stop propagation để không trigger card click nếu muốn, nhưng ở đây ta có thể để nó cùng hành động)
   const handleContinueClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // ngăn không cho card click kích hoạt thêm lần nữa, nhưng nếu dùng chung logic thì không cần thiết
+    e.stopPropagation();
     if (daDangKy && idDangKiKhoaHoc) {
       router.push(`/student/courses/my-courses/learning/${idDangKiKhoaHoc}`);
     }
   };
 
   return (
-    <Card
-      variant="outlined"
+    <Paper
+      elevation={0}
+      onClick={handleCardClick}
       sx={{
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        borderRadius: "20px",
-        border: "1px solid var(--ev-divider, #ECE7E4)",
-        bgcolor: "var(--ev-paper, #FFFFFF)",
-        boxShadow: "0 2px 10px rgba(31,41,55,0.04)",
-        transition:
-          "box-shadow 0.28s ease, border-color 0.28s ease, transform 0.28s ease",
+        borderRadius: "18px",
         overflow: "hidden",
+        border: "1px solid var(--dashboard-border, rgba(0,0,0,0.07))",
+        bgcolor: "var(--dashboard-surface, #FFFFFF)",
+        cursor: "pointer",
+        transition:
+          "transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease",
         "&:hover": {
-          boxShadow: "0 18px 36px rgba(139,19,19,0.10)",
-          borderColor: "rgba(139,19,19,0.28)",
-          transform: "translateY(-3px)",
-        },
-        "& *": {
-          fontFamily:
-            "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif)) !important",
+          boxShadow: "0 8px 24px rgba(139,19,19,0.08)",
+          borderColor: "var(--dashboard-primary-border, rgba(139,19,19,0.25))",
+          "& .course-card-img": {
+            transform: "scale(1.05)",
+          },
         },
       }}
     >
-      <CardActionArea
-        onClick={handleCardClick}
+      {/* Thumbnail Box */}
+      <Box
         sx={{
+          height: 136,
+          position: "relative",
+          overflow: "hidden",
+          background: khoaHoc.hinhAnhKhoaHoc
+            ? `url(${khoaHoc.hinhAnhKhoaHoc}) center/cover no-repeat`
+            : "var(--dashboard-surface-muted, #f3f4f6)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {!khoaHoc.hinhAnhKhoaHoc && (
+          <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
+            <SchoolRounded sx={{ color: "var(--dashboard-text-muted, #8A7676)", fontSize: 32 }} />
+            <Typography
+              sx={{
+                color: "var(--dashboard-text-muted, #8A7676)",
+                fontSize: 10,
+                fontWeight: 700,
+                mt: 0.75,
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+              }}
+            >
+              EDUVERSE
+            </Typography>
+          </Stack>
+        )}
+
+        {/* Level Chip - Top Left */}
+        {khoaHoc.capDo && (
+          <Chip
+            label={khoaHoc.capDo}
+            size="small"
+            sx={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              bgcolor: "rgba(255,255,255,0.92)",
+              color: BRAND.main,
+              fontWeight: 800,
+              fontSize: 10,
+              height: 20,
+              backdropFilter: "blur(4px)",
+            }}
+          />
+        )}
+
+        {/* Heart Icon Button - Top Right */}
+        <IconButton
+          aria-label={favorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+          aria-pressed={favorited}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFavorite(khoaHoc.id, khoaHoc.tieuDe || "");
+          }}
+          sx={{
+            position: "absolute",
+            top: 6,
+            right: 8,
+            width: 28,
+            height: 28,
+            bgcolor: "rgba(255, 255, 255, 0.95)",
+            color: favorited ? BRAND.main : "rgba(31, 41, 55, 0.4)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            zIndex: 5,
+            transition: "all 150ms ease",
+            p: 0,
+            "&:hover": {
+              bgcolor: "rgba(255, 255, 255, 1)",
+              color: BRAND.main,
+              transform: "scale(1.08)",
+            },
+          }}
+        >
+          <FavoriteHeartIcon active={favorited} color={BRAND.main} />
+        </IconButton>
+
+        {/* Free Badge - Bottom Left */}
+        {!daDangKy && laMienPhi && (
+          <Chip
+            label="MIỄN PHÍ"
+            size="small"
+            sx={{
+              position: "absolute",
+              bottom: 8,
+              left: 8,
+              bgcolor: STATUS.success,
+              color: "#fff",
+              fontWeight: 900,
+              fontSize: 9.5,
+              height: 18,
+            }}
+          />
+        )}
+      </Box>
+
+      {/* Card Content Body */}
+      <Box
+        sx={{
+          p: 1.75,
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          alignItems: "stretch",
         }}
       >
-        {/* Ảnh */}
-        <Box
-          sx={{ position: "relative", overflow: "hidden", aspectRatio: "16/9" }}
-        >
-          <CardMedia
-            component="img"
-            image={khoaHoc.hinhAnhKhoaHoc || "/images/course-placeholder.png"}
-            alt={khoaHoc.tieuDe}
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transition: "transform 0.45s ease",
-              ".MuiCardActionArea-root:hover &": {
-                transform: "scale(1.05)",
-              },
-            }}
-          />
-
-          {/* Overlay gradient nhẹ để chip/text nổi hơn */}
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 35%)",
-              pointerEvents: "none",
-            }}
-          />
-
-          {khoaHoc.capDo && (
-            <Chip
-              size="small"
-              label={khoaHoc.capDo}
-              sx={{
-                position: "absolute",
-                top: 10,
-                left: 10,
-                zIndex: 2,
-                bgcolor: "rgba(31, 41, 55, 0.78)",
-                color: "#FFFFFF",
-                backdropFilter: "blur(8px)",
-                fontWeight: 700,
-                fontSize: 11,
-                borderRadius: "8px",
-                border: "1px solid rgba(255,255,255,0.22)",
-              }}
-            />
-          )}
-          {/* Đã bỏ badge "Đã đăng ký" */}
-        </Box>
-
-        <CardContent
+        {/* Title */}
+        <Typography
           sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-            p: 2.25,
+            fontSize: 13.5,
+            fontWeight: 800,
+            lineHeight: 1.4,
+            height: 38,
+            overflow: "hidden",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            color: "var(--dashboard-text-primary, #1F2937)",
+            mb: 0.5,
           }}
         >
-          {/* Tiêu đề */}
-          <Typography
-            variant="subtitle1"
-            title={khoaHoc.tieuDe}
-            sx={{
-              fontWeight: 800,
-              fontSize: 15.5,
-              color: "var(--ev-text-primary, #1F2937)",
-              lineHeight: 1.35,
-              mb: 1,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              minHeight: 42,
-            }}
-          >
-            {khoaHoc.tieuDe}
-          </Typography>
+          {khoaHoc.tieuDe}
+        </Typography>
 
-          {/* Đánh giá */}
-          <Stack
-            direction="row"
-            spacing={0.6}
-            sx={{ alignItems: "center", mb: 1.25 }}
-          >
+        {/* Instructor Name */}
+        <Typography
+          sx={{
+            fontSize: 11.5,
+            color: "var(--dashboard-text-muted, #8A7676)",
+            fontWeight: 600,
+            mb: 0.75,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {instructorName}
+        </Typography>
+
+        {/* Metadata Details */}
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ mb: 1.25, flexWrap: "wrap", gap: 0.5 }}
+        >
+          {tongBaiGiang > 0 && (
             <Typography
               sx={{
+                fontSize: 11,
+                color: "var(--dashboard-text-muted, #8A7676)",
+                fontWeight: 600,
+              }}
+            >
+              📖 {tongBaiGiang} bài
+            </Typography>
+          )}
+          {thoiLuong > 0 && (
+            <Typography
+              sx={{
+                fontSize: 11,
+                color: "var(--dashboard-text-muted, #8A7676)",
+                fontWeight: 600,
+              }}
+            >
+              ⏱ {formatThoiLuong(thoiLuong)}
+            </Typography>
+          )}
+        </Stack>
+
+        <Divider sx={{ mb: 1.25, opacity: 0.45 }} />
+
+        {/* Bottom Price & Rating Row */}
+        <Box sx={{ mt: "auto" }}>
+          {daDangKy ? (
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<PlayArrowRounded />}
+              onClick={handleContinueClick}
+              sx={{
+                borderRadius: "10px",
+                py: 0.8,
                 fontWeight: 800,
                 fontSize: 13,
-                color: "#B45309",
-                lineHeight: 1,
+                bgcolor: BRAND.main,
+                color: "#fff",
+                boxShadow: "none",
+                textTransform: "none",
+                "&:hover": {
+                  bgcolor: "#7F1D1D",
+                  boxShadow: "none",
+                },
               }}
             >
-              {diemHienThi}
-            </Typography>
-            <Stack direction="row" sx={{ alignItems: "center" }}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <StarRoundedIcon
-                  key={i}
-                  sx={{
-                    fontSize: 15,
-                    color: i < soSaoDay ? "#F59E0B" : "rgba(0,0,0,0.15)",
-                  }}
-                />
-              ))}
-            </Stack>
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: 11.5,
-                color: "var(--ev-text-secondary, #4B5563)",
-              }}
+              Tiếp tục học
+            </Button>
+          ) : (
+            <Stack
+              direction="row"
+              sx={{ justifyContent: "space-between", alignItems: "center" }}
             >
-              ({formatSoLuong(soLuongDanhGia)})
-            </Typography>
-          </Stack>
-
-          {/* Mô tả */}
-          {cleanMoTa && (
-            <SafeHTML
-              html={cleanMoTa}
-              lineClamp={2}
-              expandable={false}
-              sx={{
-                mb: 2,
-                fontSize: "0.85rem",
-                color: "var(--ev-text-secondary, #4B5563)",
-                lineHeight: 1.5,
-              }}
-            />
-          )}
-
-          {/* Thống kê: bài giảng / thời lượng / học viên */}
-          <Stack
-            direction="row"
-            spacing={0.8}
-            sx={{ mb: 2, flexWrap: "wrap", gap: 0.8 }}
-          >
-            {thongKe.map(({ icon: Icon, label }, i) => (
-              <Stack
-                key={i}
-                direction="row"
-                spacing={0.5}
-                sx={{
-                  alignItems: "center",
-                  px: 1,
-                  py: 0.4,
-                  borderRadius: "8px",
-                  bgcolor: "var(--ev-paper-alt, #F7F5F2)",
-                }}
-              >
-                <Icon
-                  sx={{
-                    fontSize: 14,
-                    color: "var(--ev-text-secondary, #4B5563)",
-                  }}
-                />
+              <Box>
                 <Typography
-                  variant="caption"
                   sx={{
-                    fontWeight: 600,
-                    fontSize: 11,
-                    color: "var(--ev-text-secondary, #4B5563)",
-                  }}
-                >
-                  {label}
-                </Typography>
-              </Stack>
-            ))}
-          </Stack>
-
-          {/* Phần giá hoặc nút "Tiếp tục học" nếu đã đăng ký */}
-          <Box
-            sx={{
-              mt: "auto",
-              pt: 1.5,
-              borderTop: "1px dashed var(--ev-divider, #ECE7E4)",
-            }}
-          >
-            {daDangKy ? (
-              // Nếu đã đăng ký -> hiển thị nút "Tiếp tục học"
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleContinueClick}
-                sx={{
-                  bgcolor: "#8B1313",
-                  color: "#FFFFFF",
-                  fontWeight: 700,
-                  textTransform: "none",
-                  borderRadius: "8px",
-                  py: 0.8,
-                  fontSize: "0.9rem",
-                  "&:hover": {
-                    bgcolor: "#6B0F0F",
-                  },
-                }}
-              >
-                Tiếp tục học
-              </Button>
-            ) : (
-              // Chưa đăng ký -> hiển thị giá
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{ alignItems: "baseline" }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  sx={{
+                    fontSize: 14.5,
                     fontWeight: 900,
-                    fontSize: 17,
-                    color: laMienPhi ? "#15803D" : "#8B1313",
+                    color: laMienPhi ? STATUS.success : BRAND.main,
                   }}
                 >
                   {laMienPhi ? "Miễn phí" : formatGiaTien(khoaHoc.gia)}
                 </Typography>
                 {coGiaGoc && (
                   <Typography
-                    variant="body2"
                     sx={{
-                      color: "text.disabled",
+                      fontSize: 10.5,
+                      color: "var(--dashboard-text-muted, #8A7676)",
                       textDecoration: "line-through",
-                      fontSize: 12.5,
+                      fontWeight: 600,
                     }}
                   >
                     {formatGiaTien(khoaHoc.giaGoc)}
                   </Typography>
                 )}
+              </Box>
+
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <Stack
+                  direction="row"
+                  spacing={0.3}
+                  sx={{ alignItems: "center" }}
+                >
+                  <StarRounded sx={{ fontSize: 14, color: STATUS.warning }} />
+                  <Typography
+                    sx={{
+                      fontSize: 11.5,
+                      fontWeight: 800,
+                      color: "var(--dashboard-text-primary, #1F2937)",
+                    }}
+                  >
+                    {ratingVal.toFixed(1)}
+                  </Typography>
+                </Stack>
+                <Stack
+                  direction="row"
+                  spacing={0.3}
+                  sx={{ alignItems: "center" }}
+                >
+                  <PeopleAltRounded
+                    sx={{ fontSize: 13, color: "rgba(31,41,55,0.45)" }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      color: "rgba(31,41,55,0.6)",
+                    }}
+                  >
+                    {soHocVien}
+                  </Typography>
+                </Stack>
               </Stack>
-            )}
-          </Box>
-        </CardContent>
-      </CardActionArea>
-    </Card>
+            </Stack>
+          )}
+        </Box>
+      </Box>
+    </Paper>
   );
 }

@@ -65,6 +65,7 @@ import LoiMoiGiangVienService, {
 } from "@/src/services/LoiMoiGiangVienService";
 
 import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
+import { COLORS, CSSVAR, STATUS, NEUTRAL } from "@/src/theme/tokens";
 
 // ── Helper format tiền ──────────────────────────────────────────────────────
 function formatTien(so: number) {
@@ -116,7 +117,7 @@ function StatCard({
       sx={{
         p: 2.5,
         borderRadius: "14px",
-        border: "1px solid var(--ev-divider, #ECE7E4)",
+        border: `1px solid ${CSSVAR.divider}`,
         display: "flex",
         alignItems: "center",
         gap: 2,
@@ -141,19 +142,19 @@ function StatCard({
           sx={{
             fontSize: 22,
             fontWeight: 900,
-            color: "#1F2937",
+            color: NEUTRAL.textPrimary,
             lineHeight: 1.1,
           }}
         >
           {value}
         </Typography>
         <Typography
-          sx={{ fontSize: 13, color: "#4B5563", fontWeight: 600, mt: 0.25 }}
+          sx={{ fontSize: 13, color: NEUTRAL.textSecondary, fontWeight: 600, mt: 0.25 }}
         >
           {label}
         </Typography>
         {sub && (
-          <Typography sx={{ fontSize: 11, color: "#9CA3AF", mt: 0.25 }}>
+          <Typography sx={{ fontSize: 11, color: NEUTRAL.grey, mt: 0.25 }}>
             {sub}
           </Typography>
         )}
@@ -317,7 +318,7 @@ export default function PerformanceContent() {
   if (trangThai !== "DaDuyet") {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
-        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+        <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
           Thống kê chỉ khả dụng sau khi khóa học được duyệt.
         </Typography>
       </Box>
@@ -327,7 +328,7 @@ export default function PerformanceContent() {
   if (!coQuyen("performance")) {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
-        <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+        <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
           Bạn không có quyền truy cập mục Thống kê.
         </Typography>
       </Box>
@@ -339,10 +340,10 @@ export default function PerformanceContent() {
       <Box sx={{ maxWidth: 1100, mx: "auto", pb: 8 }}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
-          <Typography sx={{ fontWeight: 900, fontSize: 24, color: "#1F2937" }}>
+          <Typography sx={{ fontWeight: 900, fontSize: 24, color: NEUTRAL.textPrimary }}>
             Thống kê khóa học
           </Typography>
-          <Typography sx={{ fontSize: 14, color: "#4B5563", mt: 0.5 }}>
+          <Typography sx={{ fontSize: 14, color: NEUTRAL.textSecondary, mt: 0.5 }}>
             Doanh thu và học viên đăng ký
           </Typography>
         </Box>
@@ -353,12 +354,12 @@ export default function PerformanceContent() {
           onChange={(_, v) => setTab(v)}
           sx={{
             mb: 4,
-            borderBottom: "1px solid #ECE7E4",
+            borderBottom: `1px solid ${NEUTRAL.divider}`,
             "& .MuiTab-root": {
               textTransform: "none",
               fontWeight: 700,
               fontSize: 14,
-              color: "#4B5563",
+              color: NEUTRAL.textSecondary,
               mr: 3,
               px: 0,
             },
@@ -416,7 +417,7 @@ export default function PerformanceContent() {
                   icon={<PeopleOutlinedIcon />}
                   label="Tổng học viên"
                   value={doanhThu.tongHocVien}
-                  color="#D97706"
+                  color={STATUS.warningDark}
                 />
               </Box>
 
@@ -425,7 +426,7 @@ export default function PerformanceContent() {
                 sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
               >
                 <Typography
-                  sx={{ fontWeight: 700, fontSize: 15, color: "#1F2937" }}
+                  sx={{ fontWeight: 700, fontSize: 15, color: NEUTRAL.textPrimary }}
                 >
                   Doanh thu theo tháng
                 </Typography>
@@ -437,7 +438,7 @@ export default function PerformanceContent() {
                       fontSize: 13,
                       borderRadius: "8px",
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#ECE7E4",
+                        borderColor: NEUTRAL.divider,
                       },
                     }}
                   >
@@ -456,7 +457,7 @@ export default function PerformanceContent() {
                 sx={{
                   p: 3,
                   borderRadius: "14px",
-                  border: "1px solid #ECE7E4",
+                  border: `1px solid ${NEUTRAL.divider}`,
                   mb: 4,
                 }}
               >
@@ -465,7 +466,7 @@ export default function PerformanceContent() {
                     <AttachMoneyIcon
                       sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }}
                     />
-                    <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
+                    <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
                       Chưa có doanh thu ghi nhận theo giảng viên cho khóa học
                       này.
                     </Typography>
@@ -506,7 +507,7 @@ export default function PerformanceContent() {
 
               {/* Phân chia doanh thu giảng viên */}
               <Typography
-                sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937", mb: 2 }}
+                sx={{ fontWeight: 800, fontSize: 16, color: NEUTRAL.textPrimary, mb: 2 }}
               >
                 Phân chia doanh thu giảng viên
               </Typography>
@@ -550,7 +551,7 @@ export default function PerformanceContent() {
                   sx={{
                     p: 2,
                     borderRadius: "12px",
-                    border: "1px solid #ECE7E4",
+                    border: `1px solid ${NEUTRAL.divider}`,
                     bgcolor: "#F9FAFB",
                   }}
                 >
@@ -577,33 +578,33 @@ export default function PerformanceContent() {
                 elevation={0}
                 sx={{
                   borderRadius: "14px",
-                  border: "1px solid #ECE7E4",
+                  border: `1px solid ${NEUTRAL.divider}`,
                   overflow: "hidden",
                 }}
               >
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "#F7F5F2" }}>
+                    <TableRow sx={{ bgcolor: NEUTRAL.bg }}>
                       <TableCell
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Giảng viên
                       </TableCell>
                       <TableCell
                         align="center"
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Tỷ lệ
                       </TableCell>
                       <TableCell
                         align="right"
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Nhận được
                       </TableCell>
                       <TableCell
                         align="center"
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Lịch sử
                       </TableCell>
@@ -641,7 +642,7 @@ export default function PerformanceContent() {
                                 sx={{
                                   fontWeight: 700,
                                   fontSize: 14,
-                                  color: "#1F2937",
+                                  color: NEUTRAL.textPrimary,
                                 }}
                               >
                                 {gv.hoTen || "Chưa có tên"}
@@ -732,7 +733,7 @@ export default function PerformanceContent() {
                   Thay đổi tỷ lệ
                 </Typography>
                 {lichSuTyLe.length === 0 ? (
-                  <Typography sx={{ fontSize: 13, color: "#9CA3AF", mb: 2 }}>
+                  <Typography sx={{ fontSize: 13, color: NEUTRAL.grey, mb: 2 }}>
                     Chưa có thay đổi nào.
                   </Typography>
                 ) : (
@@ -745,7 +746,7 @@ export default function PerformanceContent() {
                         py: 0.75,
                       }}
                     >
-                      <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
+                      <Typography sx={{ fontSize: 13, color: NEUTRAL.textSecondary }}>
                         {new Date(ls.ngayThayDoi).toLocaleDateString("vi-VN")}
                       </Typography>
                       <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
@@ -761,7 +762,7 @@ export default function PerformanceContent() {
                   Theo đơn hàng
                 </Typography>
                 {lichSuDonHang.length === 0 ? (
-                  <Typography sx={{ fontSize: 13, color: "#9CA3AF" }}>
+                  <Typography sx={{ fontSize: 13, color: NEUTRAL.grey }}>
                     Chưa có đơn hàng nào ghi nhận.
                   </Typography>
                 ) : (
@@ -855,7 +856,7 @@ export default function PerformanceContent() {
                   icon={<SchoolOutlinedIcon />}
                   label="Hết hạn"
                   value={hocVien.hetHan}
-                  color="#D97706"
+                  color={STATUS.warningDark}
                 />
               </Box>
 
@@ -864,7 +865,7 @@ export default function PerformanceContent() {
                 sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
               >
                 <Typography
-                  sx={{ fontWeight: 700, fontSize: 15, color: "#1F2937" }}
+                  sx={{ fontWeight: 700, fontSize: 15, color: NEUTRAL.textPrimary }}
                 >
                   Học viên đăng ký theo tháng
                 </Typography>
@@ -878,7 +879,7 @@ export default function PerformanceContent() {
                       fontSize: 13,
                       borderRadius: "8px",
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#ECE7E4",
+                        borderColor: NEUTRAL.divider,
                       },
                     }}
                   >
@@ -897,7 +898,7 @@ export default function PerformanceContent() {
                 sx={{
                   p: 3,
                   borderRadius: "14px",
-                  border: "1px solid #ECE7E4",
+                  border: `1px solid ${NEUTRAL.divider}`,
                   mb: 4,
                 }}
               >
@@ -933,7 +934,7 @@ export default function PerformanceContent() {
 
               {/* Danh sách học viên gần đây */}
               <Typography
-                sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937", mb: 2 }}
+                sx={{ fontWeight: 800, fontSize: 16, color: NEUTRAL.textPrimary, mb: 2 }}
               >
                 Học viên đăng ký gần đây
               </Typography>
@@ -941,38 +942,38 @@ export default function PerformanceContent() {
                 elevation={0}
                 sx={{
                   borderRadius: "14px",
-                  border: "1px solid #ECE7E4",
+                  border: `1px solid ${NEUTRAL.divider}`,
                   overflow: "hidden",
                 }}
               >
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "#F7F5F2" }}>
+                    <TableRow sx={{ bgcolor: NEUTRAL.bg }}>
                       <TableCell
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Học viên
                       </TableCell>
                       <TableCell
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Ngày đăng ký
                       </TableCell>
                       <TableCell
                         align="center"
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Trạng thái
                       </TableCell>
                       <TableCell
                         align="center"
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Tiến độ
                       </TableCell>
                       <TableCell
                         align="right"
-                        sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                        sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                       >
                         Giá
                       </TableCell>
@@ -1010,13 +1011,13 @@ export default function PerformanceContent() {
                                 sx={{
                                   fontWeight: 700,
                                   fontSize: 13,
-                                  color: "#1F2937",
+                                  color: NEUTRAL.textPrimary,
                                 }}
                               >
                                 {hv.hoTen || "Ẩn danh"}
                               </Typography>
                               <Typography
-                                sx={{ fontSize: 11, color: "#9CA3AF" }}
+                                sx={{ fontSize: 11, color: NEUTRAL.grey }}
                               >
                                 {hv.email}
                               </Typography>
@@ -1024,7 +1025,7 @@ export default function PerformanceContent() {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Typography sx={{ fontSize: 13, color: "#4B5563" }}>
+                          <Typography sx={{ fontSize: 13, color: NEUTRAL.textSecondary }}>
                             {hv.thoiGianDK
                               ? new Date(hv.thoiGianDK).toLocaleDateString(
                                   "vi-VN",
@@ -1032,7 +1033,7 @@ export default function PerformanceContent() {
                               : "—"}
                           </Typography>
                           {hv.ngayHetHan && (
-                            <Typography sx={{ fontSize: 11, color: "#9CA3AF" }}>
+                            <Typography sx={{ fontSize: 11, color: NEUTRAL.grey }}>
                               Hết hạn:{" "}
                               {new Date(hv.ngayHetHan).toLocaleDateString(
                                 "vi-VN",
@@ -1072,7 +1073,7 @@ export default function PerformanceContent() {
                                   ? "#16A34A"
                                   : hv.ngayHetHan &&
                                       new Date(hv.ngayHetHan) < new Date()
-                                    ? "#D97706"
+                                    ? STATUS.warningDark
                                     : "#6B7280",
                             }}
                           />
@@ -1104,7 +1105,7 @@ export default function PerformanceContent() {
                                       ? "#16A34A"
                                       : (hv.phanTramHoanThanh ?? 0) >= 50
                                         ? MAU.chinh
-                                        : "#D97706",
+                                        : STATUS.warningDark,
                                   borderRadius: 3,
                                 }}
                               />
@@ -1113,7 +1114,7 @@ export default function PerformanceContent() {
                               sx={{
                                 fontSize: 11,
                                 fontWeight: 700,
-                                color: "#4B5563",
+                                color: NEUTRAL.textSecondary,
                               }}
                             >
                               {Math.round(hv.phanTramHoanThanh ?? 0)}%
@@ -1151,7 +1152,7 @@ export default function PerformanceContent() {
           <Box>
             {/* Card tổng quan Course Engagement */}
             <Typography
-              sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937", mb: 2 }}
+              sx={{ fontWeight: 800, fontSize: 16, color: NEUTRAL.textPrimary, mb: 2 }}
             >
               Course Engagement
             </Typography>
@@ -1179,13 +1180,13 @@ export default function PerformanceContent() {
                 icon={<AccessTimeIcon />}
                 label="Tổng thời gian học"
                 value={`${engagement.tongThoiGianHocGio.toLocaleString("vi-VN")} giờ`}
-                color="#D97706"
+                color={STATUS.warningDark}
               />
               <StatCard
                 icon={<MenuBookOutlinedIcon />}
                 label="Bài giảng được xem"
                 value={engagement.luotXemBaiGiang.toLocaleString("vi-VN")}
-                color="#7C3AED"
+                color={COLORS.purpleAI}
               />
               <StatCard
                 icon={<TrendingUpIcon />}
@@ -1197,13 +1198,13 @@ export default function PerformanceContent() {
                 icon={<LocalFireDepartmentIcon />}
                 label="Học viên đang hoạt động"
                 value={engagement.hocVienDangHoatDong}
-                color="#DC2626"
+                color={STATUS.error}
               />
             </Box>
 
             {/* Bảng theo bài giảng */}
             <Typography
-              sx={{ fontWeight: 800, fontSize: 16, color: "#1F2937", mb: 2 }}
+              sx={{ fontWeight: 800, fontSize: 16, color: NEUTRAL.textPrimary, mb: 2 }}
             >
               Thống kê theo bài giảng
             </Typography>
@@ -1211,21 +1212,21 @@ export default function PerformanceContent() {
               elevation={0}
               sx={{
                 borderRadius: "14px",
-                border: "1px solid #ECE7E4",
+                border: `1px solid ${NEUTRAL.divider}`,
                 overflow: "hidden",
               }}
             >
               <Table>
                 <TableHead>
-                  <TableRow sx={{ bgcolor: "#F7F5F2" }}>
+                  <TableRow sx={{ bgcolor: NEUTRAL.bg }}>
                     <TableCell
-                      sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                      sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                     >
                       Bài giảng
                     </TableCell>
                     <TableCell
                       align="center"
-                      sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                      sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                     >
                       <VisibilityOutlinedIcon
                         sx={{ fontSize: 14, verticalAlign: "middle", mr: 0.5 }}
@@ -1234,7 +1235,7 @@ export default function PerformanceContent() {
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontWeight: 700, fontSize: 13, color: "#4B5563" }}
+                      sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textSecondary }}
                     >
                       Hoàn thành
                     </TableCell>
@@ -1251,14 +1252,14 @@ export default function PerformanceContent() {
                           sx={{
                             fontWeight: 700,
                             fontSize: 14,
-                            color: "#1F2937",
+                            color: NEUTRAL.textPrimary,
                           }}
                         >
                           {bg.tenBaiGiang || "Chưa có tên"}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
-                        <Typography sx={{ fontSize: 14, color: "#4B5563" }}>
+                        <Typography sx={{ fontSize: 14, color: NEUTRAL.textSecondary }}>
                           {bg.luotXem.toLocaleString("vi-VN")}
                         </Typography>
                       </TableCell>
@@ -1289,7 +1290,7 @@ export default function PerformanceContent() {
                                     ? "#16A34A"
                                     : bg.tyLeHoanThanh >= 40
                                       ? MAU.chinh
-                                      : "#D97706",
+                                      : STATUS.warningDark,
                                 borderRadius: 3,
                               }}
                             />
@@ -1298,7 +1299,7 @@ export default function PerformanceContent() {
                             sx={{
                               fontWeight: 800,
                               fontSize: 13,
-                              color: "#1F2937",
+                              color: NEUTRAL.textPrimary,
                               minWidth: 32,
                             }}
                           >

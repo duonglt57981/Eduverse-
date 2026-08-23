@@ -1,4 +1,5 @@
 import { FavoriteCourse } from "../types/favorite.type";
+import { BRAND, STATUS, CSSVAR } from "@/src/theme/tokens";
 
 export interface CourseData {
   id: string;
@@ -32,7 +33,7 @@ export const MOCK_COURSES: CourseData[] = [
     level: "Người mới bắt đầu",
     isFree: false,
     tags: ["React", "Frontend", "JavaScript"],
-    palette: ["#1F2937", "#2563eb", "#1F2937"],
+    palette: [CSSVAR.textPrimary, "#2563eb", CSSVAR.textPrimary],
     badge: "Phổ biến",
     description: "Học ReactJS từ cơ bản đến nâng cao, làm chủ Hooks, Router, Redux/Zustand và xây dựng dự án SPA thực chiến."
   },
@@ -83,7 +84,7 @@ export const MOCK_COURSES: CourseData[] = [
     level: "Người mới bắt đầu",
     isFree: false,
     tags: ["Flutter", "Dart", "Mobile"],
-    palette: ["#1F2937", "#0284c7", "#1F2937"],
+    palette: [CSSVAR.textPrimary, STATUS.info, CSSVAR.textPrimary],
     badge: "Xu hướng",
     description: "Tạo ứng dụng Android & iOS mượt mà, tối ưu UI/UX, quản lý state với Bloc/Provider và tích hợp Firebase."
   },
@@ -151,7 +152,7 @@ export const MOCK_COURSES: CourseData[] = [
     level: "Trung cấp",
     isFree: false,
     tags: ["SQL Server", "Database", "T-SQL"],
-    palette: ["#1a0f0f", "#8B1313", "#200d0d"],
+    palette: ["#1a0f0f", BRAND.main, "#200d0d"],
     badge: "Quan trọng",
     description: "Tối ưu hóa Store Procedures, thiết kế Indexes hợp lý, đọc Execution Plan và khắc phục điểm nghẽn hiệu năng."
   },

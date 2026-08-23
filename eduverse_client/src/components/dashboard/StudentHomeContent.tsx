@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { BRAND, CSSVAR, STATUS, GRADIENTS } from "@/src/theme/tokens";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import DOMPurify from "dompurify";
@@ -33,8 +34,6 @@ import {
   PsychologyRounded,
   QuizRounded,
   ShoppingCartRounded,
-  FavoriteBorderRounded,
-  FavoriteRounded,
   CheckCircleRounded,
   AccessTimeRounded,
   MenuBookRounded,
@@ -46,14 +45,15 @@ import {
   PlayCircleFilledRounded,
   SchoolRounded,
 } from "@mui/icons-material";
+import FavoriteHeartIcon from "@/src/features/favorite/components/FavoriteHeartIcon";
 
 // ─── Palette (brand maroon, toned neutrals) ──────────────────────────────────
 const C = {
-  primary: "#8B1313",
-  primaryDark: "#6D0F0F",
+  primary: BRAND.main,
+  primaryDark: BRAND.dark,
   primaryTint: "var(--dashboard-primary-tint)",
   primaryBorder: "var(--dashboard-primary-border)",
-  info: "#0284C7",
+  info: STATUS.info,
   infoTint: "var(--dashboard-info-tint)",
   white: "var(--dashboard-surface)",
   card: "var(--dashboard-surface)",
@@ -62,10 +62,10 @@ const C = {
   textDark: "var(--dashboard-text-primary)",
   textSecondary: "var(--dashboard-text-secondary)",
   textMuted: "var(--dashboard-text-muted)",
-  ok: "#10B981",
+  ok: STATUS.success,
   okTint: "var(--dashboard-success-tint)",
-  warn: "#F59E0B",
-  gradientCrimson: "linear-gradient(90deg, #9f1717 0%, #7f1d1d 100%)",
+  warn: STATUS.warning,
+  gradientCrimson: GRADIENTS.crimson,
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -651,8 +651,7 @@ function HoverPanel({
                 color: "#fff",
                 boxShadow: "none",
                 "&:hover": {
-                  background:
-                    "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
+                  background: GRADIENTS.crimsonHover,
                   boxShadow: "none",
                 },
               }}
@@ -668,11 +667,11 @@ function HoverPanel({
               toggleFavorite(course.id, course.tieuDe || course.title || "");
             }}
             startIcon={
-              isFavorited(course.id) ? (
-                <FavoriteRounded sx={{ color: C.primary }} />
-              ) : (
-                <FavoriteBorderRounded />
-              )
+              <FavoriteHeartIcon
+                active={isFavorited(course.id)}
+                color={C.primary}
+                size={24}
+              />
             }
             sx={{
               borderRadius: "12px",
@@ -725,7 +724,8 @@ function CourseCard({
     ((course as unknown as Record<string, unknown>).giagoc as number) ??
     0;
   const title = course.tieuDe || course.title || "";
-  const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh ?? 5.0;
+  const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh ?? null;
+  const hasRating = ratingVal !== null && ratingVal > 0;
   const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
   const instructorName =
     course.danhSachGiangVienHienThi &&
@@ -825,6 +825,8 @@ function CourseCard({
             />
           )}
           <IconButton
+            aria-label={favorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+            aria-pressed={favorited}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
@@ -849,11 +851,7 @@ function CourseCard({
               },
             }}
           >
-            {favorited ? (
-              <FavoriteRounded sx={{ fontSize: 16, color: C.primary }} />
-            ) : (
-              <FavoriteBorderRounded sx={{ fontSize: 16 }} />
-            )}
+            <FavoriteHeartIcon active={favorited} color={C.primary} />
           </IconButton>
           {course.daDangKy && (
             <Chip
@@ -979,11 +977,20 @@ function CourseCard({
                 spacing={0.3}
                 sx={{ alignItems: "center" }}
               >
-                <StarRounded sx={{ fontSize: 14, color: "#F59E0B" }} />
+                <StarRounded
+                  sx={{
+                    fontSize: 14,
+                    color: hasRating ? STATUS.warning : C.textMuted,
+                  }}
+                />
                 <Typography
-                  sx={{ fontSize: 11.5, fontWeight: 800, color: C.textDark }}
+                  sx={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    color: hasRating ? C.textDark : C.textMuted,
+                  }}
                 >
-                  {ratingVal.toFixed(1)}
+                  {hasRating ? ratingVal.toFixed(1) : "Chưa có đánh giá"}
                 </Typography>
               </Stack>
               <Stack
@@ -1086,7 +1093,7 @@ function ContinueLearningCard({
         flexShrink: 0,
         borderRadius: "16px",
         overflow: "hidden",
-        border: `1px solid var(--ev-divider, #ECE7E4)`,
+        border: `1px solid ${CSSVAR.divider}`,
         bgcolor: C.white,
         cursor: "pointer",
         boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)",
@@ -1096,7 +1103,7 @@ function ContinueLearningCard({
           borderColor: "rgba(139, 19, 19, 0.28)",
           "& .play-glass-btn": {
             transform: "translate(-50%, -50%) scale(1.12)",
-            background: "linear-gradient(135deg, #8B1313 0%, #B91C1C 100%)",
+            background: `linear-gradient(135deg, ${BRAND.main} 0%, ${STATUS.errorDark} 100%)`,
             color: "#ffffff",
             boxShadow: "0 10px 24px rgba(139,19,19,0.45)",
           },
@@ -1215,7 +1222,7 @@ function ContinueLearningCard({
             right: 10,
             background:
               pct === 100
-                ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+                ? `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`
                 : pct === 0
                   ? "rgba(15, 23, 42, 0.78)"
                   : C.gradientCrimson,
@@ -1281,7 +1288,11 @@ function ContinueLearningCard({
                 fontSize: 12.5,
                 fontWeight: 900,
                 color:
-                  pct === 100 ? "#10B981" : pct > 0 ? C.primary : C.textMuted,
+                  pct === 100
+                    ? STATUS.success
+                    : pct > 0
+                      ? C.primary
+                      : C.textMuted,
               }}
             >
               {pct}%
@@ -1298,9 +1309,9 @@ function ContinueLearningCard({
               "& .MuiLinearProgress-bar": {
                 background:
                   pct === 100
-                    ? "linear-gradient(90deg, #34D399 0%, #10B981 100%)"
+                    ? `linear-gradient(90deg, #34D399 0%, ${STATUS.success} 100%)`
                     : pct > 0
-                      ? "linear-gradient(90deg, #B91C1C 0%, #8B1313 100%)"
+                      ? `linear-gradient(90deg, ${STATUS.errorDark} 0%, ${BRAND.main} 100%)`
                       : "linear-gradient(90deg, #E5E7EB 0%, #D1D5DB 100%)",
                 borderRadius: 6,
                 boxShadow:
@@ -1338,7 +1349,7 @@ function ContinueLearningCard({
             boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
             transition: "all 220ms ease",
             "&:hover": {
-              background: "linear-gradient(90deg, #7f1d1d 0%, #681212 100%)",
+              background: GRADIENTS.crimsonHover,
               boxShadow: "0 6px 20px rgba(139,19,19,0.36)",
               transform: "translateY(-1px)",
             },
@@ -1397,7 +1408,8 @@ export default function StudentHomeContent() {
     if (data?.continueLearning?.courses) {
       data.continueLearning.courses.forEach((item) => {
         if (isValidGuid(item.id)) enrolledIds.add(String(item.id));
-        if (isValidGuid(item.idDangKiKhoaHoc)) enrolledIds.add(String(item.idDangKiKhoaHoc));
+        if (isValidGuid(item.idDangKiKhoaHoc))
+          enrolledIds.add(String(item.idDangKiKhoaHoc));
       });
     }
 
@@ -1409,7 +1421,11 @@ export default function StudentHomeContent() {
       if (c.daDangKy) return false;
       const courseId = String(c.id || c.idKhoaHoc || "");
       if (isValidGuid(courseId) && enrolledIds.has(courseId)) return false;
-      if (isValidGuid(c.idDangKiKhoaHoc) && enrolledIds.has(String(c.idDangKiKhoaHoc))) return false;
+      if (
+        isValidGuid(c.idDangKiKhoaHoc) &&
+        enrolledIds.has(String(c.idDangKiKhoaHoc))
+      )
+        return false;
 
       // Loại bỏ khóa học cũ hơn 1 tháng
       const rawDate =
@@ -1528,7 +1544,9 @@ export default function StudentHomeContent() {
   );
 
   const handleAddCart = useCallback(async (course: KhoaHocDto) => {
-    const id = isValidGuid(course.id) ? course.id : (course as any).idKhoaHoc || "";
+    const id = isValidGuid(course.id)
+      ? course.id
+      : (course as any).idKhoaHoc || "";
     if (!isValidGuid(id)) return;
     try {
       await apiService.post(`/GioHang/${id}`);
@@ -1816,7 +1834,9 @@ export default function StudentHomeContent() {
               },
             }}
           >
-            <AccessTimeRounded sx={{ color: "#0284C7", fontSize: 24, mb: 1 }} />
+            <AccessTimeRounded
+              sx={{ color: STATUS.info, fontSize: 24, mb: 1 }}
+            />
             <Typography
               sx={{ fontSize: 18, fontWeight: 800, color: C.textDark }}
             >

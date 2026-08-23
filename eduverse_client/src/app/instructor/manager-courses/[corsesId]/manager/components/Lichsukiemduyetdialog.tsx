@@ -54,7 +54,7 @@ export default function LichSuKiemDuyetDialog({
           <Typography
             sx={{
               fontSize: 13.5,
-              color: "#8A7676",
+              color: MAU.chuXam,
               py: 2,
               textAlign: "center",
             }}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiService } from ".";
 import {
   KhoaHocKiemDuyetListDto,
@@ -112,9 +113,15 @@ export default class KiemDuyetService {
       const response =
         await apiService.get<PagedList<NhanVienPheDuyetDto>>(url);
       return response;
-    } catch (error) {
-      console.error("Error fetching course approval list:", error);
-      throw error;
+    } catch (error: any) {
+      return {
+        status: false,
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Không có quyền truy cập",
+        data: null,
+      } as any;
     }
   }
 
