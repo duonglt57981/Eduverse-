@@ -272,6 +272,41 @@ namespace Eduverse.Service.KhoaHocService
             }
         }
 
+        private async Task GanDanhGiaAsync(IEnumerable<KhoaHocDto> items)
+        {
+            var khoaHocIds = items.Select(x => x.Id).ToList();
+            if (!khoaHocIds.Any()) return;
+
+            var danhGiaList = await _danhGiaRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => khoaHocIds.Contains(x.IdKhoaHoc ?? Guid.Empty)
+                         && !x.IsDeleted
+                         && x.TrangThai == "HienThi")
+                .Select(x => new { x.IdKhoaHoc, x.SoSao })
+                .ToListAsync();
+
+            var thongKeDanhGia = danhGiaList
+                .GroupBy(x => x.IdKhoaHoc!.Value)
+                .ToDictionary(
+                    g => g.Key,
+                    g => new { SoLuong = g.Count(), TrungBinh = Math.Round(g.Average(x => (double)(x.SoSao ?? 0)), 1) }
+                );
+
+            foreach (var item in items)
+            {
+                if (thongKeDanhGia.TryGetValue(item.Id, out var tk))
+                {
+                    item.DiemDanhGiaTrungBinh = tk.TrungBinh;
+                    item.SoLuongDanhGia = tk.SoLuong;
+                }
+                else
+                {
+                    item.DiemDanhGiaTrungBinh = null;   // chưa có đánh giá nào
+                    item.SoLuongDanhGia = 0;
+                }
+            }
+        }
+
         private async Task<PagedList<KhoaHocDto>> GetListFromDatabaseAsync(KhoaHocSearch search)
         {
             Guid.TryParse(
@@ -379,6 +414,7 @@ namespace Eduverse.Service.KhoaHocService
 
             var paged = await PagedList<KhoaHocDto>.CreateAsync(itemsQuery, search);
             await GanDanhSachGiangVienHienThi(paged.Items);
+            await GanDanhGiaAsync(paged.Items);
             return paged;
         }
 

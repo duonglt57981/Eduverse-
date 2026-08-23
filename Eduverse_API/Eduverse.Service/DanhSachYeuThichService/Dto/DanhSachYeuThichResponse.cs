@@ -14,5 +14,9 @@ namespace Eduverse.Service.DanhSachYeuThichService.Dto
         public string? HinhAnh { get; set; }
         public string? GiangVien { get; set; }
         public double? GiaTien { get; set; }
+        public string? CapDo { get; set; }              // ← THÊM
+        public int SoLuongHocVien { get; set; }          // ← THÊM
+        public double? DiemDanhGiaTrungBinh { get; set; } // ← THÊM — null = chưa có đánh giá
+        public int SoLuongDanhGia { get; set; }
     }
 }

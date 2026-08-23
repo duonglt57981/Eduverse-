@@ -1,7 +1,8 @@
-
+﻿
 using Eduverse.IService.DanhSachYeuThichService;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.AppUserRepository;
+using Eduverse.Repository.DanhGiaRepository;
 using Eduverse.Repository.DanhSachYeuThichRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Service.Common;
@@ -19,17 +20,20 @@ namespace Eduverse.Service.DanhSachYeuThichService
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly IAppUserRepository _appUserRepository;
         private readonly IMapper _mapper;
+        private readonly IDanhGiaRepository _danhGiaRepository;
 
         public DanhSachYeuThichService(
             IDanhSachYeuThichRepository danhSachYeuThichRepository,
             IKhoaHocRepository khoaHocRepository,
             IAppUserRepository appUserRepository,
+            IDanhGiaRepository danhGiaRepository,
             IMapper mapper
         ) : base(danhSachYeuThichRepository)
         {
             _danhSachYeuThichRepository = danhSachYeuThichRepository;
             _khoaHocRepository = khoaHocRepository;
             _appUserRepository = appUserRepository;
+            _danhGiaRepository = danhGiaRepository;
             _mapper = mapper;
         }
 
@@ -82,10 +86,63 @@ namespace Eduverse.Service.DanhSachYeuThichService
                 GiaTien = _khoaHocRepository.GetQueryable()
                     .Where(kh => kh.Id == x.IdKhoaHoc)
                     .Select(kh => kh.Gia)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+                CapDo = _khoaHocRepository.GetQueryable()             // ← THÊM (component cần cho "level")
+                    .Where(kh => kh.Id == x.IdKhoaHoc)
+                    .Select(kh => kh.CapDo)
+                    .FirstOrDefault(),
+                SoLuongHocVien = _khoaHocRepository.GetQueryable()     // ← THÊM
+                    .Where(kh => kh.Id == x.IdKhoaHoc)
+                    .Select(kh => kh.SoLuongHocVien)
+                    .FirstOrDefault() ?? 0
             });
 
-            return await PagedList<DanhSachYeuThichResponse>.CreateAsync(dtoQuery, search);
+            var paged = await PagedList<DanhSachYeuThichResponse>.CreateAsync(dtoQuery, search);
+
+            // ── Gắn rating thật, join theo IdKhoaHoc ────────────────────
+            await GanDanhGiaAsync(paged.Items);
+
+            return paged;
+        }
+
+        private async Task GanDanhGiaAsync(IEnumerable<DanhSachYeuThichResponse> items)
+        {
+            var khoaHocIds = items
+                .Where(x => x.IdKhoaHoc.HasValue)
+                .Select(x => x.IdKhoaHoc!.Value)
+                .Distinct()
+                .ToList();
+            if (!khoaHocIds.Any()) return;
+
+            var danhGiaList = await _danhGiaRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(d => d.IdKhoaHoc.HasValue
+                         && khoaHocIds.Contains(d.IdKhoaHoc.Value)
+                         && !d.IsDeleted
+                         && d.TrangThai == "HienThi")
+                .Select(d => new { d.IdKhoaHoc, d.SoSao })
+                .ToListAsync();
+
+            var thongKe = danhGiaList
+                .GroupBy(d => d.IdKhoaHoc!.Value)
+                .ToDictionary(
+                    g => g.Key,
+                    g => new { SoLuong = g.Count(), TrungBinh = Math.Round(g.Average(x => (double)(x.SoSao ?? 0)), 1) }
+                );
+
+            foreach (var item in items)
+            {
+                if (item.IdKhoaHoc.HasValue && thongKe.TryGetValue(item.IdKhoaHoc.Value, out var tk))
+                {
+                    item.DiemDanhGiaTrungBinh = tk.TrungBinh;
+                    item.SoLuongDanhGia = tk.SoLuong;
+                }
+                else
+                {
+                    item.DiemDanhGiaTrungBinh = null;
+                    item.SoLuongDanhGia = 0;
+                }
+            }
         }
 
         public async Task<DanhSachYeuThich> ThemYeuThich(Guid userId, Guid khoaHocId)
