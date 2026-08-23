@@ -7,19 +7,10 @@ import AccountSettings from "@/src/components/settings/AccountSettings";
 import SecuritySettings from "@/src/components/settings/SecuritySettings";
 import { Box, Typography, Stack, Paper, Button } from "@mui/material";
 import { PersonRounded, SecurityRounded } from "@mui/icons-material";
-import { useSelector } from "@/src/store/hook";
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<number>(0);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const user = useSelector((state: any) => state.auth?.user);
-  const isPersonnel = Boolean(
-    user?.roles?.some((r: string) =>
-      ["personnel", "nhanvien"].includes(r.toLowerCase()),
-    ),
-  );
 
   const tabs = [
     {
@@ -37,7 +28,7 @@ export default function AdminSettingsPage() {
   ];
 
   return (
-    <AuthGuard allowedRoles={["Admin", "personnel"]}>
+    <AuthGuard allowedRoles={["Admin"]}>
       <DashboardShell>
         <Box
           sx={{
@@ -50,46 +41,18 @@ export default function AdminSettingsPage() {
         >
           {/* Header Title Section */}
           <Box sx={{ mb: 3.5 }}>
-            <Stack
-              direction="row"
-              spacing={1.5}
-              sx={{ alignItems: "center", mb: 0.75, flexWrap: "wrap", gap: 1 }}
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 900,
+                color: CSSVAR.textPrimary,
+                letterSpacing: "-0.6px",
+                fontSize: { xs: 26, sm: 32 },
+                mb: 0.75,
+              }}
             >
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 900,
-                  color: CSSVAR.textPrimary,
-                  letterSpacing: "-0.6px",
-                  fontSize: { xs: 26, sm: 32 },
-                }}
-              >
-                {isPersonnel
-                  ? "Thông tin tài khoản cá nhân"
-                  : "Cài đặt hệ thống"}
-              </Typography>
-              <Box
-                sx={{
-                  px: 1.5,
-                  py: 0.5,
-                  bgcolor: isPersonnel ? "#F3E8FF" : "#FEF2F2",
-                  border: isPersonnel
-                    ? "1px solid #C084FC"
-                    : "1px solid #FCA5A5",
-                  borderRadius: "8px",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 11,
-                    fontWeight: 800,
-                    color: isPersonnel ? "#7C3AED" : "#8B1313",
-                  }}
-                >
-                  {isPersonnel ? "NHÂN VIÊN KIỂM DUYỆT" : "SUPER ADMIN"}
-                </Typography>
-              </Box>
-            </Stack>
+              Cài đặt hệ thống
+            </Typography>
             <Typography
               sx={{
                 color: CSSVAR.textSecondary,
@@ -97,9 +60,7 @@ export default function AdminSettingsPage() {
                 fontWeight: 500,
               }}
             >
-              {isPersonnel
-                ? "Quản lý và cập nhật thông tin tài khoản cá nhân của bạn trên hệ thống EduVerse."
-                : "Quản lý hồ sơ cá nhân và bảo mật tài khoản của bạn."}
+              Quản lý hồ sơ cá nhân và bảo mật tài khoản của bạn.
             </Typography>
           </Box>
 
