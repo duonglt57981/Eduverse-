@@ -1398,6 +1398,14 @@ export default function StudentHomeContent() {
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const tabsRef = useRef<HTMLDivElement>(null);
 
+  // "Tiếp tục học": lấy trực tiếp từ danh sách khoahoc-list (latestCourses),
+  // vì mỗi phần tử ở đó đã có sẵn daDangKy, phanTramHoanThanh, idDangKiKhoaHoc
+  // do backend trả về theo đúng người dùng hiện tại.
+  const continuingCourses = useMemo(() => {
+    if (!latestCourses || !Array.isArray(latestCourses)) return [];
+    return latestCourses.filter((c: any) => c.daDangKy === true);
+  }, [latestCourses]);
+
   // Lọc danh sách "Khóa học mới nhất":
   // 1. Chỉ lấy khóa học được tạo trong 1 tháng gần nhất
   // 2. Chỉ hiển thị khóa học người dùng chưa sở hữu, chưa đăng ký
@@ -1405,13 +1413,11 @@ export default function StudentHomeContent() {
     if (!latestCourses || !Array.isArray(latestCourses)) return [];
 
     const enrolledIds = new Set<string>();
-    if (data?.continueLearning?.courses) {
-      data.continueLearning.courses.forEach((item) => {
-        if (isValidGuid(item.id)) enrolledIds.add(String(item.id));
-        if (isValidGuid(item.idDangKiKhoaHoc))
-          enrolledIds.add(String(item.idDangKiKhoaHoc));
-      });
-    }
+    continuingCourses.forEach((item) => {
+      if (isValidGuid(item.id)) enrolledIds.add(String(item.id));
+      if (isValidGuid(item.idDangKiKhoaHoc))
+        enrolledIds.add(String(item.idDangKiKhoaHoc));
+    });
 
     const oneMonthAgo = new Date();
     oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
@@ -1444,7 +1450,7 @@ export default function StudentHomeContent() {
 
       return true;
     });
-  }, [latestCourses, data]);
+  }, [latestCourses, continuingCourses]);
 
   const load = useCallback(async () => {
     try {
@@ -1475,9 +1481,10 @@ export default function StudentHomeContent() {
         }
       }
 
-      // Toàn bộ khóa học đã duyệt cho mục "Khóa học mới nhất".
+      // Toàn bộ khóa học đã duyệt cho mục "Khóa học mới nhất" và "Tiếp tục học".
       // Endpoint khoahoc-list cho phép truy cập ẩn danh, đã lọc sẵn
-      // TrangThaiPheDuyet = DaDuyet và sắp xếp giảm dần theo NgayTao.
+      // TrangThaiPheDuyet = DaDuyet, sắp xếp giảm dần theo NgayTao, và trả kèm
+      // daDangKy / phanTramHoanThanh / idDangKiKhoaHoc theo người dùng hiện tại.
       try {
         const listRes = await apiService.get<any>(
           "/KhoaHoc/khoahoc-list?pageIndex=1&pageSize=100",
@@ -1537,8 +1544,6 @@ export default function StudentHomeContent() {
       } else {
         router.push(`/student/enroll-courses/${courseId}`);
       }
-
-      router.push(`/student/enroll-courses/${course.id}`);
     },
     [router],
   );
@@ -1659,23 +1664,7 @@ export default function StudentHomeContent() {
     );
   }
 
-  const {
-    welcomeStats,
-    continueLearning,
-    interestedSkills,
-    historyRecommendation,
-  } = data;
-
-  const tabItems: KhoaHocDto[] = (() => {
-    switch (activeTab) {
-      case "courses":
-        return continueLearning?.courses ?? [];
-      case "paths":
-        return continueLearning?.paths ?? [];
-      default:
-        return [];
-    }
-  })();
+  const { welcomeStats, interestedSkills, historyRecommendation } = data;
 
   const emptyForTab: Record<string, { title: string; desc: string }> = {
     courses: {
@@ -1859,7 +1848,7 @@ export default function StudentHomeContent() {
       {/* ── 3. Tiếp tục học ─────────────────────────────────────────── */}
       <Box ref={tabsRef}>
         <SectionHeader title="Tiếp tục học" />
-        {!continueLearning?.courses || continueLearning.courses.length === 0 ? (
+        {continuingCourses.length === 0 ? (
           <EmptyState
             icon={<InboxRounded />}
             title="Chưa có khóa học đang học"
@@ -1869,11 +1858,13 @@ export default function StudentHomeContent() {
           />
         ) : (
           <CarouselRow>
-            {continueLearning.courses.map((item, i) => (
+            {continuingCourses.map((item: any, i: number) => (
               <ContinueLearningCard
-                key={item.id || item.idDangKiKhoaHoc || i}
+                key={item.idDangKiKhoaHoc || item.id || i}
                 item={{
                   ...item,
+                  phanTramHoanThanh: item.phanTramHoanThanh ?? 0,
+                  idDangKiKhoaHoc: item.idDangKiKhoaHoc,
                   hinhAnhKhoaHoc:
                     item.hinhAnhKhoaHoc ||
                     courseImages[item.id || ""] ||

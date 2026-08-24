@@ -381,6 +381,8 @@ namespace Eduverse.Service.KhoaHocService
             else
                 query = query.OrderByDescending(x => x.NgayTao);
 
+
+
             var itemsQuery = query.Select(x => new KhoaHocDto
             {
                 Id = x.Id,
@@ -409,13 +411,135 @@ namespace Eduverse.Service.KhoaHocService
                 CreatedBy = x.CreatedBy,
                 CreatedDate = x.CreatedDate,
                 IsBanHienTai = x.IsBanHienTai,
-                IdBanGhiTruoc = x.IdBanGhiTruoc
+                IdBanGhiTruoc = x.IdBanGhiTruoc,
+
+                DaDangKy = _dangKyKhoaHocRepository.GetQueryable()
+                    .Where(dk => dk.IdKhoaHoc == x.Id && dk.IdNguoiDangKi == currentUserId)
+                    .Select(dk => (bool)dk.IsDangKy)
+                    .FirstOrDefault(),
+
+                idDangKiKhoaHoc = _dangKyKhoaHocRepository.GetQueryable()
+                    .Where(dk =>dk.IdKhoaHoc == x.Id &&dk.IdNguoiDangKi == currentUserId)
+                    .Select(dk => (Guid)dk.Id)
+                    .FirstOrDefault()
             });
 
             var paged = await PagedList<KhoaHocDto>.CreateAsync(itemsQuery, search);
             await GanDanhSachGiangVienHienThi(paged.Items);
             await GanDanhGiaAsync(paged.Items);
+            await GanPhanTramHoanThanhAsync(paged.Items);
             return paged;
+        }
+
+        private async Task GanPhanTramHoanThanhAsync(List<KhoaHocDto> items)
+        {
+            if (items == null || !items.Any())
+                return;
+
+            var courseIds = items
+                .Select(x => x.Id)
+                .Distinct()
+                .ToList();
+
+            var dangKyIds = items
+                .Where(x => x.idDangKiKhoaHoc.HasValue)
+                .Select(x => x.idDangKiKhoaHoc.Value)
+                .Distinct()
+                .ToList();
+
+            if (!dangKyIds.Any())
+            {
+                foreach (var item in items)
+                    item.PhanTramHoanThanh = 0;
+
+                return;
+            }
+
+
+            var baiGiangList = await (
+                from bg in _baiGiangRepository.GetQueryable().AsNoTracking()
+                join p in _phanRepository.GetQueryable().AsNoTracking()
+                    on bg.IdPhan equals p.Id
+                where courseIds.Contains(p.IdKhoaHoc.Value)
+                      && !bg.IsDeleted
+                      && !p.IsDeleted
+
+                select new
+                {
+                    IdKhoaHoc = p.IdKhoaHoc,
+                    IdBaiGiang = bg.Id
+                }
+            ).ToListAsync();
+
+            var tongBaiGiangDict = baiGiangList
+                .GroupBy(x => x.IdKhoaHoc)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.IdBaiGiang)
+                          .Distinct()
+                          .Count());
+
+            var allBaiGiangIds = baiGiangList
+                .Select(x => x.IdBaiGiang)
+                .Distinct()
+                .ToList();
+
+            var tienDoDict = await (
+                from td in _tienDoHocTapRepository
+                    .GetQueryable()
+                    .AsNoTracking()
+
+                where td.IdDangKi.HasValue
+                      && dangKyIds.Contains(td.IdDangKi.Value)
+                      && td.TrangThai == "HoanThanh"
+                      && td.IdBaiGiang.HasValue
+                      && allBaiGiangIds.Contains(td.IdBaiGiang.Value)
+
+                group td by td.IdDangKi.Value into g
+
+                select new
+                {
+                    IdDangKy = g.Key,
+
+                    SoBaiGiangHoanThanh = g
+                        .Where(x => x.IdBaiGiang.HasValue)
+                        .Select(x => x.IdBaiGiang.Value)
+                        .Distinct()
+                        .Count()
+                }
+            ).ToDictionaryAsync(
+                x => x.IdDangKy,
+                x => x.SoBaiGiangHoanThanh);
+
+            foreach (var item in items)
+            {
+                // Chưa đăng ký => null
+                if (!item.idDangKiKhoaHoc.HasValue)
+                {
+                    item.PhanTramHoanThanh = 0;
+                    continue;
+                }
+
+                var tongBaiGiang =
+                    tongBaiGiangDict.TryGetValue(
+                        item.Id,
+                        out var tong)
+                        ? tong
+                        : 0;
+
+                var soBaiHoanThanh =
+                    tienDoDict.TryGetValue(
+                        item.idDangKiKhoaHoc.Value,
+                        out var hoanThanh)
+                        ? hoanThanh
+                        : 0;
+
+                item.PhanTramHoanThanh =
+                    tongBaiGiang > 0
+                        ? Math.Round(
+                            (double)soBaiHoanThanh * 100 / tongBaiGiang)
+                        : 0;
+            }
         }
 
         public async Task<List<GiangVienNoiBatDto>> GetGiangVienNoiBat(int soLuong = 3)

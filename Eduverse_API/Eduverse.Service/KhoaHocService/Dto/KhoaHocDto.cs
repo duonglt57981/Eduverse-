@@ -16,7 +16,7 @@ namespace Eduverse.Service.KhoaHocService.Dto
 {
     public class KhoaHocDto : KhoaHoc
     {
-        public Guid idDangKiKhoaHoc { get; set; }
+        public Guid ? idDangKiKhoaHoc { get; set; }
         public DateTime? NgayDangKy { get; set; }
         public bool DaDangKy { get; set; }
         public int SoBaiGiangHoanThanh { get; set; }
