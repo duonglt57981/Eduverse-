@@ -1,4 +1,5 @@
 ﻿using Eduverse.Service.GioHangService;
+using Eduverse.Service.KhuyenMaiService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService;
 using Eduverse.Service.LoiMoiGiangVienService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService.Request;
@@ -141,6 +142,30 @@ namespace Eduverse.Api.Controller
                 message = $"Đã backfill {count} bản ghi",
                 count
             });
+        }
+
+        [HttpGet("loimoi-khuyenmai-cuatoi")]
+        [Authorize]
+        public async Task<DataResponse<List<LoiMoiKhuyenMaiChoXacNhanDto>>> GetLoiMoiKhuyenMaiCuaToi()
+        {
+            try { return DataResponse<List<LoiMoiKhuyenMaiChoXacNhanDto>>.Success(await _service.GetLoiMoiKhuyenMaiCuaToi()); }
+            catch (Exception ex) { return DataResponse<List<LoiMoiKhuyenMaiChoXacNhanDto>>.False(ex.Message); }
+        }
+
+        [HttpPost("loimoi-khuyenmai-phanhoi/{id}")]
+        [Authorize]
+        public async Task<DataResponse<string>> PhanHoiKhuyenMai(Guid id, [FromQuery] bool dongY)
+        {
+            try { await _service.PhanHoiKhuyenMai(id, dongY); return DataResponse<string>.Success("OK"); }
+            catch (Exception ex) { return DataResponse<string>.False(ex.Message); }
+        }
+
+        [HttpGet("loimoi-khuyenmai-theoma/{idKhuyenMai}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<DataResponse<List<LoiMoiApDungKhuyenMaiDto>>> GetLoiMoiApDungTheoKhuyenMai(Guid idKhuyenMai)
+        {
+            try { return DataResponse<List<LoiMoiApDungKhuyenMaiDto>>.Success(await _service.GetLoiMoiApDungTheoKhuyenMai(idKhuyenMai)); }
+            catch (Exception ex) { return DataResponse<List<LoiMoiApDungKhuyenMaiDto>>.False(ex.Message); }
         }
     }
 }

@@ -190,7 +190,7 @@ namespace Eduverse.Model.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             AccessFailedCount = 0,
                             ChucVu = "Admin",
-                            ConcurrencyStamp = "401a7b71-fdd9-419c-b3a7-bab750950180",
+                            ConcurrencyStamp = "ed62f798-d1c7-4757-83ab-c84633b74218",
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin",
                             EmailConfirmed = true,
@@ -199,9 +199,9 @@ namespace Eduverse.Model.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEt3hhMBjDRi+HHuskXe6tK+lGokbsMIR+MQN1YDnTdXx7TulyX90y1x1tkmj4xoag==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGq4E7q4+DBwLFHwh5N1kcc4ZyAWH4l8QY3eSfXVONZSjjINTOjGgzFmRsXrWkxOLQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "01531abe-e3e1-408a-98af-3d9a138213af",
+                            SecurityStamp = "0015bd7f-d377-43c7-a807-c8111eb4e807",
                             SoDuTaiKhoan = 0m,
                             TwoFactorEnabled = false,
                             UpdatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -2069,6 +2069,9 @@ namespace Eduverse.Model.Migrations
                     b.Property<Guid>("IdKhoaHoc")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("IdKhuyenMai")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("IdNguoiDuocMoi")
                         .HasColumnType("uniqueidentifier");
 
@@ -2122,7 +2125,9 @@ namespace Eduverse.Model.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("IdKhoaHoc", "IdNguoiDuocMoi")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_loiMoiGiangViens_IdKhoaHoc_IdNguoiDuocMoi")
+                        .HasFilter("[IsDeleted] = 0 AND [TrangThai] = N'Pending' AND [IdKhuyenMai] IS NULL");
 
                     b.ToTable("loiMoiGiangViens");
                 });

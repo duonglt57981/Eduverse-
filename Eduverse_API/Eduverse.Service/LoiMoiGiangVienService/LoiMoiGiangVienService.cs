@@ -6,11 +6,13 @@ using Eduverse.Repository.DonHangChiTietRepository;
 using Eduverse.Repository.DonHangRepositoryRepository;
 using Eduverse.Repository.KhoaHoc_GiangVienRepository;
 using Eduverse.Repository.KhoaHocRepository;
+using Eduverse.Repository.KhuyenMai_KhoaHocRepository;
 using Eduverse.Repository.KhuyenMaiRepository;
 using Eduverse.Repository.LoiMoiGiangVienRepository;
 using Eduverse.Repository.ThanhToanRepository;
 using Eduverse.Service.AppUserService;
 using Eduverse.Service.Common;
+using Eduverse.Service.KhuyenMaiService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService.Request;
 using Eduverse.Service.ThanhToanService;
@@ -38,7 +40,9 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         private readonly IDonHangRepository _donHangRepo;
         private readonly IDonHangChiTietRepository _chiTietRepo;
         private readonly IThanhToanRepository _thanhToanRepo;
-        private readonly IDonHang_KhuyenMaiRepository _kmRepo;
+        private readonly IDonHang_KhuyenMaiRepository _kmDHRepo;
+        private readonly IKhuyenMai_KhoaHocRepository _kmKhoaHocRepo;
+        private readonly IKhuyenMaiRepository _kmRepo;
         public LoiMoiGiangVienService(ILoiMoiGiangVienRepository loiMoiGiangVienRepository,
             IKhoaHoc_GiangVienRepository khoaHoc_GiangVienRepository,
             IKhoaHocRepository khoaHocRepo,
@@ -48,7 +52,9 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             IDonHangRepository donHangRepo,
             IDonHangChiTietRepository donHangChiTietRepository,
             IThanhToanRepository thanhToanRepository,
-            IDonHang_KhuyenMaiRepository khuyenMaiRepository,
+            IDonHang_KhuyenMaiRepository khuyenMaiDHRepository,
+            IKhuyenMai_KhoaHocRepository khuyenMai_KhoaHocRepository,
+            IKhuyenMaiRepository khuyenMaiRepository,
             IHttpContextAccessor httpContextAccessor) : base(loiMoiGiangVienRepository)
         {
             _loiMoiRepo = loiMoiGiangVienRepository;
@@ -61,6 +67,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             _donHangRepo = donHangRepo;
             _chiTietRepo = donHangChiTietRepository;
             _thanhToanRepo = thanhToanRepository;
+            _kmDHRepo = khuyenMaiDHRepository;
+            _kmKhoaHocRepo = khuyenMai_KhoaHocRepository;
             _kmRepo = khuyenMaiRepository;
         }
 
@@ -325,6 +333,9 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 .FirstOrDefaultAsync(x => x.Id == idLoiMoi && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy lời mời");
 
+            if (loiMoi.IdKhuyenMai.HasValue)
+                throw new Exception("Đây là lời mời áp dụng khuyến mãi, vui lòng dùng chức năng phản hồi khuyến mãi");
+
             if (loiMoi.IdNguoiDuocMoi != userId)
                 throw new Exception("Lời mời này không dành cho bạn");
 
@@ -368,7 +379,9 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             var userId = LayUserId();
 
             var loiMois = await _loiMoiRepo.GetQueryable()
-                .Where(x => x.IdNguoiDuocMoi == userId && !x.IsDeleted)
+                .Where(x => x.IdNguoiDuocMoi == userId
+                         && !x.IdKhuyenMai.HasValue 
+                         && !x.IsDeleted)
                 .OrderByDescending(x => x.CreatedDate)
                 .ToListAsync();
 
@@ -782,7 +795,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             var khoaHocIds = chiTiets.Select(x => x.IdKhoaHoc).Distinct().ToList();
             var donHangIds = chiTiets.Select(x => x.IdDonHang!.Value).Distinct().ToList();
 
-            var vouchers = await _kmRepo.GetQueryable()
+            var vouchers = await _kmDHRepo.GetQueryable()
                 .Where(x => donHangIds.Contains(x.IdDonHang!.Value) && !x.IsDeleted)
                 .ToListAsync();
 
@@ -838,6 +851,284 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             foreach (var item in banGhiMoi) _donHangGiangVienRepo.Add(item);
             await _donHangGiangVienRepo.SaveAsync();
             return banGhiMoi.Count;
+        }
+
+        private async Task<Guid?> TimNguoiDuyetPromotion(Guid idKhoaHoc, KhoaHoc? khoaHoc = null)
+        {
+             var thanhViens = await _khoaHocGVRepo.GetQueryable()
+           .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted
+                    && (x.LaChuSoHuu || x.Promotions))
+           .ToListAsync();
+
+            var owner = thanhViens.FirstOrDefault(x => x.LaChuSoHuu) ?? thanhViens.FirstOrDefault();
+            // ★ FIX: loại cả trường hợp IdGiangVien = Guid.Empty (dữ liệu hỏng),
+            // không chỉ null — nếu không sẽ tạo lời mời gửi cho "không ai cả".
+            if (owner != null && owner.IdGiangVien != Guid.Empty)
+                return owner.IdGiangVien;
+
+            khoaHoc ??= await _khoaHocRepo.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
+
+            // ★ FIX: CreatedId là Guid không nullable → mặc định Guid.Empty chứ
+            // không phải null khi chưa từng được set. Phải chặn ở đây, nếu không
+            // "khoaHoc?.CreatedId" vẫn trả về Guid.Empty (có giá trị) và lọt qua
+            // check "== null" ở TaoLoiMoiApDungKhuyenMai, tạo ra lời mời không ai
+            // nhận được (IdNguoiDuocMoi = Guid.Empty).
+            if (khoaHoc != null && khoaHoc.CreatedId != Guid.Empty)
+                return khoaHoc.CreatedId;
+
+            return null;
+        }
+
+        public async Task<List<Guid>> TaoLoiMoiApDungKhuyenMai(Guid idKhuyenMai, List<Guid> idsKhoaHoc)
+        {
+            var userId = LayUserId(); // Admin đang tạo/sửa khuyến mãi
+
+            var idsTaoMoi = new List<Guid>();
+
+            foreach (var idKhoaHoc in idsKhoaHoc.Distinct())
+            {
+                var daCoPending = await _loiMoiRepo.GetQueryable()
+                    .AnyAsync(x => x.IdKhuyenMai == idKhuyenMai
+                                && x.IdKhoaHoc == idKhoaHoc
+                                && x.TrangThai == "Pending"
+                                && !x.IsDeleted);
+                if (daCoPending) continue;
+
+                var khoaHoc = await _khoaHocRepo.GetQueryable()
+                    .FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
+                if (khoaHoc == null) continue;
+
+                var idNguoiDuyet = await TimNguoiDuyetPromotion(idKhoaHoc, khoaHoc);
+                if (idNguoiDuyet == null)
+                {
+                    Console.WriteLine($"[KhuyenMai] Bỏ qua khóa học {idKhoaHoc}: không xác định được người duyệt (không có KhoaHoc_GiangVien lẫn CreatedId).");
+                    continue;
+                }
+
+                var loiMoi = new Model.Entities.LoiMoiGiangVien
+                {
+                    IdKhuyenMai = idKhuyenMai,
+                    IdKhoaHoc = idKhoaHoc,
+                    IdNguoiMoi = userId,
+                    IdNguoiDuocMoi = idNguoiDuyet.Value,
+                    EmailDuocMoi = string.Empty,
+                    TrangThai = "Pending",
+                    Visible = false,
+                    TyLeChiaDoanhThu = 0,
+                    Manage = false,
+                    Performance = false,
+                    QnA = false,
+                    Reviews = false,
+                    Assignments = false,
+                    Materials = false,
+                    Promotions = true,
+                };
+
+                _loiMoiRepo.Add(loiMoi);
+                idsTaoMoi.Add(idKhoaHoc);
+                try
+                {
+                    await _loiMoiRepo.SaveAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("=== LỖI TẠO LỜI MỜI KHUYẾN MÃI ===");
+                    Console.WriteLine(ex.ToString());
+                    throw;
+                }
+
+                await _notificationPublisher.NotifyUserAsync(idNguoiDuyet.Value, new NotificationPayload
+                {
+                    TieuDe = "Yêu cầu áp dụng mã khuyến mãi",
+                    NoiDung = $"Admin muốn áp mã khuyến mãi cho khóa học \"{khoaHoc.TieuDe}\". Vui lòng xác nhận.",
+                    LoaiThongBao = "LoiMoiApDungKhuyenMai",
+                    Link = "/instructor/invites",
+                    FromUser = userId,
+                    ItemId = loiMoi.Id,
+                    ItemName = khoaHoc.TieuDe
+                });
+            }
+
+            return idsTaoMoi;
+        }
+
+        public async Task<List<LoiMoiKhuyenMaiChoXacNhanDto>> GetLoiMoiKhuyenMaiCuaToi()
+        {
+            var userId = LayUserId();
+
+            var loiMois = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdNguoiDuocMoi == userId
+                         && x.IdKhuyenMai.HasValue
+                         && !x.IsDeleted)
+                .OrderByDescending(x => x.CreatedDate)
+                .ToListAsync();
+
+            if (!loiMois.Any()) return new List<LoiMoiKhuyenMaiChoXacNhanDto>();
+
+            var khuyenMaiIds = loiMois.Select(x => x.IdKhuyenMai!.Value).Distinct().ToList();
+            var khoaHocIds = loiMois.Select(x => x.IdKhoaHoc).Distinct().ToList();
+            var nguoiMoiIds = loiMois.Select(x => x.IdNguoiMoi).Distinct().ToList();
+
+            var khuyenMais = await _kmRepo.GetQueryable()
+                .Where(x => khuyenMaiIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.MaGiamGia, x.PhanTramGiam, x.NgayBatDau, x.NgayKetThuc })
+                .ToListAsync();
+
+            var khoaHocs = await _khoaHocRepo.GetQueryable()
+                .Where(x => khoaHocIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.TieuDe, x.HinhAnhKhoaHoc })
+                .ToListAsync();
+
+            var nguoiMois = await _appUserService.GetQueryable()
+                .Where(x => nguoiMoiIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien })
+                .ToListAsync();
+
+            return loiMois.Select(lm =>
+            {
+                var km = khuyenMais.FirstOrDefault(k => k.Id == lm.IdKhuyenMai);
+                var kh = khoaHocs.FirstOrDefault(k => k.Id == lm.IdKhoaHoc);
+                var nm = nguoiMois.FirstOrDefault(n => n.Id == lm.IdNguoiMoi);
+
+                return new LoiMoiKhuyenMaiChoXacNhanDto
+                {
+                    Id = lm.Id,
+                    IdKhuyenMai = lm.IdKhuyenMai!.Value,
+                    MaGiamGia = km?.MaGiamGia,
+                    PhanTramGiam = km?.PhanTramGiam,
+                    NgayBatDauKM = km?.NgayBatDau,
+                    NgayKetThucKM = km?.NgayKetThuc,
+                    IdKhoaHoc = lm.IdKhoaHoc,
+                    TenKhoaHoc = kh?.TieuDe,
+                    HinhAnhKhoaHoc = kh?.HinhAnhKhoaHoc,
+                    TenNguoiMoi = nm?.HoTen,
+                    AnhNguoiMoi = nm?.AnhDaiDien,
+                    TrangThai = lm.TrangThai,
+                    NgayMoi = lm.CreatedDate,
+                };
+            }).ToList();
+        }
+
+        public async Task PhanHoiKhuyenMai(Guid idLoiMoi, bool dongY)
+        {
+            var userId = LayUserId();
+
+            var loiMoi = await _loiMoiRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == idLoiMoi && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy lời mời");
+
+            if (!loiMoi.IdKhuyenMai.HasValue)
+                throw new Exception("Đây không phải lời mời áp dụng khuyến mãi");
+
+            if (loiMoi.IdNguoiDuocMoi != userId)
+                throw new Exception("Lời mời này không dành cho bạn");
+
+            if (loiMoi.TrangThai != "Pending")
+                throw new Exception("Lời mời đã được xử lý trước đó");
+
+            // Xác nhận lại quyền Promotions tại thời điểm duyệt (đề phòng bị
+            // gỡ quyền / gỡ khỏi khóa học giữa lúc lời mời còn Pending)
+            var coQuyen = await _khoaHocGVRepo.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == loiMoi.IdKhoaHoc
+                            && x.IdGiangVien == userId
+                            && !x.IsDeleted
+                            && (x.LaChuSoHuu || x.Promotions));
+            if (!coQuyen)
+                throw new Exception("Bạn không còn quyền quản lý khuyến mãi cho khóa học này");
+
+            loiMoi.TrangThai = dongY ? "Accepted" : "Rejected";
+            loiMoi.NgayPhanHoi = DateTime.UtcNow;
+            _loiMoiRepo.Update(loiMoi);
+            await _loiMoiRepo.SaveAsync();
+
+            if (dongY)
+            {
+                // Khóa học đã ở trạng thái DaDuyet mới cho gắn khuyến mãi —
+                // kiểm tra lại để tránh trường hợp khóa học bị gỡ duyệt
+                // trong lúc lời mời còn treo.
+                var khoaHoc = await _khoaHocRepo.GetQueryable()
+                    .FirstOrDefaultAsync(x => x.Id == loiMoi.IdKhoaHoc);
+                if (khoaHoc == null || khoaHoc.TrangThaiPheDuyet != "DaDuyet")
+                    throw new Exception("Khóa học hiện không ở trạng thái đã duyệt, không thể áp dụng khuyến mãi");
+
+                var daCoLink = await _kmKhoaHocRepo.GetQueryable()
+                    .AnyAsync(x => x.IdKhuyenMai == loiMoi.IdKhuyenMai && x.IdKhoaHoc == loiMoi.IdKhoaHoc);
+
+                if (!daCoLink)
+                {
+                    _kmKhoaHocRepo.Add(new KhuyenMai_KhoaHoc
+                    {
+                        IdKhuyenMai = loiMoi.IdKhuyenMai,
+                        IdKhoaHoc = loiMoi.IdKhoaHoc,
+                    });
+                    await _kmKhoaHocRepo.SaveAsync();
+                }
+            }
+
+            // Báo lại cho Admin đã gửi lời mời biết kết quả
+            await _notificationPublisher.NotifyUserAsync(loiMoi.IdNguoiMoi, new NotificationPayload
+            {
+                TieuDe = dongY ? "Khuyến mãi đã được chấp nhận" : "Khuyến mãi đã bị từ chối",
+                NoiDung = $"Giảng viên đã {(dongY ? "đồng ý" : "từ chối")} áp dụng khuyến mãi cho khóa học.",
+                LoaiThongBao = "PhanHoiApDungKhuyenMai",
+                FromUser = userId,
+                ItemId = loiMoi.IdKhuyenMai,
+            });
+        }
+
+        public async Task<List<LoiMoiApDungKhuyenMaiDto>> GetLoiMoiApDungTheoKhuyenMai(Guid idKhuyenMai)
+        {
+            var loiMois = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdKhuyenMai == idKhuyenMai && !x.IsDeleted)
+                .OrderByDescending(x => x.CreatedDate)
+                .ToListAsync();
+
+            if (!loiMois.Any()) return new List<LoiMoiApDungKhuyenMaiDto>();
+
+            var khoaHocIds = loiMois.Select(x => x.IdKhoaHoc).Distinct().ToList();
+            var giangVienIds = loiMois.Select(x => x.IdNguoiDuocMoi).Distinct().ToList();
+
+            var khoaHocs = await _khoaHocRepo.GetQueryable()
+                .Where(x => khoaHocIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.TieuDe, x.HinhAnhKhoaHoc })
+                .ToListAsync();
+
+            var giangViens = await _appUserService.GetQueryable()
+                .Where(x => giangVienIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.HoTen })
+                .ToListAsync();
+
+            return loiMois.Select(lm =>
+            {
+                var kh = khoaHocs.FirstOrDefault(k => k.Id == lm.IdKhoaHoc);
+                var gv = giangViens.FirstOrDefault(g => g.Id == lm.IdNguoiDuocMoi);
+                return new LoiMoiApDungKhuyenMaiDto
+                {
+                    IdLoiMoi = lm.Id,
+                    IdKhoaHoc = lm.IdKhoaHoc,
+                    TenKhoaHoc = kh?.TieuDe,
+                    HinhAnhKhoaHoc = kh?.HinhAnhKhoaHoc,
+                    IdGiangVienDuocMoi = lm.IdNguoiDuocMoi,
+                    TenGiangVien = gv?.HoTen,
+                    TrangThai = lm.TrangThai,
+                    NgayMoi = lm.CreatedDate,
+                    NgayPhanHoi = lm.NgayPhanHoi,
+                };
+            }).ToList();
+        }
+
+        public async Task HuyLoiMoiApDungKhuyenMaiTheoMa(Guid idKhuyenMai)
+        {
+            var loiMois = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdKhuyenMai == idKhuyenMai
+                         && x.TrangThai == "Pending"
+                         && !x.IsDeleted)
+                .ToListAsync();
+
+            if (!loiMois.Any()) return;
+
+            _loiMoiRepo.Delete(loiMois);
+            await _loiMoiRepo.SaveAsync();
         }
     }
 }

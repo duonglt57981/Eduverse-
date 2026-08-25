@@ -57,7 +57,12 @@ namespace Eduverse.Api.Controller
             }
             catch (Exception ex)
             {
-                return DataResponse<KhuyenMaiDto>.False(ex.Message);
+                Console.WriteLine("=== LỖI KHUYẾN MÃI (FULL) ===");
+                Console.WriteLine(ex.ToString());               // in cả stack trace + inner
+                Console.WriteLine("--- Inner message ---");
+                Console.WriteLine(ex.InnerException?.Message ?? "(không có inner exception)");
+                return DataResponse<KhuyenMaiDto>.False(
+                    ex.InnerException?.Message ?? ex.Message);
             }
         }
 
@@ -83,7 +88,12 @@ namespace Eduverse.Api.Controller
             }
             catch (Exception ex)
             {
-                return DataResponse<KhuyenMaiDto>.False(ex.Message);
+                Console.WriteLine("=== LỖI KHUYẾN MÃI (FULL) ===");
+                Console.WriteLine(ex.ToString());               // in cả stack trace + inner
+                Console.WriteLine("--- Inner message ---");
+                Console.WriteLine(ex.InnerException?.Message ?? "(không có inner exception)");
+                return DataResponse<KhuyenMaiDto>.False(
+                    ex.InnerException?.Message ?? ex.Message);
             }
         }
 
