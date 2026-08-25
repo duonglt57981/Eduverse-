@@ -53,4 +53,13 @@ namespace Eduverse.Service.KhuyenMaiService.Dto
         public string TrangThai { get; set; } = "Pending";
         public DateTime NgayMoi { get; set; }
     }
+
+    public class KhuyenMaiKhaDungDto
+    {
+        public Guid Id { get; set; }
+        public string? MaGiamGia { get; set; }
+        public int? PhanTramGiam { get; set; }
+        public DateTime? NgayKetThuc { get; set; }
+        public List<Guid> IdsKhoaHocApDung { get; set; } = new();
+    }
 }

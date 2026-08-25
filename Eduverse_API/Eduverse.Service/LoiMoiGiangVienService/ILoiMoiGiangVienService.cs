@@ -1,4 +1,5 @@
-﻿using Eduverse.Service.KhuyenMaiService.Dto;
+﻿using Eduverse.Service.KhoaHocService.Dto;
+using Eduverse.Service.KhuyenMaiService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService.Request;
 using System;
@@ -42,5 +43,10 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         Task PhanHoiKhuyenMai(Guid idLoiMoi, bool dongY);
         Task<List<LoiMoiApDungKhuyenMaiDto>> GetLoiMoiApDungTheoKhuyenMai(Guid idKhuyenMai);
         Task HuyLoiMoiApDungKhuyenMaiTheoMa(Guid idKhuyenMai);
+        Task HuyLoiMoiApDungKhuyenMaiTheoKhoaHoc(Guid idKhuyenMai, List<Guid> idsKhoaHoc);
+        Task<bool> LayTrangThaiEduverseDeals(Guid idKhoaHoc);
+        Task ThamGiaEduverseDeals(Guid idKhoaHoc);
+        Task HuyEduverseDeals(Guid idKhoaHoc);
+        Task<List<KhoaHocMiniDto>> GetKhoaHocDuocThamGiaEduverseDeals();
     }
 }

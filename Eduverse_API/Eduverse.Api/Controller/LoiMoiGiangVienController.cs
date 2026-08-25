@@ -1,4 +1,5 @@
 ﻿using Eduverse.Service.GioHangService;
+using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhuyenMaiService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService;
 using Eduverse.Service.LoiMoiGiangVienService.Dto;
@@ -166,6 +167,38 @@ namespace Eduverse.Api.Controller
         {
             try { return DataResponse<List<LoiMoiApDungKhuyenMaiDto>>.Success(await _service.GetLoiMoiApDungTheoKhuyenMai(idKhuyenMai)); }
             catch (Exception ex) { return DataResponse<List<LoiMoiApDungKhuyenMaiDto>>.False(ex.Message); }
+        }
+
+        [HttpGet("khoa-hoc/{idKhoaHoc}/eduverse-deals")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<bool>> LayTrangThaiEduverseDeals(Guid idKhoaHoc)
+        {
+            try { return DataResponse<bool>.Success(await _service.LayTrangThaiEduverseDeals(idKhoaHoc)); }
+            catch (Exception ex) { return DataResponse<bool>.False(ex.Message); }
+        }
+
+        [HttpPost("khoa-hoc/{idKhoaHoc}/eduverse-deals/tham-gia")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<string>> ThamGiaEduverseDeals(Guid idKhoaHoc)
+        {
+            try { await _service.ThamGiaEduverseDeals(idKhoaHoc); return DataResponse<string>.Success("OK"); }
+            catch (Exception ex) { return DataResponse<string>.False(ex.Message); }
+        }
+
+        [HttpPost("khoa-hoc/{idKhoaHoc}/eduverse-deals/huy")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<string>> HuyEduverseDeals(Guid idKhoaHoc)
+        {
+            try { await _service.HuyEduverseDeals(idKhoaHoc); return DataResponse<string>.Success("OK"); }
+            catch (Exception ex) { return DataResponse<string>.False(ex.Message); }
+        }
+
+        [HttpGet("khoa-hoc/eduverse-deals/danh-sach")]
+        [Authorize(Roles = "Admin,GiaoVien")]
+        public async Task<DataResponse<List<KhoaHocMiniDto>>> GetKhoaHocEduverseDeals()
+        {
+            try { return DataResponse<List<KhoaHocMiniDto>>.Success(await _service.GetKhoaHocDuocThamGiaEduverseDeals()); }
+            catch (Exception ex) { return DataResponse<List<KhoaHocMiniDto>>.False(ex.Message); }
         }
     }
 }

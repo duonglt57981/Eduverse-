@@ -18,5 +18,6 @@ namespace Eduverse.Service.KhuyenMaiService
         Task<KhuyenMaiDto> UpdateKhuyenMai(UpdateKhuyenMaiRequest request);
         Task<bool> DeleteKhuyenMai(Guid id);
         Task<List<KhoaHocMiniDto>> GetAllApprovedKhoaHocAsync();
+        Task<List<KhuyenMaiKhaDungDto>> GetKhaDungTheoKhoaHoc(List<Guid> khoaHocIds);
     }
 }

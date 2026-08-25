@@ -9,6 +9,7 @@ using Eduverse.Service.KhuyenMaiService.Dto;
 using Eduverse.Service.KhuyenMaiService.Request;
 using Eduverse.Service.LoiMoiGiangVienService;              // ★ MỚI
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,8 @@ namespace Eduverse.Service.KhuyenMaiService
         private readonly IKhoaHocRepository _khoaHocRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IKhoaHoc_GiangVienRepository _khoaHocGVRepository;
-        private readonly ILoiMoiGiangVienService _loiMoiGiangVienService; 
+        private readonly ILoiMoiGiangVienService _loiMoiGiangVienService;
+        private readonly UserManager<AppUser> _userManager;
 
         public KhuyenMaiService(
             IKhuyenMaiRepository khuyenMaiRepository,
@@ -33,14 +35,16 @@ namespace Eduverse.Service.KhuyenMaiService
             IKhoaHocRepository khoaHocRepository,
             IHttpContextAccessor httpContextAccessor,
             IKhoaHoc_GiangVienRepository khoaHocGVRepository,
-            ILoiMoiGiangVienService loiMoiGiangVienService                 
+            ILoiMoiGiangVienService loiMoiGiangVienService,
+            UserManager<AppUser> userManager
         ) : base(khuyenMaiRepository)
         {
             _khuyenMai_KhoaHocRepository = khuyenMai_KhoaHocRepository;
             _khoaHocRepository = khoaHocRepository;
             _httpContextAccessor = httpContextAccessor;
             _khoaHocGVRepository = khoaHocGVRepository;
-            _loiMoiGiangVienService = loiMoiGiangVienService;               
+            _loiMoiGiangVienService = loiMoiGiangVienService;
+            _userManager = userManager;
         }
 
         private bool IsAdmin() =>
@@ -123,9 +127,9 @@ namespace Eduverse.Service.KhuyenMaiService
                 foreach (var kmId in khuyenMaiIds)
                 {
                     var ds = await _loiMoiGiangVienService.GetLoiMoiApDungTheoKhuyenMai(kmId);
-                    var chuaAccepted = ds.Where(x => x.TrangThai != "Accepted").ToList();
-                    if (chuaAccepted.Any())
-                        loiMoiTheoKM[kmId] = chuaAccepted;
+                    var dangCho = ds.Where(x => x.TrangThai == "Pending").ToList();
+                    if (dangCho.Any())
+                        loiMoiTheoKM[kmId] = dangCho;
                 }
             }
 
@@ -234,7 +238,6 @@ namespace Eduverse.Service.KhuyenMaiService
             var userId = GetCurrentUserId();
             var isAdmin = IsAdmin();
 
-
             ValidateInput(request.MaGiamGia, request.PhanTramGiam, request.NgayBatDau, request.NgayKetThuc);
 
             var khoaHocs = await ValidateAndGetCourses(request.IdsKhoaHoc);
@@ -255,11 +258,9 @@ namespace Eduverse.Service.KhuyenMaiService
                 SoLuongHieuLuc = request.SoLuongHieuLuc,
             };
 
-
             await CreateAsync(khuyenMai);
             await SaveAsync();
 
-            // ── Nhóm ápNgay: gắn link như code cũ ──
             if (apNgay.Any())
             {
                 var lienKets = apNgay.Select(kh => new KhuyenMai_KhoaHoc
@@ -272,37 +273,14 @@ namespace Eduverse.Service.KhuyenMaiService
                 await _khuyenMai_KhoaHocRepository.SaveAsync();
             }
 
-            var idsTaoMoi = canXinPhep.Any()
-                ? await _loiMoiGiangVienService.TaoLoiMoiApDungKhuyenMai(
-                    khuyenMai.Id,
-                    canXinPhep.Select(kh => kh.Id).ToList())
-                : new List<Guid>();
-
-            return new KhuyenMaiDto
+            if (canXinPhep.Any())
             {
-                Id = khuyenMai.Id,
-                MaGiamGia = khuyenMai.MaGiamGia,
-                PhanTramGiam = khuyenMai.PhanTramGiam,
-                NgayBatDau = khuyenMai.NgayBatDau,
-                NgayKetThuc = khuyenMai.NgayKetThuc,
-                SoLuongHieuLuc = khuyenMai.SoLuongHieuLuc,
-                CreatedDate = khuyenMai.CreatedDate,
-                DanhSachKhoaHoc = apNgay.Select(kh => new KhoaHocMiniDto
-                {
-                    Id = kh.Id,
-                    TieuDe = kh.TieuDe,
-                    HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc
-                }).ToList(),
-                DanhSachDangCho = canXinPhep
-                .Where(kh => idsTaoMoi.Contains(kh.Id))
-                .Select(kh => new LoiMoiApDungKhuyenMaiDto
-                {
-                    IdKhoaHoc = kh.Id,
-                    TenKhoaHoc = kh.TieuDe,
-                    HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
-                    TrangThai = "Pending",
-                }).ToList(),
-            };
+                await _loiMoiGiangVienService.TaoLoiMoiApDungKhuyenMai(
+                    khuyenMai.Id,
+                    canXinPhep.Select(kh => kh.Id).ToList());
+            }
+
+            return await BuildKhuyenMaiDto(khuyenMai.Id);
         }
 
         public async Task<KhuyenMaiDto> UpdateKhuyenMai(UpdateKhuyenMaiRequest request)
@@ -314,9 +292,8 @@ namespace Eduverse.Service.KhuyenMaiService
             if (khuyenMai == null)
                 throw new Exception("Không tìm thấy mã giảm giá");
             if (!request.Id.HasValue)
-            {
                 throw new ArgumentNullException(nameof(request.Id), "(Id) không được phép bỏ trống.");
-            }
+
             var coQuyen = await CoQuyenSuaXoaKhuyenMai(request.Id.Value, userId);
             if (!coQuyen)
                 throw new Exception("Bạn không có quyền hạn để sửa mã giảm giá này");
@@ -324,10 +301,9 @@ namespace Eduverse.Service.KhuyenMaiService
             ValidateInput(request.MaGiamGia, request.PhanTramGiam, request.NgayBatDau, request.NgayKetThuc);
 
             var khoaHocs = await ValidateAndGetCourses(request.IdsKhoaHoc);
-            var (apNgay, canXinPhep) = await PhanLoaiTheoQuyen(khoaHocs, userId, isAdmin);
+            var (apNgayMoi, canXinPhepMoi) = await PhanLoaiTheoQuyen(khoaHocs, userId, isAdmin);
 
             var maCode = request.MaGiamGia!.Trim().ToUpper();
-
             var trung = await AnyAsync(x => x.MaGiamGia == maCode && x.Id != request.Id);
             if (trung)
                 throw new Exception($"Mã giảm giá '{maCode}' đã tồn tại");
@@ -341,64 +317,72 @@ namespace Eduverse.Service.KhuyenMaiService
             await UpdateAsync(khuyenMai);
             await SaveAsync();
 
-            // ── Xoá TOÀN BỘ liên kết đã áp ngay cũ + huỷ lời mời Pending cũ,
-            //    gắn lại theo danh sách mới (giữ đúng ngữ nghĩa "sửa = ghi đè
-            //    toàn bộ" như code gốc) ──
-            var lienKetCu = await _khuyenMai_KhoaHocRepository.GetQueryable()
+            // ── ★ FIX: so sánh DIFF thay vì xoá sạch làm lại toàn bộ ─────────────
+            // Lấy đúng trạng thái ĐANG CÓ trong DB để biết khóa học nào đã áp
+            // trực tiếp (link), khóa học nào đang Pending chờ duyệt.
+            var lienKetHienTai = await _khuyenMai_KhoaHocRepository.GetQueryable()
                 .Where(x => x.IdKhuyenMai == khuyenMai.Id)
                 .ToListAsync();
+            var idsDaLinkTrucTiep = lienKetHienTai
+                .Where(x => x.IdKhoaHoc.HasValue)
+                .Select(x => x.IdKhoaHoc!.Value)
+                .ToHashSet();
 
-            if (lienKetCu.Any())
+            var loiMoiHienTai = await _loiMoiGiangVienService.GetLoiMoiApDungTheoKhuyenMai(khuyenMai.Id);
+            var idsDangChoDuyet = loiMoiHienTai
+                .Where(x => x.TrangThai == "Pending")
+                .Select(x => x.IdKhoaHoc)
+                .ToHashSet();
+
+            var idsChonMoi = khoaHocs.Select(x => x.Id).ToHashSet();
+
+            // 1) Khóa học bị BỎ CHỌN (có trong link hoặc Pending cũ, nhưng không
+            //    còn trong lựa chọn mới) → gỡ link + huỷ Pending tương ứng.
+            var idsBiBoChon = idsDaLinkTrucTiep.Union(idsDangChoDuyet).Except(idsChonMoi).ToList();
+            if (idsBiBoChon.Any())
             {
-                _khuyenMai_KhoaHocRepository.Delete(lienKetCu);
-                await _khuyenMai_KhoaHocRepository.SaveAsync();
+                var lienKetCanXoa = lienKetHienTai
+                    .Where(x => x.IdKhoaHoc.HasValue && idsBiBoChon.Contains(x.IdKhoaHoc.Value))
+                    .ToList();
+                if (lienKetCanXoa.Any())
+                {
+                    _khuyenMai_KhoaHocRepository.Delete(lienKetCanXoa);
+                    await _khuyenMai_KhoaHocRepository.SaveAsync();
+                }
+                await _loiMoiGiangVienService.HuyLoiMoiApDungKhuyenMaiTheoKhoaHoc(khuyenMai.Id, idsBiBoChon);
             }
 
-            await _loiMoiGiangVienService.HuyLoiMoiApDungKhuyenMaiTheoMa(khuyenMai.Id);
-
-            if (apNgay.Any())
+            // 2) apNgay: CHỈ thêm link cho khóa học MỚI chưa từng được link.
+            //    Khóa học đã link rồi (kể cả trước đó apNgay hay đã Accepted từ
+            //    lời mời) mà vẫn được giữ chọn thì KHÔNG đụng tới — giữ nguyên
+            //    CreatedDate, không ghi DB thừa.
+            var apNgayCanThem = apNgayMoi.Where(kh => !idsDaLinkTrucTiep.Contains(kh.Id)).ToList();
+            if (apNgayCanThem.Any())
             {
-                var lienKetMoi = apNgay.Select(kh => new KhuyenMai_KhoaHoc
+                var lienKetMoi = apNgayCanThem.Select(kh => new KhuyenMai_KhoaHoc
                 {
                     IdKhuyenMai = khuyenMai.Id,
                     IdKhoaHoc = kh.Id
                 }).ToList();
-
                 _khuyenMai_KhoaHocRepository.AddRange(lienKetMoi);
                 await _khuyenMai_KhoaHocRepository.SaveAsync();
             }
 
-            var idsTaoMoi = canXinPhep.Any()
-                ? await _loiMoiGiangVienService.TaoLoiMoiApDungKhuyenMai(
-                    khuyenMai.Id,
-                    canXinPhep.Select(kh => kh.Id).ToList())
-                : new List<Guid>();
-
-            return new KhuyenMaiDto
+            // 3) canXinPhep: CHỈ gửi lời mời cho khóa học MỚI — chưa có Pending
+            //    VÀ chưa có link trực tiếp (nếu đã link nghĩa là đã Accepted từ
+            //    trước, không cần xin lại). Đây chính là phần bạn yêu cầu: khóa
+            //    học đã áp dụng/đang chờ mà không đổi gì thì không gửi request.
+            var canXinPhepCanMoi = canXinPhepMoi
+                .Where(kh => !idsDangChoDuyet.Contains(kh.Id) && !idsDaLinkTrucTiep.Contains(kh.Id))
+                .ToList();
+            if (canXinPhepCanMoi.Any())
             {
-                Id = khuyenMai.Id,
-                MaGiamGia = khuyenMai.MaGiamGia,
-                PhanTramGiam = khuyenMai.PhanTramGiam,
-                NgayBatDau = khuyenMai.NgayBatDau,
-                NgayKetThuc = khuyenMai.NgayKetThuc,
-                SoLuongHieuLuc = khuyenMai.SoLuongHieuLuc,
-                CreatedDate = khuyenMai.CreatedDate,
-                DanhSachKhoaHoc = apNgay.Select(kh => new KhoaHocMiniDto
-                {
-                    Id = kh.Id,
-                    TieuDe = kh.TieuDe,
-                    HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc
-                }).ToList(),
-                DanhSachDangCho = canXinPhep
-                .Where(kh => idsTaoMoi.Contains(kh.Id))
-                .Select(kh => new LoiMoiApDungKhuyenMaiDto
-                {
-                    IdKhoaHoc = kh.Id,
-                    TenKhoaHoc = kh.TieuDe,
-                    HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
-                    TrangThai = "Pending",
-                }).ToList(),
-            };
+                await _loiMoiGiangVienService.TaoLoiMoiApDungKhuyenMai(
+                    khuyenMai.Id,
+                    canXinPhepCanMoi.Select(kh => kh.Id).ToList());
+            }
+
+            return await BuildKhuyenMaiDto(khuyenMai.Id);
         }
 
         public async Task<bool> DeleteKhuyenMai(Guid id)
@@ -469,6 +453,54 @@ namespace Eduverse.Service.KhuyenMaiService
                 .ToListAsync();
         }
 
+        public async Task<List<KhuyenMaiKhaDungDto>> GetKhaDungTheoKhoaHoc(List<Guid> khoaHocIds)
+        {
+            if (khoaHocIds == null || !khoaHocIds.Any())
+                return new List<KhuyenMaiKhaDungDto>();
+
+            var idsDistinct = khoaHocIds.Distinct().ToList();
+            var now = DateTime.Now;
+
+            var links = await _khuyenMai_KhoaHocRepository.GetQueryable()
+                .Where(x => x.IdKhoaHoc.HasValue && idsDistinct.Contains(x.IdKhoaHoc.Value)
+                         && x.IdKhuyenMai.HasValue)
+                .ToListAsync();
+
+            var khuyenMaiIds = links.Select(x => x.IdKhuyenMai!.Value).Distinct().ToList();
+            if (!khuyenMaiIds.Any())
+                return new List<KhuyenMaiKhaDungDto>();
+
+            var khuyenMais = await GetQueryable()
+                .Where(x => khuyenMaiIds.Contains(x.Id)
+                         && (!x.NgayKetThuc.HasValue || x.NgayKetThuc.Value >= now)
+                         && (!x.NgayBatDau.HasValue || x.NgayBatDau.Value <= now)
+                         && (!x.SoLuongHieuLuc.HasValue || x.SoLuongHieuLuc.Value > 0))
+                .ToListAsync();
+
+            if (!khuyenMais.Any())
+                return new List<KhuyenMaiKhaDungDto>();
+
+            var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
+
+            var khuyenMaiCuaAdmin = khuyenMais
+                .Where(km => km.CreatedId.HasValue && adminIds.Contains(km.CreatedId.Value))
+                .ToList();
+
+            return khuyenMaiCuaAdmin.Select(km => new KhuyenMaiKhaDungDto
+            {
+                Id = km.Id,
+                MaGiamGia = km.MaGiamGia,
+                PhanTramGiam = km.PhanTramGiam,
+                NgayKetThuc = km.NgayKetThuc,
+                IdsKhoaHocApDung = links
+                    .Where(l => l.IdKhuyenMai == km.Id && l.IdKhoaHoc.HasValue)
+                    .Select(l => l.IdKhoaHoc!.Value)
+                    .Where(id => idsDistinct.Contains(id))
+                    .ToList()
+            }).ToList();
+        }
+
         private async Task<bool> CoQuyenPromotionTrenKhoaHoc(Guid idKhoaHoc, Guid userId)
         {
             var khoaHoc = await _khoaHocRepository.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
@@ -503,6 +535,46 @@ namespace Eduverse.Service.KhuyenMaiService
                     return true;
             }
             return false;
+        }
+
+        private async Task<KhuyenMaiDto> BuildKhuyenMaiDto(Guid idKhuyenMai)
+        {
+            var khuyenMai = await GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhuyenMai)
+                ?? throw new Exception("Không tìm thấy mã giảm giá");
+
+            var lienKetSauCung = await _khuyenMai_KhoaHocRepository.GetQueryable()
+                .Where(x => x.IdKhuyenMai == idKhuyenMai)
+                .ToListAsync();
+            var idsLinkSauCung = lienKetSauCung
+                .Where(x => x.IdKhoaHoc.HasValue)
+                .Select(x => x.IdKhoaHoc!.Value)
+                .ToList();
+            var khoaHocLinkSauCung = await _khoaHocRepository.GetQueryable()
+                .Where(x => idsLinkSauCung.Contains(x.Id))
+                .ToListAsync();
+
+            var loiMoiSauCung = await _loiMoiGiangVienService.GetLoiMoiApDungTheoKhuyenMai(idKhuyenMai);
+            // ★ FIX: lọc đúng "Pending" (khớp với GetListAll đang dùng), không phải
+            // "!= Accepted" như cũ — tránh Rejected bị hiện lẫn vào "đang chờ".
+            var dangChoSauCung = loiMoiSauCung.Where(x => x.TrangThai == "Pending").ToList();
+
+            return new KhuyenMaiDto
+            {
+                Id = khuyenMai.Id,
+                MaGiamGia = khuyenMai.MaGiamGia,
+                PhanTramGiam = khuyenMai.PhanTramGiam,
+                NgayBatDau = khuyenMai.NgayBatDau,
+                NgayKetThuc = khuyenMai.NgayKetThuc,
+                SoLuongHieuLuc = khuyenMai.SoLuongHieuLuc,
+                CreatedDate = khuyenMai.CreatedDate,
+                DanhSachKhoaHoc = khoaHocLinkSauCung.Select(kh => new KhoaHocMiniDto
+                {
+                    Id = kh.Id,
+                    TieuDe = kh.TieuDe,
+                    HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc
+                }).ToList(),
+                DanhSachDangCho = dangChoSauCung,
+            };
         }
     }
 }

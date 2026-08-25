@@ -126,5 +126,20 @@ namespace Eduverse.Api.Controller
                 return DataResponse<List<KhoaHocMiniDto>>.False(ex.Message);
             }
         }
+
+        [HttpGet("khuyenmai-kha-dung")]
+        [Authorize(Roles = "Admin,GiaoVien,HocVien")]
+        public async Task<DataResponse<List<KhuyenMaiKhaDungDto>>> GetKhaDungTheoKhoaHoc([FromQuery] List<Guid> khoaHocIds)
+        {
+            try
+            {
+                var result = await _khuyenMaiService.GetKhaDungTheoKhoaHoc(khoaHocIds);
+                return DataResponse<List<KhuyenMaiKhaDungDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return DataResponse<List<KhuyenMaiKhaDungDto>>.False(ex.Message);
+            }
+        }
     }
 }

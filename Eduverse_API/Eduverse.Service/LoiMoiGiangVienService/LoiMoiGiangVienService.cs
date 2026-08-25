@@ -12,6 +12,7 @@ using Eduverse.Repository.LoiMoiGiangVienRepository;
 using Eduverse.Repository.ThanhToanRepository;
 using Eduverse.Service.AppUserService;
 using Eduverse.Service.Common;
+using Eduverse.Service.KhoaHocService.Dto;
 using Eduverse.Service.KhuyenMaiService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService.Request;
@@ -82,6 +83,10 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 out var userId);
             return userId;
         }
+
+
+        private bool LaAdmin() =>
+            _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
 
         public async Task<QuyenCuaToiDto> GetQuyenCuaToi(Guid idKhoaHoc)
         {
@@ -380,7 +385,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
 
             var loiMois = await _loiMoiRepo.GetQueryable()
                 .Where(x => x.IdNguoiDuocMoi == userId
-                         && !x.IdKhuyenMai.HasValue 
+                         && !x.IdKhuyenMai.HasValue
+                         && x.IdNguoiMoi != x.IdNguoiDuocMoi
                          && !x.IsDeleted)
                 .OrderByDescending(x => x.CreatedDate)
                 .ToListAsync();
@@ -855,10 +861,10 @@ namespace Eduverse.Service.LoiMoiGiangVienService
 
         private async Task<Guid?> TimNguoiDuyetPromotion(Guid idKhoaHoc, KhoaHoc? khoaHoc = null)
         {
-             var thanhViens = await _khoaHocGVRepo.GetQueryable()
-           .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted
-                    && (x.LaChuSoHuu || x.Promotions))
-           .ToListAsync();
+            var thanhViens = await _khoaHocGVRepo.GetQueryable()
+          .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted
+                   && (x.LaChuSoHuu || x.Promotions))
+          .ToListAsync();
 
             var owner = thanhViens.FirstOrDefault(x => x.LaChuSoHuu) ?? thanhViens.FirstOrDefault();
             // ★ FIX: loại cả trường hợp IdGiangVien = Guid.Empty (dữ liệu hỏng),
@@ -905,6 +911,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     continue;
                 }
 
+                var daThamGiaDeals = await DaThamGiaEduverseDeals(idKhoaHoc);
+
                 var loiMoi = new Model.Entities.LoiMoiGiangVien
                 {
                     IdKhuyenMai = idKhuyenMai,
@@ -912,7 +920,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     IdNguoiMoi = userId,
                     IdNguoiDuocMoi = idNguoiDuyet.Value,
                     EmailDuocMoi = string.Empty,
-                    TrangThai = "Pending",
+                    TrangThai = daThamGiaDeals ? "Accepted" : "Pending",
+                    NgayPhanHoi = daThamGiaDeals ? DateTime.UtcNow : (DateTime?)null,
                     Visible = false,
                     TyLeChiaDoanhThu = 0,
                     Manage = false,
@@ -937,16 +946,44 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     throw;
                 }
 
-                await _notificationPublisher.NotifyUserAsync(idNguoiDuyet.Value, new NotificationPayload
+                if (daThamGiaDeals)
                 {
-                    TieuDe = "Yêu cầu áp dụng mã khuyến mãi",
-                    NoiDung = $"Admin muốn áp mã khuyến mãi cho khóa học \"{khoaHoc.TieuDe}\". Vui lòng xác nhận.",
-                    LoaiThongBao = "LoiMoiApDungKhuyenMai",
-                    Link = "/instructor/invites",
-                    FromUser = userId,
-                    ItemId = loiMoi.Id,
-                    ItemName = khoaHoc.TieuDe
-                });
+                    // Gắn liên kết ngay — y hệt nhánh dongY=true trong PhanHoiKhuyenMai
+                    var daCoLink = await _kmKhoaHocRepo.GetQueryable()
+                        .AnyAsync(x => x.IdKhuyenMai == idKhuyenMai && x.IdKhoaHoc == idKhoaHoc);
+                    if (!daCoLink)
+                    {
+                        _kmKhoaHocRepo.Add(new KhuyenMai_KhoaHoc
+                        {
+                            IdKhuyenMai = idKhuyenMai,
+                            IdKhoaHoc = idKhoaHoc,
+                        });
+                        await _kmKhoaHocRepo.SaveAsync();
+                    }
+
+                    await _notificationPublisher.NotifyUserAsync(idNguoiDuyet.Value, new NotificationPayload
+                    {
+                        TieuDe = "Mã khuyến mãi đã được áp dụng tự động",
+                        NoiDung = $"Khóa học \"{khoaHoc.TieuDe}\" đang tham gia Eduverse Deals nên mã khuyến mãi mới được áp dụng tự động, không cần xác nhận.",
+                        LoaiThongBao = "PhanHoiApDungKhuyenMai",
+                        FromUser = userId,
+                        ItemId = loiMoi.Id,
+                        ItemName = khoaHoc.TieuDe
+                    });
+                }
+                else
+                {
+                    await _notificationPublisher.NotifyUserAsync(idNguoiDuyet.Value, new NotificationPayload
+                    {
+                        TieuDe = "Yêu cầu áp dụng mã khuyến mãi",
+                        NoiDung = $"Admin muốn áp mã khuyến mãi cho khóa học \"{khoaHoc.TieuDe}\". Vui lòng xác nhận.",
+                        LoaiThongBao = "LoiMoiApDungKhuyenMai",
+                        Link = "/instructor/invites",
+                        FromUser = userId,
+                        ItemId = loiMoi.Id,
+                        ItemName = khoaHoc.TieuDe
+                    });
+                }
             }
 
             return idsTaoMoi;
@@ -1063,6 +1100,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     });
                     await _kmKhoaHocRepo.SaveAsync();
                 }
+                await DanhDauThamGiaEduverseDeals(loiMoi.IdKhoaHoc, userId);
             }
 
             // Báo lại cho Admin đã gửi lời mời biết kết quả
@@ -1121,6 +1159,228 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         {
             var loiMois = await _loiMoiRepo.GetQueryable()
                 .Where(x => x.IdKhuyenMai == idKhuyenMai
+                         && x.TrangThai == "Pending"
+                         && !x.IsDeleted)
+                .ToListAsync();
+
+            if (!loiMois.Any()) return;
+
+            _loiMoiRepo.Delete(loiMois);
+            await _loiMoiRepo.SaveAsync();
+        }
+
+        private async Task<bool> CoQuyenEduverseDeals(Guid idKhoaHoc, Guid userId)
+        {
+            if (LaAdmin()) return true;
+
+            var khoaHoc = await _khoaHocRepo.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
+            if (khoaHoc == null) return false;
+            if (khoaHoc.CreatedId == userId) return true;
+
+            var daDongY = await _khoaHocGVRepo.GetQueryable()
+            .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == userId && !x.IsDeleted);
+
+            return daDongY;
+        }
+
+        private async Task<bool> DaThamGiaEduverseDeals(Guid idKhoaHoc)
+        {
+            return await _loiMoiRepo.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                            && x.IdNguoiMoi == x.IdNguoiDuocMoi
+                            && x.TrangThai == "Accepted"
+                            && !x.IsDeleted);
+        }
+
+        public async Task<bool> LayTrangThaiEduverseDeals(Guid idKhoaHoc)
+        {
+            var userId = LayUserId();
+            if (!await CoQuyenEduverseDeals(idKhoaHoc, userId))
+                throw new Exception("Bạn không có quyền xem trạng thái Eduverse Deals của khóa học này");
+
+            return await DaThamGiaEduverseDeals(idKhoaHoc);
+        }
+
+        public async Task ThamGiaEduverseDeals(Guid idKhoaHoc)
+        {
+            var userId = LayUserId();
+            if (!await CoQuyenEduverseDeals(idKhoaHoc, userId))
+                throw new Exception("Bạn không có quyền tham gia Eduverse Deals cho khóa học này");
+
+            _ = await _khoaHocRepo.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy khóa học");
+
+            await DanhDauThamGiaEduverseDeals(idKhoaHoc, userId);
+            // Idempotent — đã tham gia rồi thì thôi, tránh tạo trùng dòng Accepted
+            var daThamGia = await _loiMoiRepo.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                            && x.IdNguoiMoi == userId
+                            && x.IdNguoiDuocMoi == userId
+                            && x.TrangThai == "Accepted"
+                            && !x.IsDeleted);
+            if (daThamGia) return;
+
+            var moi = new Model.Entities.LoiMoiGiangVien
+            {
+                IdKhoaHoc = idKhoaHoc,
+                IdNguoiMoi = userId,
+                IdNguoiDuocMoi = userId,
+                EmailDuocMoi = string.Empty,
+                TrangThai = "Accepted",
+                NgayPhanHoi = DateTime.UtcNow,
+                Visible = false,
+                TyLeChiaDoanhThu = 0,
+                Manage = false,
+                Performance = false,
+                QnA = false,
+                Reviews = false,
+                Assignments = false,
+                Materials = false,
+                Promotions = false,
+            };
+            _loiMoiRepo.Add(moi);
+            await _loiMoiRepo.SaveAsync();
+        }
+
+        public async Task HuyEduverseDeals(Guid idKhoaHoc)
+        {
+            var userId = LayUserId();
+            if (!await CoQuyenEduverseDeals(idKhoaHoc, userId))
+                throw new Exception("Bạn không có quyền huỷ Eduverse Deals cho khóa học này");
+
+            var dong = await _loiMoiRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
+                                        && x.IdNguoiMoi == x.IdNguoiDuocMoi
+                                        && x.TrangThai == "Accepted"
+                                        && !x.IsDeleted);
+            if (dong == null) return; // chưa từng tham gia / đã huỷ rồi — coi như thành công
+            await GoKhoiKhuyenMaiKhiTatEduverseDeals(idKhoaHoc);
+            _loiMoiRepo.Delete(dong); // soft-delete, giống HuyLoiMoi
+            await _loiMoiRepo.SaveAsync();
+        }
+
+        private async Task DanhDauThamGiaEduverseDeals(Guid idKhoaHoc, Guid userId)
+        {
+            var daThamGia = await _loiMoiRepo.GetQueryable()
+                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                            && x.IdNguoiMoi == userId
+                            && x.IdNguoiDuocMoi == userId
+                            && x.TrangThai == "Accepted"
+                            && !x.IsDeleted);
+            if (daThamGia) return;
+
+            var moi = new Model.Entities.LoiMoiGiangVien
+            {
+                IdKhoaHoc = idKhoaHoc,
+                IdNguoiMoi = userId,
+                IdNguoiDuocMoi = userId,
+                EmailDuocMoi = string.Empty,
+                TrangThai = "Accepted",
+                NgayPhanHoi = DateTime.UtcNow,
+                Visible = false,
+                TyLeChiaDoanhThu = 0,
+                Manage = false,
+                Performance = false,
+                QnA = false,
+                Reviews = false,
+                Assignments = false,
+                Materials = false,
+                Promotions = false,
+            };
+            _loiMoiRepo.Add(moi);
+            await _loiMoiRepo.SaveAsync();
+        }
+
+        // ── Gỡ khóa học khỏi các mã khuyến mãi đến từ lời mời Admin khi
+        // giảng viên tắt Eduverse Deals ──────────────────────────────────
+        private async Task GoKhoiKhuyenMaiKhiTatEduverseDeals(Guid idKhoaHoc)
+        {
+            var idsKhuyenMaiDaDuyet = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                         && x.IdKhuyenMai.HasValue
+                         && x.TrangThai == "Accepted"
+                         && !x.IsDeleted)
+                .Select(x => x.IdKhuyenMai!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (idsKhuyenMaiDaDuyet.Any())
+            {
+                var lienKets = await _kmKhoaHocRepo.GetQueryable()
+                    .Where(x => x.IdKhoaHoc == idKhoaHoc
+                             && x.IdKhuyenMai.HasValue
+                             && idsKhuyenMaiDaDuyet.Contains(x.IdKhuyenMai!.Value))
+                    .ToListAsync();
+                if (lienKets.Any())
+                {
+                    _kmKhoaHocRepo.Delete(lienKets);
+                    await _kmKhoaHocRepo.SaveAsync();
+                }
+            }
+
+            // Huỷ luôn các lời mời đang Pending — đã tắt Eduverse Deals thì
+            // không còn lý do chờ duyệt tiếp.
+            var loiMoiDangCho = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                         && x.IdKhuyenMai.HasValue
+                         && x.TrangThai == "Pending"
+                         && !x.IsDeleted)
+                .ToListAsync();
+            if (loiMoiDangCho.Any())
+            {
+                _loiMoiRepo.Delete(loiMoiDangCho);
+                await _loiMoiRepo.SaveAsync();
+            }
+        }
+
+        public async Task<List<KhoaHocMiniDto>> GetKhoaHocDuocThamGiaEduverseDeals()
+        {
+            var userId = LayUserId();
+            var isAdmin = LaAdmin();
+
+            var query = _khoaHocRepo.GetQueryable()
+                .Where(x => x.TrangThaiPheDuyet == "DaDuyet"
+                         && x.IsBanHienTai == true
+                         && !x.IsDeleted
+                         && x.TrangThai == "HoatDong");
+
+            if (!isAdmin)
+            {
+                var idsCoQuyen = await _khoaHocGVRepo.GetQueryable()
+                    .Where(x => x.IdGiangVien == userId && !x.IsDeleted)
+                    .Select(x => x.IdKhoaHoc)
+                    .Distinct()
+                    .ToListAsync();
+
+                // Gộp thêm khóa học tự tạo mà chưa từng có bản ghi KhoaHoc_GiangVien
+                // nào (trường hợp chưa từng mời cộng tác viên nào cả).
+                var idsTuTao = await _khoaHocRepo.GetQueryable()
+                    .Where(x => x.CreatedId == userId)
+                    .Select(x => x.Id)
+                    .ToListAsync();
+
+                var idsGop = idsCoQuyen.Union(idsTuTao).ToList();
+                query = query.Where(x => idsGop.Contains(x.Id));
+            }
+
+            return await query
+                .OrderByDescending(x => x.CreatedDate)
+                .Select(x => new KhoaHocMiniDto
+                {
+                    Id = x.Id,
+                    TieuDe = x.TieuDe,
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
+                })
+                .ToListAsync();
+        }
+
+        public async Task HuyLoiMoiApDungKhuyenMaiTheoKhoaHoc(Guid idKhuyenMai, List<Guid> idsKhoaHoc)
+        {
+            if (idsKhoaHoc == null || !idsKhoaHoc.Any()) return;
+
+            var loiMois = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdKhuyenMai == idKhuyenMai
+                         && idsKhoaHoc.Contains(x.IdKhoaHoc)
                          && x.TrangThai == "Pending"
                          && !x.IsDeleted)
                 .ToListAsync();
