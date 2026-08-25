@@ -2,6 +2,7 @@
 import { ApiResponse } from "../types/types";
 import { apiService } from "./index";
 import { KhoaHocMiniDto } from "./KhoaHocService";
+import { LoiMoiApDungKhuyenMaiDto } from "./LoiMoiGiangVienService";
 
 export interface KhuyenMaiDto {
   id: string;
@@ -12,6 +13,7 @@ export interface KhuyenMaiDto {
   soLuongHieuLuc?: number | null;
   createdDate: string;
   danhSachKhoaHoc?: KhoaHocMiniDto[];
+  danhSachDangCho?: LoiMoiApDungKhuyenMaiDto[];
 }
 
 export interface CreateKhuyenMaiRequest {

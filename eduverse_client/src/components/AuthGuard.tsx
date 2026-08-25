@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useDispatch, useSelector } from '@/src/store/hook';
-import { logout, updateAccessToken } from '@/src/store/auth/AuthSlice';
-import { isTokenExpired } from '@/src/utils/jwt';
-import { getRoleHomePath } from '@/src/utils/roleHome';
-import { Box, Paper, Typography } from '@mui/material';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "@/src/store/hook";
+import { logout, updateAccessToken } from "@/src/store/auth/AuthSlice";
+import { isTokenExpired } from "@/src/utils/jwt";
+import { getRoleHomePath } from "@/src/utils/roleHome";
+import { Box, Paper, Typography } from "@mui/material";
 import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 interface AuthGuardProps {
@@ -17,17 +17,20 @@ interface AuthGuardProps {
 
 /**
  * AuthGuard — Client-side route protection component.
- * 
+ *
  * Wraps pages that require authentication and/or specific roles.
  * - If user is not logged in → redirects to /auth/login
  * - If user doesn't have the required role → shows 403 Forbidden page
- * 
+ *
  * Usage:
  *   <AuthGuard allowedRoles={['Admin']}>
  *     <AdminPage />
  *   </AuthGuard>
  */
-export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProps) {
+export default function AuthGuard({
+  children,
+  allowedRoles = [],
+}: AuthGuardProps) {
   const router = useRouter();
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
@@ -38,12 +41,15 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
   const getHomeRoute = () => getRoleHomePath(roles);
 
   useEffect(() => {
-    const localToken = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
+    const localToken =
+      typeof window !== "undefined"
+        ? localStorage.getItem("AccessToken")
+        : null;
     const activeToken = localToken || user?.accessToken;
 
     // 1. Not logged in → redirect to login
     if (!user || !activeToken) {
-      router.replace('/auth/login');
+      router.replace("/auth/login");
       return;
     }
 
@@ -52,7 +58,7 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
       console.log("is Expired");
       localStorage.removeItem("AccessToken");
       dispatch(logout());
-      router.replace('/auth/login');
+      router.replace("/auth/login");
       return;
     }
 
@@ -85,9 +91,9 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
     return (
       <Box
         sx={{
-          minHeight: '100vh',
-          display: 'grid',
-          placeItems: 'center',
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
           bgcolor: CSSVAR.bg,
         }}
       >
@@ -96,9 +102,9 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
           sx={{
             px: 6,
             py: 5,
-            borderRadius: '24px',
-            border: '1px solid rgba(0,0,0,0.06)',
-            textAlign: 'center',
+            borderRadius: "24px",
+            border: "1px solid rgba(0,0,0,0.06)",
+            textAlign: "center",
             maxWidth: 440,
           }}
         >
@@ -107,8 +113,8 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
               fontSize: 64,
               fontWeight: 900,
               background: `linear-gradient(135deg, ${STATUS.error} 0%, #7F1D1D 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
               lineHeight: 1,
             }}
           >
@@ -132,8 +138,8 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
               lineHeight: 1.6,
             }}
           >
-            Bạn không có quyền truy cập trang này.
-            Vui lòng liên hệ quản trị viên nếu cần hỗ trợ.
+            Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị
+            viên nếu cần hỗ trợ.
           </Typography>
           <Box
             component="button"
@@ -142,18 +148,18 @@ export default function AuthGuard({ children, allowedRoles = [] }: AuthGuardProp
               mt: 3,
               px: 4,
               py: 1.5,
-              borderRadius: '50px',
-              border: 'none',
+              borderRadius: "50px",
+              border: "none",
               background: `linear-gradient(90deg, ${BRAND.main} 0%, #7f1d1d 55%, #6b1414 100%)`,
-              color: '#fff',
+              color: "#fff",
               fontSize: 14,
               fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 8px 24px rgba(127,29,29,0.2)',
-              transition: 'all 200ms ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 12px 32px rgba(127,29,29,0.3)',
+              cursor: "pointer",
+              boxShadow: "0 8px 24px rgba(127,29,29,0.2)",
+              transition: "all 200ms ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: "0 12px 32px rgba(127,29,29,0.3)",
               },
             }}
           >
