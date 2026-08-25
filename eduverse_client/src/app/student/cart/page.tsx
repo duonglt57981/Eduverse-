@@ -45,6 +45,15 @@ interface KetQuaApDungMa {
   tenKhoaHocDuocGiam?: string;
   soTienGiam?: number;
 }
+
+interface KhuyenMaiKhaDung {
+  id: string;
+  maGiamGia: string;
+  phanTramGiam?: number;
+  ngayKetThuc?: string;
+  idsKhoaHocApDung: string[];
+}
+
 interface ApDungNhieuMaResponse {
   ketQua: KetQuaApDungMa[];
   soTienGoc: number;
@@ -82,6 +91,8 @@ function GioHangContent() {
   const [maDangNhap, setMaDangNhap] = useState("");
   const [dsMaDaThem, setDsMaDaThem] = useState<string[]>([]);
   const [ketQuaMa, setKetQuaMa] = useState<ApDungNhieuMaResponse | null>(null);
+  const [dsMaKhaDung, setDsMaKhaDung] = useState<KhuyenMaiKhaDung[]>([]);
+  const [loadingMaKhaDung, setLoadingMaKhaDung] = useState(false);
 
   const items = gioHang?.items ?? [];
   const tongTien = gioHang?.tongTien ?? 0;
@@ -108,6 +119,25 @@ function GioHangContent() {
       }),
     );
   }, [dispatch]);
+  useEffect(() => {
+    const idsKhoaHoc = coPhí.map((i) => i.idKhoaHoc!).filter(Boolean);
+    if (idsKhoaHoc.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDsMaKhaDung([]);
+      return;
+    }
+    setLoadingMaKhaDung(true);
+    const params = new URLSearchParams();
+    idsKhoaHoc.forEach((id) => params.append("khoaHocIds", id));
+    apiService
+      .get<KhuyenMaiKhaDung[]>(
+        `/KhuyenMai/khuyenmai-kha-dung?${params.toString()}`,
+      )
+      .then((res) => setDsMaKhaDung(res.data ?? []))
+      .catch(() => setDsMaKhaDung([]))
+      .finally(() => setLoadingMaKhaDung(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
 
   const formatGia = (gia?: number) =>
     gia && gia > 0 ? `${gia.toLocaleString("vi-VN")} ₫` : "Miễn phí";
@@ -160,6 +190,13 @@ function GioHangContent() {
 
   const handleXoaMa = async (ma: string) => {
     const dsMoi = dsMaDaThem.filter((m) => m !== ma);
+    setDsMaDaThem(dsMoi);
+    await tinhLaiMa(dsMoi);
+  };
+
+  const handleChonMa = async (ma: string) => {
+    if (dsMaDaThem.includes(ma)) return;
+    const dsMoi = [...dsMaDaThem, ma];
     setDsMaDaThem(dsMoi);
     await tinhLaiMa(dsMoi);
   };
@@ -656,6 +693,103 @@ function GioHangContent() {
                   học
                 </Typography>
 
+                <Typography
+                  sx={{ fontSize: 12, color: "text.secondary", mb: 1.5 }}
+                >
+                  Có thể áp dụng nhiều mã cùng lúc, mỗi mã chỉ giảm cho 1 khóa
+                  học
+                </Typography>
+
+                {/* ★ MỚI: pick-list mã ưu đãi do Admin tạo — chọn nhanh, không cần gõ */}
+                {loadingMaKhaDung ? (
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", py: 1 }}
+                  >
+                    <CircularProgress size={16} sx={{ color: PRIMARY }} />
+                  </Box>
+                ) : dsMaKhaDung.filter(
+                    (km) => !dsMaDaThem.includes(km.maGiamGia),
+                  ).length > 0 ? (
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "text.primary",
+                        mb: 0.75,
+                      }}
+                    >
+                      Mã ưu đãi có sẵn
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0.75,
+                      }}
+                    >
+                      {dsMaKhaDung
+                        .filter((km) => !dsMaDaThem.includes(km.maGiamGia))
+                        .map((km) => (
+                          <Box
+                            key={km.id}
+                            onClick={() =>
+                              !apDungLoading && handleChonMa(km.maGiamGia)
+                            }
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              border: "1.5px dashed rgba(141,19,19,0.25)",
+                              borderRadius: "8px",
+                              px: 1.25,
+                              py: 0.75,
+                              cursor: apDungLoading ? "default" : "pointer",
+                              opacity: apDungLoading ? 0.6 : 1,
+                              transition: "all 0.15s ease",
+                              "&:hover": apDungLoading
+                                ? {}
+                                : {
+                                    bgcolor: "rgba(141,19,19,0.04)",
+                                    borderColor: PRIMARY,
+                                  },
+                            }}
+                          >
+                            <Box>
+                              <Typography
+                                sx={{
+                                  fontSize: 12.5,
+                                  fontWeight: 800,
+                                  color: PRIMARY,
+                                }}
+                              >
+                                {km.maGiamGia}
+                              </Typography>
+                              <Typography
+                                sx={{ fontSize: 10.5, color: "text.secondary" }}
+                              >
+                                Giảm {km.phanTramGiam}%
+                                {km.ngayKetThuc &&
+                                  ` • HSD ${new Date(km.ngayKetThuc).toLocaleDateString("vi-VN")}`}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label="Chọn"
+                              size="small"
+                              sx={{
+                                bgcolor: PRIMARY,
+                                color: "#fff",
+                                fontWeight: 700,
+                                fontSize: 10.5,
+                                height: 22,
+                              }}
+                            />
+                          </Box>
+                        ))}
+                    </Box>
+                  </Box>
+                ) : null}
+
                 {dsMaDaThem.length > 0 && (
                   <Box
                     sx={{
@@ -682,7 +816,14 @@ function GioHangContent() {
                   </Box>
                 )}
 
-                <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", height: 40 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    alignItems: "stretch",
+                    height: 40,
+                  }}
+                >
                   <TextField
                     size="small"
                     fullWidth

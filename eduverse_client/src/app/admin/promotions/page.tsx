@@ -656,25 +656,21 @@ function PromotionsContent() {
 
                         {(km.danhSachDangCho?.length ?? 0) > 0 && (
                           <Tooltip
-                            title={(km.danhSachDangCho ?? [])
-                              .map(
-                                (d) =>
-                                  `${d.tenKhoaHoc ?? "?"} — ${nhanTrangThaiDangCho(
-                                    d.trangThai,
-                                  )}`,
-                              )
+                            title={km
+                              .danhSachDangCho!.map((d) => d.tenKhoaHoc ?? "?")
                               .join(" · ")}
+                            arrow
                           >
                             <Chip
                               size="small"
                               label={`⏳ ${km.danhSachDangCho!.length} chờ duyệt`}
                               sx={{
-                                width: "fit-content",
-                                fontSize: 11,
                                 height: 22,
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
                                 bgcolor: "#FEF3C7",
                                 color: "#92400E",
-                                fontWeight: 700,
+                                mt: 0.5,
                               }}
                             />
                           </Tooltip>

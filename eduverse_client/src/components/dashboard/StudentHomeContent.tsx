@@ -125,6 +125,7 @@ interface DashboardData {
     subfields?: string[];
   }[];
   skillsCourses?: KhoaHocDto[];
+  promotedCourses?: KhoaHocDto[];
   premiumSelection?: {
     id?: string;
     title?: string;
@@ -1664,7 +1665,12 @@ export default function StudentHomeContent() {
     );
   }
 
-  const { welcomeStats, interestedSkills, historyRecommendation } = data;
+  const {
+    welcomeStats,
+    interestedSkills,
+    historyRecommendation,
+    promotedCourses,
+  } = data;
 
   const emptyForTab: Record<string, { title: string; desc: string }> = {
     courses: {
@@ -1895,6 +1901,45 @@ export default function StudentHomeContent() {
                 onAddCart={handleAddCart}
                 onClick={handleOpenCourse}
               />
+            ))}
+          </CarouselRow>
+        </Box>
+      )}
+
+      {/* ── Khóa học ưu đãi (voucher do Admin tạo) ──────────────────── */}
+      {promotedCourses && promotedCourses.length > 0 && (
+        <Box>
+          <SectionHeader title="Khóa học ưu đãi" />
+          <CarouselRow>
+            {promotedCourses.map((c, i) => (
+              <Box key={c.id || i} sx={{ position: "relative", flexShrink: 0 }}>
+                <Chip
+                  size="small"
+                  sx={{
+                    position: "absolute",
+                    top: -10,
+                    left: 10,
+                    zIndex: 6,
+                    bgcolor: STATUS.warning,
+                    color: "#fff",
+                    fontWeight: 900,
+                    fontSize: 10.5,
+                    height: 22,
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.18)",
+                  }}
+                />
+                <CourseCard
+                  course={{
+                    ...c,
+                    hinhAnhKhoaHoc:
+                      c.hinhAnhKhoaHoc ||
+                      courseImages[c.id || ""] ||
+                      titleImages[c.tieuDe || ""],
+                  }}
+                  onAddCart={handleAddCart}
+                  onClick={handleOpenCourse}
+                />
+              </Box>
             ))}
           </CarouselRow>
         </Box>

@@ -165,6 +165,11 @@ export interface LoiMoiApDungKhuyenMaiDto {
   ngayMoi?: string;
   ngayPhanHoi?: string;
 }
+export interface KhoaHocEduverseDealsDto {
+  id: string;
+  tieuDe: string;
+  hinhAnhKhoaHoc?: string;
+}
 
 class LoiMoiGiangVienService {
   async GuiLoiMoi(request: GuiLoiMoiRequest) {
@@ -279,6 +284,33 @@ class LoiMoiGiangVienService {
       `/LoiMoiGiangVien/loimoi-khuyenmai-phanhoi/${idLoiMoi}?dongY=${dongY}`,
     );
     return res.data;
+  }
+  async GetTrangThaiEduverseDeals(idKhoaHoc: string): Promise<boolean> {
+    const res = await apiService.get<boolean>(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/eduverse-deals`,
+    );
+    return res.data ?? false;
+  }
+
+  async ThamGiaEduverseDeals(idKhoaHoc: string) {
+    const res = await apiService.post(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/eduverse-deals/tham-gia`,
+    );
+    return res.data;
+  }
+
+  async HuyEduverseDeals(idKhoaHoc: string) {
+    const res = await apiService.post(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/eduverse-deals/huy`,
+    );
+    return res.data;
+  }
+
+  async GetKhoaHocEduverseDeals(): Promise<KhoaHocEduverseDealsDto[]> {
+    const res = await apiService.get<KhoaHocEduverseDealsDto[]>(
+      "/LoiMoiGiangVien/khoa-hoc/eduverse-deals/danh-sach",
+    );
+    return res.data ?? [];
   }
 }
 
