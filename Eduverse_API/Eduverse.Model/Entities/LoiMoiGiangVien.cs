@@ -30,5 +30,6 @@ namespace Eduverse.Model.Entities
         public bool Assignments { get; set; }
         public bool Materials { get; set; }
         public bool Promotions { get; set; }
+        public Guid? IdKhuyenMai { get; set; }
     }
 }

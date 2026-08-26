@@ -1,4 +1,6 @@
-﻿using Eduverse.Service.LoiMoiGiangVienService.Dto;
+﻿using Eduverse.Service.KhoaHocService.Dto;
+using Eduverse.Service.KhuyenMaiService.Dto;
+using Eduverse.Service.LoiMoiGiangVienService.Dto;
 using Eduverse.Service.LoiMoiGiangVienService.Request;
 using System;
 using System.Collections.Generic;
@@ -36,5 +38,15 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         Task CapNhatQuyenHangLoat(Guid idKhoaHoc, CapNhatQuyenHangLoatRequest request);
         Task<QuyenCuaToiDto> GetQuyenCuaToi(Guid idKhoaHoc);
         Task<int> BackfillDonHangGiangVienAsync();
+        Task<List<Guid>> TaoLoiMoiApDungKhuyenMai(Guid idKhuyenMai, List<Guid> idsKhoaHoc);
+        Task<List<LoiMoiKhuyenMaiChoXacNhanDto>> GetLoiMoiKhuyenMaiCuaToi();
+        Task PhanHoiKhuyenMai(Guid idLoiMoi, bool dongY);
+        Task<List<LoiMoiApDungKhuyenMaiDto>> GetLoiMoiApDungTheoKhuyenMai(Guid idKhuyenMai);
+        Task HuyLoiMoiApDungKhuyenMaiTheoMa(Guid idKhuyenMai);
+        Task HuyLoiMoiApDungKhuyenMaiTheoKhoaHoc(Guid idKhuyenMai, List<Guid> idsKhoaHoc);
+        Task<bool> LayTrangThaiEduverseDeals(Guid idKhoaHoc);
+        Task ThamGiaEduverseDeals(Guid idKhoaHoc);
+        Task HuyEduverseDeals(Guid idKhoaHoc);
+        Task<List<KhoaHocMiniDto>> GetKhoaHocDuocThamGiaEduverseDeals();
     }
 }

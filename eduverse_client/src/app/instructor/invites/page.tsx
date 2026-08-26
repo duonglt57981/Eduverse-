@@ -24,11 +24,13 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { useState, useEffect, useCallback } from "react";
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import LoiMoiGiangVienService, {
   LoiMoiChoXacNhanDto,
+  LoiMoiKhuyenMaiChoXacNhanDto,
 } from "@/src/services/LoiMoiGiangVienService";
 import { BRAND, NEUTRAL, STATUS } from "@/src/theme/tokens";
 
@@ -50,10 +52,28 @@ const DANH_SACH_QUYEN_HIEN_THI = [
 ];
 
 function TrangThaiChip({ trangThai }: { trangThai: string }) {
-  const map: Record<string, { nhan: string; mau: string; nen: string; vieng: string }> = {
-    Pending: { nhan: "Chờ xác nhận", mau: STATUS.warningDark, nen: "#FEF3C7", vieng: "#FDE68A" },
-    Accepted: { nhan: "Đã chấp nhận", mau: "#16A34A", nen: "#DCFCE7", vieng: "#BBF7D0" },
-    Rejected: { nhan: "Đã từ chối", mau: STATUS.error, nen: "#FEE2E2", vieng: "#FECACA" },
+  const map: Record<
+    string,
+    { nhan: string; mau: string; nen: string; vieng: string }
+  > = {
+    Pending: {
+      nhan: "Chờ xác nhận",
+      mau: STATUS.warningDark,
+      nen: "#FEF3C7",
+      vieng: "#FDE68A",
+    },
+    Accepted: {
+      nhan: "Đã chấp nhận",
+      mau: "#16A34A",
+      nen: "#DCFCE7",
+      vieng: "#BBF7D0",
+    },
+    Rejected: {
+      nhan: "Đã từ chối",
+      mau: STATUS.error,
+      nen: "#FEE2E2",
+      vieng: "#FECACA",
+    },
   };
   const cfg = map[trangThai] ?? {
     nhan: trangThai,
@@ -78,11 +98,171 @@ function TrangThaiChip({ trangThai }: { trangThai: string }) {
   );
 }
 
+// ── MỚI: card hiển thị 1 lời mời "xin áp dụng khuyến mãi" từ Admin ──────
+function LoiMoiKhuyenMaiCard({
+  loiMoi,
+  dangXuLy,
+  onPhanHoi,
+}: {
+  loiMoi: LoiMoiKhuyenMaiChoXacNhanDto;
+  dangXuLy: boolean;
+  onPhanHoi: (id: string, dongY: boolean) => void;
+}) {
+  const isPending = loiMoi.trangThai === "Pending";
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: "20px",
+        border: `1px solid ${isPending ? `${BRAND.main}35` : "#E2E8F0"}`,
+        bgcolor: "#FFFFFF",
+        overflow: "hidden",
+        p: { xs: 2.5, sm: 3 },
+      }}
+    >
+      <Box
+        sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}
+      >
+        <Box
+          sx={{
+            width: 56,
+            height: 56,
+            borderRadius: "14px",
+            flexShrink: 0,
+            bgcolor: "#F1F5F9",
+            overflow: "hidden",
+            position: "relative",
+            border: "1px solid #E2E8F0",
+          }}
+        >
+          {loiMoi.hinhAnhKhoaHoc ? (
+            <Image
+              src={loiMoi.hinhAnhKhoaHoc}
+              alt={loiMoi.tenKhoaHoc || "Khóa học"}
+              fill
+              style={{ objectFit: "cover" }}
+              unoptimized
+            />
+          ) : (
+            <Box
+              sx={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <SchoolOutlinedIcon sx={{ color: "#94A3B8", fontSize: 26 }} />
+            </Box>
+          )}
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 200 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <Chip
+              icon={<LocalOfferIcon sx={{ fontSize: "14px !important" }} />}
+              label={loiMoi.maGiamGia}
+              size="small"
+              sx={{
+                bgcolor: "#FEF2F2",
+                color: BRAND.main,
+                fontWeight: 800,
+                fontSize: 12.5,
+              }}
+            />
+            <Typography
+              sx={{ fontWeight: 800, fontSize: 15, color: BRAND.main }}
+            >
+              -{loiMoi.phanTramGiam}%
+            </Typography>
+          </Box>
+          <Typography sx={{ fontWeight: 700, fontSize: 15, color: "#0F172A" }}>
+            {loiMoi.tenKhoaHoc}
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: "#64748B", mt: 0.3 }}>
+            Admin{" "}
+            <strong style={{ color: "#0F172A" }}>
+              {loiMoi.tenNguoiMoi || ""}
+            </strong>{" "}
+            muốn áp mã này cho khóa học của bạn
+          </Typography>
+        </Box>
+
+        {isPending ? (
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={
+                dangXuLy ? <CircularProgress size={14} /> : <CloseIcon />
+              }
+              disabled={dangXuLy}
+              onClick={() => onPhanHoi(loiMoi.id, false)}
+              sx={{
+                textTransform: "none",
+                fontWeight: 700,
+                borderRadius: "10px",
+                borderColor: "#FECACA",
+                color: "#EF4444",
+              }}
+            >
+              Từ chối
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={
+                dangXuLy ? (
+                  <CircularProgress size={14} sx={{ color: "#fff" }} />
+                ) : (
+                  <CheckIcon />
+                )
+              }
+              disabled={dangXuLy}
+              onClick={() => onPhanHoi(loiMoi.id, true)}
+              sx={{
+                textTransform: "none",
+                fontWeight: 800,
+                borderRadius: "10px",
+                bgcolor: BRAND.main,
+                "&:hover": { bgcolor: BRAND.dark },
+              }}
+            >
+              Đồng ý
+            </Button>
+          </Box>
+        ) : (
+          <Chip
+            label={loiMoi.trangThai === "Accepted" ? "Đã đồng ý" : "Đã từ chối"}
+            size="small"
+            sx={{
+              fontWeight: 700,
+              bgcolor: loiMoi.trangThai === "Accepted" ? "#DCFCE7" : "#F3F4F6",
+              color: loiMoi.trangThai === "Accepted" ? "#16A34A" : "#6B7280",
+            }}
+          />
+        )}
+      </Box>
+    </Paper>
+  );
+}
+
 export default function InvitesPage() {
   const [danhSach, setDanhSach] = useState<LoiMoiChoXacNhanDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [dangXuLyId, setDangXuLyId] = useState<string | null>(null);
-  const [tabFilter, setTabFilter] = useState<"all" | "pending" | "resolved">("all");
+  const [tabFilter, setTabFilter] = useState<"all" | "pending" | "resolved">(
+    "all",
+  );
+
+  // ── MỚI: state cho lời mời khuyến mãi ──
+  const [dsKhuyenMai, setDsKhuyenMai] = useState<
+    LoiMoiKhuyenMaiChoXacNhanDto[]
+  >([]);
+  const [dangXuLyKM, setDangXuLyKM] = useState<string | null>(null);
+
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
@@ -109,11 +289,25 @@ export default function InvitesPage() {
     }
   }, []);
 
+  // ── MỚI: load danh sách lời mời khuyến mãi (không chặn trang nếu lỗi) ──
+  const loadKhuyenMai = useCallback(async () => {
+    try {
+      const data = await LoiMoiGiangVienService.GetLoiMoiKhuyenMaiCuaToi();
+      setDsKhuyenMai(data);
+    } catch (err: any) {
+      // ★ FIX: trước đây catch rỗng, lỗi 401/403/500 gì cũng im lặng biến
+      // mất, không cách nào biết được là do bug hay do thật sự không có
+      // lời mời nào.
+      console.error("Lỗi tải lời mời khuyến mãi:", err);
+    }
+  }, []);
+
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDanhSach();
-  }, [loadDanhSach]);
+    loadKhuyenMai();
+  }, [loadDanhSach, loadKhuyenMai]);
 
   const handlePhanHoi = async (id: string, dongY: boolean) => {
     setDangXuLyId(id);
@@ -136,15 +330,40 @@ export default function InvitesPage() {
     }
   };
 
+  // ── MỚI: phản hồi lời mời khuyến mãi ──
+  const handlePhanHoiKhuyenMai = async (id: string, dongY: boolean) => {
+    setDangXuLyKM(id);
+    try {
+      await LoiMoiGiangVienService.PhanHoiKhuyenMai(id, dongY);
+      setToast({
+        open: true,
+        message: dongY
+          ? "Đã đồng ý áp dụng khuyến mãi!"
+          : "Đã từ chối khuyến mãi",
+        severity: "success",
+      });
+      await loadKhuyenMai();
+    } catch (err: any) {
+      setToast({
+        open: true,
+        message: err.message || "Có lỗi xảy ra",
+        severity: "error",
+      });
+    } finally {
+      setDangXuLyKM(null);
+    }
+  };
+
   const pendingList = danhSach.filter((x) => x.trangThai === "Pending");
   const resolvedList = danhSach.filter((x) => x.trangThai !== "Pending");
+  const pendingKhuyenMai = dsKhuyenMai.filter((x) => x.trangThai === "Pending");
 
   const filteredList =
     tabFilter === "pending"
       ? pendingList
       : tabFilter === "resolved"
-      ? resolvedList
-      : danhSach;
+        ? resolvedList
+        : danhSach;
 
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
@@ -196,7 +415,14 @@ export default function InvitesPage() {
 
             {pendingList.length > 0 && (
               <Chip
-                icon={<AutoAwesomeIcon sx={{ fontSize: "16px !important", color: `${STATUS.warningDark} !important` }} />}
+                icon={
+                  <AutoAwesomeIcon
+                    sx={{
+                      fontSize: "16px !important",
+                      color: `${STATUS.warningDark} !important`,
+                    }}
+                  />
+                }
                 label={`${pendingList.length} lời mời cần xử lý`}
                 sx={{
                   fontWeight: 700,
@@ -210,6 +436,33 @@ export default function InvitesPage() {
               />
             )}
           </Box>
+
+          {/* ── MỚI: Khối "Yêu cầu áp dụng khuyến mãi" ── */}
+          {pendingKhuyenMai.length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
+              >
+                <LocalOfferIcon sx={{ fontSize: 20, color: BRAND.main }} />
+                <Typography
+                  sx={{ fontWeight: 800, fontSize: 16, color: "#0F172A" }}
+                >
+                  Yêu cầu áp dụng khuyến mãi ({pendingKhuyenMai.length})
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                {pendingKhuyenMai.map((km) => (
+                  <LoiMoiKhuyenMaiCard
+                    key={km.id}
+                    loiMoi={km}
+                    dangXuLy={dangXuLyKM === km.id}
+                    onPhanHoi={handlePhanHoiKhuyenMai}
+                  />
+                ))}
+              </Box>
+              <Divider sx={{ mt: 4, borderColor: "#E2E8F0" }} />
+            </Box>
+          )}
 
           {/* Filter Tabs */}
           {danhSach.length > 0 && (
@@ -278,12 +531,16 @@ export default function InvitesPage() {
               }}
             >
               <CircularProgress size={36} sx={{ color: MAU.chinh }} />
-              <Typography sx={{ fontSize: 14, color: "#64748B", fontWeight: 500 }}>
+              <Typography
+                sx={{ fontSize: 14, color: "#64748B", fontWeight: 500 }}
+              >
                 Đang tải thông tin lời mời...
               </Typography>
             </Box>
           ) : danhSach.length === 0 ? (
-            <EmptyState />
+            pendingKhuyenMai.length === 0 ? (
+              <EmptyState />
+            ) : null
           ) : filteredList.length === 0 ? (
             <Paper
               elevation={0}
@@ -296,7 +553,9 @@ export default function InvitesPage() {
                 bgcolor: "#F8FAFC",
               }}
             >
-              <Typography sx={{ fontWeight: 700, fontSize: 15, color: "#475569" }}>
+              <Typography
+                sx={{ fontWeight: 700, fontSize: 15, color: "#475569" }}
+              >
                 Không có lời mời nào trong mục này
               </Typography>
             </Paper>
@@ -334,7 +593,9 @@ export default function InvitesPage() {
   );
 }
 
-{/* Premium Empty State Component */}
+{
+  /* Premium Empty State Component */
+}
 function EmptyState() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -406,7 +667,8 @@ function EmptyState() {
             lineHeight: 1.6,
           }}
         >
-          Khi có giảng viên khác mời bạn cùng hợp tác quản lý hoặc giảng dạy khóa học, thông tin lời mời sẽ hiển thị tại đây.
+          Khi có giảng viên khác mời bạn cùng hợp tác quản lý hoặc giảng dạy
+          khóa học, thông tin lời mời sẽ hiển thị tại đây.
         </Typography>
       </Paper>
 
@@ -468,7 +730,9 @@ function EmptyState() {
               </Typography>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <VerifiedUserOutlinedIcon sx={{ fontSize: 18, color: BRAND.main }} />
+              <VerifiedUserOutlinedIcon
+                sx={{ fontSize: 18, color: BRAND.main }}
+              />
               <Typography sx={{ fontSize: 13, color: "#475569" }}>
                 Phân quyền quản lý nội dung chi tiết
               </Typography>
@@ -480,7 +744,9 @@ function EmptyState() {
   );
 }
 
-{/* Premium Invitation Card */}
+{
+  /* Premium Invitation Card */
+}
 function LoiMoiCard({
   loiMoi,
   dangXuLy,
@@ -492,7 +758,7 @@ function LoiMoiCard({
 }) {
   const isPending = loiMoi.trangThai === "Pending";
   const quyenDuocCap = DANH_SACH_QUYEN_HIEN_THI.filter(
-    (q) => (loiMoi as any)[q.key] === true
+    (q) => (loiMoi as any)[q.key] === true,
   );
 
   return (
@@ -528,7 +794,9 @@ function LoiMoiCard({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <AutoAwesomeIcon sx={{ fontSize: 15 }} />
-            <Typography sx={{ fontWeight: 700, fontSize: 12, letterSpacing: "0.03em" }}>
+            <Typography
+              sx={{ fontWeight: 700, fontSize: 12, letterSpacing: "0.03em" }}
+            >
               LỜI MỜI MỚI CHỜ BẠN PHẢN HỒI
             </Typography>
           </Box>
@@ -676,7 +944,9 @@ function LoiMoiCard({
               <TrendingUpIcon sx={{ fontSize: 18, color: BRAND.main }} />
               <Typography sx={{ fontSize: 13, color: "#334155" }}>
                 Tỷ lệ chia doanh thu:{" "}
-                <strong style={{ color: BRAND.main, fontSize: 14.5, fontWeight: 800 }}>
+                <strong
+                  style={{ color: BRAND.main, fontSize: 14.5, fontWeight: 800 }}
+                >
                   {loiMoi.tyLeChiaDoanhThu}%
                 </strong>
               </Typography>
@@ -730,7 +1000,14 @@ function LoiMoiCard({
                 quyenDuocCap.map((q) => (
                   <Chip
                     key={q.key}
-                    icon={<CheckIcon sx={{ fontSize: "14px !important", color: `${BRAND.main} !important` }} />}
+                    icon={
+                      <CheckIcon
+                        sx={{
+                          fontSize: "14px !important",
+                          color: `${BRAND.main} !important`,
+                        }}
+                      />
+                    }
                     label={q.nhan}
                     size="small"
                     sx={{
@@ -774,7 +1051,11 @@ function LoiMoiCard({
           <Button
             variant="outlined"
             startIcon={
-              dangXuLy ? <CircularProgress size={16} sx={{ color: "#EF4444" }} /> : <CloseIcon />
+              dangXuLy ? (
+                <CircularProgress size={16} sx={{ color: "#EF4444" }} />
+              ) : (
+                <CloseIcon />
+              )
             }
             disabled={dangXuLy}
             onClick={() => onPhanHoi(loiMoi.id, false)}

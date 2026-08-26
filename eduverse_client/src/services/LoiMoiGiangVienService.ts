@@ -137,6 +137,40 @@ export interface CapNhatQuyenHangLoatRequest {
   danhSach: CapNhatQuyenHangLoatItem[];
 }
 
+// ── MỚI: lời mời "xin áp dụng khuyến mãi" (Admin -> giảng viên sở hữu) ──
+export interface LoiMoiKhuyenMaiChoXacNhanDto {
+  id: string;
+  idKhuyenMai: string;
+  maGiamGia?: string;
+  phanTramGiam?: number;
+  ngayBatDauKM?: string;
+  ngayKetThucKM?: string;
+  idKhoaHoc: string;
+  tenKhoaHoc?: string;
+  hinhAnhKhoaHoc?: string;
+  tenNguoiMoi?: string;
+  anhNguoiMoi?: string;
+  trangThai: "Pending" | "Accepted" | "Rejected";
+  ngayMoi: string;
+}
+
+export interface LoiMoiApDungKhuyenMaiDto {
+  idLoiMoi?: string;
+  idKhoaHoc: string;
+  tenKhoaHoc?: string;
+  hinhAnhKhoaHoc?: string;
+  idGiangVienDuocMoi?: string;
+  tenGiangVien?: string;
+  trangThai: string;
+  ngayMoi?: string;
+  ngayPhanHoi?: string;
+}
+export interface KhoaHocEduverseDealsDto {
+  id: string;
+  tieuDe: string;
+  hinhAnhKhoaHoc?: string;
+}
+
 class LoiMoiGiangVienService {
   async GuiLoiMoi(request: GuiLoiMoiRequest) {
     const res = await apiService.post("/LoiMoiGiangVien/gui-loi-moi", request);
@@ -232,6 +266,51 @@ class LoiMoiGiangVienService {
       `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/quyen-cua-toi`,
     );
     return res.data;
+  }
+
+  // ── MỚI: lời mời xin áp dụng khuyến mãi ─────────────────────────────
+  // Lưu ý: 2 endpoint này ở Controller dùng return Ok(...) trực tiếp,
+  // KHÔNG bọc trong DataResponse<T> như các endpoint còn lại — nên
+  // res.data ở đây CHÍNH LÀ mảng/kết quả, không phải res.data.data.
+  async GetLoiMoiKhuyenMaiCuaToi(): Promise<LoiMoiKhuyenMaiChoXacNhanDto[]> {
+    const res = await apiService.get<LoiMoiKhuyenMaiChoXacNhanDto[]>(
+      "/LoiMoiGiangVien/loimoi-khuyenmai-cuatoi",
+    );
+    return res.data ?? [];
+  }
+
+  async PhanHoiKhuyenMai(idLoiMoi: string, dongY: boolean) {
+    const res = await apiService.post(
+      `/LoiMoiGiangVien/loimoi-khuyenmai-phanhoi/${idLoiMoi}?dongY=${dongY}`,
+    );
+    return res.data;
+  }
+  async GetTrangThaiEduverseDeals(idKhoaHoc: string): Promise<boolean> {
+    const res = await apiService.get<boolean>(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/eduverse-deals`,
+    );
+    return res.data ?? false;
+  }
+
+  async ThamGiaEduverseDeals(idKhoaHoc: string) {
+    const res = await apiService.post(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/eduverse-deals/tham-gia`,
+    );
+    return res.data;
+  }
+
+  async HuyEduverseDeals(idKhoaHoc: string) {
+    const res = await apiService.post(
+      `/LoiMoiGiangVien/khoa-hoc/${idKhoaHoc}/eduverse-deals/huy`,
+    );
+    return res.data;
+  }
+
+  async GetKhoaHocEduverseDeals(): Promise<KhoaHocEduverseDealsDto[]> {
+    const res = await apiService.get<KhoaHocEduverseDealsDto[]>(
+      "/LoiMoiGiangVien/khoa-hoc/eduverse-deals/danh-sach",
+    );
+    return res.data ?? [];
   }
 }
 

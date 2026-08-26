@@ -74,7 +74,9 @@ namespace Eduverse.Model
 
             builder.Entity<LoiMoiGiangVien>()
                 .HasIndex(x => new { x.IdKhoaHoc, x.IdNguoiDuocMoi })
-                .IsUnique();  // 1 người chỉ có 1 lời mời active cho 1 khóa
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0 AND [TrangThai] = N'Pending' AND [IdKhuyenMai] IS NULL")
+                .HasDatabaseName("IX_loiMoiGiangViens_IdKhoaHoc_IdNguoiDuocMoi");
 
             builder.Entity<KhoaHoc>()
        .ToTable("KhoaHocs");

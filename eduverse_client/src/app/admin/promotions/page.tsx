@@ -41,6 +41,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { apiService } from "@/src/services/index";
 import { useSelector } from "react-redux";
 import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
+import { LoiMoiApDungKhuyenMaiDto } from "@/src/services/LoiMoiGiangVienService";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface KhoaHocMiniDto {
@@ -58,6 +59,7 @@ interface KhuyenMaiDto {
   soLuongHieuLuc?: number;
   createdDate: string;
   danhSachKhoaHoc?: KhoaHocMiniDto[];
+  danhSachDangCho?: LoiMoiApDungKhuyenMaiDto[];
 }
 
 interface FormState {
@@ -149,6 +151,11 @@ function PromotionsContent() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [formError, setFormError] = useState("");
 
+  // ★ MỚI: lưu lại bản ghi đang sửa để hiển thị ghi chú "đang chờ duyệt"
+  // trong dialog, và để biết những khóa học nào đang có lời mời Pending
+  // treo (cần giữ nguyên tick, không thì bị huỷ oan khi Lưu).
+  const [editingKm, setEditingKm] = useState<KhuyenMaiDto | null>(null);
+
   // Khóa học picker
   const [allKhoaHoc, setAllKhoaHoc] = useState<KhoaHocMiniDto[]>([]);
   const [loadingKH, setLoadingKH] = useState(false);
@@ -198,6 +205,7 @@ function PromotionsContent() {
   // ── Mở dialog tạo mới ──
   const handleOpenCreate = async () => {
     setEditId(null);
+    setEditingKm(null); // ★ MỚI: dọn sạch, tránh dính ghi chú của lần sửa trước
     setForm(EMPTY_FORM);
     setFormError("");
     setSearchKH("");
@@ -208,18 +216,34 @@ function PromotionsContent() {
   // ── Mở dialog chỉnh sửa ──
   const handleOpenEdit = async (km: KhuyenMaiDto) => {
     setEditId(km.id ?? null);
+    setEditingKm(km); // ★ MỚI
+
     setForm({
       maGiamGia: km.maGiamGia ?? "",
       phanTramGiam: km.phanTramGiam?.toString() ?? "",
       ngayBatDau: km.ngayBatDau ? km.ngayBatDau.slice(0, 10) : "",
       ngayKetThuc: km.ngayKetThuc ? km.ngayKetThuc.slice(0, 10) : "",
       soLuongHieuLuc: km.soLuongHieuLuc?.toString() ?? "",
-      idsKhoaHoc: (km.danhSachKhoaHoc ?? []).map((kh) => kh.id),
+      // ★ FIX QUAN TRỌNG: gộp cả khóa học đang "chờ giảng viên duyệt"
+      // (danhSachDangCho) vào danh sách tick sẵn. Backend (UpdateKhuyenMai)
+      // coi "không có trong idsKhoaHoc gửi lên" = "bỏ chọn" và sẽ HUỶ LUÔN
+      // lời mời Pending đang treo của khóa học đó. Nếu chỉ lấy
+      // danhSachKhoaHoc (đã áp ngay) như trước, mọi lần Admin mở Sửa rồi Lưu
+      // sẽ vô tình xoá sạch các lời mời khuyến mãi đang chờ xác nhận.
+      idsKhoaHoc: [
+        ...(km.danhSachKhoaHoc ?? []).map((kh) => kh.id),
+        ...(km.danhSachDangCho ?? []).map((d) => d.idKhoaHoc),
+      ],
     });
     setFormError("");
     setSearchKH("");
     setOpenDialog(true);
     await loadKhoaHoc();
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingKm(null); // ★ MỚI: dọn state khi đóng dialog (Huỷ hoặc nút X)
   };
 
   // ── Validate form ──
@@ -290,20 +314,32 @@ function PromotionsContent() {
         idsKhoaHoc: form.idsKhoaHoc,
       };
 
-      if (editId) {
-        await apiService.put("/KhuyenMai/khuyenmai-update", {
-          id: editId,
-          ...payload,
-        });
-        setSuccessMsg("Cập nhật khuyến mãi thành công!");
-      } else {
-        await apiService.post("/KhuyenMai/khuyenmai-create", payload);
-        setSuccessMsg("Tạo khuyến mãi thành công!");
-      }
+      // ★ FIX: lấy đúng response trả về thay vì bỏ qua. Trước đây luôn hiện
+      // đúng 1 câu chung chung "Thành công!" dù có bao nhiêu khóa học rơi
+      // vào diện "đang chờ giảng viên duyệt" — Admin không có cách nào biết.
+      const res = editId
+        ? await apiService.put<KhuyenMaiDto>("/KhuyenMai/khuyenmai-update", {
+            id: editId,
+            ...payload,
+          })
+        : await apiService.post<KhuyenMaiDto>(
+            "/KhuyenMai/khuyenmai-create",
+            payload,
+          );
 
-      setOpenDialog(false);
+      const soApNgay = res.data?.danhSachKhoaHoc?.length ?? 0;
+      const soDangCho = res.data?.danhSachDangCho?.length ?? 0;
+      const hanhDong = editId ? "Cập nhật" : "Tạo";
+
+      setSuccessMsg(
+        soDangCho > 0
+          ? `${hanhDong} khuyến mãi thành công! ${soApNgay} khóa học áp dụng ngay, ${soDangCho} khóa học đang chờ giảng viên xác nhận.`
+          : `${hanhDong} khuyến mãi thành công!`,
+      );
+
+      handleCloseDialog();
       await loadList();
-      setTimeout(() => setSuccessMsg(""), 3000);
+      setTimeout(() => setSuccessMsg(""), 4000);
     } catch (e: unknown) {
       setFormError(
         typeof e === "string" ? e : "Có lỗi xảy ra, vui lòng thử lại",
@@ -348,6 +384,13 @@ function PromotionsContent() {
 
   const formatDate = (d?: string) =>
     d ? new Date(d).toLocaleDateString("vi-VN") : "—";
+
+  // ★ MỚI: nhãn trạng thái ngắn gọn cho tooltip "đang chờ duyệt"
+  const nhanTrangThaiDangCho = (trangThai: string) => {
+    if (trangThai === "Pending") return "chờ xác nhận";
+    if (trangThai === "Rejected") return "đã từ chối";
+    return trangThai;
+  };
 
   return (
     <Box>
@@ -446,7 +489,9 @@ function PromotionsContent() {
           </Box>
         ) : list.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 10 }}>
-            <LocalOfferIcon sx={{ fontSize: 56, color: CSSVAR.divider, mb: 2 }} />
+            <LocalOfferIcon
+              sx={{ fontSize: 56, color: CSSVAR.divider, mb: 2 }}
+            />
             <Typography
               sx={{
                 fontWeight: 700,
@@ -562,39 +607,73 @@ function PromotionsContent() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{ flexWrap: "wrap" }}
-                      >
-                        {(km.danhSachKhoaHoc ?? []).slice(0, 2).map((kh) => (
-                          <Tooltip key={kh.id} title={kh.tieuDe ?? ""}>
+                      {/* ★ MỚI: gộp avatar khóa học đã áp ngay + chip cảnh
+                          báo số khóa học đang chờ giảng viên duyệt */}
+                      <Stack spacing={0.5}>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          sx={{ flexWrap: "wrap" }}
+                        >
+                          {(km.danhSachKhoaHoc ?? []).slice(0, 2).map((kh) => (
+                            <Tooltip key={kh.id} title={kh.tieuDe ?? ""}>
+                              <Avatar
+                                src={kh.hinhAnhKhoaHoc}
+                                sx={{
+                                  width: 28,
+                                  height: 28,
+                                  fontSize: 11,
+                                  bgcolor: PRIMARY_SOFT,
+                                  color: PRIMARY,
+                                }}
+                              >
+                                <SchoolIcon sx={{ fontSize: 14 }} />
+                              </Avatar>
+                            </Tooltip>
+                          ))}
+                          {(km.danhSachKhoaHoc?.length ?? 0) > 2 && (
                             <Avatar
-                              src={kh.hinhAnhKhoaHoc}
                               sx={{
                                 width: 28,
                                 height: 28,
                                 fontSize: 11,
-                                bgcolor: PRIMARY_SOFT,
-                                color: PRIMARY,
+                                bgcolor: CSSVAR.paperAlt,
+                                color: CSSVAR.textMuted,
                               }}
                             >
-                              <SchoolIcon sx={{ fontSize: 14 }} />
+                              +{(km.danhSachKhoaHoc?.length ?? 0) - 2}
                             </Avatar>
-                          </Tooltip>
-                        ))}
-                        {(km.danhSachKhoaHoc?.length ?? 0) > 2 && (
-                          <Avatar
-                            sx={{
-                              width: 28,
-                              height: 28,
-                              fontSize: 11,
-                              bgcolor: CSSVAR.paperAlt,
-                              color: CSSVAR.textMuted,
-                            }}
+                          )}
+                          {(km.danhSachKhoaHoc?.length ?? 0) === 0 &&
+                            (km.danhSachDangCho?.length ?? 0) === 0 && (
+                              <Typography
+                                sx={{ fontSize: 12.5, color: CSSVAR.textMuted }}
+                              >
+                                —
+                              </Typography>
+                            )}
+                        </Stack>
+
+                        {(km.danhSachDangCho?.length ?? 0) > 0 && (
+                          <Tooltip
+                            title={km
+                              .danhSachDangCho!.map((d) => d.tenKhoaHoc ?? "?")
+                              .join(" · ")}
+                            arrow
                           >
-                            +{(km.danhSachKhoaHoc?.length ?? 0) - 2}
-                          </Avatar>
+                            <Chip
+                              size="small"
+                              label={`⏳ ${km.danhSachDangCho!.length} chờ duyệt`}
+                              sx={{
+                                height: 22,
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                bgcolor: "#FEF3C7",
+                                color: "#92400E",
+                                mt: 0.5,
+                              }}
+                            />
+                          </Tooltip>
                         )}
                       </Stack>
                     </TableCell>
@@ -658,7 +737,7 @@ function PromotionsContent() {
       {/* ── Dialog tạo/sửa ── */}
       <Dialog
         open={openDialog}
-        onClose={() => setOpenDialog(false)}
+        onClose={handleCloseDialog}
         maxWidth="md"
         fullWidth
         slotProps={{
@@ -684,10 +763,7 @@ function PromotionsContent() {
               {editId ? "Chỉnh sửa khuyến mãi" : "Tạo khuyến mãi mới"}
             </Typography>
           </Stack>
-          <IconButton
-            onClick={() => setOpenDialog(false)}
-            sx={{ color: "#fff" }}
-          >
+          <IconButton onClick={handleCloseDialog} sx={{ color: "#fff" }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -893,6 +969,31 @@ function PromotionsContent() {
             )}
           </Typography>
 
+          {/* ★ MỚI: ghi chú khi mã đang sửa có khóa học đang chờ giảng viên
+              duyệt — nhắc Admin không bỏ tick nhầm kẻo huỷ mất lời mời */}
+          {editingKm && (editingKm.danhSachDangCho?.length ?? 0) > 0 && (
+            <Paper
+              elevation={0}
+              sx={{
+                mb: 1.5,
+                p: 1.5,
+                borderRadius: "10px",
+                bgcolor: "#FFFBEB",
+                border: "1px solid #FDE68A",
+              }}
+            >
+              <Typography
+                sx={{ fontSize: 12.5, color: "#92400E", fontWeight: 600 }}
+              >
+                ⏳ {editingKm.danhSachDangCho!.length} khóa học đang chờ giảng
+                viên xác nhận:{" "}
+                {editingKm.danhSachDangCho!.map((d) => d.tenKhoaHoc).join(", ")}
+                . Các khóa học này đang được giữ nguyên lựa chọn — bỏ tick nghĩa
+                là huỷ luôn yêu cầu đang chờ đó.
+              </Typography>
+            </Paper>
+          )}
+
           {/* Search khóa học */}
           <TextField
             fullWidth
@@ -1038,7 +1139,7 @@ function PromotionsContent() {
           }}
         >
           <Button
-            onClick={() => setOpenDialog(false)}
+            onClick={handleCloseDialog}
             variant="outlined"
             sx={{
               borderColor: CSSVAR.divider,
@@ -1092,9 +1193,7 @@ function PromotionsContent() {
           Xoá khuyến mãi?
         </DialogTitle>
         <DialogContent>
-          <Typography
-            sx={{ fontSize: 14, color: CSSVAR.textMuted }}
-          >
+          <Typography sx={{ fontSize: 14, color: CSSVAR.textMuted }}>
             Bạn có chắc muốn xoá mã{" "}
             <strong style={{ color: PRIMARY }}>
               {confirmDelete?.maGiamGia}

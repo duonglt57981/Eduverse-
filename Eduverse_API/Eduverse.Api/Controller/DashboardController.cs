@@ -1,4 +1,5 @@
 using CloudinaryDotNet;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Eduverse.Model.Entities;
 using Eduverse.Service.Common;
 using Hinet.Api.Dto;
@@ -33,6 +34,8 @@ namespace Eduverse.Api.Controller
         private readonly IService<DonHang_KhuyenMai> _donHangKhuyenMaiService;
         private readonly IService<DonHang_GiangVien> _donHangGiangVienService;
         private readonly IService<DanhGia> _danhGiaService;
+        private readonly IService<KhuyenMai> _khuyenMaiService;
+        private readonly IService<KhuyenMai_KhoaHoc> _khuyenMaiKhoaHocService;
         public DashboardController(
             IService<KhoaHoc> khoaHocService,
             IService<DanhMuc> danhMucService,
@@ -46,6 +49,8 @@ namespace Eduverse.Api.Controller
             IService<KhoaHoc_GiangVien> khoaHocGiangVienService,
             IService<DonHang_KhuyenMai> donHangKhuyenMaiService,
             IService<DonHang_GiangVien> donHangGiangVienService,
+            IService<KhuyenMai> khuyenMaiService,              
+            IService<KhuyenMai_KhoaHoc> khuyenMaiKhoaHocService,
             IService<DanhGia> danhGiaService,
             UserManager<AppUser> userManager)
         {
@@ -63,6 +68,8 @@ namespace Eduverse.Api.Controller
             _donHangKhuyenMaiService = donHangKhuyenMaiService;
             _donHangGiangVienService = donHangGiangVienService;
             _danhGiaService = danhGiaService;
+            _khuyenMaiService = khuyenMaiService;               
+            _khuyenMaiKhoaHocService = khuyenMaiKhoaHocService;
         }
 
         [HttpGet]
@@ -376,6 +383,73 @@ namespace Eduverse.Api.Controller
                 thumbnailGradient = GetGradient(i + 2)
             }).ToList();
 
+            //5.5.Khóa học ưu đãi(chỉ voucher do Admin tạo, còn hiệu lực)
+            var promotedCourses = new List<object>();
+            try
+            {
+                var nowVoucher = DateTime.Now;
+
+                var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+                var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
+
+                var activeAdminVouchers = await _khuyenMaiService.GetQueryable()
+                    .Where(km => km.CreatedId.HasValue
+                              && adminIds.Contains(km.CreatedId.Value)
+                              && (!km.NgayKetThuc.HasValue || km.NgayKetThuc.Value >= nowVoucher)
+                              && (!km.SoLuongHieuLuc.HasValue || km.SoLuongHieuLuc.Value > 0))
+                    .Select(km => new { km.Id, km.MaGiamGia, km.PhanTramGiam, km.NgayKetThuc })
+                    .ToListAsync();
+
+                var activeVoucherIds = activeAdminVouchers.Select(v => v.Id).ToList();
+
+                if (activeVoucherIds.Any())
+                {
+                    var links = await _khuyenMaiKhoaHocService.GetQueryable()
+                        .Where(l => l.IdKhuyenMai.HasValue && activeVoucherIds.Contains(l.IdKhuyenMai.Value)
+                                 && l.IdKhoaHoc.HasValue)
+                        .ToListAsync();
+
+                    var voucherByCourseId = links
+                        .Where(l => l.IdKhoaHoc.HasValue && l.IdKhuyenMai.HasValue)
+                        .GroupBy(l => l.IdKhoaHoc!.Value)
+                        .ToDictionary(g => g.Key, g => activeAdminVouchers.First(v => v.Id == g.First().IdKhuyenMai!.Value));
+
+                    var promotedCourseIds = voucherByCourseId.Keys.ToList();
+
+                    var promotedCourseEntities = courses
+                        .Where(c => promotedCourseIds.Contains(c.Id) && !registeredCourseIds.Contains(c.Id))
+                        .ToList();
+
+                    promotedCourses = promotedCourseEntities.Select((c, i) =>
+                    {
+                        var voucher = voucherByCourseId[c.Id];
+                        return (object)new
+                        {
+                            id = c.Id.ToString(),
+                            title = c.TieuDe,
+                            hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                            instructor = c.CreatedBy ?? "An Danh",
+                            rating = ratingMap.TryGetValue(c.Id, out var rpm) ? rpm.DiemTrungBinh : (double?)null,
+                            soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rpb) ? rpb.SoLuong : 0,
+                            studentsCount = c.SoLuongHocVien ?? 0,
+                            level = c.CapDo ?? "Trung cấp",
+                            gia = c.Gia,
+                            giaGoc = c.GiaGoc,
+                            loaiKhoaHoc = c.LoaiKhoaHoc,
+                            daDangKy = registeredCourseIds.Contains(c.Id),
+                            maGiamGia = voucher.MaGiamGia,
+                            phanTramGiam = voucher.PhanTramGiam,
+                            voucherHetHan = voucher.NgayKetThuc,
+                            thumbnailGradient = GetGradient(i)
+                        };
+                    }).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error fetching promoted courses: " + ex.Message);
+            }
+
 
             // 6. Premium Selection
             var premiumCourse = courses.Where(c => !registeredCourseIds.Contains(c.Id)).FirstOrDefault(c => c.CapDo == "Nâng cao") ?? courses.FirstOrDefault();
@@ -445,6 +519,7 @@ namespace Eduverse.Api.Controller
                     nextSectors = nextSectors,
                     interestedSkills = interestedSkills,
                     skillsCourses = skillCourses,
+                    promotedCourses = promotedCourses,
                     premiumSelection = premiumSelection,
                     historyRecommendation = historyRecommendation
                 }

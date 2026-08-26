@@ -31,6 +31,10 @@ import KhuyenMaiService, {
   KhuyenMaiDto,
 } from "@/src/services/KhuyenMaiService";
 import KhoaHocService, { KhoaHocMiniDto } from "@/src/services/KhoaHocService";
+import DiscountOutlinedIcon from "@mui/icons-material/DiscountOutlined";
+import { EduverseDealsLabel } from "@/src/components/EduverseDeals/EduverseDealsInfo";
+import LoiMoiGiangVienService from "@/src/services/LoiMoiGiangVienService";
+import { EduverseDealsToggle } from "@/src/components/EduverseDeals/EduverseDealsToggle";
 
 function conHieuLuc(km: KhuyenMaiDto): boolean {
   if (!km.ngayKetThuc) return true;
@@ -71,6 +75,16 @@ function QuanLyKhuyenMaiContent() {
 
   const [xacNhanXoa, setXacNhanXoa] = useState<KhuyenMaiDto | null>(null);
   const [dangXoa, setDangXoa] = useState(false);
+
+  const [moEduverseDeals, setMoEduverseDeals] = useState(false);
+  const [dangTaiDeals, setDangTaiDeals] = useState(false);
+  const [trangThaiDeals, setTrangThaiDeals] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [dangCapNhatDealsId, setDangCapNhatDealsId] = useState<string | null>(
+    null,
+  );
+  const [khoaHocDeals, setKhoaHocDeals] = useState<KhoaHocMiniDto[]>([]);
 
   const [khuyenMaiSvc] = useState(() => new KhuyenMaiService());
   const [khoaHocSvc] = useState(() => new KhoaHocService());
@@ -139,7 +153,10 @@ function QuanLyKhuyenMaiContent() {
       ngayKetThuc: km.ngayKetThuc ? km.ngayKetThuc.slice(0, 10) : "",
       soLuongHieuLuc:
         km.soLuongHieuLuc != null ? String(km.soLuongHieuLuc) : "",
-      idsKhoaHoc: (km.danhSachKhoaHoc ?? []).map((c) => c.id),
+      idsKhoaHoc: [
+        ...(km.danhSachKhoaHoc ?? []).map((c) => c.id),
+        ...(km.danhSachDangCho ?? []).map((d) => d.idKhoaHoc),
+      ],
     });
     setMoForm(true);
     taiKhoaHocDaDuyet();
@@ -231,6 +248,56 @@ function QuanLyKhuyenMaiContent() {
     }
   };
 
+  const moDialogEduverseDeals = async () => {
+    setMoEduverseDeals(true);
+    setDangTaiDeals(true);
+    try {
+      // ★ FIX: gọi endpoint riêng cho Eduverse Deals thay vì mượn
+      // khoaHocDaDuyet (vốn lọc theo quyền Promotions của tính năng
+      // KhuyenMai) — 2 tính năng có phạm vi quyền khác nhau, dùng chung
+      // danh sách khiến khóa học đã Accept cộng tác nhưng chưa được cấp
+      // Promotions không bao giờ hiện ra để bật/tắt.
+      const ds = await LoiMoiGiangVienService.GetKhoaHocEduverseDeals();
+      setKhoaHocDeals(ds);
+
+      const ketQua = await Promise.all(
+        ds.map(async (kh) => {
+          try {
+            const thamGia =
+              await LoiMoiGiangVienService.GetTrangThaiEduverseDeals(kh.id);
+            return [kh.id, thamGia] as const;
+          } catch (err) {
+            console.error(
+              `Lỗi lấy trạng thái Eduverse Deals cho khóa học ${kh.id}:`,
+              err,
+            );
+            return [kh.id, false] as const;
+          }
+        }),
+      );
+      setTrangThaiDeals(Object.fromEntries(ketQua));
+    } catch (err) {
+      console.error(err);
+      setLoi("Đã xảy ra lỗi khi tải trạng thái Eduverse Deals");
+    } finally {
+      setDangTaiDeals(false);
+    }
+  };
+
+  const doiTrangThaiDeals = async (idKhoaHoc: string, val: boolean) => {
+    setDangCapNhatDealsId(idKhoaHoc);
+    try {
+      if (val) await LoiMoiGiangVienService.ThamGiaEduverseDeals(idKhoaHoc);
+      else await LoiMoiGiangVienService.HuyEduverseDeals(idKhoaHoc);
+      setTrangThaiDeals((p) => ({ ...p, [idKhoaHoc]: val }));
+    } catch (err) {
+      console.error(err);
+      setLoi("Không thể cập nhật trạng thái Eduverse Deals");
+    } finally {
+      setDangCapNhatDealsId(null);
+    }
+  };
+
   const cardSx = {
     p: LAYOUT_SPACING.cardPadding,
     mb: 2,
@@ -271,22 +338,40 @@ function QuanLyKhuyenMaiContent() {
             Tạo mã giảm giá áp dụng cho các khóa học đã được duyệt.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={moTaoMoi}
-          sx={{
-            bgcolor: MAU.chinh,
-            textTransform: "none",
-            fontWeight: 700,
-            borderRadius: 2,
-            px: 3,
-            boxShadow: "none",
-            "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
-          }}
-        >
-          Tạo mã giảm giá
-        </Button>
+        <Stack direction="row" spacing={1.5}>
+          <Button
+            variant="outlined"
+            startIcon={<DiscountOutlinedIcon />}
+            onClick={moDialogEduverseDeals}
+            sx={{
+              borderColor: MAU.chinh,
+              color: MAU.chinh,
+              textTransform: "none",
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              "&:hover": { borderColor: MAU.chinhDam, bgcolor: MAU.chinhNhat },
+            }}
+          >
+            Eduverse Deals
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={moTaoMoi}
+            sx={{
+              bgcolor: MAU.chinh,
+              textTransform: "none",
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              boxShadow: "none",
+              "&:hover": { bgcolor: MAU.chinhDam, boxShadow: "none" },
+            }}
+          >
+            Tạo mã giảm giá
+          </Button>
+        </Stack>
       </Box>
 
       {(loi || thanhCong) && (
@@ -722,6 +807,74 @@ function QuanLyKhuyenMaiContent() {
             ) : (
               "Xác nhận xoá"
             )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={moEduverseDeals}
+        onClose={() => setMoEduverseDeals(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontWeight: 800,
+          }}
+        >
+          <EduverseDealsLabel />
+          <IconButton size="small" onClick={() => setMoEduverseDeals(false)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {dangTaiDeals ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress size={24} sx={{ color: MAU.chinh }} />
+            </Box>
+          ) : khoaHocDeals.length === 0 ? (
+            <Typography
+              sx={{
+                fontSize: 13,
+                color: MAU.chuXam,
+                textAlign: "center",
+                py: 2,
+              }}
+            >
+              Bạn chưa có khóa học nào được duyệt để tham gia chương trình.
+            </Typography>
+          ) : (
+            <Stack spacing={1.5}>
+              {khoaHocDeals.map((kh) => (
+                <Box key={kh.id}>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      mb: 0.5,
+                      color: CSSVAR.textPrimary,
+                    }}
+                  >
+                    {kh.tieuDe}
+                  </Typography>
+                  <EduverseDealsToggle
+                    checked={trangThaiDeals[kh.id] ?? false}
+                    disabled={dangCapNhatDealsId === kh.id}
+                    onChange={(val) => doiTrangThaiDeals(kh.id, val)}
+                  />
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setMoEduverseDeals(false)}
+            sx={{ textTransform: "none", color: MAU.chuXam }}
+          >
+            Đóng
           </Button>
         </DialogActions>
       </Dialog>
