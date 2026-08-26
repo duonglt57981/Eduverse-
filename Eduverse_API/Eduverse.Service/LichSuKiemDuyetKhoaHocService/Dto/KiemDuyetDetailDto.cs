@@ -68,6 +68,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public Guid IdPhan { get; set; }
         public bool IsBanHienTai { get; set; } = true;
         public Guid? IdBanGhiTruoc { get; set; }
+        public int? ThuTuSapXep { get; set; }
         public List<TaiLieuChoDuyetDto> TaiLieus { get; set; } = new();
         public LyDoTuChoiDto LyDoTuChois { get; set; } = new();
     }
@@ -100,7 +101,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService.Dto
         public Guid? IdBanGhiTruoc { get; set; }
         public string? TrangThai { get; set; }
         public string? TrangThaiPheDuyet { get; set; }
-
+        public int? ThuTuSapXep { get; set; }
         public List<CauHoiChoDuyetDto> CauHois { get; set; }
         public LyDoTuChoiDto LyDoTuChois { get; set; } = new();
 

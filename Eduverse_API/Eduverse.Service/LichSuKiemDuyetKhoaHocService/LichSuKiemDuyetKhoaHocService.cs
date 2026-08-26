@@ -528,6 +528,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     IdPhan = b.IdPhan,
                     IsBanHienTai = b.IsBanHienTai,
                     IdBanGhiTruoc = b.IdBanGhiTruoc,
+                    ThuTuSapXep = b.ThuTuSapXep,
                     LyDoTuChois = lyDoBaiGiangLookup[b.Id]
                         .OrderByDescending(l => l.CreatedDate)
                         .Select(l => new LyDoTuChoiDto { Id = l.Id, LyDo = l.LyDo })
@@ -560,6 +561,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     IdBanGhiTruoc = bkt.IdBanGhiTruoc,
                     TrangThai = bkt.TrangThai,
                     TrangThaiPheDuyet = bkt.TrangThaiPheDuyet,
+                    ThuTuSapXep = bkt.ThuTuSapXep,
                     LyDoTuChois = lyDoBaiKiemTraLookup[bkt.Id]
                         .OrderByDescending(l => l.CreatedDate)
                         .Select(l => new LyDoTuChoiDto { Id = l.Id, LyDo = l.LyDo })

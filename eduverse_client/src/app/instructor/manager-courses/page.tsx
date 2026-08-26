@@ -283,7 +283,7 @@ function TheTrangThai({
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 1.5,
+        p: { xs: 1, sm: "8px 10px", md: "8px 12px" },
         borderRadius: "12px",
         bgcolor: dangChon ? MAU.chinhNhat : "#ffffff",
         textAlign: "left",
@@ -293,8 +293,9 @@ function TheTrangThai({
         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
         display: "flex",
         alignItems: "center",
-        gap: 1.25,
+        gap: 1,
         height: "100%",
+        minWidth: 0,
         boxShadow: dangChon ? `0 4px 12px ${alpha(MAU.chinh, 0.08)}` : "none",
         "&:hover": {
           borderColor: dangChon ? MAU.chinh : NEUTRAL.divider,
@@ -304,15 +305,16 @@ function TheTrangThai({
     >
       <Box
         sx={{
-          width: 32,
-          height: 32,
+          width: 28,
+          height: 28,
           flexShrink: 0,
-          borderRadius: "8px",
+          borderRadius: "7px",
           bgcolor: cauHinh.nen,
           color: cauHinh.mau,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          "& .MuiSvgIcon-root": { fontSize: 17 },
         }}
       >
         {cauHinh.icon}
@@ -321,16 +323,17 @@ function TheTrangThai({
         <Typography
           sx={{
             fontWeight: 800,
-            fontSize: 16,
+            fontSize: 14,
             color: MAU.chuDen,
-            lineHeight: 1.2,
+            lineHeight: 1.15,
+            whiteSpace: "nowrap",
           }}
         >
           <GiaTriThongKe dangTai={dangTai} giaTri={giaTri} mau={cauHinh.mau} />
         </Typography>
         <Typography
           sx={{
-            fontSize: 12,
+            fontSize: 11.5,
             color: MAU.chuXam,
             fontWeight: 600,
             whiteSpace: "nowrap",
@@ -872,20 +875,30 @@ function KhoaHocContent() {
         <Tab label="Các khóa học" value="khoa-hoc" />
       </Tabs>
 
-      {/* Thống kê / bộ lọc nhanh theo trạng thái */}
-      <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
+      {/* Thống kê / bộ lọc nhanh theo trạng thái - 7 cột trên 1 hàng */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)",
+            sm: "repeat(4, 1fr)",
+            md: "repeat(7, 1fr)",
+          },
+          gap: 1.25,
+          mb: 2.5,
+        }}
+      >
         {CAU_HINH_TRANG_THAI.map((cauHinh) => (
-          <Grid key={cauHinh.giaTri} size={{ xs: 6, sm: 4, md: 2 }}>
-            <TheTrangThai
-              cauHinh={cauHinh}
-              giaTri={thongKe[cauHinh.khoaThongKe]}
-              dangChon={trangThaiLoc === cauHinh.giaTri}
-              dangTai={dangTaiThongKe}
-              onClick={() => handleChonTrangThai(cauHinh.giaTri)}
-            />
-          </Grid>
+          <TheTrangThai
+            key={cauHinh.giaTri}
+            cauHinh={cauHinh}
+            giaTri={thongKe[cauHinh.khoaThongKe]}
+            dangChon={trangThaiLoc === cauHinh.giaTri}
+            dangTai={dangTaiThongKe}
+            onClick={() => handleChonTrangThai(cauHinh.giaTri)}
+          />
         ))}
-      </Grid>
+      </Box>
 
       {/* Thanh tìm kiếm & sắp xếp */}
       <Paper
