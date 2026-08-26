@@ -324,11 +324,8 @@ namespace Eduverse.Service.KhoaHocService
             // Keyword Search
             if (!string.IsNullOrWhiteSpace(search.Keyword))
             {
-                var kw = search.Keyword.Trim().ToLower();
-                query = query.Where(x =>
-                    (x.TieuDe != null && x.TieuDe.ToLower().Contains(kw)) ||
-                    (x.MoTa != null && x.MoTa.ToLower().Contains(kw)) ||
-                    (x.LoaiKhoaHoc != null && x.LoaiKhoaHoc.ToLower().Contains(kw)));
+                query = query.Where(
+                    CourseSearchQuery.BuildWordPrefixPredicate(search.Keyword));
             }
 
             if (currentUserId != Guid.Empty)

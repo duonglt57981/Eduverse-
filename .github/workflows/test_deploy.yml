@@ -33,7 +33,7 @@ jobs:
         env:
           API_ENV: |
             ConnectionStrings__DefaultConnection=Server=110.172.29.244,1433;Database=Eduverse;User Id=sa;Password=YourStr0ng!Password;TrustServerCertificate=True;Encrypt=False;
-            Elasticsearch__Url=http://110.172.29.244:9200
+            Elasticsearch__Url=http://elasticsearch:9200
             Elasticsearch__SyncOnStartup=true
             AllowedOrigins__0=http://localhost:3000
             AllowedOrigins__1=http://110.172.29.244:3000

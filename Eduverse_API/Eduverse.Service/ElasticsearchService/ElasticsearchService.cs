@@ -173,17 +173,48 @@ namespace Eduverse.Service.ElasticsearchService
 
             if (!string.IsNullOrWhiteSpace(search.Keyword))
             {
-                mustQueries.Add(new MultiMatchQuery
+                var keyword = search.Keyword.Trim();
+                var prefixSearchFields = new[]
                 {
-                    Query = search.Keyword.Trim(),
-                    Fields = new[]
+                    "tieuDe^6",
+                    "tenDanhMucList^3",
+                    "tenGiangVien^2"
+                };
+                var keywordQueries = new List<Query>
+                {
+                    new MultiMatchQuery
                     {
-                        "tieuDe^4",
-                        "tenDanhMucList^2",
-                        "tenGiangVien^2",
-                        "moTa"
-                    },
-                    Fuzziness = new Fuzziness("AUTO")
+                        Query = keyword,
+                        Fields = prefixSearchFields,
+                        Type = TextQueryType.BoolPrefix,
+                        Operator = Operator.And
+                    }
+                };
+
+                // Short search-as-you-type input is intentionally limited to fields the
+                // course card exposes. Searching descriptions for one or two characters
+                // produces matches that look unrelated to the user.
+                if (keyword.Length >= 3)
+                {
+                    keywordQueries.Add(new MultiMatchQuery
+                    {
+                        Query = keyword,
+                        Fields = new[]
+                        {
+                            "tieuDe^4",
+                            "tenDanhMucList^2",
+                            "tenGiangVien^2",
+                            "moTa"
+                        },
+                        Fuzziness = new Fuzziness("AUTO"),
+                        Operator = Operator.And
+                    });
+                }
+
+                mustQueries.Add(new BoolQuery
+                {
+                    Should = keywordQueries,
+                    MinimumShouldMatch = 1
                 });
             }
 
