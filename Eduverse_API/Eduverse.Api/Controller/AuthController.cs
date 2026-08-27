@@ -8,7 +8,7 @@ namespace Eduverse.Api.Controller
 {
     [ApiController]
     [Route("api/auth")]
-    public class AuthController : EduverseController
+    public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
 
@@ -61,6 +61,7 @@ namespace Eduverse.Api.Controller
         }
 
         [HttpPost("refresh-token")]
+        [AllowAnonymous]
         public async Task<DataResponse<AuthResponse>> RefreshToken()
         {
             var result = await _authService.RefreshTokenAsync(Request, Response);
