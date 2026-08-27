@@ -1390,6 +1390,9 @@ export default function StudentHomeContent() {
   const [titleImages, setTitleImages] = useState<Record<string, string>>({});
   // Toàn bộ khóa học đã duyệt, máy chủ trả về sẵn theo thứ tự mới nhất trước
   const [latestCourses, setLatestCourses] = useState<any[]>([]);
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1408,50 +1411,90 @@ export default function StudentHomeContent() {
   }, [latestCourses]);
 
   // Lọc danh sách "Khóa học mới nhất":
-  // 1. Chỉ lấy khóa học được tạo trong 1 tháng gần nhất
+  // 1. Chỉ lấy khóa học được tạo trong 1 tháng gần nhất (30 ngày)
   // 2. Chỉ hiển thị khóa học người dùng chưa sở hữu, chưa đăng ký
   const filteredLatestCourses = useMemo(() => {
     if (!latestCourses || !Array.isArray(latestCourses)) return [];
 
-    const enrolledIds = new Set<string>();
+    const enrolledIds = new Set<string>(enrolledCourseIds);
     continuingCourses.forEach((item) => {
       if (isValidGuid(item.id)) enrolledIds.add(String(item.id));
+      if (isValidGuid(item.idKhoaHoc)) enrolledIds.add(String(item.idKhoaHoc));
       if (isValidGuid(item.idDangKiKhoaHoc))
         enrolledIds.add(String(item.idDangKiKhoaHoc));
+      if (isValidGuid(item.idDangKyKhoaHoc))
+        enrolledIds.add(String(item.idDangKyKhoaHoc));
     });
+    if (data?.continueLearning?.courses) {
+      data.continueLearning.courses.forEach((item: any) => {
+        if (isValidGuid(item.id)) enrolledIds.add(String(item.id));
+        if (isValidGuid(item.idKhoaHoc)) enrolledIds.add(String(item.idKhoaHoc));
+      });
+    }
 
     const oneMonthAgo = new Date();
     oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+    oneMonthAgo.setHours(0, 0, 0, 0);
 
-    return latestCourses.filter((c: any) => {
-      // Loại bỏ nếu người dùng đã đăng ký / sở hữu khóa học
-      if (c.daDangKy) return false;
-      const courseId = String(c.id || c.idKhoaHoc || "");
-      if (isValidGuid(courseId) && enrolledIds.has(courseId)) return false;
-      if (
-        isValidGuid(c.idDangKiKhoaHoc) &&
-        enrolledIds.has(String(c.idDangKiKhoaHoc))
-      )
-        return false;
-
-      // Loại bỏ khóa học cũ hơn 1 tháng
-      const rawDate =
-        c.createdDate ||
-        c.ngayTao ||
-        c.ngayTaoKhoaHoc ||
-        c.createdAt ||
-        c.created_at;
-
-      if (rawDate) {
-        const date = new Date(rawDate);
-        if (!isNaN(date.getTime()) && date < oneMonthAgo) {
+    return latestCourses
+      .filter((c: any) => {
+        // Loại bỏ nếu người dùng đã đăng ký / sở hữu khóa học
+        if (
+          c.daDangKy === true ||
+          c.daDangKyKhoaHoc === true ||
+          c.isEnrolled === true ||
+          c.daMua === true
+        ) {
           return false;
         }
-      }
 
-      return true;
-    });
-  }, [latestCourses, continuingCourses]);
+        const courseId = String(c.id || c.idKhoaHoc || "");
+        if (isValidGuid(courseId) && enrolledIds.has(courseId)) return false;
+        if (
+          isValidGuid(c.idDangKiKhoaHoc) &&
+          enrolledIds.has(String(c.idDangKiKhoaHoc))
+        ) {
+          return false;
+        }
+        if (
+          isValidGuid(c.idDangKyKhoaHoc) &&
+          enrolledIds.has(String(c.idDangKyKhoaHoc))
+        ) {
+          return false;
+        }
+
+        // BẮT BUỘC: Khóa học phải được tạo trong vòng 1 tháng gần nhất
+        const rawDate =
+          c.ngayTao ||
+          c.createdDate ||
+          c.ngayTaoKhoaHoc ||
+          c.createdAt ||
+          c.created_at;
+
+        if (!rawDate) return false;
+
+        const date = new Date(rawDate);
+        if (isNaN(date.getTime()) || date < oneMonthAgo) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a: any, b: any) => {
+        const dateA = new Date(
+          a.ngayTao || a.createdDate || a.createdAt || 0,
+        ).getTime();
+        const dateB = new Date(
+          b.ngayTao || b.createdDate || b.createdAt || 0,
+        ).getTime();
+        return dateB - dateA;
+      });
+  }, [
+    latestCourses,
+    continuingCourses,
+    enrolledCourseIds,
+    data?.continueLearning?.courses,
+  ]);
 
   const load = useCallback(async () => {
     try {
@@ -1480,6 +1523,30 @@ export default function StudentHomeContent() {
         } catch (err) {
           console.error("Failed to load course image map:", err);
         }
+      }
+
+      // Lấy danh sách khóa học người dùng đã đăng ký / sở hữu
+      try {
+        const myCoursesRes = await apiService.get<any>(
+          "/KhoaHoc/khoahoc-dangki?pageIndex=1&pageSize=1000",
+        );
+        const myItems =
+          myCoursesRes.data?.items ||
+          myCoursesRes.data?.data ||
+          myCoursesRes.data ||
+          [];
+        if (Array.isArray(myItems)) {
+          const ids = new Set<string>();
+          myItems.forEach((it: any) => {
+            if (it.id) ids.add(String(it.id));
+            if (it.idKhoaHoc) ids.add(String(it.idKhoaHoc));
+            if (it.idDangKiKhoaHoc) ids.add(String(it.idDangKiKhoaHoc));
+            if (it.idDangKyKhoaHoc) ids.add(String(it.idDangKyKhoaHoc));
+          });
+          setEnrolledCourseIds(ids);
+        }
+      } catch (err) {
+        console.error("Failed to load enrolled courses:", err);
       }
 
       // Toàn bộ khóa học đã duyệt cho mục "Khóa học mới nhất" và "Tiếp tục học".
@@ -1944,37 +2011,6 @@ export default function StudentHomeContent() {
           </CarouselRow>
         </Box>
       )}
-
-      {/* ── 7. Gợi ý theo lịch sử (data-gated) ──────────────────────── */}
-      {historyRecommendation &&
-        historyRecommendation.courses &&
-        historyRecommendation.courses.length > 0 && (
-          <Box>
-            <SectionHeader
-              title={
-                historyRecommendation.basedOnCourse
-                  ? `Vì bạn đã học "${historyRecommendation.basedOnCourse}"`
-                  : "Gợi ý cho bạn"
-              }
-            />
-            <CarouselRow>
-              {historyRecommendation.courses.map((c, i) => (
-                <CourseCard
-                  key={c.id || i}
-                  course={{
-                    ...c,
-                    hinhAnhKhoaHoc:
-                      c.hinhAnhKhoaHoc ||
-                      courseImages[c.id || ""] ||
-                      titleImages[c.title || c.tieuDe || ""],
-                  }}
-                  onAddCart={handleAddCart}
-                  onClick={handleOpenCourse}
-                />
-              ))}
-            </CarouselRow>
-          </Box>
-        )}
 
       {/* ── Cart toast ─────────────────────────────────────────────── */}
       {addedIds.size > 0 && (

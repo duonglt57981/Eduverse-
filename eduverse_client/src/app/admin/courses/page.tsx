@@ -13,6 +13,8 @@ const BRAND = BRAND_TOKEN.main;
 const BRAND_SOFT = "rgba(139,19,19,0.08)";
 const FONT = "var(--font-primary, var(--ev-font-family, 'Be Vietnam Pro', sans-serif))";
 
+import { useSelector } from "@/src/store/hook";
+
 const options = [
   {
     key: "approve",
@@ -23,6 +25,7 @@ const options = [
       "Xem xét và phê duyệt các khóa học đang chờ được kiểm duyệt trước khi xuất bản.",
     tag: "Dành cho quản trị viên",
     route: "/admin/approve-courses",
+    personnelRoute: "/personnel/approve-courses",
     accent: BRAND,
     accentSoft: "rgba(139,19,19,0.08)",
   },
@@ -35,6 +38,7 @@ const options = [
       "Quản lý và theo dõi tất cả các khóa học đang phát hành trên Eduverses.",
     tag: "Dành cho quản trị viên",
     route: "/admin/inspect-courses",
+    personnelRoute: "/personnel/inspect-courses",
     accent: "#B45309",
     accentSoft: "rgba(180,83,9,0.08)",
   },
@@ -42,6 +46,14 @@ const options = [
 
 export default function Step1Page() {
   const router = useRouter();
+  const roles = useSelector((s) => s.auth.roles) || [];
+  const isPersonnel =
+    roles.some(
+      (r: string) =>
+        r.toLowerCase() === "personnel" ||
+        r.toLowerCase() === "nhanvien" ||
+        r.toLowerCase() === "kiemduyet",
+    ) && !roles.includes("Admin");
 
   return (
     <AuthGuard allowedRoles={["Admin", "personnel"]}>
@@ -133,7 +145,7 @@ export default function Step1Page() {
               }}
             >
               {options.map(
-                ({ key, step, icon: Icon, title, description, tag, route, accent, accentSoft }) => (
+                ({ key, step, icon: Icon, title, description, tag, route, personnelRoute, accent, accentSoft }) => (
                   <Card
                     key={key}
                     variant="outlined"
@@ -172,7 +184,13 @@ export default function Step1Page() {
                         outlineOffset: "2px",
                       },
                     }}
-                    onClick={() => router.push(route)}
+                    onClick={() =>
+                      router.push(
+                        isPersonnel && personnelRoute
+                          ? personnelRoute
+                          : route,
+                      )
+                    }
                   >
                     <CardActionArea
                       sx={{

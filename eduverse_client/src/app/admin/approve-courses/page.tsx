@@ -324,7 +324,19 @@ export default function DuyetKhoaHocPage() {
   };
 
   const handleGoBack = () => {
-    router.push("/admin/courses");
+    if (
+      roles.some(
+        (r: string) =>
+          r.toLowerCase() === "personnel" ||
+          r.toLowerCase() === "nhanvien" ||
+          r.toLowerCase() === "kiemduyet",
+      ) &&
+      !roles.includes("Admin")
+    ) {
+      router.push("/personnel/courses");
+    } else {
+      router.push("/admin/courses");
+    }
   };
 
   const eligibleItems = useMemo(

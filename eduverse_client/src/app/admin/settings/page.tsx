@@ -28,7 +28,7 @@ export default function AdminSettingsPage() {
   ];
 
   return (
-    <AuthGuard allowedRoles={["Admin"]}>
+    <AuthGuard allowedRoles={["Admin", "personnel"]}>
       <DashboardShell>
         <Box
           sx={{

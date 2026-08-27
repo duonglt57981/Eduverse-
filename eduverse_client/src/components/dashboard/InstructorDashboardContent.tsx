@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
 
 import { useEffect, useState } from "react";
-import { apiService } from "@/src/services/index";
-import { thongBaoService } from "@/src/services/ThongBaoService";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { getSoDu, getNganHangs } from "@/src/store/rutTien/RutTienSlice";
+import { apiService } from "@/src/services/index";
+import { thongBaoService } from "@/src/services/ThongBaoService";
+import { BRAND, NEUTRAL, STATUS } from "@/src/theme/tokens";
 
 import {
   Box,
@@ -31,70 +31,73 @@ import {
   PaymentRounded,
   PersonAddRounded,
   CheckCircleOutlineRounded,
+  AutoAwesomeRounded,
+  NotificationsNoneRounded,
 } from "@mui/icons-material";
 
+// Notification Icon Mapping đồng bộ với design token EduVerse
 const loaiIconMap: Record<
   string,
   { icon: any; iconBg: string; iconColor: string }
 > = {
   YeuCauRutTien: {
     icon: PaymentRounded,
-    iconBg: "rgba(245,158,11,0.08)",
-    iconColor: STATUS.warning,
+    iconBg: "rgba(245, 158, 11, 0.12)",
+    iconColor: "#B45309",
   },
   guiyeucauruttien: {
     icon: PaymentRounded,
-    iconBg: "rgba(245,158,11,0.08)",
-    iconColor: STATUS.warning,
+    iconBg: "rgba(245, 158, 11, 0.12)",
+    iconColor: "#B45309",
   },
   DoanhThu: {
     icon: AttachMoneyRounded,
-    iconBg: "rgba(21,128,61,0.08)",
+    iconBg: "rgba(22, 163, 74, 0.12)",
     iconColor: "#15803D",
   },
   doanhthu: {
     icon: AttachMoneyRounded,
-    iconBg: "rgba(21,128,61,0.08)",
+    iconBg: "rgba(22, 163, 74, 0.12)",
     iconColor: "#15803D",
   },
   RutTienThanhCong: {
     icon: AccountBalanceRounded,
-    iconBg: "rgba(21,128,61,0.08)",
+    iconBg: "rgba(22, 163, 74, 0.12)",
     iconColor: "#15803D",
   },
   ruttienthanhcong: {
     icon: AccountBalanceRounded,
-    iconBg: "rgba(21,128,61,0.08)",
+    iconBg: "rgba(22, 163, 74, 0.12)",
     iconColor: "#15803D",
   },
   RutTienTuChoi: {
     icon: PaymentRounded,
-    iconBg: "rgba(220,38,38,0.08)",
+    iconBg: "rgba(220, 38, 38, 0.12)",
     iconColor: STATUS.error,
   },
   ruttientuchoi: {
     icon: PaymentRounded,
-    iconBg: "rgba(220,38,38,0.08)",
+    iconBg: "rgba(220, 38, 38, 0.12)",
     iconColor: STATUS.error,
   },
   KhoaHocDaDuyet: {
     icon: CheckCircleOutlineRounded,
-    iconBg: "rgba(16,185,129,0.08)",
-    iconColor: STATUS.success,
+    iconBg: "rgba(22, 163, 74, 0.12)",
+    iconColor: "#15803D",
   },
   khoahocdaduyet: {
     icon: CheckCircleOutlineRounded,
-    iconBg: "rgba(16,185,129,0.08)",
-    iconColor: STATUS.success,
+    iconBg: "rgba(22, 163, 74, 0.12)",
+    iconColor: "#15803D",
   },
   HocVienDangKy: {
     icon: PersonAddRounded,
-    iconBg: "rgba(37,99,235,0.08)",
+    iconBg: "rgba(37, 99, 235, 0.12)",
     iconColor: "#2563EB",
   },
   hocviendangkykhoahoc: {
     icon: PersonAddRounded,
-    iconBg: "rgba(37,99,235,0.08)",
+    iconBg: "rgba(37, 99, 235, 0.12)",
     iconColor: "#2563EB",
   },
 };
@@ -126,23 +129,6 @@ const SAMPLE_INSTRUCTOR_NOTIFS = [
     loaiThongBao: "hocviendangkykhoahoc",
     daDoc: true,
   },
-  {
-    id: "sample-4",
-    tieuDe: "Đã gửi yêu cầu rút tiền",
-    noiDung: "Yêu cầu rút 500.000đ đã được ghi nhận và đang được Admin xử lý.",
-    thoiGianTao: new Date(Date.now() - 3600000 * 24).toISOString(),
-    loaiThongBao: "guiyeucauruttien",
-    daDoc: true,
-  },
-  {
-    id: "sample-5",
-    tieuDe: "Cập nhật doanh thu khóa học",
-    noiDung:
-      "Hệ thống vừa cập nhật doanh thu mới nhất từ lượt mua khóa học của bạn.",
-    thoiGianTao: new Date(Date.now() - 3600000 * 48).toISOString(),
-    loaiThongBao: "doanhthu",
-    daDoc: true,
-  },
 ];
 
 const thoiGianRelative = (iso?: string) => {
@@ -157,12 +143,13 @@ const thoiGianRelative = (iso?: string) => {
 };
 
 const formatTienCompact = (n: number) => {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
   return `${n}`;
 };
 
-// ── Bar Chart cho học viên (đếm số lượng) ──────────────────────────────────
+// ── BIỂU ĐỒ HỌC VIÊN ĐĂNG KÝ (EnrollmentBarChart) ──────────────────────────
 function EnrollmentBarChart({
   data,
   highlightIndex,
@@ -175,35 +162,25 @@ function EnrollmentBarChart({
   const maxVal = data.length ? Math.max(1, ...data.map((d) => d.value)) : 1;
 
   return (
-    <Box sx={{ position: "relative", width: "100%", height: 220 }}>
+    <Box sx={{ position: "relative", width: "100%", height: 210 }}>
       {allZero && (
         <Box
           sx={{
             position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 40,
+            inset: 0,
+            bottom: 30,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justify: "center",
+            justifyContent: "center",
             zIndex: 3,
-            bgcolor: "rgba(255,255,255,0.75)",
+            bgcolor: "rgba(255, 255, 255, 0.8)",
             backdropFilter: "blur(2px)",
             borderRadius: "16px",
           }}
         >
-          <PeopleAltRounded
-            sx={{ fontSize: 32, color: CSSVAR.textMuted, mb: 1 }}
-          />
-          <Typography
-            sx={{
-              fontSize: 13.5,
-              color: CSSVAR.textSecondary,
-              fontWeight: 600,
-            }}
-          >
+          <PeopleAltRounded sx={{ fontSize: 32, color: "#94A3B8", mb: 1 }} />
+          <Typography sx={{ fontSize: "0.85rem", color: "#64748B", fontWeight: 600 }}>
             Chưa có học viên đăng ký trong 7 tháng qua
           </Typography>
         </Box>
@@ -213,20 +190,17 @@ function EnrollmentBarChart({
         direction="row"
         sx={{
           alignItems: "flex-end",
-          gap: { xs: 1, md: 2 },
-          height: 180,
-          mt: 2,
+          gap: { xs: 1, md: 1.5 },
+          height: 175,
           position: "relative",
           zIndex: 2,
-          px: 1,
+          px: 0.5,
         }}
       >
         {data.map((month, i) => {
           const isHighlight = i === highlightIndex;
           const isHovered = hoveredIndex === i;
-          const barHeight = allZero
-            ? 8
-            : Math.max(12, (month.value / maxVal) * 125);
+          const barHeight = allZero ? 8 : Math.max(10, (month.value / maxVal) * 115);
 
           return (
             <Stack
@@ -236,7 +210,7 @@ function EnrollmentBarChart({
               sx={{
                 alignItems: "center",
                 flex: 1,
-                gap: 1.2,
+                gap: 1,
                 position: "relative",
                 cursor: "pointer",
               }}
@@ -246,21 +220,20 @@ function EnrollmentBarChart({
                 <Box
                   sx={{
                     position: "absolute",
-                    bottom: barHeight + 34,
-                    bgcolor: CSSVAR.textPrimary,
+                    bottom: barHeight + 38,
+                    bgcolor: "#0F172A",
                     color: "#FFFFFF",
-                    fontSize: 11.5,
+                    fontSize: "0.74rem",
                     fontWeight: 700,
-                    px: 1.2,
-                    py: 0.6,
+                    px: 1.25,
+                    py: 0.5,
                     borderRadius: "8px",
                     whiteSpace: "nowrap",
                     zIndex: 10,
-                    boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
-                    animation: "fadeIn 0.15s ease",
+                    boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
                   }}
                 >
-                  {month.label}: {month.value} học viên mới
+                  {month.label}: {month.value} học viên
                   <Box
                     sx={{
                       position: "absolute",
@@ -271,30 +244,26 @@ function EnrollmentBarChart({
                       height: 0,
                       borderLeft: "4px solid transparent",
                       borderRight: "4px solid transparent",
-                      borderTop: `4px solid ${CSSVAR.textPrimary}`,
+                      borderTop: "4px solid #0F172A",
                     }}
                   />
                 </Box>
               )}
 
               {/* Con số trên thanh */}
-              {!allZero && month.value > 0 && !isHovered && (
+              {!allZero && month.value > 0 && (
                 <Box
                   sx={{
                     position: "absolute",
                     bottom: barHeight + 8,
-                    fontSize: 11,
+                    fontSize: "0.72rem",
                     fontWeight: 800,
-                    px: 0.9,
-                    py: 0.25,
-                    borderRadius: "10px",
-                    bgcolor: isHighlight
-                      ? COLORS.primary
-                      : "rgba(31, 41, 55, 0.06)",
-                    color: isHighlight ? CSSVAR.paper : CSSVAR.textSecondary,
-                    boxShadow: isHighlight
-                      ? "0 2px 8px rgba(139,19,19,0.25)"
-                      : "none",
+                    px: 0.8,
+                    py: 0.2,
+                    borderRadius: "8px",
+                    bgcolor: isHighlight ? BRAND.main : "#F1F5F9",
+                    color: isHighlight ? "#FFFFFF" : "#475569",
+                    boxShadow: isHighlight ? `0 2px 8px ${BRAND.main}40` : "none",
                     lineHeight: 1,
                   }}
                 >
@@ -302,20 +271,18 @@ function EnrollmentBarChart({
                 </Box>
               )}
 
-              {/* Cột nền (Track) và Thanh biểu đồ */}
+              {/* Track và Thanh biểu đồ */}
               <Box
                 sx={{
                   width: "100%",
-                  maxWidth: 36,
-                  height: 135,
+                  maxWidth: 38,
+                  height: 125,
                   display: "flex",
                   alignItems: "flex-end",
                   justifyContent: "center",
-                  bgcolor: isHovered
-                    ? "rgba(139,19,19,0.06)"
-                    : "rgba(31, 41, 55, 0.025)",
-                  borderRadius: "10px",
-                  p: "3px",
+                  bgcolor: isHovered ? "rgba(139, 19, 19, 0.08)" : "#F8FAFC",
+                  borderRadius: "12px",
+                  p: "4px",
                   transition: "background-color 0.2s ease",
                 }}
               >
@@ -323,20 +290,19 @@ function EnrollmentBarChart({
                   sx={{
                     width: "100%",
                     height: barHeight,
-                    borderRadius: isHighlight ? "8px 8px 6px 6px" : "6px",
+                    borderRadius: isHighlight ? "8px 8px 6px 6px" : "8px",
                     background: allZero
-                      ? "#F3F4F6"
+                      ? "#E2E8F0"
                       : isHighlight
-                        ? `linear-gradient(180deg, #A81B1B 0%, ${COLORS.primary} 100%)`
+                        ? `linear-gradient(180deg, ${BRAND.dark} 0%, ${BRAND.main} 100%)`
                         : isHovered
-                          ? "linear-gradient(180deg, rgba(139,19,19,0.65) 0%, rgba(139,19,19,0.4) 100%)"
-                          : "linear-gradient(180deg, rgba(139,19,19,0.35) 0%, rgba(139,19,19,0.15) 100%)",
+                          ? "linear-gradient(180deg, rgba(139, 19, 19, 0.7) 0%, rgba(139, 19, 19, 0.45) 100%)"
+                          : "linear-gradient(180deg, rgba(139, 19, 19, 0.35) 0%, rgba(139, 19, 19, 0.15) 100%)",
                     boxShadow:
                       !allZero && (isHighlight || isHovered)
-                        ? "0 6px 16px rgba(139,19,19,0.3)"
+                        ? `0 6px 16px ${BRAND.main}35`
                         : "none",
-                    transform:
-                      isHovered && !allZero ? "translateY(-2px)" : "none",
+                    transform: isHovered && !allZero ? "translateY(-2px)" : "none",
                     transition: "all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
                   }}
                 />
@@ -346,20 +312,16 @@ function EnrollmentBarChart({
               <Box
                 sx={{
                   px: 1,
-                  py: 0.3,
+                  py: 0.25,
                   borderRadius: "8px",
-                  bgcolor: isHighlight
-                    ? "rgba(139, 19, 19, 0.08)"
-                    : "transparent",
+                  bgcolor: isHighlight ? "rgba(139, 19, 19, 0.1)" : "transparent",
                 }}
               >
                 <Typography
                   sx={{
-                    fontSize: 11.5,
-                    fontWeight: isHighlight ? 850 : 600,
-                    color: isHighlight
-                      ? COLORS.primary
-                      : CSSVAR.textSecondary,
+                    fontSize: "0.75rem",
+                    fontWeight: isHighlight ? 800 : 600,
+                    color: isHighlight ? BRAND.main : "#64748B",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -374,7 +336,7 @@ function EnrollmentBarChart({
   );
 }
 
-// ── Bar Chart cho doanh thu (tiền) ─────────────────────────────────────────
+// ── BIỂU ĐỒ DOANH THU THỰC NHẬN (RevenueBarChart) ──────────────────────────
 function RevenueBarChart({
   data,
   highlightIndex,
@@ -387,35 +349,25 @@ function RevenueBarChart({
   const maxVal = data.length ? Math.max(1, ...data.map((d) => d.value)) : 1;
 
   return (
-    <Box sx={{ position: "relative", width: "100%", height: 220 }}>
+    <Box sx={{ position: "relative", width: "100%", height: 210 }}>
       {allZero && (
         <Box
           sx={{
             position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 40,
+            inset: 0,
+            bottom: 30,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justify: "center",
+            justifyContent: "center",
             zIndex: 3,
-            bgcolor: "rgba(255,255,255,0.75)",
+            bgcolor: "rgba(255, 255, 255, 0.8)",
             backdropFilter: "blur(2px)",
             borderRadius: "16px",
           }}
         >
-          <AttachMoneyRounded
-            sx={{ fontSize: 32, color: CSSVAR.textMuted, mb: 1 }}
-          />
-          <Typography
-            sx={{
-              fontSize: 13.5,
-              color: CSSVAR.textSecondary,
-              fontWeight: 600,
-            }}
-          >
+          <AttachMoneyRounded sx={{ fontSize: 32, color: "#94A3B8", mb: 1 }} />
+          <Typography sx={{ fontSize: "0.85rem", color: "#64748B", fontWeight: 600 }}>
             Chưa có doanh thu trong 7 tháng qua
           </Typography>
         </Box>
@@ -425,20 +377,17 @@ function RevenueBarChart({
         direction="row"
         sx={{
           alignItems: "flex-end",
-          gap: { xs: 1, md: 2 },
-          height: 180,
-          mt: 2,
+          gap: { xs: 1, md: 1.5 },
+          height: 175,
           position: "relative",
           zIndex: 2,
-          px: 1,
+          px: 0.5,
         }}
       >
         {data.map((month, i) => {
           const isHighlight = i === highlightIndex;
           const isHovered = hoveredIndex === i;
-          const barHeight = allZero
-            ? 8
-            : Math.max(12, (month.value / maxVal) * 125);
+          const barHeight = allZero ? 8 : Math.max(10, (month.value / maxVal) * 115);
 
           return (
             <Stack
@@ -448,7 +397,7 @@ function RevenueBarChart({
               sx={{
                 alignItems: "center",
                 flex: 1,
-                gap: 1.2,
+                gap: 1,
                 position: "relative",
                 cursor: "pointer",
               }}
@@ -458,20 +407,20 @@ function RevenueBarChart({
                 <Box
                   sx={{
                     position: "absolute",
-                    bottom: barHeight + 34,
-                    bgcolor: CSSVAR.textPrimary,
+                    bottom: barHeight + 38,
+                    bgcolor: "#0F172A",
                     color: "#FFFFFF",
-                    fontSize: 11.5,
+                    fontSize: "0.74rem",
                     fontWeight: 700,
-                    px: 1.2,
-                    py: 0.6,
+                    px: 1.25,
+                    py: 0.5,
                     borderRadius: "8px",
                     whiteSpace: "nowrap",
                     zIndex: 10,
-                    boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
+                    boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
                   }}
                 >
-                  {month.label}: {month.raw.toLocaleString("vi-VN")}đ
+                  {month.label}: {month.raw.toLocaleString("vi-VN")} đ
                   <Box
                     sx={{
                       position: "absolute",
@@ -482,28 +431,26 @@ function RevenueBarChart({
                       height: 0,
                       borderLeft: "4px solid transparent",
                       borderRight: "4px solid transparent",
-                      borderTop: `4px solid ${CSSVAR.textPrimary}`,
+                      borderTop: "4px solid #0F172A",
                     }}
                   />
                 </Box>
               )}
 
-              {/* Con số doanh thu compact trên thanh */}
-              {!allZero && month.value > 0 && !isHovered && (
+              {/* Con số trên thanh */}
+              {!allZero && month.value > 0 && (
                 <Box
                   sx={{
                     position: "absolute",
                     bottom: barHeight + 8,
-                    fontSize: 10.5,
+                    fontSize: "0.7rem",
                     fontWeight: 800,
                     px: 0.8,
-                    py: 0.25,
-                    borderRadius: "10px",
-                    bgcolor: isHighlight ? "#15803D" : "rgba(31, 41, 55, 0.06)",
-                    color: isHighlight ? CSSVAR.paper : CSSVAR.textSecondary,
-                    boxShadow: isHighlight
-                      ? "0 2px 8px rgba(21,128,61,0.25)"
-                      : "none",
+                    py: 0.2,
+                    borderRadius: "8px",
+                    bgcolor: isHighlight ? "#15803D" : "#F1F5F9",
+                    color: isHighlight ? "#FFFFFF" : "#475569",
+                    boxShadow: isHighlight ? "0 2px 8px rgba(21, 128, 61, 0.35)" : "none",
                     lineHeight: 1,
                   }}
                 >
@@ -511,20 +458,18 @@ function RevenueBarChart({
                 </Box>
               )}
 
-              {/* Cột nền (Track) và Thanh biểu đồ */}
+              {/* Track và Thanh biểu đồ */}
               <Box
                 sx={{
                   width: "100%",
-                  maxWidth: 36,
-                  height: 135,
+                  maxWidth: 38,
+                  height: 125,
                   display: "flex",
                   alignItems: "flex-end",
                   justifyContent: "center",
-                  bgcolor: isHovered
-                    ? "rgba(16,185,129,0.06)"
-                    : "rgba(31, 41, 55, 0.025)",
-                  borderRadius: "10px",
-                  p: "3px",
+                  bgcolor: isHovered ? "rgba(16, 185, 129, 0.08)" : "#F8FAFC",
+                  borderRadius: "12px",
+                  p: "4px",
                   transition: "background-color 0.2s ease",
                 }}
               >
@@ -532,20 +477,19 @@ function RevenueBarChart({
                   sx={{
                     width: "100%",
                     height: barHeight,
-                    borderRadius: isHighlight ? "8px 8px 6px 6px" : "6px",
+                    borderRadius: isHighlight ? "8px 8px 6px 6px" : "8px",
                     background: allZero
-                      ? "#F3F4F6"
+                      ? "#E2E8F0"
                       : isHighlight
-                        ? `linear-gradient(180deg, ${STATUS.success} 0%, #047857 100%)`
+                        ? "linear-gradient(180deg, #10B981 0%, #047857 100%)"
                         : isHovered
-                          ? "linear-gradient(180deg, rgba(16,185,129,0.7) 0%, rgba(5,150,105,0.45) 100%)"
-                          : "linear-gradient(180deg, rgba(16,185,129,0.4) 0%, rgba(5,150,105,0.18) 100%)",
+                          ? "linear-gradient(180deg, rgba(16, 185, 129, 0.7) 0%, rgba(5, 150, 105, 0.45) 100%)"
+                          : "linear-gradient(180deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 150, 105, 0.15) 100%)",
                     boxShadow:
                       !allZero && (isHighlight || isHovered)
-                        ? "0 6px 16px rgba(16,185,129,0.3)"
+                        ? "0 6px 16px rgba(16, 185, 129, 0.3)"
                         : "none",
-                    transform:
-                      isHovered && !allZero ? "translateY(-2px)" : "none",
+                    transform: isHovered && !allZero ? "translateY(-2px)" : "none",
                     transition: "all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
                   }}
                 />
@@ -555,20 +499,16 @@ function RevenueBarChart({
               <Box
                 sx={{
                   px: 1,
-                  py: 0.3,
+                  py: 0.25,
                   borderRadius: "8px",
-                  bgcolor: isHighlight
-                    ? "rgba(16, 185, 129, 0.08)"
-                    : "transparent",
+                  bgcolor: isHighlight ? "rgba(22, 163, 74, 0.1)" : "transparent",
                 }}
               >
                 <Typography
                   sx={{
-                    fontSize: 11.5,
-                    fontWeight: isHighlight ? 850 : 600,
-                    color: isHighlight
-                      ? "#15803D"
-                      : CSSVAR.textSecondary,
+                    fontSize: "0.75rem",
+                    fontWeight: isHighlight ? 800 : 600,
+                    color: isHighlight ? "#15803D" : "#64748B",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -583,12 +523,12 @@ function RevenueBarChart({
   );
 }
 
-// ── MAIN COMPONENT ──────────────────────────────────────────────────────────
+// ── COMPONENT CHÍNH (InstructorDashboardContent) ──────────────────────────
 export default function InstructorDashboardContent() {
   const router = useRouter();
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
-  const { soDu, thongBaos, nganHangs } = useSelector((s) => s.rutTien);
+  const { soDu, thongBaos } = useSelector((s) => s.rutTien);
   const fullName = user?.hoTen || user?.userName || "Giảng viên";
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
 
@@ -651,18 +591,16 @@ export default function InstructorDashboardContent() {
     const key = n.id || n.tieuDe;
     if (!notifMap.has(key)) notifMap.set(key, n);
   });
-  const notiDisplayList = Array.from(notifMap.values()).slice(0, 2);
+  const notiDisplayList = Array.from(notifMap.values()).slice(0, 3);
 
-  // ── Dữ liệu biểu đồ học viên ──
+  // Dữ liệu biểu đồ học viên & tăng trưởng
   const chartMonths: { label: string; value: number }[] =
     dash?.monthlyEnrollments ?? [];
   const growthCount: number = dash?.newStudentsThisMonth ?? 0;
   const growthPct: number = dash?.studentGrowthPercent ?? 0;
   const completionData: any[] = dash?.completionByCourse ?? [];
 
-  // ── Dữ liệu doanh thu theo tháng (70% hóa đơn) ──
-  // BE trả về monthlyRevenue: [{label, totalAmount}] — tổng tiền khóa học được mua
-  // FE tự tính 70%
+  // Dữ liệu doanh thu
   const rawMonthlyRevenue: { label: string; totalAmount: number }[] =
     dash?.monthlyRevenue ?? [];
 
@@ -672,26 +610,32 @@ export default function InstructorDashboardContent() {
     value: Math.round(m.totalAmount),
   }));
 
-  // Tổng doanh thu 70% tháng này
   const doanhThuThangNay =
     revenueChartData.length > 0
       ? revenueChartData[revenueChartData.length - 1].raw
       : 0;
 
+  // Top 4 Metrics đồng bộ với bảng màu hệ thống EduVerse
   const instructorStats = [
     {
       label: "Tổng khóa học",
       value: dash ? String(dash.totalCourses ?? 0) : "0",
       icon: SchoolRounded,
-      iconBg: "rgba(141,19,19,0.05)",
-      iconColor: COLORS.primary,
+      gradient: `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
+      lightBg: "rgba(139, 19, 19, 0.08)",
+      color: BRAND.main,
+      sub: "Đang giảng dạy",
+      onClick: () => router.push("/instructor/manager-courses"),
     },
     {
       label: "Tổng học viên",
       value: dash ? (dash.totalStudents ?? 0).toLocaleString("vi-VN") : "0",
       icon: PeopleAltRounded,
-      iconBg: "rgba(37,99,235,0.05)",
-      iconColor: "#2563EB",
+      gradient: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+      lightBg: "rgba(37, 99, 235, 0.08)",
+      color: "#2563EB",
+      sub: "Đã tham gia học",
+      onClick: () => router.push("/instructor/students"),
     },
     {
       label: "Doanh thu cá nhân",
@@ -699,16 +643,20 @@ export default function InstructorDashboardContent() {
         ? (dash.totalRevenue ?? 0).toLocaleString("vi-VN") + " đ"
         : "0 đ",
       icon: AttachMoneyRounded,
-      iconBg: "rgba(21,128,61,0.05)",
-      iconColor: "#15803D",
+      gradient: "linear-gradient(135deg, #16A34A 0%, #15803D 100%)",
+      lightBg: "rgba(22, 163, 74, 0.08)",
+      color: "#16A34A",
+      sub: "Tổng thu nhập",
       onClick: () => router.push("/instructor/money"),
     },
     {
       label: "Số dư khả dụng",
       value: soDu ? soDu.toLocaleString("vi-VN") + " đ" : "0 đ",
       icon: AccountBalanceWalletRounded,
-      iconBg: "rgba(141,19,19,0.05)",
-      iconColor: COLORS.primary,
+      gradient: `linear-gradient(135deg, #8B1313 0%, #6D0F0F 100%)`,
+      lightBg: "rgba(139, 19, 19, 0.08)",
+      color: BRAND.main,
+      sub: "Sẵn sàng rút",
       onClick: () => router.push("/instructor/money"),
     },
   ];
@@ -719,28 +667,23 @@ export default function InstructorDashboardContent() {
         <Paper
           elevation={0}
           sx={{
-            borderRadius: "24px",
+            borderRadius: "28px",
             p: { xs: 3.5, md: 4.5 },
-            border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: CSSVAR.paper,
+            border: `1px solid ${NEUTRAL.divider}`,
+            bgcolor: "#FFFFFF",
           }}
         >
-          <Skeleton variant="text" width="40%" height={20} sx={{ mb: 1 }} />
-          <Skeleton variant="text" width="60%" height={40} sx={{ mb: 2 }} />
-          <Skeleton
-            variant="rectangular"
-            width={280}
-            height={46}
-            sx={{ borderRadius: "12px" }}
-          />
+          <Skeleton variant="text" width="30%" height={24} sx={{ mb: 1 }} />
+          <Skeleton variant="text" width="55%" height={45} sx={{ mb: 2 }} />
+          <Skeleton variant="rectangular" width={280} height={48} sx={{ borderRadius: "14px" }} />
         </Paper>
         <Box
           sx={{
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              sm: "repeat(2,1fr)",
-              md: "repeat(4,1fr)",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(4, 1fr)",
             },
             gap: 2.5,
           }}
@@ -751,56 +694,16 @@ export default function InstructorDashboardContent() {
               elevation={0}
               sx={{
                 p: 2.5,
-                borderRadius: "20px",
-                border: "1px solid rgba(141,19,19,0.06)",
-                bgcolor: CSSVAR.paper,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
+                borderRadius: "22px",
+                border: `1px solid ${NEUTRAL.divider}`,
+                bgcolor: "#FFFFFF",
               }}
             >
-              <Skeleton
-                variant="rectangular"
-                width={48}
-                height={48}
-                sx={{ borderRadius: "14px" }}
-              />
-              <Box sx={{ flex: 1 }}>
-                <Skeleton variant="text" width="60%" />
-                <Skeleton variant="text" width="40%" />
-              </Box>
+              <Skeleton variant="rectangular" width={48} height={48} sx={{ borderRadius: "14px", mb: 2 }} />
+              <Skeleton variant="text" width="50%" />
+              <Skeleton variant="text" width="75%" height={32} />
             </Paper>
           ))}
-        </Box>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" },
-            gap: 2.5,
-          }}
-        >
-          <Stack spacing={2.5}>
-            <Skeleton
-              variant="rectangular"
-              height={350}
-              sx={{ borderRadius: "20px" }}
-            />
-            <Skeleton
-              variant="rectangular"
-              height={350}
-              sx={{ borderRadius: "20px" }}
-            />
-          </Stack>
-          <Stack spacing={2.5}>
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton
-                key={i}
-                variant="rectangular"
-                height={140}
-                sx={{ borderRadius: "20px" }}
-              />
-            ))}
-          </Stack>
         </Box>
       </Stack>
     );
@@ -808,64 +711,106 @@ export default function InstructorDashboardContent() {
 
   return (
     <Stack spacing={3.5}>
-      {/* ── 1. WELCOME CARD ── */}
+      {/* ── 1. HERO BANNER: Chào mừng Giảng viên ── */}
       <Paper
         elevation={0}
         sx={{
-          borderRadius: "24px",
-          p: { xs: 3.5, md: 4.5 },
-          border: "1px solid rgba(141,19,19,0.06)",
-          bgcolor: CSSVAR.paper,
-          boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+          borderRadius: "28px",
+          p: { xs: 3, sm: 4, md: 4.5 },
+          background: "linear-gradient(135deg, #FFFFFF 0%, #FAF8F6 100%)",
+          border: `1px solid ${NEUTRAL.divider}`,
+          boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)",
           position: "relative",
           overflow: "hidden",
         }}
       >
+        {/* Decorative Glow */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: -60,
+            right: -60,
+            width: 260,
+            height: 260,
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${BRAND.main}12 0%, transparent 70%)`,
+            pointerEvents: "none",
+          }}
+        />
+
         <Stack
           direction={{ xs: "column", md: "row" }}
-          spacing={4}
+          spacing={3.5}
           sx={{
-            alignItems: "center",
+            alignItems: { xs: "flex-start", md: "center" },
             justifyContent: "space-between",
             position: "relative",
             zIndex: 2,
           }}
         >
-          <Box sx={{ flex: 1, width: "100%" }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            {/* Top Tag */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 0.75,
+                  px: 1.5,
+                  py: 0.4,
+                  borderRadius: "999px",
+                  bgcolor: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  color: BRAND.main,
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                <AutoAwesomeRounded sx={{ fontSize: 14 }} />
+                <span>Bảng điều khiển Giảng viên</span>
+              </Box>
+              <Chip
+                label="Đang hoạt động"
+                size="small"
+                sx={{
+                  bgcolor: "#DCFCE7",
+                  color: "#15803D",
+                  fontWeight: 700,
+                  fontSize: "0.74rem",
+                  border: "1px solid #BBF7D0",
+                  height: 22,
+                }}
+              />
+            </Box>
+
             <Typography
               sx={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: COLORS.primary,
-                textTransform: "uppercase",
-                letterSpacing: "1px",
+                fontSize: { xs: "1.6rem", md: "2.1rem" },
+                fontWeight: 900,
+                color: "#0F172A",
+                lineHeight: 1.25,
+                letterSpacing: "-0.02em",
                 mb: 1,
               }}
             >
-              Bảng điều khiển Giảng viên
+              Chào mừng trở lại, GS. {fullName} 👋
             </Typography>
+
             <Typography
               sx={{
-                fontSize: { xs: 26, md: 32 },
-                fontWeight: 900,
-                color: CSSVAR.textPrimary,
-                mb: 1.5,
-                lineHeight: 1.2,
-              }}
-            >
-              Chào mừng trở lại, GS. {fullName}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 14.5,
-                color: CSSVAR.textSecondary,
-                maxWidth: 480,
+                fontSize: "0.95rem",
+                color: "#64748B",
+                maxWidth: 540,
                 lineHeight: 1.6,
                 mb: 3,
               }}
             >
-              Theo dõi hiệu quả giảng dạy và quản lý hoạt động khóa học của bạn.
+              Theo dõi tình hình kinh doanh, số lượng học viên và các hoạt động giảng dạy mới nhất trên hệ thống EduVerse.
             </Typography>
+
+            {/* Quick Actions in Hero */}
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={2}
@@ -874,100 +819,97 @@ export default function InstructorDashboardContent() {
               <Button
                 variant="contained"
                 startIcon={<AddRounded />}
-                onClick={() =>
-                  router.push("/instructor/manager-courses/create/1")
-                }
+                onClick={() => router.push("/instructor/manager-courses/create/1")}
                 sx={{
-                  borderRadius: "12px",
-                  bgcolor: COLORS.primary,
+                  borderRadius: "14px",
+                  background: `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
                   color: "#FFFFFF",
-                  px: 3,
-                  py: 1.25,
-                  fontSize: 13.5,
+                  px: 3.5,
+                  py: 1.3,
+                  fontSize: "0.92rem",
                   fontWeight: 800,
                   textTransform: "none",
-                  boxShadow: "none",
-                  "&:hover": { bgcolor: "#7F1D1D", boxShadow: "none" },
+                  boxShadow: `0 4px 14px ${BRAND.main}35`,
+                  "&:hover": {
+                    background: `linear-gradient(135deg, ${BRAND.dark} 0%, ${BRAND.darker} 100%)`,
+                    boxShadow: `0 8px 20px ${BRAND.main}45`,
+                    transform: "translateY(-1px)",
+                  },
+                  transition: "all 0.2s ease",
                 }}
               >
-                Tạo khóa học
+                Tạo khóa học mới
               </Button>
+
               <Button
                 variant="outlined"
                 startIcon={<AccountBalanceWalletRounded />}
                 onClick={() => router.push("/instructor/money")}
                 sx={{
-                  borderRadius: "12px",
-                  borderColor: "rgba(141,19,19,0.25)",
-                  color: COLORS.primary,
+                  borderRadius: "14px",
+                  borderColor: "#CBD5E1",
+                  bgcolor: "#FFFFFF",
+                  color: "#1E293B",
                   px: 3,
-                  py: 1.25,
-                  fontSize: 13.5,
-                  fontWeight: 800,
+                  py: 1.3,
+                  fontSize: "0.92rem",
+                  fontWeight: 700,
                   textTransform: "none",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.02)",
                   "&:hover": {
-                    borderColor: COLORS.primary,
-                    bgcolor: "rgba(141,19,19,0.03)",
+                    borderColor: BRAND.main,
+                    color: BRAND.main,
+                    bgcolor: "rgba(139, 19, 19, 0.04)",
                   },
                 }}
               >
-                Rút tiền
+                Doanh thu & Rút tiền
               </Button>
             </Stack>
           </Box>
+
+          {/* Avatar Profile Ring */}
           <Box
             sx={{
               display: { xs: "none", md: "flex" },
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
-              width: 160,
-              height: 160,
+              p: 1,
               borderRadius: "50%",
-              bgcolor: "#FEF2F2",
-              border: "2px solid rgba(141,19,19,0.08)",
-              mr: 2,
-              p: 0.5,
+              background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
+              border: `2px solid rgba(139, 19, 19, 0.15)`,
+              boxShadow: "0 12px 28px rgba(0, 0, 0, 0.06)",
             }}
           >
             <Avatar
               src={userAvatar || user?.anhDaiDien || undefined}
               alt={fullName}
               sx={{
-                width: 146,
-                height: 146,
-                border: "1px solid rgba(141,19,19,0.04)",
-                boxShadow: "0 8px 24px rgba(141,19,19,0.06)",
-                bgcolor: "#FEF2F2",
+                width: 128,
+                height: 128,
+                border: "3px solid #FFFFFF",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
+                bgcolor: BRAND.main,
+                color: "#FFFFFF",
+                fontSize: "2.2rem",
+                fontWeight: 900,
               }}
             >
-              {fullName.split(" ").pop()?.charAt(0)}
+              {fullName.split(" ").pop()?.charAt(0)?.toUpperCase()}
             </Avatar>
           </Box>
         </Stack>
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: -60,
-            right: -60,
-            width: 220,
-            height: 220,
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(141,19,19,0.03) 0%, transparent 70%)",
-            zIndex: 1,
-          }}
-        />
       </Paper>
 
-      {/* ── 2. STATS CARDS ── */}
+      {/* ── 2. STATS KPI CARDS ── */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            sm: "repeat(2,1fr)",
-            md: "repeat(4,1fr)",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(4, 1fr)",
           },
           gap: 2.5,
         }}
@@ -980,86 +922,131 @@ export default function InstructorDashboardContent() {
               elevation={0}
               onClick={stat.onClick}
               sx={{
-                p: 2.5,
-                borderRadius: "20px",
-                border: "1px solid rgba(141,19,19,0.06)",
-                bgcolor: CSSVAR.paper,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                cursor: stat.onClick ? "pointer" : "default",
-                transition: "box-shadow 200ms ease",
+                p: 2.75,
+                borderRadius: "24px",
+                border: `1px solid ${NEUTRAL.divider}`,
+                bgcolor: "#FFFFFF",
+                position: "relative",
+                overflow: "hidden",
+                cursor: "pointer",
+                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
                 "&:hover": {
-                  boxShadow: "0 6px 18px rgba(141,19,19,0.06)",
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 14px 30px -8px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0,0,0,0.03)",
+                  borderColor: stat.color,
+                  "& .stat-arrow": {
+                    opacity: 1,
+                    transform: "translateX(0)",
+                  },
                 },
               }}
             >
+              {/* Background ambient tint */}
               <Box
                 sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "14px",
-                  bgcolor: stat.iconBg,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  position: "absolute",
+                  top: -20,
+                  right: -20,
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  bgcolor: stat.lightBg,
+                  filter: "blur(20px)",
+                  pointerEvents: "none",
+                }}
+              />
+
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "16px",
+                    background: stat.gradient,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#FFFFFF",
+                    boxShadow: `0 6px 14px ${stat.color}35`,
+                  }}
+                >
+                  <Icon sx={{ fontSize: 24 }} />
+                </Box>
+
+                <Box
+                  className="stat-arrow"
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    bgcolor: "#F8FAFC",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: stat.color,
+                    opacity: 0.4,
+                    transform: "translateX(-4px)",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <ArrowForwardRounded sx={{ fontSize: 16 }} />
+                </Box>
+              </Box>
+
+              <Typography
+                sx={{
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  color: "#64748B",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  mb: 0.5,
                 }}
               >
-                <Icon sx={{ fontSize: 24, color: stat.iconColor }} />
-              </Box>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: CSSVAR.textSecondary,
-                    mb: 0.5,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  {stat.label}
-                </Typography>
-                <Typography
-                  noWrap
-                  sx={{
-                    fontSize: 20,
-                    fontWeight: 900,
-                    color: CSSVAR.textPrimary,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {stat.value}
-                </Typography>
-              </Box>
+                {stat.label}
+              </Typography>
+
+              <Typography
+                noWrap
+                sx={{
+                  fontSize: "1.45rem",
+                  fontWeight: 900,
+                  color: "#0F172A",
+                  lineHeight: 1.2,
+                  mb: 0.5,
+                }}
+              >
+                {stat.value}
+              </Typography>
+
+              <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
+                {stat.sub}
+              </Typography>
             </Paper>
           );
         })}
       </Box>
 
-      {/* ── 3. MAIN GRID ── */}
+      {/* ── 3. MAIN ANALYTICS GRID ── */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" },
-          gap: 2.5,
+          gap: 3,
         }}
       >
-        {/* ── LEFT COLUMN ── */}
-        <Stack spacing={2.5}>
-          {/* Biểu đồ học viên mới theo tháng */}
+        {/* ── LEFT COLUMN: Charts ── */}
+        <Stack spacing={3}>
+          {/* Biểu đồ học viên theo tháng */}
           <Paper
             elevation={0}
             sx={{
-              p: 3,
-              borderRadius: "20px",
-              border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: CSSVAR.paper,
-              height: 310,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
+              p: { xs: 2.5, sm: 3.5 },
+              borderRadius: "24px",
+              border: `1px solid ${NEUTRAL.divider}`,
+              bgcolor: "#FFFFFF",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
             }}
           >
             <Stack
@@ -1067,60 +1054,60 @@ export default function InstructorDashboardContent() {
               sx={{
                 justifyContent: "space-between",
                 alignItems: "center",
-                mb: 1,
+                mb: 2,
               }}
             >
               <Box>
                 <Typography
                   sx={{
-                    fontSize: 16.5,
+                    fontSize: "1.1rem",
                     fontWeight: 800,
-                    color: CSSVAR.textPrimary,
+                    color: "#0F172A",
                   }}
                 >
                   Học viên đăng ký theo tháng
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: 12.5,
-                    color: CSSVAR.textSecondary,
-                    mt: 0.3,
+                    fontSize: "0.82rem",
+                    color: "#64748B",
+                    mt: 0.25,
                   }}
                 >
-                  Số lượt đăng ký khóa học 7 tháng gần nhất
+                  Số lượt học viên đăng ký khóa học 7 tháng gần nhất
                 </Typography>
               </Box>
+
               <Chip
                 label={`Năm ${new Date().getFullYear()}`}
                 size="small"
                 sx={{
                   fontWeight: 700,
-                  fontSize: 12,
-                  color: "var(--ev-text-secondary, rgba(31,41,55,0.6))",
-                  bgcolor: "rgba(31,41,55,0.04)",
-                  border: "1px solid rgba(31,41,55,0.08)",
+                  fontSize: "0.78rem",
+                  color: "#475569",
+                  bgcolor: "#F1F5F9",
+                  border: "1px solid #E2E8F0",
                   borderRadius: "10px",
+                  height: 26,
                 }}
               />
             </Stack>
+
             <EnrollmentBarChart
               data={chartMonths}
               highlightIndex={chartMonths.length ? chartMonths.length - 1 : 0}
             />
           </Paper>
 
-          {/* Biểu đồ doanh thu theo tháng (70%) */}
+          {/* Biểu đồ doanh thu theo tháng */}
           <Paper
             elevation={0}
             sx={{
-              p: 3,
-              borderRadius: "20px",
-              border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: CSSVAR.paper,
-              height: 310,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
+              p: { xs: 2.5, sm: 3.5 },
+              borderRadius: "24px",
+              border: `1px solid ${NEUTRAL.divider}`,
+              bgcolor: "#FFFFFF",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
             }}
           >
             <Stack
@@ -1128,46 +1115,49 @@ export default function InstructorDashboardContent() {
               sx={{
                 justifyContent: "space-between",
                 alignItems: "flex-start",
-                mb: 1,
+                mb: 2,
               }}
             >
               <Box>
                 <Typography
                   sx={{
-                    fontSize: 16.5,
+                    fontSize: "1.1rem",
                     fontWeight: 800,
-                    color: CSSVAR.textPrimary,
+                    color: "#0F172A",
                   }}
                 >
                   Doanh thu theo tháng
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: 12.5,
-                    color: CSSVAR.textSecondary,
-                    mt: 0.3,
+                    fontSize: "0.82rem",
+                    color: "#64748B",
+                    mt: 0.25,
                   }}
                 >
-                  Doanh thu thực nhận · 7 tháng gần nhất
+                  Doanh thu thực nhận từ khóa học · 7 tháng gần nhất
                 </Typography>
               </Box>
+
               <Box sx={{ textAlign: "right" }}>
                 <Typography
                   sx={{
-                    fontSize: 11,
-                    color: CSSVAR.textSecondary,
-                    fontWeight: 600,
+                    fontSize: "0.74rem",
+                    color: "#64748B",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
                   }}
                 >
                   Tháng này
                 </Typography>
                 <Typography
-                  sx={{ fontSize: 18, fontWeight: 900, color: "#15803D" }}
+                  sx={{ fontSize: "1.15rem", fontWeight: 900, color: "#15803D" }}
                 >
-                  {doanhThuThangNay.toLocaleString("vi-VN")}đ
+                  {doanhThuThangNay.toLocaleString("vi-VN")} đ
                 </Typography>
               </Box>
             </Stack>
+
             <RevenueBarChart
               data={revenueChartData}
               highlightIndex={
@@ -1177,63 +1167,62 @@ export default function InstructorDashboardContent() {
           </Paper>
         </Stack>
 
-        {/* ── RIGHT COLUMN ── */}
-        <Stack spacing={2.5}>
+        {/* ── RIGHT COLUMN: Growth, Completion, Notifications ── */}
+        <Stack spacing={3}>
           {/* Tăng trưởng học viên */}
           <Paper
             elevation={0}
             sx={{
-              p: 2.5,
-              borderRadius: "20px",
-              border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: CSSVAR.paper,
-              height: 145,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
+              p: 3,
+              borderRadius: "24px",
+              border: `1px solid ${NEUTRAL.divider}`,
+              bgcolor: "#FFFFFF",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
             }}
           >
             <Typography
               sx={{
-                fontSize: 14,
+                fontSize: "0.95rem",
                 fontWeight: 800,
-                color: CSSVAR.textPrimary,
-                mb: 1.5,
+                color: "#0F172A",
+                mb: 2,
               }}
             >
               Tăng trưởng học viên
             </Typography>
-            <Stack direction="row" sx={{ alignItems: "center", gap: 2 }}>
+
+            <Stack direction="row" sx={{ alignItems: "center", gap: 2.5 }}>
+              {/* Circular Radial Gauge */}
               <Box
                 sx={{
-                  width: 56,
-                  height: 56,
+                  width: 64,
+                  height: 64,
                   borderRadius: "50%",
-                  background: `conic-gradient(${STATUS.success} 0% ${growthPct > 0 ? growthPct : 0}%, ${CSSVAR.paperAlt} ${growthPct > 0 ? growthPct : 0}% 100%)`,
+                  background: `conic-gradient(#10B981 0% ${growthPct > 0 ? Math.min(growthPct, 100) : 0}%, #F1F5F9 ${growthPct > 0 ? Math.min(growthPct, 100) : 0}% 100%)`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
-                  boxShadow: "inset 0 0 0 5px #fff",
+                  boxShadow: "inset 0 0 0 6px #FFFFFF",
                 }}
               >
                 <Box
                   sx={{
-                    width: 42,
-                    height: 42,
+                    width: 46,
+                    height: 46,
                     borderRadius: "50%",
-                    bgcolor: CSSVAR.paper,
+                    bgcolor: "#FFFFFF",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
                   }}
                 >
                   <Typography
                     sx={{
-                      fontSize: 11.5,
-                      fontWeight: 800,
-                      color: growthPct >= 0 ? STATUS.success : STATUS.error,
+                      fontSize: "0.78rem",
+                      fontWeight: 900,
+                      color: growthPct >= 0 ? "#16A34A" : STATUS.error,
                     }}
                   >
                     {growthPct >= 0 ? "+" : ""}
@@ -1241,22 +1230,23 @@ export default function InstructorDashboardContent() {
                   </Typography>
                 </Box>
               </Box>
+
               <Box>
                 <Typography
                   sx={{
-                    fontSize: 26,
+                    fontSize: "1.75rem",
                     fontWeight: 900,
-                    color: CSSVAR.textPrimary,
+                    color: "#0F172A",
                     lineHeight: 1,
-                    mb: 0.3,
+                    mb: 0.5,
                   }}
                 >
                   {growthCount.toLocaleString("vi-VN")}
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: 12,
-                    color: CSSVAR.textSecondary,
+                    fontSize: "0.82rem",
+                    color: "#64748B",
                     fontWeight: 600,
                   }}
                 >
@@ -1270,32 +1260,30 @@ export default function InstructorDashboardContent() {
           <Paper
             elevation={0}
             sx={{
-              p: 2.5,
-              borderRadius: "20px",
-              border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: CSSVAR.paper,
-              height: 145,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
+              p: 3,
+              borderRadius: "24px",
+              border: `1px solid ${NEUTRAL.divider}`,
+              bgcolor: "#FFFFFF",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
             }}
           >
             <Typography
               sx={{
-                fontSize: 14,
+                fontSize: "0.95rem",
                 fontWeight: 800,
-                color: CSSVAR.textPrimary,
-                mb: 1.5,
+                color: "#0F172A",
+                mb: 2,
               }}
             >
               Tỷ lệ hoàn thành
             </Typography>
+
             {completionData.length === 0 ? (
-              <Box sx={{ py: 1, textAlign: "center" }}>
+              <Box sx={{ py: 1.5, textAlign: "center" }}>
                 <Typography
                   sx={{
-                    fontSize: 12.5,
-                    color: CSSVAR.textSecondary,
+                    fontSize: "0.85rem",
+                    color: "#94A3B8",
                     fontWeight: 500,
                   }}
                 >
@@ -1303,29 +1291,29 @@ export default function InstructorDashboardContent() {
                 </Typography>
               </Box>
             ) : (
-              <Stack spacing={1.5}>
+              <Stack spacing={2}>
                 {completionData.map((item) => (
                   <Box key={item.title}>
                     <Stack
                       direction="row"
-                      sx={{ justifyContent: "space-between", mb: 0.5 }}
+                      sx={{ justifyContent: "space-between", mb: 0.75 }}
                     >
                       <Typography
                         noWrap
                         sx={{
-                          fontSize: 12.5,
+                          fontSize: "0.84rem",
                           fontWeight: 700,
-                          color: CSSVAR.textSecondary,
-                          maxWidth: "80%",
+                          color: "#1E293B",
+                          maxWidth: "75%",
                         }}
                       >
                         {item.title}
                       </Typography>
                       <Typography
                         sx={{
-                          fontSize: 12.5,
+                          fontSize: "0.84rem",
                           fontWeight: 800,
-                          color: COLORS.primary,
+                          color: BRAND.main,
                         }}
                       >
                         {item.rate}%
@@ -1335,12 +1323,12 @@ export default function InstructorDashboardContent() {
                       variant="determinate"
                       value={item.rate}
                       sx={{
-                        height: 7,
+                        height: 8,
                         borderRadius: 4,
-                        bgcolor: CSSVAR.paperAlt,
+                        bgcolor: "#F1F5F9",
                         "& .MuiLinearProgress-bar": {
                           borderRadius: 4,
-                          bgcolor: COLORS.primary,
+                          background: `linear-gradient(90deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
                         },
                       }}
                     />
@@ -1354,32 +1342,39 @@ export default function InstructorDashboardContent() {
           <Paper
             elevation={0}
             sx={{
-              p: 2.5,
-              borderRadius: "20px",
-              border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: CSSVAR.paper,
-              height: 310,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
+              p: 3,
+              borderRadius: "24px",
+              border: `1px solid ${NEUTRAL.divider}`,
+              bgcolor: "#FFFFFF",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
             }}
           >
-            <Typography
+            <Box
               sx={{
-                fontSize: 15,
-                fontWeight: 800,
-                color: CSSVAR.textPrimary,
-                mb: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
               }}
             >
-              Thông báo & Hoạt động
-            </Typography>
-            <Stack spacing={0} sx={{ flex: 1, justifyContent: "space-around" }}>
+              <Typography
+                sx={{
+                  fontSize: "0.95rem",
+                  fontWeight: 800,
+                  color: "#0F172A",
+                }}
+              >
+                Thông báo & Hoạt động
+              </Typography>
+              <NotificationsNoneRounded sx={{ color: "#94A3B8", fontSize: 20 }} />
+            </Box>
+
+            <Stack spacing={1.5}>
               {notiDisplayList.length === 0 ? (
                 <Typography
                   sx={{
-                    fontSize: 13,
-                    color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                    fontSize: "0.85rem",
+                    color: "#94A3B8",
                     textAlign: "center",
                     py: 3,
                   }}
@@ -1387,11 +1382,11 @@ export default function InstructorDashboardContent() {
                   Chưa có thông báo nào
                 </Typography>
               ) : (
-                notiDisplayList.map((notif, index) => {
+                notiDisplayList.map((notif) => {
                   const config = loaiIconMap[notif.loaiThongBao ?? ""] ?? {
                     icon: PersonAddRounded,
-                    iconBg: "rgba(141,19,19,0.08)",
-                    iconColor: COLORS.primary,
+                    iconBg: "rgba(139, 19, 19, 0.08)",
+                    iconColor: BRAND.main,
                   };
                   const Icon = config.icon;
                   return (
@@ -1400,22 +1395,21 @@ export default function InstructorDashboardContent() {
                       sx={{
                         display: "flex",
                         gap: 1.5,
-                        py: 1.2,
-                        borderBottom:
-                          index < notiDisplayList.length - 1
-                            ? "1px solid rgba(0,0,0,0.05)"
-                            : "none",
-                        bgcolor: !notif.daDoc
-                          ? "rgba(141,19,19,0.02)"
-                          : "transparent",
-                        borderRadius: 1,
+                        p: 1.5,
+                        borderRadius: "14px",
+                        bgcolor: !notif.daDoc ? "#FEF2F2" : "#F8FAFC",
+                        border: `1px solid ${!notif.daDoc ? "#FECACA" : "#F1F5F9"}`,
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          bgcolor: "#F1F5F9",
+                        },
                       }}
                     >
                       <Box
                         sx={{
                           width: 36,
                           height: 36,
-                          borderRadius: "10px",
+                          borderRadius: "12px",
                           bgcolor: config.iconBg,
                           display: "flex",
                           alignItems: "center",
@@ -1428,14 +1422,14 @@ export default function InstructorDashboardContent() {
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Stack
                           direction="row"
-                          sx={{ alignItems: "center", gap: 0.8 }}
+                          sx={{ alignItems: "center", gap: 0.8, justifyContent: "space-between" }}
                         >
                           <Typography
+                            noWrap
                             sx={{
-                              fontSize: 12.5,
+                              fontSize: "0.82rem",
                               fontWeight: !notif.daDoc ? 800 : 700,
-                              color: CSSVAR.textPrimary,
-                              mb: 0.2,
+                              color: "#0F172A",
                             }}
                           >
                             {notif.tieuDe}
@@ -1443,10 +1437,10 @@ export default function InstructorDashboardContent() {
                           {!notif.daDoc && (
                             <Box
                               sx={{
-                                width: 6,
-                                height: 6,
+                                width: 7,
+                                height: 7,
                                 borderRadius: "50%",
-                                bgcolor: COLORS.primary,
+                                bgcolor: BRAND.main,
                                 flexShrink: 0,
                               }}
                             />
@@ -1454,23 +1448,23 @@ export default function InstructorDashboardContent() {
                         </Stack>
                         <Typography
                           sx={{
-                            fontSize: 11.5,
-                            color:
-                              "var(--ev-text-secondary, rgba(31,41,55,0.6))",
+                            fontSize: "0.76rem",
+                            color: "#64748B",
                             lineHeight: 1.4,
                             display: "-webkit-box",
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: "vertical",
                             overflow: "hidden",
+                            mt: 0.25,
                           }}
                         >
                           {notif.noiDung}
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: 10.5,
-                            color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                            mt: 0.3,
+                            fontSize: "0.7rem",
+                            color: "#94A3B8",
+                            mt: 0.5,
                           }}
                         >
                           {thoiGianRelative(notif.thoiGianTao)}
@@ -1481,27 +1475,6 @@ export default function InstructorDashboardContent() {
                 })
               )}
             </Stack>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => router.push("/instructor/thong-bao")}
-              sx={{
-                mt: 1.5,
-                borderRadius: "12px",
-                borderColor: "rgba(141,19,19,0.15)",
-                color: CSSVAR.textPrimary,
-                fontWeight: 700,
-                fontSize: 12.5,
-                textTransform: "none",
-                py: 1,
-                "&:hover": {
-                  borderColor: COLORS.primary,
-                  bgcolor: "rgba(141,19,19,0.03)",
-                },
-              }}
-            >
-              Xem tất cả thông báo
-            </Button>
           </Paper>
         </Stack>
       </Box>
