@@ -171,7 +171,7 @@ export default function DashboardHeader({
 
   useEffect(() => {
     const keyword = searchQuery.trim();
-    if (!isInstructorMode || keyword.length < 2) return;
+    if (!isInstructorMode || !keyword) return;
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
@@ -489,7 +489,7 @@ export default function DashboardHeader({
                 onChange={(event) => {
                   const nextQuery = event.target.value;
                   setSearchQuery(nextQuery);
-                  if (nextQuery.trim().length < 2) {
+                  if (!nextQuery.trim()) {
                     setSearchResults([]);
                     setIsSearching(false);
                     setSearchError("");
@@ -497,7 +497,7 @@ export default function DashboardHeader({
                   if (isInstructorMode) setIsSearchOpen(true);
                 }}
                 onFocus={() => {
-                  if (isInstructorMode && searchQuery.trim().length >= 2) {
+                  if (isInstructorMode && searchQuery.trim().length > 0) {
                     setIsSearchOpen(true);
                   }
                 }}
@@ -515,7 +515,7 @@ export default function DashboardHeader({
 
             {isInstructorMode &&
               isSearchOpen &&
-              searchQuery.trim().length >= 2 && (
+              searchQuery.trim().length > 0 && (
                 <Paper
                   elevation={8}
                   sx={{
