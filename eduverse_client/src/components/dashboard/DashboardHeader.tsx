@@ -983,11 +983,26 @@ export default function DashboardHeader({
             <Divider sx={{ my: 0.5 }} />
 
             <MenuItem
-              onClick={() =>
-                router.push(
-                  roles.includes("Admin") ? "/admin/settings" : "/settings",
-                )
-              }
+              onClick={() => {
+                const isPersonnel = roles.some(
+                  (r: string) =>
+                    r.toLowerCase() === "personnel" ||
+                    r.toLowerCase() === "nhanvien" ||
+                    r.toLowerCase() === "kiemduyet",
+                );
+                if (isPersonnel && !roles.includes("Admin")) {
+                  router.push("/personnel/settings");
+                } else if (roles.includes("Admin")) {
+                  router.push("/admin/settings");
+                } else if (
+                  roles.includes("GiaoVien") &&
+                  pathname.startsWith("/instructor")
+                ) {
+                  router.push("/instructor/settings");
+                } else {
+                  router.push("/settings");
+                }
+              }}
             >
               <ListItemIcon sx={{ minWidth: "32px !important" }}>
                 <SettingsRounded fontSize="small" />

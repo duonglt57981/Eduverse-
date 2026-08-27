@@ -2505,39 +2505,6 @@ export default function StudentDashboardContent() {
         </Box>
       )}
 
-      {/* ── 8. History Recommendation ──────────────────────────────── */}
-      {historyRecommendation?.courses &&
-        historyRecommendation.courses.length > 0 && (
-          <Box>
-            <Typography
-              sx={{ fontSize: 20, fontWeight: 900, color: C.textDark }}
-            >
-              Vì bạn đã học &quot;{historyRecommendation.basedOnCourse}&quot;
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 13.5,
-                color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                mb: 3,
-                mt: 0.5,
-              }}
-            >
-              Đề xuất từ động cơ trí tuệ nhân tạo (AI Recommendation Engine).
-            </Typography>
-            <CarouselRow>
-              {historyRecommendation.courses.map((c) => (
-                <CourseCard
-                  key={c.id}
-                  course={c}
-                  onAddCart={handleAddCart}
-                  onClick={handleOpenCourse}
-                  width={240}
-                />
-              ))}
-            </CarouselRow>
-          </Box>
-        )}
-
       {/* Cart notification */}
       {addedIds.size > 0 && (
         <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 2000 }}>
