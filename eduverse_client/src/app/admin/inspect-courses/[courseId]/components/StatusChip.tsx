@@ -1,121 +1,109 @@
 "use client";
-import { Chip, Box } from "@mui/material";
-import {
-  COLORS,
-  FONTS,
-  normalizeTrangThai,
-} from "@/src/app/admin/approve-courses/types/constants"; // removed TrangThaiKiemDuyet
-import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
+
+import { Box, Chip, alpha } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import PendingRoundedIcon from "@mui/icons-material/PendingRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
-import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
-import { CSSVAR } from "@/src/theme/tokens";
+import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
+import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
+import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 
-// Define the config type with optional stamp
-type TrangThaiConfig = {
-  label: string;
-  color: string;
-  bg: string;
-  icon: React.ReactElement;
-  stamp?: boolean;
-};
-
-const TRANG_THAI_CONFIG: Record<string, TrangThaiConfig> = {
-  DangSua: {
-    label: "Đang sửa",
-    color: COLORS.inkSoft,
-    bg: CSSVAR.paperAlt,
-    icon: <EditNoteRoundedIcon sx={{ fontSize: 15 }} />,
-  },
+const TRANG_THAI_CONFIG: Record<
+  string,
+  { label: string; color: string; bg: string; border: string; icon: React.ReactNode }
+> = {
   ChoDuyet: {
     label: "Chờ duyệt",
-    color: COLORS.gold,
-    bg: COLORS.goldSoft,
-    icon: <HourglassTopRoundedIcon sx={{ fontSize: 15 }} />,
+    color: "#D97706",
+    bg: "#FFFBEB",
+    border: "#FDE68A",
+    icon: <PendingRoundedIcon sx={{ fontSize: "14px !important" }} />,
   },
   DangDuyet: {
-    label: "Đang chờ duyệt",
-    color: COLORS.gold,
-    bg: COLORS.goldSoft,
-    icon: <HourglassTopRoundedIcon sx={{ fontSize: 15 }} />,
+    label: "Đang duyệt",
+    color: "#2563EB",
+    bg: "#EFF6FF",
+    border: "#BFDBFE",
+    icon: <HourglassEmptyRoundedIcon sx={{ fontSize: "14px !important" }} />,
   },
-  // Đã duyệt: dùng chung style Chip như các trạng thái khác (không còn kiểu "dấu mộc" stamp riêng)
   DaDuyet: {
     label: "Đã duyệt",
-    color: COLORS.success,
-    bg: COLORS.successSoft,
-    icon: <CheckCircleRoundedIcon sx={{ fontSize: 15 }} />,
+    color: "#16A34A",
+    bg: "#F0FDF4",
+    border: "#BBF7D0",
+    icon: <CheckCircleRoundedIcon sx={{ fontSize: "14px !important" }} />,
   },
   TuChoi: {
     label: "Từ chối",
-    color: COLORS.danger,
-    bg: COLORS.dangerSoft,
-    icon: <CancelRoundedIcon sx={{ fontSize: 15 }} />,
-    stamp: true,
+    color: "#DC2626",
+    bg: "#FEF2F2",
+    border: "#FECACA",
+    icon: <CancelRoundedIcon sx={{ fontSize: "14px !important" }} />,
+  },
+  DangSua: {
+    label: "Đang sửa",
+    color: "#9333EA",
+    bg: "#FAF5FF",
+    border: "#E9D5FF",
+    icon: <EditNoteRoundedIcon sx={{ fontSize: "14px !important" }} />,
+  },
+  XemXet: {
+    label: "Xem xét",
+    color: "#0284C7",
+    bg: "#F0F9FF",
+    border: "#BAE6FD",
+    icon: <VisibilityRoundedIcon sx={{ fontSize: "14px !important" }} />,
   },
 };
 
 export default function StatusChip({
   trangThai,
-  size = "medium",
+  size = "small",
   hidePending = false,
 }: {
-  trangThai: string | null | undefined;
+  trangThai?: string;
   size?: "small" | "medium";
   hidePending?: boolean;
 }) {
-  const status = normalizeTrangThai(trangThai);
-  if (hidePending && (status === "ChoDuyet" || status === "DangDuyet")) {
+  if (hidePending && (trangThai === "ChoDuyet" || trangThai === "DangDuyet")) {
     return null;
   }
-  const cfg = TRANG_THAI_CONFIG[status];
-  if (!cfg) return null;
-
-  if (cfg.stamp) {
-    const rotate = status === "DaDuyet" ? "-6deg" : "4deg";
-    return (
-      <Box
-        sx={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 0.5,
-          px: size === "small" ? 1 : 1.4,
-          py: size === "small" ? 0.2 : 0.4,
-          border: `1.5px solid ${cfg.color}`,
-          borderRadius: "3px",
-          color: cfg.color,
-          transform: `rotate(${rotate})`,
-          fontFamily: FONTS.display,
-          fontWeight: 700,
-          fontSize: size === "small" ? 10.5 : 12,
-          letterSpacing: "0.09em",
-          textTransform: "uppercase",
-          lineHeight: 1,
-          userSelect: "none",
-          flexShrink: 0,
-        }}
-      >
-        {cfg.icon}
-        {cfg.label}
-      </Box>
-    );
-  }
+  const config = TRANG_THAI_CONFIG[trangThai ?? ""] || {
+    label: trangThai || "Không rõ",
+    color: "#64748B",
+    bg: "#F1F5F9",
+    border: "#E2E8F0",
+    icon: null,
+  };
 
   return (
-    <Chip
-      size="small"
-      icon={cfg.icon}
-      label={cfg.label}
+    <Box
       sx={{
-        color: cfg.color,
-        bgcolor: cfg.bg,
-        fontWeight: 600,
-        fontSize: size === "small" ? 11 : 12,
-        height: size === "small" ? 22 : 24,
-        borderRadius: "8px",
-        flexShrink: 0,
-        "& .MuiChip-icon": { color: cfg.color },
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 0.65,
+        px: size === "small" ? 1.25 : 1.5,
+        py: size === "small" ? 0.35 : 0.5,
+        borderRadius: "999px",
+        bgcolor: config.bg,
+        border: `1px solid ${config.border}`,
+        color: config.color,
+        fontWeight: 800,
+        fontSize: size === "small" ? 12 : 13,
+        letterSpacing: "0.01em",
+        boxShadow: `0 1px 4px ${alpha(config.color, 0.08)}`,
       }}
-    />
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          color: config.color,
+        }}
+      >
+        {config.icon}
+      </Box>
+      <span>{config.label}</span>
+    </Box>
   );
 }

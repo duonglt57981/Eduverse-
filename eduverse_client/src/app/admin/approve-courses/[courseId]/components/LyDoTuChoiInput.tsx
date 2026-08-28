@@ -11,13 +11,16 @@ import {
   Divider,
   alpha,
   Typography,
+  Stack,
 } from "@mui/material";
 import FormatBoldRoundedIcon from "@mui/icons-material/FormatBoldRounded";
 import FormatItalicRoundedIcon from "@mui/icons-material/FormatItalicRounded";
 import FormatUnderlinedRoundedIcon from "@mui/icons-material/FormatUnderlinedRounded";
 import FormatListBulletedRoundedIcon from "@mui/icons-material/FormatListBulletedRounded";
-import { COLORS } from "@/src/app/admin/approve-courses/types/constants";
-import { CSSVAR } from "@/src/theme/tokens";
+import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
+import { BRAND } from "@/src/theme/tokens";
 
 interface LyDoTuChoiInputProps {
   idDoiTuong: string | number;
@@ -35,29 +38,22 @@ const FORMAT_BUTTONS: {
   icon: React.ElementType;
   label: string;
 }[] = [
-  { command: "bold", icon: FormatBoldRoundedIcon, label: "In đậm" },
-  { command: "italic", icon: FormatItalicRoundedIcon, label: "In nghiêng" },
+  { command: "bold", icon: FormatBoldRoundedIcon, label: "In đậm (Ctrl+B)" },
+  { command: "italic", icon: FormatItalicRoundedIcon, label: "In nghiêng (Ctrl+I)" },
   {
     command: "underline",
     icon: FormatUnderlinedRoundedIcon,
-    label: "Gạch chân",
+    label: "Gạch chân (Ctrl+U)",
   },
   {
     command: "insertUnorderedList",
     icon: FormatListBulletedRoundedIcon,
-    label: "Danh sách",
+    label: "Danh sách gạch đầu dòng",
   },
 ];
 
 const isHtmlEmpty = (html: string) =>
   !html || html.replace(/<[^>]*>/g, "").trim().length === 0;
-
-const safeAlpha = (color: string, opacity: number) => {
-  if (typeof color === "string" && color.trim().startsWith("var(")) {
-    return `color-mix(in srgb, ${color} ${Math.round(opacity * 100)}%, transparent)`;
-  }
-  return alpha(color, opacity);
-};
 
 export default function LyDoTuChoiInput({
   idDoiTuong,
@@ -107,7 +103,7 @@ export default function LyDoTuChoiInput({
     try {
       await onSave(lyDo);
       setStatus("saved");
-      setTimeout(() => setStatus("idle"), 2000);
+      setTimeout(() => setStatus("idle"), 2500);
     } catch (error) {
       console.error("Lỗi lưu lý do:", error);
       setStatus("error");
@@ -120,44 +116,59 @@ export default function LyDoTuChoiInput({
   return (
     <Box
       sx={{
-        mt: 2,
-        p: 2,
-        border: `1px solid ${safeAlpha(COLORS.primary, 0.2)}`,
-        borderRadius: 2,
-        bgcolor: safeAlpha(COLORS.primary, 0.03),
+        mt: 2.5,
+        p: 2.5,
+        borderRadius: "16px",
+        bgcolor: "#FFFDFD",
+        border: "1px solid #FECACA",
+        boxShadow: "0 2px 12px rgba(220, 38, 38, 0.03)",
       }}
     >
-      <Typography
-        variant="subtitle2"
-        sx={{ fontWeight: 600, mb: scopeNote ? 0.25 : 1, color: COLORS.ink }}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: scopeNote ? 0.5 : 1.25,
+        }}
       >
-        Ghi chú
-      </Typography>
+        <RateReviewRoundedIcon sx={{ color: BRAND.main, fontSize: 18 }} />
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: 14,
+            color: "#0F172A",
+          }}
+        >
+          Ghi chú & Yêu cầu chỉnh sửa cho mục này
+        </Typography>
+      </Box>
 
       {scopeNote && (
         <Typography
           variant="caption"
           sx={{
             display: "block",
-            mb: 1,
-            color: COLORS.inkSoft,
-            fontStyle: "italic",
+            mb: 1.5,
+            color: "#64748B",
+            fontSize: 12,
           }}
         >
-          {scopeNote}
+          💡 {scopeNote}
         </Typography>
       )}
 
+      {/* Toolbar */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           gap: 0.5,
-          mb: 0.75,
+          mb: 1,
           p: 0.5,
-          borderRadius: 1.5,
-          bgcolor: CSSVAR.paper,
-          border: `1px solid ${safeAlpha(COLORS.primary, 0.15)}`,
+          borderRadius: "10px",
+          bgcolor: "#F8FAFC",
+          border: "1px solid #E2E8F0",
           width: "fit-content",
         }}
       >
@@ -167,7 +178,7 @@ export default function LyDoTuChoiInput({
               <Divider
                 orientation="vertical"
                 flexItem
-                sx={{ mx: 0.25, height: 20, alignSelf: "center" }}
+                sx={{ mx: 0.5, height: 18, alignSelf: "center" }}
               />
             )}
             <Tooltip title={label}>
@@ -178,8 +189,13 @@ export default function LyDoTuChoiInput({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => applyFormat(command)}
                   sx={{
-                    color: COLORS.primary,
-                    "&:hover": { bgcolor: safeAlpha(COLORS.primary, 0.08) },
+                    color: "#475569",
+                    borderRadius: "6px",
+                    p: 0.6,
+                    "&:hover": {
+                      bgcolor: alpha(BRAND.main, 0.08),
+                      color: BRAND.main,
+                    },
                   }}
                 >
                   <Icon fontSize="small" />
@@ -190,72 +206,98 @@ export default function LyDoTuChoiInput({
         ))}
       </Box>
 
+      {/* Rich Input Editor */}
       <Box
         ref={editorRef}
         contentEditable={!disabled && !loading}
         suppressContentEditableWarning
         onInput={handleInput}
-        data-placeholder="Nhập lý do từ chối cho nội dung này..."
+        data-placeholder="Nhập chi tiết yêu cầu giảng viên cần sửa đổi hoặc lý do từ chối mục này..."
         sx={{
-          minHeight: 72,
+          minHeight: 80,
           maxHeight: 240,
           overflowY: "auto",
-          p: 1.25,
-          fontSize: 14,
+          p: 1.5,
+          fontSize: 13.5,
           lineHeight: 1.6,
-          color: COLORS.ink,
-          bgcolor: CSSVAR.paper,
-          border: `1px solid ${safeAlpha(COLORS.primary, 0.25)}`,
-          borderRadius: 1.5,
+          color: "#0F172A",
+          bgcolor: "#FFFFFF",
+          border: "1px solid #E2E8F0",
+          borderRadius: "10px",
           outline: "none",
           cursor: disabled || loading ? "not-allowed" : "text",
           opacity: disabled || loading ? 0.6 : 1,
+          transition: "all 0.15s ease",
           "&:focus": {
-            borderColor: COLORS.primary,
-            boxShadow: `0 0 0 2px ${safeAlpha(COLORS.primary, 0.12)}`,
+            borderColor: BRAND.main,
+            boxShadow: `0 0 0 3px ${alpha(BRAND.main, 0.1)}`,
           },
           "&:empty:before": {
             content: "attr(data-placeholder)",
-            color: safeAlpha(COLORS.ink, 0.4),
+            color: "#94A3B8",
           },
           "& ul, & ol": { pl: 3, m: 0 },
           "& p": { m: 0 },
         }}
       />
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
-        {status === "saving" && (
-          <>
-            <CircularProgress size={16} sx={{ color: COLORS.primary }} />
-            <Typography variant="caption" sx={{ color: COLORS.inkSoft }}>
-              Đang lưu...
-            </Typography>
-          </>
-        )}
-        {status === "saved" && (
-          <Typography variant="caption" sx={{ color: COLORS.success }}>
-            ✓ Đã lưu
-          </Typography>
-        )}
-        {status === "error" && (
-          <Typography variant="caption" sx={{ color: COLORS.danger }}>
-            ✗ Lỗi lưu, thử lại
-          </Typography>
-        )}
+      {/* Action Footer */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mt: 1.5,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {status === "saving" && (
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <CircularProgress size={14} sx={{ color: BRAND.main }} />
+              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+                Đang lưu ghi chú...
+              </Typography>
+            </Stack>
+          )}
+          {status === "saved" && (
+            <Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}>
+              <CheckCircleRoundedIcon sx={{ color: "#16A34A", fontSize: 16 }} />
+              <Typography variant="caption" sx={{ color: "#16A34A", fontWeight: 700 }}>
+                Đã lưu ghi chú thành công
+              </Typography>
+            </Stack>
+          )}
+          {status === "error" && (
+            <Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}>
+              <ErrorOutlineRoundedIcon sx={{ color: "#DC2626", fontSize: 16 }} />
+              <Typography variant="caption" sx={{ color: "#DC2626", fontWeight: 700 }}>
+                Vui lòng nhập nội dung trước khi lưu
+              </Typography>
+            </Stack>
+          )}
+        </Box>
+
         <Button
           size="small"
-          variant="outlined"
+          variant="contained"
           onClick={handleSave}
           disabled={isHtmlEmpty(lyDo) || loading || disabled}
           sx={{
             textTransform: "none",
-            ml: "auto",
-            borderColor: COLORS.primary,
-            color: COLORS.primary,
-            "&:hover": { bgcolor: safeAlpha(COLORS.primary, 0.04) },
+            fontWeight: 700,
+            fontSize: 13,
+            bgcolor: BRAND.main,
+            borderRadius: "8px",
+            px: 2,
+            py: 0.6,
+            boxShadow: `0 2px 8px ${alpha(BRAND.main, 0.2)}`,
+            "&:hover": {
+              bgcolor: BRAND.dark,
+              boxShadow: `0 4px 12px ${alpha(BRAND.main, 0.3)}`,
+            },
           }}
         >
-          Lưu lý do
+          Lưu ghi chú
         </Button>
       </Box>
     </Box>

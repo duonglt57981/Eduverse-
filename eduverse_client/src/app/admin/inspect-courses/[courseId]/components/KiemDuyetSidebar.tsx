@@ -10,21 +10,19 @@ import {
   IconButton,
   TextField,
   InputAdornment,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   Collapse,
   alpha,
+  Tooltip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import PlayCircleFilledRoundedIcon from "@mui/icons-material/PlayCircleFilledRounded";
+import InsertDriveFileRoundedIcon from "@mui/icons-material/InsertDriveFileRounded";
+import QuizRoundedIcon from "@mui/icons-material/QuizRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import FolderRoundedIcon from "@mui/icons-material/FolderRounded";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import QuizIcon from "@mui/icons-material/Quiz";
 import {
   COLORS,
   FONTS,
@@ -41,21 +39,10 @@ interface SelectedContent {
 interface KiemDuyetSidebarProps {
   detail: any;
   selected: SelectedContent | null;
-  onSelectContent: (loai: LoaiNoiDung, item: any) => void;
+  onSelectContent: (loai: LoaiNoiDung, item: any, parentBaiGiang?: any) => void;
   isMobile?: boolean;
   onCloseMobile?: () => void;
 }
-
-// Sắp xếp: mục đang chờ duyệt lên đầu
-const sortPending = (arr: any[]) =>
-  [...arr].sort((x, y) => {
-    const px = isTrangThaiCho(x.trangThaiPheDuyet) ? 0 : 1;
-    const py = isTrangThaiCho(y.trangThaiPheDuyet) ? 0 : 1;
-    return px - py;
-  });
-
-const dem = (arr: any[]) =>
-  arr.filter((x) => isTrangThaiCho(x.trangThaiPheDuyet)).length;
 
 export default function KiemDuyetSidebar({
   detail,
@@ -84,7 +71,6 @@ export default function KiemDuyetSidebar({
     return (selected.item[key] ?? selected.item.id) === (item[key] ?? item.id);
   };
 
-  // Dữ liệu: API thật trả về "phans" chứa sẵn baiGiangs/baiKiemTras bên trong
   const phans: any[] = detail?.phans ?? detail?.phanHocs ?? [];
   const flatBaiGiang: any[] =
     detail?.baiGiangs ?? detail?.baiGiangChoDuyet ?? [];
@@ -92,7 +78,6 @@ export default function KiemDuyetSidebar({
   const flatBaiKiemTra: any[] =
     detail?.baiKiemTras ?? detail?.baiKiemTraChoDuyet ?? [];
 
-  // Bỏ qua trạng thái của tài liệu, chỉ lấy tất cả
   const taiLieuOfBaiGiang = (bg: any) => {
     if (Array.isArray(bg.taiLieus) && bg.taiLieus.length > 0) {
       return bg.taiLieus;
@@ -107,7 +92,12 @@ export default function KiemDuyetSidebar({
     return flatBaiKiemTra.filter((bkt) => bkt.idPhan === phanId);
   };
 
-  // Lọc theo search (khớp tên phần / bài giảng / tài liệu / bài kiểm tra)
+  // Tổng số mục & số mục chờ duyệt
+  const totalLessons = flatBaiGiang.length + flatBaiKiemTra.length;
+  const pendingLessons =
+    flatBaiGiang.filter((b) => isTrangThaiCho(b.trangThaiPheDuyet)).length +
+    flatBaiKiemTra.filter((b) => isTrangThaiCho(b.trangThaiPheDuyet)).length;
+
   const filteredPhans = useMemo(() => {
     if (!searchTerm.trim()) return phans;
     const lower = searchTerm.toLowerCase();
@@ -147,75 +137,83 @@ export default function KiemDuyetSidebar({
     if (taiLieus.length === 0) return null;
     const bgId = bg.idBaiGiang ?? bg.id;
     const open = openTaiLieu[bgId] ?? false;
+
     return (
-      <Box>
-        <ListItemButton
+      <Box sx={{ mb: 0.5 }}>
+        <Box
           onClick={() => toggleTaiLieu(bgId)}
           sx={{
-            pl: 7,
-            pr: 2.5,
-            py: 0.5,
-            color: CSSVAR.textSecondary,
-            "&:hover": { bgcolor: "transparent", color: COLORS.primary },
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            ml: 4.5,
+            mr: 1.5,
+            px: 1.25,
+            py: 0.6,
+            borderRadius: "8px",
+            color: "#64748B",
+            cursor: "pointer",
+            transition: "all 0.15s ease",
+            "&:hover": {
+              bgcolor: "rgba(0, 0, 0, 0.03)",
+              color: BRAND.main,
+            },
           }}
         >
-          <AttachFileIcon sx={{ fontSize: 14, mr: 0.75 }} />
+          <InsertDriveFileRoundedIcon sx={{ fontSize: 14 }} />
           <Typography
-            variant="caption"
-            sx={{ flex: 1, fontWeight: 700, fontSize: 12 }}
+            sx={{ flex: 1, fontWeight: 700, fontSize: 11.5, lineHeight: 1 }}
           >
-            {taiLieus.length} tài liệu
+            {taiLieus.length} tài liệu đính kèm
           </Typography>
-          {open ? (
-            <ExpandLessIcon sx={{ fontSize: 14 }} />
-          ) : (
-            <ExpandMoreIcon sx={{ fontSize: 14 }} />
-          )}
-        </ListItemButton>
+          <KeyboardArrowDownRoundedIcon
+            sx={{
+              fontSize: 16,
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+            }}
+          />
+        </Box>
+
         <Collapse in={open}>
-          <Stack sx={{ pl: 7, pr: 2, pb: 1, gap: 0.75, mt: 0.5 }}>
+          <Stack sx={{ ml: 5, mr: 1.5, my: 0.5, gap: 0.5 }}>
             {taiLieus.map((tl: any, idx: number) => {
               const active = isActive("taiLieu", tl);
               return (
                 <Box
                   key={tl.idTaiLieu ?? tl.id ?? idx}
-                  onClick={() => onSelectContent("taiLieu", tl)}
+                  onClick={() => onSelectContent("taiLieu", tl, bg)}
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-                    px: 1.5,
+                    px: 1.25,
                     py: 0.75,
-                    borderRadius: "6px",
+                    borderRadius: "8px",
                     cursor: "pointer",
-                    border: `1px solid ${active ? COLORS.primary : "${CSSVAR.divider}"}`,
-                    bgcolor: active ? "rgba(139, 19, 19, 0.05)" : "transparent",
+                    border: `1px solid ${active ? alpha(BRAND.main, 0.3) : "transparent"}`,
+                    bgcolor: active ? alpha(BRAND.main, 0.06) : "transparent",
                     transition: "all 0.15s ease",
                     "&:hover": {
                       bgcolor: active
-                        ? "rgba(139, 19, 19, 0.08)"
-                        : "var(--ev-hover, rgba(24, 18, 20, 0.04))",
+                        ? alpha(BRAND.main, 0.09)
+                        : "rgba(0, 0, 0, 0.03)",
                     },
                   }}
                 >
-                  <AttachFileIcon
+                  <InsertDriveFileRoundedIcon
                     sx={{
                       fontSize: 14,
-                      color: active
-                        ? COLORS.primary
-                        : CSSVAR.textMuted,
+                      color: active ? BRAND.main : "#94A3B8",
                       flexShrink: 0,
                     }}
                   />
                   <Typography
-                    variant="caption"
                     sx={{
                       flex: 1,
                       fontWeight: active ? 700 : 500,
-                      fontSize: 12.5,
-                      color: active
-                        ? COLORS.primary
-                        : CSSVAR.textPrimary,
+                      fontSize: 12,
+                      color: active ? BRAND.main : "#334155",
                     }}
                     noWrap
                   >
@@ -233,143 +231,214 @@ export default function KiemDuyetSidebar({
   const renderBaiGiang = (bg: any) => {
     const active = isActive("baiGiang", bg);
     const pending = isTrangThaiCho(bg.trangThaiPheDuyet);
+    const isApproved = bg.trangThaiPheDuyet === "DaDuyet";
     const bgId = bg.idBaiGiang ?? bg.id;
+
     return (
-      <Box key={bgId}>
-        <ListItemButton
-          selected={active}
+      <Box key={bgId} sx={{ mb: 0.5 }}>
+        <Box
           onClick={() => onSelectContent("baiGiang", bg)}
           sx={{
-            pl: 2,
-            pr: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.25,
+            px: 1.5,
             py: 1.1,
-            borderLeft: `3px solid ${active ? COLORS.primary : pending ? alpha(COLORS.gold, 0.45) : "transparent"}`,
+            mx: 1.25,
+            borderRadius: "10px",
+            cursor: "pointer",
+            borderLeft: `3.5px solid ${
+              active
+                ? BRAND.main
+                : pending
+                  ? "#F59E0B"
+                  : isApproved
+                    ? "#10B981"
+                    : "transparent"
+            }`,
             bgcolor: active
-              ? `${alpha(COLORS.primary, 0.06)} !important`
+              ? alpha(BRAND.main, 0.06)
               : pending
-                ? alpha(COLORS.gold, 0.025)
+                ? "rgba(245, 158, 11, 0.03)"
                 : "transparent",
-            mb: 0.5,
-            mx: 1.5,
-            borderRadius: "8px",
-            transition: "all 0.2s ease",
+            transition: "all 0.15s ease",
             "&:hover": {
               bgcolor: active
-                ? "rgba(139, 19, 19, 0.08) !important"
-                : "var(--ev-hover, rgba(24, 18, 20, 0.04))",
+                ? alpha(BRAND.main, 0.09)
+                : "rgba(0, 0, 0, 0.03)",
+              transform: "translateX(2px)",
             },
           }}
         >
-          <ListItemIcon sx={{ minWidth: 28 }}>
-            <PlayArrowIcon
+          <Box
+            sx={{
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              bgcolor: active
+                ? alpha(BRAND.main, 0.12)
+                : pending
+                  ? "rgba(245, 158, 11, 0.12)"
+                  : "#F1F5F9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <PlayCircleFilledRoundedIcon
               sx={{
+                fontSize: 16,
                 color: active
-                  ? COLORS.primary
+                  ? BRAND.main
                   : pending
-                    ? COLORS.gold
-                    : CSSVAR.textMuted,
-                fontSize: 18,
+                    ? "#D97706"
+                    : "#64748B",
               }}
             />
-          </ListItemIcon>
-          <ListItemText
-            primary={
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: active ? 700 : pending ? 600 : 500,
-                  fontSize: 13.5,
-                  lineHeight: 1.4,
-                  color: active
-                    ? COLORS.primary
-                    : CSSVAR.textPrimary,
-                }}
-                noWrap
-              >
-                {bg.tenBaiGiang ?? bg.tieuDe}
-              </Typography>
-            }
-          />
-        </ListItemButton>
+          </Box>
+
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontWeight: active ? 800 : pending ? 700 : 500,
+                fontSize: 13,
+                lineHeight: 1.35,
+                color: active ? BRAND.main : "#1E293B",
+              }}
+              noWrap
+            >
+              {bg.tenBaiGiang ?? bg.tieuDe}
+            </Typography>
+          </Box>
+
+          {pending && (
+            <Tooltip title="Chờ kiểm duyệt">
+              <HourglassTopRoundedIcon
+                sx={{ fontSize: 14, color: "#D97706", flexShrink: 0 }}
+              />
+            </Tooltip>
+          )}
+          {isApproved && (
+            <Tooltip title="Đã duyệt">
+              <CheckCircleRoundedIcon
+                sx={{ fontSize: 14, color: "#16A34A", flexShrink: 0 }}
+              />
+            </Tooltip>
+          )}
+        </Box>
         {renderTaiLieu(bg)}
       </Box>
     );
   };
 
-  // Đã bỏ phần xổ xuống (danh sách câu hỏi) của bài kiểm tra —
-  // giờ đây bài kiểm tra chỉ là một mục có thể click để chọn, không mở rộng nữa.
   const renderBaiKiemTra = (bkt: any) => {
     const active = isActive("baiKiemTra", bkt);
     const pending = isTrangThaiCho(bkt.trangThaiPheDuyet);
+    const isApproved = bkt.trangThaiPheDuyet === "DaDuyet";
     const bktId = bkt.idBaiKiemTra ?? bkt.id;
     const cauHois: any[] = bkt.cauHois ?? [];
+
     return (
-      <Box key={bktId}>
-        <ListItemButton
-          selected={active}
+      <Box key={bktId} sx={{ mb: 0.5 }}>
+        <Box
           onClick={() => onSelectContent("baiKiemTra", bkt)}
           sx={{
-            pl: 2,
-            pr: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.25,
+            px: 1.5,
             py: 1.1,
-            borderLeft: `3px solid ${active ? COLORS.primary : pending ? alpha(COLORS.gold, 0.45) : "transparent"}`,
+            mx: 1.25,
+            borderRadius: "10px",
+            cursor: "pointer",
+            borderLeft: `3.5px solid ${
+              active
+                ? BRAND.main
+                : pending
+                  ? "#F59E0B"
+                  : isApproved
+                    ? "#10B981"
+                    : "transparent"
+            }`,
             bgcolor: active
-              ? `${alpha(COLORS.primary, 0.06)} !important`
+              ? alpha(BRAND.main, 0.06)
               : pending
-                ? alpha(COLORS.gold, 0.025)
+                ? "rgba(245, 158, 11, 0.03)"
                 : "transparent",
-            mb: 0.5,
-            mx: 1.5,
-            borderRadius: "8px",
-            transition: "all 0.2s ease",
+            transition: "all 0.15s ease",
             "&:hover": {
               bgcolor: active
-                ? "rgba(139, 19, 19, 0.08) !important"
-                : "var(--ev-hover, rgba(24, 18, 20, 0.04))",
+                ? alpha(BRAND.main, 0.09)
+                : "rgba(0, 0, 0, 0.03)",
+              transform: "translateX(2px)",
             },
           }}
         >
-          <ListItemIcon sx={{ minWidth: 28 }}>
-            <QuizIcon
+          <Box
+            sx={{
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              bgcolor: active
+                ? alpha(BRAND.main, 0.12)
+                : pending
+                  ? "rgba(245, 158, 11, 0.12)"
+                  : "#F1F5F9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <QuizRoundedIcon
               sx={{
+                fontSize: 15,
                 color: active
-                  ? COLORS.primary
+                  ? BRAND.main
                   : pending
-                    ? COLORS.gold
-                    : CSSVAR.textMuted,
-                fontSize: 18,
+                    ? "#D97706"
+                    : "#64748B",
               }}
             />
-          </ListItemIcon>
-          <ListItemText
-            primary={
+          </Box>
+
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontWeight: active ? 800 : pending ? 700 : 500,
+                fontSize: 13,
+                lineHeight: 1.35,
+                color: active ? BRAND.main : "#1E293B",
+              }}
+              noWrap
+            >
+              {bkt.tenBaiKiemTra ?? bkt.tieuDe}
+            </Typography>
+            {cauHois.length > 0 && (
               <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: active ? 700 : pending ? 600 : 500,
-                  fontSize: 13.5,
-                  lineHeight: 1.4,
-                  color: active
-                    ? COLORS.primary
-                    : CSSVAR.textPrimary,
-                }}
-                noWrap
+                sx={{ color: "#94A3B8", fontSize: 11, fontWeight: 500 }}
               >
-                {bkt.tenBaiKiemTra ?? bkt.tieuDe}
+                {cauHois.length} câu hỏi
               </Typography>
-            }
-            secondary={
-              cauHois.length > 0 ? (
-                <Typography
-                  variant="caption"
-                  sx={{ color: CSSVAR.textMuted, fontSize: 11 }}
-                >
-                  {cauHois.length} câu hỏi
-                </Typography>
-              ) : undefined
-            }
-          />
-        </ListItemButton>
+            )}
+          </Box>
+
+          {pending && (
+            <Tooltip title="Chờ kiểm duyệt">
+              <HourglassTopRoundedIcon
+                sx={{ fontSize: 14, color: "#D97706", flexShrink: 0 }}
+              />
+            </Tooltip>
+          )}
+          {isApproved && (
+            <Tooltip title="Đã duyệt">
+              <CheckCircleRoundedIcon
+                sx={{ fontSize: 14, color: "#16A34A", flexShrink: 0 }}
+              />
+            </Tooltip>
+          )}
+        </Box>
       </Box>
     );
   };
@@ -387,14 +456,15 @@ export default function KiemDuyetSidebar({
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        bgcolor: "#FFFFFF",
       }}
     >
       {/* Header */}
       <Box
         sx={{
-          p: 2.5,
-          borderBottom: `1px solid ${CSSVAR.divider}`,
-          bgcolor: CSSVAR.paperAlt,
+          p: 2.25,
+          borderBottom: "1px solid #F1F5F9",
+          bgcolor: "#FFFFFF",
           flexShrink: 0,
         }}
       >
@@ -406,18 +476,57 @@ export default function KiemDuyetSidebar({
             alignItems: "center",
           }}
         >
-          <Typography
-            sx={{
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: CSSVAR.textMuted,
-              fontFamily: FONTS.body,
-            }}
-          >
-            Nội dung khóa học
-          </Typography>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "#475569",
+                fontFamily: FONTS.display,
+              }}
+            >
+              Nội dung khóa học
+            </Typography>
+            {totalLessons > 0 && (
+              <Box
+                sx={{
+                  px: 0.9,
+                  py: 0.2,
+                  borderRadius: "999px",
+                  bgcolor: "#F1F5F9",
+                  color: "#64748B",
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              >
+                {totalLessons} bài
+              </Box>
+            )}
+          </Stack>
+
+          {pendingLessons > 0 && (
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 1,
+                py: 0.25,
+                borderRadius: "999px",
+                bgcolor: "#FFFBEB",
+                border: "1px solid #FDE68A",
+                color: "#D97706",
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              <HourglassTopRoundedIcon sx={{ fontSize: 11 }} />
+              {pendingLessons} chờ duyệt
+            </Box>
+          )}
+
           {isMobile && onCloseMobile && (
             <IconButton size="small" onClick={onCloseMobile}>
               <CloseIcon fontSize="small" />
@@ -426,154 +535,223 @@ export default function KiemDuyetSidebar({
         </Stack>
 
         <TextField
-          size="small"
           fullWidth
           placeholder="Tìm bài giảng, tài liệu..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
-            bgcolor: CSSVAR.paper,
+            bgcolor: "#F8FAFC",
             "& .MuiOutlinedInput-root": {
-              borderRadius: "10px",
-              fontSize: 13,
-              "& fieldset": { borderColor: CSSVAR.divider },
-              "&:hover fieldset": { borderColor: "rgba(139,19,19,0.3)" },
+              height: 44,
+              borderRadius: "12px",
+              fontSize: 13.5,
+              fontWeight: 500,
+              bgcolor: "#F8FAFC",
+              transition: "all 0.15s ease",
+              "& fieldset": { borderColor: "#E2E8F0" },
+              "&:hover fieldset": { borderColor: alpha(BRAND.main, 0.4) },
+              "&.Mui-focused": {
+                bgcolor: "#FFFFFF",
+                boxShadow: `0 0 0 3px ${alpha(BRAND.main, 0.08)}`,
+              },
               "&.Mui-focused fieldset": {
                 borderColor: BRAND.main,
                 borderWidth: 1.5,
               },
             },
+            "& .MuiOutlinedInput-input": {
+              py: 0,
+              height: "100%",
+            },
           }}
           slotProps={{
             input: {
               startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon
-                    sx={{
-                      fontSize: 18,
-                      color: CSSVAR.textMuted,
-                    }}
-                  />
+                <InputAdornment position="start" sx={{ mr: 1 }}>
+                  <SearchIcon sx={{ fontSize: 20, color: "#64748B" }} />
                 </InputAdornment>
               ),
               endAdornment: searchTerm ? (
                 <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearchTerm("")}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearchTerm("")}
+                    sx={{
+                      p: 0.5,
+                      color: "#94A3B8",
+                      "&:hover": { color: "#334155" },
+                    }}
+                  >
                     <CloseIcon sx={{ fontSize: 16 }} />
                   </IconButton>
                 </InputAdornment>
-              ) : undefined,
+              ) : null,
             },
           }}
         />
       </Box>
 
-      {/* Danh sách */}
-      <Box sx={{ overflowY: "auto", flex: 1, pb: 2 }}>
+      {/* Danh sách chương & bài */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          p: 1.25,
+          "&::-webkit-scrollbar": { width: 5 },
+          "&::-webkit-scrollbar-track": { background: "transparent" },
+          "&::-webkit-scrollbar-thumb": {
+            background: alpha(BRAND.main, 0.2),
+            borderRadius: 8,
+          },
+        }}
+      >
         {noiDungRong ? (
           <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
-              Khóa học chưa có nội dung.
+            <FolderRoundedIcon sx={{ fontSize: 40, color: "#CBD5E1", mb: 1 }} />
+            <Typography sx={{ color: "#94A3B8", fontSize: 13, fontWeight: 500 }}>
+              Khóa học chưa có nội dung bài giảng.
             </Typography>
           </Box>
-        ) : phans.length > 0 ? (
-          <>
-            {filteredPhans.map((phan: any, phanIndex: number) => {
-              const id = phan.id ?? phan.idPhan ?? `phan-${phanIndex}`;
-              const baiGiangs = Array.isArray(phan.baiGiangs)
-                ? phan.baiGiangs
-                : [];
-              const baiKiemTras = Array.isArray(phan.baiKiemTras)
-                ? phan.baiKiemTras
-                : [];
-              const soCho = dem(baiGiangs) + dem(baiKiemTras);
-              const isOpen = openPhan[id] !== false;
+        ) : filteredPhans.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: "center" }}>
+            <Typography sx={{ color: "#94A3B8", fontSize: 13, fontWeight: 500 }}>
+              Không tìm thấy nội dung phù hợp với &quot;{searchTerm}&quot;.
+            </Typography>
+          </Box>
+        ) : (
+          filteredPhans.map((phan: any, idx: number) => {
+            const phanId = phan.id ?? phan.idPhan ?? `phan-${idx}`;
+            const isOpen = openPhan[phanId] !== false; // Mặc định mở
+            const bgs =
+              phan.baiGiangs ??
+              flatBaiGiang.filter((b) => b.idPhan === phanId);
+            const bkts = baiKiemTraOfPhan(phan, phanId);
+            const totalPhanItems = bgs.length + bkts.length;
+            const pendingPhanItems =
+              bgs.filter((b: any) => isTrangThaiCho(b.trangThaiPheDuyet)).length +
+              bkts.filter((b: any) => isTrangThaiCho(b.trangThaiPheDuyet)).length;
 
-              return (
+            return (
+              <Box
+                key={phanId}
+                sx={{
+                  mb: 1.5,
+                  borderRadius: "14px",
+                  border: "1px solid #F1F5F9",
+                  bgcolor: "#FFFFFF",
+                  overflow: "hidden",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+                }}
+              >
+                {/* Header phần */}
                 <Box
-                  key={id}
-                  sx={{ borderBottom: `1px solid ${CSSVAR.divider}` }}
+                  onClick={() => togglePhan(phanId)}
+                  sx={{
+                    p: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.25,
+                    cursor: "pointer",
+                    bgcolor: isOpen ? "#F8FAFC" : "#FFFFFF",
+                    borderBottom: isOpen ? "1px solid #F1F5F9" : "none",
+                    transition: "all 0.15s ease",
+                    "&:hover": {
+                      bgcolor: "#F1F5F9",
+                    },
+                  }}
                 >
-                  <ListItemButton
-                    onClick={() => togglePhan(id)}
+                  <Box
                     sx={{
-                      bgcolor:
-                        soCho > 0 ? "rgba(245, 158, 11, 0.02)" : "transparent",
-                      borderLeft: `3px solid ${soCho > 0 ? alpha(COLORS.gold, 0.45) : "transparent"}`,
-                      py: 1.75,
-                      px: 2.5,
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        bgcolor: "var(--ev-hover, rgba(24, 18, 20, 0.04))",
-                      },
+                      width: 28,
+                      height: 28,
+                      borderRadius: "8px",
+                      bgcolor: "#FEF2F2",
+                      color: BRAND.main,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 800,
+                      fontSize: 12,
+                      flexShrink: 0,
                     }}
                   >
-                    <FolderRoundedIcon
-                      sx={{ color: COLORS.gold, fontSize: 20, mr: 1.5 }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 800,
-                          fontSize: 13.5,
-                          color: CSSVAR.textPrimary,
-                          fontFamily: FONTS.body,
-                        }}
-                        noWrap
-                      >
-                        {phanIndex + 1}. {phan.tenPhan}
-                      </Typography>
+                    {String(idx + 1).padStart(2, "0")}
+                  </Box>
+
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: 13.5,
+                        color: "#0F172A",
+                        lineHeight: 1.3,
+                      }}
+                      noWrap
+                    >
+                      {phan.tenPhan || `Phần ${idx + 1}`}
+                    </Typography>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: "center", mt: 0.3 }}
+                    >
                       <Typography
                         variant="caption"
+                        sx={{ color: "#64748B", fontSize: 11.5, fontWeight: 500 }}
+                      >
+                        {totalPhanItems} mục
+                      </Typography>
+                      {pendingPhanItems > 0 && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "#D97706",
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          · {pendingPhanItems} chờ duyệt
+                        </Typography>
+                      )}
+                    </Stack>
+                  </Box>
+
+                  <KeyboardArrowDownRoundedIcon
+                    sx={{
+                      fontSize: 20,
+                      color: "#94A3B8",
+                      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                    }}
+                  />
+                </Box>
+
+                {/* Danh sách bài giảng & bài kiểm tra */}
+                <Collapse in={isOpen}>
+                  <Box sx={{ py: 1 }}>
+                    {bgs.length === 0 && bkts.length === 0 ? (
+                      <Typography
                         sx={{
-                          color: CSSVAR.textMuted,
-                          fontWeight: 600,
-                          fontSize: 11,
+                          color: "#94A3B8",
+                          fontSize: 12,
+                          textAlign: "center",
+                          py: 1.5,
                         }}
                       >
-                        {baiGiangs.length + baiKiemTras.length} mục
-                        {soCho > 0 ? ` · ${soCho} chờ duyệt` : ""}
+                        Chưa có nội dung trong phần này
                       </Typography>
-                    </Box>
-                    {isOpen ? (
-                      <ExpandLessIcon
-                        sx={{
-                          fontSize: 20,
-                          color: CSSVAR.textMuted,
-                        }}
-                      />
                     ) : (
-                      <ExpandMoreIcon
-                        sx={{
-                          fontSize: 20,
-                          color: CSSVAR.textMuted,
-                        }}
-                      />
+                      <>
+                        {bgs.map((bg: any) => renderBaiGiang(bg))}
+                        {bkts.map((bkt: any) => renderBaiKiemTra(bkt))}
+                      </>
                     )}
-                  </ListItemButton>
-                  <Collapse in={isOpen}>
-                    <List disablePadding sx={{ py: 1.5 }}>
-                      {baiGiangs.map((bg: any) => renderBaiGiang(bg))}
-                      {baiKiemTras.map((bkt: any) => renderBaiKiemTra(bkt))}
-                    </List>
-                  </Collapse>
-                </Box>
-              );
-            })}
-            {filteredPhans.length === 0 && (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
-                  Không tìm thấy nội dung phù hợp.
-                </Typography>
+                  </Box>
+                </Collapse>
               </Box>
-            )}
-          </>
-        ) : (
-          <List disablePadding>
-            {flatBaiGiang.map((bg: any) => renderBaiGiang(bg))}
-            {flatBaiKiemTra.map((bkt: any) => renderBaiKiemTra(bkt))}
-          </List>
+            );
+          })
         )}
       </Box>
     </Box>
