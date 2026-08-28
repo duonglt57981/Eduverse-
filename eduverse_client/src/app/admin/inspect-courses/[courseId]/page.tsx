@@ -19,10 +19,12 @@ import {
   alpha,
   Snackbar,
   Alert,
+  Tooltip,
 } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
-import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import BlockRoundedIcon from "@mui/icons-material/BlockRounded";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
 
@@ -42,7 +44,7 @@ import KiemDuyetService from "@/src/services/KiemDuyetServide";
 import KiemDuyetSidebar from "./components/KiemDuyetSidebar";
 import { ApiResponse } from "@/src/types/types";
 import { LyDoTuChoiRequest } from "@/src/types/KiemDuyet/Dto/dto";
-import { CSSVAR } from "@/src/theme/tokens";
+import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
 const kiemDuyetService = new KiemDuyetService();
 
@@ -52,20 +54,17 @@ const scrollbarSx = {
   overflowY: "auto" as const,
   overflowX: "hidden" as const,
   minHeight: 0,
-  "&::-webkit-scrollbar": { width: 6 },
+  "&::-webkit-scrollbar": { width: 5 },
   "&::-webkit-scrollbar-track": { background: "transparent" },
   "&::-webkit-scrollbar-thumb": {
-    background: alpha(COLORS.primary, 0.25),
+    background: alpha(BRAND.main, 0.2),
     borderRadius: 8,
   },
   "&::-webkit-scrollbar-thumb:hover": {
-    background: alpha(COLORS.primary, 0.4),
+    background: alpha(BRAND.main, 0.35),
   },
 };
 
-// Ánh xạ "loai" (dùng ở FE cho selectedContent / NoiDungViewer) sang khoá id
-// tương ứng trên từng entity và sang "loaiDoiTuong" mà API LyDoTuChoi mong đợi.
-// Gom về 1 nơi để tránh lặp lại if/else rải rác và bỏ sót "taiLieu".
 const DOI_TUONG_ID_KEY: Record<"baiGiang" | "baiKiemTra" | "taiLieu", string> =
   {
     baiGiang: "idBaiGiang",
@@ -126,9 +125,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     (loai: "baiGiang" | "taiLieu" | "baiKiemTra", item: any) => {
       setSelectedContent({ loai, item });
 
-      // Bài giảng, bài kiểm tra VÀ tài liệu đều có thể đã có sẵn lý do từ
-      // chối (để Update thay vì Create) — trước đây chỉ xử lý baiGiang/
-      // baiKiemTra nên tài liệu luôn bị Create lại (trùng bản ghi lý do).
       if (loai === "baiGiang" || loai === "baiKiemTra" || loai === "taiLieu") {
         const doiTuongId = item?.[DOI_TUONG_ID_KEY[loai]];
         let existingLyDoId: string | null = null;
@@ -273,7 +269,6 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           }
         }
 
-        // ⭐ Cập nhật local state thay vì fetch lại toàn bộ
         setDetail((prevDetail: any) => {
           if (!prevDetail) return prevDetail;
           const matchKey = DOI_TUONG_ID_KEY[loai];
@@ -342,14 +337,14 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
       if (isSuccess) {
         setSnackbar({
           open: true,
-          message: res?.message || "✅ Từ chối khóa học thành công!",
+          message: res?.message || "✅ Đã ngưng hoạt động khóa học thành công!",
           severity: "success",
         });
         setTimeout(goBackToList, 1500);
       } else {
         setSnackbar({
           open: true,
-          message: res?.message || "❌ Từ chối khóa học thất bại",
+          message: res?.message || "❌ Ngưng hoạt động khóa học thất bại",
           severity: "error",
         });
       }
@@ -360,7 +355,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         message:
           error?.response?.data?.message ||
           error?.message ||
-          "❌ Đã xảy ra lỗi khi từ chối khóa học",
+          "❌ Đã xảy ra lỗi khi ngưng hoạt động khóa học",
         severity: "error",
       });
     } finally {
@@ -390,7 +385,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         <Alert
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
           severity={snackbar.severity}
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", borderRadius: "12px", fontWeight: 600 }}
         >
           {snackbar.message}
         </Alert>
@@ -402,64 +397,89 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          p: 3,
+          p: { xs: 2, sm: 3 },
+          bgcolor: "#F8FAFC",
         }}
       >
+        {/* Header Bar */}
         <Stack
           direction="row"
           spacing={2}
-          sx={{ alignItems: "center", mb: 3.5, flexShrink: 0 }}
+          sx={{ alignItems: "center", mb: 2.5, flexShrink: 0 }}
         >
-          <IconButton
-            onClick={goBackToList}
-            sx={{
-              border: `1px solid ${CSSVAR.divider}`,
-              borderRadius: "12px",
-              color: CSSVAR.textPrimary,
-              bgcolor: CSSVAR.paper,
-              transition: "all 0.2s ease",
-              "&:hover": {
-                bgcolor: CSSVAR.paperAlt,
-                borderColor: CSSVAR.textMuted,
-                transform: "translateX(-2px)",
-              },
-            }}
-            size="medium"
-          >
-            <ArrowBackRoundedIcon fontSize="small" />
-          </IconButton>
-          <Typography
-            sx={{
-              fontSize: 26,
-              fontWeight: 900,
-              fontFamily: FONTS.display,
-              color: CSSVAR.textPrimary,
-              flex: 1,
-            }}
-          >
-            Xem xét khóa học
-          </Typography>
+          <Tooltip title="Quay lại danh sách">
+            <IconButton
+              onClick={goBackToList}
+              sx={{
+                border: "1px solid #E2E8F0",
+                borderRadius: "12px",
+                color: "#0F172A",
+                bgcolor: "#FFFFFF",
+                p: 1.1,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  bgcolor: "#FFFFFF",
+                  borderColor: alpha(BRAND.main, 0.4),
+                  transform: "translateX(-2px)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                },
+              }}
+              size="medium"
+            >
+              <ArrowBackRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              sx={{
+                fontSize: { xs: 20, sm: 24 },
+                fontWeight: 900,
+                fontFamily: FONTS.display,
+                color: "#0F172A",
+                lineHeight: 1.2,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Xem xét khóa học
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 13,
+                color: "#64748B",
+                fontWeight: 500,
+                display: { xs: "none", sm: "block" },
+              }}
+            >
+              Kiểm tra nội dung các bài học, tài liệu và cập nhật trạng thái hoạt động của khóa học
+            </Typography>
+          </Box>
 
           {!detailLoading && detail && (
             <Stack direction="row" spacing={1.5}>
               <Button
                 variant="outlined"
                 disabled={actionLoading}
+                startIcon={<BlockRoundedIcon sx={{ fontSize: 18 }} />}
                 onClick={() => setShowTuChoi(true)}
                 sx={{
                   textTransform: "none",
                   fontWeight: 700,
                   fontSize: 13.5,
-                  borderRadius: "10px",
-                  borderColor: alpha(COLORS.danger, 0.35),
-                  color: COLORS.danger,
+                  borderRadius: "12px",
+                  borderColor: "#FECACA",
+                  bgcolor: "#FEF2F2",
+                  color: "#DC2626",
                   px: 2.5,
                   py: 1,
-                  height: 40,
-                  transition: "all 150ms ease",
+                  height: 42,
+                  boxShadow: "0 1px 3px rgba(220, 38, 38, 0.05)",
+                  transition: "all 0.15s ease",
                   "&:hover": {
-                    borderColor: COLORS.danger,
-                    bgcolor: COLORS.dangerSoft,
+                    borderColor: "#DC2626",
+                    bgcolor: "#FEE2E2",
+                    boxShadow: "0 4px 12px rgba(220, 38, 38, 0.15)",
                   },
                 }}
               >
@@ -484,6 +504,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           </Box>
         )}
 
+        {/* Modal xác nhận ngưng hoạt động */}
         <Dialog
           open={confirmAction !== null}
           onClose={() => {
@@ -492,41 +513,64 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           maxWidth="xs"
           fullWidth
           slotProps={{
-            paper: { sx: { borderRadius: 2 } },
+            paper: {
+              sx: {
+                borderRadius: "20px",
+                p: 1,
+                boxShadow: "0 20px 48px rgba(0, 0, 0, 0.15)",
+              },
+            },
           }}
         >
           <DialogTitle
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1,
+              gap: 1.25,
               fontFamily: FONTS.display,
-              fontWeight: 700,
-              color: COLORS.ink,
+              fontWeight: 800,
+              fontSize: 18,
+              color: "#0F172A",
+              pt: 2,
             }}
           >
-            <HelpOutlineRoundedIcon
+            <Box
               sx={{
-                color:
-                  confirmAction === "tuChoi" ? COLORS.danger : COLORS.primary,
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                bgcolor: "#FEF2F2",
+                color: "#DC2626",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
               }}
-            />
-            {confirmAction === "tuChoi"
-              ? "Xác nhận từ chối khóa học"
-              : "Xác nhận duyệt khóa học"}
+            >
+              <WarningAmberRoundedIcon sx={{ fontSize: 22 }} />
+            </Box>
+            Xác nhận ngưng hoạt động khóa học?
           </DialogTitle>
-          <DialogContent>
-            <Typography sx={{ color: COLORS.inkSoft }}>
-              {confirmAction === "tuChoi"
-                ? "Bạn có chắc chắn muốn từ chối khóa học này không?"
-                : "Bạn có chắc chắn muốn duyệt khóa học này không?"}
+          <DialogContent sx={{ py: 1.5 }}>
+            <Typography sx={{ color: "#64748B", fontSize: 14.5, lineHeight: 1.6 }}>
+              Bạn có chắc chắn muốn ngưng hoạt động khóa học{" "}
+              <Box component="span" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                &quot;{detail?.tieuDe || "Khóa học"}&quot;
+              </Box>{" "}
+              không? Khóa học sẽ được chuyển sang trạng thái &quot;Từ chối&quot; và tạm thời không còn hiển thị công khai.
             </Typography>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <DialogActions sx={{ px: 3, pb: 2.5, pt: 1 }}>
             <Button
               onClick={() => setConfirmAction(null)}
               disabled={actionLoading}
-              sx={{ textTransform: "none", color: COLORS.inkSoft }}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                color: "#64748B",
+                borderRadius: "8px",
+                px: 2,
+              }}
             >
               Hủy
             </Button>
@@ -536,40 +580,35 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               disabled={actionLoading}
               sx={{
                 textTransform: "none",
-                fontWeight: 600,
-                bgcolor:
-                  confirmAction === "tuChoi" ? COLORS.danger : COLORS.primary,
+                fontWeight: 800,
+                bgcolor: "#DC2626",
+                borderRadius: "8px",
+                px: 2.5,
                 boxShadow: "none",
-                "&:hover": {
-                  bgcolor:
-                    confirmAction === "tuChoi"
-                      ? COLORS.primaryDark
-                      : COLORS.primaryDark,
-                  boxShadow: "none",
-                },
+                "&:hover": { bgcolor: "#B91C1C", boxShadow: "none" },
               }}
             >
               {actionLoading ? (
                 <CircularProgress size={16} sx={{ color: "#fff" }} />
-              ) : confirmAction === "tuChoi" ? (
-                "Xác nhận từ chối"
               ) : (
-                "Xác nhận duyệt"
+                "Xác nhận ngưng"
               )}
             </Button>
           </DialogActions>
         </Dialog>
 
+        {/* Main 2-Column Split Workspace */}
         <Box
           sx={{
             flex: 1,
             minHeight: 0,
             display: "flex",
             flexDirection: { xs: "column", md: "row" },
-            gap: 3,
+            gap: 2.5,
             overflow: { xs: "auto", md: "hidden" },
           }}
         >
+          {/* Left Column: Viewer & Details */}
           <Box
             sx={{
               flex: 1,
@@ -578,34 +617,38 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              pr: { md: 1 },
+              pr: { md: 0.5 },
               ...scrollbarSx,
+              "& > *": {
+                flexShrink: 0,
+              },
             }}
           >
             {detailLoading ? (
               <>
-                <Skeleton variant="rounded" height={110} />
-                <Skeleton variant="rounded" height={420} />
+                <Skeleton variant="rounded" height={110} sx={{ borderRadius: "18px" }} />
+                <Skeleton variant="rounded" height={420} sx={{ borderRadius: "18px" }} />
               </>
             ) : detail ? (
               <>
                 <KhoiTenKhoaHoc detail={detail} />
-                <Box sx={{ ...boxSx, p: 2.5 }}>
+                <Box sx={{ ...boxSx, p: { xs: 2, sm: 2.5 } }}>
                   <NoiDungViewer
                     selected={selectedContent}
                     onSaveLyDo={handleSaveLyDo}
                   />
                 </Box>
                 {hasDescription && (
-                  <Box sx={{ ...boxSx, p: 2.5 }}>
+                  <Box sx={{ ...boxSx, p: { xs: 2, sm: 2.5 } }}>
                     <Typography
                       sx={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: "0.1em",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        letterSpacing: "0.06em",
                         textTransform: "uppercase",
-                        color: COLORS.inkSoft,
-                        mb: 1.25,
+                        color: "#475569",
+                        fontFamily: FONTS.display,
+                        mb: 1.5,
                       }}
                     >
                       Mô tả khóa học
@@ -618,42 +661,44 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               <Box
                 sx={{
                   ...boxSx,
-                  minHeight: 200,
+                  minHeight: 240,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
+                  p: 4,
+                  textAlign: "center",
                 }}
               >
                 <SchoolRoundedIcon
                   sx={{
-                    fontSize: 40,
-                    color: alpha(COLORS.primary, 0.2),
+                    fontSize: 48,
+                    color: alpha(BRAND.main, 0.2),
                     mb: 1.5,
                   }}
                 />
-                <Typography sx={{ color: COLORS.inkSoft }}>
-                  Không tìm thấy khóa học.
+                <Typography sx={{ color: "#64748B", fontWeight: 600 }}>
+                  Không tìm thấy thông tin khóa học.
                 </Typography>
               </Box>
             )}
           </Box>
 
+          {/* Right Column: Sidebar */}
           <Box
             sx={{
-              width: { xs: "100%", md: 380 },
+              width: { xs: "100%", md: 380, lg: 400 },
               flexShrink: 0,
-              pr: { md: 1 },
               ...boxSx,
-              ...scrollbarSx,
+              overflow: "hidden",
             }}
           >
             {detailLoading ? (
-              <Stack spacing={1.5} sx={{ p: 2 }}>
-                <Skeleton variant="rounded" height={90} />
-                <Skeleton variant="rounded" height={56} />
-                <Skeleton variant="rounded" height={56} />
-                <Skeleton variant="rounded" height={56} />
+              <Stack spacing={1.5} sx={{ p: 2.5 }}>
+                <Skeleton variant="rounded" height={44} sx={{ borderRadius: "12px" }} />
+                <Skeleton variant="rounded" height={60} sx={{ borderRadius: "14px" }} />
+                <Skeleton variant="rounded" height={60} sx={{ borderRadius: "14px" }} />
+                <Skeleton variant="rounded" height={60} sx={{ borderRadius: "14px" }} />
               </Stack>
             ) : detail ? (
               <KiemDuyetSidebar
@@ -662,8 +707,8 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 onSelectContent={handleSelectContent}
               />
             ) : (
-              <Box sx={{ p: 2, textAlign: "center" }}>
-                <Typography sx={{ color: COLORS.inkSoft }}>
+              <Box sx={{ p: 3, textAlign: "center" }}>
+                <Typography sx={{ color: "#64748B", fontWeight: 500 }}>
                   Không có dữ liệu để hiển thị.
                 </Typography>
               </Box>

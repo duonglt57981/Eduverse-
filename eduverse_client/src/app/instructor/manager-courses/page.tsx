@@ -8,8 +8,6 @@ import Image from "next/image";
 import {
   Box,
   Typography,
-  Tabs,
-  Tab,
   TextField,
   InputAdornment,
   Select,
@@ -22,7 +20,6 @@ import {
   Tooltip,
   Alert,
   Snackbar,
-  Grid,
   Paper,
   alpha,
   Stack,
@@ -31,38 +28,50 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Skeleton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
-import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import PendingIcon from "@mui/icons-material/Pending";
-import CancelIcon from "@mui/icons-material/Cancel";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import SwapVertIcon from "@mui/icons-material/SwapVert";
-import UndoIcon from "@mui/icons-material/Undo";
+import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import PendingRoundedIcon from "@mui/icons-material/PendingRounded";
+import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
+import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
+import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
+import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
+import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+import SellRoundedIcon from "@mui/icons-material/SellRounded";
+import LayersRoundedIcon from "@mui/icons-material/LayersRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
+
 import AuthGuard from "@/src/components/AuthGuard";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType, KhoaHocManagerSearch } from "@/src/types/khoaHoc/Dto/dto";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import { BRAND, NEUTRAL, CSSVAR, STATUS } from "@/src/theme/tokens";
 
+const FONTS = {
+  display: "var(--font-heading, 'Be Vietnam Pro', sans-serif)",
+  body: "var(--font-sans, 'Be Vietnam Pro', sans-serif)",
+};
+
 const MAU = {
   chinh: BRAND.main,
   chinhDam: BRAND.dark,
   chinhNhat: BRAND.light,
-  vien: NEUTRAL.divider,
-  chuDen: NEUTRAL.textPrimary,
-  chuXam: NEUTRAL.textMuted,
-  nenTrang: NEUTRAL.bg,
+  vien: "#E2E8F0",
+  chuDen: "#0F172A",
+  chuXam: "#64748B",
+  nenTrang: "#FFFFFF",
 };
 
 const duongDanChiTietKhoaHoc = (id: string) =>
@@ -75,30 +84,32 @@ const SO_GIAY_HOAN_TAC = 10;
 // Các trạng thái được phép xóa khóa học
 const TRANG_THAI_CHO_PHEP_XOA = ["DangSua", "DaDuyet", "TuChoi"];
 
-// Thông tin hiển thị cho trạng thái
+// Thông tin hiển thị cho trạng thái đồng bộ nhận diện EduVerse
 function thongTinTrangThaiPheDuyet(trangThai?: string): {
   nhan: string;
   mau: string;
   nen: string;
+  vien: string;
 } {
   switch (trangThai) {
     case "ChoDuyet":
-      return { nhan: "Chờ duyệt", mau: "#F59E0B", nen: "#FEF3C7" };
+      return { nhan: "Chờ duyệt", mau: "#D97706", nen: "#FFFBEB", vien: "#FEF3C7" };
     case "XemXet":
-      return { nhan: "Xem xét", mau: "#0891B2", nen: "#CFFAFE" };
+      return { nhan: "Xem xét", mau: "#475569", nen: "#F7F5F2", vien: "#ECE7E4" };
     case "DaDuyet":
-      return { nhan: "Đã duyệt", mau: STATUS.success, nen: "#E6F4EA" };
+      return { nhan: "Đã duyệt", mau: "#16A34A", nen: "#F0FDF4", vien: "#DCFCE7" };
     case "DangDuyet":
-      return { nhan: "Đang duyệt", mau: "#3B82F6", nen: "#DBEAFE" };
+      return { nhan: "Đang duyệt", mau: "#475569", nen: "#F7F5F2", vien: "#ECE7E4" };
     case "TuChoi":
-      return { nhan: "Từ chối", mau: STATUS.error, nen: "#FEE2E2" };
+      return { nhan: "Từ chối", mau: "#DC2626", nen: "#FEF2F2", vien: "#FECACA" };
     case "DangSua":
-      return { nhan: "Đang sửa", mau: "#8B5CF6", nen: "#F5F3FF" };
+      return { nhan: "Đang sửa", mau: "#7C3AED", nen: "#FAF5FF", vien: "#F3E8FF" };
     default:
       return {
         nhan: trangThai ?? "Không rõ",
-        mau: MAU.chuXam,
-        nen: CSSVAR.paperAlt,
+        mau: "#64748B",
+        nen: "#F7F5F2",
+        vien: "#ECE7E4",
       };
   }
 }
@@ -183,6 +194,7 @@ interface CauHinhTrangThai {
   icon: React.ReactNode;
   mau: string;
   nen: string;
+  vien: string;
 }
 
 const CAU_HINH_TRANG_THAI: CauHinhTrangThai[] = [
@@ -190,57 +202,64 @@ const CAU_HINH_TRANG_THAI: CauHinhTrangThai[] = [
     giaTri: "TatCa",
     khoaThongKe: "tong",
     nhan: "Tất cả",
-    icon: <SchoolOutlinedIcon fontSize="small" />,
+    icon: <SchoolRoundedIcon sx={{ fontSize: 18 }} />,
     mau: BRAND.main,
     nen: "#FEF2F2",
+    vien: "#FECACA",
   },
   {
     giaTri: "DaDuyet",
     khoaThongKe: "daDuyet",
     nhan: "Đã duyệt",
-    icon: <CheckCircleIcon fontSize="small" />,
-    mau: STATUS.success,
-    nen: "#E6F4EA",
+    icon: <CheckCircleRoundedIcon sx={{ fontSize: 18 }} />,
+    mau: "#16A34A",
+    nen: "#F0FDF4",
+    vien: "#DCFCE7",
   },
   {
     giaTri: "ChoDuyet",
     khoaThongKe: "choDuyet",
     nhan: "Chờ duyệt",
-    icon: <PendingIcon fontSize="small" />,
-    mau: STATUS.warning,
-    nen: "#FEF3C7",
+    icon: <PendingRoundedIcon sx={{ fontSize: 18 }} />,
+    mau: "#D97706",
+    nen: "#FFFBEB",
+    vien: "#FEF3C7",
   },
   {
     giaTri: "XemXet",
     khoaThongKe: "xemXet",
     nhan: "Xem xét",
-    icon: <VisibilityOutlinedIcon fontSize="small" />,
-    mau: "#0891B2",
-    nen: "#CFFAFE",
+    icon: <VisibilityRoundedIcon sx={{ fontSize: 18 }} />,
+    mau: "#475569",
+    nen: "#F7F5F2",
+    vien: "#ECE7E4",
   },
   {
     giaTri: "DangDuyet",
     khoaThongKe: "dangDuyet",
     nhan: "Đang duyệt",
-    icon: <HourglassEmptyIcon fontSize="small" />,
-    mau: "#3B82F6",
-    nen: "#DBEAFE",
+    icon: <HourglassEmptyRoundedIcon sx={{ fontSize: 18 }} />,
+    mau: "#475569",
+    nen: "#F7F5F2",
+    vien: "#ECE7E4",
   },
   {
     giaTri: "TuChoi",
     khoaThongKe: "tuChoi",
     nhan: "Từ chối",
-    icon: <CancelIcon fontSize="small" />,
-    mau: STATUS.error,
-    nen: "#FEE2E2",
+    icon: <CancelRoundedIcon sx={{ fontSize: 18 }} />,
+    mau: "#DC2626",
+    nen: "#FEF2F2",
+    vien: "#FECACA",
   },
   {
     giaTri: "DangSua",
     khoaThongKe: "dangSua",
     nhan: "Đang sửa",
-    icon: <EditNoteIcon fontSize="small" />,
-    mau: "#8B5CF6",
-    nen: "#F5F3FF",
+    icon: <EditNoteRoundedIcon sx={{ fontSize: 18 }} />,
+    mau: "#7C3AED",
+    nen: "#FAF5FF",
+    vien: "#F3E8FF",
   },
 ];
 
@@ -264,7 +283,7 @@ function GiaTriThongKe({
   mau: string;
 }) {
   if (dangTai) {
-    return <CircularProgress size={20} sx={{ color: mau }} />;
+    return <CircularProgress size={16} sx={{ color: mau }} />;
   }
   return <>{giaTri}</>;
 }
@@ -287,34 +306,42 @@ function TheTrangThai({
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 0.75, // giảm padding để tiết kiệm không gian
-        borderRadius: "10px",
-        bgcolor: dangChon ? MAU.chinhNhat : "#ffffff",
+        px: 1.5,
+        py: 1.1,
+        borderRadius: "14px",
+        bgcolor: dangChon ? "#FFF8F8" : "#FFFFFF",
         textAlign: "left",
-        border: dangChon ? `2px solid ${MAU.chinh}` : `1px solid ${MAU.vien}`,
+        border: dangChon
+          ? `1.5px solid ${BRAND.main}`
+          : `1px solid ${MAU.vien}`,
         cursor: "pointer",
         userSelect: "none",
         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
         display: "flex",
         alignItems: "center",
-        gap: 0.5, // giảm gap
-        height: "100%",
-        flex: "1 1 0",
+        gap: 1.25,
+        height: 64,
         minWidth: 0,
-        boxShadow: dangChon ? `0 4px 12px ${alpha(MAU.chinh, 0.08)}` : "none",
+        boxShadow: dangChon
+          ? `0 4px 14px ${alpha(BRAND.main, 0.1)}`
+          : "0 1px 3px rgba(0, 0, 0, 0.02)",
+        position: "relative",
+        overflow: "hidden",
         "&:hover": {
-          borderColor: dangChon ? MAU.chinh : NEUTRAL.divider,
-          boxShadow: `0 4px 12px rgba(0, 0, 0, 0.04)`,
+          borderColor: dangChon ? BRAND.main : alpha(BRAND.main, 0.4),
+          transform: "translateY(-2px)",
+          boxShadow: "0 6px 18px rgba(0, 0, 0, 0.05)",
         },
       }}
     >
       <Box
         sx={{
-          width: 24, // giảm kích thước icon
-          height: 24,
+          width: 36,
+          height: 36,
           flexShrink: 0,
-          borderRadius: "7px",
+          borderRadius: "10px",
           bgcolor: cauHinh.nen,
+          border: `1px solid ${cauHinh.vien}`,
           color: cauHinh.mau,
           display: "flex",
           alignItems: "center",
@@ -323,26 +350,28 @@ function TheTrangThai({
       >
         {cauHinh.icon}
       </Box>
+
       <Box sx={{ minWidth: 0, flexGrow: 1 }}>
         <Typography
           sx={{
-            fontWeight: 800,
-            fontSize: 13,
-            color: MAU.chuDen,
-            lineHeight: 1.2,
-            whiteSpace: "nowrap",
+            fontWeight: 900,
+            fontSize: 16,
+            color: dangChon ? BRAND.main : MAU.chuDen,
+            lineHeight: 1.15,
+            fontFamily: FONTS.display,
           }}
         >
           <GiaTriThongKe dangTai={dangTai} giaTri={giaTri} mau={cauHinh.mau} />
         </Typography>
         <Typography
           sx={{
-            fontSize: 10.5,
-            color: MAU.chuXam,
-            fontWeight: 600,
+            fontSize: 11.5,
+            color: dangChon ? BRAND.main : MAU.chuXam,
+            fontWeight: dangChon ? 700 : 600,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
+            mt: 0.2,
           }}
         >
           {cauHinh.nhan}
@@ -511,9 +540,6 @@ function KhoaHocContent() {
               item.trangThaiPheDuyet === searchParams.trangThai,
           );
           if (filtered.length !== items.length) {
-            console.warn(
-              "⚠️ Backend chưa lọc theo trangThaiPheDuyet, lọc bổ sung ở client.",
-            );
             items = filtered;
           }
         }
@@ -686,7 +712,6 @@ function KhoaHocContent() {
   // ===== Dialog xác nhận xóa =====
   const mopDialogXoa = (khoaHoc: KhoaHocType) => {
     if (!khoaHoc.id) return;
-    // Kiểm tra trạng thái có cho phép xóa không
     if (!TRANG_THAI_CHO_PHEP_XOA.includes(khoaHoc.trangThaiPheDuyet ?? "")) {
       setThongBaoLoiThaoTac(
         "Khóa học này không thể xóa ở trạng thái hiện tại.",
@@ -712,17 +737,14 @@ function KhoaHocContent() {
     if (!khoaHoc.id) return;
     const id = khoaHoc.id;
 
-    // Ẩn khóa học ngay lập tức (optimistic UI)
     setHiddenIds((prev) => [...prev, id]);
 
-    // Hiển thị thông báo hoàn tác
     setUndoInfo({
       id,
       ten: khoaHoc.tieuDe || "Khóa học",
       thoiGian: SO_GIAY_HOAN_TAC,
     });
 
-    // Xóa timer cũ nếu có (đề phòng bấm xóa lại trong lúc chờ)
     if (deleteTimers.current[id]) {
       clearTimeout(deleteTimers.current[id]);
       delete deleteTimers.current[id];
@@ -732,7 +754,6 @@ function KhoaHocContent() {
       delete countdownTimers.current[id];
     }
 
-    // Đếm ngược hiển thị mỗi giây
     const countdownTimer = setInterval(() => {
       setUndoInfo((prev) => {
         if (!prev || prev.id !== id) return prev;
@@ -747,20 +768,16 @@ function KhoaHocContent() {
     }, 1000);
     countdownTimers.current[id] = countdownTimer;
 
-    // Bắt đầu đếm ngược 10 giây rồi xóa thật
     const timer = setTimeout(async () => {
       try {
         const response = await khoaHocService.DeleteKhoaHoc(id);
         if (laThanhCong(response)) {
-          // Xóa thành công: loại bỏ khỏi danh sách thật
           setDanhSachKhoaHoc((prev) => prev.filter((c) => c.id !== id));
           setThongBaoThanhCong(
             `Đã xóa khóa học "${khoaHoc.tieuDe}" thành công.`,
           );
-          // Cập nhật thống kê
           await fetchThongKe(true);
         } else {
-          // Xóa thất bại: hiển thị lại khóa học
           setHiddenIds((prev) => prev.filter((itemId) => itemId !== id));
           setThongBaoLoiThaoTac(
             response?.message || "Không thể xóa khóa học. Vui lòng thử lại.",
@@ -768,13 +785,11 @@ function KhoaHocContent() {
         }
       } catch (error) {
         console.error("Lỗi xóa khóa học:", error);
-        // Xóa thất bại: hiển thị lại
         setHiddenIds((prev) => prev.filter((itemId) => itemId !== id));
         setThongBaoLoiThaoTac(
           trichXuatThongBaoLoi(error, "Có lỗi xảy ra khi xóa khóa học."),
         );
       } finally {
-        // Xóa thông báo hoàn tác + dọn dẹp timer đếm ngược
         setUndoInfo((prev) => (prev?.id === id ? null : prev));
         if (countdownTimers.current[id]) {
           clearInterval(countdownTimers.current[id]);
@@ -790,137 +805,121 @@ function KhoaHocContent() {
   const hoanTacXoa = () => {
     if (!undoInfo) return;
     const { id } = undoInfo;
-    // Hủy timer xóa
     if (deleteTimers.current[id]) {
       clearTimeout(deleteTimers.current[id]);
       delete deleteTimers.current[id];
     }
-    // Hủy timer đếm ngược
     if (countdownTimers.current[id]) {
       clearInterval(countdownTimers.current[id]);
       delete countdownTimers.current[id];
     }
-    // Hiện lại khóa học
     setHiddenIds((prev) => prev.filter((item) => item !== id));
     setUndoInfo(null);
   };
 
   // ===== Render =====
   return (
-    <Box>
-      {/* Header */}
+    <Box sx={{ maxWidth: 1400, mx: "auto" }}>
+      {/* Header Banner */}
       <Box
         sx={{
           display: "flex",
           alignItems: { xs: "flex-start", sm: "center" },
           justifyContent: "space-between",
           flexDirection: { xs: "column", sm: "row" },
-          gap: 2,
-          mb: 3,
+          gap: 2.5,
+          mb: 3.5,
         }}
       >
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-          <Box>
+        <Box>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 0.5 }}>
             <Typography
-              sx={{ fontWeight: 900, fontSize: 26, color: MAU.chuDen }}
+              sx={{
+                fontWeight: 900,
+                fontSize: { xs: 22, sm: 28 },
+                color: MAU.chuDen,
+                fontFamily: FONTS.display,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
+              }}
             >
-              Các khóa học
+              Quản lý khóa học
             </Typography>
-            <Typography sx={{ fontSize: 14, color: MAU.chuXam, mt: 0.5 }}>
-              Quản lý và theo dõi toàn bộ khóa học bạn đang giảng dạy
-              {totalCount > 0 && ` (${totalCount} khóa học)`}
-            </Typography>
-          </Box>
-        </Stack>
+            {totalCount > 0 && (
+              <Box
+                sx={{
+                  px: 1.2,
+                  py: 0.35,
+                  borderRadius: "999px",
+                  bgcolor: "#FEF2F2",
+                  color: BRAND.main,
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                  border: `1px solid ${alpha(BRAND.main, 0.2)}`,
+                }}
+              >
+                {totalCount} khóa học
+              </Box>
+            )}
+          </Stack>
+          <Typography sx={{ fontSize: 14, color: MAU.chuXam, fontWeight: 500 }}>
+            Tạo mới, chỉnh sửa nội dung bài giảng và theo dõi tiến độ phê duyệt các khóa học của bạn
+          </Typography>
+        </Box>
+
         <Button
           variant="contained"
-          startIcon={<AddIcon />}
+          startIcon={<AddIcon sx={{ fontSize: 20 }} />}
           onClick={() => router.push(duongDanTaoKhoaHocMoi)}
           sx={{
-            bgcolor: MAU.chinh,
+            background: `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
             textTransform: "none",
-            fontWeight: 700,
+            fontWeight: 800,
+            fontSize: 14,
             px: 3,
-            py: 1,
+            py: 1.2,
             borderRadius: "12px",
-            boxShadow: "0 6px 16px rgba(139,19,19,0.25)",
+            boxShadow: "0 4px 16px rgba(139, 19, 19, 0.25)",
+            transition: "all 0.2s ease",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
             "&:hover": {
-              bgcolor: MAU.chinhDam,
-              boxShadow: "0 8px 20px rgba(139,19,19,0.32)",
+              boxShadow: "0 6px 22px rgba(139, 19, 19, 0.38)",
+              transform: "translateY(-1px)",
             },
           }}
         >
-          Khóa học mới
+          Tạo khóa học mới
         </Button>
       </Box>
 
-      {/* Tabs */}
-      <Tabs
-        value="khoa-hoc"
-        sx={{
-          borderBottom: `1px solid ${MAU.vien}`,
-          mb: 3,
-          minHeight: 40,
-          "& .MuiTab-root": {
-            textTransform: "none",
-            fontWeight: 600,
-            fontSize: 14,
-            minHeight: 40,
-            color: MAU.chuXam,
-          },
-          "& .Mui-selected": { color: `${MAU.chinh} !important` },
-          "& .MuiTabs-indicator": {
-            bgcolor: MAU.chinh,
-            height: 3,
-            borderRadius: "3px 3px 0 0",
-          },
-        }}
-      >
-        <Tab label="Các khóa học" value="khoa-hoc" />
-      </Tabs>
-
-      {/*
-        =====================================================================
-        THỐNG KÊ / BỘ LỌC NHANH THEO TRẠNG THÁI
-        ĐÃ SỬA: luôn 1 dòng, co giãn, có scroll ngang nếu cần
-        =====================================================================
-      */}
+      {/* Quick Status Metric Filter Cards */}
       <Box
         sx={{
-          display: "flex",
-          flexWrap: "nowrap", // không xuống dòng
-          gap: 0.75,
-          mb: 2.5,
-          overflowX: "auto",
-          pb: 0.5,
-          "&::-webkit-scrollbar": { height: 6 },
-          "&::-webkit-scrollbar-thumb": {
-            bgcolor: MAU.vien,
-            borderRadius: "3px",
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)",
+            sm: "repeat(3, 1fr)",
+            md: "repeat(4, 1fr)",
+            lg: "repeat(7, 1fr)",
           },
+          gap: 1.5,
+          mb: 3,
         }}
       >
         {CAU_HINH_TRANG_THAI.map((cauHinh) => (
-          <Box
+          <TheTrangThai
             key={cauHinh.giaTri}
-            sx={{
-              flex: "1 1 0", // co giãn đều
-              minWidth: 0, // không ép buộc chiều rộng tối thiểu
-              flexShrink: 1,
-            }}
-          >
-            <TheTrangThai
-              cauHinh={cauHinh}
-              giaTri={thongKe[cauHinh.khoaThongKe]}
-              dangChon={trangThaiLoc === cauHinh.giaTri}
-              dangTai={dangTaiThongKe}
-              onClick={() => handleChonTrangThai(cauHinh.giaTri)}
-            />
-          </Box>
+            cauHinh={cauHinh}
+            giaTri={thongKe[cauHinh.khoaThongKe]}
+            dangChon={trangThaiLoc === cauHinh.giaTri}
+            dangTai={dangTaiThongKe}
+            onClick={() => handleChonTrangThai(cauHinh.giaTri)}
+          />
         ))}
       </Box>
 
-      {/* Thanh tìm kiếm & sắp xếp */}
+      {/* Search & Sort Control Bar */}
       <Paper
         elevation={0}
         sx={{
@@ -930,13 +929,14 @@ function KhoaHocContent() {
           gap: 1.5,
           p: 1.5,
           mb: 3,
-          borderRadius: "12px",
+          borderRadius: "16px",
           border: `1px solid ${MAU.vien}`,
-          bgcolor: CSSVAR.paper,
+          bgcolor: "#FFFFFF",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
         }}
       >
+        {/* Search Input */}
         <TextField
-          size="small"
           placeholder="Tìm kiếm khóa học theo tên..."
           value={tuKhoaTimKiem}
           onChange={(e) => {
@@ -945,128 +945,154 @@ function KhoaHocContent() {
           }}
           sx={{
             flex: 1,
-            minWidth: 220,
+            minWidth: { xs: "100%", sm: 260 },
             "& .MuiOutlinedInput-root": {
-              height: "42px",
-              borderRadius: "10px",
-              bgcolor: CSSVAR.paperAlt,
-              "& fieldset": { borderColor: MAU.vien },
-              "&:hover fieldset": { borderColor: CSSVAR.divider },
-              "&.Mui-focused fieldset": { borderColor: MAU.chinh },
+              height: 44,
+              borderRadius: "12px",
+              bgcolor: "#FFFFFF",
+              fontSize: 13.5,
+              fontWeight: 500,
+              transition: "all 0.15s ease",
+              "& fieldset": { borderColor: "#ECE7E4" },
+              "&:hover fieldset": { borderColor: alpha(BRAND.main, 0.4) },
               "&.Mui-focused": {
-                bgcolor: CSSVAR.paper,
-                boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
+                bgcolor: "#FFFFFF",
+                boxShadow: `0 0 0 3px ${alpha(BRAND.main, 0.08)}`,
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: BRAND.main,
+                borderWidth: 1.5,
               },
             },
             "& .MuiOutlinedInput-input": {
-              color: MAU.chuDen,
-              fontSize: 14,
-              fontWeight: 500,
+              py: 0,
+              height: "100%",
             },
           }}
           slotProps={{
             input: {
               startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: MAU.chuXam, fontSize: 20 }} />
+                <InputAdornment position="start" sx={{ mr: 1 }}>
+                  <SearchIcon sx={{ color: "#64748B", fontSize: 20 }} />
                 </InputAdornment>
               ),
+              endAdornment: tuKhoaTimKiem ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setTuKhoaTimKiem("")}
+                    sx={{ p: 0.5, color: "#94A3B8" }}
+                  >
+                    <CloseRoundedIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             },
           }}
         />
 
+        {/* Sort Select */}
         <Select
-          size="small"
           value={sapXep}
           onChange={(e) => {
             setTrangHienTai(1);
             setSapXep(e.target.value);
           }}
           startAdornment={
-            <InputAdornment position="start" sx={{ ml: 0.5 }}>
-              <SwapVertIcon sx={{ color: MAU.chuXam, fontSize: 20 }} />
+            <InputAdornment position="start" sx={{ ml: 0.5, mr: 0.75 }}>
+              <SwapVertRoundedIcon sx={{ color: "#64748B", fontSize: 20 }} />
             </InputAdornment>
           }
           sx={{
-            minWidth: 195,
-            height: "42px",
-            borderRadius: "10px",
+            minWidth: { xs: "100%", sm: 200 },
+            height: 44,
+            borderRadius: "12px",
             color: MAU.chuDen,
-            fontSize: 14,
-            fontWeight: 600,
-            bgcolor: CSSVAR.paperAlt,
-            "& .MuiOutlinedInput-notchedOutline": { borderColor: MAU.vien },
+            fontSize: 13.5,
+            fontWeight: 700,
+            bgcolor: "#FFFFFF",
+            "& .MuiOutlinedInput-notchedOutline": { borderColor: "#ECE7E4" },
             "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderColor: CSSVAR.divider,
+              borderColor: alpha(BRAND.main, 0.4),
             },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-              borderColor: MAU.chinh,
+              borderColor: BRAND.main,
             },
             "&.Mui-focused": {
-              bgcolor: CSSVAR.paper,
-              boxShadow: `0 0 0 3px ${alpha(MAU.chinh, 0.08)}`,
+              bgcolor: "#FFFFFF",
+              boxShadow: `0 0 0 3px ${alpha(BRAND.main, 0.08)}`,
             },
           }}
         >
-          <MenuItem value="moi-nhat">Mới nhất</MenuItem>
-          <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
-          <MenuItem value="ten-a-z">Tên A-Z</MenuItem>
-          <MenuItem value="hoc-vien-nhieu-nhat">Nhiều học viên nhất</MenuItem>
+          <MenuItem value="moi-nhat" sx={{ fontSize: 13.5, fontWeight: 600 }}>Mới nhất</MenuItem>
+          <MenuItem value="cu-nhat" sx={{ fontSize: 13.5, fontWeight: 600 }}>Cũ nhất</MenuItem>
+          <MenuItem value="ten-a-z" sx={{ fontSize: 13.5, fontWeight: 600 }}>Tên A-Z</MenuItem>
+          <MenuItem value="hoc-vien-nhieu-nhat" sx={{ fontSize: 13.5, fontWeight: 600 }}>Nhiều học viên nhất</MenuItem>
         </Select>
 
-        <Tooltip title="Tải lại dữ liệu với bộ lọc hiện tại">
-          <IconButton
-            onClick={handleReload}
-            disabled={dangTai}
-            sx={{
-              color: MAU.chinh,
-              bgcolor: CSSVAR.paperAlt,
-              border: `1px solid ${MAU.vien}`,
-              borderRadius: "10px",
-              width: "42px",
-              height: "42px",
-              "&:hover": {
-                bgcolor: MAU.chinhNhat,
-                borderColor: MAU.chinh,
-              },
-              "&.Mui-disabled": {
-                opacity: 0.5,
-              },
-            }}
-          >
-            {dangTai ? (
-              <CircularProgress size={20} sx={{ color: MAU.chinh }} />
-            ) : (
-              <RefreshIcon sx={{ fontSize: 20 }} />
-            )}
-          </IconButton>
-        </Tooltip>
+        {/* Action Buttons */}
+        <Stack direction="row" spacing={1} sx={{ ml: { xs: 0, sm: "auto" } }}>
+          <Tooltip title="Tải lại danh sách">
+            <span>
+              <IconButton
+                onClick={handleReload}
+                disabled={dangTai}
+                sx={{
+                  color: BRAND.main,
+                  bgcolor: "#FFFFFF",
+                  border: "1px solid #ECE7E4",
+                  borderRadius: "12px",
+                  width: 44,
+                  height: 44,
+                  transition: "all 0.15s ease",
+                  "&:hover": {
+                    bgcolor: "#FEF2F2",
+                    borderColor: alpha(BRAND.main, 0.3),
+                  },
+                  "&.Mui-disabled": { opacity: 0.5 },
+                }}
+              >
+                {dangTai ? (
+                  <CircularProgress size={18} sx={{ color: BRAND.main }} />
+                ) : (
+                  <RefreshIcon sx={{ fontSize: 20 }} />
+                )}
+              </IconButton>
+            </span>
+          </Tooltip>
 
-        <Tooltip title="Đặt lại bộ lọc & làm mới">
-          <IconButton
-            onClick={handleRefresh}
-            sx={{
-              color: MAU.chinh,
-              bgcolor: CSSVAR.paperAlt,
-              border: `1px solid ${MAU.vien}`,
-              borderRadius: "10px",
-              width: "42px",
-              height: "42px",
-              "&:hover": {
-                bgcolor: MAU.chinhNhat,
-                borderColor: MAU.chinh,
-              },
-            }}
-          >
-            <RestartAltRoundedIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-        </Tooltip>
+          <Tooltip title="Đặt lại toàn bộ bộ lọc">
+            <IconButton
+              onClick={handleRefresh}
+              sx={{
+                color: "#64748B",
+                bgcolor: "#FFFFFF",
+                border: "1px solid #ECE7E4",
+                borderRadius: "12px",
+                width: 44,
+                height: 44,
+                transition: "all 0.15s ease",
+                "&:hover": {
+                  bgcolor: "#F7F5F2",
+                  color: "#0F172A",
+                  borderColor: "#D1D5DB",
+                },
+              }}
+            >
+              <RestartAltRoundedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Paper>
 
-      {/* Chip hiển thị bộ lọc trạng thái đang áp dụng */}
+      {/* Filter Tag Active Indicator */}
       {trangThaiLoc !== "TatCa" && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-          <Typography sx={{ fontSize: 13, color: MAU.chuXam }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: "center", mb: 2.5 }}
+        >
+          <Typography sx={{ fontSize: 13, color: "#64748B", fontWeight: 600 }}>
             Đang lọc:
           </Typography>
           <Chip
@@ -1076,19 +1102,50 @@ function KhoaHocContent() {
             sx={{
               bgcolor: thongTinTrangThaiPheDuyet(trangThaiLoc).nen,
               color: thongTinTrangThaiPheDuyet(trangThaiLoc).mau,
-              fontWeight: 700,
+              border: `1px solid ${thongTinTrangThaiPheDuyet(trangThaiLoc).vien}`,
+              fontWeight: 800,
               fontSize: 12,
+              borderRadius: "8px",
+              height: 26,
             }}
           />
-        </Box>
+        </Stack>
       )}
 
-      {/* Trạng thái tải / lỗi / rỗng */}
+      {/* Loading Skeleton View */}
       {dangTai && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <CircularProgress sx={{ color: MAU.chinh }} />
-        </Box>
+        <Stack spacing={2.5}>
+          {[1, 2, 3].map((i) => (
+            <Paper
+              key={i}
+              elevation={0}
+              sx={{
+                p: 2.5,
+                borderRadius: "18px",
+                border: `1px solid ${MAU.vien}`,
+                bgcolor: "#FFFFFF",
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 2.5,
+              }}
+            >
+              <Skeleton
+                variant="rounded"
+                width={240}
+                height={140}
+                sx={{ borderRadius: "14px", flexShrink: 0 }}
+              />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton width="40%" height={24} sx={{ mb: 1 }} />
+                <Skeleton width="80%" height={32} sx={{ mb: 1.5 }} />
+                <Skeleton width="30%" height={28} />
+              </Box>
+            </Paper>
+          ))}
+        </Stack>
       )}
+
+      {/* Error State */}
       {!dangTai && loi && (
         <Paper
           elevation={0}
@@ -1096,13 +1153,13 @@ function KhoaHocContent() {
             textAlign: "center",
             py: 6,
             px: 4,
-            borderRadius: "12px",
-            border: `1px solid ${MAU.vien}`,
-            bgcolor: CSSVAR.paper,
+            borderRadius: "16px",
+            border: "1px solid #FECACA",
+            bgcolor: "#FEF2F2",
           }}
         >
           <Typography
-            sx={{ color: "#c62828", fontWeight: 700, fontSize: 16, mb: 2 }}
+            sx={{ color: "#DC2626", fontWeight: 800, fontSize: 16, mb: 2 }}
           >
             {loi}
           </Typography>
@@ -1110,14 +1167,14 @@ function KhoaHocContent() {
             variant="outlined"
             onClick={handleReload}
             sx={{
-              borderColor: MAU.chinh,
-              color: MAU.chinh,
+              borderColor: BRAND.main,
+              color: BRAND.main,
               textTransform: "none",
-              fontWeight: 600,
+              fontWeight: 700,
               borderRadius: "10px",
               "&:hover": {
-                borderColor: MAU.chinhDam,
-                bgcolor: MAU.chinhNhat,
+                borderColor: BRAND.dark,
+                bgcolor: "#FEF2F2",
               },
             }}
           >
@@ -1125,6 +1182,8 @@ function KhoaHocContent() {
           </Button>
         </Paper>
       )}
+
+      {/* Empty State */}
       {!dangTai && !loi && danhSachKhoaHoc.length === 0 && (
         <Paper
           elevation={0}
@@ -1132,47 +1191,92 @@ function KhoaHocContent() {
             textAlign: "center",
             py: 8,
             px: 4,
-            borderRadius: "12px",
-            border: `1px dashed ${MAU.vien}`,
-            bgcolor: CSSVAR.paper,
+            borderRadius: "20px",
+            border: "1px dashed #CBD5E1",
+            bgcolor: "#FFFFFF",
           }}
         >
-          <SchoolOutlinedIcon
-            sx={{ fontSize: 48, color: MAU.chinh, opacity: 0.6, mb: 2 }}
-          />
-          <Typography
-            sx={{ color: MAU.chuDen, fontWeight: 700, fontSize: 18, mb: 1 }}
-          >
-            Chưa có khóa học nào
-          </Typography>
-          <Typography
-            sx={{ color: MAU.chuXam, fontWeight: 500, fontSize: 14, mb: 3 }}
-          >
-            Bắt đầu chia sẻ kiến thức của bạn bằng cách tạo khóa học đầu tiên
-            ngay hôm nay!
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => router.push(duongDanTaoKhoaHocMoi)}
+          <Box
             sx={{
-              bgcolor: MAU.chinh,
-              textTransform: "none",
-              fontWeight: 700,
-              px: 3,
-              py: 1,
-              borderRadius: "10px",
-              "&:hover": { bgcolor: MAU.chinhDam },
+              width: 72,
+              height: 72,
+              borderRadius: "20px",
+              bgcolor: "#FEF2F2",
+              color: BRAND.main,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: "auto",
+              mb: 2,
             }}
           >
-            Tạo khóa học mới
-          </Button>
+            <SchoolRoundedIcon sx={{ fontSize: 36 }} />
+          </Box>
+          <Typography
+            sx={{
+              color: MAU.chuDen,
+              fontWeight: 900,
+              fontSize: 19,
+              fontFamily: FONTS.display,
+              mb: 1,
+            }}
+          >
+            Chưa tìm thấy khóa học nào
+          </Typography>
+          <Typography
+            sx={{
+              color: MAU.chuXam,
+              fontWeight: 500,
+              fontSize: 14,
+              maxWidth: 420,
+              mx: "auto",
+              mb: 3,
+            }}
+          >
+            {tuKhoaTimKiem || trangThaiLoc !== "TatCa"
+              ? "Không có khóa học nào khớp với bộ lọc hiện tại. Thử đặt lại bộ lọc để xem toàn bộ."
+              : "Bắt đầu chia sẻ kiến thức của bạn bằng cách tạo khóa học đầu tiên ngay hôm nay!"}
+          </Typography>
+          {tuKhoaTimKiem || trangThaiLoc !== "TatCa" ? (
+            <Button
+              variant="outlined"
+              onClick={handleRefresh}
+              sx={{
+                borderColor: BRAND.main,
+                color: BRAND.main,
+                textTransform: "none",
+                fontWeight: 700,
+                borderRadius: "10px",
+                px: 3,
+              }}
+            >
+              Đặt lại bộ lọc
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => router.push(duongDanTaoKhoaHocMoi)}
+              sx={{
+                bgcolor: BRAND.main,
+                textTransform: "none",
+                fontWeight: 800,
+                px: 3.5,
+                py: 1.2,
+                borderRadius: "12px",
+                boxShadow: "0 4px 14px rgba(139, 19, 19, 0.25)",
+                "&:hover": { bgcolor: BRAND.dark },
+              }}
+            >
+              Tạo khóa học mới
+            </Button>
+          )}
         </Paper>
       )}
 
-      {/* Danh sách khóa học dạng Grid */}
+      {/* Course Cards List */}
       {!dangTai && !loi && danhSachKhoaHoc.length > 0 && (
-        <Grid container spacing={3.5}>
+        <Stack spacing={2}>
           {danhSachKhoaHoc.map((khoaHoc) => {
             const pheDuyet = thongTinTrangThaiPheDuyet(
               khoaHoc.trangThaiPheDuyet,
@@ -1182,291 +1286,400 @@ function KhoaHocContent() {
             const dangXuLyItemNay = dangXuLyId === khoaHoc.id;
 
             return (
-              <Grid key={khoaHoc.id} size={{ xs: 12 }}>
-                <Paper
-                  elevation={0}
-                  onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
+              <Paper
+                key={khoaHoc.id}
+                elevation={0}
+                onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  gap: 2.5,
+                  borderRadius: "18px",
+                  border: `1px solid ${isDraft ? "#FECACA" : MAU.vien}`,
+                  bgcolor: "#FFFFFF",
+                  position: "relative",
+                  cursor: "pointer",
+                  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
+                  "&:hover": {
+                    boxShadow: "0 10px 28px rgba(0, 0, 0, 0.06)",
+                    borderColor: alpha(BRAND.main, 0.35),
+                    transform: "translateY(-2px)",
+                  },
+                }}
+              >
+                {/* Thumbnail Area */}
+                <Box
                   sx={{
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    borderRadius: "16px",
-                    border: `1px solid ${isDraft ? "#FECACA" : MAU.vien}`,
-                    bgcolor: CSSVAR.paper,
-                    overflow: "hidden",
                     position: "relative",
-                    cursor: "pointer",
-                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                    "&:hover": {
-                      boxShadow: "0 12px 24px rgba(0, 0, 0, 0.04)",
-                      borderColor: MAU.chinh,
-                    },
+                    width: { xs: "100%", sm: "220px", md: "240px" },
+                    height: { xs: "160px", sm: "135px" },
+                    borderRadius: "14px",
+                    flexShrink: 0,
+                    bgcolor: "#FFFFFF",
+                    overflow: "hidden",
                   }}
                 >
-                  {/* Thumbnail / Image Area */}
-                  <Box
-                    onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
-                    sx={{
-                      position: "relative",
-                      width: { xs: "100%", sm: "220px", md: "260px" },
-                      height: { xs: "160px", sm: "auto" },
-                      minHeight: { sm: "146px" },
-                      flexShrink: 0,
-                      cursor: "pointer",
-                      bgcolor: CSSVAR.paperAlt,
-                      overflow: "hidden",
-                      borderRight: { sm: `1px solid ${MAU.vien}` },
-                      borderBottom: { xs: `1px solid ${MAU.vien}`, sm: "none" },
-                    }}
-                  >
-                    {khoaHoc.hinhAnhKhoaHoc ? (
-                      <Image
-                        src={khoaHoc.hinhAnhKhoaHoc}
-                        alt={khoaHoc.tieuDe ?? "Khóa học"}
-                        fill
-                        sizes="(max-width: 600px) 100vw, 260px"
-                        style={{ objectFit: "cover" }}
-                        unoptimized
+                  {khoaHoc.hinhAnhKhoaHoc ? (
+                    <Image
+                      src={khoaHoc.hinhAnhKhoaHoc}
+                      alt={khoaHoc.tieuDe ?? "Khóa học"}
+                      fill
+                      sizes="(max-width: 600px) 100vw, 240px"
+                      style={{ objectFit: "cover", borderRadius: "14px" }}
+                      unoptimized
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        bgcolor: "#F8FAFC",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "14px",
+                      }}
+                    >
+                      <ArticleOutlinedIcon
+                        sx={{ color: "#94A3B8", fontSize: 40, opacity: 0.8 }}
                       />
-                    ) : (
+                    </Box>
+                  )}
+
+                  {isDraft && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        left: 8,
+                        bgcolor: BRAND.main,
+                        color: "#FFFFFF",
+                        fontWeight: 800,
+                        fontSize: 10,
+                        px: 1,
+                        py: 0.3,
+                        borderRadius: "6px",
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                      }}
+                    >
+                      Bản nháp
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Content & Metadata Area */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", lg: "row" },
+                    flexGrow: 1,
+                    justifyContent: "space-between",
+                    alignItems: { xs: "flex-start", lg: "center" },
+                    gap: 2,
+                    minWidth: 0,
+                    width: "100%",
+                  }}
+                >
+                  {/* Title & Badges */}
+                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    {/* Status & Level Badges */}
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{
+                        alignItems: "center",
+                        mb: 1,
+                        flexWrap: "wrap",
+                        gap: 0.75,
+                      }}
+                    >
+                      {/* Status Chip */}
                       <Box
                         sx={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          height: "100%",
-                          background: `linear-gradient(135deg, ${MAU.chinhNhat} 0%, #FEE2E2 100%)`,
-                          display: "flex",
+                          display: "inline-flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          gap: 0.6,
+                          px: 1.1,
+                          py: 0.35,
+                          borderRadius: "8px",
+                          bgcolor: pheDuyet.nen,
+                          border: `1px solid ${pheDuyet.vien}`,
+                          color: pheDuyet.mau,
+                          fontSize: 12,
+                          fontWeight: 800,
                         }}
                       >
-                        <ArticleOutlinedIcon
-                          sx={{ color: MAU.chinh, fontSize: 40, opacity: 0.6 }}
-                        />
-                      </Box>
-                    )}
-
-                    {isDraft && (
-                      <Chip
-                        label="Bản nháp"
-                        size="small"
-                        sx={{
-                          position: "absolute",
-                          top: 12,
-                          left: 12,
-                          bgcolor: MAU.chinh,
-                          color: "#ffffff",
-                          fontWeight: 700,
-                          fontSize: 10,
-                          height: 20,
-                          textTransform: "uppercase",
-                          boxShadow: `0 2px 8px ${alpha(MAU.chinh, 0.3)}`,
-                        }}
-                      />
-                    )}
-                  </Box>
-
-                  {/* Body Content Area */}
-                  <Box
-                    sx={{
-                      p: { xs: 2, sm: 2.5 },
-                      display: "flex",
-                      flexDirection: { xs: "column", md: "row" },
-                      flexGrow: 1,
-                      justifyContent: "space-between",
-                      alignItems: { xs: "stretch", md: "center" },
-                      gap: 2.5,
-                    }}
-                  >
-                    {/* Metadata & Title & Stats block */}
-                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Stack
-                        direction="row"
-                        spacing={1.5}
-                        sx={{
-                          alignItems: "center",
-                          mb: 1,
-                          flexWrap: "wrap",
-                          gap: 1,
-                        }}
-                      >
-                        <Typography
+                        <Box
                           sx={{
-                            fontSize: 11,
-                            color: MAU.chuXam,
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            bgcolor: pheDuyet.mau,
                           }}
-                        >
-                          {khoaHoc.capDo || "Tất cả cấp độ"}
-                        </Typography>
+                        />
+                        {pheDuyet.nhan}
+                      </Box>
 
+                      {/* Level Tag */}
+                      {khoaHoc.capDo && (
                         <Chip
-                          label={pheDuyet.nhan}
+                          icon={<LayersRoundedIcon sx={{ fontSize: "13px !important", color: "#64748B" }} />}
+                          label={khoaHoc.capDo}
                           size="small"
                           sx={{
-                            fontWeight: 750,
-                            fontSize: 10.5,
-                            borderRadius: "6px",
-                            height: "20px",
-                            color: pheDuyet.mau,
-                            bgcolor: pheDuyet.nen,
+                            bgcolor: "#F8FAFC",
+                            color: "#475569",
+                            fontWeight: 700,
+                            fontSize: 11.5,
+                            borderRadius: "8px",
+                            border: "1px solid #E2E8F0",
+                            height: 24,
                           }}
                         />
-                      </Stack>
+                      )}
 
-                      <Typography
-                        onClick={() => xuLyBamKhoaHoc(khoaHoc.id)}
+                      {/* Category Tag */}
+                      {khoaHoc.loaiKhoaHoc && (
+                        <Chip
+                          label={khoaHoc.loaiKhoaHoc}
+                          size="small"
+                          sx={{
+                            bgcolor: "#F8FAFC",
+                            color: "#475569",
+                            fontWeight: 700,
+                            fontSize: 11.5,
+                            borderRadius: "8px",
+                            border: "1px solid #E2E8F0",
+                            height: 24,
+                          }}
+                        />
+                      )}
+                    </Stack>
+
+                    {/* Title */}
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: { xs: 16, sm: 17.5 },
+                        color: MAU.chuDen,
+                        mb: 1.25,
+                        fontFamily: FONTS.display,
+                        lineHeight: 1.35,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                        transition: "color 0.15s ease",
+                        "&:hover": { color: BRAND.main },
+                      }}
+                    >
+                      {khoaHoc.tieuDe ?? "Chưa đặt tên khóa học"}
+                    </Typography>
+
+                    {/* Price & Students */}
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                      <Box
                         sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          px: 1.2,
+                          py: 0.4,
+                          borderRadius: "8px",
+                          bgcolor: "#F0FDF4",
+                          border: "1px solid #DCFCE7",
+                          color: "#16A34A",
+                        }}
+                      >
+                        <SellRoundedIcon sx={{ fontSize: 13 }} />
+                        <Typography sx={{ fontWeight: 900, fontSize: 13, lineHeight: 1 }}>
+                          {khoaHoc.giaGoc === 0
+                            ? "Miễn phí"
+                            : `${(khoaHoc.giaGoc ?? 0).toLocaleString("vi-VN")} đ`}
+                        </Typography>
+                      </Box>
+
+                      {khoaHoc.soLuongHocVien != null && (
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            color: "#64748B",
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                          }}
+                        >
+                          <PeopleAltRoundedIcon sx={{ fontSize: 15, color: "#94A3B8" }} />
+                          <span>{khoaHoc.soLuongHocVien} học viên</span>
+                        </Box>
+                      )}
+                    </Stack>
+                  </Box>
+
+                  {/* Action Buttons Group */}
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    onClick={(e) => e.stopPropagation()}
+                    sx={{
+                      alignItems: "center",
+                      justifyContent: { xs: "flex-end", lg: "center" },
+                      flexShrink: 0,
+                      pt: { xs: 1.5, lg: 0 },
+                      borderTop: { xs: "1px solid #F1F5F9", lg: "none" },
+                      width: { xs: "100%", lg: "auto" },
+                    }}
+                  >
+                    {actions.showEdit && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={
+                          dangXuLyItemNay ? (
+                            <CircularProgress size={14} sx={{ color: BRAND.main }} />
+                          ) : (
+                            <EditRoundedIcon sx={{ fontSize: 16 }} />
+                          )
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(khoaHoc);
+                        }}
+                        disabled={dangXuLyItemNay}
+                        sx={{
+                          textTransform: "none",
                           fontWeight: 800,
-                          fontSize: 16.5,
-                          color: MAU.chuDen,
-                          mb: 1.5,
-                          cursor: "pointer",
-                          lineHeight: 1.4,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 1,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                          transition: "color 0.2s ease",
+                          fontSize: 13.5,
+                          borderRadius: "10px",
+                          borderColor: alpha(BRAND.main, 0.35),
+                          color: BRAND.main,
+                          bgcolor: "#FEF2F2",
+                          px: 2.5,
+                          py: 0.9,
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                          minWidth: "fit-content",
+                          transition: "all 0.15s ease",
                           "&:hover": {
-                            color: MAU.chinh,
+                            bgcolor: BRAND.main,
+                            color: "#FFFFFF",
+                            borderColor: BRAND.main,
+                            boxShadow: `0 4px 12px ${alpha(BRAND.main, 0.25)}`,
                           },
                         }}
                       >
-                        {khoaHoc.tieuDe ?? "Chưa đặt tên"}
-                      </Typography>
+                        Chỉnh sửa
+                      </Button>
+                    )}
 
-                      {/* Giá khóa học */}
-                      <Typography
+                    {actions.showCancelApproval && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={
+                          dangXuLyItemNay ? (
+                            <CircularProgress size={14} sx={{ color: "#D97706" }} />
+                          ) : (
+                            <UndoRoundedIcon sx={{ fontSize: 16 }} />
+                          )
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setKhoaHocChoHuyDuyet(khoaHoc);
+                        }}
+                        disabled={dangXuLyItemNay}
                         sx={{
-                          fontWeight: 900,
-                          fontSize: 15.5,
-                          color: MAU.chuDen,
+                          textTransform: "none",
+                          fontWeight: 800,
+                          fontSize: 13.5,
+                          borderRadius: "10px",
+                          borderColor: "#FEF3C7",
+                          bgcolor: "#FFFBEB",
+                          color: "#D97706",
+                          px: 2.5,
+                          py: 0.9,
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                          minWidth: "fit-content",
+                          "&:hover": {
+                            bgcolor: "#FEF3C7",
+                            borderColor: "#F59E0B",
+                          },
                         }}
                       >
-                        {khoaHoc.giaGoc === 0
-                          ? "Miễn phí"
-                          : `${(khoaHoc.giaGoc ?? 0).toLocaleString()}đ`}
-                      </Typography>
-                    </Box>
+                        Hủy duyệt
+                      </Button>
+                    )}
 
-                    {/* Actions Group on the right */}
-                    <Box
-                      onClick={(e) => e.stopPropagation()}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: { xs: "flex-end", md: "center" },
-                        gap: 1.2,
-                        borderTop: { xs: `1px solid ${MAU.vien}`, md: "none" },
-                        pt: { xs: 1.5, md: 0 },
-                      }}
-                    >
-                      {actions.showEdit && (
-                        <Tooltip title="Chỉnh sửa">
-                          <span>
-                            <IconButton
-                              size="medium"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(khoaHoc);
-                              }}
-                              disabled={dangXuLyItemNay}
-                              sx={{
-                                color: MAU.chinh,
-                                bgcolor: MAU.chinhNhat,
-                                borderRadius: "10px",
-                                "&:hover": {
-                                  bgcolor: MAU.chinhDam,
-                                  color: "#fff",
-                                },
-                                transition: "all 0.2s",
-                              }}
-                            >
-                              {dangXuLyItemNay ? (
-                                <CircularProgress
-                                  size={18}
-                                  sx={{ color: MAU.chinh }}
-                                />
-                              ) : (
-                                <EditIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                      {actions.showCancelApproval && (
-                        <Tooltip title="Hủy duyệt">
-                          <span>
-                            <IconButton
-                              size="medium"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setKhoaHocChoHuyDuyet(khoaHoc);
-                              }}
-                              disabled={dangXuLyItemNay}
-                              sx={{
-                                color: STATUS.warningDark,
-                                bgcolor: "#FEF3C7",
-                                borderRadius: "10px",
-                                "&:hover": {
-                                  bgcolor: STATUS.warningDark,
-                                  color: "#fff",
-                                },
-                                transition: "all 0.2s",
-                              }}
-                            >
-                              {dangXuLyItemNay ? (
-                                <CircularProgress
-                                  size={18}
-                                  sx={{ color: STATUS.warningDark }}
-                                />
-                              ) : (
-                                <UndoIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                      {actions.showDelete && (
-                        <Tooltip title="Xóa khóa học">
-                          <span>
-                            <IconButton
-                              size="medium"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                mopDialogXoa(khoaHoc);
-                              }}
-                              disabled={dangXuLyItemNay}
-                              sx={{
-                                color: STATUS.error,
-                                bgcolor: "#FEF2F2",
-                                borderRadius: "10px",
-                                "&:hover": {
-                                  bgcolor: STATUS.error,
-                                  color: "#fff",
-                                },
-                                transition: "all 0.2s",
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                    </Box>
-                  </Box>
-                </Paper>
-              </Grid>
+                    {actions.showDelete && (
+                      <Tooltip title="Xóa khóa học">
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              mopDialogXoa(khoaHoc);
+                            }}
+                            disabled={dangXuLyItemNay}
+                            sx={{
+                              color: "#DC2626",
+                              bgcolor: "#FEF2F2",
+                              border: "1px solid #FECACA",
+                              borderRadius: "10px",
+                              p: 1,
+                              transition: "all 0.15s ease",
+                              "&:hover": {
+                                bgcolor: "#DC2626",
+                                color: "#FFFFFF",
+                                borderColor: "#DC2626",
+                              },
+                            }}
+                          >
+                            <DeleteOutlineRoundedIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    )}
+
+                    <Tooltip title="Vào quản lý nội dung">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          xuLyBamKhoaHoc(khoaHoc.id);
+                        }}
+                        sx={{
+                          color: "#64748B",
+                          bgcolor: "#F8FAFC",
+                          border: "1px solid #E2E8F0",
+                          borderRadius: "10px",
+                          p: 1,
+                          transition: "all 0.15s ease",
+                          "&:hover": {
+                            bgcolor: "#0F172A",
+                            color: "#FFFFFF",
+                            borderColor: "#0F172A",
+                          },
+                        }}
+                      >
+                        <ArrowForwardRoundedIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                </Box>
+              </Paper>
             );
           })}
-        </Grid>
+        </Stack>
       )}
 
-      {/* Phân trang */}
+      {/* Pagination */}
       {!dangTai && !loi && danhSachKhoaHoc.length > 0 && (
         <Box
           sx={{
@@ -1474,14 +1687,17 @@ function KhoaHocContent() {
             flexDirection: { xs: "column", sm: "row" },
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 1.5,
+            gap: 2,
             mt: 4,
+            pt: 2,
+            borderTop: "1px solid #F1F5F9",
           }}
         >
-          <Typography sx={{ fontSize: 13, color: MAU.chuXam, fontWeight: 500 }}>
-            Trang {trangHienTai}/{tongSoTrang}
-            {totalCount > 0 && ` · ${totalCount} khóa học`}
+          <Typography sx={{ fontSize: 13.5, color: MAU.chuXam, fontWeight: 600 }}>
+            Hiển thị trang <span style={{ color: "#0F172A", fontWeight: 800 }}>{trangHienTai}</span> / {tongSoTrang}
+            {totalCount > 0 && ` (Tổng cộng ${totalCount} khóa học)`}
           </Typography>
+
           {tongSoTrang > 1 && (
             <Pagination
               count={tongSoTrang}
@@ -1493,12 +1709,15 @@ function KhoaHocContent() {
               sx={{
                 "& .MuiPaginationItem-root": {
                   color: MAU.chuDen,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   borderRadius: "10px",
+                  fontSize: 13.5,
+                  "&:hover": { bgcolor: "#FEF2F2", color: BRAND.main },
                 },
                 "& .Mui-selected": {
-                  bgcolor: `${MAU.chinh} !important`,
-                  color: "#fff",
+                  bgcolor: `${BRAND.main} !important`,
+                  color: "#FFFFFF !important",
+                  boxShadow: `0 2px 8px ${alpha(BRAND.main, 0.3)}`,
                 },
               }}
             />
@@ -1513,7 +1732,13 @@ function KhoaHocContent() {
         maxWidth="xs"
         fullWidth
         slotProps={{
-          paper: { sx: { borderRadius: "16px" } },
+          paper: {
+            sx: {
+              borderRadius: "20px",
+              p: 1,
+              boxShadow: "0 20px 48px rgba(0, 0, 0, 0.15)",
+            },
+          },
         }}
       >
         <DialogTitle
@@ -1524,59 +1749,64 @@ function KhoaHocContent() {
             fontWeight: 800,
             fontSize: 18,
             color: MAU.chuDen,
+            fontFamily: FONTS.display,
+            pt: 2,
           }}
         >
           <Box
             sx={{
-              width: 36,
-              height: 36,
-              borderRadius: "10px",
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
               bgcolor: "#FEF2F2",
-              color: STATUS.error,
+              color: "#DC2626",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
             }}
           >
-            <WarningAmberRoundedIcon fontSize="small" />
+            <WarningAmberRoundedIcon sx={{ fontSize: 22 }} />
           </Box>
-          Xóa khóa học?
+          Xác nhận xóa khóa học?
         </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: MAU.chuXam, fontSize: 14.5 }}>
+        <DialogContent sx={{ py: 1.5 }}>
+          <DialogContentText sx={{ color: "#64748B", fontSize: 14.5, lineHeight: 1.6 }}>
             Bạn có chắc chắn muốn xóa khóa học{" "}
-            <Box component="span" sx={{ fontWeight: 700, color: MAU.chuDen }}>
+            <Box component="span" sx={{ fontWeight: 800, color: MAU.chuDen }}>
               &quot;{khoaHocChoXacNhanXoa?.tieuDe || "Khóa học"}&quot;
             </Box>{" "}
             không? Sau khi xác nhận, bạn sẽ có {SO_GIAY_HOAN_TAC} giây để hoàn
-            tác trước khi khóa học bị xóa vĩnh viễn.
+            tác trước khi khóa học bị xóa vĩnh viễn khỏi hệ thống.
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 1 }}>
           <Button
             onClick={dongDialogXoa}
             sx={{
               textTransform: "none",
-              fontWeight: 700,
-              color: MAU.chuXam,
-              borderRadius: "10px",
+              fontWeight: 600,
+              color: "#64748B",
+              borderRadius: "8px",
+              px: 2,
             }}
           >
-            Hủy
+            Hủy bỏ
           </Button>
           <Button
             onClick={xacNhanXoaTuDialog}
             variant="contained"
             sx={{
               textTransform: "none",
-              fontWeight: 700,
-              bgcolor: STATUS.error,
-              borderRadius: "10px",
-              "&:hover": { bgcolor: STATUS.errorDark },
+              fontWeight: 800,
+              bgcolor: "#DC2626",
+              borderRadius: "8px",
+              px: 2.5,
+              boxShadow: "none",
+              "&:hover": { bgcolor: "#B91C1C", boxShadow: "none" },
             }}
           >
-            Xóa
+            Xác nhận xóa
           </Button>
         </DialogActions>
       </Dialog>
@@ -1588,7 +1818,13 @@ function KhoaHocContent() {
         maxWidth="xs"
         fullWidth
         slotProps={{
-          paper: { sx: { borderRadius: "16px" } },
+          paper: {
+            sx: {
+              borderRadius: "20px",
+              p: 1,
+              boxShadow: "0 20px 48px rgba(0, 0, 0, 0.15)",
+            },
+          },
         }}
       >
         <DialogTitle
@@ -1599,43 +1835,46 @@ function KhoaHocContent() {
             fontWeight: 800,
             fontSize: 18,
             color: MAU.chuDen,
+            fontFamily: FONTS.display,
+            pt: 2,
           }}
         >
           <Box
             sx={{
-              width: 36,
-              height: 36,
-              borderRadius: "10px",
-              bgcolor: "#FEF3C7",
-              color: STATUS.warningDark,
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
+              bgcolor: "#FFFBEB",
+              color: "#D97706",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
             }}
           >
-            <WarningAmberRoundedIcon fontSize="small" />
+            <UndoRoundedIcon sx={{ fontSize: 22 }} />
           </Box>
           Hủy yêu cầu duyệt?
         </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: MAU.chuXam, fontSize: 14.5 }}>
+        <DialogContent sx={{ py: 1.5 }}>
+          <DialogContentText sx={{ color: "#64748B", fontSize: 14.5, lineHeight: 1.6 }}>
             Bạn có chắc chắn muốn hủy yêu cầu duyệt cho khóa học{" "}
-            <Box component="span" sx={{ fontWeight: 700, color: MAU.chuDen }}>
+            <Box component="span" sx={{ fontWeight: 800, color: MAU.chuDen }}>
               &quot;{khoaHocChoHuyDuyet?.tieuDe || "Khóa học"}&quot;
             </Box>{" "}
-            không? Khóa học sẽ được chuyển về trạng thái &quot;Đang sửa&quot;.
+            không? Khóa học sẽ được chuyển về trạng thái &quot;Đang sửa&quot; để bạn có thể tiếp tục chỉnh sửa nội dung.
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 1 }}>
           <Button
             onClick={() => setKhoaHocChoHuyDuyet(null)}
             disabled={!!dangXuLyId}
             sx={{
               textTransform: "none",
-              fontWeight: 700,
-              color: MAU.chuXam,
-              borderRadius: "10px",
+              fontWeight: 600,
+              color: "#64748B",
+              borderRadius: "8px",
+              px: 2,
             }}
           >
             Đóng
@@ -1648,14 +1887,16 @@ function KhoaHocContent() {
             disabled={!!dangXuLyId}
             sx={{
               textTransform: "none",
-              fontWeight: 700,
-              bgcolor: STATUS.warningDark,
-              borderRadius: "10px",
-              "&:hover": { bgcolor: "#B45309" },
+              fontWeight: 800,
+              bgcolor: "#D97706",
+              borderRadius: "8px",
+              px: 2.5,
+              boxShadow: "none",
+              "&:hover": { bgcolor: "#B45309", boxShadow: "none" },
             }}
           >
             {dangXuLyId ? (
-              <CircularProgress size={18} sx={{ color: "#fff" }} />
+              <CircularProgress size={16} sx={{ color: "#fff" }} />
             ) : (
               "Xác nhận hủy"
             )}
@@ -1672,14 +1913,14 @@ function KhoaHocContent() {
       >
         <Alert
           severity="warning"
-          icon={<UndoIcon />}
+          icon={<UndoRoundedIcon />}
           action={
             <Button
               color="inherit"
               size="small"
               onClick={hoanTacXoa}
               sx={{
-                fontWeight: 700,
+                fontWeight: 800,
                 borderLeft: "1px solid rgba(0,0,0,0.1)",
                 pl: 1.5,
                 ml: 1,
@@ -1689,14 +1930,15 @@ function KhoaHocContent() {
             </Button>
           }
           sx={{
-            borderRadius: "12px",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+            borderRadius: "14px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
             alignItems: "center",
-            bgcolor: "#FFF3E0",
-            color: "#E65100",
-            "& .MuiAlert-icon": { color: "#E65100" },
+            bgcolor: "#FFFBEB",
+            color: "#D97706",
+            border: "1px solid #FDE68A",
+            "& .MuiAlert-icon": { color: "#D97706" },
             "& .MuiAlert-message": {
-              fontWeight: 500,
+              fontWeight: 600,
             },
           }}
         >
@@ -1715,7 +1957,7 @@ function KhoaHocContent() {
           onClose={() => setThongBaoLoiThaoTac(null)}
           severity="error"
           variant="filled"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", borderRadius: "12px", fontWeight: 600 }}
         >
           {thongBaoLoiThaoTac}
         </Alert>
@@ -1732,7 +1974,7 @@ function KhoaHocContent() {
           onClose={() => setThongBaoThanhCong(null)}
           severity="success"
           variant="filled"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", borderRadius: "12px", fontWeight: 600 }}
         >
           {thongBaoThanhCong}
         </Alert>
@@ -1747,9 +1989,9 @@ export default function InstructorCoursesPage() {
       <DashboardShell>
         <Box
           sx={{
-            p: { xs: 2, md: 4 },
+            p: { xs: 2, sm: 2.5, md: 3 },
             minHeight: "100vh",
-            bgcolor: CSSVAR.bg,
+            bgcolor: "transparent",
           }}
         >
           <KhoaHocContent />

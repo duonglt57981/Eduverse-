@@ -1,56 +1,61 @@
 "use client";
-import { Chip, Box } from "@mui/material";
+import { Chip, Box, alpha } from "@mui/material";
 import {
   COLORS,
   FONTS,
   normalizeTrangThai,
-} from "@/src/app/admin/approve-courses/types/constants"; // removed TrangThaiKiemDuyet
+} from "@/src/app/admin/approve-courses/types/constants";
 import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import { CSSVAR } from "@/src/theme/tokens";
 
-// Define the config type with optional stamp
 type TrangThaiConfig = {
   label: string;
   color: string;
   bg: string;
+  border: string;
   icon: React.ReactElement;
   stamp?: boolean;
 };
 
 const TRANG_THAI_CONFIG: Record<string, TrangThaiConfig> = {
   DangSua: {
-    label: "Đang sửa",
-    color: COLORS.inkSoft,
-    bg: CSSVAR.paperAlt,
-    icon: <EditNoteRoundedIcon sx={{ fontSize: 15 }} />,
+    label: "Đang chỉnh sửa",
+    color: "#64748B",
+    bg: "#F1F5F9",
+    border: "#E2E8F0",
+    icon: <EditNoteRoundedIcon sx={{ fontSize: 14 }} />,
   },
   ChoDuyet: {
-    label: "Chờ duyệt",
-    color: COLORS.gold,
-    bg: COLORS.goldSoft,
-    icon: <HourglassTopRoundedIcon sx={{ fontSize: 15 }} />,
+    label: "Chờ kiểm duyệt",
+    color: "#D97706",
+    bg: "#FFFBEB",
+    border: "#FDE68A",
+    icon: <HourglassTopRoundedIcon sx={{ fontSize: 14 }} />,
   },
   DangDuyet: {
     label: "Đang chờ duyệt",
-    color: COLORS.gold,
-    bg: COLORS.goldSoft,
-    icon: <HourglassTopRoundedIcon sx={{ fontSize: 15 }} />,
+    color: "#D97706",
+    bg: "#FFFBEB",
+    border: "#FDE68A",
+    icon: <HourglassTopRoundedIcon sx={{ fontSize: 14 }} />,
   },
   DaDuyet: {
     label: "Đã duyệt",
-    color: COLORS.success,
-    bg: COLORS.successSoft,
-    icon: <CheckCircleRoundedIcon sx={{ fontSize: 15 }} />,
+    color: "#16A34A",
+    bg: "#F0FDF4",
+    border: "#BBF7D0",
+    icon: <CheckCircleRoundedIcon sx={{ fontSize: 14 }} />,
     stamp: true,
   },
   TuChoi: {
     label: "Từ chối",
-    color: COLORS.danger,
-    bg: COLORS.dangerSoft,
-    icon: <CancelRoundedIcon sx={{ fontSize: 15 }} />,
+    color: "#DC2626",
+    bg: "#FEF2F2",
+    border: "#FECACA",
+    icon: <CancelRoundedIcon sx={{ fontSize: 14 }} />,
     stamp: true,
   },
 };
@@ -72,27 +77,26 @@ export default function StatusChip({
   if (!cfg) return null;
 
   if (cfg.stamp) {
-    const rotate = status === "DaDuyet" ? "-6deg" : "4deg";
     return (
       <Box
         sx={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 0.5,
-          px: size === "small" ? 1 : 1.4,
-          py: size === "small" ? 0.2 : 0.4,
-          border: `1.5px solid ${cfg.color}`,
-          borderRadius: "3px",
+          gap: 0.6,
+          px: size === "small" ? 1.2 : 1.6,
+          py: size === "small" ? 0.35 : 0.5,
+          border: `1px solid ${cfg.border}`,
+          bgcolor: cfg.bg,
+          borderRadius: "999px",
           color: cfg.color,
-          transform: `rotate(${rotate})`,
           fontFamily: FONTS.display,
           fontWeight: 700,
-          fontSize: size === "small" ? 10.5 : 12,
-          letterSpacing: "0.09em",
-          textTransform: "uppercase",
+          fontSize: size === "small" ? 11 : 12.5,
+          letterSpacing: "0.02em",
           lineHeight: 1,
           userSelect: "none",
           flexShrink: 0,
+          boxShadow: `0 2px 6px ${alpha(cfg.color, 0.08)}`,
         }}
       >
         {cfg.icon}
@@ -102,20 +106,29 @@ export default function StatusChip({
   }
 
   return (
-    <Chip
-      size="small"
-      icon={cfg.icon}
-      label={cfg.label}
+    <Box
       sx={{
-        color: cfg.color,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 0.6,
+        px: size === "small" ? 1.2 : 1.6,
+        py: size === "small" ? 0.35 : 0.5,
+        border: `1px solid ${cfg.border}`,
         bgcolor: cfg.bg,
-        fontWeight: 600,
-        fontSize: size === "small" ? 11 : 12,
-        height: size === "small" ? 22 : 24,
-        borderRadius: "8px",
+        borderRadius: "999px",
+        color: cfg.color,
+        fontFamily: FONTS.display,
+        fontWeight: 700,
+        fontSize: size === "small" ? 11 : 12.5,
+        letterSpacing: "0.02em",
+        lineHeight: 1,
+        userSelect: "none",
         flexShrink: 0,
-        "& .MuiChip-icon": { color: cfg.color },
+        boxShadow: `0 2px 6px ${alpha(cfg.color, 0.06)}`,
       }}
-    />
+    >
+      {cfg.icon}
+      {cfg.label}
+    </Box>
   );
 }

@@ -16,7 +16,6 @@ import {
   Stack,
   Typography,
   Avatar,
-  LinearProgress,
   Chip,
   Skeleton,
 } from "@mui/material";
@@ -598,7 +597,6 @@ export default function InstructorDashboardContent() {
     dash?.monthlyEnrollments ?? [];
   const growthCount: number = dash?.newStudentsThisMonth ?? 0;
   const growthPct: number = dash?.studentGrowthPercent ?? 0;
-  const completionData: any[] = dash?.completionByCourse ?? [];
 
   // Dữ liệu doanh thu
   const rawMonthlyRevenue: { label: string; totalAmount: number }[] =
@@ -749,42 +747,6 @@ export default function InstructorDashboardContent() {
           }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            {/* Top Tag */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <Box
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 0.75,
-                  px: 1.5,
-                  py: 0.4,
-                  borderRadius: "999px",
-                  bgcolor: "#FEF2F2",
-                  border: "1px solid #FECACA",
-                  color: BRAND.main,
-                  fontSize: "0.78rem",
-                  fontWeight: 800,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                }}
-              >
-                <AutoAwesomeRounded sx={{ fontSize: 14 }} />
-                <span>Bảng điều khiển Giảng viên</span>
-              </Box>
-              <Chip
-                label="Đang hoạt động"
-                size="small"
-                sx={{
-                  bgcolor: "#DCFCE7",
-                  color: "#15803D",
-                  fontWeight: 700,
-                  fontSize: "0.74rem",
-                  border: "1px solid #BBF7D0",
-                  height: 22,
-                }}
-              />
-            </Box>
-
             <Typography
               sx={{
                 fontSize: { xs: "1.6rem", md: "2.1rem" },
@@ -1034,10 +996,11 @@ export default function InstructorDashboardContent() {
           display: "grid",
           gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" },
           gap: 3,
+          alignItems: "stretch",
         }}
       >
         {/* ── LEFT COLUMN: Charts ── */}
-        <Stack spacing={3}>
+        <Stack spacing={3} sx={{ height: "100%" }}>
           {/* Biểu đồ học viên theo tháng */}
           <Paper
             elevation={0}
@@ -1047,6 +1010,10 @@ export default function InstructorDashboardContent() {
               border: `1px solid ${NEUTRAL.divider}`,
               bgcolor: "#FFFFFF",
               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
             }}
           >
             <Stack
@@ -1108,6 +1075,10 @@ export default function InstructorDashboardContent() {
               border: `1px solid ${NEUTRAL.divider}`,
               bgcolor: "#FFFFFF",
               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
             }}
           >
             <Stack
@@ -1168,7 +1139,7 @@ export default function InstructorDashboardContent() {
         </Stack>
 
         {/* ── RIGHT COLUMN: Growth, Completion, Notifications ── */}
-        <Stack spacing={3}>
+        <Stack spacing={3} sx={{ height: "100%" }}>
           {/* Tăng trưởng học viên */}
           <Paper
             elevation={0}
@@ -1178,6 +1149,7 @@ export default function InstructorDashboardContent() {
               border: `1px solid ${NEUTRAL.divider}`,
               bgcolor: "#FFFFFF",
               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
+              flexShrink: 0,
             }}
           >
             <Typography
@@ -1256,88 +1228,6 @@ export default function InstructorDashboardContent() {
             </Stack>
           </Paper>
 
-          {/* Tỷ lệ hoàn thành */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: "24px",
-              border: `1px solid ${NEUTRAL.divider}`,
-              bgcolor: "#FFFFFF",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "0.95rem",
-                fontWeight: 800,
-                color: "#0F172A",
-                mb: 2,
-              }}
-            >
-              Tỷ lệ hoàn thành
-            </Typography>
-
-            {completionData.length === 0 ? (
-              <Box sx={{ py: 1.5, textAlign: "center" }}>
-                <Typography
-                  sx={{
-                    fontSize: "0.85rem",
-                    color: "#94A3B8",
-                    fontWeight: 500,
-                  }}
-                >
-                  Chưa có số liệu hoàn thành
-                </Typography>
-              </Box>
-            ) : (
-              <Stack spacing={2}>
-                {completionData.map((item) => (
-                  <Box key={item.title}>
-                    <Stack
-                      direction="row"
-                      sx={{ justifyContent: "space-between", mb: 0.75 }}
-                    >
-                      <Typography
-                        noWrap
-                        sx={{
-                          fontSize: "0.84rem",
-                          fontWeight: 700,
-                          color: "#1E293B",
-                          maxWidth: "75%",
-                        }}
-                      >
-                        {item.title}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "0.84rem",
-                          fontWeight: 800,
-                          color: BRAND.main,
-                        }}
-                      >
-                        {item.rate}%
-                      </Typography>
-                    </Stack>
-                    <LinearProgress
-                      variant="determinate"
-                      value={item.rate}
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        bgcolor: "#F1F5F9",
-                        "& .MuiLinearProgress-bar": {
-                          borderRadius: 4,
-                          background: `linear-gradient(90deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
-                        },
-                      }}
-                    />
-                  </Box>
-                ))}
-              </Stack>
-            )}
-          </Paper>
-
           {/* Thông báo & Hoạt động */}
           <Paper
             elevation={0}
@@ -1347,6 +1237,9 @@ export default function InstructorDashboardContent() {
               border: `1px solid ${NEUTRAL.divider}`,
               bgcolor: "#FFFFFF",
               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <Box
@@ -1369,7 +1262,7 @@ export default function InstructorDashboardContent() {
               <NotificationsNoneRounded sx={{ color: "#94A3B8", fontSize: 20 }} />
             </Box>
 
-            <Stack spacing={1.5}>
+            <Stack spacing={1.5} sx={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: notiDisplayList.length ? "flex-start" : "center" }}>
               {notiDisplayList.length === 0 ? (
                 <Typography
                   sx={{

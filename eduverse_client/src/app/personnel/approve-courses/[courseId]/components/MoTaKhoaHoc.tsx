@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
 import { Box, Button, alpha } from "@mui/material";
-import { COLORS, FONTS } from "@/src/app/admin/approve-courses/types/constants";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import { BRAND } from "@/src/theme/tokens";
+import { FONTS } from "@/src/app/admin/approve-courses/types/constants";
 
 export default function MoTaKhoaHoc({ html }: { html: string }) {
   const [expanded, setExpanded] = useState(false);
@@ -13,27 +15,21 @@ export default function MoTaKhoaHoc({ html }: { html: string }) {
           fontFamily: FONTS.body,
           fontSize: "14px",
           lineHeight: 1.75,
-          color: COLORS.inkSoft,
+          color: "#334155",
           maxHeight: expanded ? "none" : 120,
           overflow: "hidden",
           position: "relative",
-          // Establish a new block-formatting context so floated/absolute
-          // content inside the rich-text HTML (images, captions, etc. from
-          // a WYSIWYG editor) is always contained by this box instead of
-          // "leaking" out and overlapping the sections rendered after it
-          // (video/tài liệu viewer below).
           display: "flow-root",
           width: "100%",
           wordBreak: "break-word",
           overflowWrap: "anywhere",
-          transition: "max-height .2s ease",
-          "& p": { m: 0, mb: 1 },
-          "& ul": { pl: 3, m: 0, mb: 1 },
-          // Any media embedded directly in the description content must
-          // never be wider/taller than its container.
+          transition: "max-height .25s ease",
+          "& p": { m: 0, mb: 1.25 },
+          "& ul, & ol": { pl: 3, m: 0, mb: 1.25 },
           "& img, & video, & iframe, & table": {
             maxWidth: "100%",
             height: "auto",
+            borderRadius: "12px",
           },
           ...(!expanded && {
             "&::after": {
@@ -42,7 +38,7 @@ export default function MoTaKhoaHoc({ html }: { html: string }) {
               bottom: 0,
               left: 0,
               right: 0,
-              height: 40,
+              height: 50,
               background: `linear-gradient(to bottom, ${alpha("#ffffff", 0)}, #ffffff)`,
             },
           }),
@@ -52,17 +48,24 @@ export default function MoTaKhoaHoc({ html }: { html: string }) {
       <Button
         size="small"
         onClick={() => setExpanded((v) => !v)}
+        endIcon={
+          <KeyboardArrowDownRoundedIcon
+            sx={{
+              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+            }}
+          />
+        }
         sx={{
           textTransform: "none",
-          mt: 0.5,
-          px: 0,
-          minWidth: 0,
-          color: COLORS.primary,
-          fontWeight: 600,
-          "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+          mt: 0.75,
+          color: BRAND.main,
+          fontWeight: 700,
+          fontSize: 13,
+          "&:hover": { bgcolor: alpha(BRAND.main, 0.04) },
         }}
       >
-        {expanded ? "Thu gọn" : "Xem thêm"}
+        {expanded ? "Thu gọn mô tả" : "Xem thêm toàn bộ mô tả"}
       </Button>
     </Box>
   );
