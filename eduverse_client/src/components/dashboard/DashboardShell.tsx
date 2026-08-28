@@ -72,11 +72,8 @@ import {
   getSecondarySidebarItemsByRole,
   sidebarSecondaryItems,
   aiRecommendationBanners,
-  footerColumnsData,
   type CourseCardItem,
 } from "./dashboard-data";
-import AuthenticatedFooter from "../footer/AuthenticatedFooter";
-import StudentFooter from "../footer/StudentFooter";
 import { apiService } from "@/src/services/index";
 import {
   Badge,
@@ -1058,12 +1055,24 @@ export default function DashboardShell({
     }
     return list;
   }, [roles, pathname]);
-  const getHomeRoute = () => {
-    if (
+  const isPersonnel = useMemo(() => {
+    return roles.some(
+      (r: string) =>
+        r.toLowerCase() === "personnel" ||
+        r.toLowerCase() === "nhanvien" ||
+        r.toLowerCase() === "kiemduyet",
+    );
+  }, [roles]);
+
+  const isPersonnelView = useMemo(() => {
+    return (
       pathname.startsWith("/personnel") ||
-      roles.some((r: string) => r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien")
-    )
-      return "/personnel/approve-courses";
+      (isPersonnel && !roles.includes("Admin"))
+    );
+  }, [pathname, isPersonnel, roles]);
+
+  const getHomeRoute = () => {
+    if (isPersonnelView) return "/personnel/courses";
     if (activeRoles.includes("Admin")) return "/admin/dashboard";
     if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
     return "/student/dashboard";
@@ -1321,7 +1330,7 @@ export default function DashboardShell({
         {/* ========================================================= */}
         {/* 1. HEADER NAVIGATION (Fixed)                              */}
         {/* ========================================================= */}
-        {pathname.startsWith("/admin") || pathname.startsWith("/personnel") ? (
+        {pathname.startsWith("/admin") || pathname.startsWith("/personnel") || isPersonnelView ? (
           <Box
             component="header"
             sx={{
@@ -1344,7 +1353,7 @@ export default function DashboardShell({
               spacing={2}
               sx={{ alignItems: "center", flexShrink: 0 }}
             >
-              {!pathname.startsWith("/personnel") && (
+              {!pathname.startsWith("/personnel") && !isPersonnelView && (
                 <IconButton
                   onClick={() => setMobileOpen(true)}
                   sx={{
@@ -1565,10 +1574,10 @@ export default function DashboardShell({
                       lineHeight: 1.3,
                     }}
                   >
-                    {pathname.startsWith("/admin")
-                      ? "Admin Panel"
-                      : pathname.startsWith("/personnel")
-                        ? (user?.hoTen || dashboardData?.welcomeStats?.userName || "Nhân viên")
+                    {isPersonnelView || pathname.startsWith("/personnel")
+                      ? (user?.hoTen || dashboardData?.welcomeStats?.userName || "Nhân viên")
+                      : pathname.startsWith("/admin")
+                        ? "Admin Panel"
                         : pathname.startsWith("/instructor")
                           ? `GS. ${dashboardData?.welcomeStats?.userName || "Giảng viên"}`
                           : dashboardData?.welcomeStats?.userName || user?.hoTen || "Học viên"}
@@ -1578,18 +1587,19 @@ export default function DashboardShell({
                       fontSize: 10.5,
                       fontWeight: 500,
                       color:
-                        pathname.startsWith("/admin") ||
-                          pathname.startsWith("/personnel")
-                          ? BRAND.main
-                          : COLORS.primary,
+                        isPersonnelView || pathname.startsWith("/personnel")
+                          ? "#2563EB"
+                          : pathname.startsWith("/admin")
+                            ? BRAND.main
+                            : COLORS.primary,
                       letterSpacing: "0.2px",
                       textTransform: "uppercase",
                     }}
                   >
-                    {pathname.startsWith("/admin")
-                      ? "Super Administrator"
-                      : pathname.startsWith("/personnel")
-                        ? "Nhân viên kiểm duyệt"
+                    {isPersonnelView || pathname.startsWith("/personnel")
+                      ? "Nhân viên kiểm duyệt"
+                      : pathname.startsWith("/admin")
+                        ? "Super Administrator"
                         : pathname.startsWith("/instructor")
                           ? "Premium Instructor"
                           : "Học viên"}
@@ -1898,7 +1908,17 @@ export default function DashboardShell({
                     </>
                   ) : (
                     <>
-                      <MenuItem onClick={() => router.push(pathname.startsWith("/personnel") ? "/personnel/settings" : "/admin/settings")}>
+                      <MenuItem
+                        onClick={() =>
+                          router.push(
+                            isPersonnelView
+                              ? "/personnel/settings"
+                              : pathname.startsWith("/instructor")
+                                ? "/instructor/settings"
+                                : "/admin/settings",
+                          )
+                        }
+                      >
                         Cài đặt tài khoản
                       </MenuItem>
                       <MenuItem
@@ -1956,7 +1976,8 @@ export default function DashboardShell({
         {/* SIDEBAR DRAWER (COLLAPSED FOR MOBILE/TABLET)              */}
         {/* ========================================================= */}
         {!pathname.startsWith("/instructor") &&
-          !pathname.startsWith("/personnel") && (
+          !pathname.startsWith("/personnel") &&
+          !isPersonnelView && (
             <Drawer
               open={mobileOpen}
               onClose={() => setMobileOpen(false)}
@@ -1985,7 +2006,8 @@ export default function DashboardShell({
         >
           {/* 1. LEFT SIDEBAR (Desktop Fixed) */}
           {!pathname.startsWith("/instructor") &&
-            !pathname.startsWith("/personnel") && (
+            !pathname.startsWith("/personnel") &&
+            !isPersonnelView && (
               <Box
                 sx={{
                   width: sidebarWidth,
@@ -3296,67 +3318,11 @@ export default function DashboardShell({
                       </CarouselRow>
                     </Box>
 
-                    {/* ========================================================= */}
-                    {/* 8. VÌ BẠN ĐÃ ĐĂNG KÝ KHÓA HỌC NÀY                            */}
-                    {/* ========================================================= */}
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: 21,
-                          fontWeight: 900,
-                          mb: 0.5,
-                          color: CSSVAR.textPrimary,
-                        }}
-                      >
-                        Vì bạn đã học &quot;
-                        {dashboardData?.historyRecommendation?.basedOnCourse}
-                        &quot;
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 13.5,
-                          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-                          mb: 2.5,
-                        }}
-                      >
-                        Đề xuất từ động cơ trí tuệ nhân tạo (AI Recommendation
-                        Engine).
-                      </Typography>
-
-                      <CarouselRow>
-                        {(
-                          dashboardData?.historyRecommendation?.courses || []
-                        ).map((course: any) => (
-                          <CourseCard key={course.id} course={course} />
-                        ))}
-                      </CarouselRow>
-                    </Box>
                   </>
                 )}
               </Box>
             </Box>
-            {!pathname.startsWith("/admin") && !pathname.startsWith("/personnel") && (
-              <Box
-                sx={{
-                  width: { xs: "calc(100% + 32px)", md: "calc(100% + 40px)" },
-                  mx: { xs: -2, md: -2.5 },
-                  mt: 6,
-                  mb: -2.5,
-                  flexShrink: 0,
-                }}
-              >
-                {!activeRoles.includes("GiaoVien") &&
-                  !activeRoles.includes("Admin") ? (
-                  <StudentFooter />
-                ) : (
-                  <AuthenticatedFooter
-                    role={
-                      activeRoles.includes("GiaoVien") ? "GiaoVien" : "Admin"
-                    }
-                  />
-                )}
-              </Box>
-            )}
+
           </Box>
         </Box>
         <Popover
