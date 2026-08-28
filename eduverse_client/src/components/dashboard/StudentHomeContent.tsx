@@ -1493,7 +1493,7 @@ export default function StudentHomeContent() {
     latestCourses,
     continuingCourses,
     enrolledCourseIds,
-    data?.continueLearning?.courses,
+    data,
   ]);
 
   const load = useCallback(async () => {

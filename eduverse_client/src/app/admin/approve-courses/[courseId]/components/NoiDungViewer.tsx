@@ -14,19 +14,20 @@ import {
   Paper,
   Menu,
   MenuItem,
-  ListItemIcon,
-  ListItemText,
 } from "@mui/material";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
-import PlayCircleIcon from "@mui/icons-material/PlayCircle";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
+import PlayCircleFilledRoundedIcon from "@mui/icons-material/PlayCircleFilledRounded";
+import InsertDriveFileRoundedIcon from "@mui/icons-material/InsertDriveFileRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import FullscreenRoundedIcon from "@mui/icons-material/FullscreenRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import QuizRoundedIcon from "@mui/icons-material/QuizRounded";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import RadioButtonUncheckedRoundedIcon from "@mui/icons-material/RadioButtonUncheckedRounded";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import HighQualityRoundedIcon from "@mui/icons-material/HighQualityRounded";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import OndemandVideoRoundedIcon from "@mui/icons-material/OndemandVideoRounded";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 import "@videojs/http-streaming";
@@ -45,7 +46,7 @@ import {
 } from "../../types/constants";
 import StatusChip from "./StatusChip";
 import LyDoTuChoiInput from "./LyDoTuChoiInput";
-import { COLORS as TOKEN_COLORS, CSSVAR } from "@/src/theme/tokens";
+import { BRAND, COLORS as TOKEN_COLORS, CSSVAR } from "@/src/theme/tokens";
 
 // ======================== CLOUDINARY HELPERS ========================
 interface CloudinaryUrlInfo {
@@ -135,52 +136,55 @@ function getOptimalHlsUrl(originalUrl: string): {
 
 // ======================== VIDEO.JS STYLES ========================
 const VIDEO_JS_STYLES = (PRIMARY_RED: string) => `
+  .video-js {
+    font-family: inherit !important;
+  }
   .video-js .vjs-big-play-button {
-    background-color: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    width: 80px !important;
-    height: 80px !important;
-    line-height: 80px !important;
+    background-color: rgba(15, 23, 42, 0.7) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    width: 72px !important;
+    height: 72px !important;
+    line-height: 68px !important;
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     margin: 0 !important;
     padding: 0 !important;
-    transition: opacity 0.2s ease, transform 0.2s ease !important;
-    opacity: 0.9 !important;
-    font-size: 5em !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    opacity: 0.95 !important;
+    font-size: 2.8em !important;
     color: #fff !important;
-    text-shadow: 0 0 20px rgba(0,0,0,0.6) !important;
-  }
-  .video-js .vjs-big-play-button .vjs-icon-placeholder:before {
-    content: "\\25B6" !important;
-    font-size: 1em !important;
-    line-height: 1 !important;
-    position: relative !important;
-    top: 0 !important;
-    left: 4px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    height: 100% !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
   }
   .video-js:hover .vjs-big-play-button {
-    opacity: 1 !important;
-    transform: translate(-50%, -50%) scale(1.05) !important;
+    background-color: ${PRIMARY_RED} !important;
+    border-color: ${PRIMARY_RED} !important;
+    transform: translate(-50%, -50%) scale(1.1) !important;
+    box-shadow: 0 12px 40px rgba(139, 19, 19, 0.6) !important;
   }
   .video-js.vjs-playing .vjs-big-play-button {
     display: none !important;
   }
+  .video-js .vjs-control-bar {
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 70%, transparent 100%) !important;
+    height: 48px !important;
+    padding: 0 8px !important;
+  }
   .video-js .vjs-play-progress {
-    background-color: ${PRIMARY_RED} !important;
+    background: linear-gradient(90deg, ${PRIMARY_RED} 0%, #E11D48 100%) !important;
+    border-radius: 4px !important;
+  }
+  .video-js .vjs-slider {
+    border-radius: 4px !important;
   }
   .video-js .vjs-volume-level {
     background-color: ${PRIMARY_RED} !important;
+    border-radius: 4px !important;
   }
   .video-js .vjs-load-progress {
-    background-color: rgba(255,255,255,0.4) !important;
+    background-color: rgba(255,255,255,0.25) !important;
   }
   .video-js .vjs-poster {
     display: none !important;
@@ -188,9 +192,8 @@ const VIDEO_JS_STYLES = (PRIMARY_RED: string) => `
 `;
 
 // ======================== CONSTANTS ========================
-const VIEW_MIN_HEIGHT = 300;
-const VIEW_MAX_HEIGHT = 600;
-const TOOLBAR_CROP_PX = 48;
+const VIEW_MIN_HEIGHT = 360;
+const VIEW_MAX_HEIGHT = 640;
 const LOAD_TIMEOUT_MS = 30000;
 
 interface QualityLevel {
@@ -198,14 +201,6 @@ interface QualityLevel {
   label: string;
   bitrate: number;
   height: number;
-}
-
-interface TechWithVhs {
-  vhs?: {
-    stats?: {
-      bandwidth?: number;
-    };
-  };
 }
 
 // ======================== MAIN COMPONENT ========================
@@ -231,13 +226,38 @@ export default function NoiDungViewer({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
+          p: 4,
+          textAlign: "center",
         }}
       >
-        <SchoolRoundedIcon
-          sx={{ fontSize: 40, color: alpha(COLORS.primary, 0.2), mb: 1.5 }}
-        />
-        <Typography sx={{ color: COLORS.inkSoft, fontFamily: FONTS.body }}>
-          Chọn một bài giảng hoặc tài liệu bên phải để xem nội dung
+        <Box
+          sx={{
+            width: 64,
+            height: 64,
+            borderRadius: "20px",
+            bgcolor: "#FEF2F2",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mb: 2,
+          }}
+        >
+          <SchoolRoundedIcon sx={{ fontSize: 32, color: BRAND.main }} />
+        </Box>
+        <Typography
+          sx={{
+            color: "#0F172A",
+            fontFamily: FONTS.display,
+            fontWeight: 800,
+            fontSize: 16,
+            mb: 0.5,
+          }}
+        >
+          Chọn nội dung để kiểm duyệt
+        </Typography>
+        <Typography sx={{ color: "#64748B", fontSize: 13.5, maxWidth: 360 }}>
+          Vui lòng nhấp vào một bài giảng, tài liệu hoặc bài kiểm tra ở danh sách
+          bên phải để bắt đầu xem xét nội dung.
         </Typography>
       </Box>
     );
@@ -262,7 +282,6 @@ export default function NoiDungViewer({
 
   const isTest = loai === "baiKiemTra";
 
-  // Xác định target (bài giảng hoặc bài kiểm tra) để hiển thị form lý do
   const target = lyDoTarget || { loai, item };
   const targetLoai = target.loai;
   const targetItem = target.item;
@@ -277,7 +296,6 @@ export default function NoiDungViewer({
     typeof onSaveLyDo === "function" &&
     targetId;
 
-  // Lấy lý do hiện tại của target
   let currentLyDo = "";
   const lyDoData = targetItem?.lyDoTuChois;
   if (lyDoData) {
@@ -299,10 +317,6 @@ export default function NoiDungViewer({
     currentLyDo = targetItem.lyDoTuChoi.filter(Boolean).join(", ");
   }
 
-  // Ghi chú (từ chối) của bài giảng được dùng chung cho cả tài liệu con của
-  // nó, vì tài liệu con không có ô ghi chú riêng. Hiển thị lời nhắc để admin
-  // biết rõ phạm vi áp dụng khi đang xem bài giảng có tài liệu đính kèm,
-  // hoặc khi đang xem trực tiếp một tài liệu con.
   const targetTaiLieus: any[] = Array.isArray(targetItem?.taiLieus)
     ? targetItem.taiLieus
     : [];
@@ -319,42 +333,93 @@ export default function NoiDungViewer({
         maxWidth: "100%",
         overflow: "hidden",
         position: "relative",
-        isolation: "isolate",
       }}
     >
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 2 }}>
-        {loai === "baiGiang" ? (
-          <PlayCircleIcon sx={{ color: COLORS.primary, fontSize: 22 }} />
-        ) : loai === "taiLieu" ? (
-          <AttachFileIcon sx={{ color: COLORS.gold, fontSize: 22 }} />
-        ) : (
-          <QuizRoundedIcon sx={{ color: TOKEN_COLORS.purpleAI, fontSize: 22 }} />
-        )}
-        <Typography
+      {/* Top Header of Viewer */}
+      <Stack
+        direction="row"
+        spacing={1.5}
+        sx={{
+          alignItems: "center",
+          mb: 2.25,
+          pb: 2,
+          borderBottom: "1px solid #F1F5F9",
+        }}
+      >
+        <Box
           sx={{
-            flex: 1,
-            fontFamily: FONTS.display,
-            fontWeight: 800,
-            fontSize: 18,
-            color: CSSVAR.textPrimary,
+            width: 38,
+            height: 38,
+            borderRadius: "10px",
+            bgcolor:
+              loai === "baiGiang"
+                ? "#FEF2F2"
+                : loai === "taiLieu"
+                  ? "#F0F9FF"
+                  : "#FAF5FF",
+            color:
+              loai === "baiGiang"
+                ? BRAND.main
+                : loai === "taiLieu"
+                  ? "#0284C7"
+                  : "#9333EA",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
           }}
-          noWrap
         >
-          {title}
-        </Typography>
+          {loai === "baiGiang" ? (
+            <OndemandVideoRoundedIcon sx={{ fontSize: 22 }} />
+          ) : loai === "taiLieu" ? (
+            <InsertDriveFileRoundedIcon sx={{ fontSize: 20 }} />
+          ) : (
+            <QuizRoundedIcon sx={{ fontSize: 20 }} />
+          )}
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontFamily: FONTS.display,
+              fontWeight: 800,
+              fontSize: { xs: 16, sm: 18 },
+              color: "#0F172A",
+              lineHeight: 1.3,
+            }}
+            noWrap
+          >
+            {title}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: "#64748B", fontWeight: 600, fontSize: 12 }}
+          >
+            {loai === "baiGiang"
+              ? "Nội dung bài giảng video"
+              : loai === "taiLieu"
+                ? "Tài liệu học tập đính kèm"
+                : "Bài kiểm tra đánh giá kiến thức"}
+          </Typography>
+        </Box>
+
         <StatusChip trangThai={item.trangThaiPheDuyet} />
+
         {url && !isTest && (
-          <Tooltip title="Xem toàn màn hình">
+          <Tooltip title="Mở toàn màn hình">
             <IconButton
               size="small"
               onClick={() => setOpenFull(true)}
               sx={{
-                color: COLORS.inkSoft,
-                border: `1px solid ${COLORS.line}`,
-                borderRadius: 1.5,
+                color: "#64748B",
+                border: "1px solid #E2E8F0",
+                borderRadius: "10px",
+                p: 0.85,
+                transition: "all 0.15s ease",
                 "&:hover": {
-                  color: COLORS.primary,
-                  borderColor: COLORS.primary,
+                  color: BRAND.main,
+                  borderColor: alpha(BRAND.main, 0.4),
+                  bgcolor: "#FEF2F2",
                 },
               }}
             >
@@ -364,7 +429,8 @@ export default function NoiDungViewer({
         )}
       </Stack>
 
-      <Box sx={{ mb: 2, position: "relative" }}>
+      {/* Main Content Body */}
+      <Box sx={{ mb: 2.5, position: "relative" }}>
         <ViewerBody
           loai={loai}
           url={url}
@@ -374,6 +440,7 @@ export default function NoiDungViewer({
         />
       </Box>
 
+      {/* Ghi chú / Lý do từ chối */}
       {showLyDoForm && (
         <LyDoTuChoiInput
           key={`${targetLoai}-${targetId}`}
@@ -385,6 +452,7 @@ export default function NoiDungViewer({
         />
       )}
 
+      {/* Fullscreen Dialog */}
       {url && !isTest && (
         <Dialog
           open={openFull}
@@ -394,12 +462,15 @@ export default function NoiDungViewer({
           slotProps={{
             paper: {
               sx: {
-                borderRadius: 2,
-                bgcolor: COLORS.paperRaised ?? "#fff",
-                height: "90vh",
-                maxHeight: "90vh",
+                borderRadius: "20px",
+                bgcolor: "#0B0B0F",
+                color: "#FFFFFF",
+                height: "92vh",
+                maxHeight: "92vh",
                 display: "flex",
                 flexDirection: "column",
+                overflow: "hidden",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
               },
             },
           }}
@@ -409,30 +480,38 @@ export default function NoiDungViewer({
             spacing={1.5}
             sx={{
               alignItems: "center",
-              px: 2,
-              py: 1.25,
-              borderBottom: `1px solid ${COLORS.line}`,
+              px: 3,
+              py: 1.75,
+              borderBottom: "1px solid rgba(255,255,255,0.1)",
+              bgcolor: "#121218",
               flexShrink: 0,
             }}
           >
             {loai === "baiGiang" ? (
-              <PlayCircleIcon sx={{ color: COLORS.primary }} />
+              <PlayCircleFilledRoundedIcon sx={{ color: BRAND.main }} />
             ) : (
-              <AttachFileIcon sx={{ color: COLORS.primary }} />
+              <InsertDriveFileRoundedIcon sx={{ color: "#38BDF8" }} />
             )}
             <Typography
               sx={{
                 flex: 1,
                 fontFamily: FONTS.display,
-                fontWeight: 600,
-                fontSize: 17,
-                color: COLORS.ink,
+                fontWeight: 700,
+                fontSize: 16,
+                color: "#F8FAFC",
               }}
               noWrap
             >
               {title}
             </Typography>
-            <IconButton size="small" onClick={() => setOpenFull(false)}>
+            <IconButton
+              size="small"
+              onClick={() => setOpenFull(false)}
+              sx={{
+                color: "#94A3B8",
+                "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255,255,255,0.1)" },
+              }}
+            >
               <CloseRoundedIcon fontSize="small" />
             </IconButton>
           </Stack>
@@ -486,200 +565,183 @@ function ViewerBody({
           maxHeight,
           overflowY: "auto",
           overflowX: "hidden",
-          position: "relative",
-          isolation: "isolate",
-          contain: "layout paint",
-          bgcolor: CSSVAR.paperAlt,
-          border: `1px solid ${COLORS.line}`,
-          p: 2,
-          borderRadius: 2,
-          "&::-webkit-scrollbar": {
-            width: "6px",
-          },
-          "&::-webkit-scrollbar-track": {
-            backgroundColor: "transparent",
-          },
+          bgcolor: "#F8FAFC",
+          border: "1px solid #E2E8F0",
+          p: { xs: 2, sm: 3 },
+          borderRadius: "16px",
+          "&::-webkit-scrollbar": { width: 5 },
+          "&::-webkit-scrollbar-track": { background: "transparent" },
           "&::-webkit-scrollbar-thumb": {
-            backgroundColor: alpha(COLORS.primary, 0.2),
-            borderRadius: "8px",
+            background: alpha(BRAND.main, 0.2),
+            borderRadius: 8,
           },
         }}
       >
         {cauHois.length === 0 ? (
-          <Typography
-            sx={{ color: COLORS.inkSoft, textAlign: "center", mt: 4 }}
-          >
-            Bài kiểm tra chưa có câu hỏi.
-          </Typography>
+          <Box sx={{ py: 6, textAlign: "center" }}>
+            <QuizRoundedIcon sx={{ fontSize: 48, color: "#CBD5E1", mb: 1.5 }} />
+            <Typography sx={{ color: "#64748B", fontWeight: 600 }}>
+              Bài kiểm tra này chưa có câu hỏi nào được thiết lập.
+            </Typography>
+          </Box>
         ) : (
-          <Stack spacing={2}>
-            <Box
+          <Stack spacing={2.5}>
+            <Stack
+              direction="row"
               sx={{
-                display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                mb: 1,
+                pb: 1,
+                borderBottom: "1px solid #E2E8F0",
               }}
             >
               <Typography
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: 800,
                   fontSize: 16,
-                  color: COLORS.ink,
+                  color: "#0F172A",
                   fontFamily: FONTS.display,
                 }}
               >
-                Danh sách câu hỏi
+                Danh sách câu hỏi kiểm tra
               </Typography>
-              <Typography
+              <Box
                 sx={{
-                  fontSize: 14,
-                  color: COLORS.inkSoft,
-                  fontWeight: 500,
+                  px: 1.25,
+                  py: 0.35,
+                  borderRadius: "999px",
+                  bgcolor: "#FAF5FF",
+                  border: "1px solid #F3E8FF",
+                  color: "#9333EA",
+                  fontSize: 12,
+                  fontWeight: 800,
                 }}
               >
-                {cauHois.length} câu hỏi
-              </Typography>
-            </Box>
+                Tổng {cauHois.length} câu hỏi
+              </Box>
+            </Stack>
 
-            {cauHois.map((ch: any, idx: number) => (
-              <Paper
-                key={ch.idCauHoi ?? idx}
-                elevation={0}
-                sx={{
-                  p: 2,
-                  border: `1px solid ${COLORS.line}`,
-                  backgroundColor: CSSVAR.paper,
-                  transition: "box-shadow 0.2s",
-                  "&:hover": {
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  },
-                  position: "relative",
-                  isolation: "isolate",
-                  overflow: "hidden",
-                  borderRadius: 2,
-                  flexShrink: 0,
-                }}
-              >
-                <Box
-                  sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}
+            {cauHois.map((ch: any, idx: number) => {
+              const dapAns: any[] = ch.dapAns ?? ch.luaChons ?? [];
+              return (
+                <Paper
+                  key={ch.idCauHoi ?? idx}
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    border: "1px solid #E2E8F0",
+                    bgcolor: "#FFFFFF",
+                    borderRadius: "14px",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
+                    transition: "all 0.15s ease",
+                    "&:hover": {
+                      borderColor: alpha(BRAND.main, 0.3),
+                      boxShadow: "0 4px 14px rgba(0, 0, 0, 0.04)",
+                    },
+                  }}
                 >
                   <Box
                     sx={{
-                      minWidth: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      backgroundColor: alpha(COLORS.primary, 0.1),
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      mt: 0.2,
+                      alignItems: "flex-start",
+                      gap: 1.5,
+                      mb: 2,
                     }}
                   >
-                    <Typography
+                    <Box
                       sx={{
-                        fontWeight: 700,
-                        fontSize: 14,
-                        color: COLORS.primary,
+                        width: 28,
+                        height: 28,
+                        borderRadius: "8px",
+                        bgcolor: "#FEF2F2",
+                        color: BRAND.main,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 900,
+                        fontSize: 12.5,
+                        flexShrink: 0,
+                        mt: 0.1,
                       }}
                     >
                       {idx + 1}
-                    </Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 700,
+                          color: "#0F172A",
+                          fontSize: 14.5,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {ch.noiDung || ch.tenCauHoi || `Câu hỏi ${idx + 1}`}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box
-                    sx={{
-                      flex: 1,
-                      fontWeight: 600,
-                      color: COLORS.ink,
-                      fontSize: 15,
-                      lineHeight: 1.5,
-                      "& p": { m: 0 },
-                      "& img": {
-                        maxWidth: "100%",
-                        borderRadius: 1,
-                        display: "block",
-                        my: 0.5,
-                      },
-                      "& ul, & ol": { pl: 3, m: 0 },
-                    }}
-                    dangerouslySetInnerHTML={{
-                      __html: ch.noiDungCauHoi ?? ch.tieuDe ?? "",
-                    }}
-                  />
-                </Box>
 
-                <Box sx={{ ml: 4.5, mt: 1.5 }}>
-                  <Stack spacing={0.75}>
-                    {(ch.dapAns ?? []).map((da: any, daIdx: number) => {
-                      const isCorrect =
-                        da.dapAnDung || da.isDung || da.laDapAnDung;
-                      return (
-                        <Box
-                          key={da.idDapAn ?? daIdx}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            p: 0.75,
-                            borderRadius: 1,
-                            backgroundColor: isCorrect
-                              ? alpha(COLORS.success, 0.08)
-                              : "transparent",
-                            transition: "background-color 0.15s",
-                          }}
-                        >
-                          {isCorrect ? (
-                            <CheckCircleIcon
-                              sx={{
-                                color: COLORS.success,
-                                fontSize: 18,
-                                flexShrink: 0,
-                              }}
-                            />
-                          ) : (
-                            <RadioButtonUncheckedIcon
-                              sx={{
-                                color: COLORS.inkSoft,
-                                fontSize: 18,
-                                flexShrink: 0,
-                              }}
-                            />
-                          )}
-                          <Typography
-                            variant="body2"
+                  {dapAns.length > 0 && (
+                    <Stack spacing={1} sx={{ pl: 4.5 }}>
+                      {dapAns.map((da: any, daIdx: number) => {
+                        const isCorrect =
+                          da.isCorrect === true ||
+                          da.dung === true ||
+                          da.laDapAnDung === true;
+                        return (
+                          <Box
+                            key={da.idDapAn ?? daIdx}
                             sx={{
-                              color: isCorrect ? COLORS.ink : COLORS.inkSoft,
-                              fontWeight: isCorrect ? 600 : 400,
-                              fontSize: 14,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.25,
+                              p: 1.25,
+                              borderRadius: "10px",
+                              border: `1px solid ${isCorrect ? "#BBF7D0" : "#F1F5F9"}`,
+                              bgcolor: isCorrect ? "#F0FDF4" : "#F8FAFC",
                             }}
                           >
-                            {da.noiDungDapAn ?? da.tieuDe}
-                          </Typography>
-                          {isCorrect && (
-                            <Box
-                              component="span"
+                            {isCorrect ? (
+                              <CheckCircleRoundedIcon
+                                sx={{ color: "#16A34A", fontSize: 18, flexShrink: 0 }}
+                              />
+                            ) : (
+                              <RadioButtonUncheckedRoundedIcon
+                                sx={{ color: "#94A3B8", fontSize: 18, flexShrink: 0 }}
+                              />
+                            )}
+                            <Typography
                               sx={{
-                                ml: "auto",
-                                fontSize: 11,
-                                fontWeight: 600,
-                                color: COLORS.success,
-                                backgroundColor: alpha(COLORS.success, 0.12),
-                                px: 1,
-                                py: 0.25,
-                                borderRadius: 1,
+                                fontSize: 13.5,
+                                color: isCorrect ? "#166534" : "#334155",
+                                fontWeight: isCorrect ? 700 : 500,
+                                flex: 1,
                               }}
                             >
-                              Đúng
-                            </Box>
-                          )}
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                </Box>
-              </Paper>
-            ))}
+                              {da.noiDung || da.luaChon || da.tenDapAn}
+                            </Typography>
+                            {isCorrect && (
+                              <Box
+                                sx={{
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  color: "#16A34A",
+                                  bgcolor: "#DCFCE7",
+                                  px: 1,
+                                  py: 0.2,
+                                  borderRadius: "6px",
+                                }}
+                              >
+                                Đáp án đúng
+                              </Box>
+                            )}
+                          </Box>
+                        );
+                      })}
+                    </Stack>
+                  )}
+                </Paper>
+              );
+            })}
           </Stack>
         )}
       </Box>
@@ -692,21 +754,20 @@ function ViewerBody({
       <Box
         sx={{
           minHeight,
-          maxHeight,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: COLORS.paper,
-          border: `1px dashed ${COLORS.line}`,
-          position: "relative",
-          isolation: "isolate",
-          overflow: "hidden",
-          borderRadius: 2,
-          flexShrink: 0,
+          bgcolor: "#F8FAFC",
+          border: "1px dashed #CBD5E1",
+          borderRadius: "16px",
+          p: 4,
+          textAlign: "center",
         }}
       >
-        <Typography sx={{ color: COLORS.inkSoft }}>
-          Chưa có nội dung để xem trước.
+        <HelpOutlineRoundedIcon sx={{ fontSize: 40, color: "#94A3B8", mb: 1 }} />
+        <Typography sx={{ color: "#64748B", fontWeight: 600 }}>
+          Mục này chưa được tải lên file hoặc liên kết phát trực tiếp.
         </Typography>
       </Box>
     );
@@ -807,44 +868,6 @@ function VideoPlayer({
     );
   }
 
-  if (isHls) {
-    return (
-      <Box
-        sx={{
-          width: "100%",
-          aspectRatio: "16/9",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "#000",
-          p: 3,
-          position: "relative",
-          isolation: "isolate",
-          overflow: "hidden",
-          borderRadius: 2,
-          flexShrink: 0,
-        }}
-      >
-        <Typography sx={{ color: "#fff", textAlign: "center" }}>
-          Video ở định dạng HLS (streaming) không thể phát với trình duyệt hiện
-          tại.
-          <br />
-          Vui lòng sử dụng trình duyệt hỗ trợ (Chrome, Edge, Firefox mới).
-        </Typography>
-        <Button
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="outlined"
-          sx={{ mt: 2, color: "#fff", borderColor: "#fff" }}
-        >
-          Mở video trực tiếp
-        </Button>
-      </Box>
-    );
-  }
-
   const getVideoType = (src: string): string => {
     if (src.includes(".m3u8")) return "application/x-mpegURL";
     if (src.endsWith(".webm")) return "video/webm";
@@ -858,13 +881,13 @@ function VideoPlayer({
     <Box
       sx={{
         width: "100%",
-        aspectRatio: "16/9",
-        bgcolor: "#000",
+        aspectRatio: isFullscreen ? "unset" : "16/9",
+        height: isFullscreen ? "100%" : "auto",
+        bgcolor: "#0B0B0F",
         position: "relative",
-        isolation: "isolate",
         overflow: "hidden",
-        borderRadius: 2,
-        flexShrink: 0,
+        borderRadius: "16px",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
       }}
     >
       {isLoading && !hasError && !loadTimedOut && (
@@ -872,75 +895,123 @@ function VideoPlayer({
           sx={{
             position: "absolute",
             inset: 0,
-            zIndex: 1,
+            zIndex: 2,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 1.5,
-            bgcolor: "#000",
+            gap: 2,
+            bgcolor: "rgba(11, 11, 15, 0.9)",
+            backdropFilter: "blur(8px)",
           }}
         >
           <Box
             sx={{
-              width: 44,
-              height: 44,
+              width: 48,
+              height: 48,
               borderRadius: "50%",
-              border: `4px solid ${alpha(COLORS.primary, 0.25)}`,
-              borderTopColor: COLORS.primary,
+              border: "3px solid rgba(255,255,255,0.1)",
+              borderTopColor: BRAND.main,
               animation: "spin 0.85s linear infinite",
-              "@keyframes spin": {
-                to: { transform: "rotate(360deg)" },
-              },
+              "@keyframes spin": { to: { transform: "rotate(360deg)" } },
             }}
           />
-          <Typography variant="caption" sx={{ color: "#fff" }}>
-            Đang tải video...
+          <Typography
+            variant="body2"
+            sx={{ color: "#E2E8F0", fontWeight: 600, letterSpacing: "0.02em" }}
+          >
+            Đang tải dữ liệu video...
           </Typography>
         </Box>
       )}
+
       {(hasError || loadTimedOut) && (
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            zIndex: 1,
+            zIndex: 3,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 1.25,
-            bgcolor: "#000",
-            px: 3,
+            gap: 2,
+            background: "radial-gradient(ellipse at center, #1E1E28 0%, #0B0B0F 100%)",
+            p: 3,
+            textAlign: "center",
           }}
         >
-          <Typography sx={{ color: "#fff", textAlign: "center" }}>
-            {loadTimedOut
-              ? "Tải video quá lâu. Vui lòng thử lại."
-              : "Không thể phát video."}
-          </Typography>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => {
-              setHasError(false);
-              setLoadTimedOut(false);
-              setIsLoading(true);
-              const video = videoRef.current;
-              if (video) {
-                video.load();
-              }
-            }}
+          <Box
             sx={{
-              textTransform: "none",
-              bgcolor: COLORS.primary,
-              "&:hover": { bgcolor: COLORS.primaryDark },
+              width: 56,
+              height: 56,
+              borderRadius: "50%",
+              bgcolor: "rgba(220, 38, 38, 0.12)",
+              border: "1px solid rgba(220, 38, 38, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            Thử lại
-          </Button>
+            <OndemandVideoRoundedIcon sx={{ fontSize: 28, color: "#F87171" }} />
+          </Box>
+          <Box>
+            <Typography sx={{ color: "#F8FAFC", fontWeight: 700, fontSize: 15, mb: 0.5 }}>
+              {loadTimedOut
+                ? "Quá thời gian tải video"
+                : "Không thể phát video này"}
+            </Typography>
+            <Typography sx={{ color: "#94A3B8", fontSize: 13, maxWidth: 360 }}>
+              Định dạng video hoặc kết nối máy chủ streaming đang gặp gián đoạn.
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<RefreshRoundedIcon />}
+              onClick={() => {
+                setHasError(false);
+                setLoadTimedOut(false);
+                setIsLoading(true);
+                const video = videoRef.current;
+                if (video) video.load();
+              }}
+              sx={{
+                textTransform: "none",
+                bgcolor: BRAND.main,
+                fontWeight: 700,
+                borderRadius: "8px",
+                px: 2,
+                "&:hover": { bgcolor: BRAND.dark },
+              }}
+            >
+              Thử lại
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              startIcon={<OpenInNewRoundedIcon />}
+              sx={{
+                textTransform: "none",
+                borderColor: "rgba(255,255,255,0.2)",
+                color: "#F8FAFC",
+                borderRadius: "8px",
+                "&:hover": {
+                  borderColor: "#FFFFFF",
+                  bgcolor: "rgba(255,255,255,0.06)",
+                },
+              }}
+            >
+              Mở liên kết
+            </Button>
+          </Stack>
         </Box>
       )}
+
       <video
         ref={videoRef}
         controls
@@ -956,9 +1027,6 @@ function VideoPlayer({
         }}
       >
         <source src={masterUrl} type={getVideoType(masterUrl)} />
-        <Typography sx={{ color: "#fff", p: 2 }}>
-          Trình duyệt của bạn không hỗ trợ phát video.
-        </Typography>
       </video>
     </Box>
   );
@@ -987,15 +1055,8 @@ function VideoJsPlayer({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
-  const [loadElapsed, setLoadElapsed] = useState(0);
-
   const [qualityLevels, setQualityLevels] = useState<QualityLevel[]>([]);
-  const [selectedQuality, setSelectedQuality] = useState<number | "auto">(
-    "auto",
-  );
-  const [currentBandwidthKbps, setCurrentBandwidthKbps] = useState<
-    number | null
-  >(null);
+  const [selectedQuality, setSelectedQuality] = useState<number | "auto">("auto");
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
   const { masterUrl } = getOptimalHlsUrl(url);
@@ -1014,7 +1075,7 @@ function VideoJsPlayer({
     if (!document.getElementById("vjs-kiemduyet-styles")) {
       const s = document.createElement("style");
       s.id = "vjs-kiemduyet-styles";
-      s.textContent = VIDEO_JS_STYLES(COLORS.primary);
+      s.textContent = VIDEO_JS_STYLES(BRAND.main);
       document.head.appendChild(s);
     }
   }, []);
@@ -1032,8 +1093,6 @@ function VideoJsPlayer({
 
   const startLoadTimeout = useCallback(() => {
     clearAllTimers();
-    setLoadElapsed(0);
-    intervalRef.current = setInterval(() => setLoadElapsed((e) => e + 1), 1000);
     timeoutRef.current = setTimeout(() => {
       clearAllTimers();
       setLoadTimedOut(true);
@@ -1059,10 +1118,8 @@ function VideoJsPlayer({
     setHasError(false);
     setIsLoading(true);
     setLoadTimedOut(false);
-    setLoadElapsed(0);
     setQualityLevels([]);
     setSelectedQuality("auto");
-    setCurrentBandwidthKbps(null);
     autoSelectedRef.current = false;
     startLoadTimeout();
 
@@ -1169,15 +1226,6 @@ function VideoJsPlayer({
       player.on("playing", markReady);
       player.on("canplay", markReady);
 
-      player.on("timeupdate", () => {
-        if (!isHls) return;
-        const tech = player.tech(true);
-        const vhs = (tech as unknown as TechWithVhs)?.vhs;
-        if (vhs?.stats?.bandwidth) {
-          setCurrentBandwidthKbps(Math.round(vhs.stats.bandwidth / 1000));
-        }
-      });
-
       player.on("error", () => {
         clearAllTimers();
         setIsLoading(false);
@@ -1192,9 +1240,7 @@ function VideoJsPlayer({
           if (p && typeof p.isDisposed === "function" && !p.isDisposed()) {
             p.dispose();
           }
-        } catch {
-          // ignore
-        }
+        } catch {}
         if (container && videoEl.parentNode === container) {
           container.removeChild(videoEl);
         }
@@ -1203,14 +1249,12 @@ function VideoJsPlayer({
       console.error("Video.js init error:", err);
       onFallback();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [masterUrl, isHls, startLoadTimeout, onFallback]);
+  }, [masterUrl, isHls, startLoadTimeout, onFallback, applyQuality]);
 
   const handleRetry = useCallback(() => {
     setHasError(false);
     setLoadTimedOut(false);
     setIsLoading(true);
-    setLoadElapsed(0);
     startLoadTimeout();
     const p = playerRef.current;
     if (p && typeof p.load === "function") {
@@ -1218,171 +1262,220 @@ function VideoJsPlayer({
     }
   }, [startLoadTimeout]);
 
-  const containerStyle = isFullscreen
-    ? {
-        width: "100%",
-        height: "100%",
-        minHeight: minHeight,
-        maxHeight: maxHeight,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative" as const,
-        isolation: "isolate" as const,
-        overflow: "hidden" as const,
-        borderRadius: 2,
-        flexShrink: 0,
-      }
-    : {
-        width: "100%",
-        aspectRatio: "16/9",
-        position: "relative" as const,
-        isolation: "isolate" as const,
-        overflow: "hidden" as const,
-        borderRadius: 2,
-        flexShrink: 0,
-      };
-
   return (
-    <Box sx={containerStyle}>
+    <Box
+      sx={{
+        width: "100%",
+        aspectRatio: isFullscreen ? "unset" : "16/9",
+        height: isFullscreen ? "100%" : "auto",
+        bgcolor: "#0B0B0F",
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: "16px",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
+      }}
+    >
       <Box
         ref={containerRef}
         sx={{
           width: "100%",
-          height: isFullscreen ? "100%" : "100%",
-          visibility:
-            isLoading || hasError || loadTimedOut ? "hidden" : "visible",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           "& .video-js": {
-            width: "100% !important",
-            height: "100% !important",
+            width: "100%",
+            height: "100%",
           },
         }}
       />
-      {!isLoading && !hasError && !loadTimedOut && isHls && (
-        <>
-          <Tooltip title="Chất lượng video">
-            <IconButton
-              size="small"
-              onClick={(e) => setMenuAnchor(e.currentTarget)}
-              sx={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                zIndex: 2,
-                bgcolor: alpha("#000", 0.55),
-                color: "#fff",
-                "&:hover": { bgcolor: alpha("#000", 0.75) },
-              }}
-            >
-              <HighQualityRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+
+      {/* Quality Badge Selector */}
+      {qualityLevels.length > 0 && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 14,
+            right: 14,
+            zIndex: 10,
+          }}
+        >
+          <Button
+            size="small"
+            onClick={(e) => setMenuAnchor(e.currentTarget)}
+            startIcon={<HighQualityRoundedIcon sx={{ fontSize: 16 }} />}
+            sx={{
+              textTransform: "none",
+              bgcolor: "rgba(15, 23, 42, 0.75)",
+              backdropFilter: "blur(8px)",
+              color: "#FFFFFF",
+              fontSize: 12,
+              fontWeight: 700,
+              borderRadius: "8px",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
+              px: 1.25,
+              py: 0.4,
+              "&:hover": {
+                bgcolor: "rgba(15, 23, 42, 0.9)",
+                borderColor: "rgba(255, 255, 255, 0.3)",
+              },
+            }}
+          >
+            {selectedQuality === "auto"
+              ? "Tự động"
+              : qualityLevels.find((q) => q.index === selectedQuality)?.label ||
+                "Độ phân giải"}
+          </Button>
+
           <Menu
             anchorEl={menuAnchor}
-            open={!!menuAnchor}
+            open={Boolean(menuAnchor)}
             onClose={() => setMenuAnchor(null)}
+            slotProps={{
+              paper: {
+                sx: {
+                  bgcolor: "#1E1E28",
+                  color: "#FFFFFF",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
+                },
+              },
+            }}
           >
             <MenuItem
               selected={selectedQuality === "auto"}
               onClick={() => applyQuality("auto")}
+              sx={{ fontSize: 13, fontWeight: 600 }}
             >
-              <ListItemText
-                primary="Tự động"
-                secondary={
-                  currentBandwidthKbps
-                    ? `${Math.round(currentBandwidthKbps / 1000)} Mbps`
-                    : undefined
-                }
-              />
+              Tự động (Khuyên dùng)
             </MenuItem>
-            {qualityLevels.map((lv) => (
+            {qualityLevels.map((q) => (
               <MenuItem
-                key={lv.index}
-                selected={selectedQuality === lv.index}
-                onClick={() => applyQuality(lv.index)}
+                key={q.index}
+                selected={selectedQuality === q.index}
+                onClick={() => applyQuality(q.index)}
+                sx={{ fontSize: 13, fontWeight: 600 }}
               >
-                {lv.index === qualityLevels[0]?.index && (
-                  <ListItemIcon sx={{ minWidth: 28 }}>
-                    <HighQualityRoundedIcon
-                      fontSize="small"
-                      sx={{ color: COLORS.primary }}
-                    />
-                  </ListItemIcon>
-                )}
-                <ListItemText inset={lv.index !== qualityLevels[0]?.index}>
-                  {lv.label}
-                </ListItemText>
+                {q.label}
               </MenuItem>
             ))}
           </Menu>
-        </>
+        </Box>
       )}
 
+      {/* Loading Overlay */}
       {isLoading && !hasError && !loadTimedOut && (
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            zIndex: 1,
+            zIndex: 2,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 1.5,
-            bgcolor: "#000",
+            gap: 2,
+            bgcolor: "rgba(11, 11, 15, 0.85)",
+            backdropFilter: "blur(6px)",
           }}
         >
           <Box
             sx={{
-              width: 44,
-              height: 44,
+              width: 48,
+              height: 48,
               borderRadius: "50%",
-              border: `4px solid ${alpha(COLORS.primary, 0.25)}`,
-              borderTopColor: COLORS.primary,
-              animation: "vjs-kiemduyet-spin 0.85s linear infinite",
-              "@keyframes vjs-kiemduyet-spin": {
-                to: { transform: "rotate(360deg)" },
-              },
+              border: "3px solid rgba(255,255,255,0.1)",
+              borderTopColor: BRAND.main,
+              animation: "spin 0.85s linear infinite",
+              "@keyframes spin": { to: { transform: "rotate(360deg)" } },
             }}
           />
-          <Typography variant="caption" sx={{ color: "#fff" }}>
-            Đang tải video{loadElapsed >= 5 ? ` (${loadElapsed}s)…` : "…"}
+          <Typography variant="body2" sx={{ color: "#E2E8F0", fontWeight: 600 }}>
+            Đang tải dữ liệu video...
           </Typography>
         </Box>
       )}
 
+      {/* Error Overlay */}
       {(hasError || loadTimedOut) && (
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            zIndex: 1,
+            zIndex: 3,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 1.25,
-            bgcolor: "#000",
-            px: 3,
+            gap: 2,
+            background: "radial-gradient(ellipse at center, #1E1E28 0%, #0B0B0F 100%)",
+            p: 3,
+            textAlign: "center",
           }}
         >
-          <Typography sx={{ color: "#fff", textAlign: "center" }}>
-            {loadTimedOut
-              ? "Tải video quá lâu. Vui lòng kiểm tra kết nối và thử lại."
-              : "Không thể phát video. Vui lòng thử lại."}
-          </Typography>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleRetry}
+          <Box
             sx={{
-              textTransform: "none",
-              bgcolor: COLORS.primary,
-              "&:hover": { bgcolor: COLORS.primaryDark },
+              width: 56,
+              height: 56,
+              borderRadius: "50%",
+              bgcolor: "rgba(220, 38, 38, 0.12)",
+              border: "1px solid rgba(220, 38, 38, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            Thử lại
-          </Button>
+            <OndemandVideoRoundedIcon sx={{ fontSize: 28, color: "#F87171" }} />
+          </Box>
+          <Box>
+            <Typography sx={{ color: "#F8FAFC", fontWeight: 700, fontSize: 15, mb: 0.5 }}>
+              {loadTimedOut
+                ? "Quá thời gian tải video"
+                : "Không thể phát video này"}
+            </Typography>
+            <Typography sx={{ color: "#94A3B8", fontSize: 13, maxWidth: 360 }}>
+              Định dạng video hoặc kết nối máy chủ streaming đang gặp gián đoạn.
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<RefreshRoundedIcon />}
+              onClick={handleRetry}
+              sx={{
+                textTransform: "none",
+                bgcolor: BRAND.main,
+                fontWeight: 700,
+                borderRadius: "8px",
+                px: 2,
+                "&:hover": { bgcolor: BRAND.dark },
+              }}
+            >
+              Thử lại
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              startIcon={<OpenInNewRoundedIcon />}
+              sx={{
+                textTransform: "none",
+                borderColor: "rgba(255,255,255,0.2)",
+                color: "#F8FAFC",
+                borderRadius: "8px",
+                "&:hover": {
+                  borderColor: "#FFFFFF",
+                  bgcolor: "rgba(255,255,255,0.06)",
+                },
+              }}
+            >
+              Mở liên kết
+            </Button>
+          </Stack>
         </Box>
       )}
     </Box>
@@ -1406,11 +1499,6 @@ function TaiLieuPreview({
   const kind = getFileKind(url);
   const fileName = getFileName(url, tenTaiLieu);
 
-  // Ở chế độ xem toàn màn hình, khung xem cần cao đúng bằng toàn bộ chiều
-  // cao khả dụng của popup. minHeight/maxHeight thôi là chưa đủ vì nội dung
-  // bên trong (iframe/ảnh) được định vị "absolute" nên không tự đẩy chiều
-  // cao của khung cha lên — phải khai báo "height" tường minh thì khung mới
-  // thực sự giãn hết cỡ thay vì co lại theo minHeight.
   const fillSx = isFullscreen
     ? { height: "100%", flex: 1 }
     : { minHeight, maxHeight };
@@ -1421,29 +1509,16 @@ function TaiLieuPreview({
         width: "100%",
         maxWidth: "100%",
         boxSizing: "border-box",
-        border: `1px solid ${COLORS.line}`,
-        ...fillSx,
-        position: "relative",
-        isolation: "isolate",
+        border: "1px solid #E2E8F0",
+        bgcolor: "#FFFFFF",
+        borderRadius: "16px",
         overflow: "hidden",
-        borderRadius: 2,
-        flexShrink: 0,
+        position: "relative",
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
+        ...fillSx,
       }}
     >
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: "100%",
-          height: "100%",
-          overflow: "hidden",
-        }}
-      >
-        {children}
-      </Box>
+      {children}
     </Box>
   );
 
@@ -1456,15 +1531,10 @@ function TaiLieuPreview({
         height="100%"
         scrolling="no"
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
           width: "100%",
-          height: `calc(100% + ${TOOLBAR_CROP_PX}px)`,
-          maxWidth: "100%",
+          height: "100%",
           border: "none",
           display: "block",
-          overflow: "hidden",
         }}
       />,
     );
@@ -1477,17 +1547,14 @@ function TaiLieuPreview({
           width: "100%",
           maxWidth: "100%",
           boxSizing: "border-box",
-          border: `1px solid ${COLORS.line}`,
-          bgcolor: CSSVAR.paperAlt,
+          border: "1px solid #E2E8F0",
+          bgcolor: "#0F172A",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          ...fillSx,
-          position: "relative",
-          isolation: "isolate",
+          borderRadius: "16px",
           overflow: "hidden",
-          borderRadius: 2,
-          flexShrink: 0,
+          ...fillSx,
         }}
       >
         <Box
@@ -1513,17 +1580,11 @@ function TaiLieuPreview({
         title={fileName}
         width="100%"
         height="100%"
-        scrolling="no"
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
           width: "100%",
-          height: `calc(100% + ${TOOLBAR_CROP_PX}px)`,
-          maxWidth: "100%",
+          height: "100%",
           border: "none",
           display: "block",
-          overflow: "hidden",
         }}
       />,
     );
@@ -1531,43 +1592,45 @@ function TaiLieuPreview({
 
   return (
     <Stack
-      spacing={1.5}
+      spacing={2}
       sx={{
         width: "100%",
         maxWidth: "100%",
-        boxSizing: "border-box",
         alignItems: "center",
         justifyContent: "center",
+        p: 4,
+        border: "1px dashed #CBD5E1",
+        bgcolor: "#F8FAFC",
+        borderRadius: "16px",
+        textAlign: "center",
         ...fillSx,
-        border: `1px dashed ${COLORS.line}`,
-        bgcolor: COLORS.paper,
-        position: "relative",
-        isolation: "isolate",
-        overflow: "hidden",
-        borderRadius: 2,
-        flexShrink: 0,
       }}
     >
-      <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
-        Định dạng file này chưa hỗ trợ xem trước trực tiếp.
-      </Typography>
+      <InsertDriveFileRoundedIcon sx={{ fontSize: 44, color: "#64748B" }} />
+      <Box>
+        <Typography sx={{ fontWeight: 700, color: "#0F172A", fontSize: 15, mb: 0.5 }}>
+          {fileName}
+        </Typography>
+        <Typography variant="body2" sx={{ color: "#64748B" }}>
+          Định dạng tài liệu này chưa hỗ trợ xem trước trực tiếp trên trang.
+        </Typography>
+      </Box>
       <Button
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        variant="outlined"
+        variant="contained"
         startIcon={<OpenInNewRoundedIcon />}
         sx={{
           textTransform: "none",
-          borderColor: COLORS.primary,
-          color: COLORS.primary,
-          "&:hover": {
-            borderColor: COLORS.primaryDark,
-            bgcolor: alpha(COLORS.primary, 0.04),
-          },
+          fontWeight: 700,
+          borderRadius: "10px",
+          bgcolor: BRAND.main,
+          px: 2.5,
+          "&:hover": { bgcolor: BRAND.dark },
         }}
       >
-        Mở tài liệu
+        Mở tài liệu trong tab mới
       </Button>
     </Stack>
   );

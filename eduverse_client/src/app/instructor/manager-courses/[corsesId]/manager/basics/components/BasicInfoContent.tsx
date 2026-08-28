@@ -601,10 +601,16 @@ export default function BasicInfoContent() {
     const start = async () => {
       try {
         await connection.start();
-        if (!isMounted) return;
+        if (!isMounted) {
+          connection.stop().catch(() => {});
+          return;
+        }
         setDangKetNoiRealtime(true);
         await joinGroup();
-      } catch (err) {
+      } catch (err: any) {
+        if (!isMounted || err?.message?.includes("stopped during negotiation") || err?.name === "AbortError") {
+          return;
+        }
         console.error("[SignalR] Lỗi kết nối:", err);
         if (isMounted) setDangKetNoiRealtime(false);
       }
@@ -663,12 +669,16 @@ export default function BasicInfoContent() {
 
     return () => {
       isMounted = false;
-      connection
-        .invoke("LeaveCourseGroup", idKhoaHoc)
-        .catch(() => {})
-        .finally(() => {
-          connection.stop();
-        });
+      if (connection.state === "Connected") {
+        connection
+          .invoke("LeaveCourseGroup", idKhoaHoc)
+          .catch(() => {})
+          .finally(() => {
+            connection.stop().catch(() => {});
+          });
+      } else {
+        connection.stop().catch(() => {});
+      }
     };
   }, [idKhoaHoc, refreshData, fetchThongTinBoSung, daTuSuaMoTa]);
 

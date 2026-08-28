@@ -19,6 +19,7 @@ import {
   alpha,
   Snackbar,
   Alert,
+  Tooltip,
 } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
@@ -597,43 +598,65 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          p: 3,
+          p: { xs: 2, sm: 3 },
+          bgcolor: "#F8FAFC",
         }}
       >
+        {/* Top Navigation Bar */}
         <Stack
           direction="row"
           spacing={2}
-          sx={{ alignItems: "center", mb: 3.5, flexShrink: 0 }}
+          sx={{
+            alignItems: "center",
+            mb: 2.5,
+            flexShrink: 0,
+            justifyContent: "space-between",
+          }}
         >
-          <IconButton
-            onClick={goBackToList}
-            sx={{
-              border: `1px solid ${CSSVAR.divider}`,
-              borderRadius: "12px",
-              color: CSSVAR.textPrimary,
-              bgcolor: CSSVAR.paper,
-              transition: "all 0.2s ease",
-              "&:hover": {
-                bgcolor: CSSVAR.paperAlt,
-                borderColor: CSSVAR.textMuted,
-                transform: "translateX(-2px)",
-              },
-            }}
-            size="medium"
-          >
-            <ArrowBackRoundedIcon fontSize="small" />
-          </IconButton>
-          <Typography
-            sx={{
-              fontSize: 26,
-              fontWeight: 900,
-              fontFamily: FONTS.display,
-              color: CSSVAR.textPrimary,
-              flex: 1,
-            }}
-          >
-            Kiểm duyệt khóa học
-          </Typography>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Tooltip title="Quay lại danh sách">
+              <IconButton
+                onClick={goBackToList}
+                sx={{
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "12px",
+                  color: "#334155",
+                  bgcolor: "#FFFFFF",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.02)",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  "&:hover": {
+                    bgcolor: "#F1F5F9",
+                    borderColor: "#CBD5E1",
+                    transform: "translateX(-2px)",
+                  },
+                }}
+                size="medium"
+              >
+                <ArrowBackRoundedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: 20, sm: 24 },
+                  fontWeight: 900,
+                  fontFamily: FONTS.display,
+                  color: "#0F172A",
+                  lineHeight: 1.2,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Kiểm duyệt khóa học
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: "#64748B", fontWeight: 600, fontSize: 12 }}
+              >
+                Đánh giá chất lượng nội dung và quyết định phê duyệt
+              </Typography>
+            </Box>
+          </Stack>
 
           {!detailLoading && detail && isChoDuyet && (
             <Stack direction="row" spacing={1.5}>
@@ -645,16 +668,17 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                   textTransform: "none",
                   fontWeight: 700,
                   fontSize: 13.5,
-                  borderRadius: "10px",
-                  borderColor: alpha(COLORS.danger, 0.35),
-                  color: COLORS.danger,
+                  borderRadius: "12px",
+                  borderColor: "#FECACA",
+                  color: "#DC2626",
+                  bgcolor: "#FFFFFF",
                   px: 2.5,
                   py: 1,
-                  height: 40,
-                  transition: "all 150ms ease",
+                  height: 42,
+                  transition: "all 0.15s ease",
                   "&:hover": {
-                    borderColor: COLORS.danger,
-                    bgcolor: COLORS.dangerSoft,
+                    borderColor: "#DC2626",
+                    bgcolor: "#FEF2F2",
                   },
                 }}
               >
@@ -664,20 +688,25 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 variant="contained"
                 disabled={actionLoading}
                 onClick={handleDuyetClick}
+                startIcon={
+                  actionLoading && confirmAction === "duyet" ? undefined : (
+                    <CheckCircleRoundedIcon sx={{ fontSize: 18 }} />
+                  )
+                }
                 sx={{
                   textTransform: "none",
                   fontWeight: 800,
                   fontSize: 13.5,
-                  borderRadius: "10px",
+                  borderRadius: "12px",
                   bgcolor: COLORS.primary,
+                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%)`,
                   boxShadow: `0 4px 14px ${alpha(COLORS.primary, 0.28)}`,
                   px: 3,
                   py: 1,
-                  height: 40,
-                  transition: "all 150ms ease",
+                  height: 42,
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                   "&:hover": {
-                    bgcolor: COLORS.primaryDark,
-                    boxShadow: `0 6px 18px ${alpha(COLORS.primary, 0.34)}`,
+                    boxShadow: `0 6px 20px ${alpha(COLORS.primary, 0.38)}`,
                     transform: "translateY(-1px)",
                   },
                 }}
@@ -693,7 +722,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         </Stack>
 
         {showTuChoi && (
-          <Box sx={{ mb: 2, flexShrink: 0 }}>
+          <Box sx={{ mb: 2.5, flexShrink: 0 }}>
             <KhoiTuChoiForm
               ghiChu={ghiChu}
               onChange={setGhiChu}
@@ -715,43 +744,71 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           maxWidth="xs"
           fullWidth
           slotProps={{
-            paper: { sx: { borderRadius: 2 } },
+            paper: {
+              sx: {
+                borderRadius: "20px",
+                p: 1,
+                boxShadow: "0 20px 48px rgba(0, 0, 0, 0.15)",
+              },
+            },
           }}
         >
           <DialogTitle
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1,
+              gap: 1.25,
               fontFamily: FONTS.display,
-              fontWeight: 700,
-              color: COLORS.ink,
+              fontWeight: 800,
+              fontSize: 18,
+              color: "#0F172A",
+              pt: 2,
             }}
           >
-            <HelpOutlineRoundedIcon
+            <Box
               sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                bgcolor:
+                  confirmAction === "tuChoi" ? "#FEF2F2" : "#F0FDF4",
                 color:
-                  confirmAction === "tuChoi" ? COLORS.danger : COLORS.primary,
+                  confirmAction === "tuChoi" ? "#DC2626" : "#16A34A",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
-            />
+            >
+              {confirmAction === "tuChoi" ? (
+                <HelpOutlineRoundedIcon sx={{ fontSize: 20 }} />
+              ) : (
+                <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />
+              )}
+            </Box>
             {confirmAction === "tuChoi"
               ? "Xác nhận từ chối khóa học"
               : "Xác nhận duyệt khóa học"}
           </DialogTitle>
-          <DialogContent>
-            <Typography sx={{ color: COLORS.inkSoft }}>
+          <DialogContent sx={{ py: 1.5 }}>
+            <Typography sx={{ color: "#64748B", fontSize: 14.5, lineHeight: 1.6 }}>
               {confirmAction === "tuChoi"
-                ? "Bạn có chắc chắn muốn từ chối khóa học này không?"
-                : "Bạn có chắc chắn muốn duyệt khóa học này không?"}
+                ? "Bạn có chắc chắn muốn từ chối khóa học này không? Khóa học sẽ được chuyển về trạng thái Từ chối cùng với các ghi chú chỉnh sửa gửi cho giảng viên."
+                : "Bạn có chắc chắn muốn phê duyệt khóa học này không? Khóa học sẽ được xuất bản công khai lên nền tảng EduVerse sau khi duyệt."}
             </Typography>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <DialogActions sx={{ px: 3, pb: 2.5, pt: 1 }}>
             <Button
               onClick={() => setConfirmAction(null)}
               disabled={actionLoading}
-              sx={{ textTransform: "none", color: COLORS.inkSoft }}
+              sx={{
+                textTransform: "none",
+                color: "#64748B",
+                fontWeight: 600,
+                borderRadius: "8px",
+                px: 2,
+              }}
             >
-              Hủy
+              Hủy bỏ
             </Button>
             <Button
               variant="contained"
@@ -759,14 +816,16 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               disabled={actionLoading}
               sx={{
                 textTransform: "none",
-                fontWeight: 600,
+                fontWeight: 800,
+                borderRadius: "8px",
+                px: 2.5,
                 bgcolor:
-                  confirmAction === "tuChoi" ? COLORS.danger : COLORS.primary,
+                  confirmAction === "tuChoi" ? "#DC2626" : COLORS.primary,
                 boxShadow: "none",
                 "&:hover": {
                   bgcolor:
                     confirmAction === "tuChoi"
-                      ? COLORS.primaryDark
+                      ? "#B91C1C"
                       : COLORS.primaryDark,
                   boxShadow: "none",
                 },
@@ -783,16 +842,18 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           </DialogActions>
         </Dialog>
 
+        {/* Main Content Viewport */}
         <Box
           sx={{
             flex: 1,
             minHeight: 0,
             display: "flex",
             flexDirection: { xs: "column", md: "row" },
-            gap: 3,
+            gap: 2.5,
             overflow: { xs: "auto", md: "hidden" },
           }}
         >
+          {/* Left Column: Course Header, Viewer & Description */}
           <Box
             sx={{
               flex: 1,
@@ -801,34 +862,40 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              pr: { md: 1 },
+              pr: { md: 0.5 },
+              "& > *": {
+                flexShrink: 0,
+              },
               ...scrollbarSx,
             }}
           >
             {detailLoading ? (
               <>
-                <Skeleton variant="rounded" height={110} />
-                <Skeleton variant="rounded" height={420} />
+                <Skeleton variant="rounded" height={120} sx={{ borderRadius: "20px", flexShrink: 0 }} />
+                <Skeleton variant="rounded" height={440} sx={{ borderRadius: "20px", flexShrink: 0 }} />
               </>
             ) : detail ? (
               <>
                 <KhoiTenKhoaHoc detail={detail} />
-                <Box sx={{ ...boxSx, p: 2.5 }}>
+
+                <Box sx={{ ...boxSx, p: { xs: 2, sm: 2.5 }, flexShrink: 0 }}>
                   <NoiDungViewer
                     selected={selectedContent}
                     onSaveLyDo={handleSaveLyDo}
                   />
                 </Box>
+
                 {hasDescription && (
-                  <Box sx={{ ...boxSx, p: 2.5 }}>
+                  <Box sx={{ ...boxSx, p: { xs: 2, sm: 2.5 }, flexShrink: 0 }}>
                     <Typography
                       sx={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: "0.1em",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        letterSpacing: "0.06em",
                         textTransform: "uppercase",
-                        color: COLORS.inkSoft,
-                        mb: 1.25,
+                        color: "#475569",
+                        mb: 1.5,
+                        fontFamily: FONTS.display,
                       }}
                     >
                       Mô tả khóa học
@@ -841,42 +908,44 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
               <Box
                 sx={{
                   ...boxSx,
-                  minHeight: 200,
+                  minHeight: 240,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
+                  p: 4,
+                  flexShrink: 0,
                 }}
               >
                 <SchoolRoundedIcon
                   sx={{
-                    fontSize: 40,
-                    color: alpha(COLORS.primary, 0.2),
+                    fontSize: 48,
+                    color: "#CBD5E1",
                     mb: 1.5,
                   }}
                 />
-                <Typography sx={{ color: COLORS.inkSoft }}>
-                  Không tìm thấy khóa học.
+                <Typography sx={{ color: "#64748B", fontWeight: 600 }}>
+                  Không tìm thấy thông tin khóa học.
                 </Typography>
               </Box>
             )}
           </Box>
 
+          {/* Right Column: Course Curriculum Sidebar */}
           <Box
             sx={{
-              width: { xs: "100%", md: 380 },
+              width: { xs: "100%", md: 390 },
               flexShrink: 0,
-              pr: { md: 1 },
               ...boxSx,
-              ...scrollbarSx,
+              overflow: "hidden",
             }}
           >
             {detailLoading ? (
-              <Stack spacing={1.5} sx={{ p: 2 }}>
-                <Skeleton variant="rounded" height={90} />
-                <Skeleton variant="rounded" height={56} />
-                <Skeleton variant="rounded" height={56} />
-                <Skeleton variant="rounded" height={56} />
+              <Stack spacing={1.5} sx={{ p: 2.5 }}>
+                <Skeleton variant="rounded" height={50} sx={{ borderRadius: "12px" }} />
+                <Skeleton variant="rounded" height={80} sx={{ borderRadius: "14px" }} />
+                <Skeleton variant="rounded" height={80} sx={{ borderRadius: "14px" }} />
+                <Skeleton variant="rounded" height={80} sx={{ borderRadius: "14px" }} />
               </Stack>
             ) : detail ? (
               <KiemDuyetSidebar
@@ -885,8 +954,8 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 onSelectContent={handleSelectContent}
               />
             ) : (
-              <Box sx={{ p: 2, textAlign: "center" }}>
-                <Typography sx={{ color: COLORS.inkSoft }}>
+              <Box sx={{ p: 3, textAlign: "center" }}>
+                <Typography sx={{ color: "#94A3B8" }}>
                   Không có dữ liệu để hiển thị.
                 </Typography>
               </Box>

@@ -26,10 +26,11 @@ export const FONTS = {
 };
 
 export const boxSx = {
-  border: `1px solid ${COLORS.line}`,
-  borderRadius: "16px",
-  bgcolor: COLORS.paperRaised,
-  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.015)",
+  border: `1px solid ${NEUTRAL.divider}`,
+  borderRadius: "20px",
+  bgcolor: "#FFFFFF",
+  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.02)",
+  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
 };
 
 export const SCROLL_AREA_HEIGHT = "calc(100vh - 220px)";
