@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -1428,7 +1429,8 @@ export default function StudentHomeContent() {
     if (data?.continueLearning?.courses) {
       data.continueLearning.courses.forEach((item: any) => {
         if (isValidGuid(item.id)) enrolledIds.add(String(item.id));
-        if (isValidGuid(item.idKhoaHoc)) enrolledIds.add(String(item.idKhoaHoc));
+        if (isValidGuid(item.idKhoaHoc))
+          enrolledIds.add(String(item.idKhoaHoc));
       });
     }
 

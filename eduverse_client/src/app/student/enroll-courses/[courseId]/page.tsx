@@ -64,7 +64,7 @@ const RED = BRAND.main;
 const RED_HOVER = "#6B1010";
 const RED_SOFT = "#fdf2f2";
 const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
-const GIANG_VIEN_COURSES_PAGE_SIZE = 4;
+const GIANG_VIEN_COURSES_PAGE_SIZE = 3;
 
 // ─── styled components ────────────────────────────────────────────────────────
 

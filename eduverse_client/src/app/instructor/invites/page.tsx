@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -341,7 +342,11 @@ function LoiMoiKhuyenMaiCard({
               variant="outlined"
               size="medium"
               startIcon={
-                dangXuLy ? <CircularProgress size={16} color="inherit" /> : <CloseIcon />
+                dangXuLy ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <CloseIcon />
+                )
               }
               disabled={dangXuLy}
               onClick={() => onPhanHoi(loiMoi.id, false)}
@@ -444,7 +449,8 @@ function LoiMoiCard({
       {isPending ? (
         <Box
           sx={{
-            background: "linear-gradient(90deg, #8B1313 0%, #A81B1B 45%, #6D0F0F 100%)",
+            background:
+              "linear-gradient(90deg, #8B1313 0%, #A81B1B 45%, #6D0F0F 100%)",
             px: { xs: 2.5, sm: 3.5 },
             py: 1,
             color: "#FFFFFF",
@@ -569,7 +575,13 @@ function LoiMoiCard({
                 }}
               >
                 <SchoolOutlinedIcon sx={{ color: "#94A3B8", fontSize: 36 }} />
-                <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", fontWeight: 600 }}>
+                <Typography
+                  sx={{
+                    fontSize: "0.72rem",
+                    color: "#94A3B8",
+                    fontWeight: 600,
+                  }}
+                >
                   EduVerse Course
                 </Typography>
               </Box>
@@ -696,7 +708,14 @@ function LoiMoiCard({
                 }}
               >
                 {loiMoi.tyLeChiaDoanhThu}%
-                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#9A3412", marginLeft: 6 }}>
+                <span
+                  style={{
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    color: "#9A3412",
+                    marginLeft: 6,
+                  }}
+                >
                   trên mỗi đơn bán
                 </span>
               </Typography>
@@ -795,7 +814,11 @@ function LoiMoiCard({
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)",
+                },
                 gap: 1.25,
               }}
             >
@@ -1003,7 +1026,9 @@ function ConfirmActionDialog({
               width: 44,
               height: 44,
               borderRadius: "14px",
-              bgcolor: dongY ? "rgba(22, 163, 74, 0.12)" : "rgba(220, 38, 38, 0.12)",
+              bgcolor: dongY
+                ? "rgba(22, 163, 74, 0.12)"
+                : "rgba(220, 38, 38, 0.12)",
               color: dongY ? "#16A34A" : STATUS.error,
               display: "flex",
               alignItems: "center",
@@ -1017,8 +1042,12 @@ function ConfirmActionDialog({
             )}
           </Box>
           <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "#0F172A" }}>
-              {dongY ? "Xác nhận tham gia cộng tác" : "Từ chối lời mời cộng tác"}
+            <Typography
+              sx={{ fontWeight: 800, fontSize: "1.15rem", color: "#0F172A" }}
+            >
+              {dongY
+                ? "Xác nhận tham gia cộng tác"
+                : "Từ chối lời mời cộng tác"}
             </Typography>
             <Typography sx={{ fontSize: "0.82rem", color: "#64748B" }}>
               {dongY
@@ -1061,7 +1090,9 @@ function ConfirmActionDialog({
               <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
                 Giảng viên chính:
               </Typography>
-              <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B" }}>
+              <Typography
+                sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B" }}
+              >
                 {loiMoi.tenNguoiMoi || "Giảng viên"}
               </Typography>
             </Box>
@@ -1070,7 +1101,9 @@ function ConfirmActionDialog({
               <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
                 Tỷ lệ chia doanh thu:
               </Typography>
-              <Typography sx={{ fontSize: "0.85rem", fontWeight: 800, color: "#C2410C" }}>
+              <Typography
+                sx={{ fontSize: "0.85rem", fontWeight: 800, color: "#C2410C" }}
+              >
                 {loiMoi.tyLeChiaDoanhThu}%
               </Typography>
             </Box>
@@ -1079,7 +1112,13 @@ function ConfirmActionDialog({
               <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
                 Hiển thị công khai:
               </Typography>
-              <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: loiMoi.visible ? "#16A34A" : "#64748B" }}>
+              <Typography
+                sx={{
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  color: loiMoi.visible ? "#16A34A" : "#64748B",
+                }}
+              >
                 {loiMoi.visible ? "Có" : "Không"}
               </Typography>
             </Box>
@@ -1087,11 +1126,19 @@ function ConfirmActionDialog({
         </Paper>
 
         {dongY ? (
-          <Alert severity="success" sx={{ borderRadius: "12px", fontSize: "0.85rem" }}>
-            Sau khi đồng ý, khóa học sẽ xuất hiện trong mục <strong>Quản lý khóa học</strong> của bạn cùng các quyền hạn tương ứng.
+          <Alert
+            severity="success"
+            sx={{ borderRadius: "12px", fontSize: "0.85rem" }}
+          >
+            Sau khi đồng ý, khóa học sẽ xuất hiện trong mục{" "}
+            <strong>Quản lý khóa học</strong> của bạn cùng các quyền hạn tương
+            ứng.
           </Alert>
         ) : (
-          <Alert severity="warning" sx={{ borderRadius: "12px", fontSize: "0.85rem" }}>
+          <Alert
+            severity="warning"
+            sx={{ borderRadius: "12px", fontSize: "0.85rem" }}
+          >
             Bạn có chắc chắn muốn từ chối lời mời này không?
           </Alert>
         )}
@@ -1117,7 +1164,9 @@ function ConfirmActionDialog({
           variant="contained"
           onClick={onConfirm}
           disabled={loading}
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
+          startIcon={
+            loading ? <CircularProgress size={16} color="inherit" /> : null
+          }
           sx={{
             textTransform: "none",
             fontWeight: 800,
@@ -1208,8 +1257,9 @@ function EmptyState() {
             lineHeight: 1.6,
           }}
         >
-          Khi có giảng viên khác mời bạn cùng hợp tác giảng dạy hoặc quản lý khóa học,
-          thông tin lời mời và tỷ lệ chia sẻ doanh thu sẽ hiển thị tại đây.
+          Khi có giảng viên khác mời bạn cùng hợp tác giảng dạy hoặc quản lý
+          khóa học, thông tin lời mời và tỷ lệ chia sẻ doanh thu sẽ hiển thị tại
+          đây.
         </Typography>
       </Paper>
 
@@ -1269,11 +1319,21 @@ function EmptyState() {
             >
               <TrendingUpIcon sx={{ fontSize: 22 }} />
             </Box>
-            <Typography sx={{ fontWeight: 800, fontSize: "0.92rem", color: "#1E293B", mb: 0.5 }}>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: "0.92rem",
+                color: "#1E293B",
+                mb: 0.5,
+              }}
+            >
               Chia sẻ doanh thu tự động
             </Typography>
-            <Typography sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}>
-              Thu nhập từ mỗi đơn hàng được ghi nhận và phân chia minh bạch theo tỷ lệ đã thỏa thuận.
+            <Typography
+              sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}
+            >
+              Thu nhập từ mỗi đơn hàng được ghi nhận và phân chia minh bạch theo
+              tỷ lệ đã thỏa thuận.
             </Typography>
           </Box>
 
@@ -1300,11 +1360,21 @@ function EmptyState() {
             >
               <VerifiedUserOutlinedIcon sx={{ fontSize: 22 }} />
             </Box>
-            <Typography sx={{ fontWeight: 800, fontSize: "0.92rem", color: "#1E293B", mb: 0.5 }}>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: "0.92rem",
+                color: "#1E293B",
+                mb: 0.5,
+              }}
+            >
               Phân quyền linh hoạt
             </Typography>
-            <Typography sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}>
-              Kiểm soát chi tiết quyền quản lý tài liệu, bài giảng, hỏi đáp, chấm bài và khuyến mãi.
+            <Typography
+              sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}
+            >
+              Kiểm soát chi tiết quyền quản lý tài liệu, bài giảng, hỏi đáp,
+              chấm bài và khuyến mãi.
             </Typography>
           </Box>
 
@@ -1331,11 +1401,21 @@ function EmptyState() {
             >
               <VisibilityOutlinedIcon sx={{ fontSize: 22 }} />
             </Box>
-            <Typography sx={{ fontWeight: 800, fontSize: "0.92rem", color: "#1E293B", mb: 0.5 }}>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: "0.92rem",
+                color: "#1E293B",
+                mb: 0.5,
+              }}
+            >
               Xây dựng uy tín cá nhân
             </Typography>
-            <Typography sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}>
-              Được vinh danh và hiển thị đồng tác giả công khai trên trang chi tiết khóa học.
+            <Typography
+              sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}
+            >
+              Được vinh danh và hiển thị đồng tác giả công khai trên trang chi
+              tiết khóa học.
             </Typography>
           </Box>
         </Box>
@@ -1349,7 +1429,9 @@ export default function InvitesPage() {
   const [danhSach, setDanhSach] = useState<LoiMoiChoXacNhanDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [dangXuLyId, setDangXuLyId] = useState<string | null>(null);
-  const [tabFilter, setTabFilter] = useState<"all" | "pending" | "resolved">("all");
+  const [tabFilter, setTabFilter] = useState<"all" | "pending" | "resolved">(
+    "all",
+  );
   const [searchTerm, setSearchTerm] = useState("");
 
   // Dialog State
@@ -1364,7 +1446,9 @@ export default function InvitesPage() {
   });
 
   // State cho lời mời khuyến mãi
-  const [dsKhuyenMai, setDsKhuyenMai] = useState<LoiMoiKhuyenMaiChoXacNhanDto[]>([]);
+  const [dsKhuyenMai, setDsKhuyenMai] = useState<
+    LoiMoiKhuyenMaiChoXacNhanDto[]
+  >([]);
   const [dangXuLyKM, setDangXuLyKM] = useState<string | null>(null);
 
   const [toast, setToast] = useState<{
@@ -1429,7 +1513,9 @@ export default function InvitesPage() {
       await LoiMoiGiangVienService.PhanHoi(id, dongY);
       setToast({
         open: true,
-        message: dongY ? "Đã chấp nhận lời mời cộng tác thành công!" : "Đã từ chối lời mời cộng tác.",
+        message: dongY
+          ? "Đã chấp nhận lời mời cộng tác thành công!"
+          : "Đã từ chối lời mời cộng tác.",
         severity: "success",
       });
       handleCloseConfirm();
@@ -1468,9 +1554,18 @@ export default function InvitesPage() {
     }
   };
 
-  const pendingList = useMemo(() => danhSach.filter((x) => x.trangThai === "Pending"), [danhSach]);
-  const resolvedList = useMemo(() => danhSach.filter((x) => x.trangThai !== "Pending"), [danhSach]);
-  const pendingKhuyenMai = useMemo(() => dsKhuyenMai.filter((x) => x.trangThai === "Pending"), [dsKhuyenMai]);
+  const pendingList = useMemo(
+    () => danhSach.filter((x) => x.trangThai === "Pending"),
+    [danhSach],
+  );
+  const resolvedList = useMemo(
+    () => danhSach.filter((x) => x.trangThai !== "Pending"),
+    [danhSach],
+  );
+  const pendingKhuyenMai = useMemo(
+    () => dsKhuyenMai.filter((x) => x.trangThai === "Pending"),
+    [dsKhuyenMai],
+  );
 
   const filteredList = useMemo(() => {
     let list =
@@ -1494,7 +1589,11 @@ export default function InvitesPage() {
   // Tab definitions with fixed label width and consistent font weight
   const tabsConfig = [
     { key: "all" as const, label: "Tất cả", count: danhSach.length },
-    { key: "pending" as const, label: "Chờ xác nhận", count: pendingList.length },
+    {
+      key: "pending" as const,
+      label: "Chờ xác nhận",
+      count: pendingList.length,
+    },
     { key: "resolved" as const, label: "Đã xử lý", count: resolvedList.length },
   ];
 
@@ -1582,8 +1681,11 @@ export default function InvitesPage() {
                   >
                     Lời mời cộng tác
                   </Typography>
-                  <Typography sx={{ fontSize: "0.92rem", color: "#64748B", mt: 0.5 }}>
-                    Quản lý lời mời tham gia giảng dạy và phân chia doanh thu từ các giảng viên khác
+                  <Typography
+                    sx={{ fontSize: "0.92rem", color: "#64748B", mt: 0.5 }}
+                  >
+                    Quản lý lời mời tham gia giảng dạy và phân chia doanh thu từ
+                    các giảng viên khác
                   </Typography>
                 </Box>
               </Box>
@@ -1592,7 +1694,14 @@ export default function InvitesPage() {
               <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
                 {pendingList.length > 0 && (
                   <Chip
-                    icon={<AutoAwesomeIcon sx={{ fontSize: "16px !important", color: "#B45309 !important" }} />}
+                    icon={
+                      <AutoAwesomeIcon
+                        sx={{
+                          fontSize: "16px !important",
+                          color: "#B45309 !important",
+                        }}
+                      />
+                    }
                     label={`${pendingList.length} lời mời cần xử lý`}
                     sx={{
                       fontWeight: 800,
@@ -1608,7 +1717,14 @@ export default function InvitesPage() {
                 )}
                 {pendingKhuyenMai.length > 0 && (
                   <Chip
-                    icon={<LocalOfferIcon sx={{ fontSize: "15px !important", color: "#FFFFFF !important" }} />}
+                    icon={
+                      <LocalOfferIcon
+                        sx={{
+                          fontSize: "15px !important",
+                          color: "#FFFFFF !important",
+                        }}
+                      />
+                    }
                     label={`${pendingKhuyenMai.length} deal khuyến mãi`}
                     sx={{
                       fontWeight: 800,
@@ -1651,7 +1767,13 @@ export default function InvitesPage() {
                   >
                     <LocalOfferIcon sx={{ fontSize: 16 }} />
                   </Box>
-                  <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#0F172A" }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: "1.1rem",
+                      color: "#0F172A",
+                    }}
+                  >
                     Yêu cầu áp dụng khuyến mãi
                   </Typography>
                 </Box>
@@ -1735,7 +1857,8 @@ export default function InvitesPage() {
                         fontFamily: "inherit",
                         bgcolor: isActive ? BRAND.main : "transparent",
                         color: isActive ? "#FFFFFF" : "#64748B",
-                        transition: "background-color 0.15s ease, color 0.15s ease",
+                        transition:
+                          "background-color 0.15s ease, color 0.15s ease",
                         "&:hover": {
                           bgcolor: isActive ? BRAND.dark : "#F1F5F9",
                           color: isActive ? "#FFFFFF" : "#1E293B",
@@ -1754,7 +1877,9 @@ export default function InvitesPage() {
                           borderRadius: "999px",
                           fontSize: "0.76rem",
                           fontWeight: 800,
-                          bgcolor: isActive ? "rgba(255, 255, 255, 0.25)" : "#E2E8F0",
+                          bgcolor: isActive
+                            ? "rgba(255, 255, 255, 0.25)"
+                            : "#E2E8F0",
                           color: isActive ? "#FFFFFF" : "#475569",
                           minWidth: 22,
                           lineHeight: 1.2,
@@ -1794,7 +1919,10 @@ export default function InvitesPage() {
                     },
                     "& fieldset": { borderColor: "#E2E8F0" },
                     "&:hover fieldset": { borderColor: "#CBD5E1" },
-                    "&.Mui-focused fieldset": { borderColor: BRAND.main, borderWidth: "1.5px" },
+                    "&.Mui-focused fieldset": {
+                      borderColor: BRAND.main,
+                      borderWidth: "1.5px",
+                    },
                   },
                 }}
               />
@@ -1815,7 +1943,9 @@ export default function InvitesPage() {
               }}
             >
               <CircularProgress size={42} sx={{ color: BRAND.main }} />
-              <Typography sx={{ fontSize: "0.92rem", color: "#64748B", fontWeight: 600 }}>
+              <Typography
+                sx={{ fontSize: "0.92rem", color: "#64748B", fontWeight: 600 }}
+              >
                 Đang tải danh sách lời mời cộng tác...
               </Typography>
             </Box>
@@ -1840,7 +1970,14 @@ export default function InvitesPage() {
                 bgcolor: "#F8FAFC",
               }}
             >
-              <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#475569", mb: 0.5 }}>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: "1.05rem",
+                  color: "#475569",
+                  mb: 0.5,
+                }}
+              >
                 Không tìm thấy lời mời nào
               </Typography>
               <Typography sx={{ fontSize: "0.86rem", color: "#94A3B8" }}>
