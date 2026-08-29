@@ -57,6 +57,19 @@ public class CourseSearchQueryTests
     }
 
     [Fact]
+    public void RelatedCourseTerm_MatchesWhenDatabaseFallbackIsUsed()
+    {
+        var predicate = CourseSearchQuery
+            .BuildWordPrefixPredicate("js")
+            .Compile();
+
+        Assert.True(predicate(new KhoaHoc
+        {
+            TieuDe = "JavaScript từ Cơ bản đến Nâng cao"
+        }));
+    }
+
+    [Fact]
     public void WordPrefixPredicate_CanBeTranslatedBySqlServerProvider()
     {
         var options = new DbContextOptionsBuilder<EduverseContext>()
@@ -69,5 +82,20 @@ public class CourseSearchQueryTests
             .ToQueryString();
 
         Assert.Contains("LIKE", sql, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void RelatedCourseTermPredicate_CanBeTranslatedBySqlServerProvider()
+    {
+        var options = new DbContextOptionsBuilder<EduverseContext>()
+            .UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=EduverseQueryTest")
+            .Options;
+        using var context = new EduverseContext(options);
+
+        var sql = context.Set<KhoaHoc>()
+            .Where(CourseSearchQuery.BuildWordPrefixPredicate("js"))
+            .ToQueryString();
+
+        Assert.Contains("javascript", sql, StringComparison.OrdinalIgnoreCase);
     }
 }
