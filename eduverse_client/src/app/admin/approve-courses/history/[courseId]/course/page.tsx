@@ -38,6 +38,7 @@ import {
   Tooltip,
   Menu,
   MenuItem,
+  alpha,
 } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
@@ -357,166 +358,458 @@ function getOptimalHlsUrl(originalUrl: string): {
 
 // ======================== VIDEO.JS STYLES ========================
 const VIDEO_JS_STYLES = `
-  .video-js .vjs-big-play-button {
-    background-color: rgba(0,0,0,0.6) !important;
-    border: none !important;
-    border-radius: 12px !important;
-    width: 68px !important;
-    height: 48px !important;
-    line-height: 48px !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    margin: 0 !important;
-    transition: background-color 0.2s !important;
+  /* ===== RESET OVERRIDES ===== */
+  .video-js,
+  .video-js * {
+    box-sizing: border-box !important;
   }
-  .video-js:hover .vjs-big-play-button {
-    background-color: ${COLORS.primary} !important;
+
+  .video-js {
+    font-family: inherit, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-size: 14px !important;
+    color: #fff !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: #000 !important;
   }
+
+  .video-js .vjs-tech {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+  }
+
+  .video-js .vjs-poster {
+    background-size: cover !important;
+    background-position: center !important;
+  }
+
+  /* Ẩn tuyệt đối các thành phần thừa gây rác giao diện */
+  .video-js .vjs-live-control,
+  .video-js .vjs-seek-to-live-control,
+  .video-js .vjs-live-display,
+  .video-js .vjs-chapters-button,
+  .video-js .vjs-descriptions-button,
+  .video-js .vjs-audio-button,
+  .video-js .vjs-subs-caps-button,
+  .video-js .vjs-subtitles-button,
+  .video-js .vjs-captions-button,
+  .video-js .vjs-picture-in-picture-control,
+  .video-js .vjs-remaining-time,
+  .video-js .vjs-remaining-time-display,
+  .video-js .vjs-time-control.vjs-remaining-time,
+  .video-js .vjs-time-control:not(.vjs-current-time):not(.vjs-time-divider):not(.vjs-duration),
+  .video-js .vjs-spacer,
+  .video-js .vjs-custom-control-spacer,
+  .video-js .vjs-modal-dialog,
+  .video-js .vjs-text-track-settings {
+    display: none !important;
+  }
+
+  /* ===== CONTROL BAR ===== */
   .video-js .vjs-control-bar {
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, transparent 100%) !important;
-    height: 48px !important;
-    padding: 0 12px !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-  .video-js .vjs-progress-control {
     position: absolute !important;
-    top: -5px !important;
+    bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
-    height: 5px !important;
+    z-index: 2 !important;
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 60%, transparent 100%) !important;
+    height: 64px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 16px 12px 10px 12px !important;
+    gap: 0 !important;
+    font-size: 13px !important;
+    overflow: visible !important;
+  }
+
+  .video-js .vjs-control-bar > * {
+    order: 10 !important;
+  }
+
+  .video-js .vjs-control {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+  }
+
+  /* ===== PROGRESS BAR (Stretched on top with prominent red head dot) ===== */
+  .video-js .vjs-progress-control {
+    position: absolute !important;
+    top: 6px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100% - 24px) !important;
+    height: 12px !important;
     display: flex !important;
     align-items: center !important;
     cursor: pointer !important;
-    transition: transform 0.1s, top 0.1s, height 0.1s !important;
+    z-index: 3 !important;
   }
   .video-js .vjs-progress-control .vjs-progress-holder {
-    margin: 0 12px !important;
-    height: 3px !important;
-    transition: height 0.1s !important;
-    border-radius: 0 !important;
-    background-color: rgba(255,255,255,0.2) !important;
+    margin: 0 !important;
+    height: 4px !important;
+    border-radius: 2px !important;
+    background-color: rgba(255,255,255,0.25) !important;
+    transition: height 0.15s ease !important;
+    width: 100% !important;
   }
   .video-js .vjs-progress-control:hover .vjs-progress-holder {
-    height: 5px !important;
+    height: 6px !important;
   }
   .video-js .vjs-play-progress {
-    background-color: ${COLORS.primary} !important;
-  }
-  .video-js .vjs-load-progress {
-    background-color: rgba(255,255,255,0.4) !important;
-  }
-  .video-js .vjs-load-progress div {
-    background: transparent !important;
+    background-color: #FF0000 !important;
+    border-radius: 2px !important;
   }
   .video-js .vjs-play-progress:before {
     content: "" !important;
     position: absolute !important;
     top: 50% !important;
-    right: -6.5px !important;
-    width: 13px !important;
-    height: 13px !important;
-    background-color: ${COLORS.primary} !important;
+    right: -6px !important;
+    width: 14px !important;
+    height: 14px !important;
+    background-color: #FF0000 !important;
+    border: 2px solid #FFFFFF !important;
     border-radius: 50% !important;
-    transform: translateY(-50%) scale(0) !important;
-    transition: transform 0.1s cubic-bezier(0.4,0.0,1,1) !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.9) !important;
+    transform: translateY(-50%) !important;
+    display: block !important;
+    transition: transform 0.15s ease !important;
   }
   .video-js .vjs-progress-control:hover .vjs-play-progress:before {
-    transform: translateY(-50%) scale(1) !important;
+    transform: translateY(-50%) scale(1.15) !important;
   }
-  .video-js .vjs-slider {
-    border-radius: 0 !important;
+  .video-js .vjs-load-progress {
+    background-color: rgba(255,255,255,0.35) !important;
+    border-radius: 2px !important;
   }
-  .video-js .vjs-volume-panel {
+  .video-js .vjs-load-progress div {
+    background: transparent !important;
+  }
+
+  /* ===== BUTTONS & PILLS ===== */
+  /* [LEFT GROUP] 1. Play/Pause circular glass pill */
+  .video-js .vjs-control-bar .vjs-play-control {
+    order: 1 !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    cursor: pointer !important;
+    margin: 0 8px 0 0 !important;
+    transition: all 0.2s ease !important;
+  }
+  .video-js .vjs-control-bar .vjs-play-control:hover {
+    background: rgba(255, 255, 255, 0.24) !important;
+    transform: scale(1.05) !important;
+  }
+
+  /* [LEFT GROUP] 2. Volume circular glass pill with smooth slider expand */
+  .video-js .vjs-control-bar .vjs-volume-panel {
+    order: 2 !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
     display: flex !important;
     align-items: center !important;
-    margin-right: 8px !important;
-    transition: width 0.2s !important;
+    justify-content: flex-start !important;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 8px 0 0 !important;
+    cursor: pointer !important;
+    z-index: 5 !important;
+  }
+  .video-js .vjs-control-bar .vjs-volume-panel:hover,
+  .video-js .vjs-control-bar .vjs-volume-panel:focus-within,
+  .video-js .vjs-control-bar .vjs-volume-panel.vjs-slider-active,
+  .video-js .vjs-control-bar .vjs-volume-panel.vjs-volume-panel-horizontal:hover,
+  .video-js .vjs-control-bar .vjs-volume-panel.vjs-volume-panel-horizontal.vjs-slider-active,
+  .video-js .vjs-control-bar .vjs-volume-panel.vjs-volume-panel-horizontal.vjs-hover {
+    width: 120px !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+  }
+  .video-js .vjs-mute-control {
+    width: 36px !important;
+    height: 36px !important;
+    flex: 0 0 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .video-js .vjs-volume-control {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 10px 0 0 !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    transition: opacity 0.2s ease, width 0.2s ease !important;
+    pointer-events: none !important;
+  }
+  .video-js .vjs-volume-panel:hover .vjs-volume-control,
+  .video-js .vjs-volume-panel:focus-within .vjs-volume-control,
+  .video-js .vjs-volume-panel.vjs-slider-active .vjs-volume-control,
+  .video-js .vjs-volume-panel.vjs-volume-panel-horizontal.vjs-slider-active .vjs-volume-control,
+  .video-js .vjs-volume-panel.vjs-hover .vjs-volume-control {
+    opacity: 1 !important;
+    width: 74px !important;
+    pointer-events: auto !important;
+  }
+  .video-js .vjs-volume-bar {
+    width: 100% !important;
+    height: 4px !important;
+    border-radius: 2px !important;
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    position: relative !important;
+    transition: height 0.15s ease !important;
+  }
+  .video-js .vjs-volume-panel:hover .vjs-volume-bar,
+  .video-js .vjs-volume-panel.vjs-slider-active .vjs-volume-bar {
+    height: 5px !important;
   }
   .video-js .vjs-volume-level {
-    background-color: #fff !important;
+    background-color: #FFFFFF !important;
+    height: 100% !important;
+    border-radius: 2px !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
   }
   .video-js .vjs-volume-level:before {
     content: "" !important;
     position: absolute !important;
     top: 50% !important;
-    right: -6px !important;
-    width: 12px !important;
-    height: 12px !important;
-    background-color: #fff !important;
+    right: -5px !important;
+    width: 10px !important;
+    height: 10px !important;
+    background-color: #FFFFFF !important;
     border-radius: 50% !important;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.9) !important;
     transform: translateY(-50%) !important;
+    display: block !important;
   }
-  .video-js .vjs-time-control {
+
+  /* [LEFT GROUP] 3. Time display: Single unified seamless glass capsule pill (0 gaps, 0 internal seams) */
+  .video-js .vjs-control-bar .vjs-current-time {
+    order: 3 !important;
+    height: 36px !important;
+    border-top-left-radius: 18px !important;
+    border-bottom-left-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-right: none !important;
+    padding: 0 2px 0 12px !important;
+    margin: 0 !important;
     display: flex !important;
     align-items: center !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    font-family: "Roboto", Arial, sans-serif !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: 0.02em !important;
+    color: #FFFFFF !important;
+  }
+  .video-js .vjs-current-time-display {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .video-js .vjs-control-bar .vjs-time-divider {
+    order: 4 !important;
+    height: 36px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-left: none !important;
+    border-right: none !important;
     padding: 0 4px !important;
-    height: 48px !important;
-    line-height: normal !important;
-  }
-  .video-js .vjs-time-divider {
+    margin: 0 !important;
     display: flex !important;
     align-items: center !important;
-    padding: 0 2px !important;
-    height: 48px !important;
-    line-height: normal !important;
+    justify-content: center !important;
+    min-width: unset !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-size: 12.5px !important;
   }
-  .video-js .vjs-remaining-time {
+  .video-js .vjs-control-bar .vjs-duration {
+    order: 5 !important;
+    height: 36px !important;
+    border-top-right-radius: 18px !important;
+    border-bottom-right-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-left: none !important;
+    padding: 0 12px 0 2px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: 0.02em !important;
+    color: #FFFFFF !important;
+  }
+  .video-js .vjs-duration-display {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* [RIGHT GROUP] 4. Playback rate: order 100 + margin-left: auto pushes entire right group to the absolute far right */
+  .video-js .vjs-control-bar .vjs-playback-rate {
+    order: 100 !important;
+    margin-left: auto !important;
+    margin-right: 8px !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+  }
+  .video-js .vjs-control-bar .vjs-playback-rate:hover {
+    background: rgba(255, 255, 255, 0.24) !important;
+    transform: scale(1.05) !important;
+  }
+  .video-js .vjs-playback-rate .vjs-playback-rate-value {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* [RIGHT GROUP] 5. Fullscreen control: order 101 (sits directly at the right border) */
+  .video-js .vjs-control-bar .vjs-fullscreen-control {
+    order: 101 !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    margin: 0 !important;
+  }
+  .video-js .vjs-control-bar .vjs-fullscreen-control:hover {
+    background: rgba(255, 255, 255, 0.24) !important;
+    transform: scale(1.05) !important;
+  }
+
+  .video-js .vjs-button > .vjs-icon-placeholder:before {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    height: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Big play button */
+  .video-js .vjs-big-play-button {
+    background-color: rgba(15, 23, 42, 0.75) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 2px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 50% !important;
+    width: 68px !important;
+    height: 68px !important;
+    line-height: 64px !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-size: 2.6em !important;
+    color: #fff !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  }
+  .video-js:hover .vjs-big-play-button {
+    background-color: ${COLORS.primary} !important;
+    border-color: ${COLORS.primary} !important;
+    transform: translate(-50%, -50%) scale(1.08) !important;
+    box-shadow: 0 12px 36px rgba(139, 19, 19, 0.6) !important;
+  }
+  .video-js.vjs-playing .vjs-big-play-button {
     display: none !important;
   }
-  .video-js .vjs-button, .video-js .vjs-control {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    height: 48px !important;
-  }
-  .video-js .vjs-button {
-    width: 44px !important;
-  }
-  .video-js .vjs-icon-placeholder:before {
-    position: static !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-  .video-js .vjs-mouse-display .vjs-time-tooltip,
-  .video-js .vjs-play-progress .vjs-time-tooltip {
-    background: rgba(28,28,28,0.9) !important;
-    border-radius: 2px !important;
-    font-size: 13px !important;
-    font-family: "Roboto", Arial, sans-serif !important;
-    padding: 5px 9px !important;
-    bottom: 15px !important;
-  }
-  .video-js .vjs-menu-item.vjs-selected,
-  .video-js .vjs-menu-item.vjs-selected:focus,
-  .video-js .vjs-menu-item.vjs-selected:hover {
-    background-color: rgba(255,255,255,0.1) !important;
-    color: #fff !important;
-  }
-  .video-js .vjs-menu-item:hover {
-    background-color: rgba(255,255,255,0.1) !important;
-  }
+
+  /* Menu popup */
   .video-js .vjs-menu-button-popup .vjs-menu {
-    bottom: 2em !important;
+    position: absolute !important;
+    bottom: 3.2em !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
   }
   .video-js .vjs-menu-content {
-    background-color: rgba(28,28,28,0.9) !important;
-    border-radius: 8px !important;
-    padding: 8px 0 !important;
+    background-color: rgba(15, 23, 42, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 12px !important;
+    padding: 6px 0 !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.6) !important;
   }
-  .video-js {
-    width: 100% !important;
-    font-family: "Roboto", Arial, sans-serif !important;
+  .video-js .vjs-menu-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 18px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
   }
-  .video-js .vjs-loading-spinner { display: none !important; }
-  .video-js.vjs-waiting .vjs-loading-spinner { display: none !important; }
-  .video-js.vjs-seeking .vjs-loading-spinner { display: none !important; }
+  .video-js .vjs-menu-item.vjs-selected {
+    background-color: rgba(255,255,255,0.18) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+  }
+  .video-js .vjs-menu-item:hover {
+    background-color: rgba(255,255,255,0.12) !important;
+  }
+
+  .video-js .vjs-slider {
+    border-radius: 2px !important;
+  }
+  .video-js .vjs-loading-spinner,
+  .video-js.vjs-waiting .vjs-loading-spinner,
+  .video-js.vjs-seeking .vjs-loading-spinner {
+    display: none !important;
+  }
 `;
 
 // ======================== STATUS CHIP COMPONENT ========================
@@ -1480,12 +1773,13 @@ function VideoJsPlayer({
   }, []);
 
   useEffect(() => {
-    if (!document.getElementById("vjs-kiemduyet-styles")) {
-      const s = document.createElement("style");
+    let s = document.getElementById("vjs-kiemduyet-styles") as HTMLStyleElement;
+    if (!s) {
+      s = document.createElement("style");
       s.id = "vjs-kiemduyet-styles";
-      s.textContent = VIDEO_JS_STYLES;
       document.head.appendChild(s);
     }
+    s.textContent = VIDEO_JS_STYLES;
 
     return () => {
       mountedRef.current = false;
@@ -1610,15 +1904,17 @@ function VideoJsPlayer({
             fill: true,
             responsive: true,
             aspectRatio: "16:9",
+            liveui: false,
+            playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
             html5: {
               vhs: isHls
                 ? {
                     overrideNative: true,
                     useNetworkInformationApi: true,
-                    enableLowInitialPlaylist: false,
+                    enableLowInitialPlaylist: true,
                     smoothQualityChange: true,
                     handlePartialData: true,
-                    bandwidth: 8_000_000,
+                    bandwidth: 4_000_000,
                   }
                 : undefined,
               nativeVideoTracks: false,
@@ -1626,13 +1922,20 @@ function VideoJsPlayer({
               nativeTextTracks: false,
             },
             controlBar: {
-              volumePanel: { inline: false },
+              playToggle: true,
+              volumePanel: { inline: true },
+              currentTimeDisplay: true,
+              timeDivider: true,
+              durationDisplay: true,
+              remainingTimeDisplay: false,
+              progressControl: { seekBar: true },
+              liveDisplay: false,
+              seekToLive: false,
+              playbackRateMenuButton: true,
               pictureInPictureToggle: false,
-              chaptersButton: false,
-              subtitlesButton: false,
-              captionsButton: false,
+              subsCapsButton: false,
               audioTrackButton: false,
-              descriptionsButton: false,
+              fullscreenToggle: true,
             },
             sources: [
               {
@@ -2617,11 +2920,7 @@ function KiemDuyetSidebar({
   const [searchTerm, setSearchTerm] = useState("");
   const [openPhan, setOpenPhan] = useState<Record<string, boolean>>({});
   const [openTaiLieu, setOpenTaiLieu] = useState<Record<string, boolean>>({});
-  const [openBaiKiemTra, setOpenBaiKiemTra] = useState<Record<string, boolean>>(
-    {},
-  );
 
-  // Sử dụng useMemo cho các dữ liệu phụ thuộc vào detail
   const phans = useMemo(
     () => detail?.phans ?? detail?.phanHocs ?? [],
     [detail],
@@ -2643,8 +2942,6 @@ function KiemDuyetSidebar({
     setOpenPhan((p) => ({ ...p, [id]: p[id] === false ? true : !p[id] }));
   const toggleTaiLieu = (id: string) =>
     setOpenTaiLieu((p) => ({ ...p, [id]: !p[id] }));
-  const toggleBaiKiemTra = (id: string) =>
-    setOpenBaiKiemTra((p) => ({ ...p, [id]: !p[id] }));
 
   const isActive = (loai: "baiGiang" | "taiLieu" | "baiKiemTra", item: any) => {
     if (!selected || selected.loai !== loai) return false;
@@ -2689,7 +2986,7 @@ function KiemDuyetSidebar({
         const baiGiangs = (
           Array.isArray(phan.baiGiangs)
             ? phan.baiGiangs
-            : flatBaiGiang.filter((bg: any) => bg.idPhan === id)
+            : flatBaiGiang.filter((bg) => bg.idPhan === id)
         ).filter(
           (bg: any) =>
             match(bg.tenBaiGiang) ||
@@ -2713,281 +3010,357 @@ function KiemDuyetSidebar({
       .filter(Boolean) as any[];
   }, [phans, searchTerm, flatBaiGiang, taiLieuOfBaiGiang, baiKiemTraOfPhan]);
 
-  const { tongSo, tongSoCho } = useMemo(() => {
-    let tong = 0;
-    let cho = 0;
-    const countBg = (bg: any) => {
-      tong += 1;
-      if (isTrangThaiCho(bg.trangThaiPheDuyet)) cho += 1;
-      taiLieuOfBaiGiang(bg).forEach((tl: any) => {
-        tong += 1;
-        if (isTrangThaiCho(tl.trangThaiPheDuyet)) cho += 1;
-      });
-    };
-    if (phans.length > 0) {
-      phans.forEach((phan: any, idx: number) => {
-        const id = phan.id ?? phan.idPhan ?? `phan-${idx}`;
-        const baiGiangs = Array.isArray(phan.baiGiangs)
-          ? phan.baiGiangs
-          : flatBaiGiang.filter((bg: any) => bg.idPhan === id);
-        baiGiangs.forEach(countBg);
-        baiKiemTraOfPhan(phan, id).forEach((bkt: any) => {
-          tong += 1;
-          if (isTrangThaiCho(bkt.trangThaiPheDuyet)) cho += 1;
-        });
-      });
-    } else {
-      flatBaiGiang.forEach((bg: any) => countBg(bg));
-      flatBaiKiemTra.forEach((bkt: any) => {
-        tong += 1;
-        if (isTrangThaiCho(bkt.trangThaiPheDuyet)) cho += 1;
-      });
-    }
-    return { tongSo: tong, tongSoCho: cho };
-  }, [
-    phans,
-    flatBaiGiang,
-    flatBaiKiemTra,
-    taiLieuOfBaiGiang,
-    baiKiemTraOfPhan,
-  ]);
+  // Đếm số kết quả tìm kiếm
+  const soKetQuaTimKiem = useMemo(() => {
+    if (!searchTerm.trim()) return 0;
+    let count = 0;
+    filteredPhans.forEach((phan: any) => {
+      count += (phan.baiGiangs ?? []).length;
+      count += (phan.baiKiemTras ?? []).length;
+    });
+    return count;
+  }, [filteredPhans, searchTerm]);
 
-  const phanTram =
-    tongSo > 0 ? Math.round(((tongSo - tongSoCho) / tongSo) * 100) : 100;
-
-  // ---------- RENDER TAI LIEU (đã xóa StatusChip, thêm RejectionReasonIcon) ----------
   const renderTaiLieu = (bg: any) => {
     const taiLieus = taiLieuOfBaiGiang(bg);
     if (taiLieus.length === 0) return null;
     const bgId = bg.idBaiGiang ?? bg.id;
     const open = openTaiLieu[bgId] ?? false;
-    const soCho = demCho(taiLieus);
+    if (!open) return null;
+
     return (
-      <Box sx={{ borderTop: `1px solid ${COLORS.line}` }}>
-        <ListItemButton
-          onClick={() => toggleTaiLieu(bgId)}
-          sx={{ pl: 4, py: 0.75 }}
-        >
-          <AttachFileIcon
-            sx={{ fontSize: 14, color: COLORS.primary, mr: 0.75 }}
-          />
-          <Typography
-            variant="caption"
-            sx={{ flex: 1, fontWeight: 500, color: COLORS.inkSoft }}
-          >
-            {taiLieus.length} tài liệu
-          </Typography>
-          {soCho > 0 && (
-            <Chip
-              label={`${soCho} chờ duyệt`}
-              size="small"
-              sx={{
-                height: 18,
-                fontSize: 10,
-                fontWeight: 700,
-                bgcolor: COLORS.gold,
-                color: "#fff",
-                mr: 0.5,
+      <Box sx={{ mt: 0.75, pl: 2, pr: 0.5, display: "flex", flexDirection: "column", gap: 0.75 }}>
+        {taiLieus.map((tl: any, idx: number) => {
+          const active = isActive("taiLieu", tl);
+          const pending = isTrangThaiCho(tl.trangThaiPheDuyet);
+          const isApproved = tl.trangThaiPheDuyet === "DaDuyet";
+
+          return (
+            <Box
+              key={tl.idTaiLieu ?? tl.id ?? idx}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectContent("taiLieu", tl);
               }}
-            />
-          )}
-          {open ? (
-            <ExpandLessIcon sx={{ fontSize: 16 }} />
-          ) : (
-            <ExpandMoreIcon sx={{ fontSize: 16 }} />
-          )}
-        </ListItemButton>
-        <Collapse in={open}>
-          <Stack sx={{ pl: 4, pr: 1.5, pb: 1, gap: 0.5 }}>
-            {taiLieus.map((tl: any, idx: number) => {
-              const active = isActive("taiLieu", tl);
-              const pending = isTrangThaiCho(tl.trangThaiPheDuyet);
-              return (
-                <Box
-                  key={tl.idTaiLieu ?? tl.id ?? idx}
-                  onClick={() => onSelectContent("taiLieu", tl)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    cursor: "pointer",
-                    transition: "background-color .15s, border-color .15s",
-                    border: `1px solid ${
-                      active
-                        ? COLORS.primary
-                        : pending
-                          ? COLORS.gold
-                          : COLORS.line
-                    }`,
-                    bgcolor: active
-                      ? mix(COLORS.primary, 0.08)
-                      : pending
-                        ? COLORS.goldSoft
-                        : "transparent",
-                  }}
-                >
-                  <AttachFileIcon
-                    sx={{
-                      fontSize: 14,
-                      color: pending ? COLORS.gold : COLORS.primary,
-                      flexShrink: 0,
-                    }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.25,
+                p: "10px 12px",
+                borderRadius: "12px",
+                cursor: "pointer",
+                bgcolor: active ? "#FFFFFF" : "#F8FAFC",
+                border: active
+                  ? `2px solid ${BRAND.main}`
+                  : "1px solid #E2E8F0",
+                boxShadow: active
+                  ? `0 2px 10px ${alpha(BRAND.main, 0.1)}`
+                  : "none",
+                transition: "all 0.15s ease",
+                "&:hover": {
+                  bgcolor: active ? "#FFFFFF" : "#F1F5F9",
+                },
+              }}
+            >
+              <AttachFileIcon
+                sx={{
+                  fontSize: 17,
+                  color: active ? BRAND.main : "#64748B",
+                  flexShrink: 0,
+                }}
+              />
+              <Typography
+                sx={{
+                  flex: 1,
+                  fontWeight: active ? 800 : 600,
+                  fontSize: "12.5px",
+                  color: active ? BRAND.main : "#1E293B",
+                }}
+                noWrap
+              >
+                {tl.tenTaiLieu ?? tl.tieuDe}
+              </Typography>
+
+              <RejectionReasonIcon
+                lyDo={tl.lyDoTuChois ?? tl.lyDoTuChoi ?? tl.ghiChuTuChoi}
+              />
+
+              {pending && (
+                <Tooltip title="Chờ kiểm duyệt" arrow>
+                  <HourglassTopRoundedIcon
+                    sx={{ fontSize: 15, color: "#D97706", flexShrink: 0 }}
                   />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      flex: 1,
-                      fontWeight: active || pending ? 600 : 400,
-                      color: COLORS.ink,
-                    }}
-                    noWrap
-                  >
-                    {tl.tenTaiLieu ?? tl.tieuDe}
-                  </Typography>
-                  {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU CÓ LÝ DO */}
-                  <RejectionReasonIcon
-                    lyDo={tl.lyDoTuChois ?? tl.lyDoTuChoi ?? tl.ghiChuTuChoi}
+                </Tooltip>
+              )}
+              {isApproved && (
+                <Tooltip title="Đã duyệt" arrow>
+                  <CheckCircleRoundedIcon
+                    sx={{ fontSize: 15, color: "#16A34A", flexShrink: 0 }}
                   />
-                </Box>
-              );
-            })}
-          </Stack>
-        </Collapse>
+                </Tooltip>
+              )}
+            </Box>
+          );
+        })}
       </Box>
     );
   };
 
-  // ---------- RENDER BAI GIANG (đã xóa StatusChip, thêm RejectionReasonIcon) ----------
-  const renderBaiGiang = (bg: any) => {
+  const renderBaiGiang = (bg: any, i: number) => {
     const active = isActive("baiGiang", bg);
     const pending = isTrangThaiCho(bg.trangThaiPheDuyet);
+    const isApproved = bg.trangThaiPheDuyet === "DaDuyet";
     const bgId = bg.idBaiGiang ?? bg.id;
+    const taiLieus = taiLieuOfBaiGiang(bg);
+    const hasDocs = taiLieus.length > 0;
+    const isDocOpen = openTaiLieu[bgId] || false;
+
     return (
       <Box key={bgId}>
-        <ListItemButton
-          selected={active}
+        {/* Lecture Card */}
+        <Box
           onClick={() => onSelectContent("baiGiang", bg)}
           sx={{
-            pl: 3.5,
-            pr: 2.5,
-            py: 1.1,
-            borderLeft: `3px solid ${
-              active ? COLORS.primary : pending ? COLORS.gold : "transparent"
-            }`,
-            bgcolor: active
-              ? mix(COLORS.primary, 0.08)
-              : pending
-                ? COLORS.goldSoft
-                : "transparent",
-            transition: "all 0.2s",
-            "&:hover": { bgcolor: mix(COLORS.primary, 0.05) },
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            p: "12px 14px",
+            borderRadius: "16px",
+            cursor: "pointer",
+            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            bgcolor: active ? "#FFFFFF" : "#F1F4F9",
+            border: active
+              ? `2px solid ${BRAND.main}`
+              : "1.5px solid transparent",
+            boxShadow: active
+              ? `0 4px 16px ${alpha(BRAND.main, 0.12)}`
+              : "none",
+            "&:hover": {
+              bgcolor: active ? "#FFFFFF" : "#E9EDF5",
+              transform: "translateY(-1px)",
+            },
           }}
         >
-          <ListItemIcon sx={{ minWidth: 30 }}>
+          {/* Left Rounded Square Icon Box */}
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: "12px",
+              bgcolor: "#FFFFFF",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+              flexShrink: 0,
+              color: active
+                ? BRAND.main
+                : isApproved
+                  ? "#16A34A"
+                  : pending
+                    ? "#D97706"
+                    : "#1E293B",
+              transition: "all 0.2s ease",
+            }}
+          >
             <PlayArrowIcon
               sx={{
-                color: active
-                  ? COLORS.primary
-                  : pending
-                    ? COLORS.gold
-                    : COLORS.inkSoft,
-                fontSize: 18,
+                fontSize: 22,
+                color: active ? BRAND.main : "#1E293B",
               }}
             />
-          </ListItemIcon>
-          <ListItemText
-            primary={
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: active || pending ? 600 : 400,
-                  lineHeight: 1.4,
-                  color: active ? COLORS.primary : COLORS.ink,
-                }}
-                noWrap
+          </Box>
+
+          {/* Title & Duration */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontWeight: active ? 800 : 700,
+                fontSize: "13.5px",
+                lineHeight: 1.35,
+                color: active ? BRAND.main : "#1E293B",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {i + 1}. {bg.tenBaiGiang ?? bg.tieuDe}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                color: "#64748B",
+                fontWeight: 500,
+                mt: 0.4,
+              }}
+            >
+              {Math.floor((bg.thoiLuong ?? 0) / 60)} phút
+              {(bg.thoiLuong ?? 0) % 60 > 0
+                ? ` ${(bg.thoiLuong ?? 0) % 60}s`
+                : ""}
+            </Typography>
+          </Box>
+
+          {/* Right Action Icons: Documents, Rejection & Status */}
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ alignItems: "center", flexShrink: 0 }}
+          >
+            {hasDocs && (
+              <Tooltip
+                title={`${taiLieus.length} tài liệu đính kèm`}
+                arrow
               >
-                {bg.tenBaiGiang ?? bg.tieuDe}
-              </Typography>
-            }
-          />
-          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU CÓ LÝ DO */}
-          <RejectionReasonIcon
-            lyDo={bg.lyDoTuChois ?? bg.lyDoTuChoi ?? bg.ghiChuTuChoi}
-          />
-        </ListItemButton>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleTaiLieu(bgId);
+                  }}
+                  sx={{
+                    color: isDocOpen ? BRAND.main : "#64748B",
+                    p: 0.6,
+                    bgcolor: isDocOpen
+                      ? alpha(BRAND.main, 0.08)
+                      : "transparent",
+                    "&:hover": {
+                      color: BRAND.main,
+                      bgcolor: alpha(BRAND.main, 0.08),
+                    },
+                  }}
+                >
+                  <AttachFileIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            <RejectionReasonIcon
+              lyDo={bg.lyDoTuChois ?? bg.lyDoTuChoi ?? bg.ghiChuTuChoi}
+            />
+
+            {pending && (
+              <Tooltip title="Chờ kiểm duyệt" arrow>
+                <HourglassTopRoundedIcon
+                  sx={{ fontSize: 17, color: "#D97706" }}
+                />
+              </Tooltip>
+            )}
+            {isApproved && (
+              <Tooltip title="Đã duyệt" arrow>
+                <CheckCircleRoundedIcon
+                  sx={{ fontSize: 17, color: "#16A34A" }}
+                />
+              </Tooltip>
+            )}
+          </Stack>
+        </Box>
+
+        {/* Attached Documents */}
         {renderTaiLieu(bg)}
       </Box>
     );
   };
 
-  // ---------- RENDER BAI KIEM TRA ----------
-  const renderBaiKiemTra = (bkt: any) => {
+  const renderBaiKiemTra = (bkt: any, qIdx: number, offsetIdx: number) => {
     const active = isActive("baiKiemTra", bkt);
     const pending = isTrangThaiCho(bkt.trangThaiPheDuyet);
+    const isApproved = bkt.trangThaiPheDuyet === "DaDuyet";
     const bktId = bkt.idBaiKiemTra ?? bkt.id;
     const cauHois: any[] = bkt.cauHois ?? [];
+
     return (
-      <Box key={bktId}>
-        <ListItemButton
-          selected={active}
-          onClick={() => onSelectContent("baiKiemTra", bkt)}
+      <Box
+        key={bktId}
+        onClick={() => onSelectContent("baiKiemTra", bkt)}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          p: "12px 14px",
+          borderRadius: "16px",
+          cursor: "pointer",
+          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+          bgcolor: active ? "#FFFFFF" : "#F1F4F9",
+          border: active
+            ? `2px solid ${BRAND.main}`
+            : "1.5px solid transparent",
+          boxShadow: active
+            ? `0 4px 16px ${alpha(BRAND.main, 0.12)}`
+            : "none",
+          "&:hover": {
+            bgcolor: active ? "#FFFFFF" : "#E9EDF5",
+            transform: "translateY(-1px)",
+          },
+        }}
+      >
+        {/* Left Rounded Square Quiz Icon */}
+        <Box
           sx={{
-            pl: 3,
-            py: 1,
-            borderLeft: `3px solid ${
-              active ? COLORS.primary : pending ? COLORS.gold : "transparent"
-            }`,
-            bgcolor: active
-              ? mix(COLORS.primary, 0.08)
-              : pending
-                ? COLORS.goldSoft
-                : "transparent",
+            width: 44,
+            height: 44,
+            borderRadius: "12px",
+            bgcolor: "#FFFFFF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+            flexShrink: 0,
+            color: active ? BRAND.main : "#64748B",
           }}
         >
-          <ListItemIcon sx={{ minWidth: 30 }}>
-            <QuizIcon
-              sx={{
-                color: active
-                  ? COLORS.primary
-                  : pending
-                    ? COLORS.gold
-                    : COLORS.inkSoft,
-                fontSize: 18,
-              }}
+          <QuizIcon sx={{ fontSize: 22 }} />
+        </Box>
+
+        {/* Quiz Info */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontWeight: active ? 800 : 700,
+              fontSize: "13.5px",
+              lineHeight: 1.35,
+              color: active ? BRAND.main : "#1E293B",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {offsetIdx + qIdx + 1}. {bkt.tenBaiKiemTra ?? bkt.tieuDe ?? "Bài kiểm tra"}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: "12px",
+              color: "#64748B",
+              fontWeight: 500,
+              mt: 0.4,
+            }}
+          >
+            {cauHois.length > 0 ? cauHois.length : bkt.soCauHoi ?? 0} câu hỏi
+            {bkt.gioiHanThoiGian ? `  •  ${bkt.gioiHanThoiGian} phút` : ""}
+          </Typography>
+        </Box>
+
+        <RejectionReasonIcon
+          lyDo={bkt.lyDoTuChois ?? bkt.lyDoTuChoi ?? bkt.ghiChuTuChoi}
+        />
+
+        {/* Status */}
+        {pending && (
+          <Tooltip title="Chờ kiểm duyệt" arrow>
+            <HourglassTopRoundedIcon
+              sx={{ fontSize: 17, color: "#D97706", flexShrink: 0 }}
             />
-          </ListItemIcon>
-          <ListItemText
-            primary={
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: active || pending ? 600 : 400,
-                  lineHeight: 1.4,
-                  color: active ? COLORS.primary : COLORS.ink,
-                }}
-                noWrap
-              >
-                {bkt.tenBaiKiemTra ?? bkt.tieuDe}
-              </Typography>
-            }
-            secondary={
-              cauHois.length > 0 ? (
-                <Typography variant="caption" sx={{ color: COLORS.inkSoft }}>
-                  {cauHois.length} câu hỏi
-                </Typography>
-              ) : undefined
-            }
-          />
-          {/* CHỈ HIỂN THỊ ICON LÝ DO NẾU CÓ LÝ DO */}
-          <RejectionReasonIcon
-            lyDo={bkt.lyDoTuChois ?? bkt.lyDoTuChoi ?? bkt.ghiChuTuChoi}
-          />
-          {/* ĐÃ XÓA IconButton mở rộng và Collapse bên dưới */}
-        </ListItemButton>
-        {/* KHÔNG CÒN Collapse chứa câu hỏi */}
+          </Tooltip>
+        )}
+        {isApproved && (
+          <Tooltip title="Đã duyệt" arrow>
+            <CheckCircleRoundedIcon
+              sx={{ fontSize: 17, color: "#16A34A", flexShrink: 0 }}
+            />
+          </Tooltip>
+        )}
       </Box>
     );
   };
@@ -3005,194 +3378,305 @@ function KiemDuyetSidebar({
         flexDirection: "column",
         overflow: "hidden",
         height: "100%",
+        bgcolor: "#FFFFFF",
       }}
     >
+      {/* Header */}
       <Box
         sx={{
-          p: 2,
-          borderBottom: `1px solid ${COLORS.line}`,
-          bgcolor: COLORS.paperRaised,
+          p: 2.25,
+          pb: 1.5,
+          bgcolor: "#FFFFFF",
           flexShrink: 0,
         }}
       >
         <Typography
+          variant="h6"
           sx={{
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: COLORS.inkSoft,
-            fontFamily: FONTS.body,
-            mb: 1.25,
+            fontWeight: 800,
+            color: "#1E293B",
+            fontSize: "19px",
+            letterSpacing: "-0.2px",
+            mb: 1.75,
           }}
         >
           Nội dung khóa học
         </Typography>
 
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Tìm bài giảng, tài liệu..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{
-            mb: 1.5,
-            bgcolor: CSSVAR.paper,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 1.5,
-              "& fieldset": { borderColor: COLORS.line },
-              "&:hover fieldset": { borderColor: COLORS.primary },
-              "&.Mui-focused fieldset": { borderColor: COLORS.primary },
-            },
-          }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, color: COLORS.inkSoft }} />
-                </InputAdornment>
-              ),
-              endAdornment: searchTerm ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setSearchTerm("")}>
-                    <CloseIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </InputAdornment>
-              ) : undefined,
-            },
-          }}
-        />
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 0.5,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 600, color: COLORS.ink }}
-          >
-            Tiến độ kiểm duyệt
-          </Typography>
-          <Typography
-            variant="caption"
+        {/* Search input */}
+        <Box sx={{ mb: 0.5 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Tìm bài giảng, tài liệu..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
-              fontWeight: 700,
-              color: tongSoCho > 0 ? COLORS.gold : COLORS.success,
+              "& .MuiOutlinedInput-root": {
+                height: "40px",
+                borderRadius: "14px",
+                bgcolor: "#F1F4F9",
+                border: "1px solid transparent",
+                transition: "all 0.2s ease",
+                "& fieldset": { border: "none" },
+                "&:hover": {
+                  bgcolor: "#E9EDF5",
+                },
+                "&.Mui-focused": {
+                  borderColor: BRAND.main,
+                  bgcolor: "#FFFFFF",
+                  boxShadow: `0 0 0 3px ${alpha(BRAND.main, 0.1)}`,
+                },
+              },
+              "& .MuiInputBase-input": {
+                fontSize: "13.5px",
+                color: "#1E293B",
+                padding: "8px 12px",
+                "&::placeholder": {
+                  color: "#94A3B8",
+                  fontWeight: 500,
+                },
+              },
             }}
-          >
-            {phanTram}%
-          </Typography>
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ ml: 0.5 }}>
+                    <SearchIcon
+                      sx={{
+                        fontSize: 18,
+                        color: "#94A3B8",
+                      }}
+                    />
+                  </InputAdornment>
+                ),
+                endAdornment: searchTerm ? (
+                  <InputAdornment position="end" sx={{ gap: 0.5 }}>
+                    <Chip
+                      label={`${soKetQuaTimKiem} kết quả`}
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: "10px",
+                        fontWeight: 700,
+                        bgcolor: alpha(BRAND.main, 0.08),
+                        color: BRAND.main,
+                        "& .MuiChip-label": { px: 1 },
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => setSearchTerm("")}
+                      sx={{ p: 0.5 }}
+                    >
+                      <CloseIcon
+                        sx={{
+                          fontSize: 16,
+                          color: "#94A3B8",
+                        }}
+                      />
+                    </IconButton>
+                  </InputAdornment>
+                ) : undefined,
+              },
+            }}
+          />
         </Box>
-        <LinearProgress
-          variant="determinate"
-          value={phanTram}
-          sx={{
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: mix(COLORS.gold, 0.15),
-            "& .MuiLinearProgress-bar": {
-              backgroundColor: tongSoCho > 0 ? COLORS.gold : COLORS.success,
-              borderRadius: 3,
-            },
-            mb: 0.75,
-          }}
-        />
-        <Typography
-          variant="caption"
-          sx={{ display: "block", textAlign: "right", color: COLORS.inkSoft }}
-        >
-          {tongSoCho} / {tongSo} mục đang chờ duyệt
-        </Typography>
       </Box>
 
-      <Box sx={{ overflowY: "auto", flex: 1, pb: 2 }}>
+      {/* Curriculum Sections List - Scrollable */}
+      <Box
+        sx={{
+          overflowY: "auto",
+          flex: 1,
+          px: 2,
+          pb: 2,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1.5,
+          "&::-webkit-scrollbar": { width: 5 },
+          "&::-webkit-scrollbar-thumb": {
+            bgcolor: "#CBD5E1",
+            borderRadius: 3,
+          },
+        }}
+      >
         {noiDungRong ? (
           <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
+            <FolderRoundedIcon sx={{ fontSize: 40, color: "#CBD5E1", mb: 1 }} />
+            <Typography sx={{ color: "#94A3B8", fontSize: 13, fontWeight: 500 }}>
               Khóa học chưa có nội dung.
             </Typography>
           </Box>
-        ) : phans.length > 0 ? (
-          <>
-            {filteredPhans.map((phan: any, phanIndex: number) => {
-              const id = phan.id ?? phan.idPhan ?? `phan-${phanIndex}`;
-              const baiGiangs = sortPending(
-                Array.isArray(phan.baiGiangs) ? phan.baiGiangs : [],
-              );
-              const baiKiemTras = sortPending(
-                Array.isArray(phan.baiKiemTras) ? phan.baiKiemTras : [],
-              );
-              const soCho = demCho(baiGiangs) + demCho(baiKiemTras);
-              const isOpen = openPhan[id] !== false;
+        ) : filteredPhans.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: "center" }}>
+            <Typography sx={{ color: "#94A3B8", fontSize: 13, fontWeight: 500 }}>
+              Không tìm thấy nội dung phù hợp với &quot;{searchTerm}&quot;.
+            </Typography>
+          </Box>
+        ) : (
+          filteredPhans.map((phan: any, idx: number) => {
+            const phanId = phan.id ?? phan.idPhan ?? `phan-${idx}`;
+            const isOpen = openPhan[phanId] !== false; // Mặc định mở
+            const bgs =
+              phan.baiGiangs ??
+              flatBaiGiang.filter((b: any) => b.idPhan === phanId);
+            const bkts = baiKiemTraOfPhan(phan, phanId);
+            const totalItems = bgs.length + bkts.length;
+            const pendingCount =
+              bgs.filter((b: any) => isTrangThaiCho(b.trangThaiPheDuyet)).length +
+              bkts.filter((b: any) => isTrangThaiCho(b.trangThaiPheDuyet)).length;
+            const isSectionDone = totalItems > 0 && pendingCount === 0;
 
-              return (
-                <Box key={id}>
-                  <ListItemButton
-                    onClick={() => togglePhan(id)}
+            const totalMin = Math.floor(
+              bgs.reduce((s: number, b: any) => s + (b.thoiLuong ?? 0), 0) / 60,
+            );
+
+            return (
+              <Box key={phanId} sx={{ mb: 0.5 }}>
+                {/* Section Accordion Header */}
+                <Box
+                  onClick={() => togglePhan(phanId)}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    p: 1.25,
+                    borderRadius: "16px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      bgcolor: "#F8FAFC",
+                    },
+                  }}
+                >
+                  {/* Circular Section Progress Badge */}
+                  <Box
                     sx={{
-                      bgcolor: soCho > 0 ? COLORS.goldSoft : "transparent",
-                      borderLeft: `3px solid ${
-                        soCho > 0 ? COLORS.gold : "transparent"
-                      }`,
-                      py: 1.5,
-                      px: 2.5,
-                      transition: "background-color 0.2s",
-                      "&:hover": { bgcolor: mix(COLORS.primary, 0.05) },
+                      width: 44,
+                      height: 44,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: isSectionDone
+                        ? "2px solid #16A34A"
+                        : pendingCount > 0
+                          ? "2px solid #FDE68A"
+                          : "2px solid #E2E8F0",
+                      bgcolor: isSectionDone
+                        ? "#F0FDF4"
+                        : pendingCount > 0
+                          ? "#FFFBEB"
+                          : "#FFFFFF",
+                      color: isSectionDone
+                        ? "#16A34A"
+                        : pendingCount > 0
+                          ? "#D97706"
+                          : "#475569",
+                      fontWeight: 800,
+                      fontSize: "12.5px",
+                      transition: "all 0.2s ease",
                     }}
                   >
-                    <FolderRoundedIcon
-                      sx={{ color: COLORS.gold, fontSize: 18, mr: 1.25 }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 700, color: COLORS.ink }}
-                        noWrap
-                      >
-                        {phanIndex + 1}. {phan.tenPhan}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: COLORS.inkSoft }}
-                      >
-                        {baiGiangs.length + baiKiemTras.length} mục
-                        {soCho > 0 ? ` · ${soCho} chờ duyệt` : ""}
-                      </Typography>
-                    </Box>
-                    {isOpen ? (
-                      <ExpandLessIcon sx={{ fontSize: 20 }} />
+                    {isSectionDone ? (
+                      <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />
                     ) : (
-                      <ExpandMoreIcon sx={{ fontSize: 20 }} />
+                      String(idx + 1).padStart(2, "0")
                     )}
-                  </ListItemButton>
-                  <Collapse in={isOpen}>
-                    <List disablePadding>
-                      {baiGiangs.map((bg: any) => renderBaiGiang(bg))}
-                      {baiKiemTras.map((bkt: any) => renderBaiKiemTra(bkt))}
-                    </List>
-                  </Collapse>
+                  </Box>
+
+                  {/* Section Title & Metadata */}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontSize: "11.5px",
+                        fontWeight: 700,
+                        color: "#64748B",
+                        textTransform: "none",
+                        lineHeight: 1.2,
+                        mb: 0.3,
+                      }}
+                    >
+                      Phần {idx + 1}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "14.5px",
+                        color: "#1E293B",
+                        lineHeight: 1.3,
+                      }}
+                      noWrap
+                    >
+                      {phan.tenPhan || `Phần ${idx + 1}`}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        color: pendingCount > 0 ? "#D97706" : "#64748B",
+                        mt: 0.3,
+                      }}
+                    >
+                      {totalItems} mục  •  {totalMin > 0 ? `${totalMin} phút` : "Chưa có video"}
+                      {pendingCount > 0 && `  •  ${pendingCount} chờ duyệt`}
+                    </Typography>
+                  </Box>
+
+                  {/* Chevron Expand/Collapse */}
+                  <IconButton
+                    size="small"
+                    sx={{
+                      color: "#64748B",
+                      p: 0.5,
+                      "&:hover": { color: "#1E293B" },
+                    }}
+                  >
+                    {isOpen ? (
+                      <ExpandLessIcon sx={{ fontSize: 22 }} />
+                    ) : (
+                      <ExpandMoreIcon sx={{ fontSize: 22 }} />
+                    )}
+                  </IconButton>
                 </Box>
-              );
-            })}
-            {filteredPhans.length === 0 && (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Typography variant="body2" sx={{ color: COLORS.inkSoft }}>
-                  Không tìm thấy nội dung phù hợp.
-                </Typography>
+
+                {/* Section Content (Lectures & Quizzes) */}
+                <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1.25,
+                      pt: 1.25,
+                      pl: 0.5,
+                    }}
+                  >
+                    {bgs.length === 0 && bkts.length === 0 ? (
+                      <Typography
+                        sx={{
+                          color: "#94A3B8",
+                          fontSize: 12,
+                          textAlign: "center",
+                          py: 1.5,
+                        }}
+                      >
+                        Chưa có nội dung trong phần này
+                      </Typography>
+                    ) : (
+                      <>
+                        {bgs.map((bg: any, i: number) => renderBaiGiang(bg, i))}
+                        {bkts.map((bkt: any, qIdx: number) =>
+                          renderBaiKiemTra(bkt, qIdx, bgs.length),
+                        )}
+                      </>
+                    )}
+                  </Box>
+                </Collapse>
               </Box>
-            )}
-          </>
-        ) : (
-          <List disablePadding>
-            {sortPending(flatBaiGiang).map((bg: any) => renderBaiGiang(bg))}
-            {sortPending(flatBaiKiemTra).map((bkt: any) =>
-              renderBaiKiemTra(bkt),
-            )}
-          </List>
+            );
+          })
         )}
       </Box>
     </Box>

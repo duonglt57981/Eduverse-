@@ -26,6 +26,7 @@ try {
 import { QualityMenu } from "./QualityMenu";
 import { QualityLevel } from "../types";
 import { getOptimalHlsUrl, buildCloudinaryHlsUrl } from "../utils/cloudinary";
+import { VIDEO_JS_STYLES } from "../utils/videoHelpers";
 import { CloudinaryUrlInfo } from "@/src/types/Cloudinary/Dto/CloudinaryDto";
 import { BRAND } from "@/src/theme/tokens";
 
@@ -184,6 +185,14 @@ export const VideoPlayer = ({
   useEffect(() => {
     isMountedRef.current = true;
 
+    let s = document.getElementById("vjs-student-styles") as HTMLStyleElement;
+    if (!s) {
+      s = document.createElement("style");
+      s.id = "vjs-student-styles";
+      document.head.appendChild(s);
+    }
+    s.textContent = VIDEO_JS_STYLES(BRAND.main, "#7F1D1D");
+
     if (!containerRef.current) return;
 
     const { masterUrl, cloudinaryInfo: info } = getOptimalHlsUrl(url);
@@ -243,9 +252,9 @@ export const VideoPlayer = ({
         nativeTextTracks: false,
       },
       controlBar: {
-        volumePanel: { inline: false },
+        volumePanel: { inline: true },
         progressControl: { seekBar: true },
-        remainingTimeDisplay: { displayNegative: false },
+        remainingTimeDisplay: false,
         playbackRateMenuButton: true,
         pictureInPictureToggle: false,
         chaptersButton: false,

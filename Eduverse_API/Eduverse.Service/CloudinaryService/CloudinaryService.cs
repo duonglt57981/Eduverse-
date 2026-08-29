@@ -874,9 +874,7 @@ namespace Eduverse.Service.CloudinaryService
                 throw new Exception("Tài liệu không được vượt quá 50MB");
 
             var extension = Path.GetExtension(file.FileName).ToLower();
-
-            string[] allowedExtensions =
-            {".docx"};
+            string[] allowedExtensions = { ".pdf", ".doc", ".docx" };
 
             if (!allowedExtensions.Contains(extension))
                 throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");

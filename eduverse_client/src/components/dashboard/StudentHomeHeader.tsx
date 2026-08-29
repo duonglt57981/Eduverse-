@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -38,12 +38,15 @@ import { alpha } from "@mui/material/styles";
 import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
-import { clearGioHang } from "@/src/store/gioHang/GioHangSlice";
+import { clearGioHang, getGioHang } from "@/src/store/gioHang/GioHangSlice";
 import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 import { isNotificationForRole } from "@/src/libs/notificationRole";
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
+import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
+import WishlistHoverPopover from "./header/WishlistHoverPopover";
+import CartHoverPopover from "./header/CartHoverPopover";
 
 const RED = BRAND.main; // Đỏ đô
 const HEADER_H = 74;
@@ -57,6 +60,17 @@ export default function StudentHomeHeader() {
   const user = useSelector((state: any) => state.auth.user);
   const roles = useSelector((state: any) => state.auth.roles) || [];
 
+  const { favorites, favoriteCount, fetchFavorites } = useFavorite();
+  const gioHang = useSelector((state: any) => state.gioHang.gioHang);
+  const cartItemsCount = gioHang?.items?.length ?? 0;
+
+  const [isFavOpen, setIsFavOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const favBtnRef = useRef<HTMLDivElement | null>(null);
+  const cartBtnRef = useRef<HTMLDivElement | null>(null);
+  const favLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cartLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
@@ -65,6 +79,40 @@ export default function StudentHomeHeader() {
   const [notiAnchorEl, setNotiAnchorEl] =
     useState<HTMLButtonElement | null>(null);
   const [selectedNoti, setSelectedNoti] = useState<ThongBao | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    void fetchFavorites();
+    void dispatch(getGioHang());
+  }, [user, dispatch, fetchFavorites]);
+
+  const handleFavMouseEnter = () => {
+    if (favLeaveTimer.current) {
+      clearTimeout(favLeaveTimer.current);
+      favLeaveTimer.current = null;
+    }
+    setIsFavOpen(true);
+  };
+  const handleFavMouseLeave = () => {
+    if (favLeaveTimer.current) clearTimeout(favLeaveTimer.current);
+    favLeaveTimer.current = setTimeout(() => {
+      setIsFavOpen(false);
+    }, 300);
+  };
+
+  const handleCartMouseEnter = () => {
+    if (cartLeaveTimer.current) {
+      clearTimeout(cartLeaveTimer.current);
+      cartLeaveTimer.current = null;
+    }
+    setIsCartOpen(true);
+  };
+  const handleCartMouseLeave = () => {
+    if (cartLeaveTimer.current) clearTimeout(cartLeaveTimer.current);
+    cartLeaveTimer.current = setTimeout(() => {
+      setIsCartOpen(false);
+    }, 300);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -414,44 +462,73 @@ export default function StudentHomeHeader() {
               Khóa học của tôi
             </Button>
 
-            <IconButton
-              onClick={() => router.push("/student/favorites")}
-              sx={{
-                color:
-                  pathname === "/student/favorites"
-                    ? "primary.main"
-                    : "text.secondary",
-                p: 1.1,
-                borderRadius: "50%",
-                transition: "all 200ms ease",
-                "&:hover": {
-                  color: "primary.main",
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                  transform: "scale(1.05)",
-                },
-              }}
+            {/* Wishlist Button with Hover Popover */}
+            <Box
+              ref={favBtnRef}
+              onMouseEnter={handleFavMouseEnter}
+              onMouseLeave={handleFavMouseLeave}
+              sx={{ display: "inline-flex" }}
             >
-              <FavoriteBorderOutlined sx={{ fontSize: 21 }} />
-            </IconButton>
-            <IconButton
-              onClick={() => router.push("/student/cart")}
-              sx={{
-                color:
-                  pathname === "/student/cart"
-                    ? "primary.main"
-                    : "text.secondary",
-                p: 1.1,
-                borderRadius: "50%",
-                transition: "all 200ms ease",
-                "&:hover": {
-                  color: "primary.main",
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                  transform: "scale(1.05)",
-                },
-              }}
+              <IconButton
+                onClick={() => router.push("/student/favorites")}
+                sx={{
+                  color:
+                    pathname === "/student/favorites"
+                      ? "primary.main"
+                      : "text.secondary",
+                  p: 1.1,
+                  borderRadius: "50%",
+                  transition: "all 200ms ease",
+                  "&:hover": {
+                    color: "primary.main",
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                    transform: "scale(1.05)",
+                  },
+                }}
+              >
+                <Badge
+                  badgeContent={favoriteCount}
+                  color="error"
+                  sx={{ "& .MuiBadge-badge": { bgcolor: RED } }}
+                >
+                  <FavoriteBorderOutlined sx={{ fontSize: 21 }} />
+                </Badge>
+              </IconButton>
+            </Box>
+
+            {/* Cart Button with Hover Popover */}
+            <Box
+              ref={cartBtnRef}
+              onMouseEnter={handleCartMouseEnter}
+              onMouseLeave={handleCartMouseLeave}
+              sx={{ display: "inline-flex" }}
             >
-              <ShoppingCartOutlined sx={{ fontSize: 21 }} />
-            </IconButton>
+              <IconButton
+                onClick={() => router.push("/student/cart")}
+                sx={{
+                  color:
+                    pathname === "/student/cart"
+                      ? "primary.main"
+                      : "text.secondary",
+                  p: 1.1,
+                  borderRadius: "50%",
+                  transition: "all 200ms ease",
+                  "&:hover": {
+                    color: "primary.main",
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                    transform: "scale(1.05)",
+                  },
+                }}
+              >
+                <Badge
+                  badgeContent={cartItemsCount}
+                  color="error"
+                  sx={{ "& .MuiBadge-badge": { bgcolor: RED } }}
+                >
+                  <ShoppingCartOutlined sx={{ fontSize: 21 }} />
+                </Badge>
+              </IconButton>
+            </Box>
             <IconButton
               aria-label="Mở thông báo"
               onClick={(event) => setNotiAnchorEl(event.currentTarget)}
@@ -755,6 +832,26 @@ export default function StudentHomeHeader() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Wishlist Hover Popover */}
+        {/* eslint-disable-next-line react-hooks/refs */}
+        <WishlistHoverPopover
+          open={isFavOpen}
+          anchorEl={favBtnRef.current}
+          onMouseEnter={handleFavMouseEnter}
+          onMouseLeave={handleFavMouseLeave}
+          favorites={favorites}
+        />
+
+        {/* Cart Hover Popover */}
+        {/* eslint-disable-next-line react-hooks/refs */}
+        <CartHoverPopover
+          open={isCartOpen}
+          anchorEl={cartBtnRef.current}
+          onMouseEnter={handleCartMouseEnter}
+          onMouseLeave={handleCartMouseLeave}
+          gioHang={gioHang}
+        />
     </Box>
   );
 }

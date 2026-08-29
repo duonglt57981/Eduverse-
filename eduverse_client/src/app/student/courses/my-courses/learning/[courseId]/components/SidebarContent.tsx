@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import {
   Box,
   Typography,
@@ -10,30 +10,29 @@ import {
   IconButton,
   TextField,
   InputAdornment,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   Collapse,
   alpha,
-  LinearProgress,
+  CircularProgress,
   Chip,
+  Tooltip,
+  Divider,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   Close as CloseIcon,
-  ExpandLess as ExpandLessIcon,
-  ExpandMore as ExpandMoreIcon,
-  PlayArrow as PlayArrowIcon,
-  CheckCircle as CheckCircleIcon,
-  Quiz as QuizIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+  PlayArrowRounded as PlayArrowRoundedIcon,
+  CheckCircleRounded as CheckCircleRoundedIcon,
+  QuizRounded as QuizRoundedIcon,
+  FolderOpenOutlined as FolderOpenOutlinedIcon,
+  QuestionAnswerOutlined as QuestionAnswerOutlinedIcon,
 } from "@mui/icons-material";
-import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import { TaiLieuDropdown } from "./TaiLieuDropdown";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { BaiGiangType } from "@/src/types/BaiGiang/Dto/BaiGiangDto";
 import { BaiKiemTraDto } from "@/src/types/baiKiemTra/Dto/baiKiemTraDto";
-import { BRAND, CSSVAR } from "@/src/theme/tokens";
+import { BRAND } from "@/src/theme/tokens";
 
 const PRIMARY_RED = BRAND.main;
 
@@ -87,13 +86,15 @@ export const SidebarContent = ({
   idQuizDangChon,
   onSelectQuiz,
 }: SidebarContentProps) => {
+  const [openTaiLieuMap, setOpenTaiLieuMap] = useState<Record<string, boolean>>({});
+
   // Cast sang PhanHocApi[] để dùng đúng field camelCase từ BE
   const phanHocList = useMemo(
     () => (khoaHoc?.danhSachPhanHoc as unknown as PhanHocApi[]) ?? [],
     [khoaHoc?.danhSachPhanHoc],
   );
 
-  // 🔍 Lọc bài giảng theo từ khóa tìm kiếm (CẢI TIẾN)
+  // 🔍 Lọc bài giảng theo từ khóa tìm kiếm
   const filteredPhanHocs = useMemo(() => {
     if (!phanHocList.length) return [];
     const lower = searchTerm.trim().toLowerCase();
@@ -103,17 +104,14 @@ export const SidebarContent = ({
 
     return phanHocList
       .map((phan) => {
-        // Lọc bài giảng theo từ khóa
         const filteredBaiGiang = (phan.danhSachBaiGiang ?? []).filter((bg) =>
           bg.tieuDe?.toLowerCase().includes(lower),
         );
 
-        // Lọc quiz theo từ khóa
         const filteredQuiz = (phan.danhSachBaiKiemTra ?? []).filter((q) =>
           q.tenBaiKiemTra?.toLowerCase().includes(lower),
         );
 
-        // Kiểm tra tên phần có khớp không
         const tenPhanKhop =
           phan.tenPhan?.toLowerCase().includes(lower) ?? false;
 
@@ -129,7 +127,6 @@ export const SidebarContent = ({
         };
       })
       .filter((phan) => {
-        // Giữ phần nếu tên phần khớp hoặc có ít nhất 1 bài giảng/quiz khớp
         return (
           phan._keepAll ||
           (phan.danhSachBaiGiang?.length ?? 0) > 0 ||
@@ -149,10 +146,38 @@ export const SidebarContent = ({
     return count;
   }, [filteredPhanHocs, searchTerm]);
 
+  // Thống kê tổng số phần và phần hoàn thành
+  const tongSoPhan = phanHocList.length;
+  const soPhanHoanThanh = useMemo(() => {
+    return phanHocList.filter((phan) => {
+      const bgs = phan.danhSachBaiGiang ?? [];
+      if (bgs.length === 0) return false;
+      return bgs.every((b) => progressMap.get(b.id!)?.daHoanThanh === true);
+    }).length;
+  }, [phanHocList, progressMap]);
+
+  // Tổng số mục (bài giảng + quiz)
+  const tongSoMuc = useMemo(() => {
+    return phanHocList.reduce((acc, phan) => {
+      return (
+        acc +
+        (phan.danhSachBaiGiang?.length ?? 0) +
+        (phan.danhSachBaiKiemTra?.length ?? 0)
+      );
+    }, 0);
+  }, [phanHocList]);
+
   // Xóa từ khóa tìm kiếm
   const handleClearSearch = useCallback(() => {
     onSearchChange("");
   }, [onSearchChange]);
+
+  const toggleTaiLieu = (bgId: string) => {
+    setOpenTaiLieuMap((prev) => ({
+      ...prev,
+      [bgId]: !prev[bgId],
+    }));
+  };
 
   return (
     <Box
@@ -161,37 +186,47 @@ export const SidebarContent = ({
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        bgcolor: CSSVAR.paper,
+        bgcolor: "#FFFFFF",
       }}
     >
-      {/* Header - luôn hiển thị */}
+      {/* Header */}
       <Box
         sx={{
-          p: 3,
-          borderBottom: `1px solid ${CSSVAR.divider}`,
-          bgcolor: CSSVAR.paper,
+          p: 2.25,
+          pb: 1.5,
+          bgcolor: "#FFFFFF",
           flexShrink: 0,
         }}
       >
+        {/* Section Title & Mobile Close */}
         <Stack
           direction="row"
-          sx={{ mb: 2, justifyContent: "space-between", alignItems: "center" }}
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1.75,
+          }}
         >
           <Typography
-            variant="subtitle1"
-            sx={{ fontWeight: 900, color: CSSVAR.textPrimary }}
+            variant="h6"
+            sx={{
+              fontWeight: 800,
+              color: "#1E293B",
+              fontSize: "19px",
+              letterSpacing: "-0.2px",
+            }}
           >
             Nội dung khóa học
           </Typography>
           {isMobile && onCloseMobile && (
             <IconButton size="small" onClick={onCloseMobile}>
-              <CloseIcon fontSize="small" />
+              <CloseIcon sx={{ fontSize: 20 }} />
             </IconButton>
           )}
         </Stack>
 
-        {/* 🔍 Ô tìm kiếm - CẢI TIẾN */}
-        <Box sx={{ mb: 2.25 }}>
+        {/* Search input */}
+        <Box sx={{ mb: 0.5 }}>
           <TextField
             fullWidth
             size="small"
@@ -200,29 +235,28 @@ export const SidebarContent = ({
             onChange={(e) => onSearchChange(e.target.value)}
             sx={{
               "& .MuiOutlinedInput-root": {
-                height: "42px",
-                borderRadius: "10px",
-                bgcolor: CSSVAR.bg,
-                border: `1px solid ${CSSVAR.divider}`,
+                height: "40px",
+                borderRadius: "14px",
+                bgcolor: "#F1F4F9",
+                border: "1px solid transparent",
                 transition: "all 0.2s ease",
                 "& fieldset": { border: "none" },
                 "&:hover": {
-                  borderColor: "#CBD5E1",
-                  bgcolor: CSSVAR.paperAlt,
+                  bgcolor: "#E9EDF5",
                 },
                 "&.Mui-focused": {
                   borderColor: PRIMARY_RED,
-                  bgcolor: CSSVAR.paper,
-                  boxShadow: `0 0 0 4px ${alpha(PRIMARY_RED, 0.08)}`,
+                  bgcolor: "#FFFFFF",
+                  boxShadow: `0 0 0 3px ${alpha(PRIMARY_RED, 0.1)}`,
                 },
               },
               "& .MuiInputBase-input": {
-                fontSize: "14px",
-                color: CSSVAR.textPrimary,
+                fontSize: "13.5px",
+                color: "#1E293B",
                 padding: "8px 12px",
                 "&::placeholder": {
-                  color: CSSVAR.textMuted,
-                  fontWeight: 400,
+                  color: "#94A3B8",
+                  fontWeight: 500,
                 },
               },
             }}
@@ -233,7 +267,7 @@ export const SidebarContent = ({
                     <SearchIcon
                       sx={{
                         fontSize: 18,
-                        color: CSSVAR.textMuted,
+                        color: "#94A3B8",
                       }}
                     />
                   </InputAdornment>
@@ -260,7 +294,7 @@ export const SidebarContent = ({
                       <CloseIcon
                         sx={{
                           fontSize: 16,
-                          color: CSSVAR.textMuted,
+                          color: "#94A3B8",
                         }}
                       />
                     </IconButton>
@@ -270,345 +304,418 @@ export const SidebarContent = ({
             }}
           />
         </Box>
-
-        {/* Tiến độ học tập */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 0.75,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 700, color: CSSVAR.textSecondary }}
-          >
-            Tiến độ học tập
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 800, color: PRIMARY_RED }}
-          >
-            {phanTramHoanThanh}%
-          </Typography>
-        </Box>
-        <LinearProgress
-          variant="determinate"
-          value={phanTramHoanThanh}
-          sx={{
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: CSSVAR.paperAlt,
-            "& .MuiLinearProgress-bar": {
-              backgroundColor: PRIMARY_RED,
-              borderRadius: 3,
-            },
-            mb: 1,
-          }}
-        />
-        <Typography
-          variant="caption"
-          sx={{
-            display: "block",
-            textAlign: "right",
-            fontWeight: 600,
-            color: CSSVAR.textSecondary,
-          }}
-        >
-          Đã hoàn thành {soBaiHoanThanh}/{tongBai} bài học
-        </Typography>
       </Box>
 
-      {/* Phần danh sách bài giảng - có thể cuộn */}
-      <Box sx={{ overflowY: "auto", flex: 1, pb: 2 }}>
+      {/* Curriculum Sections List - Scrollable */}
+      <Box
+        sx={{
+          overflowY: "auto",
+          flex: 1,
+          px: 2,
+          pb: 2,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1.5,
+          "&::-webkit-scrollbar": { width: 5 },
+          "&::-webkit-scrollbar-thumb": {
+            bgcolor: "#CBD5E1",
+            borderRadius: 3,
+          },
+        }}
+      >
         {filteredPhanHocs.length > 0 ? (
           filteredPhanHocs.map((phan, idx) => {
             const isOpen = phanDangMo.has(phan.id!);
             const isPlaying = phan.id === idPhanPlay;
             const dsBaiGiang = phan.danhSachBaiGiang ?? [];
             const dsQuiz = phan.danhSachBaiKiemTra ?? [];
+            const totalItems = dsBaiGiang.length + dsQuiz.length;
             const doneCnt = dsBaiGiang.filter(
               (b) => progressMap.get(b.id!)?.daHoanThanh === true,
             ).length;
             const totalMin = Math.floor(
               dsBaiGiang.reduce((s, b) => s + (b.thoiLuong ?? 0), 0) / 60,
             );
-
-            // Hiển thị số lượng kết quả tìm thấy trong phần
-            const soKetQuaTrongPhan = dsBaiGiang.length + dsQuiz.length;
+            const isSectionDone = totalItems > 0 && doneCnt === dsBaiGiang.length;
 
             return (
-              <Box key={phan.id ?? idx}>
-                <ListItemButton
+              <Box key={phan.id ?? idx} sx={{ mb: 0.5 }}>
+                {/* Section Accordion Header */}
+                <Box
                   onClick={() => onTogglePhan(phan.id!, idPhanPlay)}
                   sx={{
-                    bgcolor: isOpen ? CSSVAR.bg : CSSVAR.paper,
-                    borderBottom: `1px solid ${CSSVAR.paperAlt}`,
-                    borderLeft: `3px solid ${
-                      isPlaying ? PRIMARY_RED : "transparent"
-                    }`,
-                    py: 2,
-                    px: 3,
-                    transition: "background-color 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    p: 1.25,
+                    borderRadius: "16px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
                     "&:hover": {
-                      bgcolor: CSSVAR.bg,
+                      bgcolor: "#F8FAFC",
                     },
                   }}
                 >
+                  {/* Circular Section Progress Badge */}
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: isSectionDone
+                        ? "2px solid #16A34A"
+                        : "2px solid #E2E8F0",
+                      bgcolor: isSectionDone ? "#F0FDF4" : "#FFFFFF",
+                      color: isSectionDone ? "#16A34A" : "#475569",
+                      fontWeight: 800,
+                      fontSize: "12.5px",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    {isSectionDone ? (
+                      <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />
+                    ) : (
+                      `${doneCnt}/${dsBaiGiang.length}`
+                    )}
+                  </Box>
+
+                  {/* Section Title & Metadata */}
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
-                      variant="body2"
+                      sx={{
+                        fontSize: "11.5px",
+                        fontWeight: 700,
+                        color: "#64748B",
+                        textTransform: "none",
+                        lineHeight: 1.2,
+                        mb: 0.3,
+                      }}
+                    >
+                      Phần {phan.thuTuSapXep ?? idx + 1}
+                    </Typography>
+                    <Typography
                       sx={{
                         fontWeight: 800,
-                        color: isPlaying ? PRIMARY_RED : CSSVAR.textPrimary,
+                        fontSize: "14.5px",
+                        color: isPlaying ? PRIMARY_RED : "#1E293B",
+                        lineHeight: 1.3,
                       }}
                       noWrap
                     >
-                      {phan.thuTuSapXep ?? idx + 1}. {phan.tenPhan}
+                      {phan.tenPhan}
                     </Typography>
                     <Typography
-                      variant="caption"
                       sx={{
-                        fontWeight: 600,
-                        color: CSSVAR.textSecondary,
-                        mt: 0.5,
-                        display: "block",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        color: "#64748B",
+                        mt: 0.3,
                       }}
                     >
                       {searchTerm.trim()
-                        ? `${soKetQuaTrongPhan} kết quả tìm thấy`
-                        : `${doneCnt}/${dsBaiGiang.length} bài giảng · ${totalMin} phút`}
+                        ? `${totalItems} kết quả`
+                        : `${totalItems} mục  •  ${totalMin > 0 ? `${totalMin} phút` : "Chưa có video"}`}
                     </Typography>
                   </Box>
-                  {isOpen ? (
-                    <ExpandLessIcon
-                      sx={{
-                        fontSize: 20,
-                        color: CSSVAR.textSecondary,
-                      }}
-                    />
-                  ) : (
-                    <ExpandMoreIcon
-                      sx={{
-                        fontSize: 20,
-                        color: CSSVAR.textSecondary,
-                      }}
-                    />
-                  )}
-                </ListItemButton>
 
-                <Collapse in={isOpen} timeout="auto">
-                  <List disablePadding>
-                    {/* Danh sách bài giảng */}
+                  {/* Chevron Expand/Collapse */}
+                  <IconButton
+                    size="small"
+                    sx={{
+                      color: "#64748B",
+                      p: 0.5,
+                      "&:hover": { color: "#1E293B" },
+                    }}
+                  >
+                    {isOpen ? (
+                      <KeyboardArrowUpIcon sx={{ fontSize: 22 }} />
+                    ) : (
+                      <KeyboardArrowDownIcon sx={{ fontSize: 22 }} />
+                    )}
+                  </IconButton>
+                </Box>
+
+                {/* Section Content (Lectures & Quizzes) */}
+                <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1.25,
+                      pt: 1.25,
+                      pl: 0.5,
+                    }}
+                  >
+                    {/* Lectures List */}
                     {dsBaiGiang.map((bg, i) => {
                       const bgDone =
                         progressMap.get(bg.id!)?.daHoanThanh === true;
                       const isSelected = baiGiang?.id === bg.id;
+                      const hasDocs = (bg.danhSachTaiLieu?.length ?? 0) > 0;
+                      const isDocOpen = openTaiLieuMap[bg.id!] || false;
+
                       return (
                         <Box key={bg.id ?? i}>
-                          <ListItemButton
-                            selected={isSelected}
+                          {/* Lecture Card */}
+                          <Box
                             onClick={() => onSelectBaiGiang(bg)}
                             sx={{
-                              pl: 4,
-                              pr: 3,
-                              py: 1.75,
-                              borderLeft: `4px solid ${
-                                isSelected ? PRIMARY_RED : "transparent"
-                              }`,
-                              bgcolor: isSelected
-                                ? "#FEF2F2 !important"
-                                : "transparent",
-                              transition: "all 0.15s ease",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                              p: "12px 14px",
+                              borderRadius: "16px",
+                              cursor: "pointer",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              bgcolor: isSelected ? "#FFFFFF" : "#F1F4F9",
+                              border: isSelected
+                                ? `2px solid ${PRIMARY_RED}`
+                                : "1.5px solid transparent",
+                              boxShadow: isSelected
+                                ? `0 4px 16px ${alpha(PRIMARY_RED, 0.12)}`
+                                : "none",
                               "&:hover": {
-                                bgcolor: CSSVAR.bg,
+                                bgcolor: isSelected ? "#FFFFFF" : "#E9EDF5",
+                                transform: "translateY(-1px)",
                               },
                             }}
                           >
-                            <ListItemIcon sx={{ minWidth: 28 }}>
+                            {/* Left Rounded Square Icon Box */}
+                            <Box
+                              sx={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: "12px",
+                                bgcolor: "#FFFFFF",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                                flexShrink: 0,
+                                color: isSelected
+                                  ? PRIMARY_RED
+                                  : bgDone
+                                    ? "#16A34A"
+                                    : "#1E293B",
+                                transition: "all 0.2s ease",
+                              }}
+                            >
                               {bgDone ? (
-                                <CheckCircleIcon
-                                  sx={{ color: "#15803D", fontSize: 18 }}
-                                />
+                                <CheckCircleRoundedIcon sx={{ fontSize: 22 }} />
                               ) : (
-                                <PlayArrowIcon
+                                <PlayArrowRoundedIcon
                                   sx={{
-                                    color: isSelected ? PRIMARY_RED : CSSVAR.textMuted,
-                                    fontSize: 18,
+                                    fontSize: 22,
+                                    color: isSelected ? PRIMARY_RED : "#1E293B",
                                   }}
                                 />
                               )}
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    fontWeight: isSelected ? 800 : 600,
-                                    lineHeight: 1.4,
-                                    fontSize: "13.5px",
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
-                                    overflow: "hidden",
-                                  }}
-                                  color={isSelected ? PRIMARY_RED : CSSVAR.textPrimary}
-                                >
-                                  {bg.tieuDe}
-                                </Typography>
-                              }
-                              secondary={
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: CSSVAR.textSecondary,
-                                    fontWeight: 500,
-                                    mt: 0.5,
-                                    display: "block",
-                                  }}
-                                >
-                                  {Math.floor((bg.thoiLuong ?? 0) / 60)}p{" "}
-                                  {(bg.thoiLuong ?? 0) % 60}s
-                                </Typography>
-                              }
-                            />
-                          </ListItemButton>
-                          {(bg.danhSachTaiLieu?.length ?? 0) > 0 && (
-                            <TaiLieuDropdown
-                              danhSachTaiLieu={bg.danhSachTaiLieu!}
-                            />
-                          )}
-                          {onOpenQnA && (
-                            <Box
-                              sx={{
-                                pl: 9,
-                                pr: 3,
-                                pb: 1,
-                                display: "flex",
-                              }}
-                            >
-                              <Box
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onOpenQnA(bg);
-                                }}
+                            </Box>
+
+                            {/* Title & Duration */}
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
                                 sx={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 0.5,
-                                  px: 1.25,
-                                  py: 0.4,
-                                  borderRadius: "6px",
-                                  border: `1px solid ${CSSVAR.divider}`,
-                                  cursor: "pointer",
-                                  color: CSSVAR.textSecondary,
-                                  fontSize: 11.5,
-                                  fontWeight: 600,
-                                  transition: "all 0.15s ease",
-                                  "&:hover": {
-                                    borderColor: PRIMARY_RED,
-                                    color: PRIMARY_RED,
-                                    bgcolor: `${PRIMARY_RED}08`,
-                                  },
+                                  fontWeight: isSelected ? 800 : 700,
+                                  fontSize: "13.5px",
+                                  lineHeight: 1.35,
+                                  color: isSelected ? PRIMARY_RED : "#1E293B",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
                                 }}
                               >
-                                <QuestionAnswerOutlinedIcon
-                                  sx={{ fontSize: 13 }}
-                                />
-                                Q&A
-                              </Box>
+                                {i + 1}. {bg.tieuDe}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: "12px",
+                                  color: "#64748B",
+                                  fontWeight: 500,
+                                  mt: 0.4,
+                                }}
+                              >
+                                {Math.floor((bg.thoiLuong ?? 0) / 60)} phút
+                                {(bg.thoiLuong ?? 0) % 60 > 0
+                                  ? ` ${(bg.thoiLuong ?? 0) % 60}s`
+                                  : ""}
+                              </Typography>
+                            </Box>
+
+                            {/* Right Action Icons (Document / Q&A) */}
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              sx={{ alignItems: "center", flexShrink: 0 }}
+                            >
+                              {hasDocs && (
+                                <Tooltip
+                                  title={`${bg.danhSachTaiLieu?.length} tài liệu đính kèm`}
+                                  arrow
+                                >
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleTaiLieu(bg.id!);
+                                    }}
+                                    sx={{
+                                      color: isDocOpen ? PRIMARY_RED : "#64748B",
+                                      p: 0.6,
+                                      bgcolor: isDocOpen
+                                        ? alpha(PRIMARY_RED, 0.08)
+                                        : "transparent",
+                                      "&:hover": {
+                                        color: PRIMARY_RED,
+                                        bgcolor: alpha(PRIMARY_RED, 0.08),
+                                      },
+                                    }}
+                                  >
+                                    <FolderOpenOutlinedIcon
+                                      sx={{ fontSize: 18 }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+
+                              {onOpenQnA && (
+                                <Tooltip title="Đặt câu hỏi bài này" arrow>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onOpenQnA(bg);
+                                    }}
+                                    sx={{
+                                      color: "#64748B",
+                                      p: 0.6,
+                                      "&:hover": {
+                                        color: PRIMARY_RED,
+                                        bgcolor: alpha(PRIMARY_RED, 0.08),
+                                      },
+                                    }}
+                                  >
+                                    <QuestionAnswerOutlinedIcon
+                                      sx={{ fontSize: 17 }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </Stack>
+                          </Box>
+
+                          {/* Attached Document Dropdown */}
+                          {hasDocs && isDocOpen && (
+                            <Box sx={{ mt: 0.75, pl: 2 }}>
+                              <TaiLieuDropdown
+                                danhSachTaiLieu={bg.danhSachTaiLieu!}
+                              />
                             </Box>
                           )}
                         </Box>
                       );
                     })}
 
-                    {/* Danh sách Quiz */}
-                    {dsQuiz.map((quiz) => {
+                    {/* Quiz List */}
+                    {dsQuiz.map((quiz, qIdx) => {
                       const isQuizSelected = idQuizDangChon === quiz.id;
                       return (
-                        <ListItemButton
+                        <Box
                           key={quiz.id}
-                          selected={isQuizSelected}
                           onClick={() => onSelectQuiz?.(quiz)}
                           sx={{
-                            pl: 4,
-                            pr: 3,
-                            py: 1.75,
-                            borderLeft: `4px solid ${
-                              isQuizSelected ? PRIMARY_RED : "transparent"
-                            }`,
-                            bgcolor: isQuizSelected
-                              ? "#FEF2F2 !important"
-                              : "transparent",
-                            transition: "all 0.15s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                            p: "12px 14px",
+                            borderRadius: "16px",
+                            cursor: "pointer",
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            bgcolor: isQuizSelected ? "#FFFFFF" : "#F1F4F9",
+                            border: isQuizSelected
+                              ? `2px solid ${PRIMARY_RED}`
+                              : "1.5px solid transparent",
+                            boxShadow: isQuizSelected
+                              ? `0 4px 16px ${alpha(PRIMARY_RED, 0.12)}`
+                              : "none",
                             "&:hover": {
-                              bgcolor: CSSVAR.bg,
+                              bgcolor: isQuizSelected ? "#FFFFFF" : "#E9EDF5",
+                              transform: "translateY(-1px)",
                             },
                           }}
                         >
-                          <ListItemIcon sx={{ minWidth: 28 }}>
-                            <QuizIcon
+                          {/* Left Rounded Square Quiz Icon */}
+                          <Box
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: "12px",
+                              bgcolor: "#FFFFFF",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                              flexShrink: 0,
+                              color: isQuizSelected ? PRIMARY_RED : "#64748B",
+                            }}
+                          >
+                            <QuizRoundedIcon sx={{ fontSize: 22 }} />
+                          </Box>
+
+                          {/* Quiz Info */}
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
                               sx={{
-                                color: isQuizSelected ? PRIMARY_RED : CSSVAR.textMuted,
-                                fontSize: 18,
+                                fontWeight: isQuizSelected ? 800 : 700,
+                                fontSize: "13.5px",
+                                lineHeight: 1.35,
+                                color: isQuizSelected ? PRIMARY_RED : "#1E293B",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
                               }}
-                            />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontWeight: isQuizSelected ? 800 : 600,
-                                  lineHeight: 1.4,
-                                  fontSize: "13.5px",
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: "vertical",
-                                  overflow: "hidden",
-                                }}
-                                color={isQuizSelected ? PRIMARY_RED : CSSVAR.textPrimary}
-                              >
-                                {quiz.tenBaiKiemTra ?? "Bài kiểm tra"}
-                              </Typography>
-                            }
-                            secondary={
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: CSSVAR.textSecondary,
-                                  fontWeight: 500,
-                                  mt: 0.5,
-                                  display: "block",
-                                }}
-                              >
-                                {quiz.soCauHoi ?? 0} câu hỏi
-                                {quiz.gioiHanThoiGian
-                                  ? ` · ${quiz.gioiHanThoiGian} phút`
-                                  : ""}
-                              </Typography>
-                            }
-                          />
-                        </ListItemButton>
+                            >
+                              {dsBaiGiang.length + qIdx + 1}.{" "}
+                              {quiz.tenBaiKiemTra ?? "Bài kiểm tra"}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "12px",
+                                color: "#64748B",
+                                fontWeight: 500,
+                                mt: 0.4,
+                              }}
+                            >
+                              {quiz.soCauHoi ?? 0} câu hỏi
+                              {quiz.gioiHanThoiGian
+                                ? `  •  ${quiz.gioiHanThoiGian} phút`
+                                : ""}
+                            </Typography>
+                          </Box>
+                        </Box>
                       );
                     })}
-                  </List>
+                  </Box>
                 </Collapse>
               </Box>
             );
           })
         ) : (
-          // Hiển thị khi không có kết quả tìm kiếm
+          /* Empty Search State */
           <Box sx={{ p: 4, textAlign: "center" }}>
             {searchTerm.trim() ? (
               <>
                 <Typography
-                  variant="body1"
                   sx={{
                     fontWeight: 700,
-                    color: CSSVAR.textPrimary,
+                    color: "#1E293B",
+                    fontSize: "15px",
                     mb: 1,
                   }}
                 >
@@ -616,8 +723,7 @@ export const SidebarContent = ({
                 </Typography>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
+                  sx={{ color: "#64748B", mb: 2, fontSize: "13px" }}
                 >
                   Không tìm thấy bài giảng nào phù hợp với &quot;
                   {searchTerm}&quot;
@@ -629,17 +735,140 @@ export const SidebarContent = ({
                     bgcolor: PRIMARY_RED,
                     color: "#fff",
                     fontWeight: 700,
+                    borderRadius: "10px",
                     "&:hover": { bgcolor: "#7F1D1D" },
                   }}
                 />
               </>
             ) : (
-              <Typography color="text.secondary" variant="body2">
+              <Typography sx={{ color: "#64748B", fontSize: "13.5px" }}>
                 Không có bài giảng nào trong khóa học này
               </Typography>
             )}
           </Box>
         )}
+      </Box>
+
+      {/* Bottom Overall Progress Dock */}
+      <Box
+        sx={{
+          p: "16px 20px",
+          bgcolor: "#F3F6FB",
+          borderTop: "1px solid #E2E8F0",
+          flexShrink: 0,
+        }}
+      >
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: "14px",
+            color: "#1E293B",
+            mb: 1.5,
+          }}
+        >
+          Tiến độ tổng thể của bạn
+        </Typography>
+
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          {/* Circular Progress Gauge */}
+          <Box
+            sx={{
+              position: "relative",
+              width: 50,
+              height: 50,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {/* Background Ring */}
+            <CircularProgress
+              variant="determinate"
+              value={100}
+              size={50}
+              thickness={5}
+              sx={{ color: "#E2E8F0", position: "absolute" }}
+            />
+            {/* Accent Progress Ring */}
+            <CircularProgress
+              variant="determinate"
+              value={phanTramHoanThanh}
+              size={50}
+              thickness={5}
+              sx={{
+                color: PRIMARY_RED,
+                strokeLinecap: "round",
+                position: "absolute",
+              }}
+            />
+            <Typography
+              sx={{
+                fontSize: "11px",
+                fontWeight: 900,
+                color: "#1E293B",
+              }}
+            >
+              {phanTramHoanThanh}%
+            </Typography>
+          </Box>
+
+          {/* Stat 1: Completed Sections */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontWeight: 900,
+                fontSize: "16px",
+                color: PRIMARY_RED,
+                lineHeight: 1.1,
+              }}
+            >
+              {soPhanHoanThanh}/{tongSoPhan}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "11.5px",
+                fontWeight: 500,
+                color: "#64748B",
+                mt: 0.3,
+                whiteSpace: "nowrap",
+              }}
+            >
+              phần đã hoàn thành
+            </Typography>
+          </Box>
+
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{ borderColor: "#E2E8F0", height: 32, my: "auto" }}
+          />
+
+          {/* Stat 2: Completed Items */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontWeight: 900,
+                fontSize: "16px",
+                color: PRIMARY_RED,
+                lineHeight: 1.1,
+              }}
+            >
+              {soBaiHoanThanh}/{tongSoMuc}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "11.5px",
+                fontWeight: 500,
+                color: "#64748B",
+                mt: 0.3,
+                whiteSpace: "nowrap",
+              }}
+            >
+              mục đã hoàn thành
+            </Typography>
+          </Box>
+        </Stack>
       </Box>
     </Box>
   );

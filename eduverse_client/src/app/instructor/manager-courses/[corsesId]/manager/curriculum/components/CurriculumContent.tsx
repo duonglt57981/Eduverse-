@@ -127,7 +127,7 @@ const pulseKeyframes = `
 
 // ===== Ràng buộc tài liệu =====
 const DUNG_LUONG_TAI_LIEU_TOI_DA = 50 * 1024 * 1024;
-const DUOI_TAI_LIEU_HOP_LE = [".docx"];
+const DUOI_TAI_LIEU_HOP_LE = [".pdf", ".docx", ".doc"];
 
 function layDuoiFile(tenFile: string): string {
   const idx = tenFile.lastIndexOf(".");
@@ -1991,6 +1991,11 @@ function QuestionDetailForm({
                   }}
                 >
                   <Box
+                    onClick={() => {
+                      if (!loading) {
+                        onToggleDapAnDung(d.id, !d.laDapAnDung);
+                      }
+                    }}
                     sx={{
                       width: 26,
                       height: 26,
@@ -2003,6 +2008,7 @@ function QuestionDetailForm({
                       fontWeight: 700,
                       fontSize: 12,
                       flexShrink: 0,
+                      cursor: "pointer",
                       transition: "all 0.15s ease",
                     }}
                   >
@@ -2011,9 +2017,9 @@ function QuestionDetailForm({
                   {question.loaiCauHoi === "ONE" ? (
                     <Radio
                       {...noPropagation}
-                      checked={d.laDapAnDung}
-                      onChange={(e) =>
-                        onToggleDapAnDung(d.id, e.target.checked)
+                      checked={Boolean(d.laDapAnDung)}
+                      onChange={() =>
+                        onToggleDapAnDung(d.id, true)
                       }
                       size="small"
                       sx={{
@@ -2026,7 +2032,7 @@ function QuestionDetailForm({
                   ) : (
                     <Checkbox
                       {...noPropagation}
-                      checked={d.laDapAnDung}
+                      checked={Boolean(d.laDapAnDung)}
                       onChange={(e) =>
                         onToggleDapAnDung(d.id, e.target.checked)
                       }
@@ -4177,6 +4183,14 @@ export default function CurriculumContent() {
       });
       return;
     }
+    if (question.loaiCauHoi === "ONE" && soDapAnDung > 1) {
+      setToast({
+        open: true,
+        message: "Câu hỏi một đáp án chỉ được có đúng 1 đáp án đúng",
+        severity: "error",
+      });
+      return;
+    }
     if (soDapAnDung >= question.danhSachDapAn.length) {
       setToast({
         open: true,
@@ -5519,7 +5533,7 @@ export default function CurriculumContent() {
                                                     : "Chọn file"}
                                                   <input
                                                     type="file"
-                                                    accept=".docx"
+                                                    accept=".pdf,.docx,.doc"
                                                     hidden
                                                     onChange={(e) => {
                                                       const file =
@@ -5585,8 +5599,8 @@ export default function CurriculumContent() {
                                                   display: "block",
                                                 }}
                                               >
-                                                Hỗ trợ file .docx, dung lượng
-                                                tối đa 50MB
+                                                Hỗ trợ file .pdf, .docx, .doc (dung lượng
+                                                tối đa 50MB)
                                               </Typography>
                                               <Box
                                                 sx={{
@@ -5757,18 +5771,42 @@ export default function CurriculumContent() {
                                     <QuestionDetailForm
                                       question={questionEditor.question}
                                       onQuestionChange={(field, value) =>
-                                        setQuestionEditor((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                question: {
-                                                  ...prev.question,
-                                                  [field]: value,
-                                                },
-                                              }
-                                            : null,
-                                        )
-                                      }
+                                         setQuestionEditor((prev) => {
+                                           if (!prev) return null;
+                                           let updatedQuestion = {
+                                             ...prev.question,
+                                             [field]: value,
+                                           };
+                                           if (
+                                             field === "loaiCauHoi" &&
+                                             value === "ONE"
+                                           ) {
+                                             let foundFirst = false;
+                                             updatedQuestion.danhSachDapAn = (
+                                               prev.question.danhSachDapAn || []
+                                             ).map((d) => {
+                                               if (d.laDapAnDung) {
+                                                 if (!foundFirst) {
+                                                   foundFirst = true;
+                                                   return {
+                                                     ...d,
+                                                     laDapAnDung: true,
+                                                   };
+                                                 }
+                                                 return {
+                                                   ...d,
+                                                   laDapAnDung: false,
+                                                 };
+                                               }
+                                               return d;
+                                             });
+                                           }
+                                           return {
+                                             ...prev,
+                                             question: updatedQuestion,
+                                           };
+                                         })
+                                       }
                                       onAddDapAn={() => {
                                         if (!questionEditor) return;
                                         if (
@@ -5862,26 +5900,28 @@ export default function CurriculumContent() {
                                         if (!questionEditor) return;
                                         setQuestionEditor((prev) => {
                                           if (!prev) return null;
-                                          let newDapAn =
-                                            prev.question.danhSachDapAn.map(
-                                              (d) =>
-                                                d.id === dId
-                                                  ? {
-                                                      ...d,
-                                                      laDapAnDung: checked,
-                                                    }
-                                                  : d,
-                                            );
+                                          let newDapAn: typeof prev.question.danhSachDapAn;
                                           if (
-                                            prev.question.loaiCauHoi ===
-                                              "ONE" &&
-                                            checked
+                                            prev.question.loaiCauHoi === "ONE"
                                           ) {
-                                            newDapAn = newDapAn.map((d) =>
-                                              d.id === dId
-                                                ? { ...d, laDapAnDung: true }
-                                                : { ...d, laDapAnDung: false },
-                                            );
+                                            newDapAn =
+                                              prev.question.danhSachDapAn.map(
+                                                (d) => ({
+                                                  ...d,
+                                                  laDapAnDung: d.id === dId,
+                                                }),
+                                              );
+                                          } else {
+                                            newDapAn =
+                                              prev.question.danhSachDapAn.map(
+                                                (d) =>
+                                                  d.id === dId
+                                                    ? {
+                                                        ...d,
+                                                        laDapAnDung: checked,
+                                                      }
+                                                    : d,
+                                              );
                                           }
                                           return {
                                             ...prev,
@@ -6438,13 +6478,22 @@ export default function CurriculumContent() {
             sx={{ flex: 1, display: "flex", p: 0, minHeight: 0 }}
           >
             {docPopup.url ? (
-              <iframe
-                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-                  docPopup.url,
-                )}`}
-                style={{ width: "100%", height: "100%", border: "none" }}
-                title={docPopup.name}
-              />
+              docPopup.url.toLowerCase().includes(".pdf") ||
+              docPopup.name?.toLowerCase().endsWith(".pdf") ? (
+                <iframe
+                  src={docPopup.url}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  title={docPopup.name}
+                />
+              ) : (
+                <iframe
+                  src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+                    docPopup.url,
+                  )}`}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  title={docPopup.name}
+                />
+              )
             ) : (
               <Box
                 sx={{
