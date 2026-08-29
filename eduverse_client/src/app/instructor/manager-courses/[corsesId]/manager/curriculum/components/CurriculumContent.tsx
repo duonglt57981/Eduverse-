@@ -5773,7 +5773,7 @@ export default function CurriculumContent() {
                                       onQuestionChange={(field, value) =>
                                          setQuestionEditor((prev) => {
                                            if (!prev) return null;
-                                           let updatedQuestion = {
+                                           const updatedQuestion = {
                                              ...prev.question,
                                              [field]: value,
                                            };

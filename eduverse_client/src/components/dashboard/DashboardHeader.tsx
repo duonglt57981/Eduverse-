@@ -80,6 +80,8 @@ export default function DashboardHeader({
 
   const [isFavOpen, setIsFavOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [favAnchorEl, setFavAnchorEl] = useState<HTMLElement | null>(null);
+  const [cartAnchorEl, setCartAnchorEl] = useState<HTMLElement | null>(null);
   const favBtnRef = React.useRef<HTMLDivElement | null>(null);
   const cartBtnRef = React.useRef<HTMLDivElement | null>(null);
   const favLeaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,10 +94,15 @@ export default function DashboardHeader({
     }
   }, [user, dispatch, fetchFavorites]);
 
-  const handleFavMouseEnter = () => {
+  const handleFavMouseEnter = (e?: React.MouseEvent<HTMLElement>) => {
     if (favLeaveTimer.current) {
       clearTimeout(favLeaveTimer.current);
       favLeaveTimer.current = null;
+    }
+    if (e?.currentTarget) {
+      setFavAnchorEl(e.currentTarget);
+    } else if (favBtnRef.current) {
+      setFavAnchorEl(favBtnRef.current);
     }
     setIsFavOpen(true);
   };
@@ -106,10 +113,15 @@ export default function DashboardHeader({
     }, 300);
   };
 
-  const handleCartMouseEnter = () => {
+  const handleCartMouseEnter = (e?: React.MouseEvent<HTMLElement>) => {
     if (cartLeaveTimer.current) {
       clearTimeout(cartLeaveTimer.current);
       cartLeaveTimer.current = null;
+    }
+    if (e?.currentTarget) {
+      setCartAnchorEl(e.currentTarget);
+    } else if (cartBtnRef.current) {
+      setCartAnchorEl(cartBtnRef.current);
     }
     setIsCartOpen(true);
   };
@@ -1095,20 +1107,18 @@ export default function DashboardHeader({
           </Menu>
 
           {/* Wishlist Hover Popover */}
-          {/* eslint-disable-next-line react-hooks/refs */}
           <WishlistHoverPopover
             open={isFavOpen}
-            anchorEl={favBtnRef.current}
+            anchorEl={favAnchorEl}
             onMouseEnter={handleFavMouseEnter}
             onMouseLeave={handleFavMouseLeave}
             favorites={favorites}
           />
 
           {/* Cart Hover Popover */}
-          {/* eslint-disable-next-line react-hooks/refs */}
           <CartHoverPopover
             open={isCartOpen}
-            anchorEl={cartBtnRef.current}
+            anchorEl={cartAnchorEl}
             onMouseEnter={handleCartMouseEnter}
             onMouseLeave={handleCartMouseLeave}
             gioHang={gioHang}

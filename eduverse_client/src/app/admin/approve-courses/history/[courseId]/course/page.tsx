@@ -2986,7 +2986,7 @@ function KiemDuyetSidebar({
         const baiGiangs = (
           Array.isArray(phan.baiGiangs)
             ? phan.baiGiangs
-            : flatBaiGiang.filter((bg) => bg.idPhan === id)
+            : flatBaiGiang.filter((bg: any) => bg.idPhan === id)
         ).filter(
           (bg: any) =>
             match(bg.tenBaiGiang) ||
