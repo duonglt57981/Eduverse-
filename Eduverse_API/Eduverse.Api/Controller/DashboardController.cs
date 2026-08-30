@@ -695,7 +695,11 @@ namespace Eduverse.Api.Controller
             {
                 var mStart = curMonthStart.AddMonths(-i);
                 var mEnd = mStart.AddMonths(1);
-                int cnt = myRegs.Count(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= mStart && r.ThoiGianDK.Value < mEnd);
+                int cnt = myRegs
+                    .Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= mStart && r.ThoiGianDK.Value < mEnd && r.IdNguoiDangKi.HasValue)
+                    .Select(r => r.IdNguoiDangKi!.Value)
+                    .Distinct()
+                    .Count();
                 monthlyEnrollments.Add(new { label = "Tháng " + mStart.Month, value = cnt });
             }
 

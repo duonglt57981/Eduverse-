@@ -590,7 +590,7 @@ export default function InstructorDashboardContent() {
     const key = n.id || n.tieuDe;
     if (!notifMap.has(key)) notifMap.set(key, n);
   });
-  const notiDisplayList = Array.from(notifMap.values()).slice(0, 3);
+  const notiDisplayList = Array.from(notifMap.values()).slice(0, 4);
 
   // Dữ liệu biểu đồ học viên & tăng trưởng
   const chartMonths: { label: string; value: number }[] =
@@ -623,7 +623,6 @@ export default function InstructorDashboardContent() {
       lightBg: "rgba(139, 19, 19, 0.08)",
       color: BRAND.main,
       sub: "Đang giảng dạy",
-      onClick: () => router.push("/instructor/manager-courses"),
     },
     {
       label: "Tổng học viên",
@@ -633,7 +632,6 @@ export default function InstructorDashboardContent() {
       lightBg: "rgba(37, 99, 235, 0.08)",
       color: "#2563EB",
       sub: "Đã tham gia học",
-      onClick: () => router.push("/instructor/students"),
     },
     {
       label: "Doanh thu cá nhân",
@@ -645,7 +643,6 @@ export default function InstructorDashboardContent() {
       lightBg: "rgba(22, 163, 74, 0.08)",
       color: "#16A34A",
       sub: "Tổng thu nhập",
-      onClick: () => router.push("/instructor/money"),
     },
     {
       label: "Số dư khả dụng",
@@ -655,7 +652,6 @@ export default function InstructorDashboardContent() {
       lightBg: "rgba(139, 19, 19, 0.08)",
       color: BRAND.main,
       sub: "Sẵn sàng rút",
-      onClick: () => router.push("/instructor/money"),
     },
   ];
 
@@ -882,7 +878,6 @@ export default function InstructorDashboardContent() {
             <Paper
               key={stat.label}
               elevation={0}
-              onClick={stat.onClick}
               sx={{
                 p: 2.75,
                 borderRadius: "24px",
@@ -890,18 +885,7 @@ export default function InstructorDashboardContent() {
                 bgcolor: "#FFFFFF",
                 position: "relative",
                 overflow: "hidden",
-                cursor: "pointer",
-                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.02)",
-                "&:hover": {
-                  transform: "translateY(-4px)",
-                  boxShadow: "0 14px 30px -8px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0,0,0,0.03)",
-                  borderColor: stat.color,
-                  "& .stat-arrow": {
-                    opacity: 1,
-                    transform: "translateX(0)",
-                  },
-                },
               }}
             >
               {/* Background ambient tint */}
@@ -919,7 +903,7 @@ export default function InstructorDashboardContent() {
                 }}
               />
 
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              <Box sx={{ mb: 2 }}>
                 <Box
                   sx={{
                     width: 48,
@@ -934,25 +918,6 @@ export default function InstructorDashboardContent() {
                   }}
                 >
                   <Icon sx={{ fontSize: 24 }} />
-                </Box>
-
-                <Box
-                  className="stat-arrow"
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    bgcolor: "#F8FAFC",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: stat.color,
-                    opacity: 0.4,
-                    transform: "translateX(-4px)",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <ArrowForwardRounded sx={{ fontSize: 16 }} />
                 </Box>
               </Box>
 

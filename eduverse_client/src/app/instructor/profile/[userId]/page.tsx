@@ -130,6 +130,14 @@ export default function InstructorProfilePage() {
               matched?.soLuongHocVien ||
               matched?.tongHocVien ||
               0,
+            soLuongDanhGia:
+              kh.soLuongDanhGia ??
+              matched?.soLuongDanhGia ??
+              0,
+            diemDanhGiaTrungBinh:
+              kh.diemDanhGiaTrungBinh ??
+              matched?.diemDanhGiaTrungBinh ??
+              0,
             capDo: kh.capDo || matched?.capDo || "Tất cả cấp độ",
             gia: kh.gia ?? matched?.gia ?? 0,
             giaGoc: kh.giaGoc ?? matched?.giaGoc,

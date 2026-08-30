@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.DonHang_GiangVienRepository;
@@ -232,7 +232,7 @@ namespace Eduverse.Service.ThongKeKhoaHocService
                 {
                     Nam = g.Key.Year,
                     Thang = g.Key.Month,
-                    SoLuong = g.Count(),
+                    SoLuong = g.Where(x => x.IdNguoiDangKi.HasValue).Select(x => x.IdNguoiDangKi!.Value).Distinct().Count(),
                 }).ToList();
 
             // Lấy thông tin user
@@ -254,18 +254,30 @@ namespace Eduverse.Service.ThongKeKhoaHocService
                 double phanTram = 0;
                 try
                 {
-                    phanTram = await _khoaHocService.TinhPhanTramHoanThanh(dk.Id, dk.CreatedDate);
+                    var map = await LayMapBaiGiangHienTai(idKhoaHoc);
+                    var listTienDo = await _tienDoRepo.GetQueryable()
+                        .Where(x => x.IdDangKi == dk.Id && !x.IsDeleted)
+                        .Select(x => new { x.IdBaiGiang, x.TrangThai })
+                        .ToListAsync();
+
+                    var baiGiangHoanThanhHienTai = listTienDo
+                        .Where(x => x.TrangThai == "HoanThanh" && x.IdBaiGiang.HasValue)
+                        .Select(x => map.idVeHienTai.TryGetValue(x.IdBaiGiang!.Value, out var hienTai) ? hienTai : x.IdBaiGiang.Value)
+                        .Where(id => map.baiGiangHienTaiIds.Contains(id))
+                        .Distinct()
+                        .Count();
+
+                    phanTram = map.tongSoBaiGiang > 0
+                        ? (double)baiGiangHoanThanhHienTai / map.tongSoBaiGiang * 100
+                        : 0;
                 }
-                catch
-                {
-                    // giữ 0% nếu tính lỗi (VD: khóa học chưa có bài giảng)
-                }
+                catch { }
 
                 danhSach.Add(new HocVienGanDayDto
                 {
                     IdHocVien = dk.IdNguoiDangKi ?? Guid.Empty,
                     IdDangKy = dk.Id,
-                    HoTen = u?.HoTen,
+                    HoTen = u?.HoTen ?? "Học viên",
                     AnhDaiDien = u?.AnhDaiDien,
                     Email = u?.Email,
                     GiaDangKy = dk.GiaDangKy,
@@ -279,10 +291,10 @@ namespace Eduverse.Service.ThongKeKhoaHocService
 
             return new ThongKeHocVienDto
             {
-                TongHocVien = tatCa.Count,
-                HocVienMoi30Ngay = tatCa.Count(x => x.ThoiGianDK >= now.AddDays(-30)),
-                DangHoc = tatCa.Count(x => x.IsDangKy == true && x.NgayHetHan >= now),
-                HetHan = tatCa.Count(x => x.NgayHetHan < now),
+                TongHocVien = tatCa.Where(x => x.IdNguoiDangKi.HasValue).Select(x => x.IdNguoiDangKi!.Value).Distinct().Count(),
+                HocVienMoi30Ngay = tatCa.Where(x => x.ThoiGianDK >= now.AddDays(-30) && x.IdNguoiDangKi.HasValue).Select(x => x.IdNguoiDangKi!.Value).Distinct().Count(),
+                DangHoc = tatCa.Where(x => x.IsDangKy == true && x.NgayHetHan >= now && x.IdNguoiDangKi.HasValue).Select(x => x.IdNguoiDangKi!.Value).Distinct().Count(),
+                HetHan = tatCa.Where(x => x.NgayHetHan < now && x.IdNguoiDangKi.HasValue).Select(x => x.IdNguoiDangKi!.Value).Distinct().Count(),
                 HocVienTheoThang = theoThang,
                 DanhSachHocVien = danhSach,
             };

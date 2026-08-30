@@ -239,48 +239,50 @@ export default function InstructorCourseCard({
 
         {/* Rating score + Stars OR 'Chưa có đánh giá' */}
         {hasRating ? (
-          <Stack
-            direction="row"
-            spacing={0.5}
-            sx={{ alignItems: "center", mt: 0.25 }}
-          >
-            <Typography
-              sx={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "#b45309",
-                lineHeight: 1,
-              }}
+          <Tooltip title={`${reviewCount} lượt đánh giá`} arrow placement="top">
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ alignItems: "center", mt: 0.25, width: "fit-content" }}
             >
-              {ratingVal.toFixed(1).replace(".", ",")}
-            </Typography>
-            <Stack direction="row" spacing={0.1} sx={{ alignItems: "center" }}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <StarRounded
-                  key={star}
-                  sx={{
-                    fontSize: 13.5,
-                    color:
-                      star <= Math.round(ratingVal)
-                        ? "#f59e0b"
-                        : "#d1d5db",
-                  }}
-                />
-              ))}
-            </Stack>
-            {reviewCount > 0 && (
               <Typography
                 sx={{
-                  fontSize: 11.5,
-                  color: "var(--dashboard-text-muted, rgba(31,41,55,0.6))",
-                  fontWeight: 500,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#b45309",
                   lineHeight: 1,
                 }}
               >
-                ({reviewCount.toLocaleString()})
+                {ratingVal.toFixed(1).replace(".", ",")}
               </Typography>
-            )}
-          </Stack>
+              <Stack direction="row" spacing={0.1} sx={{ alignItems: "center" }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <StarRounded
+                    key={star}
+                    sx={{
+                      fontSize: 13.5,
+                      color:
+                        star <= Math.round(ratingVal)
+                          ? "#f59e0b"
+                          : "#d1d5db",
+                    }}
+                  />
+                ))}
+              </Stack>
+              {reviewCount > 0 && (
+                <Typography
+                  sx={{
+                    fontSize: 11.5,
+                    color: "var(--dashboard-text-muted, rgba(31,41,55,0.6))",
+                    fontWeight: 500,
+                    lineHeight: 1,
+                  }}
+                >
+                  ({reviewCount.toLocaleString()})
+                </Typography>
+              )}
+            </Stack>
+          </Tooltip>
         ) : (
           <Stack
             direction="row"

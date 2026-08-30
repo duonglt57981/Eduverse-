@@ -3587,6 +3587,7 @@ namespace Eduverse.Service.KhoaHocService
             var members = await _khoaHoc_GiangVienRepository.GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .OrderByDescending(x => x.LaChuSoHuu)
                 .Select(x => new { x.IdGiangVien, x.LaChuSoHuu, x.Visible })
                 .ToListAsync();
 
@@ -3596,7 +3597,7 @@ namespace Eduverse.Service.KhoaHocService
                 return createdId.HasValue ? new List<Guid> { createdId.Value } : new List<Guid>();
             }
 
-            var visibleOnes = members.Where(x => x.Visible).Select(x => x.IdGiangVien).ToList();
+            var visibleOnes = members.Where(x => x.Visible).OrderByDescending(x => x.LaChuSoHuu).Select(x => x.IdGiangVien).ToList();
             if (visibleOnes.Any()) return visibleOnes;
 
             var owner = members.FirstOrDefault(x => x.LaChuSoHuu);
@@ -3606,13 +3607,21 @@ namespace Eduverse.Service.KhoaHocService
         // Lấy đầy đủ thông tin (tên, ảnh, tiểu sử) của những giảng viên cần hiển thị
         private async Task<List<GiangVienHienThiDto>> LayThongTinGiangVienHienThi(Guid idKhoaHoc, Guid? createdId)
         {
+            var members = await _khoaHoc_GiangVienRepository.GetQueryable()
+                .AsNoTracking()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .Select(x => new { x.IdGiangVien, x.LaChuSoHuu })
+                .ToListAsync();
+
+            var ownerId = members.FirstOrDefault(x => x.LaChuSoHuu)?.IdGiangVien ?? createdId;
+
             var ids = await LayDanhSachIdGiangVienHienThi(idKhoaHoc, createdId);
             if (!ids.Any()) return new List<GiangVienHienThiDto>();
 
             var users = await _appUserService.GetQueryable()
                 .AsNoTracking()
                 .Where(u => ids.Contains(u.Id))
-                .Select(u => new { u.Id, u.HoTen, u.AnhDaiDien, u.TieuSu })
+                .Select(u => new { u.Id, u.HoTen, u.AnhDaiDien, u.TieuSu, u.ChucVu })
                 .ToListAsync();
 
             return ids
@@ -3623,8 +3632,11 @@ namespace Eduverse.Service.KhoaHocService
                     Id = u!.Id,
                     HoTen = u.HoTen,
                     AnhDaiDien = u.AnhDaiDien,
-                    TieuSu = u.TieuSu
+                    TieuSu = u.TieuSu,
+                    ChucDanh = u.ChucVu,
+                    LaChuSoHuu = (u.Id == ownerId) || members.Any(m => m.IdGiangVien == u.Id && m.LaChuSoHuu)
                 })
+                .OrderByDescending(x => x.LaChuSoHuu)
                 .ToList();
         }
 
@@ -3656,7 +3668,7 @@ namespace Eduverse.Service.KhoaHocService
 
                 if (membersByKhoaHoc.TryGetValue(item.Id, out var ds) && ds.Any())
                 {
-                    var visibleOnes = ds.Where(x => x.Visible).Select(x => x.IdGiangVien).ToList();
+                    var visibleOnes = ds.Where(x => x.Visible).OrderByDescending(x => x.LaChuSoHuu).Select(x => x.IdGiangVien).ToList();
                     ids = visibleOnes.Any()
                         ? visibleOnes
                         : (ds.FirstOrDefault(x => x.LaChuSoHuu) is { } owner
@@ -3686,17 +3698,32 @@ namespace Eduverse.Service.KhoaHocService
                         HoTen = (!string.IsNullOrWhiteSpace(u.HoTen) ? u.HoTen
                                : !string.IsNullOrWhiteSpace(u.UserName) ? u.UserName
                                : u.Email) ?? "",
-                        AnhDaiDien = u.AnhDaiDien
+                        AnhDaiDien = u.AnhDaiDien,
+                        TieuSu = u.TieuSu,
+                        ChucDanh = u.ChucVu
                     })
                     .ToDictionaryAsync(x => x.Id);
             }
 
             foreach (var item in items)
             {
+                var ownerId = membersByKhoaHoc.TryGetValue(item.Id, out var ds)
+                    ? ds.FirstOrDefault(x => x.LaChuSoHuu)?.IdGiangVien ?? item.CreatedId
+                    : item.CreatedId;
+
                 var giangViens = idsTheoKhoaHoc.TryGetValue(item.Id, out var ids)
                     ? ids.Select(id => infoById.GetValueOrDefault(id))
                          .Where(gv => gv != null && !string.IsNullOrWhiteSpace(gv!.HoTen))
-                         .Select(gv => gv!)
+                         .Select(gv => new GiangVienHienThiDto
+                         {
+                             Id = gv!.Id,
+                             HoTen = gv.HoTen,
+                             AnhDaiDien = gv.AnhDaiDien,
+                             TieuSu = gv.TieuSu,
+                             ChucDanh = gv.ChucDanh,
+                             LaChuSoHuu = (gv.Id == ownerId) || (membersByKhoaHoc.TryGetValue(item.Id, out var mList) && mList.Any(m => m.IdGiangVien == gv.Id && m.LaChuSoHuu))
+                         })
+                         .OrderByDescending(x => x.LaChuSoHuu)
                          .ToList()
                     : new List<GiangVienHienThiDto>();
 
