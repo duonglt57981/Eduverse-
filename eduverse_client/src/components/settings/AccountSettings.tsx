@@ -51,7 +51,6 @@ import {
   WcRounded,
   BadgeRounded,
   DeleteOutlineRounded,
-  DeleteRounded,
 } from "@mui/icons-material";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";

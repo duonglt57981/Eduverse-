@@ -1362,7 +1362,7 @@ export default function InstructorsContent() {
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
-                  mb: 1.5,
+                  flexWrap: "wrap",
                 }}
               >
                 <TextField
@@ -1370,10 +1370,8 @@ export default function InstructorsContent() {
                   size="small"
                   value={formMoi.tyLeChiaDoanhThu}
                   onChange={(e) => {
-                    const v = Math.min(
-                      100,
-                      Math.max(0, Number(e.target.value)),
-                    );
+                    const num = e.target.value === "" ? 0 : Number(e.target.value);
+                    const v = Math.min(100, Math.max(0, isNaN(num) ? 0 : num));
                     setFormMoi((p) => ({ ...p, tyLeChiaDoanhThu: v }));
                   }}
                   disabled={dangGui}
@@ -1381,7 +1379,7 @@ export default function InstructorsContent() {
                     htmlInput: { min: 0, max: 100, step: 5 },
                     input: {
                       endAdornment: (
-                        <InputAdornment position="end">
+                        <InputAdornment position="end" sx={{ mr: 0.5 }}>
                           <Typography
                             sx={{
                               fontSize: 14,
@@ -1398,15 +1396,22 @@ export default function InstructorsContent() {
                   sx={{
                     width: 120,
                     "& .MuiOutlinedInput-root": {
-                      borderRadius: "12px",
+                      height: 38,
+                      borderRadius: "10px",
                       bgcolor: "#FFFFFF",
                       "& input": {
                         textAlign: "center",
                         fontWeight: 800,
-                        fontSize: 16,
+                        fontSize: 15,
+                        py: 0,
+                        height: "100%",
                       },
                       "& fieldset": { borderColor: "#CBD5E1" },
-                      "&.Mui-focused fieldset": { borderColor: MAU.chinh },
+                      "&:hover fieldset": { borderColor: "#94A3B8" },
+                      "&.Mui-focused fieldset": {
+                        borderColor: MAU.chinh,
+                        borderWidth: 1.5,
+                      },
                     },
                   }}
                 />
@@ -1415,7 +1420,7 @@ export default function InstructorsContent() {
                 <Stack
                   direction="row"
                   spacing={0.75}
-                  sx={{ flexWrap: "wrap", gap: 0.5 }}
+                  sx={{ flexWrap: "wrap", gap: 0.5, alignItems: "center" }}
                 >
                   {[0, 10, 20, 30, 50].map((val) => (
                     <Chip
@@ -1426,13 +1431,15 @@ export default function InstructorsContent() {
                       onClick={() =>
                         setFormMoi((p) => ({
                           ...p,
-                          tyLeChiaDoanhThu: Math.min(100 - tongTyLe, val),
+                          tyLeChiaDoanhThu: val,
                         }))
                       }
                       sx={{
-                        fontSize: 12,
+                        height: 38,
+                        fontSize: 12.5,
                         fontWeight: 700,
-                        borderRadius: "8px",
+                        borderRadius: "10px",
+                        cursor: "pointer",
                         bgcolor:
                           formMoi.tyLeChiaDoanhThu === val
                             ? `${MAU.chinh}15`
@@ -1445,7 +1452,11 @@ export default function InstructorsContent() {
                           formMoi.tyLeChiaDoanhThu === val
                             ? `1.5px solid ${MAU.chinh}`
                             : "1px solid #E2E8F0",
-                        "&:hover": { bgcolor: `${MAU.chinh}10` },
+                        transition: "all 0.15s ease",
+                        "&:hover": {
+                          bgcolor: `${MAU.chinh}12`,
+                          borderColor: MAU.chinh,
+                        },
                       }}
                     />
                   ))}
