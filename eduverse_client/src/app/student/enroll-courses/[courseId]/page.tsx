@@ -2,7 +2,7 @@
 "use client";
 
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSelector } from "@/src/store/hook";
 import {
@@ -232,6 +232,11 @@ function isValidGuid(id?: string | null): id is string {
 }
 
 function getGiangVienId(khoaHoc: any): string | null {
+  const ds = khoaHoc?.danhSachGiangVien;
+  if (Array.isArray(ds) && ds.length > 0) {
+    const owner = ds.find((g: any) => g.laChuSoHuu) || ds.find((g: any) => g.id === khoaHoc?.createdId) || ds[0];
+    if (owner?.id && isValidGuid(owner.id)) return owner.id;
+  }
   const id = khoaHoc?.createdId || khoaHoc?.giangVien?.id;
   return typeof id === "string" && isValidGuid(id) ? id : null;
 }
@@ -315,6 +320,17 @@ function CourseRegistrationContent() {
     tongKhoaHoc?: number;
     tongHocVien?: number;
   } | null>(null);
+  const [giangVienStatsMap, setGiangVienStatsMap] = useState<
+    Record<
+      string,
+      {
+        tongKhoaHoc: number;
+        tongHocVien?: number;
+        chucDanh?: string;
+        moTa?: string;
+      }
+    >
+  >({});
   const [giangVienKhoaHocs, setGiangVienKhoaHocs] = useState<any[]>([]);
   const [loadingGiangVien, setLoadingGiangVien] = useState(false);
   const [bioExpandedMap, setBioExpandedMap] = useState<Record<string, boolean>>(
@@ -428,39 +444,103 @@ function CourseRegistrationContent() {
   useEffect(() => {
     if (!khoaHoc) return;
 
-    const giangVienId = getGiangVienId(khoaHoc);
-    if (!giangVienId) return;
+    const allGiangVienIds: string[] = [];
+    if (Array.isArray((khoaHoc as any).danhSachGiangVien) && (khoaHoc as any).danhSachGiangVien.length > 0) {
+      for (const gv of (khoaHoc as any).danhSachGiangVien) {
+        if (gv?.id && isValidGuid(gv.id) && !allGiangVienIds.includes(gv.id)) {
+          allGiangVienIds.push(gv.id);
+        }
+      }
+    }
+    const primaryId = getGiangVienId(khoaHoc);
+    if (primaryId && !allGiangVienIds.includes(primaryId)) {
+      allGiangVienIds.unshift(primaryId);
+    }
+
+    if (allGiangVienIds.length === 0) return;
 
     let cancelled = false;
 
     (async () => {
       setLoadingGiangVien(true);
       try {
-        const res = await apiService.get<GiangVienKhoaHocDto>(
-          `/KhoaHoc/khoahoc-list-bygiangvien/${giangVienId}`,
-          {
-            params: {
-              pageIndex: 1,
-              pageSize: GIANG_VIEN_COURSES_PAGE_SIZE,
-            },
-          },
+        const responses = await Promise.all(
+          allGiangVienIds.map((id) =>
+            apiService
+              .get<GiangVienKhoaHocDto>(`/KhoaHoc/khoahoc-list-bygiangvien/${id}`, {
+                params: {
+                  pageIndex: 1,
+                  pageSize: GIANG_VIEN_COURSES_PAGE_SIZE,
+                },
+              })
+              .catch((err) => {
+                console.error(`Error loading courses for instructor ${id}:`, err);
+                return null;
+              }),
+          ),
         );
         if (cancelled) return;
 
-        const dto = res?.data;
-        const list = extractPagedItems(dto?.khoaHocs)
-          .filter((kh: any) => kh?.id !== khoaHoc.id)
-          .slice(0, GIANG_VIEN_COURSES_PAGE_SIZE);
-        setGiangVienKhoaHocs(list);
+        const courseMap = new Map<string, any>();
+        const statsMap: Record<
+          string,
+          {
+            tongKhoaHoc: number;
+            tongHocVien?: number;
+            chucDanh?: string;
+            moTa?: string;
+          }
+        > = {};
+        let ownerInfo: any = null;
 
-        const gv = dto?.thongTinGiangVien;
+        for (let i = 0; i < responses.length; i++) {
+          const res = responses[i];
+          const id = allGiangVienIds[i];
+          if (!res?.data || !id) continue;
+          const dto = res.data;
+
+          if (i === 0 || !ownerInfo) {
+            ownerInfo = dto.thongTinGiangVien;
+          }
+
+          const list = extractPagedItems(dto.khoaHocs);
+          for (const kh of list) {
+            if (kh?.id && kh.id !== khoaHoc.id && !courseMap.has(kh.id)) {
+              courseMap.set(kh.id, kh);
+            }
+          }
+
+          const totalCourses = getPagedTotalCount(
+            dto.khoaHocs,
+            list.length,
+          );
+          const totalStudents = dto.tongHocVienDangKy ?? dto.tongHocVienDangHoc;
+          const gvInfo = dto.thongTinGiangVien;
+
+          statsMap[id] = {
+            tongKhoaHoc: totalCourses,
+            tongHocVien: totalStudents,
+            chucDanh: gvInfo?.chucVu,
+            moTa: gvInfo?.gioiThieu || gvInfo?.tieuSu,
+          };
+        }
+
+        const combinedList = Array.from(courseMap.values());
+        setGiangVienKhoaHocs(combinedList);
+        setGiangVienStatsMap(statsMap);
+
+        const primaryRes = responses[0]?.data;
+        const gv = ownerInfo || primaryRes?.thongTinGiangVien;
         setGiangVienInfo({
           ten: gv?.hoTen || String(khoaHoc.createdBy || "Không xác định"),
           avatar: gv?.anhDaiDien,
           moTa: gv?.gioiThieu || gv?.tieuSu,
           chucDanh: gv?.chucVu,
-          tongKhoaHoc: getPagedTotalCount(dto?.khoaHocs, list.length + 1),
-          tongHocVien: dto?.tongHocVienDangKy ?? dto?.tongHocVienDangHoc,
+          tongKhoaHoc: primaryRes
+            ? getPagedTotalCount(primaryRes.khoaHocs, combinedList.length + 1)
+            : combinedList.length + 1,
+          tongHocVien:
+            primaryRes?.tongHocVienDangKy ?? primaryRes?.tongHocVienDangHoc,
         });
       } catch (err) {
         console.error("Error getting course list by giang vien:", err);
@@ -650,11 +730,13 @@ function CourseRegistrationContent() {
     khoaHoc.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!khoaHoc.gia || khoaHoc.gia <= 0);
 
-  const danhSachGiangVienDetail: {
+  const rawGiangViens: {
     id?: string;
     hoTen: string;
     anhDaiDien?: string;
     tieuSu?: string;
+    laChuSoHuu?: boolean;
+    chucDanh?: string;
   }[] =
     (khoaHoc as any).danhSachGiangVien &&
     (khoaHoc as any).danhSachGiangVien.length > 0
@@ -663,13 +745,28 @@ function CourseRegistrationContent() {
           {
             id: getGiangVienId(khoaHoc) ?? undefined,
             hoTen: khoaHoc.createdBy || "Không xác định",
+            laChuSoHuu: true,
           },
         ];
 
+  const danhSachGiangVienDetail = [...rawGiangViens].sort((a: any, b: any) => {
+    const aOwner = !!(a.laChuSoHuu || a.id === khoaHoc?.createdId || a.hoTen === khoaHoc?.createdBy);
+    const bOwner = !!(b.laChuSoHuu || b.id === khoaHoc?.createdId || b.hoTen === khoaHoc?.createdBy);
+    if (aOwner && !bOwner) return -1;
+    if (!aOwner && bOwner) return 1;
+    return 0;
+  });
+
   const giangVienId = getGiangVienId(khoaHoc);
-  const giangVienChinh = danhSachGiangVienDetail[0];
+  const giangVienChinh =
+    danhSachGiangVienDetail.find(
+      (g: any) =>
+        g.laChuSoHuu ||
+        g.id === khoaHoc?.createdId ||
+        g.hoTen === khoaHoc?.createdBy,
+    ) || danhSachGiangVienDetail[0];
   const tenGiangVienChinh =
-    giangVienInfo?.ten || giangVienChinh?.hoTen || "Không xác định";
+    giangVienChinh?.hoTen || giangVienInfo?.ten || khoaHoc.createdBy || "Không xác định";
 
   const goToInstructorProfile = (id?: string) => {
     if (id) router.push(`/instructor/profile/${id}`);
@@ -755,55 +852,156 @@ function CourseRegistrationContent() {
             {/* Instructors Row */}
             <Stack
               direction="row"
-              spacing={1.25}
+              spacing={1.5}
               sx={{ alignItems: "center", mb: 2.25, flexWrap: "wrap", rowGap: 1 }}
             >
-              <Typography sx={{ color: "rgba(255, 255, 255, 0.65)", fontSize: 13.5, fontWeight: 500 }}>
-                Giảng viên:
-              </Typography>
+              <Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}>
+                <SchoolRoundedIcon sx={{ fontSize: 17, color: "#f87171" }} />
+                <Typography sx={{ color: "rgba(255, 255, 255, 0.85)", fontSize: 13.5, fontWeight: 600 }}>
+                  Giảng viên:
+                </Typography>
+              </Stack>
               <Stack
                 direction="row"
                 spacing={0.75}
                 sx={{ alignItems: "center", flexWrap: "wrap" }}
               >
-                {(khoaHoc.danhSachGiangVien ?? []).map((gv) => (
-                  <Tooltip key={gv.id} title={`Xem hồ sơ: ${gv.hoTen}`} arrow>
-                    <Chip
-                      avatar={
-                        <Avatar
-                          src={gv.anhDaiDien}
-                          sx={{
-                            width: "24px !important",
-                            height: "24px !important",
-                            bgcolor: RED,
-                            fontSize: "11px !important",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {gv.hoTen.charAt(0).toUpperCase()}
-                        </Avatar>
-                      }
-                      label={gv.hoTen}
-                      size="small"
-                      onClick={() => router.push(`/instructor/profile/${gv.id}`)}
-                      sx={{
-                        bgcolor: "rgba(255, 255, 255, 0.12)",
-                        color: "#fff",
-                        fontSize: 12.5,
-                        fontWeight: 650,
-                        cursor: "pointer",
-                        border: "1px solid rgba(255, 255, 255, 0.18)",
-                        backdropFilter: "blur(6px)",
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          bgcolor: alpha(RED, 0.85),
-                          borderColor: RED,
-                          transform: "translateY(-1px)",
+                {danhSachGiangVienDetail.map((gv: any, idx: number) => {
+                  const isOwner = !!(
+                    gv.laChuSoHuu ||
+                    gv.id === khoaHoc?.createdId ||
+                    gv.hoTen === khoaHoc?.createdBy ||
+                    (idx === 0 && !danhSachGiangVienDetail.some((g: any) => g.laChuSoHuu))
+                  );
+                  const stats = gv.id ? giangVienStatsMap[gv.id] : undefined;
+                  const gvTongKhoaHoc = stats?.tongKhoaHoc ?? (isOwner ? giangVienInfo?.tongKhoaHoc : undefined);
+                  const gvTongHocVien = stats?.tongHocVien ?? (isOwner ? giangVienInfo?.tongHocVien : undefined);
+
+                  return (
+                    <Tooltip
+                      key={gv.id ?? idx}
+                      enterTouchDelay={0}
+                      arrow
+                      placement="top"
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            bgcolor: "#0F172A",
+                            border: "1px solid rgba(255, 255, 255, 0.16)",
+                            borderRadius: "14px",
+                            p: 1.5,
+                            boxShadow: "0 14px 32px rgba(0, 0, 0, 0.45)",
+                            maxWidth: 240,
+                          },
+                        },
+                        arrow: {
+                          sx: {
+                            color: "#0F172A",
+                            "&::before": {
+                              border: "1px solid rgba(255, 255, 255, 0.16)",
+                            },
+                          },
                         },
                       }}
-                    />
-                  </Tooltip>
-                ))}
+                      title={
+                        <Box sx={{ p: 0.25 }}>
+                          <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", mb: 0.75 }}>
+                            <Avatar
+                              src={gv.anhDaiDien}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                fontSize: 13,
+                                fontWeight: 800,
+                                bgcolor: RED,
+                                border: "1.5px solid rgba(255,255,255,0.3)",
+                              }}
+                            >
+                              {gv.hoTen.charAt(0).toUpperCase()}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography
+                                sx={{
+                                  fontSize: 13,
+                                  fontWeight: 800,
+                                  color: "#FFFFFF",
+                                  lineHeight: 1.25,
+                                  letterSpacing: "-0.01em",
+                                }}
+                              >
+                                {gv.hoTen}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: 11,
+                                  color: isOwner ? "#F87171" : "#94A3B8",
+                                  fontWeight: 700,
+                                  mt: 0.2,
+                                }}
+                              >
+                                {isOwner ? "Chủ sở hữu khóa học" : "Giảng viên cộng tác"}
+                              </Typography>
+                            </Box>
+                          </Stack>
+
+                          {(typeof gvTongKhoaHoc === "number" || typeof gvTongHocVien === "number") && (
+                            <Typography
+                              sx={{
+                                fontSize: 11,
+                                color: "rgba(255, 255, 255, 0.7)",
+                                mb: 0.75,
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              {typeof gvTongKhoaHoc === "number" ? `${gvTongKhoaHoc} khóa học` : ""}
+                              {typeof gvTongKhoaHoc === "number" && typeof gvTongHocVien === "number" ? " • " : ""}
+                              {typeof gvTongHocVien === "number" ? `${gvTongHocVien.toLocaleString("vi-VN")} học viên` : ""}
+                            </Typography>
+                          )}
+
+                          {gv.id && (
+                            <Typography
+                              sx={{
+                                fontSize: 11,
+                                color: "#60A5FA",
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              Xem trang cá nhân →
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                    >
+                      <Avatar
+                        src={gv.anhDaiDien}
+                        onClick={() => goToInstructorProfile(gv.id)}
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          background: `linear-gradient(135deg, #EF4444 0%, ${RED} 100%)`,
+                          fontSize: 12.5,
+                          fontWeight: 800,
+                          color: "#FFFFFF",
+                          border: "1.5px solid rgba(255, 255, 255, 0.85)",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
+                          cursor: gv.id ? "pointer" : "default",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          "&:hover": {
+                            transform: "scale(1.12) translateY(-1px)",
+                            borderColor: "#FFFFFF",
+                            boxShadow: "0 4px 14px rgba(255, 255, 255, 0.4)",
+                          },
+                        }}
+                      >
+                        {gv.hoTen.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </Tooltip>
+                  );
+                })}
               </Stack>
             </Stack>
 
@@ -983,61 +1181,85 @@ function CourseRegistrationContent() {
                   <Divider sx={{ mb: 3.5, borderColor: "divider" }} />
 
                   {/* Highlights Grid */}
-                  <Typography sx={{ fontWeight: 800, fontSize: 16, color: "text.primary", mb: 2 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: 17, color: "text.primary", mb: 2 }}>
                     Cấu trúc tổng quan
                   </Typography>
                   <Grid container spacing={2}>
                     {[
                       {
-                        icon: <MenuBookRoundedIcon sx={{ fontSize: 24, color: RED }} />,
-                        title: `${phanHocs.length} Chương / Phần học`,
-                        subtitle: "Lộ trình học theo chuyên đề rõ ràng",
+                        icon: <MenuBookRoundedIcon sx={{ fontSize: 24 }} />,
+                        number: phanHocs.length,
+                        label: "Chương / Phần học",
                       },
                       {
-                        icon: <PlayArrowRoundedIcon sx={{ fontSize: 24, color: RED }} />,
-                        title: `${khoaHoc.tongBaiGiang ?? 0} Bài giảng video`,
-                        subtitle: "Nội dung thực chiến, cô đọng",
+                        icon: <PlayArrowRoundedIcon sx={{ fontSize: 26 }} />,
+                        number: khoaHoc.tongBaiGiang ?? 0,
+                        label: "Bài giảng video",
                       },
                       {
-                        icon: <FolderRoundedIcon sx={{ fontSize: 24, color: RED }} />,
-                        title: `${khoaHoc.tongTaiLieu ?? 0} Tài liệu đính kèm`,
-                        subtitle: "Mã nguồn, slide và bài tập mẫu",
+                        icon: <FolderRoundedIcon sx={{ fontSize: 24 }} />,
+                        number: khoaHoc.tongTaiLieu ?? 0,
+                        label: "Tài liệu đính kèm",
                       },
                     ].map((item, i) => (
                       <Grid key={i} size={{ xs: 12, sm: 4 }}>
-                        <Box
+                        <Paper
+                          elevation={0}
                           sx={{
                             p: 2.25,
-                            bgcolor: RED_LIGHT,
                             borderRadius: "16px",
-                            border: `1px solid ${alpha(RED, 0.12)}`,
-                            height: "100%",
+                            border: "1px solid rgba(0, 0, 0, 0.08)",
+                            bgcolor: "#FFFFFF",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
                             display: "flex",
-                            flexDirection: "column",
-                            gap: 1,
+                            alignItems: "center",
+                            gap: 2,
+                            height: "100%",
                           }}
                         >
                           <Box
                             sx={{
-                              width: 42,
-                              height: 42,
-                              borderRadius: "12px",
-                              bgcolor: "#fff",
+                              width: 48,
+                              height: 48,
+                              borderRadius: "14px",
+                              bgcolor: RED_LIGHT,
+                              color: RED,
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              boxShadow: "0 4px 10px rgba(0,0,0,0.04)",
+                              flexShrink: 0,
+                              border: `1px solid ${alpha(RED, 0.15)}`,
+                              "& svg": {
+                                color: "inherit",
+                              },
                             }}
                           >
                             {item.icon}
                           </Box>
-                          <Typography sx={{ fontWeight: 700, fontSize: 14, color: "text.primary", mt: 0.5 }}>
-                            {item.title}
-                          </Typography>
-                          <Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
-                            {item.subtitle}
-                          </Typography>
-                        </Box>
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                            <Typography
+                              sx={{
+                                fontWeight: 800,
+                                fontSize: 18,
+                                color: "text.primary",
+                                lineHeight: 1.2,
+                                mb: 0.25,
+                              }}
+                            >
+                              {item.number}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: 13.5,
+                                fontWeight: 600,
+                                color: "text.secondary",
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {item.label}
+                            </Typography>
+                          </Box>
+                        </Paper>
                       </Grid>
                     ))}
                   </Grid>
@@ -1858,10 +2080,6 @@ function CourseRegistrationContent() {
                       icon: <AllInclusiveRoundedIcon sx={{ fontSize: 18 }} />,
                       label: "Hạn sử dụng khóa học: 6 tháng",
                     },
-                    {
-                      icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 18 }} />,
-                      label: "Chứng chỉ hoàn thành sau khi kết thúc",
-                    },
                   ].map((item, i) => (
                     <Stack
                       key={i}
@@ -1902,116 +2120,330 @@ function CourseRegistrationContent() {
           sx={{
             fontWeight: 800,
             fontSize: 22,
-            mb: 3.5,
+            mb: 3,
             color: "text.primary",
           }}
         >
-          Giảng viên
+          {danhSachGiangVienDetail.length > 1
+            ? `Đội ngũ giảng viên (${danhSachGiangVienDetail.length})`
+            : "Giảng viên"}
         </Typography>
 
-        <Stack spacing={3.5} sx={{ mb: 3 }}>
-          {danhSachGiangVienDetail.map((gv, idx) => {
-            const key = gv.id ?? `gv-${idx}`;
-            const isExpanded = !!bioExpandedMap[key];
-            const bioHtml =
-              gv.tieuSu || (idx === 0 ? giangVienInfo?.moTa : undefined);
+        {danhSachGiangVienDetail.length > 1 ? (
+          /* Multi-instructor Grid Card Layout */
+          <Grid container spacing={2.5} sx={{ mb: 3 }}>
+            {danhSachGiangVienDetail.map((gv: any, idx: number) => {
+              const key = gv.id ?? `gv-${idx}`;
+              const isOwner = !!(
+                gv.laChuSoHuu ||
+                gv.id === khoaHoc?.createdId ||
+                gv.hoTen === khoaHoc?.createdBy ||
+                (idx === 0 && !danhSachGiangVienDetail.some((g: any) => g.laChuSoHuu))
+              );
+              const stats = gv.id ? giangVienStatsMap[gv.id] : undefined;
+              const gvTongKhoaHoc =
+                stats?.tongKhoaHoc ??
+                (isOwner
+                  ? (giangVienInfo?.tongKhoaHoc ?? giangVienKhoaHocs.length + 1)
+                  : undefined);
+              const gvTongHocVien =
+                stats?.tongHocVien ??
+                (isOwner ? giangVienInfo?.tongHocVien : undefined);
+              const gvChucDanh =
+                gv.chucDanh ||
+                stats?.chucDanh ||
+                (isOwner ? giangVienInfo?.chucDanh : undefined);
+              const bioHtml =
+                gv.tieuSu ||
+                stats?.moTa ||
+                (isOwner ? giangVienInfo?.moTa : undefined);
+              const isExpanded = !!bioExpandedMap[key];
 
-            return (
-              <Box key={key}>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={3}
-                  sx={{ alignItems: "flex-start" }}
-                >
-                  <Box
-                    onClick={() => goToInstructorProfile(gv.id)}
+              return (
+                <Grid key={key} size={{ xs: 12, md: 6 }}>
+                  <Paper
+                    elevation={0}
                     sx={{
-                      cursor: gv.id ? "pointer" : "default",
-                      flexShrink: 0,
+                      p: 2.5,
+                      borderRadius: "18px",
+                      border: "1px solid rgba(0, 0, 0, 0.08)",
+                      bgcolor: "#FAFAFA",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "all 0.25s ease",
+                      "&:hover": {
+                        borderColor: alpha(RED, 0.35),
+                        boxShadow: "0 10px 28px rgba(141, 19, 19, 0.08)",
+                        bgcolor: "#FFFFFF",
+                        transform: "translateY(-2px)",
+                      },
                     }}
                   >
-                    {gv.anhDaiDien ? (
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 1.5 }}>
                       <Box
-                        component="img"
-                        src={gv.anhDaiDien}
-                        sx={{
-                          width: 96,
-                          height: 96,
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: `3px solid ${RED}`,
-                          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-                        }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 96,
-                          height: 96,
-                          borderRadius: "50%",
-                          background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
-                          color: "#fff",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 32,
-                          fontWeight: 800,
-                          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-                        }}
+                        onClick={() => goToInstructorProfile(gv.id)}
+                        sx={{ cursor: gv.id ? "pointer" : "default", flexShrink: 0 }}
                       >
-                        {gv.hoTen.charAt(0).toUpperCase()}
+                        {gv.anhDaiDien ? (
+                          <Avatar
+                            src={gv.anhDaiDien}
+                            sx={{
+                              width: 64,
+                              height: 64,
+                              border: `2.5px solid ${RED}`,
+                              boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                            }}
+                          />
+                        ) : (
+                          <Avatar
+                            sx={{
+                              width: 64,
+                              height: 64,
+                              background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
+                              color: "#fff",
+                              fontSize: 24,
+                              fontWeight: 800,
+                              boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            {gv.hoTen.charAt(0).toUpperCase()}
+                          </Avatar>
+                        )}
                       </Box>
-                    )}
-                  </Box>
 
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      onClick={() => goToInstructorProfile(gv.id)}
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: 20,
-                        color: RED,
-                        mb: 0.5,
-                        width: "fit-content",
-                        cursor: gv.id ? "pointer" : "default",
-                        "&:hover": gv.id
-                          ? { textDecoration: "underline" }
-                          : undefined,
-                      }}
-                    >
-                      {gv.hoTen}
-                    </Typography>
-
-                    {idx === 0 && giangVienInfo?.chucDanh && (
-                      <Typography sx={{ fontSize: 14, color: "text.secondary", fontWeight: 600, mb: 1 }}>
-                        {giangVienInfo.chucDanh}
-                      </Typography>
-                    )}
-
-                    {idx === 0 && (
-                      <Stack
-                        direction="row"
-                        spacing={2}
-                        sx={{ my: 1.5, flexWrap: "wrap", rowGap: 1 }}
-                      >
-                        <Stack
-                          direction="row"
-                          spacing={0.75}
-                          sx={{
-                            alignItems: "center",
-                            bgcolor: RED_LIGHT,
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: "10px",
-                          }}
-                        >
-                          <PlayCircleFilledRoundedIcon sx={{ fontSize: 18, color: RED }} />
-                          <Typography sx={{ fontSize: 13, color: "text.primary", fontWeight: 700 }}>
-                            {giangVienInfo?.tongKhoaHoc ?? giangVienKhoaHocs.length + 1} khóa học
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.5, mb: 0.5 }}>
+                          <Typography
+                            noWrap
+                            onClick={() => goToInstructorProfile(gv.id)}
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: 16.5,
+                              color: "text.primary",
+                              cursor: gv.id ? "pointer" : "default",
+                              "&:hover": gv.id ? { color: RED } : undefined,
+                              transition: "color 0.2s ease",
+                            }}
+                          >
+                            {gv.hoTen}
                           </Typography>
+                          <Chip
+                            label={isOwner ? "Chủ khóa học" : "Đồng giảng dạy"}
+                            size="small"
+                            sx={{
+                              height: 22,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              bgcolor: isOwner ? RED_LIGHT : "rgba(0,0,0,0.06)",
+                              color: isOwner ? RED : "text.secondary",
+                              borderRadius: "6px",
+                            }}
+                          />
                         </Stack>
 
-                        {typeof giangVienInfo?.tongHocVien === "number" && (
+                        {gvChucDanh && (
+                          <Typography sx={{ fontSize: 13, color: "text.secondary", fontWeight: 500, mb: 0.5 }}>
+                            {gvChucDanh}
+                          </Typography>
+                        )}
+
+                        {(typeof gvTongKhoaHoc === "number" || typeof gvTongHocVien === "number") && (
+                          <Stack direction="row" spacing={1} sx={{ mt: 0.75, flexWrap: "wrap", rowGap: 0.75 }}>
+                            {typeof gvTongKhoaHoc === "number" && (
+                              <Stack
+                                direction="row"
+                                spacing={0.5}
+                                sx={{
+                                  alignItems: "center",
+                                  bgcolor: RED_LIGHT,
+                                  px: 1.2,
+                                  py: 0.35,
+                                  borderRadius: "8px",
+                                }}
+                              >
+                                <PlayCircleFilledRoundedIcon sx={{ fontSize: 14, color: RED }} />
+                                <Typography sx={{ fontSize: 12, color: "text.primary", fontWeight: 700 }}>
+                                  {gvTongKhoaHoc} khóa học
+                                </Typography>
+                              </Stack>
+                            )}
+                            {typeof gvTongHocVien === "number" && (
+                              <Stack
+                                direction="row"
+                                spacing={0.5}
+                                sx={{
+                                  alignItems: "center",
+                                  bgcolor: RED_LIGHT,
+                                  px: 1.2,
+                                  py: 0.35,
+                                  borderRadius: "8px",
+                                }}
+                              >
+                                <PeopleAltRoundedIcon sx={{ fontSize: 14, color: RED }} />
+                                <Typography sx={{ fontSize: 12, color: "text.primary", fontWeight: 700 }}>
+                                  {gvTongHocVien.toLocaleString("vi-VN")} học viên
+                                </Typography>
+                              </Stack>
+                            )}
+                          </Stack>
+                        )}
+                      </Box>
+                    </Stack>
+
+                    {bioHtml && (
+                      <Box sx={{ mt: 1, mb: 1.5, flex: 1 }}>
+                        <Box
+                          sx={{
+                            fontSize: 13.5,
+                            color: "text.secondary",
+                            lineHeight: 1.7,
+                            ...(!isExpanded && {
+                              display: "-webkit-box",
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }),
+                          }}
+                          dangerouslySetInnerHTML={{ __html: bioHtml }}
+                        />
+                        <Button
+                          onClick={() => setBioExpandedMap((m) => ({ ...m, [key]: !m[key] }))}
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 700,
+                            fontSize: 12.5,
+                            color: RED,
+                            p: 0,
+                            mt: 0.5,
+                            minWidth: 0,
+                            "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+                          }}
+                        >
+                          {isExpanded ? "Ẩn bớt" : "Xem thêm"}
+                        </Button>
+                      </Box>
+                    )}
+
+                    {gv.id && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => goToInstructorProfile(gv.id)}
+                        endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: "14px !important" }} />}
+                        sx={{
+                          mt: "auto",
+                          pt: 0.75,
+                          pb: 0.75,
+                          alignSelf: "flex-start",
+                          textTransform: "none",
+                          fontWeight: 700,
+                          fontSize: 12.5,
+                          borderRadius: "10px",
+                          borderColor: "rgba(0,0,0,0.12)",
+                          color: "text.primary",
+                          "&:hover": {
+                            borderColor: RED,
+                            color: RED,
+                            bgcolor: RED_LIGHT,
+                          },
+                        }}
+                      >
+                        Xem hồ sơ giảng viên
+                      </Button>
+                    )}
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        ) : (
+          /* Single Instructor Layout */
+          <Stack spacing={3.5} sx={{ mb: 3 }}>
+            {danhSachGiangVienDetail.map((gv: any, idx: number) => {
+              const key = gv.id ?? `gv-${idx}`;
+              const isExpanded = !!bioExpandedMap[key];
+              const bioHtml =
+                gv.tieuSu || (idx === 0 ? giangVienInfo?.moTa : undefined);
+
+              return (
+                <Box key={key}>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={3}
+                    sx={{ alignItems: "flex-start" }}
+                  >
+                    <Box
+                      onClick={() => goToInstructorProfile(gv.id)}
+                      sx={{
+                        cursor: gv.id ? "pointer" : "default",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {gv.anhDaiDien ? (
+                        <Box
+                          component="img"
+                          src={gv.anhDaiDien}
+                          sx={{
+                            width: 96,
+                            height: 96,
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                            border: `3px solid ${RED}`,
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: 96,
+                            height: 96,
+                            borderRadius: "50%",
+                            background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
+                            color: "#fff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 32,
+                            fontWeight: 800,
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                          }}
+                        >
+                          {gv.hoTen.charAt(0).toUpperCase()}
+                        </Box>
+                      )}
+                    </Box>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        onClick={() => goToInstructorProfile(gv.id)}
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 20,
+                          color: RED,
+                          mb: 0.5,
+                          width: "fit-content",
+                          cursor: gv.id ? "pointer" : "default",
+                          "&:hover": gv.id
+                            ? { textDecoration: "underline" }
+                            : undefined,
+                        }}
+                      >
+                        {gv.hoTen}
+                      </Typography>
+
+                      {idx === 0 && giangVienInfo?.chucDanh && (
+                        <Typography sx={{ fontSize: 14, color: "text.secondary", fontWeight: 600, mb: 1 }}>
+                          {giangVienInfo.chucDanh}
+                        </Typography>
+                      )}
+
+                      {idx === 0 && (
+                        <Stack
+                          direction="row"
+                          spacing={2}
+                          sx={{ my: 1.5, flexWrap: "wrap", rowGap: 1 }}
+                        >
                           <Stack
                             direction="row"
                             spacing={0.75}
@@ -2023,69 +2455,84 @@ function CourseRegistrationContent() {
                               borderRadius: "10px",
                             }}
                           >
-                            <PeopleAltRoundedIcon sx={{ fontSize: 18, color: RED }} />
+                            <PlayCircleFilledRoundedIcon sx={{ fontSize: 18, color: RED }} />
                             <Typography sx={{ fontSize: 13, color: "text.primary", fontWeight: 700 }}>
-                              {giangVienInfo.tongHocVien.toLocaleString("vi-VN")} học viên
+                              {giangVienInfo?.tongKhoaHoc ?? giangVienKhoaHocs.length + 1} khóa học
                             </Typography>
                           </Stack>
-                        )}
-                      </Stack>
-                    )}
 
-                    {bioHtml && (
-                      <Box sx={{ mt: 1.5 }}>
-                        <Box
-                          sx={{
-                            fontSize: 14,
-                            color: "text.secondary",
-                            lineHeight: 1.85,
-                            "& p": { mb: 1 },
-                            "& p:last-child": { mb: 0 },
-                            "& ul, & ol": { pl: 2.5, mb: 1 },
-                            "& a": { color: RED },
-                            "& img": { maxWidth: "100%", borderRadius: "10px" },
-                            "& strong, & b": { color: "text.primary" },
-                            ...(!isExpanded && {
-                              display: "-webkit-box",
-                              WebkitLineClamp: 4,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
-                            }),
-                          }}
-                          dangerouslySetInnerHTML={{ __html: bioHtml }}
-                        />
-                        <Button
-                          onClick={() =>
-                            setBioExpandedMap((m) => ({ ...m, [key]: !m[key] }))
-                          }
-                          sx={{
-                            textTransform: "none",
-                            fontWeight: 800,
-                            fontSize: 13.5,
-                            color: RED,
-                            px: 0,
-                            mt: 1,
-                            minWidth: 0,
-                            "&:hover": {
-                              bgcolor: "transparent",
-                              textDecoration: "underline",
-                            },
-                          }}
-                        >
-                          {isExpanded ? "Ẩn bớt" : "Hiển thị thêm"}
-                        </Button>
-                      </Box>
-                    )}
-                  </Box>
-                </Stack>
+                          {typeof giangVienInfo?.tongHocVien === "number" && (
+                            <Stack
+                              direction="row"
+                              spacing={0.75}
+                              sx={{
+                                alignItems: "center",
+                                bgcolor: RED_LIGHT,
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: "10px",
+                              }}
+                            >
+                              <PeopleAltRoundedIcon sx={{ fontSize: 18, color: RED }} />
+                              <Typography sx={{ fontSize: 13, color: "text.primary", fontWeight: 700 }}>
+                                {giangVienInfo.tongHocVien.toLocaleString("vi-VN")} học viên
+                              </Typography>
+                            </Stack>
+                          )}
+                        </Stack>
+                      )}
 
-                {idx < danhSachGiangVienDetail.length - 1 && (
-                  <Divider sx={{ my: 3, borderColor: "divider" }} />
-                )}
-              </Box>
-            );
-          })}
-        </Stack>
+                      {bioHtml && (
+                        <Box sx={{ mt: 1.5 }}>
+                          <Box
+                            sx={{
+                              fontSize: 14,
+                              color: "text.secondary",
+                              lineHeight: 1.85,
+                              "& p": { mb: 1 },
+                              "& p:last-child": { mb: 0 },
+                              "& ul, & ol": { pl: 2.5, mb: 1 },
+                              "& a": { color: RED },
+                              "& img": { maxWidth: "100%", borderRadius: "10px" },
+                              "& strong, & b": { color: "text.primary" },
+                              ...(!isExpanded && {
+                                display: "-webkit-box",
+                                WebkitLineClamp: 4,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                              }),
+                            }}
+                            dangerouslySetInnerHTML={{ __html: bioHtml }}
+                          />
+                          <Button
+                            onClick={() =>
+                              setBioExpandedMap((m) => ({ ...m, [key]: !m[key] }))
+                            }
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 800,
+                              fontSize: 13.5,
+                              color: RED,
+                              px: 0,
+                              mt: 1,
+                              minWidth: 0,
+                              "&:hover": {
+                                bgcolor: "transparent",
+                                textDecoration: "underline",
+                              },
+                            }}
+                          >
+                            {isExpanded ? "Ẩn bớt" : "Hiển thị thêm"}
+                          </Button>
+                        </Box>
+                      )}
+                    </Box>
+                  </Stack>
+                </Box>
+              );
+            })}
+          </Stack>
+        )}
 
         <Divider sx={{ my: 3.5, borderColor: "divider" }} />
 
@@ -2095,7 +2542,9 @@ function CourseRegistrationContent() {
           sx={{ alignItems: "center", justifyContent: "space-between", mb: 3 }}
         >
           <Typography sx={{ fontWeight: 800, fontSize: 18, color: "text.primary" }}>
-            Khóa học khác của {tenGiangVienChinh}
+            {danhSachGiangVienDetail.length > 1
+              ? "Khóa học khác từ đội ngũ giảng viên"
+              : `Khóa học khác của ${tenGiangVienChinh}`}
           </Typography>
         </Stack>
 
@@ -2192,24 +2641,59 @@ function CourseRegistrationContent() {
           </Grid>
         )}
 
-        {giangVienId && (
-          <Button
-            onClick={() => goToInstructorProfile(giangVienId)}
-            endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 18 }} />}
-            sx={{
-              textTransform: "none",
-              fontWeight: 800,
-              fontSize: 14,
-              color: RED,
-              px: 0,
-              "&:hover": {
-                bgcolor: "transparent",
-                textDecoration: "underline",
-              },
-            }}
-          >
-            Xem thêm khóa học của {tenGiangVienChinh}
-          </Button>
+        {danhSachGiangVienDetail.length > 1 ? (
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+            <Typography sx={{ fontSize: 13.5, color: "text.secondary", fontWeight: 600 }}>
+              Xem thêm hồ sơ & khóa học:
+            </Typography>
+            {danhSachGiangVienDetail.map((gv: any, idx: number) => {
+              if (!gv.id) return null;
+              return (
+                <Button
+                  key={gv.id ?? idx}
+                  size="small"
+                  onClick={() => goToInstructorProfile(gv.id)}
+                  endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 14 }} />}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    color: RED,
+                    bgcolor: RED_LIGHT,
+                    borderRadius: "8px",
+                    px: 1.5,
+                    py: 0.5,
+                    "&:hover": {
+                      bgcolor: alpha(RED, 0.15),
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  {gv.hoTen}
+                </Button>
+              );
+            })}
+          </Stack>
+        ) : (
+          giangVienId && (
+            <Button
+              onClick={() => goToInstructorProfile(giangVienId)}
+              endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 18 }} />}
+              sx={{
+                textTransform: "none",
+                fontWeight: 800,
+                fontSize: 14,
+                color: RED,
+                px: 0,
+                "&:hover": {
+                  bgcolor: "transparent",
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              Xem thêm khóa học của {tenGiangVienChinh}
+            </Button>
+          )
         )}
       </SectionCard>
 

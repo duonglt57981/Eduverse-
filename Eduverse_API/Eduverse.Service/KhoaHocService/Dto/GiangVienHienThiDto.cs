@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,5 +12,7 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public string HoTen { get; set; } = null!;
         public string? AnhDaiDien { get; set; }
         public string? TieuSu { get; set; }
+        public bool LaChuSoHuu { get; set; }
+        public string? ChucDanh { get; set; }
     }
 }

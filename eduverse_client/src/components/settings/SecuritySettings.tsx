@@ -10,136 +10,52 @@ import {
   Typography,
   TextField,
   Button,
-  Switch,
-  Divider,
   Stack,
   IconButton,
   InputAdornment,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Snackbar,
   Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   CircularProgress,
-  useTheme,
-  Pagination,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import {
   LockRounded,
   VisibilityRounded,
   VisibilityOffRounded,
-  DesktopWindowsRounded,
-  SmartphoneRounded,
-  HistoryRounded,
-  VpnKeyRounded,
-  ShieldRounded,
-  InfoRounded,
 } from '@mui/icons-material';
 import { apiService } from '@/src/services/index';
 
-interface Device {
-  id: number;
-  name: string;
-  browser: string;
-  location: string;
-  ip: string;
-  time: string;
-  isCurrent: boolean;
-}
-
-interface LoginHistoryItem {
-  time: string;
-  dev: string;
-  ip: string;
-  loc: string;
-  status: string;
-}
-
 export default function SecuritySettings() {
-  const theme = useTheme();
   const [showPass, setShowPass] = useState({ current: false, new: false, confirm: false });
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
   const [passErrors, setPassErrors] = useState({ current: '', new: '', confirm: '' });
   const [passLoading, setPassLoading] = useState(false);
-
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [loginHistory, setLoginHistory] = useState<LoginHistoryItem[]>([]);
-  const [loadingDevices, setLoadingDevices] = useState(true);
-  const [loadingHistory, setLoadingHistory] = useState(true);
-
-  const [devicePage, setDevicePage] = useState(1);
-  const [historyPage, setHistoryPage] = useState(1);
-  const PAGE_SIZE = 5;
-
-  const paginatedDevices = devices.slice((devicePage - 1) * PAGE_SIZE, devicePage * PAGE_SIZE);
-  const totalDevicePages = Math.ceil(devices.length / PAGE_SIZE);
-
-  const paginatedHistory = loginHistory.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE);
-  const totalHistoryPages = Math.ceil(loginHistory.length / PAGE_SIZE);
-
-  const [twoFactor, setTwoFactor] = useState(false);
-  const [open2FA, setOpen2FA] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [secretKey, setSecretKey] = useState('');
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [isGoogleAccount, setIsGoogleAccount] = useState(false);
+  const [securityStatusError, setSecurityStatusError] = useState(false);
+  const passwordChangeDisabled = profileLoading || isGoogleAccount || securityStatusError;
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' });
 
-  // Load 2FA status from profile API on mount
-  const fetch2FAStatus = useCallback(async () => {
+  // Load security capabilities from profile API on mount
+  const fetchSecurityStatus = useCallback(async () => {
     try {
       const res = await apiService.get<any>('/profile');
       if (res.status && res.data) {
-        setTwoFactor(res.data.twoFactorEnabled || false);
+        setIsGoogleAccount(Boolean(res.data.isGoogleAccount));
+      } else {
+        setSecurityStatusError(true);
       }
     } catch {
-      // Silent fail
-    }
-  }, []);
-
-  // Fetch real active devices and login history from backend
-  const fetchDevicesAndHistory = useCallback(async () => {
-    try {
-      setLoadingDevices(true);
-      const resDev = await apiService.get<Device[]>('/profile/active-devices');
-      if (resDev.status && Array.isArray(resDev.data)) {
-        setDevices(resDev.data);
-      }
-    } catch {
-      // Silent catch
+      setSecurityStatusError(true);
     } finally {
-      setLoadingDevices(false);
-    }
-
-    try {
-      setLoadingHistory(true);
-      const resHist = await apiService.get<LoginHistoryItem[]>('/profile/login-history');
-      if (resHist.status && Array.isArray(resHist.data)) {
-        setLoginHistory(resHist.data);
-      }
-    } catch {
-      // Silent catch
-    } finally {
-      setLoadingHistory(false);
+      setProfileLoading(false);
     }
   }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetch2FAStatus();
-    fetchDevicesAndHistory();
-  }, [fetch2FAStatus, fetchDevicesAndHistory]);
+    fetchSecurityStatus();
+  }, [fetchSecurityStatus]);
 
   const handleTogglePassVisibility = (field: 'current' | 'new' | 'confirm') => {
     setShowPass((prev) => ({ ...prev, [field]: !prev[field] }));
@@ -154,6 +70,11 @@ export default function SecuritySettings() {
   // Real API: POST /api/auth/change-password
   const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (passwordChangeDisabled) {
+      return;
+    }
+
     let hasError = false;
     const errors = { current: '', new: '', confirm: '' };
 
@@ -198,79 +119,6 @@ export default function SecuritySettings() {
     }
   };
 
-  const handleLogoutDevice = async (id: number) => {
-    try {
-      const res = await apiService.post<any>(`/profile/logout-device/${id}`, {});
-      if (res.status) {
-        setSnackbar({ open: true, message: res.message || 'Đã hủy phiên đăng nhập trên thiết bị!', severity: 'info' });
-        fetchDevicesAndHistory();
-      } else {
-        setSnackbar({ open: true, message: res.message || 'Không thể hủy phiên đăng nhập', severity: 'error' });
-      }
-    } catch (err: any) {
-      setSnackbar({ open: true, message: typeof err === 'string' ? err : 'Không thể đăng xuất thiết bị', severity: 'error' });
-    }
-  };
-
-  // Real API: POST /api/enable-2fa
-  const handleToggle2FA = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    if (checked) {
-      try {
-        const res = await apiService.post<any>('/enable-2fa', { enable: true });
-        if (res.status && res.data) {
-          setQrCodeUrl(res.data.qrCode || '');
-          setSecretKey(res.data.secret || 'EDUVERSE2026KEY');
-          setOpen2FA(true);
-        } else {
-          setSnackbar({ open: true, message: res.message || 'Không thể kích hoạt 2FA', severity: 'error' });
-        }
-      } catch (err: any) {
-        const message = typeof err === 'string' ? err : 'Có lỗi xảy ra';
-        setSnackbar({ open: true, message, severity: 'error' });
-      }
-    } else {
-      try {
-        const res = await apiService.post<any>('/enable-2fa', { enable: false });
-        if (res.status) {
-          setTwoFactor(false);
-          setSnackbar({ open: true, message: 'Đã tắt xác thực 2 lớp!', severity: 'info' });
-        } else {
-          setSnackbar({ open: true, message: res.message || 'Không thể tắt 2FA', severity: 'error' });
-        }
-      } catch (err: any) {
-        const message = typeof err === 'string' ? err : 'Có lỗi xảy ra';
-        setSnackbar({ open: true, message, severity: 'error' });
-      }
-    }
-  };
-
-  // Real API: POST /api/verify-otp
-  const handleVerify2FA = async () => {
-    if (otpCode.length !== 6 || !/^\d+$/.test(otpCode)) {
-      setOtpError('Mã xác thực phải gồm 6 chữ số');
-      return;
-    }
-    setOtpLoading(true);
-    try {
-      const res = await apiService.post<any>('/verify-otp', { code: otpCode });
-      if (res.status) {
-        setTwoFactor(true);
-        setOpen2FA(false);
-        setOtpCode('');
-        setOtpError('');
-        setSnackbar({ open: true, message: 'Kích hoạt xác thực 2 lớp thành công!', severity: 'success' });
-      } else {
-        setOtpError(res.message || 'Mã xác thực không đúng');
-      }
-    } catch (err: any) {
-      const message = typeof err === 'string' ? err : 'Xác minh OTP thất bại';
-      setOtpError(message);
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
   return (
     <Box>
       <Snackbar
@@ -308,6 +156,18 @@ export default function SecuritySettings() {
               Cập nhật mật khẩu mới thường xuyên để nâng cao bảo mật tài khoản.
             </Typography>
 
+            {isGoogleAccount && (
+              <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+                Tài khoản Google không sử dụng tính năng đổi mật khẩu tại EduVerse. Chỉ tài khoản đăng nhập bằng tên đăng nhập và mật khẩu của EduVerse mới có thể dùng tính năng này.
+              </Alert>
+            )}
+
+            {securityStatusError && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                Không thể xác định loại tài khoản. Tính năng đổi mật khẩu tạm thời bị khóa để bảo vệ tài khoản.
+              </Alert>
+            )}
+
             <Box component="form" onSubmit={handleSavePassword}>
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12 }}>
@@ -319,6 +179,7 @@ export default function SecuritySettings() {
                       name="current"
                       value={passwords.current}
                       onChange={handlePasswordChange}
+                      disabled={passwordChangeDisabled}
                       error={Boolean(passErrors.current)}
                       helperText={passErrors.current}
                       placeholder="••••••••"
@@ -326,7 +187,12 @@ export default function SecuritySettings() {
                         input: {
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton onClick={() => handleTogglePassVisibility('current')} edge="end">
+                              <IconButton
+                                onClick={() => handleTogglePassVisibility('current')}
+                                edge="end"
+                                disabled={passwordChangeDisabled}
+                                aria-label={showPass.current ? 'Ẩn mật khẩu hiện tại' : 'Hiện mật khẩu hiện tại'}
+                              >
                                 {showPass.current ? <VisibilityOffRounded fontSize="small" /> : <VisibilityRounded fontSize="small" />}
                               </IconButton>
                             </InputAdornment>
@@ -347,6 +213,7 @@ export default function SecuritySettings() {
                       name="new"
                       value={passwords.new}
                       onChange={handlePasswordChange}
+                      disabled={passwordChangeDisabled}
                       error={Boolean(passErrors.new)}
                       helperText={passErrors.new}
                       placeholder="••••••••"
@@ -354,7 +221,12 @@ export default function SecuritySettings() {
                         input: {
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton onClick={() => handleTogglePassVisibility('new')} edge="end">
+                              <IconButton
+                                onClick={() => handleTogglePassVisibility('new')}
+                                edge="end"
+                                disabled={passwordChangeDisabled}
+                                aria-label={showPass.new ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'}
+                              >
                                 {showPass.new ? <VisibilityOffRounded fontSize="small" /> : <VisibilityRounded fontSize="small" />}
                               </IconButton>
                             </InputAdornment>
@@ -375,6 +247,7 @@ export default function SecuritySettings() {
                       name="confirm"
                       value={passwords.confirm}
                       onChange={handlePasswordChange}
+                      disabled={passwordChangeDisabled}
                       error={Boolean(passErrors.confirm)}
                       helperText={passErrors.confirm}
                       placeholder="••••••••"
@@ -382,7 +255,12 @@ export default function SecuritySettings() {
                         input: {
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton onClick={() => handleTogglePassVisibility('confirm')} edge="end">
+                              <IconButton
+                                onClick={() => handleTogglePassVisibility('confirm')}
+                                edge="end"
+                                disabled={passwordChangeDisabled}
+                                aria-label={showPass.confirm ? 'Ẩn xác nhận mật khẩu mới' : 'Hiện xác nhận mật khẩu mới'}
+                              >
                                 {showPass.confirm ? <VisibilityOffRounded fontSize="small" /> : <VisibilityRounded fontSize="small" />}
                               </IconButton>
                             </InputAdornment>
@@ -398,8 +276,8 @@ export default function SecuritySettings() {
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={passLoading}
-                    startIcon={passLoading ? <CircularProgress size={18} color="inherit" /> : undefined}
+                    disabled={passwordChangeDisabled || passLoading}
+                    startIcon={profileLoading || passLoading ? <CircularProgress size={18} color="inherit" /> : undefined}
                     sx={{
                       px: 3,
                       py: 1.1,
@@ -412,236 +290,14 @@ export default function SecuritySettings() {
                       },
                     }}
                   >
-                    {passLoading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
+                    {profileLoading ? 'Đang kiểm tra...' : passLoading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
                   </Button>
                 </Grid>
               </Grid>
             </Box>
           </CardContent>
         </Card>
-
-
-
-        {/* Thiết bị đăng nhập */}
-        <Card
-          elevation={0}
-          sx={{
-            borderRadius: 2.8,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-          }}
-        >
-          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-            <Typography variant="h6" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <DesktopWindowsRounded sx={{ color: 'primary.main' }} /> Thiết bị đang đăng nhập
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: 13.5, mb: 3 }}>
-              Danh sách các thiết bị hiện đang duy trì phiên đăng nhập vào tài khoản của bạn.
-            </Typography>
-
-            {loadingDevices ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                <CircularProgress size={26} />
-              </Box>
-            ) : devices.length === 0 ? (
-              <Typography sx={{ fontSize: 13.5, color: 'text.secondary', py: 2, textAlign: 'center' }}>
-                Không tìm thấy phiên đăng nhập nào.
-              </Typography>
-            ) : (
-              <>
-                <Stack spacing={2} divider={<Divider sx={{ opacity: 0.6 }} />}>
-                  {paginatedDevices.map((device) => (
-                    <Stack key={device.id} direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                        <Box
-                          sx={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 2,
-                            bgcolor: 'action.hover',
-                            display: 'grid',
-                            placeItems: 'center',
-                            color: 'text.secondary',
-                          }}
-                        >
-                          {device.name.includes('iPhone') || device.name.includes('Android') ? (
-                            <SmartphoneRounded />
-                          ) : (
-                            <DesktopWindowsRounded />
-                          )}
-                        </Box>
-                        <Box>
-                          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                            <Typography sx={{ fontSize: 15, fontWeight: 800, color: 'text.primary' }}>
-                              {device.name}
-                            </Typography>
-                            {device.isCurrent && (
-                              <Chip
-                                label="Phiên hiện tại"
-                                size="small"
-                                sx={{
-                                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                                  color: 'primary.main',
-                                  fontWeight: 800,
-                                  height: 20,
-                                  fontSize: 11,
-                                }}
-                              />
-                            )}
-                          </Stack>
-                          <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mt: 0.3 }}>
-                            {device.browser} • {device.location} • IP: {device.ip}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                        <Typography sx={{ fontSize: 13, color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
-                          {device.time}
-                        </Typography>
-                        {!device.isCurrent && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                            onClick={() => handleLogoutDevice(device.id)}
-                            sx={{
-                              borderRadius: 999,
-                              borderColor: 'rgba(211,47,47,0.25)',
-                              fontWeight: 700,
-                              px: 2,
-                              '&:hover': {
-                                borderColor: 'error.main',
-                                bgcolor: 'rgba(211,47,47,0.03)',
-                              },
-                            }}
-                          >
-                            Đăng xuất
-                          </Button>
-                        )}
-                      </Stack>
-                    </Stack>
-                  ))}
-                </Stack>
-
-                {totalDevicePages > 1 && (
-                  <Stack sx={{ alignItems: 'center', mt: 3 }}>
-                    <Pagination
-                      page={devicePage}
-                      count={totalDevicePages}
-                      onChange={(_, page) => setDevicePage(page)}
-                      size="small"
-                      shape="rounded"
-                      sx={{
-                        '& .MuiPaginationItem-root': {
-                          fontWeight: 700,
-                          borderRadius: '8px',
-                        },
-                        '& .MuiPaginationItem-root.Mui-selected': {
-                          bgcolor: (theme) => `${theme.palette.primary.main} !important`,
-                          color: '#FFFFFF !important',
-                        },
-                      }}
-                    />
-                  </Stack>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Lịch sử đăng nhập */}
-        <Card
-          elevation={0}
-          sx={{
-            borderRadius: 2.8,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-          }}
-        >
-          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-            <Typography variant="h6" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <HistoryRounded sx={{ color: 'primary.main' }} /> Lịch sử đăng nhập
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: 13.5, mb: 3 }}>
-              Giám sát hoạt động truy cập tài khoản gần đây.
-            </Typography>
-
-            {loadingHistory ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                <CircularProgress size={26} />
-              </Box>
-            ) : loginHistory.length === 0 ? (
-              <Typography sx={{ fontSize: 13.5, color: 'text.secondary', py: 2, textAlign: 'center' }}>
-                Chưa có lịch sử đăng nhập.
-              </Typography>
-            ) : (
-              <>
-                <TableContainer>
-                  <Table sx={{ minWidth: 600 }}>
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: 'action.hover' }}>
-                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thời gian</TableCell>
-                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thiết bị / Trình duyệt</TableCell>
-                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Địa chỉ IP</TableCell>
-                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Vị trí</TableCell>
-                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Trạng thái</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {paginatedHistory.map((row, index) => (
-                        <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                          <TableCell sx={{ fontSize: 13.5 }}>{row.time}</TableCell>
-                          <TableCell sx={{ fontSize: 13.5, fontWeight: 700 }}>{row.dev}</TableCell>
-                          <TableCell sx={{ fontSize: 13.5 }}>{row.ip}</TableCell>
-                          <TableCell sx={{ fontSize: 13.5 }}>{row.loc}</TableCell>
-                          <TableCell sx={{ fontSize: 13.5 }}>
-                            <Chip
-                              label={row.status}
-                              size="small"
-                              sx={{
-                                fontSize: 11,
-                                fontWeight: 700,
-                                bgcolor: row.status.includes('thành công') || row.status.includes('Thành công') ? 'rgba(46,125,50,0.08)' : 'rgba(211,47,47,0.08)',
-                                color: row.status.includes('thành công') || row.status.includes('Thành công') ? '#2e7d32' : '#d32f2f',
-                              }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                {totalHistoryPages > 1 && (
-                  <Stack sx={{ alignItems: 'center', mt: 3 }}>
-                    <Pagination
-                      page={historyPage}
-                      count={totalHistoryPages}
-                      onChange={(_, page) => setHistoryPage(page)}
-                      size="small"
-                      shape="rounded"
-                      sx={{
-                        '& .MuiPaginationItem-root': {
-                          fontWeight: 700,
-                          borderRadius: '8px',
-                        },
-                        '& .MuiPaginationItem-root.Mui-selected': {
-                          bgcolor: (theme) => `${theme.palette.primary.main} !important`,
-                          color: '#FFFFFF !important',
-                        },
-                      }}
-                    />
-                  </Stack>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
       </Stack>
-
-
     </Box>
   );
 }

@@ -29,6 +29,7 @@ import {
   Typography,
   Checkbox,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 import { type CourseCatalogItem, type CourseCategory } from "./landing-data";
 import { useRouter } from "next/navigation";
@@ -327,24 +328,28 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
           spacing={0.5}
           sx={{ alignItems: "center", mb: 1.5 }}
         >
-          {course.rating !== null ? (
-            <>
-              <Typography
-                sx={{
-                  fontSize: 13.5,
-                  color: STATUS.warning,
-                  fontWeight: 800,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.25,
-                }}
-              >
-                ★ {course.rating.toFixed(1)}
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: BRAND_COLORS.textMuted }}>
-                · ({course.students.toLocaleString()} học viên)
-              </Typography>
-            </>
+          {course.rating !== null && course.rating > 0 ? (
+            <Tooltip title={`${(course.soLuongDanhGia ?? 0).toLocaleString()} lượt đánh giá`} arrow placement="top">
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", width: "fit-content" }}>
+                <Typography
+                  sx={{
+                    fontSize: 13.5,
+                    color: STATUS.warning,
+                    fontWeight: 800,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.25,
+                  }}
+                >
+                  ★ {course.rating.toFixed(1)}
+                </Typography>
+                {Boolean(course.soLuongDanhGia && course.soLuongDanhGia > 0) && (
+                  <Typography sx={{ fontSize: 13, color: BRAND_COLORS.textMuted }}>
+                    ({(course.soLuongDanhGia ?? 0).toLocaleString()})
+                  </Typography>
+                )}
+              </Stack>
+            </Tooltip>
           ) : (
             <Typography
               sx={{
@@ -353,7 +358,7 @@ function CourseCard({ course }: { course: CourseCatalogItem }) {
                 fontStyle: "italic",
               }}
             >
-              Chưa có đánh giá · {course.students.toLocaleString()} học viên
+              Chưa có đánh giá
             </Typography>
           )}
         </Stack>
