@@ -57,9 +57,9 @@ import {
   ZoomInRounded,
   ZoomOutRounded,
   CheckRounded,
-  CloudUploadRounded,
   SchoolRounded,
   PhoneRounded,
+  DeleteOutlineRounded,
 } from '@mui/icons-material';
 
 const TextFieldAny = TextField as any;
@@ -82,7 +82,6 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
   const [experience, setExperience] = useState('');
   const [bangCap, setBangCap] = useState('');
   const [motivation, setMotivation] = useState('');
-  const [cvFile, setCvFile] = useState<File | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [openTermsDialog, setOpenTermsDialog] = useState(false);
 
@@ -200,16 +199,6 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
       return;
     }
 
-    if (!cvFile) {
-      showToast('Vui lòng tải lên tài liệu CV của bạn', 'error');
-      return;
-    }
-
-    if (cvFile.size > 10 * 1024 * 1024) {
-      showToast('Tệp CV tối đa là 10MB', 'error');
-      return;
-    }
-
     if (!agreedToTerms) {
       showToast('Bạn phải đồng ý với điều khoản giảng viên', 'error');
       return;
@@ -223,7 +212,6 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
       formData.append('kinhNghiem', experience);
       formData.append('bangCap', bangCap);
       formData.append('lyDo', motivation);
-      formData.append('cvFile', cvFile);
 
       const res = await apiService.post<any>('/profile/upgrade-request', formData, {
         headers: {
@@ -514,6 +502,41 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
     }, 'image/jpeg');
   };
 
+  const handleDeleteAvatar = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa ảnh đại diện và quay về ảnh mặc định không?")) return;
+    try {
+      setSaveLoading(true);
+      const res = await apiService.delete<any>('/profile/avatar');
+      if (res.status) {
+        showToast('Đã xóa ảnh đại diện, đã quay về ảnh mặc định', 'success');
+        localStorage.removeItem(`user_avatar_${email}`);
+        window.dispatchEvent(new Event("avatar_updated"));
+        setProfile((prev: any) => ({
+          ...prev,
+          anhDaiDien: '',
+        }));
+      } else {
+        localStorage.removeItem(`user_avatar_${email}`);
+        window.dispatchEvent(new Event("avatar_updated"));
+        setProfile((prev: any) => ({
+          ...prev,
+          anhDaiDien: '',
+        }));
+        showToast('Đã xóa ảnh đại diện', 'success');
+      }
+    } catch {
+      localStorage.removeItem(`user_avatar_${email}`);
+      window.dispatchEvent(new Event("avatar_updated"));
+      setProfile((prev: any) => ({
+        ...prev,
+        anhDaiDien: '',
+      }));
+      showToast('Đã xóa ảnh đại diện', 'success');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   const handleDownloadCert = async (certId: string) => {
     try {
       showToast('Đang tải xuống chứng chỉ PDF...', 'success');
@@ -678,22 +701,46 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                 >
                   {profile.hoTen.split(' ').pop()?.substring(0, 2).toUpperCase()}
                 </Avatar>
-                <IconButton
-                  size="small"
-                  onClick={() => fileInputRef.current?.click()}
-                  sx={{
-                    position: 'absolute',
-                    bottom: -5,
-                    right: -5,
-                    bgcolor: COLORS.primary,
-                    color: '#fff',
-                    border: '2px solid #fff',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-                    '&:hover': { bgcolor: COLORS.primaryDark },
-                  }}
-                >
-                  <CameraAltRounded sx={{ fontSize: 16 }} />
-                </IconButton>
+                <Tooltip title="Tải ảnh đại diện mới" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{
+                      position: 'absolute',
+                      bottom: -5,
+                      right: -5,
+                      bgcolor: COLORS.primary,
+                      color: '#fff',
+                      border: '2px solid #fff',
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                      '&:hover': { bgcolor: COLORS.primaryDark, transform: 'scale(1.08)' },
+                      transition: 'all 150ms ease',
+                    }}
+                  >
+                    <CameraAltRounded sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
+                {Boolean(profile.anhDaiDien) && (
+                  <Tooltip title="Xóa ảnh đại diện (về mặc định)" arrow>
+                    <IconButton
+                      size="small"
+                      onClick={handleDeleteAvatar}
+                      sx={{
+                        position: 'absolute',
+                        top: -5,
+                        right: -5,
+                        bgcolor: 'error.main',
+                        color: '#fff',
+                        border: '2px solid #fff',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                        '&:hover': { bgcolor: 'error.dark', transform: 'scale(1.08)' },
+                        transition: 'all 150ms ease',
+                      }}
+                    >
+                      <DeleteOutlineRounded sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -716,6 +763,25 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                     ID: {profile.id.substring(0, 8).toUpperCase()}
                   </Typography>
                 </Stack>
+                {Boolean(profile.anhDaiDien) && (
+                  <Button
+                    size="small"
+                    variant="text"
+                    color="error"
+                    startIcon={<DeleteOutlineRounded sx={{ fontSize: 15 }} />}
+                    onClick={handleDeleteAvatar}
+                    sx={{
+                      textTransform: 'none',
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      p: 0,
+                      mt: 0.5,
+                      '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+                    }}
+                  >
+                    Xóa ảnh đại diện (về mặc định)
+                  </Button>
+                )}
               </Box>
             </Stack>
           </Grid>
@@ -1928,7 +1994,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                           <TextFieldAny
                             fullWidth
                             multiline
-                            rows={4}
+                            rows={3}
                             value={experience}
                             onChange={(e: any) => setExperience(e.target.value)}
                             placeholder="Chi tiết về các dự án đã tham gia, số năm kinh nghiệm, các đơn vị đã công tác..."
@@ -1991,156 +2057,6 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                               }
                             }}
                           />
-                        </Grid>
-
-                        <Grid size={{ xs: 12 }}>
-                          <Stack direction="row" spacing={1} sx={{ mb: 1.25, alignItems: 'center' }}>
-                            <CloudUploadRounded sx={{ color: COLORS.primary, fontSize: 20 }} />
-                            <Typography sx={{ fontWeight: 800, fontSize: 14, color: COLORS.textDark }}>
-                              Tải lên CV / Hồ sơ năng lực (Tối đa 10MB)
-                            </Typography>
-                          </Stack>
-
-                          <input
-                            type="file"
-                            id="cv-upload-input"
-                            accept=".pdf,.doc,.docx"
-                            style={{ display: 'none' }}
-                            onChange={(e: any) => {
-                              if (e.target.files && e.target.files[0]) {
-                                const file = e.target.files[0];
-                                if (file.size > 10 * 1024 * 1024) {
-                                  showToast('Tệp CV tối đa 10MB', 'error');
-                                } else {
-                                  setCvFile(file);
-                                }
-                              }
-                            }}
-                          />
-
-                          {!cvFile ? (
-                            <Box
-                              component="label"
-                              htmlFor="cv-upload-input"
-                              sx={{
-                                display: 'block',
-                                border: '2px dashed rgba(139, 19, 19, 0.25)',
-                                borderRadius: '16px',
-                                p: { xs: 3, sm: 4 },
-                                textAlign: 'center',
-                                background: 'linear-gradient(135deg, rgba(139,19,19,0.015) 0%, rgba(255,255,255,1) 100%)',
-                                cursor: 'pointer',
-                                transition: 'all 0.25s ease-in-out',
-                                '&:hover': {
-                                  borderColor: COLORS.primary,
-                                  bgcolor: 'rgba(139,19,19,0.03)',
-                                  boxShadow: '0 8px 24px rgba(139,19,19,0.06)',
-                                  '& .upload-icon-box': {
-                                    transform: 'scale(1.08)',
-                                    bgcolor: 'rgba(139,19,19,0.12)',
-                                  },
-                                },
-                              }}
-                            >
-                              <Box
-                                className="upload-icon-box"
-                                sx={{
-                                  width: 54,
-                                  height: 54,
-                                  borderRadius: '16px',
-                                  bgcolor: 'rgba(139,19,19,0.06)',
-                                  color: COLORS.primary,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  mx: 'auto',
-                                  mb: 1.5,
-                                  transition: 'all 0.25s ease-in-out',
-                                }}
-                              >
-                                <CloudUploadRounded sx={{ fontSize: 28 }} />
-                              </Box>
-
-                              <Typography sx={{ fontSize: 14.5, fontWeight: 700, color: COLORS.textDark, mb: 0.5 }}>
-                                Chọn tệp tin CV hoặc kéo thả vào đây
-                              </Typography>
-                              <Typography sx={{ fontSize: 12.5, color: COLORS.textSecondary }}>
-                                Hỗ trợ định dạng: PDF, DOC, DOCX (Tối đa 10MB)
-                              </Typography>
-                            </Box>
-                          ) : (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                border: '1.5px solid rgba(16, 185, 129, 0.3)',
-                                borderRadius: '16px',
-                                p: 2.5,
-                                bgcolor: 'rgba(16, 185, 129, 0.03)',
-                                transition: 'all 0.2s ease',
-                              }}
-                            >
-                              <Stack direction="row" spacing={2} sx={{ alignItems: 'center', minWidth: 0 }}>
-                                <Box
-                                  sx={{
-                                    width: 46,
-                                    height: 46,
-                                    borderRadius: '12px',
-                                    bgcolor: 'rgba(16, 185, 129, 0.1)',
-                                    color: STATUS.success,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <CheckCircleRounded sx={{ fontSize: 24 }} />
-                                </Box>
-                                <Box sx={{ minWidth: 0 }}>
-                                  <Typography
-                                    noWrap
-                                    sx={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}
-                                  >
-                                    {cvFile.name}
-                                  </Typography>
-                                  <Typography sx={{ fontSize: 12, color: COLORS.textSecondary }}>
-                                    {(cvFile.size / (1024 * 1024)).toFixed(2)} MB • Đã sẵn sàng gửi
-                                  </Typography>
-                                </Box>
-                              </Stack>
-
-                              <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-                                <Button
-                                  component="label"
-                                  htmlFor="cv-upload-input"
-                                  size="small"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 700,
-                                    fontSize: 12.5,
-                                    color: COLORS.primary,
-                                    bgcolor: 'rgba(139,19,19,0.06)',
-                                    borderRadius: '10px',
-                                    px: 1.5,
-                                    '&:hover': { bgcolor: 'rgba(139,19,19,0.12)' },
-                                  }}
-                                >
-                                  Thay đổi
-                                </Button>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => setCvFile(null)}
-                                  sx={{
-                                    color: COLORS.textSecondary,
-                                    '&:hover': { color: STATUS.error, bgcolor: 'rgba(220,38,38,0.08)' },
-                                  }}
-                                >
-                                  <CloseRounded sx={{ fontSize: 18 }} />
-                                </IconButton>
-                              </Stack>
-                            </Box>
-                          )}
                         </Grid>
 
                         <Grid size={{ xs: 12 }}>

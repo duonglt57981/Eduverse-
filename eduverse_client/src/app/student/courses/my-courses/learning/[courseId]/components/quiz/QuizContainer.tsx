@@ -19,7 +19,7 @@ import {
   ChevronRightRounded,
 } from "@mui/icons-material";
 import type { BaiKiemTraInfoDto, LichSuLamBaiDto } from "../../hooks/useQuiz";
-import { BRAND, STATUS, CSSVAR } from "@/src/theme/tokens";
+import { BRAND, STATUS, CSSVAR, FONT_FAMILY } from "@/src/theme/tokens";
 
 // ── Design tokens — dùng chung tông đỏ với QuizView / QuizResult / QuizReview ──
 const RED = BRAND.main;
@@ -31,7 +31,7 @@ const BORDER = "#d1d7dc";
 const GREEN = STATUS.success;
 const RADIUS = "10px";
 const RADIUS_SM = "6px";
-const FONT = "Inter, sans-serif";
+const FONT = FONT_FAMILY;
 
 interface QuizContainerProps {
   info: BaiKiemTraInfoDto;
@@ -43,7 +43,7 @@ interface QuizContainerProps {
   onBatDau: () => void;
   onTiepTuc: (id: string) => void;
   onXemLai: (id: string) => void;
-  onSkip: () => void; // 🆕 Thêm prop để xử lý bỏ qua
+  onSkip: () => void;
 }
 
 export function QuizContainer({

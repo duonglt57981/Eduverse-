@@ -26,23 +26,21 @@ export default function FavoriteGrid({ favorites, loading, onRemove }: FavoriteG
             key={idx}
             elevation={0}
             sx={{
-              p: 2,
-              borderRadius: 2.8,
-              border: '1px solid rgba(17,17,17,0.08)',
-              bgcolor: 'var(--ev-paper, #fff)',
-              height: 440,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
+              borderRadius: "10px",
+              border: "1px solid rgba(17,17,17,0.08)",
+              bgcolor: "var(--dashboard-surface, #fff)",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            <Skeleton variant="rounded" height={200} sx={{ borderRadius: 2.8 }} />
-            <Skeleton variant="text" height={24} width="40%" />
-            <Skeleton variant="text" height={32} width="80%" />
-            <Skeleton variant="text" height={40} width="100%" />
-            <Box sx={{ mt: 'auto', display: 'flex', gap: 1 }}>
-              <Skeleton variant="rectangular" height={36} width="50%" sx={{ borderRadius: 2.8 }} />
-              <Skeleton variant="rectangular" height={36} width="50%" sx={{ borderRadius: 2.8 }} />
+            <Skeleton variant="rectangular" height={140} />
+            <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+              <Skeleton variant="text" height={20} width="90%" />
+              <Skeleton variant="text" height={16} width="60%" />
+              <Skeleton variant="text" height={16} width="40%" />
+              <Skeleton variant="text" height={22} width="50%" />
+              <Skeleton variant="rounded" height={22} width={80} sx={{ borderRadius: "6px", mt: 0.5 }} />
             </Box>
           </Paper>
         ))}

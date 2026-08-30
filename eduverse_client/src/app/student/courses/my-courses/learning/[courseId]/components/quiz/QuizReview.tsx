@@ -23,6 +23,7 @@ import {
   DapAnReviewDto,
   isMultiChoice,
 } from "../../hooks/useQuiz";
+import { cleanHtmlContent, isHtmlContent, stripHtml } from "@/src/utils/htmlHelpers";
 
 // ── Design tokens — đồng bộ với QuizContainer / QuizView / QuizResult ──
 const RED = BRAND.main;
@@ -192,6 +193,10 @@ function CauHoiReviewItem({
               textColor = RED;
             }
 
+            const rawAnswer = da.noiDungDapAn ?? "";
+            const answerText = cleanHtmlContent(rawAnswer);
+            const isAnswerHtml = isHtmlContent(answerText);
+
             return (
               <Box
                 key={da.id}
@@ -228,17 +233,32 @@ function CauHoiReviewItem({
                   )}
                 </Box>
 
-                <Typography
-                  sx={{
-                    fontSize: 14,
-                    flex: 1,
-                    color: textColor,
-                    fontWeight: laDung || chonSai ? 600 : 400,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {da.noiDungDapAn}
-                </Typography>
+                {isAnswerHtml ? (
+                  <Box
+                    sx={{
+                      fontSize: 14,
+                      flex: 1,
+                      color: textColor,
+                      fontWeight: laDung || chonSai ? 600 : 400,
+                      lineHeight: 1.5,
+                      "& p": { m: 0 },
+                      "& strong": { fontWeight: 700 },
+                    }}
+                    dangerouslySetInnerHTML={{ __html: answerText }}
+                  />
+                ) : (
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      flex: 1,
+                      color: textColor,
+                      fontWeight: laDung || chonSai ? 600 : 400,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {answerText || "(Trống)"}
+                  </Typography>
+                )}
 
                 {choXemDapAn && laDung && (
                   <CheckCircleIcon

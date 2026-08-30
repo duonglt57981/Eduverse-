@@ -39,9 +39,24 @@ export default function InstructorCourseList({
       <Grid container spacing={3}>
         {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Skeleton variant="rounded" height={160} sx={{ mb: 1.5, borderRadius: "16px" }} />
-            <Skeleton variant="text" height={24} sx={{ borderRadius: "4px" }} />
-            <Skeleton variant="text" width="60%" sx={{ borderRadius: "4px" }} />
+            <Skeleton
+              variant="rounded"
+              height={140}
+              sx={{ mb: 1, borderRadius: "10px" }}
+            />
+            <Skeleton variant="text" height={20} sx={{ borderRadius: "4px" }} />
+            <Skeleton
+              variant="text"
+              width="60%"
+              height={16}
+              sx={{ borderRadius: "4px" }}
+            />
+            <Skeleton
+              variant="text"
+              width="40%"
+              height={16}
+              sx={{ borderRadius: "4px" }}
+            />
           </Grid>
         ))}
       </Grid>

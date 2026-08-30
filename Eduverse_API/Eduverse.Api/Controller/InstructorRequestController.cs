@@ -73,21 +73,20 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<object> { Status = false, Message = "Bạn đã gửi yêu cầu nâng cấp và đang chờ xét duyệt" };
             }
 
-            if (dto.CvFile == null || dto.CvFile.Length == 0)
+            string cvUrl = string.Empty;
+            if (dto.CvFile != null && dto.CvFile.Length > 0)
             {
-                return new DataResponse<object> { Status = false, Message = "Vui lòng chọn file tài liệu CV" };
-            }
+                if (dto.CvFile.Length > 10 * 1024 * 1024)
+                {
+                    return new DataResponse<object> { Status = false, Message = "File tối đa 10MB" };
+                }
 
-            if (dto.CvFile.Length > 10 * 1024 * 1024)
-            {
-                return new DataResponse<object> { Status = false, Message = "File tối đa 10MB" };
-            }
-
-            // Upload CV to Cloudinary
-            var uploadResult = await _cloudinaryService.UploadDocumentAsync(dto.CvFile);
-            if (uploadResult == null || string.IsNullOrEmpty(uploadResult.UrlDoc))
-            {
-                return new DataResponse<object> { Status = false, Message = "Lỗi khi tải file CV lên máy chủ Cloudinary" };
+                // Upload CV to Cloudinary if provided
+                var uploadResult = await _cloudinaryService.UploadDocumentAsync(dto.CvFile);
+                if (uploadResult != null && !string.IsNullOrEmpty(uploadResult.UrlDoc))
+                {
+                    cvUrl = uploadResult.UrlDoc;
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
@@ -103,7 +102,7 @@ namespace Eduverse.Api.Controller
                 KinhNghiem = dto.KinhNghiem,
                 BangCap = dto.BangCap,
                 LyDo = dto.LyDo,
-                CvUrl = uploadResult.UrlDoc,
+                CvUrl = cvUrl,
                 Status = 0
             };
 
@@ -478,8 +477,7 @@ namespace Eduverse.Api.Controller
         [Required]
         public string LyDo { get; set; } = string.Empty;
 
-        [Required]
-        public IFormFile CvFile { get; set; }
+        public IFormFile? CvFile { get; set; }
     }
 
     public class RejectRequestDto

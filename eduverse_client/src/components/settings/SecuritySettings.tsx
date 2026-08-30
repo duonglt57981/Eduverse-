@@ -30,6 +30,7 @@ import {
   TableRow,
   CircularProgress,
   useTheme,
+  Pagination,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -74,6 +75,16 @@ export default function SecuritySettings() {
   const [loginHistory, setLoginHistory] = useState<LoginHistoryItem[]>([]);
   const [loadingDevices, setLoadingDevices] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
+
+  const [devicePage, setDevicePage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
+  const PAGE_SIZE = 5;
+
+  const paginatedDevices = devices.slice((devicePage - 1) * PAGE_SIZE, devicePage * PAGE_SIZE);
+  const totalDevicePages = Math.ceil(devices.length / PAGE_SIZE);
+
+  const paginatedHistory = loginHistory.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE);
+  const totalHistoryPages = Math.ceil(loginHistory.length / PAGE_SIZE);
 
   const [twoFactor, setTwoFactor] = useState(false);
   const [open2FA, setOpen2FA] = useState(false);
@@ -438,79 +449,103 @@ export default function SecuritySettings() {
                 Không tìm thấy phiên đăng nhập nào.
               </Typography>
             ) : (
-              <Stack spacing={2} divider={<Divider sx={{ opacity: 0.6 }} />}>
-                {devices.map((device) => (
-                  <Stack key={device.id} direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                      <Box
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 2,
-                          bgcolor: 'action.hover',
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: 'text.secondary',
-                        }}
-                      >
-                        {device.name.includes('iPhone') || device.name.includes('Android') ? (
-                          <SmartphoneRounded />
-                        ) : (
-                          <DesktopWindowsRounded />
-                        )}
-                      </Box>
-                      <Box>
-                        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                          <Typography sx={{ fontSize: 15, fontWeight: 800, color: 'text.primary' }}>
-                            {device.name}
-                          </Typography>
-                          {device.isCurrent && (
-                            <Chip
-                              label="Phiên hiện tại"
-                              size="small"
-                              sx={{
-                                bgcolor: alpha(theme.palette.primary.main, 0.08),
-                                color: 'primary.main',
-                                fontWeight: 800,
-                                height: 20,
-                                fontSize: 11,
-                              }}
-                            />
-                          )}
-                        </Stack>
-                        <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mt: 0.3 }}>
-                          {device.browser} • {device.location} • IP: {device.ip}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                    <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                      <Typography sx={{ fontSize: 13, color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
-                        {device.time}
-                      </Typography>
-                      {!device.isCurrent && (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          onClick={() => handleLogoutDevice(device.id)}
+              <>
+                <Stack spacing={2} divider={<Divider sx={{ opacity: 0.6 }} />}>
+                  {paginatedDevices.map((device) => (
+                    <Stack key={device.id} direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                        <Box
                           sx={{
-                            borderRadius: 999,
-                            borderColor: 'rgba(211,47,47,0.25)',
-                            fontWeight: 700,
-                            px: 2,
-                            '&:hover': {
-                              borderColor: 'error.main',
-                              bgcolor: 'rgba(211,47,47,0.03)',
-                            },
+                            width: 44,
+                            height: 44,
+                            borderRadius: 2,
+                            bgcolor: 'action.hover',
+                            display: 'grid',
+                            placeItems: 'center',
+                            color: 'text.secondary',
                           }}
                         >
-                          Đăng xuất
-                        </Button>
-                      )}
+                          {device.name.includes('iPhone') || device.name.includes('Android') ? (
+                            <SmartphoneRounded />
+                          ) : (
+                            <DesktopWindowsRounded />
+                          )}
+                        </Box>
+                        <Box>
+                          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                            <Typography sx={{ fontSize: 15, fontWeight: 800, color: 'text.primary' }}>
+                              {device.name}
+                            </Typography>
+                            {device.isCurrent && (
+                              <Chip
+                                label="Phiên hiện tại"
+                                size="small"
+                                sx={{
+                                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                  color: 'primary.main',
+                                  fontWeight: 800,
+                                  height: 20,
+                                  fontSize: 11,
+                                }}
+                              />
+                            )}
+                          </Stack>
+                          <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mt: 0.3 }}>
+                            {device.browser} • {device.location} • IP: {device.ip}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                        <Typography sx={{ fontSize: 13, color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
+                          {device.time}
+                        </Typography>
+                        {!device.isCurrent && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="error"
+                            onClick={() => handleLogoutDevice(device.id)}
+                            sx={{
+                              borderRadius: 999,
+                              borderColor: 'rgba(211,47,47,0.25)',
+                              fontWeight: 700,
+                              px: 2,
+                              '&:hover': {
+                                borderColor: 'error.main',
+                                bgcolor: 'rgba(211,47,47,0.03)',
+                              },
+                            }}
+                          >
+                            Đăng xuất
+                          </Button>
+                        )}
+                      </Stack>
                     </Stack>
+                  ))}
+                </Stack>
+
+                {totalDevicePages > 1 && (
+                  <Stack sx={{ alignItems: 'center', mt: 3 }}>
+                    <Pagination
+                      page={devicePage}
+                      count={totalDevicePages}
+                      onChange={(_, page) => setDevicePage(page)}
+                      size="small"
+                      shape="rounded"
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected': {
+                          bgcolor: (theme) => `${theme.palette.primary.main} !important`,
+                          color: '#FFFFFF !important',
+                        },
+                      }}
+                    />
                   </Stack>
-                ))}
-              </Stack>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -542,41 +577,65 @@ export default function SecuritySettings() {
                 Chưa có lịch sử đăng nhập.
               </Typography>
             ) : (
-              <TableContainer>
-                <Table sx={{ minWidth: 600 }}>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'action.hover' }}>
-                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thời gian</TableCell>
-                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thiết bị / Trình duyệt</TableCell>
-                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Địa chỉ IP</TableCell>
-                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Vị trí</TableCell>
-                      <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Trạng thái</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {loginHistory.map((row, index) => (
-                      <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        <TableCell sx={{ fontSize: 13.5 }}>{row.time}</TableCell>
-                        <TableCell sx={{ fontSize: 13.5, fontWeight: 700 }}>{row.dev}</TableCell>
-                        <TableCell sx={{ fontSize: 13.5 }}>{row.ip}</TableCell>
-                        <TableCell sx={{ fontSize: 13.5 }}>{row.loc}</TableCell>
-                        <TableCell sx={{ fontSize: 13.5 }}>
-                          <Chip
-                            label={row.status}
-                            size="small"
-                            sx={{
-                              fontSize: 11,
-                              fontWeight: 700,
-                              bgcolor: row.status.includes('thành công') || row.status.includes('Thành công') ? 'rgba(46,125,50,0.08)' : 'rgba(211,47,47,0.08)',
-                              color: row.status.includes('thành công') || row.status.includes('Thành công') ? '#2e7d32' : '#d32f2f',
-                            }}
-                          />
-                        </TableCell>
+              <>
+                <TableContainer>
+                  <Table sx={{ minWidth: 600 }}>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: 'action.hover' }}>
+                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thời gian</TableCell>
+                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Thiết bị / Trình duyệt</TableCell>
+                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Địa chỉ IP</TableCell>
+                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Vị trí</TableCell>
+                        <TableCell sx={{ fontWeight: 800, fontSize: 13 }}>Trạng thái</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedHistory.map((row, index) => (
+                        <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                          <TableCell sx={{ fontSize: 13.5 }}>{row.time}</TableCell>
+                          <TableCell sx={{ fontSize: 13.5, fontWeight: 700 }}>{row.dev}</TableCell>
+                          <TableCell sx={{ fontSize: 13.5 }}>{row.ip}</TableCell>
+                          <TableCell sx={{ fontSize: 13.5 }}>{row.loc}</TableCell>
+                          <TableCell sx={{ fontSize: 13.5 }}>
+                            <Chip
+                              label={row.status}
+                              size="small"
+                              sx={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                bgcolor: row.status.includes('thành công') || row.status.includes('Thành công') ? 'rgba(46,125,50,0.08)' : 'rgba(211,47,47,0.08)',
+                                color: row.status.includes('thành công') || row.status.includes('Thành công') ? '#2e7d32' : '#d32f2f',
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {totalHistoryPages > 1 && (
+                  <Stack sx={{ alignItems: 'center', mt: 3 }}>
+                    <Pagination
+                      page={historyPage}
+                      count={totalHistoryPages}
+                      onChange={(_, page) => setHistoryPage(page)}
+                      size="small"
+                      shape="rounded"
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                        },
+                        '& .MuiPaginationItem-root.Mui-selected': {
+                          bgcolor: (theme) => `${theme.palette.primary.main} !important`,
+                          color: '#FFFFFF !important',
+                        },
+                      }}
+                    />
+                  </Stack>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

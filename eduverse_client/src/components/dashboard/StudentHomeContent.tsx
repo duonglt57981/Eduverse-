@@ -726,14 +726,16 @@ function CourseCard({
     ((course as unknown as Record<string, unknown>).giagoc as number) ??
     0;
   const title = course.tieuDe || course.title || "";
-  const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh ?? null;
-  const hasRating = ratingVal !== null && ratingVal > 0;
-  const students = course.soLuongHocVien ?? course.studentsCount ?? 0;
+  const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh;
+  const hasRating = typeof ratingVal === "number" && ratingVal > 0;
+  const reviewCount = course.soLuongDanhGia ?? 0;
   const instructorName =
     course.danhSachGiangVienHienThi &&
     course.danhSachGiangVienHienThi.length > 0
       ? course.danhSachGiangVienHienThi.join(", ")
       : course.tenGiangVien || course.instructor || "Giảng viên EduVerse";
+
+  const levelBadge = course.capDo || course.level || "Tất cả cấp độ";
 
   const handleCardEnter = () => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -768,19 +770,24 @@ function CourseCard({
         sx={{
           width,
           flexShrink: 0,
-          borderRadius: "18px",
+          borderRadius: "10px",
           overflow: "hidden",
           border: `1px solid ${C.border}`,
           bgcolor: C.white,
           cursor: "pointer",
           transition:
-            "transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease",
+            "transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease",
           "&:hover": {
-            boxShadow: "0 8px 24px rgba(139,19,19,0.08)",
+            transform: "translateY(-3px)",
+            boxShadow: "0 10px 24px rgba(0,0,0,0.08)",
             borderColor: C.primaryBorder,
+            "& .card-wishlist-btn": {
+              opacity: 1,
+            },
           },
         }}
       >
+        {/* ── 1. Thumbnail Image ── */}
         <Box
           sx={{
             height: 136,
@@ -791,6 +798,7 @@ function CourseCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            overflow: "hidden",
           }}
         >
           {!isValidImage(course.hinhAnhKhoaHoc) && (
@@ -810,23 +818,10 @@ function CourseCard({
               </Typography>
             </Stack>
           )}
-          {(course.capDo || course.level) && (
-            <Chip
-              label={course.capDo || course.level}
-              size="small"
-              sx={{
-                position: "absolute",
-                top: 8,
-                left: 8,
-                bgcolor: "rgba(255,255,255,0.92)",
-                color: C.primary,
-                fontWeight: 800,
-                fontSize: 10,
-                height: 20,
-              }}
-            />
-          )}
+
+          {/* Subtle wishlist heart button (visible on hover or when favorited) */}
           <IconButton
+            className="card-wishlist-btn"
             aria-label={favorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
             aria-pressed={favorited}
             onClick={(e) => {
@@ -837,65 +832,34 @@ function CourseCard({
             sx={{
               position: "absolute",
               top: 6,
-              right: 8,
+              right: 6,
               width: 28,
               height: 28,
-              bgcolor: "rgba(255, 255, 255, 0.95)",
+              bgcolor: "rgba(255, 255, 255, 0.92)",
               color: favorited ? C.primary : "rgba(31, 41, 55, 0.4)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
               zIndex: 5,
-              transition: "all 150ms ease",
+              opacity: favorited ? 1 : 0,
+              transition: "opacity 180ms ease, transform 150ms ease",
               p: 0,
               "&:hover": {
-                bgcolor: "rgba(255, 255, 255, 1)",
+                bgcolor: "#ffffff",
                 color: C.primary,
-                transform: "scale(1.08)",
+                transform: "scale(1.1)",
               },
             }}
           >
             <FavoriteHeartIcon active={favorited} color={C.primary} />
           </IconButton>
-          {course.daDangKy && (
-            <Chip
-              icon={<CheckCircleRounded sx={{ fontSize: "12px !important" }} />}
-              label="Đã học"
-              size="small"
-              sx={{
-                position: "absolute",
-                bottom: 8,
-                left: 8,
-                bgcolor: C.ok,
-                color: "#fff",
-                fontWeight: 800,
-                fontSize: 10,
-                height: 20,
-                "& .MuiChip-icon": { color: "#fff !important" },
-              }}
-            />
-          )}
-          {!course.daDangKy && isFree && (
-            <Chip
-              label="MIỄN PHÍ"
-              size="small"
-              sx={{
-                position: "absolute",
-                bottom: 8,
-                left: 8,
-                bgcolor: C.ok,
-                color: "#fff",
-                fontWeight: 900,
-                fontSize: 9.5,
-                height: 18,
-              }}
-            />
-          )}
         </Box>
 
-        <Box sx={{ p: 1.75 }}>
+        {/* ── 2. Card Content ── */}
+        <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
+          {/* Title */}
           <Typography
             sx={{
               fontSize: 13.5,
-              fontWeight: 800,
+              fontWeight: 700,
               lineHeight: 1.4,
               height: 38,
               overflow: "hidden",
@@ -903,18 +867,17 @@ function CourseCard({
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
               color: C.textDark,
-              mb: 0.5,
             }}
           >
             {title}
           </Typography>
 
+          {/* Instructor name */}
           <Typography
             sx={{
               fontSize: 11.5,
               color: C.textMuted,
-              fontWeight: 600,
-              mb: 0.75,
+              fontWeight: 500,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -923,92 +886,130 @@ function CourseCard({
             {instructorName}
           </Typography>
 
-          <Stack
-            direction="row"
-            spacing={1.5}
-            sx={{ mb: 1.25, flexWrap: "wrap", gap: 0.5 }}
-          >
-            {course.tongBaiGiang != null && (
-              <Typography
-                sx={{ fontSize: 11, color: C.textMuted, fontWeight: 600 }}
-              >
-                📖 {course.tongBaiGiang} bài
-              </Typography>
-            )}
-            {course.tongThoiLuong != null && (
-              <Typography
-                sx={{ fontSize: 11, color: C.textMuted, fontWeight: 600 }}
-              >
-                ⏱ {fmtDuration(course.tongThoiLuong)}
-              </Typography>
-            )}
-          </Stack>
-
-          <Divider sx={{ mb: 1.25, opacity: 0.45 }} />
-
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
-            <Box>
+          {/* Rating score + Stars OR 'Chưa có đánh giá' */}
+          {hasRating ? (
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ alignItems: "center", mt: 0.25 }}
+            >
               <Typography
                 sx={{
-                  fontSize: 14.5,
-                  fontWeight: 900,
-                  color: isFree ? C.ok : C.primary,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#b45309",
+                  lineHeight: 1,
                 }}
               >
-                {isFree ? "Miễn phí" : fmtPrice(displayPrice)}
+                {ratingVal.toFixed(1).replace(".", ",")}
               </Typography>
-              {Boolean(course.giaGoc && course.giaGoc > displayPrice) && (
-                <Typography
-                  sx={{
-                    fontSize: 10.5,
-                    color: C.textMuted,
-                    textDecoration: "line-through",
-                    fontWeight: 600,
-                  }}
-                >
-                  {course.giaGoc?.toLocaleString("vi-VN")}đ
-                </Typography>
-              )}
-            </Box>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <Stack
-                direction="row"
-                spacing={0.3}
-                sx={{ alignItems: "center" }}
-              >
-                <StarRounded
-                  sx={{
-                    fontSize: 14,
-                    color: hasRating ? STATUS.warning : C.textMuted,
-                  }}
-                />
+              <Stack direction="row" spacing={0.1} sx={{ alignItems: "center" }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <StarRounded
+                    key={star}
+                    sx={{
+                      fontSize: 13.5,
+                      color:
+                        star <= Math.round(ratingVal)
+                          ? "#f59e0b"
+                          : "#d1d5db",
+                    }}
+                  />
+                ))}
+              </Stack>
+              {reviewCount > 0 && (
                 <Typography
                   sx={{
                     fontSize: 11.5,
-                    fontWeight: 800,
-                    color: hasRating ? C.textDark : C.textMuted,
+                    color: C.textMuted,
+                    fontWeight: 500,
+                    lineHeight: 1,
                   }}
                 >
-                  {hasRating ? ratingVal.toFixed(1) : "Chưa có đánh giá"}
+                  ({reviewCount.toLocaleString()})
                 </Typography>
-              </Stack>
-              <Stack
-                direction="row"
-                spacing={0.3}
-                sx={{ alignItems: "center" }}
-              >
-                <PeopleAltRounded sx={{ fontSize: 13, color: C.textMuted }} />
-                <Typography
-                  sx={{ fontSize: 11, color: C.textMuted, fontWeight: 600 }}
-                >
-                  {students.toLocaleString()}
-                </Typography>
-              </Stack>
+              )}
             </Stack>
+          ) : (
+            <Stack
+              direction="row"
+              spacing={0.4}
+              sx={{ alignItems: "center", mt: 0.25 }}
+            >
+              <StarRounded sx={{ fontSize: 14, color: C.textMuted }} />
+              <Typography
+                sx={{
+                  fontSize: 11.5,
+                  color: C.textMuted,
+                  fontWeight: 500,
+                  lineHeight: 1,
+                }}
+              >
+                Chưa có đánh giá
+              </Typography>
+            </Stack>
+          )}
+
+          {/* Price row */}
+          <Stack
+            direction="row"
+            spacing={0.75}
+            sx={{ alignItems: "baseline", mt: 0.25 }}
+          >
+            <Typography
+              sx={{
+                fontSize: 15,
+                fontWeight: 800,
+                color: C.textDark,
+                lineHeight: 1.2,
+              }}
+            >
+              {isFree ? "Miễn phí" : fmtPrice(displayPrice)}
+            </Typography>
+            {Boolean(course.giaGoc && course.giaGoc > displayPrice) && (
+              <Typography
+                sx={{
+                  fontSize: 11.5,
+                  color: C.textMuted,
+                  textDecoration: "line-through",
+                  fontWeight: 500,
+                }}
+              >
+                {fmtPrice(course.giaGoc!)}
+              </Typography>
+            )}
           </Stack>
+
+          {/* Bottom Badge: Pill badge (Brand red "Tất cả cấp độ" / Level) */}
+          <Box sx={{ mt: 0.5 }}>
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 1,
+                py: 0.35,
+                borderRadius: "6px",
+                bgcolor: C.primary,
+                color: "#ffffff",
+                width: "fit-content",
+              }}
+            >
+              <WorkspacePremiumRounded
+                sx={{ fontSize: 13, color: "#ffffff" }}
+              />
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  lineHeight: 1.2,
+                }}
+              >
+                {levelBadge}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       </Paper>
 
@@ -1067,24 +1068,33 @@ function SectionHeader({
   );
 }
 
-// ─── Continue-learning progress card (Ultra-Premium Modern Card) ──────────────
+// ─── Continue-learning progress card (Styled in harmony with standard CourseCard) ───
 function ContinueLearningCard({
   item,
   onOpen,
-  width = 260,
+  width = 240,
 }: {
   item: KhoaHocDto;
   onOpen: (c: KhoaHocDto) => void;
   width?: number;
 }) {
+  const { isFavorited, toggleFavorite } = useFavorite();
+  const favorited = isFavorited(item.id);
   const title = item.tieuDe || item.title || "";
-  const gradient = getGradient(item);
   const pct = Math.max(
     0,
     Math.min(100, Math.round(item.phanTramHoanThanh ?? item.progress ?? 0)),
   );
   const done = item.soBaiGiangHoanThanh;
   const total = item.tongBaiGiang;
+
+  const ratingVal = item.rating ?? item.diemDanhGiaTrungBinh;
+  const hasRating = typeof ratingVal === "number" && ratingVal > 0;
+  const reviewCount = item.soLuongDanhGia ?? 0;
+  const instructorName =
+    item.danhSachGiangVienHienThi && item.danhSachGiangVienHienThi.length > 0
+      ? item.danhSachGiangVienHienThi.join(", ")
+      : item.tenGiangVien || item.instructor || "Giảng viên EduVerse";
 
   return (
     <Paper
@@ -1093,208 +1103,212 @@ function ContinueLearningCard({
       sx={{
         width,
         flexShrink: 0,
-        borderRadius: "16px",
+        borderRadius: "10px",
         overflow: "hidden",
-        border: `1px solid ${CSSVAR.divider}`,
+        border: `1px solid ${C.border}`,
         bgcolor: C.white,
         cursor: "pointer",
-        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)",
-        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition:
+          "transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease",
         "&:hover": {
-          boxShadow: "0 14px 32px rgba(139, 19, 19, 0.10)",
-          borderColor: "rgba(139, 19, 19, 0.28)",
-          "& .play-glass-btn": {
-            transform: "translate(-50%, -50%) scale(1.12)",
-            background: `linear-gradient(135deg, ${BRAND.main} 0%, ${STATUS.errorDark} 100%)`,
-            color: "#ffffff",
-            boxShadow: "0 10px 24px rgba(139,19,19,0.45)",
-          },
-          "& .card-title-text": {
-            color: C.primary,
-          },
-          "& .card-thumb-img": {
-            transform: "scale(1.05)",
+          transform: "translateY(-3px)",
+          boxShadow: "0 10px 24px rgba(0,0,0,0.08)",
+          borderColor: C.primaryBorder,
+          "& .card-wishlist-btn": {
+            opacity: 1,
           },
         },
       }}
     >
-      {/* ── 1. Top Image Thumbnail Container ── */}
+      {/* ── 1. Thumbnail Image ── */}
       <Box
         sx={{
-          height: 145,
+          height: 136,
+          background: isValidImage(item.hinhAnhKhoaHoc)
+            ? `url(${item.hinhAnhKhoaHoc}) center/cover no-repeat`
+            : "var(--dashboard-surface-muted)",
           position: "relative",
-          overflow: "hidden",
-          bgcolor: "var(--dashboard-surface-muted, #FBFAF9)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          overflow: "hidden",
         }}
       >
-        {isValidImage(item.hinhAnhKhoaHoc) ? (
-          <Box
-            className="card-thumb-img"
-            component="img"
-            src={item.hinhAnhKhoaHoc}
-            alt={title}
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transition: "transform 0.4s ease",
-            }}
-          />
-        ) : (
-          <Box
-            sx={{
-              width: "100%",
-              height: "100%",
-              background: gradient,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          />
+        {!isValidImage(item.hinhAnhKhoaHoc) && (
+          <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
+            <SchoolRounded sx={{ color: C.textMuted, fontSize: 32 }} />
+            <Typography
+              sx={{
+                color: C.textMuted,
+                fontSize: 11,
+                fontWeight: 700,
+                mt: 0.75,
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+              }}
+            >
+              EDUVERSE
+            </Typography>
+          </Stack>
         )}
 
-        {/* Dark bottom gradient overlay for readability */}
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to top, rgba(15, 23, 42, 0.65) 0%, transparent 60%)",
-            pointerEvents: "none",
+        {/* Wishlist heart button */}
+        <IconButton
+          className="card-wishlist-btn"
+          aria-label={favorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+          aria-pressed={favorited}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            toggleFavorite(item.id, title);
           }}
-        />
-
-        {/* Glassmorphic Play Button */}
-        <Box
-          className="play-glass-btn"
           sx={{
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 2,
-            width: 48,
-            height: 48,
-            borderRadius: "50%",
-            background: "rgba(255, 255, 255, 0.90)",
-            backdropFilter: "blur(10px)",
-            color: C.primary,
-            display: "grid",
-            placeItems: "center",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.24)",
-            transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+            top: 6,
+            right: 6,
+            width: 28,
+            height: 28,
+            bgcolor: "rgba(255, 255, 255, 0.92)",
+            color: favorited ? C.primary : "rgba(31, 41, 55, 0.4)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            zIndex: 5,
+            opacity: favorited ? 1 : 0,
+            transition: "opacity 180ms ease, transform 150ms ease",
+            p: 0,
+            "&:hover": {
+              bgcolor: "#ffffff",
+              color: C.primary,
+              transform: "scale(1.1)",
+            },
           }}
         >
-          <PlayArrowRounded sx={{ fontSize: 30, ml: 0.2 }} />
-        </Box>
-
-        {/* Level Badge (Top Left) */}
-        {(item.capDo || item.level) && (
-          <Chip
-            label={item.capDo || item.level}
-            size="small"
-            sx={{
-              position: "absolute",
-              top: 10,
-              left: 10,
-              bgcolor: "rgba(15, 23, 42, 0.78)",
-              color: "#FFFFFF",
-              backdropFilter: "blur(8px)",
-              fontWeight: 800,
-              fontSize: 10.5,
-              height: 22,
-              px: 0.5,
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.18)",
-              zIndex: 3,
-            }}
-          />
-        )}
-
-        {/* Percentage Chip Badge (Bottom Right) */}
-        <Chip
-          label={pct === 100 ? "100% ✓" : pct === 0 ? "Mới" : `${pct}%`}
-          size="small"
-          sx={{
-            position: "absolute",
-            bottom: 10,
-            right: 10,
-            background:
-              pct === 100
-                ? `linear-gradient(135deg, ${STATUS.success} 0%, #059669 100%)`
-                : pct === 0
-                  ? "rgba(15, 23, 42, 0.78)"
-                  : C.gradientCrimson,
-            backdropFilter: "blur(8px)",
-            color: "#ffffff",
-            fontWeight: 800,
-            fontSize: 10.5,
-            height: 22,
-            px: 0.75,
-            borderRadius: "8px",
-            boxShadow:
-              pct === 100
-                ? "0 4px 12px rgba(16,185,129,0.35)"
-                : "0 4px 12px rgba(139,19,19,0.35)",
-            zIndex: 3,
-          }}
-        />
+          <FavoriteHeartIcon active={favorited} color={C.primary} />
+        </IconButton>
       </Box>
 
-      {/* ── 2. Card Body Content ── */}
-      <Box sx={{ p: 2.25, display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* ── 2. Card Content ── */}
+      <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
+        {/* Title */}
         <Typography
-          className="card-title-text"
           sx={{
-            fontSize: 14.5,
-            fontWeight: 800,
-            lineHeight: 1.38,
-            height: 42,
+            fontSize: 13.5,
+            fontWeight: 700,
+            lineHeight: 1.4,
+            height: 38,
             overflow: "hidden",
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
             color: C.textDark,
-            transition: "color 200ms ease",
           }}
         >
           {title}
         </Typography>
 
-        {/* Progress Info & Bar */}
-        <Box>
+        {/* Instructor name */}
+        <Typography
+          sx={{
+            fontSize: 11.5,
+            color: C.textMuted,
+            fontWeight: 500,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {instructorName}
+        </Typography>
+
+        {/* Rating score + Stars OR 'Chưa có đánh giá' */}
+        {hasRating ? (
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ alignItems: "center", mt: 0.25 }}
+          >
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#b45309",
+                lineHeight: 1,
+              }}
+            >
+              {ratingVal.toFixed(1).replace(".", ",")}
+            </Typography>
+            <Stack direction="row" spacing={0.1} sx={{ alignItems: "center" }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <StarRounded
+                  key={star}
+                  sx={{
+                    fontSize: 13.5,
+                    color:
+                      star <= Math.round(ratingVal)
+                        ? "#f59e0b"
+                        : "#d1d5db",
+                  }}
+                />
+              ))}
+            </Stack>
+            {reviewCount > 0 && (
+              <Typography
+                sx={{
+                  fontSize: 11.5,
+                  color: C.textMuted,
+                  fontWeight: 500,
+                  lineHeight: 1,
+                }}
+              >
+                ({reviewCount.toLocaleString()})
+              </Typography>
+            )}
+          </Stack>
+        ) : (
+          <Stack
+            direction="row"
+            spacing={0.4}
+            sx={{ alignItems: "center", mt: 0.25 }}
+          >
+            <StarRounded sx={{ fontSize: 14, color: C.textMuted }} />
+            <Typography
+              sx={{
+                fontSize: 11.5,
+                color: C.textMuted,
+                fontWeight: 500,
+                lineHeight: 1,
+              }}
+            >
+              Chưa có đánh giá
+            </Typography>
+          </Stack>
+        )}
+
+        {/* Progress row: Text + Percentage + Bar */}
+        <Box sx={{ mt: 0.5 }}>
           <Stack
             direction="row"
             sx={{
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 0.85,
+              mb: 0.5,
             }}
           >
-            <Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}>
-              <MenuBookRounded sx={{ fontSize: 14, color: C.primary }} />
-              <Typography
-                sx={{ fontSize: 11.5, color: C.textSecondary, fontWeight: 600 }}
-              >
-                {done != null && total != null
-                  ? `${done}/${total} bài học`
-                  : "Tiến độ học tập"}
-              </Typography>
-            </Stack>
-
             <Typography
               sx={{
-                fontSize: 12.5,
-                fontWeight: 900,
-                color:
-                  pct === 100
-                    ? STATUS.success
-                    : pct > 0
-                      ? C.primary
-                      : C.textMuted,
+                fontSize: 11.5,
+                color: C.textMuted,
+                fontWeight: 500,
+              }}
+            >
+              {done != null && total != null
+                ? `${done}/${total} bài học`
+                : "Tiến độ học tập"}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: pct === 100 ? STATUS.success : C.primary,
               }}
             >
               {pct}%
@@ -1305,27 +1319,21 @@ function ContinueLearningCard({
             variant="determinate"
             value={pct}
             sx={{
-              height: 6,
-              borderRadius: 6,
+              height: 5,
+              borderRadius: 3,
               bgcolor: "rgba(0,0,0,0.06)",
               "& .MuiLinearProgress-bar": {
                 background:
                   pct === 100
                     ? `linear-gradient(90deg, #34D399 0%, ${STATUS.success} 100%)`
-                    : pct > 0
-                      ? `linear-gradient(90deg, ${STATUS.errorDark} 0%, ${BRAND.main} 100%)`
-                      : "linear-gradient(90deg, #E5E7EB 0%, #D1D5DB 100%)",
-                borderRadius: 6,
-                boxShadow:
-                  pct === 100
-                    ? "0 2px 8px rgba(16,185,129,0.35)"
-                    : "0 2px 8px rgba(139,19,19,0.3)",
+                    : `linear-gradient(90deg, ${STATUS.errorDark} 0%, ${BRAND.main} 100%)`,
+                borderRadius: 3,
               },
             }}
           />
         </Box>
 
-        {/* Unified Brand Crimson Action Button */}
+        {/* Bottom Action Button (Full Width, Modern & Elegant) */}
         <Button
           fullWidth
           variant="contained"
@@ -1334,7 +1342,7 @@ function ContinueLearningCard({
             pct === 100 ? (
               <CheckCircleRounded sx={{ fontSize: "16px !important" }} />
             ) : (
-              <PlayCircleFilledRounded sx={{ fontSize: "16px !important" }} />
+              <PlayArrowRounded sx={{ fontSize: "18px !important" }} />
             )
           }
           onClick={(e) => {
@@ -1342,17 +1350,31 @@ function ContinueLearningCard({
             onOpen(item);
           }}
           sx={{
-            borderRadius: "10px",
-            py: 1.1,
-            fontWeight: 800,
-            fontSize: 13,
-            background: C.gradientCrimson,
+            mt: 0.75,
+            borderRadius: "8px",
+            py: 0.75,
+            fontWeight: 700,
+            fontSize: 12.5,
+            background:
+              pct === 100
+                ? "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+                : C.gradientCrimson,
             color: "#ffffff",
-            boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
-            transition: "all 220ms ease",
+            boxShadow:
+              pct === 100
+                ? "0 3px 10px rgba(16,185,129,0.25)"
+                : "0 3px 10px rgba(139,19,19,0.22)",
+            textTransform: "none",
+            transition: "all 200ms ease",
             "&:hover": {
-              background: GRADIENTS.crimsonHover,
-              boxShadow: "0 6px 20px rgba(139,19,19,0.36)",
+              background:
+                pct === 100
+                  ? "linear-gradient(135deg, #059669 0%, #047857 100%)"
+                  : GRADIENTS.crimsonHover,
+              boxShadow:
+                pct === 100
+                  ? "0 5px 14px rgba(16,185,129,0.35)"
+                  : "0 5px 14px rgba(139,19,19,0.32)",
               transform: "translateY(-1px)",
             },
           }}

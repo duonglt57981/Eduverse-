@@ -804,12 +804,10 @@ namespace Eduverse.Service.CloudinaryService
 
             var extension = Path.GetExtension(file.FileName).ToLower();
 
-            // Giao diện đang cho người dùng chọn .pdf/.doc/.docx nên máy chủ
-            // phải chấp nhận cả ba, tránh trường hợp chọn được nhưng gửi lên bị lỗi.
-            string[] allowedExtensions = { ".pdf", ".doc", ".docx" };
+            string[] allowedExtensions = { ".doc", ".docx" };
 
             if (!allowedExtensions.Contains(extension))
-                throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
+                throw new Exception($"Định dạng không hỗ trợ. Chỉ chấp nhận: {string.Join(", ", allowedExtensions)}");
 
             await using var inputStream = file.OpenReadStream();
 
@@ -874,12 +872,10 @@ namespace Eduverse.Service.CloudinaryService
                 throw new Exception("Tài liệu không được vượt quá 50MB");
 
             var extension = Path.GetExtension(file.FileName).ToLower();
-
-            string[] allowedExtensions =
-            {".docx"};
+            string[] allowedExtensions = { ".doc", ".docx" };
 
             if (!allowedExtensions.Contains(extension))
-                throw new Exception($"Định dạng không hỗ trợ. Chấp nhận: {string.Join(", ", allowedExtensions)}");
+                throw new Exception($"Định dạng không hỗ trợ. Chỉ chấp nhận: {string.Join(", ", allowedExtensions)}");
 
             await using var inputStream = file.OpenReadStream();
 

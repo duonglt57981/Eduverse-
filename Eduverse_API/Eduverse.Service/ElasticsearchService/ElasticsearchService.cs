@@ -174,43 +174,48 @@ namespace Eduverse.Service.ElasticsearchService
             if (!string.IsNullOrWhiteSpace(search.Keyword))
             {
                 var keyword = search.Keyword.Trim();
+                var searchVariants = CourseSearchVocabulary.GetSearchVariants(keyword);
                 var prefixSearchFields = new[]
                 {
                     "tieuDe^6",
                     "tenDanhMucList^3",
                     "tenGiangVien^2"
                 };
-                var keywordQueries = new List<Query>
+                var keywordQueries = new List<Query>();
+
+                foreach (var variant in searchVariants)
                 {
-                    new MultiMatchQuery
+                    keywordQueries.Add(new MultiMatchQuery
                     {
-                        Query = keyword,
+                        Query = variant,
                         Fields = prefixSearchFields,
                         Type = TextQueryType.BoolPrefix,
                         Operator = Operator.And
+                    });
+
+                    // Expanded abbreviations such as "js" -> "javascript" are long
+                    // enough to search descriptions without the noisy 1-2 character matches.
+                    if (variant.Length >= 3)
+                    {
+                        keywordQueries.Add(new MultiMatchQuery
+                        {
+                            Query = variant,
+                            Fields = new[]
+                            {
+                                "tieuDe^4",
+                                "tenDanhMucList^2",
+                                "tenGiangVien^2",
+                                "moTa"
+                            },
+                            Fuzziness = new Fuzziness("AUTO"),
+                            Operator = Operator.And
+                        });
                     }
-                };
+                }
 
                 // Short search-as-you-type input is intentionally limited to fields the
                 // course card exposes. Searching descriptions for one or two characters
                 // produces matches that look unrelated to the user.
-                if (keyword.Length >= 3)
-                {
-                    keywordQueries.Add(new MultiMatchQuery
-                    {
-                        Query = keyword,
-                        Fields = new[]
-                        {
-                            "tieuDe^4",
-                            "tenDanhMucList^2",
-                            "tenGiangVien^2",
-                            "moTa"
-                        },
-                        Fuzziness = new Fuzziness("AUTO"),
-                        Operator = Operator.And
-                    });
-                }
-
                 mustQueries.Add(new BoolQuery
                 {
                     Should = keywordQueries,
@@ -385,6 +390,14 @@ namespace Eduverse.Service.ElasticsearchService
 
             await InitializeIndexAsync();
 
+            var searchVariants = CourseSearchVocabulary.GetSearchVariants(query);
+            var suggestionQueries = searchVariants
+                .Select(variant => (Query)new MatchPhrasePrefixQuery(new Field("tieuDe"))
+                {
+                    Query = variant
+                })
+                .ToList();
+
             var request = new SearchRequest(IndexName)
             {
                 Size = 10,
@@ -392,9 +405,10 @@ namespace Eduverse.Service.ElasticsearchService
                 {
                     Must = new List<Query>
                     {
-                        new MatchPhrasePrefixQuery(new Field("tieuDe"))
+                        new BoolQuery
                         {
-                            Query = query.Trim()
+                            Should = suggestionQueries,
+                            MinimumShouldMatch = 1
                         }
                     },
                     Filter = new List<Query>

@@ -5,7 +5,6 @@ import { COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiService } from "@/src/services/index";
-import CvViewerDialog from "@/src/components/common/CvViewerDialog";
 import {
   Box,
   Button,
@@ -751,8 +750,6 @@ export default function AdminDashboardContent() {
   // Hộp thoại xem chi tiết yêu cầu nâng cấp giảng viên
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRequest, setDetailRequest] = useState<any>(null);
-  // Trình xem hồ sơ CV ngay trong trang, không phải rời đi tab khác
-  const [cvOpen, setCvOpen] = useState(false);
   // Bộ lọc yêu cầu theo trạng thái: "all" | 0 (chờ duyệt) | 1 (đã duyệt) | 2 (đã từ chối)
   const [statusFilter, setStatusFilter] = useState<"all" | 0 | 1 | 2>("all");
   // Khoảng thời gian của biểu đồ doanh thu: month | quarter | year
@@ -1699,15 +1696,6 @@ export default function AdminDashboardContent() {
         </DialogActions>
       </Dialog>
 
-      {/* Trình xem hồ sơ CV */}
-      <CvViewerDialog
-        open={cvOpen}
-        onClose={() => setCvOpen(false)}
-        cvUrl={detailRequest?.cvUrl}
-        hoTen={detailRequest?.hoTen || detailRequest?.userName}
-        requestId={detailRequest?.id}
-      />
-
       {/* Hộp thoại xem chi tiết yêu cầu nâng cấp giảng viên */}
       <Dialog
         open={detailOpen}
@@ -1807,78 +1795,6 @@ export default function AdminDashboardContent() {
                 value={detailRequest.lyDo}
               />
 
-              <Stack spacing={0.6}>
-                <Typography
-                  sx={{
-                    fontSize: 11.5,
-                    fontWeight: 900,
-                    letterSpacing: 0.4,
-                    textTransform: "uppercase",
-                    color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
-                  }}
-                >
-                  Hồ sơ CV
-                </Typography>
-                {detailRequest.cvUrl ? (
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ flexWrap: "wrap", rowGap: 1 }}
-                  >
-                    <Button
-                      variant="contained"
-                      size="small"
-                      disableElevation
-                      startIcon={
-                        <VisibilityRoundedIcon sx={{ fontSize: 17 }} />
-                      }
-                      onClick={() => setCvOpen(true)}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 800,
-                        borderRadius: "10px",
-                        bgcolor: COLORS.primary,
-                        color: "#fff",
-                        "&:hover": { bgcolor: COLORS.primaryDark },
-                      }}
-                    >
-                      Xem CV
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() =>
-                        window.open(
-                          detailRequest.cvUrl,
-                          "_blank",
-                          "noopener,noreferrer",
-                        )
-                      }
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 800,
-                        borderRadius: "10px",
-                        color: COLORS.primary,
-                        borderColor:
-                          "var(--ev-brand-border, rgba(141,19,19,0.25))",
-                      }}
-                    >
-                      Mở tab mới
-                    </Button>
-                  </Stack>
-                ) : (
-                  <Typography
-                    sx={{
-                      fontSize: 13.5,
-                      fontStyle: "italic",
-                      color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
-                    }}
-                  >
-                    Học viên chưa đính kèm CV
-                  </Typography>
-                )}
-              </Stack>
-
               {detailRequest.adminNotes && (
                 <Box
                   sx={{
@@ -1966,15 +1882,6 @@ export default function AdminDashboardContent() {
           )}
         </DialogActions>
       </Dialog>
-
-      {/* Trình xem hồ sơ CV trực tiếp ngay trong trang */}
-      <CvViewerDialog
-        open={cvOpen}
-        onClose={() => setCvOpen(false)}
-        cvUrl={detailRequest?.cvUrl}
-        hoTen={detailRequest?.hoTen || detailRequest?.userName}
-        requestId={detailRequest?.id}
-      />
     </Stack>
   );
 }

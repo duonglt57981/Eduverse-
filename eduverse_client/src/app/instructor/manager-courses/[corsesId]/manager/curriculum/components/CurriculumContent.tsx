@@ -90,6 +90,7 @@ import {
 import { TaiLieuType } from "@/src/types/TaiLieu/Dto/TaiLieuDto";
 import AuthGuard from "@/src/components/AuthGuard";
 import { useCourseEdit } from "../../components/CourseEditContext";
+import { cleanHtmlContent } from "@/src/utils/htmlHelpers";
 
 import {
   DndContext,
@@ -127,7 +128,7 @@ const pulseKeyframes = `
 
 // ===== Ràng buộc tài liệu =====
 const DUNG_LUONG_TAI_LIEU_TOI_DA = 50 * 1024 * 1024;
-const DUOI_TAI_LIEU_HOP_LE = [".docx"];
+const DUOI_TAI_LIEU_HOP_LE = [".doc", ".docx"];
 
 function layDuoiFile(tenFile: string): string {
   const idx = tenFile.lastIndexOf(".");
@@ -562,9 +563,17 @@ function RichTextEditor({
 // Hàm stripHtml để lấy text thuần
 function stripHtml(html: string): string {
   if (!html) return "";
-  const div = document.createElement("div");
-  div.innerHTML = html;
-  return div.textContent || div.innerText || "";
+  return html
+    .replace(/<!--[\s\S]*?-->/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const noPropagation = {
@@ -1991,6 +2000,11 @@ function QuestionDetailForm({
                   }}
                 >
                   <Box
+                    onClick={() => {
+                      if (!loading) {
+                        onToggleDapAnDung(d.id, !d.laDapAnDung);
+                      }
+                    }}
                     sx={{
                       width: 26,
                       height: 26,
@@ -2003,6 +2017,7 @@ function QuestionDetailForm({
                       fontWeight: 700,
                       fontSize: 12,
                       flexShrink: 0,
+                      cursor: "pointer",
                       transition: "all 0.15s ease",
                     }}
                   >
@@ -2011,9 +2026,9 @@ function QuestionDetailForm({
                   {question.loaiCauHoi === "ONE" ? (
                     <Radio
                       {...noPropagation}
-                      checked={d.laDapAnDung}
-                      onChange={(e) =>
-                        onToggleDapAnDung(d.id, e.target.checked)
+                      checked={Boolean(d.laDapAnDung)}
+                      onChange={() =>
+                        onToggleDapAnDung(d.id, true)
                       }
                       size="small"
                       sx={{
@@ -2026,7 +2041,7 @@ function QuestionDetailForm({
                   ) : (
                     <Checkbox
                       {...noPropagation}
-                      checked={d.laDapAnDung}
+                      checked={Boolean(d.laDapAnDung)}
                       onChange={(e) =>
                         onToggleDapAnDung(d.id, e.target.checked)
                       }
@@ -2260,14 +2275,6 @@ function QuestionListView({
   expandedQuestions: Record<string, boolean>;
   onToggleQuestion: (id: string) => void;
 }) {
-  // Hàm stripHtml để lấy text thuần cho hiển thị tóm tắt
-  const stripHtml = (html: string) => {
-    if (!html) return "";
-    const div = document.createElement("div");
-    div.innerHTML = html;
-    return div.textContent || div.innerText || "";
-  };
-
   return (
     <Box>
       <Box
@@ -2500,7 +2507,7 @@ function QuestionListView({
                     {/* Nội dung câu hỏi (hỗ trợ HTML) */}
                     <Box
                       dangerouslySetInnerHTML={{
-                        __html: q.noiDungCauHoi || "",
+                        __html: cleanHtmlContent(q.noiDungCauHoi || ""),
                       }}
                       sx={{
                         mb: 1.5,
@@ -2599,7 +2606,7 @@ function LectureInfoView({
   onDeleteDoc: (taiLieuId: string) => void;
   isEditable: boolean;
 }) {
-  const taiLieus = (bg.danhSachTaiLieu ?? []) as TaiLieuType[];
+  const taiLieus = (bg.danhSachTaiLieu ?? (bg as any).taiLieus ?? []) as TaiLieuType[];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -4177,6 +4184,14 @@ export default function CurriculumContent() {
       });
       return;
     }
+    if (question.loaiCauHoi === "ONE" && soDapAnDung > 1) {
+      setToast({
+        open: true,
+        message: "Câu hỏi một đáp án chỉ được có đúng 1 đáp án đúng",
+        severity: "error",
+      });
+      return;
+    }
     if (soDapAnDung >= question.danhSachDapAn.length) {
       setToast({
         open: true,
@@ -5519,7 +5534,7 @@ export default function CurriculumContent() {
                                                     : "Chọn file"}
                                                   <input
                                                     type="file"
-                                                    accept=".docx"
+                                                    accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                                     hidden
                                                     onChange={(e) => {
                                                       const file =
@@ -5585,8 +5600,8 @@ export default function CurriculumContent() {
                                                   display: "block",
                                                 }}
                                               >
-                                                Hỗ trợ file .docx, dung lượng
-                                                tối đa 50MB
+                                                Hỗ trợ file .doc, .docx (dung lượng
+                                                tối đa 50MB)
                                               </Typography>
                                               <Box
                                                 sx={{
@@ -5757,18 +5772,42 @@ export default function CurriculumContent() {
                                     <QuestionDetailForm
                                       question={questionEditor.question}
                                       onQuestionChange={(field, value) =>
-                                        setQuestionEditor((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                question: {
-                                                  ...prev.question,
-                                                  [field]: value,
-                                                },
-                                              }
-                                            : null,
-                                        )
-                                      }
+                                         setQuestionEditor((prev) => {
+                                           if (!prev) return null;
+                                           const updatedQuestion = {
+                                             ...prev.question,
+                                             [field]: value,
+                                           };
+                                           if (
+                                             field === "loaiCauHoi" &&
+                                             value === "ONE"
+                                           ) {
+                                             let foundFirst = false;
+                                             updatedQuestion.danhSachDapAn = (
+                                               prev.question.danhSachDapAn || []
+                                             ).map((d) => {
+                                               if (d.laDapAnDung) {
+                                                 if (!foundFirst) {
+                                                   foundFirst = true;
+                                                   return {
+                                                     ...d,
+                                                     laDapAnDung: true,
+                                                   };
+                                                 }
+                                                 return {
+                                                   ...d,
+                                                   laDapAnDung: false,
+                                                 };
+                                               }
+                                               return d;
+                                             });
+                                           }
+                                           return {
+                                             ...prev,
+                                             question: updatedQuestion,
+                                           };
+                                         })
+                                       }
                                       onAddDapAn={() => {
                                         if (!questionEditor) return;
                                         if (
@@ -5862,26 +5901,28 @@ export default function CurriculumContent() {
                                         if (!questionEditor) return;
                                         setQuestionEditor((prev) => {
                                           if (!prev) return null;
-                                          let newDapAn =
-                                            prev.question.danhSachDapAn.map(
-                                              (d) =>
-                                                d.id === dId
-                                                  ? {
-                                                      ...d,
-                                                      laDapAnDung: checked,
-                                                    }
-                                                  : d,
-                                            );
+                                          let newDapAn: typeof prev.question.danhSachDapAn;
                                           if (
-                                            prev.question.loaiCauHoi ===
-                                              "ONE" &&
-                                            checked
+                                            prev.question.loaiCauHoi === "ONE"
                                           ) {
-                                            newDapAn = newDapAn.map((d) =>
-                                              d.id === dId
-                                                ? { ...d, laDapAnDung: true }
-                                                : { ...d, laDapAnDung: false },
-                                            );
+                                            newDapAn =
+                                              prev.question.danhSachDapAn.map(
+                                                (d) => ({
+                                                  ...d,
+                                                  laDapAnDung: d.id === dId,
+                                                }),
+                                              );
+                                          } else {
+                                            newDapAn =
+                                              prev.question.danhSachDapAn.map(
+                                                (d) =>
+                                                  d.id === dId
+                                                    ? {
+                                                        ...d,
+                                                        laDapAnDung: checked,
+                                                      }
+                                                    : d,
+                                              );
                                           }
                                           return {
                                             ...prev,
@@ -6438,13 +6479,22 @@ export default function CurriculumContent() {
             sx={{ flex: 1, display: "flex", p: 0, minHeight: 0 }}
           >
             {docPopup.url ? (
-              <iframe
-                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-                  docPopup.url,
-                )}`}
-                style={{ width: "100%", height: "100%", border: "none" }}
-                title={docPopup.name}
-              />
+              docPopup.url.toLowerCase().includes(".pdf") ||
+              docPopup.name?.toLowerCase().endsWith(".pdf") ? (
+                <iframe
+                  src={docPopup.url}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  title={docPopup.name}
+                />
+              ) : (
+                <iframe
+                  src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+                    docPopup.url,
+                  )}`}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  title={docPopup.name}
+                />
+              )
             ) : (
               <Box
                 sx={{

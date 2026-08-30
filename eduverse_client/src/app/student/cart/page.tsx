@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import AuthGuard from "@/src/components/AuthGuard";
@@ -10,15 +11,18 @@ import {
   Divider,
   TextField,
   CircularProgress,
-  Avatar,
   Chip,
   Snackbar,
   Alert,
+  Stack,
 } from "@mui/material";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import SchoolIcon from "@mui/icons-material/School";
+import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
+import ConfirmationNumberOutlinedIcon from "@mui/icons-material/ConfirmationNumberOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import {
   getGioHang,
@@ -62,6 +66,22 @@ interface ApDungNhieuMaResponse {
 }
 
 const PRIMARY = BRAND.main;
+
+function getCourseImage(hinhAnh?: string): string {
+  if (!hinhAnh) return "";
+  try {
+    const parsed = JSON.parse(hinhAnh);
+    if (parsed.imageUrl) return parsed.imageUrl;
+  } catch {}
+  if (
+    hinhAnh.startsWith("http") ||
+    hinhAnh.startsWith("/") ||
+    hinhAnh.startsWith(".")
+  ) {
+    return hinhAnh;
+  }
+  return "";
+}
 
 const formatThoiLuong = (phut?: number) => {
   if (!phut) return null;
@@ -142,9 +162,6 @@ function GioHangContent() {
   const formatGia = (gia?: number) =>
     gia && gia > 0 ? `${gia.toLocaleString("vi-VN")} ₫` : "Miễn phí";
 
-  // Bất cứ khi nào giỏ hàng thay đổi thành phần (thêm/xoá), toàn bộ mã đã
-  // áp dụng phải reset — vì kết quả được tính "đóng băng" tại một danh sách
-  // khóa học cụ thể, không tự đồng bộ với BE.
   const resetMaGiamGiaSauKhiDoiGioHang = () => {
     setKetQuaMa(null);
     setDsMaDaThem([]);
@@ -202,45 +219,28 @@ function GioHangContent() {
   };
 
   const handleDangKyMienPhi = async () => {
-    const dsMienPhi = items.filter((i) => !i.gia || i.gia === 0);
-    if (dsMienPhi.length === 0) return;
-
     setDangKyLoading(true);
     try {
-      const results = await Promise.allSettled(
-        dsMienPhi.map((item) =>
-          apiService.post(`/dangkikhoahoc/dangki-khoahoc/${item.idKhoaHoc}`),
+      const ketQua = await Promise.allSettled(
+        items.map((i) =>
+          apiService.post(`/dangkikhoahoc/dangki-khoahoc/${i.idKhoaHoc}`),
         ),
       );
-
-      const thanhCong = results.filter((r) => r.status === "fulfilled").length;
-      const thatBai = results.filter((r) => r.status === "rejected").length;
-
-      for (let i = 0; i < results.length; i++) {
-        if (results[i].status === "fulfilled") {
-          await dispatch(xoaKhoiGioHang(dsMienPhi[i].idKhoaHoc!));
-        }
-      }
+      const thanhCong = ketQua.filter((r) => r.status === "fulfilled").length;
+      await Promise.all(items.map((i) => dispatch(xoaKhoiGioHang(i.idKhoaHoc!))));
       dispatch(getGioHang());
-
-      if (thanhCong > 0 && thatBai === 0) {
-        setAlertMessage(`Đăng ký thành công ${thanhCong} khóa học miễn phí!`);
-        setAlertSeverity("success");
-        setOpen(true);
+      setAlertMessage(
+        thanhCong === items.length
+          ? `Đã đăng ký thành công ${thanhCong} khóa học!`
+          : `Đã đăng ký ${thanhCong}/${items.length} khóa học (có thể một số đã được đăng ký trước đó).`,
+      );
+      setAlertSeverity(thanhCong > 0 ? "success" : "error");
+      setOpen(true);
+      if (thanhCong > 0) {
         setTimeout(() => router.push("/student/courses/my-courses"), 1500);
-      } else if (thanhCong > 0) {
-        setAlertMessage(
-          `Đăng ký ${thanhCong} thành công, ${thatBai} thất bại (có thể đã đăng ký)`,
-        );
-        setAlertSeverity("success");
-        setOpen(true);
-      } else {
-        setAlertMessage("Đã đăng ký khóa học này rồi hoặc có lỗi xảy ra");
-        setAlertSeverity("error");
-        setOpen(true);
       }
     } catch {
-      setAlertMessage("Có lỗi xảy ra khi đăng ký");
+      setAlertMessage("Có lỗi xảy ra khi đăng ký. Vui lòng thử lại.");
       setAlertSeverity("error");
       setOpen(true);
     } finally {
@@ -265,15 +265,16 @@ function GioHangContent() {
 
   return (
     <Box>
+      {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Typography
-          sx={{ fontSize: 26, fontWeight: 900, color: PRIMARY, mb: 0.5 }}
+          sx={{ fontSize: 26, fontWeight: 900, color: "text.primary", mb: 0.5 }}
         >
           Giỏ hàng của tôi
         </Typography>
         <Typography
           sx={{
-            color: "var(--ev-text-secondary, rgba(31,41,55,0.55))",
+            color: "text.secondary",
             fontSize: 14,
           }}
         >
@@ -281,7 +282,7 @@ function GioHangContent() {
           {mienphi.length > 0 && (
             <Box
               component="span"
-              sx={{ ml: 1, color: "success.main", fontWeight: 600 }}
+              sx={{ ml: 1, color: "#059669", fontWeight: 700 }}
             >
               ({mienphi.length} miễn phí)
             </Box>
@@ -293,31 +294,34 @@ function GioHangContent() {
         <Box
           sx={{
             textAlign: "center",
-            py: 10,
+            py: 8,
+            px: 3,
             borderRadius: "16px",
-            border: "1.5px dashed rgba(141,19,19,0.18)",
-            bgcolor: "rgba(141,19,19,0.02)",
+            border: "1.5px dashed rgba(0,0,0,0.12)",
+            bgcolor: "rgba(0,0,0,0.01)",
           }}
         >
-          <Typography sx={{ fontSize: 40, mb: 2 }}>🛒</Typography>
+          <Typography sx={{ fontSize: 44, mb: 1.5 }}>🛒</Typography>
           <Typography
-            sx={{ fontSize: 18, fontWeight: 700, mb: 1, color: "text.primary" }}
+            sx={{ fontSize: 18, fontWeight: 800, mb: 0.75, color: "text.primary" }}
           >
-            Giỏ hàng trống
+            Giỏ hàng của bạn đang trống
           </Typography>
           <Typography sx={{ color: "text.secondary", mb: 3, fontSize: 14 }}>
-            Hãy khám phá và thêm khóa học bạn yêu thích!
+            Hãy khám phá thêm nhiều khóa học bổ ích và thêm vào giỏ hàng nhé!
           </Typography>
           <Button
             variant="contained"
             onClick={() => router.push("/student/explore")}
             sx={{
               bgcolor: PRIMARY,
-              "&:hover": { bgcolor: "#7f1d1d" },
+              "&:hover": { bgcolor: BRAND.dark },
               borderRadius: "10px",
-              fontWeight: 700,
-              px: 4,
+              fontWeight: 800,
+              px: 3.5,
               py: 1.2,
+              boxShadow: "none",
+              textTransform: "none",
             }}
           >
             Khám phá khóa học
@@ -327,16 +331,22 @@ function GioHangContent() {
         <Box
           sx={{
             display: "flex",
-            gap: 4,
+            gap: 3.5,
             alignItems: "flex-start",
             flexDirection: { xs: "column", md: "row" },
           }}
         >
           {/* ── Danh sách khóa học ── */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Divider sx={{ borderColor: "rgba(141,19,19,0.1)" }} />
+          <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
+            <Divider sx={{ borderColor: "rgba(0,0,0,0.08)" }} />
             {items.map((item) => {
               const laMienPhi = !item.gia || item.gia === 0;
+              const imgUrl = getCourseImage(item.hinhAnh);
+              const instructor =
+                item.danhSachGiangVien && item.danhSachGiangVien.length > 0
+                  ? item.danhSachGiangVien.join(", ")
+                  : (item.tenTacGia ?? "Giảng viên EduVerse");
+
               return (
                 <Box key={item.id}>
                   <Box
@@ -347,19 +357,30 @@ function GioHangContent() {
                       alignItems: "flex-start",
                     }}
                   >
+                    {/* Thumbnail */}
                     <Box
+                      onClick={() => {
+                        if (item.idKhoaHoc) {
+                          router.push(`/student/enroll-courses/${item.idKhoaHoc}`);
+                        }
+                      }}
                       sx={{
-                        width: 130,
-                        height: 80,
+                        width: 140,
+                        height: 84,
                         flexShrink: 0,
                         borderRadius: "10px",
                         overflow: "hidden",
-                        bgcolor: "#f0f0f0",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        bgcolor: "var(--dashboard-surface-muted, #f3f4f6)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      {item.hinhAnh ? (
+                      {imgUrl ? (
                         <img
-                          src={item.hinhAnh}
+                          src={imgUrl}
                           alt={item.tenKhoaHoc ?? ""}
                           style={{
                             width: "100%",
@@ -368,21 +389,13 @@ function GioHangContent() {
                           }}
                         />
                       ) : (
-                        <Avatar
-                          variant="square"
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            bgcolor: "#e0e0e0",
-                            fontSize: 13,
-                            color: "#999",
-                          }}
-                        >
-                          Ảnh
-                        </Avatar>
+                        <SchoolRoundedIcon
+                          sx={{ fontSize: 32, color: "text.disabled" }}
+                        />
                       )}
                     </Box>
 
+                    {/* Information */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box
                         sx={{
@@ -390,14 +403,27 @@ function GioHangContent() {
                           alignItems: "center",
                           gap: 1,
                           mb: 0.5,
+                          flexWrap: "wrap",
                         }}
                       >
                         <Typography
+                          onClick={() => {
+                            if (item.idKhoaHoc) {
+                              router.push(
+                                `/student/enroll-courses/${item.idKhoaHoc}`,
+                              );
+                            }
+                          }}
                           sx={{
                             fontWeight: 700,
-                            fontSize: 14,
-                            lineHeight: 1.4,
+                            fontSize: 15,
+                            lineHeight: 1.35,
                             color: "text.primary",
+                            cursor: "pointer",
+                            transition: "color 150ms ease",
+                            "&:hover": {
+                              color: PRIMARY,
+                            },
                           }}
                         >
                           {item.tenKhoaHoc}
@@ -406,25 +432,31 @@ function GioHangContent() {
                           <Chip
                             label="Miễn phí"
                             size="small"
-                            color="success"
-                            sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
+                            sx={{
+                              height: 20,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              bgcolor: "rgba(16, 185, 129, 0.12)",
+                              color: "#047857",
+                              border: "1px solid rgba(16, 185, 129, 0.25)",
+                              borderRadius: "4px",
+                            }}
                           />
                         )}
                       </Box>
+
                       <Typography
-                        sx={{ fontSize: 12, color: "text.secondary", mb: 0.5 }}
+                        sx={{ fontSize: 12.5, color: "text.secondary", mb: 0.5 }}
                       >
-                        {item.danhSachGiangVien &&
-                        item.danhSachGiangVien.length > 0
-                          ? item.danhSachGiangVien.join(", ")
-                          : (item.tenTacGia ?? "Giảng viên")}
+                        {instructor}
                       </Typography>
+
                       <Box
                         sx={{
                           display: "flex",
                           alignItems: "center",
                           gap: 1.5,
-                          mb: 1,
+                          mb: 1.25,
                         }}
                       >
                         {item.tongBaiGiang != null && (
@@ -442,7 +474,9 @@ function GioHangContent() {
                           </Typography>
                         )}
                       </Box>
-                      <Box sx={{ display: "flex", gap: 2 }}>
+
+                      {/* Action Links */}
+                      <Stack direction="row" spacing={2.5}>
                         <Button
                           size="small"
                           startIcon={
@@ -454,11 +488,16 @@ function GioHangContent() {
                             resetMaGiamGiaSauKhiDoiGioHang();
                           }}
                           sx={{
-                            color: PRIMARY,
-                            fontSize: 12,
+                            color: "text.secondary",
+                            fontSize: 12.5,
                             p: 0,
                             minWidth: 0,
                             fontWeight: 600,
+                            textTransform: "none",
+                            "&:hover": {
+                              color: "error.main",
+                              bgcolor: "transparent",
+                            },
                           }}
                         >
                           Xóa
@@ -477,26 +516,32 @@ function GioHangContent() {
                               resetMaGiamGiaSauKhiDoiGioHang();
                             }}
                             sx={{
-                              color: PRIMARY,
-                              fontSize: 12,
+                              color: "text.secondary",
+                              fontSize: 12.5,
                               p: 0,
                               minWidth: 0,
                               fontWeight: 600,
+                              textTransform: "none",
+                              "&:hover": {
+                                color: PRIMARY,
+                                bgcolor: "transparent",
+                              },
                             }}
                           >
                             Lưu để mua sau
                           </Button>
                         )}
-                      </Box>
+                      </Stack>
                     </Box>
 
+                    {/* Price Column */}
                     <Box sx={{ textAlign: "right", flexShrink: 0 }}>
                       {laMienPhi ? (
                         <Typography
                           sx={{
                             fontWeight: 800,
                             fontSize: 16,
-                            color: "success.main",
+                            color: "#059669",
                           }}
                         >
                           Miễn phí
@@ -506,8 +551,8 @@ function GioHangContent() {
                           <Typography
                             sx={{
                               fontWeight: 800,
-                              fontSize: 16,
-                              color: PRIMARY,
+                              fontSize: 16.5,
+                              color: "text.primary",
                             }}
                           >
                             {formatGia(item.gia)}
@@ -517,9 +562,10 @@ function GioHangContent() {
                           ) && (
                             <Typography
                               sx={{
-                                fontSize: 12,
-                                color: CSSVAR.textMuted,
+                                fontSize: 12.5,
+                                color: "text.disabled",
                                 textDecoration: "line-through",
+                                mt: 0.25,
                               }}
                             >
                               {formatGia(item.giaGoc)}
@@ -529,34 +575,35 @@ function GioHangContent() {
                       )}
                     </Box>
                   </Box>
-                  <Divider sx={{ borderColor: "rgba(141,19,19,0.08)" }} />
+                  <Divider sx={{ borderColor: "rgba(0,0,0,0.06)" }} />
                 </Box>
               );
             })}
           </Box>
 
-          {/* ── Tóm tắt đơn hàng ── */}
+          {/* ── Tóm tắt đơn hàng (Order Summary Card) ── */}
           <Box
             sx={{
-              width: { xs: "100%", md: 300 },
+              width: { xs: "100%", md: 320 },
               flexShrink: 0,
               borderRadius: "16px",
-              border: "1.5px solid rgba(141,19,19,0.12)",
-              bgcolor: "rgba(141,19,19,0.015)",
-              p: 3,
+              border: "1px solid rgba(0,0,0,0.08)",
+              bgcolor: "background.paper",
+              boxShadow: "0 6px 24px rgba(0,0,0,0.04)",
+              p: 2.5,
             }}
           >
             {tatCaLaMienPhi ? (
               <>
                 <Box sx={{ textAlign: "center", mb: 2 }}>
-                  <SchoolIcon
-                    sx={{ fontSize: 48, color: "success.main", mb: 1 }}
+                  <SchoolRoundedIcon
+                    sx={{ fontSize: 44, color: "#059669", mb: 1 }}
                   />
                   <Typography
                     sx={{
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: 900,
-                      color: "success.main",
+                      color: "#059669",
                       mb: 0.5,
                     }}
                   >
@@ -576,16 +623,18 @@ function GioHangContent() {
                     dangKyLoading ? (
                       <CircularProgress size={18} sx={{ color: "#fff" }} />
                     ) : (
-                      <SchoolIcon />
+                      <SchoolRoundedIcon />
                     )
                   }
                   sx={{
-                    bgcolor: "success.main",
-                    "&:hover": { bgcolor: "success.dark" },
+                    bgcolor: "#059669",
+                    "&:hover": { bgcolor: "#047857" },
                     borderRadius: "10px",
                     fontWeight: 800,
                     fontSize: 15,
-                    py: 1.5,
+                    py: 1.4,
+                    boxShadow: "none",
+                    textTransform: "none",
                   }}
                 >
                   {dangKyLoading ? "Đang đăng ký..." : "Đăng ký ngay"}
@@ -596,7 +645,14 @@ function GioHangContent() {
                 {mienphi.length > 0 && (
                   <Alert
                     severity="info"
-                    sx={{ borderRadius: "10px", mb: 2, fontSize: 12 }}
+                    sx={{
+                      borderRadius: "10px",
+                      mb: 2,
+                      fontSize: 12,
+                      bgcolor: "rgba(37, 99, 235, 0.06)",
+                      color: "#1e40af",
+                      border: "1px solid rgba(37, 99, 235, 0.15)",
+                    }}
                   >
                     <strong>{mienphi.length} khóa học miễn phí</strong> sẽ được
                     đăng ký tự động khi thanh toán
@@ -610,7 +666,7 @@ function GioHangContent() {
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: 900,
                     color: PRIMARY,
                     mb: 0.5,
@@ -622,25 +678,39 @@ function GioHangContent() {
                 </Typography>
 
                 {ketQuaMa && ketQuaMa.tongSoTienGiam > 0 && (
-                  <Box sx={{ mb: 1.5 }}>
-                    <Typography
-                      sx={{
-                        fontSize: 13,
-                        color: "text.secondary",
-                        textDecoration: "line-through",
-                      }}
+                  <Box
+                    sx={{
+                      mb: 1.5,
+                      p: 1,
+                      borderRadius: "8px",
+                      bgcolor: "rgba(16, 185, 129, 0.08)",
+                      border: "1px solid rgba(16, 185, 129, 0.2)",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: "center", justifyContent: "space-between" }}
                     >
-                      {formatGia(tongTien)}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: 13,
-                        color: "success.main",
-                        fontWeight: 700,
-                      }}
-                    >
-                      Tiết kiệm {formatGia(ketQuaMa.tongSoTienGiam)}
-                    </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 12.5,
+                          color: "text.secondary",
+                          textDecoration: "line-through",
+                        }}
+                      >
+                        {formatGia(tongTien)}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 12.5,
+                          color: "#047857",
+                          fontWeight: 700,
+                        }}
+                      >
+                        Tiết kiệm {formatGia(ketQuaMa.tongSoTienGiam)}
+                      </Typography>
+                    </Stack>
                   </Box>
                 )}
 
@@ -661,26 +731,29 @@ function GioHangContent() {
                   endIcon={<ArrowForwardIcon />}
                   sx={{
                     bgcolor: PRIMARY,
-                    "&:hover": { bgcolor: "#7f1d1d" },
+                    "&:hover": { bgcolor: BRAND.dark },
                     borderRadius: "10px",
                     fontWeight: 800,
                     fontSize: 15,
-                    py: 1.5,
+                    py: 1.35,
                     mb: 2.5,
                     mt: 1,
-                    "&.Mui-disabled": { bgcolor: "#ddd", color: "#aaa" },
+                    boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
+                    textTransform: "none",
+                    "&.Mui-disabled": { bgcolor: "#e2e8f0", color: "#94a3b8" },
                   }}
                 >
                   Tiến hành thanh toán
                 </Button>
 
-                <Divider sx={{ mb: 2, borderColor: "rgba(141,19,19,0.1)" }} />
+                <Divider sx={{ mb: 2, borderColor: "rgba(0,0,0,0.08)" }} />
 
+                {/* Voucher Section */}
                 <Typography
                   sx={{
                     fontSize: 14,
-                    fontWeight: 700,
-                    mb: 1,
+                    fontWeight: 800,
+                    mb: 0.5,
                     color: "text.primary",
                   }}
                 >
@@ -689,18 +762,10 @@ function GioHangContent() {
                 <Typography
                   sx={{ fontSize: 12, color: "text.secondary", mb: 1.5 }}
                 >
-                  Có thể áp dụng nhiều mã cùng lúc, mỗi mã chỉ giảm cho 1 khóa
-                  học
+                  Có thể áp dụng nhiều mã cùng lúc, mỗi mã chỉ giảm cho 1 khóa học
                 </Typography>
 
-                <Typography
-                  sx={{ fontSize: 12, color: "text.secondary", mb: 1.5 }}
-                >
-                  Có thể áp dụng nhiều mã cùng lúc, mỗi mã chỉ giảm cho 1 khóa
-                  học
-                </Typography>
-
-                {/* ★ MỚI: pick-list mã ưu đãi do Admin tạo — chọn nhanh, không cần gõ */}
+                {/* Available Coupons list */}
                 {loadingMaKhaDung ? (
                   <Box
                     sx={{ display: "flex", justifyContent: "center", py: 1 }}
@@ -710,15 +775,19 @@ function GioHangContent() {
                 ) : dsMaKhaDung.filter(
                     (km) => !dsMaDaThem.includes(km.maGiamGia),
                   ).length > 0 ? (
-                  <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ mb: 1.75 }}>
                     <Typography
                       sx={{
                         fontSize: 12,
                         fontWeight: 700,
                         color: "text.primary",
                         mb: 0.75,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
                       }}
                     >
+                      <ConfirmationNumberOutlinedIcon sx={{ fontSize: 15, color: PRIMARY }} />
                       Mã ưu đãi có sẵn
                     </Typography>
                     <Box
@@ -740,17 +809,18 @@ function GioHangContent() {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
-                              border: "1.5px dashed rgba(141,19,19,0.25)",
+                              border: "1.5px dashed rgba(139, 19, 19, 0.25)",
                               borderRadius: "8px",
                               px: 1.25,
                               py: 0.75,
                               cursor: apDungLoading ? "default" : "pointer",
                               opacity: apDungLoading ? 0.6 : 1,
+                              bgcolor: "rgba(139, 19, 19, 0.02)",
                               transition: "all 0.15s ease",
                               "&:hover": apDungLoading
                                 ? {}
                                 : {
-                                    bgcolor: "rgba(141,19,19,0.04)",
+                                    bgcolor: "rgba(139, 19, 19, 0.05)",
                                     borderColor: PRIMARY,
                                   },
                             }}
@@ -761,6 +831,7 @@ function GioHangContent() {
                                   fontSize: 12.5,
                                   fontWeight: 800,
                                   color: PRIMARY,
+                                  letterSpacing: 0.25,
                                 }}
                               >
                                 {km.maGiamGia}
@@ -777,11 +848,16 @@ function GioHangContent() {
                               label="Chọn"
                               size="small"
                               sx={{
-                                bgcolor: PRIMARY,
-                                color: "#fff",
-                                fontWeight: 700,
-                                fontSize: 10.5,
+                                bgcolor: "rgba(139, 19, 19, 0.08)",
+                                color: PRIMARY,
+                                fontWeight: 800,
+                                fontSize: 11,
                                 height: 22,
+                                border: "1px solid rgba(139, 19, 19, 0.2)",
+                                "&:hover": {
+                                  bgcolor: PRIMARY,
+                                  color: "#ffffff",
+                                },
                               }}
                             />
                           </Box>
@@ -790,6 +866,7 @@ function GioHangContent() {
                   </Box>
                 ) : null}
 
+                {/* Applied Coupons Chips */}
                 {dsMaDaThem.length > 0 && (
                   <Box
                     sx={{
@@ -799,29 +876,51 @@ function GioHangContent() {
                       mb: 1.5,
                     }}
                   >
-                    {ketQuaMa?.ketQua.map((kq) => (
-                      <Chip
-                        key={kq.maGiamGia}
-                        label={
-                          kq.hopLe
-                            ? `${kq.maGiamGia} (-${formatGia(kq.soTienGiam)})`
-                            : `${kq.maGiamGia} (không áp dụng)`
-                        }
-                        onDelete={() => handleXoaMa(kq.maGiamGia)}
-                        size="small"
-                        color={kq.hopLe ? "success" : "default"}
-                        sx={{ fontWeight: 600 }}
-                      />
-                    ))}
+                    {ketQuaMa?.ketQua.map((kq) => {
+                      const isValid = kq.hopLe;
+                      return (
+                        <Chip
+                          key={kq.maGiamGia}
+                          label={
+                            isValid
+                              ? `${kq.maGiamGia} (-${formatGia(kq.soTienGiam)})`
+                              : `${kq.maGiamGia} (không áp dụng)`
+                          }
+                          onDelete={() => handleXoaMa(kq.maGiamGia)}
+                          size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: 12,
+                            borderRadius: "6px",
+                            height: 26,
+                            bgcolor: isValid
+                              ? "rgba(16, 185, 129, 0.12)"
+                              : "rgba(239, 68, 68, 0.08)",
+                            color: isValid ? "#065f46" : "#991b1b",
+                            border: isValid
+                              ? "1px solid rgba(16, 185, 129, 0.3)"
+                              : "1px solid rgba(239, 68, 68, 0.2)",
+                            "& .MuiChip-deleteIcon": {
+                              color: isValid ? "#059669" : "#dc2626",
+                              fontSize: 16,
+                              "&:hover": {
+                                color: isValid ? "#047857" : "#b91c1c",
+                              },
+                            },
+                          }}
+                        />
+                      );
+                    })}
                   </Box>
                 )}
 
+                {/* Coupon Input Box */}
                 <Box
                   sx={{
                     display: "flex",
                     gap: 1,
                     alignItems: "stretch",
-                    height: 40,
+                    height: 38,
                   }}
                 >
                   <TextField
@@ -839,54 +938,104 @@ function GioHangContent() {
                         height: "100%",
                         borderRadius: "8px",
                         fontSize: 13,
-                        bgcolor: CSSVAR.paper,
-                        "&.Mui-focused fieldset": { borderColor: PRIMARY },
+                        bgcolor: "background.paper",
+                        "& fieldset": {
+                          borderColor: "rgba(0,0,0,0.15)",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "rgba(0,0,0,0.25)",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: PRIMARY,
+                        },
                       },
                     }}
                   />
                   <Button
-                    variant="outlined"
+                    variant="contained"
                     size="small"
                     disabled={apDungLoading || !maDangNhap.trim()}
                     onClick={handleThemMa}
                     sx={{
                       height: "100%",
-                      borderColor: PRIMARY,
-                      color: PRIMARY,
+                      bgcolor: PRIMARY,
+                      color: "#ffffff",
                       borderRadius: "8px",
                       px: 2,
                       whiteSpace: "nowrap",
                       flexShrink: 0,
                       fontWeight: 700,
-                      "&:hover": { bgcolor: "#fff0f0", borderColor: PRIMARY },
+                      fontSize: 13,
+                      boxShadow: "none",
+                      textTransform: "none",
+                      "&:hover": {
+                        bgcolor: BRAND.dark,
+                        boxShadow: "none",
+                      },
+                      "&.Mui-disabled": {
+                        bgcolor: "#e2e8f0",
+                        color: "#94a3b8",
+                      },
                     }}
                   >
                     {apDungLoading ? (
-                      <CircularProgress size={14} sx={{ color: PRIMARY }} />
+                      <CircularProgress size={14} sx={{ color: "#fff" }} />
                     ) : (
                       "Thêm"
                     )}
                   </Button>
                 </Box>
 
+                {/* Error Notice */}
                 {ketQuaMa?.ketQua.some((k) => !k.hopLe) && (
-                  <Typography
-                    sx={{ fontSize: 11.5, color: "error.main", mt: 0.75 }}
+                  <Box
+                    sx={{
+                      mt: 1.25,
+                      p: 1,
+                      borderRadius: "8px",
+                      bgcolor: "rgba(239, 68, 68, 0.06)",
+                      border: "1px solid rgba(239, 68, 68, 0.18)",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 0.75,
+                    }}
                   >
-                    {ketQuaMa.ketQua
-                      .filter((k) => !k.hopLe)
-                      .map((k) => `${k.maGiamGia}: ${k.thongBao}`)
-                      .join(" • ")}
-                  </Typography>
+                    <InfoOutlinedIcon
+                      sx={{ fontSize: 16, color: "error.main", mt: "1px", flexShrink: 0 }}
+                    />
+                    <Typography
+                      sx={{ fontSize: 11.5, color: "#b91c1c", lineHeight: 1.4 }}
+                    >
+                      {ketQuaMa.ketQua
+                        .filter((k) => !k.hopLe)
+                        .map((k) => `${k.maGiamGia}: ${k.thongBao}`)
+                        .join(" • ")}
+                    </Typography>
+                  </Box>
                 )}
 
                 {vuaThayDoiGioHang && !ketQuaMa && (
-                  <Typography
-                    sx={{ fontSize: 11.5, color: "#e65100", mt: 0.75 }}
+                  <Box
+                    sx={{
+                      mt: 1.25,
+                      p: 1,
+                      borderRadius: "8px",
+                      bgcolor: "rgba(245, 158, 11, 0.08)",
+                      border: "1px solid rgba(245, 158, 11, 0.2)",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 0.75,
+                    }}
                   >
-                    Giỏ hàng đã thay đổi — vui lòng áp dụng lại mã giảm giá nếu
-                    cần.
-                  </Typography>
+                    <InfoOutlinedIcon
+                      sx={{ fontSize: 16, color: "#d97706", mt: "1px", flexShrink: 0 }}
+                    />
+                    <Typography
+                      sx={{ fontSize: 11.5, color: "#b45309", lineHeight: 1.4 }}
+                    >
+                      Giỏ hàng đã thay đổi — vui lòng áp dụng lại mã giảm giá nếu cần.
+                    </Typography>
+                  </Box>
                 )}
               </>
             )}
@@ -896,10 +1045,10 @@ function GioHangContent() {
 
       {/* ── Đã lưu để mua sau ── */}
       {savedItems.length > 0 && (
-        <Box sx={{ mt: 5 }}>
+        <Box sx={{ mt: 6 }}>
           <Typography
             sx={{
-              fontSize: 17,
+              fontSize: 18,
               fontWeight: 800,
               mb: 1.5,
               color: "text.primary",
@@ -907,160 +1056,188 @@ function GioHangContent() {
           >
             Đã lưu để mua sau ({savedItems.length})
           </Typography>
-          <Divider sx={{ mb: 1, borderColor: "rgba(141,19,19,0.1)" }} />
-          {savedItems.map((item) => (
-            <Box key={item.id}>
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 2,
-                  py: 2.5,
-                  alignItems: "flex-start",
-                }}
-              >
+          <Divider sx={{ mb: 1, borderColor: "rgba(0,0,0,0.08)" }} />
+          {savedItems.map((item) => {
+            const imgUrl = getCourseImage(item.hinhAnh);
+            const isFree = !item.gia || item.gia === 0;
+            const instructor =
+              item.danhSachGiangVien && item.danhSachGiangVien.length > 0
+                ? item.danhSachGiangVien.join(", ")
+                : (item.tenTacGia ?? "Giảng viên EduVerse");
+
+            return (
+              <Box key={item.id}>
                 <Box
                   sx={{
-                    width: 130,
-                    height: 80,
-                    flexShrink: 0,
-                    borderRadius: "10px",
-                    overflow: "hidden",
-                    bgcolor: "#f0f0f0",
+                    display: "flex",
+                    gap: 2,
+                    py: 2.5,
+                    alignItems: "flex-start",
                   }}
                 >
-                  {item.hinhAnh ? (
-                    <img
-                      src={item.hinhAnh}
-                      alt={item.tenKhoaHoc ?? ""}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: "100%",
-                        bgcolor: "#e0e0e0",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 12, color: "#999" }}>
-                        Ảnh
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
+                  <Box
+                    onClick={() => {
+                      if (item.idKhoaHoc) {
+                        router.push(`/student/enroll-courses/${item.idKhoaHoc}`);
+                      }
+                    }}
                     sx={{
-                      fontWeight: 700,
-                      fontSize: 14,
-                      mb: 0.5,
-                      lineHeight: 1.4,
-                      color: "text.primary",
+                      width: 140,
+                      height: 84,
+                      flexShrink: 0,
+                      borderRadius: "10px",
+                      overflow: "hidden",
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      bgcolor: "var(--dashboard-surface-muted, #f3f4f6)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    {item.tenKhoaHoc}
-                  </Typography>
-                  <Typography
-                    sx={{ fontSize: 12, color: "text.secondary", mb: 0.5 }}
-                  >
-                    {item.danhSachGiangVien && item.danhSachGiangVien.length > 0
-                      ? item.danhSachGiangVien.join(", ")
-                      : (item.tenTacGia ?? "Giảng viên")}
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <Button
-                      size="small"
-                      onClick={async () => {
-                        await dispatch(chuyenVaoGioHang(item.idKhoaHoc!));
-                        dispatch(getGioHang());
-                        dispatch(getDanhSachMuaSau());
-                        resetMaGiamGiaSauKhiDoiGioHang();
-                      }}
-                      sx={{
-                        color: PRIMARY,
-                        fontSize: 12,
-                        p: 0,
-                        minWidth: 0,
-                        fontWeight: 700,
-                      }}
-                    >
-                      Chuyển vào giỏ hàng
-                    </Button>
-                    <Button
-                      size="small"
-                      onClick={async () => {
-                        await dispatch(xoaKhoiMuaSau(item.idKhoaHoc!));
-                        dispatch(getDanhSachMuaSau());
-                      }}
-                      sx={{ color: "#666", fontSize: 12, p: 0, minWidth: 0 }}
-                    >
-                      Xóa
-                    </Button>
+                    {imgUrl ? (
+                      <img
+                        src={imgUrl}
+                        alt={item.tenKhoaHoc ?? ""}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <SchoolRoundedIcon
+                        sx={{ fontSize: 32, color: "text.disabled" }}
+                      />
+                    )}
                   </Box>
-                </Box>
-                <Box sx={{ textAlign: "right", flexShrink: 0 }}>
-                  {!item.gia || item.gia === 0 ? (
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
+                      onClick={() => {
+                        if (item.idKhoaHoc) {
+                          router.push(`/student/enroll-courses/${item.idKhoaHoc}`);
+                        }
+                      }}
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 700,
                         fontSize: 15,
-                        color: "success.main",
+                        mb: 0.5,
+                        lineHeight: 1.35,
+                        color: "text.primary",
+                        cursor: "pointer",
+                        "&:hover": { color: PRIMARY },
                       }}
                     >
-                      Miễn phí
+                      {item.tenKhoaHoc}
                     </Typography>
-                  ) : (
-                    <>
-                      <Typography
-                        sx={{ fontWeight: 800, fontSize: 15, color: PRIMARY }}
+                    <Typography
+                      sx={{ fontSize: 12.5, color: "text.secondary", mb: 1 }}
+                    >
+                      {instructor}
+                    </Typography>
+                    <Stack direction="row" spacing={2.5}>
+                      <Button
+                        size="small"
+                        onClick={async () => {
+                          await dispatch(chuyenVaoGioHang(item.idKhoaHoc!));
+                          dispatch(getGioHang());
+                          dispatch(getDanhSachMuaSau());
+                          resetMaGiamGiaSauKhiDoiGioHang();
+                        }}
+                        sx={{
+                          color: PRIMARY,
+                          fontSize: 12.5,
+                          p: 0,
+                          minWidth: 0,
+                          fontWeight: 700,
+                          textTransform: "none",
+                          "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+                        }}
                       >
-                        {formatGia(item.gia)}
+                        Chuyển vào giỏ hàng
+                      </Button>
+                      <Button
+                        size="small"
+                        onClick={async () => {
+                          await dispatch(xoaKhoiMuaSau(item.idKhoaHoc!));
+                          dispatch(getDanhSachMuaSau());
+                        }}
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: 12.5,
+                          p: 0,
+                          minWidth: 0,
+                          fontWeight: 600,
+                          textTransform: "none",
+                          "&:hover": { color: "error.main", bgcolor: "transparent" },
+                        }}
+                      >
+                        Xóa
+                      </Button>
+                    </Stack>
+                  </Box>
+                  <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                    {isFree ? (
+                      <Typography
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 16,
+                          color: "#059669",
+                        }}
+                      >
+                        Miễn phí
                       </Typography>
-                      {Boolean(
-                        item.giaGoc && item.giaGoc > (item.gia ?? 0),
-                      ) && (
+                    ) : (
+                      <>
                         <Typography
                           sx={{
-                            fontSize: 12,
-                            color: CSSVAR.textMuted,
-                            textDecoration: "line-through",
+                            fontWeight: 800,
+                            fontSize: 16.5,
+                            color: "text.primary",
                           }}
                         >
-                          {formatGia(item.giaGoc)}
+                          {formatGia(item.gia)}
                         </Typography>
-                      )}
-                    </>
-                  )}
+                        {Boolean(
+                          item.giaGoc && item.giaGoc > (item.gia ?? 0),
+                        ) && (
+                          <Typography
+                            sx={{
+                              fontSize: 12.5,
+                              color: "text.disabled",
+                              textDecoration: "line-through",
+                            }}
+                          >
+                            {formatGia(item.giaGoc)}
+                          </Typography>
+                        )}
+                      </>
+                    )}
+                  </Box>
                 </Box>
+                <Divider sx={{ borderColor: "rgba(0,0,0,0.06)" }} />
               </Box>
-              <Divider sx={{ borderColor: "rgba(141,19,19,0.08)" }} />
-            </Box>
-          ))}
+            );
+          })}
         </Box>
       )}
 
-      {/* ── Bạn cũng có thể thích ── */}
+      {/* ── Bạn cũng có thể thích (Recommendations) ── */}
       {pagedResult && pagedResult.items.length > 0 && (
-        <Box sx={{ mt: 5 }}>
-          <Divider sx={{ mb: 3, borderColor: "rgba(141,19,19,0.1)" }} />
+        <Box sx={{ mt: 6 }}>
+          <Divider sx={{ mb: 3, borderColor: "rgba(0,0,0,0.08)" }} />
           <Typography
-            sx={{ fontSize: 17, fontWeight: 800, mb: 2, color: "text.primary" }}
+            sx={{ fontSize: 18, fontWeight: 800, mb: 2, color: "text.primary" }}
           >
             Bạn cũng có thể thích
           </Typography>
-          <Divider sx={{ mb: 2, borderColor: "rgba(141,19,19,0.08)" }} />
+          <Divider sx={{ mb: 2, borderColor: "rgba(0,0,0,0.06)" }} />
           {pagedResult.items
             .filter((kh) => !items.some((i) => i.idKhoaHoc === kh.id))
             .slice(0, 4)
             .map((kh) => {
               const laMienPhi = !kh.gia || kh.gia === 0;
+              const imgUrl = getCourseImage(kh.hinhAnhKhoaHoc);
               return (
                 <Box key={kh.id}>
                   <Box
@@ -1072,18 +1249,24 @@ function GioHangContent() {
                     }}
                   >
                     <Box
+                      onClick={() => router.push(`/student/enroll-courses/${kh.id}`)}
                       sx={{
-                        width: 130,
-                        height: 80,
+                        width: 140,
+                        height: 84,
                         flexShrink: 0,
                         borderRadius: "10px",
                         overflow: "hidden",
-                        bgcolor: "#f0f0f0",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        bgcolor: "var(--dashboard-surface-muted, #f3f4f6)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      {kh.hinhAnhKhoaHoc ? (
+                      {imgUrl ? (
                         <img
-                          src={kh.hinhAnhKhoaHoc}
+                          src={imgUrl}
                           alt={kh.tieuDe ?? ""}
                           style={{
                             width: "100%",
@@ -1092,30 +1275,22 @@ function GioHangContent() {
                           }}
                         />
                       ) : (
-                        <Box
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            bgcolor: "#e0e0e0",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Typography sx={{ fontSize: 12, color: "#999" }}>
-                            Ảnh
-                          </Typography>
-                        </Box>
+                        <SchoolRoundedIcon
+                          sx={{ fontSize: 32, color: "text.disabled" }}
+                        />
                       )}
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography
+                        onClick={() => router.push(`/student/enroll-courses/${kh.id}`)}
                         sx={{
                           fontWeight: 700,
-                          fontSize: 14,
+                          fontSize: 15,
                           mb: 0.5,
-                          lineHeight: 1.4,
+                          lineHeight: 1.35,
                           color: "text.primary",
+                          cursor: "pointer",
+                          "&:hover": { color: PRIMARY },
                         }}
                       >
                         {kh.tieuDe}
@@ -1126,9 +1301,12 @@ function GioHangContent() {
                           size="small"
                           sx={{
                             fontSize: 11,
+                            fontWeight: 700,
                             height: 20,
                             mb: 0.5,
-                            bgcolor: "#f0f0f0",
+                            bgcolor: "rgba(139, 19, 19, 0.08)",
+                            color: PRIMARY,
+                            borderRadius: "4px",
                           }}
                         />
                       )}
@@ -1139,8 +1317,8 @@ function GioHangContent() {
                           sx={{
                             fontWeight: 800,
                             fontSize: 15,
-                            mb: 0.5,
-                            color: "success.main",
+                            mb: 0.75,
+                            color: "#059669",
                           }}
                         >
                           Miễn phí
@@ -1150,9 +1328,9 @@ function GioHangContent() {
                           <Typography
                             sx={{
                               fontWeight: 800,
-                              fontSize: 15,
+                              fontSize: 16,
                               mb: 0.5,
-                              color: PRIMARY,
+                              color: "text.primary",
                             }}
                           >
                             {formatGia(kh.gia)}
@@ -1161,7 +1339,7 @@ function GioHangContent() {
                             <Typography
                               sx={{
                                 fontSize: 12,
-                                color: CSSVAR.textMuted,
+                                color: "text.disabled",
                                 textDecoration: "line-through",
                                 mb: 0.5,
                               }}
@@ -1194,11 +1372,13 @@ function GioHangContent() {
                             }
                           }}
                           sx={{
-                            bgcolor: "success.main",
-                            "&:hover": { bgcolor: "success.dark" },
+                            bgcolor: "#059669",
+                            "&:hover": { bgcolor: "#047857" },
                             borderRadius: "8px",
                             fontSize: 12,
                             fontWeight: 700,
+                            boxShadow: "none",
+                            textTransform: "none",
                           }}
                         >
                           Đăng ký ngay
@@ -1222,12 +1402,16 @@ function GioHangContent() {
                             }
                           }}
                           sx={{
-                            borderColor: PRIMARY,
+                            borderColor: "rgba(139, 19, 19, 0.3)",
                             color: PRIMARY,
                             borderRadius: "8px",
                             fontSize: 12,
                             fontWeight: 700,
-                            "&:hover": { bgcolor: PRIMARY, color: "#fff" },
+                            textTransform: "none",
+                            "&:hover": {
+                              bgcolor: "rgba(139, 19, 19, 0.04)",
+                              borderColor: PRIMARY,
+                            },
                           }}
                         >
                           Thêm vào giỏ
@@ -1235,7 +1419,7 @@ function GioHangContent() {
                       )}
                     </Box>
                   </Box>
-                  <Divider sx={{ borderColor: "rgba(141,19,19,0.08)" }} />
+                  <Divider sx={{ borderColor: "rgba(0,0,0,0.06)" }} />
                 </Box>
               );
             })}
@@ -1262,10 +1446,10 @@ export default function StudentCartPage() {
         <Box
           sx={{
             p: { xs: 2, md: 4 },
-            borderRadius: "24px",
-            border: "1px solid rgba(141,19,19,0.06)",
-            bgcolor: CSSVAR.paper,
-            boxShadow: "0 10px 30px rgba(141,19,19,0.015)",
+            borderRadius: "20px",
+            border: "1px solid rgba(0,0,0,0.06)",
+            bgcolor: "background.paper",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.02)",
           }}
         >
           <GioHangContent />

@@ -731,12 +731,7 @@ export default function LichSuKiemDuyetPage() {
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: {
-                    xs: "minmax(0, 1fr)",
-                    sm: "repeat(2, minmax(0, 1fr))",
-                    md: "repeat(3, minmax(0, 1fr))",
-                    lg: "minmax(240px, 2fr) minmax(200px, 1.35fr) repeat(3, minmax(145px, 1fr)) minmax(184px, auto)",
-                  },
+                  gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
                   gap: { xs: 1.5, sm: 1.75 },
                   alignItems: "start",
                 }}
@@ -756,12 +751,7 @@ export default function LichSuKiemDuyetPage() {
                   }
                   sx={{
                     ...filterControlSx,
-                    gridColumn: {
-                      xs: "span 1",
-                      sm: "1 / -1",
-                      md: "span 2",
-                      lg: "span 1",
-                    },
+                    gridColumn: { xs: "span 12", sm: "span 12", md: "span 6" },
                   }}
                   slotProps={{
                     htmlInput: { "aria-label": "Tìm kiếm khóa học" },
@@ -806,6 +796,7 @@ export default function LichSuKiemDuyetPage() {
                   noOptionsText="Không tìm thấy người tạo phù hợp"
                   sx={{
                     ...filterControlSx,
+                    gridColumn: { xs: "span 12", sm: "span 12", md: "span 6" },
                     "& .MuiOutlinedInput-root": {
                       ...filterControlSx["& .MuiOutlinedInput-root"],
                       height: 44,
@@ -859,7 +850,10 @@ export default function LichSuKiemDuyetPage() {
                     },
                   }}
                   error={isDateRangeInvalid}
-                  sx={filterControlSx}
+                  sx={{
+                    ...filterControlSx,
+                    gridColumn: { xs: "span 12", sm: "span 6", md: "span 3" },
+                  }}
                 />
 
                 <TextField
@@ -883,7 +877,10 @@ export default function LichSuKiemDuyetPage() {
                     },
                   }}
                   error={isDateRangeInvalid}
-                  sx={filterControlSx}
+                  sx={{
+                    ...filterControlSx,
+                    gridColumn: { xs: "span 12", sm: "span 6", md: "span 3" },
+                  }}
                 />
 
                 {/* Sort dropdown */}
@@ -910,7 +907,10 @@ export default function LichSuKiemDuyetPage() {
                       ),
                     },
                   }}
-                  sx={filterControlSx}
+                  sx={{
+                    ...filterControlSx,
+                    gridColumn: { xs: "span 12", sm: "span 6", md: "span 3" },
+                  }}
                 >
                   <MenuItem value="moi-nhat">Mới nhất</MenuItem>
                   <MenuItem value="cu-nhat">Cũ nhất</MenuItem>
@@ -921,13 +921,9 @@ export default function LichSuKiemDuyetPage() {
                     display: "flex",
                     gap: 1,
                     minWidth: 0,
-                    gridColumn: {
-                      xs: "span 1",
-                      sm: "1 / -1",
-                      md: "1 / -1",
-                      lg: "span 1",
-                    },
-                    justifyContent: { md: "flex-end", lg: "stretch" },
+                    width: "100%",
+                    gridColumn: { xs: "span 12", sm: "span 6", md: "span 3" },
+                    alignItems: "center",
                   }}
                 >
                   <Button
@@ -937,11 +933,14 @@ export default function LichSuKiemDuyetPage() {
                     startIcon={<SearchIcon aria-hidden="true" />}
                     sx={{
                       flex: 1,
-                      minWidth: { xs: 0, sm: 132 },
+                      minWidth: 0,
                       height: 44,
                       borderRadius: `${RADIUS.base}px`,
                       bgcolor: COLORS.primary,
                       boxShadow: "none",
+                      whiteSpace: "nowrap",
+                      fontWeight: 700,
+                      fontSize: 14,
                       "&:hover": {
                         bgcolor: COLORS.primaryDark,
                         boxShadow: SHADOWS.sm,
@@ -960,12 +959,16 @@ export default function LichSuKiemDuyetPage() {
                         startIcon={<RestartAltRoundedIcon aria-hidden="true" />}
                         sx={{
                           flex: { xs: 1, sm: "0 0 auto" },
-                          minWidth: { xs: 0, sm: 112 },
+                          minWidth: { xs: 0, sm: "auto" },
+                          px: { sm: 1.75 },
                           height: 44,
                           borderRadius: `${RADIUS.base}px`,
                           borderColor: COLORS.line,
                           color: COLORS.inkSoft,
                           bgcolor: COLORS.paperRaised,
+                          whiteSpace: "nowrap",
+                          fontWeight: 700,
+                          fontSize: 13,
                           "&:hover": {
                             borderColor: COLORS.primary,
                             color: COLORS.primary,

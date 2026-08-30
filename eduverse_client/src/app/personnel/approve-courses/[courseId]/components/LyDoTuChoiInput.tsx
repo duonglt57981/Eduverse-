@@ -154,7 +154,7 @@ export default function LyDoTuChoiInput({
             fontSize: 12,
           }}
         >
-          💡 {scopeNote}
+          {scopeNote}
         </Typography>
       )}
 

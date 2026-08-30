@@ -25,6 +25,7 @@ import { useState } from "react";
 import type { CauHoiLamBaiDto } from "../../hooks/useQuiz";
 import { isMultiChoice } from "../../hooks/useQuiz";
 import { BRAND, STATUS } from "@/src/theme/tokens";
+import { cleanHtmlContent, isHtmlContent, stripHtml } from "@/src/utils/htmlHelpers";
 
 // ── Design tokens ──
 const RED = BRAND.main;
@@ -260,50 +261,91 @@ export function QuizView({
                 mb: 2.5,
               }}
             >
-              <Typography
-                sx={{
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: INK,
-                  lineHeight: 1.5,
-                  mb: 0.5,
-                }}
-              >
-                {cauHoi.tenCauHoi}
-              </Typography>
-              {cauHoi.noiDungCauHoi &&
-                cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi && (
-                  <Box
-                    sx={{
-                      fontSize: 14,
-                      color: "#3c3d40",
-                      lineHeight: 1.7,
-                      "& p": { m: 0, mb: 1 },
-                      "& p:last-child": { mb: 0 },
-                      "& ul, & ol": { pl: 2.5, mb: 1 },
-                      "& li": { mb: 0.5 },
-                      "& img": {
-                        maxWidth: "100%",
-                        borderRadius: RADIUS,
-                        my: 1,
-                        display: "block",
-                      },
-                      "& b, & strong": { fontWeight: 700, color: INK },
-                      "& a": { color: RED },
-                      "& table": {
-                        borderCollapse: "collapse",
-                        width: "100%",
-                        my: 1,
-                      },
-                      "& td, & th": {
-                        border: `1px solid ${BORDER}`,
-                        p: 1,
-                        fontSize: 13,
-                      },
-                    }}
-                    dangerouslySetInnerHTML={{ __html: cauHoi.noiDungCauHoi }}
-                  />
-                )}
+              {(() => {
+                const cleanedTitle = cleanHtmlContent(cauHoi.tenCauHoi);
+                const cleanedNoiDung = cleanHtmlContent(cauHoi.noiDungCauHoi);
+                const hasDistinctNoiDung =
+                  Boolean(cleanedNoiDung) &&
+                  cleanedNoiDung !== cleanedTitle &&
+                  stripHtml(cleanedNoiDung) !== stripHtml(cleanedTitle);
+                const isTitleHtml = isHtmlContent(cleanedTitle);
+                const isNoiDungHtml = isHtmlContent(cleanedNoiDung);
+
+                return (
+                  <>
+                    {isTitleHtml ? (
+                      <Box
+                        sx={{
+                          fontSize: 18,
+                          fontWeight: 700,
+                          color: INK,
+                          lineHeight: 1.5,
+                          mb: 0.5,
+                          "& p": { m: 0 },
+                        }}
+                        dangerouslySetInnerHTML={{ __html: cleanedTitle }}
+                      />
+                    ) : (
+                      <Typography
+                        sx={{
+                          fontSize: 18,
+                          fontWeight: 700,
+                          color: INK,
+                          lineHeight: 1.5,
+                          mb: 0.5,
+                        }}
+                      >
+                        {cleanedTitle}
+                      </Typography>
+                    )}
+
+                    {hasDistinctNoiDung && (
+                      isNoiDungHtml ? (
+                        <Box
+                          sx={{
+                            fontSize: 14,
+                            color: "#3c3d40",
+                            lineHeight: 1.7,
+                            "& p": { m: 0, mb: 1 },
+                            "& p:last-child": { mb: 0 },
+                            "& ul, & ol": { pl: 2.5, mb: 1 },
+                            "& li": { mb: 0.5 },
+                            "& img": {
+                              maxWidth: "100%",
+                              borderRadius: RADIUS,
+                              my: 1,
+                              display: "block",
+                            },
+                            "& b, & strong": { fontWeight: 700, color: INK },
+                            "& a": { color: RED },
+                            "& table": {
+                              borderCollapse: "collapse",
+                              width: "100%",
+                              my: 1,
+                            },
+                            "& td, & th": {
+                              border: `1px solid ${BORDER}`,
+                              p: 1,
+                              fontSize: 13,
+                            },
+                          }}
+                          dangerouslySetInnerHTML={{ __html: cleanedNoiDung }}
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontSize: 14,
+                            color: "#3c3d40",
+                            lineHeight: 1.7,
+                          }}
+                        >
+                          {cleanedNoiDung}
+                        </Typography>
+                      )
+                    )}
+                  </>
+                );
+              })()}
               {cauHoi.diem && (
                 <Typography
                   sx={{ fontSize: 12, color: SUB, mt: 1, fontWeight: 600 }}
@@ -317,6 +359,9 @@ export function QuizView({
             <Stack spacing={1.25}>
               {cauHoi.dapAns.map((da, i) => {
                 const isSelected = selected.includes(da.id);
+                const rawAnswer = da.noiDungDapAn ?? "";
+                const answerText = cleanHtmlContent(rawAnswer);
+                const isAnswerHtml = isHtmlContent(answerText);
                 return (
                   <Box
                     key={da.id}
@@ -361,17 +406,32 @@ export function QuizView({
                         (LABELS[i] ?? i + 1)
                       )}
                     </Box>
-                    <Typography
-                      sx={{
-                        fontSize: 15,
-                        lineHeight: 1.5,
-                        flex: 1,
-                        fontWeight: isSelected ? 600 : 400,
-                        color: isSelected ? RED_DARK : INK,
-                      }}
-                    >
-                      {da.noiDungDapAn}
-                    </Typography>
+                    {isAnswerHtml ? (
+                      <Box
+                        sx={{
+                          fontSize: 15,
+                          lineHeight: 1.5,
+                          flex: 1,
+                          fontWeight: isSelected ? 600 : 400,
+                          color: isSelected ? RED_DARK : INK,
+                          "& p": { m: 0 },
+                          "& strong": { fontWeight: 700 },
+                        }}
+                        dangerouslySetInnerHTML={{ __html: answerText }}
+                      />
+                    ) : (
+                      <Typography
+                        sx={{
+                          fontSize: 15,
+                          lineHeight: 1.5,
+                          flex: 1,
+                          fontWeight: isSelected ? 600 : 400,
+                          color: isSelected ? RED_DARK : INK,
+                        }}
+                      >
+                        {answerText || "(Trống)"}
+                      </Typography>
+                    )}
                   </Box>
                 );
               })}

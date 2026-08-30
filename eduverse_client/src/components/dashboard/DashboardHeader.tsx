@@ -39,6 +39,10 @@ import { useDispatch, useSelector } from "@/src/store/hook";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
+import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
+import { getGioHang } from "@/src/store/gioHang/GioHangSlice";
+import WishlistHoverPopover from "./header/WishlistHoverPopover";
+import CartHoverPopover from "./header/CartHoverPopover";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -69,6 +73,60 @@ export default function DashboardHeader({
   const [isSearching, setIsSearching] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchError, setSearchError] = useState("");
+
+  const { favorites, favoriteCount, fetchFavorites } = useFavorite();
+  const gioHang = useSelector((state: any) => state.gioHang.gioHang);
+  const cartItemsCount = gioHang?.items?.length ?? 0;
+
+  const [isFavOpen, setIsFavOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [favAnchorEl, setFavAnchorEl] = useState<HTMLElement | null>(null);
+  const [cartAnchorEl, setCartAnchorEl] = useState<HTMLElement | null>(null);
+  const favBtnRef = React.useRef<HTMLDivElement | null>(null);
+  const cartBtnRef = React.useRef<HTMLDivElement | null>(null);
+  const favLeaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cartLeaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      void fetchFavorites();
+      void dispatch(getGioHang());
+    }
+  }, [user, dispatch, fetchFavorites]);
+
+  const handleFavMouseEnter = () => {
+    if (favLeaveTimer.current) {
+      clearTimeout(favLeaveTimer.current);
+      favLeaveTimer.current = null;
+    }
+    if (favBtnRef.current) {
+      setFavAnchorEl(favBtnRef.current);
+    }
+    setIsFavOpen(true);
+  };
+  const handleFavMouseLeave = () => {
+    if (favLeaveTimer.current) clearTimeout(favLeaveTimer.current);
+    favLeaveTimer.current = setTimeout(() => {
+      setIsFavOpen(false);
+    }, 250);
+  };
+
+  const handleCartMouseEnter = () => {
+    if (cartLeaveTimer.current) {
+      clearTimeout(cartLeaveTimer.current);
+      cartLeaveTimer.current = null;
+    }
+    if (cartBtnRef.current) {
+      setCartAnchorEl(cartBtnRef.current);
+    }
+    setIsCartOpen(true);
+  };
+  const handleCartMouseLeave = () => {
+    if (cartLeaveTimer.current) clearTimeout(cartLeaveTimer.current);
+    cartLeaveTimer.current = setTimeout(() => {
+      setIsCartOpen(false);
+    }, 250);
+  };
 
   useEffect(() => {
     const handleAvatarUpdate = () => {
@@ -760,30 +818,56 @@ export default function DashboardHeader({
           {/* Standard Icons */}
           {isStudentMode && (
             <>
-              <IconButton
-                onClick={() => router.push("/student/favorites")}
-                sx={{
-                  width: 42,
-                  height: 42,
-                  bgcolor: "transparent",
-                  color: "text.primary",
-                  "&:hover": { color: "primary.main" },
-                }}
+              <Box
+                ref={favBtnRef}
+                onMouseEnter={handleFavMouseEnter}
+                onMouseLeave={handleFavMouseLeave}
+                sx={{ display: "inline-flex" }}
               >
-                <FavoriteBorderOutlined fontSize="small" />
-              </IconButton>
-              <IconButton
-                onClick={() => router.push("/student/cart")}
-                sx={{
-                  width: 42,
-                  height: 42,
-                  bgcolor: "transparent",
-                  color: "text.primary",
-                  "&:hover": { color: "primary.main" },
-                }}
+                <IconButton
+                  onClick={() => router.push("/student/favorites")}
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    bgcolor: "transparent",
+                    color: "text.primary",
+                    "&:hover": { color: "primary.main" },
+                  }}
+                >
+                  <Badge
+                    badgeContent={favoriteCount}
+                    color="error"
+                    sx={{ "& .MuiBadge-badge": { bgcolor: BRAND.main } }}
+                  >
+                    <FavoriteBorderOutlined fontSize="small" />
+                  </Badge>
+                </IconButton>
+              </Box>
+              <Box
+                ref={cartBtnRef}
+                onMouseEnter={handleCartMouseEnter}
+                onMouseLeave={handleCartMouseLeave}
+                sx={{ display: "inline-flex" }}
               >
-                <ShoppingCartOutlined fontSize="small" />
-              </IconButton>
+                <IconButton
+                  onClick={() => router.push("/student/cart")}
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    bgcolor: "transparent",
+                    color: "text.primary",
+                    "&:hover": { color: "primary.main" },
+                  }}
+                >
+                  <Badge
+                    badgeContent={cartItemsCount}
+                    color="error"
+                    sx={{ "& .MuiBadge-badge": { bgcolor: BRAND.main } }}
+                  >
+                    <ShoppingCartOutlined fontSize="small" />
+                  </Badge>
+                </IconButton>
+              </Box>
             </>
           )}
 
@@ -1017,6 +1101,24 @@ export default function DashboardHeader({
               Đăng xuất
             </MenuItem>
           </Menu>
+
+          {/* Wishlist Hover Popover */}
+          <WishlistHoverPopover
+            open={isFavOpen}
+            anchorEl={favAnchorEl}
+            onMouseEnter={handleFavMouseEnter}
+            onMouseLeave={handleFavMouseLeave}
+            favorites={favorites}
+          />
+
+          {/* Cart Hover Popover */}
+          <CartHoverPopover
+            open={isCartOpen}
+            anchorEl={cartAnchorEl}
+            onMouseEnter={handleCartMouseEnter}
+            onMouseLeave={handleCartMouseLeave}
+            gioHang={gioHang}
+          />
         </Stack>
       </Stack>
     </Box>

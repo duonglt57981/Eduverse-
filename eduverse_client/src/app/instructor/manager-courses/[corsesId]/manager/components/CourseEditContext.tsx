@@ -1414,14 +1414,17 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
           p.id === phanId
             ? {
                 ...p,
-                DanhSachBaiGiang: p.DanhSachBaiGiang?.map((bg) =>
-                  bg.id === baiGiangId
-                    ? {
-                        ...bg,
-                        danhSachTaiLieu: [...(bg.taiLieus || []), newDoc],
-                      }
-                    : bg,
-                ),
+                DanhSachBaiGiang: p.DanhSachBaiGiang?.map((bg) => {
+                  if (bg.id !== baiGiangId) return bg;
+                  const currentDocs =
+                    bg.danhSachTaiLieu || (bg as any).taiLieus || [];
+                  const updatedDocs = [...currentDocs, newDoc];
+                  return {
+                    ...bg,
+                    danhSachTaiLieu: updatedDocs,
+                    taiLieus: updatedDocs,
+                  };
+                }),
               }
             : p,
         ),
@@ -1441,16 +1444,19 @@ export function CourseEditProvider({ children }: { children: ReactNode }) {
           p.id === phanId
             ? {
                 ...p,
-                DanhSachBaiGiang: p.DanhSachBaiGiang?.map((bg) =>
-                  bg.id === baiGiangId
-                    ? {
-                        ...bg,
-                        danhSachTaiLieu: bg.taiLieus?.filter(
-                          (tl: TaiLieuType) => tl.id !== taiLieuId,
-                        ),
-                      }
-                    : bg,
-                ),
+                DanhSachBaiGiang: p.DanhSachBaiGiang?.map((bg) => {
+                  if (bg.id !== baiGiangId) return bg;
+                  const currentDocs: any[] =
+                    bg.danhSachTaiLieu || (bg as any).taiLieus || [];
+                  const updatedDocs = currentDocs.filter(
+                    (tl: any) => (tl.id ?? tl.idTaiLieu) !== taiLieuId,
+                  );
+                  return {
+                    ...bg,
+                    danhSachTaiLieu: updatedDocs,
+                    taiLieus: updatedDocs,
+                  };
+                }),
               }
             : p,
         ),

@@ -22,6 +22,7 @@ import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { COLORS, isTrangThaiCho } from "../types/constants";
 import StatusChip from "./StatusChip";
 import { useState } from "react";
+import { stripHtml } from "@/src/utils/htmlHelpers";
 
 // --- Row components ---
 function BaiGiangRow({ baiGiang, active, onClick }: any) {
@@ -111,7 +112,11 @@ function TaiLieuRow({ taiLieu, active, onClick, nested = false }: any) {
 function BaiKiemTraRow({ baiKiemTra, active, onClick }: any) {
   const [expanded, setExpanded] = useState(false);
   const isPending = isTrangThaiCho(baiKiemTra.trangThaiPheDuyet);
-  const cauHois: any[] = baiKiemTra.cauHois ?? [];
+  const cauHois: any[] =
+    baiKiemTra.cauHois ??
+    baiKiemTra.danhSachCauHois ??
+    baiKiemTra.danhSachCauHoi ??
+    [];
 
   return (
     <Box>
@@ -173,7 +178,7 @@ function BaiKiemTraRow({ baiKiemTra, active, onClick }: any) {
         <Collapse in={expanded}>
           <Stack spacing={0.75} sx={{ mt: 0.75, ml: 2.5 }}>
             {cauHois.map((ch: any, chIndex: number) => (
-              <CauHoiRow key={ch.idCauHoi ?? `ch-${chIndex}`} cauHoi={ch} />
+              <CauHoiRow key={ch.idCauHoi ?? ch.id ?? `ch-${chIndex}`} cauHoi={ch} />
             ))}
           </Stack>
         </Collapse>
@@ -185,7 +190,18 @@ function BaiKiemTraRow({ baiKiemTra, active, onClick }: any) {
 // --- Câu hỏi (nested trong bài kiểm tra) ---
 function CauHoiRow({ cauHoi }: any) {
   const [expanded, setExpanded] = useState(false);
-  const dapAns: any[] = cauHoi.dapAns ?? [];
+  const dapAns: any[] =
+    cauHoi.dapAns ??
+    cauHoi.danhSachDapAns ??
+    cauHoi.danhSachDapAn ??
+    [];
+
+  const rawTitle =
+    cauHoi.noiDungCauHoi ||
+    cauHoi.tenCauHoi ||
+    cauHoi.tieuDe ||
+    "Câu hỏi";
+  const questionTitle = stripHtml(rawTitle) || "Câu hỏi";
 
   return (
     <Box
@@ -212,7 +228,7 @@ function CauHoiRow({ cauHoi }: any) {
           sx={{ flex: 1, color: COLORS.ink, fontSize: 13 }}
           noWrap
         >
-          {cauHoi.noiDungCauHoi || cauHoi.tieuDe}
+          {questionTitle}
         </Typography>
         {dapAns.length > 0 && (
           <ExpandMoreIcon
@@ -228,35 +244,43 @@ function CauHoiRow({ cauHoi }: any) {
       {dapAns.length > 0 && (
         <Collapse in={expanded}>
           <Stack spacing={0.5} sx={{ mt: 0.75, ml: 2.25 }}>
-            {dapAns.map((da: any, daIndex: number) => (
-              <Stack
-                key={da.idDapAn ?? `da-${daIndex}`}
-                direction="row"
-                spacing={0.75}
-                sx={{ alignItems: "center" }}
-              >
-                {da.dapAnDung || da.isDung ? (
-                  <CheckCircleIcon
-                    sx={{ color: COLORS.primary, fontSize: 14 }}
-                  />
-                ) : (
-                  <RadioButtonUncheckedIcon
-                    sx={{ color: COLORS.inkSoft, fontSize: 14 }}
-                  />
-                )}
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color:
-                      da.dapAnDung || da.isDung ? COLORS.ink : COLORS.inkSoft,
-                    fontWeight: da.dapAnDung || da.isDung ? 600 : 400,
-                  }}
-                  noWrap
+            {dapAns.map((da: any, daIndex: number) => {
+              const isCorrect =
+                da.laDapAnDung === true ||
+                da.dapAnDung === true ||
+                da.isDung === true;
+              const rawAnswer =
+                da.noiDungDapAn || da.noiDung || da.tieuDe || da.tenDapAn;
+              const answerText = stripHtml(rawAnswer) || "(Trống)";
+              return (
+                <Stack
+                  key={da.idDapAn ?? da.id ?? `da-${daIndex}`}
+                  direction="row"
+                  spacing={0.75}
+                  sx={{ alignItems: "center" }}
                 >
-                  {da.noiDungDapAn || da.tieuDe}
-                </Typography>
-              </Stack>
-            ))}
+                  {isCorrect ? (
+                    <CheckCircleIcon
+                      sx={{ color: COLORS.primary, fontSize: 14 }}
+                    />
+                  ) : (
+                    <RadioButtonUncheckedIcon
+                      sx={{ color: COLORS.inkSoft, fontSize: 14 }}
+                    />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: isCorrect ? COLORS.ink : COLORS.inkSoft,
+                      fontWeight: isCorrect ? 600 : 400,
+                    }}
+                    noWrap
+                  >
+                    {answerText}
+                  </Typography>
+                </Stack>
+              );
+            })}
           </Stack>
         </Collapse>
       )}

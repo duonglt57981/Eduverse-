@@ -1,27 +1,22 @@
 "use client";
 
 import {
-  Card,
-  CardContent,
   Typography,
   Stack,
-  Button,
   Box,
   IconButton,
-  Chip,
-  Divider,
   Tooltip,
+  Paper,
 } from "@mui/material";
 import {
   StarRounded,
-  PeopleAltRounded,
-  FavoriteRounded,
-  ArrowForwardRounded,
   SchoolRounded,
+  WorkspacePremiumRounded,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { FavoriteCourse } from "../types/favorite.type";
-import { BRAND, CSSVAR, STATUS } from "@/src/theme/tokens";
+import { BRAND } from "@/src/theme/tokens";
+import FavoriteHeartIcon from "./FavoriteHeartIcon";
 
 interface FavoriteCourseCardProps {
   course: FavoriteCourse;
@@ -34,7 +29,7 @@ export default function FavoriteCourseCard({
 }: FavoriteCourseCardProps) {
   const router = useRouter();
 
-  let badge = "Khóa học";
+  let badge = "";
   let imageUrl = "";
 
   try {
@@ -52,55 +47,65 @@ export default function FavoriteCourseCard({
     }
   }
 
-  const level = course.capDo || badge || "Trung cấp";
-  const rating = course.diemDanhGiaTrungBinh ?? null;
-  const students = course.soLuongHocVien ?? 0;
+  const levelBadge = course.capDo || badge || "Tất cả cấp độ";
+  const ratingVal = course.diemDanhGiaTrungBinh;
+  const hasRating = typeof ratingVal === "number" && ratingVal > 0;
+  const reviewCount = course.soLuongDanhGia ?? 0;
+  const isFree = !course.giaTien || course.giaTien <= 0;
 
   return (
-    <Card
+    <Paper
       elevation={0}
       onClick={() => router.push(`/student/enroll-courses/${course.khoaHocId}`)}
       sx={{
-        borderRadius: "18px",
-        border: "1px solid rgba(0,0,0,0.07)",
-        bgcolor: "var(--ev-paper, #fff)",
-        transition:
-          "transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease",
+        borderRadius: "10px",
+        overflow: "hidden",
+        border: "1px solid rgba(0,0,0,0.08)",
+        bgcolor: "var(--dashboard-surface, #fff)",
+        cursor: "pointer",
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        overflow: "hidden",
-        position: "relative",
-        cursor: "pointer",
+        transition:
+          "transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease",
         "&:hover": {
-          boxShadow: "0 8px 24px rgba(139,19,19,0.08)",
-          borderColor: "rgba(139,19,19,0.18)",
+          transform: "translateY(-3px)",
+          boxShadow: "0 10px 24px rgba(0,0,0,0.08)",
+          borderColor: "rgba(141,19,19,0.2)",
+          "& .card-wishlist-btn": {
+            transform: "scale(1.1)",
+          },
         },
       }}
     >
-      {/* Thumbnail Area */}
+      {/* ── 1. Thumbnail Image ── */}
       <Box
         sx={{
-          height: 145,
-          position: "relative",
-          overflow: "hidden",
+          height: 140,
           background: imageUrl
             ? `url(${imageUrl}) center/cover no-repeat`
             : "var(--dashboard-surface-muted, #f3f4f6)",
+          position: "relative",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          overflow: "hidden",
         }}
       >
         {!imageUrl && (
           <Stack sx={{ alignItems: "center", justifyContent: "center" }}>
-            <SchoolRounded sx={{ color: "rgba(31,41,55,0.3)", fontSize: 36 }} />
+            <SchoolRounded
+              sx={{
+                color: "var(--dashboard-text-muted, rgba(31,41,55,0.4))",
+                fontSize: 32,
+              }}
+            />
             <Typography
               sx={{
-                color: "rgba(31,41,55,0.35)",
-                fontSize: 10,
-                fontWeight: 800,
-                mt: 0.5,
+                color: "var(--dashboard-text-muted, rgba(31,41,55,0.4))",
+                fontSize: 11,
+                fontWeight: 700,
+                mt: 0.75,
                 letterSpacing: "1px",
                 textTransform: "uppercase",
               }}
@@ -110,108 +115,73 @@ export default function FavoriteCourseCard({
           </Stack>
         )}
 
-        {/* Level Tag Overlay */}
-        <Chip
-          label={level}
-          size="small"
-          sx={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            bgcolor: "rgba(255,255,255,0.92)",
-            color: BRAND.main,
-            fontWeight: 800,
-            fontSize: 10,
-            height: 20,
-          }}
-        />
-
-        {/* Heart Icon Button to Remove from Favorite */}
+        {/* Wishlist heart button (active / red) to remove from favorite */}
         <Tooltip title="Bỏ yêu thích" arrow placement="top">
           <IconButton
+            className="card-wishlist-btn"
+            aria-label="Bỏ yêu thích"
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
               onRemove();
             }}
             sx={{
               position: "absolute",
-              top: 8,
-              right: 10,
+              top: 6,
+              right: 6,
               width: 28,
               height: 28,
-              bgcolor: "rgba(255, 255, 255, 0.95)",
+              bgcolor: "rgba(255, 255, 255, 0.92)",
               color: BRAND.main,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
               zIndex: 5,
-              transition: "all 150ms ease",
+              transition: "transform 150ms ease, background-color 150ms ease",
               p: 0,
               "&:hover": {
-                bgcolor: BRAND.main,
-                color: "#ffffff",
-                transform: "scale(1.08)",
-                "& .MuiSvgIcon-root": {
-                  color: "#ffffff",
-                },
+                bgcolor: "#ffffff",
+                color: BRAND.main,
+                transform: "scale(1.15)",
               },
             }}
           >
-            <FavoriteRounded sx={{ fontSize: 16, color: BRAND.main }} />
+            <FavoriteHeartIcon active={true} color={BRAND.main} />
           </IconButton>
         </Tooltip>
-
-        {/* Free Badge */}
-        {course.giaTien === 0 && (
-          <Chip
-            label="MIỄN PHÍ"
-            size="small"
-            sx={{
-              position: "absolute",
-              bottom: 8,
-              left: 10,
-              bgcolor: STATUS.success,
-              color: "#fff",
-              fontWeight: 900,
-              fontSize: 9.5,
-              height: 18,
-            }}
-          />
-        )}
       </Box>
 
-      {/* Course Details Content */}
-      <CardContent
+      {/* ── 2. Card Content ── */}
+      <Box
         sx={{
-          p: 2,
-          flexGrow: 1,
+          p: 1.5,
           display: "flex",
           flexDirection: "column",
+          gap: 0.5,
+          flexGrow: 1,
         }}
       >
         {/* Title */}
         <Typography
           sx={{
-            fontSize: 14,
-            fontWeight: 800,
+            fontSize: 13.5,
+            fontWeight: 700,
             lineHeight: 1.4,
-            color: CSSVAR.textPrimary,
-            mb: 0.5,
-            height: 39,
+            height: 38,
             overflow: "hidden",
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
+            color: "var(--dashboard-text-primary, #111827)",
           }}
         >
           {course.tieuDe}
         </Typography>
 
-        {/* Instructor */}
+        {/* Instructor name */}
         <Typography
           sx={{
-            fontSize: 12,
-            color: CSSVAR.textMuted,
-            fontWeight: 600,
-            mb: 1.25,
+            fontSize: 11.5,
+            color: "var(--dashboard-text-muted, rgba(31,41,55,0.6))",
+            fontWeight: 500,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -220,131 +190,124 @@ export default function FavoriteCourseCard({
           {course.giangVien || "Giảng viên EduVerse"}
         </Typography>
 
-        <Divider sx={{ mb: 1.5, opacity: 0.4 }} />
-
-        {/* Price & Rating Row */}
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-            mt: "auto",
-          }}
-        >
-          <Box>
+        {/* Rating score + Stars OR 'Chưa có đánh giá' */}
+        {hasRating ? (
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ alignItems: "center", mt: 0.25 }}
+          >
             <Typography
               sx={{
-                fontSize: 15.5,
-                fontWeight: 900,
-                color: course.giaTien === 0 ? STATUS.success : BRAND.main,
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#b45309",
+                lineHeight: 1,
               }}
             >
-              {course.giaTien === 0
-                ? "Miễn phí"
-                : `${course.giaTien.toLocaleString("vi-VN")}đ`}
+              {ratingVal.toFixed(1).replace(".", ",")}
             </Typography>
-          </Box>
-
-          <Stack direction="row" spacing={1.2} sx={{ alignItems: "center" }}>
-            {rating !== null ? (
-              <Stack
-                direction="row"
-                spacing={0.3}
-                sx={{ alignItems: "center" }}
-              >
-                <StarRounded sx={{ fontSize: 14, color: STATUS.warning }} />
-                <Typography
+            <Stack direction="row" spacing={0.1} sx={{ alignItems: "center" }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <StarRounded
+                  key={star}
                   sx={{
-                    fontSize: 11.5,
-                    fontWeight: 800,
-                    color: CSSVAR.textPrimary,
+                    fontSize: 13.5,
+                    color:
+                      star <= Math.round(ratingVal)
+                        ? "#f59e0b"
+                        : "#d1d5db",
                   }}
-                >
-                  {rating.toFixed(1)}
-                </Typography>
-              </Stack>
-            ) : (
-              <Typography
-                sx={{
-                  fontSize: 11,
-                  color: CSSVAR.textMuted,
-                  fontStyle: "italic",
-                }}
-              >
-                Chưa có đánh giá
-              </Typography>
-            )}
-            <Stack direction="row" spacing={0.3} sx={{ alignItems: "center" }}>
-              <PeopleAltRounded
-                sx={{ fontSize: 13, color: "rgba(31,41,55,0.45)" }}
-              />
+                />
+              ))}
+            </Stack>
+            {reviewCount > 0 && (
               <Typography
                 sx={{
                   fontSize: 11.5,
-                  fontWeight: 700,
-                  color: "rgba(31,41,55,0.6)",
+                  color: "var(--dashboard-text-muted, rgba(31,41,55,0.6))",
+                  fontWeight: 500,
+                  lineHeight: 1,
                 }}
               >
-                {students.toLocaleString()}
+                ({reviewCount.toLocaleString()})
               </Typography>
-            </Stack>
+            )}
           </Stack>
-        </Stack>
-
-        {/* Action Buttons */}
-        <Stack direction="row" spacing={1}>
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            variant="outlined"
-            fullWidth
-            sx={{
-              borderRadius: "11px",
-              py: 0.9,
-              fontWeight: 700,
-              fontSize: 12.5,
-              borderColor: "rgba(139,19,19,0.2)",
-              color: BRAND.main,
-              textTransform: "none",
-              "&:hover": {
-                bgcolor: "rgba(139,19,19,0.04)",
-                borderColor: BRAND.main,
-              },
-            }}
+        ) : (
+          <Stack
+            direction="row"
+            spacing={0.4}
+            sx={{ alignItems: "center", mt: 0.25 }}
           >
-            Bỏ yêu thích
-          </Button>
+            <StarRounded
+              sx={{
+                fontSize: 14,
+                color: "var(--dashboard-text-muted, rgba(31,41,55,0.4))",
+              }}
+            />
+            <Typography
+              sx={{
+                fontSize: 11.5,
+                color: "var(--dashboard-text-muted, rgba(31,41,55,0.6))",
+                fontWeight: 500,
+                lineHeight: 1,
+              }}
+            >
+              Chưa có đánh giá
+            </Typography>
+          </Stack>
+        )}
 
-          <Button
-            variant="contained"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/student/enroll-courses/${course.khoaHocId}`);
-            }}
-            endIcon={<ArrowForwardRounded sx={{ fontSize: 15 }} />}
-            fullWidth
+        {/* Price row */}
+        <Stack
+          direction="row"
+          spacing={0.75}
+          sx={{ alignItems: "baseline", mt: 0.25 }}
+        >
+          <Typography
             sx={{
-              borderRadius: "11px",
-              py: 0.9,
+              fontSize: 15,
               fontWeight: 800,
-              fontSize: 12.5,
-              bgcolor: BRAND.main,
-              color: "#fff",
-              boxShadow: "none",
-              textTransform: "none",
-              "&:hover": {
-                bgcolor: "#7F1D1D",
-                boxShadow: "none",
-              },
+              color: "var(--dashboard-text-primary, #111827)",
+              lineHeight: 1.2,
             }}
           >
-            Xem khóa học
-          </Button>
+            {isFree ? "Miễn phí" : `${course.giaTien.toLocaleString("vi-VN")}đ`}
+          </Typography>
         </Stack>
-      </CardContent>
-    </Card>
+
+        {/* Bottom Badge: Pill badge (Brand red "Tất cả cấp độ" / Level) */}
+        <Box sx={{ mt: "auto", pt: 0.5 }}>
+          <Box
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.5,
+              px: 1,
+              py: 0.35,
+              borderRadius: "6px",
+              bgcolor: BRAND.main,
+              color: "#ffffff",
+              width: "fit-content",
+            }}
+          >
+            <WorkspacePremiumRounded
+              sx={{ fontSize: 13, color: "#ffffff" }}
+            />
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#ffffff",
+                lineHeight: 1.2,
+              }}
+            >
+              {levelBadge}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Paper>
   );
 }
