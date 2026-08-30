@@ -377,7 +377,11 @@ export default function KiemDuyetSidebar({
     const pending = isTrangThaiCho(bkt.trangThaiPheDuyet);
     const isApproved = bkt.trangThaiPheDuyet === "DaDuyet";
     const bktId = bkt.idBaiKiemTra ?? bkt.id;
-    const cauHois: any[] = bkt.cauHois ?? [];
+    const cauHois: any[] =
+      bkt.cauHois ??
+      bkt.danhSachCauHois ??
+      bkt.danhSachCauHoi ??
+      [];
 
     return (
       <Box

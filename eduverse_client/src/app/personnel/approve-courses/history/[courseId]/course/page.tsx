@@ -74,6 +74,7 @@ import {
 } from "@/src/types/KiemDuyet/Dto/dto";
 import { ApiResponse } from "@/src/types/types";
 import { BRAND, NEUTRAL, STATUS, FONT_FAMILY, CSSVAR } from "@/src/theme/tokens";
+import { cleanHtmlContent, isHtmlContent } from "@/src/utils/htmlHelpers";
 
 // ======================== CONSTANTS ========================
 const COLORS = {
@@ -2539,7 +2540,11 @@ function NoiDungViewer({ selected }: { selected: any }) {
 
   const renderViewerBody = () => {
     if (loai === "baiKiemTra") {
-      const cauHois: any[] = item.cauHois ?? [];
+      const cauHois: any[] =
+        item.cauHois ??
+        item.danhSachCauHois ??
+        item.danhSachCauHoi ??
+        [];
       return (
         <Box
           sx={{
@@ -2599,140 +2604,187 @@ function NoiDungViewer({ selected }: { selected: any }) {
                 </Typography>
               </Box>
 
-              {cauHois.map((ch: any, idx: number) => (
-                <Paper
-                  key={ch.idCauHoi ?? idx}
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    border: `1px solid ${COLORS.line}`,
-                    backgroundColor: CSSVAR.paper,
-                    transition: "box-shadow 0.2s",
-                    "&:hover": {
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    },
-                    position: "relative",
-                    isolation: "isolate",
-                    overflow: "hidden",
-                    borderRadius: 2,
-                    flexShrink: 0,
-                  }}
-                >
-                  <Box
-                    sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}
+              {cauHois.map((ch: any, idx: number) => {
+                const dapAns: any[] =
+                  ch.dapAns ??
+                  ch.danhSachDapAns ??
+                  ch.danhSachDapAn ??
+                  [];
+                const rawQuestion =
+                  ch.noiDungCauHoi ||
+                  ch.noiDung ||
+                  ch.tenCauHoi ||
+                  ch.tieuDe ||
+                  `Câu hỏi ${idx + 1}`;
+                const questionContent = cleanHtmlContent(rawQuestion);
+                const isHtml = isHtmlContent(questionContent);
+
+                return (
+                  <Paper
+                    key={ch.idCauHoi ?? ch.id ?? idx}
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      border: `1px solid ${COLORS.line}`,
+                      backgroundColor: CSSVAR.paper,
+                      transition: "box-shadow 0.2s",
+                      "&:hover": {
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                      },
+                      position: "relative",
+                      isolation: "isolate",
+                      overflow: "hidden",
+                      borderRadius: 2,
+                      flexShrink: 0,
+                    }}
                   >
                     <Box
-                      sx={{
-                        minWidth: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        backgroundColor: mix(COLORS.primary, 0.1),
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        mt: 0.2,
-                      }}
+                      sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}
                     >
-                      <Typography
+                      <Box
                         sx={{
-                          fontWeight: 700,
-                          fontSize: 14,
-                          color: COLORS.primary,
+                          minWidth: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          backgroundColor: mix(COLORS.primary, 0.1),
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          mt: 0.2,
                         }}
                       >
-                        {idx + 1}
-                      </Typography>
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: 14,
+                            color: COLORS.primary,
+                          }}
+                        >
+                          {idx + 1}
+                        </Typography>
+                      </Box>
+                      {/* Hiển thị HTML cho câu hỏi */}
+                      {isHtml ? (
+                        <Box
+                          sx={{
+                            fontWeight: 600,
+                            color: COLORS.ink,
+                            fontSize: 15,
+                            lineHeight: 1.5,
+                            flex: 1,
+                            wordBreak: "break-word",
+                            "& strong": { fontWeight: 700 },
+                            "& p": { m: 0 },
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: questionContent,
+                          }}
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            color: COLORS.ink,
+                            fontSize: 15,
+                            lineHeight: 1.5,
+                            flex: 1,
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {questionContent}
+                        </Typography>
+                      )}
                     </Box>
-                    {/* Hiển thị HTML cho câu hỏi */}
-                    <Box
-                      sx={{
-                        fontWeight: 600,
-                        color: COLORS.ink,
-                        fontSize: 15,
-                        lineHeight: 1.5,
-                        flex: 1,
-                        wordBreak: "break-word",
-                        "& strong": { fontWeight: 700 },
-                        "& p": { m: 0 },
-                      }}
-                      dangerouslySetInnerHTML={{
-                        __html: ch.noiDungCauHoi ?? ch.tieuDe ?? "",
-                      }}
-                    />
-                  </Box>
 
-                  <Box sx={{ ml: 4.5, mt: 1.5 }}>
-                    <Stack spacing={0.75}>
-                      {(ch.dapAns ?? []).map((da: any, daIdx: number) => {
-                        const isCorrect =
-                          da.dapAnDung || da.isDung || da.laDapAnDung;
-                        return (
-                          <Box
-                            key={da.idDapAn ?? daIdx}
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              p: 0.75,
-                              borderRadius: 1,
-                              backgroundColor: isCorrect
-                                ? mix(COLORS.success, 0.08)
-                                : "transparent",
-                              transition: "background-color 0.15s",
-                            }}
-                          >
-                            {isCorrect ? (
-                              <CheckCircleIcon
-                                sx={{
-                                  color: COLORS.success,
-                                  fontSize: 18,
-                                  flexShrink: 0,
-                                }}
-                              />
-                            ) : (
-                              <RadioButtonUncheckedIcon
-                                sx={{
-                                  color: COLORS.inkSoft,
-                                  fontSize: 18,
-                                  flexShrink: 0,
-                                }}
-                              />
-                            )}
-                            <Typography
-                              variant="body2"
+                    <Box sx={{ ml: 4.5, mt: 1.5 }}>
+                      <Stack spacing={0.75}>
+                        {dapAns.map((da: any, daIdx: number) => {
+                          const isCorrect =
+                            da.dapAnDung || da.isDung || da.laDapAnDung;
+                          const rawAnswer =
+                            da.noiDungDapAn ?? da.noiDung ?? da.tieuDe ?? da.tenDapAn ?? "";
+                          const answerText = cleanHtmlContent(rawAnswer);
+                          const isAnswerHtml = isHtmlContent(answerText);
+                          return (
+                            <Box
+                              key={da.idDapAn ?? da.id ?? daIdx}
                               sx={{
-                                color: isCorrect ? COLORS.ink : COLORS.inkSoft,
-                                fontWeight: isCorrect ? 600 : 400,
-                                fontSize: 14,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                p: 0.75,
+                                borderRadius: 1,
+                                backgroundColor: isCorrect
+                                  ? mix(COLORS.success, 0.08)
+                                  : "transparent",
+                                transition: "background-color 0.15s",
                               }}
                             >
-                              {da.noiDungDapAn ?? da.tieuDe}
-                            </Typography>
-                            {isCorrect && (
-                              <Box
-                                component="span"
-                                sx={{
-                                  ml: "auto",
-                                  fontSize: 11,
-                                  fontWeight: 600,
-                                  color: COLORS.success,
-                                  backgroundColor: mix(COLORS.success, 0.12),
-                                  px: 1,
-                                  py: 0.25,
-                                  borderRadius: 1,
-                                }}
-                              >
-                                Đúng
-                              </Box>
-                            )}
-                          </Box>
-                        );
-                      })}
-                    </Stack>
-                  </Box>
-                </Paper>
-              ))}
+                              {isCorrect ? (
+                                <CheckCircleIcon
+                                  sx={{
+                                    color: COLORS.success,
+                                    fontSize: 18,
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              ) : (
+                                <RadioButtonUncheckedIcon
+                                  sx={{
+                                    color: COLORS.inkSoft,
+                                    fontSize: 18,
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              )}
+                              {isAnswerHtml ? (
+                                <Box
+                                  sx={{
+                                    color: isCorrect ? COLORS.ink : COLORS.inkSoft,
+                                    fontWeight: isCorrect ? 600 : 400,
+                                    fontSize: 14,
+                                    "& p": { m: 0 },
+                                  }}
+                                  dangerouslySetInnerHTML={{ __html: answerText }}
+                                />
+                              ) : (
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: isCorrect ? COLORS.ink : COLORS.inkSoft,
+                                    fontWeight: isCorrect ? 600 : 400,
+                                    fontSize: 14,
+                                  }}
+                                >
+                                  {answerText || "(Trống)"}
+                                </Typography>
+                              )}
+                              {isCorrect && (
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    ml: "auto",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    color: COLORS.success,
+                                    backgroundColor: mix(COLORS.success, 0.12),
+                                    px: 0.75,
+                                    py: 0.25,
+                                    borderRadius: 0.75,
+                                  }}
+                                >
+                                  Đáp án đúng
+                                </Box>
+                              )}
+                            </Box>
+                          );
+                        })}
+                      </Stack>
+                    </Box>
+                  </Paper>
+                );
+              })}
             </Stack>
           )}
         </Box>

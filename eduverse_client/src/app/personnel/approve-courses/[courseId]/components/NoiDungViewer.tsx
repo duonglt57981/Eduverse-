@@ -49,6 +49,7 @@ import {
 import StatusChip from "./StatusChip";
 import LyDoTuChoiInput from "./LyDoTuChoiInput";
 import { BRAND, COLORS as TOKEN_COLORS, CSSVAR } from "@/src/theme/tokens";
+import { cleanHtmlContent, isHtmlContent, stripHtml } from "@/src/utils/htmlHelpers";
 
 // ======================== CLOUDINARY HELPERS ========================
 interface CloudinaryUrlInfo {
@@ -766,13 +767,13 @@ export default function NoiDungViewer({
                 ? "#FEF2F2"
                 : loai === "taiLieu"
                   ? "#F0F9FF"
-                  : "#FAF5FF",
+                  : "#FEF2F2",
             color:
               loai === "baiGiang"
                 ? BRAND.main
                 : loai === "taiLieu"
                   ? "#0284C7"
-                  : "#9333EA",
+                  : BRAND.main,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -967,7 +968,12 @@ function ViewerBody({
 }) {
   // Bài kiểm tra
   if (loai === "baiKiemTra") {
-    const cauHois: any[] = item.cauHois ?? [];
+    const cauHois: any[] =
+      item.cauHois ??
+      item.danhSachCauHois ??
+      item.danhSachCauHoi ??
+      item.DanhSachCauHois ??
+      [];
     return (
       <Box
         sx={{
@@ -1020,9 +1026,9 @@ function ViewerBody({
                   px: 1.25,
                   py: 0.35,
                   borderRadius: "999px",
-                  bgcolor: "#FAF5FF",
-                  border: "1px solid #F3E8FF",
-                  color: "#9333EA",
+                  bgcolor: "#FEF2F2",
+                  border: `1px solid ${alpha(BRAND.main, 0.2)}`,
+                  color: BRAND.main,
                   fontSize: 12,
                   fontWeight: 800,
                 }}
@@ -1032,10 +1038,31 @@ function ViewerBody({
             </Stack>
 
             {cauHois.map((ch: any, idx: number) => {
-              const dapAns: any[] = ch.dapAns ?? ch.luaChons ?? [];
+              const dapAns: any[] =
+                ch.dapAns ??
+                ch.danhSachDapAns ??
+                ch.danhSachDapAn ??
+                ch.DanhSachDapAns ??
+                ch.luaChons ??
+                [];
+              const rawQuestion =
+                ch.noiDungCauHoi ||
+                ch.noiDung ||
+                ch.tenCauHoi ||
+                ch.tieuDe ||
+                `Câu hỏi ${idx + 1}`;
+              const questionContent = cleanHtmlContent(rawQuestion);
+              const isHtml = isHtmlContent(questionContent);
+              const rawTitle = ch.tenCauHoi ? cleanHtmlContent(ch.tenCauHoi) : "";
+              const showTitle =
+                Boolean(rawTitle) &&
+                rawTitle !== questionContent &&
+                rawTitle !== `Câu hỏi ${idx + 1}` &&
+                stripHtml(rawTitle) !== stripHtml(questionContent);
+
               return (
                 <Paper
-                  key={ch.idCauHoi ?? idx}
+                  key={ch.idCauHoi ?? ch.id ?? idx}
                   elevation={0}
                   sx={{
                     p: 2.5,
@@ -1076,17 +1103,44 @@ function ViewerBody({
                     >
                       {idx + 1}
                     </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        sx={{
-                          fontWeight: 700,
-                          color: "#0F172A",
-                          fontSize: 14.5,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {ch.noiDung || ch.tenCauHoi || `Câu hỏi ${idx + 1}`}
-                      </Typography>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      {showTitle && (
+                        <Typography
+                          sx={{
+                            fontWeight: 800,
+                            color: "#0F172A",
+                            fontSize: 14.5,
+                            mb: 0.5,
+                          }}
+                        >
+                          {stripHtml(rawTitle)}
+                        </Typography>
+                      )}
+                      {isHtml ? (
+                        <Box
+                          sx={{
+                            fontSize: 14.5,
+                            color: "#0F172A",
+                            lineHeight: 1.6,
+                            fontWeight: 600,
+                            "& p": { m: 0, mb: 0.5, "&:last-child": { mb: 0 } },
+                            "& strong": { fontWeight: 700 },
+                            "& img": { maxWidth: "100%", height: "auto", borderRadius: "8px" },
+                          }}
+                          dangerouslySetInnerHTML={{ __html: questionContent }}
+                        />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            color: "#0F172A",
+                            fontSize: 14.5,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {questionContent}
+                        </Typography>
+                      )}
                     </Box>
                   </Box>
 
@@ -1096,10 +1150,22 @@ function ViewerBody({
                         const isCorrect =
                           da.isCorrect === true ||
                           da.dung === true ||
-                          da.laDapAnDung === true;
+                          da.laDapAnDung === true ||
+                          da.dapAnDung === true ||
+                          da.isDung === true;
+                        const rawAnswer =
+                          da.noiDungDapAn ??
+                          da.noiDung ??
+                          da.tieuDe ??
+                          da.luaChon ??
+                          da.tenDapAn ??
+                          "";
+                        const answerText = cleanHtmlContent(rawAnswer);
+                        const isAnswerHtml = isHtmlContent(answerText);
+
                         return (
                           <Box
-                            key={da.idDapAn ?? daIdx}
+                            key={da.idDapAn ?? da.id ?? daIdx}
                             sx={{
                               display: "flex",
                               alignItems: "center",
@@ -1119,16 +1185,32 @@ function ViewerBody({
                                 sx={{ color: "#94A3B8", fontSize: 18, flexShrink: 0 }}
                               />
                             )}
-                            <Typography
-                              sx={{
-                                fontSize: 13.5,
-                                color: isCorrect ? "#166534" : "#334155",
-                                fontWeight: isCorrect ? 700 : 500,
-                                flex: 1,
-                              }}
-                            >
-                              {da.noiDung || da.luaChon || da.tenDapAn}
-                            </Typography>
+                            {isAnswerHtml ? (
+                              <Box
+                                sx={{
+                                  fontSize: 13.5,
+                                  color: isCorrect ? "#166534" : "#334155",
+                                  fontWeight: isCorrect ? 700 : 500,
+                                  flex: 1,
+                                  wordBreak: "break-word",
+                                  "& p": { m: 0 },
+                                  "& strong": { fontWeight: 700 },
+                                }}
+                                dangerouslySetInnerHTML={{ __html: answerText }}
+                              />
+                            ) : (
+                              <Typography
+                                sx={{
+                                  fontSize: 13.5,
+                                  color: isCorrect ? "#166534" : "#334155",
+                                  fontWeight: isCorrect ? 700 : 500,
+                                  flex: 1,
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {answerText || "(Trống)"}
+                              </Typography>
+                            )}
                             {isCorrect && (
                               <Box
                                 sx={{

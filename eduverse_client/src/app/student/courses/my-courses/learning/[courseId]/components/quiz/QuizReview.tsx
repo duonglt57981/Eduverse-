@@ -21,6 +21,7 @@ import type {
   CauHoiReviewDto,
   DapAnReviewDto,
 } from "../../hooks/useQuiz";
+import { cleanHtmlContent, isHtmlContent, stripHtml } from "@/src/utils/htmlHelpers";
 
 // ── Design tokens — đồng bộ với QuizContainer / QuizView / QuizResult ──
 const RED = BRAND.main;
@@ -88,35 +89,83 @@ function CauHoiReviewItem({
           )}
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            sx={{ fontSize: 14, fontWeight: 700, color: INK, lineHeight: 1.5 }}
-          >
-            Câu {stt}. {cauHoi.tenCauHoi}
-          </Typography>
-          {cauHoi.noiDungCauHoi &&
-            cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi && (
-              <Box
-                sx={{
-                  fontSize: 13,
-                  color: "#3c3d40",
-                  mt: 0.4,
-                  lineHeight: 1.6,
-                  "& p": { m: 0, mb: 1 },
-                  "& p:last-child": { mb: 0 },
-                  "& ul, & ol": { pl: 2.5, mb: 1 },
-                  "& li": { mb: 0.5 },
-                  "& img": {
-                    maxWidth: "100%",
-                    borderRadius: RADIUS,
-                    my: 1,
-                    display: "block",
-                  },
-                  "& b, & strong": { fontWeight: 700, color: INK },
-                  "& a": { color: RED },
-                }}
-                dangerouslySetInnerHTML={{ __html: cauHoi.noiDungCauHoi }}
-              />
-            )}
+          {(() => {
+            const cleanedTitle = cleanHtmlContent(cauHoi.tenCauHoi);
+            const cleanedNoiDung = cleanHtmlContent(cauHoi.noiDungCauHoi);
+            const hasDistinctNoiDung =
+              Boolean(cleanedNoiDung) &&
+              cleanedNoiDung !== cleanedTitle &&
+              stripHtml(cleanedNoiDung) !== stripHtml(cleanedTitle);
+            const isTitleHtml = isHtmlContent(cleanedTitle);
+            const isNoiDungHtml = isHtmlContent(cleanedNoiDung);
+
+            return (
+              <>
+                {isTitleHtml ? (
+                  <Box
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: INK,
+                      lineHeight: 1.5,
+                      "& p": { m: 0 },
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: `Câu ${stt}. ${cleanedTitle}`,
+                    }}
+                  />
+                ) : (
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: INK,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Câu {stt}. {cleanedTitle}
+                  </Typography>
+                )}
+
+                {hasDistinctNoiDung && (
+                  isNoiDungHtml ? (
+                    <Box
+                      sx={{
+                        fontSize: 13,
+                        color: "#3c3d40",
+                        mt: 0.4,
+                        lineHeight: 1.6,
+                        "& p": { m: 0, mb: 1 },
+                        "& p:last-child": { mb: 0 },
+                        "& ul, & ol": { pl: 2.5, mb: 1 },
+                        "& li": { mb: 0.5 },
+                        "& img": {
+                          maxWidth: "100%",
+                          borderRadius: RADIUS,
+                          my: 1,
+                          display: "block",
+                        },
+                        "& b, & strong": { fontWeight: 700, color: INK },
+                        "& a": { color: RED },
+                      }}
+                      dangerouslySetInnerHTML={{ __html: cleanedNoiDung }}
+                    />
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        color: "#3c3d40",
+                        mt: 0.4,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {cleanedNoiDung}
+                    </Typography>
+                  )
+                )}
+              </>
+            );
+          })()}
         </Box>
       </Box>
 
@@ -146,6 +195,10 @@ function CauHoiReviewItem({
               labelBg = alpha(RED, 0.12);
               textColor = RED;
             }
+
+            const rawAnswer = da.noiDungDapAn ?? "";
+            const answerText = cleanHtmlContent(rawAnswer);
+            const isAnswerHtml = isHtmlContent(answerText);
 
             return (
               <Box
@@ -179,17 +232,32 @@ function CauHoiReviewItem({
                   {LABELS[i] ?? i + 1}
                 </Box>
 
-                <Typography
-                  sx={{
-                    fontSize: 14,
-                    flex: 1,
-                    color: textColor,
-                    fontWeight: laDung || chonSai ? 600 : 400,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {da.noiDungDapAn}
-                </Typography>
+                {isAnswerHtml ? (
+                  <Box
+                    sx={{
+                      fontSize: 14,
+                      flex: 1,
+                      color: textColor,
+                      fontWeight: laDung || chonSai ? 600 : 400,
+                      lineHeight: 1.5,
+                      "& p": { m: 0 },
+                      "& strong": { fontWeight: 700 },
+                    }}
+                    dangerouslySetInnerHTML={{ __html: answerText }}
+                  />
+                ) : (
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      flex: 1,
+                      color: textColor,
+                      fontWeight: laDung || chonSai ? 600 : 400,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {answerText || "(Trống)"}
+                  </Typography>
+                )}
 
                 {choXemDapAn && laDung && (
                   <CheckCircleIcon

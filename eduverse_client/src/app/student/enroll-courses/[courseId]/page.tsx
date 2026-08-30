@@ -26,28 +26,36 @@ import {
   TextField,
   Fade,
   Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import PlayCircleIcon from "@mui/icons-material/PlayCircleRounded";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import SchoolIcon from "@mui/icons-material/School";
-import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import LockIcon from "@mui/icons-material/Lock";
-import StarIcon from "@mui/icons-material/Star";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
-import DevicesIcon from "@mui/icons-material/Devices";
-import AllInclusiveIcon from "@mui/icons-material/AllInclusive";
-import FolderIcon from "@mui/icons-material/Folder";
-import CloseIcon from "@mui/icons-material/Close";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import { styled, keyframes } from "@mui/material/styles";
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
+import PlayCircleFilledRoundedIcon from "@mui/icons-material/PlayCircleFilledRounded";
+import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
+import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
+import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
+import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
+import AllInclusiveRoundedIcon from "@mui/icons-material/AllInclusiveRounded";
+import FolderRoundedIcon from "@mui/icons-material/FolderRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import Rating from "@mui/material/Rating";
 import Avatar from "@mui/material/Avatar";
 import LinearProgress from "@mui/material/LinearProgress";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import OndemandVideoRoundedIcon from "@mui/icons-material/OndemandVideoRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import AuthGuard from "@/src/components/AuthGuard";
 import StudentDashboardShell from "@/src/components/dashboard/StudentDashboardShell";
 import DangKiService from "@/src/services/DangKiService";
@@ -58,112 +66,124 @@ import danhGiaService, {
   DanhGiaKhoaHocDto,
 } from "@/src/services/DanhGiaService";
 
-// ─── constants ────────────────────────────────────────────────────────────────
+// ─── constants & animations ───────────────────────────────────────────────────
 
 const RED = BRAND.main;
-const RED_HOVER = "#6B1010";
-const RED_SOFT = "#fdf2f2";
+const RED_DARK = "#7f1d1d";
+const RED_LIGHT = "#fef2f2";
 const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
 const GIANG_VIEN_COURSES_PAGE_SIZE = 3;
+
+const pulseAnimation = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+`;
 
 // ─── styled components ────────────────────────────────────────────────────────
 
 const HeroBanner = styled(Box)(() => ({
-  background: "linear-gradient(135deg, #1c1d1f 0%, #141414 100%)",
-  borderRadius: 14,
-  padding: "1.5rem 1.75rem",
-  marginBottom: "1rem",
+  background:
+    "linear-gradient(135deg, #191b1f 0%, #111215 55%, #1f0a0a 100%)",
+  borderRadius: 24,
+  padding: "2rem 2.25rem",
+  marginBottom: "1.5rem",
   position: "relative",
   overflow: "hidden",
+  border: "1px solid rgba(255, 255, 255, 0.08)",
+  boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
   "&::before": {
     content: '""',
     position: "absolute",
-    top: 0,
-    right: 0,
-    width: 260,
-    height: "100%",
-    background: `radial-gradient(circle at top right, ${alpha(RED, 0.35)}, transparent 70%)`,
+    top: "-30%",
+    right: "-10%",
+    width: "450px",
+    height: "450px",
+    background: `radial-gradient(circle, ${alpha(RED, 0.32)} 0%, transparent 70%)`,
     pointerEvents: "none",
   },
   "&::after": {
     content: '""',
     position: "absolute",
-    bottom: -50,
-    left: -50,
-    width: 160,
-    height: 160,
-    borderRadius: "50%",
-    background: `radial-gradient(circle, ${alpha(RED, 0.12)}, transparent 70%)`,
+    bottom: "-20%",
+    left: "10%",
+    width: "250px",
+    height: "250px",
+    background: `radial-gradient(circle, ${alpha(RED, 0.1)} 0%, transparent 70%)`,
     pointerEvents: "none",
   },
 }));
 
 const SidebarCard = styled(Paper)(() => ({
-  borderRadius: 20,
-  border: "1px solid #f3d9d9",
-  boxShadow: "0 16px 40px rgba(141,19,19,0.10)",
+  borderRadius: 24,
+  border: "1px solid rgba(141, 19, 19, 0.12)",
+  boxShadow: "0 20px 45px -10px rgba(141, 19, 19, 0.12), 0 10px 25px rgba(0, 0, 0, 0.04)",
   overflow: "hidden",
   position: "sticky",
   top: 24,
+  backgroundColor: "#ffffff",
+  transition: "box-shadow 0.3s ease",
 }));
 
 const ThumbBox = styled(Box)<{ bgimg?: string }>(({ bgimg }) => ({
   position: "relative",
-  paddingTop: "56%",
+  paddingTop: "56.25%",
   background: bgimg
-    ? `#1c1d1f url(${bgimg}) center/cover no-repeat`
-    : "#1c1d1f",
+    ? `#141517 url(${bgimg}) center/cover no-repeat`
+    : "linear-gradient(135deg, #24272c, #16181b)",
+  overflow: "hidden",
   "&::after": {
     content: '""',
     position: "absolute",
     inset: 0,
     background:
-      "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 100%)",
+      "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%)",
   },
 }));
 
 const SectionCard = styled(Paper)(() => ({
-  borderRadius: 20,
-  border: "1px solid #f3d9d9",
-  boxShadow: "0 6px 24px rgba(141,19,19,0.06)",
-  padding: "1.75rem",
+  borderRadius: 22,
+  border: "1px solid rgba(0, 0, 0, 0.07)",
+  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.03)",
+  padding: "2rem",
+  backgroundColor: "#ffffff",
   transition: "box-shadow 0.25s ease",
-}));
-
-const PhanCard = styled(Paper)(() => ({
-  borderRadius: 18,
-  border: "1px solid #f3d9d9",
-  boxShadow: "0 6px 20px rgba(141,19,19,0.05)",
-  overflow: "hidden",
 }));
 
 const LessonRow = styled(Box)<{ clickable?: number }>(({ clickable }) => ({
   display: "flex",
   alignItems: "center",
-  gap: 12,
-  padding: "12px 8px",
-  borderBottom: "1px solid #f6e9e9",
-  fontSize: 13,
-  borderRadius: 10,
+  gap: 14,
+  padding: "14px 12px",
+  borderBottom: "1px solid rgba(0,0,0,0.05)",
+  fontSize: 13.5,
+  borderRadius: 12,
   cursor: clickable ? "pointer" : "default",
-  transition: "background-color 0.18s ease, transform 0.18s ease",
+  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
   "&:last-child": { borderBottom: "none" },
   "&:hover": clickable
     ? {
-        backgroundColor: RED_SOFT,
+        backgroundColor: RED_LIGHT,
+        transform: "translateX(4px)",
       }
     : undefined,
 }));
 
 const PlayBadge = styled(Box)(() => ({
-  width: 30,
-  height: 30,
+  width: 32,
+  height: 32,
   borderRadius: "50%",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
-  transition: "transform 0.18s ease, background-color 0.18s ease",
+  transition: "all 0.2s ease",
 }));
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -211,16 +231,11 @@ function isValidGuid(id?: string | null): id is string {
   return !!id && id !== EMPTY_GUID;
 }
 
-// Id giảng viên (người tạo khóa học) — dùng để gọi API
-// /KhoaHoc/khoahoc-list-bygiangvien/{userId} và để build link hồ sơ giảng
-// viên /instructor/profile/{id}. Ưu tiên createdId (id tài khoản tạo khóa
-// học), dự phòng giangVien.id nếu BE có populate sẵn quan hệ.
 function getGiangVienId(khoaHoc: any): string | null {
   const id = khoaHoc?.createdId || khoaHoc?.giangVien?.id;
   return typeof id === "string" && isValidGuid(id) ? id : null;
 }
 
-// PagedList<T> phía BE — lấy mảng item bất kể tên field cụ thể là gì.
 function extractPagedItems(paged: any): any[] {
   if (!paged) return [];
   if (Array.isArray(paged)) return paged;
@@ -255,7 +270,6 @@ function CourseRegistrationContent() {
   const courseId = params?.courseId ?? "";
   const user = useSelector((s) => s.auth.user);
 
-  // Kiểm tra đăng nhập khi bấm nút — nếu chưa đăng nhập, chuyển đến trang login
   const checkAuth = (): boolean => {
     const token =
       typeof window !== "undefined"
@@ -293,7 +307,6 @@ function CourseRegistrationContent() {
     severity: "success" | "error" | "info";
   }>({ open: false, message: "", severity: "success" });
 
-  // Thông tin giảng viên + các khóa học khác của giảng viên (hiển thị cuối trang)
   const [giangVienInfo, setGiangVienInfo] = useState<{
     ten: string;
     avatar?: string;
@@ -311,9 +324,6 @@ function CourseRegistrationContent() {
   const dangKiService = new DangKiService();
   const khoaHocService = new KhoaHocService();
 
-  // ── Tải (hoặc đồng bộ lại) dữ liệu khóa học từ server ───────────────────
-  // silent = true: không bật spinner toàn trang, dùng để đồng bộ ngầm sau khi
-  // đăng ký thành công (tránh phải reload cả trang / bấm nút 2 lần).
   const loadKhoaHoc = useCallback(
     async (opts?: { silent?: boolean }) => {
       if (!courseId) return null;
@@ -332,7 +342,6 @@ function CourseRegistrationContent() {
           const isEnrolled = !!course.daDangKy;
           setEnrolled(isEnrolled);
 
-          // Lấy idDangKi từ nhiều nguồn khả dĩ trong response
           let idDangKiFromRes: string | null = null;
           if (res?.data?.idDangKiKhoaHoc) {
             idDangKiFromRes = res.data.idDangKiKhoaHoc;
@@ -361,7 +370,7 @@ function CourseRegistrationContent() {
           setPageError(String(errMsg));
         }
         return null;
-      } catch (err) {
+      } catch {
         if (!opts?.silent) {
           setPageError("Không tải được thông tin khóa học. Vui lòng thử lại.");
         }
@@ -400,9 +409,8 @@ function CourseRegistrationContent() {
     }
   }, [courseId]);
 
-  // ── Fetch dữ liệu khóa học lần đầu ──────────────────────────────────────
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount is the intended sync point
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadKhoaHoc();
   }, [loadKhoaHoc]);
 
@@ -477,11 +485,7 @@ function CourseRegistrationContent() {
     setRegistering(true);
     try {
       const res = await dangKiService.DangKiKhoaHocMienPhi(courseId);
-
       let id: string | null = res?.data?.idDangKi ?? null;
-
-      // Luôn đồng bộ lại dữ liệu mới nhất từ server ngay sau khi đăng ký,
-      // để lấy idDangKi chuẩn — tránh tình trạng phải bấm "Vào học ngay" 2 lần.
       const synced = await loadKhoaHoc({ silent: true });
       if (!id) id = synced?.idDangKi ?? null;
 
@@ -506,7 +510,6 @@ function CourseRegistrationContent() {
         let idFromError: string | null =
           error?.response?.data?.idDangKi || error?.response?.data?.id || null;
 
-        // Nếu response lỗi không kèm id, đồng bộ ngầm từ server thay vì reload.
         if (!idFromError) {
           const synced = await loadKhoaHoc({ silent: true });
           idFromError = synced?.idDangKi ?? null;
@@ -561,8 +564,6 @@ function CourseRegistrationContent() {
     }
   };
 
-  // ── Vào học ngay: nếu chưa có id hợp lệ, tự đồng bộ rồi điều hướng luôn
-  // trong cùng một lần bấm, không cần reload cả trang.
   const handleGoToLearning = async () => {
     if (isValidGuid(idDangKi)) {
       router.push(`/student/courses/my-courses/learning/${idDangKi}`);
@@ -623,13 +624,13 @@ function CourseRegistrationContent() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 1.5,
-          py: 12,
+          gap: 2,
+          py: 14,
         }}
       >
-        <CircularProgress sx={{ color: RED }} size={36} thickness={4} />
-        <Typography sx={{ fontSize: 13, color: "text.disabled" }}>
-          Đang tải khóa học...
+        <CircularProgress sx={{ color: RED }} size={42} thickness={4.5} />
+        <Typography sx={{ fontSize: 14, fontWeight: 600, color: "text.secondary" }}>
+          Đang tải thông tin khóa học...
         </Typography>
       </Box>
     );
@@ -637,7 +638,7 @@ function CourseRegistrationContent() {
 
   if (pageError || !khoaHoc) {
     return (
-      <Alert severity="error" sx={{ borderRadius: 3 }}>
+      <Alert severity="error" sx={{ borderRadius: 3, p: 2 }}>
         {pageError ?? "Không tìm thấy khóa học."}
       </Alert>
     );
@@ -665,7 +666,6 @@ function CourseRegistrationContent() {
           },
         ];
 
-  // Id giảng viên "chính" (chủ sở hữu) — dùng để tải "Khóa học khác của..."
   const giangVienId = getGiangVienId(khoaHoc);
   const giangVienChinh = danhSachGiangVienDetail[0];
   const tenGiangVienChinh =
@@ -677,107 +677,159 @@ function CourseRegistrationContent() {
 
   return (
     <Box>
-      <Grid container spacing={3}>
+      <Grid container spacing={3.5}>
         {/* ── Main column ── */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <HeroBanner>
-            <Chip
-              label={khoaHoc.loaiKhoaHoc ?? "KHÓA HỌC"}
-              size="small"
-              sx={{
-                bgcolor: RED,
-                color: "#fff",
-                fontWeight: 700,
-                fontSize: 11,
-                mb: 1.75,
-                letterSpacing: 0.3,
-              }}
-            />
+            {/* Header badges */}
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: "center", mb: 2, flexWrap: "wrap", rowGap: 1 }}
+            >
+              <Chip
+                icon={<AutoAwesomeRoundedIcon sx={{ fontSize: "14px !important", color: "#fff !important" }} />}
+                label={khoaHoc.loaiKhoaHoc ?? "KHÓA HỌC"}
+                size="small"
+                sx={{
+                  background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
+                  color: "#fff",
+                  fontWeight: 800,
+                  fontSize: 11.5,
+                  letterSpacing: 0.5,
+                  px: 0.75,
+                  py: 0.25,
+                  boxShadow: `0 4px 12px ${alpha(RED, 0.4)}`,
+                }}
+              />
+              {khoaHoc.capDo && (
+                <Chip
+                  label={khoaHoc.capDo}
+                  size="small"
+                  sx={{
+                    bgcolor: "rgba(255, 255, 255, 0.1)",
+                    color: "#fff",
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    backdropFilter: "blur(6px)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                  }}
+                />
+              )}
+            </Stack>
+
+            {/* Course Title */}
             <Typography
-              variant="h5"
+              variant="h4"
               sx={{
-                color: "#fff",
+                color: "#ffffff",
                 fontWeight: 800,
-                mb: 1.5,
-                lineHeight: 1.35,
-                fontSize: { xs: 20, md: 26 },
+                mb: 1.75,
+                lineHeight: 1.3,
+                fontSize: { xs: 22, sm: 26, md: 30 },
+                letterSpacing: "-0.01em",
               }}
             >
               {khoaHoc.tieuDe}
             </Typography>
+
+            {/* Brief Description */}
             <Box
               sx={{
-                color: "#c9c9c9",
-                fontSize: 13,
-                mb: 2.5,
+                color: "rgba(255, 255, 255, 0.78)",
+                fontSize: 14,
+                mb: 3,
                 lineHeight: 1.8,
-                maxWidth: 560,
+                maxWidth: 620,
                 display: "-webkit-box",
                 WebkitLineClamp: 3,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
                 "& img": { maxWidth: "100%" },
                 "& ul, & ol": { pl: 2 },
-                "& p": { mb: 1 },
+                "& p": { mb: 0.5 },
               }}
               dangerouslySetInnerHTML={{ __html: khoaHoc.moTa || "" }}
             />
 
+            {/* Instructors Row */}
             <Stack
               direction="row"
-              spacing={1}
-              sx={{ alignItems: "center", mb: 1.5 }}
+              spacing={1.25}
+              sx={{ alignItems: "center", mb: 2.25, flexWrap: "wrap", rowGap: 1 }}
             >
-              <SchoolIcon sx={{ fontSize: 16, color: RED }} />
-              <Typography sx={{ color: "#ddd", fontSize: 13 }}>
+              <Typography sx={{ color: "rgba(255, 255, 255, 0.65)", fontSize: 13.5, fontWeight: 500 }}>
                 Giảng viên:
               </Typography>
               <Stack
                 direction="row"
-                sx={{ "& > *:not(:first-of-type)": { marginLeft: "-8px" } }}
+                spacing={0.75}
+                sx={{ alignItems: "center", flexWrap: "wrap" }}
               >
                 {(khoaHoc.danhSachGiangVien ?? []).map((gv) => (
-                  <Tooltip key={gv.id} title={gv.hoTen} arrow>
-                    <Avatar
-                      src={gv.anhDaiDien}
-                      onClick={() =>
-                        router.push(`/instructor/profile/${gv.id}`)
+                  <Tooltip key={gv.id} title={`Xem hồ sơ: ${gv.hoTen}`} arrow>
+                    <Chip
+                      avatar={
+                        <Avatar
+                          src={gv.anhDaiDien}
+                          sx={{
+                            width: "24px !important",
+                            height: "24px !important",
+                            bgcolor: RED,
+                            fontSize: "11px !important",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {gv.hoTen.charAt(0).toUpperCase()}
+                        </Avatar>
                       }
+                      label={gv.hoTen}
+                      size="small"
+                      onClick={() => router.push(`/instructor/profile/${gv.id}`)}
                       sx={{
-                        width: 26,
-                        height: 26,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        bgcolor: RED,
-                        border: "2px solid #1c1d1f",
+                        bgcolor: "rgba(255, 255, 255, 0.12)",
+                        color: "#fff",
+                        fontSize: 12.5,
+                        fontWeight: 650,
                         cursor: "pointer",
-                        transition: "transform 0.15s ease",
-                        "&:hover": { transform: "translateY(-3px)", zIndex: 1 },
+                        border: "1px solid rgba(255, 255, 255, 0.18)",
+                        backdropFilter: "blur(6px)",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          bgcolor: alpha(RED, 0.85),
+                          borderColor: RED,
+                          transform: "translateY(-1px)",
+                        },
                       }}
-                    >
-                      {gv.hoTen.charAt(0).toUpperCase()}
-                    </Avatar>
+                    />
                   </Tooltip>
                 ))}
               </Stack>
             </Stack>
 
-            {/* Số sao thật + số lượt đánh giá + số học viên đăng ký, tách rõ ràng */}
+            {/* Ratings & Enrolled Count */}
             <Stack
               direction="row"
-              spacing={1}
+              spacing={1.5}
               sx={{
                 alignItems: "center",
-                mb: 2.5,
+                mb: 3,
                 flexWrap: "wrap",
-                rowGap: 0.5,
+                rowGap: 1,
               }}
             >
               {danhGia && danhGia.tongSoDanhGia > 0 ? (
                 <Stack
                   direction="row"
                   spacing={0.75}
-                  sx={{ alignItems: "center" }}
+                  sx={{
+                    alignItems: "center",
+                    bgcolor: "rgba(234, 179, 8, 0.15)",
+                    border: "1px solid rgba(234, 179, 8, 0.3)",
+                    borderRadius: 999,
+                    px: 1.5,
+                    py: 0.5,
+                  }}
                 >
                   <Rating
                     value={danhGia.diemTrungBinh}
@@ -785,452 +837,507 @@ function CourseRegistrationContent() {
                     readOnly
                     size="small"
                     sx={{
-                      "& .MuiRating-iconFilled": { color: "#e0a800" },
+                      "& .MuiRating-iconFilled": { color: "#facc15" },
                       "& .MuiRating-iconEmpty": {
-                        color: "rgba(255,255,255,0.25)",
+                        color: "rgba(255,255,255,0.2)",
                       },
                     }}
                   />
                   <Typography
-                    sx={{ color: "#e0a800", fontSize: 12.5, fontWeight: 700 }}
+                    sx={{ color: "#fef08a", fontSize: 13, fontWeight: 800 }}
                   >
                     {danhGia.diemTrungBinh.toFixed(1)}
                   </Typography>
-                  <Typography sx={{ color: "#aaa", fontSize: 12 }}>
-                    ({danhGia.tongSoDanhGia} lượt đánh giá)
+                  <Typography sx={{ color: "rgba(255, 255, 255, 0.65)", fontSize: 12 }}>
+                    ({danhGia.tongSoDanhGia} đánh giá)
                   </Typography>
                 </Stack>
               ) : (
-                <Typography sx={{ color: "#aaa", fontSize: 12 }}>
-                  Chưa có đánh giá
-                </Typography>
+                <Chip
+                  label="Khóa học mới"
+                  size="small"
+                  sx={{
+                    bgcolor: "rgba(255, 255, 255, 0.1)",
+                    color: "rgba(255, 255, 255, 0.85)",
+                    fontSize: 12,
+                  }}
+                />
               )}
-              <Typography sx={{ color: "#555", fontSize: 12 }}>•</Typography>
-              <Typography sx={{ color: "#aaa", fontSize: 12 }}>
-                {(khoaHoc.soLuongHocVien ?? 0).toLocaleString("vi-VN")} học viên
-                đã đăng ký
-              </Typography>
+
+              <Stack
+                direction="row"
+                spacing={0.75}
+                sx={{
+                  alignItems: "center",
+                  bgcolor: "rgba(255, 255, 255, 0.08)",
+                  borderRadius: 999,
+                  px: 1.5,
+                  py: 0.5,
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                }}
+              >
+                <PeopleAltRoundedIcon sx={{ fontSize: 15, color: "rgba(255, 255, 255, 0.7)" }} />
+                <Typography sx={{ color: "#fff", fontSize: 12.5, fontWeight: 600 }}>
+                  {(khoaHoc.soLuongHocVien ?? 0).toLocaleString("vi-VN")} học viên
+                </Typography>
+              </Stack>
             </Stack>
 
-            <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
+            {/* Quick Pills */}
+            <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", rowGap: 1 }}>
               {[
                 {
-                  icon: <AccessTimeIcon sx={{ fontSize: 14 }} />,
+                  icon: <AccessTimeRoundedIcon sx={{ fontSize: 15 }} />,
                   label: formatTongThoiLuong(khoaHoc.tongThoiLuong),
                 },
                 {
-                  icon: <MenuBookIcon sx={{ fontSize: 14 }} />,
+                  icon: <MenuBookRoundedIcon sx={{ fontSize: 15 }} />,
                   label: `${khoaHoc.tongBaiGiang ?? 0} bài học`,
+                },
+                {
+                  icon: <FolderRoundedIcon sx={{ fontSize: 15 }} />,
+                  label: `${khoaHoc.tongTaiLieu ?? 0} tài liệu`,
                 },
               ].map((item, i) => (
                 <Stack
                   key={i}
                   direction="row"
-                  spacing={0.75}
+                  spacing={0.85}
                   sx={{
-                    bgcolor: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 999,
-                    px: 1.5,
-                    py: 0.6,
-                    color: "#ddd",
+                    bgcolor: "rgba(255, 255, 255, 0.06)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "10px",
+                    px: 1.75,
+                    py: 0.75,
+                    color: "rgba(255, 255, 255, 0.9)",
                     alignItems: "center",
+                    backdropFilter: "blur(4px)",
                   }}
                 >
-                  {item.icon}
-                  <Typography sx={{ fontSize: 12 }}>{item.label}</Typography>
+                  <Box sx={{ color: RED }}>{item.icon}</Box>
+                  <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{item.label}</Typography>
                 </Stack>
               ))}
             </Stack>
           </HeroBanner>
 
+          {/* Modern Tabs */}
           <Tabs
             value={tab}
             onChange={(_, v) => setTab(v)}
             sx={{
-              mb: 2.5,
-              minHeight: 44,
-              bgcolor: RED_SOFT,
-              borderRadius: 999,
-              p: 0.5,
+              mb: 3,
+              minHeight: 48,
+              bgcolor: "background.paper",
+              border: "1px solid rgba(0,0,0,0.08)",
+              borderRadius: "16px",
+              p: 0.75,
               width: "fit-content",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
               "& .MuiTabs-indicator": { display: "none" },
               "& .MuiTab-root": {
                 textTransform: "none",
-                fontWeight: 600,
-                fontSize: 13,
-                minHeight: 36,
-                borderRadius: 999,
+                fontWeight: 700,
+                fontSize: 14,
+                minHeight: 38,
+                borderRadius: "12px",
                 color: "text.secondary",
-                px: 2.5,
-                transition: "all 0.2s ease",
+                px: 2.75,
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
               },
               "& .Mui-selected": {
                 color: "#fff !important",
-                bgcolor: RED,
+                background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
+                boxShadow: `0 4px 12px ${alpha(RED, 0.3)}`,
               },
             }}
           >
             <Tab label="Tổng quan" disableRipple />
             <Tab label={`Nội dung (${phanHocs.length})`} disableRipple />
-            <Tab label="Đánh giá" disableRipple />
+            <Tab label={`Đánh giá ${danhGia?.tongSoDanhGia ? `(${danhGia.tongSoDanhGia})` : ""}`} disableRipple />
           </Tabs>
 
           <Fade in key={tab} timeout={250}>
             <Box>
+              {/* TAB 0: TỔNG QUAN */}
               {tab === 0 && (
                 <SectionCard>
-                  <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 2 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: 18, color: "text.primary", mb: 2.5 }}>
                     Mô tả khóa học
                   </Typography>
                   <Box
                     sx={{
-                      fontSize: 13.5,
+                      fontSize: 14.5,
                       color: "text.secondary",
                       lineHeight: 1.9,
-                      mb: 3,
-                      "& img": { maxWidth: "100%" },
-                      "& ul, & ol": { pl: 2 },
-                      "& p": { mb: 1 },
+                      mb: 4,
+                      "& img": { maxWidth: "100%", borderRadius: "12px" },
+                      "& ul, & ol": { pl: 2.5, mb: 1.5 },
+                      "& li": { mb: 0.5 },
+                      "& p": { mb: 1.5 },
+                      "& strong": { color: "text.primary" },
                     }}
-                    dangerouslySetInnerHTML={{ __html: khoaHoc.moTa || "" }}
+                    dangerouslySetInnerHTML={{ __html: khoaHoc.moTa || "Chưa có mô tả chi tiết." }}
                   />
-                  <Divider sx={{ mb: 2.5, borderColor: "#f3d9d9" }} />
-                  <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
+
+                  <Divider sx={{ mb: 3.5, borderColor: "divider" }} />
+
+                  {/* Highlights Grid */}
+                  <Typography sx={{ fontWeight: 800, fontSize: 16, color: "text.primary", mb: 2 }}>
+                    Cấu trúc tổng quan
+                  </Typography>
+                  <Grid container spacing={2}>
                     {[
                       {
-                        icon: (
-                          <MenuBookIcon sx={{ fontSize: 18, color: RED }} />
-                        ),
-                        label: `${phanHocs.length} phần học`,
+                        icon: <MenuBookRoundedIcon sx={{ fontSize: 24, color: RED }} />,
+                        title: `${phanHocs.length} Chương / Phần học`,
+                        subtitle: "Lộ trình học theo chuyên đề rõ ràng",
                       },
                       {
-                        icon: (
-                          <PlayArrowIcon sx={{ fontSize: 18, color: RED }} />
-                        ),
-                        label: `${khoaHoc.tongBaiGiang ?? 0} bài giảng`,
+                        icon: <PlayArrowRoundedIcon sx={{ fontSize: 24, color: RED }} />,
+                        title: `${khoaHoc.tongBaiGiang ?? 0} Bài giảng video`,
+                        subtitle: "Nội dung thực chiến, cô đọng",
                       },
                       {
-                        icon: <FolderIcon sx={{ fontSize: 18, color: RED }} />,
-                        label: `${khoaHoc.tongTaiLieu ?? 0} tài liệu đính kèm`,
+                        icon: <FolderRoundedIcon sx={{ fontSize: 24, color: RED }} />,
+                        title: `${khoaHoc.tongTaiLieu ?? 0} Tài liệu đính kèm`,
+                        subtitle: "Mã nguồn, slide và bài tập mẫu",
                       },
                     ].map((item, i) => (
-                      <Stack
-                        key={i}
-                        direction="row"
-                        spacing={1}
-                        sx={{
-                          bgcolor: RED_SOFT,
-                          borderRadius: 3,
-                          px: 1.75,
-                          py: 1,
-                          alignItems: "center",
-                        }}
-                      >
-                        {item.icon}
-                        <Typography
+                      <Grid key={i} size={{ xs: 12, sm: 4 }}>
+                        <Box
                           sx={{
-                            fontSize: 13,
-                            color: "text.secondary",
-                            fontWeight: 600,
+                            p: 2.25,
+                            bgcolor: RED_LIGHT,
+                            borderRadius: "16px",
+                            border: `1px solid ${alpha(RED, 0.12)}`,
+                            height: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1,
                           }}
-                        >
-                          {item.label}
-                        </Typography>
-                      </Stack>
-                    ))}
-                  </Stack>
-                </SectionCard>
-              )}
-
-              {tab === 1 && (
-                <Stack spacing={2}>
-                  {phanHocs.length === 0 && (
-                    <SectionCard>
-                      <Typography
-                        sx={{ fontSize: 13, color: "text.secondary" }}
-                      >
-                        Khóa học chưa có nội dung.
-                      </Typography>
-                    </SectionCard>
-                  )}
-                  {phanHocs.map((phan: any, i: number) => (
-                    <PhanCard key={phan.id ?? i}>
-                      <Stack
-                        direction="row"
-                        sx={{
-                          p: 2,
-                          background: `linear-gradient(90deg, ${RED_SOFT}, #fff)`,
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Stack
-                          direction="row"
-                          spacing={1.25}
-                          sx={{ alignItems: "center" }}
                         >
                           <Box
                             sx={{
-                              width: 26,
-                              height: 26,
-                              borderRadius: "50%",
-                              bgcolor: RED,
-                              color: "#fff",
-                              fontSize: 12,
-                              fontWeight: 700,
+                              width: 42,
+                              height: 42,
+                              borderRadius: "12px",
+                              bgcolor: "#fff",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              boxShadow: "0 4px 10px rgba(0,0,0,0.04)",
                             }}
                           >
-                            {i + 1}
+                            {item.icon}
                           </Box>
-                          <Typography sx={{ fontWeight: 700, fontSize: 13.5 }}>
-                            {phan.tenPhan}
+                          <Typography sx={{ fontWeight: 700, fontSize: 14, color: "text.primary", mt: 0.5 }}>
+                            {item.title}
                           </Typography>
-                        </Stack>
-                        <Typography
-                          sx={{ fontSize: 11.5, color: "text.disabled" }}
+                          <Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
+                            {item.subtitle}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </SectionCard>
+              )}
+
+              {/* TAB 1: NỘI DUNG KHÓA HỌC */}
+              {tab === 1 && (
+                <Stack spacing={2}>
+                  {phanHocs.length === 0 ? (
+                    <SectionCard>
+                      <Typography sx={{ fontSize: 14, color: "text.secondary", textAlign: "center", py: 4 }}>
+                        Khóa học hiện chưa có nội dung bài giảng.
+                      </Typography>
+                    </SectionCard>
+                  ) : (
+                    phanHocs.map((phan: any, i: number) => {
+                      const baiGiangs = phan.danhSachBaiGiang ?? [];
+                      const sectionDuration = baiGiangs.reduce(
+                        (acc: number, curr: any) => acc + (curr.thoiLuong ?? 0),
+                        0,
+                      );
+
+                      return (
+                        <Accordion
+                          key={phan.id ?? i}
+                          defaultExpanded={i === 0}
+                          elevation={0}
+                          sx={{
+                            borderRadius: "18px !important",
+                            border: "1px solid rgba(0,0,0,0.08)",
+                            overflow: "hidden",
+                            "&::before": { display: "none" },
+                            boxShadow: "0 4px 16px rgba(0,0,0,0.02)",
+                          }}
                         >
-                          {(phan.danhSachBaiGiang ?? []).length} bài
-                        </Typography>
-                      </Stack>
-                      <Box sx={{ px: 1.5, py: 0.5 }}>
-                        {(phan.danhSachBaiGiang ?? []).map(
-                          (bg: any, j: number) => {
-                            const playable =
-                              !!bg.laBaiGiangFree && !!bg.urlBaiGiang;
-                            return (
-                              <LessonRow
-                                key={bg.id ?? j}
-                                clickable={playable ? 1 : 0}
-                                onClick={() => handleOpenVideo(bg)}
+                          <AccordionSummary
+                            expandIcon={<ExpandMoreRoundedIcon sx={{ color: RED }} />}
+                            sx={{
+                              bgcolor: "rgba(0,0,0,0.015)",
+                              px: 2.5,
+                              py: 1,
+                              "&:hover": { bgcolor: "rgba(0,0,0,0.03)" },
+                            }}
+                          >
+                            <Stack
+                              direction="row"
+                              spacing={1.75}
+                              sx={{ alignItems: "center", width: "100%", pr: 2 }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: "50%",
+                                  background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
+                                  color: "#fff",
+                                  fontSize: 13,
+                                  fontWeight: 800,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                  boxShadow: `0 4px 10px ${alpha(RED, 0.3)}`,
+                                }}
                               >
-                                <PlayBadge
-                                  sx={{
-                                    bgcolor: playable
-                                      ? RED_SOFT
-                                      : "transparent",
-                                  }}
-                                >
-                                  {playable ? (
-                                    <PlayArrowIcon
-                                      sx={{ fontSize: 16, color: RED }}
-                                    />
-                                  ) : (
-                                    <LockIcon
-                                      sx={{
-                                        fontSize: 15,
-                                        color: "text.disabled",
-                                      }}
-                                    />
-                                  )}
-                                </PlayBadge>
-                                <Typography
-                                  sx={{
-                                    flex: 1,
-                                    fontSize: 13,
-                                    fontWeight: playable ? 600 : 400,
-                                    color: playable
-                                      ? "text.primary"
-                                      : "text.secondary",
-                                  }}
-                                >
-                                  {bg.tieuDe}
+                                {i + 1}
+                              </Box>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography sx={{ fontWeight: 700, fontSize: 14.5, color: "text.primary" }}>
+                                  {phan.tenPhan}
                                 </Typography>
-                                {Array.isArray(bg.danhSachTaiLieu) &&
-                                  bg.danhSachTaiLieu.length > 0 && (
-                                    <Chip
-                                      icon={
-                                        <FolderIcon sx={{ fontSize: 12 }} />
-                                      }
-                                      label={bg.danhSachTaiLieu.length}
-                                      size="small"
+                              </Box>
+                              <Typography sx={{ fontSize: 12.5, color: "text.secondary", fontWeight: 600, flexShrink: 0 }}>
+                                {baiGiangs.length} bài • {formatTongThoiLuong(sectionDuration)}
+                              </Typography>
+                            </Stack>
+                          </AccordionSummary>
+
+                          <AccordionDetails sx={{ p: 1.5, bgcolor: "#ffffff" }}>
+                            {baiGiangs.length === 0 ? (
+                              <Typography sx={{ fontSize: 13, color: "text.disabled", p: 2, textAlign: "center" }}>
+                                Chưa có bài giảng trong phần này.
+                              </Typography>
+                            ) : (
+                              baiGiangs.map((bg: any, j: number) => {
+                                const playable = !!bg.laBaiGiangFree && !!bg.urlBaiGiang;
+
+                                return (
+                                  <LessonRow
+                                    key={bg.id ?? j}
+                                    clickable={playable ? 1 : 0}
+                                    onClick={() => handleOpenVideo(bg)}
+                                  >
+                                    <PlayBadge
                                       sx={{
-                                        bgcolor: RED_SOFT,
-                                        color: RED,
-                                        fontSize: 10,
-                                        height: 22,
+                                        bgcolor: playable ? alpha(RED, 0.1) : "rgba(0,0,0,0.04)",
+                                        color: playable ? RED : "text.disabled",
+                                      }}
+                                    >
+                                      {playable ? (
+                                        <PlayArrowRoundedIcon sx={{ fontSize: 18 }} />
+                                      ) : (
+                                        <LockRoundedIcon sx={{ fontSize: 15 }} />
+                                      )}
+                                    </PlayBadge>
+
+                                    <Typography
+                                      sx={{
+                                        flex: 1,
+                                        fontSize: 13.5,
+                                        fontWeight: playable ? 600 : 500,
+                                        color: playable ? "text.primary" : "text.secondary",
+                                      }}
+                                    >
+                                      {bg.tieuDe}
+                                    </Typography>
+
+                                    {Array.isArray(bg.danhSachTaiLieu) &&
+                                      bg.danhSachTaiLieu.length > 0 && (
+                                        <Chip
+                                          icon={<FolderRoundedIcon sx={{ fontSize: "13px !important" }} />}
+                                          label={`${bg.danhSachTaiLieu.length} tài liệu`}
+                                          size="small"
+                                          sx={{
+                                            bgcolor: "rgba(0,0,0,0.05)",
+                                            color: "text.secondary",
+                                            fontSize: 11,
+                                            height: 24,
+                                            fontWeight: 600,
+                                          }}
+                                        />
+                                      )}
+
+                                    {bg.laBaiGiangFree && (
+                                      <Chip
+                                        label="Xem thử miễn phí"
+                                        size="small"
+                                        sx={{
+                                          bgcolor: "#e8f5e9",
+                                          color: "#2e7d32",
+                                          fontSize: 11,
+                                          height: 24,
+                                          fontWeight: 700,
+                                          border: "1px solid #c8e6c9",
+                                        }}
+                                      />
+                                    )}
+
+                                    <Typography
+                                      sx={{
+                                        fontSize: 12.5,
+                                        color: "text.disabled",
+                                        minWidth: 46,
+                                        textAlign: "right",
+                                        fontVariantNumeric: "tabular-nums",
                                         fontWeight: 600,
                                       }}
-                                    />
-                                  )}
-                                {bg.laBaiGiangFree && (
-                                  <Chip
-                                    label="Miễn phí"
-                                    size="small"
-                                    sx={{
-                                      bgcolor: "#e8f5e9",
-                                      color: "#2e7d32",
-                                      fontSize: 10,
-                                      height: 22,
-                                      fontWeight: 600,
-                                    }}
-                                  />
-                                )}
-                                <Typography
-                                  sx={{
-                                    fontSize: 12,
-                                    color: "text.disabled",
-                                    minWidth: 42,
-                                    textAlign: "right",
-                                    fontVariantNumeric: "tabular-nums",
-                                  }}
-                                >
-                                  {formatLessonDuration(bg.thoiLuong)}
-                                </Typography>
-                              </LessonRow>
-                            );
-                          },
-                        )}
-                      </Box>
-                    </PhanCard>
-                  ))}
+                                    >
+                                      {formatLessonDuration(bg.thoiLuong)}
+                                    </Typography>
+                                  </LessonRow>
+                                );
+                              })
+                            )}
+                          </AccordionDetails>
+                        </Accordion>
+                      );
+                    })
+                  )}
                 </Stack>
               )}
 
+              {/* TAB 2: ĐÁNH GIÁ */}
               {tab === 2 && (
                 <SectionCard>
                   {loadingDanhGia ? (
-                    <Box
-                      sx={{ display: "flex", justifyContent: "center", py: 6 }}
-                    >
-                      <CircularProgress sx={{ color: RED }} size={32} />
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+                      <CircularProgress sx={{ color: RED }} size={36} />
                     </Box>
                   ) : (
                     <>
-                      {/* ── Tổng quan điểm ── */}
+                      {/* Rating Score Overview Card */}
                       {danhGia && danhGia.tongSoDanhGia > 0 ? (
-                        <Stack
-                          direction={{ xs: "column", sm: "row" }}
-                          spacing={3}
-                          sx={{ mb: 3.5, alignItems: "center" }}
+                        <Box
+                          sx={{
+                            p: 3,
+                            mb: 4,
+                            borderRadius: "18px",
+                            background: "linear-gradient(135deg, #fffaf5, #fef2f2)",
+                            border: `1px solid ${alpha(RED, 0.15)}`,
+                          }}
                         >
-                          {/* Điểm trung bình */}
-                          <Box sx={{ textAlign: "center", flexShrink: 0 }}>
-                            <Typography
-                              sx={{
-                                fontSize: 56,
-                                fontWeight: 900,
-                                color: RED,
-                                lineHeight: 1,
-                              }}
-                            >
-                              {danhGia.diemTrungBinh.toFixed(1)}
-                            </Typography>
-                            <Rating
-                              value={danhGia.diemTrungBinh}
-                              readOnly
-                              precision={0.1}
-                              sx={{
-                                "& .MuiRating-iconFilled": { color: "#e0a800" },
-                              }}
-                            />
-                            <Typography
-                              sx={{
-                                fontSize: 12,
-                                color: "text.disabled",
-                                mt: 0.5,
-                              }}
-                            >
-                              {danhGia.tongSoDanhGia} đánh giá
-                            </Typography>
-                          </Box>
-
-                          {/* Phân bổ sao */}
-                          <Box sx={{ flex: 1, width: "100%" }}>
-                            {[5, 4, 3, 2, 1].map((star) => {
-                              const count = danhGia.phanBoSao[star] ?? 0;
-                              const pct =
-                                danhGia.tongSoDanhGia > 0
-                                  ? (count / danhGia.tongSoDanhGia) * 100
-                                  : 0;
-                              return (
-                                <Stack
-                                  key={star}
-                                  direction="row"
-                                  spacing={1.5}
-                                  sx={{ alignItems: "center", mb: 0.75 }}
-                                >
-                                  <Typography
-                                    sx={{
-                                      fontSize: 12,
-                                      color: "text.secondary",
-                                      minWidth: 8,
-                                    }}
-                                  >
-                                    {star}
-                                  </Typography>
-                                  <StarIcon
-                                    sx={{ fontSize: 14, color: "#e0a800" }}
-                                  />
-                                  <LinearProgress
-                                    variant="determinate"
-                                    value={pct}
-                                    sx={{
-                                      flex: 1,
-                                      height: 8,
-                                      borderRadius: 4,
-                                      bgcolor: "#f3e8e8",
-                                      "& .MuiLinearProgress-bar": {
-                                        bgcolor: "#e0a800",
-                                        borderRadius: 4,
-                                      },
-                                    }}
-                                  />
-                                  <Typography
-                                    sx={{
-                                      fontSize: 12,
-                                      color: "text.disabled",
-                                      minWidth: 28,
-                                      textAlign: "right",
-                                    }}
-                                  >
-                                    {count}
-                                  </Typography>
-                                </Stack>
-                              );
-                            })}
-                          </Box>
-                        </Stack>
-                      ) : (
-                        <Stack sx={{ alignItems: "center", py: 4 }} spacing={1}>
-                          <StarIcon sx={{ fontSize: 40, color: "#f3e8e8" }} />
-                          <Typography
-                            sx={{ fontSize: 13.5, color: "text.secondary" }}
+                          <Stack
+                            direction={{ xs: "column", sm: "row" }}
+                            spacing={4}
+                            sx={{ alignItems: "center" }}
                           >
+                            <Box sx={{ textAlign: "center", flexShrink: 0, minWidth: 150 }}>
+                              <Typography
+                                sx={{
+                                  fontSize: 60,
+                                  fontWeight: 900,
+                                  color: RED,
+                                  lineHeight: 1,
+                                  letterSpacing: "-1px",
+                                }}
+                              >
+                                {danhGia.diemTrungBinh.toFixed(1)}
+                              </Typography>
+                              <Rating
+                                value={danhGia.diemTrungBinh}
+                                readOnly
+                                precision={0.1}
+                                sx={{
+                                  my: 0.75,
+                                  "& .MuiRating-iconFilled": { color: "#eab308" },
+                                }}
+                              />
+                              <Typography sx={{ fontSize: 13, color: "text.secondary", fontWeight: 600 }}>
+                                {danhGia.tongSoDanhGia} đánh giá học viên
+                              </Typography>
+                            </Box>
+
+                            <Box sx={{ flex: 1, width: "100%" }}>
+                              {[5, 4, 3, 2, 1].map((star) => {
+                                const count = danhGia.phanBoSao[star] ?? 0;
+                                const pct =
+                                  danhGia.tongSoDanhGia > 0
+                                    ? (count / danhGia.tongSoDanhGia) * 100
+                                    : 0;
+
+                                return (
+                                  <Stack
+                                    key={star}
+                                    direction="row"
+                                    spacing={1.5}
+                                    sx={{ alignItems: "center", mb: 0.85 }}
+                                  >
+                                    <Typography sx={{ fontSize: 12.5, fontWeight: 700, minWidth: 10 }}>
+                                      {star}
+                                    </Typography>
+                                    <StarRoundedIcon sx={{ fontSize: 16, color: "#eab308" }} />
+                                    <LinearProgress
+                                      variant="determinate"
+                                      value={pct}
+                                      sx={{
+                                        flex: 1,
+                                        height: 8,
+                                        borderRadius: 4,
+                                        bgcolor: "rgba(0,0,0,0.06)",
+                                        "& .MuiLinearProgress-bar": {
+                                          bgcolor: "#eab308",
+                                          borderRadius: 4,
+                                        },
+                                      }}
+                                    />
+                                    <Typography
+                                      sx={{
+                                        fontSize: 12.5,
+                                        color: "text.secondary",
+                                        minWidth: 32,
+                                        textAlign: "right",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      {count}
+                                    </Typography>
+                                  </Stack>
+                                );
+                              })}
+                            </Box>
+                          </Stack>
+                        </Box>
+                      ) : (
+                        <Stack sx={{ alignItems: "center", py: 5, textAlign: "center" }} spacing={1.5}>
+                          <RateReviewRoundedIcon sx={{ fontSize: 48, color: "text.disabled" }} />
+                          <Typography sx={{ fontSize: 15, fontWeight: 600, color: "text.secondary" }}>
                             Chưa có đánh giá nào cho khóa học này.
                           </Typography>
                         </Stack>
                       )}
 
-                      <Divider sx={{ mb: 3, borderColor: "#f3d9d9" }} />
-
-                      {/* ── Form viết đánh giá ── */}
+                      {/* Write Review Form */}
                       {enrolled && !daDanhGia && (
                         <Box
                           sx={{
-                            mb: 3.5,
-                            p: 2.5,
-                            bgcolor: RED_SOFT,
-                            borderRadius: 3,
-                            border: `1px solid ${RED}22`,
+                            mb: 4,
+                            p: 3,
+                            bgcolor: RED_LIGHT,
+                            borderRadius: "18px",
+                            border: `1.5px solid ${alpha(RED, 0.2)}`,
                           }}
                         >
-                          <Typography
-                            sx={{ fontWeight: 700, fontSize: 15, mb: 2 }}
-                          >
-                            Chia sẻ đánh giá của bạn
+                          <Typography sx={{ fontWeight: 800, fontSize: 16, color: "text.primary", mb: 1.5 }}>
+                            Chia sẻ trải nghiệm học tập của bạn
                           </Typography>
-                          <Stack
-                            spacing={1}
-                            sx={{ mb: 2, alignItems: "flex-start" }}
-                          >
-                            <Typography
-                              sx={{ fontSize: 13, color: "text.secondary" }}
-                            >
-                              Số sao
+                          <Stack spacing={1.5} sx={{ mb: 2 }}>
+                            <Typography sx={{ fontSize: 13.5, color: "text.secondary", fontWeight: 600 }}>
+                              Bạn đánh giá khóa học này bao nhiêu sao?
                             </Typography>
                             <Rating
                               value={formDanhGia.soSao}
@@ -1239,7 +1346,7 @@ function CourseRegistrationContent() {
                               }
                               size="large"
                               sx={{
-                                "& .MuiRating-iconFilled": { color: "#e0a800" },
+                                "& .MuiRating-iconFilled": { color: "#eab308" },
                               }}
                             />
                           </Stack>
@@ -1247,7 +1354,7 @@ function CourseRegistrationContent() {
                             fullWidth
                             multiline
                             rows={3}
-                            placeholder="Chia sẻ trải nghiệm học tập của bạn..."
+                            placeholder="Nhập cảm nhận chi tiết của bạn về nội dung, chất lượng giảng dạy..."
                             value={formDanhGia.noiDung}
                             onChange={(e) =>
                               setFormDanhGia((p) => ({
@@ -1256,9 +1363,9 @@ function CourseRegistrationContent() {
                               }))
                             }
                             sx={{
-                              mb: 2,
+                              mb: 2.25,
                               "& .MuiOutlinedInput-root": {
-                                borderRadius: "12px",
+                                borderRadius: "14px",
                                 bgcolor: "#fff",
                                 "&.Mui-focused fieldset": { borderColor: RED },
                               },
@@ -1270,23 +1377,22 @@ function CourseRegistrationContent() {
                             onClick={handleSubmitDanhGia}
                             startIcon={
                               submittingDanhGia ? (
-                                <CircularProgress
-                                  size={14}
-                                  sx={{ color: "#fff" }}
-                                />
+                                <CircularProgress size={16} sx={{ color: "#fff" }} />
                               ) : (
-                                <StarIcon />
+                                <StarRoundedIcon />
                               )
                             }
                             sx={{
                               bgcolor: RED,
-                              "&:hover": { bgcolor: RED_HOVER },
-                              borderRadius: "10px",
+                              "&:hover": { bgcolor: RED_DARK },
+                              borderRadius: "12px",
                               fontWeight: 700,
                               textTransform: "none",
+                              px: 3,
+                              py: 1.15,
                             }}
                           >
-                            {submittingDanhGia ? "Đang gửi..." : "Gửi đánh giá"}
+                            {submittingDanhGia ? "Đang gửi đánh giá..." : "Gửi đánh giá"}
                           </Button>
                         </Box>
                       )}
@@ -1294,27 +1400,19 @@ function CourseRegistrationContent() {
                       {enrolled && daDanhGia && (
                         <Box
                           sx={{
-                            mb: 3,
+                            mb: 3.5,
                             p: 2,
                             bgcolor: "#f0fdf4",
                             border: "1px solid #86efac",
-                            borderRadius: 3,
+                            borderRadius: "14px",
                             display: "flex",
                             alignItems: "center",
                             gap: 1.5,
                           }}
                         >
-                          <CheckCircleIcon
-                            sx={{ color: "#22c55e", fontSize: 20 }}
-                          />
-                          <Typography
-                            sx={{
-                              fontSize: 13.5,
-                              color: "#15803d",
-                              fontWeight: 600,
-                            }}
-                          >
-                            Bạn đã đánh giá khóa học này. Cảm ơn!
+                          <CheckCircleRoundedIcon sx={{ color: "#22c55e", fontSize: 22 }} />
+                          <Typography sx={{ fontSize: 14, color: "#15803d", fontWeight: 700 }}>
+                            Bạn đã hoàn thành đánh giá cho khóa học này. Cảm ơn bạn!
                           </Typography>
                         </Box>
                       )}
@@ -1322,50 +1420,58 @@ function CourseRegistrationContent() {
                       {!enrolled && (
                         <Box
                           sx={{
-                            mb: 3,
+                            mb: 3.5,
                             p: 2,
                             bgcolor: "#fffbeb",
                             border: "1px solid #fde68a",
-                            borderRadius: 3,
+                            borderRadius: "14px",
                           }}
                         >
-                          <Typography sx={{ fontSize: 13, color: "#92400e" }}>
-                            Bạn cần đăng ký khóa học để có thể đánh giá.
+                          <Typography sx={{ fontSize: 13.5, color: "#92400e", fontWeight: 600 }}>
+                            💡 Bạn cần đăng ký khóa học để có thể chia sẻ đánh giá.
                           </Typography>
                         </Box>
                       )}
 
-                      {/* ── Danh sách đánh giá ── */}
+                      {/* Reviews List */}
                       {(danhGia?.danhSach ?? []).length > 0 && (
-                        <Stack spacing={2.5}>
-                          <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
-                            Đánh giá ({danhGia?.tongSoDanhGia})
+                        <Stack spacing={3}>
+                          <Typography sx={{ fontWeight: 800, fontSize: 16, color: "text.primary" }}>
+                            Nhận xét từ học viên ({danhGia?.tongSoDanhGia})
                           </Typography>
                           {danhGia!.danhSach.map((dg) => (
-                            <Stack key={dg.id} direction="row" spacing={2}>
+                            <Stack
+                              key={dg.id}
+                              direction="row"
+                              spacing={2}
+                              sx={{
+                                p: 2.25,
+                                borderRadius: "16px",
+                                border: "1px solid rgba(0,0,0,0.06)",
+                                bgcolor: "rgba(0,0,0,0.01)",
+                              }}
+                            >
                               <Avatar
                                 src={dg.anhNguoiDung}
                                 sx={{
-                                  width: 40,
-                                  height: 40,
+                                  width: 44,
+                                  height: 44,
                                   bgcolor: RED,
                                   fontSize: 16,
+                                  fontWeight: 700,
                                   flexShrink: 0,
+                                  boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
                                 }}
                               >
-                                {(dg.hoTenNguoiDung ?? "?")
-                                  .charAt(0)
-                                  .toUpperCase()}
+                                {(dg.hoTenNguoiDung ?? "?").charAt(0).toUpperCase()}
                               </Avatar>
                               <Box sx={{ flex: 1 }}>
                                 <Stack
                                   direction="row"
                                   spacing={1.5}
-                                  sx={{ alignItems: "center", mb: 0.5 }}
+                                  sx={{ alignItems: "center", mb: 0.5, flexWrap: "wrap" }}
                                 >
-                                  <Typography
-                                    sx={{ fontWeight: 700, fontSize: 13.5 }}
-                                  >
+                                  <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
                                     {dg.hoTenNguoiDung ?? "Người dùng"}
                                   </Typography>
                                   <Rating
@@ -1373,102 +1479,74 @@ function CourseRegistrationContent() {
                                     readOnly
                                     size="small"
                                     sx={{
-                                      "& .MuiRating-iconFilled": {
-                                        color: "#e0a800",
-                                      },
+                                      "& .MuiRating-iconFilled": { color: "#eab308" },
                                     }}
                                   />
-                                  <Typography
-                                    sx={{
-                                      fontSize: 11.5,
-                                      color: "text.disabled",
-                                    }}
-                                  >
-                                    {new Date(dg.ngayTao).toLocaleDateString(
-                                      "vi-VN",
-                                    )}
+                                  <Typography sx={{ fontSize: 12, color: "text.disabled" }}>
+                                    {new Date(dg.ngayTao).toLocaleDateString("vi-VN")}
                                   </Typography>
                                 </Stack>
 
                                 {dg.noiDung && (
                                   <Typography
                                     sx={{
-                                      fontSize: 13,
+                                      fontSize: 13.5,
                                       color: "text.secondary",
                                       lineHeight: 1.7,
+                                      mt: 0.5,
                                     }}
                                   >
                                     {dg.noiDung}
                                   </Typography>
                                 )}
 
-                                {/* Phản hồi từ giảng viên */}
+                                {/* Instructor response */}
                                 {dg.phanHoi && (
                                   <Box
                                     sx={{
-                                      mt: 1.5,
-                                      p: 1.5,
-                                      bgcolor: RED_SOFT,
-                                      borderRadius: 2.5,
-                                      borderLeft: `3px solid ${RED}`,
+                                      mt: 2,
+                                      p: 2,
+                                      bgcolor: RED_LIGHT,
+                                      borderRadius: "14px",
+                                      borderLeft: `4px solid ${RED}`,
                                     }}
                                   >
                                     <Stack
                                       direction="row"
                                       spacing={1}
-                                      sx={{ alignItems: "center", mb: 0.5 }}
+                                      sx={{ alignItems: "center", mb: 0.75 }}
                                     >
                                       <Avatar
                                         src={dg.phanHoi.anhGV}
                                         sx={{
-                                          width: 22,
-                                          height: 22,
-                                          fontSize: 11,
+                                          width: 26,
+                                          height: 26,
+                                          fontSize: 12,
                                           bgcolor: RED,
-                                        }}
-                                      >
-                                        {(dg.phanHoi.hoTenGV ?? "GV")
-                                          .charAt(0)
-                                          .toUpperCase()}
-                                      </Avatar>
-                                      <Typography
-                                        sx={{
-                                          fontSize: 12.5,
                                           fontWeight: 700,
-                                          color: RED,
                                         }}
                                       >
+                                        {(dg.phanHoi.hoTenGV ?? "GV").charAt(0).toUpperCase()}
+                                      </Avatar>
+                                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: RED }}>
                                         {dg.phanHoi.hoTenGV ?? "Giảng viên"}
                                       </Typography>
                                       <Chip
                                         label="Giảng viên"
                                         size="small"
                                         sx={{
-                                          height: 18,
-                                          fontSize: 9.5,
+                                          height: 20,
+                                          fontSize: 10,
                                           bgcolor: RED,
                                           color: "#fff",
-                                          fontWeight: 600,
+                                          fontWeight: 700,
                                         }}
                                       />
-                                      <Typography
-                                        sx={{
-                                          fontSize: 11,
-                                          color: "text.disabled",
-                                        }}
-                                      >
-                                        {new Date(
-                                          dg.phanHoi.ngayTao,
-                                        ).toLocaleDateString("vi-VN")}
+                                      <Typography sx={{ fontSize: 11.5, color: "text.disabled" }}>
+                                        {new Date(dg.phanHoi.ngayTao).toLocaleDateString("vi-VN")}
                                       </Typography>
                                     </Stack>
-                                    <Typography
-                                      sx={{
-                                        fontSize: 12.5,
-                                        color: "text.secondary",
-                                        lineHeight: 1.6,
-                                      }}
-                                    >
+                                    <Typography sx={{ fontSize: 13, color: "text.secondary", lineHeight: 1.6 }}>
                                       {dg.phanHoi.noiDung}
                                     </Typography>
                                   </Box>
@@ -1486,9 +1564,10 @@ function CourseRegistrationContent() {
           </Fade>
         </Grid>
 
-        {/* ── Sidebar ── */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        {/* ── Sidebar Column (Sticky Purchase Box) ── */}
+        <Grid size={{ xs: 12, lg: 4 }}>
           <SidebarCard>
+            {/* Cinematic Video Thumbnail */}
             <ThumbBox bgimg={khoaHoc.hinhAnhKhoaHoc}>
               <Box
                 sx={{
@@ -1497,66 +1576,70 @@ function CourseRegistrationContent() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  zIndex: 1,
+                  zIndex: 2,
                 }}
               >
                 {previewVideo && (
                   <Box
                     onClick={() => handleOpenPreviewVideo(previewVideo)}
                     sx={{
-                      width: 64,
-                      height: 64,
+                      width: 68,
+                      height: 68,
                       borderRadius: "50%",
-                      bgcolor: alpha(RED, 0.92),
+                      bgcolor: RED,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       cursor: "pointer",
-                      boxShadow: "0 8px 28px rgba(0,0,0,0.45)",
-                      border: "3px solid rgba(255,255,255,0.25)",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
+                      border: "3px solid rgba(255,255,255,0.4)",
+                      animation: `${pulseAnimation} 2s infinite`,
+                      transition: "transform 0.2s ease",
                       "&:hover": {
                         transform: "scale(1.1)",
-                        boxShadow: "0 10px 32px rgba(0,0,0,0.55)",
                       },
                     }}
                   >
-                    <PlayArrowIcon sx={{ color: "#fff", fontSize: 30 }} />
+                    <PlayArrowRoundedIcon sx={{ color: "#fff", fontSize: 36, ml: 0.5 }} />
                   </Box>
                 )}
               </Box>
 
               {previewVideo && (
                 <Chip
-                  label="Xem thử miễn phí"
+                  icon={<OndemandVideoRoundedIcon sx={{ fontSize: "14px !important", color: "#fff !important" }} />}
+                  label="Xem trước khóa học"
                   size="small"
                   sx={{
                     position: "absolute",
-                    bottom: 12,
-                    left: 12,
-                    bgcolor: "rgba(0,0,0,0.65)",
+                    bottom: 14,
+                    left: 14,
+                    bgcolor: "rgba(0,0,0,0.75)",
                     color: "#fff",
-                    fontSize: 10.5,
-                    height: 24,
-                    fontWeight: 600,
-                    zIndex: 1,
-                    backdropFilter: "blur(4px)",
+                    fontSize: 11,
+                    height: 26,
+                    fontWeight: 700,
+                    zIndex: 2,
+                    backdropFilter: "blur(8px)",
+                    border: "1px solid rgba(255,255,255,0.2)",
                   }}
                 />
               )}
             </ThumbBox>
 
-            <Box sx={{ p: 2.75 }}>
+            <Box sx={{ p: 3 }}>
+              {/* Price Tag */}
               <Stack
                 direction="row"
-                spacing={1.25}
-                sx={{ alignItems: "baseline", mb: 1.5 }}
+                spacing={1.5}
+                sx={{ alignItems: "baseline", mb: 2.5 }}
               >
                 <Typography
                   sx={{
-                    fontSize: 26,
-                    fontWeight: 800,
-                    color: isFree ? "#2d7a35" : RED,
+                    fontSize: 32,
+                    fontWeight: 900,
+                    color: isFree ? "#16a34a" : RED,
+                    letterSpacing: "-0.5px",
                   }}
                 >
                   {isFree
@@ -1568,9 +1651,10 @@ function CourseRegistrationContent() {
                 {Boolean(khoaHoc.giaGoc && khoaHoc.giaGoc > gia) && (
                   <Typography
                     sx={{
-                      fontSize: 13,
+                      fontSize: 15,
                       color: "text.disabled",
                       textDecoration: "line-through",
+                      fontWeight: 600,
                     }}
                   >
                     {(khoaHoc.giaGoc ?? 0).toLocaleString("vi-VN")}₫
@@ -1578,89 +1662,96 @@ function CourseRegistrationContent() {
                 )}
               </Stack>
 
+              {/* Action Buttons */}
               {!enrolled ? (
                 isFree ? (
                   <Button
                     fullWidth
                     variant="contained"
-                    startIcon={<SchoolIcon />}
+                    startIcon={<SchoolRoundedIcon />}
                     onClick={() => {
                       if (!checkAuth()) return;
                       setModalOpen(true);
                     }}
                     sx={{
-                      bgcolor: "#2d7a35",
-                      "&:hover": { bgcolor: "#245f2a" },
+                      bgcolor: "#16a34a",
+                      "&:hover": { bgcolor: "#15803d", transform: "translateY(-1px)" },
                       textTransform: "none",
-                      fontWeight: 700,
-                      fontSize: 14.5,
-                      borderRadius: 2.5,
-                      py: 1.35,
-                      mb: 1.5,
-                      boxShadow: `0 8px 20px ${alpha("#2d7a35", 0.3)}`,
+                      fontWeight: 800,
+                      fontSize: 15.5,
+                      borderRadius: "14px",
+                      py: 1.5,
+                      mb: 2,
+                      boxShadow: "0 10px 24px rgba(22, 163, 74, 0.3)",
+                      transition: "all 0.2s ease",
                     }}
                   >
-                    Đăng ký miễn phí
+                    Đăng ký học miễn phí
                   </Button>
                 ) : (
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    startIcon={<ShoppingCartIcon />}
-                    onClick={async () => {
-                      if (!checkAuth()) return;
-                      try {
-                        await apiService.post(`/GioHang/${khoaHoc.id}`);
-                        router.push("/student/cart");
-                      } catch (e: any) {
-                        const msg = e?.response?.data?.message ?? "";
-                        const status = e?.response?.status;
-
-                        if (status === 409) {
+                  <Stack spacing={1.5} sx={{ mb: 2 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      startIcon={<ShoppingCartRoundedIcon />}
+                      onClick={async () => {
+                        if (!checkAuth()) return;
+                        try {
+                          await apiService.post(`/GioHang/${khoaHoc.id}`);
                           router.push("/student/cart");
-                        } else if (
-                          msg.includes("sở hữu") ||
-                          msg.includes("đã mua")
-                        ) {
-                          setEnrolled(true);
-                          setSnackbar({
-                            open: true,
-                            message: "Bạn đã sở hữu khóa học này!",
-                            severity: "success",
-                          });
-                        } else {
-                          setSnackbar({
-                            open: true,
-                            message: msg || "Có lỗi xảy ra",
-                            severity: "error",
-                          });
+                        } catch (e: any) {
+                          const msg = e?.response?.data?.message ?? "";
+                          const status = e?.response?.status;
+
+                          if (status === 409) {
+                            router.push("/student/cart");
+                          } else if (
+                            msg.includes("sở hữu") ||
+                            msg.includes("đã mua")
+                          ) {
+                            setEnrolled(true);
+                            setSnackbar({
+                              open: true,
+                              message: "Bạn đã sở hữu khóa học này!",
+                              severity: "success",
+                            });
+                          } else {
+                            setSnackbar({
+                              open: true,
+                              message: msg || "Có lỗi xảy ra",
+                              severity: "error",
+                            });
+                          }
                         }
-                      }
-                    }}
-                    sx={{
-                      bgcolor: RED,
-                      "&:hover": { bgcolor: RED_HOVER },
-                      textTransform: "none",
-                      fontWeight: 700,
-                      fontSize: 14.5,
-                      borderRadius: 2.5,
-                      py: 1.35,
-                      mb: 1.5,
-                      boxShadow: `0 8px 20px ${alpha(RED, 0.3)}`,
-                    }}
-                  >
-                    Mua ngay
-                  </Button>
+                      }}
+                      sx={{
+                        background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
+                        "&:hover": {
+                          background: `linear-gradient(135deg, ${RED_DARK}, #5c0f0f)`,
+                          transform: "translateY(-1px)",
+                        },
+                        textTransform: "none",
+                        fontWeight: 800,
+                        fontSize: 15.5,
+                        borderRadius: "14px",
+                        py: 1.5,
+                        boxShadow: `0 10px 25px ${alpha(RED, 0.35)}`,
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      Mua ngay
+                    </Button>
+                  </Stack>
                 )
               ) : (
-                <Box sx={{ mb: 1.5 }}>
+                <Box sx={{ mb: 2 }}>
                   <Box
                     sx={{
                       bgcolor: "#f0fdf4",
                       border: "1.5px solid #86efac",
-                      borderRadius: "14px",
+                      borderRadius: "16px",
                       p: 2,
-                      mb: 1.5,
+                      mb: 2,
                       display: "flex",
                       alignItems: "center",
                       gap: 1.5,
@@ -1668,8 +1759,8 @@ function CourseRegistrationContent() {
                   >
                     <Box
                       sx={{
-                        width: 36,
-                        height: 36,
+                        width: 38,
+                        height: 38,
                         borderRadius: "50%",
                         bgcolor: "#22c55e",
                         display: "flex",
@@ -1678,19 +1769,13 @@ function CourseRegistrationContent() {
                         flexShrink: 0,
                       }}
                     >
-                      <CheckCircleIcon sx={{ color: "#fff", fontSize: 20 }} />
+                      <CheckCircleRoundedIcon sx={{ color: "#fff", fontSize: 22 }} />
                     </Box>
                     <Box>
-                      <Typography
-                        sx={{
-                          fontWeight: 800,
-                          fontSize: 13.5,
-                          color: "#15803d",
-                        }}
-                      >
+                      <Typography sx={{ fontWeight: 800, fontSize: 14, color: "#15803d" }}>
                         Khóa học của bạn
                       </Typography>
-                      <Typography sx={{ fontSize: 12, color: "#16a34a" }}>
+                      <Typography sx={{ fontSize: 12.5, color: "#16a34a", fontWeight: 600 }}>
                         Bạn đã sở hữu khóa học này
                       </Typography>
                     </Box>
@@ -1703,19 +1788,20 @@ function CourseRegistrationContent() {
                       navigatingToLearn ? (
                         <CircularProgress size={16} sx={{ color: "#fff" }} />
                       ) : (
-                        <SchoolIcon />
+                        <SchoolRoundedIcon />
                       )
                     }
                     onClick={handleGoToLearning}
                     sx={{
-                      bgcolor: "#22c55e",
-                      "&:hover": { bgcolor: "#16a34a" },
+                      bgcolor: "#16a34a",
+                      "&:hover": { bgcolor: "#15803d", transform: "translateY(-1px)" },
                       textTransform: "none",
-                      fontWeight: 700,
-                      fontSize: 14.5,
-                      borderRadius: 2.5,
-                      py: 1.35,
-                      boxShadow: "0 8px 20px rgba(34,197,94,0.3)",
+                      fontWeight: 800,
+                      fontSize: 15,
+                      borderRadius: "14px",
+                      py: 1.5,
+                      boxShadow: "0 10px 24px rgba(22, 163, 74, 0.35)",
+                      transition: "all 0.2s ease",
                     }}
                   >
                     {navigatingToLearn ? "Đang mở khóa học..." : "Vào học ngay"}
@@ -1723,86 +1809,107 @@ function CourseRegistrationContent() {
                 </Box>
               )}
 
+              {/* Guarantees */}
               <Stack
                 direction="row"
-                spacing={0.5}
-                sx={{ justifyContent: "center", mb: 2.5 }}
+                spacing={0.75}
+                sx={{
+                  justifyContent: "center",
+                  alignItems: "center",
+                  mb: 3,
+                  py: 1,
+                  bgcolor: "rgba(0,0,0,0.02)",
+                  borderRadius: "10px",
+                }}
               >
-                <VerifiedUserIcon
-                  sx={{ fontSize: 14, color: "text.disabled" }}
-                />
+                <VerifiedUserRoundedIcon sx={{ fontSize: 16, color: RED }} />
+                <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}>
+                  Truy cập học trọn đời • Đảm bảo uy tín
+                </Typography>
               </Stack>
 
-              <Typography sx={{ fontWeight: 700, fontSize: 13.5, mb: 1.5 }}>
-                Khóa học bao gồm
-              </Typography>
-              <Stack spacing={1.25}>
-                {[
-                  {
-                    icon: <PlayArrowIcon sx={{ fontSize: 17 }} />,
-                    label: formatTongThoiLuong(khoaHoc.tongThoiLuong),
-                  },
-                  {
-                    icon: <FolderIcon sx={{ fontSize: 17 }} />,
-                    label: `${khoaHoc.tongTaiLieu ?? 0} tài nguyên tải về`,
-                  },
-                  {
-                    icon: <DevicesIcon sx={{ fontSize: 17 }} />,
-                    label: "Truy cập trên mọi thiết bị",
-                  },
-                  {
-                    icon: <AllInclusiveIcon sx={{ fontSize: 17 }} />,
-                    label: "Gia hạn 6 tháng",
-                  },
-                ].map((item, i) => (
-                  <Stack
-                    key={i}
-                    direction="row"
-                    spacing={1.25}
-                    sx={{ alignItems: "center" }}
-                  >
-                    <Box
-                      sx={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: 2,
-                        bgcolor: RED_SOFT,
-                        color: RED,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
+              {/* Features List */}
+              <Box
+                sx={{
+                  p: 2.25,
+                  borderRadius: "18px",
+                  bgcolor: "rgba(0,0,0,0.02)",
+                  border: "1px solid rgba(0,0,0,0.05)",
+                }}
+              >
+                <Typography sx={{ fontWeight: 800, fontSize: 14, mb: 2, color: "text.primary" }}>
+                  Khóa học bao gồm:
+                </Typography>
+                <Stack spacing={1.5}>
+                  {[
+                    {
+                      icon: <PlayArrowRoundedIcon sx={{ fontSize: 18 }} />,
+                      label: `${formatTongThoiLuong(khoaHoc.tongThoiLuong)} video theo yêu cầu`,
+                    },
+                    {
+                      icon: <FolderRoundedIcon sx={{ fontSize: 18 }} />,
+                      label: `${khoaHoc.tongTaiLieu ?? 0} tài nguyên tải về`,
+                    },
+                    {
+                      icon: <DevicesRoundedIcon sx={{ fontSize: 18 }} />,
+                      label: "Truy cập linh hoạt trên máy tính và di động",
+                    },
+                    {
+                      icon: <AllInclusiveRoundedIcon sx={{ fontSize: 18 }} />,
+                      label: "Hạn sử dụng khóa học: 6 tháng",
+                    },
+                    {
+                      icon: <WorkspacePremiumRoundedIcon sx={{ fontSize: 18 }} />,
+                      label: "Chứng chỉ hoàn thành sau khi kết thúc",
+                    },
+                  ].map((item, i) => (
+                    <Stack
+                      key={i}
+                      direction="row"
+                      spacing={1.5}
+                      sx={{ alignItems: "center" }}
                     >
-                      {item.icon}
-                    </Box>
-                    <Typography
-                      sx={{ fontSize: 12.5, color: "text.secondary" }}
-                    >
-                      {item.label}
-                    </Typography>
-                  </Stack>
-                ))}
-              </Stack>
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "10px",
+                          bgcolor: RED_LIGHT,
+                          color: RED,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {item.icon}
+                      </Box>
+                      <Typography sx={{ fontSize: 13, color: "text.secondary", fontWeight: 600 }}>
+                        {item.label}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Box>
             </Box>
           </SidebarCard>
         </Grid>
       </Grid>
 
-      {/* ── Giảng viên & các khóa học khác (kiểu Udemy) ── */}
-      <SectionCard sx={{ mt: 3 }}>
+      {/* ── Giảng viên & Khóa học liên quan ── */}
+      <SectionCard sx={{ mt: 4 }}>
         <Typography
           sx={{
-            fontWeight: 700,
+            fontWeight: 800,
             fontSize: 22,
-            mb: 3,
-            letterSpacing: 0.2,
+            mb: 3.5,
+            color: "text.primary",
           }}
         >
           Giảng viên
         </Typography>
 
-        <Stack spacing={3} sx={{ mb: 2.75 }}>
+        <Stack spacing={3.5} sx={{ mb: 3 }}>
           {danhSachGiangVienDetail.map((gv, idx) => {
             const key = gv.id ?? `gv-${idx}`;
             const isExpanded = !!bioExpandedMap[key];
@@ -1813,7 +1920,7 @@ function CourseRegistrationContent() {
               <Box key={key}>
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
-                  spacing={2.5}
+                  spacing={3}
                   sx={{ alignItems: "flex-start" }}
                 >
                   <Box
@@ -1828,26 +1935,28 @@ function CourseRegistrationContent() {
                         component="img"
                         src={gv.anhDaiDien}
                         sx={{
-                          width: 84,
-                          height: 84,
+                          width: 96,
+                          height: 96,
                           borderRadius: "50%",
                           objectFit: "cover",
-                          border: `2px solid ${RED_SOFT}`,
+                          border: `3px solid ${RED}`,
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
                         }}
                       />
                     ) : (
                       <Box
                         sx={{
-                          width: 84,
-                          height: 84,
+                          width: 96,
+                          height: 96,
                           borderRadius: "50%",
-                          bgcolor: RED,
+                          background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
                           color: "#fff",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: 28,
-                          fontWeight: 700,
+                          fontSize: 32,
+                          fontWeight: 800,
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
                         }}
                       >
                         {gv.hoTen.charAt(0).toUpperCase()}
@@ -1855,14 +1964,14 @@ function CourseRegistrationContent() {
                     )}
                   </Box>
 
-                  <Box sx={{ flex: 1, minWidth: 0, pt: 0.5 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                       onClick={() => goToInstructorProfile(gv.id)}
                       sx={{
-                        fontWeight: 700,
-                        fontSize: 18,
+                        fontWeight: 800,
+                        fontSize: 20,
                         color: RED,
-                        mb: 0.25,
+                        mb: 0.5,
                         width: "fit-content",
                         cursor: gv.id ? "pointer" : "default",
                         "&:hover": gv.id
@@ -1874,51 +1983,49 @@ function CourseRegistrationContent() {
                     </Typography>
 
                     {idx === 0 && giangVienInfo?.chucDanh && (
-                      <Typography
-                        sx={{
-                          fontSize: 13.5,
-                          color: "text.secondary",
-                          mb: 0.5,
-                        }}
-                      >
+                      <Typography sx={{ fontSize: 14, color: "text.secondary", fontWeight: 600, mb: 1 }}>
                         {giangVienInfo.chucDanh}
                       </Typography>
                     )}
 
                     {idx === 0 && (
-                      <Stack spacing={0.5} sx={{ mt: 1, mb: 1 }}>
+                      <Stack
+                        direction="row"
+                        spacing={2}
+                        sx={{ my: 1.5, flexWrap: "wrap", rowGap: 1 }}
+                      >
                         <Stack
                           direction="row"
-                          spacing={1.25}
-                          sx={{ alignItems: "center" }}
+                          spacing={0.75}
+                          sx={{
+                            alignItems: "center",
+                            bgcolor: RED_LIGHT,
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: "10px",
+                          }}
                         >
-                          <PlayCircleIcon sx={{ fontSize: 17, color: RED }} />
-                          <Typography
-                            sx={{ fontSize: 13, color: "text.secondary" }}
-                          >
-                            <strong>
-                              {giangVienInfo?.tongKhoaHoc ??
-                                giangVienKhoaHocs.length + 1}
-                            </strong>{" "}
-                            khóa học
+                          <PlayCircleFilledRoundedIcon sx={{ fontSize: 18, color: RED }} />
+                          <Typography sx={{ fontSize: 13, color: "text.primary", fontWeight: 700 }}>
+                            {giangVienInfo?.tongKhoaHoc ?? giangVienKhoaHocs.length + 1} khóa học
                           </Typography>
                         </Stack>
+
                         {typeof giangVienInfo?.tongHocVien === "number" && (
                           <Stack
                             direction="row"
-                            spacing={1.25}
-                            sx={{ alignItems: "center" }}
+                            spacing={0.75}
+                            sx={{
+                              alignItems: "center",
+                              bgcolor: RED_LIGHT,
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: "10px",
+                            }}
                           >
-                            <PeopleAltIcon sx={{ fontSize: 17, color: RED }} />
-                            <Typography
-                              sx={{ fontSize: 13, color: "text.secondary" }}
-                            >
-                              <strong>
-                                {giangVienInfo.tongHocVien.toLocaleString(
-                                  "vi-VN",
-                                )}
-                              </strong>{" "}
-                              học viên
+                            <PeopleAltRoundedIcon sx={{ fontSize: 18, color: RED }} />
+                            <Typography sx={{ fontSize: 13, color: "text.primary", fontWeight: 700 }}>
+                              {giangVienInfo.tongHocVien.toLocaleString("vi-VN")} học viên
                             </Typography>
                           </Stack>
                         )}
@@ -1926,17 +2033,17 @@ function CourseRegistrationContent() {
                     )}
 
                     {bioHtml && (
-                      <Box sx={{ mt: 1 }}>
+                      <Box sx={{ mt: 1.5 }}>
                         <Box
                           sx={{
-                            fontSize: 13.5,
+                            fontSize: 14,
                             color: "text.secondary",
                             lineHeight: 1.85,
                             "& p": { mb: 1 },
                             "& p:last-child": { mb: 0 },
                             "& ul, & ol": { pl: 2.5, mb: 1 },
                             "& a": { color: RED },
-                            "& img": { maxWidth: "100%", borderRadius: 8 },
+                            "& img": { maxWidth: "100%", borderRadius: "10px" },
                             "& strong, & b": { color: "text.primary" },
                             ...(!isExpanded && {
                               display: "-webkit-box",
@@ -1953,11 +2060,11 @@ function CourseRegistrationContent() {
                           }
                           sx={{
                             textTransform: "none",
-                            fontWeight: 700,
-                            fontSize: 13,
+                            fontWeight: 800,
+                            fontSize: 13.5,
                             color: RED,
                             px: 0,
-                            mt: 0.75,
+                            mt: 1,
                             minWidth: 0,
                             "&:hover": {
                               bgcolor: "transparent",
@@ -1973,39 +2080,41 @@ function CourseRegistrationContent() {
                 </Stack>
 
                 {idx < danhSachGiangVienDetail.length - 1 && (
-                  <Divider sx={{ mt: 2.5, borderColor: "#f6e9e9" }} />
+                  <Divider sx={{ my: 3, borderColor: "divider" }} />
                 )}
               </Box>
             );
           })}
         </Stack>
 
-        <Divider sx={{ my: 2.75, borderColor: "#f3d9d9" }} />
+        <Divider sx={{ my: 3.5, borderColor: "divider" }} />
 
+        {/* Other Courses by Instructor */}
         <Stack
           direction="row"
-          sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}
+          sx={{ alignItems: "center", justifyContent: "space-between", mb: 3 }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 18, color: "text.primary" }}>
             Khóa học khác của {tenGiangVienChinh}
           </Typography>
         </Stack>
 
         {loadingGiangVien ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-            <CircularProgress size={26} sx={{ color: RED }} thickness={4} />
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={30} sx={{ color: RED }} thickness={4} />
           </Box>
         ) : giangVienKhoaHocs.length === 0 ? (
-          <Typography sx={{ fontSize: 13, color: "text.disabled", mb: 2 }}>
-            Giảng viên chưa có khóa học nào khác.
+          <Typography sx={{ fontSize: 14, color: "text.disabled", mb: 2 }}>
+            Giảng viên hiện chưa có khóa học nào khác.
           </Typography>
         ) : (
-          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+          <Grid container spacing={3} sx={{ mb: 3 }}>
             {giangVienKhoaHocs.map((kh: any, i: number) => {
               const khGia = kh.gia ?? kh.giaGoc ?? 0;
               const khFree =
                 kh.loaiKhoaHoc !== "Khóa học trả phí" &&
                 (!kh.gia || kh.gia <= 0);
+
               return (
                 <Grid key={kh.id ?? i} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper
@@ -2013,18 +2122,20 @@ function CourseRegistrationContent() {
                       kh.id && router.push(`/student/enroll-courses/${kh.id}`)
                     }
                     sx={{
-                      borderRadius: 3,
-                      border: "1px solid #f3d9d9",
+                      borderRadius: "18px",
+                      border: "1px solid rgba(0,0,0,0.08)",
                       overflow: "hidden",
                       cursor: kh.id ? "pointer" : "default",
-                      transition: "box-shadow 0.2s ease, transform 0.2s ease",
+                      transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                       height: "100%",
                       display: "flex",
                       flexDirection: "column",
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
                       "&:hover": kh.id
                         ? {
-                            boxShadow: "0 10px 26px rgba(141,19,19,0.14)",
-                            transform: "translateY(-2px)",
+                            boxShadow: "0 16px 36px rgba(141,19,19,0.12)",
+                            transform: "translateY(-4px)",
+                            borderColor: alpha(RED, 0.3),
                           }
                         : undefined,
                     }}
@@ -2032,7 +2143,7 @@ function CourseRegistrationContent() {
                     <Box
                       sx={{
                         position: "relative",
-                        paddingTop: "56%",
+                        paddingTop: "56.25%",
                         bgcolor: "#1c1d1f",
                         backgroundImage: kh.hinhAnhKhoaHoc
                           ? `url(${kh.hinhAnhKhoaHoc})`
@@ -2041,34 +2152,38 @@ function CourseRegistrationContent() {
                         backgroundPosition: "center",
                       }}
                     />
-                    <Box sx={{ p: 1.75, flex: 1 }}>
+                    <Box sx={{ p: 2.25, flex: 1, display: "flex", flexDirection: "column" }}>
                       <Typography
                         sx={{
-                          fontSize: 13.5,
-                          fontWeight: 600,
-                          mb: 1,
+                          fontSize: 14.5,
+                          fontWeight: 700,
+                          mb: 1.5,
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: "vertical",
                           overflow: "hidden",
-                          minHeight: 36,
+                          minHeight: 42,
+                          color: "text.primary",
+                          lineHeight: 1.4,
                         }}
                       >
                         {kh.tieuDe}
                       </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 14,
-                          fontWeight: 800,
-                          color: khFree ? "#2d7a35" : RED,
-                        }}
-                      >
-                        {khFree
-                          ? "Miễn phí"
-                          : khGia > 0
-                            ? `${khGia.toLocaleString("vi-VN")}₫`
-                            : "Liên hệ"}
-                      </Typography>
+                      <Box sx={{ mt: "auto" }}>
+                        <Typography
+                          sx={{
+                            fontSize: 16,
+                            fontWeight: 900,
+                            color: khFree ? "#16a34a" : RED,
+                          }}
+                        >
+                          {khFree
+                            ? "Miễn phí"
+                            : khGia > 0
+                              ? `${khGia.toLocaleString("vi-VN")}₫`
+                              : "Liên hệ"}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Paper>
                 </Grid>
@@ -2080,11 +2195,11 @@ function CourseRegistrationContent() {
         {giangVienId && (
           <Button
             onClick={() => goToInstructorProfile(giangVienId)}
-            endIcon={<ArrowForwardIcon sx={{ fontSize: 16 }} />}
+            endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 18 }} />}
             sx={{
               textTransform: "none",
-              fontWeight: 700,
-              fontSize: 13.5,
+              fontWeight: 800,
+              fontSize: 14,
               color: RED,
               px: 0,
               "&:hover": {
@@ -2098,24 +2213,24 @@ function CourseRegistrationContent() {
         )}
       </SectionCard>
 
-      {/* ── Confirm dialog ── */}
+      {/* ── Confirm Registration Dialog ── */}
       <Dialog
         open={modalOpen}
         onClose={() => !registering && setModalOpen(false)}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 4 } } }}
+        slotProps={{ paper: { sx: { borderRadius: "24px", p: 1 } } }}
       >
-        <DialogContent sx={{ p: 3.5 }}>
+        <DialogContent sx={{ p: 3 }}>
           <Stack
             direction="row"
             sx={{
               justifyContent: "space-between",
-              alignItems: "flex-start",
-              mb: 0.5,
+              alignItems: "center",
+              mb: 1.5,
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
               Xác nhận đăng ký
             </Typography>
             <IconButton
@@ -2124,31 +2239,32 @@ function CourseRegistrationContent() {
               onClick={() => setModalOpen(false)}
               sx={{ color: "text.disabled" }}
             >
-              <CloseIcon fontSize="small" />
+              <CloseRoundedIcon fontSize="small" />
             </IconButton>
           </Stack>
-          <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 2.5 }}>
+          <Typography sx={{ fontSize: 14, color: "text.secondary", mb: 3 }}>
             {isFree
-              ? "Bạn sắp đăng ký khóa học sau hoàn toàn miễn phí."
-              : "Bạn sắp đăng ký khóa học sau."}
+              ? "Bạn sắp đăng ký tham gia khóa học sau hoàn toàn miễn phí."
+              : "Bạn sắp đăng ký tham gia khóa học sau."}
           </Typography>
 
           <Stack
             direction="row"
-            spacing={1.5}
+            spacing={2}
             sx={{
               alignItems: "center",
-              bgcolor: RED_SOFT,
-              borderRadius: 3,
-              p: 1.75,
+              bgcolor: RED_LIGHT,
+              borderRadius: "16px",
+              p: 2,
               mb: 3,
+              border: `1px solid ${alpha(RED, 0.15)}`,
             }}
           >
             <Box
               sx={{
-                width: 46,
-                height: 46,
-                borderRadius: 2.5,
+                width: 48,
+                height: 48,
+                borderRadius: "14px",
                 bgcolor: RED,
                 display: "flex",
                 alignItems: "center",
@@ -2157,20 +2273,19 @@ function CourseRegistrationContent() {
                 flexShrink: 0,
               }}
             >
-              <SchoolIcon />
+              <SchoolRoundedIcon />
             </Box>
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 700, color: "text.primary" }}>
                 {khoaHoc.tieuDe}
               </Typography>
-              <Typography sx={{ fontSize: 12, color: "text.disabled" }}>
-                {khoaHoc.tongBaiGiang ?? 0} bài học ·{" "}
-                {formatTongThoiLuong(khoaHoc.tongThoiLuong)}
+              <Typography sx={{ fontSize: 12.5, color: "text.secondary", mt: 0.25 }}>
+                {khoaHoc.tongBaiGiang ?? 0} bài học • {formatTongThoiLuong(khoaHoc.tongThoiLuong)}
               </Typography>
             </Box>
           </Stack>
 
-          <Stack spacing={1.25}>
+          <Stack spacing={1.5}>
             <Button
               fullWidth
               variant="contained"
@@ -2180,19 +2295,21 @@ function CourseRegistrationContent() {
                 registering ? (
                   <CircularProgress size={16} sx={{ color: "#fff" }} />
                 ) : (
-                  <SchoolIcon />
+                  <SchoolRoundedIcon />
                 )
               }
               sx={{
                 bgcolor: RED,
-                "&:hover": { bgcolor: RED_HOVER },
+                "&:hover": { bgcolor: RED_DARK },
                 textTransform: "none",
-                fontWeight: 700,
-                borderRadius: 2.5,
-                py: 1.35,
+                fontWeight: 800,
+                fontSize: 15,
+                borderRadius: "14px",
+                py: 1.4,
+                boxShadow: `0 8px 20px ${alpha(RED, 0.3)}`,
               }}
             >
-              {registering ? "Đang đăng ký..." : "Xác nhận đăng ký"}
+              {registering ? "Đang xử lý đăng ký..." : "Xác nhận đăng ký"}
             </Button>
             <Button
               fullWidth
@@ -2202,7 +2319,9 @@ function CourseRegistrationContent() {
               sx={{
                 color: "text.secondary",
                 textTransform: "none",
-                fontWeight: 600,
+                fontWeight: 700,
+                fontSize: 14,
+                borderRadius: "12px",
               }}
             >
               Hủy bỏ
@@ -2211,7 +2330,7 @@ function CourseRegistrationContent() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Video preview player ── */}
+      {/* ── Video Preview Player Modal ── */}
       <Dialog
         open={videoPlayer.open}
         onClose={handleCloseVideo}
@@ -2220,57 +2339,53 @@ function CourseRegistrationContent() {
         slotProps={{
           paper: {
             sx: {
-              borderRadius: "20px",
-              bgcolor: "#111214",
+              borderRadius: "24px",
+              bgcolor: "#0d0e11",
               overflow: "hidden",
-              boxShadow: "0 24px 70px rgba(0,0,0,0.55)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
+              border: "1px solid rgba(255,255,255,0.1)",
               m: 2,
             },
           },
           backdrop: {
             sx: {
-              backgroundColor: "rgba(10,10,10,0.7)",
-              backdropFilter: "blur(6px)",
+              backgroundColor: "rgba(0,0,0,0.75)",
+              backdropFilter: "blur(8px)",
             },
           },
         }}
       >
-        {/* Header */}
         <Stack
           direction="row"
           sx={{
-            px: 2.25,
-            py: 1.5,
+            px: 2.5,
+            py: 1.75,
             alignItems: "center",
             justifyContent: "space-between",
             gap: 2,
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
           }}
         >
-          <Stack
-            direction="row"
-            spacing={1.25}
-            sx={{ alignItems: "center", minWidth: 0 }}
-          >
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0 }}>
             <Box
               sx={{
-                width: 30,
-                height: 30,
+                width: 34,
+                height: 34,
                 borderRadius: "50%",
-                bgcolor: alpha(RED, 0.18),
+                bgcolor: alpha(RED, 0.2),
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
               }}
             >
-              <PlayCircleIcon sx={{ fontSize: 17, color: RED }} />
+              <PlayCircleFilledRoundedIcon sx={{ fontSize: 20, color: RED }} />
             </Box>
             <Typography
               sx={{
                 color: "#fff",
-                fontSize: 13.5,
-                fontWeight: 600,
+                fontSize: 14.5,
+                fontWeight: 700,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -2284,19 +2399,18 @@ function CourseRegistrationContent() {
             onClick={handleCloseVideo}
             sx={{
               color: "rgba(255,255,255,0.7)",
-              bgcolor: "rgba(255,255,255,0.06)",
+              bgcolor: "rgba(255,255,255,0.08)",
               "&:hover": {
-                bgcolor: "rgba(255,255,255,0.14)",
+                bgcolor: "rgba(255,255,255,0.18)",
                 color: "#fff",
               },
               flexShrink: 0,
             }}
           >
-            <CloseIcon fontSize="small" />
+            <CloseRoundedIcon fontSize="small" />
           </IconButton>
         </Stack>
 
-        {/* Video player */}
         <Box
           sx={{
             position: "relative",
@@ -2311,7 +2425,7 @@ function CourseRegistrationContent() {
           {isVideoLoading && (
             <CircularProgress
               sx={{ color: RED, position: "absolute", zIndex: 5 }}
-              size={40}
+              size={44}
               thickness={4}
             />
           )}
@@ -2340,8 +2454,8 @@ function CourseRegistrationContent() {
               }}
             />
           ) : (
-            <Typography sx={{ color: "#fff", fontSize: 13 }}>
-              Không thể tải video
+            <Typography sx={{ color: "#fff", fontSize: 14 }}>
+              Không thể tải video xem thử
             </Typography>
           )}
         </Box>
@@ -2356,7 +2470,7 @@ function CourseRegistrationContent() {
         <Alert
           severity={snackbar.severity}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          sx={{ borderRadius: 2.5 }}
+          sx={{ borderRadius: 3, fontWeight: 600 }}
         >
           {snackbar.message}
         </Alert>

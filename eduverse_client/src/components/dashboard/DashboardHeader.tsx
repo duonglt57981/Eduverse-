@@ -94,14 +94,12 @@ export default function DashboardHeader({
     }
   }, [user, dispatch, fetchFavorites]);
 
-  const handleFavMouseEnter = (e?: React.MouseEvent<HTMLElement>) => {
+  const handleFavMouseEnter = () => {
     if (favLeaveTimer.current) {
       clearTimeout(favLeaveTimer.current);
       favLeaveTimer.current = null;
     }
-    if (e?.currentTarget) {
-      setFavAnchorEl(e.currentTarget);
-    } else if (favBtnRef.current) {
+    if (favBtnRef.current) {
       setFavAnchorEl(favBtnRef.current);
     }
     setIsFavOpen(true);
@@ -110,17 +108,15 @@ export default function DashboardHeader({
     if (favLeaveTimer.current) clearTimeout(favLeaveTimer.current);
     favLeaveTimer.current = setTimeout(() => {
       setIsFavOpen(false);
-    }, 300);
+    }, 250);
   };
 
-  const handleCartMouseEnter = (e?: React.MouseEvent<HTMLElement>) => {
+  const handleCartMouseEnter = () => {
     if (cartLeaveTimer.current) {
       clearTimeout(cartLeaveTimer.current);
       cartLeaveTimer.current = null;
     }
-    if (e?.currentTarget) {
-      setCartAnchorEl(e.currentTarget);
-    } else if (cartBtnRef.current) {
+    if (cartBtnRef.current) {
       setCartAnchorEl(cartBtnRef.current);
     }
     setIsCartOpen(true);
@@ -129,7 +125,7 @@ export default function DashboardHeader({
     if (cartLeaveTimer.current) clearTimeout(cartLeaveTimer.current);
     cartLeaveTimer.current = setTimeout(() => {
       setIsCartOpen(false);
-    }, 300);
+    }, 250);
   };
 
   useEffect(() => {

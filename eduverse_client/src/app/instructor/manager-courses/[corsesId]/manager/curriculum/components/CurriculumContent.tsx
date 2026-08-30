@@ -90,6 +90,7 @@ import {
 import { TaiLieuType } from "@/src/types/TaiLieu/Dto/TaiLieuDto";
 import AuthGuard from "@/src/components/AuthGuard";
 import { useCourseEdit } from "../../components/CourseEditContext";
+import { cleanHtmlContent } from "@/src/utils/htmlHelpers";
 
 import {
   DndContext,
@@ -127,7 +128,7 @@ const pulseKeyframes = `
 
 // ===== Ràng buộc tài liệu =====
 const DUNG_LUONG_TAI_LIEU_TOI_DA = 50 * 1024 * 1024;
-const DUOI_TAI_LIEU_HOP_LE = [".pdf", ".docx", ".doc"];
+const DUOI_TAI_LIEU_HOP_LE = [".doc", ".docx"];
 
 function layDuoiFile(tenFile: string): string {
   const idx = tenFile.lastIndexOf(".");
@@ -562,9 +563,17 @@ function RichTextEditor({
 // Hàm stripHtml để lấy text thuần
 function stripHtml(html: string): string {
   if (!html) return "";
-  const div = document.createElement("div");
-  div.innerHTML = html;
-  return div.textContent || div.innerText || "";
+  return html
+    .replace(/<!--[\s\S]*?-->/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const noPropagation = {
@@ -2266,14 +2275,6 @@ function QuestionListView({
   expandedQuestions: Record<string, boolean>;
   onToggleQuestion: (id: string) => void;
 }) {
-  // Hàm stripHtml để lấy text thuần cho hiển thị tóm tắt
-  const stripHtml = (html: string) => {
-    if (!html) return "";
-    const div = document.createElement("div");
-    div.innerHTML = html;
-    return div.textContent || div.innerText || "";
-  };
-
   return (
     <Box>
       <Box
@@ -2506,7 +2507,7 @@ function QuestionListView({
                     {/* Nội dung câu hỏi (hỗ trợ HTML) */}
                     <Box
                       dangerouslySetInnerHTML={{
-                        __html: q.noiDungCauHoi || "",
+                        __html: cleanHtmlContent(q.noiDungCauHoi || ""),
                       }}
                       sx={{
                         mb: 1.5,
@@ -2605,7 +2606,7 @@ function LectureInfoView({
   onDeleteDoc: (taiLieuId: string) => void;
   isEditable: boolean;
 }) {
-  const taiLieus = (bg.danhSachTaiLieu ?? []) as TaiLieuType[];
+  const taiLieus = (bg.danhSachTaiLieu ?? (bg as any).taiLieus ?? []) as TaiLieuType[];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -5533,7 +5534,7 @@ export default function CurriculumContent() {
                                                     : "Chọn file"}
                                                   <input
                                                     type="file"
-                                                    accept=".pdf,.docx,.doc"
+                                                    accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                                     hidden
                                                     onChange={(e) => {
                                                       const file =
@@ -5599,7 +5600,7 @@ export default function CurriculumContent() {
                                                   display: "block",
                                                 }}
                                               >
-                                                Hỗ trợ file .pdf, .docx, .doc (dung lượng
+                                                Hỗ trợ file .doc, .docx (dung lượng
                                                 tối đa 50MB)
                                               </Typography>
                                               <Box

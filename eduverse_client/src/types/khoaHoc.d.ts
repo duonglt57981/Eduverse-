@@ -29,6 +29,7 @@ export interface BaiGiangDto {
   trangThai?: number;
   lyDoTuChois: LyDoTuChoiDto;
   taiLieus?: TaiLieuDto[];
+  danhSachTaiLieu?: TaiLieuDto[];
 }
 
 export interface PhanDto {

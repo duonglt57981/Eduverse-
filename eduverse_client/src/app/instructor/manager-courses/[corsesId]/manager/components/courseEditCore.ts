@@ -155,6 +155,7 @@ export function isOnlySpaces(text: string): boolean {
 export function layNoiDungThuanTuyTuHtml(html: string): string {
   if (!html || typeof html !== "string") return "";
   return html
+    .replace(/<!--[\s\S]*?-->/gi, "")
     .replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr|\/blockquote)\s*\/?>/gi, " ")
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/gi, " ")

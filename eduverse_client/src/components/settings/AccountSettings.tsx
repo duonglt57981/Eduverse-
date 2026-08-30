@@ -50,6 +50,8 @@ import {
   FormatQuoteRounded,
   WcRounded,
   BadgeRounded,
+  DeleteOutlineRounded,
+  DeleteRounded,
 } from "@mui/icons-material";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -58,7 +60,8 @@ import Placeholder from "@tiptap/extension-placeholder";
 import DOMPurify from "dompurify";
 import { usePathname } from "next/navigation";
 import { apiService } from "@/src/services/index";
-import { STATUS } from "@/src/theme/tokens";
+import { STATUS, BRAND } from "@/src/theme/tokens";
+import Swal from "sweetalert2";
 
 interface ProfileData {
   userName?: string;
@@ -531,6 +534,48 @@ export default function AccountSettings() {
     }
   };
 
+  const handleDeleteAvatar = async () => {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa ảnh đại diện",
+      text: "Bạn có chắc chắn muốn xóa ảnh đại diện và quay về ảnh mặc định của hệ thống không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: BRAND.main,
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Xóa ảnh",
+      cancelButtonText: "Hủy",
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    setAvatarUploading(true);
+    try {
+      const res = await apiService.delete<{ status: boolean; message: string }>("/profile/avatar");
+      if (res.status) {
+        localStorage.removeItem(`user_avatar_${profile.email}`);
+        window.dispatchEvent(new Event("avatar_updated"));
+        setProfile((prev) => ({ ...prev, anhDaiDien: "" }));
+        setTempProfile((prev) => ({ ...prev, anhDaiDien: "" }));
+        showNotification("Đã xóa ảnh đại diện và khôi phục ảnh mặc định thành công!", "success");
+      } else {
+        localStorage.removeItem(`user_avatar_${profile.email}`);
+        window.dispatchEvent(new Event("avatar_updated"));
+        setProfile((prev) => ({ ...prev, anhDaiDien: "" }));
+        setTempProfile((prev) => ({ ...prev, anhDaiDien: "" }));
+        showNotification(res.message || "Đã xóa ảnh đại diện", "success");
+      }
+    } catch {
+      localStorage.removeItem(`user_avatar_${profile.email}`);
+      window.dispatchEvent(new Event("avatar_updated"));
+      setProfile((prev) => ({ ...prev, anhDaiDien: "" }));
+      setTempProfile((prev) => ({ ...prev, anhDaiDien: "" }));
+      showNotification("Đã xóa ảnh đại diện, đã quay về ảnh mặc định", "success");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (tempProfile.ngaySinh) {
       const selectedDate = new Date(tempProfile.ngaySinh);
@@ -791,7 +836,7 @@ export default function AccountSettings() {
               alignItems: "center",
             }}
           >
-            <Box sx={{ position: "relative" }}>
+            <Box sx={{ position: "relative", display: "inline-flex" }}>
               <Avatar
                 src={isEditing ? tempProfile.anhDaiDien : profile.anhDaiDien}
                 sx={{
@@ -815,33 +860,65 @@ export default function AccountSettings() {
                 accept="image/*"
                 style={{ display: "none" }}
               />
-              <IconButton
-                onClick={() => fileInputRef.current?.click()}
-                disabled={avatarUploading}
-                sx={{
-                  position: "absolute",
-                  bottom: 0,
-                  right: 0,
-                  bgcolor: "primary.main",
-                  color: "#fff",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-                  "&:hover": {
-                    bgcolor: "primary.dark",
-                  },
-                  width: 36,
-                  height: 36,
-                }}
-              >
-                {avatarUploading ? (
-                  <CircularProgress size={18} color="inherit" />
-                ) : (
-                  <CameraAltRounded fontSize="small" />
-                )}
-              </IconButton>
+              <Tooltip title="Tải ảnh đại diện mới" arrow>
+                <IconButton
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  sx={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    bgcolor: "primary.main",
+                    color: "#fff",
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+                    "&:hover": {
+                      bgcolor: "primary.dark",
+                      transform: "scale(1.08)",
+                    },
+                    width: 36,
+                    height: 36,
+                    transition: "all 150ms ease",
+                  }}
+                >
+                  {avatarUploading ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    <CameraAltRounded fontSize="small" />
+                  )}
+                </IconButton>
+              </Tooltip>
+
+              {Boolean(isEditing ? tempProfile.anhDaiDien : profile.anhDaiDien) && (
+                <Tooltip title="Xóa ảnh đại diện (về ảnh mặc định)" arrow>
+                  <IconButton
+                    onClick={handleDeleteAvatar}
+                    disabled={avatarUploading}
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      bgcolor: "error.main",
+                      color: "#fff",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+                      border: "2px solid",
+                      borderColor: "background.paper",
+                      "&:hover": {
+                        bgcolor: "error.dark",
+                        transform: "scale(1.08)",
+                      },
+                      width: 32,
+                      height: 32,
+                      transition: "all 150ms ease",
+                    }}
+                  >
+                    <DeleteOutlineRounded sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
 
             <Stack
-              spacing={1}
+              spacing={0.75}
               sx={{ textAlign: { xs: "center", sm: "left" }, flexGrow: 1 }}
             >
               <Typography
@@ -873,6 +950,31 @@ export default function AccountSettings() {
                       ? "Giảng viên EduVerse"
                       : profile.chucVu || "Học viên EduVerse"}
               </Typography>
+
+              {Boolean(isEditing ? tempProfile.anhDaiDien : profile.anhDaiDien) && (
+                <Box sx={{ pt: 0.5 }}>
+                  <Button
+                    size="small"
+                    variant="text"
+                    color="error"
+                    startIcon={<DeleteOutlineRounded sx={{ fontSize: 16 }} />}
+                    onClick={handleDeleteAvatar}
+                    disabled={avatarUploading}
+                    sx={{
+                      textTransform: "none",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      p: 0,
+                      "&:hover": {
+                        bgcolor: "transparent",
+                        textDecoration: "underline",
+                      },
+                    }}
+                  >
+                    Xóa ảnh đại diện (về mặc định)
+                  </Button>
+                </Box>
+              )}
             </Stack>
 
             <Box>

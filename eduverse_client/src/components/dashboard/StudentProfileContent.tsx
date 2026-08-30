@@ -59,6 +59,7 @@ import {
   CheckRounded,
   SchoolRounded,
   PhoneRounded,
+  DeleteOutlineRounded,
 } from '@mui/icons-material';
 
 const TextFieldAny = TextField as any;
@@ -501,6 +502,41 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
     }, 'image/jpeg');
   };
 
+  const handleDeleteAvatar = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa ảnh đại diện và quay về ảnh mặc định không?")) return;
+    try {
+      setSaveLoading(true);
+      const res = await apiService.delete<any>('/profile/avatar');
+      if (res.status) {
+        showToast('Đã xóa ảnh đại diện, đã quay về ảnh mặc định', 'success');
+        localStorage.removeItem(`user_avatar_${email}`);
+        window.dispatchEvent(new Event("avatar_updated"));
+        setProfile((prev: any) => ({
+          ...prev,
+          anhDaiDien: '',
+        }));
+      } else {
+        localStorage.removeItem(`user_avatar_${email}`);
+        window.dispatchEvent(new Event("avatar_updated"));
+        setProfile((prev: any) => ({
+          ...prev,
+          anhDaiDien: '',
+        }));
+        showToast('Đã xóa ảnh đại diện', 'success');
+      }
+    } catch {
+      localStorage.removeItem(`user_avatar_${email}`);
+      window.dispatchEvent(new Event("avatar_updated"));
+      setProfile((prev: any) => ({
+        ...prev,
+        anhDaiDien: '',
+      }));
+      showToast('Đã xóa ảnh đại diện', 'success');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   const handleDownloadCert = async (certId: string) => {
     try {
       showToast('Đang tải xuống chứng chỉ PDF...', 'success');
@@ -665,22 +701,46 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                 >
                   {profile.hoTen.split(' ').pop()?.substring(0, 2).toUpperCase()}
                 </Avatar>
-                <IconButton
-                  size="small"
-                  onClick={() => fileInputRef.current?.click()}
-                  sx={{
-                    position: 'absolute',
-                    bottom: -5,
-                    right: -5,
-                    bgcolor: COLORS.primary,
-                    color: '#fff',
-                    border: '2px solid #fff',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-                    '&:hover': { bgcolor: COLORS.primaryDark },
-                  }}
-                >
-                  <CameraAltRounded sx={{ fontSize: 16 }} />
-                </IconButton>
+                <Tooltip title="Tải ảnh đại diện mới" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{
+                      position: 'absolute',
+                      bottom: -5,
+                      right: -5,
+                      bgcolor: COLORS.primary,
+                      color: '#fff',
+                      border: '2px solid #fff',
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                      '&:hover': { bgcolor: COLORS.primaryDark, transform: 'scale(1.08)' },
+                      transition: 'all 150ms ease',
+                    }}
+                  >
+                    <CameraAltRounded sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
+                {Boolean(profile.anhDaiDien) && (
+                  <Tooltip title="Xóa ảnh đại diện (về mặc định)" arrow>
+                    <IconButton
+                      size="small"
+                      onClick={handleDeleteAvatar}
+                      sx={{
+                        position: 'absolute',
+                        top: -5,
+                        right: -5,
+                        bgcolor: 'error.main',
+                        color: '#fff',
+                        border: '2px solid #fff',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                        '&:hover': { bgcolor: 'error.dark', transform: 'scale(1.08)' },
+                        transition: 'all 150ms ease',
+                      }}
+                    >
+                      <DeleteOutlineRounded sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -703,6 +763,25 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                     ID: {profile.id.substring(0, 8).toUpperCase()}
                   </Typography>
                 </Stack>
+                {Boolean(profile.anhDaiDien) && (
+                  <Button
+                    size="small"
+                    variant="text"
+                    color="error"
+                    startIcon={<DeleteOutlineRounded sx={{ fontSize: 15 }} />}
+                    onClick={handleDeleteAvatar}
+                    sx={{
+                      textTransform: 'none',
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      p: 0,
+                      mt: 0.5,
+                      '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+                    }}
+                  >
+                    Xóa ảnh đại diện (về mặc định)
+                  </Button>
+                )}
               </Box>
             </Stack>
           </Grid>

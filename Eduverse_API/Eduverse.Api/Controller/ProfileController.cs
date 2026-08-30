@@ -251,6 +251,39 @@ namespace Eduverse.Api.Controller
         }
 
         // ══════════════════════════════════════════════
+        // 3b. DELETE /api/profile/avatar
+        // ══════════════════════════════════════════════
+        [HttpDelete("profile/avatar")]
+        public async Task<DataResponse<object>> DeleteAvatar()
+        {
+            var loggedInUserId = UserId;
+            if (loggedInUserId == null)
+            {
+                return new DataResponse<object> { Status = false, Message = "Không tìm thấy người dùng đăng nhập" };
+            }
+
+            var user = await _userManager.FindByIdAsync(loggedInUserId.ToString());
+            if (user == null)
+            {
+                return new DataResponse<object> { Status = false, Message = "Người dùng không tồn tại" };
+            }
+
+            user.AnhDaiDien = null;
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return new DataResponse<object> { Status = false, Message = "Không thể xóa ảnh đại diện: " + string.Join(", ", result.Errors.Select(e => e.Description)) };
+            }
+
+            return new DataResponse<object>
+            {
+                Status = true,
+                Message = "Xóa ảnh đại diện thành công, đã trở về ảnh mặc định",
+                Data = new { url = (string?)null }
+            };
+        }
+
+        // ══════════════════════════════════════════════
         // 4. POST /api/profile/cover
         // ══════════════════════════════════════════════
         [HttpPost("profile/cover")]

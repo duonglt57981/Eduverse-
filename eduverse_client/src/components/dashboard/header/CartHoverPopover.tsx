@@ -62,17 +62,23 @@ export default function CartHoverPopover({
         {
           name: "offset",
           options: {
-            offset: [0, 2],
+            offset: [0, 4],
+          },
+        },
+        {
+          name: "preventOverflow",
+          options: {
+            padding: 12,
           },
         },
       ]}
     >
       {({ TransitionProps }) => (
-        <Fade {...TransitionProps} timeout={180}>
+        <Fade {...TransitionProps} timeout={150}>
           <Box
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
-            sx={{ pt: "6px", pointerEvents: "auto" }}
+            sx={{ pt: "8px", mt: "-4px", pointerEvents: "auto" }}
           >
             <Paper
               elevation={0}

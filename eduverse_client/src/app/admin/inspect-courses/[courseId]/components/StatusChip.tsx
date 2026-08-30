@@ -42,9 +42,9 @@ const TRANG_THAI_CONFIG: Record<
   },
   DangSua: {
     label: "Đang sửa",
-    color: "#9333EA",
-    bg: "#FAF5FF",
-    border: "#E9D5FF",
+    color: "#64748B",
+    bg: "#F1F5F9",
+    border: "#E2E8F0",
     icon: <EditNoteRoundedIcon sx={{ fontSize: "14px !important" }} />,
   },
   XemXet: {
