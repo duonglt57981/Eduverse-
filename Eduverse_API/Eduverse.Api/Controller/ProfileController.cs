@@ -343,6 +343,18 @@ namespace Eduverse.Api.Controller
                 return new DataResponse<string> { Status = false, Message = "Người dùng không tồn tại" };
             }
 
+            var userLogins = await _userManager.GetLoginsAsync(user);
+            var isGoogleAccount = string.IsNullOrEmpty(user.PasswordHash)
+                || userLogins.Any(login => login.LoginProvider.Equals("Google", StringComparison.OrdinalIgnoreCase));
+            if (isGoogleAccount)
+            {
+                return new DataResponse<string>
+                {
+                    Status = false,
+                    Message = "Tài khoản Google không thể đổi mật khẩu tại EduVerse."
+                };
+            }
+
             var result = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
             if (!result.Succeeded)
             {
