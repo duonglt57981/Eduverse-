@@ -66,7 +66,11 @@ namespace Eduverse.Service.KhuyenMaiService
 
             if (isAdmin)
             {
+                var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+                var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
+
                 khuyenMais = await GetQueryable()
+                    .Where(x => x.CreatedId.HasValue && adminIds.Contains(x.CreatedId.Value))
                     .OrderByDescending(x => x.CreatedDate)
                     .ToListAsync();
             }

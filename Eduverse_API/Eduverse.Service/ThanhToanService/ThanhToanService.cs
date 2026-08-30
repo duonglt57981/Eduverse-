@@ -240,7 +240,7 @@ namespace Eduverse.Service.ThanhToanService
             try
             {
                 webhookData = await _payOS.Webhooks.VerifyAsync(webhook);
-                //webhookData = webhook.Data; dung khi khong can verify signature(Xac nhan cua payos)
+                //webhookData = webhook.Data;
             }
             catch (Exception)
             {
